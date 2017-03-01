@@ -22,7 +22,7 @@ func Encode(msgType string, payload []byte) []byte {
 
 // Decode a message received from a websocket channel.
 func Decode(payload []byte) (string, []byte, error) {
-	nl := bytes.Index(sep, payload)
+	nl := bytes.Index(payload, sep)
 	if nl < 0 {
 		return "", nil, errors.New("Invalid message.")
 	}
