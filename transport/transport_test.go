@@ -46,7 +46,7 @@ func TestTransportSendReceive(t *testing.T) {
 }
 
 // This was all mostly to prove that performance of encoding/decoding was
-// linear.
+// not super-linear.
 
 var (
 	encodingTestMessages = map[int][]byte{}
