@@ -12,6 +12,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type testMessageType struct {
+	Data string
+}
+
+func TestTransportSendReceive(t *testing.T) {
+	testMessage := &testMessageType{"message"}
+
+	done := make(chan struct{})
+	server := NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		transport, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		msgType, payload, err := transport.Receive(context.TODO())
+
+		assert.NoError(t, err)
+		assert.Equal(t, "testMessageType", msgType)
+		m := &testMessageType{"message"}
+		assert.NoError(t, json.Unmarshal(payload, m))
+		assert.Equal(t, testMessage.Data, m.Data)
+		done <- struct{}{}
+	}))
+	defer ts.Close()
+
+	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
+	assert.NoError(t, err)
+	msgBytes, err := json.Marshal(testMessage)
+	assert.NoError(t, err)
+	err = clientTransport.Send(context.TODO(), "testMessageType", msgBytes)
+	assert.NoError(t, err)
+
+	<-done
+}
+
 // This was all mostly to prove that performance of encoding/decoding was
 // linear.
 
@@ -63,37 +96,4 @@ func BenchmarkEncode32k(b *testing.B) {
 
 func BenchmarkEncode128k(b *testing.B) {
 	benchmarkEncode(128*1024, b)
-}
-
-type testMessageType struct {
-	Data string
-}
-
-func TestTransportSendReceive(t *testing.T) {
-	testMessage := &testMessageType{"message"}
-
-	done := make(chan struct{})
-	server := NewServer()
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		transport, err := server.Serve(w, r)
-		assert.NoError(t, err)
-		msgType, payload, err := transport.Receive(context.TODO())
-
-		assert.NoError(t, err)
-		assert.Equal(t, "testMessageType", msgType)
-		m := &testMessageType{"message"}
-		assert.NoError(t, json.Unmarshal(payload, m))
-		assert.Equal(t, testMessage.Data, m.Data)
-		done <- struct{}{}
-	}))
-	defer ts.Close()
-
-	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
-	assert.NoError(t, err)
-	msgBytes, err := json.Marshal(testMessage)
-	assert.NoError(t, err)
-	err = clientTransport.Send(context.TODO(), "testMessageType", msgBytes)
-	assert.NoError(t, err)
-
-	<-done
 }
