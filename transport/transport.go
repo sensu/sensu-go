@@ -24,7 +24,7 @@ func Encode(msgType string, payload []byte) []byte {
 func Decode(payload []byte) (string, []byte, error) {
 	nl := bytes.Index(payload, sep)
 	if nl < 0 {
-		return "", nil, errors.New("Invalid message.")
+		return "", nil, errors.New("invalid message")
 	}
 
 	msgType := payload[0:nl]
@@ -32,6 +32,8 @@ func Decode(payload []byte) (string, []byte, error) {
 	return string(msgType), msg, nil
 }
 
+// A Transport is a wrapper around a websocket or other connection that provides
+// safety for concurrent use by multiple goroutines.
 type Transport struct {
 	Connection *websocket.Conn
 
@@ -39,7 +41,7 @@ type Transport struct {
 	writeLock *sync.Mutex
 }
 
-// Create an initialized Transport and return its pointer.
+// NewTransport creates an initialized Transport and return its pointer.
 func NewTransport(conn *websocket.Conn) *Transport {
 	return &Transport{
 		Connection: conn,
