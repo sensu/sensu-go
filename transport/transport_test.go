@@ -45,6 +45,32 @@ func TestTransportSendReceive(t *testing.T) {
 	<-done
 }
 
+func TestClosedWebsocket(t *testing.T) {
+	done := make(chan struct{}, 1)
+
+	server := NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		transport, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		transport.Connection.Close()
+		done <- struct{}{}
+	}))
+	defer ts.Close()
+
+	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
+	assert.NoError(t, err)
+	<-done
+	_, _, err = clientTransport.Receive(context.TODO())
+	assert.IsType(t, ConnectionError{}, err)
+
+	// This test will fail until https://github.com/gorilla/websocket/issues/226
+	// is fixed. The first call to Send() will fail silently because of a bug
+	// in the websocket library. Nothing we can do to prevent lost messages
+	// right now.
+	// err = clientTransport.Send(context.TODO(), "type", []byte("message"))
+	// assert.IsType(t, ConnectionError{}, err)
+}
+
 // This was all mostly to prove that performance of encoding/decoding was
 // not super-linear.
 

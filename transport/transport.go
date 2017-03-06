@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -12,6 +13,26 @@ import (
 var (
 	sep = []byte("\n")
 )
+
+// A ClosedError is returned when Receive or Send is called on a closed
+// Transport.
+type ClosedError struct {
+	Message string
+}
+
+func (e ClosedError) Error() string {
+	return fmt.Sprintf("Connection closed: %s", e.Message)
+}
+
+// A ConnectionError is returned when a Transport receives any unexpected error
+// connecting to, sending to, or receiving from a backend.
+type ConnectionError struct {
+	Message string
+}
+
+func (e ConnectionError) Error() string {
+	return fmt.Sprintf("Connection error: %s", e.Message)
+}
 
 // Encode a message to be sent over a websocket channel
 func Encode(msgType string, payload []byte) []byte {
@@ -64,7 +85,10 @@ func (t *Transport) Send(ctx context.Context, msgType string, payload []byte) er
 	msg := Encode(msgType, payload)
 	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
 	if err != nil {
-		return err
+		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+			return ClosedError{err.Error()}
+		}
+		return ConnectionError{err.Error()}
 	}
 
 	return nil
@@ -78,7 +102,10 @@ func (t *Transport) Receive(ctx context.Context) (string, []byte, error) {
 
 	_, p, err := t.Connection.ReadMessage()
 	if err != nil {
-		return "", nil, err
+		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+			return "", nil, ClosedError{err.Error()}
+		}
+		return "", nil, ConnectionError{err.Error()}
 	}
 
 	msgType, payload, err := Decode(p)
