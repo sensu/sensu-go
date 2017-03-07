@@ -34,7 +34,7 @@ type Agent struct {
 	conn         *transport.Transport
 	sendq        chan *message
 	disconnected bool
-	stopping     bool
+	stopChan     chan struct{}
 }
 
 type message struct {
@@ -49,7 +49,7 @@ func NewAgent(config *Config) *Agent {
 		backendURL:   config.BackendURL,
 		handler:      handler.NewMessageHandler(),
 		disconnected: true,
-		stopping:     false,
+		stopChan:     make(chan struct{}),
 		sendq:        make(chan *message, 10),
 	}
 }
@@ -57,14 +57,13 @@ func NewAgent(config *Config) *Agent {
 func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 	log.Println("connected - starting receivePump")
 	for {
-		if a.disconnected || a.stopping {
+		if a.disconnected {
 			log.Println("disconnected - stopping receivePump")
 			wg.Done()
 			return
 		}
 
 		t, m, err := conn.Receive(context.TODO())
-		log.Println("message received - type: ", t, " message: ", m)
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError:
@@ -76,6 +75,7 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 			}
 			continue
 		}
+		log.Println("message received - type: ", t, " message: ", m)
 
 		err = a.handler.Handle(t, m)
 		if err != nil {
@@ -102,7 +102,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 				}
 			}
 		case <-ticker.C:
-			if a.disconnected || a.stopping {
+			if a.disconnected {
 				log.Println("disconnected - stopping sendPump")
 				ticker.Stop()
 				wg.Done()
@@ -132,28 +132,36 @@ func (a *Agent) Run() error {
 
 	go func(wg *sync.WaitGroup) {
 		retries := 0
-		for !a.stopping {
-			if a.disconnected {
-				log.Println("disconnected - attempting to reconnect: ", a.backendURL)
-				wg.Wait()
-				conn, err := transport.Connect(a.backendURL)
-				if err != nil {
-					log.Println("connection error:", err.Error())
-					// TODO(greg): exponential backoff
-					time.Sleep(1 * time.Second)
-					retries++
-					// TODO(greg): Figure out a max backoff / max retries thing
-					// before we fail over to the configured backend url
-					if retries >= 30 {
-						a.backendURL = a.config.BackendURL
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-a.stopChan:
+				a.conn.Close()
+				a.stopChan <- struct{}{}
+			case <-ticker.C:
+				if a.disconnected {
+					log.Println("disconnected - attempting to reconnect: ", a.backendURL)
+					wg.Wait()
+					conn, err := transport.Connect(a.backendURL)
+					if err != nil {
+						log.Println("connection error:", err.Error())
+						// TODO(greg): exponential backoff
+						time.Sleep(1 * time.Second)
+						retries++
+						// TODO(greg): Figure out a max backoff / max retries thing
+						// before we fail over to the configured backend url
+						if retries >= 30 {
+							a.backendURL = a.config.BackendURL
+						}
+						continue
 					}
-					continue
+					log.Println("connected: ", a.backendURL)
+					wg.Add(2)
+					go a.sendPump(wg, conn)
+					go a.receivePump(wg, conn)
+					a.disconnected = false
 				}
-				log.Println("connected: ", a.backendURL)
-				wg.Add(2)
-				go a.sendPump(wg, conn)
-				go a.receivePump(wg, conn)
-				a.disconnected = false
 			}
 		}
 	}(wg)
@@ -164,8 +172,13 @@ func (a *Agent) Run() error {
 // Stop will cause the Agent to finish processing requests and then cleanly
 // shutdown.
 func (a *Agent) Stop() {
-	a.disconnected = true
-	a.stopping = true
+	a.stopChan <- struct{}{}
+	select {
+	case <-a.stopChan:
+		return
+	case <-time.After(1 * time.Second):
+		return
+	}
 }
 
 func (a *Agent) sendMessage(msgType string, payload []byte) {
