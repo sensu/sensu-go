@@ -55,6 +55,7 @@ func NewAgent(config Config) *Agent {
 }
 
 func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
+	log.Println("connected - starting receivePump")
 	for {
 		if a.disconnected || a.stopping {
 			log.Println("disconnected - stopping receivePump")
@@ -84,21 +85,28 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 }
 
 func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
+	log.Println("connected - starting sendPump")
+	ticker := time.NewTicker(100 * time.Millisecond)
 	for {
-		if a.disconnected || a.stopping {
-			wg.Done()
-			return
-		}
-		msg := <-a.sendq
-		err := conn.Send(context.TODO(), msg.Type, msg.Payload)
-		if err != nil {
-			switch err := err.(type) {
-			case transport.ConnectionError:
-				a.disconnected = true
-			case transport.ClosedError:
-				a.disconnected = true
-			default:
-				log.Println("recv error:", err.Error())
+		select {
+		case msg := <-a.sendq:
+			err := conn.Send(context.TODO(), msg.Type, msg.Payload)
+			if err != nil {
+				switch err := err.(type) {
+				case transport.ConnectionError:
+					a.disconnected = true
+				case transport.ClosedError:
+					a.disconnected = true
+				default:
+					log.Println("recv error:", err.Error())
+				}
+			}
+		case <-ticker.C:
+			if a.disconnected || a.stopping {
+				log.Println("disconnected - stopping sendPump")
+				ticker.Stop()
+				wg.Done()
+				return
 			}
 		}
 	}
@@ -141,6 +149,7 @@ func (a *Agent) Run() error {
 					}
 					continue
 				}
+				log.Println("connected: ", a.backendURL)
 				wg.Add(2)
 				go a.sendPump(wg, conn)
 				go a.receivePump(wg, conn)

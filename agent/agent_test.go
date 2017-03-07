@@ -85,17 +85,15 @@ func TestReceiveLoop(t *testing.T) {
 }
 
 func TestReconnect(t *testing.T) {
-	control := make(chan struct{}, 1)
+	control := make(chan struct{})
 	connectionCount := 0
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		connectionCount++
-		control <- struct{}{}
 		<-control
 		conn.Close()
-		control <- struct{}{}
 	}))
 	defer ts.Close()
 
@@ -106,13 +104,10 @@ func TestReconnect(t *testing.T) {
 	})
 	err := ta.Run()
 	assert.NoError(t, err)
-	<-control
 	assert.Equal(t, 1, connectionCount)
 	control <- struct{}{}
-	// that'll disconnect it
+	// Look. I feel bad that this is here, but give the agent a second to
+	// shutdown and reconnect. -grep
 	time.Sleep(1 * time.Second)
-	assert.True(t, ta.disconnected)
-	time.Sleep(2 * time.Second)
-	assert.False(t, ta.disconnected)
-
+	assert.Condition(t, func() bool { return connectionCount > 1 })
 }
