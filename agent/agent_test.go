@@ -25,6 +25,9 @@ func TestSendLoop(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		transport, err := server.Serve(w, r)
 		assert.NoError(t, err)
+		// throw away the handshake
+		_, _, err = transport.Receive(context.TODO())
+		assert.NoError(t, err)
 		msgType, payload, err := transport.Receive(context.TODO())
 
 		assert.NoError(t, err)

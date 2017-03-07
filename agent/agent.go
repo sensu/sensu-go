@@ -6,12 +6,14 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -23,7 +25,8 @@ const (
 // A Config specifies Agent configuration.
 type Config struct {
 	// BackendURL is the URL to the Sensu Backend.
-	BackendURL string
+	BackendURL    string
+	Subscriptions []string
 }
 
 // An Agent receives and acts on messages from a Sensu Backend.
@@ -112,6 +115,15 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	}
 }
 
+func (a *Agent) handshake() {
+	handshake := &types.AgentHandshake{
+		Subscriptions: a.config.Subscriptions,
+	}
+	msgBytes, _ := json.Marshal(handshake)
+
+	a.sendMessage(types.AgentHandshakeType, msgBytes)
+}
+
 // Run starts the Agent's connection manager which handles connecting and
 // reconnecting to the Sensu Backend. It also handles coordination of the
 // agent's read and write pumps.
@@ -129,6 +141,7 @@ func (a *Agent) Run() error {
 	wg.Add(2)
 	go a.sendPump(wg, conn)
 	go a.receivePump(wg, conn)
+	a.handshake()
 
 	go func(wg *sync.WaitGroup) {
 		retries := 0
@@ -138,6 +151,7 @@ func (a *Agent) Run() error {
 			select {
 			case <-a.stopChan:
 				a.conn.Close()
+				wg.Wait()
 				a.stopChan <- struct{}{}
 			case <-ticker.C:
 				if a.disconnected {
@@ -161,6 +175,7 @@ func (a *Agent) Run() error {
 					go a.sendPump(wg, conn)
 					go a.receivePump(wg, conn)
 					a.disconnected = false
+					a.handshake()
 				}
 			}
 		}
@@ -182,6 +197,8 @@ func (a *Agent) Stop() {
 }
 
 func (a *Agent) sendMessage(msgType string, payload []byte) {
+	// blocks until message can be enqueued.
+	// TODO(greg): ring buffer?
 	a.sendq <- &message{msgType, payload}
 }
 
