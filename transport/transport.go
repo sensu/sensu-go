@@ -115,3 +115,8 @@ func (t *Transport) Receive(ctx context.Context) (string, []byte, error) {
 
 	return msgType, payload, nil
 }
+
+// Close will cleanly shutdown a websocket connection.
+func (t *Transport) Close() error {
+	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
+}
