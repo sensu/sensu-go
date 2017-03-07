@@ -1,6 +1,11 @@
 package main
 
 import (
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/sensu/sensu-go/agent"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +29,19 @@ func newStartCommand() *cobra.Command {
 			if err := sensuAgent.Run(); err != nil {
 				return err
 			}
+
+			sigs := make(chan os.Signal, 1)
+			done := make(chan struct{}, 1)
+
+			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+			go func() {
+				sig := <-sigs
+				log.Println("signal received: ", sig)
+				sensuAgent.Stop()
+				done <- struct{}{}
+			}()
+
+			<-done
 			return nil
 		},
 	}
