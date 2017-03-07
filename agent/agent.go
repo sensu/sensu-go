@@ -43,9 +43,9 @@ type message struct {
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
-func NewAgent(config Config) *Agent {
+func NewAgent(config *Config) *Agent {
 	return &Agent{
-		config:       &config,
+		config:       config,
 		backendURL:   config.BackendURL,
 		handler:      handler.NewMessageHandler(),
 		disconnected: true,

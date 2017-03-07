@@ -38,7 +38,7 @@ func TestSendLoop(t *testing.T) {
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 
-	ta := NewAgent(Config{
+	ta := NewAgent(&Config{
 		BackendURL: wsURL,
 	})
 	err := ta.Run()
@@ -65,7 +65,7 @@ func TestReceiveLoop(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	ta := NewAgent(Config{
+	ta := NewAgent(&Config{
 		BackendURL: wsURL,
 	})
 	ta.addHandler("testMessageType", func(payload []byte) error {
@@ -99,7 +99,7 @@ func TestReconnect(t *testing.T) {
 
 	// connect with an agent
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	ta := NewAgent(Config{
+	ta := NewAgent(&Config{
 		BackendURL: wsURL,
 	})
 	err := ta.Run()
