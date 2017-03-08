@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,12 +23,12 @@ func TestSendLoop(t *testing.T) {
 	done := make(chan struct{})
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		transport, err := server.Serve(w, r)
+		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		// throw away the handshake
-		_, _, err = transport.Receive(context.TODO())
-		assert.NoError(t, err)
-		msgType, payload, err := transport.Receive(context.TODO())
+		// throw away handshake
+		conn.Receive(context.TODO())
+		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
+		msgType, payload, err := conn.Receive(context.TODO())
 
 		assert.NoError(t, err)
 		assert.Equal(t, "testMessageType", msgType)
@@ -46,6 +46,9 @@ func TestSendLoop(t *testing.T) {
 	})
 	err := ta.Run()
 	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
@@ -57,11 +60,15 @@ func TestReceiveLoop(t *testing.T) {
 	done := make(chan struct{})
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		transport, err := server.Serve(w, r)
+		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
+		// throw away handshake
+		conn.Receive(context.TODO())
+		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
+
 		msgBytes, err := json.Marshal(testMessage)
 		assert.NoError(t, err)
-		err = transport.Send(context.Background(), "testMessageType", msgBytes)
+		err = conn.Send(context.Background(), "testMessageType", msgBytes)
 		assert.NoError(t, err)
 		done <- struct{}{}
 	}))
@@ -81,6 +88,9 @@ func TestReceiveLoop(t *testing.T) {
 	})
 	err := ta.Run()
 	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
@@ -94,6 +104,9 @@ func TestReconnect(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
+		// throw away handshake
+		conn.Receive(context.TODO())
+		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
 		connectionCount++
 		<-control
 		conn.Close()
@@ -107,10 +120,11 @@ func TestReconnect(t *testing.T) {
 	})
 	err := ta.Run()
 	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
+	control <- struct{}{}
 	assert.Equal(t, 1, connectionCount)
 	control <- struct{}{}
-	// Look. I feel bad that this is here, but give the agent a second to
-	// shutdown and reconnect. -grep
-	time.Sleep(1 * time.Second)
 	assert.Condition(t, func() bool { return connectionCount > 1 })
 }

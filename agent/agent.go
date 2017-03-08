@@ -7,6 +7,8 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -115,13 +117,36 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	}
 }
 
-func (a *Agent) handshake() {
+func (a *Agent) handshake() error {
 	handshake := &types.AgentHandshake{
 		Subscriptions: a.config.Subscriptions,
 	}
-	msgBytes, _ := json.Marshal(handshake)
+	msgBytes, err := json.Marshal(handshake)
+	if err != nil {
+		return err
+	}
 
-	a.sendMessage(types.AgentHandshakeType, msgBytes)
+	err = a.conn.Send(context.TODO(), types.AgentHandshakeType, msgBytes)
+	if err != nil {
+		return err
+	}
+
+	t, m, err := a.conn.Receive(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	if t != types.BackendHandshakeType {
+		return errors.New("backend did not send handshake")
+	}
+
+	response := types.BackendHandshake{}
+	err = json.Unmarshal(m, &response)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling backend handshake: %s", err.Error())
+	}
+
+	return nil
 }
 
 // Run starts the Agent's connection manager which handles connecting and
@@ -136,12 +161,16 @@ func (a *Agent) Run() error {
 		return err
 	}
 	a.conn = conn
-	a.disconnected = false
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
+	err = a.handshake()
+	if err != nil {
+		return err
+	}
+
+	a.disconnected = false
 	go a.sendPump(wg, conn)
 	go a.receivePump(wg, conn)
-	a.handshake()
 
 	go func(wg *sync.WaitGroup) {
 		retries := 0
@@ -170,12 +199,17 @@ func (a *Agent) Run() error {
 						}
 						continue
 					}
-					log.Println("connected: ", a.backendURL)
+					a.conn = conn
+					log.Println("reconnected: ", a.backendURL)
 					wg.Add(2)
+					err = a.handshake()
+					if err != nil {
+						log.Println("handshake error: ", err.Error())
+						continue
+					}
 					go a.sendPump(wg, conn)
 					go a.receivePump(wg, conn)
 					a.disconnected = false
-					a.handshake()
 				}
 			}
 		}
