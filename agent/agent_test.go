@@ -26,8 +26,8 @@ func TestSendLoop(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Receive(context.TODO())
 		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
+		conn.Receive(context.TODO())
 		msgType, payload, err := conn.Receive(context.TODO())
 
 		assert.NoError(t, err)
@@ -63,8 +63,8 @@ func TestReceiveLoop(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Receive(context.TODO())
 		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
+		conn.Receive(context.TODO())
 
 		msgBytes, err := json.Marshal(testMessage)
 		assert.NoError(t, err)
@@ -105,8 +105,8 @@ func TestReconnect(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Receive(context.TODO())
 		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
+		conn.Receive(context.TODO())
 		connectionCount++
 		<-control
 		conn.Close()

@@ -126,6 +126,7 @@ func (a *Agent) handshake() error {
 		return err
 	}
 
+	// shoot first, ask questions later.
 	err = a.conn.Send(context.TODO(), types.AgentHandshakeType, msgBytes)
 	if err != nil {
 		return err
