@@ -6,27 +6,27 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/backend"
 	"github.com/spf13/cobra"
+)
+
+var (
+	listenPort int
 )
 
 func init() {
 	rootCmd.AddCommand(newStartCommand())
 }
 
-var (
-	backendURL string
-)
-
 func newStartCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
-		Short: "start the sensu agent",
+		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			sensuAgent := agent.NewAgent(&agent.Config{
-				BackendURL: backendURL,
+			sensuBackend := backend.NewBackend(&backend.Config{
+				Port: listenPort,
 			})
-			if err := sensuAgent.Run(); err != nil {
+			if err := sensuBackend.Run(); err != nil {
 				return err
 			}
 
@@ -37,7 +37,7 @@ func newStartCommand() *cobra.Command {
 			go func() {
 				sig := <-sigs
 				log.Println("signal received: ", sig)
-				sensuAgent.Stop()
+				sensuBackend.Stop()
 				done <- struct{}{}
 			}()
 
@@ -46,7 +46,7 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&backendURL, "backend-url", "b", "ws://localhost:8080", "ws/wss URL of Sensu backend server(s)")
+	cmd.Flags().IntVarP(&listenPort, "port", "p", 8080, "port to listen on")
 
 	return cmd
 }
