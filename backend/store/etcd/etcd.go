@@ -113,8 +113,16 @@ func Shutdown() error {
 		return errors.New("no running etcd detected")
 	}
 
-	etcdServer.Server.Stop()
-	etcdServer.Close()
+	// This is admittedly janky, but if we call Stop() directly, it will cause us
+	// to hard exit instead of just returning and allowing us to continue our
+	// shutdown process.
+	done := make(chan struct{})
+	go func() {
+		defer func() {
+			done <- struct{}{}
+		}()
+		etcdServer.Close()
+	}()
 	return nil
 }
 
