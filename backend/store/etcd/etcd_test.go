@@ -21,7 +21,6 @@ func TestNewEtcd(t *testing.T) {
 	cfg.StateDir = tmpDir
 
 	err = NewEtcd(cfg)
-	defer Shutdown()
 	assert.NoError(t, err)
 
 	client, err := NewClient()
@@ -46,4 +45,6 @@ func TestNewEtcd(t *testing.T) {
 	assert.Equal(t, 1, len(getResp.Kvs))
 	assert.Equal(t, "key", string(getResp.Kvs[0].Key))
 	assert.Equal(t, "value", string(getResp.Kvs[0].Value))
+
+	Shutdown()
 }

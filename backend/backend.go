@@ -68,33 +68,36 @@ func (b *Backend) newHTTPHandler() http.Handler {
 
 // Run starts all of the Backend server's event loops and sets up the HTTP
 // server.
-func (b *Backend) Run() {
+func (b *Backend) Run() error {
+	errChan := make(chan error)
+
+	if err := etcd.NewEtcd(etcd.NewConfig()); err != nil {
+		return fmt.Errorf("error starting etcd: %s", err.Error())
+	}
+
 	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Printf("panic: recovering - %s", err)
-			}
-			if err := etcd.Shutdown(); err != nil {
-				log.Printf("error shutting down etcd: %s", err.Error())
-			}
-			if err := b.httpServer.Shutdown(context.TODO()); err != nil {
-				log.Printf("error shutting down http listener: %s", err.Error())
-			}
-		}()
+		errChan <- b.httpServer.ListenAndServe()
+	}()
+	go func() {
+		errChan <- <-etcd.Err()
+	}()
 
-		if err := etcd.NewEtcd(etcd.NewConfig()); err != nil {
-			log.Fatalf("error starting etcd: %s", err.Error())
-		}
-
-		errChan := make(chan error)
+	go func() {
 		select {
 		case err := <-errChan:
 			log.Fatal("http server error: ", err.Error())
 		case <-b.shutdownChan:
 			log.Println("backend shutting down")
 		}
-		errChan <- b.httpServer.ListenAndServe()
+
+		if err := etcd.Shutdown(); err != nil {
+			log.Printf("error shutting down etcd: %s", err.Error())
+		}
+		if err := b.httpServer.Shutdown(context.TODO()); err != nil {
+			log.Printf("error shutting down http listener: %s", err.Error())
+		}
 	}()
+	return nil
 }
 
 // Stop the Backend cleanly.

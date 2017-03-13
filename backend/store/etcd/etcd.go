@@ -2,9 +2,8 @@
 // state consistently across sensu-backend processes.
 //
 // To use the embedded Etcd, you must first call NewEtcd(). This will configure
-// and start Etcd and ensure that it starts correctly. The goroutine monitoring
-// Etcd for a fatal error will cause a panic should Etcd fail. The calling
-// goroutine should recover() from the panic and shutdown appropriately.
+// and start Etcd and ensure that it starts correctly. The channel returned by
+// Err() should be monitored--these are terminal/fatal errors for Etcd.
 package etcd
 
 import (
@@ -72,7 +71,14 @@ func ensureDir(path string) error {
 // panic on error. The calling goroutine should recover() from the panic and
 // shutdown accordingly. Callers must also ensure that the running Etcd is
 // cleanly shutdown before the process terminates.
+//
+// Callers should monitor the Err() channel for the running etcd--these are
+// terminal errors.
 func NewEtcd(config *Config) error {
+	if etcdServer != nil {
+		return errors.New("etcd is already running")
+	}
+
 	cfg := embed.NewConfig()
 	cfgDir := filepath.Join(config.StateDir, "etcd", "data")
 	walDir := filepath.Join(config.StateDir, "etcd", "wal")
@@ -98,13 +104,17 @@ func NewEtcd(config *Config) error {
 		return fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)
 	}
 
-	go func() {
-		log.Fatal(<-e.Err())
-	}()
-
 	etcdServer = e
 
 	return nil
+}
+
+// Err returns the error channel for Etcd or nil if no etcd is started.
+func Err() <-chan error {
+	if etcdServer == nil {
+		return nil
+	}
+	return etcdServer.Err()
 }
 
 // Shutdown will cleanly shutdown the running Etcd.
@@ -113,16 +123,8 @@ func Shutdown() error {
 		return errors.New("no running etcd detected")
 	}
 
-	// This is admittedly janky, but if we call Stop() directly, it will cause us
-	// to hard exit instead of just returning and allowing us to continue our
-	// shutdown process.
-	done := make(chan struct{})
-	go func() {
-		defer func() {
-			done <- struct{}{}
-		}()
-		etcdServer.Close()
-	}()
+	etcdServer.Close()
+	etcdServer = nil
 	return nil
 }
 
