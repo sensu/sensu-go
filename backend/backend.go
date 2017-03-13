@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/nsqio/nsq/nsqd"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/transport"
 )
 
@@ -19,6 +21,7 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
+	messageBus      *nsqd.NSQD
 	httpServer      *http.Server
 	transportServer *transport.Server
 }
@@ -31,6 +34,7 @@ func NewBackend(config *Config) *Backend {
 	}
 	b.httpServer = b.newHTTPServer()
 	b.transportServer = transport.NewServer()
+	b.messageBus = messaging.NewNSQD()
 	return b
 }
 
