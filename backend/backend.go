@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -14,7 +15,8 @@ import (
 
 // Config specifies a Backend configuration.
 type Config struct {
-	Port int
+	Port     int
+	StateDir string
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -31,7 +33,7 @@ type Backend struct {
 
 // NewBackend will, given a Config, create an initialized Backend and return a
 // pointer to it.
-func NewBackend(config *Config) *Backend {
+func NewBackend(config *Config) (*Backend, error) {
 	b := &Backend{
 		Config: config,
 
@@ -40,8 +42,14 @@ func NewBackend(config *Config) *Backend {
 	}
 	b.httpServer = b.newHTTPServer()
 	b.transportServer = transport.NewServer()
-	b.messageBus = messaging.NewNSQD()
-	return b
+	nsqConfig := messaging.NewConfig()
+	nsqConfig.StatePath = filepath.Join(config.StateDir, "nsqd")
+	bus, err := messaging.NewNSQD(nsqConfig)
+	if err != nil {
+		return nil, err
+	}
+	b.messageBus = bus
+	return b, nil
 }
 
 func (b *Backend) newHTTPServer() *http.Server {
@@ -72,7 +80,9 @@ func (b *Backend) newHTTPHandler() http.Handler {
 // server.
 func (b *Backend) Run() error {
 	errChan := make(chan error)
-	if err := etcd.NewEtcd(etcd.NewConfig()); err != nil {
+	cfg := etcd.NewConfig()
+	cfg.StateDir = b.Config.StateDir
+	if err := etcd.NewEtcd(cfg); err != nil {
 		return fmt.Errorf("error starting etcd: %s", err.Error())
 	}
 
@@ -82,6 +92,7 @@ func (b *Backend) Run() error {
 	go func() {
 		errChan <- <-etcd.Err()
 	}()
+	go b.messageBus.Main()
 
 	go func() {
 		var inErr error
@@ -98,6 +109,7 @@ func (b *Backend) Run() error {
 		if err := b.httpServer.Shutdown(context.TODO()); err != nil {
 			log.Printf("error shutting down http listener: %s", err.Error())
 		}
+		b.messageBus.Exit()
 
 		// if an error caused the shutdown
 		if inErr != nil {

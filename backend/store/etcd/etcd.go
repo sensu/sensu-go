@@ -20,7 +20,7 @@ import (
 
 const (
 	// StateDir is the base path for Sensu's local storage.
-	StateDir = "/var/cache/sensu"
+	StateDir = "/var/lib/sensu"
 	// EtcdStartupTimeout is the amount of time we give the embedded Etcd Server
 	// to start.
 	EtcdStartupTimeout = 60 // seconds
