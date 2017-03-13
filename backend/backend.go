@@ -22,6 +22,7 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
+	shutdownChan    chan struct{}
 	messageBus      *nsqd.NSQD
 	httpServer      *http.Server
 	transportServer *transport.Server
@@ -32,6 +33,8 @@ type Backend struct {
 func NewBackend(config *Config) *Backend {
 	b := &Backend{
 		Config: config,
+
+		shutdownChan: make(chan struct{}),
 	}
 	b.httpServer = b.newHTTPServer()
 	b.transportServer = transport.NewServer()
@@ -65,25 +68,37 @@ func (b *Backend) newHTTPHandler() http.Handler {
 
 // Run starts all of the Backend server's event loops and sets up the HTTP
 // server.
-func (b *Backend) Run() error {
+func (b *Backend) Run() {
 	go func() {
-		if err := b.httpServer.ListenAndServe(); err != nil {
-			log.Println("http server error: ", err.Error())
-		}
-	}()
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("panic: recovering - %s", err)
+			}
+			if err := etcd.Shutdown(); err != nil {
+				log.Printf("error shutting down etcd: %s", err.Error())
+			}
+			if err := b.httpServer.Shutdown(context.TODO()); err != nil {
+				log.Printf("error shutting down http listener: %s", err.Error())
+			}
+		}()
 
-	if err := etcd.NewEtcd(); err != nil {
-		return err
-	}
-	return nil
+		if err := etcd.NewEtcd(); err != nil {
+			log.Fatalf("error starting etcd: %s", err.Error())
+		}
+
+		errChan := make(chan error)
+		select {
+		case err := <-errChan:
+			log.Fatal("http server error: ", err.Error())
+		case <-b.shutdownChan:
+			log.Println("backend shutting down")
+		}
+		errChan <- b.httpServer.ListenAndServe()
+	}()
 }
 
 // Stop the Backend cleanly.
-func (b *Backend) Stop() error {
+func (b *Backend) Stop() {
 	// TODO(greg): shutdown all active client connections
-
-	if err := b.httpServer.Shutdown(context.TODO()); err != nil {
-		return err
-	}
-	return nil
+	b.shutdownChan <- struct{}{}
 }
