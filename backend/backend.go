@@ -8,6 +8,7 @@ import (
 
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
 )
 
@@ -70,6 +71,10 @@ func (b *Backend) Run() error {
 			log.Println("http server error: ", err.Error())
 		}
 	}()
+
+	if err := etcd.NewEtcd(); err != nil {
+		return err
+	}
 	return nil
 }
 
