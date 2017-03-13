@@ -39,8 +39,12 @@ func newStartCommand() *cobra.Command {
 				done <- struct{}{}
 			}()
 
-			<-done
-			return nil
+			select {
+			case <-done:
+				return nil
+			case err := <-sensuBackend.Err():
+				return err
+			}
 		},
 	}
 

@@ -22,6 +22,7 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
+	errChan         chan error
 	shutdownChan    chan struct{}
 	messageBus      *nsqd.NSQD
 	httpServer      *http.Server
@@ -34,6 +35,7 @@ func NewBackend(config *Config) *Backend {
 	b := &Backend{
 		Config: config,
 
+		errChan:      make(chan error, 1),
 		shutdownChan: make(chan struct{}),
 	}
 	b.httpServer = b.newHTTPServer()
@@ -70,7 +72,6 @@ func (b *Backend) newHTTPHandler() http.Handler {
 // server.
 func (b *Backend) Run() error {
 	errChan := make(chan error)
-
 	if err := etcd.NewEtcd(etcd.NewConfig()); err != nil {
 		return fmt.Errorf("error starting etcd: %s", err.Error())
 	}
@@ -83,9 +84,10 @@ func (b *Backend) Run() error {
 	}()
 
 	go func() {
+		var inErr error
 		select {
-		case err := <-errChan:
-			log.Fatal("http server error: ", err.Error())
+		case inErr = <-errChan:
+			log.Fatal("http server error: ", inErr.Error())
 		case <-b.shutdownChan:
 			log.Println("backend shutting down")
 		}
@@ -96,8 +98,21 @@ func (b *Backend) Run() error {
 		if err := b.httpServer.Shutdown(context.TODO()); err != nil {
 			log.Printf("error shutting down http listener: %s", err.Error())
 		}
+
+		// if an error caused the shutdown
+		if inErr != nil {
+			b.errChan <- inErr
+		}
+		close(b.errChan)
 	}()
+
 	return nil
+}
+
+// Err returns a channel yielding terminal errors for the backend. The channel
+// will be closed on clean shutdown.
+func (b *Backend) Err() <-chan error {
+	return b.errChan
 }
 
 // Stop the Backend cleanly.
