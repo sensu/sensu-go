@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -34,14 +35,55 @@ var (
 	etcdServer *embed.Etcd
 )
 
+// Config is a configuration for the embedded etcd
+type Config struct {
+	StateDir string
+}
+
+// NewConfig returns a pointer to an initialized Config object with defaults.
+func NewConfig() *Config {
+	c := &Config{}
+	c.StateDir = StateDir
+
+	return c
+}
+
+func ensureDir(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			if mkdirErr := os.MkdirAll(path, 0700); mkdirErr != nil {
+				return mkdirErr
+			}
+		} else {
+			return err
+		}
+	}
+	fi, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if !fi.IsDir() {
+		return fmt.Errorf("path exists and is not directory - %s", path)
+	}
+	return nil
+}
+
 // NewEtcd returns a new, configured, and running Etcd. The running Etcd will
 // panic on error. The calling goroutine should recover() from the panic and
 // shutdown accordingly. Callers must also ensure that the running Etcd is
 // cleanly shutdown before the process terminates.
-func NewEtcd() error {
+func NewEtcd(config *Config) error {
 	cfg := embed.NewConfig()
-	cfg.Dir = filepath.Join(StateDir, "etcd", "data")
-	cfg.WalDir = filepath.Join(StateDir, "etcd", "wal")
+	cfgDir := filepath.Join(config.StateDir, "etcd", "data")
+	walDir := filepath.Join(config.StateDir, "etcd", "wal")
+	cfg.Dir = cfgDir
+	cfg.WalDir = walDir
+	if err := ensureDir(cfgDir); err != nil {
+		return err
+	}
+	if err := ensureDir(walDir); err != nil {
+		return err
+	}
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {

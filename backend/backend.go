@@ -82,7 +82,7 @@ func (b *Backend) Run() {
 			}
 		}()
 
-		if err := etcd.NewEtcd(); err != nil {
+		if err := etcd.NewEtcd(etcd.NewConfig()); err != nil {
 			log.Fatalf("error starting etcd: %s", err.Error())
 		}
 

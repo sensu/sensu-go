@@ -26,9 +26,7 @@ func newStartCommand() *cobra.Command {
 			sensuBackend := backend.NewBackend(&backend.Config{
 				Port: listenPort,
 			})
-			if err := sensuBackend.Run(); err != nil {
-				return err
-			}
+			sensuBackend.Run()
 
 			sigs := make(chan os.Signal, 1)
 			done := make(chan struct{}, 1)
