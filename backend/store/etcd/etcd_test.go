@@ -13,6 +13,7 @@ func TestNewEtcd(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
+	defer os.RemoveAll(tmpDir)
 
 	cfg := NewConfig()
 	cfg.StateDir = tmpDir
