@@ -15,7 +15,7 @@ build_commands () {
 }
 
 test_commands () {
-  gometalinter --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
+  gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
   go test -v $(go list ./... | grep -v vendor)
 }
 
