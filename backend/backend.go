@@ -8,6 +8,7 @@ import (
 
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
 )
 
@@ -21,6 +22,8 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
+	errChan         chan error
+	shutdownChan    chan struct{}
 	messageBus      *nsqd.NSQD
 	httpServer      *http.Server
 	transportServer *transport.Server
@@ -31,6 +34,9 @@ type Backend struct {
 func NewBackend(config *Config) *Backend {
 	b := &Backend{
 		Config: config,
+
+		errChan:      make(chan error, 1),
+		shutdownChan: make(chan struct{}),
 	}
 	b.httpServer = b.newHTTPServer()
 	b.transportServer = transport.NewServer()
@@ -65,20 +71,52 @@ func (b *Backend) newHTTPHandler() http.Handler {
 // Run starts all of the Backend server's event loops and sets up the HTTP
 // server.
 func (b *Backend) Run() error {
+	errChan := make(chan error)
+	if err := etcd.NewEtcd(etcd.NewConfig()); err != nil {
+		return fmt.Errorf("error starting etcd: %s", err.Error())
+	}
+
 	go func() {
-		if err := b.httpServer.ListenAndServe(); err != nil {
-			log.Println("http server error: ", err.Error())
-		}
+		errChan <- b.httpServer.ListenAndServe()
 	}()
+	go func() {
+		errChan <- <-etcd.Err()
+	}()
+
+	go func() {
+		var inErr error
+		select {
+		case inErr = <-errChan:
+			log.Fatal("http server error: ", inErr.Error())
+		case <-b.shutdownChan:
+			log.Println("backend shutting down")
+		}
+
+		if err := etcd.Shutdown(); err != nil {
+			log.Printf("error shutting down etcd: %s", err.Error())
+		}
+		if err := b.httpServer.Shutdown(context.TODO()); err != nil {
+			log.Printf("error shutting down http listener: %s", err.Error())
+		}
+
+		// if an error caused the shutdown
+		if inErr != nil {
+			b.errChan <- inErr
+		}
+		close(b.errChan)
+	}()
+
 	return nil
 }
 
-// Stop the Backend cleanly.
-func (b *Backend) Stop() error {
-	// TODO(greg): shutdown all active client connections
+// Err returns a channel yielding terminal errors for the backend. The channel
+// will be closed on clean shutdown.
+func (b *Backend) Err() <-chan error {
+	return b.errChan
+}
 
-	if err := b.httpServer.Shutdown(context.TODO()); err != nil {
-		return err
-	}
-	return nil
+// Stop the Backend cleanly.
+func (b *Backend) Stop() {
+	// TODO(greg): shutdown all active client connections
+	b.shutdownChan <- struct{}{}
 }
