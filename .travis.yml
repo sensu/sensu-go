@@ -1,0 +1,8 @@
+language: go
+go:
+    - 1.8.x
+install:
+  - ./build.sh deps
+script:
+  - ./build.sh test
+  - ./build.sh build

@@ -12,6 +12,7 @@ import (
 
 var (
 	listenPort int
+	stateDir   string
 )
 
 func init() {
@@ -23,9 +24,13 @@ func newStartCommand() *cobra.Command {
 		Use:   "start",
 		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			sensuBackend := backend.NewBackend(&backend.Config{
-				Port: listenPort,
+			sensuBackend, err := backend.NewBackend(&backend.Config{
+				Port:     listenPort,
+				StateDir: stateDir,
 			})
+			if err != nil {
+				return err
+			}
 			sensuBackend.Run()
 
 			sigs := make(chan os.Signal, 1)
@@ -49,6 +54,7 @@ func newStartCommand() *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&listenPort, "port", "p", 8080, "port to listen on")
+	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", "/var/lib/sensu", "path to sensu state storage")
 
 	return cmd
 }

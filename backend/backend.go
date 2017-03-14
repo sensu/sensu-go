@@ -3,8 +3,12 @@ package backend
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -14,7 +18,11 @@ import (
 
 // Config specifies a Backend configuration.
 type Config struct {
-	Port int
+	Port                int
+	StateDir            string
+	EtcdClientListenURL string
+	EtcdPeerListenURL   string
+	EtcdInitialCluster  string
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -24,6 +32,7 @@ type Backend struct {
 
 	errChan         chan error
 	shutdownChan    chan struct{}
+	done            chan struct{}
 	messageBus      *nsqd.NSQD
 	httpServer      *http.Server
 	transportServer *transport.Server
@@ -31,17 +40,24 @@ type Backend struct {
 
 // NewBackend will, given a Config, create an initialized Backend and return a
 // pointer to it.
-func NewBackend(config *Config) *Backend {
+func NewBackend(config *Config) (*Backend, error) {
 	b := &Backend{
 		Config: config,
 
+		done:         make(chan struct{}),
 		errChan:      make(chan error, 1),
 		shutdownChan: make(chan struct{}),
 	}
 	b.httpServer = b.newHTTPServer()
 	b.transportServer = transport.NewServer()
-	b.messageBus = messaging.NewNSQD()
-	return b
+	nsqConfig := messaging.NewConfig()
+	nsqConfig.StatePath = filepath.Join(config.StateDir, "nsqd")
+	bus, err := messaging.NewNSQD(nsqConfig)
+	if err != nil {
+		return nil, err
+	}
+	b.messageBus = bus
+	return b, nil
 }
 
 func (b *Backend) newHTTPServer() *http.Server {
@@ -72,7 +88,13 @@ func (b *Backend) newHTTPHandler() http.Handler {
 // server.
 func (b *Backend) Run() error {
 	errChan := make(chan error)
-	if err := etcd.NewEtcd(etcd.NewConfig()); err != nil {
+	cfg := etcd.NewConfig()
+	cfg.StateDir = b.Config.StateDir
+	cfg.ClientListenURL = b.Config.EtcdClientListenURL
+	cfg.PeerListenURL = b.Config.EtcdPeerListenURL
+	cfg.InitialCluster = b.Config.EtcdInitialCluster
+	e, err := etcd.NewEtcd(cfg)
+	if err != nil {
 		return fmt.Errorf("error starting etcd: %s", err.Error())
 	}
 
@@ -80,8 +102,9 @@ func (b *Backend) Run() error {
 		errChan <- b.httpServer.ListenAndServe()
 	}()
 	go func() {
-		errChan <- <-etcd.Err()
+		errChan <- <-e.Err()
 	}()
+	go b.messageBus.Main()
 
 	go func() {
 		var inErr error
@@ -92,18 +115,29 @@ func (b *Backend) Run() error {
 			log.Println("backend shutting down")
 		}
 
-		if err := etcd.Shutdown(); err != nil {
+		log.Printf("shutting down etcd")
+		if err := e.Shutdown(); err != nil {
 			log.Printf("error shutting down etcd: %s", err.Error())
 		}
+		log.Printf("shutting down http server")
 		if err := b.httpServer.Shutdown(context.TODO()); err != nil {
 			log.Printf("error shutting down http listener: %s", err.Error())
 		}
+		log.Printf("shutting down message bus")
+		b.messageBus.Exit()
 
 		// if an error caused the shutdown
 		if inErr != nil {
 			b.errChan <- inErr
 		}
+		close(b.shutdownChan)
 		close(b.errChan)
+		close(b.done)
+		cmd := exec.Command("nslookup", "-l", "-n", "-t")
+		cmd.Run()
+		rdr, _ := cmd.StdoutPipe()
+		out, _ := ioutil.ReadAll(io.Reader(rdr))
+		fmt.Print(out)
 	}()
 
 	return nil
@@ -119,4 +153,5 @@ func (b *Backend) Err() <-chan error {
 func (b *Backend) Stop() {
 	// TODO(greg): shutdown all active client connections
 	b.shutdownChan <- struct{}{}
+	<-b.done
 }
