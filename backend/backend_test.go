@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"testing"
@@ -15,29 +16,52 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func testWithTempDir(t *testing.T, f func(string)) {
+func testWithTempDir(f func(string)) {
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
 	defer os.RemoveAll(tmpDir)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	f(tmpDir)
 }
 
 func TestHTTPListener(t *testing.T) {
-	testWithTempDir(t, func(path string) {
+	testWithTempDir(func(path string) {
+		// This will likely bite us in the butt eventually, but for now, we need a
+		// way to get random available ports for etcd so that we can still run
+		// tests in parallel since we might have multiple etcds running.
+		l, err := net.Listen("tcp", ":0")
+		if err != nil {
+			log.Panic(err)
+		}
+		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
+		if err != nil {
+			log.Panic(err)
+		}
+		clURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port)
+		apURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port+1)
+		initCluster := fmt.Sprintf("default=%s", apURL)
+		fmt.Println(initCluster)
+		l.Close()
+
 		b, err := NewBackend(&Config{
-			Port:     31337,
-			StateDir: path,
+			Port:                31337,
+			StateDir:            path,
+			EtcdClientListenURL: clURL,
+			EtcdPeerListenURL:   apURL,
+			EtcdInitialCluster:  initCluster,
 		})
 		assert.NoError(t, err)
+		if err != nil {
+			assert.FailNow(t, "failed to start backend")
+		}
 
 		err = b.Run()
 		assert.NoError(t, err)
 
 		for i := 0; i < 5; i++ {
-			conn, err := net.Dial("tcp", "localhost:31337")
-			if err != nil {
+			conn, derr := net.Dial("tcp", "localhost:31337")
+			if derr != nil {
 				fmt.Println("Waiting for backend to start")
 				time.Sleep(time.Duration(i) * time.Second)
 			} else {

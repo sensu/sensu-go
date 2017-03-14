@@ -7,9 +7,9 @@
 package etcd
 
 import (
-	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -24,25 +24,29 @@ const (
 	// EtcdStartupTimeout is the amount of time we give the embedded Etcd Server
 	// to start.
 	EtcdStartupTimeout = 60 // seconds
-
-	etcdClientAddress = "127.0.0.1:2379"
-)
-
-var (
-	// the running etcd is a private singleton and we just act on it with
-	// functions in here.
-	etcdServer *embed.Etcd
+	// ClientListenURL is the default listen address for clients.
+	ClientListenURL = "http://127.0.0.1:2379"
+	// PeerListenURL is the default listen address for peers.
+	PeerListenURL = "http://127.0.0.1:2380"
+	// InitialCluster is the default initial cluster
+	InitialCluster = "default=http://127.0.0.1:2380"
 )
 
 // Config is a configuration for the embedded etcd
 type Config struct {
-	StateDir string
+	StateDir        string
+	PeerListenURL   string
+	ClientListenURL string
+	InitialCluster  string
 }
 
 // NewConfig returns a pointer to an initialized Config object with defaults.
 func NewConfig() *Config {
 	c := &Config{}
 	c.StateDir = StateDir
+	c.ClientListenURL = ClientListenURL
+	c.PeerListenURL = PeerListenURL
+	c.InitialCluster = InitialCluster
 
 	return c
 }
@@ -67,6 +71,12 @@ func ensureDir(path string) error {
 	return nil
 }
 
+// Etcd is a wrapper around github.com/coreos/etcd/embed.Etcd
+type Etcd struct {
+	cfg  *Config
+	etcd *embed.Etcd
+}
+
 // NewEtcd returns a new, configured, and running Etcd. The running Etcd will
 // panic on error. The calling goroutine should recover() from the panic and
 // shutdown accordingly. Callers must also ensure that the running Etcd is
@@ -74,26 +84,39 @@ func ensureDir(path string) error {
 //
 // Callers should monitor the Err() channel for the running etcd--these are
 // terminal errors.
-func NewEtcd(config *Config) error {
-	if etcdServer != nil {
-		return errors.New("etcd is already running")
-	}
-
+func NewEtcd(config *Config) (*Etcd, error) {
 	cfg := embed.NewConfig()
 	cfgDir := filepath.Join(config.StateDir, "etcd", "data")
 	walDir := filepath.Join(config.StateDir, "etcd", "wal")
 	cfg.Dir = cfgDir
 	cfg.WalDir = walDir
 	if err := ensureDir(cfgDir); err != nil {
-		return err
+		return nil, err
 	}
 	if err := ensureDir(walDir); err != nil {
-		return err
+		return nil, err
 	}
+
+	clURL, err := url.Parse(config.ClientListenURL)
+	if err != nil {
+		return nil, err
+	}
+
+	apURL, err := url.Parse(config.PeerListenURL)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.ACUrls = []url.URL{*clURL}
+	cfg.APUrls = []url.URL{*apURL}
+	cfg.LCUrls = []url.URL{*clURL}
+	cfg.LPUrls = []url.URL{*apURL}
+
+	cfg.InitialCluster = config.InitialCluster
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	select {
@@ -101,41 +124,29 @@ func NewEtcd(config *Config) error {
 		log.Println("Etcd ready to serve client connections")
 	case <-time.After(EtcdStartupTimeout * time.Second):
 		e.Server.Stop()
-		return fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)
+		return nil, fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)
 	}
 
-	etcdServer = e
-
-	return nil
+	return &Etcd{config, e}, nil
 }
 
 // Err returns the error channel for Etcd or nil if no etcd is started.
-func Err() <-chan error {
-	if etcdServer == nil {
-		return nil
-	}
-	return etcdServer.Err()
+func (e *Etcd) Err() <-chan error {
+	return e.etcd.Err()
 }
 
 // Shutdown will cleanly shutdown the running Etcd.
-func Shutdown() error {
-	if etcdServer == nil {
-		return errors.New("no running etcd detected")
-	}
-
-	etcdServer.Close()
-	etcdServer = nil
+func (e *Etcd) Shutdown() error {
+	etcdStopped := e.etcd.Server.StopNotify()
+	e.etcd.Close()
+	<-etcdStopped
 	return nil
 }
 
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
-func NewClient() (*clientv3.Client, error) {
-	if etcdServer == nil {
-		return nil, errors.New("no running etcd - must call NewEtcd() prior to NewClient()")
-	}
-
+func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{etcdClientAddress},
+		Endpoints:   []string{e.cfg.ClientListenURL},
 		DialTimeout: 5 * time.Second,
 	})
 	if err != nil {
