@@ -7,6 +7,9 @@ cmd=${1:-"all"}
 install_deps () {
   go get github.com/axw/gocov/gocov
   go get gopkg.in/alecthomas/gometalinter.v1
+  go get github.com/gordonklaus/ineffassign
+  go get github.com/jgautheron/goconst/cmd/goconst
+  go get -u github.com/golang/lint/golint
 }
 
 build_commands () {
@@ -15,8 +18,8 @@ build_commands () {
 }
 
 test_commands () {
-  gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
-  go test -v $(go list ./... | grep -v vendor)
+  gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./... || exit 1
+  go test -v $(go list ./... | grep -v vendor) || exit 1
 }
 
 if [ "$cmd" == "deps" ]; then
