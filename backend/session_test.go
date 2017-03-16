@@ -12,16 +12,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type testStore struct{}
+
+func (t *testStore) GetEntityByID(string) (*types.Entity, error) {
+	return &types.Entity{}, nil
+}
+func (t *testStore) UpdateEntity(*types.Entity) error {
+	return nil
+}
+func (t *testStore) DeleteEntity(*types.Entity) error {
+	return nil
+}
+
 func TestGoodHandshake(t *testing.T) {
 	done := make(chan struct{})
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		session := NewSession(conn)
+		session := NewSession(conn, &testStore{})
 		err = session.Start()
 		assert.NoError(t, err)
 		done <- struct{}{}
+		session.Stop()
 	}))
 	defer ts.Close()
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
 )
@@ -36,6 +37,7 @@ type Backend struct {
 	messageBus      *nsqd.NSQD
 	httpServer      *http.Server
 	transportServer *transport.Server
+	store           store.Store
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -75,7 +77,7 @@ func (b *Backend) newHTTPHandler() http.Handler {
 			return
 		}
 
-		session := NewSession(conn)
+		session := NewSession(conn, b.store)
 		// blocks until session end is detected
 		err = session.Start()
 		if err != nil {
@@ -97,6 +99,11 @@ func (b *Backend) Run() error {
 	if err != nil {
 		return fmt.Errorf("error starting etcd: %s", err.Error())
 	}
+	store, err := e.NewStore()
+	if err != nil {
+		return err
+	}
+	b.store = store
 
 	go func() {
 		errChan <- b.httpServer.ListenAndServe()

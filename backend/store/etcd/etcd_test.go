@@ -24,13 +24,7 @@ func testWithTempDir(f func(string)) {
 }
 
 func TestNewEtcd(t *testing.T) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
-	defer os.RemoveAll(tmpDir)
-
-	testWithTempDir(func(arg1 string) {
+	testWithTempDir(func(tmpDir string) {
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
 			log.Panic(err)
@@ -52,6 +46,9 @@ func TestNewEtcd(t *testing.T) {
 		cfg.InitialCluster = initCluster
 
 		e, err := NewEtcd(cfg)
+		if e != nil {
+			defer e.Shutdown()
+		}
 		assert.NoError(t, err)
 		if err != nil {
 			pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
