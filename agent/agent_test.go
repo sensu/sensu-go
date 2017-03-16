@@ -40,9 +40,9 @@ func TestSendLoop(t *testing.T) {
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 
-	ta := NewAgent(&Config{
-		BackendURL: wsURL,
-	})
+	cfg := NewConfig()
+	cfg.BackendURL = wsURL
+	ta := NewAgent(cfg)
 	err := ta.Run()
 	assert.NoError(t, err)
 	if err != nil {
@@ -51,6 +51,7 @@ func TestSendLoop(t *testing.T) {
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
+	ta.Stop()
 }
 
 func TestReceiveLoop(t *testing.T) {
@@ -74,9 +75,9 @@ func TestReceiveLoop(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	ta := NewAgent(&Config{
-		BackendURL: wsURL,
-	})
+	cfg := NewConfig()
+	cfg.BackendURL = wsURL
+	ta := NewAgent(cfg)
 	ta.addHandler("testMessageType", func(payload []byte) error {
 		msg := &testMessageType{}
 		err := json.Unmarshal(payload, msg)
@@ -94,6 +95,7 @@ func TestReceiveLoop(t *testing.T) {
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
 	<-done
+	ta.Stop()
 }
 
 func TestReconnect(t *testing.T) {
@@ -114,9 +116,9 @@ func TestReconnect(t *testing.T) {
 
 	// connect with an agent
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	ta := NewAgent(&Config{
-		BackendURL: wsURL,
-	})
+	cfg := NewConfig()
+	cfg.BackendURL = wsURL
+	ta := NewAgent(cfg)
 	err := ta.Run()
 	assert.NoError(t, err)
 	if err != nil {
@@ -126,4 +128,5 @@ func TestReconnect(t *testing.T) {
 	assert.Equal(t, 1, connectionCount)
 	control <- struct{}{}
 	assert.Condition(t, func() bool { return connectionCount > 1 })
+	ta.Stop()
 }
