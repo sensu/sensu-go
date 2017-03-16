@@ -33,20 +33,24 @@ func (s *Session) handshake() error {
 	}
 
 	// shoot first, ask questions later.
-	err = s.conn.Send(types.BackendHandshakeType, hsBytes)
+	msg := &transport.Message{
+		Type:    types.BackendHandshakeType,
+		Payload: hsBytes,
+	}
+	err = s.conn.Send(msg)
 	if err != nil {
 		return fmt.Errorf("error sending backend handshake: %s", err.Error())
 	}
 
-	t, m, err := s.conn.Receive()
+	resp, err := s.conn.Receive()
 	if err != nil {
 		return fmt.Errorf("error receiving agent handshake: %s", err.Error())
 	}
-	if t != types.AgentHandshakeType {
+	if resp.Type != types.AgentHandshakeType {
 		return errors.New("no handshake from agent")
 	}
 	agentHandshake := types.AgentHandshake{}
-	if err := json.Unmarshal(m, &agentHandshake); err != nil {
+	if err := json.Unmarshal(resp.Payload, &agentHandshake); err != nil {
 		return fmt.Errorf("error unmarshaling agent handshake: %s", err.Error())
 	}
 

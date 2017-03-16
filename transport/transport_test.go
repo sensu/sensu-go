@@ -23,12 +23,12 @@ func TestTransportSendReceive(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		transport, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		msgType, payload, err := transport.Receive()
+		msg, err := transport.Receive()
 
 		assert.NoError(t, err)
-		assert.Equal(t, "testMessageType", msgType)
+		assert.Equal(t, "testMessageType", msg.Type)
 		m := &testMessageType{"message"}
-		assert.NoError(t, json.Unmarshal(payload, m))
+		assert.NoError(t, json.Unmarshal(msg.Payload, m))
 		assert.Equal(t, testMessage.Data, m.Data)
 		done <- struct{}{}
 	}))
@@ -38,7 +38,7 @@ func TestTransportSendReceive(t *testing.T) {
 	assert.NoError(t, err)
 	msgBytes, err := json.Marshal(testMessage)
 	assert.NoError(t, err)
-	err = clientTransport.Send("testMessageType", msgBytes)
+	err = clientTransport.Send(&Message{"testMessageType", msgBytes})
 	assert.NoError(t, err)
 
 	<-done
@@ -59,15 +59,8 @@ func TestClosedWebsocket(t *testing.T) {
 	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
 	assert.NoError(t, err)
 	<-done
-	_, _, err = clientTransport.Receive()
+	_, err = clientTransport.Receive()
 	assert.IsType(t, ConnectionError{}, err)
-
-	// This test will fail until https://github.com/gorilla/websocket/issues/226
-	// is fixed. The first call to Send() will fail silently because of a bug
-	// in the websocket library. Nothing we can do to prevent lost messages
-	// right now.
-	// err = clientTransport.Send(context.TODO(), "type", []byte("message"))
-	// assert.IsType(t, ConnectionError{}, err)
 }
 
 // This was all mostly to prove that performance of encoding/decoding was

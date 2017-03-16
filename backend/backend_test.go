@@ -73,11 +73,15 @@ func TestHTTPListener(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 
-		err = client.Send(types.AgentHandshakeType, []byte("{}"))
+		msg := &transport.Message{
+			Type:    types.AgentHandshakeType,
+			Payload: []byte("{}"),
+		}
+		err = client.Send(msg)
 		assert.NoError(t, err)
-		mt, _, err := client.Receive()
+		resp, err := client.Receive()
 		assert.NoError(t, err)
-		assert.Equal(t, types.BackendHandshakeType, mt)
+		assert.Equal(t, types.BackendHandshakeType, resp.Type)
 
 		assert.NoError(t, client.Close())
 

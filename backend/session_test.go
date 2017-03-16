@@ -28,13 +28,17 @@ func TestGoodHandshake(t *testing.T) {
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 	conn, err := transport.Connect(wsURL)
 	assert.NoError(t, err)
-	err = conn.Send(types.AgentHandshakeType, []byte("{}"))
+	msg := &transport.Message{
+		Type:    types.AgentHandshakeType,
+		Payload: []byte("{}"),
+	}
+	err = conn.Send(msg)
 	assert.NoError(t, err)
-	msgType, m, err := conn.Receive()
+	resp, err := conn.Receive()
 	assert.NoError(t, err)
-	assert.Equal(t, msgType, types.BackendHandshakeType)
+	assert.Equal(t, types.BackendHandshakeType, resp.Type)
 	handshake := types.BackendHandshake{}
-	err = json.Unmarshal(m, &handshake)
+	err = json.Unmarshal(resp.Payload, &handshake)
 	assert.NoError(t, err)
 	<-done
 }
