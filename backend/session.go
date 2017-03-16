@@ -88,17 +88,20 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 
 		msg, err := s.conn.Receive()
 		if err != nil {
-			err := s.conn.Send(msg)
-			if err != nil {
-				switch err := err.(type) {
-				case transport.ConnectionError:
-					s.disconnected = true
-				case transport.ClosedError:
-					s.disconnected = true
-				default:
-					log.Println("recv error:", err.Error())
-				}
+			switch err := err.(type) {
+			case transport.ConnectionError:
+				s.disconnected = true
+			case transport.ClosedError:
+				s.disconnected = true
+			default:
+				log.Println("recv error:", err.Error())
 			}
+			continue
+		}
+
+		err = s.handler.Handle(msg.Type, msg.Payload)
+		if err != nil {
+			log.Println("error handling message: ", msg)
 		}
 	}
 }
@@ -145,6 +148,7 @@ func (s *Session) Start() error {
 
 	wg := &sync.WaitGroup{}
 	go s.sendPump(wg)
+	go s.recvPump(wg)
 	go func(wg *sync.WaitGroup) {
 		wg.Wait()
 		close(s.stopped)

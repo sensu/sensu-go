@@ -43,6 +43,20 @@ type Backend struct {
 // NewBackend will, given a Config, create an initialized Backend and return a
 // pointer to it.
 func NewBackend(config *Config) (*Backend, error) {
+	// In other places we have a NewConfig() method, but I think that doing it
+	// this way is more safe, because it doesn't require "trust" in callers.
+	if config.EtcdClientListenURL == "" {
+		config.EtcdClientListenURL = "http://127.0.0.1:2379"
+	}
+
+	if config.EtcdPeerListenURL == "" {
+		config.EtcdPeerListenURL = "http://127.0.0.1:2380"
+	}
+
+	if config.EtcdInitialCluster == "" {
+		config.EtcdInitialCluster = "default=http://127.0.0.1:2380"
+	}
+
 	b := &Backend{
 		Config: config,
 
@@ -59,6 +73,7 @@ func NewBackend(config *Config) (*Backend, error) {
 		return nil, err
 	}
 	b.messageBus = bus
+
 	return b, nil
 }
 
