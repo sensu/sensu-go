@@ -38,7 +38,8 @@ type Agent struct {
 	conn         *transport.Transport
 	sendq        chan *message
 	disconnected bool
-	stopChan     chan struct{}
+	stopping     chan struct{}
+	stopped      chan struct{}
 }
 
 type message struct {
@@ -53,7 +54,8 @@ func NewAgent(config *Config) *Agent {
 		backendURL:   config.BackendURL,
 		handler:      handler.NewMessageHandler(),
 		disconnected: true,
-		stopChan:     make(chan struct{}),
+		stopping:     make(chan struct{}),
+		stopped:      make(chan struct{}),
 		sendq:        make(chan *message, 10),
 	}
 }
@@ -93,6 +95,7 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	wg.Add(1)
 	defer wg.Done()
+
 	log.Println("connected - starting sendPump")
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -116,6 +119,10 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 				log.Println("disconnected - stopping sendPump")
 				return
 			}
+		case <-a.stopping:
+			// we abandon anything left in the queue and exit the sendpump
+			// TODO(greg): leave no messages behind! if we can.
+			return
 		}
 	}
 }
@@ -181,10 +188,10 @@ func (a *Agent) Run() error {
 		defer ticker.Stop()
 		for {
 			select {
-			case <-a.stopChan:
+			case <-a.stopping:
 				a.conn.Close()
 				wg.Wait()
-				a.stopChan <- struct{}{}
+				close(a.stopped)
 			case <-ticker.C:
 				if a.disconnected {
 					log.Println("disconnected - attempting to reconnect: ", a.backendURL)
@@ -224,9 +231,9 @@ func (a *Agent) Run() error {
 // Stop will cause the Agent to finish processing requests and then cleanly
 // shutdown.
 func (a *Agent) Stop() {
-	a.stopChan <- struct{}{}
+	close(a.stopping)
 	select {
-	case <-a.stopChan:
+	case <-a.stopped:
 		return
 	case <-time.After(1 * time.Second):
 		return
