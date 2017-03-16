@@ -17,8 +17,6 @@ type testMessageType struct {
 }
 
 func TestSendLoop(t *testing.T) {
-	testMessage := &testMessageType{"message"}
-
 	done := make(chan struct{})
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,10 +32,10 @@ func TestSendLoop(t *testing.T) {
 		msg, err := conn.Receive()
 
 		assert.NoError(t, err)
-		assert.Equal(t, "testMessageType", msg.Type)
-		m := &testMessageType{"message"}
-		assert.NoError(t, json.Unmarshal(msg.Payload, m))
-		assert.Equal(t, testMessage.Data, m.Data)
+		assert.Equal(t, "keepalive", msg.Type)
+		event := &types.Event{}
+		assert.NoError(t, json.Unmarshal(msg.Payload, event))
+		assert.NotNil(t, event.Entity)
 		done <- struct{}{}
 	}))
 	defer ts.Close()
@@ -52,8 +50,6 @@ func TestSendLoop(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, "agent failed to run")
 	}
-	msgBytes, _ := json.Marshal(&testMessageType{"message"})
-	ta.sendMessage("testMessageType", msgBytes)
 	<-done
 	ta.Stop()
 }

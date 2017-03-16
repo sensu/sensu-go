@@ -132,7 +132,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 				case transport.ClosedError:
 					a.disconnected = true
 				default:
-					log.Println("recv error:", err.Error())
+					log.Println("send error:", err.Error())
 				}
 			}
 		case <-ticker.C:
@@ -149,6 +149,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 }
 
 func (a *Agent) sendKeepalive() error {
+	log.Println("sending keepalive")
 	msg := &transport.Message{
 		Type: types.KeepaliveType,
 	}
@@ -231,6 +232,11 @@ func (a *Agent) handshake() error {
 	err = json.Unmarshal(m.Payload, &response)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling backend handshake: %s", err.Error())
+	}
+
+	err = a.sendKeepalive()
+	if err != nil {
+		return err
 	}
 
 	return nil

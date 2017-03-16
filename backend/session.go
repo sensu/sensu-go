@@ -39,6 +39,7 @@ func NewSession(conn *transport.Transport, store store.Store) *Session {
 		stopped:      make(chan struct{}),
 		sendq:        make(chan *transport.Message, 10),
 		disconnected: false,
+		store:        store,
 	}
 	s.handler = newSessionHandler(s)
 	return s
@@ -176,5 +177,6 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive does not contain an entity")
 	}
 
+	log.Println("handling keepalive: ", *keepalive)
 	return s.store.UpdateEntity(keepalive.Entity)
 }

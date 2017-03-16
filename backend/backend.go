@@ -152,7 +152,6 @@ func (b *Backend) Run() error {
 		if inErr != nil {
 			b.errChan <- inErr
 		}
-		close(b.shutdownChan)
 		close(b.errChan)
 		close(b.done)
 		cmd := exec.Command("nslookup", "-l", "-n", "-t")
@@ -173,7 +172,6 @@ func (b *Backend) Err() <-chan error {
 
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
-	// TODO(greg): shutdown all active client connections
-	b.shutdownChan <- struct{}{}
+	close(b.shutdownChan)
 	<-b.done
 }
