@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -26,9 +25,9 @@ func TestSendLoop(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
-		conn.Receive(context.TODO())
-		msgType, payload, err := conn.Receive(context.TODO())
+		conn.Send(types.BackendHandshakeType, []byte("{}"))
+		conn.Receive()
+		msgType, payload, err := conn.Receive()
 
 		assert.NoError(t, err)
 		assert.Equal(t, "testMessageType", msgType)
@@ -63,12 +62,12 @@ func TestReceiveLoop(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
-		conn.Receive(context.TODO())
+		conn.Send(types.BackendHandshakeType, []byte("{}"))
+		conn.Receive()
 
 		msgBytes, err := json.Marshal(testMessage)
 		assert.NoError(t, err)
-		err = conn.Send(context.Background(), "testMessageType", msgBytes)
+		err = conn.Send("testMessageType", msgBytes)
 		assert.NoError(t, err)
 		done <- struct{}{}
 	}))
@@ -105,8 +104,8 @@ func TestReconnect(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Send(context.TODO(), types.BackendHandshakeType, []byte("{}"))
-		conn.Receive(context.TODO())
+		conn.Send(types.BackendHandshakeType, []byte("{}"))
+		conn.Receive()
 		connectionCount++
 		<-control
 		conn.Close()

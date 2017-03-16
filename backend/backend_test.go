@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -74,9 +73,9 @@ func TestHTTPListener(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 
-		err = client.Send(context.Background(), types.AgentHandshakeType, []byte("{}"))
+		err = client.Send(types.AgentHandshakeType, []byte("{}"))
 		assert.NoError(t, err)
-		mt, _, err := client.Receive(context.Background())
+		mt, _, err := client.Receive()
 		assert.NoError(t, err)
 		assert.Equal(t, types.BackendHandshakeType, mt)
 

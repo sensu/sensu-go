@@ -5,7 +5,6 @@
 package agent
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -68,7 +67,7 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 			return
 		}
 
-		t, m, err := conn.Receive(context.TODO())
+		t, m, err := conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError:
@@ -95,7 +94,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	for {
 		select {
 		case msg := <-a.sendq:
-			err := conn.Send(context.TODO(), msg.Type, msg.Payload)
+			err := conn.Send(msg.Type, msg.Payload)
 			if err != nil {
 				switch err := err.(type) {
 				case transport.ConnectionError:
@@ -127,12 +126,12 @@ func (a *Agent) handshake() error {
 	}
 
 	// shoot first, ask questions later.
-	err = a.conn.Send(context.TODO(), types.AgentHandshakeType, msgBytes)
+	err = a.conn.Send(types.AgentHandshakeType, msgBytes)
 	if err != nil {
 		return err
 	}
 
-	t, m, err := a.conn.Receive(context.TODO())
+	t, m, err := a.conn.Receive()
 	if err != nil {
 		return err
 	}
