@@ -59,11 +59,13 @@ func NewAgent(config *Config) *Agent {
 }
 
 func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
+	wg.Add(1)
+	defer wg.Done()
+
 	log.Println("connected - starting receivePump")
 	for {
 		if a.disconnected {
 			log.Println("disconnected - stopping receivePump")
-			wg.Done()
 			return
 		}
 
@@ -89,8 +91,12 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 }
 
 func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
+	wg.Add(1)
+	defer wg.Done()
 	log.Println("connected - starting sendPump")
 	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case msg := <-a.sendq:
@@ -108,8 +114,6 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 		case <-ticker.C:
 			if a.disconnected {
 				log.Println("disconnected - stopping sendPump")
-				ticker.Stop()
-				wg.Done()
 				return
 			}
 		}
@@ -162,7 +166,6 @@ func (a *Agent) Run() error {
 	}
 	a.conn = conn
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
 	err = a.handshake()
 	if err != nil {
 		return err
