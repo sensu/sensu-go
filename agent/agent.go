@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -25,6 +26,8 @@ const (
 
 // A Config specifies Agent configuration.
 type Config struct {
+	// AgentID is the entity ID for the running agent. Default is hostname.
+	AgentID string
 	// BackendURL is the URL to the Sensu Backend. Default: ws://127.0.0.1:8080
 	BackendURL string
 	// Subscriptions is an array of subscription names. Default: empty array.
@@ -41,6 +44,13 @@ func NewConfig() *Config {
 		Subscriptions:     []string{},
 		KeepaliveInterval: 60,
 	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Println("error getting hostname: ", err.Error())
+		// TODO(greg): wat do?
+		c.AgentID = "unidentified-sensu-agent"
+	}
+	c.AgentID = hostname
 
 	return c
 }
@@ -180,7 +190,9 @@ func (a *Agent) keepaliveLoop() {
 
 func (a *Agent) getDefaultEntity() *types.Entity {
 	if a.entity == nil {
-		e := &types.Entity{}
+		e := &types.Entity{
+			ID: a.config.AgentID,
+		}
 		a.entity = e
 	}
 
