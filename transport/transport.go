@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -52,21 +51,15 @@ func Decode(payload []byte) (string, []byte, error) {
 	return string(msgType), msg, nil
 }
 
-// A Transport is a wrapper around a websocket or other connection that provides
-// safety for concurrent use by multiple goroutines.
+// A Transport is a connection between sensu Agents and Backends.
 type Transport struct {
 	Connection *websocket.Conn
-
-	readLock  *sync.Mutex
-	writeLock *sync.Mutex
 }
 
 // NewTransport creates an initialized Transport and return its pointer.
 func NewTransport(conn *websocket.Conn) *Transport {
 	return &Transport{
 		Connection: conn,
-		readLock:   &sync.Mutex{},
-		writeLock:  &sync.Mutex{},
 	}
 }
 
