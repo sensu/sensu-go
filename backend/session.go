@@ -25,8 +25,7 @@ func NewSession(conn *transport.Transport) *Session {
 	}
 }
 
-// Start a Session
-func (s *Session) Start() error {
+func (s *Session) handshake() error {
 	handshake := &types.BackendHandshake{}
 	hsBytes, err := json.Marshal(handshake)
 	if err != nil {
@@ -51,9 +50,17 @@ func (s *Session) Start() error {
 		return fmt.Errorf("error unmarshaling agent handshake: %s", err.Error())
 	}
 
+	return nil
+}
+
+// Start a Session
+func (s *Session) Start() error {
+	err := s.handshake()
+	if err != nil {
+		return err
+	}
+
 	log.Println("agent connected")
 
-	// setup subscriptions for the client and start a sendpump
-	// start readpump
 	return nil
 }
