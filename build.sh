@@ -20,13 +20,20 @@ build_commands () {
 test_commands () {
   gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
   if [ $? -ne 0 ]; then
-    echo "linting failed"
+    echo "Linting failed..."
     exit 1
   fi
-  
-  go test -v $(go list ./... | grep -v vendor) || exit 1
-  if [ $? -ne 0 ]; then
-    echo "tests failed"
+
+  tests_failed=
+  for pkg in $(go list ./... | grep -v vendor); do
+    go test -v $pkg
+    if [ $? -ne 0 ]; then
+      tests_failed=t
+    fi
+  done
+
+  if [ $tests_failed ]; then
+    "Tests failed..."
     exit 1
   fi
 }
