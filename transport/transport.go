@@ -51,6 +51,13 @@ func Decode(payload []byte) (string, []byte, error) {
 	return string(msgType), msg, nil
 }
 
+// A Message is a tuple of a message type (i.e. channel) and a byte-array
+// payload to be sent across the transport.
+type Message struct {
+	Type    string
+	Payload []byte
+}
+
 // A Transport is a connection between sensu Agents and Backends.
 type Transport struct {
 	Connection *websocket.Conn
@@ -61,13 +68,6 @@ func NewTransport(conn *websocket.Conn) *Transport {
 	return &Transport{
 		Connection: conn,
 	}
-}
-
-// A Message is a tuple of a message type (i.e. channel) and a byte-array
-// payload to be sent across the transport.
-type Message struct {
-	Type    string
-	Payload []byte
 }
 
 // Send is used to send a message over the transport. It takes a message type
