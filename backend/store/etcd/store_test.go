@@ -8,12 +8,13 @@ import (
 	"runtime/pprof"
 	"testing"
 
+	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEtcdStore(t *testing.T) {
-	testWithTempDir(func(tmpDir string) {
+	util.WithTempDir(func(tmpDir string) {
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
 			log.Panic(err)

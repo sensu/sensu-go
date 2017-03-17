@@ -2,30 +2,20 @@ package backend
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"os"
 	"testing"
 	"time"
 
 	nsq "github.com/nsqio/go-nsq"
+	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func testWithTempDir(f func(string)) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	defer os.RemoveAll(tmpDir)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	f(tmpDir)
-}
-
 func TestHTTPListener(t *testing.T) {
-	testWithTempDir(func(path string) {
+	util.WithTempDir(func(path string) {
 		// This will likely bite us in the butt eventually, but for now, we need a
 		// way to get random available ports for etcd so that we can still run
 		// tests in parallel since we might have multiple etcds running.

@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -11,20 +10,12 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/testing/util"
 	"github.com/stretchr/testify/assert"
 )
 
-func testWithTempDir(f func(string)) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	defer os.RemoveAll(tmpDir)
-	if err != nil {
-		log.Panic(err)
-	}
-	f(tmpDir)
-}
-
 func TestNewEtcd(t *testing.T) {
-	testWithTempDir(func(tmpDir string) {
+	util.WithTempDir(func(tmpDir string) {
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
 			log.Panic(err)
