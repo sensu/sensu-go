@@ -117,6 +117,12 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	wg.Add(1)
 	defer wg.Done()
 
+	// The sendPump is actually responsible for shutting down the transport
+	// to prevent a race condition between it and something else trying
+	// to close the transport (which actually causes a write to the websocket
+	// connection.)
+	defer a.conn.Close()
+
 	log.Println("connected - starting sendPump")
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -275,8 +281,8 @@ func (a *Agent) Run() error {
 		for {
 			select {
 			case <-a.stopping:
-				a.conn.Close()
 				wg.Wait()
+				close(a.sendq)
 				close(a.stopped)
 			case <-ticker.C:
 				if a.disconnected {
