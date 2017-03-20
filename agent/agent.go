@@ -40,7 +40,7 @@ type Config struct {
 // NewConfig provides a new Config object initialized with defaults.
 func NewConfig() *Config {
 	c := &Config{
-		BackendURL:        "ws://127.0.0.1:8080/",
+		BackendURL:        "ws://127.0.0.1:8080/agents/ws",
 		Subscriptions:     []string{},
 		KeepaliveInterval: 60,
 	}

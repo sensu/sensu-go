@@ -78,13 +78,15 @@ func NewBackend(config *Config) (*Backend, error) {
 }
 
 func (b *Backend) newHTTPServer() *http.Server {
+	servemux := http.NewServeMux()
+	servemux.HandleFunc("/agents/ws", b.newHTTPHandler())
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", b.Config.Port),
-		Handler: b.newHTTPHandler(),
+		Handler: servemux,
 	}
 }
 
-func (b *Backend) newHTTPHandler() http.Handler {
+func (b *Backend) newHTTPHandler() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := b.transportServer.Serve(w, r)
 		if err != nil {

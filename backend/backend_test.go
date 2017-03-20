@@ -59,7 +59,7 @@ func TestHTTPListener(t *testing.T) {
 			}
 		}
 
-		client, err := transport.Connect("ws://localhost:31337")
+		client, err := transport.Connect("ws://localhost:31337/agents/ws")
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 
