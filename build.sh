@@ -23,6 +23,10 @@ build_commands () {
   go build -o bin/sensu-backend ${REPO_PATH}/backend/cmd/...
 }
 
+e2e_commands () {
+  go test -v ${REPO_PATH}/testing/e2e
+}
+
 test_commands () {
   echo "Running tests..."
 
@@ -45,7 +49,7 @@ e2e_commands () {
 
 if [ "$cmd" == "deps" ]; then
   install_deps
-elif [ "$cmd" == "test" ]; then
+elif [ "$cmd" == "unit" ]; then
   test_commands
 elif [ "$cmd" == "build" ]; then
   build_commands
@@ -53,4 +57,5 @@ else
   install_deps
   test_commands
   build_commands
+  e2e_commands
 fi
