@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"runtime/pprof"
 	"testing"
@@ -16,19 +15,15 @@ import (
 
 func TestNewEtcd(t *testing.T) {
 	util.WithTempDir(func(tmpDir string) {
-		l, err := net.Listen("tcp", ":0")
+		ports := make([]int, 2)
+		err := util.RandomPorts(ports)
 		if err != nil {
 			log.Panic(err)
 		}
-		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
-		if err != nil {
-			log.Panic(err)
-		}
-		clURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port)
-		apURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port+1)
+		clURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
+		apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
 		initCluster := fmt.Sprintf("default=%s", apURL)
 		fmt.Println(initCluster)
-		l.Close()
 
 		cfg := NewConfig()
 		cfg.StateDir = tmpDir

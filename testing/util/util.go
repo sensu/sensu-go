@@ -3,6 +3,7 @@ package util
 import (
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 )
 
@@ -15,4 +16,22 @@ func WithTempDir(f func(string)) {
 		log.Panic(err)
 	}
 	f(tmpDir)
+}
+
+// RandomPorts generates len(p) random ports and assigns them to elements of p.
+func RandomPorts(p []int) error {
+	for i := range p {
+		l, err := net.Listen("tcp", ":0")
+		if err != nil {
+			return err
+		}
+		defer l.Close()
+
+		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
+		if err != nil {
+			return err
+		}
+		p[i] = addr.Port
+	}
+	return nil
 }
