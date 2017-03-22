@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -78,13 +79,26 @@ func NewBackend(config *Config) (*Backend, error) {
 }
 
 func (b *Backend) newHTTPServer() *http.Server {
+	servemux := http.NewServeMux()
+	servemux.HandleFunc("/agents/ws", b.newHTTPHandler())
+	// TODO(greg): the API stuff will all have to be moved out of here at some
+	// point. @portertech and I had discussed multiple listeners as well, but I'm
+	// still not convinced about that.
+	servemux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		sb, err := json.Marshal(b.Status())
+		if err != nil {
+			log.Println("error marshaling status: ", err.Error())
+			http.Error(w, "Error getting server status.", 500)
+		}
+		fmt.Fprint(w, sb)
+	})
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", b.Config.Port),
-		Handler: b.newHTTPHandler(),
+		Handler: servemux,
 	}
 }
 
-func (b *Backend) newHTTPHandler() http.Handler {
+func (b *Backend) newHTTPHandler() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := b.transportServer.Serve(w, r)
 		if err != nil {
@@ -162,6 +176,22 @@ func (b *Backend) Run() error {
 	}()
 
 	return nil
+}
+
+// Status returns a map of component name to boolean healthy indicator.
+func (b *Backend) Status() map[string]bool {
+	sm := map[string]bool{
+		"store":       b.store.Healthy(),
+		"message_bus": true,
+	}
+
+	busHealth := b.messageBus.GetHealth()
+	// ugh.
+	if busHealth != "OK" {
+		sm["message_bus"] = false
+	}
+
+	return sm
 }
 
 // Err returns a channel yielding terminal errors for the backend. The channel

@@ -3,41 +3,27 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"runtime/pprof"
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/testing/util"
 	"github.com/stretchr/testify/assert"
 )
 
-func testWithTempDir(f func(string)) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	defer os.RemoveAll(tmpDir)
-	if err != nil {
-		log.Panic(err)
-	}
-	f(tmpDir)
-}
-
 func TestNewEtcd(t *testing.T) {
-	testWithTempDir(func(tmpDir string) {
-		l, err := net.Listen("tcp", ":0")
+	util.WithTempDir(func(tmpDir string) {
+		ports := make([]int, 2)
+		err := util.RandomPorts(ports)
 		if err != nil {
 			log.Panic(err)
 		}
-		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
-		if err != nil {
-			log.Panic(err)
-		}
-		clURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port)
-		apURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port+1)
+		clURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
+		apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
 		initCluster := fmt.Sprintf("default=%s", apURL)
 		fmt.Println(initCluster)
-		l.Close()
 
 		cfg := NewConfig()
 		cfg.StateDir = tmpDir

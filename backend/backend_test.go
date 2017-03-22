@@ -2,49 +2,33 @@ package backend
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"os"
 	"testing"
 	"time"
 
 	nsq "github.com/nsqio/go-nsq"
+	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func testWithTempDir(f func(string)) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	defer os.RemoveAll(tmpDir)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	f(tmpDir)
-}
-
 func TestHTTPListener(t *testing.T) {
-	testWithTempDir(func(path string) {
-		// This will likely bite us in the butt eventually, but for now, we need a
-		// way to get random available ports for etcd so that we can still run
-		// tests in parallel since we might have multiple etcds running.
-		l, err := net.Listen("tcp", ":0")
+	util.WithTempDir(func(path string) {
+		ports := make([]int, 3)
+		err := util.RandomPorts(ports)
 		if err != nil {
 			log.Panic(err)
 		}
-		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
-		if err != nil {
-			log.Panic(err)
-		}
-		clURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port)
-		apURL := fmt.Sprintf("http://127.0.0.1:%d", addr.Port+1)
+		clURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
+		apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
+		backendPort := ports[2]
 		initCluster := fmt.Sprintf("default=%s", apURL)
 		fmt.Println(initCluster)
-		l.Close()
 
 		b, err := NewBackend(&Config{
-			Port:                31337,
+			Port:                backendPort,
 			StateDir:            path,
 			EtcdClientListenURL: clURL,
 			EtcdPeerListenURL:   apURL,
@@ -59,7 +43,7 @@ func TestHTTPListener(t *testing.T) {
 		assert.NoError(t, err)
 
 		for i := 0; i < 5; i++ {
-			conn, derr := net.Dial("tcp", "localhost:31337")
+			conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", backendPort))
 			if derr != nil {
 				fmt.Println("Waiting for backend to start")
 				time.Sleep(time.Duration(i) * time.Second)
@@ -69,7 +53,7 @@ func TestHTTPListener(t *testing.T) {
 			}
 		}
 
-		client, err := transport.Connect("ws://localhost:31337")
+		client, err := transport.Connect(fmt.Sprintf("ws://localhost:%d/agents/ws", backendPort))
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 

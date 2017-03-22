@@ -4,6 +4,10 @@ REPO_PATH="github.com/sensu/sensu-go"
 
 cmd=${1:-"all"}
 
+if [ "$GOARCH" == "amd64" ]; then
+	RACE="--race"
+fi
+
 install_deps () {
   go get github.com/axw/gocov/gocov
   go get gopkg.in/alecthomas/gometalinter.v1
@@ -13,27 +17,37 @@ install_deps () {
 }
 
 build_commands () {
+  echo "Running build..."
+
   go build -o bin/sensu-agent ${REPO_PATH}/agent/cmd/...
   go build -o bin/sensu-backend ${REPO_PATH}/backend/cmd/...
 }
 
 test_commands () {
+  echo "Running tests..."
+
   gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
   if [ $? -ne 0 ]; then
-    echo "linting failed"
+    echo "Linting failed..."
     exit 1
   fi
-  
-  go test -v $(go list ./... | grep -v vendor) || exit 1
+
+  go test -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
   if [ $? -ne 0 ]; then
-    echo "tests failed"
+    echo "Tests failed..."
     exit 1
   fi
 }
 
+e2e_commands () {
+  echo "Running e2e tests..."
+
+	go test -v ${REPO_PATH}/testing/e2e
+}
+
 if [ "$cmd" == "deps" ]; then
   install_deps
-elif [ "$cmd" == "test" ]; then
+elif [ "$cmd" == "unit" ]; then
   test_commands
 elif [ "$cmd" == "build" ]; then
   build_commands
@@ -41,4 +55,5 @@ else
   install_deps
   test_commands
   build_commands
+  e2e_commands
 fi
