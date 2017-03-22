@@ -23,10 +23,6 @@ build_commands () {
   go build -o bin/sensu-backend ${REPO_PATH}/backend/cmd/...
 }
 
-e2e_commands () {
-  go test -v ${REPO_PATH}/testing/e2e
-}
-
 test_commands () {
   echo "Running tests..."
 
@@ -45,6 +41,8 @@ test_commands () {
 
 e2e_commands () {
   echo "Running e2e tests..."
+
+	go test -v ${REPO_PATH}/testing/e2e
 }
 
 if [ "$cmd" == "deps" ]; then

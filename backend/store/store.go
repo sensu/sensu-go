@@ -7,4 +7,6 @@ type Store interface {
 	GetEntityByID(id string) (*types.Entity, error)
 	UpdateEntity(e *types.Entity) error
 	DeleteEntity(e *types.Entity) error
+
+	Healthy() bool
 }
