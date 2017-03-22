@@ -4,5 +4,4 @@ go:
 install:
   - ./build.sh deps
 script:
-  - ./build.sh test
-  - ./build.sh build
+  - ./build.sh
