@@ -17,23 +17,25 @@ type testMessageType struct {
 }
 
 func TestSendLoop(t *testing.T) {
-	testMessage := &testMessageType{"message"}
-
 	done := make(chan struct{})
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Send(types.BackendHandshakeType, []byte("{}"))
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
 		conn.Receive()
-		msgType, payload, err := conn.Receive()
+		msg, err := conn.Receive()
 
 		assert.NoError(t, err)
-		assert.Equal(t, "testMessageType", msgType)
-		m := &testMessageType{"message"}
-		assert.NoError(t, json.Unmarshal(payload, m))
-		assert.Equal(t, testMessage.Data, m.Data)
+		assert.Equal(t, "keepalive", msg.Type)
+		event := &types.Event{}
+		assert.NoError(t, json.Unmarshal(msg.Payload, event))
+		assert.NotNil(t, event.Entity)
 		done <- struct{}{}
 	}))
 	defer ts.Close()
@@ -48,8 +50,6 @@ func TestSendLoop(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, "agent failed to run")
 	}
-	msgBytes, _ := json.Marshal(&testMessageType{"message"})
-	ta.sendMessage("testMessageType", msgBytes)
 	<-done
 	ta.Stop()
 }
@@ -63,12 +63,20 @@ func TestReceiveLoop(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Send(types.BackendHandshakeType, []byte("{}"))
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
 		conn.Receive()
 
 		msgBytes, err := json.Marshal(testMessage)
 		assert.NoError(t, err)
-		err = conn.Send("testMessageType", msgBytes)
+		tm := &transport.Message{
+			Type:    "testMessageType",
+			Payload: msgBytes,
+		}
+		err = conn.Send(tm)
 		assert.NoError(t, err)
 		done <- struct{}{}
 	}))
@@ -106,7 +114,11 @@ func TestReconnect(t *testing.T) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		// throw away handshake
-		conn.Send(types.BackendHandshakeType, []byte("{}"))
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
 		conn.Receive()
 		connectionCount++
 		<-control

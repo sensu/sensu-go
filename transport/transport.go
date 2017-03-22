@@ -63,12 +63,19 @@ func NewTransport(conn *websocket.Conn) *Transport {
 	}
 }
 
+// A Message is a tuple of a message type (i.e. channel) and a byte-array
+// payload to be sent across the transport.
+type Message struct {
+	Type    string
+	Payload []byte
+}
+
 // Send is used to send a message over the transport. It takes a message type
 // hint and a serialized payload. Send will block until the message has been
 // sent. Send is synchronous, returning nil if the write to the underlying
 // socket was successful and an error otherwise.
-func (t *Transport) Send(msgType string, payload []byte) error {
-	msg := Encode(msgType, payload)
+func (t *Transport) Send(m *Message) error {
+	msg := Encode(m.Type, m.Payload)
 	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
 	if err != nil {
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
@@ -82,21 +89,21 @@ func (t *Transport) Send(msgType string, payload []byte) error {
 
 // Receive is used to receive a message from the transport. It takes a context
 // and blocks until the next message is received from the transport.
-func (t *Transport) Receive() (string, []byte, error) {
+func (t *Transport) Receive() (*Message, error) {
 	_, p, err := t.Connection.ReadMessage()
 	if err != nil {
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-			return "", nil, ClosedError{err.Error()}
+			return nil, ClosedError{err.Error()}
 		}
-		return "", nil, ConnectionError{err.Error()}
+		return nil, ConnectionError{err.Error()}
 	}
 
 	msgType, payload, err := Decode(p)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	return msgType, payload, nil
+	return &Message{msgType, payload}, nil
 }
 
 // Close will cleanly shutdown a websocket connection.

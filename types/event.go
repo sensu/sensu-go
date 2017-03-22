@@ -18,4 +18,6 @@ type Event struct {
 }
 
 // An Entity is an identifier used for a particular Event.
-type Entity struct{}
+type Entity struct {
+	ID string
+}

@@ -18,8 +18,17 @@ build_commands () {
 }
 
 test_commands () {
-  gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./... || exit 1
+  gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
+  if [ $? -ne 0 ]; then
+    echo "linting failed"
+    exit 1
+  fi
+  
   go test -v $(go list ./... | grep -v vendor) || exit 1
+  if [ $? -ne 0 ]; then
+    echo "tests failed"
+    exit 1
+  fi
 }
 
 if [ "$cmd" == "deps" ]; then

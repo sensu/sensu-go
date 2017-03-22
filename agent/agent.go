@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -25,6 +26,8 @@ const (
 
 // A Config specifies Agent configuration.
 type Config struct {
+	// AgentID is the entity ID for the running agent. Default is hostname.
+	AgentID string
 	// BackendURL is the URL to the Sensu Backend. Default: ws://127.0.0.1:8080
 	BackendURL string
 	// Subscriptions is an array of subscription names. Default: empty array.
@@ -41,6 +44,13 @@ func NewConfig() *Config {
 		Subscriptions:     []string{},
 		KeepaliveInterval: 60,
 	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Println("error getting hostname: ", err.Error())
+		// TODO(greg): wat do?
+		c.AgentID = "unidentified-sensu-agent"
+	}
+	c.AgentID = hostname
 
 	return c
 }
@@ -51,16 +61,11 @@ type Agent struct {
 	backendURL   string
 	handler      *handler.MessageHandler
 	conn         *transport.Transport
-	sendq        chan *message
+	sendq        chan *transport.Message
 	disconnected bool
 	stopping     chan struct{}
 	stopped      chan struct{}
 	entity       *types.Entity
-}
-
-type message struct {
-	Type    string
-	Payload []byte
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -72,7 +77,7 @@ func NewAgent(config *Config) *Agent {
 		disconnected: true,
 		stopping:     make(chan struct{}),
 		stopped:      make(chan struct{}),
-		sendq:        make(chan *message, 10),
+		sendq:        make(chan *transport.Message, 10),
 	}
 }
 
@@ -87,7 +92,7 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 			return
 		}
 
-		t, m, err := conn.Receive()
+		m, err := conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError:
@@ -99,9 +104,9 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 			}
 			continue
 		}
-		log.Println("message received - type: ", t, " message: ", m)
+		log.Println("message received - type: ", m.Type, " message: ", m.Payload)
 
-		err = a.handler.Handle(t, m)
+		err = a.handler.Handle(m.Type, m.Payload)
 		if err != nil {
 			log.Println("error handling message:", err.Error())
 		}
@@ -119,7 +124,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	for {
 		select {
 		case msg := <-a.sendq:
-			err := conn.Send(msg.Type, msg.Payload)
+			err := conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
 				case transport.ConnectionError:
@@ -127,7 +132,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 				case transport.ClosedError:
 					a.disconnected = true
 				default:
-					log.Println("recv error:", err.Error())
+					log.Println("send error:", err.Error())
 				}
 			}
 		case <-ticker.C:
@@ -144,7 +149,8 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 }
 
 func (a *Agent) sendKeepalive() error {
-	msg := &message{
+	log.Println("sending keepalive")
+	msg := &transport.Message{
 		Type: types.KeepaliveType,
 	}
 	keepalive := &types.Event{}
@@ -185,7 +191,9 @@ func (a *Agent) keepaliveLoop() {
 
 func (a *Agent) getDefaultEntity() *types.Entity {
 	if a.entity == nil {
-		e := &types.Entity{}
+		e := &types.Entity{
+			ID: a.config.AgentID,
+		}
 		a.entity = e
 	}
 
@@ -202,24 +210,33 @@ func (a *Agent) handshake() error {
 	}
 
 	// shoot first, ask questions later.
-	err = a.conn.Send(types.AgentHandshakeType, msgBytes)
+	agentHandshakeMsg := &transport.Message{
+		Type:    types.AgentHandshakeType,
+		Payload: msgBytes,
+	}
+	err = a.conn.Send(agentHandshakeMsg)
 	if err != nil {
 		return err
 	}
 
-	t, m, err := a.conn.Receive()
+	m, err := a.conn.Receive()
 	if err != nil {
 		return err
 	}
 
-	if t != types.BackendHandshakeType {
+	if m.Type != types.BackendHandshakeType {
 		return errors.New("backend did not send handshake")
 	}
 
 	response := types.BackendHandshake{}
-	err = json.Unmarshal(m, &response)
+	err = json.Unmarshal(m.Payload, &response)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling backend handshake: %s", err.Error())
+	}
+
+	err = a.sendKeepalive()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -312,7 +329,11 @@ func (a *Agent) Stop() {
 func (a *Agent) sendMessage(msgType string, payload []byte) {
 	// blocks until message can be enqueued.
 	// TODO(greg): ring buffer?
-	a.sendq <- &message{msgType, payload}
+	msg := &transport.Message{
+		Type:    msgType,
+		Payload: payload,
+	}
+	a.sendq <- msg
 }
 
 func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFunc) {

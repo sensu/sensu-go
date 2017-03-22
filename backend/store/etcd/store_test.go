@@ -1,29 +1,18 @@
 package etcd
 
 import (
-	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"runtime/pprof"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func testWithTempDir(f func(string)) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	defer os.RemoveAll(tmpDir)
-	if err != nil {
-		log.Panic(err)
-	}
-	f(tmpDir)
-}
-
-func TestNewEtcd(t *testing.T) {
+func TestEtcdStore(t *testing.T) {
 	testWithTempDir(func(tmpDir string) {
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
@@ -57,30 +46,24 @@ func TestNewEtcd(t *testing.T) {
 			assert.FailNow(t, "unable to start new etcd")
 		}
 
-		client, err := e.NewClient()
+		store, err := e.NewStore()
 		assert.NoError(t, err)
-		kv := clientv3.NewKV(client)
-		assert.NotNil(t, kv)
-
-		putsResp, err := kv.Put(context.Background(), "key", "value")
-		assert.NoError(t, err)
-		assert.NotNil(t, putsResp)
-
-		if putsResp == nil {
-			assert.FailNow(t, "got nil put response from etcd")
+		if err != nil {
+			assert.FailNow(t, "failed to get store from etcd")
 		}
 
-		getResp, err := kv.Get(context.Background(), "key")
-		assert.NoError(t, err)
-		assert.NotNil(t, getResp)
-
-		if getResp == nil {
-			assert.FailNow(t, "got nil get response from etcd")
+		entity := &types.Entity{
+			ID: "0",
 		}
-		assert.Equal(t, 1, len(getResp.Kvs))
-		assert.Equal(t, "key", string(getResp.Kvs[0].Key))
-		assert.Equal(t, "value", string(getResp.Kvs[0].Value))
-
-		e.Shutdown()
+		err = store.UpdateEntity(entity)
+		assert.NoError(t, err)
+		retrieved, err := store.GetEntityByID(entity.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, entity.ID, retrieved.ID)
+		err = store.DeleteEntity(entity)
+		assert.NoError(t, err)
+		retrieved, err = store.GetEntityByID(entity.ID)
+		assert.Nil(t, retrieved)
+		assert.Error(t, err)
 	})
 }
