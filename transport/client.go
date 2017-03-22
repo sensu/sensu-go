@@ -21,7 +21,5 @@ func Connect(wsServerURL string) (*Transport, error) {
 		return nil, err
 	}
 
-	// Investigate what behavior conn.SetReadDeadline() masks/causes. What causes
-	// a read timeout?
 	return NewTransport(conn), nil
 }

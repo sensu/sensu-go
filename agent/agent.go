@@ -5,7 +5,6 @@
 package agent
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,9 +25,24 @@ const (
 
 // A Config specifies Agent configuration.
 type Config struct {
-	// BackendURL is the URL to the Sensu Backend.
-	BackendURL    string
+	// BackendURL is the URL to the Sensu Backend. Default: ws://127.0.0.1:8080
+	BackendURL string
+	// Subscriptions is an array of subscription names. Default: empty array.
 	Subscriptions []string
+	// KeepaliveInterval is the interval, in seconds, when agents will send a
+	// keepalive to sensu-backend. Default: 60
+	KeepaliveInterval int
+}
+
+// NewConfig provides a new Config object initialized with defaults.
+func NewConfig() *Config {
+	c := &Config{
+		BackendURL:        "ws://127.0.0.1:8080/",
+		Subscriptions:     []string{},
+		KeepaliveInterval: 60,
+	}
+
+	return c
 }
 
 // An Agent receives and acts on messages from a Sensu Backend.
@@ -39,7 +53,9 @@ type Agent struct {
 	conn         *transport.Transport
 	sendq        chan *message
 	disconnected bool
-	stopChan     chan struct{}
+	stopping     chan struct{}
+	stopped      chan struct{}
+	entity       *types.Entity
 }
 
 type message struct {
@@ -54,21 +70,24 @@ func NewAgent(config *Config) *Agent {
 		backendURL:   config.BackendURL,
 		handler:      handler.NewMessageHandler(),
 		disconnected: true,
-		stopChan:     make(chan struct{}),
+		stopping:     make(chan struct{}),
+		stopped:      make(chan struct{}),
 		sendq:        make(chan *message, 10),
 	}
 }
 
 func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
+	wg.Add(1)
+	defer wg.Done()
+
 	log.Println("connected - starting receivePump")
 	for {
 		if a.disconnected {
 			log.Println("disconnected - stopping receivePump")
-			wg.Done()
 			return
 		}
 
-		t, m, err := conn.Receive(context.TODO())
+		t, m, err := conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError:
@@ -90,12 +109,17 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 }
 
 func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
+	wg.Add(1)
+	defer wg.Done()
+
 	log.Println("connected - starting sendPump")
 	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case msg := <-a.sendq:
-			err := conn.Send(context.TODO(), msg.Type, msg.Payload)
+			err := conn.Send(msg.Type, msg.Payload)
 			if err != nil {
 				switch err := err.(type) {
 				case transport.ConnectionError:
@@ -109,12 +133,63 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 		case <-ticker.C:
 			if a.disconnected {
 				log.Println("disconnected - stopping sendPump")
-				ticker.Stop()
-				wg.Done()
 				return
 			}
+		case <-a.stopping:
+			// we abandon anything left in the queue and exit the sendpump
+			// TODO(greg): leave no messages behind! if we can.
+			return
 		}
 	}
+}
+
+func (a *Agent) sendKeepalive() error {
+	msg := &message{
+		Type: types.KeepaliveType,
+	}
+	keepalive := &types.Event{}
+	keepalive.Entity = a.getDefaultEntity()
+	keepalive.Timestamp = time.Now().Unix()
+	msgBytes, err := json.Marshal(keepalive)
+	if err != nil {
+		return err
+	}
+	msg.Payload = msgBytes
+
+	a.sendq <- msg
+
+	return nil
+}
+
+func (a *Agent) keepaliveLoop() {
+	log.Println("starting keepalive loop")
+
+	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	defer ticker.Stop()
+	// when we're disconnected, we want to pause sending keepalives so that we
+	// can queue up things in the send queue that are important.
+	for {
+		select {
+		case <-ticker.C:
+			if !a.disconnected {
+				if err := a.sendKeepalive(); err != nil {
+					log.Println("error marshaling keepalive: ", err.Error())
+				}
+			}
+		case <-a.stopping:
+			log.Println("stopping keepalive loop")
+			return
+		}
+	}
+}
+
+func (a *Agent) getDefaultEntity() *types.Entity {
+	if a.entity == nil {
+		e := &types.Entity{}
+		a.entity = e
+	}
+
+	return a.entity
 }
 
 func (a *Agent) handshake() error {
@@ -127,12 +202,12 @@ func (a *Agent) handshake() error {
 	}
 
 	// shoot first, ask questions later.
-	err = a.conn.Send(context.TODO(), types.AgentHandshakeType, msgBytes)
+	err = a.conn.Send(types.AgentHandshakeType, msgBytes)
 	if err != nil {
 		return err
 	}
 
-	t, m, err := a.conn.Receive(context.TODO())
+	t, m, err := a.conn.Receive()
 	if err != nil {
 		return err
 	}
@@ -157,13 +232,15 @@ func (a *Agent) handshake() error {
 // If Run cannot establish an initial connection to the specified Backend
 // URL, Run will return an error.
 func (a *Agent) Run() error {
+	// TODO(greg): this whole thing reeks. i want to be able to return an error
+	// if we can't connect, but maybe we do the channel w/ terminal errors thing
+	// here as well. yeah. i think we should do that instead.
 	conn, err := transport.Connect(a.config.BackendURL)
 	if err != nil {
 		return err
 	}
 	a.conn = conn
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
 	err = a.handshake()
 	if err != nil {
 		return err
@@ -172,6 +249,7 @@ func (a *Agent) Run() error {
 	a.disconnected = false
 	go a.sendPump(wg, conn)
 	go a.receivePump(wg, conn)
+	go a.keepaliveLoop()
 
 	go func(wg *sync.WaitGroup) {
 		retries := 0
@@ -179,10 +257,10 @@ func (a *Agent) Run() error {
 		defer ticker.Stop()
 		for {
 			select {
-			case <-a.stopChan:
+			case <-a.stopping:
 				a.conn.Close()
 				wg.Wait()
-				a.stopChan <- struct{}{}
+				close(a.stopped)
 			case <-ticker.C:
 				if a.disconnected {
 					log.Println("disconnected - attempting to reconnect: ", a.backendURL)
@@ -222,9 +300,9 @@ func (a *Agent) Run() error {
 // Stop will cause the Agent to finish processing requests and then cleanly
 // shutdown.
 func (a *Agent) Stop() {
-	a.stopChan <- struct{}{}
+	close(a.stopping)
 	select {
-	case <-a.stopChan:
+	case <-a.stopped:
 		return
 	case <-time.After(1 * time.Second):
 		return

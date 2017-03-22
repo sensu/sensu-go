@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -29,9 +28,9 @@ func TestGoodHandshake(t *testing.T) {
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 	conn, err := transport.Connect(wsURL)
 	assert.NoError(t, err)
-	err = conn.Send(context.TODO(), types.AgentHandshakeType, []byte("{}"))
+	err = conn.Send(types.AgentHandshakeType, []byte("{}"))
 	assert.NoError(t, err)
-	msgType, m, err := conn.Receive(context.TODO())
+	msgType, m, err := conn.Receive()
 	assert.NoError(t, err)
 	assert.Equal(t, msgType, types.BackendHandshakeType)
 	handshake := types.BackendHandshake{}

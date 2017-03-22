@@ -2,10 +2,8 @@ package transport
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -53,35 +51,23 @@ func Decode(payload []byte) (string, []byte, error) {
 	return string(msgType), msg, nil
 }
 
-// A Transport is a wrapper around a websocket or other connection that provides
-// safety for concurrent use by multiple goroutines.
+// A Transport is a connection between sensu Agents and Backends.
 type Transport struct {
 	Connection *websocket.Conn
-
-	readLock  *sync.Mutex
-	writeLock *sync.Mutex
 }
 
 // NewTransport creates an initialized Transport and return its pointer.
 func NewTransport(conn *websocket.Conn) *Transport {
 	return &Transport{
 		Connection: conn,
-		readLock:   &sync.Mutex{},
-		writeLock:  &sync.Mutex{},
 	}
 }
 
-// TODO(grep): handle context cancelling / read timeout so that we we don't
-// deadlock on the readLock mutex. Is this possible to do with contexts
-// and gorilla/websocket? Is there some way that this is not totally screwed?
-
 // Send is used to send a message over the transport. It takes a message type
 // hint and a serialized payload. Send will block until the message has been
-// sent.
-func (t *Transport) Send(ctx context.Context, msgType string, payload []byte) error {
-	t.writeLock.Lock()
-	defer t.writeLock.Unlock()
-
+// sent. Send is synchronous, returning nil if the write to the underlying
+// socket was successful and an error otherwise.
+func (t *Transport) Send(msgType string, payload []byte) error {
 	msg := Encode(msgType, payload)
 	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
 	if err != nil {
@@ -96,10 +82,7 @@ func (t *Transport) Send(ctx context.Context, msgType string, payload []byte) er
 
 // Receive is used to receive a message from the transport. It takes a context
 // and blocks until the next message is received from the transport.
-func (t *Transport) Receive(ctx context.Context) (string, []byte, error) {
-	t.readLock.Lock()
-	defer t.readLock.Unlock()
-
+func (t *Transport) Receive() (string, []byte, error) {
 	_, p, err := t.Connection.ReadMessage()
 	if err != nil {
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {

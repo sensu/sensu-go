@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,12 +34,12 @@ func (s *Session) Start() error {
 	}
 
 	// shoot first, ask questions later.
-	err = s.conn.Send(context.TODO(), types.BackendHandshakeType, hsBytes)
+	err = s.conn.Send(types.BackendHandshakeType, hsBytes)
 	if err != nil {
 		return fmt.Errorf("error sending backend handshake: %s", err.Error())
 	}
 
-	t, m, err := s.conn.Receive(context.TODO())
+	t, m, err := s.conn.Receive()
 	if err != nil {
 		return fmt.Errorf("error receiving agent handshake: %s", err.Error())
 	}

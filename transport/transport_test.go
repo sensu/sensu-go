@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/json"
 	"net/http"
@@ -24,7 +23,7 @@ func TestTransportSendReceive(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		transport, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		msgType, payload, err := transport.Receive(context.TODO())
+		msgType, payload, err := transport.Receive()
 
 		assert.NoError(t, err)
 		assert.Equal(t, "testMessageType", msgType)
@@ -39,7 +38,7 @@ func TestTransportSendReceive(t *testing.T) {
 	assert.NoError(t, err)
 	msgBytes, err := json.Marshal(testMessage)
 	assert.NoError(t, err)
-	err = clientTransport.Send(context.TODO(), "testMessageType", msgBytes)
+	err = clientTransport.Send("testMessageType", msgBytes)
 	assert.NoError(t, err)
 
 	<-done
@@ -60,7 +59,7 @@ func TestClosedWebsocket(t *testing.T) {
 	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
 	assert.NoError(t, err)
 	<-done
-	_, _, err = clientTransport.Receive(context.TODO())
+	_, _, err = clientTransport.Receive()
 	assert.IsType(t, ConnectionError{}, err)
 
 	// This test will fail until https://github.com/gorilla/websocket/issues/226
