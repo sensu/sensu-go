@@ -84,13 +84,22 @@ func (b *Backend) newHTTPServer() *http.Server {
 	// TODO(greg): the API stuff will all have to be moved out of here at some
 	// point. @portertech and I had discussed multiple listeners as well, but I'm
 	// still not convinced about that.
-	servemux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+	servemux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
 		sb, err := json.Marshal(b.Status())
 		if err != nil {
 			log.Println("error marshaling status: ", err.Error())
 			http.Error(w, "Error getting server status.", 500)
 		}
 		fmt.Fprint(w, sb)
+	})
+	servemux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		for _, v := range b.Status() {
+			if !v {
+				http.Error(w, "", 503)
+				return
+			}
+		}
+		// implicitly returns 200
 	})
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", b.Config.Port),

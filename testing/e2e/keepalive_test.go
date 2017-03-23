@@ -54,7 +54,7 @@ func TestAgentKeepalives(t *testing.T) {
 
 	backendHealthy := false
 	for i := 0; i < 10; i++ {
-		resp, getErr := http.Get(fmt.Sprintf("%s/status", backendHTTPURL))
+		resp, getErr := http.Get(fmt.Sprintf("%s/health", backendHTTPURL))
 		if getErr != nil {
 			log.Println("backend not ready, sleeping...")
 			time.Sleep(1 * time.Second)
