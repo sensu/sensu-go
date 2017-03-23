@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
+	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -79,31 +81,34 @@ func NewBackend(config *Config) (*Backend, error) {
 }
 
 func (b *Backend) newHTTPServer() *http.Server {
-	servemux := http.NewServeMux()
-	servemux.HandleFunc("/agents/ws", b.newHTTPHandler())
+	r := mux.NewRouter()
+	r.HandleFunc("/agents/ws", b.newHTTPHandler())
+
 	// TODO(greg): the API stuff will all have to be moved out of here at some
 	// point. @portertech and I had discussed multiple listeners as well, but I'm
 	// still not convinced about that.
-	servemux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
 		sb, err := json.Marshal(b.Status())
 		if err != nil {
 			log.Println("error marshaling status: ", err.Error())
-			http.Error(w, "Error getting server status.", 500)
+			http.Error(w, "Error getting server status.", http.StatusInternalServerError)
 		}
 		fmt.Fprint(w, sb)
 	})
-	servemux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		for _, v := range b.Status() {
 			if !v {
-				http.Error(w, "", 503)
+				http.Error(w, "", http.StatusServiceUnavailable)
 				return
 			}
 		}
 		// implicitly returns 200
 	})
 	return &http.Server{
-		Addr:    fmt.Sprintf(":%d", b.Config.Port),
-		Handler: servemux,
+		Addr:         fmt.Sprintf(":%d", b.Config.Port),
+		Handler:      r,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
 	}
 }
 
@@ -137,6 +142,7 @@ func (b *Backend) Run() error {
 	if err != nil {
 		return fmt.Errorf("error starting etcd: %s", err.Error())
 	}
+
 	store, err := e.NewStore()
 	if err != nil {
 		return err
