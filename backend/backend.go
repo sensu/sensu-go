@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -100,7 +97,12 @@ func NewBackend(config *Config) (*Backend, error) {
 // Run starts all of the Backend server's event loops and sets up the HTTP
 // server.
 func (b *Backend) Run() error {
-	errChan := make(chan error)
+	// there are two channels in play here: inErrChan is used by the various
+	// services the Backend manages as a destination for terminal errors.
+	// we then monitor that channel and the first error returned on that
+	// channel causes the Backend to shutdown. Then, we pass that error on
+	// to the Err() method via the b.errChan channel.
+	inErrChan := make(chan error)
 	cfg := etcd.NewConfig()
 	cfg.StateDir = b.Config.StateDir
 	cfg.ClientListenURL = b.Config.EtcdClientListenURL
@@ -118,15 +120,15 @@ func (b *Backend) Run() error {
 	b.store = store
 
 	go func() {
-		errChan <- b.httpServer.ListenAndServe()
+		inErrChan <- b.httpServer.ListenAndServe()
 	}()
 
 	go func() {
-		errChan <- b.agentServer.ListenAndServe()
+		inErrChan <- b.agentServer.ListenAndServe()
 	}()
 
 	go func() {
-		errChan <- <-e.Err()
+		inErrChan <- <-e.Err()
 	}()
 
 	go b.messageBus.Main()
@@ -134,7 +136,7 @@ func (b *Backend) Run() error {
 	go func() {
 		var inErr error
 		select {
-		case inErr = <-errChan:
+		case inErr = <-inErrChan:
 			log.Fatal("http server error: ", inErr.Error())
 		case <-b.shutdownChan:
 			log.Println("backend shutting down")
@@ -155,13 +157,9 @@ func (b *Backend) Run() error {
 		if inErr != nil {
 			b.errChan <- inErr
 		}
-		close(b.errChan)
+		// we allow b.errChan and inErrChan to leak to avoid panics from other
+		// goroutines writing errors to either after shutdown has been initiated.
 		close(b.done)
-		cmd := exec.Command("nslookup", "-l", "-n", "-t")
-		cmd.Run()
-		rdr, _ := cmd.StdoutPipe()
-		out, _ := ioutil.ReadAll(io.Reader(rdr))
-		fmt.Print(out)
 	}()
 
 	return nil
@@ -183,10 +181,9 @@ func (b *Backend) Status() map[string]bool {
 	return sm
 }
 
-// Err returns a channel yielding terminal errors for the backend. The channel
-// will be closed on clean shutdown.
-func (b *Backend) Err() <-chan error {
-	return b.errChan
+// Err blocks and returns the first terminal error encountered by this Backend.
+func (b *Backend) Err() error {
+	return <-b.errChan
 }
 
 // Stop the Backend cleanly.
