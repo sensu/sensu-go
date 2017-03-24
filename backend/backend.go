@@ -2,14 +2,12 @@ package backend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -166,7 +164,7 @@ func (b *Backend) Run() error {
 }
 
 // Status returns a map of component name to boolean healthy indicator.
-func (b *Backend) Status() map[string]bool {
+func (b *Backend) Status() StatusMap {
 	sm := map[string]bool{
 		"store":       b.store.Healthy(),
 		"message_bus": true,
@@ -209,37 +207,6 @@ func agentServer(b *Backend) *http.Server {
 
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", b.Config.AgentPort),
-		Handler:      r,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
-}
-
-func httpServer(b *Backend) *http.Server {
-	r := mux.NewRouter()
-
-	// TODO(greg): the API stuff will all have to be moved out of here at some
-	// point. @portertech and I had discussed multiple listeners as well, but I'm
-	// still not convinced about that.
-	r.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
-		sb, err := json.Marshal(b.Status())
-		if err != nil {
-			log.Println("error marshaling status: ", err.Error())
-			http.Error(w, "Error getting server status.", http.StatusInternalServerError)
-		}
-		fmt.Fprint(w, sb)
-	})
-	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		for _, v := range b.Status() {
-			if !v {
-				http.Error(w, "", http.StatusServiceUnavailable)
-				return
-			}
-		}
-		// implicitly returns 200
-	})
-	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", b.Config.APIPort),
 		Handler:      r,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
