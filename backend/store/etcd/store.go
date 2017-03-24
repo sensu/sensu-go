@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
@@ -46,7 +45,7 @@ func (s *etcdStore) GetEntityByID(id string) (*types.Entity, error) {
 		return nil, err
 	}
 	if len(resp.Kvs) != 1 {
-		return nil, errors.New("not found")
+		return nil, nil
 	}
 	entity := &types.Entity{}
 	err = json.Unmarshal(resp.Kvs[0].Value, entity)

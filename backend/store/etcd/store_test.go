@@ -60,6 +60,6 @@ func TestEtcdStore(t *testing.T) {
 		assert.NoError(t, err)
 		retrieved, err = store.GetEntityByID(entity.ID)
 		assert.Nil(t, retrieved)
-		assert.Error(t, err)
+		assert.NoError(t, err)
 	})
 }
