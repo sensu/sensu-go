@@ -16,7 +16,7 @@ import (
 )
 
 func TestAgentKeepalives(t *testing.T) {
-	ports := make([]int, 3)
+	ports := make([]int, 4)
 	err := util.RandomPorts(ports)
 	if err != nil {
 		log.Fatal(err)
@@ -30,13 +30,15 @@ func TestAgentKeepalives(t *testing.T) {
 
 	etcdClientURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
 	etcdPeerURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
-	backendPort := ports[2]
-	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/agents/ws", backendPort)
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", backendPort)
+	apiPort := ports[2]
+	agentPort := ports[3]
+	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", agentPort)
+	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", apiPort)
 	initialCluster := fmt.Sprintf("default=%s", etcdPeerURL)
 
 	bep := &backendProcess{
-		BackendPort:        backendPort,
+		APIPort:            apiPort,
+		AgentPort:          agentPort,
 		StateDir:           tmpDir,
 		EtcdClientURL:      etcdClientURL,
 		EtcdPeerURL:        etcdPeerURL,
@@ -54,7 +56,7 @@ func TestAgentKeepalives(t *testing.T) {
 
 	backendHealthy := false
 	for i := 0; i < 10; i++ {
-		resp, getErr := http.Get(fmt.Sprintf("%s/status", backendHTTPURL))
+		resp, getErr := http.Get(fmt.Sprintf("%s/health", backendHTTPURL))
 		if getErr != nil {
 			log.Println("backend not ready, sleeping...")
 			time.Sleep(1 * time.Second)

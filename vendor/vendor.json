@@ -424,6 +424,12 @@
 			"revisionTime": "2016-12-17T18:35:37Z"
 		},
 		{
+			"checksumSHA1": "Ek5SW7pswB7YzX1Dr0bTSFCNOtc=",
+			"path": "github.com/gorilla/mux",
+			"revision": "999ef73f5d50979cf6d12afed1726325b63f9570",
+			"revisionTime": "2017-02-23T20:25:54Z"
+		},
+		{
 			"checksumSHA1": "jb1pFNNVYzpY4Mz09WEWeTNng40=",
 			"path": "github.com/gorilla/websocket",
 			"revision": "3f3e394da2b801fbe732a935ef40724762a67a07",

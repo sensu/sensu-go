@@ -16,19 +16,21 @@ import (
 
 func TestHTTPListener(t *testing.T) {
 	util.WithTempDir(func(path string) {
-		ports := make([]int, 3)
+		ports := make([]int, 4)
 		err := util.RandomPorts(ports)
 		if err != nil {
 			log.Panic(err)
 		}
 		clURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
 		apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
-		backendPort := ports[2]
+		agentPort := ports[2]
+		apiPort := ports[3]
 		initCluster := fmt.Sprintf("default=%s", apURL)
 		fmt.Println(initCluster)
 
 		b, err := NewBackend(&Config{
-			Port:                backendPort,
+			AgentPort:           agentPort,
+			APIPort:             apiPort,
 			StateDir:            path,
 			EtcdClientListenURL: clURL,
 			EtcdPeerListenURL:   apURL,
@@ -43,7 +45,7 @@ func TestHTTPListener(t *testing.T) {
 		assert.NoError(t, err)
 
 		for i := 0; i < 5; i++ {
-			conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", backendPort))
+			conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", agentPort))
 			if derr != nil {
 				fmt.Println("Waiting for backend to start")
 				time.Sleep(time.Duration(i) * time.Second)
@@ -53,7 +55,7 @@ func TestHTTPListener(t *testing.T) {
 			}
 		}
 
-		client, err := transport.Connect(fmt.Sprintf("ws://localhost:%d/agents/ws", backendPort))
+		client, err := transport.Connect(fmt.Sprintf("ws://localhost:%d/", agentPort))
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 

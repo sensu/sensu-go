@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os/exec"
 	"path/filepath"
+	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -18,9 +18,16 @@ import (
 	"github.com/sensu/sensu-go/transport"
 )
 
+var (
+	// upgrader is safe for concurrent use, and we don't need any particularly
+	// specialized configurations for different uses.
+	upgrader = &websocket.Upgrader{}
+)
+
 // Config specifies a Backend configuration.
 type Config struct {
-	Port                int
+	APIPort             int
+	AgentPort           int
 	StateDir            string
 	EtcdClientListenURL string
 	EtcdPeerListenURL   string
@@ -32,13 +39,13 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
-	errChan         chan error
-	shutdownChan    chan struct{}
-	done            chan struct{}
-	messageBus      *nsqd.NSQD
-	httpServer      *http.Server
-	transportServer *transport.Server
-	store           store.Store
+	errChan      chan error
+	shutdownChan chan struct{}
+	done         chan struct{}
+	messageBus   *nsqd.NSQD
+	httpServer   *http.Server
+	agentServer  *http.Server
+	store        store.Store
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -58,6 +65,14 @@ func NewBackend(config *Config) (*Backend, error) {
 		config.EtcdInitialCluster = "default=http://127.0.0.1:2380"
 	}
 
+	if config.APIPort == 0 {
+		config.APIPort = 8080
+	}
+
+	if config.AgentPort == 0 {
+		config.AgentPort = 8081
+	}
+
 	b := &Backend{
 		Config: config,
 
@@ -65,8 +80,9 @@ func NewBackend(config *Config) (*Backend, error) {
 		errChan:      make(chan error, 1),
 		shutdownChan: make(chan struct{}),
 	}
-	b.httpServer = b.newHTTPServer()
-	b.transportServer = transport.NewServer()
+
+	b.httpServer = httpServer(b)
+	b.agentServer = agentServer(b)
 	nsqConfig := messaging.NewConfig()
 	nsqConfig.StatePath = filepath.Join(config.StateDir, "nsqd")
 	bus, err := messaging.NewNSQD(nsqConfig)
@@ -78,47 +94,15 @@ func NewBackend(config *Config) (*Backend, error) {
 	return b, nil
 }
 
-func (b *Backend) newHTTPServer() *http.Server {
-	servemux := http.NewServeMux()
-	servemux.HandleFunc("/agents/ws", b.newHTTPHandler())
-	// TODO(greg): the API stuff will all have to be moved out of here at some
-	// point. @portertech and I had discussed multiple listeners as well, but I'm
-	// still not convinced about that.
-	servemux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		sb, err := json.Marshal(b.Status())
-		if err != nil {
-			log.Println("error marshaling status: ", err.Error())
-			http.Error(w, "Error getting server status.", 500)
-		}
-		fmt.Fprint(w, sb)
-	})
-	return &http.Server{
-		Addr:    fmt.Sprintf(":%d", b.Config.Port),
-		Handler: servemux,
-	}
-}
-
-func (b *Backend) newHTTPHandler() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := b.transportServer.Serve(w, r)
-		if err != nil {
-			log.Println("transport error on websocket upgrade: ", err.Error())
-			return
-		}
-
-		session := NewSession(conn, b.store)
-		// blocks until session end is detected
-		err = session.Start()
-		if err != nil {
-			log.Println("failed to start session: ", err.Error())
-		}
-	})
-}
-
 // Run starts all of the Backend server's event loops and sets up the HTTP
 // server.
 func (b *Backend) Run() error {
-	errChan := make(chan error)
+	// there are two channels in play here: inErrChan is used by the various
+	// services the Backend manages as a destination for terminal errors.
+	// we then monitor that channel and the first error returned on that
+	// channel causes the Backend to shutdown. Then, we pass that error on
+	// to the Err() method via the b.errChan channel.
+	inErrChan := make(chan error)
 	cfg := etcd.NewConfig()
 	cfg.StateDir = b.Config.StateDir
 	cfg.ClientListenURL = b.Config.EtcdClientListenURL
@@ -128,6 +112,7 @@ func (b *Backend) Run() error {
 	if err != nil {
 		return fmt.Errorf("error starting etcd: %s", err.Error())
 	}
+
 	store, err := e.NewStore()
 	if err != nil {
 		return err
@@ -135,17 +120,23 @@ func (b *Backend) Run() error {
 	b.store = store
 
 	go func() {
-		errChan <- b.httpServer.ListenAndServe()
+		inErrChan <- b.httpServer.ListenAndServe()
 	}()
+
 	go func() {
-		errChan <- <-e.Err()
+		inErrChan <- b.agentServer.ListenAndServe()
 	}()
+
+	go func() {
+		inErrChan <- <-e.Err()
+	}()
+
 	go b.messageBus.Main()
 
 	go func() {
 		var inErr error
 		select {
-		case inErr = <-errChan:
+		case inErr = <-inErrChan:
 			log.Fatal("http server error: ", inErr.Error())
 		case <-b.shutdownChan:
 			log.Println("backend shutting down")
@@ -166,13 +157,9 @@ func (b *Backend) Run() error {
 		if inErr != nil {
 			b.errChan <- inErr
 		}
-		close(b.errChan)
+		// we allow b.errChan and inErrChan to leak to avoid panics from other
+		// goroutines writing errors to either after shutdown has been initiated.
 		close(b.done)
-		cmd := exec.Command("nslookup", "-l", "-n", "-t")
-		cmd.Run()
-		rdr, _ := cmd.StdoutPipe()
-		out, _ := ioutil.ReadAll(io.Reader(rdr))
-		fmt.Print(out)
 	}()
 
 	return nil
@@ -194,14 +181,67 @@ func (b *Backend) Status() map[string]bool {
 	return sm
 }
 
-// Err returns a channel yielding terminal errors for the backend. The channel
-// will be closed on clean shutdown.
-func (b *Backend) Err() <-chan error {
-	return b.errChan
+// Err blocks and returns the first terminal error encountered by this Backend.
+func (b *Backend) Err() error {
+	return <-b.errChan
 }
 
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
 	close(b.shutdownChan)
 	<-b.done
+}
+
+func agentServer(b *Backend) *http.Server {
+	r := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println("transport error on websocket upgrade: ", err.Error())
+			return
+		}
+
+		session := NewSession(transport.NewTransport(conn), b.store)
+		err = session.Start()
+		if err != nil {
+			log.Println("failed to start session: ", err.Error())
+		}
+	})
+
+	return &http.Server{
+		Addr:         fmt.Sprintf(":%d", b.Config.AgentPort),
+		Handler:      r,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+}
+
+func httpServer(b *Backend) *http.Server {
+	r := mux.NewRouter()
+
+	// TODO(greg): the API stuff will all have to be moved out of here at some
+	// point. @portertech and I had discussed multiple listeners as well, but I'm
+	// still not convinced about that.
+	r.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
+		sb, err := json.Marshal(b.Status())
+		if err != nil {
+			log.Println("error marshaling status: ", err.Error())
+			http.Error(w, "Error getting server status.", http.StatusInternalServerError)
+		}
+		fmt.Fprint(w, sb)
+	})
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		for _, v := range b.Status() {
+			if !v {
+				http.Error(w, "", http.StatusServiceUnavailable)
+				return
+			}
+		}
+		// implicitly returns 200
+	})
+	return &http.Server{
+		Addr:         fmt.Sprintf(":%d", b.Config.APIPort),
+		Handler:      r,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
 }

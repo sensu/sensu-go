@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	listenPort int
-	stateDir   string
+	agentPort int
+	apiPort   int
+	stateDir  string
 
 	etcdClientListenURL string
 	etcdPeerListenURL   string
@@ -29,10 +30,15 @@ func newStartCommand() *cobra.Command {
 		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := &backend.Config{
-				Port:     listenPort,
-				StateDir: stateDir,
+				AgentPort: agentPort,
+				APIPort:   apiPort,
+				StateDir:  stateDir,
 			}
 
+			// we have defaults for this in the backend config. this is basically
+			// because we don't _actually_ want people using these flags. they're
+			// mostly just for testing. can we kill these from the shipped binary?
+			// - grep
 			if etcdClientListenURL != "" {
 				cfg.EtcdClientListenURL = etcdClientListenURL
 			}
@@ -52,26 +58,20 @@ func newStartCommand() *cobra.Command {
 			sensuBackend.Run()
 
 			sigs := make(chan os.Signal, 1)
-			done := make(chan struct{}, 1)
 
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 			go func() {
 				sig := <-sigs
 				log.Println("signal received: ", sig)
 				sensuBackend.Stop()
-				done <- struct{}{}
 			}()
 
-			select {
-			case <-done:
-				return nil
-			case err := <-sensuBackend.Err():
-				return err
-			}
+			return sensuBackend.Err()
 		},
 	}
 
-	cmd.Flags().IntVarP(&listenPort, "port", "p", 8080, "port to listen on")
+	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
+	cmd.Flags().IntVar(&agentPort, "agent-port", 8081, "Agent listener port")
 	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", "/var/lib/sensu", "path to sensu state storage")
 
 	// For now don't set defaults for these. This allows us to control defaults on NewBackend(). We may wish
