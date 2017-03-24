@@ -58,22 +58,15 @@ func newStartCommand() *cobra.Command {
 			sensuBackend.Run()
 
 			sigs := make(chan os.Signal, 1)
-			done := make(chan struct{}, 1)
 
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 			go func() {
 				sig := <-sigs
 				log.Println("signal received: ", sig)
 				sensuBackend.Stop()
-				done <- struct{}{}
 			}()
 
-			select {
-			case <-done:
-				return nil
-			case err := <-sensuBackend.Err():
-				return err
-			}
+			return sensuBackend.Err()
 		},
 	}
 
