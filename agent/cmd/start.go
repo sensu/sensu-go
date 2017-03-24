@@ -16,6 +16,7 @@ func init() {
 
 var (
 	backendURL string
+	agentID    string
 )
 
 func newStartCommand() *cobra.Command {
@@ -25,6 +26,11 @@ func newStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := agent.NewConfig()
 			cfg.BackendURL = backendURL
+
+			if agentID != "" {
+				cfg.AgentID = agentID
+			}
+
 			sensuAgent := agent.NewAgent(cfg)
 			if err := sensuAgent.Run(); err != nil {
 				return err
@@ -47,6 +53,7 @@ func newStartCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&backendURL, "backend-url", "b", "ws://localhost:8080", "ws/wss URL of Sensu backend server(s)")
+	cmd.Flags().StringVar(&agentID, "id", "", "agent ID (defaults to hostname)")
 
 	return cmd
 }
