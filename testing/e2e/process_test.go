@@ -9,7 +9,8 @@ import (
 )
 
 type backendProcess struct {
-	BackendPort        int
+	APIPort            int
+	AgentPort          int
 	StateDir           string
 	EtcdPeerURL        string
 	EtcdClientURL      string
@@ -25,7 +26,7 @@ type backendProcess struct {
 // backendProcess must be configured.
 func (b *backendProcess) Start() error {
 	exe := filepath.Join(binDir, "sensu-backend")
-	cmd := exec.Command(exe, "start", "-d", b.StateDir, "-p", strconv.FormatInt(int64(b.BackendPort), 10), "--store-client-url", b.EtcdClientURL, "--store-peer-url", b.EtcdPeerURL, "--store-initial-cluster", b.EtcdInitialCluster)
+	cmd := exec.Command(exe, "start", "-d", b.StateDir, "--api-port", strconv.FormatInt(int64(b.APIPort), 10), "--agent-port", strconv.FormatInt(int64(b.AgentPort), 10), "--store-client-url", b.EtcdClientURL, "--store-peer-url", b.EtcdPeerURL, "--store-initial-cluster", b.EtcdInitialCluster)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -41,7 +42,7 @@ func (b *backendProcess) Start() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("backend started with pid %d listening on port %d\n", cmd.Process.Pid, b.BackendPort)
+	log.Printf("backend started with pid %d\n", cmd.Process.Pid)
 	if err != nil {
 		return err
 	}
