@@ -26,9 +26,6 @@ func (t *testStore) DeleteEntity(*types.Entity) error {
 func (t *testStore) GetEntities() ([]*types.Entity, error) {
 	return nil, nil
 }
-func (t *testStore) Healthy() bool {
-	return true
-}
 
 func TestGoodHandshake(t *testing.T) {
 	done := make(chan struct{})

@@ -77,19 +77,6 @@ func (s *etcdStore) GetEntities() ([]*types.Entity, error) {
 	return earr, nil
 }
 
-func (s *etcdStore) Healthy() bool {
-	mapi := clientv3.NewMaintenance(s.client)
-	// TODO(greg): what can we do with the response? are there some operational
-	// parameters that are useful?
-	//
-	// https://godoc.org/github.com/coreos/etcd/etcdserver/etcdserverpb#StatusResponse
-	_, err := mapi.Status(context.TODO(), s.etcd.cfg.ClientListenURL)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 // NewStore ...
 func (e *Etcd) NewStore() (store.Store, error) {
 	c, err := e.NewClient()

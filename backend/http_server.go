@@ -38,7 +38,7 @@ func (a *API) InfoHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("error marshaling status: ", err.Error())
 		http.Error(w, "Error getting server status.", http.StatusInternalServerError)
 	}
-	fmt.Fprint(w, sb)
+	fmt.Fprint(w, string(sb))
 }
 
 // HealthHandler handles GET requests to the /health endpoint.
@@ -61,7 +61,7 @@ func (a *API) EntitiesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	fmt.Fprint(w, esb)
+	fmt.Fprint(w, string(esb))
 }
 
 // EntityHandler handles requests to /entities/{id}.
@@ -82,13 +82,18 @@ func (a *API) EntityHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	fmt.Fprint(w, eb)
+	fmt.Fprint(w, string(eb))
 }
 
-func httpServer(b *Backend) *http.Server {
+func httpServer(b *Backend) (*http.Server, error) {
+	store, err := b.etcd.NewStore()
+	if err != nil {
+		return nil, err
+	}
+
 	api := &API{
 		Status: b.Status,
-		Store:  b.store,
+		Store:  store,
 	}
 
 	r := mux.NewRouter()
@@ -103,5 +108,5 @@ func httpServer(b *Backend) *http.Server {
 		Handler:      r,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-	}
+	}, nil
 }

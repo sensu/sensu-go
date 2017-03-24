@@ -8,6 +8,4 @@ type Store interface {
 	UpdateEntity(e *types.Entity) error
 	DeleteEntity(e *types.Entity) error
 	GetEntities() ([]*types.Entity, error)
-
-	Healthy() bool
 }

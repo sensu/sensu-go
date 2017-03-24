@@ -7,6 +7,7 @@
 package etcd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/url"
@@ -154,4 +155,22 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	}
 
 	return cli, nil
+}
+
+// Healthy returns true if Etcd is healthy, false otherwise.
+func (e *Etcd) Healthy() bool {
+	client, err := e.NewClient()
+	if err != nil {
+		return false
+	}
+	mapi := clientv3.NewMaintenance(client)
+	// TODO(greg): what can we do with the response? are there some operational
+	// parameters that are useful?
+	//
+	// https://godoc.org/github.com/coreos/etcd/etcdserver/etcdserverpb#StatusResponse
+	_, err = mapi.Status(context.TODO(), e.cfg.ClientListenURL)
+	if err != nil {
+		return false
+	}
+	return true
 }
