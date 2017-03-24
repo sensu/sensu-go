@@ -55,6 +55,28 @@ func (s *etcdStore) GetEntityByID(id string) (*types.Entity, error) {
 	return entity, nil
 }
 
+func (s *etcdStore) GetEntities() ([]*types.Entity, error) {
+	resp, err := s.kvc.Get(context.TODO(), getEntityPath(""), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	earr := make([]*types.Entity, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		entity := &types.Entity{}
+		err = json.Unmarshal(kv.Value, entity)
+		if err != nil {
+			return nil, err
+		}
+		earr[i] = entity
+	}
+
+	return earr, nil
+}
+
 func (s *etcdStore) Healthy() bool {
 	mapi := clientv3.NewMaintenance(s.client)
 	// TODO(greg): what can we do with the response? are there some operational

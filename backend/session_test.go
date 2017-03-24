@@ -23,6 +23,9 @@ func (t *testStore) UpdateEntity(*types.Entity) error {
 func (t *testStore) DeleteEntity(*types.Entity) error {
 	return nil
 }
+func (t *testStore) GetEntities() ([]*types.Entity, error) {
+	return nil, nil
+}
 func (t *testStore) Healthy() bool {
 	return true
 }
