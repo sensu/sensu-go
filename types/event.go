@@ -17,9 +17,10 @@ type Event struct {
 	Entity *Entity `json:"entity,omitempty"`
 }
 
-// Entity provides Event context.
+// Entity provides Event context and/or an Agent identifier.
 type Entity struct {
 	ID string
+	Class string
 	System
 }
 
@@ -27,4 +28,8 @@ type Entity struct {
 // is running on, used for additional Entity context.
 type System struct {
 	Hostname string
+	OS string
+	Platform string
+	PlatformFamily string
+	PlatformVersion string
 }

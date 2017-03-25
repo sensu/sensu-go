@@ -161,7 +161,7 @@ func (a *Agent) sendKeepalive() error {
 		Type: types.KeepaliveType,
 	}
 	keepalive := &types.Event{}
-	keepalive.Entity = a.getDefaultEntity()
+	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
 	msgBytes, err := json.Marshal(keepalive)
 	if err != nil {
@@ -196,14 +196,19 @@ func (a *Agent) keepaliveLoop() {
 	}
 }
 
-func (a *Agent) getDefaultEntity() *types.Entity {
+func (a *Agent) getAgentEntity() *types.Entity {
 	i, _ := host.Info()
 
 	if a.entity == nil {
 		e := &types.Entity{
 			ID: a.config.AgentID,
+			Class: "agent",
 			System: types.System{
 				Hostname: i.Hostname,
+				OS: i.OS,
+				Platform: i.Platform,
+				PlatformFamily: i.PlatformFamily,
+				PlatformVersion: i.PlatformVersion,
 			},
 		}
 		a.entity = e

@@ -36,7 +36,12 @@ func TestSendLoop(t *testing.T) {
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
 		assert.NotNil(t, event.Entity)
+		assert.Equal(t, "agent", event.Entity.Class)
 		assert.NotEmpty(t, event.Entity.System.Hostname)
+		assert.NotEmpty(t, event.Entity.System.OS)
+		assert.NotEmpty(t, event.Entity.System.Platform)
+		assert.NotEmpty(t, event.Entity.System.PlatformFamily)
+		assert.NotEmpty(t, event.Entity.System.PlatformVersion)
 		done <- struct{}{}
 	}))
 	defer ts.Close()
