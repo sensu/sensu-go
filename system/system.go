@@ -1,6 +1,6 @@
 // Package system provides information about the system of the current
-// process. System information is use for Agent (and potentially
-// Backend) entity context.
+// process. System information is used for Agent (and potentially
+// Backend) Entity context.
 package system
 
 import (
@@ -9,49 +9,56 @@ import (
         "github.com/sensu/sensu-go/types"
 )
 
-// Info describes the local system.
+// Info describes the local system, hostname, OS, platform, platform
+// family, platform version, and network interfaces.
 func Info() (types.System, error) {
-        i, err := host.Info()
+        info, err := host.Info()
 
         if err != nil {
                 return types.System{}, err
         }
 
-        s := types.System{
-                Hostname: i.Hostname,
-                OS: i.OS,
-                Platform: i.Platform,
-                PlatformFamily: i.PlatformFamily,
-                PlatformVersion: i.PlatformVersion,
+        system := types.System{
+                Hostname: info.Hostname,
+                OS: info.OS,
+                Platform: info.Platform,
+                PlatformFamily: info.PlatformFamily,
+                PlatformVersion: info.PlatformVersion,
         }
 
-        n, err := NetworkInfo()
+        network, err := NetworkInfo()
 
         if err == nil {
-		s.Network = n
+                system.Network = network
         }
 
-        return s, nil
+        return system, nil
 }
 
 
-// NetworkInfo describes the local network interfaces.
+// NetworkInfo describes the local network interfaces, including their
+// names (e.g. eth0), MACs (if available), and addresses.
 func NetworkInfo() (types.Network, error) {
-        i, err := net.Interfaces()
+        interfaces, err := net.Interfaces()
 
-        n := types.Network{}
+        network := types.Network{}
 
         if err != nil {
-                return n, err
+                return network, err
         }
 
-        for _, ni := range i {
-		item := types.NetworkInterface{
-			Name: ni.Name,
-		}
+        for _, i := range interfaces {
+                nInterface := types.NetworkInterface{
+                        Name: i.Name,
+			MAC: i.HardwareAddr,
+                }
 
-		n.Interfaces = append(n.Interfaces, item)
+                for _, address := range i.Addrs {
+			nInterface.Addresses = append(nInterface.Addresses, address.String())
+                }
+
+                network.Interfaces = append(network.Interfaces, nInterface)
         }
 
-        return n, nil
+        return network, nil
 }

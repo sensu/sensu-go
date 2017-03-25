@@ -16,6 +16,8 @@ func TestInfo(t *testing.T) {
         assert.NotEmpty(t, info.PlatformFamily)
         assert.NotEmpty(t, info.PlatformVersion)
         assert.NotEmpty(t, info.Network.Interfaces)
-        ni := info.Network.Interfaces[0]
-        assert.NotEmpty(t, ni.Name)
+        nInterface := info.Network.Interfaces[0]
+        assert.NotEmpty(t, nInterface.Name)
+        //assert.NotEmpty(t, nInterface.MAC) // can be empty
+        assert.NotEmpty(t, nInterface.Addresses)
 }

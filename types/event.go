@@ -46,4 +46,6 @@ type Network struct {
 // interface.
 type NetworkInterface struct {
 	Name string
+	MAC string
+	Addresses []string
 }
