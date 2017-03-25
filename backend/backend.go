@@ -2,18 +2,15 @@ package backend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
 )
@@ -45,7 +42,7 @@ type Backend struct {
 	messageBus   *nsqd.NSQD
 	httpServer   *http.Server
 	agentServer  *http.Server
-	store        store.Store
+	etcd         *etcd.Etcd
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -81,8 +78,31 @@ func NewBackend(config *Config) (*Backend, error) {
 		shutdownChan: make(chan struct{}),
 	}
 
-	b.httpServer = httpServer(b)
-	b.agentServer = agentServer(b)
+	// we go ahead and setup and start etcd here, because we'll have to pass
+	// a store along to the API.
+	cfg := etcd.NewConfig()
+	cfg.StateDir = b.Config.StateDir
+	cfg.ClientListenURL = b.Config.EtcdClientListenURL
+	cfg.PeerListenURL = b.Config.EtcdPeerListenURL
+	cfg.InitialCluster = b.Config.EtcdInitialCluster
+	e, err := etcd.NewEtcd(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error starting etcd: %s", err.Error())
+	}
+	b.etcd = e
+
+	httpsrv, err := httpServer(b)
+	if err != nil {
+		return nil, err
+	}
+	b.httpServer = httpsrv
+
+	asrv, err := agentServer(b)
+	if err != nil {
+		return nil, err
+	}
+
+	b.agentServer = asrv
 	nsqConfig := messaging.NewConfig()
 	nsqConfig.StatePath = filepath.Join(config.StateDir, "nsqd")
 	bus, err := messaging.NewNSQD(nsqConfig)
@@ -103,21 +123,6 @@ func (b *Backend) Run() error {
 	// channel causes the Backend to shutdown. Then, we pass that error on
 	// to the Err() method via the b.errChan channel.
 	inErrChan := make(chan error)
-	cfg := etcd.NewConfig()
-	cfg.StateDir = b.Config.StateDir
-	cfg.ClientListenURL = b.Config.EtcdClientListenURL
-	cfg.PeerListenURL = b.Config.EtcdPeerListenURL
-	cfg.InitialCluster = b.Config.EtcdInitialCluster
-	e, err := etcd.NewEtcd(cfg)
-	if err != nil {
-		return fmt.Errorf("error starting etcd: %s", err.Error())
-	}
-
-	store, err := e.NewStore()
-	if err != nil {
-		return err
-	}
-	b.store = store
 
 	go func() {
 		inErrChan <- b.httpServer.ListenAndServe()
@@ -128,7 +133,7 @@ func (b *Backend) Run() error {
 	}()
 
 	go func() {
-		inErrChan <- <-e.Err()
+		inErrChan <- <-b.etcd.Err()
 	}()
 
 	go b.messageBus.Main()
@@ -143,7 +148,7 @@ func (b *Backend) Run() error {
 		}
 
 		log.Printf("shutting down etcd")
-		if err := e.Shutdown(); err != nil {
+		if err := b.etcd.Shutdown(); err != nil {
 			log.Printf("error shutting down etcd: %s", err.Error())
 		}
 		log.Printf("shutting down http server")
@@ -166,9 +171,9 @@ func (b *Backend) Run() error {
 }
 
 // Status returns a map of component name to boolean healthy indicator.
-func (b *Backend) Status() map[string]bool {
+func (b *Backend) Status() StatusMap {
 	sm := map[string]bool{
-		"store":       b.store.Healthy(),
+		"store":       b.etcd.Healthy(),
 		"message_bus": true,
 	}
 
@@ -192,7 +197,12 @@ func (b *Backend) Stop() {
 	<-b.done
 }
 
-func agentServer(b *Backend) *http.Server {
+func agentServer(b *Backend) (*http.Server, error) {
+	store, err := b.etcd.NewStore()
+	if err != nil {
+		return nil, err
+	}
+
 	r := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -200,7 +210,7 @@ func agentServer(b *Backend) *http.Server {
 			return
 		}
 
-		session := NewSession(transport.NewTransport(conn), b.store)
+		session := NewSession(transport.NewTransport(conn), store)
 		err = session.Start()
 		if err != nil {
 			log.Println("failed to start session: ", err.Error())
@@ -212,36 +222,5 @@ func agentServer(b *Backend) *http.Server {
 		Handler:      r,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-	}
-}
-
-func httpServer(b *Backend) *http.Server {
-	r := mux.NewRouter()
-
-	// TODO(greg): the API stuff will all have to be moved out of here at some
-	// point. @portertech and I had discussed multiple listeners as well, but I'm
-	// still not convinced about that.
-	r.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
-		sb, err := json.Marshal(b.Status())
-		if err != nil {
-			log.Println("error marshaling status: ", err.Error())
-			http.Error(w, "Error getting server status.", http.StatusInternalServerError)
-		}
-		fmt.Fprint(w, sb)
-	})
-	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		for _, v := range b.Status() {
-			if !v {
-				http.Error(w, "", http.StatusServiceUnavailable)
-				return
-			}
-		}
-		// implicitly returns 200
-	})
-	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", b.Config.APIPort),
-		Handler:      r,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
+	}, nil
 }

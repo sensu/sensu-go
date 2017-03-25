@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
@@ -46,7 +45,7 @@ func (s *etcdStore) GetEntityByID(id string) (*types.Entity, error) {
 		return nil, err
 	}
 	if len(resp.Kvs) != 1 {
-		return nil, errors.New("not found")
+		return nil, nil
 	}
 	entity := &types.Entity{}
 	err = json.Unmarshal(resp.Kvs[0].Value, entity)
@@ -56,17 +55,26 @@ func (s *etcdStore) GetEntityByID(id string) (*types.Entity, error) {
 	return entity, nil
 }
 
-func (s *etcdStore) Healthy() bool {
-	mapi := clientv3.NewMaintenance(s.client)
-	// TODO(greg): what can we do with the response? are there some operational
-	// parameters that are useful?
-	//
-	// https://godoc.org/github.com/coreos/etcd/etcdserver/etcdserverpb#StatusResponse
-	_, err := mapi.Status(context.TODO(), s.etcd.cfg.ClientListenURL)
+func (s *etcdStore) GetEntities() ([]*types.Entity, error) {
+	resp, err := s.kvc.Get(context.TODO(), getEntityPath(""), clientv3.WithPrefix())
 	if err != nil {
-		return false
+		return nil, err
 	}
-	return true
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	earr := make([]*types.Entity, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		entity := &types.Entity{}
+		err = json.Unmarshal(kv.Value, entity)
+		if err != nil {
+			return nil, err
+		}
+		earr[i] = entity
+	}
+
+	return earr, nil
 }
 
 // NewStore ...

@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/testing/util"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,6 +52,7 @@ func TestAgentKeepalives(t *testing.T) {
 
 	ap := &agentProcess{
 		BackendURL: backendWSURL,
+		AgentID:    "TestKeepalives",
 	}
 
 	backendHealthy := false
@@ -62,7 +63,7 @@ func TestAgentKeepalives(t *testing.T) {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		defer resp.Body.Close()
+		resp.Body.Close()
 		if resp.StatusCode != 200 {
 			log.Printf("backend returned non-200 status code: %d\n", resp.StatusCode)
 			time.Sleep(1 * time.Second)
@@ -71,43 +72,46 @@ func TestAgentKeepalives(t *testing.T) {
 		backendHealthy = true
 	}
 
-	err = ap.Start()
-	if err != nil {
-		log.Panic(err)
-	}
+	assert.True(t, backendHealthy)
 
-	client, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{etcdClientURL},
-		DialTimeout: 5 * time.Second,
-	})
+	err = ap.Start()
 	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "unable to connect to etcd")
-	}
-	defer client.Close()
-	kvc := clientv3.NewKV(client)
+
+	// We do our debug/logging output here so that we don't panic down the line and
+	// never see it. This is all pretty useful stuff. This also lets us shutdown our
+	// child processes cleanly.
+	defer func() {
+		// We get vetshadow errors if we use err here, which is really damn
+		// annoying.
+		var dErr error
+		bep.Kill()
+		ap.Kill()
+
+		b, dErr := ioutil.ReadAll(bep.Stderr)
+		if dErr != nil {
+			log.Panic(dErr)
+		}
+		fmt.Print(string(b))
+
+		b, dErr = ioutil.ReadAll(ap.Stderr)
+		if dErr != nil {
+			log.Panic(dErr)
+		}
+		fmt.Print(string(b))
+	}()
 
 	// Give it a second to make sure we've sent a keepalive.
 	time.Sleep(1 * time.Second)
-	resp, err := kvc.Get(context.Background(), "/sensu.io", clientv3.WithPrefix())
+
+	resp, err := http.Get(fmt.Sprintf("%s/entities", backendHTTPURL))
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(resp.Kvs))
-	bep.Kill()
-	ap.Kill()
-
-	assert.True(t, backendHealthy)
-
-	// TODO(greg): Figure out if there's a way for us to only print logs if the
-	// test fails.
-	b, err := ioutil.ReadAll(bep.Stderr)
-	if err != nil {
-		log.Panic(err)
-	}
-	fmt.Print(string(b))
-
-	b, err = ioutil.ReadAll(ap.Stderr)
-	if err != nil {
-		log.Panic(err)
-	}
-	fmt.Print(string(b))
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	defer resp.Body.Close()
+	entities := []*types.Entity{}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	err = json.Unmarshal(bodyBytes, &entities)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(entities))
+	assert.Equal(t, "TestKeepalives", entities[0].ID)
 }
