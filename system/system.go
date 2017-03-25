@@ -50,11 +50,11 @@ func NetworkInfo() (types.Network, error) {
         for _, i := range interfaces {
                 nInterface := types.NetworkInterface{
                         Name: i.Name,
-			MAC: i.HardwareAddr,
+                        MAC: i.HardwareAddr,
                 }
 
                 for _, address := range i.Addrs {
-			nInterface.Addresses = append(nInterface.Addresses, address.String())
+                        nInterface.Addresses = append(nInterface.Addresses, address.String())
                 }
 
                 network.Interfaces = append(network.Interfaces, nInterface)
