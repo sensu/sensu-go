@@ -32,4 +32,18 @@ type System struct {
 	Platform string
 	PlatformFamily string
 	PlatformVersion string
+	Network
+}
+
+// Network contains information about the system network interfaces
+// that the Agent process is running on, used for additional Entity
+// context.
+type Network struct {
+	Interfaces []NetworkInterface
+}
+
+// NetworkInterface contains information about a system network
+// interface.
+type NetworkInterface struct {
+	Name string
 }

@@ -5,16 +5,17 @@ package system
 
 import (
         "github.com/shirou/gopsutil/host"
+        "github.com/shirou/gopsutil/net"
         "github.com/sensu/sensu-go/types"
 )
 
-// Info describes the system of the current process.
+// Info describes the local system.
 func Info() (types.System, error) {
         i, err := host.Info()
 
-	if err != nil {
-		return types.System{}, err
-	}
+        if err != nil {
+                return types.System{}, err
+        }
 
         s := types.System{
                 Hostname: i.Hostname,
@@ -24,5 +25,33 @@ func Info() (types.System, error) {
                 PlatformVersion: i.PlatformVersion,
         }
 
-	return s, nil
+        n, err := NetworkInfo()
+
+        if err == nil {
+		s.Network = n
+        }
+
+        return s, nil
+}
+
+
+// NetworkInfo describes the local network interfaces.
+func NetworkInfo() (types.Network, error) {
+        i, err := net.Interfaces()
+
+        n := types.Network{}
+
+        if err != nil {
+                return n, err
+        }
+
+        for _, ni := range i {
+		item := types.NetworkInterface{
+			Name: ni.Name,
+		}
+
+		n.Interfaces = append(n.Interfaces, item)
+        }
+
+        return n, nil
 }

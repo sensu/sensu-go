@@ -5,7 +5,7 @@ package system
 import (
         "testing"
 
-	"github.com/stretchr/testify/assert"
+        "github.com/stretchr/testify/assert"
 )
 
 func TestInfo(t *testing.T) {
@@ -15,4 +15,7 @@ func TestInfo(t *testing.T) {
         assert.NotEmpty(t, info.Platform)
         assert.NotEmpty(t, info.PlatformFamily)
         assert.NotEmpty(t, info.PlatformVersion)
+        assert.NotEmpty(t, info.Network.Interfaces)
+        ni := info.Network.Interfaces[0]
+        assert.NotEmpty(t, ni.Name)
 }
