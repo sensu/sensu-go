@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/shirou/gopsutil/host"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -196,9 +197,14 @@ func (a *Agent) keepaliveLoop() {
 }
 
 func (a *Agent) getDefaultEntity() *types.Entity {
+	i, _ := host.Info()
+
 	if a.entity == nil {
 		e := &types.Entity{
 			ID: a.config.AgentID,
+			System: types.System{
+				Hostname: i.Hostname,
+			},
 		}
 		a.entity = e
 	}

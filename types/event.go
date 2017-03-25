@@ -14,10 +14,17 @@ type Event struct {
 
 	// Entity is the Entity supplying the event. The default Entity for any
 	// Event is the running Agent process--if the Event is sent by an Agent.
-	Entity *Entity `json:"entity"`
+	Entity *Entity `json:"entity,omitempty"`
 }
 
-// An Entity is an identifier used for a particular Event.
+// Entity provides Event context.
 type Entity struct {
 	ID string
+	System
+}
+
+// System contains information about the system that the Agent process
+// is running on, used for additional Entity context.
+type System struct {
+	Hostname string
 }
