@@ -12,8 +12,8 @@ type Check struct {
 	// run.
 	Interval int `json:"interval"`
 
-	// Subscribers is the list of subscribers for the check.
-	Subscribers []string `json:"subscribers"`
+	// Subscriptions is the list of subscribers for the check.
+	Subscriptions []string `json:"subscriptions"`
 
 	// Command is the command to be executed.
 	Command string `json:"command"`

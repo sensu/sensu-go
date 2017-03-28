@@ -73,10 +73,10 @@ func TestEntityStorage(t *testing.T) {
 func TestCheckStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		check := &types.Check{
-			Name:        "check1",
-			Interval:    60,
-			Subscribers: []string{"subscription1"},
-			Command:     "command1",
+			Name:          "check1",
+			Interval:      60,
+			Subscriptions: []string{"subscription1"},
+			Command:       "command1",
 		}
 
 		err := store.UpdateCheck(check)
@@ -87,7 +87,7 @@ func TestCheckStorage(t *testing.T) {
 
 		assert.Equal(t, check.Name, retrieved.Name)
 		assert.Equal(t, check.Interval, retrieved.Interval)
-		assert.Equal(t, check.Subscribers, retrieved.Subscribers)
+		assert.Equal(t, check.Subscriptions, retrieved.Subscriptions)
 		assert.Equal(t, check.Command, retrieved.Command)
 
 		checks, err := store.GetChecks()
