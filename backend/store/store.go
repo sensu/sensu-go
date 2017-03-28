@@ -14,5 +14,5 @@ type Store interface {
 	GetChecks() ([]*types.Check, error)
 	GetCheckByName(name string) (*types.Check, error)
 	DeleteCheckByName(name string) error
-	Updatecheck(check *types.Check) error
+	UpdateCheck(check *types.Check) error
 }

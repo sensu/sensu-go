@@ -64,4 +64,32 @@ func TestEntityStorage(t *testing.T) {
 		assert.Nil(t, retrieved)
 		assert.NoError(t, err)
 	})
+
+}
+
+func TestCheckStorage(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		check := &types.Check{
+			Name:        "check1",
+			Interval:    60,
+			Subscribers: []string{"subscription1"},
+			Command:     "command1",
+		}
+
+		err := store.UpdateCheck(check)
+		assert.NoError(t, err)
+		retrieved, err := store.GetCheckByName("check1")
+		assert.NoError(t, err)
+		assert.NotNil(t, retrieved)
+
+		assert.Equal(t, check.Name, retrieved.Name)
+		assert.Equal(t, check.Interval, retrieved.Interval)
+		assert.Equal(t, check.Subscribers, retrieved.Subscribers)
+		assert.Equal(t, check.Command, retrieved.Command)
+
+		checks, err := store.GetChecks()
+		assert.NoError(t, err)
+		assert.NotEmpty(t, checks)
+		assert.Equal(t, 1, len(checks))
+	})
 }
