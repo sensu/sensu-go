@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/handler"
+	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -199,7 +199,7 @@ func (a *Agent) keepaliveLoop() {
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
-			ID: a.config.AgentID,
+			ID:    a.config.AgentID,
 			Class: "agent",
 		}
 
