@@ -12,7 +12,7 @@ type Event struct {
 	// Timestamp is the time in seconds since the Epoch.
 	Timestamp int64 `json:"timestamp"`
 
-	Entity *Entity `json:"entity"`
+	Entity *Entity `json:"entity,omitempty"`
 	Check  *Check  `json:"check,omitempty"`
 }
 
@@ -21,18 +21,18 @@ type Event struct {
 type Entity struct {
 	ID     string `json:"id"`
 	Class  string `json:"class"`
-	System `json:"system,omitempty"`
+	System System `json:"system,omitempty"`
 }
 
 // System contains information about the system that the Agent process
 // is running on, used for additional Entity context.
 type System struct {
-	Hostname        string `json:"hostname"`
-	OS              string `json:"os"`
-	Platform        string `json:"platform"`
-	PlatformFamily  string `json:"platform_family"`
-	PlatformVersion string `json:"platform_version"`
-	Network         `json:"network"`
+	Hostname        string  `json:"hostname"`
+	OS              string  `json:"os"`
+	Platform        string  `json:"platform"`
+	PlatformFamily  string  `json:"platform_family"`
+	PlatformVersion string  `json:"platform_version"`
+	Network         Network `json:"network"`
 }
 
 // Network contains information about the system network interfaces
