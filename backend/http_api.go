@@ -147,7 +147,7 @@ func (a *API) CheckHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err := a.Store.UpdateCheck(newCheck)
+		err = a.Store.UpdateCheck(newCheck)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -180,7 +180,7 @@ func (a *API) ChecksHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	fmt.Fprintf(w, checksBytes)
+	fmt.Fprintf(w, string(checksBytes))
 }
 
 func httpServer(b *Backend) (*http.Server, error) {
