@@ -63,6 +63,9 @@ func TestEntityStorage(t *testing.T) {
 		retrieved, err = store.GetEntityByID(entity.ID)
 		assert.Nil(t, retrieved)
 		assert.NoError(t, err)
+		// Nonexistent entity deletion should return no error.
+		err = store.DeleteEntity(entity)
+		assert.NoError(t, err)
 	})
 
 }
