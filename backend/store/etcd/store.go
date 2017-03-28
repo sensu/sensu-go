@@ -105,7 +105,7 @@ func (s *etcdStore) GetChecks() ([]*types.Check, error) {
 }
 
 func (s *etcdStore) GetCheckByName(name string) (*types.Check, error) {
-	resp, err := s.kvc.Get(context.TODO(), getChecksPath(name), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(context.TODO(), getChecksPath(name))
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,8 @@ func (s *etcdStore) GetCheckByName(name string) (*types.Check, error) {
 }
 
 func (s *etcdStore) DeleteCheckByName(name string) error {
-	return nil
+	_, err := s.kvc.Delete(context.TODO(), getChecksPath(name))
+	return err
 }
 
 func (s *etcdStore) UpdateCheck(check *types.Check) error {
