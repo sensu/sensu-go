@@ -12,27 +12,27 @@ type Event struct {
 	// Timestamp is the time in seconds since the Epoch.
 	Timestamp int64 `json:"timestamp"`
 
-	// Entity is the Entity supplying the event. The default Entity for any
-	// Event is the running Agent process--if the Event is sent by an Agent.
-	Entity *Entity `json:"entity,omitempty"`
+	Entity *Entity `json:"entity"`
+	Check  *Check  `json:"check,omitempty"`
 }
 
-// Entity provides Event context and/or an Agent identifier.
+// Entity is the Entity supplying the event. The default Entity for any
+// Event is the running Agent process--if the Event is sent by an Agent.
 type Entity struct {
-	ID string `json:"id"`
-	Class string `json:"class"`
+	ID     string `json:"id"`
+	Class  string `json:"class"`
 	System `json:"system,omitempty"`
 }
 
 // System contains information about the system that the Agent process
 // is running on, used for additional Entity context.
 type System struct {
-	Hostname string `json:"hostname"`
-	OS string `json:"os"`
-	Platform string `json:"platform"`
-	PlatformFamily string `json:"platform_family"`
+	Hostname        string `json:"hostname"`
+	OS              string `json:"os"`
+	Platform        string `json:"platform"`
+	PlatformFamily  string `json:"platform_family"`
 	PlatformVersion string `json:"platform_version"`
-	Network `json:"network"`
+	Network         `json:"network"`
 }
 
 // Network contains information about the system network interfaces
@@ -45,7 +45,7 @@ type Network struct {
 // NetworkInterface contains information about a system network
 // interface.
 type NetworkInterface struct {
-	Name string `json:"name"`
-	MAC string `json:"mac"`
+	Name      string   `json:"name"`
+	MAC       string   `json:"mac"`
 	Addresses []string `json:"addresses"`
 }
