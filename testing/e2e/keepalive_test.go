@@ -114,4 +114,6 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(entities))
 	assert.Equal(t, "TestKeepalives", entities[0].ID)
+	assert.Equal(t, "agent", entities[0].Class)
+	assert.NotEmpty(t, entities[0].System.Hostname)
 }

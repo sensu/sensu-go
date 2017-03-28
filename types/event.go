@@ -14,10 +14,38 @@ type Event struct {
 
 	// Entity is the Entity supplying the event. The default Entity for any
 	// Event is the running Agent process--if the Event is sent by an Agent.
-	Entity *Entity `json:"entity"`
+	Entity *Entity `json:"entity,omitempty"`
 }
 
-// An Entity is an identifier used for a particular Event.
+// Entity provides Event context and/or an Agent identifier.
 type Entity struct {
-	ID string
+	ID string `json:"id"`
+	Class string `json:"class"`
+	System `json:"system,omitempty"`
+}
+
+// System contains information about the system that the Agent process
+// is running on, used for additional Entity context.
+type System struct {
+	Hostname string `json:"hostname"`
+	OS string `json:"os"`
+	Platform string `json:"platform"`
+	PlatformFamily string `json:"platform_family"`
+	PlatformVersion string `json:"platform_version"`
+	Network `json:"network"`
+}
+
+// Network contains information about the system network interfaces
+// that the Agent process is running on, used for additional Entity
+// context.
+type Network struct {
+	Interfaces []NetworkInterface `json:"interfaces"`
+}
+
+// NetworkInterface contains information about a system network
+// interface.
+type NetworkInterface struct {
+	Name string `json:"name"`
+	MAC string `json:"mac"`
+	Addresses []string `json:"addresses"`
 }

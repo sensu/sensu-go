@@ -13,9 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -160,7 +161,7 @@ func (a *Agent) sendKeepalive() error {
 		Type: types.KeepaliveType,
 	}
 	keepalive := &types.Event{}
-	keepalive.Entity = a.getDefaultEntity()
+	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
 	msgBytes, err := json.Marshal(keepalive)
 	if err != nil {
@@ -195,11 +196,18 @@ func (a *Agent) keepaliveLoop() {
 	}
 }
 
-func (a *Agent) getDefaultEntity() *types.Entity {
+func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
 			ID: a.config.AgentID,
+			Class: "agent",
 		}
+
+		s, err := system.Info()
+		if err == nil {
+			e.System = s
+		}
+
 		a.entity = e
 	}
 
