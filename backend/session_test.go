@@ -7,25 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sensu/sensu-go/testing/fixtures"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
-
-type testStore struct{}
-
-func (t *testStore) GetEntityByID(string) (*types.Entity, error) {
-	return &types.Entity{}, nil
-}
-func (t *testStore) UpdateEntity(*types.Entity) error {
-	return nil
-}
-func (t *testStore) DeleteEntity(*types.Entity) error {
-	return nil
-}
-func (t *testStore) GetEntities() ([]*types.Entity, error) {
-	return nil, nil
-}
 
 func TestGoodHandshake(t *testing.T) {
 	done := make(chan struct{})
@@ -33,7 +19,7 @@ func TestGoodHandshake(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		session := NewSession(conn, &testStore{})
+		session := NewSession(conn, fixtures.NewFixtureStore())
 		err = session.Start()
 		assert.NoError(t, err)
 		done <- struct{}{}

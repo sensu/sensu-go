@@ -4,61 +4,60 @@
 package system
 
 import (
-        "github.com/shirou/gopsutil/host"
-        "github.com/shirou/gopsutil/net"
-        "github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types"
+	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/net"
 )
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
 func Info() (types.System, error) {
-        info, err := host.Info()
+	info, err := host.Info()
 
-        if err != nil {
-                return types.System{}, err
-        }
+	if err != nil {
+		return types.System{}, err
+	}
 
-        system := types.System{
-                Hostname: info.Hostname,
-                OS: info.OS,
-                Platform: info.Platform,
-                PlatformFamily: info.PlatformFamily,
-                PlatformVersion: info.PlatformVersion,
-        }
+	system := types.System{
+		Hostname:        info.Hostname,
+		OS:              info.OS,
+		Platform:        info.Platform,
+		PlatformFamily:  info.PlatformFamily,
+		PlatformVersion: info.PlatformVersion,
+	}
 
-        network, err := NetworkInfo()
+	network, err := NetworkInfo()
 
-        if err == nil {
-                system.Network = network
-        }
+	if err == nil {
+		system.Network = network
+	}
 
-        return system, nil
+	return system, nil
 }
-
 
 // NetworkInfo describes the local network interfaces, including their
 // names (e.g. eth0), MACs (if available), and addresses.
 func NetworkInfo() (types.Network, error) {
-        interfaces, err := net.Interfaces()
+	interfaces, err := net.Interfaces()
 
-        network := types.Network{}
+	network := types.Network{}
 
-        if err != nil {
-                return network, err
-        }
+	if err != nil {
+		return network, err
+	}
 
-        for _, i := range interfaces {
-                nInterface := types.NetworkInterface{
-                        Name: i.Name,
-                        MAC: i.HardwareAddr,
-                }
+	for _, i := range interfaces {
+		nInterface := types.NetworkInterface{
+			Name: i.Name,
+			MAC:  i.HardwareAddr,
+		}
 
-                for _, address := range i.Addrs {
-                        nInterface.Addresses = append(nInterface.Addresses, address.String())
-                }
+		for _, address := range i.Addrs {
+			nInterface.Addresses = append(nInterface.Addresses, address.String())
+		}
 
-                network.Interfaces = append(network.Interfaces, nInterface)
-        }
+		network.Interfaces = append(network.Interfaces, nInterface)
+	}
 
-        return network, nil
+	return network, nil
 }
