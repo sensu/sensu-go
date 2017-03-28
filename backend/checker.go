@@ -40,12 +40,13 @@ func (s *MessageScheduler) Start() error {
 
 	go func() {
 		now := uint64(time.Now().UnixNano())
-		nextExecution := time.Nanosecond * time.Duration((splayHash-now)%(uint64(s.Interval)*uint64(1000)))
-		timer := time.NewTimer(nextExecution)
+		// (splay_hash - current_time) % (interval * 1000) / 1000
+		nextExecution := (splayHash - now) % (uint64(s.Interval) * uint64(1000))
+		timer := time.NewTimer(time.Duration(nextExecution) * time.Millisecond)
 		for {
 			select {
 			case <-timer.C:
-				timer.Reset(time.Duration(s.Interval))
+				timer.Reset(time.Duration(time.Second * time.Duration(s.Interval)))
 				for _, channel := range s.Channels {
 					if err := s.MessageBus.Publish(s.Topic, channel, s.MsgBytes); err != nil {
 						log.Println("error publishing check request: ", err.Error())

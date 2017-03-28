@@ -93,7 +93,7 @@ func (b *MemoryBus) startFanout(topicName string) {
 }
 
 // Subscribe ...
-func (b *MemoryBus) Subscribe(topic, channel string) (chan []byte, error) {
+func (b *MemoryBus) Subscribe(topic, channel string) (<-chan []byte, error) {
 	if !b.running.Load().(bool) {
 		return nil, errors.New("bus no longer running")
 	}
