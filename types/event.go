@@ -19,33 +19,33 @@ type Event struct {
 
 // Entity provides Event context and/or an Agent identifier.
 type Entity struct {
-	ID string
-	Class string
-	System
+	ID string `json:"id"`
+	Class string `json:"class"`
+	System `json:"system,omitempty"`
 }
 
 // System contains information about the system that the Agent process
 // is running on, used for additional Entity context.
 type System struct {
-	Hostname string
-	OS string
-	Platform string
-	PlatformFamily string
-	PlatformVersion string
-	Network
+	Hostname string `json:"hostname"`
+	OS string `json:"os"`
+	Platform string `json:"platform"`
+	PlatformFamily string `json:"platform_family"`
+	PlatformVersion string `json:"platform_version"`
+	Network `json:"network"`
 }
 
 // Network contains information about the system network interfaces
 // that the Agent process is running on, used for additional Entity
 // context.
 type Network struct {
-	Interfaces []NetworkInterface
+	Interfaces []NetworkInterface `json:"interfaces"`
 }
 
 // NetworkInterface contains information about a system network
 // interface.
 type NetworkInterface struct {
-	Name string
-	MAC string
-	Addresses []string
+	Name string `json:"name"`
+	MAC string `json:"mac"`
+	Addresses []string `json:"addresses"`
 }
