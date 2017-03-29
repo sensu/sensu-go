@@ -8,24 +8,27 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/testing/fixtures"
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMessageScheduler(t *testing.T) {
+func TestCheckScheduler(t *testing.T) {
 	bus := &messaging.MemoryBus{}
 	assert.NoError(t, bus.Start())
 
-	ms := &MessageScheduler{
+	st := fixtures.NewFixtureStore()
+	check, _ := st.GetCheckByName("check1")
+	check.Interval = 1
+
+	ms := &CheckScheduler{
 		MessageBus: bus,
-		HashKey:    []byte("hash_key"),
-		Interval:   1,
-		MsgBytes:   []byte("message"),
-		Topics:     []string{"topic"},
+		Store:      fixtures.NewFixtureStore(),
+		Check:      check,
 	}
 
-	c1, err := bus.Subscribe("topic", "channel")
+	c1, err := bus.Subscribe("subscription1", "")
 	assert.NoError(t, err)
 
 	assert.NoError(t, ms.Start())
@@ -33,12 +36,14 @@ func TestMessageScheduler(t *testing.T) {
 	ms.Stop()
 	assert.NoError(t, bus.Stop())
 
-	messages := []string{}
+	messages := [][]byte{}
 	for msg := range c1 {
-		messages = append(messages, string(msg))
+		messages = append(messages, msg)
 	}
 	assert.Equal(t, 1, len(messages))
-	assert.Equal(t, "message", messages[0])
+	evt := &types.Event{}
+	assert.NoError(t, json.Unmarshal(messages[0], evt))
+	assert.Equal(t, "check1", evt.Check.Name)
 }
 
 func TestCheckerd(t *testing.T) {
