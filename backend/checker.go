@@ -7,10 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -68,13 +70,16 @@ func (s *MessageScheduler) Stop() {
 }
 
 func newSchedulerFromCheck(bus messaging.MessageBus, check *types.Check) (*MessageScheduler, error) {
-	checkBytes, err := json.Marshal(check)
+	evt := &types.Event{
+		Check: check,
+	}
+	evtBytes, err := json.Marshal(evt)
 	if err != nil {
 		return nil, err
 	}
 	scheduler := &MessageScheduler{
 		MessageBus: bus,
-		MsgBytes:   checkBytes,
+		MsgBytes:   evtBytes,
 		HashKey:    []byte(check.Name),
 		Topics:     check.Subscriptions,
 		Interval:   check.Interval,
@@ -132,21 +137,32 @@ func (c *Checker) Start() error {
 
 func (c *Checker) startWatcher() {
 	go func() {
-		var check *types.Check
 		for resp := range c.watcher.Watch(context.TODO(), "/sensu.io/checks", clientv3.WithPrefix()) {
 			for _, ev := range resp.Events {
-				err := json.Unmarshal(ev.Kv.Value, check)
-				if err != nil {
-					log.Printf("error unmarshalling \"%s\": %s", string(ev.Kv.Value), err.Error())
-				}
-				c.schedulers[check.Name].Stop()
-				newScheduler, err := newSchedulerFromCheck(c.MessageBus, check)
-				if err != nil {
-					log.Println("error creating new check scheduler: ", err.Error())
-				}
-				err = newScheduler.Start()
-				if err != nil {
-					log.Println("error starting new check scheduler: ", err.Error())
+				switch ev.Type {
+				case mvccpb.PUT:
+					check := &types.Check{}
+					err := json.Unmarshal(ev.Kv.Value, check)
+					if err != nil {
+						log.Printf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
+						continue
+					}
+					sched, ok := c.schedulers[check.Name]
+					if ok {
+						sched.Stop()
+					}
+					newScheduler, err := newSchedulerFromCheck(c.MessageBus, check)
+					if err != nil {
+						log.Println("error creating new check scheduler: ", err.Error())
+					}
+					err = newScheduler.Start()
+					if err != nil {
+						log.Println("error starting new check scheduler: ", err.Error())
+					}
+				case mvccpb.DELETE:
+					parts := strings.Split(string(ev.Kv.Key), "/")
+					name := parts[len(parts)-1]
+					delete(c.schedulers, name)
 				}
 			}
 		}
@@ -161,7 +177,7 @@ func (c *Checker) Stop() error {
 	}
 	// let the event queue drain so that we don't panic inside the loop.
 	// TODO(greg): get ride of this dependency.
-	c.wg.Done()
+	c.wg.Wait()
 
 	return nil
 }
