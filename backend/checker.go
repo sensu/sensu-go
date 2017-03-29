@@ -23,8 +23,7 @@ type MessageScheduler struct {
 	HashKey    []byte
 	Interval   int
 	MsgBytes   []byte
-	Topic      string
-	Channels   []string
+	Topics     []string
 
 	stop chan struct{}
 }
@@ -47,8 +46,8 @@ func (s *MessageScheduler) Start() error {
 			select {
 			case <-timer.C:
 				timer.Reset(time.Duration(time.Second * time.Duration(s.Interval)))
-				for _, channel := range s.Channels {
-					if err := s.MessageBus.Publish(s.Topic, channel, s.MsgBytes); err != nil {
+				for _, t := range s.Topics {
+					if err := s.MessageBus.Publish(t, s.MsgBytes); err != nil {
 						log.Println("error publishing check request: ", err.Error())
 					}
 				}
@@ -77,8 +76,7 @@ func newSchedulerFromCheck(bus messaging.MessageBus, check *types.Check) (*Messa
 		MessageBus: bus,
 		MsgBytes:   checkBytes,
 		HashKey:    []byte(check.Name),
-		Topic:      "checks",
-		Channels:   check.Subscriptions,
+		Topics:     check.Subscriptions,
 		Interval:   check.Interval,
 	}
 	return scheduler, nil

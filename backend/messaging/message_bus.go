@@ -9,5 +9,5 @@ type MessageBus interface {
 
 	// Publish sends a message to a topic over an optional channel. If there's
 	// a problem publishing the message, an error is returned.
-	Publish(topic, channel string, message []byte) error
+	Publish(topic string, message []byte) error
 }

@@ -17,8 +17,7 @@ func TestMessageScheduler(t *testing.T) {
 		HashKey:    []byte("hash_key"),
 		Interval:   1,
 		MsgBytes:   []byte("message"),
-		Topic:      "topic",
-		Channels:   []string{"channel"},
+		Topics:     []string{"topic"},
 	}
 
 	c1, err := bus.Subscribe("topic", "channel")
@@ -35,4 +34,8 @@ func TestMessageScheduler(t *testing.T) {
 	}
 	assert.Equal(t, 1, len(messages))
 	assert.Equal(t, "message", messages[0])
+}
+
+func TestCheckerd(t *testing.T) {
+
 }

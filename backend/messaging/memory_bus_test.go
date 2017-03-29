@@ -10,7 +10,7 @@ func TestMemoryBus(t *testing.T) {
 	b := &MemoryBus{}
 	b.Start()
 
-	err := b.Publish("topic", "", []byte("message1"))
+	err := b.Publish("topic", []byte("message1"))
 	assert.NoError(t, err)
 	// should be able to publish with no subscribers
 
@@ -20,9 +20,9 @@ func TestMemoryBus(t *testing.T) {
 	c2, err := b.Subscribe("topic", "")
 	assert.NoError(t, err)
 
-	err = b.Publish("topic", "", []byte("message2"))
+	err = b.Publish("topic", []byte("message2"))
 	assert.NoError(t, err)
-	err = b.Publish("topic", "", []byte("message3"))
+	err = b.Publish("topic", []byte("message3"))
 	assert.NoError(t, err)
 
 	b.Stop()
