@@ -7,6 +7,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
@@ -22,6 +23,7 @@ type Session struct {
 	stopped      chan struct{}
 	sendq        chan *transport.Message
 	disconnected bool
+	bus          messaging.MessageBus
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -32,7 +34,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 }
 
 // NewSession ...
-func NewSession(conn *transport.Transport, store store.Store) *Session {
+func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store.Store) *Session {
 	s := &Session{
 		conn:         conn,
 		stopping:     make(chan struct{}, 1),
@@ -40,6 +42,7 @@ func NewSession(conn *transport.Transport, store store.Store) *Session {
 		sendq:        make(chan *transport.Message, 10),
 		disconnected: false,
 		store:        store,
+		bus:          bus,
 	}
 	s.handler = newSessionHandler(s)
 	return s

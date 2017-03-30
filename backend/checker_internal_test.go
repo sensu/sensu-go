@@ -70,6 +70,9 @@ func TestCheckerReconcile(t *testing.T) {
 		}
 		return checks, nil
 	}
+	st.getCheckByName = func(name string) (*types.Check, error) {
+		return nil, nil
+	}
 
 	c := &Checker{
 		Store:           st,

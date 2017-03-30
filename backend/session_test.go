@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/fixtures"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -19,7 +20,9 @@ func TestGoodHandshake(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		session := NewSession(conn, fixtures.NewFixtureStore())
+		bus := &messaging.MemoryBus{}
+		bus.Start()
+		session := NewSession(conn, bus, fixtures.NewFixtureStore())
 		err = session.Start()
 		assert.NoError(t, err)
 		done <- struct{}{}

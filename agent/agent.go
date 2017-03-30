@@ -292,6 +292,7 @@ func (a *Agent) Run() error {
 				wg.Wait()
 				close(a.sendq)
 				close(a.stopped)
+				return
 			case <-ticker.C:
 				if a.disconnected {
 					log.Println("disconnected - attempting to reconnect: ", a.backendURL)
