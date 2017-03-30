@@ -1,4 +1,4 @@
-package backend
+package daemon
 
 // A Daemon is a managed subprocess comprised of one or more goroutines that
 // can be managed via a consistent, simple interface.

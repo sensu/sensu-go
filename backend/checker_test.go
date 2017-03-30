@@ -22,7 +22,7 @@ func TestCheckScheduler(t *testing.T) {
 	check, _ := st.GetCheckByName("check1")
 	check.Interval = 1
 
-	ms := &CheckScheduler{
+	scheduler := &CheckScheduler{
 		MessageBus: bus,
 		Store:      fixtures.NewFixtureStore(),
 		Check:      check,
@@ -31,9 +31,9 @@ func TestCheckScheduler(t *testing.T) {
 	c1, err := bus.Subscribe("subscription1", "")
 	assert.NoError(t, err)
 
-	assert.NoError(t, ms.Start())
+	assert.NoError(t, scheduler.Start())
 	time.Sleep(1 * time.Second)
-	ms.Stop()
+	scheduler.Stop()
 	assert.NoError(t, bus.Stop())
 
 	messages := [][]byte{}

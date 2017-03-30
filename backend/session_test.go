@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/fixtures"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -16,10 +17,13 @@ import (
 func TestGoodHandshake(t *testing.T) {
 	done := make(chan struct{})
 	server := transport.NewServer()
+	var session *Session
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		session := NewSession(conn, fixtures.NewFixtureStore())
+		bus := &messaging.MemoryBus{}
+		bus.Start()
+		session = NewSession(conn, bus, fixtures.NewFixtureStore())
 		err = session.Start()
 		assert.NoError(t, err)
 		done <- struct{}{}
@@ -30,9 +34,16 @@ func TestGoodHandshake(t *testing.T) {
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 	conn, err := transport.Connect(wsURL)
 	assert.NoError(t, err)
+
+	entity := &types.AgentHandshake{
+		ID:            "id",
+		Subscriptions: []string{"subscription1"},
+	}
+	payload, err := json.Marshal(entity)
+	assert.NoError(t, err)
 	msg := &transport.Message{
 		Type:    types.AgentHandshakeType,
-		Payload: []byte("{}"),
+		Payload: payload,
 	}
 	err = conn.Send(msg)
 	assert.NoError(t, err)
@@ -43,4 +54,8 @@ func TestGoodHandshake(t *testing.T) {
 	err = json.Unmarshal(resp.Payload, &handshake)
 	assert.NoError(t, err)
 	<-done
+
+	subscriptionChan, ok := session.checkChans["subscription1"]
+	assert.True(t, ok)
+	assert.NotNil(t, subscriptionChan)
 }

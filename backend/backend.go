@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/nsqio/nsq/nsqd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
@@ -39,7 +38,7 @@ type Backend struct {
 	errChan      chan error
 	shutdownChan chan struct{}
 	done         chan struct{}
-	messageBus   *nsqd.NSQD
+	messageBus   messaging.MessageBus
 	httpServer   *http.Server
 	agentServer  *http.Server
 	etcd         *etcd.Etcd
@@ -105,11 +104,21 @@ func NewBackend(config *Config) (*Backend, error) {
 	b.agentServer = asrv
 	nsqConfig := messaging.NewConfig()
 	nsqConfig.StatePath = filepath.Join(config.StateDir, "nsqd")
-	bus, err := messaging.NewNSQD(nsqConfig)
+	nsq, err := messaging.NewNSQD(nsqConfig)
 	if err != nil {
 		return nil, err
 	}
-	b.messageBus = bus
+	nsqBus := &messaging.NsqBus{
+		NSQD: nsq,
+	}
+	err = nsqBus.Start()
+	if err != nil {
+		e.Shutdown()
+		asrv.Shutdown(context.Background())
+		httpsrv.Shutdown(context.Background())
+		return nil, err
+	}
+	b.messageBus = nsqBus
 
 	return b, nil
 }
@@ -136,8 +145,6 @@ func (b *Backend) Run() error {
 		inErrChan <- <-b.etcd.Err()
 	}()
 
-	go b.messageBus.Main()
-
 	go func() {
 		var inErr error
 		select {
@@ -156,7 +163,7 @@ func (b *Backend) Run() error {
 			log.Printf("error shutting down http listener: %s", err.Error())
 		}
 		log.Printf("shutting down message bus")
-		b.messageBus.Exit()
+		b.messageBus.Stop()
 
 		// if an error caused the shutdown
 		if inErr != nil {
@@ -177,9 +184,7 @@ func (b *Backend) Status() StatusMap {
 		"message_bus": true,
 	}
 
-	busHealth := b.messageBus.GetHealth()
-	// ugh.
-	if busHealth != "OK" {
+	if b.messageBus.Status() != nil {
 		sm["message_bus"] = false
 	}
 
@@ -210,7 +215,7 @@ func agentServer(b *Backend) (*http.Server, error) {
 			return
 		}
 
-		session := NewSession(transport.NewTransport(conn), store)
+		session := NewSession(transport.NewTransport(conn), b.messageBus, store)
 		err = session.Start()
 		if err != nil {
 			log.Println("failed to start session: ", err.Error())

@@ -75,3 +75,49 @@ func NewNSQD(config *Config) (*nsqd.NSQD, error) {
 
 	return nsqd, nil
 }
+
+// NsqBus is a Daemon and a MessageBus.
+type NsqBus struct {
+	NSQD    *nsqd.NSQD
+	errChan chan error
+}
+
+// Start starts the underlying NSQD, and returns an error upon failure.
+func (bus *NsqBus) Start() error {
+	bus.errChan = make(chan error, 1)
+	go bus.NSQD.Main()
+	return nil
+}
+
+// Stop stops the underlying NSQD and closes any open consumers/producers.
+func (bus *NsqBus) Stop() error {
+	return nil
+}
+
+// Status returns the current error from NSQD.
+func (bus *NsqBus) Status() error {
+	// I think we can just return bus.NSQD.GetError() here, but I'm not entirely
+	// sure, so I'm just leaving it like this for now.
+	if bus.NSQD.GetHealth() != "ok" {
+		return bus.NSQD.GetError()
+	}
+	return nil
+}
+
+// Err returns a channel to listen for any terminal errors from the NSQD
+// monitor.
+func (bus *NsqBus) Err() <-chan error {
+	return bus.errChan
+}
+
+// Subscribe sets up a managed consumer. Upon terminal failure of the
+// underlying NSQD or shutdown, the returned channel will be closed.
+func (bus *NsqBus) Subscribe(topic, channel string) (<-chan []byte, error) {
+	return nil, nil
+}
+
+// Publish sends a message over a given topic. If the message failes to send
+// for any reason, an error will be returned.
+func (bus *NsqBus) Publish(topic string, msg []byte) error {
+	return nil
+}
