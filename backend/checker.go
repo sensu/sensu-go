@@ -109,12 +109,12 @@ type Checker struct {
 	Store      store.Store
 	MessageBus messaging.MessageBus
 
-	schedulers map[string]*CheckScheduler
-	sMutex     *sync.Mutex
-	wg         *sync.WaitGroup
-	watcher    clientv3.Watcher
-	errChan    chan error
-	shutdown   chan struct{}
+	schedulers      map[string]*CheckScheduler
+	schedulersMutex *sync.Mutex
+	watcher         clientv3.Watcher
+	wg              *sync.WaitGroup
+	errChan         chan error
+	shutdown        chan struct{}
 }
 
 // Start the Checker.
@@ -128,15 +128,13 @@ func (c *Checker) Start() error {
 	}
 
 	c.schedulers = map[string]*CheckScheduler{}
-	c.sMutex = &sync.Mutex{}
+	c.schedulersMutex = &sync.Mutex{}
+
+	c.errChan = make(chan error, 1)
 
 	// The reconciler and the watchers have to be a little coordinated. We start
 	// the watcher first, so that we don't miss any checks that are created
 	// during our initial reconciliation phase.
-	watcher := clientv3.NewWatcher(c.Client)
-	c.watcher = watcher
-	c.errChan = make(chan error, 1)
-
 	c.wg = &sync.WaitGroup{}
 	c.wg.Add(2)
 	c.startWatcher()
@@ -154,17 +152,17 @@ func (c *Checker) reconcile() error {
 	}
 
 	for _, check := range checks {
-		c.sMutex.Lock()
+		c.schedulersMutex.Lock()
 		if _, ok := c.schedulers[check.Name]; !ok {
 			scheduler := newSchedulerFromCheck(c.Store, c.MessageBus, check)
 			err = scheduler.Start()
 			if err != nil {
-				c.sMutex.Unlock()
+				c.schedulersMutex.Unlock()
 				return err
 			}
 			c.schedulers[check.Name] = scheduler
 		}
-		c.sMutex.Unlock()
+		c.schedulersMutex.Unlock()
 	}
 	return nil
 }
@@ -189,34 +187,46 @@ func (c *Checker) startReconciler() {
 // that are created. Once the scheduler is in place, it will self manage.
 func (c *Checker) startWatcher() {
 	go func() {
-		for resp := range c.watcher.Watch(
-			context.TODO(),
-			"/sensu.io/checks",
-			clientv3.WithPrefix(),
-			clientv3.WithFilterDelete(),
-			clientv3.WithFilterPut(),
-			clientv3.WithCreatedNotify(),
-		) {
-			for _, ev := range resp.Events {
-				c.sMutex.Lock()
-				check := &types.Check{}
-				err := json.Unmarshal(ev.Kv.Value, check)
-				if err != nil {
-					log.Printf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
-					c.sMutex.Unlock()
-					continue
+		for {
+			select {
+			case <-c.shutdown:
+				c.wg.Done()
+				return
+			default:
+				// TODO(grep): this should probably come from our own factory. have a
+				// WatchFactory interface that takes a *clientv3.Client and returns a
+				// clientv3.Watcher (interface). Then we can have the etcd factory and
+				// the testing factory so we can do unit testing.
+				c.watcher = clientv3.NewWatcher(c.Client)
+			}
+			for resp := range c.watcher.Watch(
+				context.TODO(),
+				"/sensu.io/checks",
+				clientv3.WithPrefix(),
+				clientv3.WithFilterDelete(),
+				clientv3.WithFilterPut(),
+				clientv3.WithCreatedNotify(),
+			) {
+				for _, ev := range resp.Events {
+					c.schedulersMutex.Lock()
+					check := &types.Check{}
+					err := json.Unmarshal(ev.Kv.Value, check)
+					if err != nil {
+						log.Printf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
+						c.schedulersMutex.Unlock()
+						continue
+					}
+					scheduler := newSchedulerFromCheck(c.Store, c.MessageBus, check)
+					c.schedulers[check.Name] = scheduler
+					err = scheduler.Start()
+					if err != nil {
+						log.Println("error starting scheduler for check: ", check.Name)
+						c.schedulersMutex.Unlock()
+					}
+					c.schedulersMutex.Unlock()
 				}
-				scheduler := newSchedulerFromCheck(c.Store, c.MessageBus, check)
-				c.schedulers[check.Name] = scheduler
-				err = scheduler.Start()
-				if err != nil {
-					log.Println("error starting scheduler for check: ", check.Name)
-					c.sMutex.Unlock()
-				}
-				c.sMutex.Unlock()
 			}
 		}
-		c.wg.Done()
 	}()
 }
 

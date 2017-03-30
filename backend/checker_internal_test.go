@@ -72,9 +72,9 @@ func TestCheckerReconcile(t *testing.T) {
 	}
 
 	c := &Checker{
-		Store:      st,
-		sMutex:     &sync.Mutex{},
-		schedulers: map[string]*CheckScheduler{},
+		Store:           st,
+		schedulersMutex: &sync.Mutex{},
+		schedulers:      map[string]*CheckScheduler{},
 	}
 	c.reconcile()
 
