@@ -222,10 +222,8 @@ func (c *Checker) startWatcher() {
 
 // Stop the Checker.
 func (c *Checker) Stop() error {
-	if err := c.watcher.Close(); err != nil {
-		return err
-	}
 	close(c.shutdown)
+	c.watcher.Close()
 	// let the event queue drain so that we don't panic inside the loop.
 	// TODO(greg): get ride of this dependency.
 	c.wg.Wait()
