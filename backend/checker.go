@@ -226,6 +226,8 @@ func (c *Checker) startWatcher() {
 					c.schedulersMutex.Unlock()
 				}
 			}
+			// TODO(greg): exponential backoff
+			time.Sleep(1 * time.Second)
 		}
 	}()
 }
