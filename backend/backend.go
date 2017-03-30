@@ -102,7 +102,7 @@ func NewBackend(config *Config) (*Backend, error) {
 
 	b.agentServer = asrv
 
-	b.messageBus = &messaging.MemoryBus{}
+	b.messageBus = &messaging.WizardBus{}
 
 	return b, nil
 }

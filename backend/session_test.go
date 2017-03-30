@@ -21,7 +21,7 @@ func TestGoodHandshake(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		bus := &messaging.MemoryBus{}
+		bus := &messaging.WizardBus{}
 		bus.Start()
 		session = NewSession(conn, bus, fixtures.NewFixtureStore())
 		err = session.Start()

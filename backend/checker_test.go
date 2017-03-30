@@ -15,7 +15,7 @@ import (
 )
 
 func TestCheckScheduler(t *testing.T) {
-	bus := &messaging.MemoryBus{}
+	bus := &messaging.WizardBus{}
 	assert.NoError(t, bus.Start())
 
 	st := fixtures.NewFixtureStore()
@@ -67,7 +67,7 @@ func TestCheckerd(t *testing.T) {
 		cli, err := e.NewClient()
 		assert.NoError(t, err)
 		st, err := e.NewStore()
-		bus := &messaging.MemoryBus{}
+		bus := &messaging.WizardBus{}
 		assert.NoError(t, bus.Start())
 
 		checker := &Checker{
