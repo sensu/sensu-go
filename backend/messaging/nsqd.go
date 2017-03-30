@@ -1,9 +1,12 @@
 package messaging
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"sync"
 
+	nsq "github.com/nsqio/go-nsq"
 	"github.com/nsqio/nsq/nsqd"
 )
 
@@ -71,26 +74,55 @@ func NewNSQD(config *Config) (*nsqd.NSQD, error) {
 	opts.Verbose = false
 	opts.DataPath = config.StatePath
 
-	nsqd := nsqd.New(opts)
-
-	return nsqd, nil
+	return nsqd.New(opts), nil
 }
 
 // NsqBus is a Daemon and a MessageBus.
 type NsqBus struct {
-	NSQD    *nsqd.NSQD
-	errChan chan error
+	NSQD *nsqd.NSQD
+
+	producer  *nsq.Producer
+	consumers []*consumerChannel
+	errChan   chan error
+}
+
+type consumerChannel struct {
+	consumer *nsq.Consumer
+	channel  chan []byte
 }
 
 // Start starts the underlying NSQD, and returns an error upon failure.
 func (bus *NsqBus) Start() error {
 	bus.errChan = make(chan error, 1)
-	go bus.NSQD.Main()
+	bus.consumers = []*consumerChannel{}
+	done := make(chan struct{})
+	go func() {
+		bus.NSQD.Main()
+		close(done)
+	}()
+	<-done
+	producer, err := nsq.NewProducer(bus.NSQD.RealTCPAddr().String(), nsq.NewConfig())
+	if err != nil {
+		return err
+	}
+	bus.producer = producer
 	return nil
 }
 
 // Stop stops the underlying NSQD and closes any open consumers/producers.
 func (bus *NsqBus) Stop() error {
+	if bus.consumers != nil {
+		wg := &sync.WaitGroup{}
+		for _, conChan := range bus.consumers {
+			wg.Add(1)
+			go func(cch *consumerChannel) {
+				cch.consumer.Stop()
+				<-cch.consumer.StopChan
+				close(cch.channel)
+				wg.Done()
+			}(conChan)
+		}
+	}
 	return nil
 }
 
@@ -113,11 +145,36 @@ func (bus *NsqBus) Err() <-chan error {
 // Subscribe sets up a managed consumer. Upon terminal failure of the
 // underlying NSQD or shutdown, the returned channel will be closed.
 func (bus *NsqBus) Subscribe(topic, channel string) (<-chan []byte, error) {
-	return nil, nil
+	consumer, err := nsq.NewConsumer(topic, channel, nsq.NewConfig())
+	if err != nil {
+		return nil, err
+	}
+	addr := bus.NSQD.RealTCPAddr()
+	msgChannel := make(chan []byte, 100)
+	consumer.AddHandler(nsq.HandlerFunc(func(nsqMessage *nsq.Message) error {
+		select {
+		case msgChannel <- nsqMessage.Body:
+			return nil
+		default:
+			return errors.New("cannot handle message at this time")
+		}
+	}))
+
+	err = consumer.ConnectToNSQD(addr.String())
+	if err != nil {
+		return nil, err
+	}
+
+	cch := &consumerChannel{
+		consumer: consumer,
+		channel:  msgChannel,
+	}
+	bus.consumers = append(bus.consumers, cch)
+	return msgChannel, nil
 }
 
 // Publish sends a message over a given topic. If the message failes to send
 // for any reason, an error will be returned.
 func (bus *NsqBus) Publish(topic string, msg []byte) error {
-	return nil
+	return bus.producer.Publish(topic, msg)
 }
