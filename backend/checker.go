@@ -198,17 +198,22 @@ func (c *Checker) startWatcher() {
 			clientv3.WithCreatedNotify(),
 		) {
 			for _, ev := range resp.Events {
+				c.sMutex.Lock()
 				check := &types.Check{}
 				err := json.Unmarshal(ev.Kv.Value, check)
 				if err != nil {
 					log.Printf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
+					c.sMutex.Unlock()
 					continue
 				}
 				scheduler := newSchedulerFromCheck(c.Store, c.MessageBus, check)
+				c.schedulers[check.Name] = scheduler
 				err = scheduler.Start()
 				if err != nil {
 					log.Println("error starting scheduler for check: ", check.Name)
+					c.sMutex.Unlock()
 				}
+				c.sMutex.Unlock()
 			}
 		}
 		c.wg.Done()
