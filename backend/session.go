@@ -22,7 +22,7 @@ type Session struct {
 	stopping     chan struct{}
 	stopped      chan struct{}
 	sendq        chan *transport.Message
-	checkChans   map[string](<-chan []byte)
+	checkChannel chan []byte
 	disconnected bool
 	bus          messaging.MessageBus
 }
@@ -37,10 +37,11 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 // NewSession ...
 func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store.Store) *Session {
 	s := &Session{
-		conn:     conn,
-		stopping: make(chan struct{}, 1),
-		stopped:  make(chan struct{}),
-		sendq:    make(chan *transport.Message, 10),
+		conn:         conn,
+		stopping:     make(chan struct{}, 1),
+		stopped:      make(chan struct{}),
+		sendq:        make(chan *transport.Message, 10),
+		checkChannel: make(chan []byte, 100),
 
 		disconnected: false,
 		store:        store,
@@ -80,7 +81,7 @@ func (s *Session) handshake() error {
 	}
 
 	for _, sub := range agentHandshake.Subscriptions {
-		if err := s.bus.Subscribe(sub, make(chan []byte, 100)); err != nil {
+		if err := s.bus.Subscribe(sub, s.checkChannel); err != nil {
 			return err
 		}
 	}
@@ -117,14 +118,33 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 	}
 }
 
-func (s *Session) sendPump(wg *sync.WaitGroup) {
+func (s *Session) subPump(wg *sync.WaitGroup) {
 	defer wg.Done()
-
 	for {
 		if s.disconnected {
 			log.Println("session disconnected - stopping sendPump")
 			return
 		}
+
+		select {
+		case check := <-s.checkChannel:
+			msg := &transport.Message{
+				Type:    types.EventType,
+				Payload: check,
+			}
+			s.sendq <- msg
+		case <-s.stopping:
+			log.Println("shutting down - stopping subPump")
+			return
+		}
+
+	}
+}
+
+func (s *Session) sendPump(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for {
 
 		select {
 		case msg := <-s.sendq:
@@ -157,11 +177,11 @@ func (s *Session) Start() error {
 	log.Println("agent connected")
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 	go s.sendPump(wg)
 	go s.recvPump(wg)
+	go s.subPump(wg)
 	go func(wg *sync.WaitGroup) {
-		wg.Wait()
 		close(s.stopped)
 	}(wg)
 
