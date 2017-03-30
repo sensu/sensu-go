@@ -10,7 +10,7 @@ import (
 type WizardBus struct {
 	sendBuffers      map[string]chan []byte
 	sendBuffersMutex *sync.Mutex
-	subscribers      map[string][]chan []byte
+	subscribers      map[string][]chan<- []byte
 	stopping         chan struct{}
 	running          *atomic.Value
 	wg               *sync.WaitGroup
@@ -25,7 +25,7 @@ func (b *WizardBus) Start() error {
 	b.running = &atomic.Value{}
 	b.wg = &sync.WaitGroup{}
 	b.sendBuffers = map[string](chan []byte){}
-	b.subscribers = map[string]([]chan []byte){}
+	b.subscribers = map[string]([]chan<- []byte){}
 	b.running.Store(true)
 	return nil
 }
@@ -93,9 +93,9 @@ func (b *WizardBus) startFanout(topic string) {
 
 // Subscribe ... We actually ignore channel names here, because right now we
 // don't need multiple consumers on a single channel. Just move to NSQ.
-func (b *WizardBus) Subscribe(topic, channel string) (<-chan []byte, error) {
+func (b *WizardBus) Subscribe(topic string, channel chan<- []byte) error {
 	if !b.running.Load().(bool) {
-		return nil, errors.New("bus no longer running")
+		return errors.New("bus no longer running")
 	}
 
 	b.sendBuffersMutex.Lock()
@@ -107,10 +107,9 @@ func (b *WizardBus) Subscribe(topic, channel string) (<-chan []byte, error) {
 		b.wg.Add(1)
 	}
 
-	subscriberChannel := make(chan []byte, 100)
-	b.subscribers[topic] = append(b.subscribers[topic], subscriberChannel)
+	b.subscribers[topic] = append(b.subscribers[topic], channel)
 
-	return subscriberChannel, nil
+	return nil
 }
 
 // Publish ...

@@ -37,11 +37,11 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 // NewSession ...
 func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store.Store) *Session {
 	s := &Session{
-		conn:         conn,
-		stopping:     make(chan struct{}, 1),
-		stopped:      make(chan struct{}),
-		sendq:        make(chan *transport.Message, 10),
-		checkChans:   map[string](<-chan []byte){},
+		conn:     conn,
+		stopping: make(chan struct{}, 1),
+		stopped:  make(chan struct{}),
+		sendq:    make(chan *transport.Message, 10),
+
 		disconnected: false,
 		store:        store,
 		bus:          bus,
@@ -80,11 +80,9 @@ func (s *Session) handshake() error {
 	}
 
 	for _, sub := range agentHandshake.Subscriptions {
-		channel, err := s.bus.Subscribe(sub, agentHandshake.ID)
-		if err != nil {
+		if err := s.bus.Subscribe(sub, make(chan []byte, 100)); err != nil {
 			return err
 		}
-		s.checkChans[sub] = channel
 	}
 
 	return nil
@@ -149,29 +147,6 @@ func (s *Session) sendPump(wg *sync.WaitGroup) {
 	}
 }
 
-func (s *Session) subPump(wg *sync.WaitGroup) {
-	for checkName, checkChan := range s.checkChans {
-		go func(name string, c <-chan []byte) {
-			for {
-				if s.disconnected {
-					log.Println("session disconnected - stopping subPump for ", name)
-					return
-				}
-				select {
-				case <-s.stopping:
-					return
-				case msg := <-c:
-					message := &transport.Message{
-						Type:    types.EventType,
-						Payload: msg,
-					}
-					s.sendq <- message
-				}
-			}
-		}(checkName, checkChan)
-	}
-}
-
 // Start a Session
 func (s *Session) Start() error {
 	err := s.handshake()
@@ -182,10 +157,9 @@ func (s *Session) Start() error {
 	log.Println("agent connected")
 
 	wg := &sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(2)
 	go s.sendPump(wg)
 	go s.recvPump(wg)
-	go s.subPump(wg)
 	go func(wg *sync.WaitGroup) {
 		wg.Wait()
 		close(s.stopped)

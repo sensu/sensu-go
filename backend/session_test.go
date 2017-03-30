@@ -54,8 +54,4 @@ func TestGoodHandshake(t *testing.T) {
 	err = json.Unmarshal(resp.Payload, &handshake)
 	assert.NoError(t, err)
 	<-done
-
-	subscriptionChan, ok := session.checkChans["subscription1"]
-	assert.True(t, ok)
-	assert.NotNil(t, subscriptionChan)
 }

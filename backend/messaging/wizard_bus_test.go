@@ -14,11 +14,11 @@ func TestMemoryBus(t *testing.T) {
 	assert.NoError(t, err)
 	// should be able to publish with no subscribers
 
-	c1, err := b.Subscribe("topic", "")
-	assert.NoError(t, err)
+	c1 := make(chan []byte, 3)
+	c2 := make(chan []byte, 3)
+	assert.NoError(t, b.Subscribe("topic", c1))
 
-	c2, err := b.Subscribe("topic", "")
-	assert.NoError(t, err)
+	assert.NoError(t, b.Subscribe("topic", c2))
 
 	err = b.Publish("topic", []byte("message2"))
 	assert.NoError(t, err)
