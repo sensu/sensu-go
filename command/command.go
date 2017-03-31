@@ -104,14 +104,13 @@ func ExecuteCommand(execution *Execution) (*Execution, error) {
 	}()
 	select {
 	case <-time.After(time.Duration(execution.Timeout) * time.Second):
+		// Attempt to kill -9 the command execution child process.
 		if err := cmd.Process.Kill(); err != nil {
 			return execution, err
 		}
 
 		execution.Output = TimeoutOutput
 		execution.Status = TimeoutExitStatus
-
-		// DO WE NEED `<-done:` HERE? LEAK?
 	case err := <-done:
 		execution.Output = output.String()
 
@@ -132,7 +131,6 @@ func ExecuteCommand(execution *Execution) (*Execution, error) {
 			// Everything is A-OK.
 			execution.Status = OKExitStatus
 		}
-
 	}
 
 	return execution, nil
