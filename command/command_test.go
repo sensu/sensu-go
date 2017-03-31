@@ -44,4 +44,14 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, nil, outputsErr)
 	assert.Equal(t, "foo\nbar\n", outputsExec.Output)
 	assert.Equal(t, 0, outputsExec.Status)
+
+	sleep := &Execution{
+		Command: "sleep 10",
+		Timeout: 1,
+	}
+
+	sleepExec, sleepErr := ExecuteCommand(sleep)
+	assert.Equal(t, nil, sleepErr)
+	assert.Equal(t, "Execution timed out\n", sleepExec.Output)
+	assert.Equal(t, 2, sleepExec.Status)
 }

@@ -7,9 +7,31 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 )
 
-const fallbackExitStatus int = 3
+const (
+	// DefaultTimeout specifies the default command execution
+	// timeout in seconds.
+	DefaultTimeout int = 60
+
+	// TimeoutOutput specifies the command execution output in the
+	// event of an execution timeout.
+	TimeoutOutput string = "Execution timed out\n"
+
+	// OKExitStatus specifies the command execution exit status
+	// that indicates a success, A-OK.
+	OKExitStatus int = 0
+
+	// TimeoutExitStatus specifies the command execution exit
+	// status in the event of an execution timeout.
+	TimeoutExitStatus int = 2
+
+	// FallbackExitStatus specifies the command execution exit
+	// status used when golang is unable to determine the exit
+	// status.
+	FallbackExitStatus int = 3
+)
 
 // Execution provides information about a system command execution,
 // somewhat of an abstraction intended to be used for Sensu check,
@@ -20,6 +42,9 @@ type Execution struct {
 
 	// Input to provide the command via STDIN.
 	Input string
+
+	// Timeout
+	Timeout int
 
 	// Combined command execution STDOUT/ERR.
 	Output string
@@ -63,26 +88,42 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 		return c, err
 	}
 
-	err := cmd.Wait()
+	if c.Timeout == 0 {
+		c.Timeout = DefaultTimeout
+	}
 
-	c.Output = output.String()
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Wait()
+	}()
+	select {
+	case <-time.After(time.Duration(c.Timeout) * time.Second):
+		if err := cmd.Process.Kill(); err != nil {
+			return c, err
+		}
+		c.Output = TimeoutOutput
+		c.Status = TimeoutExitStatus
+	case err := <-done:
+		c.Output = output.String()
 
-	// The command most likely return a non-zero exit status.
-	if err != nil {
-		// Best effort to determine the exit status, this
-		// should work on Linux, OSX, and Windows.
-		if exitError, ok := err.(*exec.ExitError); ok {
-			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-				c.Status = status.ExitStatus()
+		// The command most likely return a non-zero exit status.
+		if err != nil {
+			// Best effort to determine the exit status, this
+			// should work on Linux, OSX, and Windows.
+			if exitError, ok := err.(*exec.ExitError); ok {
+				if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
+					c.Status = status.ExitStatus()
+				} else {
+					c.Status = FallbackExitStatus
+				}
 			} else {
-				c.Status = fallbackExitStatus
+				c.Status = FallbackExitStatus
 			}
 		} else {
-			c.Status = fallbackExitStatus
+			// Everything is A-OK.
+			c.Status = OKExitStatus
 		}
-	} else {
-		// Everything is A-OK.
-		c.Status = 0
+
 	}
 
 	return c, nil
