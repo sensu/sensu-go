@@ -90,7 +90,7 @@ func (s *Session) handshake() error {
 	}
 
 	for _, sub := range agentHandshake.Subscriptions {
-		if err := s.bus.Subscribe(sub, agentHandshake.ID, s.checkChannel); err != nil {
+		if err := s.bus.Subscribe(sub, s.ID, s.checkChannel); err != nil {
 			return err
 		}
 	}
