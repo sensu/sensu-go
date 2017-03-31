@@ -3,6 +3,7 @@ package command
 
 import (
 	"bytes"
+	"context"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -52,12 +53,20 @@ type Execution struct {
 
 	// Command execution exit status.
 	Status int
+
+	// Duration provides command execution time in seconds.
+	Duration float64
 }
 
-// ExecuteCommand executes a system command (fork/exec), optionally
-// writing to STDIN, capture its combined output (STDOUT/ERR) and exit
-// status.
-func ExecuteCommand(execution *Execution) (*Execution, error) {
+// ExecuteCommand executes a system command (fork/exec) with a
+// timeout, optionally writing to STDIN, capturing its combined output
+// (STDOUT/ERR) and exit status.
+func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, error) {
+	// If Timeout is not specified, use the default.
+	if execution.Timeout == 0 {
+		execution.Timeout = DefaultTimeout
+	}
+
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
 	// known to have troubles, e.g. command not found. We still
@@ -65,11 +74,15 @@ func ExecuteCommand(execution *Execution) (*Execution, error) {
 	// exit status cannot be determined.
 	var cmd *exec.Cmd
 
+	// Use the context deadline for execution timeout.
+	ctx, timeout := context.WithTimeout(ctx, time.Duration(execution.Timeout)*time.Second)
+	defer timeout()
+
 	// Taken from Sensu-Spawn (Sensu 1.x.x).
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", execution.Command)
+		cmd = exec.CommandContext(ctx, "cmd", "/c", execution.Command)
 	} else {
-		cmd = exec.Command("sh", "-c", execution.Command)
+		cmd = exec.CommandContext(ctx, "sh", "-c", execution.Command)
 	}
 
 	// Share an output buffer between STDOUT/ERR, following the
@@ -84,53 +97,43 @@ func ExecuteCommand(execution *Execution) (*Execution, error) {
 		cmd.Stdin = strings.NewReader(execution.Input)
 	}
 
+	started := time.Now()
+
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happended when attepting to
 		// fork/exec, return immediately.
 		return execution, err
 	}
 
-	// If Timeout is not specified, use the default.
-	if execution.Timeout == 0 {
-		execution.Timeout = DefaultTimeout
-	}
+	err := cmd.Wait()
 
-	// Use a goroutine and channel for execution timeout.
-	done := make(chan error, 1)
-	defer close(done)
-	go func() {
-		// Wait for the command execution to complete.
-		done <- cmd.Wait()
-	}()
-	select {
-	case <-time.After(time.Duration(execution.Timeout) * time.Second):
-		// Attempt to kill -9 the command execution child process.
-		if err := cmd.Process.Kill(); err != nil {
-			return execution, err
-		}
+	execution.Output = output.String()
+	execution.Duration = time.Since(started).Seconds()
 
+	// The command execution timed out if the context deadline was
+	// exceeded.
+	if ctx.Err() == context.DeadlineExceeded {
 		execution.Output = TimeoutOutput
 		execution.Status = TimeoutExitStatus
-	case err := <-done:
-		execution.Output = output.String()
-
+	} else if err != nil {
 		// The command most likely return a non-zero exit status.
-		if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			execution.Output = TimeoutOutput
+			execution.Status = TimeoutExitStatus
+		} else if exitError, ok := err.(*exec.ExitError); ok {
 			// Best effort to determine the exit status, this
 			// should work on Linux, OSX, and Windows.
-			if exitError, ok := err.(*exec.ExitError); ok {
-				if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-					execution.Status = status.ExitStatus()
-				} else {
-					execution.Status = FallbackExitStatus
-				}
+			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
+				execution.Status = status.ExitStatus()
 			} else {
 				execution.Status = FallbackExitStatus
 			}
 		} else {
-			// Everything is A-OK.
-			execution.Status = OKExitStatus
+			execution.Status = FallbackExitStatus
 		}
+	} else {
+		// Everything is A-OK.
+		execution.Status = 0
 	}
 
 	return execution, nil
