@@ -4,6 +4,7 @@ package command
 import (
 	"bytes"
 	"os/exec"
+	"runtime"
 	"strings"
 	"syscall"
 )
@@ -36,7 +37,14 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 	// known to have troubles, e.g. command not found. We still
 	// use a fallback exit status in the unlikely event that the
 	// exit status cannot be determined.
-	cmd := exec.Command("sh", "-c", c.Command)
+	var cmd *exec.Cmd
+
+	// Taken from Sensu-Spawn (Sensu 1.x.x).
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", c.Command)
+	} else {
+		cmd = exec.Command("sh", "-c", c.Command)
+	}
 
 	// Share an output buffer between STDOUT/ERR, following the
 	// Nagios plugin spec.
