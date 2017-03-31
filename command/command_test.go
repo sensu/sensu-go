@@ -28,6 +28,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, nil, catErr)
 	assert.Equal(t, "bar", catExec.Output)
 	assert.Equal(t, 0, catExec.Status)
+	assert.NotEqual(t, 0, catExec.Duration)
 
 	falseCmd := &Execution{
 		Command: "false",
@@ -37,6 +38,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, nil, falseErr)
 	assert.Equal(t, "", falseExec.Output)
 	assert.Equal(t, 1, falseExec.Status)
+	assert.NotEqual(t, 0, falseExec.Duration)
 
 	outputs := &Execution{
 		Command: "echo foo && echo bar 1>&2",
@@ -46,6 +48,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, nil, outputsErr)
 	assert.Equal(t, "foo\nbar\n", outputsExec.Output)
 	assert.Equal(t, 0, outputsExec.Status)
+	assert.NotEqual(t, 0, outputsExec.Duration)
 
 	sleep := &Execution{
 		Command: "sleep 10",
@@ -56,4 +59,5 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, nil, sleepErr)
 	assert.Equal(t, "Execution timed out\n", sleepExec.Output)
 	assert.Equal(t, 2, sleepExec.Status)
+	assert.NotEqual(t, 0, sleepExec.Duration)
 }

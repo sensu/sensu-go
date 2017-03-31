@@ -74,7 +74,7 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	// exit status cannot be determined.
 	var cmd *exec.Cmd
 
-	// Use the context deadline for execution timeout.
+	// Use the context deadline for command execution timeout.
 	ctx, timeout := context.WithTimeout(ctx, time.Duration(execution.Timeout)*time.Second)
 	defer timeout()
 
@@ -117,10 +117,7 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		execution.Status = TimeoutExitStatus
 	} else if err != nil {
 		// The command most likely return a non-zero exit status.
-		if ctx.Err() == context.DeadlineExceeded {
-			execution.Output = TimeoutOutput
-			execution.Status = TimeoutExitStatus
-		} else if exitError, ok := err.(*exec.ExitError); ok {
+		if exitError, ok := err.(*exec.ExitError); ok {
 			// Best effort to determine the exit status, this
 			// should work on Linux, OSX, and Windows.
 			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
