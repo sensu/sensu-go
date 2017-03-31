@@ -25,7 +25,7 @@ type Session struct {
 	stopping     chan struct{}
 	stopped      chan struct{}
 	sendq        chan *transport.Message
-	checkChannel chan []byte
+	checkChannel <-chan []byte
 	disconnected bool
 	bus          messaging.MessageBus
 }
@@ -50,8 +50,6 @@ func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store
 		stopping:     make(chan struct{}, 1),
 		stopped:      make(chan struct{}),
 		sendq:        make(chan *transport.Message, 10),
-		checkChannel: make(chan []byte, 100),
-
 		disconnected: false,
 		store:        store,
 		bus:          bus,
@@ -89,8 +87,14 @@ func (s *Session) handshake() error {
 		return fmt.Errorf("error unmarshaling agent handshake: %s", err.Error())
 	}
 
+	subID, channel, err := s.bus.NewSubscriber()
+	if err != nil {
+		return err
+	}
+	s.checkChannel = channel
+
 	for _, sub := range agentHandshake.Subscriptions {
-		if err := s.bus.Subscribe(sub, s.ID, s.checkChannel); err != nil {
+		if err := s.bus.Subscribe(sub, s.ID); err != nil {
 			return err
 		}
 	}

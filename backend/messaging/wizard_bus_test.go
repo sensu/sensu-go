@@ -14,11 +14,13 @@ func TestMemoryBus(t *testing.T) {
 	assert.NoError(t, err)
 	// should be able to publish with no subscribers
 
-	c1 := make(chan []byte, 3)
-	c2 := make(chan []byte, 3)
-	assert.NoError(t, b.Subscribe("topic", "channel1", c1))
+	sub1, ch1, err := b.NewSubscriber()
+	assert.NoError(t, err)
+	sub2, ch2, err := b.NewSubscriber()
+	assert.NoError(t, err)
+	assert.NoError(t, b.Subscribe("topic", sub1))
 
-	assert.NoError(t, b.Subscribe("topic", "channel2", c2))
+	assert.NoError(t, b.Subscribe("topic", sub2))
 
 	err = b.Publish("topic", []byte("message2"))
 	assert.NoError(t, err)
@@ -29,12 +31,12 @@ func TestMemoryBus(t *testing.T) {
 
 	received := 0
 	messages := []string{}
-	for m := range c1 {
+	for m := range ch1 {
 		received++
 		messages = append(messages, string(m))
 	}
 
-	for m := range c2 {
+	for m := range ch2 {
 		received++
 		messages = append(messages, string(m))
 	}

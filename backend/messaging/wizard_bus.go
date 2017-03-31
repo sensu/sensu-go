@@ -4,7 +4,30 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
+
+	"github.com/google/uuid"
 )
+
+// NewSubscriber returns an initialized Subscriber.
+func newSubscriber(id string) *WizardSubscriber {
+	return &WizardSubscriber{
+		id:      id,
+		count:   0,
+		channel: make(chan []byte, 100),
+	}
+}
+
+// A WizardSubscriber is a struct that makes channels friendlier and allows
+// us to fan-in messages from multiple topics to a single channel.
+//
+// Subscribers are not to be reused.
+type WizardSubscriber struct {
+	// ID must be unique for each Subscriber.
+	id      string
+	channel chan []byte
+	count   int
+	sync.Mutex
+}
 
 // WizardBus is an in-memory message bus. It's unsafe and riddled with problems.
 type WizardBus struct {
@@ -17,12 +40,13 @@ type WizardBus struct {
 	// 	},
 	// 	...
 	// }
-	subscribers map[string]map[string]chan<- []byte
+	subscribers map[string]map[string]*WizardSubscriber
 	mutex       *sync.Mutex
 	stopping    chan struct{}
 	running     *atomic.Value
 	wg          *sync.WaitGroup
 	errchan     chan error
+	subRegistry map[string]*WizardSubscriber
 }
 
 // Start ...
@@ -33,7 +57,8 @@ func (b *WizardBus) Start() error {
 	b.running = &atomic.Value{}
 	b.wg = &sync.WaitGroup{}
 	b.sendBuffers = map[string](chan []byte){}
-	b.subscribers = map[string]map[string](chan<- []byte){}
+	b.subscribers = map[string]map[string]*WizardSubscriber{}
+	b.subRegistry = map[string]*WizardSubscriber{}
 	b.mutex = &sync.Mutex{}
 	b.running.Store(true)
 
@@ -46,9 +71,9 @@ func (b *WizardBus) Stop() error {
 	close(b.stopping)
 	close(b.errchan)
 	b.wg.Wait()
-	for _, subs := range b.subscribers {
-		for _, ch := range subs {
-			close(ch)
+	for _, topic := range b.subscribers {
+		for _, sub := range topic {
+			close(sub.channel)
 		}
 	}
 	return nil
@@ -76,9 +101,9 @@ func (b *WizardBus) startFanout(topic string) {
 			case <-b.stopping:
 				close(b.sendBuffers[topic])
 				for remaining := range b.sendBuffers[topic] {
-					for _, ch := range b.subscribers[topic] {
+					for _, sub := range b.subscribers[topic] {
 						select {
-						case ch <- remaining:
+						case sub.channel <- remaining:
 						default:
 							continue
 						}
@@ -86,9 +111,9 @@ func (b *WizardBus) startFanout(topic string) {
 				}
 				return
 			case msg := <-c:
-				for _, ch := range b.subscribers[topic] {
+				for _, sub := range b.subscribers[topic] {
 					select {
-					case ch <- msg:
+					case sub.channel <- msg:
 					default:
 						continue
 					}
@@ -98,16 +123,37 @@ func (b *WizardBus) startFanout(topic string) {
 	}()
 }
 
-// Subscribe is not particularly safe for use by multiple goroutines...
-func (b *WizardBus) Subscribe(topic, channelName string, channel chan<- []byte) error {
-	if !b.running.Load().(bool) {
-		return errors.New("bus no longer running")
+// NewSubscriber returns a new unique subscriber ID and a corresponding event
+// channel for that subscriber.
+func (b *WizardBus) NewSubscriber() (string, <-chan []byte, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return "", nil, err
 	}
+
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	_, ok := b.sendBuffers[topic]
+	sub := newSubscriber(id.String())
+	b.subRegistry[sub.id] = sub
+	return sub.id, sub.channel, nil
+}
+
+// Subscribe is not particularly safe for use by multiple goroutines...
+func (b *WizardBus) Subscribe(topic, subscriberID string) error {
+	if !b.running.Load().(bool) {
+		return errors.New("bus no longer running")
+	}
+
+	sub, ok := b.subRegistry[subscriberID]
 	if !ok {
+		return errors.New("subscriber not found")
+	}
+
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	if _, ok := b.sendBuffers[topic]; !ok {
 		b.sendBuffers[topic] = make(chan []byte, 100)
 		b.wg.Add(1)
 		b.startFanout(topic)
@@ -115,10 +161,10 @@ func (b *WizardBus) Subscribe(topic, channelName string, channel chan<- []byte) 
 
 	_, ok = b.subscribers[topic]
 	if !ok {
-		b.subscribers[topic] = map[string]chan<- []byte{}
+		b.subscribers[topic] = map[string]*WizardSubscriber{}
 	}
 
-	b.subscribers[topic][channelName] = channel
+	b.subscribers[topic][sub.id] = sub
 
 	return nil
 }
