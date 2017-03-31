@@ -75,6 +75,8 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	var cmd *exec.Cmd
 
 	// Use the context deadline for command execution timeout.
+	// This will be effectively ignored if the context already has
+	// an earlier deadline, which is super rad.
 	ctx, timeout := context.WithTimeout(ctx, time.Duration(execution.Timeout)*time.Second)
 	defer timeout()
 
