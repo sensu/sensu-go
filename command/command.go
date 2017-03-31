@@ -38,7 +38,8 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 	// exit status cannot be determined.
 	cmd := exec.Command("sh", "-c", c.Command)
 
-	// Try to sharing an output buffer between STDOUT/ERR.
+	// Share an output buffer between STDOUT/ERR, following the
+	// Nagios plugin spec.
 	var output bytes.Buffer
 
 	cmd.Stdout = &output
