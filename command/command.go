@@ -57,7 +57,7 @@ type Execution struct {
 // ExecuteCommand executes a system command (fork/exec), optionally
 // writing to STDIN, capture its combined output (STDOUT/ERR) and exit
 // status.
-func ExecuteCommand(c *Execution) (*Execution, error) {
+func ExecuteCommand(execution *Execution) (*Execution, error) {
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
 	// known to have troubles, e.g. command not found. We still
@@ -67,9 +67,9 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 
 	// Taken from Sensu-Spawn (Sensu 1.x.x).
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", c.Command)
+		cmd = exec.Command("cmd", "/c", execution.Command)
 	} else {
-		cmd = exec.Command("sh", "-c", c.Command)
+		cmd = exec.Command("sh", "-c", execution.Command)
 	}
 
 	// Share an output buffer between STDOUT/ERR, following the
@@ -80,39 +80,40 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 	cmd.Stderr = &output
 
 	// If Input is specified, write to STDIN.
-	if c.Input != "" {
-		cmd.Stdin = strings.NewReader(c.Input)
+	if execution.Input != "" {
+		cmd.Stdin = strings.NewReader(execution.Input)
 	}
 
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happended when attepting to
 		// fork/exec, return immediately.
-		return c, err
+		return execution, err
 	}
 
 	// If Timeout is not specified, use the default.
-	if c.Timeout == 0 {
-		c.Timeout = DefaultTimeout
+	if execution.Timeout == 0 {
+		execution.Timeout = DefaultTimeout
 	}
 
 	// Use a goroutine and channel for execution timeout.
 	done := make(chan error, 1)
+	defer close(done)
 	go func() {
 		// Wait for the command execution to complete.
 		done <- cmd.Wait()
 	}()
 	select {
-	case <-time.After(time.Duration(c.Timeout) * time.Second):
+	case <-time.After(time.Duration(execution.Timeout) * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
-			return c, err
+			return execution, err
 		}
 
-		c.Output = TimeoutOutput
-		c.Status = TimeoutExitStatus
+		execution.Output = TimeoutOutput
+		execution.Status = TimeoutExitStatus
 
 		// DO WE NEED `<-done:` HERE? LEAK?
 	case err := <-done:
-		c.Output = output.String()
+		execution.Output = output.String()
 
 		// The command most likely return a non-zero exit status.
 		if err != nil {
@@ -120,19 +121,19 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 			// should work on Linux, OSX, and Windows.
 			if exitError, ok := err.(*exec.ExitError); ok {
 				if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-					c.Status = status.ExitStatus()
+					execution.Status = status.ExitStatus()
 				} else {
-					c.Status = FallbackExitStatus
+					execution.Status = FallbackExitStatus
 				}
 			} else {
-				c.Status = FallbackExitStatus
+				execution.Status = FallbackExitStatus
 			}
 		} else {
 			// Everything is A-OK.
-			c.Status = OKExitStatus
+			execution.Status = OKExitStatus
 		}
 
 	}
 
-	return c, nil
+	return execution, nil
 }
