@@ -78,6 +78,7 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 	cmd.Stdout = &output
 	cmd.Stderr = &output
 
+	// If Input is specified, write to STDIN.
 	if c.Input != "" {
 		cmd.Stdin = strings.NewReader(c.Input)
 	}
@@ -88,10 +89,12 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 		return c, err
 	}
 
+	// If Timeout is not specified, use the default.
 	if c.Timeout == 0 {
 		c.Timeout = DefaultTimeout
 	}
 
+	// Use a goroutine and channel for execution timeout.
 	done := make(chan error, 1)
 	go func() {
 		done <- cmd.Wait()
@@ -101,8 +104,11 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			return c, err
 		}
+
 		c.Output = TimeoutOutput
 		c.Status = TimeoutExitStatus
+
+		// DO WE NEED `<-done:` HERE? LEAK?
 	case err := <-done:
 		c.Output = output.String()
 
