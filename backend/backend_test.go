@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	nsq "github.com/nsqio/go-nsq"
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -70,14 +69,6 @@ func TestHTTPListener(t *testing.T) {
 		assert.Equal(t, types.BackendHandshakeType, resp.Type)
 
 		assert.NoError(t, client.Close())
-
-		// Test NSQD
-		nsqCfg := nsq.NewConfig()
-		producer, err := nsq.NewProducer("127.0.0.1:4150", nsqCfg)
-		assert.NoError(t, err)
-
-		err = producer.Publish("test_topic", []byte("{}"))
-		assert.NoError(t, err)
 		b.Stop()
 	})
 }

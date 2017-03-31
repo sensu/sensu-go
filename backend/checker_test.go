@@ -15,7 +15,7 @@ import (
 )
 
 func TestCheckScheduler(t *testing.T) {
-	bus := &messaging.MemoryBus{}
+	bus := &messaging.WizardBus{}
 	assert.NoError(t, bus.Start())
 
 	st := fixtures.NewFixtureStore()
@@ -28,8 +28,8 @@ func TestCheckScheduler(t *testing.T) {
 		Check:      check,
 	}
 
-	c1, err := bus.Subscribe("subscription1", "")
-	assert.NoError(t, err)
+	c1 := make(chan []byte, 10)
+	assert.NoError(t, bus.Subscribe("subscription1", "channel1", c1))
 
 	assert.NoError(t, scheduler.Start())
 	time.Sleep(1 * time.Second)
@@ -67,7 +67,7 @@ func TestCheckerd(t *testing.T) {
 		cli, err := e.NewClient()
 		assert.NoError(t, err)
 		st, err := e.NewStore()
-		bus := &messaging.MemoryBus{}
+		bus := &messaging.WizardBus{}
 		assert.NoError(t, bus.Start())
 
 		checker := &Checker{
@@ -77,9 +77,8 @@ func TestCheckerd(t *testing.T) {
 		}
 		checker.Start()
 
-		ch, err := bus.Subscribe("subscription", "")
-		assert.NoError(t, err)
-		assert.NotNil(t, ch)
+		ch := make(chan []byte, 10)
+		assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
 
 		check := &types.Check{
 			Name:          "check_name",
