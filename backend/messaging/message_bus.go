@@ -6,10 +6,10 @@ import "github.com/sensu/sensu-go/backend/daemon"
 type MessageBus interface {
 	daemon.Daemon
 
-	// Subscribe allows a consumer to subscribe to a topic on an optional channel
+	// Subscribe allows a consumer to subscribe to a topic and channel
 	// and listen for events on a read-only channel. Events are delivered
 	// as simple byte arrays.
-	Subscribe(topic string, channel chan<- []byte) error
+	Subscribe(topic, channelName string, channel chan<- []byte) error
 
 	// Publish sends a message to a topic over an optional channel. If there's
 	// a problem publishing the message, an error is returned.

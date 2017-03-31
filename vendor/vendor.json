@@ -15,18 +15,6 @@
 			"revisionTime": "2016-08-04T10:47:26Z"
 		},
 		{
-			"checksumSHA1": "gntLgvUzJqZWf4NYxJr3p/3gcvk=",
-			"path": "github.com/blang/semver",
-			"revision": "4a1e882c79dcf4ec00d2e29fac74b9c8938d5052",
-			"revisionTime": "2017-02-02T18:38:21Z"
-		},
-		{
-			"checksumSHA1": "xBwkW3XCOni1zsg8S/uHv4aGPKw=",
-			"path": "github.com/bmizerany/perks/quantile",
-			"revision": "d9a9656a3a4b1c2864fdb44db2ef8619772d92aa",
-			"revisionTime": "2014-07-16T21:06:14Z"
-		},
-		{
 			"checksumSHA1": "J+kVue/HTH4sELlqMO4z0tx9DiA=",
 			"path": "github.com/boltdb/bolt",
 			"revision": "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd",
@@ -430,12 +418,6 @@
 			"revisionTime": "2017-03-07T00:15:33Z"
 		},
 		{
-			"checksumSHA1": "p/8vSviYF91gFflhrt5vkyksroo=",
-			"path": "github.com/golang/snappy",
-			"revision": "553a641470496b2327abcac10b36396bd98e45c9",
-			"revisionTime": "2017-02-15T23:32:05Z"
-		},
-		{
 			"checksumSHA1": "mygGPzw0Q81XnyUgA7+YYDIjYD8=",
 			"path": "github.com/google/btree",
 			"revision": "316fb6d3f031ae8f4d457c6c5186b9e3ded70435",
@@ -484,106 +466,10 @@
 			"revisionTime": "2016-09-07T12:20:59Z"
 		},
 		{
-			"checksumSHA1": "Y3U6on66N0BszKXYvb2Q+qpG6f4=",
-			"path": "github.com/julienschmidt/httprouter",
-			"revision": "8a45e95fc75cb77048068a62daed98cc22fdac7c",
-			"revisionTime": "2017-01-04T18:58:16Z"
-		},
-		{
 			"checksumSHA1": "bKMZjd2wPw13VwoE7mBeSv5djFA=",
 			"path": "github.com/matttproud/golang_protobuf_extensions/pbutil",
 			"revision": "c12348ce28de40eed0136aa2b644d0ee0650e56c",
 			"revisionTime": "2016-04-24T11:30:07Z"
-		},
-		{
-			"checksumSHA1": "8psox4iKaF5lr1aSrXxwlGhE6eQ=",
-			"path": "github.com/nsqio/go-diskqueue",
-			"revision": "d7805f889b023afcd5b8933e815ce9ba36327333",
-			"revisionTime": "2017-01-11T04:15:20Z"
-		},
-		{
-			"checksumSHA1": "QM8ESeTcifXJsm/SGdnwE2IdFvw=",
-			"path": "github.com/nsqio/go-nsq",
-			"revision": "b9762cdcb6d5cc5ac5287ca076354143d332cc97",
-			"revisionTime": "2017-02-15T00:13:23Z"
-		},
-		{
-			"checksumSHA1": "gCUzspp2yMElWYdVN6sgkPue/Os=",
-			"path": "github.com/nsqio/nsq/internal/app",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "FD6rdKevWHzGFHBVlOLSS0Ww5og=",
-			"path": "github.com/nsqio/nsq/internal/auth",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "WXjeGU04ZPNt6ckAUaIsgQbQrtY=",
-			"path": "github.com/nsqio/nsq/internal/clusterinfo",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "VH92rfhuEhWcSW1OTVFLMy6WymU=",
-			"path": "github.com/nsqio/nsq/internal/dirlock",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "7wzeYLb++6h0Ojb8elHpzyetUcQ=",
-			"path": "github.com/nsqio/nsq/internal/http_api",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "iIkhyC1YxxhOYMz/F/ouE3ZcUm0=",
-			"path": "github.com/nsqio/nsq/internal/pqueue",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "9rRrgyx6KTSFOpl8T15hMoAX7EM=",
-			"path": "github.com/nsqio/nsq/internal/protocol",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "o3qBJxX9P4lngUFvD2kz1GkrfVU=",
-			"path": "github.com/nsqio/nsq/internal/quantile",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "yS/ZaBhA6P6aTOLFrmiwQjpNaYA=",
-			"path": "github.com/nsqio/nsq/internal/statsd",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "X8nzM1YKKmmhf3qQ0Hz9nuOkROE=",
-			"path": "github.com/nsqio/nsq/internal/stringy",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "DHuiy89n3a9N2Gxs/edt4aq6XXA=",
-			"path": "github.com/nsqio/nsq/internal/util",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "z17559LuQKeuxJ/D0LZUIMR4Exk=",
-			"path": "github.com/nsqio/nsq/internal/version",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
-		},
-		{
-			"checksumSHA1": "FXHq/MBpNuIM0tJ+43U3fM044Xk=",
-			"path": "github.com/nsqio/nsq/nsqd",
-			"revision": "733c6a5ffda3fb628c5a4d92d47e54fd36d30936",
-			"revisionTime": "2017-03-06T01:17:54Z"
 		},
 		{
 			"checksumSHA1": "zKKp5SZ3d3ycKe4EKMNT0BqAWBw=",

@@ -10,11 +10,19 @@ import (
 type WizardBus struct {
 	sendBuffers      map[string]chan []byte
 	sendBuffersMutex *sync.Mutex
-	subscribers      map[string][]chan<- []byte
-	stopping         chan struct{}
-	running          *atomic.Value
-	wg               *sync.WaitGroup
-	errchan          chan error
+	// {
+	// 	"topic": {
+	// 		"channel": channel,
+	// 		...
+	// 	},
+	// 	...
+	// }
+	subscribers map[string]map[string]chan<- []byte
+	mutex       *sync.Mutex
+	stopping    chan struct{}
+	running     *atomic.Value
+	wg          *sync.WaitGroup
+	errchan     chan error
 }
 
 // Start ...
@@ -25,8 +33,10 @@ func (b *WizardBus) Start() error {
 	b.running = &atomic.Value{}
 	b.wg = &sync.WaitGroup{}
 	b.sendBuffers = map[string](chan []byte){}
-	b.subscribers = map[string]([]chan<- []byte){}
+	b.subscribers = map[string]map[string](chan<- []byte){}
+	b.mutex = &sync.Mutex{}
 	b.running.Store(true)
+
 	return nil
 }
 
@@ -58,10 +68,9 @@ func (b *WizardBus) Err() <-chan error {
 }
 
 func (b *WizardBus) startFanout(topic string) {
-	done := make(chan struct{})
 	go func() {
+		defer b.wg.Done()
 		c := b.sendBuffers[topic]
-		close(done)
 		for {
 			select {
 			case <-b.stopping:
@@ -75,7 +84,6 @@ func (b *WizardBus) startFanout(topic string) {
 						}
 					}
 				}
-				b.wg.Done()
 				return
 			case msg := <-c:
 				for _, ch := range b.subscribers[topic] {
@@ -88,46 +96,52 @@ func (b *WizardBus) startFanout(topic string) {
 			}
 		}
 	}()
-	<-done
 }
 
-// Subscribe ... We actually ignore channel names here, because right now we
-// don't need multiple consumers on a single channel. Just move to NSQ.
-func (b *WizardBus) Subscribe(topic string, channel chan<- []byte) error {
+// Subscribe is not particularly safe for use by multiple goroutines...
+func (b *WizardBus) Subscribe(topic, channelName string, channel chan<- []byte) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
 
-	b.sendBuffersMutex.Lock()
-	defer b.sendBuffersMutex.Unlock()
 	_, ok := b.sendBuffers[topic]
 	if !ok {
 		b.sendBuffers[topic] = make(chan []byte, 100)
-		b.startFanout(topic)
 		b.wg.Add(1)
+		b.startFanout(topic)
 	}
 
-	b.subscribers[topic] = append(b.subscribers[topic], channel)
+	_, ok = b.subscribers[topic]
+	if !ok {
+		b.subscribers[topic] = map[string]chan<- []byte{}
+	}
+
+	b.subscribers[topic][channelName] = channel
 
 	return nil
 }
 
-// Publish ...
+// Publish publishes a message. If the topic has never had subscribers, this is
+// a noop.
 func (b *WizardBus) Publish(topic string, msg []byte) error {
+	// At least _try_ to avoid sending on channels that are closing. This is still
+	// khnown to be racey, but we're accepting that for now. We need to protect
+	// against panics in the Backend.
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}
 
-	b.sendBuffersMutex.Lock()
-	defer b.sendBuffersMutex.Unlock()
-	_, ok := b.sendBuffers[topic]
-	if !ok {
-		b.sendBuffers[topic] = make(chan []byte)
-		b.startFanout(topic)
-		b.wg.Add(1)
+	// This is purposefully racey with Subscribe, because we want to avoid
+	// having Publish() synchronize around a mutex since it's called all the
+	// time. Put all of the synchronization in Subscribe, and understand that
+	// nearly _all_ messages sent through sensu's message bus are periodic and
+	// cyclical. If we miss the _very first message_ sent over this topic, it
+	// really doesn't matter, because it'll be sent again soon enough.
+	if ch, ok := b.sendBuffers[topic]; ok {
+		ch <- msg
 	}
-
-	b.sendBuffers[topic] <- msg
 
 	return nil
 }

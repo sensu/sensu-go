@@ -29,7 +29,7 @@ func TestCheckScheduler(t *testing.T) {
 	}
 
 	c1 := make(chan []byte, 10)
-	assert.NoError(t, bus.Subscribe("subscription1", c1))
+	assert.NoError(t, bus.Subscribe("subscription1", "channel1", c1))
 
 	assert.NoError(t, scheduler.Start())
 	time.Sleep(1 * time.Second)
@@ -78,7 +78,7 @@ func TestCheckerd(t *testing.T) {
 		checker.Start()
 
 		ch := make(chan []byte, 10)
-		assert.NoError(t, bus.Subscribe("subscription", ch))
+		assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
 
 		check := &types.Check{
 			Name:          "check_name",
