@@ -191,6 +191,8 @@ func (s *Session) Start() error {
 	go s.recvPump(wg)
 	go s.subPump(wg)
 	go func(wg *sync.WaitGroup) {
+		wg.Wait()
+		close(s.checkChannel)
 		close(s.stopped)
 	}(wg)
 
