@@ -43,7 +43,8 @@ type Execution struct {
 	// Input to provide the command via STDIN.
 	Input string
 
-	// Timeout
+	// Execution timeout in seconds, will be set to a default if
+	// not specified.
 	Timeout int
 
 	// Combined command execution STDOUT/ERR.
@@ -97,6 +98,7 @@ func ExecuteCommand(c *Execution) (*Execution, error) {
 	// Use a goroutine and channel for execution timeout.
 	done := make(chan error, 1)
 	go func() {
+		// Wait for the command execution to complete.
 		done <- cmd.Wait()
 	}()
 	select {
