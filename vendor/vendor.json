@@ -424,6 +424,12 @@
 			"revisionTime": "2016-12-17T18:35:37Z"
 		},
 		{
+			"checksumSHA1": "WMTjT/WhwABW0CP22n1KeXxb96w=",
+			"path": "github.com/google/uuid",
+			"revision": "6a5e28554805e78ea6141142aba763936c4761c0",
+			"revisionTime": "2017-03-06T14:51:42Z"
+		},
+		{
 			"checksumSHA1": "Ek5SW7pswB7YzX1Dr0bTSFCNOtc=",
 			"path": "github.com/gorilla/mux",
 			"revision": "999ef73f5d50979cf6d12afed1726325b63f9570",

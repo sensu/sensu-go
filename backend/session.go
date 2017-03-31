@@ -7,6 +7,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/handler"
@@ -16,6 +17,8 @@ import (
 
 // A Session ...
 type Session struct {
+	ID string
+
 	conn         *transport.Transport
 	store        store.Store
 	handler      *handler.MessageHandler
@@ -35,8 +38,14 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 }
 
 // NewSession ...
-func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store.Store) *Session {
+func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+
 	s := &Session{
+		ID:           id.String(),
 		conn:         conn,
 		stopping:     make(chan struct{}, 1),
 		stopped:      make(chan struct{}),
@@ -48,7 +57,7 @@ func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store
 		bus:          bus,
 	}
 	s.handler = newSessionHandler(s)
-	return s
+	return s, nil
 }
 
 func (s *Session) handshake() error {

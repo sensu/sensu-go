@@ -204,13 +204,21 @@ func agentServer(b *Backend) (*http.Server, error) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println("transport error on websocket upgrade: ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		session := NewSession(transport.NewTransport(conn), b.messageBus, store)
+		session, err := NewSession(transport.NewTransport(conn), b.messageBus, store)
+		if err != nil {
+			log.Println("failed to start session: ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		err = session.Start()
 		if err != nil {
 			log.Println("failed to start session: ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	})
 

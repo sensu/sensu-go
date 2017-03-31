@@ -23,7 +23,8 @@ func TestGoodHandshake(t *testing.T) {
 		assert.NoError(t, err)
 		bus := &messaging.WizardBus{}
 		bus.Start()
-		session = NewSession(conn, bus, fixtures.NewFixtureStore())
+		session, err = NewSession(conn, bus, fixtures.NewFixtureStore())
+		assert.NoError(t, err)
 		err = session.Start()
 		assert.NoError(t, err)
 		done <- struct{}{}
