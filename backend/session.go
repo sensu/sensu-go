@@ -19,15 +19,16 @@ import (
 type Session struct {
 	ID string
 
-	conn         *transport.Transport
-	store        store.Store
-	handler      *handler.MessageHandler
-	stopping     chan struct{}
-	stopped      chan struct{}
-	sendq        chan *transport.Message
-	checkChannel chan []byte
-	disconnected bool
-	bus          messaging.MessageBus
+	conn          *transport.Transport
+	store         store.Store
+	handler       *handler.MessageHandler
+	stopping      chan struct{}
+	stopped       chan struct{}
+	sendq         chan *transport.Message
+	subscriptions []string
+	checkChannel  chan []byte
+	disconnected  bool
+	bus           messaging.MessageBus
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -89,7 +90,8 @@ func (s *Session) handshake() error {
 		return fmt.Errorf("error unmarshaling agent handshake: %s", err.Error())
 	}
 
-	for _, sub := range agentHandshake.Subscriptions {
+	s.subscriptions = agentHandshake.Subscriptions
+	for _, sub := range s.subscriptions {
 		if err := s.bus.Subscribe(sub, s.ID, s.checkChannel); err != nil {
 			return err
 		}
@@ -192,6 +194,9 @@ func (s *Session) Start() error {
 	go s.subPump(wg)
 	go func(wg *sync.WaitGroup) {
 		wg.Wait()
+		for _, sub := range s.subscriptions {
+			s.bus.Unsubscribe(sub, s.ID)
+		}
 		close(s.checkChannel)
 		close(s.stopped)
 	}(wg)

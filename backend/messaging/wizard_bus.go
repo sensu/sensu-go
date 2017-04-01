@@ -151,8 +151,9 @@ func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- []by
 // WizardBus mutex, fetches the appropriate WizardTopic (noop if
 // missing), unlocks the WizardBus mutex, locks the WizardTopic's
 // mutex, fetches the consumer channel from the WizardTopic's bindings
-// (noop if missing), and closes the channel and deletes it from
-// bindings map.
+// (noop if missing), and deletes the channel from WizardTopic's
+// bindings (it does not close the channel because it could be bound
+// to another topic).
 func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
@@ -167,10 +168,7 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 	if ok {
 		wTopic.mutex.Lock()
 
-		if channel, ok := wTopic.bindings[consumer]; ok {
-			close(channel)
-			delete(wTopic.bindings, consumer)
-		}
+		delete(wTopic.bindings, consumer)
 
 		wTopic.mutex.Unlock()
 	}
