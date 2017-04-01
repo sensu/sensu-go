@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 )
 
-// WizardBus is an in-memory message bus. It's unsafe and riddled with problems.
+// WizardBus is an in-memory message bus.
 type WizardBus struct {
 	stopping chan struct{}
 	running  *atomic.Value
