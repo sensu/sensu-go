@@ -16,9 +16,9 @@ func TestMemoryBus(t *testing.T) {
 
 	c1 := make(chan []byte, 3)
 	c2 := make(chan []byte, 3)
-	assert.NoError(t, b.Subscribe("topic", "channel1", c1))
+	assert.NoError(t, b.Subscribe("topic", "consumer1", c1))
 
-	assert.NoError(t, b.Subscribe("topic", "channel2", c2))
+	assert.NoError(t, b.Subscribe("topic", "consumer2", c2))
 
 	err = b.Publish("topic", []byte("message2"))
 	assert.NoError(t, err)
