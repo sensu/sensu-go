@@ -170,7 +170,6 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 		if channel, ok := wTopic.bindings[consumer]; ok {
 			close(channel)
 			delete(wTopic.bindings, consumer)
-
 		}
 
 		wTopic.mutex.Unlock()
