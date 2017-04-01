@@ -36,6 +36,7 @@ func TestMemoryBus(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NoError(t, b.Unsubscribe("topic", "consumer4"))
+	close(c4)
 
 	b.Stop()
 

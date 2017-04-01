@@ -43,8 +43,8 @@ func (b *WizardBus) Stop() error {
 	close(b.stopping)
 	close(b.errchan)
 	b.wg.Wait()
-	for _, wtopic := range b.topics {
-		for _, binding := range wtopic.bindings {
+	for _, wTopic := range b.topics {
+		for _, binding := range wTopic.bindings {
 			close(binding)
 		}
 	}
