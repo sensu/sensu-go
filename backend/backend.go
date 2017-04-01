@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -102,23 +101,8 @@ func NewBackend(config *Config) (*Backend, error) {
 	}
 
 	b.agentServer = asrv
-	nsqConfig := messaging.NewConfig()
-	nsqConfig.StatePath = filepath.Join(config.StateDir, "nsqd")
-	nsq, err := messaging.NewNSQD(nsqConfig)
-	if err != nil {
-		return nil, err
-	}
-	nsqBus := &messaging.NsqBus{
-		NSQD: nsq,
-	}
-	err = nsqBus.Start()
-	if err != nil {
-		e.Shutdown()
-		asrv.Shutdown(context.Background())
-		httpsrv.Shutdown(context.Background())
-		return nil, err
-	}
-	b.messageBus = nsqBus
+
+	b.messageBus = &messaging.WizardBus{}
 
 	return b, nil
 }
@@ -126,6 +110,10 @@ func NewBackend(config *Config) (*Backend, error) {
 // Run starts all of the Backend server's event loops and sets up the HTTP
 // server.
 func (b *Backend) Run() error {
+	if err := b.messageBus.Start(); err != nil {
+		return err
+	}
+
 	// there are two channels in play here: inErrChan is used by the various
 	// services the Backend manages as a destination for terminal errors.
 	// we then monitor that channel and the first error returned on that
@@ -143,6 +131,10 @@ func (b *Backend) Run() error {
 
 	go func() {
 		inErrChan <- <-b.etcd.Err()
+	}()
+
+	go func() {
+		inErrChan <- <-b.messageBus.Err()
 	}()
 
 	go func() {
@@ -212,13 +204,21 @@ func agentServer(b *Backend) (*http.Server, error) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println("transport error on websocket upgrade: ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		session := NewSession(transport.NewTransport(conn), b.messageBus, store)
+		session, err := NewSession(transport.NewTransport(conn), b.messageBus, store)
+		if err != nil {
+			log.Println("failed to start session: ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		err = session.Start()
 		if err != nil {
 			log.Println("failed to start session: ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	})
 

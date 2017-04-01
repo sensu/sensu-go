@@ -21,9 +21,10 @@ func TestGoodHandshake(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		bus := &messaging.MemoryBus{}
+		bus := &messaging.WizardBus{}
 		bus.Start()
-		session = NewSession(conn, bus, fixtures.NewFixtureStore())
+		session, err = NewSession(conn, bus, fixtures.NewFixtureStore())
+		assert.NoError(t, err)
 		err = session.Start()
 		assert.NoError(t, err)
 		done <- struct{}{}
@@ -54,8 +55,4 @@ func TestGoodHandshake(t *testing.T) {
 	err = json.Unmarshal(resp.Payload, &handshake)
 	assert.NoError(t, err)
 	<-done
-
-	subscriptionChan, ok := session.checkChans["subscription1"]
-	assert.True(t, ok)
-	assert.NotNil(t, subscriptionChan)
 }
