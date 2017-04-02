@@ -11,7 +11,7 @@ type WizardBus struct {
 	stopping chan struct{}
 	running  *atomic.Value
 	wg       *sync.WaitGroup
-	mutex    *sync.Mutex
+	mutex    *sync.RWMutex
 	errchan  chan error
 	topics   map[string]WizardTopic
 }
@@ -19,7 +19,7 @@ type WizardBus struct {
 // WizardTopic encapsulates state around a WizardBus topic and its
 // consumer channel bindings.
 type WizardTopic struct {
-	mutex      *sync.Mutex
+	mutex      *sync.RWMutex
 	bindings   map[string]chan<- []byte
 	sendBuffer chan []byte
 }
@@ -30,7 +30,7 @@ func (b *WizardBus) Start() error {
 	b.errchan = make(chan error, 1)
 	b.running = &atomic.Value{}
 	b.wg = &sync.WaitGroup{}
-	b.mutex = &sync.Mutex{}
+	b.mutex = &sync.RWMutex{}
 	b.topics = map[string]WizardTopic{}
 	b.running.Store(true)
 
@@ -70,7 +70,7 @@ func (b *WizardBus) Err() <-chan error {
 // to/from the single topic.
 func (b *WizardBus) createTopic(topic string) *WizardTopic {
 	wTopic := &WizardTopic{
-		mutex:      &sync.Mutex{},
+		mutex:      &sync.RWMutex{},
 		bindings:   make(map[string](chan<- []byte)),
 		sendBuffer: make(chan []byte),
 	}
@@ -84,7 +84,7 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 			case <-b.stopping:
 				close(wTopic.sendBuffer)
 
-				wTopic.mutex.Lock()
+				wTopic.mutex.RLock()
 
 				for remaining := range wTopic.sendBuffer {
 					for _, ch := range wTopic.bindings {
@@ -96,11 +96,11 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 					}
 				}
 
-				wTopic.mutex.Unlock()
+				wTopic.mutex.RUnlock()
 
 				return
 			case msg := <-wTopic.sendBuffer:
-				wTopic.mutex.Lock()
+				wTopic.mutex.RLock()
 
 				for _, ch := range wTopic.bindings {
 					select {
@@ -110,7 +110,7 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 					}
 				}
 
-				wTopic.mutex.Unlock()
+				wTopic.mutex.RUnlock()
 			}
 		}
 	}()
@@ -191,9 +191,11 @@ func (b *WizardBus) Publish(topic string, msg []byte) error {
 	// we miss the _very first message_ sent over this topic, it
 	// really doesn't matter, because it'll be sent again soon
 	// enough.
+	b.mutex.RLock()
 	if wTopic, ok := b.topics[topic]; ok {
 		wTopic.sendBuffer <- msg
 	}
+	b.mutex.RUnlock()
 
 	return nil
 }

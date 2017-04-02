@@ -1,7 +1,10 @@
 package messaging
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -63,4 +66,26 @@ func TestMemoryBus(t *testing.T) {
 	assert.Equal(t, "message4", messages[2])
 	assert.Equal(t, "message2", messages[3])
 	assert.Equal(t, "message2", messages[6])
+}
+
+func BenchmarkSubscribe(b *testing.B) {
+	testCases := []int{100, 1000, 10000}
+
+	rand.Seed(time.Now().UnixNano())
+
+	for _, tc := range testCases {
+		bus := &WizardBus{}
+		bus.Start()
+		b.Run(fmt.Sprintf("%d subscribers", tc), func(b *testing.B) {
+			b.SetParallelism(tc)
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					ch := make(chan []byte)
+					subID := string(rand.Int())
+					bus.Subscribe("topic", subID, ch)
+				}
+			})
+		})
+		bus.Stop()
+	}
 }
