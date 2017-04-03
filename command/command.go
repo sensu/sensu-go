@@ -100,6 +100,9 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	}
 
 	started := time.Now()
+	defer func() {
+		execution.Duration = time.Since(started).Seconds()
+	}()
 
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happended when attepting to
@@ -110,7 +113,6 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	err := cmd.Wait()
 
 	execution.Output = output.String()
-	execution.Duration = time.Since(started).Seconds()
 
 	// The command execution timed out if the context deadline was
 	// exceeded.

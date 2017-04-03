@@ -76,6 +76,8 @@ func (s *CheckScheduler) Start() error {
 					if err := s.MessageBus.Publish(sub, evtBytes); err != nil {
 						log.Println("error publishing check request: ", err.Error())
 					}
+
+					log.Println("scheduling check: ", s.Check.Name)
 				}
 			case <-s.stop:
 				timer.Stop()
@@ -186,6 +188,7 @@ func (c *Checker) startReconciler() {
 // All the watcher has to do is make sure that we have schedulers for any checks
 // that are created. Once the scheduler is in place, it will self manage.
 func (c *Checker) startWatcher() {
+	log.Println("starting checks etcd watcher")
 	go func() {
 		for {
 			select {
@@ -224,6 +227,7 @@ func (c *Checker) startWatcher() {
 						c.schedulersMutex.Unlock()
 					}
 					c.schedulersMutex.Unlock()
+					log.Println("started scheduler for check: ", check.Name)
 				}
 			}
 			// TODO(greg): exponential backoff

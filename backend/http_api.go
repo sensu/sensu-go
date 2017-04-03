@@ -127,7 +127,7 @@ func (a *API) CheckHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Fprintf(w, string(checkBytes))
-	case http.MethodPut:
+	case http.MethodPut, http.MethodPost:
 		newCheck := &types.Check{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -201,7 +201,7 @@ func httpServer(b *Backend) (*http.Server, error) {
 	r.HandleFunc("/entities", api.EntitiesHandler).Methods(http.MethodGet)
 	r.HandleFunc("/entities/{id}", api.EntityHandler).Methods(http.MethodGet)
 	r.HandleFunc("/checks", api.ChecksHandler).Methods(http.MethodGet)
-	r.HandleFunc("/checks/{name}", api.CheckHandler).Methods(http.MethodGet, http.MethodPut, http.MethodDelete)
+	r.HandleFunc("/checks/{name}", api.CheckHandler).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", b.Config.APIPort),
