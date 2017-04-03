@@ -147,6 +147,8 @@ func TestAgentKeepalives(t *testing.T) {
 	checkBytes, err = json.Marshal(check)
 	assert.NoError(t, err)
 	resp, err = http.Post(fmt.Sprintf("%s/checks/testcheck2", backendHTTPURL), "application/json", bytes.NewBuffer(checkBytes))
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, err)
 
 	time.Sleep(30 * time.Second)
 
