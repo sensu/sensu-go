@@ -34,13 +34,14 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
-	errChan      chan error
-	shutdownChan chan struct{}
-	done         chan struct{}
-	messageBus   messaging.MessageBus
-	httpServer   *http.Server
-	agentServer  *http.Server
-	etcd         *etcd.Etcd
+	errChan        chan error
+	shutdownChan   chan struct{}
+	done           chan struct{}
+	messageBus     messaging.MessageBus
+	httpServer     *http.Server
+	agentServer    *http.Server
+	checkScheduler *Checker
+	etcd           *etcd.Etcd
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -111,6 +112,30 @@ func NewBackend(config *Config) (*Backend, error) {
 // server.
 func (b *Backend) Run() error {
 	if err := b.messageBus.Start(); err != nil {
+		return err
+	}
+
+	// Right now, instantiating a new Etcd will start etcd. If we change that
+	// s.t. Etcd has its own Start() method, conforming to Daemon, then we will
+	// want to make sure that we aren't calling NewClient before starting it,
+	// I think. That might return a connection error.
+	st, err := b.etcd.NewStore()
+	if err != nil {
+		return err
+	}
+
+	cli, err := b.etcd.NewClient()
+	if err != nil {
+		return err
+	}
+
+	b.checkScheduler = &Checker{
+		MessageBus: b.messageBus,
+		Client:     cli,
+		Store:      st,
+	}
+	err = b.checkScheduler.Start()
+	if err != nil {
 		return err
 	}
 

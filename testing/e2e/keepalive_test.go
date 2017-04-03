@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -98,6 +99,11 @@ func TestAgentKeepalives(t *testing.T) {
 			log.Panic(dErr)
 		}
 		fmt.Print(string(b))
+		b, dErr = ioutil.ReadAll(ap.Stdout)
+		if dErr != nil {
+			log.Panic(dErr)
+		}
+		fmt.Print(string(b))
 	}()
 
 	// Give it a second to make sure we've sent a keepalive.
@@ -116,4 +122,34 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.Equal(t, "TestKeepalives", entities[0].ID)
 	assert.Equal(t, "agent", entities[0].Class)
 	assert.NotEmpty(t, entities[0].System.Hostname)
+
+	check := &types.Check{
+		Name:          "testcheck",
+		Command:       "echo output",
+		Interval:      1,
+		Subscriptions: []string{"test"},
+	}
+	checkBytes, err := json.Marshal(check)
+	assert.NoError(t, err)
+	resp, err = http.Post(fmt.Sprintf("%s/checks/testcheck", backendHTTPURL), "application/json", bytes.NewBuffer(checkBytes))
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, err)
+	resp, err = http.Get(fmt.Sprintf("%s/checks/testcheck", backendHTTPURL))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	check = &types.Check{
+		Name:          "testcheck2",
+		Command:       "echo output",
+		Interval:      1,
+		Subscriptions: []string{"test"},
+	}
+	checkBytes, err = json.Marshal(check)
+	assert.NoError(t, err)
+	resp, err = http.Post(fmt.Sprintf("%s/checks/testcheck2", backendHTTPURL), "application/json", bytes.NewBuffer(checkBytes))
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, err)
+
+	time.Sleep(30 * time.Second)
+
 }

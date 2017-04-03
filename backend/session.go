@@ -97,6 +97,8 @@ func (s *Session) handshake() error {
 		}
 	}
 
+	log.Printf("agent connected: id=%s subscriptions=%s\n", agentHandshake.ID, agentHandshake.Subscriptions)
+
 	return nil
 }
 
@@ -184,8 +186,6 @@ func (s *Session) Start() error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("agent connected")
 
 	wg := &sync.WaitGroup{}
 	wg.Add(3)

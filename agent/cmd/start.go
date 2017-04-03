@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/sensu/sensu-go/agent"
@@ -15,8 +16,9 @@ func init() {
 }
 
 var (
-	backendURL string
-	agentID    string
+	backendURL    string
+	agentID       string
+	subscriptions string
 )
 
 func newStartCommand() *cobra.Command {
@@ -29,6 +31,11 @@ func newStartCommand() *cobra.Command {
 
 			if agentID != "" {
 				cfg.AgentID = agentID
+			}
+
+			if subscriptions != "" {
+				// TODO(greg): we prooobably want someeee sort of input validation.
+				cfg.Subscriptions = strings.Split(subscriptions, ",")
 			}
 
 			sensuAgent := agent.NewAgent(cfg)
@@ -54,6 +61,7 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&backendURL, "backend-url", "b", "ws://localhost:8080", "ws/wss URL of Sensu backend server(s)")
 	cmd.Flags().StringVar(&agentID, "id", "", "agent ID (defaults to hostname)")
+	cmd.Flags().StringVar(&subscriptions, "subscriptions", "", "comma-delimited list of agent subscriptions")
 
 	return cmd
 }

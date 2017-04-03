@@ -17,6 +17,18 @@ type Check struct {
 
 	// Command is the command to be executed.
 	Command string `json:"command"`
+
+	// Output from the execution of Command.
+	Output string `json:"output"`
+
+	// Time check request was issued.
+	Issued int64 `json:"issued"`
+
+	// Time check request was executed
+	Executed int64 `json:"executed"`
+
+	// Duration of execution.
+	Duration float64 `json:"duration"`
 }
 
 // Validate returns an error if the check does not pass validation tests.

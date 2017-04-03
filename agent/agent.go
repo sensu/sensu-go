@@ -71,7 +71,7 @@ type Agent struct {
 
 // NewAgent creates a new Agent and returns a pointer to it.
 func NewAgent(config *Config) *Agent {
-	return &Agent{
+	agent := &Agent{
 		config:       config,
 		backendURL:   config.BackendURL,
 		handler:      handler.NewMessageHandler(),
@@ -80,6 +80,10 @@ func NewAgent(config *Config) *Agent {
 		stopped:      make(chan struct{}),
 		sendq:        make(chan *transport.Message, 10),
 	}
+
+	agent.handler.AddHandler(types.EventType, agent.handleCheck)
+
+	return agent
 }
 
 func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
@@ -199,8 +203,9 @@ func (a *Agent) keepaliveLoop() {
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
-			ID:    a.config.AgentID,
-			Class: "agent",
+			ID:            a.config.AgentID,
+			Class:         "agent",
+			Subscriptions: a.config.Subscriptions,
 		}
 
 		s, err := system.Info()
