@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMemoryBus(t *testing.T) {
+func TestWizardBus(t *testing.T) {
 	b := &WizardBus{}
 	b.Start()
 

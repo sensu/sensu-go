@@ -64,10 +64,14 @@ func (b *WizardBus) Err() <-chan error {
 	return b.errchan
 }
 
-// Create a WizardBus topic with consumer channel bindings. Every
-// topic has its own mutex, so sending data to consumers should only
-// block adding (Subscribe) and removing (Unsubscribe) consumers
-// to/from the single topic.
+// Create a WizardBus topic (WizardTopic) with consumer channel
+// bindings. Every topic has its own mutex, sending data to consumers
+// should only be blocked when adding (Subscribe) or removing
+// (Unsubscribe) a consumer binding to the topic. This function also
+// creates a goroutine that will continue to pull a message from the
+// topic's send buffer, lock the topic's mutex (R), write the message
+// to each consumer channel bound to the topic, and then unlock the
+// topic's mutex.
 func (b *WizardBus) createTopic(topic string) *WizardTopic {
 	wTopic := &WizardTopic{
 		mutex:      &sync.RWMutex{},
@@ -119,10 +123,10 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 }
 
 // Subscribe to a WizardBus topic. This function locks the WizardBus
-// mutex, fetches the appropriate WizardTopic (or creates it if
+// mutex (RW), fetches the appropriate WizardTopic (or creates it if
 // missing), unlocks the WizardBus mutex, locks the WizardTopic's
-// mutex, adds the consumer channel to the WizardTopic's bindings, and
-// unlocks the WizardTopics mutex.
+// mutex (RW), adds the consumer channel to the WizardTopic's
+// bindings, and unlocks the WizardTopics mutex.
 func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- []byte) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
@@ -148,12 +152,12 @@ func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- []by
 }
 
 // Unsubscribe from a WizardBus topic. This function locks the
-// WizardBus mutex, fetches the appropriate WizardTopic (noop if
+// WizardBus mutex (RW), fetches the appropriate WizardTopic (noop if
 // missing), unlocks the WizardBus mutex, locks the WizardTopic's
-// mutex, fetches the consumer channel from the WizardTopic's bindings
-// (noop if missing), and deletes the channel from WizardTopic's
-// bindings (it does not close the channel because it could be bound
-// to another topic).
+// mutex (RW), fetches the consumer channel from the WizardTopic's
+// bindings (noop if missing), and deletes the channel from
+// WizardTopic's bindings (it does not close the channel because it
+// could be bound to another topic).
 func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
@@ -176,25 +180,19 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 	return nil
 }
 
-// Publish publishes a message. If the topic does not exist, this is a
-// noop.
+// Publish publishes a message to a topic. If the topic does not
+// exist, this is a noop.
 func (b *WizardBus) Publish(topic string, msg []byte) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}
 
-	// This is purposefully racey with Subscribe, because we want
-	// to avoid having Publish() synchronize around a mutex since
-	// it's called very often. Put all of the synchronization in
-	// Subscribe, and understand that nearly _all_ messages sent
-	// through Sensu's message bus are periodic and cyclical. If
-	// we miss the _very first message_ sent over this topic, it
-	// really doesn't matter, because it'll be sent again soon
-	// enough.
 	b.mutex.RLock()
+
 	if wTopic, ok := b.topics[topic]; ok {
 		wTopic.sendBuffer <- msg
 	}
+
 	b.mutex.RUnlock()
 
 	return nil
