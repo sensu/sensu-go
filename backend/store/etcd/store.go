@@ -145,6 +145,28 @@ func (s *etcdStore) UpdateCheck(check *types.Check) error {
 	return nil
 }
 
+// Events
+
+func (s *etcdStore) GetEvents() ([]*types.Event, error) {
+	return nil, nil
+}
+
+func (s *etcdStore) GetEventsByEntity(entityID string) ([]*types.Event, error) {
+	return nil, nil
+}
+
+func (s *etcdStore) GetEventByEntityCheck(entityID, checkID string) (*types.Event, error) {
+	return nil, nil
+}
+
+func (s *etcdStore) UpdateEventsByEntityCheck(entityID, checkID string, event *types.Event) error {
+	return nil
+}
+
+func (s *etcdStore) DeleteEventsByEntityCheck(entityID, checkID string) error {
+	return nil
+}
+
 // NewStore ...
 func (e *Etcd) NewStore() (store.Store, error) {
 	c, err := e.NewClient()

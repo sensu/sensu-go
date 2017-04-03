@@ -15,4 +15,11 @@ type Store interface {
 	GetCheckByName(name string) (*types.Check, error)
 	DeleteCheckByName(name string) error
 	UpdateCheck(check *types.Check) error
+
+	// Events
+	GetEvents() ([]*types.Event, error)
+	GetEventsByEntity(entityID string) ([]*types.Event, error)
+	GetEventByEntityCheck(entityID, checkID string) (*types.Event, error)
+	UpdateEventsByEntityCheck(entityID, checkID string, event *types.Event) error
+	DeleteEventsByEntityCheck(entityID, checkID string) error
 }
