@@ -3,8 +3,8 @@ package backend
 import (
 	"errors"
 
-	"github.com/coreos/etcd/store"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 // Eventd handles incoming sensu events and stores them in etcd.
