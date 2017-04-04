@@ -229,20 +229,5 @@ func (s *Session) handleKeepalive(payload []byte) error {
 }
 
 func (s *Session) handleEvent(payload []byte) error {
-	event := &types.Event{}
-	err := json.Unmarshal(payload, event)
-	if err != nil {
-		return err
-	}
-
-	if event.Entity == nil {
-		return errors.New("event contains no entity")
-	}
-
-	if event.Check == nil {
-		return errors.New("event contains no check")
-	}
-
-	return s.store.UpdateEvent(event)
-
+	return s.bus.Publish("sensu:event", payload)
 }
