@@ -2,6 +2,11 @@ package messaging
 
 import "github.com/sensu/sensu-go/backend/daemon"
 
+const (
+	// TopicEvent is the topic for events.
+	TopicEvent = "sensu:event"
+)
+
 // MessageBus is the interface to the internal messaging system.
 type MessageBus interface {
 	daemon.Daemon
