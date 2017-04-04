@@ -228,5 +228,5 @@ func (s *Session) handleKeepalive(payload []byte) error {
 }
 
 func (s *Session) handleEvent(payload []byte) error {
-	return s.bus.Publish("sensu:event", payload)
+	return s.bus.Publish(messaging.TopicEvent, payload)
 }
