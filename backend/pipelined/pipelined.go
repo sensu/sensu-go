@@ -2,15 +2,12 @@
 package pipelined
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"sync"
 	"sync/atomic"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -19,7 +16,9 @@ const (
 )
 
 // Pipelined handles incoming Sensu events and puts them through the
-// Sensu event pipeline, i.e. filter -> mutator -> handler.
+// Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
+// handler configuration determines which Sensu filters and mutator
+// are used.
 type Pipelined struct {
 	stopping  chan struct{}
 	running   *atomic.Value
@@ -100,39 +99,4 @@ func (p *Pipelined) createPipelines(count int, channel chan []byte) error {
 	}
 
 	return nil
-}
-
-func (p *Pipelined) handleEvent(event *types.Event) error {
-	eventData, err := p.executeEventMutator(event)
-
-	if err != nil {
-		return nil
-	}
-
-	handlerExec, err := p.executeEventHandler(eventData)
-
-	if err != nil {
-		return nil
-	}
-
-	log.Printf("executed event handler: status: %x output: %s", handlerExec.Status, handlerExec.Output)
-
-	return err
-}
-
-func (p *Pipelined) executeEventHandler(eventData []byte) (*command.Execution, error) {
-	handlerExec := &command.Execution{}
-
-	handlerExec.Command = "cat"
-	handlerExec.Input = string(eventData[:])
-
-	result, err := command.ExecuteCommand(context.Background(), handlerExec)
-
-	return result, err
-}
-
-func (p *Pipelined) executeEventMutator(event *types.Event) ([]byte, error) {
-	eventData, err := json.Marshal(event)
-
-	return eventData, err
 }
