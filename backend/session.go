@@ -34,6 +34,7 @@ type Session struct {
 func newSessionHandler(s *Session) *handler.MessageHandler {
 	handler := handler.NewMessageHandler()
 	handler.AddHandler(types.KeepaliveType, s.handleKeepalive)
+	handler.AddHandler(types.EventType, s.handleEvent)
 
 	return handler
 }
@@ -225,4 +226,8 @@ func (s *Session) handleKeepalive(payload []byte) error {
 
 	log.Println("handling keepalive: ", *keepalive)
 	return s.store.UpdateEntity(keepalive.Entity)
+}
+
+func (s *Session) handleEvent(payload []byte) error {
+	return s.bus.Publish("sensu:event", payload)
 }

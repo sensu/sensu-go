@@ -221,6 +221,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 
 func (a *Agent) handshake() error {
 	handshake := &types.AgentHandshake{
+		ID:            a.config.AgentID,
 		Subscriptions: a.config.Subscriptions,
 	}
 	msgBytes, err := json.Marshal(handshake)

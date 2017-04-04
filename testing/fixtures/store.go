@@ -69,6 +69,33 @@ func (s *FixtureStore) UpdateCheck(check *types.Check) error {
 	return nil
 }
 
+// Events
+
+// GetEvents ...
+func (s *FixtureStore) GetEvents() ([]*types.Event, error) {
+	return nil, nil
+}
+
+// GetEventsByEntity ...
+func (s *FixtureStore) GetEventsByEntity(entityID string) ([]*types.Event, error) {
+	return nil, nil
+}
+
+// GetEventByEntityCheck ...
+func (s *FixtureStore) GetEventByEntityCheck(entityID, checkID string) (*types.Event, error) {
+	return nil, nil
+}
+
+// UpdateEvent ...
+func (s *FixtureStore) UpdateEvent(event *types.Event) error {
+	return nil
+}
+
+// DeleteEventByEntityCheck ...
+func (s *FixtureStore) DeleteEventByEntityCheck(entityID, checkID string) error {
+	return nil
+}
+
 // NewFixtureStore returns a pointer to a new, initialized store. Each test
 // requiring a store, should initialize its own so that tests can't
 // pollute state.
