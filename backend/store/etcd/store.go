@@ -3,7 +3,9 @@ package etcd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -20,6 +22,10 @@ func getEntityPath(id string) string {
 
 func getChecksPath(name string) string {
 	return fmt.Sprintf("%s/checks/%s", etcdRoot, name)
+}
+
+func getEventsPath(args ...string) string {
+	return fmt.Sprintf("%s/events/%s", etcdRoot, strings.Join(args, "/"))
 }
 
 // Store is an implementation of the sensu-go/backend/store.Store iface.
@@ -148,23 +154,115 @@ func (s *etcdStore) UpdateCheck(check *types.Check) error {
 // Events
 
 func (s *etcdStore) GetEvents() ([]*types.Event, error) {
-	return nil, nil
+	resp, err := s.kvc.Get(context.Background(), getEventsPath(""), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	eventsArray := make([]*types.Event, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		event := &types.Event{}
+		err = json.Unmarshal(kv.Value, event)
+		if err != nil {
+			return nil, err
+		}
+		eventsArray[i] = event
+	}
+
+	return eventsArray, nil
 }
 
 func (s *etcdStore) GetEventsByEntity(entityID string) ([]*types.Event, error) {
-	return nil, nil
+	resp, err := s.kvc.Get(context.Background(), getEventsPath(entityID), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	eventsArray := make([]*types.Event, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		event := &types.Event{}
+		err = json.Unmarshal(kv.Value, event)
+		if err != nil {
+			return nil, err
+		}
+		eventsArray[i] = event
+	}
+
+	return eventsArray, nil
 }
 
 func (s *etcdStore) GetEventByEntityCheck(entityID, checkID string) (*types.Event, error) {
-	return nil, nil
+	if entityID == "" {
+		return nil, errors.New("entity id is required")
+	}
+
+	if checkID == "" {
+		return nil, errors.New("check id is required")
+	}
+
+	resp, err := s.kvc.Get(context.Background(), getEventsPath(entityID, checkID), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	eventBytes := resp.Kvs[0].Value
+	event := &types.Event{}
+	if err := json.Unmarshal(eventBytes, event); err != nil {
+		return nil, err
+	}
+
+	return event, nil
 }
 
-func (s *etcdStore) UpdateEventsByEntityCheck(entityID, checkID string, event *types.Event) error {
+func (s *etcdStore) UpdateEvent(event *types.Event) error {
+	if event.Check == nil {
+		return errors.New("event has no check")
+	}
+
+	if err := event.Check.Validate(); err != nil {
+		return err
+	}
+
+	// update the history
+	// marshal the new event and store it.
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	entityID := event.Entity.ID
+	checkID := event.Check.Name
+
+	_, err = s.kvc.Put(context.TODO(), getEventsPath(entityID, checkID), string(eventBytes))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (s *etcdStore) DeleteEventsByEntityCheck(entityID, checkID string) error {
-	return nil
+func (s *etcdStore) DeleteEventByEntityCheck(entityID, checkID string) error {
+	if entityID == "" {
+		return errors.New("entity id is required")
+	}
+
+	if checkID == "" {
+		return errors.New("check id is required")
+	}
+
+	_, err := s.kvc.Delete(context.TODO(), getEventsPath(entityID, checkID))
+	return err
 }
 
 // NewStore ...

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -94,5 +95,62 @@ func TestCheckStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, checks)
 		assert.Equal(t, 1, len(checks))
+	})
+}
+
+func TestEventStorage(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		sysinfo, _ := system.Info()
+
+		event := &types.Event{
+			Entity: &types.Entity{
+				ID:     "entity1",
+				Class:  "system",
+				System: sysinfo,
+			},
+			Check: &types.Check{
+				Name:          "check1",
+				Interval:      60,
+				Subscriptions: []string{"subscription1"},
+				Command:       "command1",
+			},
+		}
+
+		assert.NoError(t, store.UpdateEvent(event))
+
+		newEv, err := store.GetEventByEntityCheck(event.Entity.ID, event.Check.Name)
+		assert.NoError(t, err)
+		assert.EqualValues(t, event, newEv)
+
+		events, err := store.GetEvents()
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(events))
+		assert.EqualValues(t, event, events[0])
+
+		newEv, err = store.GetEventByEntityCheck("", "foo")
+		assert.Nil(t, newEv)
+		assert.Error(t, err)
+
+		newEv, err = store.GetEventByEntityCheck("foo", "")
+		assert.Nil(t, newEv)
+		assert.Error(t, err)
+
+		newEv, err = store.GetEventByEntityCheck("foo", "foo")
+		assert.Nil(t, newEv)
+		assert.Nil(t, err)
+
+		events, err = store.GetEventsByEntity(event.Entity.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(events))
+		assert.EqualValues(t, event, events[0])
+
+		assert.NoError(t, store.DeleteEventByEntityCheck(event.Entity.ID, event.Check.Name))
+		newEv, err = store.GetEventByEntityCheck(event.Entity.ID, event.Check.Name)
+		assert.Nil(t, newEv)
+		assert.NoError(t, err)
+
+		assert.Error(t, store.DeleteEventByEntityCheck("", ""))
+		assert.Error(t, store.DeleteEventByEntityCheck("", "foo"))
+		assert.Error(t, store.DeleteEventByEntityCheck("foo", ""))
 	})
 }

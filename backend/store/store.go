@@ -20,6 +20,6 @@ type Store interface {
 	GetEvents() ([]*types.Event, error)
 	GetEventsByEntity(entityID string) ([]*types.Event, error)
 	GetEventByEntityCheck(entityID, checkID string) (*types.Event, error)
-	UpdateEventsByEntityCheck(entityID, checkID string, event *types.Event) error
-	DeleteEventsByEntityCheck(entityID, checkID string) error
+	UpdateEvent(event *types.Event) error
+	DeleteEventByEntityCheck(entityID, checkID string) error
 }

@@ -86,13 +86,13 @@ func (s *FixtureStore) GetEventByEntityCheck(entityID, checkID string) (*types.E
 	return nil, nil
 }
 
-// UpdateEventsByEntityCheck ...
-func (s *FixtureStore) UpdateEventsByEntityCheck(entityID, checkID string, event *types.Event) error {
+// UpdateEvent ...
+func (s *FixtureStore) UpdateEvent(event *types.Event) error {
 	return nil
 }
 
-// DeleteEventsByEntityCheck ...
-func (s *FixtureStore) DeleteEventsByEntityCheck(entityID, checkID string) error {
+// DeleteEventByEntityCheck ...
+func (s *FixtureStore) DeleteEventByEntityCheck(entityID, checkID string) error {
 	return nil
 }
 

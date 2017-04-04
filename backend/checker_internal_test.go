@@ -23,6 +23,13 @@ type mockStore struct {
 	getCheckByName    func(name string) (*types.Check, error)
 	deleteCheckByName func(name string) error
 	updateCheck       func(check *types.Check) error
+
+	// Events
+	getEvents                func() ([]*types.Event, error)
+	getEventsByEntity        func(entityID string) ([]*types.Event, error)
+	getEventByEntityCheck    func(entityID, checkID string) (*types.Event, error)
+	updateEvent              func(event *types.Event) error
+	deleteEventByEntityCheck func(entityID, checkID string) error
 }
 
 func (m *mockStore) GetEntityByID(id string) (*types.Entity, error) {
@@ -55,6 +62,26 @@ func (m *mockStore) DeleteCheckByName(name string) error {
 
 func (m *mockStore) UpdateCheck(check *types.Check) error {
 	return m.updateCheck(check)
+}
+
+func (m *mockStore) GetEvents() ([]*types.Event, error) {
+	return m.getEvents()
+}
+
+func (m *mockStore) GetEventsByEntity(entityID string) ([]*types.Event, error) {
+	return m.getEventsByEntity(entityID)
+}
+
+func (m *mockStore) GetEventByEntityCheck(entityID, checkID string) (*types.Event, error) {
+	return m.getEventByEntityCheck(entityID, checkID)
+}
+
+func (m *mockStore) UpdateEvent(event *types.Event) error {
+	return m.updateEvent(event)
+}
+
+func (m *mockStore) DeleteEventByEntityCheck(entityID, checkID string) error {
+	return m.deleteEventByEntityCheck(entityID, checkID)
 }
 
 func TestCheckerReconcile(t *testing.T) {
