@@ -21,12 +21,13 @@ const (
 // Pipelined handles incoming Sensu events and puts them through the
 // Sensu event pipeline, i.e. filter -> mutator -> handler.
 type Pipelined struct {
-	stopping chan struct{}
-	running  *atomic.Value
-	wg       *sync.WaitGroup
+	stopping  chan struct{}
+	running   *atomic.Value
+	wg        *sync.WaitGroup
+	errChan   chan error
+	eventChan chan []byte
 
 	MessageBus messaging.MessageBus
-	errChan    chan error
 }
 
 // Start pipelined.
@@ -41,13 +42,13 @@ func (p *Pipelined) Start() error {
 
 	p.errChan = make(chan error, 1)
 
-	ch := make(chan []byte, 100)
+	p.eventChan = make(chan []byte, 100)
 
-	if err := p.MessageBus.Subscribe("sensu:event", "pipelined", ch); err != nil {
+	if err := p.MessageBus.Subscribe("sensu:event", "pipelined", p.eventChan); err != nil {
 		return err
 	}
 
-	if err := p.createPipelines(PipelineCount, ch); err != nil {
+	if err := p.createPipelines(PipelineCount, p.eventChan); err != nil {
 		return err
 	}
 
@@ -58,8 +59,9 @@ func (p *Pipelined) Start() error {
 func (p *Pipelined) Stop() error {
 	p.running.Store(false)
 	close(p.stopping)
-	close(p.errChan)
 	p.wg.Wait()
+	close(p.errChan)
+	close(p.eventChan)
 
 	return nil
 }
