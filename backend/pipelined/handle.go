@@ -11,32 +11,37 @@ import (
 )
 
 func (p *Pipelined) handleEvent(event *types.Event) error {
-	handlerPipe := &types.HandlerPipe{
-		Command: "cat",
-	}
+	for _, handlerName := range event.Check.Handlers {
+		if handlerName == "debug" {
+			handlerPipe := &types.HandlerPipe{
+				Command: "cat",
+			}
 
-	handler := &types.Handler{
-		Type: "pipe",
-		Pipe: *handlerPipe,
-	}
+			handler := &types.Handler{
+				Type: "pipe",
+				Name: "debug",
+				Pipe: *handlerPipe,
+			}
 
-	eventData, err := p.mutateEvent(handler, event)
+			eventData, err := p.mutateEvent(handler, event)
 
-	if err != nil {
-		return err
-	}
+			if err != nil {
+				return err
+			}
 
-	if handler.Type == "pipe" {
-		handlerExec, err := p.pipeHandler(handler, eventData)
+			if handler.Type == "pipe" {
+				handlerExec, err := p.pipeHandler(handler, eventData)
 
-		if err != nil {
-			return err
+				if err != nil {
+					return err
+				}
+
+				log.Printf("executed event pipe handler: status: %x output: %s", handlerExec.Status, handlerExec.Output)
+			} else {
+				// We MUST validate handler type.
+				return errors.New("unknown handler type")
+			}
 		}
-
-		log.Printf("executed event pipe handler: status: %x output: %s", handlerExec.Status, handlerExec.Output)
-	} else {
-		// We MUST validate handler type.
-		return errors.New("unknown handler type")
 	}
 
 	return nil

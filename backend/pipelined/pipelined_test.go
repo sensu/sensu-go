@@ -20,7 +20,11 @@ func TestPipelined(t *testing.T) {
 
 	assert.NoError(t, p.Start())
 
+	check := &types.Check{}
+	check.Handlers = []string{"debug"}
+
 	event := &types.Event{}
+	event.Check = check
 
 	eventJSON, _ := json.Marshal(event)
 
