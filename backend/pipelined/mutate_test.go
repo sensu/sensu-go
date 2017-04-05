@@ -30,3 +30,33 @@ func TestPipelinedMutate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, eventData)
 }
+
+func TestPipelinedJsonMutator(t *testing.T) {
+	p := &Pipelined{}
+
+	event := &types.Event{}
+
+	output, err := p.jsonMutator(event)
+
+	expected, _ := json.Marshal(event)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, output)
+}
+
+func TestPipelinedPipeMutator(t *testing.T) {
+	p := &Pipelined{}
+
+	mutator := &types.Mutator{
+		Command: "cat",
+	}
+
+	event := &types.Event{}
+
+	output, err := p.pipeMutator(mutator, event)
+
+	expected, _ := json.Marshal(event)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, output)
+}
