@@ -13,6 +13,8 @@ import (
 )
 
 const (
+	// PipelineCount specifies how many pipelines (goroutines) are
+	// in action.
 	PipelineCount int = 10
 )
 

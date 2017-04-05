@@ -13,11 +13,11 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 		eventData, err := p.jsonMutator(event)
 
 		return eventData, err
-	} else {
-		// We should guard against creating a handler with an
-		// unknown (missing) mutator.
-		return nil, errors.New("unknown mutator")
 	}
+
+	// We should guard against creating a handler with an
+	// unknown (missing) mutator.
+	return nil, errors.New("unknown mutator")
 }
 
 func (p *Pipelined) jsonMutator(event *types.Event) ([]byte, error) {
