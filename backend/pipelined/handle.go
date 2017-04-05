@@ -44,6 +44,8 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 		if handler == nil {
 			if err != nil {
 				log.Println("pipelined failed to retrieve a handler: ", err.Error())
+			} else {
+				log.Println("pipelined failed to retrieve a handler: ", handlerName)
 			}
 			continue
 		}
