@@ -1,19 +1,26 @@
 package backend
 
 import (
+	"encoding/json"
 	"errors"
+	"log"
+	"sync"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
-	Store      store.Store
-	MessageBus messaging.MessageBus
+	Store        store.Store
+	MessageBus   messaging.MessageBus
+	HandlerCount int
 
-	eventChan chan []byte
-	errChan   chan error
+	eventChan    chan []byte
+	errChan      chan error
+	shutdownChan chan struct{}
+	wg           *sync.WaitGroup
 }
 
 // Start eventd.
@@ -26,7 +33,16 @@ func (e *Eventd) Start() error {
 		return errors.New("no message bus found")
 	}
 
+	if e.HandlerCount == 0 {
+		e.HandlerCount = 10
+	}
+
 	e.errChan = make(chan error, 1)
+	e.shutdownChan = make(chan struct{}, 1)
+
+	e.wg = &sync.WaitGroup{}
+	e.wg.Add(e.HandlerCount)
+	e.startHandlers()
 
 	ch := make(chan []byte, 100)
 	err := e.MessageBus.Subscribe(messaging.TopicEvent, "eventd", ch)
@@ -37,8 +53,58 @@ func (e *Eventd) Start() error {
 	return nil
 }
 
+func (e *Eventd) startHandlers() {
+	for i := 0; i < e.HandlerCount; i++ {
+		go func() {
+			var event *types.Event
+			var err error
+
+			for {
+				select {
+				case <-e.shutdownChan:
+					e.wg.Done()
+					return
+
+				case msg := <-e.eventChan:
+					event = &types.Event{}
+					err = json.Unmarshal(msg, event)
+					if err != nil {
+						log.Printf("eventd - error handling event: %s\n", err.Error())
+						continue
+					}
+
+					prevEvent, err := e.Store.GetEventByEntityCheck(event.Entity.ID, event.Check.Name)
+					if err != nil {
+						log.Printf("eventd - error handling event: %s\n", err.Error())
+						continue
+					}
+
+					if prevEvent == nil {
+						err = e.Store.UpdateEvent(event)
+						if err != nil {
+							log.Printf("eventd - error handling event: %s\n", err.Error())
+						}
+						continue
+					}
+
+					history := prevEvent.Check.History
+					history = append([]types.CheckHistory{{event.Check.Status, event.Check.Executed}}, history[:len(history)-1]...)
+					event.Check.History = history
+
+					err = e.Store.UpdateEvent(event)
+					if err != nil {
+						log.Printf("eventd - error handling event: %s\n", err.Error())
+					}
+				}
+			}
+		}()
+	}
+}
+
 // Stop eventd.
 func (e *Eventd) Stop() error {
+	close(e.shutdownChan)
+	e.wg.Wait()
 	return nil
 }
 

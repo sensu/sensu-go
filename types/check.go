@@ -19,23 +19,32 @@ type Check struct {
 	Command string `json:"command"`
 
 	// Output from the execution of Command.
-	Output string `json:"output"`
+	Output string `json:"output,omitempty"`
 
-	// Status from the execution of Command.
-	Status int64 `json:"status"`
+	// Status is the exit status code produced by the check.
+	Status int `json:"status,omitempty"`
 
 	// Time check request was issued.
-	Issued int64 `json:"issued"`
+	Issued int64 `json:"issued,omitempty"`
 
 	// Time check request was executed
-	Executed int64 `json:"executed"`
+	Executed int64 `json:"executed,omitempty"`
 
 	// Duration of execution.
-	Duration float64 `json:"duration"`
+	Duration float64 `json:"duration,omitempty"`
 
 	// Handlers are the event handler for the check (incidents
 	// and/or metrics).
 	Handlers []string `json:"handlers"`
+
+	// History is the check state history.
+	History []CheckHistory `json:"history,omitempty"`
+}
+
+// CheckState is a record of a check execution and its status.
+type CheckHistory struct {
+	Status   int   `json:"status"`
+	Executed int64 `json:"executed"`
 }
 
 // Validate returns an error if the check does not pass validation tests.
