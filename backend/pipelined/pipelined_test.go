@@ -23,16 +23,16 @@ func TestPipelined(t *testing.T) {
 
 	assert.NoError(t, p.Start())
 
-	check, _ := store.GetCheckByName("check1")
 	entity, _ := store.GetEntityByID("entity1")
+	check, _ := store.GetCheckByName("check1")
 
 	event := &types.Event{}
 	event.Entity = entity
 	event.Check = check
 
-	eventJSON, _ := json.Marshal(event)
+	msg, _ := json.Marshal(event)
 
-	err := bus.Publish("sensu:event", eventJSON)
+	err := bus.Publish("sensu:event", msg)
 	assert.NoError(t, err)
 
 	assert.NoError(t, p.Stop())

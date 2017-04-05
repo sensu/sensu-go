@@ -10,6 +10,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPipelinedHandleEvent(t *testing.T) {
+	p := &Pipelined{}
+
+	store := fixtures.NewFixtureStore()
+	p.Store = store
+
+	entity, _ := store.GetEntityByID("entity1")
+	check, _ := store.GetCheckByName("check1")
+
+	event := &types.Event{}
+	event.Entity = entity
+	event.Check = check
+
+	// Currently fire and forget. You may choose to return a map
+	// of handler execution information in the future, don't know
+	// how useful this would be.
+	assert.NoError(t, p.handleEvent(event))
+}
+
 func TestPipelinedExpandHandlers(t *testing.T) {
 	p := &Pipelined{}
 
