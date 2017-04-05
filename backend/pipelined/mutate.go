@@ -70,9 +70,9 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		return nil, err
 	} else if result.Status != 0 {
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
-	} else {
-		log.Printf("pipelined executed event pipe mutator: status: %x output: %s", result.Status, result.Output)
 	}
+
+	log.Printf("pipelined executed event pipe mutator: status: %x output: %s", result.Status, result.Output)
 
 	return []byte(result.Output), nil
 }

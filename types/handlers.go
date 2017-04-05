@@ -15,6 +15,9 @@ type Handler struct {
 
 	// Pipe contains configuration for a pipe handler.
 	Pipe HandlerPipe `json:"pipe,omitempty"`
+
+	// Handlers is a list of handlers for a handler set.
+	Handlers []string `json:"handlers,omitempty"`
 }
 
 // HandlerPipe contains configuration for a pipe handler.
@@ -28,7 +31,7 @@ type HandlerPipe struct {
 
 // Validate returns an error if the handler does not pass validation tests.
 func (h *Handler) Validate() error {
-	if h.Type == "" {
+	if h.Type == "pipe" || h.Type == "set" {
 		return errors.New("must have a type")
 	}
 
