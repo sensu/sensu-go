@@ -71,6 +71,62 @@ func TestEntityStorage(t *testing.T) {
 
 }
 
+func TestHandlerStorage(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		handlerPipe := &types.HandlerPipe{
+			Command: "cat",
+			Timeout: 10,
+		}
+
+		handler := &types.Handler{
+			Name: "handler1",
+			Type: "pipe",
+			Pipe: *handlerPipe,
+		}
+
+		err := store.UpdateHandler(handler)
+		assert.NoError(t, err)
+		retrieved, err := store.GetHandlerByName("handler1")
+		assert.NoError(t, err)
+		assert.NotNil(t, retrieved)
+
+		assert.Equal(t, handler.Name, retrieved.Name)
+		assert.Equal(t, handler.Type, retrieved.Type)
+		assert.Equal(t, handler.Pipe.Command, retrieved.Pipe.Command)
+		assert.Equal(t, handler.Pipe.Timeout, retrieved.Pipe.Timeout)
+
+		handlers, err := store.GetHandlers()
+		assert.NoError(t, err)
+		assert.NotEmpty(t, handlers)
+		assert.Equal(t, 1, len(handlers))
+	})
+}
+
+func TestMutatorStorage(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		mutator := &types.Mutator{
+			Name:    "mutator1",
+			Command: "command1",
+			Timeout: 10,
+		}
+
+		err := store.UpdateMutator(mutator)
+		assert.NoError(t, err)
+		retrieved, err := store.GetMutatorByName("mutator1")
+		assert.NoError(t, err)
+		assert.NotNil(t, retrieved)
+
+		assert.Equal(t, mutator.Name, retrieved.Name)
+		assert.Equal(t, mutator.Command, retrieved.Command)
+		assert.Equal(t, mutator.Timeout, retrieved.Timeout)
+
+		mutators, err := store.GetMutators()
+		assert.NoError(t, err)
+		assert.NotEmpty(t, mutators)
+		assert.Equal(t, 1, len(mutators))
+	})
+}
+
 func TestCheckStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		check := &types.Check{

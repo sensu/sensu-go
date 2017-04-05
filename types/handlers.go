@@ -31,7 +31,7 @@ type HandlerPipe struct {
 
 // Validate returns an error if the handler does not pass validation tests.
 func (h *Handler) Validate() error {
-	if h.Type == "pipe" || h.Type == "set" {
+	if h.Type == "" {
 		return errors.New("must have a type")
 	}
 
