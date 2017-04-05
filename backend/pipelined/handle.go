@@ -11,7 +11,11 @@ import (
 )
 
 func (p *Pipelined) handleEvent(event *types.Event) error {
-	handlers, _ := p.expandHandlers(event.Check.Handlers, 1)
+	handlers, err := p.expandHandlers(event.Check.Handlers, 1)
+
+	if err != nil {
+		return err
+	}
 
 	for _, handler := range handlers {
 		eventData, err := p.mutateEvent(handler, event)
