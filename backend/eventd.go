@@ -88,7 +88,11 @@ func (e *Eventd) startHandlers() {
 					}
 
 					history := prevEvent.Check.History
-					history = append([]types.CheckHistory{{event.Check.Status, event.Check.Executed}}, history[:len(history)-1]...)
+					histEntry := types.CheckHistory{
+						Status:   event.Check.Status,
+						Executed: event.Check.Executed,
+					}
+					history = append([]types.CheckHistory{histEntry}, history[:len(history)-1]...)
 					event.Check.History = history
 
 					err = e.Store.UpdateEvent(event)

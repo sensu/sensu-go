@@ -41,7 +41,7 @@ type Check struct {
 	History []CheckHistory `json:"history,omitempty"`
 }
 
-// CheckState is a record of a check execution and its status.
+// CheckHistory is a record of a check execution and its status.
 type CheckHistory struct {
 	Status   int   `json:"status"`
 	Executed int64 `json:"executed"`
