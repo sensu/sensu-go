@@ -6,6 +6,7 @@ import "github.com/sensu/sensu-go/types"
 // fixtures in memory.
 type FixtureStore struct {
 	Entities map[string]*types.Entity
+	Handlers map[string]*types.Handler
 	Checks   map[string]*types.Check
 }
 
@@ -37,6 +38,38 @@ func (s *FixtureStore) GetEntities() ([]*types.Entity, error) {
 		entities = append(entities, v)
 	}
 	return entities, nil
+}
+
+// Handlers ...
+
+// GetHandlers ...
+func (s *FixtureStore) GetHandlers() ([]*types.Handler, error) {
+	var handlers []*types.Handler
+	for _, v := range s.Handlers {
+		handlers = append(handlers, v)
+	}
+	return handlers, nil
+}
+
+// GetHandlerByName ...
+func (s *FixtureStore) GetHandlerByName(name string) (*types.Handler, error) {
+	c, ok := s.Handlers[name]
+	if !ok {
+		return nil, nil
+	}
+	return c, nil
+}
+
+// DeleteHandlerByName ...
+func (s *FixtureStore) DeleteHandlerByName(name string) error {
+	delete(s.Handlers, name)
+	return nil
+}
+
+// UpdateHandler ...
+func (s *FixtureStore) UpdateHandler(handler *types.Handler) error {
+	s.Handlers[handler.Name] = handler
+	return nil
 }
 
 // GetChecks ...
@@ -102,12 +135,18 @@ func (s *FixtureStore) DeleteEventByEntityCheck(entityID, checkID string) error 
 func NewFixtureStore() *FixtureStore {
 	s := &FixtureStore{
 		Entities: map[string]*types.Entity{},
+		Handlers: map[string]*types.Handler{},
 		Checks:   map[string]*types.Check{},
 	}
 
 	for _, e := range entityFixtures {
 		s.Entities[e.ID] = e
 	}
+
+	for _, h := range handlerFixtures {
+		s.Handlers[h.Name] = h
+	}
+
 	for _, c := range checkFixtures {
 		s.Checks[c.Name] = c
 	}

@@ -4,7 +4,7 @@ import "errors"
 
 // A Handler is a handler specification.
 type Handler struct {
-	// Name is the unique identifier for a check.
+	// Name is the unique identifier for a handler.
 	Name string `json:"name"`
 
 	// Type is the handler type, i.e. pipe.

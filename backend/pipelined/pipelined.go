@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -26,11 +27,16 @@ type Pipelined struct {
 	errChan   chan error
 	eventChan chan []byte
 
+	Store      store.Store
 	MessageBus messaging.MessageBus
 }
 
 // Start pipelined.
 func (p *Pipelined) Start() error {
+	if p.Store == nil {
+		return errors.New("no store found")
+	}
+
 	if p.MessageBus == nil {
 		return errors.New("no message bus found")
 	}
