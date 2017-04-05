@@ -7,6 +7,7 @@ import "github.com/sensu/sensu-go/types"
 type FixtureStore struct {
 	Entities map[string]*types.Entity
 	Handlers map[string]*types.Handler
+	Mutators map[string]*types.Mutator
 	Checks   map[string]*types.Check
 }
 
@@ -72,6 +73,40 @@ func (s *FixtureStore) UpdateHandler(handler *types.Handler) error {
 	return nil
 }
 
+// Mutators ...
+
+// GetMutators ...
+func (s *FixtureStore) GetMutators() ([]*types.Mutator, error) {
+	var mutators []*types.Mutator
+	for _, v := range s.Mutators {
+		mutators = append(mutators, v)
+	}
+	return mutators, nil
+}
+
+// GetMutatorByName ...
+func (s *FixtureStore) GetMutatorByName(name string) (*types.Mutator, error) {
+	c, ok := s.Mutators[name]
+	if !ok {
+		return nil, nil
+	}
+	return c, nil
+}
+
+// DeleteMutatorByName ...
+func (s *FixtureStore) DeleteMutatorByName(name string) error {
+	delete(s.Mutators, name)
+	return nil
+}
+
+// UpdateMutator ...
+func (s *FixtureStore) UpdateMutator(mutator *types.Mutator) error {
+	s.Mutators[mutator.Name] = mutator
+	return nil
+}
+
+// Checks
+
 // GetChecks ...
 func (s *FixtureStore) GetChecks() ([]*types.Check, error) {
 	var checks []*types.Check
@@ -136,6 +171,7 @@ func NewFixtureStore() *FixtureStore {
 	s := &FixtureStore{
 		Entities: map[string]*types.Entity{},
 		Handlers: map[string]*types.Handler{},
+		Mutators: map[string]*types.Mutator{},
 		Checks:   map[string]*types.Check{},
 	}
 
@@ -145,6 +181,10 @@ func NewFixtureStore() *FixtureStore {
 
 	for _, h := range handlerFixtures {
 		s.Handlers[h.Name] = h
+	}
+
+	for _, m := range mutatorFixtures {
+		s.Mutators[m.Name] = m
 	}
 
 	for _, c := range checkFixtures {

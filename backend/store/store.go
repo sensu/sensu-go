@@ -16,6 +16,12 @@ type Store interface {
 	DeleteHandlerByName(name string) error
 	UpdateHandler(handler *types.Handler) error
 
+	// Mutators
+	GetMutators() ([]*types.Mutator, error)
+	GetMutatorByName(name string) (*types.Mutator, error)
+	DeleteMutatorByName(name string) error
+	UpdateMutator(mutator *types.Mutator) error
+
 	// Checks
 	GetChecks() ([]*types.Check, error)
 	GetCheckByName(name string) (*types.Check, error)

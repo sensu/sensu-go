@@ -22,7 +22,6 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		eventData, err := p.mutateEvent(handler, event)
 
 		if err != nil {
-			log.Println("pipelined failed to mutate an event: ", err.Error())
 			continue
 		}
 
