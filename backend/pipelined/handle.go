@@ -15,25 +15,21 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		handler, err := p.Store.GetHandlerByName(handlerName)
 
 		if err != nil {
-			return err
+			log.Println("pipelined failed to retrieve a handler: ", err.Error())
+			continue
 		}
 
 		eventData, err := p.mutateEvent(handler, event)
 
 		if err != nil {
-			return err
+			log.Println("pipelined failed to mutate an event: ", err.Error())
+			continue
 		}
 
-		if handler.Type == "pipe" {
-			handlerExec, err := p.pipeHandler(handler, eventData)
-
-			if err != nil {
-				return err
-			}
-
-			log.Printf("executed event pipe handler: status: %x output: %s", handlerExec.Status, handlerExec.Output)
-		} else {
-			// We MUST validate handler type.
+		switch handler.Type {
+		case "pipe":
+			p.pipeHandler(handler, eventData)
+		default:
 			return errors.New("unknown handler type")
 		}
 	}
@@ -50,6 +46,12 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 	handlerExec.Input = string(eventData[:])
 
 	result, err := command.ExecuteCommand(context.Background(), handlerExec)
+
+	if err != nil {
+		log.Println("pipelined failed to execute event pipe handler: ", err.Error())
+	} else {
+		log.Printf("pipelined executed event pipe handler: status: %x output: %s", result.Status, result.Output)
+	}
 
 	return result, err
 }
