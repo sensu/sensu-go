@@ -29,6 +29,10 @@ type Check struct {
 
 	// Duration of execution.
 	Duration float64 `json:"duration"`
+
+	// Handlers are the event handler for the check (incidents
+	// and/or metrics).
+	Handlers []string `json:"handlers"`
 }
 
 // Validate returns an error if the check does not pass validation tests.

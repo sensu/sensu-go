@@ -20,6 +20,14 @@ func getEntityPath(id string) string {
 	return fmt.Sprintf("%s/entities/%s", etcdRoot, id)
 }
 
+func getHandlersPath(name string) string {
+	return fmt.Sprintf("%s/handlers/%s", etcdRoot, name)
+}
+
+func getMutatorsPath(name string) string {
+	return fmt.Sprintf("%s/mutators/%s", etcdRoot, name)
+}
+
 func getChecksPath(name string) string {
 	return fmt.Sprintf("%s/checks/%s", etcdRoot, name)
 }
@@ -85,6 +93,134 @@ func (s *etcdStore) GetEntities() ([]*types.Entity, error) {
 	}
 
 	return earr, nil
+}
+
+// Handlers
+func (s *etcdStore) GetHandlers() ([]*types.Handler, error) {
+	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(""), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	handlersArray := make([]*types.Handler, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		handler := &types.Handler{}
+		err = json.Unmarshal(kv.Value, handler)
+		if err != nil {
+			return nil, err
+		}
+		handlersArray[i] = handler
+	}
+
+	return handlersArray, nil
+}
+
+func (s *etcdStore) GetHandlerByName(name string) (*types.Handler, error) {
+	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(name))
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	handlerBytes := resp.Kvs[0].Value
+	handler := &types.Handler{}
+	if err := json.Unmarshal(handlerBytes, handler); err != nil {
+		return nil, err
+	}
+
+	return handler, nil
+}
+
+func (s *etcdStore) DeleteHandlerByName(name string) error {
+	_, err := s.kvc.Delete(context.TODO(), getHandlersPath(name))
+	return err
+}
+
+func (s *etcdStore) UpdateHandler(handler *types.Handler) error {
+	if err := handler.Validate(); err != nil {
+		return err
+	}
+
+	handlerBytes, err := json.Marshal(handler)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.kvc.Put(context.TODO(), getHandlersPath(handler.Name), string(handlerBytes))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Mutators
+func (s *etcdStore) GetMutators() ([]*types.Mutator, error) {
+	resp, err := s.kvc.Get(context.TODO(), getMutatorsPath(""), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	mutatorsArray := make([]*types.Mutator, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		mutator := &types.Mutator{}
+		err = json.Unmarshal(kv.Value, mutator)
+		if err != nil {
+			return nil, err
+		}
+		mutatorsArray[i] = mutator
+	}
+
+	return mutatorsArray, nil
+}
+
+func (s *etcdStore) GetMutatorByName(name string) (*types.Mutator, error) {
+	resp, err := s.kvc.Get(context.TODO(), getMutatorsPath(name))
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	mutatorBytes := resp.Kvs[0].Value
+	mutator := &types.Mutator{}
+	if err := json.Unmarshal(mutatorBytes, mutator); err != nil {
+		return nil, err
+	}
+
+	return mutator, nil
+}
+
+func (s *etcdStore) DeleteMutatorByName(name string) error {
+	_, err := s.kvc.Delete(context.TODO(), getMutatorsPath(name))
+	return err
+}
+
+func (s *etcdStore) UpdateMutator(mutator *types.Mutator) error {
+	if err := mutator.Validate(); err != nil {
+		return err
+	}
+
+	mutatorBytes, err := json.Marshal(mutator)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.kvc.Put(context.TODO(), getMutatorsPath(mutator.Name), string(mutatorBytes))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Checks

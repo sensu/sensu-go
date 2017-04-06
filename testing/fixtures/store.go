@@ -6,6 +6,8 @@ import "github.com/sensu/sensu-go/types"
 // fixtures in memory.
 type FixtureStore struct {
 	Entities map[string]*types.Entity
+	Handlers map[string]*types.Handler
+	Mutators map[string]*types.Mutator
 	Checks   map[string]*types.Check
 }
 
@@ -38,6 +40,72 @@ func (s *FixtureStore) GetEntities() ([]*types.Entity, error) {
 	}
 	return entities, nil
 }
+
+// Handlers ...
+
+// GetHandlers ...
+func (s *FixtureStore) GetHandlers() ([]*types.Handler, error) {
+	var handlers []*types.Handler
+	for _, v := range s.Handlers {
+		handlers = append(handlers, v)
+	}
+	return handlers, nil
+}
+
+// GetHandlerByName ...
+func (s *FixtureStore) GetHandlerByName(name string) (*types.Handler, error) {
+	c, ok := s.Handlers[name]
+	if !ok {
+		return nil, nil
+	}
+	return c, nil
+}
+
+// DeleteHandlerByName ...
+func (s *FixtureStore) DeleteHandlerByName(name string) error {
+	delete(s.Handlers, name)
+	return nil
+}
+
+// UpdateHandler ...
+func (s *FixtureStore) UpdateHandler(handler *types.Handler) error {
+	s.Handlers[handler.Name] = handler
+	return nil
+}
+
+// Mutators ...
+
+// GetMutators ...
+func (s *FixtureStore) GetMutators() ([]*types.Mutator, error) {
+	var mutators []*types.Mutator
+	for _, v := range s.Mutators {
+		mutators = append(mutators, v)
+	}
+	return mutators, nil
+}
+
+// GetMutatorByName ...
+func (s *FixtureStore) GetMutatorByName(name string) (*types.Mutator, error) {
+	c, ok := s.Mutators[name]
+	if !ok {
+		return nil, nil
+	}
+	return c, nil
+}
+
+// DeleteMutatorByName ...
+func (s *FixtureStore) DeleteMutatorByName(name string) error {
+	delete(s.Mutators, name)
+	return nil
+}
+
+// UpdateMutator ...
+func (s *FixtureStore) UpdateMutator(mutator *types.Mutator) error {
+	s.Mutators[mutator.Name] = mutator
+	return nil
+}
+
+// Checks
 
 // GetChecks ...
 func (s *FixtureStore) GetChecks() ([]*types.Check, error) {
@@ -102,12 +170,23 @@ func (s *FixtureStore) DeleteEventByEntityCheck(entityID, checkID string) error 
 func NewFixtureStore() *FixtureStore {
 	s := &FixtureStore{
 		Entities: map[string]*types.Entity{},
+		Handlers: map[string]*types.Handler{},
+		Mutators: map[string]*types.Mutator{},
 		Checks:   map[string]*types.Check{},
 	}
 
 	for _, e := range entityFixtures {
 		s.Entities[e.ID] = e
 	}
+
+	for _, h := range handlerFixtures {
+		s.Handlers[h.Name] = h
+	}
+
+	for _, m := range mutatorFixtures {
+		s.Mutators[m.Name] = m
+	}
+
 	for _, c := range checkFixtures {
 		s.Checks[c.Name] = c
 	}

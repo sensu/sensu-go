@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
 )
@@ -42,6 +44,8 @@ type Backend struct {
 	agentServer    *http.Server
 	checkScheduler *Checker
 	etcd           *etcd.Etcd
+
+	pipelined daemon.Daemon
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -139,6 +143,15 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	b.pipelined = &pipelined.Pipelined{
+		Store:      st,
+		MessageBus: b.messageBus,
+	}
+
+	if err := b.pipelined.Start(); err != nil {
+		return err
+	}
+
 	// there are two channels in play here: inErrChan is used by the various
 	// services the Backend manages as a destination for terminal errors.
 	// we then monitor that channel and the first error returned on that
@@ -163,6 +176,10 @@ func (b *Backend) Run() error {
 	}()
 
 	go func() {
+		inErrChan <- <-b.pipelined.Err()
+	}()
+
+	go func() {
 		var inErr error
 		select {
 		case inErr = <-inErrChan:
@@ -182,6 +199,9 @@ func (b *Backend) Run() error {
 		log.Printf("shutting down message bus")
 		b.messageBus.Stop()
 
+		log.Printf("shutting down pipelined")
+		b.pipelined.Stop()
+
 		// if an error caused the shutdown
 		if inErr != nil {
 			b.errChan <- inErr
@@ -199,10 +219,15 @@ func (b *Backend) Status() StatusMap {
 	sm := map[string]bool{
 		"store":       b.etcd.Healthy(),
 		"message_bus": true,
+		"pipelined":   true,
 	}
 
 	if b.messageBus.Status() != nil {
 		sm["message_bus"] = false
+	}
+
+	if b.pipelined.Status() != nil {
+		sm["pipelined"] = false
 	}
 
 	return sm

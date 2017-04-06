@@ -10,6 +10,18 @@ type Store interface {
 	DeleteEntity(e *types.Entity) error
 	GetEntities() ([]*types.Entity, error)
 
+	// Handlers
+	GetHandlers() ([]*types.Handler, error)
+	GetHandlerByName(name string) (*types.Handler, error)
+	DeleteHandlerByName(name string) error
+	UpdateHandler(handler *types.Handler) error
+
+	// Mutators
+	GetMutators() ([]*types.Mutator, error)
+	GetMutatorByName(name string) (*types.Mutator, error)
+	DeleteMutatorByName(name string) error
+	UpdateMutator(mutator *types.Mutator) error
+
 	// Checks
 	GetChecks() ([]*types.Check, error)
 	GetCheckByName(name string) (*types.Check, error)

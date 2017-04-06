@@ -9,6 +9,7 @@ var (
 			Interval:      60,
 			Subscriptions: []string{"subscription1"},
 			Command:       "command1",
+			Handlers:      []string{"handler1"},
 		},
 	}
 )
