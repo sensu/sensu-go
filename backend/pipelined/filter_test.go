@@ -24,15 +24,35 @@ func TestPipelinedFilter(t *testing.T) {
 		Check: &types.Check{},
 	}
 
-	filtered := p.filterEvent(handler, event)
+	event.Check.Status = 0
 
-	assert.Equal(t, true, filtered)
+	notIncident := p.filterEvent(handler, event)
+
+	assert.Equal(t, true, notIncident)
 
 	event.Check.Status = 1
 
-	notFiltered := p.filterEvent(handler, event)
+	incident := p.filterEvent(handler, event)
 
-	assert.Equal(t, false, notFiltered)
+	assert.Equal(t, false, incident)
+
+	event.Check.Status = 0
+
+	noMetrics := p.filterEvent(handler, event)
+
+	assert.Equal(t, true, noMetrics)
+
+	event.Metrics = &types.Metrics{}
+
+	metrics := p.filterEvent(handler, event)
+
+	assert.Equal(t, false, metrics)
+
+	event.Check.Status = 1
+
+	both := p.filterEvent(handler, event)
+
+	assert.Equal(t, false, both)
 }
 
 func TestPipelinedIsIncident(t *testing.T) {
@@ -42,15 +62,31 @@ func TestPipelinedIsIncident(t *testing.T) {
 		Check: &types.Check{},
 	}
 
-	notIncident, err := p.isIncident(event)
+	notIncident := p.isIncident(event)
 
-	assert.NoError(t, err)
 	assert.Equal(t, false, notIncident)
 
 	event.Check.Status = 1
 
-	incident, err := p.isIncident(event)
+	incident := p.isIncident(event)
 
-	assert.NoError(t, err)
 	assert.Equal(t, true, incident)
+}
+
+func TestPipelinedHasMetrics(t *testing.T) {
+	p := &Pipelined{}
+
+	event := &types.Event{
+		Check: &types.Check{},
+	}
+
+	notMetrics := p.hasMetrics(event)
+
+	assert.Equal(t, false, notMetrics)
+
+	event.Metrics = &types.Metrics{}
+
+	metrics := p.hasMetrics(event)
+
+	assert.Equal(t, true, metrics)
 }

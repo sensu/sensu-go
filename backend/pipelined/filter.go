@@ -10,14 +10,11 @@ import (
 // filterEvent filters a Sensu event, determining if it will continue
 // through the Sensu pipeline.
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
-	incident, err := p.isIncident(event)
+	incident := p.isIncident(event)
 
-	if err != nil {
-		log.Println("pipelined failed to determine if an event is an incident: ", err.Error())
-		return true
-	}
+	metrics := p.hasMetrics(event)
 
-	if incident {
+	if incident || metrics {
 		return false
 	}
 
@@ -27,10 +24,19 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 }
 
 // isIncident determines if an event indicates an incident.
-func (p *Pipelined) isIncident(event *types.Event) (bool, error) {
+func (p *Pipelined) isIncident(event *types.Event) bool {
 	if event.Check.Status != 0 {
-		return true, nil
+		return true
 	}
 
-	return false, nil
+	return false
+}
+
+// hasMetrics determines if an event has metric data.
+func (p *Pipelined) hasMetrics(event *types.Event) bool {
+	if event.Metrics != nil {
+		return true
+	}
+
+	return false
 }

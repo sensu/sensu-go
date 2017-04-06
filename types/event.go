@@ -12,8 +12,9 @@ type Event struct {
 	// Timestamp is the time in seconds since the Epoch.
 	Timestamp int64 `json:"timestamp"`
 
-	Entity *Entity `json:"entity,omitempty"`
-	Check  *Check  `json:"check,omitempty"`
+	Entity  *Entity  `json:"entity,omitempty"`
+	Check   *Check   `json:"check,omitempty"`
+	Metrics *Metrics `json:"metrics,omitempty"`
 }
 
 // Entity is the Entity supplying the event. The default Entity for any
