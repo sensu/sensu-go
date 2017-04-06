@@ -10,6 +10,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// handleEvent takes a Sensu event through a Sensu pipeline, filters
+// -> mutator -> handler. An event may have one or more handlers. Most
+// errors are only logged and used for flow control, they will not
+// interupt event handling.
 func (p *Pipelined) handleEvent(event *types.Event) error {
 	handlers, err := p.expandHandlers(event.Check.Handlers, 1)
 
@@ -35,6 +39,9 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	return nil
 }
 
+// expandHandlers turns a list of Sensu handler names into a list of
+// handlers, while expanding handler sets with support for some
+// nesting. Handlers are fetched from etcd.
 func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*types.Handler, error) {
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
@@ -77,6 +84,8 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 	return expanded, nil
 }
 
+// pipeHandler fork/executes a child process for a Sensu pipe handler
+// command and writes the mutated eventData to it via STDIN.
 func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.Execution, error) {
 	handlerExec := &command.Execution{}
 

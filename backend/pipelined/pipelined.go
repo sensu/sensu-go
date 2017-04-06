@@ -18,7 +18,7 @@ const (
 	PipelineCount int = 10
 )
 
-// Pipelined handles incoming Sensu events and puts them through the
+// Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
 // handler configuration determines which Sensu filters and mutator
 // are used.
@@ -33,7 +33,8 @@ type Pipelined struct {
 	MessageBus messaging.MessageBus
 }
 
-// Start pipelined.
+// Start pipelined, subscribing to the "event" message bus topic to
+// pass Sensu events to the pipelines for handling (goroutines).
 func (p *Pipelined) Start() error {
 	if p.Store == nil {
 		return errors.New("no store found")
@@ -83,6 +84,9 @@ func (p *Pipelined) Err() <-chan error {
 	return p.errChan
 }
 
+// createPipelines creates several goroutines, responsible for pulling
+// Sensu events from a channel (bound to message bus "event" topic)
+// and for handling them.
 func (p *Pipelined) createPipelines(count int, channel chan []byte) error {
 	for i := 1; i <= count; i++ {
 		p.wg.Add(1)

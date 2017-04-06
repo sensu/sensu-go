@@ -11,6 +11,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// mutateEvent mutates (transforms) a Sensu event into a serialized
+// format (byte slice) to be provided to a Sensu event handler.
 func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]byte, error) {
 	if handler.Mutator == "" {
 		eventData, err := p.jsonMutator(event)
@@ -40,6 +42,8 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 	return eventData, nil
 }
 
+// jsonMutator produces the JSON encoding of the Sensu event. This
+// mutator is used when a Sensu handler does not specify one.
 func (p *Pipelined) jsonMutator(event *types.Event) ([]byte, error) {
 	eventData, err := json.Marshal(event)
 
@@ -50,6 +54,10 @@ func (p *Pipelined) jsonMutator(event *types.Event) ([]byte, error) {
 	return eventData, nil
 }
 
+// pipeMutator fork/executes a child process for a Sensu mutator
+// command, writes the JSON encoding of the Sensu event to it via
+// STDIN, and captures the command output (STDOUT/ERR) to be used as
+// the mutated event data for a Sensu event handler.
 func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]byte, error) {
 	mutatorExec := &command.Execution{}
 
