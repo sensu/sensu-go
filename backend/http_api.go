@@ -183,6 +183,22 @@ func (a *API) ChecksHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, string(checksBytes))
 }
 
+// HandlersHandler handles requests to /handlers
+func (a *API) HandlersHandler(w http.ResponseWriter, r *http.Request) {
+	handlers, err := a.Store.GetHandlers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	checksBytes, err := json.Marshal(handlers)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	fmt.Fprintf(w, string(checksBytes))
+}
+
 func httpServer(b *Backend) (*http.Server, error) {
 	store, err := b.etcd.NewStore()
 	if err != nil {
@@ -194,6 +210,17 @@ func httpServer(b *Backend) (*http.Server, error) {
 		Store:  store,
 	}
 
+	router := httpRouter(api)
+
+	return &http.Server{
+		Addr:         fmt.Sprintf(":%d", b.Config.APIPort),
+		Handler:      router,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}, nil
+}
+
+func httpRouter(api *API) *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/info", api.InfoHandler).Methods(http.MethodGet)
@@ -202,11 +229,7 @@ func httpServer(b *Backend) (*http.Server, error) {
 	r.HandleFunc("/entities/{id}", api.EntityHandler).Methods(http.MethodGet)
 	r.HandleFunc("/checks", api.ChecksHandler).Methods(http.MethodGet)
 	r.HandleFunc("/checks/{name}", api.CheckHandler).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
+	r.HandleFunc("/handlers", api.HandlersHandler).Methods(http.MethodGet)
 
-	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", b.Config.APIPort),
-		Handler:      r,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}, nil
+	return r
 }
