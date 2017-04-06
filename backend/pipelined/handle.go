@@ -22,6 +22,12 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	}
 
 	for _, handler := range handlers {
+		filtered := p.filterEvent(handler, event)
+
+		if filtered {
+			continue
+		}
+
 		eventData, err := p.mutateEvent(handler, event)
 
 		if err != nil {

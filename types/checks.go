@@ -21,6 +21,9 @@ type Check struct {
 	// Output from the execution of Command.
 	Output string `json:"output"`
 
+	// Status from the execution of Command.
+	Status int64 `json:"status"`
+
 	// Time check request was issued.
 	Issued int64 `json:"issued"`
 
