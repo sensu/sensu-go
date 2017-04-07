@@ -200,15 +200,15 @@ func (a *API) HandlerHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-	}
 
-	switch r.Method {
-	case http.MethodGet:
 		if handler == nil {
 			http.NotFound(w, r)
 			return
 		}
+	}
 
+	switch r.Method {
+	case http.MethodGet:
 		handlerBytes, err := json.Marshal(handler)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -241,18 +241,12 @@ func (a *API) HandlerHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		return
 	case http.MethodDelete:
-		if handler == nil {
-			http.NotFound(w, r)
-		}
-
 		err := a.Store.DeleteHandlerByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		return
 	}
 }
 
