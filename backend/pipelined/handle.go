@@ -95,8 +95,8 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.Execution, error) {
 	handlerExec := &command.Execution{}
 
-	handlerExec.Command = handler.Pipe.Command
-	handlerExec.Timeout = handler.Pipe.Timeout
+	handlerExec.Command = handler.Command
+	handlerExec.Timeout = handler.Timeout
 
 	handlerExec.Input = string(eventData[:])
 

@@ -13,20 +13,14 @@ type Handler struct {
 	// Mutator is the handler event data mutator.
 	Mutator string `json:"mutator,omitempty"`
 
-	// Pipe contains configuration for a pipe handler.
-	Pipe HandlerPipe `json:"pipe,omitempty"`
+	// Command is the command to be executed for a pipe handler.
+	Command string `json:"command"`
+
+	// Timeout is the handler timeout in seconds.
+	Timeout int `json:"timeout"`
 
 	// Handlers is a list of handlers for a handler set.
 	Handlers []string `json:"handlers,omitempty"`
-}
-
-// HandlerPipe contains configuration for a pipe handler.
-type HandlerPipe struct {
-	// Command is the command to be executed.
-	Command string `json:"command"`
-
-	// Timeout is the command execution timeout in seconds.
-	Timeout int `json:"timeout"`
 }
 
 // Validate returns an error if the handler does not pass validation tests.

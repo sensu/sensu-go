@@ -8,10 +8,8 @@ var (
 			Name:    "handler1",
 			Type:    "pipe",
 			Mutator: "mutator1",
-			Pipe: types.HandlerPipe{
-				Command: "cat",
-				Timeout: 10,
-			},
+			Command: "cat",
+			Timeout: 10,
 		},
 		&types.Handler{
 			Name:     "handler2",

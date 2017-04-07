@@ -61,13 +61,9 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 func TestPipelinedPipeHandler(t *testing.T) {
 	p := &Pipelined{}
 
-	handlerPipe := &types.HandlerPipe{
-		Command: "cat",
-	}
-
 	handler := &types.Handler{
-		Type: "pipe",
-		Pipe: *handlerPipe,
+		Type:    "pipe",
+		Command: "cat",
 	}
 
 	event := &types.Event{}
