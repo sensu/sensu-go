@@ -135,7 +135,7 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (net
 		timeout = DefaultSocketTimeout
 	}
 
-	address := fmt.Sprintf("%s:%v", host, port)
+	address := fmt.Sprintf("%s:%d", host, port)
 	timeoutDuration := time.Duration(timeout) * time.Second
 
 	conn, err := net.DialTimeout(protocol, address, timeoutDuration)
