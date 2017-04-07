@@ -183,6 +183,79 @@ func (a *API) ChecksHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, string(checksBytes))
 }
 
+// HandlerHandler handles requests to /handlers/:name
+func (a *API) HandlerHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	method := r.Method
+
+	var (
+		handler *types.Handler
+		err     error
+	)
+
+	if method == http.MethodGet || method == http.MethodDelete {
+		handler, err = a.Store.GetHandlerByName(name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		if handler == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		handlerBytes, err := json.Marshal(handler)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, string(handlerBytes))
+	case http.MethodPut, http.MethodPost:
+		newHandler := &types.Handler{}
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		err = json.Unmarshal(bodyBytes, newHandler)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err = newHandler.Validate(); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = a.Store.UpdateHandler(newHandler)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		return
+	case http.MethodDelete:
+		if handler == nil {
+			http.NotFound(w, r)
+		}
+
+		err := a.Store.DeleteHandlerByName(name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+}
+
 // HandlersHandler handles requests to /handlers
 func (a *API) HandlersHandler(w http.ResponseWriter, r *http.Request) {
 	handlers, err := a.Store.GetHandlers()
@@ -230,6 +303,7 @@ func httpRouter(api *API) *mux.Router {
 	r.HandleFunc("/checks", api.ChecksHandler).Methods(http.MethodGet)
 	r.HandleFunc("/checks/{name}", api.CheckHandler).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 	r.HandleFunc("/handlers", api.HandlersHandler).Methods(http.MethodGet)
+	r.HandleFunc("/handlers/{name}", api.HandlerHandler).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 
 	return r
 }
