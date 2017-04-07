@@ -4,10 +4,19 @@ package pipelined
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"net"
+	"time"
 
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
+)
+
+const (
+	// DefaultSocketTimeout specifies the default socket dial
+	// timeout in seconds for TCP and UDP handlers.
+	DefaultSocketTimeout int = 60
 )
 
 // handleEvent takes a Sensu event through a Sensu pipeline, filters
@@ -37,6 +46,8 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		switch handler.Type {
 		case "pipe":
 			p.pipeHandler(handler, eventData)
+		case "tcp", "udp":
+			p.socketHandler(handler, eventData)
 		default:
 			return errors.New("unknown handler type")
 		}
@@ -62,7 +73,7 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 			if err != nil {
 				log.Println("pipelined failed to retrieve a handler: ", err.Error())
 			} else {
-				log.Println("pipelined failed to retrieve a handler: ", handlerName)
+				log.Println("pipelined failed to retrieve a handler: name= ", handlerName)
 			}
 			continue
 		}
@@ -95,8 +106,8 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.Execution, error) {
 	handlerExec := &command.Execution{}
 
-	handlerExec.Command = handler.Pipe.Command
-	handlerExec.Timeout = handler.Pipe.Timeout
+	handlerExec.Command = handler.Command
+	handlerExec.Timeout = handler.Timeout
 
 	handlerExec.Input = string(eventData[:])
 
@@ -105,8 +116,41 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 	if err != nil {
 		log.Println("pipelined failed to execute event pipe handler: ", err.Error())
 	} else {
-		log.Printf("pipelined executed event pipe handler: status: %x output: %s", result.Status, result.Output)
+		log.Printf("pipelined executed event pipe handler: status=%x output=%s", result.Status, result.Output)
 	}
 
 	return result, err
+}
+
+// socketHandler creates either a TCP or UDP client to write eventData
+// to a socket. The provided handler Type determines the protocol.
+func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (net.Conn, error) {
+	protocol := handler.Type
+	host := handler.Socket.Host
+	port := handler.Socket.Port
+	timeout := handler.Timeout
+
+	// If Timeout is not specified, use the default.
+	if timeout == 0 {
+		timeout = DefaultSocketTimeout
+	}
+
+	address := fmt.Sprintf("%s:%d", host, port)
+	timeoutDuration := time.Duration(timeout) * time.Second
+
+	conn, err := net.DialTimeout(protocol, address, timeoutDuration)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	bytes, err := conn.Write(eventData)
+
+	if err != nil {
+		log.Printf("pipelined failed to execute event %s handler: %v", protocol, err.Error())
+	} else {
+		log.Printf("pipelined executed event %s handler: bytes=%v", protocol, bytes)
+	}
+
+	return conn, nil
 }

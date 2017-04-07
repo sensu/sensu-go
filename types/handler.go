@@ -13,20 +13,25 @@ type Handler struct {
 	// Mutator is the handler event data mutator.
 	Mutator string `json:"mutator,omitempty"`
 
-	// Pipe contains configuration for a pipe handler.
-	Pipe HandlerPipe `json:"pipe,omitempty"`
+	// Command is the command to be executed for a pipe handler.
+	Command string `json:"command,omitempty"`
+
+	// Timeout is the handler timeout in seconds.
+	Timeout int `json:"timeout"`
+
+	Socket HandlerSocket `json:"socket,omitempty"`
 
 	// Handlers is a list of handlers for a handler set.
 	Handlers []string `json:"handlers,omitempty"`
 }
 
-// HandlerPipe contains configuration for a pipe handler.
-type HandlerPipe struct {
-	// Command is the command to be executed.
-	Command string `json:"command"`
+// HandlerSocket contains configuration for a TCP or UDP handler.
+type HandlerSocket struct {
+	// Host is the socket peer address.
+	Host string `json:"host"`
 
-	// Timeout is the command execution timeout in seconds.
-	Timeout int `json:"timeout"`
+	// Port is the socket peer port.
+	Port int `json:"port"`
 }
 
 // Validate returns an error if the handler does not pass validation tests.

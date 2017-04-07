@@ -73,15 +73,11 @@ func TestEntityStorage(t *testing.T) {
 
 func TestHandlerStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		handlerPipe := &types.HandlerPipe{
+		handler := &types.Handler{
+			Name:    "handler1",
+			Type:    "pipe",
 			Command: "cat",
 			Timeout: 10,
-		}
-
-		handler := &types.Handler{
-			Name: "handler1",
-			Type: "pipe",
-			Pipe: *handlerPipe,
 		}
 
 		err := store.UpdateHandler(handler)
@@ -92,8 +88,8 @@ func TestHandlerStorage(t *testing.T) {
 
 		assert.Equal(t, handler.Name, retrieved.Name)
 		assert.Equal(t, handler.Type, retrieved.Type)
-		assert.Equal(t, handler.Pipe.Command, retrieved.Pipe.Command)
-		assert.Equal(t, handler.Pipe.Timeout, retrieved.Pipe.Timeout)
+		assert.Equal(t, handler.Command, retrieved.Command)
+		assert.Equal(t, handler.Timeout, retrieved.Timeout)
 
 		handlers, err := store.GetHandlers()
 		assert.NoError(t, err)

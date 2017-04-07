@@ -27,8 +27,12 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 
 	mutator, err := p.Store.GetMutatorByName(handler.Mutator)
 
-	if err != nil {
-		log.Println("pipelined failed to retrieve a mutator: ", err.Error())
+	if mutator == nil {
+		if err != nil {
+			log.Println("pipelined failed to retrieve a mutator: ", err.Error())
+		} else {
+			log.Println("pipelined failed to retrieve a mutator: name= ", handler.Mutator)
+		}
 		return nil, err
 	}
 
@@ -80,7 +84,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
 	}
 
-	log.Printf("pipelined executed event pipe mutator: status: %x output: %s", result.Status, result.Output)
+	log.Printf("pipelined executed event pipe mutator: status=%x output=%s", result.Status, result.Output)
 
 	return []byte(result.Output), nil
 }

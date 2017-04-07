@@ -8,10 +8,8 @@ var (
 			Name:    "handler1",
 			Type:    "pipe",
 			Mutator: "mutator1",
-			Pipe: types.HandlerPipe{
-				Command: "cat",
-				Timeout: 10,
-			},
+			Command: "cat",
+			Timeout: 10,
 		},
 		&types.Handler{
 			Name:     "handler2",
@@ -27,6 +25,22 @@ var (
 			Name:     "handler4",
 			Type:     "set",
 			Handlers: []string{"handler2", "handler3"},
+		},
+		&types.Handler{
+			Name: "handler5",
+			Type: "tcp",
+			Socket: *&types.HandlerSocket{
+				Host: "localhost",
+				Port: 6789,
+			},
+		},
+		&types.Handler{
+			Name: "handler6",
+			Type: "udp",
+			Socket: *&types.HandlerSocket{
+				Host: "localhost",
+				Port: 6789,
+			},
 		},
 	}
 )
