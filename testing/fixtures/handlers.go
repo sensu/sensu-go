@@ -26,5 +26,21 @@ var (
 			Type:     "set",
 			Handlers: []string{"handler2", "handler3"},
 		},
+		&types.Handler{
+			Name: "handler5",
+			Type: "tcp",
+			Socket: *&types.HandlerSocket{
+				Host: "localhost",
+				Port: 6789,
+			},
+		},
+		&types.Handler{
+			Name: "handler6",
+			Type: "udp",
+			Socket: *&types.HandlerSocket{
+				Host: "localhost",
+				Port: 6789,
+			},
+		},
 	}
 )
