@@ -1,4 +1,4 @@
-package backend
+package api
 
 import (
 	"bytes"
@@ -13,17 +13,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getAPI() *API {
+func getApi() *HttpApi {
 	store := fixtures.NewFixtureStore()
 
-	api := &API{
+	api := &HttpApi{
 		Store: store,
 	}
 
 	return api
 }
 
-func processRequest(req *http.Request, api *API) *httptest.ResponseRecorder {
+func processRequest(req *http.Request, api *HttpApi) *httptest.ResponseRecorder {
 	if api == nil {
 		api = getAPI()
 	}

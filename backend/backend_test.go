@@ -29,7 +29,7 @@ func TestHTTPListener(t *testing.T) {
 
 		b, err := NewBackend(&Config{
 			AgentPort:           agentPort,
-			APIPort:             apiPort,
+			ApiPort:             apiPort,
 			StateDir:            path,
 			EtcdClientListenURL: clURL,
 			EtcdPeerListenURL:   apURL,
