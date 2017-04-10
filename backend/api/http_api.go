@@ -113,16 +113,24 @@ func (a *HttpApi) Err() <-chan error {
 func httpRouter(api *HttpApi) *mux.Router {
 	r := mux.NewRouter()
 
-	checksController := &controllers.ChecksController{}
+	checksController := &controllers.ChecksController{
+		Store: api.Store,
+	}
 	checksController.Register(r)
 
-	entitiesController := &controllers.EntitiesController{}
+	entitiesController := &controllers.EntitiesController{
+		Store: api.Store,
+	}
 	entitiesController.Register(r)
 
-	handlersController := &controllers.HandlersController{}
+	handlersController := &controllers.HandlersController{
+		Store: api.Store,
+	}
 	handlersController.Register(r)
 
-	mutatorsController := &controllers.MutatorsController{}
+	mutatorsController := &controllers.MutatorsController{
+		Store: api.Store,
+	}
 	mutatorsController.Register(r)
 
 	//r.HandleFunc("/info", api.InfoHandler).Methods(http.MethodGet)
