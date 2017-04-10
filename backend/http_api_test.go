@@ -3,6 +3,7 @@ package backend
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -34,7 +35,7 @@ func processRequest(req *http.Request, api *API) *httptest.ResponseRecorder {
 	return res
 }
 
-func TestHttpApiHandlersHandler(t *testing.T) {
+func TestHttpApiHandlersHandlerGet(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/handlers", nil)
 	res := processRequest(req, nil)
 
@@ -77,8 +78,10 @@ func TestHttpApiHandlerHandlerGet(t *testing.T) {
 func TestHttpApiHandlerHandlerPut(t *testing.T) {
 	api := getApi()
 
+	handlerName := "handler1"
+
 	updatedHandler := &types.Handler{
-		Name:    "handler1",
+		Name:    handlerName,
 		Type:    "pipe",
 		Mutator: "mutator2",
 		Pipe: types.HandlerPipe{
@@ -89,12 +92,12 @@ func TestHttpApiHandlerHandlerPut(t *testing.T) {
 
 	updatedHandlerJson, _ := json.Marshal(updatedHandler)
 
-	putReq, _ := http.NewRequest("PUT", "/handlers/handler1", bytes.NewBuffer(updatedHandlerJson))
+	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJson))
 	putRes := processRequest(putReq, api)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
 
-	getReq, _ := http.NewRequest("GET", "/handlers/handler1", nil)
+	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/handlers/%s", handlerName), nil)
 	getRes := processRequest(getReq, api)
 
 	assert.Equal(t, http.StatusOK, getRes.Code)
@@ -107,8 +110,10 @@ func TestHttpApiHandlerHandlerPut(t *testing.T) {
 func TestHttpApiHandlerHandlerPost(t *testing.T) {
 	api := getApi()
 
+	handlerName := "newhandler1"
+
 	updatedHandler := &types.Handler{
-		Name:    "newhandler1",
+		Name:    handlerName,
 		Type:    "pipe",
 		Mutator: "mutator2",
 		Pipe: types.HandlerPipe{
@@ -119,12 +124,12 @@ func TestHttpApiHandlerHandlerPost(t *testing.T) {
 
 	updatedHandlerJson, _ := json.Marshal(updatedHandler)
 
-	putReq, _ := http.NewRequest("POST", "/handlers/newhandler1", bytes.NewBuffer(updatedHandlerJson))
+	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJson))
 	putRes := processRequest(putReq, api)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
 
-	getReq, _ := http.NewRequest("GET", "/handlers/newhandler1", nil)
+	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/handlers/%s", handlerName), nil)
 	getRes := processRequest(getReq, api)
 
 	assert.Equal(t, http.StatusOK, getRes.Code)
@@ -137,12 +142,126 @@ func TestHttpApiHandlerHandlerPost(t *testing.T) {
 func TestHttpApiHandlerHandlerDelete(t *testing.T) {
 	api := getApi()
 
-	deleteReq, _ := http.NewRequest("DELETE", "/handlers/handler1", nil)
+	handlerName := "handler1"
+
+	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/handlers/%s", handlerName), nil)
 	deleteRes := processRequest(deleteReq, api)
 
 	assert.Equal(t, http.StatusOK, deleteRes.Code)
 
-	getReq, _ := http.NewRequest("GET", "/handlers/handler1", nil)
+	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/handlers/%s", handlerName), nil)
+	getRes := processRequest(getReq, api)
+
+	assert.Equal(t, http.StatusNotFound, getRes.Code)
+}
+
+func TestHttpApiMutatorsHandlerGet(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/mutators", nil)
+	res := processRequest(req, nil)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	body := res.Body.Bytes()
+
+	mutators := []*types.Mutator{}
+	err := json.Unmarshal(body, &mutators)
+
+	assert.NoError(t, err)
+	assert.Condition(t, func() bool { return len(mutators) >= 1 })
+}
+
+func TestHttpApiMutatorHandlerGet(t *testing.T) {
+	api := getApi()
+
+	notFoundReq, _ := http.NewRequest("GET", "/mutators/somemutator", nil)
+	notFoundRes := processRequest(notFoundReq, api)
+
+	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
+
+	foundReq, _ := http.NewRequest("GET", "/mutators/mutator1", nil)
+	foundRes := processRequest(foundReq, api)
+
+	assert.Equal(t, http.StatusOK, foundRes.Code)
+
+	body := foundRes.Body.Bytes()
+
+	mutator := &types.Mutator{}
+	err := json.Unmarshal(body, &mutator)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, mutator.Name)
+	assert.NotNil(t, mutator.Command)
+	assert.NotEqual(t, mutator.Name, "")
+	assert.NotEqual(t, mutator.Command, "")
+}
+
+func TestHttpApiMutatorHandlerPut(t *testing.T) {
+	api := getApi()
+
+	mutatorName := "newmutator1"
+
+	updatedMutator := &types.Mutator{
+		Name:    mutatorName,
+		Command: "dog",
+		Timeout: 50,
+	}
+
+	updatedMutatorJson, _ := json.Marshal(updatedMutator)
+
+	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJson))
+	putRes := processRequest(putReq, api)
+
+	assert.Equal(t, http.StatusOK, putRes.Code)
+
+	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
+	getRes := processRequest(getReq, api)
+
+	assert.Equal(t, http.StatusOK, getRes.Code)
+
+	body := getRes.Body.String()
+
+	assert.Equal(t, string(updatedMutatorJson[:]), body)
+}
+
+func TestHttpApiMutatorHandlerPost(t *testing.T) {
+	api := getApi()
+
+	mutatorName := "newmutator1"
+
+	updatedMutator := &types.Mutator{
+		Name:    mutatorName,
+		Command: "cat",
+		Timeout: 10,
+	}
+
+	updatedMutatorJson, _ := json.Marshal(updatedMutator)
+
+	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJson))
+	putRes := processRequest(putReq, api)
+
+	assert.Equal(t, http.StatusOK, putRes.Code)
+
+	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
+	getRes := processRequest(getReq, api)
+
+	assert.Equal(t, http.StatusOK, getRes.Code)
+
+	body := getRes.Body.String()
+
+	assert.Equal(t, string(updatedMutatorJson[:]), body)
+}
+
+func TestHttpApiMutatorHandlerDelete(t *testing.T) {
+	api := getApi()
+
+	mutatorName := "mutator1"
+
+	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/mutators/%s", mutatorName), nil)
+	deleteRes := processRequest(deleteReq, api)
+
+	assert.Equal(t, http.StatusOK, deleteRes.Code)
+
+	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
 	getRes := processRequest(getReq, api)
 
 	assert.Equal(t, http.StatusNotFound, getRes.Code)

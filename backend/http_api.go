@@ -258,12 +258,95 @@ func (a *API) HandlersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	checksBytes, err := json.Marshal(handlers)
+	handlersBytes, err := json.Marshal(handlers)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	fmt.Fprintf(w, string(checksBytes))
+	fmt.Fprintf(w, string(handlersBytes))
+}
+
+// MutatorsHandler handles requests to /mutators
+func (a *API) MutatorsHandler(w http.ResponseWriter, r *http.Request) {
+	mutators, err := a.Store.GetMutators()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	mutatorsBytes, err := json.Marshal(mutators)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	fmt.Fprintf(w, string(mutatorsBytes))
+}
+
+// MutatorHandler handles requests to /mutators/:name
+func (a *API) MutatorHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	method := r.Method
+
+	var (
+		mutator *types.Mutator
+		err     error
+	)
+
+	if method == http.MethodGet || method == http.MethodDelete {
+		mutator, err = a.Store.GetMutatorByName(name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if mutator == nil {
+			http.NotFound(w, r)
+			return
+		}
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		mutatorBytes, err := json.Marshal(mutator)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, string(mutatorBytes))
+	case http.MethodPut, http.MethodPost:
+		newMutator := &types.Mutator{}
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		err = json.Unmarshal(bodyBytes, newMutator)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err = newMutator.Validate(); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = a.Store.UpdateMutator(newMutator)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	case http.MethodDelete:
+		err := a.Store.DeleteMutatorByName(name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func httpServer(b *Backend) (*http.Server, error) {
@@ -298,6 +381,8 @@ func httpRouter(api *API) *mux.Router {
 	r.HandleFunc("/checks/{name}", api.CheckHandler).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 	r.HandleFunc("/handlers", api.HandlersHandler).Methods(http.MethodGet)
 	r.HandleFunc("/handlers/{name}", api.HandlerHandler).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
+	r.HandleFunc("/mutators", api.MutatorsHandler).Methods(http.MethodGet)
+	r.HandleFunc("/mutators/{name}", api.MutatorHandler).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 
 	return r
 }
