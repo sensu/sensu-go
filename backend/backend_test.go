@@ -40,8 +40,10 @@ func TestHTTPListener(t *testing.T) {
 			assert.FailNow(t, "failed to start backend")
 		}
 
-		err = b.Run()
-		assert.NoError(t, err)
+		go func() {
+			err = b.Run()
+			assert.NoError(t, err)
+		}()
 
 		for i := 0; i < 5; i++ {
 			conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", agentPort))
