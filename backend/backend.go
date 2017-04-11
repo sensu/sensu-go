@@ -180,10 +180,10 @@ func (b *Backend) Run() error {
 	}()
 
 	go func() {
-		var inErr error
 		select {
-		case inErr = <-inErrChan:
-			log.Fatal("http server error: ", inErr.Error())
+		case err := <-inErrChan:
+			log.Println(err.Error())
+			b.errChan <- err
 		case <-b.shutdownChan:
 			log.Println("backend shutting down")
 		}
@@ -202,12 +202,9 @@ func (b *Backend) Run() error {
 		log.Printf("shutting down pipelined")
 		b.pipelined.Stop()
 
-		// if an error caused the shutdown
-		if inErr != nil {
-			b.errChan <- inErr
-		}
-		// we allow b.errChan and inErrChan to leak to avoid panics from other
+		// we allow inErrChan to leak to avoid panics from other
 		// goroutines writing errors to either after shutdown has been initiated.
+		close(b.errChan)
 		close(b.done)
 	}()
 
