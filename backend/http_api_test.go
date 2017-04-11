@@ -84,10 +84,8 @@ func TestHttpApiHandlerHandlerPut(t *testing.T) {
 		Name:    handlerName,
 		Type:    "pipe",
 		Mutator: "mutator2",
-		Pipe: types.HandlerPipe{
-			Command: "cat",
-			Timeout: 10,
-		},
+		Command: "cat",
+		Timeout: 10,
 	}
 
 	updatedHandlerJSON, _ := json.Marshal(updatedHandler)
@@ -116,10 +114,8 @@ func TestHttpApiHandlerHandlerPost(t *testing.T) {
 		Name:    handlerName,
 		Type:    "pipe",
 		Mutator: "mutator2",
-		Pipe: types.HandlerPipe{
-			Command: "cat",
-			Timeout: 10,
-		},
+		Command: "cat",
+		Timeout: 10,
 	}
 
 	updatedHandlerJSON, _ := json.Marshal(updatedHandler)
