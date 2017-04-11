@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getApi() *API {
+func getAPI() *API {
 	store := fixtures.NewFixtureStore()
 
 	api := &API{
@@ -25,7 +25,7 @@ func getApi() *API {
 
 func processRequest(req *http.Request, api *API) *httptest.ResponseRecorder {
 	if api == nil {
-		api = getApi()
+		api = getAPI()
 	}
 
 	router := httpRouter(api)
@@ -51,7 +51,7 @@ func TestHttpApiHandlersHandlerGet(t *testing.T) {
 }
 
 func TestHttpApiHandlerHandlerGet(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	notFoundReq, _ := http.NewRequest("GET", "/handlers/somehandler", nil)
 	notFoundRes := processRequest(notFoundReq, api)
@@ -76,7 +76,7 @@ func TestHttpApiHandlerHandlerGet(t *testing.T) {
 }
 
 func TestHttpApiHandlerHandlerPut(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	handlerName := "handler1"
 
@@ -90,9 +90,9 @@ func TestHttpApiHandlerHandlerPut(t *testing.T) {
 		},
 	}
 
-	updatedHandlerJson, _ := json.Marshal(updatedHandler)
+	updatedHandlerJSON, _ := json.Marshal(updatedHandler)
 
-	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJson))
+	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJSON))
 	putRes := processRequest(putReq, api)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
@@ -104,11 +104,11 @@ func TestHttpApiHandlerHandlerPut(t *testing.T) {
 
 	body := getRes.Body.String()
 
-	assert.Equal(t, string(updatedHandlerJson[:]), body)
+	assert.Equal(t, string(updatedHandlerJSON[:]), body)
 }
 
 func TestHttpApiHandlerHandlerPost(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	handlerName := "newhandler1"
 
@@ -122,9 +122,9 @@ func TestHttpApiHandlerHandlerPost(t *testing.T) {
 		},
 	}
 
-	updatedHandlerJson, _ := json.Marshal(updatedHandler)
+	updatedHandlerJSON, _ := json.Marshal(updatedHandler)
 
-	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJson))
+	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJSON))
 	putRes := processRequest(putReq, api)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
@@ -136,11 +136,11 @@ func TestHttpApiHandlerHandlerPost(t *testing.T) {
 
 	body := getRes.Body.String()
 
-	assert.Equal(t, string(updatedHandlerJson[:]), body)
+	assert.Equal(t, string(updatedHandlerJSON[:]), body)
 }
 
 func TestHttpApiHandlerHandlerDelete(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	handlerName := "handler1"
 
@@ -171,7 +171,7 @@ func TestHttpApiMutatorsHandlerGet(t *testing.T) {
 }
 
 func TestHttpApiMutatorHandlerGet(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	notFoundReq, _ := http.NewRequest("GET", "/mutators/somemutator", nil)
 	notFoundRes := processRequest(notFoundReq, api)
@@ -196,7 +196,7 @@ func TestHttpApiMutatorHandlerGet(t *testing.T) {
 }
 
 func TestHttpApiMutatorHandlerPut(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	mutatorName := "newmutator1"
 
@@ -206,9 +206,9 @@ func TestHttpApiMutatorHandlerPut(t *testing.T) {
 		Timeout: 50,
 	}
 
-	updatedMutatorJson, _ := json.Marshal(updatedMutator)
+	updatedMutatorJSON, _ := json.Marshal(updatedMutator)
 
-	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJson))
+	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJSON))
 	putRes := processRequest(putReq, api)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
@@ -220,11 +220,11 @@ func TestHttpApiMutatorHandlerPut(t *testing.T) {
 
 	body := getRes.Body.String()
 
-	assert.Equal(t, string(updatedMutatorJson[:]), body)
+	assert.Equal(t, string(updatedMutatorJSON[:]), body)
 }
 
 func TestHttpApiMutatorHandlerPost(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	mutatorName := "newmutator1"
 
@@ -234,9 +234,9 @@ func TestHttpApiMutatorHandlerPost(t *testing.T) {
 		Timeout: 10,
 	}
 
-	updatedMutatorJson, _ := json.Marshal(updatedMutator)
+	updatedMutatorJSON, _ := json.Marshal(updatedMutator)
 
-	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJson))
+	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJSON))
 	putRes := processRequest(putReq, api)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
@@ -248,11 +248,11 @@ func TestHttpApiMutatorHandlerPost(t *testing.T) {
 
 	body := getRes.Body.String()
 
-	assert.Equal(t, string(updatedMutatorJson[:]), body)
+	assert.Equal(t, string(updatedMutatorJSON[:]), body)
 }
 
 func TestHttpApiMutatorHandlerDelete(t *testing.T) {
-	api := getApi()
+	api := getAPI()
 
 	mutatorName := "mutator1"
 
