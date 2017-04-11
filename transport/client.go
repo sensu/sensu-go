@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"fmt"
 	"net/url"
 
 	"github.com/gorilla/websocket"
@@ -16,8 +17,11 @@ func Connect(wsServerURL string) (*Transport, error) {
 		return nil, err
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	conn, resp, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
+		if err == websocket.ErrBadHandshake {
+			return nil, fmt.Errorf("handshake failed with status %d", resp.StatusCode)
+		}
 		return nil, err
 	}
 
