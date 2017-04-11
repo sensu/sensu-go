@@ -59,7 +59,7 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&backendURL, "backend-url", "b", "ws://localhost:8080", "ws/wss URL of Sensu backend server(s)")
+	cmd.Flags().StringVarP(&backendURL, "backend-url", "b", "ws://localhost:8081", "ws/wss URL of Sensu backend server(s)")
 	cmd.Flags().StringVar(&agentID, "id", "", "agent ID (defaults to hostname)")
 	cmd.Flags().StringVar(&subscriptions, "subscriptions", "", "comma-delimited list of agent subscriptions")
 
