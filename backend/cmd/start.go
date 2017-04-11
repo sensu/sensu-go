@@ -55,7 +55,6 @@ func newStartCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			sensuBackend.Run()
 
 			sigs := make(chan os.Signal, 1)
 
@@ -66,7 +65,7 @@ func newStartCommand() *cobra.Command {
 				sensuBackend.Stop()
 			}()
 
-			return sensuBackend.Err()
+			return sensuBackend.Run()
 		},
 	}
 

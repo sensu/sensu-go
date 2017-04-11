@@ -36,7 +36,6 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
-	errChan        chan error
 	shutdownChan   chan struct{}
 	done           chan struct{}
 	messageBus     messaging.MessageBus
@@ -77,7 +76,6 @@ func NewBackend(config *Config) (*Backend, error) {
 		Config: config,
 
 		done:         make(chan struct{}),
-		errChan:      make(chan error, 1),
 		shutdownChan: make(chan struct{}),
 	}
 
@@ -152,11 +150,6 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	// there are two channels in play here: inErrChan is used by the various
-	// services the Backend manages as a destination for terminal errors.
-	// we then monitor that channel and the first error returned on that
-	// channel causes the Backend to shutdown. Then, we pass that error on
-	// to the Err() method via the b.errChan channel.
 	inErrChan := make(chan error)
 
 	go func() {
@@ -179,37 +172,30 @@ func (b *Backend) Run() error {
 		inErrChan <- <-b.pipelined.Err()
 	}()
 
-	go func() {
-		var inErr error
-		select {
-		case inErr = <-inErrChan:
-			log.Fatal("http server error: ", inErr.Error())
-		case <-b.shutdownChan:
-			log.Println("backend shutting down")
-		}
+	select {
+	case err := <-inErrChan:
+		log.Println(err.Error())
+	case <-b.shutdownChan:
+		log.Println("backend shutting down")
+	}
 
-		log.Printf("shutting down etcd")
-		if err := b.etcd.Shutdown(); err != nil {
-			log.Printf("error shutting down etcd: %s", err.Error())
-		}
-		log.Printf("shutting down http server")
-		if err := b.httpServer.Shutdown(context.TODO()); err != nil {
-			log.Printf("error shutting down http listener: %s", err.Error())
-		}
-		log.Printf("shutting down message bus")
-		b.messageBus.Stop()
+	log.Printf("shutting down etcd")
+	if err := b.etcd.Shutdown(); err != nil {
+		log.Printf("error shutting down etcd: %s", err.Error())
+	}
+	log.Printf("shutting down http server")
+	if err := b.httpServer.Shutdown(context.TODO()); err != nil {
+		log.Printf("error shutting down http listener: %s", err.Error())
+	}
+	log.Printf("shutting down message bus")
+	b.messageBus.Stop()
 
-		log.Printf("shutting down pipelined")
-		b.pipelined.Stop()
+	log.Printf("shutting down pipelined")
+	b.pipelined.Stop()
 
-		// if an error caused the shutdown
-		if inErr != nil {
-			b.errChan <- inErr
-		}
-		// we allow b.errChan and inErrChan to leak to avoid panics from other
-		// goroutines writing errors to either after shutdown has been initiated.
-		close(b.done)
-	}()
+	// we allow inErrChan to leak to avoid panics from other
+	// goroutines writing errors to either after shutdown has been initiated.
+	close(b.done)
 
 	return nil
 }
@@ -231,11 +217,6 @@ func (b *Backend) Status() StatusMap {
 	}
 
 	return sm
-}
-
-// Err blocks and returns the first terminal error encountered by this Backend.
-func (b *Backend) Err() error {
-	return <-b.errChan
 }
 
 // Stop the Backend cleanly.

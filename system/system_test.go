@@ -13,7 +13,9 @@ func TestInfo(t *testing.T) {
 	assert.NotEmpty(t, info.Hostname)
 	assert.NotEmpty(t, info.OS)
 	assert.NotEmpty(t, info.Platform)
-	assert.NotEmpty(t, info.PlatformFamily)
+	if info.Platform == "linux" {
+		assert.NotEmpty(t, info.PlatformFamily)
+	}
 	assert.NotEmpty(t, info.PlatformVersion)
 	assert.NotEmpty(t, info.Network.Interfaces)
 	nInterface := info.Network.Interfaces[0]
