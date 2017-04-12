@@ -212,7 +212,7 @@ func (b *Backend) Status() types.StatusMap {
 		"store":       b.etcd.Healthy(),
 		"message_bus": true,
 		"pipelined":   true,
-		"http_api":    true,
+		"apid":        true,
 	}
 
 	if b.messageBus.Status() != nil {

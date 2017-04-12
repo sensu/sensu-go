@@ -44,10 +44,14 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	method := r.Method
-	var check *types.Check
+
+	var (
+		check *types.Check
+		err   error
+	)
 
 	if method == http.MethodGet || method == http.MethodDelete {
-		check, err := c.Store.GetCheckByName(name)
+		check, err = c.Store.GetCheckByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

@@ -63,7 +63,7 @@ func TestHttpApiMutatorPut(t *testing.T) {
 		Store: fixtures.NewFixtureStore(),
 	}
 
-	mutatorName := "newmutator1"
+	mutatorName := "mutator1"
 
 	updatedMutator := &types.Mutator{
 		Name:    mutatorName,

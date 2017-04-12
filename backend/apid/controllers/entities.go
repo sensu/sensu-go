@@ -18,7 +18,7 @@ type EntitiesController struct {
 // respective handlers defined within this Controller.
 func (c *EntitiesController) Register(r *mux.Router) {
 	r.HandleFunc("/entities", c.many).Methods(http.MethodGet)
-	r.HandleFunc("/entities/{name}", c.single).Methods(http.MethodGet)
+	r.HandleFunc("/entities/{id}", c.single).Methods(http.MethodGet)
 }
 
 // many handles GET requests to the /entities endpoint.
@@ -42,6 +42,7 @@ func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
 func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
+
 	entity, err := c.Store.GetEntityByID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
