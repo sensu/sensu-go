@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/sensu/sensu-go/backend/api"
+	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 
 // Config specifies a Backend configuration.
 type Config struct {
-	ApiPort             int
+	APIPort             int
 	AgentPort           int
 	StateDir            string
 	EtcdClientListenURL string
@@ -39,7 +40,7 @@ type Backend struct {
 	shutdownChan   chan struct{}
 	done           chan struct{}
 	messageBus     messaging.MessageBus
-	httpServer     daemon.Daemon
+	apid           daemon.Daemon
 	agentServer    *http.Server
 	checkScheduler *Checker
 	etcd           *etcd.Etcd
@@ -64,8 +65,8 @@ func NewBackend(config *Config) (*Backend, error) {
 		config.EtcdInitialCluster = "default=http://127.0.0.1:2380"
 	}
 
-	if config.ApiPort == 0 {
-		config.ApiPort = 8080
+	if config.APIPort == 0 {
+		config.APIPort = 8080
 	}
 
 	if config.AgentPort == 0 {
@@ -143,11 +144,12 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	b.httpServer = &api.HttpApi{
-		Store: st,
-		Port:  b.Config.ApiPort,
+	b.apid = &apid.APId{
+		Store:         st,
+		Port:          b.Config.APIPort,
+		BackendStatus: b.Status,
 	}
-	if err := b.httpServer.Start(); err != nil {
+	if err := b.apid.Start(); err != nil {
 		return err
 	}
 
@@ -158,11 +160,12 @@ func (b *Backend) Run() error {
 	// to the Err() method via the b.errChan channel.
 	inErrChan := make(chan error)
 
-	/*go func() {
-		inErrChan <- b.httpServer.Err()
-	}()*/
+	go func() {
+		inErrChan <- <-b.apid.Err()
+	}()
 
 	go func() {
+		log.Println("starting agent server on address: ", b.agentServer.Addr)
 		inErrChan <- b.agentServer.ListenAndServe()
 	}()
 
@@ -189,8 +192,8 @@ func (b *Backend) Run() error {
 	if err := b.etcd.Shutdown(); err != nil {
 		log.Printf("error shutting down etcd: %s", err.Error())
 	}
-	log.Printf("shutting down http server")
-	b.httpServer.Stop()
+	log.Printf("shutting down apid")
+	b.apid.Stop()
 	log.Printf("shutting down message bus")
 	b.messageBus.Stop()
 	log.Printf("shutting down pipelined")
@@ -203,11 +206,8 @@ func (b *Backend) Run() error {
 	return nil
 }
 
-// StatusMap is a map of backend component names to their current status info.
-type StatusMap map[string]bool
-
 // Status returns a map of component name to boolean healthy indicator.
-func (b *Backend) Status() StatusMap {
+func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
 		"store":       b.etcd.Healthy(),
 		"message_bus": true,
@@ -223,8 +223,8 @@ func (b *Backend) Status() StatusMap {
 		sm["pipelined"] = false
 	}
 
-	if b.httpServer.Status() != nil {
-		sm["http_api"] = false
+	if b.apid.Status() != nil {
+		sm["apid"] = false
 	}
 
 	return sm

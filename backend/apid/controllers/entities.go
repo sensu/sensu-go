@@ -9,18 +9,21 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// EntitiesController defines the fields required by EntitiesController.
 type EntitiesController struct {
 	Store store.Store
 }
 
+// Register should define an association between HTTP routes and their
+// respective handlers defined within this Controller.
 func (c *EntitiesController) Register(r *mux.Router) {
 	r.HandleFunc("/entities", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/entities/{name}", c.single).Methods(http.MethodGet)
 }
 
 // many handles GET requests to the /entities endpoint.
-func (a *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
-	es, err := a.Store.GetEntities()
+func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
+	es, err := c.Store.GetEntities()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -36,10 +39,10 @@ func (a *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
 }
 
 // single handles requests to /entities/{id}.
-func (a *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
+func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	entity, err := a.Store.GetEntityByID(id)
+	entity, err := c.Store.GetEntityByID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

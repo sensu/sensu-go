@@ -11,50 +11,53 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-type HandlersController struct {
+// MutatorsController defines the fields required by MutatorsController.
+type MutatorsController struct {
 	Store store.Store
 }
 
-func (c *HandlersController) Register(r *mux.Router) {
-	r.HandleFunc("/handlers", c.many).Methods(http.MethodGet)
-	r.HandleFunc("/handlers/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
+// Register should define an association between HTTP routes and their
+// respective handlers defined within this Controller.
+func (c *MutatorsController) Register(r *mux.Router) {
+	r.HandleFunc("/mutators", c.many).Methods(http.MethodGet)
+	r.HandleFunc("/mutators/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 }
 
-// many handles requests to /handlers
-func (a *HandlersController) many(w http.ResponseWriter, r *http.Request) {
-	handlers, err := a.Store.GetHandlers()
+// many handles requests to /mutators
+func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
+	mutators, err := c.Store.GetMutators()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	handlersBytes, err := json.Marshal(handlers)
+	mutatorsBytes, err := json.Marshal(mutators)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	fmt.Fprintf(w, string(handlersBytes))
+	fmt.Fprintf(w, string(mutatorsBytes))
 }
 
-// single handles requests to /handlers/:name
-func (a *HandlersController) single(w http.ResponseWriter, r *http.Request) {
+// single handles requests to /mutators/:name
+func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	method := r.Method
 
 	var (
-		handler *types.Handler
+		mutator *types.Mutator
 		err     error
 	)
 
 	if method == http.MethodGet || method == http.MethodDelete {
-		handler, err = a.Store.GetHandlerByName(name)
+		mutator, err = c.Store.GetMutatorByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if handler == nil {
+		if mutator == nil {
 			http.NotFound(w, r)
 			return
 		}
@@ -62,15 +65,15 @@ func (a *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		handlerBytes, err := json.Marshal(handler)
+		mutatorBytes, err := json.Marshal(mutator)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Fprintf(w, string(handlerBytes))
+		fmt.Fprintf(w, string(mutatorBytes))
 	case http.MethodPut, http.MethodPost:
-		newHandler := &types.Handler{}
+		newMutator := &types.Mutator{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -78,24 +81,24 @@ func (a *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 		}
 		defer r.Body.Close()
 
-		err = json.Unmarshal(bodyBytes, newHandler)
+		err = json.Unmarshal(bodyBytes, newMutator)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if err = newHandler.Validate(); err != nil {
+		if err = newMutator.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = a.Store.UpdateHandler(newHandler)
+		err = c.Store.UpdateMutator(newMutator)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	case http.MethodDelete:
-		err := a.Store.DeleteHandlerByName(name)
+		err := c.Store.DeleteMutatorByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

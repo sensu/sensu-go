@@ -11,18 +11,21 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// ChecksController defines the fields required by ChecksController.
 type ChecksController struct {
 	Store store.Store
 }
 
+// Register should define an association between HTTP routes and their
+// respective handlers defined within this Controller.
 func (c *ChecksController) Register(r *mux.Router) {
 	r.HandleFunc("/checks", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/checks/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 }
 
 // many handles requests to /checks
-func (a *ChecksController) many(w http.ResponseWriter, r *http.Request) {
-	checks, err := a.Store.GetChecks()
+func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
+	checks, err := c.Store.GetChecks()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -37,18 +40,14 @@ func (a *ChecksController) many(w http.ResponseWriter, r *http.Request) {
 }
 
 // single handles requests to /checks/:name
-func (a *ChecksController) single(w http.ResponseWriter, r *http.Request) {
+func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	method := r.Method
-
-	var (
-		check *types.Check
-		err   error
-	)
+	var check *types.Check
 
 	if method == http.MethodGet || method == http.MethodDelete {
-		check, err = a.Store.GetCheckByName(name)
+		check, err := c.Store.GetCheckByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -89,14 +88,14 @@ func (a *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = a.Store.UpdateCheck(newCheck)
+		err = c.Store.UpdateCheck(newCheck)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		return
 	case http.MethodDelete:
-		err := a.Store.DeleteCheckByName(name)
+		err := c.Store.DeleteCheckByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
