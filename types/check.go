@@ -41,12 +41,6 @@ type Check struct {
 	History []CheckHistory `json:"history,omitempty"`
 }
 
-// CheckHistory is a record of a check execution and its status.
-type CheckHistory struct {
-	Status   int   `json:"status"`
-	Executed int64 `json:"executed"`
-}
-
 // Validate returns an error if the check does not pass validation tests.
 func (c *Check) Validate() error {
 	if c.Name == "" {
@@ -63,3 +57,21 @@ func (c *Check) Validate() error {
 
 	return nil
 }
+
+// CheckHistory is a record of a check execution and its status.
+type CheckHistory struct {
+	Status   int   `json:"status"`
+	Executed int64 `json:"executed"`
+}
+
+// ByExecuted implements the sort.Interface for []CheckHistory based on the
+// Executed field.
+//
+// Example:
+//
+// sort.Sort(ByExecuted(check.History))
+type ByExecuted []CheckHistory
+
+func (b ByExecuted) Len() int           { return len(b) }
+func (b ByExecuted) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b ByExecuted) Less(i, j int) bool { return b[i].Executed < b[j].Executed }

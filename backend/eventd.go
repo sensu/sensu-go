@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"sort"
 	"sync"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -89,11 +90,15 @@ func (e *Eventd) startHandlers() {
 
 					history := prevEvent.Check.History
 					histEntry := types.CheckHistory{
-						Status:   event.Check.Status,
-						Executed: event.Check.Executed,
+						Status:   prevEvent.Check.Status,
+						Executed: prevEvent.Check.Executed,
 					}
-					history = append([]types.CheckHistory{histEntry}, history[:len(history)-1]...)
-					event.Check.History = history
+
+					history = append([]types.CheckHistory{histEntry}, history...)
+					sort.Sort(types.ByExecuted(history))
+					if len(history) > 21 {
+						history = history[:len(history)-1]
+					}
 
 					err = e.Store.UpdateEvent(event)
 					if err != nil {
