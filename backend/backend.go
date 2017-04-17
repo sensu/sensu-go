@@ -2,12 +2,14 @@ package backend
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gorilla/websocket"
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
+	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
@@ -26,6 +28,9 @@ var (
 type Config struct {
 	APIPort             int
 	AgentPort           int
+	DashboardDir        string
+	DashboardHost       string
+	DashboardPort       int
 	StateDir            string
 	EtcdClientListenURL string
 	EtcdPeerListenURL   string
@@ -45,8 +50,9 @@ type Backend struct {
 	schedulerd   daemon.Daemon
 	etcd         *etcd.Etcd
 
-	pipelined daemon.Daemon
-	eventd    daemon.Daemon
+	dashboardd daemon.Daemon
+	eventd     daemon.Daemon
+	pipelined  daemon.Daemon
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -156,6 +162,18 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	b.dashboardd = &dashboardd.Dashboardd{
+		BackendStatus: b.Status,
+		Config: dashboardd.Config{
+			Dir:  b.Config.DashboardDir,
+			Host: b.Config.DashboardHost,
+			Port: b.Config.DashboardPort,
+		},
+	}
+	if err := b.dashboardd.Start(); err != nil {
+		return err
+	}
+
 	b.eventd = &eventd.Eventd{
 		Store:      st,
 		MessageBus: b.messageBus,
@@ -191,6 +209,10 @@ func (b *Backend) Run() error {
 	}()
 
 	go func() {
+		inErrChan <- <-b.dashboardd.Err()
+	}()
+
+	go func() {
 		inErrChan <- <-b.eventd.Err()
 	}()
 
@@ -215,6 +237,8 @@ func (b *Backend) Run() error {
 	b.messageBus.Stop()
 	logger.Info("shutting down pipelined")
 	b.pipelined.Stop()
+	log.Printf("shutting down dashboardd")
+	b.dashboardd.Stop()
 
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
