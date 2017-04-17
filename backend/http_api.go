@@ -29,7 +29,7 @@ func (s StatusMap) Healthy() bool {
 
 // API is the backend HTTP API.
 type API struct {
-	Status func() StatusMap
+	Status func() types.StatusMap
 	Store  store.Store
 }
 

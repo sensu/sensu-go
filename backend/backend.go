@@ -9,10 +9,12 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/sensu/sensu-go/backend/daemon"
+	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -25,6 +27,9 @@ var (
 type Config struct {
 	APIPort             int
 	AgentPort           int
+	DashboardDir        string
+	DashboardHost       string
+	DashboardPort       int
 	StateDir            string
 	EtcdClientListenURL string
 	EtcdPeerListenURL   string
@@ -44,7 +49,8 @@ type Backend struct {
 	checkScheduler *Checker
 	etcd           *etcd.Etcd
 
-	pipelined daemon.Daemon
+	dashboardd daemon.Daemon
+	pipelined  daemon.Daemon
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -150,6 +156,18 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	b.dashboardd = &dashboardd.Dashboardd{
+		BackendStatus: b.Status,
+		Config: dashboardd.Config{
+			Dir:  b.Config.DashboardDir,
+			Host: b.Config.DashboardHost,
+			Port: b.Config.DashboardPort,
+		},
+	}
+	if err := b.dashboardd.Start(); err != nil {
+		return err
+	}
+
 	inErrChan := make(chan error)
 
 	go func() {
@@ -170,6 +188,10 @@ func (b *Backend) Run() error {
 
 	go func() {
 		inErrChan <- <-b.pipelined.Err()
+	}()
+
+	go func() {
+		inErrChan <- <-b.dashboardd.Err()
 	}()
 
 	select {
@@ -193,6 +215,9 @@ func (b *Backend) Run() error {
 	log.Printf("shutting down pipelined")
 	b.pipelined.Stop()
 
+	log.Printf("shutting down dashboardd")
+	b.dashboardd.Stop()
+
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
 	close(b.done)
@@ -201,7 +226,7 @@ func (b *Backend) Run() error {
 }
 
 // Status returns a map of component name to boolean healthy indicator.
-func (b *Backend) Status() StatusMap {
+func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
 		"store":       b.etcd.Healthy(),
 		"message_bus": true,
