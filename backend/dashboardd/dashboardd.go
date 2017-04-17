@@ -12,12 +12,14 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// Config represents the dashboard configuration
 type Config struct {
 	Dir  string
 	Host string
 	Port int
 }
 
+// Dashboardd represents the dashboard daemon
 type Dashboardd struct {
 	stopping      chan struct{}
 	running       *atomic.Value
