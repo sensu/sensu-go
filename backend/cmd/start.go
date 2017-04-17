@@ -11,9 +11,12 @@ import (
 )
 
 var (
-	agentPort int
-	apiPort   int
-	stateDir  string
+	agentPort     int
+	apiPort       int
+	dashboardDir  string
+	dashboardHost string
+	dashboardPort int
+	stateDir      string
 
 	etcdClientListenURL string
 	etcdPeerListenURL   string
@@ -30,9 +33,12 @@ func newStartCommand() *cobra.Command {
 		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := &backend.Config{
-				AgentPort: agentPort,
-				APIPort:   apiPort,
-				StateDir:  stateDir,
+				AgentPort:     agentPort,
+				APIPort:       apiPort,
+				DashboardDir:  dashboardDir,
+				DashboardHost: dashboardHost,
+				DashboardPort: dashboardPort,
+				StateDir:      stateDir,
 			}
 
 			// we have defaults for this in the backend config. this is basically
@@ -71,6 +77,9 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
 	cmd.Flags().IntVar(&agentPort, "agent-port", 8081, "Agent listener port")
+	cmd.Flags().StringVar(&dashboardDir, "dashboard-dir", "./bin/dashboard", "path to sensu dashboard static assets")
+	cmd.Flags().StringVar(&dashboardHost, "dashboard-host", "127.0.0.1", "Dashboard listener host")
+	cmd.Flags().IntVar(&dashboardPort, "dashboard-port", 3000, "Dashboard listener port")
 	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", "/var/lib/sensu", "path to sensu state storage")
 
 	// For now don't set defaults for these. This allows us to control defaults on NewBackend(). We may wish
