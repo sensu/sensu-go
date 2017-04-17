@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
+	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
@@ -26,6 +27,9 @@ var (
 type Config struct {
 	APIPort             int
 	AgentPort           int
+	DashboardDir        string
+	DashboardHost       string
+	DashboardPort       int
 	StateDir            string
 	EtcdClientListenURL string
 	EtcdPeerListenURL   string
@@ -45,7 +49,8 @@ type Backend struct {
 	checkScheduler *Checker
 	etcd           *etcd.Etcd
 
-	pipelined daemon.Daemon
+	dashboardd daemon.Daemon
+	pipelined  daemon.Daemon
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -153,6 +158,18 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	b.dashboardd = &dashboardd.Dashboardd{
+		BackendStatus: b.Status,
+		Config: dashboardd.Config{
+			Dir:  b.Config.DashboardDir,
+			Host: b.Config.DashboardHost,
+			Port: b.Config.DashboardPort,
+		},
+	}
+	if err := b.dashboardd.Start(); err != nil {
+		return err
+	}
+
 	// there are two channels in play here: inErrChan is used by the various
 	// services the Backend manages as a destination for terminal errors.
 	// we then monitor that channel and the first error returned on that
@@ -181,6 +198,10 @@ func (b *Backend) Run() error {
 		inErrChan <- <-b.pipelined.Err()
 	}()
 
+	go func() {
+		inErrChan <- <-b.dashboardd.Err()
+	}()
+
 	select {
 	case err := <-inErrChan:
 		log.Println(err.Error())
@@ -198,6 +219,9 @@ func (b *Backend) Run() error {
 	b.messageBus.Stop()
 	log.Printf("shutting down pipelined")
 	b.pipelined.Stop()
+
+	log.Printf("shutting down dashboardd")
+	b.dashboardd.Stop()
 
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
