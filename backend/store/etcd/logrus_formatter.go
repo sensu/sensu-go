@@ -8,18 +8,25 @@ import (
 	"github.com/coreos/pkg/capnslog"
 )
 
-func NewLogrusFormatter() capnslog.Formatter {
-	return &logrusFormatter{}
+type logrusFormatter struct {
+	logger *log.Entry
 }
 
-func logWithPkg(pkg string) *log.Entry {
-	return log.WithFields(log.Fields{
+func NewLogrusFormatter() capnslog.Formatter {
+	logger := log.WithFields(log.Fields{
 		"component": "etcd",
-		"pkg":       pkg,
+	})
+
+	return &logrusFormatter{
+		logger: logger,
+	}
+}
+
+func (s *logrusFormatter) logWithPkg(pkg string) *log.Entry {
+	return s.logger.WithFields(log.Fields{
+		"pkg": pkg,
 	})
 }
-
-type logrusFormatter struct{}
 
 // Format builds a log message for the LogrusFormatter.
 func (s *logrusFormatter) Format(pkg string, l capnslog.LogLevel, _ int, entries ...interface{}) {
@@ -27,19 +34,19 @@ func (s *logrusFormatter) Format(pkg string, l capnslog.LogLevel, _ int, entries
 		str := fmt.Sprint(entry)
 		switch l {
 		case capnslog.CRITICAL:
-			logWithPkg(pkg).Fatal(str)
+			s.logWithPkg(pkg).Fatal(str)
 		case capnslog.ERROR:
-			logWithPkg(pkg).Error(str)
+			s.logWithPkg(pkg).Error(str)
 		case capnslog.WARNING:
-			logWithPkg(pkg).Warning(str)
+			s.logWithPkg(pkg).Warning(str)
 		case capnslog.NOTICE:
-			logWithPkg(pkg).Warning(str)
+			s.logWithPkg(pkg).Warning(str)
 		case capnslog.INFO:
-			logWithPkg(pkg).Info(str)
+			s.logWithPkg(pkg).Info(str)
 		case capnslog.DEBUG:
-			logWithPkg(pkg).Debug(str)
+			s.logWithPkg(pkg).Debug(str)
 		case capnslog.TRACE:
-			logWithPkg(pkg).Debug(str)
+			s.logWithPkg(pkg).Debug(str)
 		default:
 			panic("Unhandled loglevel")
 		}
