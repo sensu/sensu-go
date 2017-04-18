@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "ZKxETlJdB2XubMrZnXB0FQimVA8=",
+			"path": "github.com/Sirupsen/logrus",
+			"revision": "10f801ebc38b33738c9d17d50860f484a0988ff5",
+			"revisionTime": "2017-03-17T14:32:14Z"
+		},
+		{
 			"checksumSHA1": "Te1xRugxHQMAg7EvbIUuPWm8fvU=",
 			"path": "github.com/StackExchange/wmi",
 			"revision": "9f32b5905fd6ce7384093f9d048437e79f7b4d85",
@@ -363,6 +369,12 @@
 			"revisionTime": "2017-02-01T10:47:36Z"
 		},
 		{
+			"checksumSHA1": "bBD/1CVVtZYvSiZVv/6f+r2Qkig=",
+			"path": "github.com/coreos/pkg",
+			"revision": "099530d80109cc4876ac866c38dded19786731d0",
+			"revisionTime": "2017-04-05T07:26:53Z"
+		},
+		{
 			"checksumSHA1": "wqEybhAfMhCq2uOu4bT737mqu6U=",
 			"path": "github.com/coreos/pkg/capnslog",
 			"revision": "1c941d73110817a80b9fa6e14d5d2b00d977ce2a",
@@ -380,6 +392,10 @@
 			"path": "github.com/dgrijalva/jwt-go",
 			"revision": "2268707a8f0843315e2004ee4f1d021dc08baedf",
 			"revisionTime": "2017-02-01T22:58:49Z"
+		},
+		{
+			"path": "github.com/etcd/pkg",
+			"revision": ""
 		},
 		{
 			"checksumSHA1": "muGVyM8mY3/gcap6kr4Ib3F5Xn4=",

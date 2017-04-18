@@ -1,10 +1,11 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/sensu/sensu-go/backend"
 	"github.com/spf13/cobra"
@@ -21,6 +22,7 @@ var (
 )
 
 func init() {
+	log.SetFormatter(&log.JSONFormatter{})
 	rootCmd.AddCommand(newStartCommand())
 }
 
@@ -61,7 +63,7 @@ func newStartCommand() *cobra.Command {
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 			go func() {
 				sig := <-sigs
-				log.Println("signal received: ", sig)
+				log.Info("signal received: ", sig)
 				sensuBackend.Stop()
 			}()
 

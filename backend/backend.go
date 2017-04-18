@@ -2,7 +2,8 @@ package backend
 
 import (
 	"fmt"
-	"log"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
@@ -175,22 +176,20 @@ func (b *Backend) Run() error {
 
 	select {
 	case err := <-inErrChan:
-		log.Println(err.Error())
+		log.Error(err.Error())
 	case <-b.shutdownChan:
-		log.Println("backend shutting down")
+		log.Info("backend shutting down")
 	}
 
-	log.Printf("shutting down etcd")
+	log.Info("shutting down etcd")
 	if err := b.etcd.Shutdown(); err != nil {
-		log.Printf("error shutting down etcd: %s", err.Error())
+		log.Errorf("error shutting down etcd: %s", err.Error())
 	}
-	log.Printf("shutting down apid")
+	log.Info("shutting down apid")
 	b.apid.Stop()
-	log.Printf("shutting down agentd")
 	b.agentd.Stop()
-	log.Printf("shutting down message bus")
 	b.messageBus.Stop()
-	log.Printf("shutting down pipelined")
+	log.Info("shutting down pipelined")
 	b.pipelined.Stop()
 
 	// we allow inErrChan to leak to avoid panics from other

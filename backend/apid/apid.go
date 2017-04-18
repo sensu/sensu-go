@@ -3,11 +3,12 @@ package apid
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/controllers"
@@ -48,7 +49,7 @@ func (a *APId) Start() error {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Println("starting apid on address: ", server.Addr)
+	log.Info("starting apid on address: ", server.Addr)
 
 	go func() {
 		defer a.wg.Done()

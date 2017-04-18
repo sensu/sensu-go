@@ -3,8 +3,9 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/store"
@@ -27,7 +28,7 @@ func (c *InfoController) Register(r *mux.Router) {
 func (c *InfoController) many(w http.ResponseWriter, r *http.Request) {
 	sb, err := json.Marshal(c.Status())
 	if err != nil {
-		log.Println("error marshaling status: ", err.Error())
+		log.Error("error marshaling status: ", err.Error())
 		http.Error(w, "Error getting server status.", http.StatusInternalServerError)
 		return
 	}

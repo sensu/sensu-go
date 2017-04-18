@@ -2,7 +2,7 @@
 package pipelined
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -18,7 +18,7 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 		return false
 	}
 
-	log.Printf("pipelined filtered an event")
+	log.Debug("pipelined filtered an event")
 
 	return true
 }
