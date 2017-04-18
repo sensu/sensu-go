@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -99,7 +97,7 @@ func (s *Session) handshake() error {
 		}
 	}
 
-	log.Infof("agent connected: id=%s subscriptions=%s\n", agentHandshake.ID, agentHandshake.Subscriptions)
+	logger.Infof("agent connected: id=%s subscriptions=%s\n", agentHandshake.ID, agentHandshake.Subscriptions)
 
 	return nil
 }
@@ -109,7 +107,7 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 
 	for {
 		if s.disconnected {
-			log.Info("session disconnected - stopping recvPump")
+			logger.Info("session disconnected - stopping recvPump")
 			return
 		}
 
@@ -121,14 +119,14 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 			case transport.ClosedError:
 				s.disconnected = true
 			default:
-				log.Error("recv error:", err.Error())
+				logger.Error("recv error:", err.Error())
 			}
 			continue
 		}
 
 		err = s.handler.Handle(msg.Type, msg.Payload)
 		if err != nil {
-			log.Error("error handling message: ", msg)
+			logger.Error("error handling message: ", msg)
 		}
 	}
 }
@@ -137,7 +135,7 @@ func (s *Session) subPump(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		if s.disconnected {
-			log.Info("session disconnected - stopping sendPump")
+			logger.Info("session disconnected - stopping sendPump")
 			return
 		}
 
@@ -149,7 +147,7 @@ func (s *Session) subPump(wg *sync.WaitGroup) {
 			}
 			s.sendq <- msg
 		case <-s.stopping:
-			log.Info("shutting down - stopping subPump")
+			logger.Info("shutting down - stopping subPump")
 			return
 		}
 
@@ -171,12 +169,12 @@ func (s *Session) sendPump(wg *sync.WaitGroup) {
 				case transport.ClosedError:
 					s.disconnected = true
 				default:
-					log.Error("send error:", err.Error())
+					logger.Error("send error:", err.Error())
 				}
 			}
 		case <-s.stopping:
 			s.disconnected = true
-			log.Info("shutting down - stopping sendPump")
+			logger.Info("shutting down - stopping sendPump")
 			return
 		}
 	}
@@ -225,7 +223,7 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive does not contain an entity")
 	}
 
-	log.Debug("handling keepalive: ", *keepalive)
+	logger.Debug("handling keepalive: ", *keepalive)
 	return s.store.UpdateEntity(keepalive.Entity)
 }
 

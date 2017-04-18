@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -47,7 +45,7 @@ func (s *CheckScheduler) Start() error {
 			case <-timer.C:
 				check, err := s.Store.GetCheckByName(s.Check.Name)
 				if err != nil {
-					log.Error("error getting check from store: ", err.Error())
+					logger.Error("error getting check from store: ", err.Error())
 					// TODO(grep): what do we do when we cannot talk to the store?
 					continue
 				}
@@ -70,12 +68,12 @@ func (s *CheckScheduler) Start() error {
 					}
 					evtBytes, err := json.Marshal(evt)
 					if err != nil {
-						log.Error("error marshalling check in scheduler: ", err.Error())
+						logger.Error("error marshalling check in scheduler: ", err.Error())
 						continue
 					}
 
 					if err := s.MessageBus.Publish(sub, evtBytes); err != nil {
-						log.Error("error publishing check request: ", err.Error())
+						logger.Error("error publishing check request: ", err.Error())
 					}
 				}
 			case <-s.stop:
@@ -213,7 +211,7 @@ func (c *Checker) startWatcher() {
 					check := &types.Check{}
 					err := json.Unmarshal(ev.Kv.Value, check)
 					if err != nil {
-						log.Error("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
+						logger.Error("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
 						c.schedulersMutex.Unlock()
 						continue
 					}
@@ -221,7 +219,7 @@ func (c *Checker) startWatcher() {
 					c.schedulers[check.Name] = scheduler
 					err = scheduler.Start()
 					if err != nil {
-						log.Error("error starting scheduler for check: ", check.Name)
+						logger.Error("error starting scheduler for check: ", check.Name)
 						c.schedulersMutex.Unlock()
 					}
 					c.schedulersMutex.Unlock()
