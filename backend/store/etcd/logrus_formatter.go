@@ -3,17 +3,16 @@ package etcd
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
-
+	"github.com/Sirupsen/logrus"
 	"github.com/coreos/pkg/capnslog"
 )
 
 type logrusFormatter struct {
-	logger *log.Entry
+	logger *logrus.Entry
 }
 
 func NewLogrusFormatter() capnslog.Formatter {
-	logger := log.WithFields(log.Fields{
+	logger := logrus.WithFields(logrus.Fields{
 		"component": "etcd",
 	})
 
@@ -22,8 +21,8 @@ func NewLogrusFormatter() capnslog.Formatter {
 	}
 }
 
-func (s *logrusFormatter) logWithPkg(pkg string) *log.Entry {
-	return s.logger.WithFields(log.Fields{
+func (s *logrusFormatter) logWithPkg(pkg string) *logrus.Entry {
+	return s.logger.WithFields(logrus.Fields{
 		"pkg": pkg,
 	})
 }

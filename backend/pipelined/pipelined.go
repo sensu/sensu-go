@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -17,6 +18,14 @@ const (
 	// in action.
 	PipelineCount int = 10
 )
+
+var logger *logrus.Entry
+
+func init() {
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "store",
+	})
+}
 
 // Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu

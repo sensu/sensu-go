@@ -14,8 +14,6 @@ import (
 	"path/filepath"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
 	"github.com/coreos/pkg/capnslog"
@@ -126,7 +124,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	select {
 	case <-e.Server.ReadyNotify():
-		log.Info("Etcd ready to serve client connections")
+		logger.Info("Etcd ready to serve client connections")
 	case <-time.After(EtcdStartupTimeout * time.Second):
 		e.Server.Stop()
 		return nil, fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)

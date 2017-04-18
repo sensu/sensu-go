@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/controllers"
@@ -26,6 +26,14 @@ type APId struct {
 	Store         store.Store
 	Port          int
 	BackendStatus func() types.StatusMap
+}
+
+var logger *logrus.Entry
+
+func init() {
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "apid",
+	})
 }
 
 // Start Apid.
@@ -49,7 +57,7 @@ func (a *APId) Start() error {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Info("starting apid on address: ", server.Addr)
+	logger.Info("starting apid on address: ", server.Addr)
 
 	go func() {
 		defer a.wg.Done()

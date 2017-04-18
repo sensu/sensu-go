@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 )
@@ -19,7 +17,7 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 		eventData, err := p.jsonMutator(event)
 
 		if err != nil {
-			log.Error("pipelined failed to mutate an event: ", err.Error())
+			logger.Error("pipelined failed to mutate an event: ", err.Error())
 			return nil, err
 		}
 
@@ -30,9 +28,9 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 
 	if mutator == nil {
 		if err != nil {
-			log.Error("pipelined failed to retrieve a mutator: ", err.Error())
+			logger.Error("pipelined failed to retrieve a mutator: ", err.Error())
 		} else {
-			log.Error("pipelined failed to retrieve a mutator: name= ", handler.Mutator)
+			logger.Error("pipelined failed to retrieve a mutator: name= ", handler.Mutator)
 		}
 		return nil, err
 	}
@@ -40,7 +38,7 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 	eventData, err := p.pipeMutator(mutator, event)
 
 	if err != nil {
-		log.Error("pipelined failed to mutate an event: ", err.Error())
+		logger.Error("pipelined failed to mutate an event: ", err.Error())
 		return nil, err
 	}
 
@@ -85,7 +83,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
 	}
 
-	log.Debug("pipelined executed event pipe mutator: status=%x output=%s", result.Status, result.Output)
+	logger.Debug("pipelined executed event pipe mutator: status=%x output=%s", result.Status, result.Output)
 
 	return []byte(result.Output), nil
 }
