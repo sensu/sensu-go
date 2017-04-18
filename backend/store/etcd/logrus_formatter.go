@@ -11,6 +11,7 @@ type logrusFormatter struct {
 	logger *logrus.Entry
 }
 
+// NewLogrusFormatter creates a new LogrusFormatter
 func NewLogrusFormatter() capnslog.Formatter {
 	logger := logrus.WithFields(logrus.Fields{
 		"component": "etcd",
