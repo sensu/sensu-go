@@ -3,8 +3,13 @@ package messaging
 import "github.com/sensu/sensu-go/backend/daemon"
 
 const (
-	// TopicEvent is the topic for events.
+	// TopicEvent is the topic for events that have been written to Etcd and
+	// normalized by eventd.
 	TopicEvent = "sensu:event"
+
+	// TopicEventRaw is the Session -> Eventd channel -- for raw events directly
+	// from agents, subscribe to this.
+	TopicEventRaw = "sensu:event-raw"
 )
 
 // MessageBus is the interface to the internal messaging system.

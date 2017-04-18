@@ -46,7 +46,7 @@ func (e *Eventd) Start() error {
 	e.startHandlers()
 
 	ch := make(chan []byte, 100)
-	err := e.MessageBus.Subscribe(messaging.TopicEvent, "eventd", ch)
+	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, "eventd", ch)
 	if err != nil {
 		return err
 	}
