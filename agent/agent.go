@@ -8,11 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
@@ -38,6 +38,14 @@ type Config struct {
 	KeepaliveInterval int
 }
 
+var logger *logrus.Entry
+
+func init() {
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "agent",
+	})
+}
+
 // NewConfig provides a new Config object initialized with defaults.
 func NewConfig() *Config {
 	c := &Config{
@@ -47,7 +55,7 @@ func NewConfig() *Config {
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Println("error getting hostname: ", err.Error())
+		logger.Error("error getting hostname: ", err.Error())
 		// TODO(greg): wat do?
 		c.AgentID = "unidentified-sensu-agent"
 	}
@@ -90,10 +98,10 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 	wg.Add(1)
 	defer wg.Done()
 
-	log.Println("connected - starting receivePump")
+	logger.Info("connected - starting receivePump")
 	for {
 		if a.disconnected {
-			log.Println("disconnected - stopping receivePump")
+			logger.Info("disconnected - stopping receivePump")
 			return
 		}
 
@@ -105,15 +113,15 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 			case transport.ClosedError:
 				a.disconnected = true
 			default:
-				log.Println("recv error:", err.Error())
+				logger.Error("recv error:", err.Error())
 			}
 			continue
 		}
-		log.Println("message received - type: ", m.Type, " message: ", m.Payload)
+		logger.Info("message received - type: ", m.Type, " message: ", m.Payload)
 
 		err = a.handler.Handle(m.Type, m.Payload)
 		if err != nil {
-			log.Println("error handling message:", err.Error())
+			logger.Error("error handling message:", err.Error())
 		}
 	}
 }
@@ -128,7 +136,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	// connection.)
 	defer a.conn.Close()
 
-	log.Println("connected - starting sendPump")
+	logger.Info("connected - starting sendPump")
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -143,12 +151,12 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 				case transport.ClosedError:
 					a.disconnected = true
 				default:
-					log.Println("send error:", err.Error())
+					logger.Error("send error:", err.Error())
 				}
 			}
 		case <-ticker.C:
 			if a.disconnected {
-				log.Println("disconnected - stopping sendPump")
+				logger.Info("disconnected - stopping sendPump")
 				return
 			}
 		case <-a.stopping:
@@ -160,7 +168,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 }
 
 func (a *Agent) sendKeepalive() error {
-	log.Println("sending keepalive")
+	logger.Info("sending keepalive")
 	msg := &transport.Message{
 		Type: types.KeepaliveType,
 	}
@@ -179,7 +187,7 @@ func (a *Agent) sendKeepalive() error {
 }
 
 func (a *Agent) keepaliveLoop() {
-	log.Println("starting keepalive loop")
+	logger.Info("starting keepalive loop")
 
 	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer ticker.Stop()
@@ -190,11 +198,11 @@ func (a *Agent) keepaliveLoop() {
 		case <-ticker.C:
 			if !a.disconnected {
 				if err := a.sendKeepalive(); err != nil {
-					log.Println("error marshaling keepalive: ", err.Error())
+					logger.Error("error marshaling keepalive: ", err.Error())
 				}
 			}
 		case <-a.stopping:
-			log.Println("stopping keepalive loop")
+			logger.Info("stopping keepalive loop")
 			return
 		}
 	}
@@ -301,11 +309,11 @@ func (a *Agent) Run() error {
 				return
 			case <-ticker.C:
 				if a.disconnected {
-					log.Println("disconnected - attempting to reconnect: ", a.backendURL)
+					logger.Info("disconnected - attempting to reconnect: ", a.backendURL)
 					wg.Wait()
 					conn, err := transport.Connect(a.backendURL)
 					if err != nil {
-						log.Println("connection error:", err.Error())
+						logger.Error("connection error:", err.Error())
 						// TODO(greg): exponential backoff
 						time.Sleep(1 * time.Second)
 						retries++
@@ -317,11 +325,11 @@ func (a *Agent) Run() error {
 						continue
 					}
 					a.conn = conn
-					log.Println("reconnected: ", a.backendURL)
+					logger.Info("reconnected: ", a.backendURL)
 					wg.Add(2)
 					err = a.handshake()
 					if err != nil {
-						log.Println("handshake error: ", err.Error())
+						logger.Error("handshake error: ", err.Error())
 						continue
 					}
 					go a.sendPump(wg, conn)

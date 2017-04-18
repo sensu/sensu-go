@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
-
 	"github.com/sensu/sensu-go/backend"
 	"github.com/spf13/cobra"
 )

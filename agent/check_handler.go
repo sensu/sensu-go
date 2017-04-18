@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/sensu/sensu-go/command"
@@ -25,7 +24,7 @@ func (a *Agent) handleCheck(payload []byte) error {
 
 	if event.Check.Command != "" {
 		go func() {
-			log.Println("executing check: ", event.Check.Name)
+			logger.Info("executing check: ", event.Check.Name)
 			ex := &command.Execution{}
 			event.Check.Executed = time.Now().Unix()
 			_, err := command.ExecuteCommand(context.Background(), ex)
@@ -38,7 +37,7 @@ func (a *Agent) handleCheck(payload []byte) error {
 			event.Check.Duration = ex.Duration
 			msg, err := json.Marshal(event)
 			if err != nil {
-				log.Print("error marshaling check result: ", err.Error())
+				logger.Error("error marshaling check result: ", err.Error())
 				return
 			}
 
