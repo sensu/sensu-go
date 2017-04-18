@@ -1,18 +1,19 @@
 package backend
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -39,7 +40,7 @@ type Backend struct {
 	shutdownChan   chan struct{}
 	done           chan struct{}
 	messageBus     messaging.MessageBus
-	httpServer     *http.Server
+	apid           daemon.Daemon
 	agentServer    *http.Server
 	checkScheduler *Checker
 	etcd           *etcd.Etcd
@@ -92,12 +93,6 @@ func NewBackend(config *Config) (*Backend, error) {
 	}
 	b.etcd = e
 
-	httpsrv, err := httpServer(b)
-	if err != nil {
-		return nil, err
-	}
-	b.httpServer = httpsrv
-
 	asrv, err := agentServer(b)
 	if err != nil {
 		return nil, err
@@ -145,18 +140,32 @@ func (b *Backend) Run() error {
 		Store:      st,
 		MessageBus: b.messageBus,
 	}
-
 	if err := b.pipelined.Start(); err != nil {
 		return err
 	}
 
+	b.apid = &apid.APId{
+		Store:         st,
+		Port:          b.Config.APIPort,
+		BackendStatus: b.Status,
+	}
+	if err := b.apid.Start(); err != nil {
+		return err
+	}
+
+	// there are two channels in play here: inErrChan is used by the various
+	// services the Backend manages as a destination for terminal errors.
+	// we then monitor that channel and the first error returned on that
+	// channel causes the Backend to shutdown. Then, we pass that error on
+	// to the Err() method via the b.errChan channel.
 	inErrChan := make(chan error)
 
 	go func() {
-		inErrChan <- b.httpServer.ListenAndServe()
+		inErrChan <- <-b.apid.Err()
 	}()
 
 	go func() {
+		log.Println("starting agent server on address: ", b.agentServer.Addr)
 		inErrChan <- b.agentServer.ListenAndServe()
 	}()
 
@@ -183,13 +192,10 @@ func (b *Backend) Run() error {
 	if err := b.etcd.Shutdown(); err != nil {
 		log.Printf("error shutting down etcd: %s", err.Error())
 	}
-	log.Printf("shutting down http server")
-	if err := b.httpServer.Shutdown(context.TODO()); err != nil {
-		log.Printf("error shutting down http listener: %s", err.Error())
-	}
+	log.Printf("shutting down apid")
+	b.apid.Stop()
 	log.Printf("shutting down message bus")
 	b.messageBus.Stop()
-
 	log.Printf("shutting down pipelined")
 	b.pipelined.Stop()
 
@@ -201,11 +207,12 @@ func (b *Backend) Run() error {
 }
 
 // Status returns a map of component name to boolean healthy indicator.
-func (b *Backend) Status() StatusMap {
+func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
 		"store":       b.etcd.Healthy(),
 		"message_bus": true,
 		"pipelined":   true,
+		"apid":        true,
 	}
 
 	if b.messageBus.Status() != nil {
@@ -214,6 +221,10 @@ func (b *Backend) Status() StatusMap {
 
 	if b.pipelined.Status() != nil {
 		sm["pipelined"] = false
+	}
+
+	if b.apid.Status() != nil {
+		sm["apid"] = false
 	}
 
 	return sm

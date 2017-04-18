@@ -32,7 +32,7 @@ test_commands () {
     exit 1
   fi
 
-  go test -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
+  go test -timeout 60s -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
   if [ $? -ne 0 ]; then
     echo "Tests failed..."
     exit 1

@@ -83,6 +83,7 @@ func TestPipelinedPipeHandler(t *testing.T) {
 }
 
 func TestPipelinedTcpHandler(t *testing.T) {
+	ready := make(chan struct{})
 	done := make(chan struct{})
 
 	p := &Pipelined{}
@@ -109,6 +110,8 @@ func TestPipelinedTcpHandler(t *testing.T) {
 
 		defer listener.Close()
 
+		ready <- struct{}{}
+
 		conn, err := listener.Accept()
 		if err != nil {
 			return
@@ -124,6 +127,7 @@ func TestPipelinedTcpHandler(t *testing.T) {
 		done <- struct{}{}
 	}()
 
+	<-ready
 	_, err := p.socketHandler(handler, eventData)
 
 	assert.NoError(t, err)
