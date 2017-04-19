@@ -217,15 +217,11 @@ func (b *Backend) Run() error {
 func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
 		"store":       b.etcd.Healthy(),
-		"message_bus": b.messageBus.Status() != nil,
-		"pipelined":   b.pipelined.Status() != nil,
-		"apid":        b.apid.Status() != nil,
-		"eventd":      b.eventd.Status() != nil,
+		"message_bus": b.messageBus.Status() == nil,
+		"pipelined":   b.pipelined.Status() == nil,
+		"apid":        b.apid.Status() == nil,
+		"eventd":      b.eventd.Status() == nil,
 		"agentd":      b.agentd.Status() == nil,
-	}
-
-	if b.agentd.Status() != nil {
-		sm["agentd"] = false
 	}
 
 	return sm
