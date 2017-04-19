@@ -1,4 +1,4 @@
-package backend
+package agentd
 
 import (
 	"encoding/json"

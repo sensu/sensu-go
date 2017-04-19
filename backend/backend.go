@@ -3,23 +3,14 @@ package backend
 import (
 	"fmt"
 	"log"
-	"net/http"
-	"time"
 
-	"github.com/gorilla/websocket"
+	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
-)
-
-var (
-	// upgrader is safe for concurrent use, and we don't need any particularly
-	// specialized configurations for different uses.
-	upgrader = &websocket.Upgrader{}
 )
 
 // Config specifies a Backend configuration.
@@ -41,7 +32,7 @@ type Backend struct {
 	done           chan struct{}
 	messageBus     messaging.MessageBus
 	apid           daemon.Daemon
-	agentServer    *http.Server
+	agentd         daemon.Daemon
 	checkScheduler *Checker
 	etcd           *etcd.Etcd
 
@@ -92,13 +83,6 @@ func NewBackend(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error starting etcd: %s", err.Error())
 	}
 	b.etcd = e
-
-	asrv, err := agentServer(b)
-	if err != nil {
-		return nil, err
-	}
-
-	b.agentServer = asrv
 
 	b.messageBus = &messaging.WizardBus{}
 
@@ -153,6 +137,15 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	b.agentd = &agentd.Agentd{
+		Store:      st,
+		Port:       b.Config.AgentPort,
+		MessageBus: b.messageBus,
+	}
+	if err := b.agentd.Start(); err != nil {
+		return err
+	}
+
 	// there are two channels in play here: inErrChan is used by the various
 	// services the Backend manages as a destination for terminal errors.
 	// we then monitor that channel and the first error returned on that
@@ -165,8 +158,7 @@ func (b *Backend) Run() error {
 	}()
 
 	go func() {
-		log.Println("starting agent server on address: ", b.agentServer.Addr)
-		inErrChan <- b.agentServer.ListenAndServe()
+		inErrChan <- <-b.agentd.Err()
 	}()
 
 	go func() {
@@ -194,6 +186,8 @@ func (b *Backend) Run() error {
 	}
 	log.Printf("shutting down apid")
 	b.apid.Stop()
+	log.Printf("shutting down agentd")
+	b.agentd.Stop()
 	log.Printf("shutting down message bus")
 	b.messageBus.Stop()
 	log.Printf("shutting down pipelined")
@@ -213,6 +207,7 @@ func (b *Backend) Status() types.StatusMap {
 		"message_bus": true,
 		"pipelined":   true,
 		"apid":        true,
+		"agentd":      true,
 	}
 
 	if b.messageBus.Status() != nil {
@@ -227,6 +222,10 @@ func (b *Backend) Status() types.StatusMap {
 		sm["apid"] = false
 	}
 
+	if b.agentd.Status() != nil {
+		sm["agentd"] = false
+	}
+
 	return sm
 }
 
@@ -234,40 +233,4 @@ func (b *Backend) Status() types.StatusMap {
 func (b *Backend) Stop() {
 	close(b.shutdownChan)
 	<-b.done
-}
-
-func agentServer(b *Backend) (*http.Server, error) {
-	store, err := b.etcd.NewStore()
-	if err != nil {
-		return nil, err
-	}
-
-	r := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			log.Println("transport error on websocket upgrade: ", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		session, err := NewSession(transport.NewTransport(conn), b.messageBus, store)
-		if err != nil {
-			log.Println("failed to start session: ", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = session.Start()
-		if err != nil {
-			log.Println("failed to start session: ", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
-
-	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", b.Config.AgentPort),
-		Handler:      r,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}, nil
 }
