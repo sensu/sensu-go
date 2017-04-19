@@ -112,5 +112,10 @@ func httpRouter(a *APId) *mux.Router {
 	}
 	healthController.Register(r)
 
+	eventsController := &controllers.EventsController{
+		Store: a.Store,
+	}
+	eventsController.Register(r)
+
 	return r
 }

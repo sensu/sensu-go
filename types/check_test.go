@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +22,6 @@ func TestMergeWith(t *testing.T) {
 	newCheck.MergeWith(originalCheck)
 
 	assert.NotEmpty(t, newCheck.History)
-	fmt.Println(newCheck.History)
 	// History has a length of 21, so just index it directly. jfc.
 	assert.Equal(t, 1, newCheck.History[20].Status)
 }
