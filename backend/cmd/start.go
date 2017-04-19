@@ -1,16 +1,18 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/spf13/cobra"
 )
 
 var (
+	logger *logrus.Entry
+
 	agentPort int
 	apiPort   int
 	stateDir  string
@@ -21,6 +23,11 @@ var (
 )
 
 func init() {
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "cmd",
+	})
+
 	rootCmd.AddCommand(newStartCommand())
 }
 
@@ -61,7 +68,7 @@ func newStartCommand() *cobra.Command {
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 			go func() {
 				sig := <-sigs
-				log.Println("signal received: ", sig)
+				logger.Info("signal received: ", sig)
 				sensuBackend.Stop()
 			}()
 

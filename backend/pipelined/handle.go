@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
@@ -71,9 +70,9 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 
 		if handler == nil {
 			if err != nil {
-				log.Println("pipelined failed to retrieve a handler: ", err.Error())
+				logger.Error("pipelined failed to retrieve a handler: ", err.Error())
 			} else {
-				log.Println("pipelined failed to retrieve a handler: name= ", handlerName)
+				logger.Error("pipelined failed to retrieve a handler: name= ", handlerName)
 			}
 			continue
 		}
@@ -83,7 +82,7 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 			setHandlers, err := p.expandHandlers(handler.Handlers, level)
 
 			if err != nil {
-				log.Println("pipelined failed to expand handler set: ", err.Error())
+				logger.Error("pipelined failed to expand handler set: ", err.Error())
 			} else {
 				for name, setHandler := range setHandlers {
 					if _, ok := expanded[name]; !ok {
@@ -114,9 +113,9 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 	result, err := command.ExecuteCommand(context.Background(), handlerExec)
 
 	if err != nil {
-		log.Println("pipelined failed to execute event pipe handler: ", err.Error())
+		logger.Error("pipelined failed to execute event pipe handler: ", err.Error())
 	} else {
-		log.Printf("pipelined executed event pipe handler: status=%x output=%s", result.Status, result.Output)
+		logger.Errorf("pipelined executed event pipe handler: status=%x output=%s", result.Status, result.Output)
 	}
 
 	return result, err
@@ -147,9 +146,9 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (net
 	bytes, err := conn.Write(eventData)
 
 	if err != nil {
-		log.Printf("pipelined failed to execute event %s handler: %v", protocol, err.Error())
+		logger.Errorf("pipelined failed to execute event %s handler: %v", protocol, err.Error())
 	} else {
-		log.Printf("pipelined executed event %s handler: bytes=%v", protocol, bytes)
+		logger.Errorf("pipelined executed event %s handler: bytes=%v", protocol, bytes)
 	}
 
 	return conn, nil

@@ -3,17 +3,25 @@ package agentd
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
 )
+
+var logger *logrus.Entry
+
+func init() {
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "agentd",
+	})
+}
 
 var (
 	// upgrader is safe for concurrent use, and we don't need any particularly
@@ -54,7 +62,7 @@ func (a *Agentd) Start() error {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Println("starting agentd on address: ", server.Addr)
+	logger.Info("starting agentd on address: ", server.Addr)
 
 	go func() {
 		defer a.wg.Done()
@@ -87,21 +95,21 @@ func (a *Agentd) Err() <-chan error {
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("transport error on websocket upgrade: ", err.Error())
+		logger.Error("transport error on websocket upgrade: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	session, err := NewSession(transport.NewTransport(conn), a.MessageBus, a.Store)
 	if err != nil {
-		log.Println("failed to create session: ", err.Error())
+		logger.Error("failed to create session: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = session.Start()
 	if err != nil {
-		log.Println("failed to start session: ", err.Error())
+		logger.Error("failed to start session: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

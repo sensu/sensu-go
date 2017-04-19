@@ -9,7 +9,6 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
+	"github.com/coreos/pkg/capnslog"
 )
 
 const (
@@ -115,6 +115,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	cfg.InitialCluster = config.InitialCluster
 
+	capnslog.SetFormatter(NewLogrusFormatter())
+
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		return nil, err
@@ -122,7 +124,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	select {
 	case <-e.Server.ReadyNotify():
-		log.Println("Etcd ready to serve client connections")
+		logger.Info("Etcd ready to serve client connections")
 	case <-time.After(EtcdStartupTimeout * time.Second):
 		e.Server.Stop()
 		return nil, fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)

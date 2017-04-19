@@ -2,7 +2,9 @@ package backend
 
 import (
 	"fmt"
-	"log"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/websocket"
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
@@ -11,6 +13,14 @@ import (
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
+)
+
+var logger *logrus.Entry
+
+var (
+	// upgrader is safe for concurrent use, and we don't need any particularly
+	// specialized configurations for different uses.
+	upgrader = &websocket.Upgrader{}
 )
 
 // Config specifies a Backend configuration.
@@ -37,6 +47,12 @@ type Backend struct {
 	etcd           *etcd.Etcd
 
 	pipelined daemon.Daemon
+}
+
+func init() {
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "backend",
+	})
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -175,22 +191,20 @@ func (b *Backend) Run() error {
 
 	select {
 	case err := <-inErrChan:
-		log.Println(err.Error())
+		logger.Error(err.Error())
 	case <-b.shutdownChan:
-		log.Println("backend shutting down")
+		logger.Info("backend shutting down")
 	}
 
-	log.Printf("shutting down etcd")
+	logger.Info("shutting down etcd")
 	if err := b.etcd.Shutdown(); err != nil {
-		log.Printf("error shutting down etcd: %s", err.Error())
+		logger.Errorf("error shutting down etcd: %s", err.Error())
 	}
-	log.Printf("shutting down apid")
+	logger.Info("shutting down apid")
 	b.apid.Stop()
-	log.Printf("shutting down agentd")
 	b.agentd.Stop()
-	log.Printf("shutting down message bus")
 	b.messageBus.Stop()
-	log.Printf("shutting down pipelined")
+	logger.Info("shutting down pipelined")
 	b.pipelined.Stop()
 
 	// we allow inErrChan to leak to avoid panics from other

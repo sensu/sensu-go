@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -98,7 +97,7 @@ func (s *Session) handshake() error {
 		}
 	}
 
-	log.Printf("agent connected: id=%s subscriptions=%s\n", agentHandshake.ID, agentHandshake.Subscriptions)
+	logger.Infof("agent connected: id=%s subscriptions=%s\n", agentHandshake.ID, agentHandshake.Subscriptions)
 
 	return nil
 }
@@ -108,7 +107,7 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 
 	for {
 		if s.disconnected {
-			log.Println("session disconnected - stopping recvPump")
+			logger.Info("session disconnected - stopping recvPump")
 			return
 		}
 
@@ -120,14 +119,14 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 			case transport.ClosedError:
 				s.disconnected = true
 			default:
-				log.Println("recv error:", err.Error())
+				logger.Error("recv error:", err.Error())
 			}
 			continue
 		}
 
 		err = s.handler.Handle(msg.Type, msg.Payload)
 		if err != nil {
-			log.Println("error handling message: ", msg)
+			logger.Error("error handling message: ", msg)
 		}
 	}
 }
@@ -136,7 +135,7 @@ func (s *Session) subPump(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		if s.disconnected {
-			log.Println("session disconnected - stopping sendPump")
+			logger.Info("session disconnected - stopping sendPump")
 			return
 		}
 
@@ -148,7 +147,7 @@ func (s *Session) subPump(wg *sync.WaitGroup) {
 			}
 			s.sendq <- msg
 		case <-s.stopping:
-			log.Println("shutting down - stopping subPump")
+			logger.Info("shutting down - stopping subPump")
 			return
 		}
 
@@ -170,12 +169,12 @@ func (s *Session) sendPump(wg *sync.WaitGroup) {
 				case transport.ClosedError:
 					s.disconnected = true
 				default:
-					log.Println("send error:", err.Error())
+					logger.Error("send error:", err.Error())
 				}
 			}
 		case <-s.stopping:
 			s.disconnected = true
-			log.Println("shutting down - stopping sendPump")
+			logger.Info("shutting down - stopping sendPump")
 			return
 		}
 	}
@@ -224,7 +223,7 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive does not contain an entity")
 	}
 
-	log.Println("handling keepalive: ", *keepalive)
+	logger.Debug("handling keepalive: ", *keepalive)
 	return s.store.UpdateEntity(keepalive.Entity)
 }
 

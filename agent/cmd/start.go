@@ -1,25 +1,32 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(newStartCommand())
-}
-
 var (
+	logger *logrus.Entry
+
 	backendURL    string
 	agentID       string
 	subscriptions string
 )
+
+func init() {
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "cmd",
+	})
+
+	rootCmd.AddCommand(newStartCommand())
+}
 
 func newStartCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -49,7 +56,7 @@ func newStartCommand() *cobra.Command {
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 			go func() {
 				sig := <-sigs
-				log.Println("signal received: ", sig)
+				logger.Info("signal received: ", sig)
 				sensuAgent.Stop()
 				done <- struct{}{}
 			}()
