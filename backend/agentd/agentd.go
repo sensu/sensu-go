@@ -8,20 +8,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
 )
-
-var logger *logrus.Entry
-
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "agentd",
-	})
-}
 
 var (
 	// upgrader is safe for concurrent use, and we don't need any particularly

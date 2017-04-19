@@ -8,8 +8,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/controllers"
 	"github.com/sensu/sensu-go/backend/store"
@@ -26,14 +24,6 @@ type APId struct {
 	Store         store.Store
 	Port          int
 	BackendStatus func() types.StatusMap
-}
-
-var logger *logrus.Entry
-
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "apid",
-	})
 }
 
 // Start Apid.

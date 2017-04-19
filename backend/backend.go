@@ -3,7 +3,6 @@ package backend
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -14,8 +13,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 )
-
-var logger *logrus.Entry
 
 var (
 	// upgrader is safe for concurrent use, and we don't need any particularly
@@ -47,12 +44,6 @@ type Backend struct {
 	etcd           *etcd.Etcd
 
 	pipelined daemon.Daemon
-}
-
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "backend",
-	})
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
