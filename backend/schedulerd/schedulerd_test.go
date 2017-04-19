@@ -1,8 +1,9 @@
-package backend
+package schedulerd
 
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ func TestCheckScheduler(t *testing.T) {
 		MessageBus: bus,
 		Store:      fixtures.NewFixtureStore(),
 		Check:      check,
+		wg:         &sync.WaitGroup{},
 	}
 
 	c1 := make(chan []byte, 10)
@@ -46,7 +48,7 @@ func TestCheckScheduler(t *testing.T) {
 	assert.Equal(t, "check1", evt.Check.Name)
 }
 
-func TestCheckerd(t *testing.T) {
+func TestSchedulerd(t *testing.T) {
 	util.WithTempDir(func(tmpDir string) {
 		p := make([]int, 2)
 		err := util.RandomPorts(p)
@@ -70,10 +72,11 @@ func TestCheckerd(t *testing.T) {
 		bus := &messaging.WizardBus{}
 		assert.NoError(t, bus.Start())
 
-		checker := &Checker{
+		checker := &Schedulerd{
 			Client:     cli,
 			Store:      st,
 			MessageBus: bus,
+			wg:         &sync.WaitGroup{},
 		}
 		checker.Start()
 

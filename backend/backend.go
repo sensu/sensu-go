@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
+	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 )
@@ -38,15 +39,14 @@ type Config struct {
 type Backend struct {
 	Config *Config
 
-	shutdownChan   chan struct{}
-	done           chan struct{}
-	messageBus     messaging.MessageBus
-	apid           daemon.Daemon
-	agentd         daemon.Daemon
-	checkScheduler *Checker
-	etcd           *etcd.Etcd
-
-	pipelined daemon.Daemon
+	shutdownChan chan struct{}
+	done         chan struct{}
+	messageBus   messaging.MessageBus
+	apid         daemon.Daemon
+	agentd       daemon.Daemon
+	schedulerd   daemon.Daemon
+	pipelined    daemon.Daemon
+	etcd         *etcd.Etcd
 }
 
 func init() {
@@ -126,12 +126,12 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	b.checkScheduler = &Checker{
+	b.schedulerd = &schedulerd.Schedulerd{
 		MessageBus: b.messageBus,
 		Client:     cli,
 		Store:      st,
 	}
-	err = b.checkScheduler.Start()
+	err = b.schedulerd.Start()
 	if err != nil {
 		return err
 	}
@@ -178,6 +178,10 @@ func (b *Backend) Run() error {
 	}()
 
 	go func() {
+		inErrChan <- <-b.schedulerd.Err()
+	}()
+
+	go func() {
 		inErrChan <- <-b.etcd.Err()
 	}()
 
@@ -202,7 +206,11 @@ func (b *Backend) Run() error {
 	}
 	logger.Info("shutting down apid")
 	b.apid.Stop()
+	logger.Info("shutting down agentd")
 	b.agentd.Stop()
+	logger.Info("shutting down schedulerd")
+	b.schedulerd.Stop()
+	logger.Info("shutting down message bus")
 	b.messageBus.Stop()
 	logger.Info("shutting down pipelined")
 	b.pipelined.Stop()
@@ -219,6 +227,7 @@ func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
 		"store":       b.etcd.Healthy(),
 		"message_bus": true,
+		"schedulerd":  true,
 		"pipelined":   true,
 		"apid":        true,
 		"agentd":      true,
@@ -226,6 +235,10 @@ func (b *Backend) Status() types.StatusMap {
 
 	if b.messageBus.Status() != nil {
 		sm["message_bus"] = false
+	}
+
+	if b.schedulerd.Status() != nil {
+		sm["schedulerd"] = false
 	}
 
 	if b.pipelined.Status() != nil {
