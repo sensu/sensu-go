@@ -30,5 +30,7 @@ func (c *InfoController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error getting server status.", http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(sb))
 }

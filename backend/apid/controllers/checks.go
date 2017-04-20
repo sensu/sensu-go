@@ -20,6 +20,7 @@ type ChecksController struct {
 // respective handlers defined within this Controller.
 func (c *ChecksController) Register(r *mux.Router) {
 	r.HandleFunc("/checks", c.many).Methods(http.MethodGet)
+	r.HandleFunc("/checks", c.single).Methods(http.MethodPost)
 	r.HandleFunc("/checks/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 }
 
@@ -36,13 +37,14 @@ func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, string(checksBytes))
 }
 
 // single handles requests to /checks/:name
 func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	name := vars["name"]
+	name, _ := vars["name"]
 	method := r.Method
 
 	var (
