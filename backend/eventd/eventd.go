@@ -59,14 +59,21 @@ func (e *Eventd) startHandlers() {
 		go func() {
 			var event *types.Event
 			var err error
+			defer e.wg.Done()
 
 			for {
 				select {
 				case <-e.shutdownChan:
-					e.wg.Done()
 					return
 
-				case msg := <-e.eventChan:
+				case msg, ok := <-e.eventChan:
+					// The message bus will close channels when it's shut down which means
+					// we will end up reading from a closed channel. If it's closed,
+					// return from this goroutine. Shutdown eventd.
+					if !ok {
+						e.errChan <- errors.New("event channel closed")
+						return
+					}
 					log.Printf("eventd - handling event: %s\n", string(msg))
 					event = &types.Event{}
 					err = json.Unmarshal(msg, event)
