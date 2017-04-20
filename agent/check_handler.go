@@ -22,31 +22,41 @@ func (a *Agent) handleCheck(payload []byte) error {
 		return errors.New("no check found in event")
 	}
 
-	if event.Check.Command != "" {
-		go func() {
-			logger.Info("executing check: ", event.Check.Name)
-			ex := &command.Execution{}
-			event.Check.Executed = time.Now().Unix()
-			_, err := command.ExecuteCommand(context.Background(), ex)
-			if err != nil {
-				event.Check.Output = err.Error()
-			} else {
-				event.Check.Output = ex.Output
-			}
-
-			event.Check.Duration = ex.Duration
-
-			event.Entity = a.getAgentEntity()
-
-			msg, err := json.Marshal(event)
-			if err != nil {
-				logger.Error("error marshaling check result: ", err.Error())
-				return
-			}
-
-			a.sendMessage(types.EventType, msg)
-		}()
+	if err := event.Check.Validate(); err != nil {
+		return err
 	}
 
+	logger.Info("scheduling check execution: ", event.Check.Name)
+
+	go a.executeCheck(event)
+
 	return nil
+}
+
+func (a *Agent) executeCheck(event *types.Event) {
+	ex := &command.Execution{
+		Command: event.Check.Command,
+	}
+	event.Check.Executed = time.Now().Unix()
+
+	_, err := command.ExecuteCommand(context.Background(), ex)
+	if err != nil {
+		event.Check.Output = err.Error()
+	} else {
+		event.Check.Output = ex.Output
+	}
+
+	event.Check.Duration = ex.Duration
+	event.Check.Status = ex.Status
+
+	event.Entity = a.getAgentEntity()
+	event.Timestamp = time.Now().Unix()
+
+	msg, err := json.Marshal(event)
+	if err != nil {
+		logger.Error("error marshaling check result: ", err.Error())
+		return
+	}
+
+	a.sendMessage(types.EventType, msg)
 }
