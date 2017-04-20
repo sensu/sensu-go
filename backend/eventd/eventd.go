@@ -5,10 +5,10 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sirupsen/logrus"
 )
 
 var (
