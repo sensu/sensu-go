@@ -1,4 +1,4 @@
-package backend
+package schedulerd
 
 import (
 	"sync"
@@ -8,13 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckerReconcile(t *testing.T) {
+func TestSchedulerdReconcile(t *testing.T) {
 	store := fixtures.NewFixtureStore()
 
-	c := &Checker{
+	c := &Schedulerd{
 		Store:           store,
 		schedulersMutex: &sync.Mutex{},
 		schedulers:      map[string]*CheckScheduler{},
+		wg:              &sync.WaitGroup{},
 	}
 
 	assert.Equal(t, 0, len(c.schedulers))
