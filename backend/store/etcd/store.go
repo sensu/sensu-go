@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -16,14 +15,6 @@ import (
 const (
 	etcdRoot = "/sensu.io"
 )
-
-var logger *logrus.Entry
-
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "store",
-	})
-}
 
 func getEntityPath(id string) string {
 	return fmt.Sprintf("%s/entities/%s", etcdRoot, id)

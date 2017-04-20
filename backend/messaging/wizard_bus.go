@@ -4,7 +4,13 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
+
+	"github.com/Sirupsen/logrus"
 )
+
+var logger = logrus.WithFields(logrus.Fields{
+	"component": "message_bus",
+})
 
 // WizardBus is an in-memory message bus.
 type WizardBus struct {
@@ -86,6 +92,7 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 		for {
 			select {
 			case <-b.stopping:
+				logger.Infof("message bus - flushing topic %s", topic)
 				close(wTopic.sendBuffer)
 
 				wTopic.mutex.RLock()

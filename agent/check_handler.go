@@ -35,6 +35,9 @@ func (a *Agent) handleCheck(payload []byte) error {
 			}
 
 			event.Check.Duration = ex.Duration
+
+			event.Entity = a.getAgentEntity()
+
 			msg, err := json.Marshal(event)
 			if err != nil {
 				logger.Error("error marshaling check result: ", err.Error())

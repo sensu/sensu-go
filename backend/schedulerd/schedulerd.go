@@ -129,7 +129,7 @@ func (s *Schedulerd) startWatcher() {
 					check := &types.Check{}
 					err := json.Unmarshal(ev.Kv.Value, check)
 					if err != nil {
-						logger.Info("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
+						logger.Errorf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
 						s.schedulersMutex.Unlock()
 						continue
 					}
@@ -137,7 +137,7 @@ func (s *Schedulerd) startWatcher() {
 					s.schedulers[check.Name] = scheduler
 					err = scheduler.Start()
 					if err != nil {
-						logger.Info("error starting scheduler for check: ", check.Name)
+						logger.Error("error starting scheduler for check: ", check.Name)
 						s.schedulersMutex.Unlock()
 					}
 					s.schedulersMutex.Unlock()

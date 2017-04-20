@@ -3,20 +3,18 @@ package backend
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
+	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 )
-
-var logger *logrus.Entry
 
 var (
 	// upgrader is safe for concurrent use, and we don't need any particularly
@@ -45,14 +43,10 @@ type Backend struct {
 	apid         daemon.Daemon
 	agentd       daemon.Daemon
 	schedulerd   daemon.Daemon
-	pipelined    daemon.Daemon
 	etcd         *etcd.Etcd
-}
 
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "backend",
-	})
+	pipelined daemon.Daemon
+	eventd    daemon.Daemon
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -162,11 +156,14 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	// there are two channels in play here: inErrChan is used by the various
-	// services the Backend manages as a destination for terminal errors.
-	// we then monitor that channel and the first error returned on that
-	// channel causes the Backend to shutdown. Then, we pass that error on
-	// to the Err() method via the b.errChan channel.
+	b.eventd = &eventd.Eventd{
+		Store:      st,
+		MessageBus: b.messageBus,
+	}
+	if err := b.eventd.Start(); err != nil {
+		return err
+	}
+
 	inErrChan := make(chan error)
 
 	go func() {
@@ -191,6 +188,10 @@ func (b *Backend) Run() error {
 
 	go func() {
 		inErrChan <- <-b.pipelined.Err()
+	}()
+
+	go func() {
+		inErrChan <- <-b.eventd.Err()
 	}()
 
 	select {
@@ -226,31 +227,12 @@ func (b *Backend) Run() error {
 func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
 		"store":       b.etcd.Healthy(),
-		"message_bus": true,
-		"schedulerd":  true,
-		"pipelined":   true,
-		"apid":        true,
-		"agentd":      true,
-	}
-
-	if b.messageBus.Status() != nil {
-		sm["message_bus"] = false
-	}
-
-	if b.schedulerd.Status() != nil {
-		sm["schedulerd"] = false
-	}
-
-	if b.pipelined.Status() != nil {
-		sm["pipelined"] = false
-	}
-
-	if b.apid.Status() != nil {
-		sm["apid"] = false
-	}
-
-	if b.agentd.Status() != nil {
-		sm["agentd"] = false
+		"message_bus": b.messageBus.Status() == nil,
+		"schedulerd":  b.schedulerd.Status() == nil,
+		"pipelined":   b.pipelined.Status() == nil,
+		"eventd":      b.eventd.Status() == nil,
+		"agentd":      b.agentd.Status() == nil,
+		"apid":        b.apid.Status() == nil,
 	}
 
 	return sm
