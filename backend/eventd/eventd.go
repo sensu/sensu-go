@@ -3,12 +3,18 @@ package eventd
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"sync"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "backend",
+	})
 )
 
 // Eventd handles incoming sensu events and stores them in etcd.
@@ -74,45 +80,45 @@ func (e *Eventd) startHandlers() {
 						e.errChan <- errors.New("event channel closed")
 						return
 					}
-					log.Printf("eventd - handling event: %s\n", string(msg))
+					logger.Debugf("eventd - handling event: %s\n", string(msg))
 					event = &types.Event{}
 					err = json.Unmarshal(msg, event)
 					if err != nil {
-						log.Printf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s\n", err.Error())
 						continue
 					}
 
 					if event.Check == nil || event.Entity == nil {
-						log.Println("eventd - error handling event: event invalid")
+						logger.Error("eventd - error handling event: event invalid")
 						continue
 					}
 
 					if err := event.Check.Validate(); err != nil {
-						log.Printf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s\n", err.Error())
 						continue
 					}
 
 					if err := event.Entity.Validate(); err != nil {
-						log.Printf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s\n", err.Error())
 						continue
 					}
 
 					prevEvent, err := e.Store.GetEventByEntityCheck(event.Entity.ID, event.Check.Name)
 					if err != nil {
-						log.Printf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s\n", err.Error())
 						continue
 					}
 
 					if prevEvent == nil {
 						err = e.Store.UpdateEvent(event)
 						if err != nil {
-							log.Printf("eventd - error handling event: %s\n", err.Error())
+							logger.Errorf("eventd - error handling event: %s\n", err.Error())
 						}
 						continue
 					}
 
 					if prevEvent.Check == nil {
-						log.Printf("eventd - error handling event: invalid previous event")
+						logger.Errorf("eventd - error handling event: invalid previous event")
 						continue
 					}
 
@@ -120,7 +126,7 @@ func (e *Eventd) startHandlers() {
 
 					err = e.Store.UpdateEvent(event)
 					if err != nil {
-						log.Printf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s\n", err.Error())
 					}
 				}
 			}
@@ -130,7 +136,7 @@ func (e *Eventd) startHandlers() {
 
 // Stop eventd.
 func (e *Eventd) Stop() error {
-	log.Println("shutting down eventd")
+	logger.Info("shutting down eventd")
 	close(e.shutdownChan)
 	e.wg.Wait()
 	close(e.eventChan)

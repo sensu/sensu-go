@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -124,7 +123,7 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 			}
 			continue
 		}
-		log.Printf("session - received message: %s\n", string(msg.Payload))
+		logger.Debugf("session - received message: %s\n", string(msg.Payload))
 		err = s.handler.Handle(msg.Type, msg.Payload)
 		if err != nil {
 			logger.Error("error handling message: ", msg)
@@ -162,7 +161,7 @@ func (s *Session) sendPump(wg *sync.WaitGroup) {
 
 		select {
 		case msg := <-s.sendq:
-			log.Printf("session - sending message: %s\n", string(msg.Payload))
+			logger.Debugf("session - sending message: %s\n", string(msg.Payload))
 			err := s.conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
