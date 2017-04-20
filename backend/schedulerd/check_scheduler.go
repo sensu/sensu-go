@@ -26,19 +26,18 @@ type CheckScheduler struct {
 // Start scheduler, ...
 func (s *CheckScheduler) Start() error {
 	s.stopping = make(chan struct{})
-	sum := md5.Sum([]byte(s.Check.Name))
-	splayHash, n := binary.Uvarint(sum[0:7])
-	if n < 0 {
-		return errors.New("check hashing failed")
+
+	splayHash, err := calcExecutionSplay(s.Check)
+	if err != nil {
+		return err
 	}
 
 	s.wg.Add(1)
 	go func() {
 		now := uint64(time.Now().UnixNano())
-		// (splay_hash - current_time) % (interval * 1000) / 1000
-		// TODO: Can has NOTE here? Halp me understand.
-		nextExecution := (splayHash - now) % (uint64(s.Check.Interval) * uint64(1000))
-		timer := time.NewTimer(time.Duration(nextExecution) * time.Millisecond)
+		checkInterval := time.Duration(s.Check.Interval) * time.Second
+		nextExecution := time.Duration(splayHash-now) % checkInterval
+		timer := time.NewTimer(time.Duration(nextExecution))
 
 		defer s.wg.Done()
 		for {
@@ -90,4 +89,16 @@ func (s *CheckScheduler) Start() error {
 func (s *CheckScheduler) Stop() error {
 	close(s.stopping)
 	return nil
+}
+
+// Calculate a check execution splay to ensure
+// execution is consistent between process restarts.
+func calcExecutionSplay(c *types.Check) (uint64, error) {
+	sum := md5.Sum([]byte(c.Name))
+	splayHash, n := binary.Uvarint(sum[0:7])
+	if n < 0 {
+		return 0, errors.New("check hashing failed")
+	}
+
+	return splayHash, nil
 }
