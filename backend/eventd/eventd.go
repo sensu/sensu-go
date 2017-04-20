@@ -75,16 +75,21 @@ func (e *Eventd) startHandlers() {
 				case msg, ok := <-e.eventChan:
 					// The message bus will close channels when it's shut down which means
 					// we will end up reading from a closed channel. If it's closed,
-					// return from this goroutine. Shutdown eventd.
+					// return from this goroutine and emit a fatal error. It is then
+					// the responsility of eventd's parent to shutdown eventd.
+					//
+					// NOTE: Should that be the case? If eventd is signalling that it has,
+					// effectively, shutdown, why would something else be responsible for
+					// shutting it down.
 					if !ok {
 						e.errChan <- errors.New("event channel closed")
 						return
 					}
-					logger.Debugf("eventd - handling event: %s\n", string(msg))
+					logger.Debugf("eventd - handling event: %s", string(msg))
 					event = &types.Event{}
 					err = json.Unmarshal(msg, event)
 					if err != nil {
-						logger.Errorf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s", err.Error())
 						continue
 					}
 
@@ -94,25 +99,25 @@ func (e *Eventd) startHandlers() {
 					}
 
 					if err := event.Check.Validate(); err != nil {
-						logger.Errorf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s", err.Error())
 						continue
 					}
 
 					if err := event.Entity.Validate(); err != nil {
-						logger.Errorf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s", err.Error())
 						continue
 					}
 
 					prevEvent, err := e.Store.GetEventByEntityCheck(event.Entity.ID, event.Check.Name)
 					if err != nil {
-						logger.Errorf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s", err.Error())
 						continue
 					}
 
 					if prevEvent == nil {
 						err = e.Store.UpdateEvent(event)
 						if err != nil {
-							logger.Errorf("eventd - error handling event: %s\n", err.Error())
+							logger.Errorf("eventd - error handling event: %s", err.Error())
 						}
 						continue
 					}
@@ -126,7 +131,7 @@ func (e *Eventd) startHandlers() {
 
 					err = e.Store.UpdateEvent(event)
 					if err != nil {
-						logger.Errorf("eventd - error handling event: %s\n", err.Error())
+						logger.Errorf("eventd - error handling event: %s", err.Error())
 					}
 				}
 			}
