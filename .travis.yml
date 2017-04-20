@@ -5,3 +5,4 @@ install:
   - ./build.sh deps
 script:
   - ./build.sh
+  - ./build.sh docker
