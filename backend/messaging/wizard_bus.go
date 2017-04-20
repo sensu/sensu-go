@@ -92,7 +92,7 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 		for {
 			select {
 			case <-b.stopping:
-				logger.Infof("message bus - flushing topic %s\n", topic)
+				logger.Infof("message bus - flushing topic %s", topic)
 				close(wTopic.sendBuffer)
 
 				wTopic.mutex.RLock()

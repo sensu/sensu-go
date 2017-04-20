@@ -97,7 +97,7 @@ func (s *Session) handshake() error {
 		}
 	}
 
-	logger.Infof("agent connected: id=%s subscriptions=%s\n", agentHandshake.ID, agentHandshake.Subscriptions)
+	logger.Infof("agent connected: id=%s subscriptions=%s", agentHandshake.ID, agentHandshake.Subscriptions)
 
 	return nil
 }
@@ -123,7 +123,7 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 			}
 			continue
 		}
-		logger.Debugf("session - received message: %s\n", string(msg.Payload))
+		logger.Debugf("session - received message: %s", string(msg.Payload))
 		err = s.handler.Handle(msg.Type, msg.Payload)
 		if err != nil {
 			logger.Error("error handling message: ", msg)
@@ -161,7 +161,7 @@ func (s *Session) sendPump(wg *sync.WaitGroup) {
 
 		select {
 		case msg := <-s.sendq:
-			logger.Debugf("session - sending message: %s\n", string(msg.Payload))
+			logger.Debugf("session - sending message: %s", string(msg.Payload))
 			err := s.conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
