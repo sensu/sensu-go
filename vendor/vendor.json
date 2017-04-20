@@ -482,6 +482,12 @@
 			"revisionTime": "2017-03-04T03:40:43Z"
 		},
 		{
+			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
+			"path": "github.com/inconshreveable/mousetrap",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
 			"checksumSHA1": "SGc5vSs9tXhrGJ5ncymDyMvTg24=",
 			"path": "github.com/jonboulle/clockwork",
 			"revision": "bcac9884e7502bb2b474c0339d889cb981a2f27f",
@@ -585,16 +591,16 @@
 			"revisionTime": "2016-09-30T03:27:40Z"
 		},
 		{
-			"checksumSHA1": "fUj88MYwrfU8xFWu+BPWpBXm8V4=",
+			"checksumSHA1": "Xo6A0SheHtKlf6RwnnBXat47Otc=",
 			"path": "github.com/spf13/cobra",
-			"revision": "ee4055870c2d5f7ce112642377e32c9929c3bbaf",
-			"revisionTime": "2017-02-17T16:44:07Z"
+			"revision": "10f6b9d7e1631a54ad07c5c0fb71c28a1abfd3c2",
+			"revisionTime": "2017-04-20T19:54:12Z"
 		},
 		{
-			"checksumSHA1": "5KvHyB1CImtwZT3fwNkNUlc8R0k=",
+			"checksumSHA1": "/iDm+vsu0bUFOgLzkeAXl0cJFXc=",
 			"path": "github.com/spf13/pflag",
-			"revision": "9ff6c6923cfffbcd502984b8e0c80539a94968b7",
-			"revisionTime": "2017-01-30T21:42:45Z"
+			"revision": "2300d0f8576fe575f71aaa5b9bbe4e1b0dc2eb51",
+			"revisionTime": "2017-04-18T05:23:14Z"
 		},
 		{
 			"checksumSHA1": "EO+jcRet/AJ6IY3lBO8l8BLsZWg=",
