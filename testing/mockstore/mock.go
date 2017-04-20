@@ -45,6 +45,8 @@ type MockStore struct {
 }
 
 // Entities
+
+// GetEntityByID ...
 func (s *MockStore) GetEntityByID(id string) (*types.Entity, error) {
 	if s.FuncGetEntityByID != nil {
 		return s.FuncGetEntityByID(id)
@@ -53,6 +55,7 @@ func (s *MockStore) GetEntityByID(id string) (*types.Entity, error) {
 	return args.Get(0).(*types.Entity), args.Error(1)
 }
 
+// UpdateEntity ...
 func (s *MockStore) UpdateEntity(e *types.Entity) error {
 	if s.FuncUpdateEntity != nil {
 		return s.FuncUpdateEntity(e)
@@ -61,6 +64,7 @@ func (s *MockStore) UpdateEntity(e *types.Entity) error {
 	return args.Error(0)
 }
 
+// DeleteEntity ...
 func (s *MockStore) DeleteEntity(e *types.Entity) error {
 	if s.FuncDeleteEntity != nil {
 		return s.FuncDeleteEntity(e)
@@ -69,6 +73,7 @@ func (s *MockStore) DeleteEntity(e *types.Entity) error {
 	return args.Error(0)
 }
 
+// GetEntities ...
 func (s *MockStore) GetEntities() ([]*types.Entity, error) {
 	if s.FuncGetEntities != nil {
 		return s.FuncGetEntities()
@@ -78,6 +83,8 @@ func (s *MockStore) GetEntities() ([]*types.Entity, error) {
 }
 
 // Handlers
+
+// GetHandlers ...
 func (s *MockStore) GetHandlers() ([]*types.Handler, error) {
 	if s.FuncGetHandlers != nil {
 		return s.FuncGetHandlers()
@@ -86,6 +93,7 @@ func (s *MockStore) GetHandlers() ([]*types.Handler, error) {
 	return args.Get(0).([]*types.Handler), args.Error(1)
 }
 
+// GetHandlerByName ...
 func (s *MockStore) GetHandlerByName(name string) (*types.Handler, error) {
 	if s.FuncGetHandlerByName != nil {
 		return s.FuncGetHandlerByName(name)
@@ -94,6 +102,7 @@ func (s *MockStore) GetHandlerByName(name string) (*types.Handler, error) {
 	return args.Get(0).(*types.Handler), args.Error(1)
 }
 
+// DeleteHandlerByName ...
 func (s *MockStore) DeleteHandlerByName(name string) error {
 	if s.FuncDeleteHandlerByName != nil {
 		return s.FuncDeleteHandlerByName(name)
@@ -102,6 +111,7 @@ func (s *MockStore) DeleteHandlerByName(name string) error {
 	return args.Error(0)
 }
 
+// UpdateHandler ...
 func (s *MockStore) UpdateHandler(handler *types.Handler) error {
 	if s.FuncUpdateHandler != nil {
 		return s.FuncUpdateHandler(handler)
@@ -111,6 +121,8 @@ func (s *MockStore) UpdateHandler(handler *types.Handler) error {
 }
 
 // Mutators
+
+// GetMutators ...
 func (s *MockStore) GetMutators() ([]*types.Mutator, error) {
 	if s.FuncGetMutators != nil {
 		return s.FuncGetMutators()
@@ -119,6 +131,7 @@ func (s *MockStore) GetMutators() ([]*types.Mutator, error) {
 	return args.Get(0).([]*types.Mutator), args.Error(1)
 }
 
+// GetMutatorByName ...
 func (s *MockStore) GetMutatorByName(name string) (*types.Mutator, error) {
 	if s.FuncGetMutatorByName != nil {
 		return s.FuncGetMutatorByName(name)
@@ -127,6 +140,7 @@ func (s *MockStore) GetMutatorByName(name string) (*types.Mutator, error) {
 	return args.Get(0).(*types.Mutator), args.Error(1)
 }
 
+// DeleteMutatorByName ...
 func (s *MockStore) DeleteMutatorByName(name string) error {
 	if s.FuncDeleteMutatorByName != nil {
 		return s.FuncDeleteMutatorByName(name)
@@ -135,6 +149,7 @@ func (s *MockStore) DeleteMutatorByName(name string) error {
 	return args.Error(0)
 }
 
+// UpdateMutator ...
 func (s *MockStore) UpdateMutator(mutator *types.Mutator) error {
 	if s.FuncUpdateMutator != nil {
 		return s.FuncUpdateMutator(mutator)
@@ -144,6 +159,8 @@ func (s *MockStore) UpdateMutator(mutator *types.Mutator) error {
 }
 
 // Checks
+
+// GetChecks ...
 func (s *MockStore) GetChecks() ([]*types.Check, error) {
 	if s.FuncGetChecks != nil {
 		return s.FuncGetChecks()
@@ -152,6 +169,7 @@ func (s *MockStore) GetChecks() ([]*types.Check, error) {
 	return args.Get(0).([]*types.Check), args.Error(1)
 }
 
+// GetCheckByName ...
 func (s *MockStore) GetCheckByName(name string) (*types.Check, error) {
 	if s.FuncGetCheckByName != nil {
 		return s.FuncGetCheckByName(name)
@@ -160,6 +178,7 @@ func (s *MockStore) GetCheckByName(name string) (*types.Check, error) {
 	return args.Get(0).(*types.Check), args.Error(1)
 }
 
+// DeleteCheckByName ...
 func (s *MockStore) DeleteCheckByName(name string) error {
 	if s.FuncDeleteCheckByName != nil {
 		return s.FuncDeleteCheckByName(name)
@@ -168,6 +187,7 @@ func (s *MockStore) DeleteCheckByName(name string) error {
 	return args.Error(0)
 }
 
+// UpdateCheck ...
 func (s *MockStore) UpdateCheck(check *types.Check) error {
 	if s.FuncUpdateCheck != nil {
 		return s.UpdateCheck(check)
@@ -177,6 +197,8 @@ func (s *MockStore) UpdateCheck(check *types.Check) error {
 }
 
 // Events
+
+// GetEvents ...
 func (s *MockStore) GetEvents() ([]*types.Event, error) {
 	if s.FuncGetEvents != nil {
 		return s.FuncGetEvents()
@@ -185,6 +207,7 @@ func (s *MockStore) GetEvents() ([]*types.Event, error) {
 	return args.Get(0).([]*types.Event), args.Error(1)
 }
 
+// GetEventsByEntity ...
 func (s *MockStore) GetEventsByEntity(entityID string) ([]*types.Event, error) {
 	if s.FuncGetEventsByEntity != nil {
 		return s.FuncGetEventsByEntity(entityID)
@@ -193,6 +216,7 @@ func (s *MockStore) GetEventsByEntity(entityID string) ([]*types.Event, error) {
 	return args.Get(0).([]*types.Event), args.Error(1)
 }
 
+// GetEventByEntityCheck ...
 func (s *MockStore) GetEventByEntityCheck(entityID, checkID string) (*types.Event, error) {
 	if s.FuncGetEventByEntityCheck != nil {
 		return s.FuncGetEventByEntityCheck(entityID, checkID)
@@ -201,6 +225,7 @@ func (s *MockStore) GetEventByEntityCheck(entityID, checkID string) (*types.Even
 	return args.Get(0).(*types.Event), args.Error(1)
 }
 
+// UpdateEvent ...
 func (s *MockStore) UpdateEvent(event *types.Event) error {
 	if s.FuncUpdateEvent != nil {
 		return s.FuncUpdateEvent(event)
@@ -209,6 +234,7 @@ func (s *MockStore) UpdateEvent(event *types.Event) error {
 	return args.Error(0)
 }
 
+// DeleteEventByEntityCheck ...
 func (s *MockStore) DeleteEventByEntityCheck(entityID, checkID string) error {
 	if s.FuncDeleteEventByEntityCheck != nil {
 		return s.FuncDeleteEventByEntityCheck(entityID, checkID)
