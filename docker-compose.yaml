@@ -8,7 +8,7 @@ services:
       - "8081:8081"
   sensu-agent:
     image: sensu/sensu
-    command: /sensu-agent start --backend-url ws://backend:8081
+    command: /sensu-agent start --backend-url ws://backend:8081 --subscriptions test
     restart: on-failure
     links:
       - sensu-backend:backend
