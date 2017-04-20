@@ -12,9 +12,6 @@ import (
 func TestExecuteCheck(t *testing.T) {
 	check := types.FixtureCheck("check")
 
-	// Does this work on windows?
-	check.Command = "true"
-
 	event := &types.Event{}
 	event.Check = check
 
@@ -22,6 +19,9 @@ func TestExecuteCheck(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
+
+	// Does this work on windows?
+	check.Command = "true"
 
 	agent.executeCheck(event)
 
