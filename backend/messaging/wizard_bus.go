@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"errors"
+	"log"
 	"sync"
 	"sync/atomic"
 )
@@ -86,6 +87,7 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 		for {
 			select {
 			case <-b.stopping:
+				log.Printf("message bus - flushing topic %s\n", topic)
 				close(wTopic.sendBuffer)
 
 				wTopic.mutex.RLock()

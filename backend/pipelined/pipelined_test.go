@@ -32,12 +32,12 @@ func TestPipelined(t *testing.T) {
 	}
 
 	notIncident, _ := json.Marshal(event)
-	assert.NoError(t, bus.Publish("sensu:event", notIncident))
+	assert.NoError(t, bus.Publish(messaging.TopicEvent, notIncident))
 
 	event.Check.Status = 1
 
 	incident, _ := json.Marshal(event)
-	assert.NoError(t, bus.Publish("sensu:event", incident))
+	assert.NoError(t, bus.Publish(messaging.TopicEvent, incident))
 
 	assert.NoError(t, p.Stop())
 }

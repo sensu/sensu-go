@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -123,7 +124,7 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 			}
 			continue
 		}
-
+		log.Printf("session - received message: %s\n", string(msg.Payload))
 		err = s.handler.Handle(msg.Type, msg.Payload)
 		if err != nil {
 			logger.Error("error handling message: ", msg)
@@ -161,6 +162,7 @@ func (s *Session) sendPump(wg *sync.WaitGroup) {
 
 		select {
 		case msg := <-s.sendq:
+			log.Printf("session - sending message: %s\n", string(msg.Payload))
 			err := s.conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
@@ -223,7 +225,8 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive does not contain an entity")
 	}
 
-	logger.Debug("handling keepalive: ", *keepalive)
+	logger.Debug("keepalive received for entity ID: %s", keepalive.Entity.ID)
+
 	return s.store.UpdateEntity(keepalive.Entity)
 }
 

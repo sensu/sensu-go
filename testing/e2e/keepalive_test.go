@@ -158,4 +158,15 @@ func TestAgentKeepalives(t *testing.T) {
 	resp, err = http.Get(fmt.Sprintf("%s/events/TestKeepalives/testcheck2", backendHTTPURL))
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.NoError(t, err)
+
+	eventBytes, err := ioutil.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	resp.Body.Close()
+	event := &types.Event{}
+	json.Unmarshal(eventBytes, event)
+	assert.NotNil(t, event)
+	assert.NotNil(t, event.Check)
+	assert.NotNil(t, event.Entity)
+	assert.Equal(t, "TestKeepalives", event.Entity.ID)
+	assert.Equal(t, "testcheck2", event.Check.Name)
 }

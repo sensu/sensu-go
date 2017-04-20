@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // KeepaliveType is the message type sent for keepalives--which are just an
 // event without a Check or Metrics section.
 const KeepaliveType = "keepalive"
@@ -20,7 +22,8 @@ type Event struct {
 // FixtureEvent returns a testing fixutre for an Event object.
 func FixtureEvent(entityID, checkID string) *Event {
 	return &Event{
-		Entity: FixtureEntity(entityID),
-		Check:  FixtureCheck(checkID),
+		Timestamp: time.Now().Unix(),
+		Entity:    FixtureEntity(entityID),
+		Check:     FixtureCheck(checkID),
 	}
 }

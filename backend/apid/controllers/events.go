@@ -29,11 +29,18 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 	events, err := c.Store.GetEventsByEntity(entityID)
 	if err != nil {
 		http.Error(w, "error getting events for entity", http.StatusInternalServerError)
+		return
+	}
+
+	if events == nil {
+		http.Error(w, "events not found", http.StatusNotFound)
+		return
 	}
 
 	jsonStr, err := json.Marshal(events)
 	if err != nil {
 		http.Error(w, "error marshalling response", http.StatusInternalServerError)
+		return
 	}
 
 	fmt.Fprint(w, string(jsonStr))
@@ -47,11 +54,18 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 	event, err := c.Store.GetEventByEntityCheck(entityID, checkID)
 	if err != nil {
 		http.Error(w, "error getting event for check", http.StatusInternalServerError)
+		return
+	}
+
+	if event == nil {
+		http.Error(w, "event not found", http.StatusNotFound)
+		return
 	}
 
 	jsonStr, err := json.Marshal(event)
 	if err != nil {
 		http.Error(w, "error marshalling response", http.StatusInternalServerError)
+		return
 	}
 
 	fmt.Fprint(w, string(jsonStr))

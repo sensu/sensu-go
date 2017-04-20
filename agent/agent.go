@@ -117,7 +117,8 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 			}
 			continue
 		}
-		logger.Info("message received - type: ", m.Type, " message: ", m.Payload)
+
+		logger.Info("message received - type: ", m.Type, " message: ", string(m.Payload))
 
 		err = a.handler.Handle(m.Type, m.Payload)
 		if err != nil {

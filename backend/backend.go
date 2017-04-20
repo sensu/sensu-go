@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
+	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/store/etcd"
@@ -154,7 +155,7 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	b.eventd = &Eventd{
+	b.eventd = &eventd.Eventd{
 		Store:      st,
 		MessageBus: b.messageBus,
 	}
