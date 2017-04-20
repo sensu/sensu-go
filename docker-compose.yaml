@@ -1,0 +1,14 @@
+version: '3'
+services:
+  sensu-backend:
+    image: sensu/sensu
+    command: /sensu-backend start
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+  sensu-agent:
+    image: sensu/sensu
+    command: /sensu-agent start --backend-url ws://backend:8081
+    restart: on-failure
+    links:
+      - sensu-backend:backend
