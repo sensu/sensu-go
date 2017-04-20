@@ -37,7 +37,7 @@ func (s *CheckScheduler) Start() error {
 		now := uint64(time.Now().UnixNano())
 		checkInterval := time.Duration(s.Check.Interval) * time.Second
 		nextExecution := time.Duration(splayHash-now) % checkInterval
-		timer := time.NewTimer(time.Duration(nextExecution))
+		timer := time.NewTimer(nextExecution)
 
 		defer s.wg.Done()
 		for {
