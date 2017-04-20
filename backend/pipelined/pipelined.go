@@ -52,7 +52,7 @@ func (p *Pipelined) Start() error {
 
 	p.eventChan = make(chan []byte, 100)
 
-	if err := p.MessageBus.Subscribe("sensu:event", "pipelined", p.eventChan); err != nil {
+	if err := p.MessageBus.Subscribe(messaging.TopicEvent, "pipelined", p.eventChan); err != nil {
 		return err
 	}
 

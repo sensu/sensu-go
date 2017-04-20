@@ -211,7 +211,7 @@ func (c *Checker) startWatcher() {
 					check := &types.Check{}
 					err := json.Unmarshal(ev.Kv.Value, check)
 					if err != nil {
-						logger.Error("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
+						logger.Errorf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
 						c.schedulersMutex.Unlock()
 						continue
 					}

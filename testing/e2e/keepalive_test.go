@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO(greg): Yeah, this is really just one enormous test for all e2e stuff.
+// I'd love to see this organized better.
 func TestAgentKeepalives(t *testing.T) {
 	ports := make([]int, 4)
 	err := util.RandomPorts(ports)
@@ -140,7 +142,7 @@ func TestAgentKeepalives(t *testing.T) {
 
 	check = &types.Check{
 		Name:          "testcheck2",
-		Command:       "echo output",
+		Command:       "false",
 		Interval:      1,
 		Subscriptions: []string{"test"},
 	}
@@ -152,4 +154,19 @@ func TestAgentKeepalives(t *testing.T) {
 
 	time.Sleep(30 * time.Second)
 
+	// At this point, we should have 21 failing status codes for testcheck2
+	resp, err = http.Get(fmt.Sprintf("%s/events/TestKeepalives/testcheck2", backendHTTPURL))
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, err)
+
+	eventBytes, err := ioutil.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	resp.Body.Close()
+	event := &types.Event{}
+	json.Unmarshal(eventBytes, event)
+	assert.NotNil(t, event)
+	assert.NotNil(t, event.Check)
+	assert.NotNil(t, event.Entity)
+	assert.Equal(t, "TestKeepalives", event.Entity.ID)
+	assert.Equal(t, "testcheck2", event.Check.Name)
 }
