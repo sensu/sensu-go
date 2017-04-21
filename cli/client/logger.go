@@ -14,9 +14,11 @@ var logger = logrus.WithFields(logrus.Fields{
 type Logger struct{}
 
 // Write implements io.Writer interface
-func (*Logger) Write(p []byte) (n int, err error) {
-	n := bytes.IndexByte(byteArray, 0)
-	s := string(byteArray[n])
+func (*Logger) Write(p []byte) (int, error) {
+	n := bytes.IndexByte(p, 0)
+	s := string(p[n])
 
 	logger.Debug(s)
+
+	return 0, nil
 }
