@@ -81,7 +81,7 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
 
 	// Serve static content
-	r.Handle("/", noCacheHandler(http.FileServer(http.Dir(d.Dir))))
+	r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(http.Dir(d.Dir))))
 
 	return r
 }
