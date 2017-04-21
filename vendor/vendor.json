@@ -3,6 +3,18 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "23FJUX+AInYeEM2hoUMvYZtXZd4=",
+			"path": "github.com/Azure/go-ansiterm",
+			"revision": "fa152c58bc15761d0200cb75fe958b89a9d4888e",
+			"revisionTime": "2016-06-22T17:32:16Z"
+		},
+		{
+			"checksumSHA1": "jBimnggjIiFUjaImNoJhSVLtdzw=",
+			"path": "github.com/Azure/go-ansiterm/winterm",
+			"revision": "fa152c58bc15761d0200cb75fe958b89a9d4888e",
+			"revisionTime": "2016-06-22T17:32:16Z"
+		},
+		{
 			"checksumSHA1": "ZKxETlJdB2XubMrZnXB0FQimVA8=",
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "10f801ebc38b33738c9d17d50860f484a0988ff5",
@@ -392,6 +404,18 @@
 			"path": "github.com/dgrijalva/jwt-go",
 			"revision": "2268707a8f0843315e2004ee4f1d021dc08baedf",
 			"revisionTime": "2017-02-01T22:58:49Z"
+		},
+		{
+			"checksumSHA1": "Nfp/0W+HK8ZEgklbSWmjJGXTJew=",
+			"path": "github.com/docker/docker/pkg/term",
+			"revision": "7f927516eae370aff1e7993ff43e4d99c409e126",
+			"revisionTime": "2017-04-20T22:32:32Z"
+		},
+		{
+			"checksumSHA1": "EMjTiUTHNxqSsmdMB1V29hRvJbQ=",
+			"path": "github.com/docker/docker/pkg/term/windows",
+			"revision": "7f927516eae370aff1e7993ff43e4d99c409e126",
+			"revisionTime": "2017-04-20T22:32:32Z"
 		},
 		{
 			"path": "github.com/etcd/pkg",

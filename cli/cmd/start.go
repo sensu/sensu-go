@@ -13,8 +13,6 @@ func main() {
 		Short: "A tool to help manage Sensu",
 	}
 
-	cobra.AddTemplateFunc("subCommands", subCommands)
-
 	rootCmd.SetUsageTemplate(usageTemplate)
 	rootCmd.SetHelpTemplate(helpTemplate)
 	rootCmd.AddCommand(eventCommand())
@@ -23,16 +21,6 @@ func main() {
 		logger.Fatal(err.Error())
 		os.Exit(1)
 	}
-}
-
-func subCommands(cmd *cobra.Command) []*cobra.Command {
-	cmds := []*cobra.Command{}
-	for _, sub := range cmd.Commands() {
-		if sub.IsAvailableCommand() && sub.HasSubCommands() {
-			cmds = append(cmds, sub)
-		}
-	}
-	return cmds
 }
 
 func eventCommand() *cobra.Command {
@@ -64,6 +52,13 @@ var usageTemplate = `Usage:
 {{- if .HasSubCommands}}	{{ .CommandPath}} COMMAND{{end}}
 
 {{ .Short | trim }}
+
+{{- if .HasFlags}}
+
+Options:
+{{ wrappedFlagUsages . | trimRightSpace}}
+
+{{- end}}
 
 {{- if .HasSubCommands }}
 
