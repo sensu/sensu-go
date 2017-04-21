@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -79,6 +81,13 @@ func (d *Dashboardd) Err() <-chan error {
 
 func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
+
+	// API gateway to Sensu API
+	target, err := url.Parse("http://127.0.0.1:8080")
+	if err != nil {
+		log.Fatal(err)
+	}
+	r.Handle("/entities", httputil.NewSingleHostReverseProxy(target))
 
 	// Serve static content
 	r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(http.Dir(d.Dir))))
