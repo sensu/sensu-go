@@ -1,12 +1,12 @@
 package commands
 
 import (
-	"github.com/sensu/sensu-go/cli/cmd/commands/event"
+	"github.com/sensu/sensu-go/cli/commands/event"
 	"github.com/spf13/cobra"
 )
 
 func AddCommands(rootCmd *cobra.Command) {
-	cmd.AddCommand(
+	rootCmd.AddCommand(
 		// events
 		event.NewEventCommand(rootCmd),
 	)

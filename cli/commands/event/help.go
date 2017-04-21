@@ -5,7 +5,7 @@ import "github.com/spf13/cobra"
 func NewEventCommand(parent *cobra.Command) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "event",
-		Short: "returns a list of event sub-commands",
+		Short: "Manage events",
 	}
 
 	cmd.AddCommand(NewEventListCommand())

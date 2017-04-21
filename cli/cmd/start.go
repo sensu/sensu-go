@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/sensu/sensu-go/cli/cmd/commands"
+	"github.com/sensu/sensu-go/cli/commands"
 	"github.com/spf13/cobra"
 )
 
@@ -38,11 +38,20 @@ Options:
 
 {{- end}}
 
-{{- if .HasSubCommands }}
+{{- if hasManagementSubCommands . }}
+
+Managment Commands:
+
+{{- range managementSubCommands . }}
+  {{rpad .Name .NamePadding }} {{.Short}}
+{{- end}}
+{{- end}}
+
+{{- if hasOperationalSubCommands . }}
 
 Commands:
 
-{{- range subCommands . }}
+{{- range operationalSubCommands . }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end}}
 {{- end}}

@@ -6,11 +6,32 @@ import (
 )
 
 func init() {
-	cobra.AddTemplateFunc("subCommands", subCommands)
+	cobra.AddTemplateFunc("hasOperationalSubCommands", hasOperationalSubCommands)
+	cobra.AddTemplateFunc("hasManagementSubCommands", hasManagementSubCommands)
+	cobra.AddTemplateFunc("operationalSubCommands", operationalSubCommands)
+	cobra.AddTemplateFunc("managementSubCommands", managementSubCommands)
 	cobra.AddTemplateFunc("wrappedFlagUsages", wrappedFlagUsages)
 }
 
-func subCommands(cmd *cobra.Command) []*cobra.Command {
+func hasOperationalSubCommands(cmd *cobra.Command) bool {
+	return len(operationalSubCommands(cmd)) > 0
+}
+
+func hasManagementSubCommands(cmd *cobra.Command) bool {
+	return len(managementSubCommands(cmd)) > 0
+}
+
+func operationalSubCommands(cmd *cobra.Command) []*cobra.Command {
+	cmds := []*cobra.Command{}
+	for _, sub := range cmd.Commands() {
+		if sub.IsAvailableCommand() && !sub.HasSubCommands() {
+			cmds = append(cmds, sub)
+		}
+	}
+	return cmds
+}
+
+func managementSubCommands(cmd *cobra.Command) []*cobra.Command {
 	cmds := []*cobra.Command{}
 	for _, sub := range cmd.Commands() {
 		if sub.IsAvailableCommand() && sub.HasSubCommands() {
