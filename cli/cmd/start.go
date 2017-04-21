@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/sensu/sensu-go/cli/cmd/commands"
 	"github.com/spf13/cobra"
 )
 
@@ -15,35 +15,13 @@ func main() {
 
 	rootCmd.SetUsageTemplate(usageTemplate)
 	rootCmd.SetHelpTemplate(helpTemplate)
-	rootCmd.AddCommand(eventCommand())
+
+	commands.AddCommands(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err.Error())
 		os.Exit(1)
 	}
-}
-
-func eventCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "event",
-		Short: "returns a list of event sub-commands",
-	}
-
-	cmd.AddCommand(listEventsCommand())
-
-	return cmd
-}
-
-func listEventsCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "list events",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("LISTING THE EVENTS\n", args)
-		},
-	}
-
-	return cmd
 }
 
 var usageTemplate = `Usage:
