@@ -14,10 +14,10 @@ func NewEventListCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r, err := client.Request().Get("/events")
 			if err != nil {
-				return nil
+				return err
 			}
 
-			fmt.Printf("LISTING THE EVENTS\n %s", r.String())
+			fmt.Println(r.String())
 			return nil
 		},
 	}
