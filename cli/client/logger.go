@@ -17,7 +17,6 @@ type Logger struct{}
 func (*Logger) Write(p []byte) (int, error) {
 	n := bytes.IndexByte(p, 0)
 	s := string(p[n])
-
 	logger.Debug(s)
 
 	return 0, nil
