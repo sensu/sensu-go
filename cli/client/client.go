@@ -6,8 +6,9 @@ import (
 
 // RestClient wraps resty.Client
 type RestClient struct {
-	client     *resty.Client
-	config     *Config
+	client *resty.Client
+	config *Config
+
 	configured bool
 }
 

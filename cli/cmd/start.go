@@ -67,20 +67,20 @@ Options:
 
 {{- end}}
 
-{{- if hasManagementSubCommands . }}
-
-Managment Commands:
-
-{{- range managementSubCommands . }}
-  {{rpad .Name .NamePadding }} {{.Short}}
-{{- end}}
-{{- end}}
-
 {{- if hasOperationalSubCommands . }}
 
 Commands:
 
 {{- range operationalSubCommands . }}
+  {{rpad .Name .NamePadding }} {{.Short}}
+{{- end}}
+{{- end}}
+
+{{- if hasManagementSubCommands . }}
+
+Managment Commands:
+
+{{- range managementSubCommands . }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end}}
 {{- end}}

@@ -27,6 +27,7 @@ func New(flags *pflag.FlagSet) *SensuCli {
 
 	return &SensuCli{
 		Client: client,
+		Config: clientConfig,
 		Logger: logger,
 	}
 }

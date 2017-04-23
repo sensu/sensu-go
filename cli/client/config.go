@@ -41,12 +41,10 @@ func NewConfig() (*Config, error) {
 
 func (c *Config) Get(key string) interface{} {
 	if val := c.viper.Get(key); val != "" {
-		logger.Info("here", val)
 		return val
 	}
 
 	key = fmt.Sprintf("%s.%s", c.GetString(profileKey), key)
-	logger.Info("not here", key, c.viper.Get(key))
 	return c.viper.Get(key)
 }
 

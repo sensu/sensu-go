@@ -3,6 +3,18 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "gZpMqxyoh7RHwdLxnD2RbwmlzeQ=",
+			"path": "github.com/AlecAivazis/survey/core",
+			"revision": "c10cbbc78a56bb1f5c62090f4c2813ffcb146a3a",
+			"revisionTime": "2017-04-22T00:22:05Z"
+		},
+		{
+			"checksumSHA1": "M4CgOQC0QUrL7PwYs22JSSvjT7A=",
+			"path": "github.com/AlecAivazis/survey/terminal",
+			"revision": "c10cbbc78a56bb1f5c62090f4c2813ffcb146a3a",
+			"revisionTime": "2017-04-22T00:22:05Z"
+		},
+		{
 			"checksumSHA1": "23FJUX+AInYeEM2hoUMvYZtXZd4=",
 			"path": "github.com/Azure/go-ansiterm",
 			"revision": "fa152c58bc15761d0200cb75fe958b89a9d4888e",
@@ -37,6 +49,12 @@
 			"path": "github.com/boltdb/bolt",
 			"revision": "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd",
 			"revisionTime": "2017-01-31T19:20:18Z"
+		},
+		{
+			"checksumSHA1": "aTYPm16eYDQhbVLgreCGwvV2klw=",
+			"path": "github.com/chzyer/readline",
+			"revision": "41eea22f717c616615e1e59aa06cf831f9901f35",
+			"revisionTime": "2017-03-13T23:49:21Z"
 		},
 		{
 			"checksumSHA1": "HlDspvrfA33+zVOgm5mvoiWvRhg=",
@@ -584,10 +602,34 @@
 			"revisionTime": "2017-03-21T09:30:39Z"
 		},
 		{
+			"checksumSHA1": "uAVg4Tj5Fxi62z7/ScDEkHr6Ue8=",
+			"path": "github.com/mattn/go-colorable",
+			"revision": "ded68f7a9561c023e790de24279db7ebf473ea80",
+			"revisionTime": "2017-03-27T08:33:44Z"
+		},
+		{
+			"checksumSHA1": "U6lX43KDDlNOn+Z0Yyww+ZzHfFo=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "fc9e8d8ef48496124e79ae0df75490096eccf6fe",
+			"revisionTime": "2017-03-22T23:44:13Z"
+		},
+		{
 			"checksumSHA1": "bKMZjd2wPw13VwoE7mBeSv5djFA=",
 			"path": "github.com/matttproud/golang_protobuf_extensions/pbutil",
 			"revision": "c12348ce28de40eed0136aa2b644d0ee0650e56c",
 			"revisionTime": "2016-04-24T11:30:07Z"
+		},
+		{
+			"checksumSHA1": "CIK3BBNX3nuUQCmNqTQydNfMNKI=",
+			"path": "github.com/mgutz/ansi",
+			"revision": "9520e82c474b0a04dd04f8a40959027271bab992",
+			"revisionTime": "2017-02-06T15:57:36Z"
+		},
+		{
+			"checksumSHA1": "V/quM7+em2ByJbWBLOsEwnY3j/Q=",
+			"path": "github.com/mitchellh/go-homedir",
+			"revision": "b8bc1bf767474819792c23f32d8286a45736f1c6",
+			"revisionTime": "2016-12-03T19:45:07Z"
 		},
 		{
 			"checksumSHA1": "c1JIqjo91nD1RMFImnW69n8jtj8=",
@@ -946,6 +988,12 @@
 			"revisionTime": "2017-03-10T19:14:43Z"
 		},
 		{
+			"checksumSHA1": "Gcc7FZJe6gvsKJaHJp/JYJGUrRc=",
+			"path": "gopkg.in/AlecAivazis/survey.v1",
+			"revision": "687a9a9b09afe8756d9fa2526f64e4d4c5c7deb7",
+			"revisionTime": "2017-04-21T08:10:13Z"
+		},
+		{
 			"checksumSHA1": "CSb3aeUBe0ckuXYgnCPv5QycrC8=",
 			"path": "gopkg.in/resty.v0",
 			"revision": "c45c7bcc0000d1a9ac1b119b2e6043c6540eedea",
@@ -956,6 +1004,10 @@
 			"path": "gopkg.in/yaml.v2",
 			"revision": "a3f3340b5840cee44f372bddb5880fcbc419b46a",
 			"revisionTime": "2017-02-08T14:18:51Z"
+		},
+		{
+			"path": "https://github.com/mitchellh/go-homedir",
+			"revision": ""
 		}
 	],
 	"rootPath": "github.com/sensu/sensu-go"
