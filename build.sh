@@ -35,6 +35,10 @@ build_binary () {
 build_commands () {
 	echo "Running build..."
 
+	if [ ! -d bin/ ]; then
+		mkdir -p bin/
+	fi
+
 	for cmd in agent backend; do
 		echo "Building $cmd for ${GOOS}-${GOARCH}"
 		out=$(build_binary $GOOS $GOARCH $cmd)
