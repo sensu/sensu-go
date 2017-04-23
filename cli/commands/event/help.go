@@ -1,14 +1,18 @@
 package event
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/sensu/sensu-go/cli"
+	"github.com/spf13/cobra"
+)
 
-func NewEventCommand(parent *cobra.Command) *cobra.Command {
+func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "event",
 		Short: "Manage events",
 	}
 
-	cmd.AddCommand(NewEventListCommand())
+	// Add sub-commands
+	cmd.AddCommand(ListCommand(cli))
 
 	return cmd
 }

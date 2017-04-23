@@ -1,27 +1,56 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands"
 	"github.com/spf13/cobra"
 )
 
 func main() {
-	rootCmd := &cobra.Command{
-		Use:   "sensu-cli",
-		Short: "A tool to help manage Sensu",
-	}
+	rootCmd := configureRootCmd()
+	sensuCli := cli.New(rootCmd.PersistentFlags())
 
-	rootCmd.SetUsageTemplate(usageTemplate)
-	rootCmd.SetHelpTemplate(helpTemplate)
-
-	commands.AddCommands(rootCmd)
+	commands.AddCommands(rootCmd, sensuCli)
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err.Error())
 		os.Exit(1)
 	}
+}
+
+func configureRootCmd() *cobra.Command {
+	showVersion := false
+	cmd := &cobra.Command{
+		Use:   "sensu-cli",
+		Short: "A tool to help manage Sensu",
+		Run: func(cmd *cobra.Command, args []string) {
+			if showVersion {
+				showCLIVersion()
+			} else {
+				cmd.HelpFunc()(cmd, args)
+			}
+		},
+	}
+
+	// Templates
+	cmd.SetUsageTemplate(usageTemplate)
+
+	// Version flag
+	cmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print version information")
+
+	// Global flags
+	cmd.PersistentFlags().StringP("baseURL", "", "", "Host URL of Sensu installation")
+	cmd.PersistentFlags().StringP("profile", "", "default", "Configuration values to use")
+
+	return cmd
+}
+
+func showCLIVersion() {
+	// TODO: 😰
+	fmt.Printf("Sensu CLI version %s\n", "0.1.alpha")
 }
 
 var usageTemplate = `Usage:
