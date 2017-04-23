@@ -29,14 +29,14 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			// TODO(james) handle case where file exists but is invalid
 			c, err := toml.LoadFile(configFile)
 			if err != nil {
-				c = &toml.TomlTree{}
+				c, _ = toml.TreeFromMap(make(map[string]interface{}))
 			}
 
 			// Get the configuation values for the specified profile
 			profileKey := cli.Config.GetString("profile")
 			profile, ok := c.Get(profileKey).(*toml.TomlTree)
 			if !ok {
-				profile = &toml.TomlTree{}
+				profile, _ = toml.TreeFromMap(make(map[string]interface{}))
 			}
 
 			// Get new values via interactive questions
