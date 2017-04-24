@@ -92,7 +92,7 @@ func NewAgent(config *Config) *Agent {
 	return agent
 }
 
-func (a *Agent) receiveMessage(out chan *transport.Message) {
+func (a *Agent) receiveMessages(out chan *transport.Message) {
 	defer close(out)
 	for {
 		m, err := a.conn.Receive()
@@ -119,7 +119,7 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
 	logger.Info("connected - starting receivePump")
 
 	recvChan := make(chan *transport.Message)
-	go a.receiveMessage(recvChan)
+	go a.receiveMessages(recvChan)
 
 	for {
 		select {
