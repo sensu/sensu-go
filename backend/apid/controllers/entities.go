@@ -35,6 +35,7 @@ func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(esb))
 }
 
@@ -60,5 +61,6 @@ func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(eb))
 }

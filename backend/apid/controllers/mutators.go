@@ -36,6 +36,7 @@ func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, string(mutatorsBytes))
 }
 
@@ -71,6 +72,7 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(mutatorBytes))
 	case http.MethodPut, http.MethodPost:
 		newMutator := &types.Mutator{}

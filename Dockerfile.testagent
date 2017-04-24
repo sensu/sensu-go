@@ -1,0 +1,5 @@
+FROM alpine
+
+COPY target/linux-amd64/sensu-agent /opt/bin/sensu-agent
+
+EXPOSE 2379 2380 8080 8081

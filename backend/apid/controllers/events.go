@@ -43,6 +43,7 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(jsonStr))
 }
 
@@ -68,5 +69,6 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(jsonStr))
 }
