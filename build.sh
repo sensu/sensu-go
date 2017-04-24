@@ -8,9 +8,9 @@ eval $(go env)
 
 cmd=${1:-"all"}
 
-#if [ "$GOARCH" == "amd64" ]; then
-	#RACE="--race"
-#fi
+if [ "$GOARCH" == "amd64" ]; then
+	RACE="--race"
+fi
 
 install_deps () {
 	go get github.com/axw/gocov/gocov
