@@ -3,16 +3,13 @@ package configure
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/AlecAivazis/survey"
-	homedir "github.com/mitchellh/go-homedir"
 	toml "github.com/pelletier/go-toml"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/spf13/cobra"
 )
-
-var configFile string
 
 type Answers struct {
 	URL    string `survey 'url'`
@@ -30,8 +27,8 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 
 			// Read configuration file
 			// TODO(james) handle case where file exists but is invalid
-			if _, err := os.Stat(configFile); err == nil {
-				config, err = toml.LoadFile(configFile)
+			if _, err := os.Stat(client.ConfigFilePath); err == nil {
+				config, err = toml.LoadFile(client.ConfigFilePath)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "Error loading config:")
 					fmt.Fprintln(os.Stderr, err)
@@ -118,7 +115,7 @@ func AskForDefaultOutput() *survey.Question {
 }
 
 func writeNewConfig(config *toml.TomlTree) error {
-	f, err := os.Create(configFile)
+	f, err := os.Create(client.ConfigFilePath)
 	if err != nil {
 		return err
 	}
@@ -131,10 +128,4 @@ func writeNewConfig(config *toml.TomlTree) error {
 func emptyTomlTree() *toml.TomlTree {
 	empty, _ := toml.TreeFromMap(make(map[string]interface{}))
 	return empty
-}
-
-func init() {
-	h, _ := homedir.Dir()
-	// TODO(james) move configuration into it's own package
-	configFile = filepath.Join(h, ".config", "sensu", "profiles.toml")
 }

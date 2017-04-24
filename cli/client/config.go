@@ -2,7 +2,9 @@ package client
 
 import (
 	"fmt"
+	"path/filepath"
 
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -11,6 +13,11 @@ const (
 	// SENSU_PROFILE or --profile
 	profileKey     = "profile"
 	profileDefault = "default"
+)
+
+var (
+	// Path to configuration file
+	ConfigFilePath string
 )
 
 type Config struct {
@@ -31,8 +38,7 @@ func NewConfig() (*Config, error) {
 	v.BindEnv("url")
 
 	// Configuration file
-	v.AddConfigPath("$HOME/.config/sensu")
-	v.SetConfigName("profiles")
+	v.SetConfigFile(ConfigFilePath)
 	v.SetConfigType("toml")
 
 	err := v.ReadInConfig()
@@ -40,11 +46,11 @@ func NewConfig() (*Config, error) {
 }
 
 func (c *Config) Get(key string) interface{} {
-	if val := c.viper.Get(key); val != "" {
+	if val := c.viper.Get(key); val != "" && val != nil {
 		return val
 	}
 
-	key = fmt.Sprintf("%s.%s", c.GetString(profileKey), key)
+	key = fmt.Sprintf("%s.%s", c.Get(profileKey), key)
 	return c.viper.Get(key)
 }
 
@@ -55,4 +61,9 @@ func (c *Config) GetString(key string) string {
 
 func (c *Config) BindPFlag(key string, flag *pflag.Flag) {
 	c.viper.BindPFlag(key, flag)
+}
+
+func init() {
+	h, _ := homedir.Dir()
+	ConfigFilePath = filepath.Join(h, ".config", "sensu", "profiles")
 }
