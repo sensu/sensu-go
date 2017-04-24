@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"sync"
 	"time"
 
@@ -27,16 +26,12 @@ type CheckScheduler struct {
 func (s *CheckScheduler) Start() error {
 	s.stopping = make(chan struct{})
 
-	splayHash, err := calcExecutionSplay(s.Check)
-	if err != nil {
-		return err
-	}
+	splayHash := calcExecutionSplay(s.Check.Name)
 
 	s.wg.Add(1)
+	// TODO(greg): Refactor this part to make the code more easily tested.
 	go func() {
-		now := uint64(time.Now().UnixNano())
-		checkInterval := time.Duration(s.Check.Interval) * time.Second
-		nextExecution := time.Duration(splayHash-now) % checkInterval
+		nextExecution := calcNextExecution(splayHash, s.Check.Interval)
 		timer := time.NewTimer(nextExecution)
 
 		defer s.wg.Done()
@@ -93,12 +88,17 @@ func (s *CheckScheduler) Stop() error {
 
 // Calculate a check execution splay to ensure
 // execution is consistent between process restarts.
-func calcExecutionSplay(c *types.Check) (uint64, error) {
-	sum := md5.Sum([]byte(c.Name))
-	splayHash, n := binary.Uvarint(sum[0:7])
-	if n < 0 {
-		return 0, errors.New("check hashing failed")
-	}
+func calcExecutionSplay(checkName string) uint64 {
+	sum := md5.Sum([]byte(checkName))
 
-	return splayHash, nil
+	return binary.LittleEndian.Uint64(sum[:])
+}
+
+// Calculate the next execution time for a given time and a check interval
+// (in seconds) as an int.
+func calcNextExecution(splay uint64, intervalSeconds int) time.Duration {
+	// current_time = (Time.now.to_f * 1000).to_i
+	now := time.Now().UnixNano() / int64(time.Millisecond)
+	offset := (splay - uint64(now)) % uint64(intervalSeconds*1000)
+	return time.Duration(offset) * time.Millisecond
 }

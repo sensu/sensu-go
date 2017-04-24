@@ -9,44 +9,10 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/testing/fixtures"
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestCheckScheduler(t *testing.T) {
-	bus := &messaging.WizardBus{}
-	assert.NoError(t, bus.Start())
-
-	st := fixtures.NewFixtureStore()
-	check, _ := st.GetCheckByName("check1")
-	check.Interval = 1
-
-	scheduler := &CheckScheduler{
-		MessageBus: bus,
-		Store:      fixtures.NewFixtureStore(),
-		Check:      check,
-		wg:         &sync.WaitGroup{},
-	}
-
-	c1 := make(chan []byte, 10)
-	assert.NoError(t, bus.Subscribe("subscription1", "channel1", c1))
-
-	assert.NoError(t, scheduler.Start())
-	time.Sleep(1 * time.Second)
-	scheduler.Stop()
-	assert.NoError(t, bus.Stop())
-
-	messages := [][]byte{}
-	for msg := range c1 {
-		messages = append(messages, msg)
-	}
-	assert.Equal(t, 1, len(messages))
-	evt := &types.Event{}
-	assert.NoError(t, json.Unmarshal(messages[0], evt))
-	assert.Equal(t, "check1", evt.Check.Name)
-}
 
 func TestSchedulerd(t *testing.T) {
 	util.WithTempDir(func(tmpDir string) {

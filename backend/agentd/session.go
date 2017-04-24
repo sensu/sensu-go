@@ -126,7 +126,7 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 	}()
 
 	msgChannel := make(chan *transport.Message)
-
+	go s.receiveMessages(msgChannel)
 	for {
 		select {
 		case msg, ok := <-msgChannel:
