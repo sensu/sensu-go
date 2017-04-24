@@ -622,6 +622,12 @@
 			"revisionTime": "2017-03-22T23:44:13Z"
 		},
 		{
+			"checksumSHA1": "MNkKJyk2TazKMJYbal5wFHybpyA=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "14207d285c6c197daabb5c9793d63e7af9ab2d50",
+			"revisionTime": "2017-02-01T02:35:40Z"
+		},
+		{
 			"checksumSHA1": "bKMZjd2wPw13VwoE7mBeSv5djFA=",
 			"path": "github.com/matttproud/golang_protobuf_extensions/pbutil",
 			"revision": "c12348ce28de40eed0136aa2b644d0ee0650e56c",
@@ -644,6 +650,12 @@
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "cc8532a8e9a55ea36402aa21efdf403a60d34096",
 			"revisionTime": "2017-04-22T00:02:51Z"
+		},
+		{
+			"checksumSHA1": "h+oCMj21PiQfIdBog0eyUtF1djs=",
+			"path": "github.com/olekukonko/tablewriter",
+			"revision": "febf2d34b54a69ce7530036c7503b1c9fbfdf0bb",
+			"revisionTime": "2017-01-28T05:05:32Z"
 		},
 		{
 			"checksumSHA1": "F1IYMLBLAZaTOWnmXsgaxTGvrWI=",
@@ -808,6 +820,12 @@
 			"path": "github.com/stretchr/testify/mock",
 			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
 			"revisionTime": "2017-01-30T11:31:45Z"
+		},
+		{
+			"checksumSHA1": "spJ1eXh+9C2lgTjm7ErpjQ8PaXw=",
+			"path": "github.com/ttacon/chalk",
+			"revision": "22c06c80ed312dcb6e1cf394f9634aa2c4676e22",
+			"revisionTime": "2016-06-26T20:24:18Z"
 		},
 		{
 			"checksumSHA1": "MxLnUmfrP+r5HfCZM29+WPKebn8=",
