@@ -66,27 +66,25 @@ func NewConfig() *Config {
 
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
-	config       *Config
-	backendURL   string
-	handler      *handler.MessageHandler
-	conn         *transport.Transport
-	sendq        chan *transport.Message
-	disconnected bool
-	stopping     chan struct{}
-	stopped      chan struct{}
-	entity       *types.Entity
+	config     *Config
+	backendURL string
+	handler    *handler.MessageHandler
+	conn       *transport.Transport
+	sendq      chan *transport.Message
+	stopping   chan struct{}
+	stopped    chan struct{}
+	entity     *types.Entity
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
 func NewAgent(config *Config) *Agent {
 	agent := &Agent{
-		config:       config,
-		backendURL:   config.BackendURL,
-		handler:      handler.NewMessageHandler(),
-		disconnected: true,
-		stopping:     make(chan struct{}),
-		stopped:      make(chan struct{}),
-		sendq:        make(chan *transport.Message, 10),
+		config:     config,
+		backendURL: config.BackendURL,
+		handler:    handler.NewMessageHandler(),
+		stopping:   make(chan struct{}),
+		stopped:    make(chan struct{}),
+		sendq:      make(chan *transport.Message, 10),
 	}
 
 	agent.handler.AddHandler(types.EventType, agent.handleCheck)
@@ -94,42 +92,68 @@ func NewAgent(config *Config) *Agent {
 	return agent
 }
 
-func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
-	wg.Add(1)
-	defer wg.Done()
-
-	logger.Info("connected - starting receivePump")
+func (a *Agent) receiveMessage(out chan *transport.Message) {
+	defer close(out)
 	for {
-		if a.disconnected {
-			logger.Info("disconnected - stopping receivePump")
-			return
-		}
-
-		m, err := conn.Receive()
+		m, err := a.conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
-			case transport.ConnectionError:
-				a.disconnected = true
-			case transport.ClosedError:
-				a.disconnected = true
+			case transport.ConnectionError, transport.ClosedError:
+				logger.Error("recv error: ", err.Error())
+				return
 			default:
-				logger.Error("recv error:", err.Error())
+				logger.Error("recv error: ", err.Error())
+				continue
 			}
-			continue
 		}
+		out <- m
+	}
+}
 
-		logger.Info("message received - type: ", m.Type, " message: ", string(m.Payload))
+func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
+	defer func() {
+		wg.Done()
+		logger.Info("recv pump shutting down")
+	}()
 
-		err = a.handler.Handle(m.Type, m.Payload)
-		if err != nil {
-			logger.Error("error handling message:", err.Error())
+	logger.Info("connected - starting receivePump")
+
+	recvChan := make(chan *transport.Message)
+	go a.receiveMessage(recvChan)
+
+	for {
+		select {
+		case <-a.stopping:
+			return
+		case msg, ok := <-recvChan:
+			if !ok {
+				return
+			}
+
+			logger.Info("message received - type: ", msg.Type, " message: ", string(msg.Payload))
+			err := a.handler.Handle(msg.Type, msg.Payload)
+			if err != nil {
+				logger.Error("error handling message:", err.Error())
+			}
 		}
 	}
 }
 
+func (a *Agent) sendMessage(msgType string, payload []byte) {
+	// blocks until message can be enqueued.
+	// TODO(greg): ring buffer?
+	msg := &transport.Message{
+		Type:    msgType,
+		Payload: payload,
+	}
+	a.sendq <- msg
+}
+
 func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
-	wg.Add(1)
-	defer wg.Done()
+	defer func() {
+		wg.Done()
+		logger.Info("sendpump shutting down")
+	}()
 
 	// The sendPump is actually responsible for shutting down the transport
 	// to prevent a race condition between it and something else trying
@@ -141,29 +165,34 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
+	keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+
 	for {
+		select {
+		case <-keepaliveTicker.C:
+			a.sendKeepalive()
+		default:
+		}
+
 		select {
 		case msg := <-a.sendq:
 			err := conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
-				case transport.ConnectionError:
-					a.disconnected = true
-				case transport.ClosedError:
-					a.disconnected = true
+				case transport.ConnectionError, transport.ClosedError:
+					logger.Error("send error: ", err.Error())
+					return
 				default:
 					logger.Error("send error:", err.Error())
 				}
 			}
-		case <-ticker.C:
-			if a.disconnected {
-				logger.Info("disconnected - stopping sendPump")
+		case <-a.stopping:
+			return
+		default:
+			if a.conn.Closed() {
 				return
 			}
-		case <-a.stopping:
-			// we abandon anything left in the queue and exit the sendpump
-			// TODO(greg): leave no messages behind! if we can.
-			return
+			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }
@@ -185,28 +214,6 @@ func (a *Agent) sendKeepalive() error {
 	a.sendq <- msg
 
 	return nil
-}
-
-func (a *Agent) keepaliveLoop() {
-	logger.Info("starting keepalive loop")
-
-	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-	defer ticker.Stop()
-	// when we're disconnected, we want to pause sending keepalives so that we
-	// can queue up things in the send queue that are important.
-	for {
-		select {
-		case <-ticker.C:
-			if !a.disconnected {
-				if err := a.sendKeepalive(); err != nil {
-					logger.Error("error marshaling keepalive: ", err.Error())
-				}
-			}
-		case <-a.stopping:
-			logger.Info("stopping keepalive loop")
-			return
-		}
-	}
 }
 
 func (a *Agent) getAgentEntity() *types.Entity {
@@ -286,16 +293,21 @@ func (a *Agent) Run() error {
 		return err
 	}
 	a.conn = conn
-	wg := &sync.WaitGroup{}
 	err = a.handshake()
 	if err != nil {
 		return err
 	}
 
-	a.disconnected = false
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
 	go a.sendPump(wg, conn)
 	go a.receivePump(wg, conn)
-	go a.keepaliveLoop()
+
+	pumpsReturned := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(pumpsReturned)
+	}()
 
 	go func(wg *sync.WaitGroup) {
 		retries := 0
@@ -308,35 +320,40 @@ func (a *Agent) Run() error {
 				close(a.sendq)
 				close(a.stopped)
 				return
-			case <-ticker.C:
-				if a.disconnected {
-					logger.Info("disconnected - attempting to reconnect: ", a.backendURL)
-					wg.Wait()
-					conn, err := transport.Connect(a.backendURL)
-					if err != nil {
-						logger.Error("connection error:", err.Error())
-						// TODO(greg): exponential backoff
-						time.Sleep(1 * time.Second)
-						retries++
-						// TODO(greg): Figure out a max backoff / max retries thing
-						// before we fail over to the configured backend url
-						if retries >= 30 {
-							a.backendURL = a.config.BackendURL
-						}
-						continue
+
+			case <-pumpsReturned:
+				logger.Info("disconnected - attempting to reconnect: ", a.backendURL)
+				conn, err := transport.Connect(a.backendURL)
+				if err != nil {
+					logger.Error("connection error:", err.Error())
+					// TODO(greg): exponential backoff
+					time.Sleep(1 * time.Second)
+					retries++
+					// TODO(greg): Figure out a max backoff / max retries thing
+					// before we fail over to the configured backend url
+					if retries >= 30 {
+						a.backendURL = a.config.BackendURL
 					}
-					a.conn = conn
-					logger.Info("reconnected: ", a.backendURL)
-					wg.Add(2)
-					err = a.handshake()
-					if err != nil {
-						logger.Error("handshake error: ", err.Error())
-						continue
-					}
-					go a.sendPump(wg, conn)
-					go a.receivePump(wg, conn)
-					a.disconnected = false
+					continue
 				}
+
+				a.conn = conn
+				logger.Info("reconnected: ", a.backendURL)
+
+				err = a.handshake()
+				if err != nil {
+					logger.Error("handshake error: ", err.Error())
+					continue
+				}
+
+				wg.Add(2)
+				go a.sendPump(wg, conn)
+				go a.receivePump(wg, conn)
+				pumpsReturned = make(chan struct{})
+				go func() {
+					wg.Wait()
+					close(pumpsReturned)
+				}()
 			}
 		}
 	}(wg)
@@ -354,16 +371,6 @@ func (a *Agent) Stop() {
 	case <-time.After(1 * time.Second):
 		return
 	}
-}
-
-func (a *Agent) sendMessage(msgType string, payload []byte) {
-	// blocks until message can be enqueued.
-	// TODO(greg): ring buffer?
-	msg := &transport.Message{
-		Type:    msgType,
-		Payload: payload,
-	}
-	a.sendq <- msg
 }
 
 func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFunc) {
