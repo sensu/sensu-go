@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/sensu/sensu-go/transport"
@@ -112,6 +113,8 @@ func TestReconnect(t *testing.T) {
 	control := make(chan struct{})
 	connectionCount := 0
 	server := transport.NewServer()
+	mutex := &sync.Mutex{}
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
@@ -122,7 +125,9 @@ func TestReconnect(t *testing.T) {
 		}
 		conn.Send(bhsm)
 		conn.Receive()
+		mutex.Lock()
 		connectionCount++
+		mutex.Unlock()
 		<-control
 		conn.Close()
 	}))
@@ -139,8 +144,13 @@ func TestReconnect(t *testing.T) {
 		assert.FailNow(t, "agent failed to run")
 	}
 	control <- struct{}{}
+	mutex.Lock()
 	assert.Equal(t, 1, connectionCount)
+	mutex.Unlock()
+
 	control <- struct{}{}
+	mutex.Lock()
 	assert.Condition(t, func() bool { return connectionCount > 1 })
+	mutex.Unlock()
 	ta.Stop()
 }
