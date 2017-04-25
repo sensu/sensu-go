@@ -8,15 +8,24 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/fixtures"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestHttpAPIHandlersGet(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &HandlersController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
+	handlers := []*types.Handler{
+		types.FixtureHandler("handler1"),
+		types.FixtureHandler("handler2"),
+	}
+	store.On("GetHandlers").Return(handlers, nil)
 	req, _ := http.NewRequest("GET", "/handlers", nil)
 	res := processRequest(c, req)
 
@@ -24,23 +33,31 @@ func TestHttpAPIHandlersGet(t *testing.T) {
 
 	body := res.Body.Bytes()
 
-	handlers := []*types.Handler{}
-	err := json.Unmarshal(body, &handlers)
+	receivedHandlers := []*types.Handler{}
+	err := json.Unmarshal(body, &receivedHandlers)
 
 	assert.NoError(t, err)
-	assert.Condition(t, func() bool { return len(handlers) >= 1 })
+	for i, handler := range receivedHandlers {
+		assert.EqualValues(t, handlers[i], handler)
+	}
 }
 
 func TestHttpAPIHandlerGet(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &HandlersController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
+	var nilHandler *types.Handler
+	store.On("GetHandlerByName", "somehandler").Return(nilHandler, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/handlers/somehandler", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
 
+	handler := types.FixtureHandler("handler1")
+	store.On("GetHandlerByName", "handler1").Return(handler, nil)
 	foundReq, _ := http.NewRequest("GET", "/handlers/handler1", nil)
 	foundRes := processRequest(c, foundReq)
 
@@ -48,94 +65,68 @@ func TestHttpAPIHandlerGet(t *testing.T) {
 
 	body := foundRes.Body.Bytes()
 
-	handler := &types.Handler{}
-	err := json.Unmarshal(body, &handler)
+	receivedHandler := &types.Handler{}
+	err := json.Unmarshal(body, &receivedHandler)
 
 	assert.NoError(t, err)
-	assert.NotNil(t, handler.Name)
-	assert.NotNil(t, handler.Type)
-	assert.NotEqual(t, handler.Name, "")
-	assert.NotEqual(t, handler.Type, "")
+	assert.EqualValues(t, handler, receivedHandler)
 }
 
 func TestHttpAPIHandlerPut(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &HandlersController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
-	handlerName := "handler1"
+	handler := types.FixtureHandler("handler1")
+	updatedHandlerJSON, _ := json.Marshal(handler)
 
-	updatedHandler := &types.Handler{
-		Name:    handlerName,
-		Type:    "pipe",
-		Mutator: "mutator2",
-		Command: "cat",
-		Timeout: 10,
-	}
-
-	updatedHandlerJSON, _ := json.Marshal(updatedHandler)
-
-	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJSON))
+	store.On("UpdateHandler", mock.AnythingOfType("*types.Handler")).Return(nil).Run(func(args mock.Arguments) {
+		receivedHandler := args.Get(0).(*types.Handler)
+		assert.EqualValues(t, handler, receivedHandler)
+	})
+	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/handlers/handler1"), bytes.NewBuffer(updatedHandlerJSON))
 	putRes := processRequest(c, putReq)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
-
-	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/handlers/%s", handlerName), nil)
-	getRes := processRequest(c, getReq)
-
-	assert.Equal(t, http.StatusOK, getRes.Code)
-
-	body := getRes.Body.String()
-
-	assert.Equal(t, string(updatedHandlerJSON[:]), body)
 }
 
 func TestHttpAPIHandlerPost(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &HandlersController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
 	handlerName := "newhandler1"
 
-	updatedHandler := &types.Handler{
-		Name:    handlerName,
-		Type:    "pipe",
-		Mutator: "mutator2",
-		Command: "cat",
-		Timeout: 10,
-	}
+	handler := types.FixtureHandler(handlerName)
+	updatedHandlerJSON, _ := json.Marshal(handler)
 
-	updatedHandlerJSON, _ := json.Marshal(updatedHandler)
+	store.On("UpdateHandler", mock.AnythingOfType("*types.Handler")).Return(nil).Run(func(args mock.Arguments) {
+		receivedHandler := args.Get(0).(*types.Handler)
+		assert.EqualValues(t, handler, receivedHandler)
+	})
 
 	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/handlers/%s", handlerName), bytes.NewBuffer(updatedHandlerJSON))
 	putRes := processRequest(c, putReq)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
-
-	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/handlers/%s", handlerName), nil)
-	getRes := processRequest(c, getReq)
-
-	assert.Equal(t, http.StatusOK, getRes.Code)
-
-	body := getRes.Body.String()
-
-	assert.Equal(t, string(updatedHandlerJSON[:]), body)
 }
 
 func TestHttpAPIHandlerDelete(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &HandlersController{
 		Store: fixtures.NewFixtureStore(),
 	}
 
 	handlerName := "handler1"
 
+	store.On("DeleteHandlerByName", handlerName).Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/handlers/%s", handlerName), nil)
 	deleteRes := processRequest(c, deleteReq)
 
 	assert.Equal(t, http.StatusOK, deleteRes.Code)
-
-	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/handlers/%s", handlerName), nil)
-	getRes := processRequest(c, getReq)
-
-	assert.Equal(t, http.StatusNotFound, getRes.Code)
 }

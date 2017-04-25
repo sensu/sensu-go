@@ -46,3 +46,12 @@ func (h *Handler) Validate() error {
 
 	return nil
 }
+
+// FixtureHandler returns a Handler fixture for testing.
+func FixtureHandler(name string) *Handler {
+	return &Handler{
+		Name:    name,
+		Type:    "pipe",
+		Command: "command",
+	}
+}
