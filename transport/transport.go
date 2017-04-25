@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -61,13 +62,24 @@ type Message struct {
 // A Transport is a connection between sensu Agents and Backends.
 type Transport struct {
 	Connection *websocket.Conn
+	closed     bool
+	mutex      *sync.RWMutex
 }
 
 // NewTransport creates an initialized Transport and return its pointer.
 func NewTransport(conn *websocket.Conn) *Transport {
 	return &Transport{
 		Connection: conn,
+		closed:     false,
+		mutex:      &sync.RWMutex{},
 	}
+}
+
+// Closed returns true if the underlying connection is closed.
+func (t *Transport) Closed() bool {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	return t.closed
 }
 
 // Send is used to send a message over the transport. It takes a message type
@@ -75,9 +87,23 @@ func NewTransport(conn *websocket.Conn) *Transport {
 // sent. Send is synchronous, returning nil if the write to the underlying
 // socket was successful and an error otherwise.
 func (t *Transport) Send(m *Message) error {
+	t.mutex.RLock()
+	if t.closed {
+		t.mutex.RUnlock()
+		return ClosedError{"connection closed"}
+	}
+	t.mutex.RUnlock()
+
 	msg := Encode(m.Type, m.Payload)
 	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
 	if err != nil {
+		// If we get _any_ error, let's just considered the connection closed,
+		// because it's _really_ hard to figure out what errors from the
+		// websocket library are terminal and which aren't. So, abandon all
+		// hope, and reconnect if we get an error from the websocket lib.
+		t.mutex.Lock()
+		t.closed = true
+		t.mutex.Unlock()
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
 			return ClosedError{err.Error()}
 		}
@@ -90,8 +116,19 @@ func (t *Transport) Send(m *Message) error {
 // Receive is used to receive a message from the transport. It takes a context
 // and blocks until the next message is received from the transport.
 func (t *Transport) Receive() (*Message, error) {
+	t.mutex.RLock()
+	if t.closed {
+		t.mutex.RUnlock()
+		return nil, ClosedError{"connection closed"}
+	}
+	t.mutex.RUnlock()
+
 	_, p, err := t.Connection.ReadMessage()
 	if err != nil {
+		t.mutex.Lock()
+		t.closed = true
+		t.mutex.Unlock()
+
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
 			return nil, ClosedError{err.Error()}
 		}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -26,7 +27,6 @@ type Session struct {
 	sendq         chan *transport.Message
 	subscriptions []string
 	checkChannel  chan []byte
-	disconnected  bool
 	bus           messaging.MessageBus
 }
 
@@ -53,9 +53,8 @@ func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store
 		sendq:        make(chan *transport.Message, 10),
 		checkChannel: make(chan []byte, 100),
 
-		disconnected: false,
-		store:        store,
-		bus:          bus,
+		store: store,
+		bus:   bus,
 	}
 	s.handler = newSessionHandler(s)
 	return s, nil
@@ -102,43 +101,57 @@ func (s *Session) handshake() error {
 	return nil
 }
 
-func (s *Session) recvPump(wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (s *Session) receiveMessages(out chan *transport.Message) {
+	defer close(out)
 	for {
-		if s.disconnected {
-			logger.Info("session disconnected - stopping recvPump")
-			return
-		}
-
-		msg, err := s.conn.Receive()
+		m, err := s.conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
-			case transport.ConnectionError:
-				s.disconnected = true
-			case transport.ClosedError:
-				s.disconnected = true
+			case transport.ConnectionError, transport.ClosedError:
+				logger.Error("recv error: ", err.Error())
+				return
 			default:
-				logger.Error("recv error:", err.Error())
+				logger.Error("recv error: ", err.Error())
+				continue
 			}
-			continue
 		}
-		logger.Debugf("session - received message: %s", string(msg.Payload))
-		err = s.handler.Handle(msg.Type, msg.Payload)
-		if err != nil {
-			logger.Error("error handling message: ", msg)
+		out <- m
+	}
+}
+
+func (s *Session) recvPump(wg *sync.WaitGroup) {
+	defer func() {
+		logger.Info("session disconnected - stopping recvPump")
+		wg.Done()
+	}()
+
+	msgChannel := make(chan *transport.Message)
+	go s.receiveMessages(msgChannel)
+	for {
+		select {
+		case msg, ok := <-msgChannel:
+			if !ok {
+				return
+			}
+
+			logger.Debugf("session - received message: %s", string(msg.Payload))
+			err := s.handler.Handle(msg.Type, msg.Payload)
+			if err != nil {
+				logger.Error("error handling message: ", msg)
+			}
+		case <-s.stopping:
+			return
 		}
 	}
 }
 
 func (s *Session) subPump(wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		if s.disconnected {
-			logger.Info("session disconnected - stopping sendPump")
-			return
-		}
+	defer func() {
+		wg.Done()
+		logger.Info("shutting down - stopping subPump")
+	}()
 
+	for {
 		select {
 		case check := <-s.checkChannel:
 			msg := &transport.Message{
@@ -147,36 +160,42 @@ func (s *Session) subPump(wg *sync.WaitGroup) {
 			}
 			s.sendq <- msg
 		case <-s.stopping:
-			logger.Info("shutting down - stopping subPump")
 			return
+		default:
+			if s.conn.Closed() {
+				return
+			}
+			time.Sleep(1 * time.Millisecond)
 		}
-
 	}
 }
 
 func (s *Session) sendPump(wg *sync.WaitGroup) {
-	defer wg.Done()
+	defer func() {
+		wg.Done()
+		logger.Info("shutting down - stopping sendPump")
+	}()
 
 	for {
-
 		select {
 		case msg := <-s.sendq:
 			logger.Debugf("session - sending message: %s", string(msg.Payload))
 			err := s.conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
-				case transport.ConnectionError:
-					s.disconnected = true
-				case transport.ClosedError:
-					s.disconnected = true
+				case transport.ConnectionError, transport.ClosedError:
+					return
 				default:
 					logger.Error("send error:", err.Error())
 				}
 			}
 		case <-s.stopping:
-			s.disconnected = true
-			logger.Info("shutting down - stopping sendPump")
 			return
+		default:
+			if s.conn.Closed() {
+				return
+			}
+			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }

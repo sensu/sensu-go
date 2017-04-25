@@ -109,7 +109,7 @@ func TestAgentKeepalives(t *testing.T) {
 	}()
 
 	// Give it a second to make sure we've sent a keepalive.
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	resp, err := http.Get(fmt.Sprintf("%s/entities", backendHTTPURL))
 	assert.NoError(t, err)
@@ -169,4 +169,5 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NotNil(t, event.Entity)
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
 	assert.Equal(t, "testcheck2", event.Check.Name)
+	// TODO(greg): ensure results are as expected.
 }

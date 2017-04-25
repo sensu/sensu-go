@@ -59,8 +59,15 @@ func TestClosedWebsocket(t *testing.T) {
 	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
 	assert.NoError(t, err)
 	<-done
+	// At this point we should receive a connection closed message.
 	_, err = clientTransport.Receive()
 	assert.IsType(t, ConnectionError{}, err)
+
+	err = clientTransport.Send(&Message{"testMessageType", []byte{}})
+	assert.IsType(t, ClosedError{}, err)
+
+	_, err = clientTransport.Receive()
+	assert.IsType(t, ClosedError{}, err)
 }
 
 // This was all mostly to prove that performance of encoding/decoding was

@@ -51,9 +51,8 @@ func (s *Schedulerd) Start() error {
 	// the watcher first, so that we don't miss any checks that are created
 	// during our initial reconciliation phase.
 	s.wg = &sync.WaitGroup{}
-	s.startWatcher()
-
 	s.stopping = make(chan struct{})
+	s.startWatcher()
 	s.reconcile()
 	s.startReconciler()
 	return nil
