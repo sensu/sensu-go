@@ -26,3 +26,11 @@ func (c *Mutator) Validate() error {
 
 	return nil
 }
+
+// FixtureMutator returns a Mutator fixture for testing.
+func FixtureMutator(name string) *Mutator {
+	return &Mutator{
+		Name:    name,
+		Command: "command",
+	}
+}
