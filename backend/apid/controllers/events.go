@@ -18,6 +18,7 @@ type EventsController struct {
 // Register the EventsController with a mux.Router.
 func (c *EventsController) Register(r *mux.Router) {
 	r.HandleFunc("/events", c.events).Methods(http.MethodGet)
+	r.HandleFunc("/events", c.updateEvents).Methods(http.MethodPut)
 	r.HandleFunc("/events/{entity}", c.entityEvents).Methods(http.MethodGet)
 	r.HandleFunc("/events/{entity}/{check}", c.entityCheckEvents).Methods(http.MethodGet)
 	// TODO(greg): Handle a PUT to /events
@@ -96,4 +97,45 @@ func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(jsonStr))
+}
+
+func (c *EventsController) updateEvents(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var event types.Event
+
+	err := decoder.Decode(&event)
+	if err != nil {
+		logger.Error("error decoding the body: ", err.Error())
+		http.Error(w, "error decoding the body", http.StatusInternalServerError)
+		return
+	}
+
+	err = c.Store.UpdateEvent(&event)
+	if err != nil {
+		logger.Error("invalid event: ", err.Error())
+		http.Error(w, "invalid event", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println(event)
+	// events, err := c.Store.GetEvents()
+	// if err != nil {
+	// 	http.Error(w, "error getting events", http.StatusInternalServerError)
+	// 	return
+	// }
+	//
+	// // If the events slice is empty, we want to return an empty array instead
+	// // of null for easier consumption
+	// if len(events) == 0 {
+	// 	events = make([]*types.Event, 0)
+	// }
+	//
+	// jsonStr, err := json.Marshal(events)
+	// if err != nil {
+	// 	http.Error(w, "error marshalling response", http.StatusInternalServerError)
+	// 	return
+	// }
+	//
+	// w.Header().Set("Content-Type", "application/json")
+	// fmt.Fprint(w, string(jsonStr))
 }
