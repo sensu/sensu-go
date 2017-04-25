@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/fixtures"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,13 +18,13 @@ func TestPipelined(t *testing.T) {
 	bus.Start()
 	p.MessageBus = bus
 
-	store := fixtures.NewFixtureStore()
+	store := &mockstore.MockStore{}
 	p.Store = store
 
 	assert.NoError(t, p.Start())
 
-	entity, _ := store.GetEntityByID("entity1")
-	check, _ := store.GetCheckByName("check1")
+	entity := types.FixtureEntity("entity1")
+	check := types.FixtureCheck("check1")
 
 	event := &types.Event{
 		Entity: entity,
