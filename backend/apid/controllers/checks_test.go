@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -37,6 +38,24 @@ func TestHttpApiChecksGet(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.EqualValues(t, checks, returnedChecks)
+}
+
+func TestHttpApiChecksGetError(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &ChecksController{
+		Store: store,
+	}
+
+	var nilChecks []*types.Check
+	store.On("GetChecks").Return(nilChecks, errors.New("error"))
+	req, _ := http.NewRequest("GET", "/checks", nil)
+	res := processRequest(c, req)
+
+	body := res.Body.Bytes()
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, "error\n", string(body))
 }
 
 func TestHttpApiCheckGet(t *testing.T) {
