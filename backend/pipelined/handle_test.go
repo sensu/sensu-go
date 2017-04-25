@@ -73,15 +73,14 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 	assert.Equal(t, expanded, twoLevels)
 
 	handler4 := types.FixtureHandler("handler4")
+	handler4.Type = "set"
+	handler4.Handlers = []string{"handler2", "handler3"}
 
 	store.On("GetHandlerByName", "handler4").Return(handler4, nil)
 	threeLevels, err := p.expandHandlers([]string{"handler4"}, 1)
 
 	assert.NoError(t, err)
 
-	expanded = map[string]*types.Handler{
-		"handler4": handler4,
-	}
 	assert.Equal(t, expanded, threeLevels)
 }
 
