@@ -2,7 +2,6 @@ package dashboardd
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -10,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/types"
 )
@@ -37,6 +37,14 @@ type Dashboardd struct {
 	Config
 }
 
+var logger *logrus.Entry
+
+func init() {
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "dashboard",
+	})
+}
+
 // Start dashboardd
 func (d *Dashboardd) Start() error {
 	d.stopping = make(chan struct{}, 1)
@@ -54,7 +62,7 @@ func (d *Dashboardd) Start() error {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Println("starting dashboardd on address: ", server.Addr)
+	logger.Info("starting dashboardd on address: ", server.Addr)
 
 	go func() {
 		defer d.wg.Done()
@@ -89,7 +97,7 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	// API gateway to Sensu API
 	target, err := url.Parse(API)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	r.Handle("/entities", httputil.NewSingleHostReverseProxy(target))
 

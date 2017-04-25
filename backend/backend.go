@@ -2,7 +2,6 @@ package backend
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/gorilla/websocket"
 
@@ -237,7 +236,7 @@ func (b *Backend) Run() error {
 	b.messageBus.Stop()
 	logger.Info("shutting down pipelined")
 	b.pipelined.Stop()
-	log.Printf("shutting down dashboardd")
+	logger.Info("shutting down dashboardd")
 	b.dashboardd.Stop()
 
 	// we allow inErrChan to leak to avoid panics from other
