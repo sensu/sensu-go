@@ -36,6 +36,7 @@ func TestHttpAPIHandlersGet(t *testing.T) {
 	err := json.Unmarshal(body, &receivedHandlers)
 
 	assert.NoError(t, err)
+	assert.Equal(t, 2, len(receivedHandlers))
 	for i, handler := range receivedHandlers {
 		assert.EqualValues(t, handlers[i], handler)
 	}

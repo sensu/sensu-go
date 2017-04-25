@@ -33,6 +33,7 @@ func TestHttpApiEntitiesGet(t *testing.T) {
 	err := json.Unmarshal(body, &returnedEntities)
 
 	assert.NoError(t, err)
+	assert.Equal(t, 2, len(returnedEntities))
 	for i, entity := range returnedEntities {
 		assert.EqualValues(t, entities[i], entity)
 	}
