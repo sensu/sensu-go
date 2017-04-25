@@ -14,6 +14,11 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const (
+	// API represents the Sensu API url
+	API = "http://127.0.0.1:8080"
+)
+
 // Config represents the dashboard configuration
 type Config struct {
 	Dir  string
@@ -64,7 +69,6 @@ func (d *Dashboardd) Stop() error {
 	close(d.stopping)
 	d.wg.Wait()
 	close(d.errChan)
-	// eventChan is closed by MessageBus Stop()
 
 	return nil
 }
@@ -83,7 +87,7 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
 
 	// API gateway to Sensu API
-	target, err := url.Parse("http://127.0.0.1:8080")
+	target, err := url.Parse(API)
 	if err != nil {
 		log.Fatal(err)
 	}
