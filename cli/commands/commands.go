@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// AddCommands adds management commands to given command
 func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 	rootCmd.AddCommand(
 		event.HelpCommand(cli),

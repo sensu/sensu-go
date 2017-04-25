@@ -11,13 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Answers struct {
-	URL    string `survey 'url'`
-	UserID string `survey 'userid'`
+type answers struct {
+	URL    string `survey:"url"`
+	UserID string `survey:"userid"`
 	Secret string
 	Output string
 }
 
+// Command defines new configuration command
 func Command(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:   "configure",
@@ -49,7 +50,6 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
-			fmt.Fprintln(os.Stderr, v)
 
 			// Update profile
 			profile.Set("url", v.URL)
@@ -65,20 +65,20 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 }
 
-func gatherConfigValues(config *toml.TomlTree) (*Answers, error) {
+func gatherConfigValues(config *toml.TomlTree) (*answers, error) {
 	qs := []*survey.Question{
-		AskForURL(config),
-		AskForUsername(config),
-		AskForSecret(),
-		AskForDefaultOutput(),
+		askForURL(config),
+		askForUsername(config),
+		askForSecret(),
+		askForDefaultOutput(),
 	}
 
-	answers := &Answers{}
-	err := survey.Ask(qs, answers)
-	return answers, err
+	res := &answers{}
+	err := survey.Ask(qs, res)
+	return res, err
 }
 
-func AskForURL(config *toml.TomlTree) *survey.Question {
+func askForURL(config *toml.TomlTree) *survey.Question {
 	url, _ := config.Get("url").(string)
 
 	return &survey.Question{
@@ -87,7 +87,7 @@ func AskForURL(config *toml.TomlTree) *survey.Question {
 	}
 }
 
-func AskForUsername(config *toml.TomlTree) *survey.Question {
+func askForUsername(config *toml.TomlTree) *survey.Question {
 	userid, _ := config.Get("userid").(string)
 
 	return &survey.Question{
@@ -96,14 +96,14 @@ func AskForUsername(config *toml.TomlTree) *survey.Question {
 	}
 }
 
-func AskForSecret() *survey.Question {
+func askForSecret() *survey.Question {
 	return &survey.Question{
 		Name:   "secret",
 		Prompt: &survey.Password{Message: "Password:"},
 	}
 }
 
-func AskForDefaultOutput() *survey.Question {
+func askForDefaultOutput() *survey.Question {
 	return &survey.Question{
 		Name: "output",
 		Prompt: &survey.Select{

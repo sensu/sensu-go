@@ -10,7 +10,7 @@ import (
 // encapsulates API client, logger & general configuration.
 type SensuCli struct {
 	Config *client.Config
-	Client *client.RestClient
+	Client client.APIClient
 	Logger *logrus.Entry
 }
 

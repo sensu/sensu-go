@@ -16,10 +16,11 @@ const (
 )
 
 var (
-	// Path to configuration file
+	// ConfigFilePath contains path to configuration file
 	ConfigFilePath string
 )
 
+// Config ...
 type Config struct {
 	viper *viper.Viper
 }
@@ -45,6 +46,7 @@ func NewConfig() (*Config, error) {
 	return &Config{viper: v}, err
 }
 
+// Get value from configuration for given key
 func (c *Config) Get(key string) interface{} {
 	if val := c.viper.Get(key); val != "" && val != nil {
 		return val
@@ -54,13 +56,17 @@ func (c *Config) Get(key string) interface{} {
 	return c.viper.Get(key)
 }
 
+// GetString value from configuration for given key
 func (c *Config) GetString(key string) string {
 	val, _ := c.Get(key).(string)
 	return val
 }
 
+// BindPFlag binds given pflag to config
 func (c *Config) BindPFlag(key string, flag *pflag.Flag) {
-	c.viper.BindPFlag(key, flag)
+	if flag != nil {
+		c.viper.BindPFlag(key, flag)
+	}
 }
 
 func init() {

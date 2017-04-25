@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// HelpCommand defines new event command
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "event",
