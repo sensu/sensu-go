@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/fixtures"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -119,11 +118,14 @@ func TestHttpAPIHandlerDelete(t *testing.T) {
 	store := &mockstore.MockStore{}
 
 	c := &HandlersController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
 	handlerName := "handler1"
 
+	handler := types.FixtureHandler(handlerName)
+
+	store.On("GetHandlerByName", handlerName).Return(handler, nil)
 	store.On("DeleteHandlerByName", handlerName).Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/handlers/%s", handlerName), nil)
 	deleteRes := processRequest(c, deleteReq)
