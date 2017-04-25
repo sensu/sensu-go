@@ -4,12 +4,17 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/fixtures"
+	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSchedulerdReconcile(t *testing.T) {
-	store := fixtures.NewFixtureStore()
+	store := &mockstore.MockStore{}
+
+	check1 := types.FixtureCheck("check1")
+	store.On("GetChecks").Return([]*types.Check{check1}, nil)
+	store.On("GetCheckByName", "check1").Return(check1, nil)
 
 	c := &Schedulerd{
 		Store:           store,
@@ -24,7 +29,9 @@ func TestSchedulerdReconcile(t *testing.T) {
 
 	assert.Equal(t, 1, len(c.schedulers))
 
-	store.DeleteCheckByName("check1")
+	var nilCheck *types.Check
+	store.On("GetCheckByName", "check1").Return(nilCheck, nil)
+	store.On("GetChecks").Return(nil, nil)
 
 	assert.NoError(t, c.reconcile())
 }
