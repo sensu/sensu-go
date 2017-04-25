@@ -7,7 +7,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/fixtures"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,12 +15,17 @@ import (
 func TestPipelinedHandleEvent(t *testing.T) {
 	p := &Pipelined{}
 
-	store := fixtures.NewFixtureStore()
+	store := &mockstore.MockStore{}
 	p.Store = store
 
-	entity, _ := store.GetEntityByID("entity1")
-	check, _ := store.GetCheckByName("check1")
-
+	entity := types.FixtureEntity("entity1")
+	check := types.FixtureCheck("check1")
+	handler := types.FixtureHandler("handler1")
+	handler.Type = "udp"
+	handler.Socket = types.HandlerSocket{
+		Host: "localhost",
+		Port: 6789,
+	}
 	event := &types.Event{
 		Entity: entity,
 		Check:  check,
@@ -31,36 +36,52 @@ func TestPipelinedHandleEvent(t *testing.T) {
 	// how useful this would be.
 	assert.NoError(t, p.handleEvent(event))
 
-	event.Check.Handlers = []string{"handler6"}
-
+	event.Check.Handlers = []string{"handler1"}
+	store.On("GetHandlerByName", "handler1").Return(handler, nil)
 	assert.NoError(t, p.handleEvent(event))
 }
 
 func TestPipelinedExpandHandlers(t *testing.T) {
 	p := &Pipelined{}
 
-	store := fixtures.NewFixtureStore()
+	store := &mockstore.MockStore{}
 	p.Store = store
+	handler1 := types.FixtureHandler("handler1")
+	store.On("GetHandlerByName", "handler1").Return(handler1, nil)
 
 	oneLevel, err := p.expandHandlers([]string{"handler1"}, 1)
-
 	assert.NoError(t, err)
 
-	handler1, _ := store.GetHandlerByName("handler1")
 	expanded := map[string]*types.Handler{"handler1": handler1}
-
 	assert.Equal(t, expanded, oneLevel)
 
+	handler2 := types.FixtureHandler("handler2")
+	handler2.Type = "set"
+	handler2.Handlers = []string{"handler1", "unknown"}
+
+	handler3 := types.FixtureHandler("handler3")
+	handler3.Type = "set"
+	handler3.Handlers = []string{"handler1", "handler2"}
+
+	var nilHandler *types.Handler
+	store.On("GetHandlerByName", "unknown").Return(nilHandler, nil)
+	store.On("GetHandlerByName", "handler2").Return(handler2, nil)
+	store.On("GetHandlerByName", "handler3").Return(handler3, nil)
+
 	twoLevels, err := p.expandHandlers([]string{"handler3"}, 1)
-
 	assert.NoError(t, err)
-
 	assert.Equal(t, expanded, twoLevels)
 
+	handler4 := types.FixtureHandler("handler4")
+
+	store.On("GetHandlerByName", "handler4").Return(handler4, nil)
 	threeLevels, err := p.expandHandlers([]string{"handler4"}, 1)
 
 	assert.NoError(t, err)
 
+	expanded = map[string]*types.Handler{
+		"handler4": handler4,
+	}
 	assert.Equal(t, expanded, threeLevels)
 }
 
