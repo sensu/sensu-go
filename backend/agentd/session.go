@@ -217,7 +217,6 @@ func (s *Session) Start() error {
 		for _, sub := range s.subscriptions {
 			s.bus.Unsubscribe(sub, s.ID)
 		}
-		close(s.checkChannel)
 		close(s.stopped)
 	}(wg)
 
