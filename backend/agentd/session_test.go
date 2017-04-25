@@ -8,22 +8,27 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/fixtures"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGoodHandshake(t *testing.T) {
 	done := make(chan struct{})
 	server := transport.NewServer()
 	var session *Session
+
+	st := &mockstore.MockStore{}
+	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
 		bus := &messaging.WizardBus{}
 		bus.Start()
-		session, err = NewSession(conn, bus, fixtures.NewFixtureStore())
+		session, err = NewSession(conn, bus, st)
 		assert.NoError(t, err)
 		err = session.Start()
 		assert.NoError(t, err)
