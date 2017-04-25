@@ -2,3 +2,12 @@ bin/
 target/
 *~
 \#*
+
+# dashboard
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+.DS_Store
