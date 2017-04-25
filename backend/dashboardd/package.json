@@ -4,7 +4,8 @@
   "private": true,
   "dependencies": {
     "react": "^15.5.4",
-    "react-dom": "^15.5.4"
+    "react-dom": "^15.5.4",
+    "react-router-dom": "^4.1.1"
   },
   "devDependencies": {
     "autoprefixer": "6.7.2",
@@ -46,7 +47,7 @@
     "webpack-manifest-plugin": "1.1.0",
     "whatwg-fetch": "2.0.2"
   },
-  "proxy": "http://localhost:8080",
+  "proxy": "http://localhost:3000",
   "scripts": {
     "start": "PORT=3030 node scripts/start.js",
     "build": "node scripts/build.js",

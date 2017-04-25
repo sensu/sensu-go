@@ -99,6 +99,8 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	if err != nil {
 		logger.Fatal(err)
 	}
+
+	r.Handle("/events", httputil.NewSingleHostReverseProxy(target))
 	r.Handle("/entities", httputil.NewSingleHostReverseProxy(target))
 
 	// Serve static content

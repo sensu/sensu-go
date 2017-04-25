@@ -1,8 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import {
+  BrowserRouter as Router,
+  Route
+} from 'react-router-dom'
+import Events from 'containers/events';
 
 ReactDOM.render(
-  <App />,
+  <Router>
+    <Route path="/" component={Events}/>
+  </Router>,
   document.getElementById('root')
 );

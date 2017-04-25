@@ -1,22 +1,23 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
+import EventsList from 'components/eventsList'
 
-class App extends Component {
+export default class Events extends Component {
   constructor(props) {
     super(props);
-    this.state = {entities: []};
+    this.state = {events: []};
   }
 
   componentDidMount() {
-    this.Entities()
+    this.Events()
     .then(data => {
       this.setState({
-        entities : data
+        events : data
       });
     });
   }
 
-  Entities() {
-    return fetch('/entities', {
+  Events() {
+    return fetch('/events', {
       headers : {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -34,16 +35,6 @@ class App extends Component {
   }
 
   render() {
-    return (
-      <div>
-      {
-        this.state.entities.map(function(entity, i){
-         return <li key={i}>{entity.id}</li>
-        })
-      }
-      </div>
-    );
+    return <EventsList events={this.state.events} />;
   }
 }
-
-export default App;
