@@ -9,7 +9,7 @@ eval $(go env)
 cmd=${1:-"all"}
 
 if [ "$GOARCH" == "amd64" ]; then
-	RACE="--race"
+	RACE="-race"
 fi
 
 install_deps () {

@@ -47,11 +47,12 @@ func (e *Eventd) Start() error {
 	e.shutdownChan = make(chan struct{}, 1)
 
 	ch := make(chan []byte, 100)
+	e.eventChan = ch
+
 	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, "eventd", ch)
 	if err != nil {
 		return err
 	}
-	e.eventChan = ch
 
 	e.wg = &sync.WaitGroup{}
 	e.wg.Add(e.HandlerCount)
@@ -144,7 +145,6 @@ func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
 	close(e.shutdownChan)
 	e.wg.Wait()
-	close(e.eventChan)
 	return nil
 }
 

@@ -7,16 +7,25 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/fixtures"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestHttpApiMutatorsGet(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &MutatorsController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
+	mutators := []*types.Mutator{
+		types.FixtureMutator("mutator1"),
+		types.FixtureMutator("mutator2"),
+	}
+
+	store.On("GetMutators").Return(mutators, nil)
 	req, _ := http.NewRequest("GET", "/mutators", nil)
 	res := processRequest(c, req)
 
@@ -24,114 +33,104 @@ func TestHttpApiMutatorsGet(t *testing.T) {
 
 	body := res.Body.Bytes()
 
-	mutators := []*types.Mutator{}
-	err := json.Unmarshal(body, &mutators)
+	returnedMutators := []*types.Mutator{}
+	err := json.Unmarshal(body, &returnedMutators)
 
 	assert.NoError(t, err)
-	assert.Condition(t, func() bool { return len(mutators) >= 1 })
+	assert.Equal(t, 2, len(returnedMutators))
+	for i, mutator := range returnedMutators {
+		assert.EqualValues(t, mutators[i], mutator)
+	}
 }
 
 func TestHttpApiMutatorGet(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &MutatorsController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
+	var nilMutator *types.Mutator
+	store.On("GetMutatorByName", "somemutator").Return(nilMutator, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/mutators/somemutator", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
 
-	foundReq, _ := http.NewRequest("GET", "/mutators/mutator1", nil)
+	mutatorName := "mutator1"
+	mutator := types.FixtureMutator(mutatorName)
+	store.On("GetMutatorByName", mutatorName).Return(mutator, nil)
+	foundReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
 	foundRes := processRequest(c, foundReq)
 
 	assert.Equal(t, http.StatusOK, foundRes.Code)
 
 	body := foundRes.Body.Bytes()
 
-	mutator := &types.Mutator{}
-	err := json.Unmarshal(body, &mutator)
+	returnedMutator := &types.Mutator{}
+	err := json.Unmarshal(body, &returnedMutator)
 
 	assert.NoError(t, err)
-	assert.NotNil(t, mutator.Name)
-	assert.NotNil(t, mutator.Command)
-	assert.NotEqual(t, mutator.Name, "")
-	assert.NotEqual(t, mutator.Command, "")
+	assert.EqualValues(t, mutator, returnedMutator)
 }
 
 func TestHttpApiMutatorPut(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &MutatorsController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
 	mutatorName := "mutator1"
+	mutator := types.FixtureMutator(mutatorName)
 
-	updatedMutator := &types.Mutator{
-		Name:    mutatorName,
-		Command: "dog",
-		Timeout: 50,
-	}
+	updatedMutatorJSON, _ := json.Marshal(mutator)
 
-	updatedMutatorJSON, _ := json.Marshal(updatedMutator)
-
+	store.On("UpdateMutator", mock.AnythingOfType("*types.Mutator")).Return(nil).Run(func(args mock.Arguments) {
+		receivedMutator := args.Get(0).(*types.Mutator)
+		assert.EqualValues(t, mutator, receivedMutator)
+	})
 	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJSON))
 	putRes := processRequest(c, putReq)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
-
-	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
-	getRes := processRequest(c, getReq)
-
-	assert.Equal(t, http.StatusOK, getRes.Code)
-
-	body := getRes.Body.String()
-
-	assert.Equal(t, string(updatedMutatorJSON[:]), body)
 }
 
 func TestHttpApiMutatorPost(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &MutatorsController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
 	mutatorName := "newmutator1"
+	mutator := types.FixtureMutator(mutatorName)
 
-	updatedMutator := &types.Mutator{
-		Name:    mutatorName,
-		Command: "cat",
-		Timeout: 10,
-	}
+	updatedMutatorJSON, _ := json.Marshal(mutator)
 
-	updatedMutatorJSON, _ := json.Marshal(updatedMutator)
-
+	store.On("UpdateMutator", mock.AnythingOfType("*types.Mutator")).Return(nil).Run(func(args mock.Arguments) {
+		receivedMutator := args.Get(0).(*types.Mutator)
+		assert.EqualValues(t, mutator, receivedMutator)
+	})
 	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/mutators/%s", mutatorName), bytes.NewBuffer(updatedMutatorJSON))
 	putRes := processRequest(c, putReq)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
-
-	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
-	getRes := processRequest(c, getReq)
-
-	assert.Equal(t, http.StatusOK, getRes.Code)
-
-	body := getRes.Body.String()
-
-	assert.Equal(t, string(updatedMutatorJSON[:]), body)
 }
 
 func TestHttpApiMutatorDelete(t *testing.T) {
+	store := &mockstore.MockStore{}
+
 	c := &MutatorsController{
-		Store: fixtures.NewFixtureStore(),
+		Store: store,
 	}
 
 	mutatorName := "mutator1"
-
+	mutator := types.FixtureMutator(mutatorName)
+	store.On("GetMutatorByName", mutatorName).Return(mutator, nil)
+	store.On("DeleteMutatorByName", mutatorName).Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/mutators/%s", mutatorName), nil)
 	deleteRes := processRequest(c, deleteReq)
 
 	assert.Equal(t, http.StatusOK, deleteRes.Code)
-
-	getReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
-	getRes := processRequest(c, getReq)
-
-	assert.Equal(t, http.StatusNotFound, getRes.Code)
 }

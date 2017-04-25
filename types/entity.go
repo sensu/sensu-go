@@ -55,6 +55,6 @@ func FixtureEntity(id string) *Entity {
 	return &Entity{
 		ID:            id,
 		Class:         "host",
-		Subscriptions: []string{},
+		Subscriptions: []string{"subscription"},
 	}
 }

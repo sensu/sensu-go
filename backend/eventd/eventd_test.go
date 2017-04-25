@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestEventHandling(t *testing.T) {
@@ -45,9 +46,7 @@ func TestEventHandling(t *testing.T) {
 	mockStore.On("GetEventByEntityCheck", "entity", "check").Return(nilEvent, nil)
 	// We can't directly mock this, because we don't have access to the event that
 	// will be deserialized, so we mock it with a function pointer instead.
-	mockStore.FuncUpdateEvent = func(_ *types.Event) error {
-		return nil
-	}
+	mockStore.On("UpdateEvent", mock.AnythingOfType("*types.Event")).Return(nil)
 
 	bus.Publish(messaging.TopicEventRaw, eventBytes)
 
