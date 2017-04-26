@@ -40,7 +40,7 @@ By default, every Sensu User, Entity, and Object (i.e. check) is a member of the
 
 By default, every Entity, and Object (i.e. check) is a member of the Environment "default".
 
-The Organization "default" has a Group "default", which grants read/write permissions to every Object Type in the Environment "default". Every User is is NOT a member by default, however, it can become a member at creation time or later.
+The Organization "default" has a Group "default", which grants read/write permissions to every Object Type in the Environment "default". A User is is NOT a member by default, however, it can become a member at creation time or later.
 
 Object Types include checks, subscriptions, filters, mutators, and handlers.
 
