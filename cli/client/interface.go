@@ -15,5 +15,6 @@ type EventAPIClient interface {
 
 // CheckAPIClient client methods for checks
 type CheckAPIClient interface {
-	//  	CreateCheck(*types.Check) error
+	ListChecks() ([]types.Check, error)
+	CreateCheck(*types.Check) error
 }

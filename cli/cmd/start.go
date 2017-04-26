@@ -39,11 +39,11 @@ func configureRootCmd() *cobra.Command {
 	cmd.SetUsageTemplate(usageTemplate)
 
 	// Version flag
-	cmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print version information")
+	cmd.Flags().BoolVarP(&showVersion, "version", "v", false, "print version information")
 
 	// Global flags
-	cmd.PersistentFlags().StringP("baseURL", "", "", "Host URL of Sensu installation")
-	cmd.PersistentFlags().StringP("profile", "", "default", "Configuration values to use")
+	cmd.PersistentFlags().StringP("baseURL", "", "", "host URL of Sensu installation")
+	cmd.PersistentFlags().StringP("profile", "", "default", "configuration values to use")
 
 	return cmd
 }

@@ -1,4 +1,4 @@
-package event
+package check
 
 import (
 	"encoding/json"
@@ -13,9 +13,9 @@ import (
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "list events",
+		Short: "list checks",
 		Run: func(cmd *cobra.Command, args []string) {
-			r, err := cli.Client.ListEvents()
+			r, err := cli.Client.ListChecks()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%s\n", err)
 				os.Exit(1)
