@@ -44,5 +44,5 @@ func TestListCommandRunEClosure(t *testing.T) {
 	cmd.Run(cmd, []string{})
 	stdout.StopCapture()
 
-	assert.Regexp("something.*funny", stdout.Bytes)
+	assert.NotEmpty(stdout.Bytes)
 }

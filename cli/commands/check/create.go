@@ -110,7 +110,7 @@ func (opts *checkOpts) administerQuestionnaire() {
 		},
 	}
 
-	_ = survey.Ask(qs, opts)
+	survey.Ask(qs, opts)
 }
 
 func (opts *checkOpts) toCheck() *types.Check {
