@@ -14,6 +14,22 @@ In order to provide the fine-grained access control that our current customers h
 -- user
 ```
 
+### Permissions
+
+Each level of the tree can have read/write permissions applied to it, for each Sensu object type (i.e. checks).
+
+For example, a user with the following permissions would have the ability to read and write checks at the organizational level, but only read those in the production environment, and cannot interact with those that have the "mysql" subscription.
+
+```
+-- organization [checks: read/write]
+              |
+               --environment ("production") [checks: read]
+                           |
+                            -- subscription ("mysql") [checks: -]
+
+-- user
+```
+
 ### Users
 
 A Sensu user has a name (i.e. "portertech) and two means of authentication, a password, or a SSL client certificate. A Sensu user also has a session token, generated when a user successfully authenticates using a password, which expires after a configurable amount of time. A Sensu user session token may be used to make Sensu API requests. When using a SSL client certificate for authentication, the Sensu Backend compares the certificate with the one stored for the user.
