@@ -5,32 +5,43 @@ import (
 	"os"
 )
 
-// StdoutCapture overwrites Stdout to capture bytes written to it
-// Borrowed from testify.suite package
-// https://github.com/stretchr/testify/blob/v1.1.4/suite/suite_test.go
-type StdoutCapture struct {
-	oldStdout *os.File
-	readPipe  *os.File
-
-	Bytes string
+type FileCapture struct {
+	file          **os.File
+	originalValue *os.File
+	reader        *os.File
+	output        string
 }
 
-// StartCapture overwrites Stdout and starts capturing
-func (sc *StdoutCapture) StartCapture() {
-	sc.Bytes = ""
-	sc.oldStdout = os.Stdout
-	sc.readPipe, os.Stdout, _ = os.Pipe()
+func NewFileCapture(f **os.File) FileCapture {
+	return FileCapture{file: f}
 }
 
-// StopCapture stops capture and restores Stdout
-func (sc *StdoutCapture) StopCapture() {
-	if sc.oldStdout == nil || sc.readPipe == nil {
-		panic("StartCapture not called before StopCapture")
-	}
-	os.Stdout.Close()
-	os.Stdout = sc.oldStdout
-	bytes, err := ioutil.ReadAll(sc.readPipe)
-	if err == nil {
-		sc.Bytes = string(bytes)
-	}
+func (fc *FileCapture) Start() {
+	// copy the file into oldValue
+	fc.originalValue = *fc.file
+
+	// create a pipe returning reader and writer files, assign
+	// reference to the writer file to the file pointer
+	fc.reader, *fc.file, _ = os.Pipe()
+}
+
+func (fc *FileCapture) Stop() {
+	// store reference to the writer file
+	writer := *fc.file
+
+	// reassign the reference to the original file back to the
+	// file pointer
+	*fc.file = fc.originalValue
+
+	// close the writer file as it's no longer needed
+	writer.Close()
+
+	// store the contents of the reader as a string
+	// in fc.output
+	bytes, _ := ioutil.ReadAll(fc.reader)
+	fc.output = string(bytes)
+}
+
+func (fc *FileCapture) Output() string {
+	return fc.output
 }

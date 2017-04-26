@@ -1,6 +1,7 @@
 package check
 
 import (
+	"os"
 	"testing"
 
 	"github.com/sensu/sensu-go/cli"
@@ -28,21 +29,21 @@ func TestListCommand(t *testing.T) {
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
-	assert.NotNil(cmd.Run, "cmd should be able to be executed")
+	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
 	assert.Regexp("checks", cmd.Short)
 }
 
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
-	stdout := &test.StdoutCapture{}
+	stdout := test.NewFileCapture(&os.Stdout)
 
 	cli := &cli.SensuCli{Client: &MockCheckList{}}
 	cmd := ListCommand(cli)
 
-	stdout.StartCapture()
-	cmd.Run(cmd, []string{})
-	stdout.StopCapture()
+	stdout.Start()
+	cmd.RunE(cmd, []string{})
+	stdout.Stop()
 
-	assert.NotEmpty(stdout.Bytes)
+	assert.NotEmpty(stdout.Output())
 }

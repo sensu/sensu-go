@@ -1,8 +1,6 @@
 package check
 
 import (
-	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -28,8 +26,9 @@ const (
 // CreateCommand adds command that allows user to create new checks
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [COMMAND]",
-		Short: "create new checks",
+		Use:          "create [COMMAND]",
+		Short:        "create new checks",
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
@@ -47,17 +46,16 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			check := opts.toCheck()
 			if err := check.Validate(); err != nil {
 				if isInteractive {
-					fmt.Fprintln(os.Stderr, err)
-					os.Exit(1)
+					return err
 				} else {
+					cmd.SilenceUsage = false
 					return err
 				}
 			}
 
 			err := cli.Client.CreateCheck(check)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 
 			return nil
