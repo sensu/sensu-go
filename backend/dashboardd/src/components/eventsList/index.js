@@ -1,4 +1,7 @@
 import React, {Component} from 'react';
+import {Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn} from 'material-ui/Table';
+
+var styles = require('./eventsList.css');
 
 export default class EventsList extends Component {
   constructor(props) {
@@ -8,35 +11,31 @@ export default class EventsList extends Component {
 
   render() {
     return (
-      <div>
-      Events
-      <table class="pure-table">
-        <thead>
-          <tr>
-            <th>Entity</th>
-            <th>Check</th>
-            <th>Command</th>
-            <th>Timestamp</th>
-          </tr>
-        </thead>
-
-        <tbody>
+      <Table className={styles.table}>
+        <TableHeader>
+          <TableRow>
+            <TableHeaderColumn>Entity</TableHeaderColumn>
+            <TableHeaderColumn>Check</TableHeaderColumn>
+            <TableHeaderColumn>Command</TableHeaderColumn>
+            <TableHeaderColumn>Timestamp</TableHeaderColumn>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {Object.keys(this.props.events).map(this.renderEvent)}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
-      </div>
     );
   }
 
   renderEvent(key) {
     return (
-      <tr key={key}>
-        <td>{this.props.events[key].entity.id}</td>
-        <td>{this.props.events[key].check.name}</td>
-        <td>{this.props.events[key].check.command}</td>
-        <td>{this.props.events[key].timestamp}</td>
-      </tr>
+      <TableRow key={key}>
+        <TableRowColumn>{this.props.events[key].entity.id}</TableRowColumn>
+        <TableRowColumn>{this.props.events[key].check.name}</TableRowColumn>
+        <TableRowColumn>{this.props.events[key].check.command}</TableRowColumn>
+        <TableRowColumn>{this.props.events[key].timestamp}</TableRowColumn>
+      </TableRow>
     );
   }
 }

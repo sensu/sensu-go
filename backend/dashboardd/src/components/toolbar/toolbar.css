@@ -1,0 +1,16 @@
+.appbar {
+  left: 0;
+  right: 0 !important;
+  padding-left: 280px !important;
+  position: fixed !important;
+  width: auto !important;
+  transition: left 218ms cubic-bezier(0.4, 0, 0.2, 1);
+  -moz-transition: left 218ms cubic-bezier(0.4, 0, 0.2, 1);
+  -o-transition: left 218ms cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-transition: left 218ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wrapper {
+  position: fixed;
+  z-index: 2;
+}
