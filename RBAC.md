@@ -24,9 +24,9 @@ The Developers group also have five checks that anyone can read. The Developers 
 
 Another group of users, Support, does not have Read or Write access to the sensitive checks, but does have Read access to the non-sensitive checks and associated events.
 
-**Given a company (i.e GE):**
+**Given a company (e.g. GE):**
 
-A company has an Organization for every business unit (i.e. "predix").
+A company has an Organization for every business unit (e.g. "predix").
 
 Each business unit Organization has several Environments in order to support a traditional software development and deployment workflow, "development", "staging", and "production".
 
