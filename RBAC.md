@@ -16,13 +16,27 @@
 
 #### Examples
 
-Given a single environment:
+**Given a single Environment:**
 
 The Developers group has four checks with sensitive information in their event payloads. The Developers group has Read/Write access to those checks.
 
 The Developers group also have five checks that anyone can read. The Developers group has Read/Write access to those checks.
 
 Another group of users, Support, does not have Read or Write access to the sensitive checks, but does have Read access to the non-sensitive checks and associated events.
+
+**Given a company (i.e GE):**
+
+A company has an Organization for every business unit (i.e. "predix").
+
+Each business unit Organization has several Environments in order to support a traditional software development and deployment workflow, "development", "staging", and "production".
+
+Each business unit Organization has a Group, "support", that grants read permissions for all Object Types in the Environment "production".
+
+Each business unit Organization has a Group, "devops", that grants read/write permissions for all Object Types in the Environment "production".
+
+Support staff can only view/observe (read) monitoring in production for their business unit.
+
+Only DevOps staff are able make changes to monitoring in production for their business unit.
 
 ## Proposal
 
