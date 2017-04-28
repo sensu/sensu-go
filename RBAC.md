@@ -4,9 +4,9 @@
 
 2. A User may be a member of more than one Group.
 
-3. A Group may be granted Read or Read/Write access to a specific object type within an Environment.
+3. A Group may be granted read or read/write access to a specific object type within an Environment.
 
-4. A Group may be granted Read or Read/Write access to a specific instance of an object within an Environment (overriding the group's permissions to that object type for this object).
+4. A Group may be granted read or read/write access to a specific instance of an object within an Environment (overriding the group's permissions to that object type for this object).
 
 5. An Agent has a User.
 
@@ -14,15 +14,23 @@
 
 7. An Agent may be granted access in an automated or manual fashion to modify other Entities or create Events associated with those Entities in any Environment.
 
+8. A User may have a Role.
+
+9. A User may have more than one Role.
+
+10. A Role may be granted read access to Organizations.
+
+11. A Role may be granted access to manage Organizations, Environments, and Groups.
+
 #### Examples
 
 **Given a single Environment:**
 
-The Developers group has four checks with sensitive information in their event payloads. The Developers group has Read/Write access to those checks.
+The Developers group has four checks with sensitive information in their event payloads. The Developers group has read/write access to those checks.
 
-The Developers group also have five checks that anyone can read. The Developers group has Read/Write access to those checks.
+The Developers group also have five checks that anyone can read. The Developers group has read/write access to those checks.
 
-Another group of users, Support, does not have Read or Write access to the sensitive checks, but does have Read access to the non-sensitive checks and associated events.
+Another group of users, Support, does not have read or write access to the sensitive checks, but does have read access to the non-sensitive checks and associated events.
 
 **Given a company (e.g. GE):**
 
@@ -42,9 +50,15 @@ Only DevOps staff are able make changes to monitoring in production for their bu
 
 ### Overview
 
-In order to provide fine-grained access control, Sensu must have Organizations, Groups, Environments, Object Types, and Object Instances.
+In order to provide fine-grained access control, Sensu must have Roles, Organizations, Environments, Groups, Object Types, and Object Instances.
 
-A Sensu User can be a member of multiple Organizations.
+A Sensu User can be a member of multiple Roles.
+
+A Sensu User can be a member of a Role that grants read access to one or more Organizations.
+
+A Sensu User can be a member of a Role that grants access to manage Organizations and their Environments, and Groups.
+
+A Sensu User can be a member of a Role that grants access to manage other Roles.
 
 A Sensu User can be a member of multiple Groups within each Organization.
 
@@ -54,15 +68,21 @@ By default, every Sensu User, Entity, and Object (i.e. check) is a member of the
 
 By default, every Entity, and Object (i.e. check) is a member of the Environment "default".
 
-The Organization "default" has a Group "default", which grants read/write permissions to every Object Type in the Environment "default". A User is is NOT a member by default, however, it can become a member at creation time or later.
+The Organization "default" has a Group "default", which grants read/write permissions to every Object Type in the Environment "default". A User is is NOT a member of this Group by default, however, it can become a member at creation time or later.
 
-Object Types include checks, subscriptions, filters, mutators, and handlers.
+Object Types include Entities, Checks, Subscriptions, Filters, Mutators, and Handlers.
 
-A Sensu Environment may have one or more trusted SSL certificate chains, used to authenticate Agent Users (**WIP**).
+By default, a Sensu installation has two Roles, "admin" which grants access to create and manage Organizations, and "default" which grants access to the Organization "default".
+
+By default, a Sensu installation has a User "admin" that is a member of the Role "admin".
+
+A Sensu Environment may have one or more trusted SSL certificate chains, used to authenticate Agent Users.
 
 #### Examples
 
 ```
+-- Role
+
 -- Organization
               |
                --Group
@@ -76,6 +96,9 @@ A Sensu Environment may have one or more trusted SSL certificate chains, used to
 ```
 
 ```
+-- admin (Role)
+-- default (Role)
+
 -- default (Organization)
          |
           --default (Group)
@@ -85,6 +108,7 @@ A Sensu Environment may have one or more trusted SSL certificate chains, used to
                             -- {checks: rw, filters: rw, mutators: rw, handlers: rw} (Object Type)
                             -- {checks: {check_lb: --}} Object Instance
 
+-- admin (User)
 -- portertech (User)
 ```
 
