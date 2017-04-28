@@ -19,10 +19,16 @@ func TestTransportSendReceive(t *testing.T) {
 	testMessage := &testMessageType{"message"}
 
 	done := make(chan struct{})
-	server := NewServer()
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		transport, err := server.Serve(w, r)
+		defer func() {
+			done <- struct{}{}
+		}()
+		transport, err := Serve(w, r)
 		assert.NoError(t, err)
+		if err != nil {
+			return
+		}
 		msg, err := transport.Receive()
 
 		assert.NoError(t, err)
@@ -30,7 +36,6 @@ func TestTransportSendReceive(t *testing.T) {
 		m := &testMessageType{"message"}
 		assert.NoError(t, json.Unmarshal(msg.Payload, m))
 		assert.Equal(t, testMessage.Data, m.Data)
-		done <- struct{}{}
 	}))
 	defer ts.Close()
 
@@ -47,12 +52,16 @@ func TestTransportSendReceive(t *testing.T) {
 func TestClosedWebsocket(t *testing.T) {
 	done := make(chan struct{}, 1)
 
-	server := NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		transport, err := server.Serve(w, r)
+		defer func() {
+			done <- struct{}{}
+		}()
+		transport, err := Serve(w, r)
 		assert.NoError(t, err)
+		if err != nil {
+			return
+		}
 		transport.Connection.Close()
-		done <- struct{}{}
 	}))
 	defer ts.Close()
 
