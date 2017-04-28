@@ -5,6 +5,17 @@ import (
 	"os"
 )
 
+// FileCapture helps us write tests where we want to assert that
+// something was written to STDOUT or STDERR.
+//
+// Usage:
+//
+//   stdout := NewFileCapture(&os.Stdin)
+//   stdout.Start()
+//   fmt.Println("omgomgomg")
+//   stdout.Stop()
+//   assert.Equal("omgomgomg", stdout.Output())
+//
 type FileCapture struct {
 	file          **os.File
 	originalValue *os.File
@@ -12,10 +23,12 @@ type FileCapture struct {
 	output        string
 }
 
+// NewFileCapture instantiates new FileCapture
 func NewFileCapture(f **os.File) FileCapture {
 	return FileCapture{file: f}
 }
 
+// Start starts capturing data written to FileCapture#file
 func (fc *FileCapture) Start() {
 	// copy the file into oldValue
 	fc.originalValue = *fc.file
@@ -25,6 +38,7 @@ func (fc *FileCapture) Start() {
 	fc.reader, *fc.file, _ = os.Pipe()
 }
 
+// Stop stops capturing and reads the data to the FileCaputre#output string
 func (fc *FileCapture) Stop() {
 	// store reference to the writer file
 	writer := *fc.file
@@ -42,6 +56,7 @@ func (fc *FileCapture) Stop() {
 	fc.output = string(bytes)
 }
 
+// Output exposes the data captured; only available after capture has stopped
 func (fc *FileCapture) Output() string {
 	return fc.output
 }

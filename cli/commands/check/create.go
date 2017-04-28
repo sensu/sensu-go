@@ -45,12 +45,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			check := opts.toCheck()
 			if err := check.Validate(); err != nil {
-				if isInteractive {
-					return err
-				} else {
+				if !isInteractive {
 					cmd.SilenceUsage = false
-					return err
 				}
+				return err
 			}
 
 			err := cli.Client.CreateCheck(check)

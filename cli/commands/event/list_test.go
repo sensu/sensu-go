@@ -1,6 +1,7 @@
 package event
 
 import (
+	"os"
 	"testing"
 
 	"github.com/sensu/sensu-go/cli"
@@ -35,14 +36,14 @@ func TestListCommand(t *testing.T) {
 
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
-	stdout := &test.StdoutCapture{}
+	stdout := test.NewFileCapture(&os.Stdout)
 
 	cli := &cli.SensuCli{Client: &MockEventList{}}
 	cmd := ListCommand(cli)
 
-	stdout.StartCapture()
+	stdout.Start()
 	cmd.Run(cmd, []string{})
-	stdout.StopCapture()
+	stdout.Stop()
 
-	assert.NotEmpty(stdout.Bytes)
+	assert.NotEmpty(stdout.Output())
 }
