@@ -11,11 +11,6 @@ import (
 func TestNewConfig(t *testing.T) {
 	assert := assert.New(t)
 
-	config, err := NewConfig()
-
-	assert.NotNil(config, "NewConfig should not return nil")
-	assert.Nil(err, "Under normal circumstances no error should be returned")
-
 	// Return includes err when configuration file doesn't exist
 	ConfigFilePath = "~/.sensu/config/no_comprende"
 	config, err = NewConfig()
