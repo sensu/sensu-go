@@ -13,7 +13,7 @@ func TestNewConfig(t *testing.T) {
 
 	// Return includes err when configuration file doesn't exist
 	ConfigFilePath = "~/.sensu/config/no_comprende"
-	config, err = NewConfig()
+	config, err := NewConfig()
 
 	assert.NotNil(config, "NewConfig should still return a valid config")
 	assert.NotNil(err, "Error when the file doesn't exist")
