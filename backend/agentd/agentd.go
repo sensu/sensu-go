@@ -84,14 +84,13 @@ func (a *Agentd) Err() <-chan error {
 }
 
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := transport.Serve(w, r)
 	if err != nil {
 		logger.Error("transport error on websocket upgrade: ", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	session, err := NewSession(transport.NewTransport(conn), a.MessageBus, a.Store)
+	session, err := NewSession(conn, a.MessageBus, a.Store)
 	if err != nil {
 		logger.Error("failed to create session: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -17,14 +17,13 @@ import (
 
 func TestGoodHandshake(t *testing.T) {
 	done := make(chan struct{})
-	server := transport.NewServer()
 	var session *Session
 
 	st := &mockstore.MockStore{}
 	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
+		conn, err := transport.Serve(w, r)
 		assert.NoError(t, err)
 		bus := &messaging.WizardBus{}
 		bus.Start()
