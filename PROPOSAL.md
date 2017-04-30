@@ -22,4 +22,4 @@ A Sensu Check may have an "entity" configuration attribute, specifying an Entity
 
 ### Authorization
 
-Sensu Agents who recieve check request Events containing an Entity are assumed to be granted permission to produce an Event on its behalf. This bypasses RBAC permissions granted to a Agent's User by one or more Groups.
+Sensu Agents who receive check request Events containing an Entity are assumed to be granted permission to produce an Event on its behalf. This bypasses RBAC permissions granted to a Agent's User by one or more Groups.
