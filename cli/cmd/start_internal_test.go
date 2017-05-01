@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/sensu/sensu-go/cli/commands/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +37,7 @@ func (sc *StdoutCapture) StopCapture() (string, error) {
 
 func TestConfigureRootCmd(t *testing.T) {
 	assert := assert.New(t)
-	capture := StdoutCapture{}
+	stdout := test.NewFileCapture(&os.Stdout)
 	cmd := configureRootCmd()
 
 	assert.NotNil(cmd, "Returns a Command instance")
@@ -44,15 +45,15 @@ func TestConfigureRootCmd(t *testing.T) {
 	assert.NotNil(cmd.Flags().Lookup("version"), "Configures version flag")
 
 	// Run command w/o any flags
-	capture.StartCapture()
+	stdout.Start()
 	cmd.Run(cmd, []string{})
-	result, _ := capture.StopCapture()
-	assert.Regexp("Usage:", result)
+	stdout.Stop()
+	assert.Regexp("Usage:", stdout.Output())
 
 	// Run command w/ version flag
-	capture.StartCapture()
+	stdout.Start()
 	cmd.Flags().Set("version", "t")
 	cmd.Run(cmd, []string{})
-	result, _ = capture.StopCapture()
-	assert.Regexp("Sensu CLI version", result)
+	stdout.Stop()
+	assert.Regexp("Sensu CLI version", stdout.Output())
 }
