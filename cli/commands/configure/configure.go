@@ -21,19 +21,18 @@ type answers struct {
 // Command defines new configuration command
 func Command(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
-		Use:   "configure",
-		Short: "Configure Sensu CLI options",
+		Use:          "configure",
+		Short:        "Configure Sensu CLI options",
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			config := emptyTomlTree()
 
 			// Read configuration file
-			// TODO(james) handle case where file exists but is invalid
 			if _, err := os.Stat(client.ConfigFilePath); err == nil {
 				config, err = toml.LoadFile(client.ConfigFilePath)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "Error loading config:")
-					fmt.Fprintln(os.Stderr, err)
-					os.Exit(1)
+					return err
 				}
 			}
 
@@ -47,8 +46,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			// Get new values via interactive questions
 			v, err := gatherConfigValues(profile)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 
 			// Update profile

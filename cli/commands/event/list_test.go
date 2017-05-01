@@ -29,7 +29,7 @@ func TestListCommand(t *testing.T) {
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
-	assert.NotNil(cmd.Run, "cmd should be able to be executed")
+	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
 	assert.Regexp("events", cmd.Short)
 }
@@ -37,12 +37,30 @@ func TestListCommand(t *testing.T) {
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	stdout := test.NewFileCapture(&os.Stdout)
+	config, _ := client.NewConfig()
 
-	cli := &cli.SensuCli{Client: &MockEventList{}}
+	cli := &cli.SensuCli{Client: &MockEventList{}, Config: config}
 	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "json")
 
 	stdout.Start()
-	cmd.Run(cmd, []string{})
+	cmd.RunE(cmd, []string{})
+	stdout.Stop()
+
+	assert.NotEmpty(stdout.Output())
+}
+
+func TestListCommandRunEClosureWithTable(t *testing.T) {
+	assert := assert.New(t)
+	stdout := test.NewFileCapture(&os.Stdout)
+	config, _ := client.NewConfig()
+
+	cli := &cli.SensuCli{Client: &MockEventList{}, Config: config}
+	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "table")
+
+	stdout.Start()
+	cmd.RunE(cmd, []string{})
 	stdout.Stop()
 
 	assert.NotEmpty(stdout.Output())
