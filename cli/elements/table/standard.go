@@ -18,8 +18,6 @@ var (
 	CTATextStyle = ansi.ColorFunc("red+b:white+h") // Call To Action
 )
 
-var stdTableWriter tablewriter.Table
-
 // Row describes a value that will represent a row in our table
 type Row struct {
 	Value interface{}
@@ -62,9 +60,7 @@ func New(columns []*Column) *Table {
 // Render renders table to STDOUT given row values
 func (t *Table) Render(rows []*Row) {
 	// (Shallow) copy standard writer
-	t.writer = &tablewriter.Table{}
-	*t.writer = stdTableWriter
-
+	t.writer = newWriter()
 	t.writeColumns()
 	t.writeRows(rows)
 	t.writer.Render()
@@ -101,8 +97,8 @@ func (t *Table) writeColumns() {
 	t.writer.SetHeader(fmtTitles)
 }
 
-func init() {
-	stdTableWriter = *tablewriter.NewWriter(os.Stdout)
+func newWriter() *tablewriter.Table {
+	stdTableWriter := tablewriter.NewWriter(os.Stdout)
 
 	// Borders are extraneous; replace with unicodes spaces.
 	stdTableWriter.SetBorder(false)
@@ -114,4 +110,6 @@ func init() {
 	// We'll uniformly format the headers as bold and capitalized when we
 	// render.
 	stdTableWriter.SetAutoFormatHeaders(false)
+
+	return stdTableWriter
 }
