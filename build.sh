@@ -40,23 +40,17 @@ build_commands () {
 	fi
 
 	for cmd in agent backend cli; do
-		echo "Building $cmd for ${GOOS}-${GOARCH}"
-		out=$(build_binary $GOOS $GOARCH $cmd)
-		rm -f bin/$(basename $out)
-		cp ${out} bin
+		build_command $cmd
 	done
 }
 
-build_agent () {
-  go build -o bin/sensu-agent ${REPO_PATH}/agent/cmd/...
-}
+build_command () {
+	local cmd=$1
 
-build_backend () {
-  go build -o bin/sensu-backend ${REPO_PATH}/backend/cmd/...
-}
-
-build_cli () {
-  go build -o bin/sensu-cli ${REPO_PATH}/cli/cmd/...
+	echo "Building $cmd for ${GOOS}-${GOARCH}"
+	out=$(build_binary $GOOS $GOARCH $cmd)
+	rm -f bin/$(basename $out)
+	cp ${out} bin
 }
 
 test_commands () {
@@ -101,11 +95,11 @@ elif [ "$cmd" == "build" ]; then
 elif [ "$cmd" == "docker" ]; then
 	docker_commands
 elif [ "$cmd" == "build_agent" ]; then
-	build_agent
+	build_command agent
 elif [ "$cmd" == "build_backend" ]; then
-	build_backend
+	build_command backend
 elif [ "$cmd" == "build_cli" ]; then
-	build_cli
+	build_command cli
 else
 	install_deps
 	test_commands
