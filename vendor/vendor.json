@@ -822,12 +822,6 @@
 			"revisionTime": "2017-01-30T11:31:45Z"
 		},
 		{
-			"checksumSHA1": "spJ1eXh+9C2lgTjm7ErpjQ8PaXw=",
-			"path": "github.com/ttacon/chalk",
-			"revision": "22c06c80ed312dcb6e1cf394f9634aa2c4676e22",
-			"revisionTime": "2016-06-26T20:24:18Z"
-		},
-		{
 			"checksumSHA1": "MxLnUmfrP+r5HfCZM29+WPKebn8=",
 			"path": "github.com/ugorji/go/codec",
 			"revision": "708a42d246822952f38190a8d8c4e6b16a0e600c",
