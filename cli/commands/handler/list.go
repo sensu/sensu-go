@@ -1,7 +1,7 @@
-package event
+package handler
 
 import (
-	"time"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -14,13 +14,13 @@ import (
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
-		Short:        "list events",
+		Short:        "list handlers",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			format, _ := cmd.Flags().GetString("format")
 
-			// Fetch events from API
-			r, err := cli.Client.ListEvents()
+			// Fetch handlers from API
+			r, err := cli.Client.ListHandlers()
 			if err != nil {
 				return err
 			}
@@ -28,7 +28,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			if format == "json" {
 				helpers.PrettyPrintResultsToJSON(r)
 			} else {
-				printEventsToTable(r)
+				printHandlersToTable(r)
 			}
 
 			return nil
@@ -40,7 +40,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEventsToTable(queryResults []types.Event) {
+func printHandlersToTable(queryResults []types.Handler) {
 	rows := make([]*table.Row, len(queryResults))
 	for i, result := range queryResults {
 		rows[i] = &table.Row{Value: result}
@@ -48,33 +48,39 @@ func printEventsToTable(queryResults []types.Event) {
 
 	table := table.New([]*table.Column{
 		{
-			Title:       "Source",
+			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return event.Entity.ID
+				handler, _ := data.(types.Handler)
+				return handler.Name
 			},
 		},
 		{
-			Title: "Check",
+			Title: "Type",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return event.Check.Name
+				handler, _ := data.(types.Handler)
+				return handler.Type
 			},
 		},
 		{
-			Title: "Result",
+			Title: "Command",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return event.Check.Output
+				handler, _ := data.(types.Handler)
+				return handler.Command
 			},
 		},
 		{
-			Title: "Timestamp",
+			Title: "Mutator",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				time := time.Unix(event.Timestamp, 0)
-				return time.String()
+				handler, _ := data.(types.Handler)
+				return handler.Mutator
+			},
+		},
+		{
+			Title: "Handlers",
+			CellTransformer: func(data interface{}) string {
+				handler, _ := data.(types.Handler)
+				return strings.Join(handler.Handlers, ",")
 			},
 		},
 	})

@@ -1,4 +1,4 @@
-package check
+package handler
 
 import (
 	"errors"
@@ -11,34 +11,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockCheckList struct {
+type MockHandlerList struct {
 	client.RestClient
 }
 
-func (c *MockCheckList) ListChecks() ([]types.Check, error) {
-	return []types.Check{
-		*types.FixtureCheck("one"),
-		*types.FixtureCheck("two"),
+func (c *MockHandlerList) ListHandlers() ([]types.Handler, error) {
+	return []types.Handler{
+		*types.FixtureHandler("one"),
+		*types.FixtureHandler("two"),
 	}, nil
 }
 
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.SimpleSensuCLI(&MockCheckList{})
+	cli := test.SimpleSensuCLI(&MockHandlerList{})
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
-	assert.Regexp("checks", cmd.Short)
+	assert.Regexp("handler", cmd.Short)
 }
 
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	stdout := test.NewFileCapture(&os.Stdout)
 
-	cli := test.SimpleSensuCLI(&MockCheckList{})
+	cli := test.SimpleSensuCLI(&MockHandlerList{})
 	cmd := ListCommand(cli)
 
 	stdout.Start()
@@ -48,22 +48,22 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.NotEmpty(stdout.Output())
 }
 
-var errorFetchingChecks = errors.New("500 err")
+var errorFetchingHandlers = errors.New("500 err")
 
-type MockCheckListErr struct {
+type MockHandlerListErr struct {
 	client.RestClient
 }
 
-func (c *MockCheckListErr) ListChecks() ([]types.Check, error) {
-	return nil, errorFetchingChecks
+func (c *MockHandlerListErr) ListHandlers() ([]types.Handler, error) {
+	return nil, errorFetchingHandlers
 }
 
 func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.SimpleSensuCLI(&MockCheckListErr{})
+	cli := test.SimpleSensuCLI(&MockHandlerListErr{})
 	cmd := ListCommand(cli)
 
 	err := cmd.RunE(cmd, []string{})
 	assert.NotNil(err)
-	assert.Equal(errorFetchingChecks, err)
+	assert.Equal(errorFetchingHandlers, err)
 }

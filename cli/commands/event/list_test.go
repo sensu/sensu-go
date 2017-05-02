@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/test"
 	"github.com/sensu/sensu-go/types"
@@ -25,7 +24,7 @@ func (c *MockEventList) ListEvents() ([]types.Event, error) {
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := &cli.SensuCli{Client: &MockEventList{}}
+	cli := test.SimpleSensuCLI(&MockEventList{})
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -37,9 +36,8 @@ func TestListCommand(t *testing.T) {
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	stdout := test.NewFileCapture(&os.Stdout)
-	config, _ := client.NewConfig()
 
-	cli := &cli.SensuCli{Client: &MockEventList{}, Config: config}
+	cli := test.SimpleSensuCLI(&MockEventList{})
 	cmd := ListCommand(cli)
 	cmd.Flags().Set("format", "json")
 
@@ -53,9 +51,8 @@ func TestListCommandRunEClosure(t *testing.T) {
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	stdout := test.NewFileCapture(&os.Stdout)
-	config, _ := client.NewConfig()
 
-	cli := &cli.SensuCli{Client: &MockEventList{}, Config: config}
+	cli := test.SimpleSensuCLI(&MockEventList{})
 	cmd := ListCommand(cli)
 	cmd.Flags().Set("format", "table")
 
