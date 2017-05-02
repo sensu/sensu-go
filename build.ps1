@@ -36,16 +36,21 @@ function build_commands
 {
   echo "Running build..."
 
+  ForEach ($bin in "agent","backend","cli") {
+    build_command $bin
+  }
+}
+
+function build_command([string]$bin)
+{
   If (!(Test-Path -Path "bin")) {
     New-Item -ItemType directory -Path "bin" | out-null
   }
 
-  ForEach ($bin in "agent","backend") {
-    echo "Building $bin for $env:GOOS-$env:GOARCH"
-    $out = build_binary $env:GOOS $env:GOARCH $bin
-    Remove-Item -Path "bin/$(Split-Path -Leaf $out)" -EA SilentlyContinue
-    cp $out bin
-  }
+  echo "Building $bin for $env:GOOS-$env:GOARCH"
+  $out = build_binary $env:GOOS $env:GOARCH $bin
+  Remove-Item -Path "bin/$(Split-Path -Leaf $out)" -EA SilentlyContinue
+  cp $out bin
 }
 
 function test_commands
@@ -84,6 +89,15 @@ ElseIf ($cmd -eq "unit") {
 }
 ElseIf ($cmd -eq "build") {
   build_commands
+}
+ElseIf ($cmd -eq "build_agent") {
+  build_command "agent"
+}
+ElseIf ($cmd -eq "build_backend") {
+  build_command "backend"
+}
+ElseIf ($cmd -eq "build_cli") {
+  build_command "cli"
 }
 Else {
   install_deps

@@ -35,10 +35,6 @@ build_binary () {
 build_commands () {
 	echo "Running build..."
 
-	if [ ! -d bin/ ]; then
-		mkdir -p bin/
-	fi
-
 	for cmd in agent backend cli; do
 		build_command $cmd
 	done
@@ -46,6 +42,10 @@ build_commands () {
 
 build_command () {
 	local cmd=$1
+
+	if [ ! -d bin/ ]; then
+		mkdir -p bin/
+	fi
 
 	echo "Building $cmd for ${GOOS}-${GOARCH}"
 	out=$(build_binary $GOOS $GOARCH $cmd)
