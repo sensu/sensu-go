@@ -39,12 +39,18 @@ build_commands () {
 		mkdir -p bin/
 	fi
 
-	for cmd in agent backend; do
-		echo "Building $cmd for ${GOOS}-${GOARCH}"
-		out=$(build_binary $GOOS $GOARCH $cmd)
-		rm -f bin/$(basename $out)
-		cp ${out} bin
+	for cmd in agent backend cli; do
+		build_command $cmd
 	done
+}
+
+build_command () {
+	local cmd=$1
+
+	echo "Building $cmd for ${GOOS}-${GOARCH}"
+	out=$(build_binary $GOOS $GOARCH $cmd)
+	rm -f bin/$(basename $out)
+	cp ${out} bin
 }
 
 test_commands () {
@@ -88,6 +94,12 @@ elif [ "$cmd" == "build" ]; then
 	build_commands
 elif [ "$cmd" == "docker" ]; then
 	docker_commands
+elif [ "$cmd" == "build_agent" ]; then
+	build_command agent
+elif [ "$cmd" == "build_backend" ]; then
+	build_command backend
+elif [ "$cmd" == "build_cli" ]; then
+	build_command cli
 else
 	install_deps
 	test_commands
