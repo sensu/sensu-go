@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/coreos/etcd/pkg/fileutil"
@@ -15,7 +17,24 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&binDir, "bin-dir", "../../bin", "directory containing sensu binaries")
 	flag.Parse()
 
-	if !fileutil.Exist(binDir+"/sensu-agent") || !fileutil.Exist(binDir+"/sensu-backend") {
+	var (
+		agentBin string
+		backendBin string
+	)
+
+	switch runtime.GOOS {
+	case "windows":
+		agentBin = "sensu-agent.exe"
+		backendBin = "sensu-backend.exe"
+	default:
+		agentBin = "sensu-agent"
+		backendBin = "sensu-backend"
+	}
+
+	agentPath := filepath.Join(binDir, agentBin)
+	backendPath := filepath.Join(binDir, backendBin)
+
+	if !fileutil.Exist(agentPath) || !fileutil.Exist(backendPath) {
 		fmt.Println("missing binaries")
 		os.Exit(1)
 	}
