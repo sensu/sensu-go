@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"runtime"
+	"strings"
 )
 
 // WithTempDir runs function f within a temporary directory whose contents
@@ -34,4 +36,22 @@ func RandomPorts(p []int) error {
 		p[i] = addr.Port
 	}
 	return nil
+}
+
+// CleanOutput takes a string and strips extra characters that are not
+// consistent across platforms.
+func CleanOutput(s string) string {
+	return strings.Replace(s, "\r", "", -1)
+}
+
+// CommandPath takes a path to a command and returns a corrected path
+// for the operating system this is running on.
+func CommandPath(s string) string {
+	switch runtime.GOOS {
+	case "windows":
+		if !strings.HasSuffix(s, ".exe") {
+			return s + ".exe"
+		}
+	}
+	return strings.TrimSuffix(s, ".exe")
 }

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/coreos/etcd/pkg/fileutil"
+	"github.com/sensu/sensu-go/testing/util"
 )
 
 var binDir string
@@ -17,19 +17,8 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&binDir, "bin-dir", "../../bin", "directory containing sensu binaries")
 	flag.Parse()
 
-	var (
-		agentBin string
-		backendBin string
-	)
-
-	switch runtime.GOOS {
-	case "windows":
-		agentBin = "sensu-agent.exe"
-		backendBin = "sensu-backend.exe"
-	default:
-		agentBin = "sensu-agent"
-		backendBin = "sensu-backend"
-	}
+	agentBin := util.CommandPath("sensu-agent")
+	backendBin := util.CommandPath("sensu-backend")
 
 	agentPath := filepath.Join(binDir, agentBin)
 	backendPath := filepath.Join(binDir, backendBin)
