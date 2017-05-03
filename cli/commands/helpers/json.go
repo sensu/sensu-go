@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func PrettyPrintResultsToJSON(r interface{}) {
+func PrintResultsToPrettyJSON(r interface{}) {
 	result, _ := json.MarshalIndent(r, "", "  ")
 	fmt.Fprintf(os.Stdout, "%s\n", result)
 }

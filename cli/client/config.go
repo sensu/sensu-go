@@ -21,13 +21,20 @@ var (
 )
 
 // Config ...
-type Config struct {
+type Config interface {
+	Get(key string) interface{}
+	GetString(key string) string
+	BindPFlag(key string, flag *pflag.Flag)
+}
+
+// MultiConfig wraps viper library
+type MultiConfig struct {
 	viper *viper.Viper
 }
 
 // NewConfig reads configuration file, sets up ENV variables,
 // configures defaults and returns new a Config w/ given values.
-func NewConfig() (*Config, error) {
+func NewConfig() (*MultiConfig, error) {
 	v := viper.New()
 
 	// Set the default profile
@@ -43,11 +50,11 @@ func NewConfig() (*Config, error) {
 	v.SetConfigType("toml")
 
 	err := v.ReadInConfig()
-	return &Config{viper: v}, err
+	return &MultiConfig{viper: v}, err
 }
 
 // Get value from configuration for given key
-func (c *Config) Get(key string) interface{} {
+func (c *MultiConfig) Get(key string) interface{} {
 	if val := c.viper.Get(key); val != "" && val != nil {
 		return val
 	}
@@ -57,13 +64,13 @@ func (c *Config) Get(key string) interface{} {
 }
 
 // GetString value from configuration for given key
-func (c *Config) GetString(key string) string {
+func (c *MultiConfig) GetString(key string) string {
 	val, _ := c.Get(key).(string)
 	return val
 }
 
 // BindPFlag binds given pflag to config
-func (c *Config) BindPFlag(key string, flag *pflag.Flag) {
+func (c *MultiConfig) BindPFlag(key string, flag *pflag.Flag) {
 	if flag != nil {
 		c.viper.BindPFlag(key, flag)
 	}

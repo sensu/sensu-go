@@ -28,7 +28,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Print out events in requested format
 			if format == "json" {
-				helpers.PrettyPrintResultsToJSON(r)
+				helpers.PrintResultsToPrettyJSON(r)
 			} else {
 				printChecksToTable(r)
 			}
@@ -37,7 +37,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	helpers.AddFormatFlag(cmd.Flags(), cli)
+	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
 
 	return cmd
 }

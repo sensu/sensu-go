@@ -1,6 +1,7 @@
 package event
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -61,4 +62,24 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	stdout.Stop()
 
 	assert.NotEmpty(stdout.Output())
+}
+
+var errorFetchingEvents = errors.New("500 err")
+
+type MockEventListErr struct {
+	client.RestClient
+}
+
+func (c *MockEventListErr) ListEvents() ([]types.Event, error) {
+	return nil, errorFetchingEvents
+}
+
+func TestListCommandRunEClosureWithErr(t *testing.T) {
+	assert := assert.New(t)
+	cli := test.SimpleSensuCLI(&MockEventListErr{})
+	cmd := ListCommand(cli)
+
+	err := cmd.RunE(cmd, []string{})
+	assert.NotNil(err)
+	assert.Equal(errorFetchingEvents, err)
 }

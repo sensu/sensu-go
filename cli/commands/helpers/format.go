@@ -3,12 +3,12 @@ package helpers
 import (
 	"strings"
 
-	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/spf13/pflag"
 )
 
-func AddFormatFlag(flags *pflag.FlagSet, cli *cli.SensuCli) {
-	defaultFormat := cli.Config.GetString("format")
+func AddFormatFlag(flags *pflag.FlagSet, config client.Config) {
+	defaultFormat := config.GetString("format")
 
 	switch t := strings.ToLower(strings.TrimSpace(defaultFormat)); t {
 	case "yaml":

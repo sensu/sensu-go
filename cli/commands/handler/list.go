@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
@@ -26,7 +27,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				helpers.PrettyPrintResultsToJSON(r)
+				helpers.PrintResultsToPrettyJSON(r)
 			} else {
 				printHandlersToTable(r)
 			}
@@ -35,7 +36,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	helpers.AddFormatFlag(cmd.Flags(), cli)
+	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
 
 	return cmd
 }
@@ -81,6 +82,18 @@ func printHandlersToTable(queryResults []types.Handler) {
 			CellTransformer: func(data interface{}) string {
 				handler, _ := data.(types.Handler)
 				return strings.Join(handler.Handlers, ",")
+			},
+		},
+		{
+			Title: "Socket",
+			CellTransformer: func(data interface{}) string {
+				handler, _ := data.(types.Handler)
+
+				if len(handler.Socket.Host) > 0 {
+					return fmt.Sprintf("%s://%s:%d", handler.Type, handler.Socket.Host, handler.Socket.Port)
+				}
+
+				return ""
 			},
 		},
 	})

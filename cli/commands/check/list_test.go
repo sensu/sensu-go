@@ -48,6 +48,21 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.NotEmpty(stdout.Output())
 }
 
+func TestListCommandRunEClosureWithTable(t *testing.T) {
+	assert := assert.New(t)
+	stdout := test.NewFileCapture(&os.Stdout)
+
+	cli := test.SimpleSensuCLI(&MockCheckList{})
+	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "table")
+
+	stdout.Start()
+	cmd.RunE(cmd, []string{})
+	stdout.Stop()
+
+	assert.NotEmpty(stdout.Output())
+}
+
 var errorFetchingChecks = errors.New("500 err")
 
 type MockCheckListErr struct {
