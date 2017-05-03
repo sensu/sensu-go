@@ -3,32 +3,75 @@ package command
 
 import (
 	"context"
-	"path/filepath"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/stretchr/testify/assert"
 )
 
-var binDir = filepath.Join("..", "bin")
+func fakeCommand(command string, args ...string) *Execution {
+	cs := []string{os.Args[0], "-test.run=TestHelperProcess", "--", command}
+	cs = append(cs, args...)
+	cmdStr := strings.Join(cs, " ")
+	trimmedCmd := strings.Trim(cmdStr, " ")
+	env := []string{"GO_WANT_HELPER_PROCESS=1"}
+
+	execution := &Execution{
+		Command: trimmedCmd,
+		Env:     env,
+	}
+
+	return execution
+}
+
+func TestHelperProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+
+	command := strings.Join(os.Args[3:], " ")
+
+	stdin, _ := ioutil.ReadAll(os.Stdin)
+
+	hasArgs := len(os.Args) > 4
+	argStr := ""
+	if hasArgs {
+		argStr = strings.Join(os.Args[4:], " ")
+	}
+
+	switch command {
+	case "cat":
+		fmt.Fprintf(os.Stdout, "%s", stdin)
+	case "echo foo":
+		fmt.Fprintln(os.Stdout, argStr)
+	case "echo bar":
+		fmt.Fprintln(os.Stderr, argStr)
+	case "false":
+		os.Exit(1)
+	case "sleep 10":
+		time.Sleep(10 * time.Second)
+	}
+	os.Exit(0)
+}
 
 func TestExecuteCommand(t *testing.T) {
-	echo := &Execution{
-		Command: "echo foo",
-	}
+	// test that stdout can be read from
+	echo := fakeCommand("echo", "foo")
 
 	echoExec, echoErr := ExecuteCommand(context.Background(), echo)
 	assert.Equal(t, nil, echoErr)
-	assert.Equal(t, "foo\n", util.CleanOutput(echoExec.Output))
+	assert.Equal(t, "foo\n", echoExec.Output)
 	assert.Equal(t, 0, echoExec.Status)
 	assert.NotEqual(t, 0, echoExec.Duration)
 
-	catPath := util.CommandPath(filepath.Join(binDir, "cat"))
-
-	cat := &Execution{
-		Command: catPath,
-		Input:   "bar",
-	}
+	// test that input can be passed to a command through stdin
+	cat := fakeCommand("cat")
+	cat.Input = "bar"
 
 	catExec, catErr := ExecuteCommand(context.Background(), cat)
 	assert.Equal(t, nil, catErr)
@@ -36,11 +79,8 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, 0, catExec.Status)
 	assert.NotEqual(t, 0, catExec.Duration)
 
-	falsePath := util.CommandPath(filepath.Join(binDir, "false"))
-
-	falseCmd := &Execution{
-		Command: falsePath,
-	}
+	// test that command exit codes can be read
+	falseCmd := fakeCommand("false")
 
 	falseExec, falseErr := ExecuteCommand(context.Background(), falseCmd)
 	assert.Equal(t, nil, falseErr)
@@ -48,22 +88,18 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, 1, falseExec.Status)
 	assert.NotEqual(t, 0, falseExec.Duration)
 
-	outputs := &Execution{
-		Command: "(echo foo) && (echo bar) 1>&2",
-	}
+	// test that stderr can be read from
+	outputs := fakeCommand("echo bar 1>&2")
 
 	outputsExec, outputsErr := ExecuteCommand(context.Background(), outputs)
 	assert.Equal(t, nil, outputsErr)
-	assert.Equal(t, "foo\nbar\n", util.CleanOutput(outputsExec.Output))
+	assert.Equal(t, "bar\n", util.CleanOutput(outputsExec.Output))
 	assert.Equal(t, 0, outputsExec.Status)
 	assert.NotEqual(t, 0, outputsExec.Duration)
 
-	sleepPath := util.CommandPath(filepath.Join(binDir, "sleep"), "10")
-
-	sleep := &Execution{
-		Command: sleepPath,
-		Timeout: 1,
-	}
+	// test that commands can time out
+	sleep := fakeCommand("sleep 10")
+	sleep.Timeout = 1
 
 	sleepExec, sleepErr := ExecuteCommand(context.Background(), sleep)
 	assert.Equal(t, nil, sleepErr)
