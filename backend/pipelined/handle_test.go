@@ -5,12 +5,17 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net"
+	"path/filepath"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
+
+var binDir = filepath.Join("..", "..", "bin")
+var catPath = util.CommandPath(filepath.Join(binDir, "cat"))
 
 func TestPipelinedHandleEvent(t *testing.T) {
 	p := &Pipelined{}
@@ -89,7 +94,7 @@ func TestPipelinedPipeHandler(t *testing.T) {
 
 	handler := &types.Handler{
 		Type:    "pipe",
-		Command: "cat",
+		Command: catPath,
 	}
 
 	event := &types.Event{}

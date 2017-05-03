@@ -2,12 +2,16 @@ package agent
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"testing"
 
+	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
+
+var binDir = filepath.Join("..", "bin")
 
 func TestExecuteCheck(t *testing.T) {
 	check := types.FixtureCheck("check")
@@ -20,8 +24,8 @@ func TestExecuteCheck(t *testing.T) {
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
-	// Does this work on windows?
-	check.Command = "true"
+	truePath := util.CommandPath(filepath.Join(binDir, "true"))
+	check.Command = truePath
 
 	agent.executeCheck(event)
 
@@ -31,7 +35,8 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(t, event.Timestamp)
 	assert.Equal(t, 0, event.Check.Status)
 
-	check.Command = "false"
+	falsePath := util.CommandPath(filepath.Join(binDir, "false"))
+	check.Command = falsePath
 
 	agent.executeCheck(event)
 

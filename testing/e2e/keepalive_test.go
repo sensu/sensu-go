@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -140,9 +141,14 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
+	falsePath := util.CommandPath(filepath.Join(binDir, "false"))
+	falseAbsPath, err := filepath.Abs(falsePath)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, falseAbsPath)
+
 	check = &types.Check{
 		Name:          "testcheck2",
-		Command:       "false",
+		Command:       falseAbsPath,
 		Interval:      1,
 		Subscriptions: []string{"test"},
 	}

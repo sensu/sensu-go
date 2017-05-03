@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -46,12 +47,17 @@ func CleanOutput(s string) string {
 
 // CommandPath takes a path to a command and returns a corrected path
 // for the operating system this is running on.
-func CommandPath(s string) string {
+func CommandPath(s string, p ...string) string {
+	var command string
 	switch runtime.GOOS {
 	case "windows":
 		if !strings.HasSuffix(s, ".exe") {
-			return s + ".exe"
+			command = s + ".exe"
 		}
+	default:
+		command = strings.TrimSuffix(s, ".exe")
 	}
-	return strings.TrimSuffix(s, ".exe")
+	params := strings.Join(p, " ")
+	fullCmd := fmt.Sprintf("%s %s", command, params)
+	return strings.Trim(fullCmd, " ")
 }

@@ -25,6 +25,8 @@ type backendProcess struct {
 // Start starts a backend process as configured. All exported variables in
 // backendProcess must be configured.
 func (b *backendProcess) Start() error {
+	// path := strings.Split(os.Getenv("PATH"), filepath.ListSeparator)
+	// append([]string{bin_dir}, path...)
 	exe := filepath.Join(binDir, "sensu-backend")
 	cmd := exec.Command(exe, "start", "-d", b.StateDir, "--api-port", strconv.FormatInt(int64(b.APIPort), 10), "--agent-port", strconv.FormatInt(int64(b.AgentPort), 10), "--store-client-url", b.EtcdClientURL, "--store-peer-url", b.EtcdPeerURL, "--store-initial-cluster", b.EtcdInitialCluster)
 	stdout, err := cmd.StdoutPipe()

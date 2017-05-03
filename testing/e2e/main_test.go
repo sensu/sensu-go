@@ -23,8 +23,13 @@ func TestMain(m *testing.M) {
 	agentPath := filepath.Join(binDir, agentBin)
 	backendPath := filepath.Join(binDir, backendBin)
 
-	if !fileutil.Exist(agentPath) || !fileutil.Exist(backendPath) {
-		fmt.Println("missing binaries")
+	if !fileutil.Exist(agentPath) {
+		fmt.Println("missing agent binary: ", agentPath)
+		os.Exit(1)
+	}
+
+	if !fileutil.Exist(backendPath) {
+		fmt.Println("missing backend binary: ", backendPath)
 		os.Exit(1)
 	}
 

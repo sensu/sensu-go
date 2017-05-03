@@ -22,6 +22,16 @@ function install_deps
   go get -u github.com/golang/lint/golint
 }
 
+function build_tool_binary([string]$goos, [string]$goarch, [string]$bin)
+{
+  $outfile = "target/$goos-$goarch/$bin.exe"
+  $env:GOOS = $goos
+  $env:GOARCH = $goarch
+  go build -o $outfile "$REPO_PATH/tools/$bin/..."
+
+  return $outfile
+}
+
 function build_binary([string]$goos, [string]$goarch, [string]$bin)
 {
   $outfile = "target/$goos-$goarch/sensu-$bin.exe"
@@ -30,6 +40,27 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin)
   go build -o $outfile "$REPO_PATH/$bin/cmd/..."
 
   return $outfile
+}
+
+function build_tools
+{
+  echo "Running tool builds..."
+
+  ForEach ($bin in "cat","false","sleep","true") {
+    build_tool $bin
+  }
+}
+
+function build_tool([string]$bin)
+{
+  If (!(Test-Path -Path "bin")) {
+    New-Item -ItemType directory -Path "bin" | out-null
+  }
+
+  echo "Building $bin for $env:GOOS-$env:GOARCH"
+  $out = build_tool_binary $env:GOOS $env:GOARCH $bin
+  Remove-Item -Path "bin/$(Split-Path -Leaf $out)" -EA SilentlyContinue
+  cp $out bin
 }
 
 function build_commands
@@ -53,15 +84,20 @@ function build_command([string]$bin)
   cp $out bin
 }
 
-function test_commands
+function linter_commands
 {
-  echo "Running tests..."
+  echo "Running linter..."
 
   gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
   If ($LASTEXITCODE -ne 0) {
     echo "Linting failed..."
     exit 1
   }
+}
+
+function test_commands
+{
+  echo "Running tests..."
 
   echo "" > "coverage.txt"
   $packages = go list ./... | Select-String -pattern "testing", "vendor" -notMatch
@@ -84,11 +120,27 @@ function e2e_commands
 If ($cmd -eq "deps") {
   install_deps
 }
+ElseIf ($cmd -eq "quality") {
+  linter_commands
+  test_commands
+}
+ElseIf ($cmd -eq "lint") {
+  linter_commands
+}
 ElseIf ($cmd -eq "unit") {
   test_commands
 }
+ElseIf ($cmd -eq "build_tools") {
+  build_tools
+}
+ElseIf ($cmd -eq "e2e") {
+  e2e_commands
+}
 ElseIf ($cmd -eq "build") {
   build_commands
+}
+ElseIf ($cmd -eq "docker") {
+  # no-op for now
 }
 ElseIf ($cmd -eq "build_agent") {
   build_command "agent"
@@ -101,6 +153,8 @@ ElseIf ($cmd -eq "build_cli") {
 }
 Else {
   install_deps
+  linter_commands
+  build_tools
   test_commands
   build_commands
   e2e_commands

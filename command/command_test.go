@@ -3,12 +3,14 @@ package command
 
 import (
 	"context"
-	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/stretchr/testify/assert"
 )
+
+var binDir = filepath.Join("..", "bin")
 
 func TestExecuteCommand(t *testing.T) {
 	echo := &Execution{
@@ -21,7 +23,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, 0, echoExec.Status)
 	assert.NotEqual(t, 0, echoExec.Duration)
 
-	catPath := util.CommandPath("cat")
+	catPath := util.CommandPath(filepath.Join(binDir, "cat"))
 
 	cat := &Execution{
 		Command: catPath,
@@ -34,7 +36,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, 0, catExec.Status)
 	assert.NotEqual(t, 0, catExec.Duration)
 
-	falsePath := util.CommandPath("false")
+	falsePath := util.CommandPath(filepath.Join(binDir, "false"))
 
 	falseCmd := &Execution{
 		Command: falsePath,
@@ -56,10 +58,10 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, 0, outputsExec.Status)
 	assert.NotEqual(t, 0, outputsExec.Duration)
 
-	sleepPath := util.CommandPath("sleep")
+	sleepPath := util.CommandPath(filepath.Join(binDir, "sleep"), "10")
 
 	sleep := &Execution{
-		Command: fmt.Sprintf("%s 10", sleepPath),
+		Command: sleepPath,
 		Timeout: 1,
 	}
 
