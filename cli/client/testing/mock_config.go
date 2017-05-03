@@ -13,6 +13,7 @@ func (c *MockConfig) Get(key string) interface{} {
 	args := c.Called(key)
 	return args.Get(0)
 }
+
 func (c *MockConfig) GetString(key string) string {
 	args := c.Called(key)
 	return args.Get(0).(string)
