@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
@@ -64,10 +65,10 @@ func printHandlersToTable(queryResults []types.Handler) {
 			},
 		},
 		{
-			Title: "Command",
+			Title: "Timeout",
 			CellTransformer: func(data interface{}) string {
 				handler, _ := data.(types.Handler)
-				return handler.Command
+				return strconv.Itoa(handler.Timeout)
 			},
 		},
 		{
@@ -78,22 +79,36 @@ func printHandlersToTable(queryResults []types.Handler) {
 			},
 		},
 		{
-			Title: "Handlers",
-			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
-				return strings.Join(handler.Handlers, ",")
-			},
-		},
-		{
-			Title: "Socket",
+			Title: "Execute",
 			CellTransformer: func(data interface{}) string {
 				handler, _ := data.(types.Handler)
 
-				if len(handler.Socket.Host) > 0 {
-					return fmt.Sprintf("%s://%s:%d", handler.Type, handler.Socket.Host, handler.Socket.Port)
+				switch handler.Type {
+				case "tcp":
+					fallthrough
+				case "udp":
+					return fmt.Sprintf(
+						"%s  %s://%s:%d",
+						table.TitleStyle("SOCKET:"),
+						handler.Type,
+						handler.Socket.Host,
+						handler.Socket.Port,
+					)
+				case "pipe":
+					return fmt.Sprintf(
+						"%s %s",
+						table.TitleStyle("COMMAND:"),
+						handler.Command,
+					)
+				case "set":
+					return fmt.Sprintf(
+						"%s    %s",
+						table.TitleStyle("EXEC:"),
+						strings.Join(handler.Handlers, ","),
+					)
+				default:
+					return "UNKNOWN"
 				}
-
-				return ""
 			},
 		},
 	})
