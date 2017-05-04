@@ -84,29 +84,16 @@ func TestAgentKeepalives(t *testing.T) {
 	// We do our debug/logging output here so that we don't panic down the line and
 	// never see it. This is all pretty useful stuff. This also lets us shutdown our
 	// child processes cleanly.
+	//
+	// JK: for whatever reason, printing the stdout/stderr of the
+	// backend & agent commands here instead of in real-time makes
+	// etcd hang on Windows.
 	defer func() {
 		// We get vetshadow errors if we use err here, which is really damn
 		// annoying.
-		var dErr error
+		//var dErr error
 		bep.Kill()
 		ap.Kill()
-
-		b, dErr := ioutil.ReadAll(bep.Stderr)
-		if dErr != nil {
-			log.Panic(dErr)
-		}
-		fmt.Print(string(b))
-
-		b, dErr = ioutil.ReadAll(ap.Stderr)
-		if dErr != nil {
-			log.Panic(dErr)
-		}
-		fmt.Print(string(b))
-		b, dErr = ioutil.ReadAll(ap.Stdout)
-		if dErr != nil {
-			log.Panic(dErr)
-		}
-		fmt.Print(string(b))
 	}()
 
 	// Give it a second to make sure we've sent a keepalive.
