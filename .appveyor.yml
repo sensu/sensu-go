@@ -1,5 +1,18 @@
+clone_folder: c:\gopath\src\github.com\sensu\sensu-go
+
+environment:
+  GOPATH: c:\gopath
+
+install:
+  - echo %PATH%
+  - echo %GOPATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - go version
+  - go env
+
 platform:
   - x86
   - x64
+
 build_script:
   - ps: .\build.ps1
