@@ -1,14 +1,12 @@
 import React, {Component} from 'react';
-import {Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn} from 'material-ui/Table';
+import {Table, TableBody, TableHeader, TableHeaderColumn, TableRow} from 'material-ui/Table';
+import map from 'lodash/map';
+
+import EventRow from 'components/eventRow'
 
 var styles = require('./eventsList.css');
 
 export default class EventsList extends Component {
-  constructor(props) {
-    super(props);
-    this.renderEvent= this.renderEvent.bind(this);
-  }
-
   render() {
     return (
       <Table className={styles.table}>
@@ -21,21 +19,12 @@ export default class EventsList extends Component {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Object.keys(this.props.events).map(this.renderEvent)}
+          {map(this.props.events, (event, i) => (
+            <EventRow key={i} {...event} />
+          ))}
         </TableBody>
       </Table>
 
-    );
-  }
-
-  renderEvent(key) {
-    return (
-      <TableRow key={key}>
-        <TableRowColumn>{this.props.events[key].entity.id}</TableRowColumn>
-        <TableRowColumn>{this.props.events[key].check.name}</TableRowColumn>
-        <TableRowColumn>{this.props.events[key].check.command}</TableRowColumn>
-        <TableRowColumn>{this.props.events[key].timestamp}</TableRowColumn>
-      </TableRow>
     );
   }
 }
