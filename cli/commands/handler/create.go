@@ -68,7 +68,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("timeout", "i", "", "execution duration timeout in seconds (hard stop)")
 	cmd.Flags().String("socket-host", "", "host of handler socket")
 	cmd.Flags().String("socket-port", "", "port of handler socket")
-	cmd.Flags().StringP("handlers", "h", "", "comma separated list of handlers to call")
+	cmd.Flags().StringP("handlers", "", "", "comma separated list of handlers to call")
 
 	return cmd
 }

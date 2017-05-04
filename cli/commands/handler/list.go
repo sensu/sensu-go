@@ -89,22 +89,22 @@ func printHandlersToTable(queryResults []types.Handler, writer io.Writer) {
 					fallthrough
 				case "udp":
 					return fmt.Sprintf(
-						"%s  %s://%s:%d",
-						table.TitleStyle("SOCKET:"),
+						"%s %s://%s:%d",
+						table.TitleStyle("PUSH:"),
 						handler.Type,
 						handler.Socket.Host,
 						handler.Socket.Port,
 					)
 				case "pipe":
 					return fmt.Sprintf(
-						"%s %s",
-						table.TitleStyle("COMMAND:"),
+						"%s  %s",
+						table.TitleStyle("RUN:"),
 						handler.Command,
 					)
 				case "set":
 					return fmt.Sprintf(
-						"%s    %s",
-						table.TitleStyle("EXEC:"),
+						"%s %s",
+						table.TitleStyle("CALL:"),
 						strings.Join(handler.Handlers, ","),
 					)
 				default:
