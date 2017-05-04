@@ -2,4 +2,4 @@ platform:
   - x86
   - x64
 build_script:
-  - ps: build.ps1
+  - ps: .\build.ps1
