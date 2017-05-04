@@ -1,3 +1,3 @@
-import EventRow from './eventRow'
+import EventRow from './eventRow';
 
-export default EventRow
+export default EventRow;
