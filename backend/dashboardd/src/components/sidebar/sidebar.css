@@ -20,12 +20,6 @@
   top: 0;
   width: 256px;
   z-index: 4;
-  transform: translateZ(0);
-  transform-style: preserve-3d;
-  transition-delay: .1s;
-  transition-duration: .2s;
-  transition-property: transform,left;
-  transition-timing-function: cubic-bezier(.4,0,.2,1);
 }
 
 .wrapper {
