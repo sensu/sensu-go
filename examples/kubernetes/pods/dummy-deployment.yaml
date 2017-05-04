@@ -1,14 +1,14 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: example-service
+  name: dummy-service
 spec:
   replicas: 2
   template:
     metadata:
-      name: sensu-agent
+      name: dummy-service
       labels:
-        app: sensu
+        app: dummy-service
     spec:
       containers:
         - name: sensu-agent
@@ -16,9 +16,8 @@ spec:
           command: ["/opt/sensu/bin/sensu-agent", "start"]
           env:
             - name: SENSU_BACKEND_URL
-              value: sensu-backend.default.svc.cluster.local
+              value: ws://sensu-backend.default.svc.cluster.local:8081
             - name: SENSU_SUBSCRIPTIONS
               value: dummy
-        - name: service
+        - name: dummy-service
           image: grepory/dummy
-          command: /dummy
