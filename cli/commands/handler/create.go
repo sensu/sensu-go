@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -56,17 +57,18 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}
 
-	cmd.Flags().String("type", "t", "type of handler (pipe, tcp, udp, or set)")
-	cmd.Flags().String("mutator", "m", "Sensu event mutator (name) to use to mutate event data for the handler")
-	cmd.Flags().String("command", "c", "command to be executed. The event data is passed to the process via STDIN")
-	cmd.Flags().String("timeout", "i", "execution duration timeout in seconds (hard stop)")
+	cmd.Flags().StringP("type", "t", "", "type of handler (pipe, tcp, udp, or set)")
+	cmd.Flags().StringP("mutator", "m", "", "Sensu event mutator (name) to use to mutate event data for the handler")
+	cmd.Flags().StringP("command", "c", "", "command to be executed. The event data is passed to the process via STDIN")
+	cmd.Flags().StringP("timeout", "i", "", "execution duration timeout in seconds (hard stop)")
 	cmd.Flags().String("socket-host", "", "host of handler socket")
 	cmd.Flags().String("socket-port", "", "port of handler socket")
-	cmd.Flags().String("handlers", "h", "comma separated list of handlers to call")
+	cmd.Flags().StringP("handlers", "h", "", "comma separated list of handlers to call")
 
 	return cmd
 }

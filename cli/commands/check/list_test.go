@@ -2,30 +2,19 @@ package check
 
 import (
 	"errors"
-	"os"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/commands/test"
+	"github.com/sensu/sensu-go/cli"
+	client "github.com/sensu/sensu-go/cli/client/testing"
+	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-type MockCheckList struct {
-	client.RestClient
-}
-
-func (c *MockCheckList) ListChecks() ([]types.Check, error) {
-	return []types.Check{
-		*types.FixtureCheck("one"),
-		*types.FixtureCheck("two"),
-	}, nil
-}
-
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.SimpleSensuCLI(&MockCheckList{})
+	cli := newCLI()
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -36,49 +25,42 @@ func TestListCommand(t *testing.T) {
 
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
-	stdout := test.NewFileCapture(&os.Stdout)
 
-	cli := test.SimpleSensuCLI(&MockCheckList{})
+	cli := newCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListChecks").Return([]types.Check{
+		*types.FixtureCheck("name-one"),
+		*types.FixtureCheck("name-two"),
+	}, nil)
+
 	cmd := ListCommand(cli)
+	out, err := test.RunCmd(cmd, []string{})
 
-	stdout.Start()
-	cmd.RunE(cmd, []string{})
-	stdout.Stop()
-
-	assert.NotEmpty(stdout.Output())
+	assert.NotEmpty(out)
+	assert.Contains(out, "name-one")
+	assert.Contains(out, "name-two")
+	assert.Nil(err)
 }
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	stdout := test.NewFileCapture(&os.Stdout)
 
-	cli := test.SimpleSensuCLI(&MockCheckList{})
+	cli := newCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListChecks").Return([]types.Check{}, errors.New("my-err"))
+
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "table")
+	out, err := test.RunCmd(cmd, []string{})
 
-	stdout.Start()
-	cmd.RunE(cmd, []string{})
-	stdout.Stop()
-
-	assert.NotEmpty(stdout.Output())
-}
-
-var errorFetchingChecks = errors.New("500 err")
-
-type MockCheckListErr struct {
-	client.RestClient
-}
-
-func (c *MockCheckListErr) ListChecks() ([]types.Check, error) {
-	return nil, errorFetchingChecks
-}
-
-func TestListCommandRunEClosureWithErr(t *testing.T) {
-	assert := assert.New(t)
-	cli := test.SimpleSensuCLI(&MockCheckListErr{})
-	cmd := ListCommand(cli)
-
-	err := cmd.RunE(cmd, []string{})
 	assert.NotNil(err)
-	assert.Equal(errorFetchingChecks, err)
+	assert.Equal("my-err", err.Error())
+	assert.Empty(out)
+}
+
+func newCLI() *cli.SensuCli {
+	cli := test.NewMockCLI()
+	config := cli.Config.(*client.MockConfig)
+	config.On("GetString", "format").Return("json")
+
+	return cli
 }

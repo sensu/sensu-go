@@ -1,6 +1,7 @@
 package event
 
 import (
+	"io"
 	"time"
 
 	"github.com/sensu/sensu-go/cli"
@@ -26,9 +27,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				helpers.PrintResultsToPrettyJSON(r)
+				helpers.PrintJSON(r, cmd.OutOrStdout())
 			} else {
-				printEventsToTable(r)
+				printEventsToTable(r, cmd.OutOrStdout())
 			}
 
 			return nil
@@ -40,7 +41,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEventsToTable(queryResults []types.Event) {
+func printEventsToTable(queryResults []types.Event, io io.Writer) {
 	rows := make([]*table.Row, len(queryResults))
 	for i, result := range queryResults {
 		rows[i] = &table.Row{Value: result}
@@ -79,5 +80,5 @@ func printEventsToTable(queryResults []types.Event) {
 		},
 	})
 
-	table.Render(rows)
+	table.Render(io, rows)
 }

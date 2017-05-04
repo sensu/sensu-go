@@ -3,7 +3,7 @@ package commands
 import (
 	"testing"
 
-	"github.com/sensu/sensu-go/cli/commands/test"
+	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )

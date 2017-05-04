@@ -1,28 +1,19 @@
 package check
 
 import (
-	"os"
+	"errors"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/commands/test"
-	"github.com/sensu/sensu-go/types"
+	client "github.com/sensu/sensu-go/cli/client/testing"
+	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
-
-type MockCheckCreate struct {
-	client.RestClient
-}
-
-func (m *MockCheckCreate) CreateCheck(c *types.Check) error {
-	return nil
-}
 
 func TestCreateCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := &cli.SensuCli{Client: &MockCheckCreate{}}
+	cli := test.NewMockCLI()
 	cmd := CreateCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -31,21 +22,45 @@ func TestCreateCommand(t *testing.T) {
 	assert.Regexp("checks", cmd.Short)
 }
 
-func TestCreateCommandRunEClosure(t *testing.T) {
+func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 	assert := assert.New(t)
-	stdout := test.NewFileCapture(&os.Stdout)
-	stderr := test.NewFileCapture(&os.Stderr)
 
-	cli := &cli.SensuCli{Client: &MockCheckCreate{}}
+	cli := test.NewMockCLI()
 	cmd := CreateCommand(cli)
+	cmd.Flags().Set("interval", "sdfsa")
+	out, err := test.RunCmd(cmd, []string{"echo 'heyhey'"})
 
-	stdout.Start()
-	stderr.Start()
-	err := cmd.RunE(cmd, []string{"echo 'sensu'"})
-	stderr.Stop()
-	stdout.Stop()
-
-	assert.Empty(stdout.Output())
-	assert.Empty(stderr.Output())
+	assert.Empty(out)
 	assert.NotNil(err)
+}
+
+func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateCheck", mock.AnythingOfType("*types.Check")).Return(nil)
+
+	cmd := CreateCommand(cli)
+	cmd.Flags().Set("command", "echo 'heyhey'")
+	out, err := test.RunCmd(cmd, []string{"can-holla"})
+
+	assert.Regexp("OK", out)
+	assert.Nil(err)
+}
+
+func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateCheck", mock.AnythingOfType("*types.Check")).Return(errors.New("whoops"))
+
+	cmd := CreateCommand(cli)
+	cmd.Flags().Set("command", "echo 'heyhey'")
+	out, err := test.RunCmd(cmd, []string{"can-holla"})
+
+	assert.Empty(out)
+	assert.NotNil(err)
+	assert.Equal("whoops", err.Error())
 }

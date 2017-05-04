@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -28,9 +29,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				helpers.PrintResultsToPrettyJSON(r)
+				helpers.PrintJSON(r, cmd.OutOrStdout())
 			} else {
-				printHandlersToTable(r)
+				printHandlersToTable(r, cmd.OutOrStdout())
 			}
 
 			return nil
@@ -42,7 +43,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printHandlersToTable(queryResults []types.Handler) {
+func printHandlersToTable(queryResults []types.Handler, writer io.Writer) {
 	rows := make([]*table.Row, len(queryResults))
 	for i, result := range queryResults {
 		rows[i] = &table.Row{Value: result}
@@ -113,5 +114,5 @@ func printHandlersToTable(queryResults []types.Handler) {
 		},
 	})
 
-	table.Render(rows)
+	table.Render(writer, rows)
 }

@@ -1,11 +1,8 @@
-package test
+package testing
 
 import (
 	"io/ioutil"
 	"os"
-
-	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
 )
 
 // FileCapture helps us write tests where we want to assert that
@@ -62,14 +59,4 @@ func (fc *FileCapture) Stop() {
 // Output exposes the data captured; only available after capture has stopped
 func (fc *FileCapture) Output() string {
 	return fc.output
-}
-
-// NewSensuCLI
-func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
-	config, _ := client.NewConfig()
-
-	return &cli.SensuCli{
-		Client: apiClient,
-		Config: config,
-	}
 }

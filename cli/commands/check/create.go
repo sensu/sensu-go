@@ -1,6 +1,7 @@
 package check
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -26,7 +27,7 @@ const (
 // CreateCommand adds command that allows user to create new checks
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [COMMAND]",
+		Use:          "create [NAME]",
 		Short:        "create new checks",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -39,7 +40,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				opts.withFlags(flags)
 				if len(args) > 0 {
-					opts.Command = args[0]
+					opts.Name = args[0]
 				}
 			}
 
@@ -56,11 +57,12 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			fmt.Fprintf(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}
 
-	cmd.Flags().StringP("name", "n", "", "name of the check")
+	cmd.Flags().StringP("command", "c", "", "the command the check should run")
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of subscribers")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers")
@@ -69,7 +71,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
-	opts.Name, _ = flags.GetString("name")
+	opts.Command, _ = flags.GetString("command")
 	opts.Interval, _ = flags.GetString("interval")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")

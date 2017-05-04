@@ -1,6 +1,7 @@
 package check
 
 import (
+	"io"
 	"strconv"
 	"strings"
 
@@ -28,9 +29,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Print out events in requested format
 			if format == "json" {
-				helpers.PrintResultsToPrettyJSON(r)
+				helpers.PrintJSON(r, cmd.OutOrStdout())
 			} else {
-				printChecksToTable(r)
+				printChecksToTable(r, cmd.OutOrStdout())
 			}
 
 			return nil
@@ -42,7 +43,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printChecksToTable(queryResults []types.Check) {
+func printChecksToTable(queryResults []types.Check, io io.Writer) {
 	rows := make([]*table.Row, len(queryResults))
 	for i, result := range queryResults {
 		rows[i] = &table.Row{Value: result}
@@ -87,5 +88,5 @@ func printChecksToTable(queryResults []types.Check) {
 		},
 	})
 
-	table.Render(rows)
+	table.Render(io, rows)
 }

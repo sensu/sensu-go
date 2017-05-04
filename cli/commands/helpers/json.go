@@ -3,10 +3,10 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"io"
 )
 
-func PrintResultsToPrettyJSON(r interface{}) {
+func PrintJSON(r interface{}, io io.Writer) {
 	result, _ := json.MarshalIndent(r, "", "  ")
-	fmt.Fprintf(os.Stdout, "%s\n", result)
+	fmt.Fprintf(io, "%s\n", result)
 }
