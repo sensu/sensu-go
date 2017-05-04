@@ -4,8 +4,8 @@ environment:
   GOPATH: c:\gopath
 
   matrix:
-    - GOARCH=386
-    - GOARCH=amd64
+    - GOARCH: 386
+    - GOARCH: amd64
 
 install:
   - echo %PATH%
