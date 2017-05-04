@@ -6,7 +6,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// ListChecks fetches all handlers from configured Sensu instance
+// ListHandlers fetches all handlers from configured Sensu instance
 func (client *RestClient) ListHandlers() (handlers []types.Handler, err error) {
 	r, err := client.R().Get("/handlers")
 	if err == nil {
