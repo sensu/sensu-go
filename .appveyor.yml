@@ -3,6 +3,10 @@ clone_folder: c:\gopath\src\github.com\sensu\sensu-go
 environment:
   GOPATH: c:\gopath
 
+  matrix:
+    - GOARCH=386
+    - GOARCH=amd64
+
 install:
   - echo %PATH%
   - echo %GOPATH%
@@ -11,7 +15,6 @@ install:
   - go env
 
 platform:
-  - x86
   - x64
 
 build_script:
