@@ -1,4 +1,4 @@
-package check
+package handler
 
 import (
 	"errors"
@@ -20,7 +20,7 @@ func TestListCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
-	assert.Regexp("checks", cmd.Short)
+	assert.Regexp("handler", cmd.Short)
 }
 
 func TestListCommandRunEClosure(t *testing.T) {
@@ -28,33 +28,31 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.Check{
-		*types.FixtureCheck("name-one"),
-		*types.FixtureCheck("name-two"),
+	client.On("ListHandlers").Return([]types.Handler{
+		*types.FixtureHandler("one"),
+		*types.FixtureHandler("two"),
 	}, nil)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "name-one")
-	assert.Contains(out, "name-two")
 	assert.Nil(err)
 }
 
-func TestListCommandRunEClosureWithTable(t *testing.T) {
+func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.Check{}, errors.New("my-err"))
+	client.On("ListHandlers").Return([]types.Handler{}, errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
-	assert.NotNil(err)
-	assert.Equal("my-err", err.Error())
 	assert.Empty(out)
+	assert.NotNil(err)
+	assert.Equal("fire", err.Error())
 }
 
 func newCLI() *cli.SensuCli {

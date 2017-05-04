@@ -1,4 +1,4 @@
-package check
+package handler
 
 import (
 	"github.com/sensu/sensu-go/cli"
@@ -8,8 +8,8 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "check",
-		Short: "Manage checks",
+		Use:   "handler",
+		Short: "Manage handlers",
 	}
 
 	// Add sub-commands

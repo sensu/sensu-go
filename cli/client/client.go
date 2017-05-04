@@ -7,13 +7,13 @@ import (
 // RestClient wraps resty.Client
 type RestClient struct {
 	client *resty.Client
-	config *Config
+	config Config
 
 	configured bool
 }
 
 // New builds a new client with defaults
-func New(config *Config) *RestClient {
+func New(config Config) *RestClient {
 	c := &RestClient{client: resty.New(), config: config}
 	c.client.SetLogger(&Logger{})
 	c.client.SetHeader("Accept", "application/json")

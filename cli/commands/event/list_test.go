@@ -1,31 +1,20 @@
 package event
 
 import (
-	"os"
+	"errors"
 	"testing"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/commands/test"
+	client "github.com/sensu/sensu-go/cli/client/testing"
+	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-type MockEventList struct {
-	client.RestClient
-}
-
-func (c *MockEventList) ListEvents() ([]types.Event, error) {
-	return []types.Event{
-		*types.FixtureEvent("1", "something"),
-		*types.FixtureEvent("2", "funny"),
-	}, nil
-}
-
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := &cli.SensuCli{Client: &MockEventList{}}
+	cli := newConfiguredCLI()
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -36,32 +25,57 @@ func TestListCommand(t *testing.T) {
 
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
-	stdout := test.NewFileCapture(&os.Stdout)
-	config, _ := client.NewConfig()
+	cli := newConfiguredCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListEvents").Return([]types.Event{
+		*types.FixtureEvent("1", "something"),
+		*types.FixtureEvent("2", "funny"),
+	}, nil)
 
-	cli := &cli.SensuCli{Client: &MockEventList{}, Config: config}
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "json")
+	out, err := test.RunCmd(cmd, []string{})
 
-	stdout.Start()
-	cmd.RunE(cmd, []string{})
-	stdout.Stop()
-
-	assert.NotEmpty(stdout.Output())
+	assert.NotEmpty(out)
+	assert.Contains(out, "something")
+	assert.Contains(out, "funny")
+	assert.Nil(err)
 }
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	stdout := test.NewFileCapture(&os.Stdout)
-	config, _ := client.NewConfig()
+	cli := newConfiguredCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListEvents").Return([]types.Event{
+		*types.FixtureEvent("1", "something"),
+		*types.FixtureEvent("2", "funny"),
+	}, nil)
 
-	cli := &cli.SensuCli{Client: &MockEventList{}, Config: config}
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "table")
+	out, err := test.RunCmd(cmd, []string{})
 
-	stdout.Start()
-	cmd.RunE(cmd, []string{})
-	stdout.Stop()
+	assert.NotEmpty(out)
+	assert.Contains(out, "something")
+	assert.Contains(out, "funny")
+	assert.Nil(err)
+}
 
-	assert.NotEmpty(stdout.Output())
+func TestListCommandRunEClosureWithErr(t *testing.T) {
+	assert := assert.New(t)
+	cli := newConfiguredCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListEvents").Return([]types.Event{}, errors.New("fun-msg"))
+
+	cmd := ListCommand(cli)
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.Empty(out)
+	assert.NotNil(err)
+	assert.Equal("fun-msg", err.Error())
+}
+
+func newConfiguredCLI() *cli.SensuCli {
+	cli := test.NewMockCLI()
+	config := cli.Config.(*client.MockConfig)
+	config.On("GetString", "format").Return("json")
+	return cli
 }

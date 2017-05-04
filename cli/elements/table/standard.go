@@ -1,7 +1,7 @@
 package table
 
 import (
-	"os"
+	"io"
 
 	"github.com/mgutz/ansi"
 	"github.com/olekukonko/tablewriter"
@@ -58,9 +58,9 @@ func New(columns []*Column) *Table {
 }
 
 // Render renders table to STDOUT given row values
-func (t *Table) Render(rows []*Row) {
+func (t *Table) Render(io io.Writer, rows []*Row) {
 	// (Shallow) copy standard writer
-	t.writer = newWriter()
+	t.writer = newWriter(io)
 	t.writeColumns()
 	t.writeRows(rows)
 	t.writer.Render()
@@ -97,8 +97,8 @@ func (t *Table) writeColumns() {
 	t.writer.SetHeader(fmtTitles)
 }
 
-func newWriter() *tablewriter.Table {
-	stdTableWriter := tablewriter.NewWriter(os.Stdout)
+func newWriter(io io.Writer) *tablewriter.Table {
+	stdTableWriter := tablewriter.NewWriter(io)
 
 	// Borders are extraneous; replace with unicodes spaces.
 	stdTableWriter.SetBorder(false)

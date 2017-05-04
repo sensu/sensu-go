@@ -1,4 +1,4 @@
-package check
+package handler
 
 import (
 	"bufio"
@@ -11,28 +11,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ImportCommand adds command that allows user to create new checks from stdin
+// ImportCommand adds a command that allows user to create new handlers from STDIN
 func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "import",
-		Short:        "create new checks from STDIN",
+		Short:        "create new handlers from STDIN",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			stat, _ := os.Stdin.Stat()
+
+			// If no data is present in STDIN print out usage
 			if stat.Mode()&os.ModeNamedPipe == 0 {
-				cmd.Help() // Print out usage
+				cmd.Help()
 				return nil
 			}
 
-			check := &types.Check{}
+			handler := &types.Handler{}
 			dec := json.NewDecoder(bufio.NewReader(os.Stdin))
-			dec.Decode(check)
+			dec.Decode(handler)
 
-			if err := check.Validate(); err != nil {
+			if err := handler.Validate(); err != nil {
 				return err
 			}
 
-			err := cli.Client.CreateCheck(check)
+			err := cli.Client.CreateHandler(handler)
 			if err != nil {
 				return err
 			}

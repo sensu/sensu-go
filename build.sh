@@ -53,14 +53,18 @@ build_command () {
 	cp ${out} bin
 }
 
-test_commands () {
-	echo "Running tests..."
+linter_commands () {
+	echo "Running linter..."
 
 	gometalinter.v1 --vendor --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
 	if [ $? -ne 0 ]; then
 		echo "Linting failed..."
 		exit 1
 	fi
+}
+
+test_commands () {
+	echo "Running tests..."
 
 	echo "" > coverage.txt
 	for pkg in $(go list ./... | egrep -v '(testing|vendor)'); do
@@ -88,8 +92,13 @@ docker_commands () {
 
 if [ "$cmd" == "deps" ]; then
 	install_deps
+elif [ "$cmd" == "quality" ]; then
+	linter_commands
+	test_commands
 elif [ "$cmd" == "unit" ]; then
 	test_commands
+elif [ "$cmd" == "lint" ]; then
+	linter_commands
 elif [ "$cmd" == "build" ]; then
 	build_commands
 elif [ "$cmd" == "docker" ]; then
@@ -102,6 +111,7 @@ elif [ "$cmd" == "build_cli" ]; then
 	build_command cli
 else
 	install_deps
+	linter_commands
 	test_commands
 	build_commands
 	e2e_commands

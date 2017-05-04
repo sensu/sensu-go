@@ -1,12 +1,11 @@
 package event
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
+	"io"
 	"time"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -18,10 +17,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "list",
 		Short:        "list events",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			config := cli.Config
-			config.BindPFlag("format", cmd.Flags().Lookup("format"))
-			format := config.GetString("format")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			format, _ := cmd.Flags().GetString("format")
 
 			// Fetch events from API
 			r, err := cli.Client.ListEvents()
@@ -30,26 +27,21 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				writeEventsInJSON(&r)
+				helpers.PrintJSON(r, cmd.OutOrStdout())
 			} else {
-				writeEventsToTable(r)
+				printEventsToTable(r, cmd.OutOrStdout())
 			}
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringP("format", "f", "", "format of data returned; defaults to human readable tabular style")
+	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
 
 	return cmd
 }
 
-func writeEventsInJSON(queryResults *[]types.Event) {
-	result, _ := json.MarshalIndent(queryResults, "", "  ")
-	fmt.Fprintf(os.Stdout, "%s\n", result)
-}
-
-func writeEventsToTable(queryResults []types.Event) {
+func printEventsToTable(queryResults []types.Event, io io.Writer) {
 	rows := make([]*table.Row, len(queryResults))
 	for i, result := range queryResults {
 		rows[i] = &table.Row{Value: result}
@@ -88,5 +80,5 @@ func writeEventsToTable(queryResults []types.Event) {
 		},
 	})
 
-	table.Render(rows)
+	table.Render(io, rows)
 }

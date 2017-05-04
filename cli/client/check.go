@@ -27,3 +27,9 @@ func (client *RestClient) CreateCheck(check *types.Check) (err error) {
 
 	return
 }
+
+// DeleteCheck deletes check from configured Sensu instance
+func (client *RestClient) DeleteCheck(check *types.Check) (err error) {
+	_, err = client.R().Delete("/checks/" + check.Name)
+	return
+}
