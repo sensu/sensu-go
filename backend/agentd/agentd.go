@@ -47,7 +47,7 @@ func (a *Agentd) Start() error {
 	handler := http.HandlerFunc(a.webSocketHandler)
 
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", a.Port),
+		Addr:         fmt.Sprintf("0.0.0.0:%d", a.Port),
 		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

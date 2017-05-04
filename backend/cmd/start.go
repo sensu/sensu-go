@@ -89,7 +89,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
 	cmd.Flags().IntVar(&agentPort, "agent-port", 8081, "Agent listener port")
 	cmd.Flags().StringVar(&dashboardDir, "dashboard-dir", "./bin/dashboard", "path to sensu dashboard static assets")
-	cmd.Flags().StringVar(&dashboardHost, "dashboard-host", "127.0.0.1", "Dashboard listener host")
+	cmd.Flags().StringVar(&dashboardHost, "dashboard-host", "0.0.0.0", "Dashboard listener host")
 	cmd.Flags().IntVar(&dashboardPort, "dashboard-port", 3000, "Dashboard listener port")
 	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", defaultStateDir, "path to sensu state storage")
 

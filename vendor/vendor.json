@@ -803,6 +803,12 @@
 			"revisionTime": "2017-04-17T08:08:15Z"
 		},
 		{
+			"checksumSHA1": "HlXjt2RK4U99cs/cfKwEYLzHjT4=",
+			"path": "github.com/spf13/viper",
+			"revision": "f904a1790545169368e8d37badd19d1895d94f29",
+			"revisionTime": "2016-04-20T22:40:14Z"
+		},
+		{
 			"checksumSHA1": "EO+jcRet/AJ6IY3lBO8l8BLsZWg=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/stretchr/objx",
 			"path": "github.com/stretchr/objx",
