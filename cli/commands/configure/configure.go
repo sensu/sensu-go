@@ -3,6 +3,7 @@ package configure
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/AlecAivazis/survey"
 	toml "github.com/pelletier/go-toml"
@@ -34,6 +35,9 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 					fmt.Fprintln(os.Stderr, "Error loading config:")
 					return err
 				}
+			} else {
+				// Ensure that the path to the configuration exists
+				os.MkdirAll(path.Dir(client.ConfigFilePath), os.ModeDir)
 			}
 
 			// Get the configuation values for the specified profile
