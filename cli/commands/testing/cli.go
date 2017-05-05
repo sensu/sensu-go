@@ -2,6 +2,7 @@ package testing
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/sensu/sensu-go/cli"
@@ -37,9 +38,17 @@ func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
 func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	var err error
 
-	// So that we can caputre output we reassign cmd.output
-	reader, writer, _ := os.Pipe()
-	cmd.SetOutput(writer)
+	// So that we can capture output we reassign cmd.output
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	if err != nil {
+		log.Panic("Error creating tmpFile: ", tmpFile.Name())
+	}
+
+	defer func() {
+		os.Remove(tmpFile.Name())
+	}()
+
+	cmd.SetOutput(tmpFile)
 
 	// Run given command
 	if cmd.Run != nil {
@@ -48,12 +57,11 @@ func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 		err = cmd.RunE(cmd, args)
 	}
 
-	// Close the writer so that we do not run into
-	// a deadlock while reading
-	writer.Close()
+	// Close the file so that we can read from it
+	tmpFile.Close()
 
 	// Store the contents of the reader as a string
-	bytes, _ := ioutil.ReadAll(reader)
+	bytes, _ := ioutil.ReadFile(tmpFile.Name())
 
 	return string(bytes), err
 }

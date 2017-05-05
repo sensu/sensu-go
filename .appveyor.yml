@@ -1,0 +1,29 @@
+clone_folder: c:\gopath\src\github.com\sensu\sensu-go
+
+branches:
+  only:
+    - master
+
+image:
+  - Visual Studio 2015
+  - Visual Studio 2017
+
+environment:
+  GOPATH: c:\gopath
+
+  matrix:
+    - GOARCH: 386
+    - GOARCH: amd64
+
+install:
+  - echo %PATH%
+  - echo %GOPATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - go version
+  - go env
+
+platform:
+  - x64
+
+build_script:
+  - ps: .\build.ps1

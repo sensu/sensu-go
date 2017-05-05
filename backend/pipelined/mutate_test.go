@@ -14,7 +14,7 @@ func TestPipelinedMutate(t *testing.T) {
 
 	handler := &types.Handler{
 		Type:    "pipe",
-		Command: "cat",
+		Command: catPath,
 	}
 
 	event := &types.Event{}
@@ -44,7 +44,7 @@ func TestPipelinedPipeMutator(t *testing.T) {
 	p := &Pipelined{}
 
 	mutator := &types.Mutator{
-		Command: "cat",
+		Command: catPath,
 	}
 
 	event := &types.Event{}

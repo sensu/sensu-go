@@ -20,6 +20,18 @@ install_deps () {
 	go get -u github.com/golang/lint/golint
 }
 
+build_tool_binary () {
+	local goos=$1
+	local goarch=$2
+	local cmd=$3
+
+	local outfile="target/${goos}-${goarch}/${cmd}"
+
+	GOOS=$goos GOARCH=$goarch go build -o $outfile ${REPO_PATH}/tools/${cmd}/...
+
+	echo $outfile
+}
+
 build_binary () {
 	local goos=$1
 	local goarch=$2
@@ -32,12 +44,29 @@ build_binary () {
 	echo $outfile
 }
 
-build_commands () {
-	echo "Running build..."
+build_tools () {
+	echo "Running tool builds..."
+
+	for cmd in cat false sleep true; do
+		build_tool $cmd
+	done
+}
+
+build_tool () {
+	local cmd=$1
 
 	if [ ! -d bin/ ]; then
 		mkdir -p bin/
 	fi
+
+	echo "Building $cmd for ${GOOS}-${GOARCH}"
+	out=$(build_tool_binary $GOOS $GOARCH $cmd)
+	rm -f bin/$(basename $out)
+	cp ${out} bin
+}
+
+build_commands () {
+	echo "Running build..."
 
 	for cmd in agent backend cli; do
 		build_command $cmd
@@ -46,6 +75,10 @@ build_commands () {
 
 build_command () {
 	local cmd=$1
+
+	if [ ! -d bin/ ]; then
+		mkdir -p bin/
+	fi
 
 	echo "Building $cmd for ${GOOS}-${GOARCH}"
 	out=$(build_binary $GOOS $GOARCH $cmd)
@@ -95,10 +128,14 @@ if [ "$cmd" == "deps" ]; then
 elif [ "$cmd" == "quality" ]; then
 	linter_commands
 	test_commands
-elif [ "$cmd" == "unit" ]; then
-	test_commands
 elif [ "$cmd" == "lint" ]; then
 	linter_commands
+elif [ "$cmd" == "unit" ]; then
+	test_commands
+elif [ "$cmd" == "build_tools" ]; then
+	build_tools
+elif [ "$cmd" == "e2e" ]; then
+	e2e_commands
 elif [ "$cmd" == "build" ]; then
 	build_commands
 elif [ "$cmd" == "docker" ]; then
@@ -112,6 +149,7 @@ elif [ "$cmd" == "build_cli" ]; then
 else
 	install_deps
 	linter_commands
+	build_tools
 	test_commands
 	build_commands
 	e2e_commands

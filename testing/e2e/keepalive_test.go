@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -80,32 +81,9 @@ func TestAgentKeepalives(t *testing.T) {
 	err = ap.Start()
 	assert.NoError(t, err)
 
-	// We do our debug/logging output here so that we don't panic down the line and
-	// never see it. This is all pretty useful stuff. This also lets us shutdown our
-	// child processes cleanly.
 	defer func() {
-		// We get vetshadow errors if we use err here, which is really damn
-		// annoying.
-		var dErr error
 		bep.Kill()
 		ap.Kill()
-
-		b, dErr := ioutil.ReadAll(bep.Stderr)
-		if dErr != nil {
-			log.Panic(dErr)
-		}
-		fmt.Print(string(b))
-
-		b, dErr = ioutil.ReadAll(ap.Stderr)
-		if dErr != nil {
-			log.Panic(dErr)
-		}
-		fmt.Print(string(b))
-		b, dErr = ioutil.ReadAll(ap.Stdout)
-		if dErr != nil {
-			log.Panic(dErr)
-		}
-		fmt.Print(string(b))
 	}()
 
 	// Give it a second to make sure we've sent a keepalive.
@@ -140,9 +118,14 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
+	falsePath := util.CommandPath(filepath.Join(binDir, "false"))
+	falseAbsPath, err := filepath.Abs(falsePath)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, falseAbsPath)
+
 	check = &types.Check{
 		Name:          "testcheck2",
-		Command:       "false",
+		Command:       falseAbsPath,
 		Interval:      1,
 		Subscriptions: []string{"test"},
 	}

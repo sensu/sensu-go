@@ -1,10 +1,13 @@
 package util
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"os"
+	"runtime"
+	"strings"
 )
 
 // WithTempDir runs function f within a temporary directory whose contents
@@ -34,4 +37,27 @@ func RandomPorts(p []int) error {
 		p[i] = addr.Port
 	}
 	return nil
+}
+
+// CleanOutput takes a string and strips extra characters that are not
+// consistent across platforms.
+func CleanOutput(s string) string {
+	return strings.Replace(s, "\r", "", -1)
+}
+
+// CommandPath takes a path to a command and returns a corrected path
+// for the operating system this is running on.
+func CommandPath(s string, p ...string) string {
+	var command string
+	switch runtime.GOOS {
+	case "windows":
+		if !strings.HasSuffix(s, ".exe") {
+			command = s + ".exe"
+		}
+	default:
+		command = strings.TrimSuffix(s, ".exe")
+	}
+	params := strings.Join(p, " ")
+	fullCmd := fmt.Sprintf("%s %s", command, params)
+	return strings.Trim(fullCmd, " ")
 }

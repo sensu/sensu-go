@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"syscall"
 
 	"github.com/sensu/sensu-go/backend"
@@ -74,12 +76,22 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
+	var defaultStateDir string
+
+	switch runtime.GOOS {
+	case "windows":
+		programDataDir := os.Getenv("PROGRAMDATA")
+		defaultStateDir = filepath.Join(programDataDir, "sensu")
+	default:
+		defaultStateDir = "/var/lib/sensu"
+	}
+
 	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
 	cmd.Flags().IntVar(&agentPort, "agent-port", 8081, "Agent listener port")
 	cmd.Flags().StringVar(&dashboardDir, "dashboard-dir", "./bin/dashboard", "path to sensu dashboard static assets")
 	cmd.Flags().StringVar(&dashboardHost, "dashboard-host", "127.0.0.1", "Dashboard listener host")
 	cmd.Flags().IntVar(&dashboardPort, "dashboard-port", 3000, "Dashboard listener port")
-	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", "/var/lib/sensu", "path to sensu state storage")
+	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", defaultStateDir, "path to sensu state storage")
 
 	// For now don't set defaults for these. This allows us to control defaults on NewBackend(). We may wish
 	// to do something more interesting here as well--e.g. only expose these settings via some kind of compile

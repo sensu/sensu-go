@@ -41,6 +41,8 @@ type Execution struct {
 	// Command is the command to be executed.
 	Command string
 
+	Env []string
+
 	// Input to provide the command via STDIN.
 	Input string
 
@@ -85,6 +87,11 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		cmd = exec.CommandContext(ctx, "cmd", "/c", execution.Command)
 	} else {
 		cmd = exec.CommandContext(ctx, "sh", "-c", execution.Command)
+	}
+
+	// Set the ENV for the command if it is set
+	if len(execution.Env) > 0 {
+		cmd.Env = execution.Env
 	}
 
 	// Share an output buffer between STDOUT/ERR, following the
