@@ -4,6 +4,10 @@ branches:
   only:
     - master
 
+image:
+  - Visual Studio 2015
+  - Visual Studio 2017
+
 environment:
   GOPATH: c:\gopath
 
