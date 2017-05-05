@@ -81,13 +81,6 @@ func TestAgentKeepalives(t *testing.T) {
 	err = ap.Start()
 	assert.NoError(t, err)
 
-	// We do our debug/logging output here so that we don't panic down the line and
-	// never see it. This is all pretty useful stuff. This also lets us shutdown our
-	// child processes cleanly.
-	//
-	// JK: for whatever reason, printing the stdout/stderr of the
-	// backend & agent commands here instead of in real-time makes
-	// etcd hang on Windows.
 	defer func() {
 		// We get vetshadow errors if we use err here, which is really damn
 		// annoying.
