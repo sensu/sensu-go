@@ -2,8 +2,8 @@ package testing
 
 import (
 	"io/ioutil"
-	"os"
 	"log"
+	"os"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
@@ -45,7 +45,6 @@ func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	}
 
 	defer func() {
-		tmpFile.Close()
 		os.Remove(tmpFile.Name())
 	}()
 
