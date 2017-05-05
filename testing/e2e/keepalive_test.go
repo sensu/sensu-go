@@ -82,9 +82,6 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NoError(t, err)
 
 	defer func() {
-		// We get vetshadow errors if we use err here, which is really damn
-		// annoying.
-		//var dErr error
 		bep.Kill()
 		ap.Kill()
 	}()
