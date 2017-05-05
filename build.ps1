@@ -28,6 +28,10 @@ function build_tool_binary([string]$goos, [string]$goarch, [string]$bin)
   $env:GOOS = $goos
   $env:GOARCH = $goarch
   go build -o $outfile "$REPO_PATH/tools/$bin/..."
+  If ($LASTEXITCODE -ne 0) {
+    echo "Failed to build $outfile..."
+    exit 1
+  }
 
   return $outfile
 }
@@ -38,6 +42,10 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin)
   $env:GOOS = $goos
   $env:GOARCH = $goarch
   go build -o $outfile "$REPO_PATH/$bin/cmd/..."
+  If ($LASTEXITCODE -ne 0) {
+    echo "Failed to build $outfile..."
+    exit 1
+  }
 
   return $outfile
 }
@@ -99,14 +107,23 @@ function test_commands
 {
   echo "Running tests..."
 
+  $failed = 0
   echo "" > "coverage.txt"
   $packages = go list ./... | Select-String -pattern "testing", "vendor" -notMatch
   ForEach ($pkg in $packages) {
     go test -timeout=60s -v -coverprofile="profile.out" -covermode=atomic $pkg
+    If ($LASTEXITCODE -ne 0) {
+      $failed = 1
+    }
     If (Test-Path "profile.out") {
       cat "profile.out" >> "coverage.txt"
       rm "profile.out"
     }
+  }
+
+  If ($failed -ne 0) {
+    echo "Unit testing failed..."
+    exit 1
   }
 }
 
@@ -115,6 +132,10 @@ function e2e_commands
   echo "Running e2e tests..."
 
   go test -v $REPO_PATH/testing/e2e
+  If ($LASTEXITCODE -ne 0) {
+    echo "e2e testing failed..."
+    exit 1
+  }
 }
 
 If ($cmd -eq "deps") {
