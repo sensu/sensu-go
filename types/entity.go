@@ -33,7 +33,7 @@ type Network struct {
 // interface.
 type NetworkInterface struct {
 	Name      string   `json:"name"`
-	MAC       string   `json:"mac",omitempty`
+	MAC       string   `json:"mac,omitempty"`
 	Addresses []string `json:"addresses"`
 }
 
