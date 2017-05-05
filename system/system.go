@@ -53,7 +53,7 @@ func NetworkInfo() (types.Network, error) {
 		}
 
 		for _, address := range i.Addrs {
-			nInterface.Addresses = append(nInterface.Addresses, address.String())
+			nInterface.Addresses = append(nInterface.Addresses, address.Addr)
 		}
 
 		network.Interfaces = append(network.Interfaces, nInterface)
