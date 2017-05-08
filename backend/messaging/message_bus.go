@@ -7,6 +7,9 @@ const (
 	// normalized by eventd.
 	TopicEvent = "sensu:event"
 
+	// TopicKeepalive is the topic for keepalive events.
+	TopicKeepalive = "sensu:keepalive"
+
 	// TopicEventRaw is the Session -> Eventd channel -- for raw events directly
 	// from agents, subscribe to this.
 	TopicEventRaw = "sensu:event-raw"

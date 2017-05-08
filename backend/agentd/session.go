@@ -244,7 +244,13 @@ func (s *Session) handleKeepalive(payload []byte) error {
 
 	logger.Debug("keepalive received for entity ID: %s", keepalive.Entity.ID)
 
-	return s.store.UpdateEntity(keepalive.Entity)
+	if err := s.store.UpdateEntity(keepalive.Entity); err != nil {
+		return err
+	}
+
+	if err := s.bus.Publish(messaging.TopicKeepalive, payload); err != nil {
+		return err
+	}
 }
 
 func (s *Session) handleEvent(payload []byte) error {
