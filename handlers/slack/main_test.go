@@ -1,6 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -95,4 +100,45 @@ func TestMessageStatus(t *testing.T) {
 	event.Check.Status = 2
 	status = messageStatus(event)
 	assert.Equal("Critical", status)
+}
+
+func TestSendMessage(t *testing.T) {
+	assert := assert.New(t)
+	event := types.FixtureEvent("entity1", "check1")
+
+	var apiStub = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadAll(r.Body)
+		expectedBody := `{"channel":"#general","attachments":[{"color":"good","fallback":"RESOLVED - entity1/check1:","title":"Description","text":"","fields":[{"title":"Status","value":"Resolved","short":false},{"title":"Entity","value":"entity1","short":true},{"title":"Check","value":"check1","short":true}]}]}`
+		assert.Equal(expectedBody, string(body))
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ok": true}`))
+	}))
+
+	webhookUrl = apiStub.URL
+	err := sendMessage(event)
+	assert.NoError(err)
+}
+
+func TestMain(t *testing.T) {
+	assert := assert.New(t)
+	file, _ := ioutil.TempFile(os.TempDir(), "sensu-handler-slack-")
+	defer os.Remove(file.Name())
+
+	event := types.FixtureEvent("entity1", "check1")
+	eventJson, _ := json.Marshal(event)
+	file.WriteString(string(eventJson))
+	file.Sync()
+	file.Seek(0, 0)
+	stdin = file
+	requestReceived := false
+
+	var apiStub = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestReceived = true
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ok": true}`))
+	}))
+
+	webhookUrl = apiStub.URL
+	main()
+	assert.True(requestReceived)
 }

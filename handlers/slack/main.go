@@ -28,6 +28,7 @@ var (
 	username   string
 	iconUrl    string
 	timeout    int
+	stdin      *os.File
 
 	rootCmd = &cobra.Command{
 		Use:   "handler-slack",
@@ -163,7 +164,11 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	eventJson, err := ioutil.ReadAll(os.Stdin)
+	if stdin == nil {
+		stdin = os.Stdin
+	}
+
+	eventJson, err := ioutil.ReadAll(stdin)
 	if err != nil {
 		log.Fatal("failed to read stdin: ", err.Error())
 	}
@@ -171,7 +176,7 @@ func main() {
 	event := &types.Event{}
 	err = json.Unmarshal(eventJson, event)
 	if err != nil {
-		log.Fatal("failed to unmarshal stdin data")
+		log.Fatal("failed to unmarshal stdin data: ", eventJson)
 	}
 
 	if err = sendMessage(event); err != nil {
