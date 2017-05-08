@@ -785,10 +785,10 @@
 			"revisionTime": "2017-04-20T19:54:12Z"
 		},
 		{
-			"checksumSHA1": "9pkkhgKp3mwSreiML3plQlQYdLQ=",
+			"checksumSHA1": "dkruahfhuLXXuyeCuRpsWlcRK+8=",
 			"path": "github.com/spf13/jwalterweatherman",
-			"revision": "fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66",
-			"revisionTime": "2017-01-09T13:33:55Z"
+			"revision": "33c24e77fb80341fe7130ee7c594256ff08ccc46",
+			"revisionTime": "2016-03-01T12:00:06Z"
 		},
 		{
 			"checksumSHA1": "/iDm+vsu0bUFOgLzkeAXl0cJFXc=",
@@ -797,10 +797,10 @@
 			"revisionTime": "2017-04-18T05:23:14Z"
 		},
 		{
-			"checksumSHA1": "QMYYbMeFaLNL/UezRGhNVax5EBg=",
+			"checksumSHA1": "HlXjt2RK4U99cs/cfKwEYLzHjT4=",
 			"path": "github.com/spf13/viper",
-			"revision": "0967fc9aceab2ce9da34061253ac10fb99bba5b2",
-			"revisionTime": "2017-04-17T08:08:15Z"
+			"revision": "f904a1790545169368e8d37badd19d1895d94f29",
+			"revisionTime": "2016-04-20T22:40:14Z"
 		},
 		{
 			"checksumSHA1": "EO+jcRet/AJ6IY3lBO8l8BLsZWg=",

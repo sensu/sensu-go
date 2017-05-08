@@ -13,7 +13,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.testagent
-    command: /opt/bin/sensu-agent start --backend-url ws://backend1:8081 --subscriptions test
+    command: /opt/sensu/bin/sensu-agent start --backend-url ws://backend1:8081 --subscriptions test
     hostname: agent1
     restart: always
     links:

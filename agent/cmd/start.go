@@ -9,6 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -26,6 +27,10 @@ func init() {
 	})
 
 	rootCmd.AddCommand(newStartCommand())
+
+	viper.SetEnvPrefix("sensu")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
 }
 
 func newStartCommand() *cobra.Command {
@@ -67,8 +72,13 @@ func newStartCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&backendURL, "backend-url", "b", "ws://localhost:8081", "ws/wss URL of Sensu backend server(s)")
+	viper.BindPFlag("backend-url", cmd.Flags().Lookup("backend-url"))
+
 	cmd.Flags().StringVar(&agentID, "id", "", "agent ID (defaults to hostname)")
+	viper.BindPFlag("id", cmd.Flags().Lookup("id"))
+
 	cmd.Flags().StringVar(&subscriptions, "subscriptions", "", "comma-delimited list of agent subscriptions")
+	viper.BindPFlag("subscriptions", cmd.Flags().Lookup("subscriptions"))
 
 	return cmd
 }

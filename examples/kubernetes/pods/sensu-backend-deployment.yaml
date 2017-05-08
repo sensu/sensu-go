@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sensu-backend
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: sensu-backend
+      labels:
+        app: sensu
+    spec:
+      containers:
+        - name: sensu-backend
+          image: us.gcr.io/monitorama-166316/sensu
+          command: ["/sensu-backend", "start"]
+          ports:
+            - protocol: TCP
+              containerPort: 8080
+            - protocol: TCP
+              containerPort: 8081
+            - protocol: TCP
+              containerPort: 3000
