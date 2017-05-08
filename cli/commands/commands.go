@@ -19,4 +19,8 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		check.HelpCommand(cli),
 		handler.HelpCommand(cli),
 	)
+
+	for _, cmd := range rootCmd.Commands() {
+		rootCmd.ValidArgs = append(rootCmd.ValidArgs, cmd.Use)
+	}
 }
