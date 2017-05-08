@@ -6,12 +6,21 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands"
+	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 )
 
 func main() {
 	rootCmd := configureRootCmd()
 	sensuCli := cli.New(rootCmd.PersistentFlags())
+
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
+		if err := hooks.ConfigurationPresent(cmd, sensuCli); err != nil {
+			return err
+		}
+
+		return nil
+	}
 
 	commands.AddCommands(rootCmd, sensuCli)
 
@@ -23,13 +32,14 @@ func main() {
 func configureRootCmd() *cobra.Command {
 	showVersion := false
 	cmd := &cobra.Command{
-		Use:   "sensu-cli",
-		Short: "A tool to help manage Sensu",
+		Use:          "sensu-cli",
+		Short:        "A tool to help manage Sensu",
+		SilenceUsage: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			if showVersion {
 				showCLIVersion()
 			} else {
-				cmd.HelpFunc()(cmd, args)
+				cmd.Help()
 			}
 		},
 	}
