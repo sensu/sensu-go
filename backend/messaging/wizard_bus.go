@@ -8,9 +8,13 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-var logger = logrus.WithFields(logrus.Fields{
-	"component": "message_bus",
-})
+var (
+	sendBufferQueueLength = 10
+
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "message_bus",
+	})
+)
 
 // WizardBus is an in-memory message bus.
 type WizardBus struct {
@@ -82,7 +86,7 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 	wTopic := &WizardTopic{
 		mutex:      &sync.RWMutex{},
 		bindings:   make(map[string](chan<- []byte)),
-		sendBuffer: make(chan []byte),
+		sendBuffer: make(chan []byte, sendBufferQueueLength),
 	}
 
 	b.wg.Add(1)
@@ -195,12 +199,17 @@ func (b *WizardBus) Publish(topic string, msg []byte) error {
 	}
 
 	b.mutex.RLock()
+	defer b.mutex.RUnlock()
 
 	if wTopic, ok := b.topics[topic]; ok {
-		wTopic.sendBuffer <- msg
+		select {
+		case wTopic.sendBuffer <- msg:
+			return nil
+		default:
+			// TODO(greg): we should definitely have metrics around this.
+			return errors.New("topic buffer full")
+		}
 	}
-
-	b.mutex.RUnlock()
 
 	return nil
 }
