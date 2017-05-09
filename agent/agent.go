@@ -51,7 +51,7 @@ func NewConfig() *Config {
 	c := &Config{
 		BackendURL:        "ws://127.0.0.1:8081",
 		Subscriptions:     []string{},
-		KeepaliveInterval: 60,
+		KeepaliveInterval: 20,
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
