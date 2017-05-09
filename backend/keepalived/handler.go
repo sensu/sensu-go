@@ -26,7 +26,7 @@ func (k *Keepalived) processKeepalives() {
 				continue
 			}
 
-			err = k.KeepaliveStore.UpdateKeepalive(event.Entity.ID, event.Timestamp, event.Timestamp+DefaultKeepaliveTimeout)
+			err = k.KeepaliveStore.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout)
 			if err != nil {
 				logger.WithError(err).Error("error updating keepalive in store")
 				continue

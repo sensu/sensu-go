@@ -154,3 +154,9 @@ func (s *MockStore) UpdateKeepalive(entityID string, timestamp, expired int64) e
 	args := s.Called(entityID, timestamp, expired)
 	return args.Error(0)
 }
+
+// GetKeepalive ...
+func (s *MockStore) GetKeepalive(entityID string) (int64, error) {
+	args := s.Called(entityID)
+	return args.Get(0).(int64), args.Error(1)
+}

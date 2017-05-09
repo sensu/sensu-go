@@ -36,12 +36,16 @@ type Store interface {
 	GetEventByEntityCheck(entityID, checkID string) (*types.Event, error)
 	UpdateEvent(event *types.Event) error
 	DeleteEventByEntityCheck(entityID, checkID string) error
+
+	KeepaliveStore
 }
 
 // KeepaliveStore is responsible for updating entity keepalive data.
 type KeepaliveStore interface {
-	// UpdateKeepalive updates the current keepalive for an entity, setting the
-	// time that the timestamp was received and the time at which the keepalive
-	// expires.
-	UpdateKeepalive(entityID string, timestamp, expired int64) error
+	// UpdateKeepalive updates the current expiration time for an entity's
+	// keepalive.
+	UpdateKeepalive(entityID string, expiration int64) error
+
+	// GetKeepalive gets the current expiration for an entity's keepalive.
+	GetKeepalive(entityID string) (int64, error)
 }
