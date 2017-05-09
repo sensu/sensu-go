@@ -39,12 +39,14 @@ type NetworkInterface struct {
 
 // Validate returns an error if the entity is invalid.
 func (e *Entity) Validate() error {
-	if e.ID == "" {
-		return errors.New("entity id must not be empty")
+	err := validateName(e.ID)
+	if err != nil {
+		return errors.New("entity id " + err.Error())
 	}
 
-	if e.Class == "" {
-		return errors.New("entity string must not be empty")
+	err = validateName(e.Class)
+	if err != nil {
+		return errors.New("entity class " + err.Error())
 	}
 
 	return nil

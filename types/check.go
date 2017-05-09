@@ -47,16 +47,17 @@ type Check struct {
 
 // Validate returns an error if the check does not pass validation tests.
 func (c *Check) Validate() error {
-	if c.Name == "" {
-		return errors.New("name cannot be empty")
+	err := validateName(c.Name)
+	if err != nil {
+		return errors.New("check name " + err.Error())
 	}
 
-	if c.Interval == 0 {
-		return errors.New("interval must be greater than zero")
+	if c.Interval <= 0 {
+		return errors.New("check interval must be greater than 0")
 	}
 
 	if c.Command == "" {
-		return errors.New("must have a command")
+		return errors.New("check command must be set")
 	}
 
 	return nil

@@ -36,12 +36,14 @@ type HandlerSocket struct {
 
 // Validate returns an error if the handler does not pass validation tests.
 func (h *Handler) Validate() error {
-	if h.Type == "" {
-		return errors.New("must have a type")
+	err := validateName(h.Name)
+	if err != nil {
+		return errors.New("handler name " + err.Error())
 	}
 
-	if h.Name == "" {
-		return errors.New("name cannot be empty")
+	err = validateHandlerType(h.Type)
+	if err != nil {
+		return errors.New("handler type " + err.Error())
 	}
 
 	return nil

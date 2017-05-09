@@ -15,13 +15,14 @@ type Mutator struct {
 }
 
 // Validate returns an error if the mutator does not pass validation tests.
-func (c *Mutator) Validate() error {
-	if c.Name == "" {
-		return errors.New("name cannot be empty")
+func (m *Mutator) Validate() error {
+	err := validateName(m.Name)
+	if err != nil {
+		return errors.New("mutator name " + err.Error())
 	}
 
-	if c.Command == "" {
-		return errors.New("must have a command")
+	if m.Command == "" {
+		return errors.New("mutator command must be set")
 	}
 
 	return nil
