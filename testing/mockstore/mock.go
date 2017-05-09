@@ -150,8 +150,8 @@ func (s *MockStore) DeleteEventByEntityCheck(entityID, checkID string) error {
 }
 
 // UpdateKeepalive ...
-func (s *MockStore) UpdateKeepalive(entityID string, timestamp, expired int64) error {
-	args := s.Called(entityID, timestamp, expired)
+func (s *MockStore) UpdateKeepalive(entityID string, expiration int64) error {
+	args := s.Called(entityID, expiration)
 	return args.Error(0)
 }
 
