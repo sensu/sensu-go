@@ -28,8 +28,11 @@ func TestHTTPListener(t *testing.T) {
 		fmt.Println(initCluster)
 
 		b, err := NewBackend(&Config{
+			AgentHost:           "127.0.0.1",
 			AgentPort:           agentPort,
+			APIHost:             "127.0.0.1",
 			APIPort:             apiPort,
+			DashboardHost:       "127.0.0.1",
 			StateDir:            path,
 			EtcdClientListenURL: clURL,
 			EtcdPeerListenURL:   apURL,

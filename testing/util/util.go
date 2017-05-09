@@ -24,7 +24,7 @@ func WithTempDir(f func(string)) {
 // RandomPorts generates len(p) random ports and assigns them to elements of p.
 func RandomPorts(p []int) error {
 	for i := range p {
-		l, err := net.Listen("tcp", ":0")
+		l, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			return err
 		}

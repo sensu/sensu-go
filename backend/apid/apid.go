@@ -22,6 +22,7 @@ type APId struct {
 	errChan  chan error
 
 	Store         store.Store
+	Host          string
 	Port          int
 	BackendStatus func() types.StatusMap
 }
@@ -41,7 +42,7 @@ func (a *APId) Start() error {
 	router := httpRouter(a)
 
 	server := &http.Server{
-		Addr:         fmt.Sprintf("0.0.0.0:%d", a.Port),
+		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

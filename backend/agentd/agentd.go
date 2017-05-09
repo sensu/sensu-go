@@ -28,6 +28,7 @@ type Agentd struct {
 	errChan  chan error
 
 	Store      store.Store
+	Host       string
 	Port       int
 	MessageBus messaging.MessageBus
 }
@@ -47,7 +48,7 @@ func (a *Agentd) Start() error {
 	handler := http.HandlerFunc(a.webSocketHandler)
 
 	server := &http.Server{
-		Addr:         fmt.Sprintf("0.0.0.0:%d", a.Port),
+		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

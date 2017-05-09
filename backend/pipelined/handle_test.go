@@ -127,7 +127,7 @@ func TestPipelinedTcpHandler(t *testing.T) {
 	eventData, _ := json.Marshal(event)
 
 	go func() {
-		listener, err := net.Listen("tcp", ":5678")
+		listener, err := net.Listen("tcp", "127.0.0.1:5678")
 		assert.NoError(t, err)
 		if err != nil {
 			return
