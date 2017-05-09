@@ -242,15 +242,21 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive does not contain an entity")
 	}
 
-	logger.Debug("keepalive received for entity ID: %s", keepalive.Entity.ID)
+	entity := keepalive.Entity
 
-	if err := s.store.UpdateEntity(keepalive.Entity); err != nil {
+	logger.Debug("keepalive received for entity ID: %s", entity.ID)
+
+	entity.LastSeen = keepalive.Timestamp
+
+	if err := s.store.UpdateEntity(entity); err != nil {
 		return err
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, payload); err != nil {
 		return err
 	}
+
+	return nil
 }
 
 func (s *Session) handleEvent(payload []byte) error {
