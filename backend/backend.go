@@ -25,8 +25,10 @@ var (
 
 // Config specifies a Backend configuration.
 type Config struct {
-	APIPort             int
+	AgentHost           string
 	AgentPort           int
+	APIHost             string
+	APIPort             int
 	DashboardDir        string
 	DashboardHost       string
 	DashboardPort       int
@@ -145,6 +147,7 @@ func (b *Backend) Run() error {
 
 	b.apid = &apid.APId{
 		Store:         st,
+		Host:          b.Config.APIHost,
 		Port:          b.Config.APIPort,
 		BackendStatus: b.Status,
 	}
@@ -154,6 +157,7 @@ func (b *Backend) Run() error {
 
 	b.agentd = &agentd.Agentd{
 		Store:      st,
+		Host:       b.Config.AgentHost,
 		Port:       b.Config.AgentPort,
 		MessageBus: b.messageBus,
 	}

@@ -12,7 +12,9 @@ import (
 )
 
 var (
+	agentHost     string
 	agentPort     int
+	apiHost       string
 	apiPort       int
 	dashboardDir  string
 	dashboardHost string
@@ -34,7 +36,9 @@ func newStartCommand() *cobra.Command {
 		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := &backend.Config{
+				AgentHost:     agentHost,
 				AgentPort:     agentPort,
+				APIHost:       apiHost,
 				APIPort:       apiPort,
 				DashboardDir:  dashboardDir,
 				DashboardHost: dashboardHost,
@@ -86,8 +90,10 @@ func newStartCommand() *cobra.Command {
 		defaultStateDir = "/var/lib/sensu"
 	}
 
-	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
+	cmd.Flags().StringVar(&agentHost, "agent-host", "0.0.0.0", "Agent listener host")
 	cmd.Flags().IntVar(&agentPort, "agent-port", 8081, "Agent listener port")
+	cmd.Flags().StringVar(&apiHost, "api-host", "0.0.0.0", "HTTP API listener host")
+	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
 	cmd.Flags().StringVar(&dashboardDir, "dashboard-dir", "./bin/dashboard", "path to sensu dashboard static assets")
 	cmd.Flags().StringVar(&dashboardHost, "dashboard-host", "0.0.0.0", "Dashboard listener host")
 	cmd.Flags().IntVar(&dashboardPort, "dashboard-port", 3000, "Dashboard listener port")
