@@ -102,6 +102,7 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.Equal(t, "TestKeepalives", entities[0].ID)
 	assert.Equal(t, "agent", entities[0].Class)
 	assert.NotEmpty(t, entities[0].System.Hostname)
+	assert.NotZero(t, entities[0].LastSeen)
 
 	check := &types.Check{
 		Name:          "testcheck",
