@@ -140,6 +140,29 @@ func TestCheckStorage(t *testing.T) {
 	})
 }
 
+func TestAssetStorage(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		asset := types.FixtureAsset("ruby")
+
+		err := store.UpdateAsset(asset)
+		assert.NoError(t, err)
+
+		retrieved, err := store.GetAssetByName("ruby")
+		assert.NoError(t, err)
+		assert.NotNil(t, retrieved)
+
+		assert.Equal(t, asset.Name, retrieved.Name)
+		assert.Equal(t, asset.URL, retrieved.URL)
+		assert.Equal(t, asset.Hash, retrieved.Hash)
+		assert.Equal(t, asset.Metadata, retrieved.Metadata)
+
+		assets, err := store.GetAssets()
+		assert.NoError(t, err)
+		assert.NotEmpty(t, assets)
+		assert.Equal(t, 1, len(assets))
+	})
+}
+
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		sysinfo, _ := system.Info()

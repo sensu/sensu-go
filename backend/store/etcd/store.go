@@ -32,6 +32,10 @@ func getEventsPath(args ...string) string {
 	return fmt.Sprintf("%s/events/%s", etcdRoot, strings.Join(args, "/"))
 }
 
+func getAssetsPath(name string) string {
+	return fmt.Sprintf("%s/assets/%s", etcdRoot, name)
+}
+
 // Store is an implementation of the sensu-go/backend/store.Store iface.
 type etcdStore struct {
 	client *clientv3.Client
@@ -344,6 +348,70 @@ func (s *etcdStore) DeleteEventByEntityCheck(entityID, checkID string) error {
 	}
 
 	_, err := s.kvc.Delete(context.TODO(), getEventsPath(entityID, checkID))
+	return err
+}
+
+// Asset
+
+// GetAssets fetches all assets from the store
+func (s *etcdStore) GetAssets() ([]*types.Asset, error) {
+	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(""), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	assetArray := make([]*types.Asset, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		err = json.Unmarshal(kv.Value, assetArray[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return assetArray, nil
+}
+
+func (s *etcdStore) GetAssetByName(name string) (*types.Asset, error) {
+	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(name))
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	assetBytes := resp.Kvs[0].Value
+	asset := &types.Asset{}
+	if err := json.Unmarshal(assetBytes, asset); err != nil {
+		return nil, err
+	}
+
+	return asset, nil
+}
+
+func (s *etcdStore) UpdateAsset(asset *types.Asset) error {
+	if err := asset.Validate(); err != nil {
+		return err
+	}
+
+	assetBytes, err := json.Marshal(asset)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.kvc.Put(context.TODO(), getAssetsPath(asset.Name), string(assetBytes))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *etcdStore) DeleteAssetByName(name string) error {
+	_, err := s.kvc.Delete(context.TODO(), getAssetsPath(name))
 	return err
 }
 
