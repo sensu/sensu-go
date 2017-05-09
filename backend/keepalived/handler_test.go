@@ -14,10 +14,10 @@ func TestInvalidJSON(t *testing.T) {
 	store := &mockstore.MockStore{}
 
 	event1 := types.FixtureEvent("entity1", "check")
-	store.On("UpdateKeepalive", event1.Entity.ID, event1.Timestamp, event1.Timestamp+DefaultKeepaliveTimeout).Return(nil)
+	store.On("UpdateKeepalive", event1.Entity.ID, event1.Timestamp+DefaultKeepaliveTimeout).Return(nil)
 
 	event2 := types.FixtureEvent("entity2", "check")
-	store.On("UpdateKeepalive", event2.Entity.ID, event2.Timestamp, event2.Timestamp+DefaultKeepaliveTimeout).Return(errors.New(""))
+	store.On("UpdateKeepalive", event2.Entity.ID, event2.Timestamp+DefaultKeepaliveTimeout).Return(errors.New(""))
 
 	k := &Keepalived{}
 
