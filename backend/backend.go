@@ -184,8 +184,8 @@ func (b *Backend) Run() error {
 	}
 
 	b.keepalived = &keepalived.Keepalived{
-		KeepaliveStore: st,
-		MessageBus:     b.messageBus,
+		Store:      st,
+		MessageBus: b.messageBus,
 	}
 	if err := b.keepalived.Start(); err != nil {
 		return err
