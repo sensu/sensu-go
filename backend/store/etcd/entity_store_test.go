@@ -10,9 +10,7 @@ import (
 
 func TestEntityStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		entity := &types.Entity{
-			ID: "0",
-		}
+		entity := types.FixtureEntity("entity")
 		err := store.UpdateEntity(entity)
 		assert.NoError(t, err)
 		retrieved, err := store.GetEntityByID(entity.ID)
