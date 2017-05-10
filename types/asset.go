@@ -2,9 +2,13 @@ package types
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"io"
+	"net/http"
 	"net/url"
+	"time"
 )
 
 // Asset defines an asset agents install as a dependency for a check.
@@ -46,6 +50,24 @@ func (a *Asset) Validate() error {
 	}
 
 	return nil
+}
+
+// UpdateHash sets Hash value from given URL
+func (a *Asset) UpdateHash() (err error) {
+	netClient := &http.Client{Timeout: time.Second * 10}
+	h := sha256.New()
+
+	r, err := netClient.Get(a.URL)
+	if err != nil {
+		return
+	}
+
+	if _, err = io.Copy(h, r.Body); err != nil {
+		return
+	}
+
+	a.Hash = string(h.Sum(nil))
+	return
 }
 
 // FixtureAsset given a name returns a valid asset for use in tests
