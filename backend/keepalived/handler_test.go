@@ -8,12 +8,14 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestInvalidJSON(t *testing.T) {
 	store := &mockstore.MockStore{}
 
 	event1 := types.FixtureEvent("entity1", "check")
+	store.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 	store.On("UpdateKeepalive", event1.Entity.ID, event1.Timestamp+DefaultKeepaliveTimeout).Return(nil)
 
 	event2 := types.FixtureEvent("entity2", "check")
@@ -25,7 +27,7 @@ func TestInvalidJSON(t *testing.T) {
 	messageBus.Start()
 	defer messageBus.Stop()
 	k.MessageBus = messageBus
-	k.KeepaliveStore = store
+	k.Store = store
 	k.Start()
 	k.keepaliveChan <- []byte(".")
 

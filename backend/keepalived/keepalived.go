@@ -17,9 +17,9 @@ const (
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
-	MessageBus     messaging.MessageBus
-	HandlerCount   int
-	KeepaliveStore store.KeepaliveStore
+	MessageBus   messaging.MessageBus
+	HandlerCount int
+	Store        store.Store
 
 	wg            *sync.WaitGroup
 	stopping      chan struct{}
@@ -34,7 +34,7 @@ func (k *Keepalived) Start() error {
 		return errors.New("no message bus found")
 	}
 
-	if k.KeepaliveStore == nil {
+	if k.Store == nil {
 		return errors.New("no keepalive store found")
 	}
 

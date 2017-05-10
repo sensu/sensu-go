@@ -19,7 +19,7 @@ func TestStartStop(t *testing.T) {
 	defer messageBus.Stop()
 
 	store := &mockstore.MockStore{}
-	k.KeepaliveStore = store
+	k.Store = store
 	assert.NoError(t, k.Start())
 
 	assert.NoError(t, k.Status())

@@ -21,14 +21,24 @@ func (k *Keepalived) processKeepalives() {
 		select {
 		case msg, ok := <-k.keepaliveChan:
 			if ok {
-				err := json.Unmarshal(msg, event)
-				if err != nil {
+				if err := json.Unmarshal(msg, event); err != nil {
 					logger.WithError(err).Error("error unmarshaling keepliave event")
 					continue
 				}
 
-				err = k.KeepaliveStore.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout)
-				if err != nil {
+				entity := event.Entity
+				if err := entity.Validate(); err != nil {
+					logger.WithError(err).Error("invalid keepalive event")
+					continue
+				}
+				entity.LastSeen = event.Timestamp
+
+				if err := k.Store.UpdateEntity(entity); err != nil {
+					logger.WithError(err).Error("error updating entity in store")
+					continue
+				}
+
+				if err := k.Store.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
 					logger.WithError(err).Error("error updating keepalive in store")
 					continue
 				}
