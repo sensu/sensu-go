@@ -7,7 +7,7 @@ import (
 )
 
 func getKeepalivePath(entityID string) string {
-	return fmt.Sprintf("%s/entities/keepalives/%s", etcdRoot, entityID)
+	return fmt.Sprintf("%s/keepalives/%s", etcdRoot, entityID)
 }
 
 func (s *etcdStore) GetKeepalive(entityID string) (int64, error) {
