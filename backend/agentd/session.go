@@ -242,9 +242,11 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive does not contain an entity")
 	}
 
-	logger.Debug("keepalive received for entity ID: %s", keepalive.Entity.ID)
+	if keepalive.Timestamp == 0 {
+		return errors.New("keepalive contains invalid timestamp")
+	}
 
-	return s.store.UpdateEntity(keepalive.Entity)
+	return s.bus.Publish(messaging.TopicKeepalive, payload)
 }
 
 func (s *Session) handleEvent(payload []byte) error {

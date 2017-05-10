@@ -1,6 +1,8 @@
 package store
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/types"
+)
 
 // A Store is responsible for managing durable state for Sensu backends.
 type Store interface {
@@ -34,4 +36,16 @@ type Store interface {
 	GetEventByEntityCheck(entityID, checkID string) (*types.Event, error)
 	UpdateEvent(event *types.Event) error
 	DeleteEventByEntityCheck(entityID, checkID string) error
+
+	KeepaliveStore
+}
+
+// KeepaliveStore is responsible for updating entity keepalive data.
+type KeepaliveStore interface {
+	// UpdateKeepalive updates the current expiration time for an entity's
+	// keepalive.
+	UpdateKeepalive(entityID string, expiration int64) error
+
+	// GetKeepalive gets the current expiration for an entity's keepalive.
+	GetKeepalive(entityID string) (int64, error)
 }

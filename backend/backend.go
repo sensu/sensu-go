@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/eventd"
+	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/schedulerd"
@@ -54,6 +55,7 @@ type Backend struct {
 	dashboardd daemon.Daemon
 	eventd     daemon.Daemon
 	pipelined  daemon.Daemon
+	keepalived daemon.Daemon
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -185,6 +187,14 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	b.keepalived = &keepalived.Keepalived{
+		Store:      st,
+		MessageBus: b.messageBus,
+	}
+	if err := b.keepalived.Start(); err != nil {
+		return err
+	}
+
 	inErrChan := make(chan error)
 
 	go func() {
@@ -217,6 +227,10 @@ func (b *Backend) Run() error {
 
 	go func() {
 		inErrChan <- <-b.eventd.Err()
+	}()
+
+	go func() {
+		inErrChan <- <-b.keepalived.Err()
 	}()
 
 	select {
