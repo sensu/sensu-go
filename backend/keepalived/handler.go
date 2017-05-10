@@ -19,17 +19,19 @@ func (k *Keepalived) processKeepalives() {
 
 	for {
 		select {
-		case msg := <-k.keepaliveChan:
-			err := json.Unmarshal(msg, event)
-			if err != nil {
-				logger.WithError(err).Error("error unmarshaling keepliave event")
-				continue
-			}
+		case msg, ok := <-k.keepaliveChan:
+			if ok {
+				err := json.Unmarshal(msg, event)
+				if err != nil {
+					logger.WithError(err).Error("error unmarshaling keepliave event")
+					continue
+				}
 
-			err = k.KeepaliveStore.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout)
-			if err != nil {
-				logger.WithError(err).Error("error updating keepalive in store")
-				continue
+				err = k.KeepaliveStore.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout)
+				if err != nil {
+					logger.WithError(err).Error("error updating keepalive in store")
+					continue
+				}
 			}
 		case <-k.stopping:
 			return
