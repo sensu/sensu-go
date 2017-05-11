@@ -18,6 +18,7 @@ type checkOpts struct {
 	Interval      string `survey:"interval"`
 	Subscriptions string `survey:"subscriptions"`
 	Handlers      string `survey:"handlers"`
+	Dependencies  string `survey:"dependencies"`
 }
 
 const (
@@ -65,6 +66,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of subscribers")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers")
+	cmd.Flags().StringP("runtime-dependencies", "d", "", "comma separated list of assets")
 
 	return cmd
 }
@@ -74,6 +76,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Interval, _ = flags.GetString("interval")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")
+	opts.Dependencies, _ = flags.GetString("runtime-dependencies")
 }
 
 func (opts *checkOpts) administerQuestionnaire() {
@@ -105,6 +108,11 @@ func (opts *checkOpts) administerQuestionnaire() {
 			Prompt:   &survey.Input{"Handlers:", ""},
 			Validate: survey.Required,
 		},
+		{
+			Name:     "dependencies",
+			Prompt:   &survey.Input{"Runtime Dependencies:", ""},
+			Validate: survey.Required,
+		},
 	}
 
 	survey.Ask(qs, opts)
@@ -114,10 +122,11 @@ func (opts *checkOpts) toCheck() *types.Check {
 	interval, _ := strconv.Atoi(opts.Interval)
 
 	return &types.Check{
-		Name:          opts.Name,
-		Interval:      interval,
-		Command:       opts.Command,
-		Subscriptions: strings.Split(opts.Subscriptions, ","),
-		Handlers:      strings.Split(opts.Handlers, ","),
+		Name:                opts.Name,
+		Interval:            interval,
+		Command:             opts.Command,
+		Subscriptions:       strings.Split(opts.Subscriptions, ","),
+		Handlers:            strings.Split(opts.Handlers, ","),
+		RuntimeDependencies: strings.Split(opts.Dependencies, ","),
 	}
 }
