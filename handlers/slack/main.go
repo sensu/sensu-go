@@ -14,20 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-/*type SlackHandler struct {
-	webhookUrl string
-	channel    string
-	username   string
-	iconUrl    string
-	timeout    int
-	event      *types.Event
-}*/
-
 var (
-	webhookUrl string
+	webhookURL string
 	channel    string
 	username   string
-	iconUrl    string
+	iconURL    string
 	timeout    int
 	stdin      *os.File
 )
@@ -46,7 +37,7 @@ func configureRootCommand() *cobra.Command {
 		RunE:  run,
 	}
 
-	cmd.Flags().StringVarP(&webhookUrl,
+	cmd.Flags().StringVarP(&webhookURL,
 		"webhook-url",
 		"w",
 		"",
@@ -64,7 +55,7 @@ func configureRootCommand() *cobra.Command {
 		"sensu",
 		"The username that messages will be sent as")
 
-	cmd.Flags().StringVarP(&iconUrl,
+	cmd.Flags().StringVarP(&iconURL,
 		"icon-url",
 		"i",
 		"http://s3-us-west-2.amazonaws.com/sensuapp.org/sensu.png",
@@ -84,15 +75,15 @@ func run(cmd *cobra.Command, args []string) error {
 		stdin = os.Stdin
 	}
 
-	eventJson, err := ioutil.ReadAll(stdin)
+	eventJSON, err := ioutil.ReadAll(stdin)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to read stdin: %s", err.Error()))
+		return fmt.Errorf("failed to read stdin: %s", err.Error())
 	}
 
 	event := &types.Event{}
-	err = json.Unmarshal(eventJson, event)
+	err = json.Unmarshal(eventJSON, event)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to unmarshal stdin data: %s", eventJson))
+		return fmt.Errorf("failed to unmarshal stdin data: %s", eventJSON)
 	}
 
 	if err = validateEvent(event); err != nil {
@@ -185,7 +176,7 @@ func messageAttachment(event *types.Event) *slack.Attachment {
 }
 
 func sendMessage(event *types.Event) error {
-	hook := slack.NewWebHook(webhookUrl)
+	hook := slack.NewWebHook(webhookURL)
 	err := hook.PostMessage(&slack.WebHookPostPayload{
 		Text:        "",
 		Channel:     channel,
