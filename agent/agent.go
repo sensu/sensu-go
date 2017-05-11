@@ -38,6 +38,8 @@ type Config struct {
 	KeepaliveInterval int
 	// Deregister indicates whether the entity is ephemeral
 	Deregister bool
+	// DeregistrationHandler specifies a single deregistration handler
+	DeregistrationHandler string
 }
 
 var logger *logrus.Entry
@@ -224,6 +226,10 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			ID:            a.config.AgentID,
 			Class:         "agent",
 			Subscriptions: a.config.Subscriptions,
+			Deregister:    a.config.Deregister,
+			Deregistration: types.Deregistration{
+				Handler: a.config.DeregistrationHandler,
+			},
 		}
 
 		s, err := system.Info()

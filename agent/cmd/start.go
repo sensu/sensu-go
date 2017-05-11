@@ -17,10 +17,11 @@ var (
 )
 
 const (
-	flagBackendURL    = "backend-url"
-	flagAgentID       = "id"
-	flagSubscriptions = "subscriptions"
-	flagDeregister    = "deregister"
+	flagBackendURL            = "backend-url"
+	flagAgentID               = "id"
+	flagSubscriptions         = "subscriptions"
+	flagDeregister            = "deregister"
+	flagDeregistrationHandler = "deregistration-handler"
 )
 
 func init() {
@@ -44,6 +45,7 @@ func newStartCommand() *cobra.Command {
 			cfg := agent.NewConfig()
 			cfg.BackendURL = viper.GetString(flagBackendURL)
 			cfg.Deregister = viper.GetBool(flagDeregister)
+			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
@@ -88,6 +90,9 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().Bool(flagDeregister, false, "ephemeral agent")
 	viper.BindPFlag(flagDeregister, cmd.Flags().Lookup(flagDeregister))
+
+	cmd.Flags().String(flagDeregistrationHandler, "", "deregistration handler that should process the entity deregistration event.")
+	viper.BindPFlag(flagDeregistrationHandler, cmd.Flags().Lookup(flagDeregistrationHandler))
 
 	return cmd
 }
