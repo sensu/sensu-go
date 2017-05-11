@@ -39,7 +39,7 @@ function install_deps
   go get -u github.com/golang/lint/golint
 v}
 
-function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]subdir)
+function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)
 {
   $outfile = "target/$goos-$goarch/$subdir/$bin.exe"
   $env:GOOS = $goos
