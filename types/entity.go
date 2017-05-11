@@ -10,6 +10,7 @@ type Entity struct {
 	System        System   `json:"system,omitempty"`
 	Subscriptions []string `json:"subscriptions,omitempty"`
 	LastSeen      int64    `json:"last_seen,omitempty"`
+	Ephemeral     bool     `json:"ephemeral"`
 }
 
 // System contains information about the system that the Agent process
