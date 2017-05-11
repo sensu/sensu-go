@@ -14,11 +14,13 @@ import (
 
 var (
 	logger *logrus.Entry
+)
 
-	backendURL    string
-	agentID       string
-	subscriptions string
-	deregister    bool
+const (
+	flagBackendURL    = "backend-url"
+	flagAgentID       = "id"
+	flagSubscriptions = "subscriptions"
+	flagDeregister    = "deregister"
 )
 
 func init() {
@@ -40,13 +42,15 @@ func newStartCommand() *cobra.Command {
 		Short: "start the sensu agent",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := agent.NewConfig()
-			cfg.BackendURL = backendURL
-			cfg.Deregister = deregister
+			cfg.BackendURL = viper.GetString(flagBackendURL)
+			cfg.Deregister = viper.GetBool(flagDeregister)
 
+			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
 				cfg.AgentID = agentID
 			}
 
+			subscriptions := viper.GetString(flagSubscriptions)
 			if subscriptions != "" {
 				// TODO(greg): we prooobably want someeee sort of input validation.
 				cfg.Subscriptions = strings.Split(subscriptions, ",")
@@ -73,17 +77,17 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&backendURL, "backend-url", "b", "ws://localhost:8081", "ws/wss URL of Sensu backend server(s)")
-	viper.BindPFlag("backend-url", cmd.Flags().Lookup("backend-url"))
+	cmd.Flags().String(flagBackendURL, "ws://localhost:8081", "ws/wss URL of Sensu backend server(s)")
+	viper.BindPFlag(flagBackendURL, cmd.Flags().Lookup(flagBackendURL))
 
-	cmd.Flags().StringVar(&agentID, "id", "", "agent ID (defaults to hostname)")
-	viper.BindPFlag("id", cmd.Flags().Lookup("id"))
+	cmd.Flags().String(flagAgentID, "", "agent ID (defaults to hostname)")
+	viper.BindPFlag(flagAgentID, cmd.Flags().Lookup(flagAgentID))
 
-	cmd.Flags().StringVar(&subscriptions, "subscriptions", "", "comma-delimited list of agent subscriptions")
-	viper.BindPFlag("subscriptions", cmd.Flags().Lookup("subscriptions"))
+	cmd.Flags().String(flagSubscriptions, "", "comma-delimited list of agent subscriptions")
+	viper.BindPFlag(flagSubscriptions, cmd.Flags().Lookup(flagSubscriptions))
 
-	cmd.Flags().BoolVar(&deregister, "deregister", false, "ephemeral agent")
-	viper.BindPFlag("deregister", cmd.Flags().Lookup("deregister"))
+	cmd.Flags().Bool(flagDeregister, false, "ephemeral agent")
+	viper.BindPFlag(flagDeregister, cmd.Flags().Lookup(flagDeregister))
 
 	return cmd
 }
