@@ -16,13 +16,13 @@ func TestMutatorValidate(t *testing.T) {
 	var m Mutator
 
 	// Invalid name
-	assert.NotNil(t, m.Validate())
+	assert.Error(t, m.Validate())
 	m.Name = "foo"
 
 	// Invalid command
-	assert.NotNil(t, m.Validate())
+	assert.Error(t, m.Validate())
 	m.Command = "echo 'foo'"
 
 	// Valid mutator
-	assert.Nil(t, m.Validate())
+	assert.NoError(t, m.Validate())
 }

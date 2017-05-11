@@ -16,13 +16,13 @@ func TestHandlerValidate(t *testing.T) {
 	var h Handler
 
 	// Invalid name
-	assert.NotNil(t, h.Validate())
+	assert.Error(t, h.Validate())
 	h.Name = "foo"
 
 	// Invalid type
-	assert.NotNil(t, h.Validate())
+	assert.Error(t, h.Validate())
 	h.Type = "pipe"
 
 	// Valid handler
-	assert.Nil(t, h.Validate())
+	assert.NoError(t, h.Validate())
 }

@@ -7,18 +7,18 @@ import (
 )
 
 func TestValidateHandlerType(t *testing.T) {
-	assert.NotNil(t, validateHandlerType(""))
-	assert.NotNil(t, validateHandlerType("foo"))
-	assert.Nil(t, validateHandlerType("pipe"))
-	assert.Nil(t, validateHandlerType("tcp"))
-	assert.Nil(t, validateHandlerType("udp"))
-	assert.Nil(t, validateHandlerType("transport"))
-	assert.Nil(t, validateHandlerType("set"))
+	assert.Error(t, validateHandlerType(""))
+	assert.Error(t, validateHandlerType("foo"))
+	assert.NoError(t, validateHandlerType("pipe"))
+	assert.NoError(t, validateHandlerType("tcp"))
+	assert.NoError(t, validateHandlerType("udp"))
+	assert.NoError(t, validateHandlerType("transport"))
+	assert.NoError(t, validateHandlerType("set"))
 }
 
 func TestValidateName(t *testing.T) {
-	assert.NotNil(t, validateName(""))
-	assert.NotNil(t, validateName("foo bar"))
-	assert.NotNil(t, validateName("foo@bar"))
-	assert.Nil(t, validateName("foo-bar"))
+	assert.Error(t, validateName(""))
+	assert.Error(t, validateName("foo bar"))
+	assert.Error(t, validateName("foo@bar"))
+	assert.NoError(t, validateName("foo-bar"))
 }

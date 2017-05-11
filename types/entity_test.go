@@ -10,15 +10,15 @@ func TestEntityValidate(t *testing.T) {
 	var e Entity
 
 	// Invalid ID
-	assert.NotNil(t, e.Validate())
+	assert.Error(t, e.Validate())
 	e.ID = "foo"
 
 	// Invalid class
-	assert.NotNil(t, e.Validate())
+	assert.Error(t, e.Validate())
 	e.Class = "agent"
 
 	// Valid entity
-	assert.Nil(t, e.Validate())
+	assert.NoError(t, e.Validate())
 }
 
 func TestFixtureEntityIsValid(t *testing.T) {

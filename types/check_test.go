@@ -10,19 +10,19 @@ func TestCheckValidate(t *testing.T) {
 	var c Check
 
 	// Invalid name
-	assert.NotNil(t, c.Validate())
+	assert.Error(t, c.Validate())
 	c.Name = "foo"
 
 	// Invalid interval
-	assert.NotNil(t, c.Validate())
+	assert.Error(t, c.Validate())
 	c.Interval = 60
 
 	// Invalid command
-	assert.NotNil(t, c.Validate())
+	assert.Error(t, c.Validate())
 	c.Command = "echo 'foo'"
 
 	// Valid check
-	assert.Nil(t, c.Validate())
+	assert.NoError(t, c.Validate())
 }
 
 func TestFixtureCheckIsValid(t *testing.T) {
