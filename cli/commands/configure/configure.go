@@ -3,11 +3,13 @@ package configure
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/AlecAivazis/survey"
 	toml "github.com/pelletier/go-toml"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +36,9 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 					fmt.Fprintln(os.Stderr, "Error loading config:")
 					return err
 				}
+			} else {
+				// Ensure that the path to the configuration exists
+				os.MkdirAll(path.Dir(client.ConfigFilePath), os.ModeDir)
 			}
 
 			// Get the configuation values for the specified profile
@@ -59,6 +64,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			writeNewConfig(config)
 
 			return nil
+		},
+		Annotations: map[string]string{
+			// We want to be able to run this command regardless of whether the CLI
+			// has been configured.
+			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
 		},
 	}
 }

@@ -32,7 +32,7 @@ func (c *RestClient) configure() {
 	c.configured = true
 }
 
-// R returns new resty.Request from default client
+// R returns new resty.Request from configured client
 func (c *RestClient) R() *resty.Request {
 	c.configure()
 	r := c.client.R()
