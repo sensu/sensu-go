@@ -11,3 +11,18 @@ func TestFixtureMutator(t *testing.T) {
 	assert.Equal(t, "fixture", fixture.Name)
 	assert.NoError(t, fixture.Validate())
 }
+
+func TestMutatorValidate(t *testing.T) {
+	var m Mutator
+
+	// Invalid name
+	assert.Error(t, m.Validate())
+	m.Name = "foo"
+
+	// Invalid command
+	assert.Error(t, m.Validate())
+	m.Command = "echo 'foo'"
+
+	// Valid mutator
+	assert.NoError(t, m.Validate())
+}

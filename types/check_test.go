@@ -6,6 +6,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestCheckValidate(t *testing.T) {
+	var c Check
+
+	// Invalid name
+	assert.Error(t, c.Validate())
+	c.Name = "foo"
+
+	// Invalid interval
+	assert.Error(t, c.Validate())
+	c.Interval = 60
+
+	// Invalid command
+	assert.Error(t, c.Validate())
+	c.Command = "echo 'foo'"
+
+	// Valid check
+	assert.NoError(t, c.Validate())
+}
+
 func TestFixtureCheckIsValid(t *testing.T) {
 	c := FixtureCheck("check")
 	assert.Equal(t, "check", c.Name)
