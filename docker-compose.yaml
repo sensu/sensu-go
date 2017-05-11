@@ -2,7 +2,7 @@ version: '3'
 services:
   sensu-backend1:
     image: sensu/sensu
-    command: /sensu-backend start --store-client-url http://0.0.0.0:2379
+    command: /opt/bin/backend.sh
     hostname: backend1
     ports:
       - "2379:2379"
@@ -10,10 +10,8 @@ services:
       - "8080:8080"
       - "8081:8081"
   sensu-agent1:
-    build:
-      context: .
-      dockerfile: Dockerfile.testagent
-    command: /opt/sensu/bin/sensu-agent start --backend-url ws://backend1:8081 --subscriptions test
+    image: sensu/sensu
+    command: /opt/bin/agent.sh
     hostname: agent1
     restart: always
     links:

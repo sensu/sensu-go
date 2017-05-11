@@ -42,6 +42,8 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 			continue
 		}
 
+		logger.Debugf("sending event: %s to handler: %s", eventData, handler.Name)
+
 		switch handler.Type {
 		case "pipe":
 			p.pipeHandler(handler, eventData)
@@ -115,7 +117,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 	if err != nil {
 		logger.Error("pipelined failed to execute event pipe handler: ", err.Error())
 	} else {
-		logger.Errorf("pipelined executed event pipe handler: status=%x output=%s", result.Status, result.Output)
+		logger.Infof("pipelined executed event pipe handler: status=%x output=%s", result.Status, result.Output)
 	}
 
 	return result, err
@@ -148,7 +150,7 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (net
 	if err != nil {
 		logger.Errorf("pipelined failed to execute event %s handler: %v", protocol, err.Error())
 	} else {
-		logger.Errorf("pipelined executed event %s handler: bytes=%v", protocol, bytes)
+		logger.Debugf("pipelined executed event %s handler: bytes=%v", protocol, bytes)
 	}
 
 	return conn, nil

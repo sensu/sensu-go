@@ -134,6 +134,12 @@ func (e *Eventd) startHandlers() {
 					if err != nil {
 						logger.Errorf("eventd - error handling event: %s", err.Error())
 					}
+
+					eventBytes, err := json.Marshal(event)
+					if err != nil {
+						logger.Errorf("error handling event: %s", err.Error())
+					}
+					e.MessageBus.Publish(messaging.TopicEvent, eventBytes)
 				}
 			}
 		}()

@@ -7,5 +7,6 @@ var logger = logrus.WithFields(logrus.Fields{
 })
 
 func init() {
+	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 }

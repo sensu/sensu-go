@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -29,43 +30,80 @@ var (
 	iconUrl    string
 	timeout    int
 	stdin      *os.File
-
-	rootCmd = &cobra.Command{
-		Use:   "handler-slack",
-		Short: "a slack handler built for use with sensu",
-	}
 )
 
-func init() {
-	rootCmd.Flags().StringVarP(&webhookUrl,
+func main() {
+	rootCmd := configureRootCommand()
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatal(err.Error())
+	}
+}
+
+func configureRootCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "handler-slack",
+		Short: "a slack handler built for use with sensu",
+		RunE:  run,
+	}
+
+	cmd.Flags().StringVarP(&webhookUrl,
 		"webhook-url",
 		"w",
 		"",
 		"The webhook url to send messages to")
 
-	rootCmd.Flags().StringVarP(&channel,
+	cmd.Flags().StringVarP(&channel,
 		"channel",
 		"c",
 		"#general",
 		"The channel to post messages to")
 
-	rootCmd.Flags().StringVarP(&username,
+	cmd.Flags().StringVarP(&username,
 		"username",
 		"u",
-		"",
+		"sensu",
 		"The username that messages will be sent as")
 
-	rootCmd.Flags().StringVarP(&iconUrl,
+	cmd.Flags().StringVarP(&iconUrl,
 		"icon-url",
 		"i",
 		"http://s3-us-west-2.amazonaws.com/sensuapp.org/sensu.png",
 		"A URL to an image to use as the user avatar")
 
-	rootCmd.Flags().IntVarP(&timeout,
+	cmd.Flags().IntVarP(&timeout,
 		"timeout",
 		"t",
 		10,
 		"The amount of seconds to wait before terminating the handler")
+
+	return cmd
+}
+
+func run(cmd *cobra.Command, args []string) error {
+	if stdin == nil {
+		stdin = os.Stdin
+	}
+
+	eventJson, err := ioutil.ReadAll(stdin)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to read stdin: %s", err.Error()))
+	}
+
+	event := &types.Event{}
+	err = json.Unmarshal(eventJson, event)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to unmarshal stdin data: %s", eventJson))
+	}
+
+	if err = validateEvent(event); err != nil {
+		return errors.New(err.Error())
+	}
+
+	if err = sendMessage(event); err != nil {
+		return errors.New(err.Error())
+	}
+
+	return nil
 }
 
 func formattedEventAction(event *types.Event) string {
@@ -159,27 +197,26 @@ func sendMessage(event *types.Event) error {
 	return nil
 }
 
-func main() {
-	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err.Error())
+func validateEvent(event *types.Event) error {
+	if event.Timestamp <= 0 {
+		return errors.New("timestamp is missing or must be greater than zero")
 	}
 
-	if stdin == nil {
-		stdin = os.Stdin
+	if event.Entity == nil {
+		return errors.New("entity is missing from event")
 	}
 
-	eventJson, err := ioutil.ReadAll(stdin)
-	if err != nil {
-		log.Fatal("failed to read stdin: ", err.Error())
+	if event.Check == nil {
+		return errors.New("check is missing from event")
 	}
 
-	event := &types.Event{}
-	err = json.Unmarshal(eventJson, event)
-	if err != nil {
-		log.Fatal("failed to unmarshal stdin data: ", eventJson)
+	if err := event.Entity.Validate(); err != nil {
+		return err
 	}
 
-	if err = sendMessage(event); err != nil {
-		os.Exit(1)
+	if err := event.Check.Validate(); err != nil {
+		return errors.New(err.Error())
 	}
+
+	return nil
 }

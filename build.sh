@@ -141,9 +141,19 @@ e2e_commands () {
 }
 
 docker_commands () {
-	for cmd in agent backend; do
+	for cmd in cat false sleep true; do
+		echo "Building tools/$cmd for linux-amd64"
+		build_tool_binary linux amd64 $cmd "tools"
+	done
+
+	for cmd in slack; do
+		echo "Building handlers/$cmd for linux-amd64"
+		build_tool_binary linux amd64 $cmd "handlers"
+	done
+
+	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
-		out=$(build_binary linux amd64 $cmd)
+		build_binary linux amd64 $cmd
 	done
 	docker build -t sensu/sensu .
 }
