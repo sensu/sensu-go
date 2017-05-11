@@ -36,8 +36,8 @@ type Config struct {
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
 	// keepalive to sensu-backend. Default: 60
 	KeepaliveInterval int
-	// Ephemeral indicates that the entity is ephemeral
-	Ephemeral bool
+	// Deregister indicates whether the entity is ephemeral
+	Deregister bool
 }
 
 var logger *logrus.Entry

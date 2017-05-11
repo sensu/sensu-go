@@ -18,7 +18,7 @@ var (
 	backendURL    string
 	agentID       string
 	subscriptions string
-	ephemeral     bool
+	deregister    bool
 )
 
 func init() {
@@ -41,7 +41,7 @@ func newStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := agent.NewConfig()
 			cfg.BackendURL = backendURL
-			cfg.Ephemeral = ephemeral
+			cfg.Deregister = deregister
 
 			if agentID != "" {
 				cfg.AgentID = agentID
@@ -82,8 +82,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&subscriptions, "subscriptions", "", "comma-delimited list of agent subscriptions")
 	viper.BindPFlag("subscriptions", cmd.Flags().Lookup("subscriptions"))
 
-	cmd.Flags().BoolVar(&ephemeral, "ephemeral", false, "ephemeral agent")
-	viper.BindPFlag("ephemeral", cmd.Flags().Lookup("ephemeral"))
+	cmd.Flags().BoolVar(&deregister, "deregister", false, "ephemeral agent")
+	viper.BindPFlag("deregister", cmd.Flags().Lookup("deregister"))
 
 	return cmd
 }
