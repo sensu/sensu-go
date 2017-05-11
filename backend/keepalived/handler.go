@@ -12,15 +12,21 @@ const (
 	DefaultKeepaliveTimeout = 120 // seconds
 )
 
+// if this function returns, it is because keepalived is shutting down
 func (k *Keepalived) processKeepalives() {
 	defer k.wg.Done()
 
 	event := &types.Event{}
+	var (
+		channel chan *types.Event
+		ok      bool
+	)
+	entityChannels := map[string](chan *types.Event){}
 
 	for {
 		select {
-		case msg, ok := <-k.keepaliveChan:
-			if ok {
+		case msg, open := <-k.keepaliveChan:
+			if open {
 				if err := json.Unmarshal(msg, event); err != nil {
 					logger.WithError(err).Error("error unmarshaling keepliave event")
 					continue
@@ -33,18 +39,34 @@ func (k *Keepalived) processKeepalives() {
 				}
 				entity.LastSeen = event.Timestamp
 
-				if err := k.Store.UpdateEntity(entity); err != nil {
-					logger.WithError(err).Error("error updating entity in store")
-					continue
+				channel, ok = entityChannels[entity.ID]
+				if !ok {
+					channel = make(chan *types.Event)
+					entityChannels[entity.ID] = channel
+					go k.monitorEntity(channel)
 				}
 
-				if err := k.Store.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
-					logger.WithError(err).Error("error updating keepalive in store")
+				channel <- event
+
+				if err := k.Store.UpdateEntity(entity); err != nil {
+					logger.WithError(err).Error("error updating entity in store")
 					continue
 				}
 			}
 		case <-k.stopping:
 			return
+		}
+	}
+}
+
+func (k *Keepalived) monitorEntity(ch chan *types.Event) {
+	for {
+		select {
+		case event := <-ch:
+			if err := k.Store.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
+				logger.WithError(err).Error("error updating keepalive in store")
+				continue
+			}
 		}
 	}
 }
