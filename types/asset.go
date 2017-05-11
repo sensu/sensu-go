@@ -36,10 +36,6 @@ func (a *Asset) Validate() error {
 		return errors.New("URL cannot be empty")
 	}
 
-	if a.Hash == "" {
-		return errors.New("Hash cannot be empty")
-	}
-
 	u, err := url.Parse(a.URL)
 	if err != nil {
 		return errors.New("Invalid URL provided")
@@ -66,7 +62,7 @@ func (a *Asset) UpdateHash() (err error) {
 		return
 	}
 
-	a.Hash = string(h.Sum(nil))
+	a.Hash = hex.EncodeToString(h.Sum(nil))
 	return
 }
 

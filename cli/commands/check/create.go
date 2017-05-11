@@ -52,8 +52,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			err := cli.Client.CreateCheck(check)
-			if err != nil {
+			if err := cli.Client.CreateCheck(check); err != nil {
 				return err
 			}
 
