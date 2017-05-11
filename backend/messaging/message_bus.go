@@ -1,7 +1,5 @@
 package messaging
 
-import "github.com/sensu/sensu-go/backend/daemon"
-
 const (
 	// TopicEvent is the topic for events that have been written to Etcd and
 	// normalized by eventd.
@@ -17,8 +15,6 @@ const (
 
 // MessageBus is the interface to the internal messaging system.
 type MessageBus interface {
-	daemon.Daemon
-
 	// Subscribe allows a consumer to subscribe to a topic,
 	// binding a read-only channel to the topic. Topic messages
 	// are delivered to the channel as simple byte arrays.
