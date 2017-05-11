@@ -227,9 +227,12 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			Class:         "agent",
 			Subscriptions: a.config.Subscriptions,
 			Deregister:    a.config.Deregister,
-			Deregistration: types.Deregistration{
+		}
+
+		if a.config.DeregistrationHandler != "" {
+			e.Deregistration = types.Deregistration{
 				Handler: a.config.DeregistrationHandler,
-			},
+			}
 		}
 
 		s, err := system.Info()
