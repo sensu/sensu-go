@@ -15,12 +15,16 @@ spec:
       containers:
         - name: sensu-backend
           image: us.gcr.io/monitorama-166316/sensu
-          command: ["/opt/bin/backend.sh"]
+          # Only one process!
+          command: ["/opt/bin/sensu-backend", "start"]
           ports:
+            # Sensu HTTP API
             - protocol: TCP
               containerPort: 8080
+            # Sensu Transport WebSocket Listener
             - protocol: TCP
               containerPort: 8081
+            # Sensu Dashboard
             - protocol: TCP
               containerPort: 3000
           volumeMounts:
