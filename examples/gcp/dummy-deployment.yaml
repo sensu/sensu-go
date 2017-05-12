@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: dummy-service
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       name: dummy-service
@@ -11,16 +11,10 @@ spec:
         app: dummy-service
     spec:
       containers:
-        - name: sensu-agent
-          image: us.gcr.io/monitorama-166316/sensu-agent
-          command: ["/opt/sensu/bin/sensu-agent", "start"]
-          env:
-            - name: SENSU_BACKEND_URL
-              value: ws://sensu-backend.default.svc.cluster.local:8081
-            - name: SENSU_SUBSCRIPTIONS
-              value: dummy
+          # My Cool Service
         - name: dummy-service
           image: grepory/dummy
           ports:
             - name: http
+              containerPort: 80
               protocol: TCP

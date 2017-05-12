@@ -7,15 +7,26 @@ spec:
   selector:
     app: sensu
   ports:
+      # Sensu HTTP API
     - name: api
       protocol: TCP
+      # Load Balancer Port
       port: 8080
+      # Container Port
       targetPort: 8080
+
+      # Sensu Transport WebSocket Listener
     - name: ws
       protocol: TCP
+      # Load Balancer Port
       port: 8081
+      # Container Port
       targetPort: 8081
+
+      # Sensu Dashboard
     - name: dashboard
       protocol: TCP
+      # Load Balancer Port
       port: 3000
+      # Container Port
       targetPort: 3000
