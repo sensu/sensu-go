@@ -8,9 +8,28 @@ eval $(go env)
 
 cmd=${1:-"all"}
 
-if [ "$GOARCH" == "amd64" ]; then
-	RACE="-race"
-fi
+RACE=""
+
+set_race_flag() {
+	if [ "$GOARCH" == "amd64" ]; then
+		RACE="-race"
+	fi
+}
+
+case "$GOOS" in
+	darwin)
+		set_race_flag
+		;;
+	freebsd)
+		set_race_flag
+		;;
+	linux)
+		set_race_flag
+		;;
+	windows)
+		set_race_flag
+		;;
+esac
 
 install_deps () {
 	go get github.com/axw/gocov/gocov
@@ -27,7 +46,7 @@ build_tool_binary () {
 
 	local outfile="target/${goos}-${goarch}/${cmd}"
 
-	GOOS=$goos GOARCH=$goarch go build -o $outfile ${REPO_PATH}/tools/${cmd}/...
+	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/tools/${cmd}/...
 
 	echo $outfile
 }
@@ -39,7 +58,7 @@ build_binary () {
 
 	local outfile="target/${goos}-${goarch}/sensu-${cmd}"
 
-	GOOS=$goos GOARCH=$goarch go build -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
 	echo $outfile
 }
