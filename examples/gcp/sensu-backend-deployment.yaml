@@ -2,8 +2,13 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: sensu-backend
+  labels:
+    app: sensu
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: sensu
   template:
     metadata:
       name: sensu-backend
@@ -21,3 +26,11 @@ spec:
               containerPort: 8081
             - protocol: TCP
               containerPort: 3000
+          volumeMounts:
+            - name: sensu-backend-persistent-storage
+              mountPath: /var/lib/sensu
+      volumes:
+        - name: sensu-backend-persistent-storage
+          gcePersistentDisk:
+            pdName: sensu-backend-disk
+            fsType: ext4
