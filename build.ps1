@@ -13,6 +13,23 @@ ForEach ($env_cmd in $env_commands) {
   Invoke-Expression $ps_cmd
 }
 
+$RACE = ""
+
+function set_race_flag
+{
+  If ($env:GOARCH -eq "amd64") {
+    $RACE = "-race"
+  }
+}
+
+switch ($env:GOOS)
+{
+        "darwin" {set_race_flag}
+        "freebsd" {set_race_flag}
+        "linux" {set_race_flag}
+        "windows" {set_race_flag}
+}
+
 function install_deps
 {
   go get github.com/axw/gocov/gocov
@@ -27,7 +44,7 @@ function build_tool_binary([string]$goos, [string]$goarch, [string]$bin)
   $outfile = "target/$goos-$goarch/$bin.exe"
   $env:GOOS = $goos
   $env:GOARCH = $goarch
-  go build -o $outfile "$REPO_PATH/tools/$bin/..."
+  go build -i -o $outfile "$REPO_PATH/tools/$bin/..."
   If ($LASTEXITCODE -ne 0) {
     echo "Failed to build $outfile..."
     exit 1
@@ -41,7 +58,7 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin)
   $outfile = "target/$goos-$goarch/sensu-$bin.exe"
   $env:GOOS = $goos
   $env:GOARCH = $goarch
-  go build -o $outfile "$REPO_PATH/$bin/cmd/..."
+  go build -i -o $outfile "$REPO_PATH/$bin/cmd/..."
   If ($LASTEXITCODE -ne 0) {
     echo "Failed to build $outfile..."
     exit 1
