@@ -11,7 +11,7 @@ type APIClient interface {
 	HandlerAPIClient
 }
 
-// AssetAPIClient client methods for checks
+// AssetAPIClient client methods for assets
 type AssetAPIClient interface {
 	ListAssets() ([]types.Asset, error)
 	CreateAsset(*types.Asset) error
@@ -24,7 +24,7 @@ type CheckAPIClient interface {
 	DeleteCheck(*types.Check) error
 }
 
-// EntityAPIClient client methods for checks
+// EntityAPIClient client methods for entities
 type EntityAPIClient interface {
 	ListEntities() ([]types.Entity, error)
 	FetchEntity(ID string) (types.Entity, error)
@@ -35,7 +35,7 @@ type EventAPIClient interface {
 	ListEvents() ([]types.Event, error)
 }
 
-// HandlerAPIClient client methods for checks
+// HandlerAPIClient client methods for handlers
 type HandlerAPIClient interface {
 	ListHandlers() ([]types.Handler, error)
 	CreateHandler(*types.Handler) error

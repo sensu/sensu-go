@@ -40,6 +40,7 @@ type Store interface {
 	AssetStore
 }
 
+// AssetStore manage assets
 type AssetStore interface {
 	GetAssets() ([]*types.Asset, error)
 	GetAssetByName(assetName string) (*types.Asset, error)

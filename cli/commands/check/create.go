@@ -7,6 +7,7 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -45,7 +46,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			check := opts.toCheck()
+			check := buildCheck(opts, cli.Client)
 			if err := check.Validate(); err != nil {
 				if !isInteractive {
 					cmd.SilenceUsage = false
@@ -64,9 +65,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("command", "c", "", "the command the check should run")
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
-	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of subscribers")
-	cmd.Flags().String("handlers", "", "comma separated list of handlers")
-	cmd.Flags().StringP("runtime-dependencies", "d", "", "comma separated list of assets")
+	cmd.Flags().StringSliceP("subscriptions", "s", []string{}, "comma separated list of subscribers")
+	cmd.Flags().StringSlice("handlers", []string{}, "comma separated list of handlers")
+	cmd.Flags().StringSliceP("runtime-dependency", "d", []string{}, "asset this check depends on")
+	cmd.Flags().StringSlice("runtime-dependency-url", []string{}, "URL of asset this check depends on")
 
 	return cmd
 }
@@ -74,9 +76,15 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
 	opts.Interval, _ = flags.GetString("interval")
-	opts.Subscriptions, _ = flags.GetString("subscriptions")
-	opts.Handlers, _ = flags.GetString("handlers")
-	opts.Dependencies, _ = flags.GetString("runtime-dependencies")
+
+	subscriptions, _ := flags.GetStringSlice("subscriptions")
+	opts.Subscriptions = strings.Join(subscriptions, ",")
+
+	handlers, _ := flags.GetStringSlice("handlers")
+	opts.Handlers = strings.Join(handlers, ",")
+
+	dependencies, _ := flags.GetStringSlice("runtime-dependency")
+	opts.Dependencies = strings.Join(dependencies, ",")
 }
 
 func (opts *checkOpts) administerQuestionnaire() {
@@ -118,15 +126,30 @@ func (opts *checkOpts) administerQuestionnaire() {
 	survey.Ask(qs, opts)
 }
 
-func (opts *checkOpts) toCheck() *types.Check {
+func buildCheck(opts *checkOpts, client client.APIClient) *types.Check {
 	interval, _ := strconv.Atoi(opts.Interval)
-
-	return &types.Check{
+	check := &types.Check{
 		Name:                opts.Name,
 		Interval:            interval,
 		Command:             opts.Command,
 		Subscriptions:       strings.Split(opts.Subscriptions, ","),
 		Handlers:            strings.Split(opts.Handlers, ","),
-		RuntimeDependencies: strings.Split(opts.Dependencies, ","),
+		RuntimeDependencies: []types.Asset{},
 	}
+
+	if len(opts.Dependencies) > 0 {
+		assets, _ := client.ListAssets()
+		dependencies := strings.Split(opts.Dependencies, ",")
+
+		for _, asset := range assets {
+			for _, givenName := range dependencies {
+				if asset.Name == givenName {
+					check.RuntimeDependencies = append(check.RuntimeDependencies, asset)
+					break
+				}
+			}
+		}
+	}
+
+	return check
 }

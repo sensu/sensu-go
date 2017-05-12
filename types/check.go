@@ -45,7 +45,7 @@ type Check struct {
 	History []CheckHistory `json:"history,omitempty"`
 
 	// RuntimeDependencies are a list of assets required to execute check.
-	RuntimeDependencies []string `json:"runtime_dependencies"`
+	RuntimeDependencies []Asset `json:"runtime_dependencies"`
 }
 
 // Validate returns an error if the check does not pass validation tests.
@@ -61,6 +61,12 @@ func (c *Check) Validate() error {
 
 	if c.Command == "" {
 		return errors.New("check command must be set")
+	}
+
+	for _, asset := range c.RuntimeDependencies {
+		if err := asset.Validate(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -126,6 +132,6 @@ func FixtureCheck(id string) *Check {
 		Duration:            1.0,
 		Handlers:            []string{},
 		History:             history,
-		RuntimeDependencies: []string{},
+		RuntimeDependencies: []Asset{},
 	}
 }

@@ -16,9 +16,10 @@ import (
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	exec := createExecutor{client: cli.Client}
 	cmd := &cobra.Command{
-		Use:   "create [NAME]",
-		Short: "create new assets",
-		RunE:  exec.run,
+		Use:    "create [NAME]",
+		Short:  "create new assets",
+		RunE:   exec.run,
+		Hidden: true,
 	}
 
 	cmd.Flags().StringP("url", "u", "", "the URL of the asset")
@@ -60,19 +61,19 @@ type assetOpts struct {
 	err   error
 }
 
-func (o *assetOpts) configure(flags *pflag.FlagSet, args []string) {
-	o.setName(args)
-	o.setURL(flags)
-	o.setMeta(flags)
+func (e *assetOpts) configure(flags *pflag.FlagSet, args []string) {
+	e.setName(args)
+	e.setURL(flags)
+	e.setMeta(flags)
 }
 
 func (e *assetOpts) setName(args []string) {
 	if len(args) == 1 {
 		e.asset.Name = args[0]
 	} else if len(args) > 1 {
-		e.err = errors.New("too many arguments given.")
+		e.err = errors.New("too many arguments given")
 	} else {
-		e.err = errors.New("please provide a name for given asset.")
+		e.err = errors.New("please provide a name for given asset")
 	}
 }
 

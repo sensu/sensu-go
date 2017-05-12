@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 )
 
@@ -64,6 +65,17 @@ func (a *Asset) UpdateHash() (err error) {
 
 	a.Hash = hex.EncodeToString(h.Sum(nil))
 	return
+}
+
+// Filename returns the filename of the underlying asset; pulled from the URL
+func (a *Asset) Filename() string {
+	u, err := url.Parse(a.URL)
+	if err != nil {
+		return ""
+	}
+
+	_, file := path.Split(u.EscapedPath())
+	return file
 }
 
 // FixtureAsset given a name returns a valid asset for use in tests

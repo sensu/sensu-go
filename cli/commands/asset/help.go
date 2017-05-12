@@ -8,8 +8,9 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "asset",
-		Short: "Manage assets",
+		Use:    "asset",
+		Short:  "Manage assets",
+		Hidden: true,
 	}
 
 	// Add sub-commands

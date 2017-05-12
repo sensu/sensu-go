@@ -40,6 +40,8 @@ type Config struct {
 	Deregister bool
 	// DeregistrationHandler specifies a single deregistration handler
 	DeregistrationHandler string
+	// CacheDir path where cached data is stored
+	CacheDir string
 }
 
 var logger *logrus.Entry
@@ -56,6 +58,7 @@ func NewConfig() *Config {
 		BackendURL:        "ws://127.0.0.1:8081",
 		Subscriptions:     []string{},
 		KeepaliveInterval: 20,
+		CacheDir:          "/var/cache/sensu",
 	}
 	hostname, err := os.Hostname()
 	if err != nil {

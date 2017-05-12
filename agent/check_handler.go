@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"time"
 
 	"github.com/sensu/sensu-go/command"
@@ -34,10 +35,21 @@ func (a *Agent) handleCheck(payload []byte) error {
 }
 
 func (a *Agent) executeCheck(event *types.Event) {
+	deps := newDependencyManager(a, event.Check)
+
+	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
+	// availabe when when the command is executed.
+	env := os.Environ()
+	env = deps.injectIntoEnv(env)
+
 	ex := &command.Execution{
 		Command: event.Check.Command,
+		Env:     env,
 	}
 	event.Check.Executed = time.Now().Unix()
+
+	// Ensure that all the dependencies are installed.
+	deps.install()
 
 	_, err := command.ExecuteCommand(context.Background(), ex)
 	if err != nil {
