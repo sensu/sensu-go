@@ -21,3 +21,6 @@ spec:
               value: dummy
         - name: dummy-service
           image: grepory/dummy
+          ports:
+            - name: http
+              protocol: TCP
