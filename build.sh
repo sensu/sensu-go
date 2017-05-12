@@ -47,7 +47,7 @@ build_tool_binary () {
 
 	local outfile="target/${goos}-${goarch}/${subdir}/${cmd}"
 
-	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/#{subdir}/${cmd}/...
+	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/${subdir}/${cmd}/...
 
 	echo $outfile
 }
