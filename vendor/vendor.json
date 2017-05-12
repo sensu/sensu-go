@@ -51,6 +51,12 @@
 			"revisionTime": "2016-08-04T10:47:26Z"
 		},
 		{
+			"checksumSHA1": "gt4RQWXgDLvuta0zb4cYEBrwmkQ=",
+			"path": "github.com/bluele/slack",
+			"revision": "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba",
+			"revisionTime": "2017-01-26T01:05:58Z"
+		},
+		{
 			"checksumSHA1": "J+kVue/HTH4sELlqMO4z0tx9DiA=",
 			"path": "github.com/boltdb/bolt",
 			"revision": "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd",
@@ -892,6 +898,12 @@
 			"path": "golang.org/x/net/trace",
 			"revision": "a6577fac2d73be281a500b310739095313165611",
 			"revisionTime": "2017-03-08T20:54:49Z"
+		},
+		{
+			"checksumSHA1": "7EZyXN0EmZLgGxZxK01IJua4c8o=",
+			"path": "golang.org/x/net/websocket",
+			"revision": "feeb485667d1fdabe727840fe00adc22431bc86e",
+			"revisionTime": "2017-05-02T17:39:58Z"
 		},
 		{
 			"checksumSHA1": "ruEvGIBt119UK7KTkoNaYnYhZuI=",

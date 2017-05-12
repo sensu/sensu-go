@@ -15,7 +15,8 @@ import (
 )
 
 var binDir = filepath.Join("..", "..", "bin")
-var catPath = util.CommandPath(filepath.Join(binDir, "cat"))
+var toolsDir = filepath.Join(binDir, "tools")
+var catPath = util.CommandPath(filepath.Join(toolsDir, "cat"))
 
 func TestPipelinedHandleEvent(t *testing.T) {
 	p := &Pipelined{}

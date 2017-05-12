@@ -43,10 +43,11 @@ build_tool_binary () {
 	local goos=$1
 	local goarch=$2
 	local cmd=$3
+	local subdir=$4
 
-	local outfile="target/${goos}-${goarch}/${cmd}"
+	local outfile="target/${goos}-${goarch}/${subdir}/${cmd}"
 
-	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/tools/${cmd}/...
+	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/${subdir}/${cmd}/...
 
 	echo $outfile
 }
@@ -64,24 +65,29 @@ build_binary () {
 }
 
 build_tools () {
-	echo "Running tool builds..."
+	echo "Running tool & plugin builds..."
 
 	for cmd in cat false sleep true; do
-		build_tool $cmd
+		build_tool $cmd "tools"
+	done
+
+	for cmd in slack; do
+		build_tool $cmd "handlers"
 	done
 }
 
 build_tool () {
 	local cmd=$1
+	local subdir=$2
 
-	if [ ! -d bin/ ]; then
-		mkdir -p bin/
+	if [ ! -d bin/${subdir} ]; then
+		mkdir -p bin/${subdir}
 	fi
 
-	echo "Building $cmd for ${GOOS}-${GOARCH}"
-	out=$(build_tool_binary $GOOS $GOARCH $cmd)
+	echo "Building $subdir/$cmd for ${GOOS}-${GOARCH}"
+	out=$(build_tool_binary $GOOS $GOARCH $cmd $subdir)
 	rm -f bin/$(basename $out)
-	cp ${out} bin
+	cp ${out} bin/${subdir}
 }
 
 build_commands () {
@@ -135,9 +141,19 @@ e2e_commands () {
 }
 
 docker_commands () {
-	for cmd in agent backend; do
+	for cmd in cat false sleep true; do
+		echo "Building tools/$cmd for linux-amd64"
+		build_tool_binary linux amd64 $cmd "tools"
+	done
+
+	for cmd in slack; do
+		echo "Building handlers/$cmd for linux-amd64"
+		build_tool_binary linux amd64 $cmd "handlers"
+	done
+
+	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
-		out=$(build_binary linux amd64 $cmd)
+		build_binary linux amd64 $cmd
 	done
 	docker build -t sensu/sensu .
 }

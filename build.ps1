@@ -37,14 +37,14 @@ function install_deps
   go get github.com/gordonklaus/ineffassign
   go get github.com/jgautheron/goconst/cmd/goconst
   go get -u github.com/golang/lint/golint
-}
+v}
 
-function build_tool_binary([string]$goos, [string]$goarch, [string]$bin)
+function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)
 {
-  $outfile = "target/$goos-$goarch/$bin.exe"
+  $outfile = "target/$goos-$goarch/$subdir/$bin.exe"
   $env:GOOS = $goos
   $env:GOARCH = $goarch
-  go build -i -o $outfile "$REPO_PATH/tools/$bin/..."
+  go build -i -o $outfile "$REPO_PATH/$subdir/$bin/..."
   If ($LASTEXITCODE -ne 0) {
     echo "Failed to build $outfile..."
     exit 1
@@ -69,23 +69,27 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin)
 
 function build_tools
 {
-  echo "Running tool builds..."
+  echo "Running tool & plugin builds..."
 
   ForEach ($bin in "cat","false","sleep","true") {
-    build_tool $bin
+    build_tool $bin "tools"
+  }
+
+  ForEach ($bin in "slack") {
+    build_tool $bin "handlers"
   }
 }
 
-function build_tool([string]$bin)
+function build_tool([string]$bin, [string]$subdir)
 {
-  If (!(Test-Path -Path "bin")) {
-    New-Item -ItemType directory -Path "bin" | out-null
+  If (!(Test-Path -Path "bin/$subdir")) {
+    New-Item -ItemType directory -Path "bin/$subdir" | out-null
   }
 
-  echo "Building $bin for $env:GOOS-$env:GOARCH"
-  $out = build_tool_binary $env:GOOS $env:GOARCH $bin
+  echo "Building $subdir/$bin for $env:GOOS-$env:GOARCH"
+  $out = build_tool_binary $env:GOOS $env:GOARCH $bin $subdir
   Remove-Item -Path "bin/$(Split-Path -Leaf $out)" -EA SilentlyContinue
-  cp $out bin
+  cp $out bin/$subdir
 }
 
 function build_commands
