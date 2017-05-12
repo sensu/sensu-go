@@ -17,9 +17,10 @@ const (
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
-	MessageBus   messaging.MessageBus
-	HandlerCount int
-	Store        store.Store
+	MessageBus            messaging.MessageBus
+	HandlerCount          int
+	Store                 store.Store
+	DeregistrationHandler string
 
 	wg            *sync.WaitGroup
 	stopping      chan struct{}

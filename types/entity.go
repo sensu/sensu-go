@@ -5,12 +5,13 @@ import "errors"
 // Entity is the Entity supplying the event. The default Entity for any
 // Event is the running Agent process--if the Event is sent by an Agent.
 type Entity struct {
-	ID            string   `json:"id"`
-	Class         string   `json:"class"`
-	System        System   `json:"system,omitempty"`
-	Subscriptions []string `json:"subscriptions,omitempty"`
-	LastSeen      int64    `json:"last_seen,omitempty"`
-	Deregister    bool     `json:"deregister"`
+	ID             string         `json:"id"`
+	Class          string         `json:"class"`
+	System         System         `json:"system,omitempty"`
+	Subscriptions  []string       `json:"subscriptions,omitempty"`
+	LastSeen       int64          `json:"last_seen,omitempty"`
+	Deregister     bool           `json:"deregister"`
+	Deregistration Deregistration `json:"deregistration"`
 }
 
 // System contains information about the system that the Agent process
@@ -37,6 +38,11 @@ type NetworkInterface struct {
 	Name      string   `json:"name"`
 	MAC       string   `json:"mac,omitempty"`
 	Addresses []string `json:"addresses"`
+}
+
+// Deregistration contains configuration for Sensu entity de-registration.
+type Deregistration struct {
+	Handler string `json:"handler"`
 }
 
 // Validate returns an error if the entity is invalid.

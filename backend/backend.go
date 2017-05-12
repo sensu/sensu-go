@@ -26,17 +26,18 @@ var (
 
 // Config specifies a Backend configuration.
 type Config struct {
-	AgentHost           string
-	AgentPort           int
-	APIHost             string
-	APIPort             int
-	DashboardDir        string
-	DashboardHost       string
-	DashboardPort       int
-	StateDir            string
-	EtcdClientListenURL string
-	EtcdPeerListenURL   string
-	EtcdInitialCluster  string
+	AgentHost             string
+	AgentPort             int
+	APIHost               string
+	APIPort               int
+	DashboardDir          string
+	DashboardHost         string
+	DashboardPort         int
+	DeregistrationHandler string
+	StateDir              string
+	EtcdClientListenURL   string
+	EtcdPeerListenURL     string
+	EtcdInitialCluster    string
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -188,8 +189,9 @@ func (b *Backend) Run() error {
 	}
 
 	b.keepalived = &keepalived.Keepalived{
-		Store:      st,
-		MessageBus: b.messageBus,
+		Store:                 st,
+		MessageBus:            b.messageBus,
+		DeregistrationHandler: b.Config.DeregistrationHandler,
 	}
 	if err := b.keepalived.Start(); err != nil {
 		return err

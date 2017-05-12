@@ -12,14 +12,15 @@ import (
 )
 
 var (
-	agentHost     string
-	agentPort     int
-	apiHost       string
-	apiPort       int
-	dashboardDir  string
-	dashboardHost string
-	dashboardPort int
-	stateDir      string
+	agentHost             string
+	agentPort             int
+	apiHost               string
+	apiPort               int
+	dashboardDir          string
+	dashboardHost         string
+	dashboardPort         int
+	deregistrationHandler string
+	stateDir              string
 
 	etcdClientListenURL string
 	etcdPeerListenURL   string
@@ -36,14 +37,15 @@ func newStartCommand() *cobra.Command {
 		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := &backend.Config{
-				AgentHost:     agentHost,
-				AgentPort:     agentPort,
-				APIHost:       apiHost,
-				APIPort:       apiPort,
-				DashboardDir:  dashboardDir,
-				DashboardHost: dashboardHost,
-				DashboardPort: dashboardPort,
-				StateDir:      stateDir,
+				AgentHost:             agentHost,
+				AgentPort:             agentPort,
+				APIHost:               apiHost,
+				APIPort:               apiPort,
+				DashboardDir:          dashboardDir,
+				DashboardHost:         dashboardHost,
+				DashboardPort:         dashboardPort,
+				DeregistrationHandler: deregistrationHandler,
+				StateDir:              stateDir,
 			}
 
 			// we have defaults for this in the backend config. this is basically
@@ -97,6 +99,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&dashboardDir, "dashboard-dir", "./bin/dashboard", "path to sensu dashboard static assets")
 	cmd.Flags().StringVar(&dashboardHost, "dashboard-host", "0.0.0.0", "Dashboard listener host")
 	cmd.Flags().IntVar(&dashboardPort, "dashboard-port", 3000, "Dashboard listener port")
+	cmd.Flags().StringVar(&deregistrationHandler, "deregistration-handler", "", "Default deregistration handler")
 	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", defaultStateDir, "path to sensu state storage")
 
 	// For now don't set defaults for these. This allows us to control defaults on NewBackend(). We may wish
