@@ -103,23 +103,29 @@ func (k *Keepalived) monitorEntity(ch chan *types.Event, entity *types.Entity, s
 			timer.Reset(timerDuration)
 		case <-timer.C:
 			// timed out keepalive
-			keepaliveCheck := &types.Check{
-				Name:          "keepalive",
-				Interval:      DefaultKeepaliveTimeout,
-				Subscriptions: []string{""},
-				Command:       "",
-				Handlers:      []string{"keepalive"},
-			}
-			keepaliveEvent := &types.Event{
-				Entity: entity,
-				Check:  keepaliveCheck,
-			}
+			if entity.Deregister {
+				if err := k.Store.DeleteEntity(entity); err != nil {
+					logger.WithError(err).Error("error deleting entity in store")
+				}
+			} else {
+				keepaliveCheck := &types.Check{
+					Name:          "keepalive",
+					Interval:      DefaultKeepaliveTimeout,
+					Subscriptions: []string{""},
+					Command:       "",
+					Handlers:      []string{"keepalive"},
+				}
+				keepaliveEvent := &types.Event{
+					Entity: entity,
+					Check:  keepaliveCheck,
+				}
 
-			eventBytes, err := json.Marshal(keepaliveEvent)
-			if err != nil {
-				logger.Errorf("error serializing keepalive event: %s", err.Error())
+				eventBytes, err := json.Marshal(keepaliveEvent)
+				if err != nil {
+					logger.Errorf("error serializing keepalive event: %s", err.Error())
+				}
+				k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
 			}
-			k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
 		case <-stoppingMonitors:
 			if !timer.Stop() {
 				<-timer.C

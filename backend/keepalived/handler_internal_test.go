@@ -27,6 +27,26 @@ func (m *mockMessageBus) Publish(topic string, message []byte) error {
 	return args.Error(0)
 }
 
+func (m *mockMessageBus) Start() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func (m *mockMessageBus) Stop() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func (m *mockMessageBus) Status() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func (m *mockMessageBus) Err() <-chan error {
+	errChan := make(chan error, 1)
+	return errChan
+}
+
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including assertion methods.
 type HandlerTestSuite struct {
@@ -78,6 +98,24 @@ func (s *HandlerTestSuite) TestKeepaliveTimeout() {
 	ch := make(chan *types.Event)
 
 	entity := types.FixtureEntity("entity1")
+
+	go s.keepalived.monitorEntity(ch, entity, s.stoppingMonitors)
+
+	s.NotNil(<-keepaliveTimedout)
+
+	close(s.keepalived.stopping)
+}
+
+func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregistration() {
+	keepaliveTimeout = 1
+	keepaliveTimedout := make(chan struct{})
+
+	entity := types.FixtureEntity("entity1")
+	entity.Deregister = true
+
+	s.store.On("DeleteEntity", entity).Return(nil).Run(func(args mock.Arguments) { close(keepaliveTimedout) })
+
+	ch := make(chan *types.Event)
 
 	go s.keepalived.monitorEntity(ch, entity, s.stoppingMonitors)
 
