@@ -39,6 +39,24 @@ func TestHttpApiEntitiesGet(t *testing.T) {
 	}
 }
 
+func TestHttpApiEntitiesGetEmpty(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &EntitiesController{
+		Store: store,
+	}
+
+	var entities []*types.Entity
+	store.On("GetEntities").Return(entities, nil)
+	req, _ := http.NewRequest("GET", "/entities", nil)
+	res := processRequest(c, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	body := res.Body.String()
+	assert.Equal(t, "[]", body)
+}
+
 func TestHttpApiEntityGet(t *testing.T) {
 	store := &mockstore.MockStore{}
 

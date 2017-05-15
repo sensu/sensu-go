@@ -43,6 +43,24 @@ func TestHttpApiMutatorsGet(t *testing.T) {
 	}
 }
 
+func TestHttpApiMutatorsGetEmpty(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &MutatorsController{
+		Store: store,
+	}
+
+	var mutators []*types.Mutator
+	store.On("GetMutators").Return(mutators, nil)
+	req, _ := http.NewRequest("GET", "/mutators", nil)
+	res := processRequest(c, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	body := res.Body.String()
+	assert.Equal(t, "[]", body)
+}
+
 func TestHttpApiMutatorGet(t *testing.T) {
 	store := &mockstore.MockStore{}
 

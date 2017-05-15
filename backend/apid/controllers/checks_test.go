@@ -40,6 +40,24 @@ func TestHttpApiChecksGet(t *testing.T) {
 	assert.EqualValues(t, checks, returnedChecks)
 }
 
+func TestHttpApiChecksGetEmpty(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &ChecksController{
+		Store: store,
+	}
+
+	var checks []*types.Check
+	store.On("GetChecks").Return(checks, nil)
+	req, _ := http.NewRequest("GET", "/checks", nil)
+	res := processRequest(c, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	body := res.Body.String()
+	assert.Equal(t, "[]", body)
+}
+
 func TestHttpApiChecksGetError(t *testing.T) {
 	store := &mockstore.MockStore{}
 

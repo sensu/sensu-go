@@ -42,6 +42,24 @@ func TestHttpAPIHandlersGet(t *testing.T) {
 	}
 }
 
+func TestHttpAPIHandlersGetEmpty(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &HandlersController{
+		Store: store,
+	}
+
+	var handlers []*types.Handler
+	store.On("GetHandlers").Return(handlers, nil)
+	req, _ := http.NewRequest("GET", "/handlers", nil)
+	res := processRequest(c, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	body := res.Body.String()
+	assert.Equal(t, "[]", body)
+}
+
 func TestHttpAPIHandlerGet(t *testing.T) {
 	store := &mockstore.MockStore{}
 

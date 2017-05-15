@@ -31,6 +31,12 @@ func (c *HandlersController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// We initialize the variable if no results were returned so we later print
+	// an empty array instead of "null"
+	if handlers == nil {
+		handlers = []*types.Handler{}
+	}
+
 	handlersBytes, err := json.Marshal(handlers)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

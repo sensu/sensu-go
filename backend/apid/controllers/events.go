@@ -83,10 +83,10 @@ func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If the events slice is empty, we want to return an empty array instead
-	// of null for easier consumption
-	if len(events) == 0 {
-		events = make([]*types.Event, 0)
+	// We initialize the variable if no results were returned so we later print
+	// an empty array instead of "null"
+	if events == nil {
+		events = []*types.Event{}
 	}
 
 	jsonStr, err := json.Marshal(events)
