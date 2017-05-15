@@ -31,6 +31,12 @@ func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// We initialize the variable if no results were returned so we later print
+	// an empty array instead of "null"
+	if mutators == nil {
+		mutators = []*types.Mutator{}
+	}
+
 	mutatorsBytes, err := json.Marshal(mutators)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -32,6 +32,12 @@ func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// We initialize the variable if no results were returned so we later print
+	// an empty array instead of "null"
+	if checks == nil {
+		checks = []*types.Check{}
+	}
+
 	checksBytes, err := json.Marshal(checks)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

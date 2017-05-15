@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 // EntitiesController defines the fields required by EntitiesController.
@@ -27,6 +28,12 @@ func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// We initialize the variable if no results were returned so we later print
+	// an empty array instead of "null"
+	if es == nil {
+		es = []*types.Entity{}
 	}
 
 	esb, err := json.Marshal(es)
