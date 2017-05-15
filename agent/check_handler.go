@@ -49,7 +49,10 @@ func (a *Agent) executeCheck(event *types.Event) {
 	event.Check.Executed = time.Now().Unix()
 
 	// Ensure that all the dependencies are installed.
-	deps.install()
+	if err := deps.install(); err != nil {
+		logger.Error("error installing dependencies: ", err.Error())
+		return
+	}
 
 	_, err := command.ExecuteCommand(context.Background(), ex)
 	if err != nil {

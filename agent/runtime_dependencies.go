@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/mholt/archiver"
 	"github.com/sensu/sensu-go/types"
 )
@@ -75,10 +76,13 @@ func (m *dependencyManager) injectIntoEnv(env []string) []string {
 		k, v := pair[0], pair[1]
 
 		injectPaths := func(subDir string) {
+			sep := string(filepath.ListSeparator)
+			vals := strings.Split(v, sep)
 			for _, p := range m.paths() {
-				v = filepath.Join(p, subDir) + ";" + v
+				fullpath := filepath.Join(p, subDir)
+				vals = append([]string{fullpath}, vals...)
 			}
-			env[i] = fmt.Sprintf("%s=%s", k, v)
+			env[i] = fmt.Sprintf("%s=%s", k, strings.Join(vals, sep))
 		}
 
 		switch k {
@@ -133,6 +137,10 @@ func (d *runtimeDependency) install() error {
 		return err
 	}
 
+	logger.WithFields(logrus.Fields{
+		"asset_name": d.asset.Name,
+	}).Info("new dependency encountered; downloading")
+
 	// Download the asset
 	r, err := d.fetch()
 	if err != nil {
@@ -142,12 +150,12 @@ func (d *runtimeDependency) install() error {
 	// Write response to tmp
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-asset")
 	if err != nil {
-		return fmt.Errorf("Unable to obtain tmp file for asset '%s'", d.asset.Name)
+		return fmt.Errorf("unable to obtain tmp file for asset '%s'", d.asset.Name)
 	}
 	defer os.Remove(tmpFile.Name())
 
 	if _, err = io.Copy(tmpFile, r.Body); err != nil {
-		return fmt.Errorf("Unable to write asset '%s' to tmp", d.asset.Name)
+		return fmt.Errorf("unable to write asset '%s' to tmp", d.asset.Name)
 	}
 
 	// Ensure file contents are synced and rewound
@@ -177,7 +185,7 @@ func (d *runtimeDependency) install() error {
 	// of our asset to it.
 	binDir := filepath.Join(d.path(), "bin")
 	if err = os.MkdirAll(binDir, 0755); err != nil {
-		return fmt.Errorf("Unable to create cache directory '%s'", d.path())
+		return fmt.Errorf("unable to create cache directory '%s'", d.path(), err)
 	}
 
 	// If file is an archive attempt to extract it
