@@ -55,7 +55,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Update profile
-			profile.Set("url", v.URL)
+			profile.Set("api-url", v.URL)
 			profile.Set("userid", v.UserID)
 			profile.Set("secret", v.Secret)
 			config.Set(profileKey, profile)
@@ -87,7 +87,7 @@ func gatherConfigValues(config *toml.TomlTree) (*answers, error) {
 }
 
 func askForURL(config *toml.TomlTree) *survey.Question {
-	url, _ := config.Get("url").(string)
+	url, _ := config.Get("api-url").(string)
 
 	return &survey.Question{
 		Name:   "url",

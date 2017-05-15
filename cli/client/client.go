@@ -27,7 +27,7 @@ func (c *RestClient) configure() {
 		return
 	}
 
-	c.client.SetHostURL(c.config.GetString("url"))
+	c.client.SetHostURL(c.config.GetString("api-url"))
 	c.client.SetAuthToken(c.config.GetString("secret"))
 	c.configured = true
 }

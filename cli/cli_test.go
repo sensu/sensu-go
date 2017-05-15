@@ -11,7 +11,7 @@ func TestNew(t *testing.T) {
 	assert := assert.New(t)
 
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
-	flags.String("baseURL", "", "")
+	flags.String("api-url", "", "")
 	flags.String("profile", "", "")
 	c := New(flags)
 
@@ -22,9 +22,9 @@ func TestNew(t *testing.T) {
 	assert.NotNil(c.Logger, "New should include Logger")
 
 	// Ensure that flags are correctly set
-	flags.Set("baseURL", "http://localhost:8080")
+	flags.Set("api-url", "http://localhost:8080")
 	flags.Set("profile", "sensu")
 
-	assert.Equal(c.Config.GetString("url"), "http://localhost:8080")
+	assert.Equal(c.Config.GetString("api-url"), "http://localhost:8080")
 	assert.Equal(c.Config.GetString("profile"), "sensu")
 }

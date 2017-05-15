@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/pflag"
@@ -42,8 +43,10 @@ func NewConfig() (*MultiConfig, error) {
 
 	// ENV variables
 	v.SetEnvPrefix("SENSU")
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.BindEnv(profileKey)
-	v.BindEnv("url")
+	v.BindEnv("api-url")
+	v.BindEnv("secret")
 
 	// Configuration file
 	v.SetConfigFile(ConfigFilePath)
