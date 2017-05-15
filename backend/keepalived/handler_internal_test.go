@@ -108,18 +108,29 @@ func (s *HandlerTestSuite) TestKeepaliveTimeout() {
 
 func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregistration() {
 	keepaliveTimeout = 1
-	keepaliveTimedout := make(chan struct{})
+	entityDeleted := make(chan struct{})
+	eventPublished := make(chan struct{})
+	eventDeleted := make(chan struct{})
 
-	entity := types.FixtureEntity("entity1")
-	entity.Deregister = true
+	event := types.FixtureEvent("entity1", "check1")
+	event.Entity.Deregister = true
 
-	s.store.On("DeleteEntity", entity).Return(nil).Run(func(args mock.Arguments) { close(keepaliveTimedout) })
+	mockEvents := []*types.Event{
+		event,
+	}
+
+	s.store.On("DeleteEntity", event.Entity).Return(nil).Run(func(args mock.Arguments) { close(entityDeleted) })
+	s.store.On("GetEventsByEntity", event.Entity.ID).Return(mockEvents, nil)
+	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Name).Return(nil).Run(func(args mock.Arguments) { close(eventDeleted) })
+	s.bus.On("Publish", messaging.TopicEvent, mock.AnythingOfType("[]uint8")).Return(nil).Run(func(args mock.Arguments) { close(eventPublished) })
 
 	ch := make(chan *types.Event)
 
-	go s.keepalived.monitorEntity(ch, entity, s.stoppingMonitors)
+	go s.keepalived.monitorEntity(ch, event.Entity, s.stoppingMonitors)
 
-	s.NotNil(<-keepaliveTimedout)
+	s.NotNil(<-entityDeleted)
+	s.NotNil(<-eventDeleted)
+	s.NotNil(<-eventPublished)
 
 	close(s.keepalived.stopping)
 }

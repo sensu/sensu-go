@@ -81,6 +81,50 @@ func (k *Keepalived) processKeepalives(ec map[string](chan *types.Event)) {
 	}
 }
 
+func (k *Keepalived) deregisterEntity(entity *types.Entity) {
+	if err := k.Store.DeleteEntity(entity); err != nil {
+		logger.WithError(err).Error("error deleting entity in store")
+	}
+	events, err := k.Store.GetEventsByEntity(entity.ID)
+	if err != nil {
+		logger.WithError(err).Error("error fetching events for entity")
+	}
+	for _, event := range events {
+		// Delete event from Store
+		if err := k.Store.DeleteEventByEntityCheck(entity.ID, event.Check.Name); err != nil {
+			logger.WithError(err).Error("error deleting event for entity")
+		}
+		event.Check.Output = "Resolving due to entity deregistering"
+		event.Check.Status = 0
+		event.Check.History = []types.CheckHistory{}
+
+		eventBytes, err := json.Marshal(event)
+		if err != nil {
+			logger.Errorf("error serializing deregistration event: %s", err.Error())
+		}
+		k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
+	}
+}
+
+func (k *Keepalived) createKeepaliveEvent(entity *types.Entity) {
+	keepaliveCheck := &types.Check{
+		Name:          "keepalive",
+		Interval:      DefaultKeepaliveTimeout,
+		Subscriptions: []string{""},
+		Command:       "",
+		Handlers:      []string{"keepalive"},
+	}
+	keepaliveEvent := &types.Event{
+		Entity: entity,
+		Check:  keepaliveCheck,
+	}
+	eventBytes, err := json.Marshal(keepaliveEvent)
+	if err != nil {
+		logger.Errorf("error serializing keepalive event: %s", err.Error())
+	}
+	k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
+}
+
 func (k *Keepalived) monitorEntity(ch chan *types.Event, entity *types.Entity, stoppingMonitors chan struct{}) {
 	timeout := DefaultKeepaliveTimeout
 	if keepaliveTimeout != 0 {
@@ -104,27 +148,9 @@ func (k *Keepalived) monitorEntity(ch chan *types.Event, entity *types.Entity, s
 		case <-timer.C:
 			// timed out keepalive
 			if entity.Deregister {
-				if err := k.Store.DeleteEntity(entity); err != nil {
-					logger.WithError(err).Error("error deleting entity in store")
-				}
+				k.deregisterEntity(entity)
 			} else {
-				keepaliveCheck := &types.Check{
-					Name:          "keepalive",
-					Interval:      DefaultKeepaliveTimeout,
-					Subscriptions: []string{""},
-					Command:       "",
-					Handlers:      []string{"keepalive"},
-				}
-				keepaliveEvent := &types.Event{
-					Entity: entity,
-					Check:  keepaliveCheck,
-				}
-
-				eventBytes, err := json.Marshal(keepaliveEvent)
-				if err != nil {
-					logger.Errorf("error serializing keepalive event: %s", err.Error())
-				}
-				k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
+				k.createKeepaliveEvent(entity)
 			}
 		case <-stoppingMonitors:
 			if !timer.Stop() {
