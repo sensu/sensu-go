@@ -7,6 +7,7 @@ type APIClient interface {
 	EventAPIClient
 	CheckAPIClient
 	HandlerAPIClient
+	EntityAPIClient
 }
 
 // EventAPIClient client methods for events
@@ -26,4 +27,9 @@ type HandlerAPIClient interface {
 	ListHandlers() ([]types.Handler, error)
 	CreateHandler(*types.Handler) error
 	DeleteHandler(*types.Handler) error
+}
+
+// EntityAPIClient client methods for checks
+type EntityAPIClient interface {
+	ListEntities() ([]types.Entity, error)
 }
