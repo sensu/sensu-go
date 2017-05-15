@@ -38,7 +38,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				}
 			} else {
 				// Ensure that the path to the configuration exists
-				os.MkdirAll(path.Dir(client.ConfigFilePath), os.ModeDir)
+				os.MkdirAll(path.Dir(client.ConfigFilePath), 0755)
 			}
 
 			// Get the configuation values for the specified profile
