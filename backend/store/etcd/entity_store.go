@@ -49,7 +49,7 @@ func (s *etcdStore) GetEntities() ([]*types.Entity, error) {
 		return nil, err
 	}
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return []*types.Entity{}, nil
 	}
 
 	earr := make([]*types.Entity, len(resp.Kvs))

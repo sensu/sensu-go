@@ -46,7 +46,7 @@ func (s *etcdStore) GetHandlers() ([]*types.Handler, error) {
 		return nil, err
 	}
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return []*types.Handler{}, nil
 	}
 
 	handlersArray := make([]*types.Handler, len(resp.Kvs))
@@ -110,7 +110,7 @@ func (s *etcdStore) GetMutators() ([]*types.Mutator, error) {
 		return nil, err
 	}
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return []*types.Mutator{}, nil
 	}
 
 	mutatorsArray := make([]*types.Mutator, len(resp.Kvs))
@@ -174,7 +174,7 @@ func (s *etcdStore) GetChecks() ([]*types.Check, error) {
 		return nil, err
 	}
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return []*types.Check{}, nil
 	}
 
 	checksArray := make([]*types.Check, len(resp.Kvs))
@@ -240,7 +240,7 @@ func (s *etcdStore) GetEvents() ([]*types.Event, error) {
 	}
 
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return []*types.Event{}, nil
 	}
 
 	eventsArray := make([]*types.Event, len(resp.Kvs))
