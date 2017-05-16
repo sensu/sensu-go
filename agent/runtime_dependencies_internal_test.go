@@ -12,85 +12,117 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type ManagerTestSuite struct {
 	suite.Suite
 	agent       *Agent
-	asset       *types.Asset
-	manager     *dependencyManager
+	dep         *runtimeDependency
+	manager     *DependencyManager
 	assetServer *httptest.Server
 }
 
-func (e *ManagerTestSuite) SetupTest() {
+func (suite *ManagerTestSuite) SetupTest() {
 	// Ex script
 	exBody := "abc"
 	exHash := stringToSHA256(exBody)
 
 	// Setup a fake server to fake retrieving the asset
-	e.assetServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	suite.assetServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text")
 		fmt.Fprintf(w, exBody)
 	}))
 
-	// Create a fake cache directory so that we have a safe place to test results
-	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-")
-	agent := &Agent{config: &Config{CacheDir: tmpDir}}
-
+	// Ex. asset
 	asset := &types.Asset{
 		Name: "ruby24",
 		Hash: exHash,
-		URL:  e.assetServer.URL + "/myfile",
-	}
-	manager := &dependencyManager{
-		agent: agent,
-		dependencies: []*runtimeDependency{
-			{agent: agent, asset: asset},
-		},
+		URL:  suite.assetServer.URL + "/myfile",
 	}
 
-	e.manager = manager
-	e.agent = agent
-	e.asset = asset
+	// Create a fake cache directory so that we have a safe place to test results
+	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-")
+
+	// Ex. manager
+	manager := NewDependencyManager(tmpDir)
+	dep := &runtimeDependency{manager: manager, asset: asset}
+	manager.knownDeps["test"] = dep
+
+	suite.dep = dep
+	suite.manager = manager
 }
 
-func (e *ManagerTestSuite) AfterTest() {
+func (suite *ManagerTestSuite) AfterTest() {
 	// Shutdown asset server
-	e.assetServer.Close()
+	suite.assetServer.Close()
 
 	// Remove tmpdir
-	os.RemoveAll(e.agent.config.CacheDir)
+	os.RemoveAll(suite.manager.cacheDir)
 }
 
-func (e *ManagerTestSuite) TestNewDepManager() {
-	check := types.FixtureCheck("test")
-	check.RuntimeDependencies = append(check.RuntimeDependencies, *e.asset)
+func (suite *ManagerTestSuite) TestNewDepManager() {
+	manager := NewDependencyManager("./tmp")
 
-	manager := newDependencyManager(e.agent, check)
-	assert.NotNil(e.T(), manager)
-	assert.NotEmpty(e.T(), manager.dependencies)
+	suite.NotNil(manager)
+	suite.Contains(manager.cacheDir, "tmp")
+	suite.Contains(manager.cacheDir, "deps")
+	suite.Empty(manager.knownDeps)
 }
 
-func (e *ManagerTestSuite) TestManagerPaths() {
-	paths := e.manager.paths()
-	assert.NotEmpty(e.T(), paths)
-	assert.NotEmpty(e.T(), paths[0])
+func (suite *ManagerTestSuite) TestManagerPaths() {
+	paths := suite.manager.paths()
+	suite.NotEmpty(paths)
+	suite.Contains(paths, suite.dep.path())
 }
 
-func (e *ManagerTestSuite) TestManagerInject() {
-	testEnv := []string{"PATH=/usr/bin"}
-	resEnv := e.manager.injectIntoEnv(testEnv)
+func (suite *ManagerTestSuite) TestManagerEnv() {
+	suite.manager.BaseEnv = []string{"PATH=/usr/bin"}
 
-	assert.NotEmpty(e.T(), resEnv)
-	assert.NotEmpty(e.T(), resEnv[0])
-	assert.Regexp(e.T(), "^PATH=.*;/usr/bin", resEnv[0])
+	// Not memoized
+	resEnv := suite.manager.Env()
+	suite.NotEmpty(resEnv)
+	suite.NotEmpty(resEnv[0])
+	suite.Contains(resEnv[0], suite.manager.cacheDir)
+
+	// memoized
+	suite.manager.env = []string{"PATH=test"}
+	resEnv = suite.manager.Env()
+	suite.NotEmpty(resEnv)
+	suite.Equal("PATH=test", resEnv[0])
+
+	// Other vars
+	suite.manager.env = nil
+	suite.manager.BaseEnv = []string{
+		"PATH=tmp/bin",
+		"LD_LIBRARY_PATH=tmp/lib",
+		"CPATH=tmp/include",
+		"CAKES=are.tasty",
+	}
+	resEnv = suite.manager.Env()
+	suite.NotEmpty(resEnv)
+	suite.Contains(resEnv[0], suite.manager.cacheDir)
+	suite.Contains(resEnv[1], suite.manager.cacheDir)
+	suite.Contains(resEnv[2], suite.manager.cacheDir)
+	suite.NotContains(resEnv[3], suite.manager.cacheDir)
 }
 
-func (e *ManagerTestSuite) TestManagerInstall() {
-	err := e.manager.install()
-	assert.NoError(e.T(), err)
+func (suite *ManagerTestSuite) TestManagerInstall() {
+	err := suite.manager.Install()
+	suite.NoError(err)
+}
+
+func (suite *ManagerTestSuite) TestManagerReset() {
+	suite.manager.Reset()
+	suite.Nil(suite.manager.env)
+	suite.Empty(suite.manager.knownDeps)
+	suite.NotEmpty(suite.manager.BaseEnv)
+}
+
+func (suite *ManagerTestSuite) TestManagerSetConfig() {
+	suite.manager.SetCacheDir("./tmp")
+	suite.Nil(suite.manager.env)
+	suite.NotEmpty(suite.manager.cacheDir)
 }
 
 type DependencyTestSuite struct {
@@ -98,87 +130,97 @@ type DependencyTestSuite struct {
 
 	assetServer  *httptest.Server
 	dep          *runtimeDependency
+	manager      *DependencyManager
 	responseBody string
 	responseType string
 }
 
-func (e *DependencyTestSuite) SetupTest() {
+func (suite *DependencyTestSuite) SetupTest() {
 	// Setup a fake server to fake retrieving the asset
-	e.assetServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", e.responseType)
-		fmt.Fprintf(w, e.responseBody)
+	suite.assetServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", suite.responseType)
+		fmt.Fprintf(w, suite.responseBody)
 	}))
+
+	// Default response
+	suite.responseBody = ""
+	suite.responseType = "text"
 
 	// Create a fake cache directory so that we have a safe place to test results
 	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-test")
 
-	e.responseBody = ""
-	e.responseType = "text"
-	e.dep = &runtimeDependency{
-		agent: &Agent{config: &Config{CacheDir: tmpDir}},
-		asset: &types.Asset{Name: "ruby24", URL: e.assetServer.URL + "/myfile"},
+	// Ex. Dep
+	suite.manager = &DependencyManager{cacheDir: tmpDir}
+	suite.dep = &runtimeDependency{
+		manager: suite.manager,
+		asset: &types.Asset{
+			Name: "ruby24",
+			Hash: "123456",
+			URL:  suite.assetServer.URL + "/myfile",
+		},
 	}
 }
 
-func (e *DependencyTestSuite) AfterTest() {
+func (suite *DependencyTestSuite) AfterTest() {
 	// Shutdown asset server
-	e.assetServer.Close()
+	suite.assetServer.Close()
 
 	// Remove tmpdir
-	os.RemoveAll(e.dep.agent.config.CacheDir)
+	os.RemoveAll(suite.dep.manager.cacheDir)
 }
 
-func (e *DependencyTestSuite) TestFetch() {
-	e.responseBody = "abc"
+func (suite *DependencyTestSuite) TestFetch() {
+	suite.responseBody = "abc"
 
-	res, err := e.dep.fetch()
-	assert.NotNil(e.T(), res)
-	assert.NoError(e.T(), err)
+	res, err := suite.dep.fetch()
+	suite.NotNil(res)
+	suite.NoError(err)
 }
 
-func (e *DependencyTestSuite) TestInstall() {
-	e.responseBody = "abc"
-	e.dep.asset.Hash = stringToSHA256(e.responseBody)
+func (suite *DependencyTestSuite) TestInstall() {
+	suite.responseBody = "abc"
+	suite.dep.asset.Hash = stringToSHA256(suite.responseBody)
 
-	err := e.dep.install()
-	assert.NoError(e.T(), err)
+	err := suite.dep.install()
+	suite.NoError(err)
 }
 
-func (e *DependencyTestSuite) TestInstallBadAssetHash() {
-	e.responseBody = "abc"
-	e.dep.asset.Hash = "bad bad hash boy"
+func (suite *DependencyTestSuite) TestInstallBadAssetHash() {
+	suite.responseBody = "abc"
+	suite.dep.asset.Hash = "bad bad hash boy"
 
-	err := e.dep.install()
-	assert.Error(e.T(), err)
+	err := suite.dep.install()
+	suite.Error(err)
 }
 
-func (e *DependencyTestSuite) TestIsCached() {
-	cached, err := e.dep.isCached()
-	assert.False(e.T(), cached)
-	assert.NoError(e.T(), err)
+func (suite *DependencyTestSuite) TestIsCached() {
+	fmt.Println(suite.dep.path())
+	cached, err := suite.dep.isCached()
+	suite.False(cached)
+	suite.NoError(err)
 
-	os.MkdirAll(e.dep.path(), 0755)
-	cached, err = e.dep.isCached()
-	assert.True(e.T(), cached)
-	assert.NoError(e.T(), err)
+	os.MkdirAll(suite.dep.path(), 0755)
+	cached, err = suite.dep.isCached()
+	suite.True(cached)
+	suite.NoError(err)
 }
 
-func (e *DependencyTestSuite) TestIsCachedDirIsNotDirectory() {
-	os.MkdirAll(path.Dir(e.dep.path()), 0755)
-	os.OpenFile(e.dep.path(), os.O_RDONLY|os.O_CREATE, 0666)
+func (suite *DependencyTestSuite) TestIsCachedDirIsNotDirectory() {
+	os.MkdirAll(path.Dir(suite.dep.path()), 0755)
+	os.OpenFile(suite.dep.path(), os.O_RDONLY|os.O_CREATE, 0666)
 
-	cached, err := e.dep.isCached()
-	assert.True(e.T(), cached)
-	assert.Error(e.T(), err)
+	cached, err := suite.dep.isCached()
+	suite.True(cached)
+	suite.Error(err)
 }
 
-func TestInstallDependency(t *testing.T) {
+func TestRuntimeDependencies(t *testing.T) {
+	suite.Run(t, new(ManagerTestSuite))
 	suite.Run(t, new(DependencyTestSuite))
 }
 
-func TestDependencyManager(t *testing.T) {
-	suite.Run(t, new(ManagerTestSuite))
-}
+//
+// Helpers
 
 func stringToSHA256(hash string) string {
 	h := sha256.New()

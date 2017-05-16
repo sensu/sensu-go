@@ -24,11 +24,6 @@ func TestValidator(t *testing.T) {
 	asset = FixtureAsset("")
 	assert.Error(asset.Validate())
 
-	// Given asset without a hash it should not pass
-	asset = FixtureAsset("name")
-	asset.Hash = ""
-	assert.Error(asset.Validate())
-
 	// Given asset without a URL it should not pass
 	asset = FixtureAsset("name")
 	asset.URL = ""

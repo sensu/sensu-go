@@ -18,40 +18,57 @@ import (
 )
 
 const (
-	// Time in seconds we allow for fetching the asset
+	// time in seconds we allow for fetching the asset
 	fetchTimeout = time.Second * 30
+
+	// dependencies cache path
+	depsCachePath = "deps"
 )
 
-type dependencyManager struct {
-	agent        *Agent
-	dependencies []*runtimeDependency
+// DependencyManager manages caching & installation of dependencies
+type DependencyManager struct {
+	// BaseEnv env vars that dependencies are injected into; defaults to sys vars
+	BaseEnv []string
+
+	cacheDir  string
+	knownDeps map[string]*runtimeDependency
+	env       []string
 }
 
-func newDependencyManager(agent *Agent, check *types.Check) *dependencyManager {
-	manager := &dependencyManager{
-		agent:        agent,
-		dependencies: []*runtimeDependency{},
-	}
-
-	if check.RuntimeDependencies == nil {
-		return manager
-	}
-
-	for _, asset := range check.RuntimeDependencies {
-		manager.dependencies = append(
-			manager.dependencies,
-			&runtimeDependency{
-				agent: agent,
-				asset: &asset,
-			},
-		)
-	}
+// NewDependencyManager given agent returns instantiated DependencyManager
+func NewDependencyManager(agentCacheDir string) *DependencyManager {
+	manager := &DependencyManager{}
+	manager.SetCacheDir(agentCacheDir)
+	manager.Reset()
 
 	return manager
 }
 
-func (m *dependencyManager) install() error {
-	for _, dep := range m.dependencies {
+// SetCacheDir sets cache directory given a base directory
+func (m *DependencyManager) SetCacheDir(baseDir string) {
+	m.cacheDir = filepath.Join(baseDir, depsCachePath)
+	m.env = nil // Clear environment as it is likely pointing to the wrong paths
+}
+
+// Merge updates list of known dependencies given a list of assets
+func (m *DependencyManager) Merge(assets []types.Asset) {
+	for _, asset := range assets {
+		// Do nothing if we already know about the dependency
+		if m.knownDeps[asset.Hash] != nil {
+			continue
+		}
+
+		m.env = nil // Clears env forcing us to re-construct on next exec
+		m.knownDeps[asset.Hash] = &runtimeDependency{
+			manager: m,
+			asset:   &asset,
+		}
+	}
+}
+
+// Install - ensures that all known dependencies are installed
+func (m *DependencyManager) Install() error {
+	for _, dep := range m.knownDeps {
 		if err := dep.install(); err != nil {
 			return err
 		}
@@ -60,52 +77,83 @@ func (m *dependencyManager) install() error {
 	return nil
 }
 
-func (m *dependencyManager) paths() []string {
+// Env returns a copy of the current environment with PATH, LD_LIBRARY_PATH, &
+// CPATH updated to include dependency paths. In this way the execution context
+// allows the check to reference binary & libraries provided by dependencies.
+func (m *DependencyManager) Env() []string {
+	if m.env != nil {
+		return m.env
+	}
+
+	injectPaths := func(val string, subDir string) string {
+		for _, p := range m.paths() {
+			val = strings.Join(
+				[]string{filepath.Join(p, subDir), val},
+				string(filepath.ListSeparator),
+			)
+		}
+		return val
+	}
+
+	// NOTE: Because we memoize this means that if a new ENVIRONMENT variable
+	// variable is added it will not be made available in the execution context.
+	// In the future we may want have functionality to reset state; perhaps the
+	// agent responds to kill -HUP?
+	m.env = make([]string, len(m.BaseEnv))
+	copy(m.env, m.BaseEnv)
+
+	// Inject paths for dependencies
+	for i, e := range m.env {
+		pair := strings.Split(e, "=")
+		key, val := pair[0], pair[1]
+
+		switch key {
+		case "PATH":
+			val = injectPaths(val, "bin")
+		case "LD_LIBRARY_PATH":
+			val = injectPaths(val, "lib")
+		case "CPATH":
+			val = injectPaths(val, "include")
+		default:
+			continue
+		}
+
+		m.env[i] = fmt.Sprintf("%s=%s", key, val)
+	}
+
+	return m.Env()
+}
+
+// Reset clears all knownDeps and env from state, this forces the agent to
+// recompute the next time a check is run.
+//
+// NOTE: Cache on disk is not cleared.
+func (m *DependencyManager) Reset() {
+	m.knownDeps = map[string]*runtimeDependency{}
+	m.BaseEnv = os.Environ()
+	m.env = nil
+}
+
+func (m *DependencyManager) paths() []string {
 	paths := []string{}
 
-	for _, dep := range m.dependencies {
+	for _, dep := range m.knownDeps {
 		paths = append(paths, dep.path())
 	}
 
 	return paths
 }
 
-func (m *dependencyManager) injectIntoEnv(env []string) []string {
-	for i, e := range env {
-		pair := strings.Split(e, "=")
-		k, v := pair[0], pair[1]
-
-		injectPaths := func(subDir string) {
-			sep := string(filepath.ListSeparator)
-			vals := strings.Split(v, sep)
-			for _, p := range m.paths() {
-				fullpath := filepath.Join(p, subDir)
-				vals = append([]string{fullpath}, vals...)
-			}
-			env[i] = fmt.Sprintf("%s=%s", k, strings.Join(vals, sep))
-		}
-
-		switch k {
-		case "PATH":
-			injectPaths("bin")
-		case "LD_LIBRARY_PATH":
-			injectPaths("lib")
-		case "CPATH":
-			injectPaths("include")
-		}
-	}
-
-	return env
-}
-
 type runtimeDependency struct {
-	agent *Agent
-	asset *types.Asset
+	manager *DependencyManager
+	asset   *types.Asset
 }
 
 func (d *runtimeDependency) path() string {
-	config := d.agent.config
-	return filepath.Join(config.CacheDir, "deps", d.asset.Hash)
+	return filepath.Join(
+		d.manager.cacheDir,
+		d.asset.Hash,
+	)
 }
 
 func (d *runtimeDependency) isCached() (bool, error) {
