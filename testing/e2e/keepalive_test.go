@@ -42,8 +42,11 @@ func TestAgentKeepalives(t *testing.T) {
 	initialCluster := fmt.Sprintf("default=%s", etcdPeerURL)
 
 	bep := &backendProcess{
-		APIPort:            apiPort,
+		AgentHost:          "127.0.0.1",
 		AgentPort:          agentPort,
+		APIHost:            "127.0.0.1",
+		APIPort:            apiPort,
+		DashboardHost:      "127.0.0.1",
 		DashboardPort:      dashboardPort,
 		StateDir:           tmpDir,
 		EtcdClientURL:      etcdClientURL,
