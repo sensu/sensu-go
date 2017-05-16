@@ -32,4 +32,5 @@ type HandlerAPIClient interface {
 // EntityAPIClient client methods for checks
 type EntityAPIClient interface {
 	ListEntities() ([]types.Entity, error)
+	FetchEntity(ID string) (types.Entity, error)
 }

@@ -54,7 +54,7 @@ func printEntitiesToTable(queryResults []types.Entity, writer io.Writer) {
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				entity, _ := data.(types.Entity)
-				return entity.System.Hostname
+				return entity.ID
 			},
 		},
 		{
