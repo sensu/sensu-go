@@ -27,9 +27,9 @@ func TestGet(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 	tmpFile.WriteString(`
 [default]
-  url = "http://lol.com"
+  api-url = "http://lol.com"
 [annastomatoes]
-  url = "http://anna.tomato"
+  api-url = "http://anna.tomato"
 	`)
 	tmpFile.Close()
 	ConfigFilePath = tmpFile.Name()
@@ -38,16 +38,16 @@ func TestGet(t *testing.T) {
 	var result string
 
 	// Pull url value from the default profile
-	result = config.GetString("url")
+	result = config.GetString("api-url")
 	assert.Equal("http://lol.com", result, "correct URL is returned for default profile")
 
 	// Pull url value from annatomatoes profile
 	os.Setenv("SENSU_PROFILE", "annastomatoes")
-	result = config.GetString("url")
+	result = config.GetString("api-url")
 	assert.Equal("http://anna.tomato", result, "correct URL is returned for given profile")
 
 	// Return given (unnested) environment var
-	os.Setenv("SENSU_URL", "http://test.local")
-	result = config.GetString("url")
+	os.Setenv("SENSU_API_URL", "http://test.local")
+	result = config.GetString("api-url")
 	assert.Equal(result, "http://test.local", "ENV variables value is returned")
 }
