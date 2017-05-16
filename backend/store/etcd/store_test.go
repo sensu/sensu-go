@@ -47,6 +47,11 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 
 func TestHandlerStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		// We should receive an empty slice if no results were found
+		handlers, err := store.GetHandlers()
+		assert.NoError(t, err)
+		assert.NotNil(t, handlers)
+
 		handler := &types.Handler{
 			Name:    "handler1",
 			Type:    "pipe",
@@ -54,8 +59,9 @@ func TestHandlerStorage(t *testing.T) {
 			Timeout: 10,
 		}
 
-		err := store.UpdateHandler(handler)
+		err = store.UpdateHandler(handler)
 		assert.NoError(t, err)
+
 		retrieved, err := store.GetHandlerByName("handler1")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
@@ -65,7 +71,7 @@ func TestHandlerStorage(t *testing.T) {
 		assert.Equal(t, handler.Command, retrieved.Command)
 		assert.Equal(t, handler.Timeout, retrieved.Timeout)
 
-		handlers, err := store.GetHandlers()
+		handlers, err = store.GetHandlers()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, handlers)
 		assert.Equal(t, 1, len(handlers))
@@ -74,13 +80,18 @@ func TestHandlerStorage(t *testing.T) {
 
 func TestMutatorStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		// We should receive an empty slice if no results were found
+		mutators, err := store.GetMutators()
+		assert.NoError(t, err)
+		assert.NotNil(t, mutators)
+
 		mutator := &types.Mutator{
 			Name:    "mutator1",
 			Command: "command1",
 			Timeout: 10,
 		}
 
-		err := store.UpdateMutator(mutator)
+		err = store.UpdateMutator(mutator)
 		assert.NoError(t, err)
 		retrieved, err := store.GetMutatorByName("mutator1")
 		assert.NoError(t, err)
@@ -90,7 +101,7 @@ func TestMutatorStorage(t *testing.T) {
 		assert.Equal(t, mutator.Command, retrieved.Command)
 		assert.Equal(t, mutator.Timeout, retrieved.Timeout)
 
-		mutators, err := store.GetMutators()
+		mutators, err = store.GetMutators()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, mutators)
 		assert.Equal(t, 1, len(mutators))
@@ -99,6 +110,11 @@ func TestMutatorStorage(t *testing.T) {
 
 func TestCheckStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		// We should receive an empty slice if no results were found
+		checks, err := store.GetChecks()
+		assert.NoError(t, err)
+		assert.NotNil(t, checks)
+
 		check := &types.Check{
 			Name:          "check1",
 			Interval:      60,
@@ -106,7 +122,7 @@ func TestCheckStorage(t *testing.T) {
 			Command:       "command1",
 		}
 
-		err := store.UpdateCheck(check)
+		err = store.UpdateCheck(check)
 		assert.NoError(t, err)
 		retrieved, err := store.GetCheckByName("check1")
 		assert.NoError(t, err)
@@ -117,7 +133,7 @@ func TestCheckStorage(t *testing.T) {
 		assert.Equal(t, check.Subscriptions, retrieved.Subscriptions)
 		assert.Equal(t, check.Command, retrieved.Command)
 
-		checks, err := store.GetChecks()
+		checks, err = store.GetChecks()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, checks)
 		assert.Equal(t, 1, len(checks))
@@ -127,6 +143,11 @@ func TestCheckStorage(t *testing.T) {
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		sysinfo, _ := system.Info()
+
+		// We should receive an empty slice if no results were found
+		events, err := store.GetEvents()
+		assert.NoError(t, err)
+		assert.NotNil(t, events)
 
 		event := &types.Event{
 			Entity: &types.Entity{
@@ -148,7 +169,7 @@ func TestEventStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.EqualValues(t, event, newEv)
 
-		events, err := store.GetEvents()
+		events, err = store.GetEvents()
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
 		assert.EqualValues(t, event, events[0])
