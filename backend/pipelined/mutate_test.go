@@ -3,19 +3,36 @@ package pipelined
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
+func TestHelperMutatorProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_MUTATOR_PROCESS") != "1" {
+		return
+	}
+
+	command := strings.Join(os.Args[3:], " ")
+	stdin, _ := ioutil.ReadAll(os.Stdin)
+
+	switch command {
+	case "cat":
+		fmt.Fprintf(os.Stdout, "%s", stdin)
+	}
+	os.Exit(0)
+}
+
 func TestPipelinedMutate(t *testing.T) {
 	p := &Pipelined{}
 
-	handler := &types.Handler{
-		Type:    "pipe",
-		Command: catPath,
-	}
+	handler := types.FakeHandlerCommand("cat")
+	handler.Type = "pipe"
 
 	event := &types.Event{}
 
@@ -43,9 +60,7 @@ func TestPipelinedJsonMutator(t *testing.T) {
 func TestPipelinedPipeMutator(t *testing.T) {
 	p := &Pipelined{}
 
-	mutator := &types.Mutator{
-		Command: catPath,
-	}
+	mutator := types.FakeMutatorCommand("cat")
 
 	event := &types.Event{}
 

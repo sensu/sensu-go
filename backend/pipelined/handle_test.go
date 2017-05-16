@@ -3,20 +3,32 @@ package pipelined
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
-	"path/filepath"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-var binDir = filepath.Join("..", "..", "bin")
-var toolsDir = filepath.Join(binDir, "tools")
-var catPath = util.CommandPath(filepath.Join(toolsDir, "cat"))
+func TestHelperHandlerProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_HANDLER_PROCESS") != "1" {
+		return
+	}
+
+	command := strings.Join(os.Args[3:], " ")
+	stdin, _ := ioutil.ReadAll(os.Stdin)
+
+	switch command {
+	case "cat":
+		fmt.Fprintf(os.Stdout, "%s", stdin)
+	}
+	os.Exit(0)
+}
 
 func TestPipelinedHandleEvent(t *testing.T) {
 	p := &Pipelined{}
@@ -93,10 +105,8 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 func TestPipelinedPipeHandler(t *testing.T) {
 	p := &Pipelined{}
 
-	handler := &types.Handler{
-		Type:    "pipe",
-		Command: catPath,
-	}
+	handler := types.FakeHandlerCommand("cat")
+	handler.Type = "pipe"
 
 	event := &types.Event{}
 	eventData, _ := json.Marshal(event)
