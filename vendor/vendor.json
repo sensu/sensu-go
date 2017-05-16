@@ -846,6 +846,12 @@
 			"revisionTime": "2017-03-12T11:21:14Z"
 		},
 		{
+			"checksumSHA1": "alyRcK9u1TMJXoSp1ojF4eGyXVs=",
+			"path": "github.com/willf/pad/utf8",
+			"revision": "b3d7806010228b1a954b4d9c4ee4cf6cb476b063",
+			"revisionTime": "2016-03-31T13:10:08Z"
+		},
+		{
 			"checksumSHA1": "+SrMzo4EJeOuoF9AKdbw8QWOOYQ=",
 			"path": "github.com/xiang90/probing",
 			"revision": "07dd2e8dfe18522e9c447ba95f2fe95262f63bb2",
