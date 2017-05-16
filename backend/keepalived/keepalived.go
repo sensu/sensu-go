@@ -51,11 +51,7 @@ func (k *Keepalived) Start() error {
 		k.HandlerCount = DefaultHandlerCount
 	}
 
-	k.wg = &sync.WaitGroup{}
-	k.wg.Add(k.HandlerCount)
-	for i := 0; i < k.HandlerCount; i++ {
-		go k.processKeepalives()
-	}
+	k.startWorkers()
 
 	k.errChan = make(chan error, 1)
 	return nil
