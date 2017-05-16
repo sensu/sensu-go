@@ -85,23 +85,49 @@ func (k *Keepalived) deregisterEntity(entity *types.Entity) {
 	if err := k.Store.DeleteEntity(entity); err != nil {
 		logger.WithError(err).Error("error deleting entity in store")
 	}
+
 	events, err := k.Store.GetEventsByEntity(entity.ID)
 	if err != nil {
 		logger.WithError(err).Error("error fetching events for entity")
 	}
+
 	for _, event := range events {
-		// Delete event from Store
 		if err := k.Store.DeleteEventByEntityCheck(entity.ID, event.Check.Name); err != nil {
 			logger.WithError(err).Error("error deleting event for entity")
 		}
+
 		event.Check.Output = "Resolving due to entity deregistering"
 		event.Check.Status = 0
 		event.Check.History = []types.CheckHistory{}
 
 		eventBytes, err := json.Marshal(event)
 		if err != nil {
+			logger.Errorf("error serializing event: %s", err.Error())
+		}
+
+		k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
+	}
+
+	if entity.Deregistration.Handler != "" {
+		deregistrationCheck := &types.Check{
+			Name:          "deregistration",
+			Interval:      DefaultKeepaliveTimeout,
+			Subscriptions: []string{""},
+			Command:       "",
+			Handlers:      []string{entity.Deregistration.Handler},
+			Status:        1,
+		}
+
+		deregistrationEvent := types.Event{
+			Entity: entity,
+			Check:  deregistrationCheck,
+		}
+
+		eventBytes, err := json.Marshal(deregistrationEvent)
+		if err != nil {
 			logger.Errorf("error serializing deregistration event: %s", err.Error())
 		}
+
 		k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
 	}
 }

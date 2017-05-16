@@ -1,6 +1,7 @@
 package keepalived
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -106,7 +107,7 @@ func (s *HandlerTestSuite) TestKeepaliveTimeout() {
 	close(s.keepalived.stopping)
 }
 
-func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregistration() {
+func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregister() {
 	keepaliveTimeout = 1
 	entityDeleted := make(chan struct{})
 	eventPublished := make(chan struct{})
@@ -130,6 +131,42 @@ func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregistration() {
 
 	s.NotNil(<-entityDeleted)
 	s.NotNil(<-eventDeleted)
+	s.NotNil(<-eventPublished)
+
+	close(s.keepalived.stopping)
+}
+
+func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregistrationHandler() {
+	keepaliveTimeout = 1
+	eventPublished := make(chan struct{})
+
+	event := types.FixtureEvent("entity1", "check1")
+	event.Entity.Deregister = true
+	event.Entity.Deregistration = types.Deregistration{
+		Handler: "deregistration",
+	}
+
+	mockEvents := []*types.Event{
+		event,
+	}
+
+	s.store.On("DeleteEntity", event.Entity).Return(nil)
+	s.store.On("GetEventsByEntity", event.Entity.ID).Return(mockEvents, nil)
+	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Name).Return(nil)
+	s.bus.On("Publish", messaging.TopicEvent, mock.AnythingOfType("[]uint8")).Return(nil).Run(func(args mock.Arguments) {
+		publishedEvent := types.Event{}
+		_ = json.Unmarshal(args[1].([]byte), &publishedEvent)
+
+		if publishedEvent.Check.Name == "deregistration" {
+			s.Equal([]string{"deregistration"}, publishedEvent.Check.Handlers)
+			close(eventPublished)
+		}
+	})
+
+	ch := make(chan *types.Event)
+
+	go s.keepalived.monitorEntity(ch, event.Entity, s.stoppingMonitors)
+
 	s.NotNil(<-eventPublished)
 
 	close(s.keepalived.stopping)
