@@ -13,6 +13,7 @@ import (
 type backendProcess struct {
 	APIPort            int
 	AgentPort          int
+	DashboardPort      int
 	StateDir           string
 	EtcdPeerURL        string
 	EtcdClientURL      string
@@ -30,7 +31,7 @@ func (b *backendProcess) Start() error {
 	// path := strings.Split(os.Getenv("PATH"), filepath.ListSeparator)
 	// append([]string{bin_dir}, path...)
 	exe := filepath.Join(binDir, "sensu-backend")
-	cmd := exec.Command(exe, "start", "-d", b.StateDir, "--api-port", strconv.FormatInt(int64(b.APIPort), 10), "--agent-port", strconv.FormatInt(int64(b.AgentPort), 10), "--store-client-url", b.EtcdClientURL, "--store-peer-url", b.EtcdPeerURL, "--store-initial-cluster", b.EtcdInitialCluster)
+	cmd := exec.Command(exe, "start", "-d", b.StateDir, "--api-port", strconv.FormatInt(int64(b.APIPort), 10), "--agent-port", strconv.FormatInt(int64(b.AgentPort), 10), "--store-client-url", b.EtcdClientURL, "--store-peer-url", b.EtcdPeerURL, "--store-initial-cluster", b.EtcdInitialCluster, "--dashboard-port", strconv.FormatInt(int64(b.DashboardPort), 10))
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err

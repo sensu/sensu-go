@@ -20,7 +20,7 @@ import (
 // TODO(greg): Yeah, this is really just one enormous test for all e2e stuff.
 // I'd love to see this organized better.
 func TestAgentKeepalives(t *testing.T) {
-	ports := make([]int, 4)
+	ports := make([]int, 5)
 	err := util.RandomPorts(ports)
 	if err != nil {
 		log.Fatal(err)
@@ -36,6 +36,7 @@ func TestAgentKeepalives(t *testing.T) {
 	etcdPeerURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
 	apiPort := ports[2]
 	agentPort := ports[3]
+	dashboardPort := ports[4]
 	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", agentPort)
 	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", apiPort)
 	initialCluster := fmt.Sprintf("default=%s", etcdPeerURL)
@@ -43,6 +44,7 @@ func TestAgentKeepalives(t *testing.T) {
 	bep := &backendProcess{
 		APIPort:            apiPort,
 		AgentPort:          agentPort,
+		DashboardPort:      dashboardPort,
 		StateDir:           tmpDir,
 		EtcdClientURL:      etcdClientURL,
 		EtcdPeerURL:        etcdPeerURL,
