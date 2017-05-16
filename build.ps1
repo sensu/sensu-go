@@ -37,7 +37,7 @@ function install_deps
   go get github.com/gordonklaus/ineffassign
   go get github.com/jgautheron/goconst/cmd/goconst
   go get -u github.com/golang/lint/golint
-v}
+}
 
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)
 {
