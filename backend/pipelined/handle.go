@@ -109,6 +109,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 
 	handlerExec.Command = handler.Command
 	handlerExec.Timeout = handler.Timeout
+	handlerExec.Env = handler.Env
 
 	handlerExec.Input = string(eventData[:])
 

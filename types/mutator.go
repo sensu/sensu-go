@@ -12,6 +12,9 @@ type Mutator struct {
 
 	// Timeout is the command execution timeout in seconds.
 	Timeout int `json:"timeout"`
+
+	// Env is a list of environment variables to use with command execution
+	Env []string `json:"environment,omitempty"`
 }
 
 // Validate returns an error if the mutator does not pass validation tests.
