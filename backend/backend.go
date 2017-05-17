@@ -149,6 +149,7 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	// TODO(Simon): We need to determine the authentication driver from the config
 	basicAuth := &basic.Basic{
 		Store: st,
 	}
