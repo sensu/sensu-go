@@ -4,15 +4,17 @@ import "github.com/sensu/sensu-go/types"
 
 // APIClient client methods across the Sensu API
 type APIClient interface {
-	EventAPIClient
+	AssetAPIClient
 	CheckAPIClient
-	HandlerAPIClient
 	EntityAPIClient
+	EventAPIClient
+	HandlerAPIClient
 }
 
-// EventAPIClient client methods for events
-type EventAPIClient interface {
-	ListEvents() ([]types.Event, error)
+// AssetAPIClient client methods for assets
+type AssetAPIClient interface {
+	ListAssets() ([]types.Asset, error)
+	CreateAsset(*types.Asset) error
 }
 
 // CheckAPIClient client methods for checks
@@ -22,15 +24,20 @@ type CheckAPIClient interface {
 	DeleteCheck(*types.Check) error
 }
 
-// HandlerAPIClient client methods for checks
+// EntityAPIClient client methods for entities
+type EntityAPIClient interface {
+	ListEntities() ([]types.Entity, error)
+	FetchEntity(ID string) (types.Entity, error)
+}
+
+// EventAPIClient client methods for events
+type EventAPIClient interface {
+	ListEvents() ([]types.Event, error)
+}
+
+// HandlerAPIClient client methods for handlers
 type HandlerAPIClient interface {
 	ListHandlers() ([]types.Handler, error)
 	CreateHandler(*types.Handler) error
 	DeleteHandler(*types.Handler) error
-}
-
-// EntityAPIClient client methods for checks
-type EntityAPIClient interface {
-	ListEntities() ([]types.Entity, error)
-	FetchEntity(ID string) (types.Entity, error)
 }

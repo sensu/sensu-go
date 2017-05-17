@@ -33,6 +33,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "json")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -51,9 +52,14 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "tabular")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
+	assert.Contains(out, "Source")    // Heading
+	assert.Contains(out, "Check")     // Heading
+	assert.Contains(out, "Result")    // Heading
+	assert.Contains(out, "Timestamp") // Heading
 	assert.Contains(out, "something")
 	assert.Contains(out, "funny")
 	assert.Nil(err)

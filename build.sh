@@ -114,7 +114,7 @@ build_command () {
 linter_commands () {
 	echo "Running linter..."
 
-	gometalinter.v1 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=vetshadow --enable=golint --enable=ineffassign --enable=goconst --tests ./...
+	gometalinter.v1 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=golint --enable=ineffassign --enable=goconst --tests ./...
 	if [ $? -ne 0 ]; then
 		echo "Linting failed..."
 		exit 1

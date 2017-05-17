@@ -37,6 +37,16 @@ type Store interface {
 	UpdateEvent(event *types.Event) error
 	DeleteEventByEntityCheck(entityID, checkID string) error
 
+	AssetStore
+}
+
+// AssetStore manage assets
+type AssetStore interface {
+	GetAssets() ([]*types.Asset, error)
+	GetAssetByName(assetName string) (*types.Asset, error)
+	UpdateAsset(asset *types.Asset) error
+	DeleteAssetByName(assetName string) error
+
 	KeepaliveStore
 }
 
