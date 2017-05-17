@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
+	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/eventd"
@@ -148,11 +149,15 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	basicAuth := &basic.Basic{
+		Store: st,
+	}
 	b.apid = &apid.APId{
-		Store:         st,
-		Host:          b.Config.APIHost,
-		Port:          b.Config.APIPort,
-		BackendStatus: b.Status,
+		Authentication: basicAuth,
+		Store:          st,
+		Host:           b.Config.APIHost,
+		Port:           b.Config.APIPort,
+		BackendStatus:  b.Status,
 	}
 	if err := b.apid.Start(); err != nil {
 		return err
