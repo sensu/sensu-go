@@ -11,7 +11,7 @@ import (
 func TestUserStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		user := types.FixtureUser("foo")
-		err := store.UpdateUser(user)
+		err := store.CreateUser(user)
 		assert.NoError(t, err)
 	})
 }

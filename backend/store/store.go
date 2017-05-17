@@ -38,7 +38,7 @@ type Store interface {
 	DeleteEventByEntityCheck(entityID, checkID string) error
 
 	// Users
-	UpdateUser(user *types.User) error
+	CreateUser(user *types.User) error
 
 	KeepaliveStore
 }

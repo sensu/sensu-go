@@ -15,7 +15,7 @@ func TestCreateUser(t *testing.T) {
 	store := &mockstore.MockStore{}
 	b.Store = store
 
-	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(nil)
+	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	user := types.FixtureUser("foo")
 	user.Password = "P@ssw0rd!"

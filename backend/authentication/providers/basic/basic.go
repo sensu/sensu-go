@@ -19,7 +19,7 @@ func (b *Basic) CreateUser(user *types.User) error {
 	}
 	user.Password = hash
 
-	return b.Store.UpdateUser(user)
+	return b.Store.CreateUser(user)
 }
 
 func hashPassword(password string) (string, error) {
