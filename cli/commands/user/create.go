@@ -31,7 +31,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				opts.withFlags(flags)
 				if len(args) > 0 {
-					fmt.Println(args)
 					opts.Username = args[0]
 				}
 			}
