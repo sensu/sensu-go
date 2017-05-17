@@ -90,7 +90,7 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(newAsset.Hash) == 0 {
-			if err := newAsset.UpdateHash(); err != nil {
+			if err = newAsset.UpdateHash(); err != nil {
 				http.Error(w, "unable to read given URL", http.StatusBadRequest)
 				return
 			}
