@@ -160,3 +160,9 @@ func (s *MockStore) GetKeepalive(entityID string) (int64, error) {
 	args := s.Called(entityID)
 	return args.Get(0).(int64), args.Error(1)
 }
+
+// UpdateUser ...
+func (s *MockStore) UpdateUser(user *types.User) error {
+	args := s.Called(user)
+	return args.Error(0)
+}
