@@ -18,5 +18,14 @@ func TestCreateUser(t *testing.T) {
 	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	user := types.FixtureUser("foo")
+	user.Password = "P@ssw0rd!"
 	assert.NoError(t, b.CreateUser(user))
+}
+
+func TestHashPassword(t *testing.T) {
+	password := "P@ssw0rd!"
+
+	hash, err := hashPassword(password)
+	assert.NotEqual(t, password, hash)
+	assert.NoError(t, err)
 }
