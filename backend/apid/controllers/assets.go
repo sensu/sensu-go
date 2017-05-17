@@ -96,7 +96,7 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if err = newAsset.Validate(); err != nil {
+		if err := newAsset.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
