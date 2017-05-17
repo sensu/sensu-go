@@ -14,21 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func fakeCommand(command string, args ...string) *Execution {
-	cs := []string{os.Args[0], "-test.run=TestHelperProcess", "--", command}
-	cs = append(cs, args...)
-	cmdStr := strings.Join(cs, " ")
-	trimmedCmd := strings.Trim(cmdStr, " ")
-	env := []string{"GO_WANT_HELPER_PROCESS=1"}
-
-	execution := &Execution{
-		Command: trimmedCmd,
-		Env:     env,
-	}
-
-	return execution
-}
-
 func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
@@ -61,7 +46,7 @@ func TestHelperProcess(t *testing.T) {
 
 func TestExecuteCommand(t *testing.T) {
 	// test that stdout can be read from
-	echo := fakeCommand("echo", "foo")
+	echo := FakeCommand("echo", "foo")
 
 	echoExec, echoErr := ExecuteCommand(context.Background(), echo)
 	assert.Equal(t, nil, echoErr)
@@ -70,7 +55,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.NotEqual(t, 0, echoExec.Duration)
 
 	// test that input can be passed to a command through stdin
-	cat := fakeCommand("cat")
+	cat := FakeCommand("cat")
 	cat.Input = "bar"
 
 	catExec, catErr := ExecuteCommand(context.Background(), cat)
@@ -80,7 +65,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.NotEqual(t, 0, catExec.Duration)
 
 	// test that command exit codes can be read
-	falseCmd := fakeCommand("false")
+	falseCmd := FakeCommand("false")
 
 	falseExec, falseErr := ExecuteCommand(context.Background(), falseCmd)
 	assert.Equal(t, nil, falseErr)
@@ -89,7 +74,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.NotEqual(t, 0, falseExec.Duration)
 
 	// test that stderr can be read from
-	outputs := fakeCommand("echo bar 1>&2")
+	outputs := FakeCommand("echo bar 1>&2")
 
 	outputsExec, outputsErr := ExecuteCommand(context.Background(), outputs)
 	assert.Equal(t, nil, outputsErr)
@@ -98,7 +83,7 @@ func TestExecuteCommand(t *testing.T) {
 	assert.NotEqual(t, 0, outputsExec.Duration)
 
 	// test that commands can time out
-	sleep := fakeCommand("sleep 10")
+	sleep := FakeCommand("sleep 10")
 	sleep.Timeout = 1
 
 	sleepExec, sleepErr := ExecuteCommand(context.Background(), sleep)
