@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 )
@@ -21,7 +20,7 @@ type Session struct {
 
 	conn          *transport.Transport
 	store         store.Store
-	handler       *handler.MessageHandler
+	handler       handler.MessageHandler
 	stopping      chan struct{}
 	stopped       chan struct{}
 	sendq         chan *transport.Message
@@ -135,7 +134,7 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 			}
 
 			logger.Debugf("session - received message: %s", string(msg.Payload))
-			err := s.handler.Handle(msg.Type, msg.Payload)
+			err := s.handler.Handle(msg)
 			if err != nil {
 				logger.Error("error handling message: ", msg)
 			}

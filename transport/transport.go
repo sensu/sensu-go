@@ -2,15 +2,28 @@ package transport
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 var (
-	sep = []byte("\n")
+	space = []byte(" ")
+	sep   = []byte("\n")
+
+	pongWait   = pingPeriod + (pingPeriod / 6)
+	pingPeriod = 60 * time.Second
+
+	writeWait   = 10 * time.Second
+	recvTimeout = 10 * time.Second
+	sendTimeout = 10 * time.Second
+
+	sendBufferLength = 20
+	recvBufferLength = 20
 )
 
 // A ClosedError is returned when Receive or Send is called on a closed
@@ -35,14 +48,16 @@ func (e ConnectionError) Error() string {
 
 // Encode a message to be sent over a websocket channel
 func Encode(msgType string, payload []byte) []byte {
-	buf := []byte(msgType + "\n")
+	buf := []byte(msgType)
+	buf = append(buf, space...)
 	buf = append(buf, payload...)
+	buf = append(buf, sep...)
 	return buf
 }
 
 // Decode a message received from a websocket channel.
 func Decode(payload []byte) (string, []byte, error) {
-	nl := bytes.Index(payload, sep)
+	nl := bytes.Index(payload, space)
 	if nl < 0 {
 		return "", nil, errors.New("invalid message")
 	}
@@ -59,91 +74,199 @@ type Message struct {
 	Payload []byte
 }
 
-// A Transport is a connection between sensu Agents and Backends.
-type Transport struct {
-	Connection *websocket.Conn
-	closed     bool
-	mutex      *sync.RWMutex
-}
-
-// NewTransport creates an initialized Transport and return its pointer.
-func NewTransport(conn *websocket.Conn) *Transport {
-	return &Transport{
-		Connection: conn,
-		closed:     false,
-		mutex:      &sync.RWMutex{},
-	}
-}
-
-// Closed returns true if the underlying connection is closed.
-func (t *Transport) Closed() bool {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-	return t.closed
-}
-
-// Send is used to send a message over the transport. It takes a message type
-// hint and a serialized payload. Send will block until the message has been
-// sent. Send is synchronous, returning nil if the write to the underlying
-// socket was successful and an error otherwise.
-func (t *Transport) Send(m *Message) error {
-	t.mutex.RLock()
-	if t.closed {
-		t.mutex.RUnlock()
-		return ClosedError{"connection closed"}
-	}
-	t.mutex.RUnlock()
-
-	msg := Encode(m.Type, m.Payload)
-	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
-	if err != nil {
-		// If we get _any_ error, let's just considered the connection closed,
-		// because it's _really_ hard to figure out what errors from the
-		// websocket library are terminal and which aren't. So, abandon all
-		// hope, and reconnect if we get an error from the websocket lib.
-		t.mutex.Lock()
-		t.closed = true
-		t.mutex.Unlock()
-		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-			return ClosedError{err.Error()}
-		}
-		return ConnectionError{err.Error()}
+// Validate if the message is a valid Sensu Transport message.
+func (m *Message) Validate() error {
+	if m.Type == "" {
+		return errors.New("message type cannot be empty")
 	}
 
 	return nil
 }
 
-// Receive is used to receive a message from the transport. It takes a context
-// and blocks until the next message is received from the transport.
-func (t *Transport) Receive() (*Message, error) {
-	t.mutex.RLock()
-	if t.closed {
-		t.mutex.RUnlock()
-		return nil, ClosedError{"connection closed"}
+// A Conn is a connection between sensu Agents and Backends.
+type Conn struct {
+	ws        *websocket.Conn
+	closeChan chan struct{}
+	sendq     chan []byte
+	recvq     chan *Message
+	errChan   chan error
+	closed    bool
+	mutex     *sync.Mutex
+	err       error
+}
+
+// NewConnection creates an initialized Transport and return its pointer.
+func NewConnection(conn *websocket.Conn) *Conn {
+	c := &Conn{
+		ws:        conn,
+		closeChan: make(chan struct{}, 1),
+		sendq:     make(chan []byte, sendBufferLength),
+		recvq:     make(chan *Message, recvBufferLength),
+		errChan:   make(chan error, 1),
+		closed:    false,
+		mutex:     &sync.Mutex{},
+		err:       nil,
 	}
-	t.mutex.RUnlock()
+	go c.readPump()
+	go c.writePump()
+	return c
+}
 
-	_, p, err := t.Connection.ReadMessage()
-	if err != nil {
-		t.mutex.Lock()
-		t.closed = true
-		t.mutex.Unlock()
+func (c *Conn) close() {
+	fmt.Println("entering close()")
+	c.mutex.Lock()
+	if c.closed {
+		fmt.Println("returning from close()")
+		return
+	}
+	defer c.mutex.Unlock()
 
-		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-			return nil, ClosedError{err.Error()}
+	c.error(&ClosedError{})
+	c.closed = true
+	c.ws.Close()
+	// we don't close the sendq to avoid a panic. callers should monitor the
+	// connection for a terminal error, and shutdown, allowing the sendq channel
+	// to be garbage collected.
+	close(c.closeChan)
+	close(c.recvq)
+}
+
+// most of a *Transport's workflow comes from the websocket chat server example.
+// https://github.com/gorilla/websocket/blob/a68708917c6a4f06314ab4e52493cc61359c9d42/examples/chat/conn.go
+func (c *Conn) writePump() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		c.close()
+	}()
+
+	for {
+		select {
+		case <-c.closeChan:
+			c.ws.WriteMessage(websocket.CloseMessage, []byte{})
+			c.error(&ClosedError{})
+			return
+		case msg := <-c.sendq:
+			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+			writer, err := c.ws.NextWriter(websocket.BinaryMessage)
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+					c.error(&ConnectionError{})
+				} else {
+					c.error(&ClosedError{})
+				}
+				return
+			}
+			writer.Write(msg)
+
+			// Flush messages from the sendq -- this is only a snapshot, since
+			// messages can come in while we're "flushing".
+			n := len(c.sendq)
+			for i := 0; i < n; i++ {
+				_, err := writer.Write(<-c.sendq)
+				if err != nil {
+					c.error(&ConnectionError{})
+					return
+				}
+			}
+
+			if err := writer.Close(); err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+					c.error(&ConnectionError{})
+				} else {
+					c.error(&ClosedError{})
+				}
+				return
+			}
 		}
-		return nil, ConnectionError{err.Error()}
+	}
+}
+
+func (c *Conn) readPump() {
+	defer func() {
+		c.close()
+	}()
+
+	c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
+	for {
+		_, message, err := c.ws.ReadMessage()
+		if err != nil {
+			c.error(err)
+			return
+		}
+
+		// We may be receiving multiple messages. We want to separate those by lines
+		// decode them, and then handle them all.
+		messages := bytes.Split(message, sep)
+		for _, msg := range messages {
+			// TODO(greg): do something with this error too.
+			msgType, payload, _ := Decode(msg)
+			msg := &Message{msgType, payload}
+			c.recvq <- msg
+		}
+	}
+}
+
+// Send encodes and queues a message for sending over the underlying websocket
+// connection. If the connection has been closed, the call to Send will
+// timeout.
+func (c *Conn) Send(ctx context.Context, m *Message) error {
+	if err := m.Validate(); err != nil {
+		return err
 	}
 
-	msgType, payload, err := Decode(p)
-	if err != nil {
-		return nil, err
-	}
+	payload := Encode(m.Type, m.Payload)
 
-	return &Message{msgType, payload}, nil
+	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
+	defer cancel()
+
+	select {
+	case c.sendq <- payload:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// Receive a message from the connection,
+func (c *Conn) Receive(ctx context.Context) (*Message, error) {
+	ctx, cancel := context.WithTimeout(ctx, recvTimeout)
+	defer cancel()
+
+	select {
+	case msg := <-c.recvq:
+		return msg, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func (c *Conn) error(err error) {
+	select {
+	case c.errChan <- err:
+	default:
+		return
+	}
+}
+
+// Error blocks until a terminal error on the connection is received. Once an
+// error is returned, it will be returned forever.
+func (c *Conn) Error() error {
+	c.mutex.Lock()
+	if c.err != nil {
+		c.mutex.Unlock()
+		return c.err
+	}
+	c.mutex.Unlock()
+
+	fmt.Println("reading from errChan")
+	c.err = <-c.errChan
+	return c.err
 }
 
 // Close will cleanly shutdown a websocket connection.
-func (t *Transport) Close() error {
-	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
+func (c *Conn) Close() {
+	c.close()
 }

@@ -1,4 +1,4 @@
-package handler
+package transport
 
 import (
 	"testing"
@@ -13,7 +13,8 @@ func TestFuncAddHandler(t *testing.T) {
 		return nil
 	})
 
-	assert.NoError(t, handler.Handle("MessageType", []byte{0}))
+	msg := &Message{"MessageType", []byte{0}}
+	assert.NoError(t, handler.Handle(msg))
 }
 
 func BenchmarkHandleMessage(b *testing.B) {
@@ -22,7 +23,8 @@ func BenchmarkHandleMessage(b *testing.B) {
 		return nil
 	})
 
+	msg := &Message{"MessageType", []byte{0}}
 	for n := 0; n < b.N; n++ {
-		handler.Handle("MessageType", []byte{0})
+		handler.Handle(msg)
 	}
 }

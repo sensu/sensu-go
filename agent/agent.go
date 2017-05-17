@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -72,7 +71,7 @@ func NewConfig() *Config {
 type Agent struct {
 	config     *Config
 	backendURL string
-	handler    *handler.MessageHandler
+	handler    *transport.MessageHandler
 	conn       *transport.Transport
 	sendq      chan *transport.Message
 	stopping   chan struct{}
@@ -85,7 +84,7 @@ func NewAgent(config *Config) *Agent {
 	agent := &Agent{
 		config:     config,
 		backendURL: config.BackendURL,
-		handler:    handler.NewMessageHandler(),
+		handler:    transport.NewMessageHandler(),
 		stopping:   make(chan struct{}),
 		stopped:    make(chan struct{}),
 		sendq:      make(chan *transport.Message, 10),
@@ -384,6 +383,6 @@ func (a *Agent) Stop() {
 	}
 }
 
-func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFunc) {
+func (a *Agent) addHandler(msgType string, handlerFunc transport.MessageHandlerFunc) {
 	a.handler.AddHandler(msgType, handlerFunc)
 }

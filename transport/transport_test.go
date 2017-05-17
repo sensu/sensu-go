@@ -1,12 +1,14 @@
 package transport
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,18 +21,23 @@ func TestTransportSendReceive(t *testing.T) {
 	testMessage := &testMessageType{"message"}
 
 	done := make(chan struct{})
-	server := NewServer()
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		transport, err := server.Serve(w, r)
+		defer func() {
+			done <- struct{}{}
+		}()
+		transport, err := Serve(w, r)
 		assert.NoError(t, err)
-		msg, err := transport.Receive()
+		if err != nil {
+			return
+		}
+		msg, err := transport.Receive(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, "testMessageType", msg.Type)
 		m := &testMessageType{"message"}
 		assert.NoError(t, json.Unmarshal(msg.Payload, m))
 		assert.Equal(t, testMessage.Data, m.Data)
-		done <- struct{}{}
 	}))
 	defer ts.Close()
 
@@ -38,7 +45,7 @@ func TestTransportSendReceive(t *testing.T) {
 	assert.NoError(t, err)
 	msgBytes, err := json.Marshal(testMessage)
 	assert.NoError(t, err)
-	err = clientTransport.Send(&Message{"testMessageType", msgBytes})
+	err = clientTransport.Send(context.Background(), &Message{"testMessageType", msgBytes})
 	assert.NoError(t, err)
 
 	<-done
@@ -47,27 +54,36 @@ func TestTransportSendReceive(t *testing.T) {
 func TestClosedWebsocket(t *testing.T) {
 	done := make(chan struct{}, 1)
 
-	server := NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		transport, err := server.Serve(w, r)
+		defer func() {
+			done <- struct{}{}
+		}()
+		transport, err := Serve(w, r)
 		assert.NoError(t, err)
-		transport.Connection.Close()
-		done <- struct{}{}
+		if err != nil {
+			return
+		}
+		transport.Close()
 	}))
 	defer ts.Close()
 
 	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
 	assert.NoError(t, err)
 	<-done
-	// At this point we should receive a connection closed message.
-	_, err = clientTransport.Receive()
-	assert.IsType(t, ConnectionError{}, err)
 
-	err = clientTransport.Send(&Message{"testMessageType", []byte{}})
-	assert.IsType(t, ClosedError{}, err)
+	recvCtx, recvCtxCancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer recvCtxCancel()
 
-	_, err = clientTransport.Receive()
-	assert.IsType(t, ClosedError{}, err)
+	_, err = clientTransport.Receive(recvCtx)
+	assert.Error(t, err)
+
+	sendCtx, sendCtxCancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer sendCtxCancel()
+	err = clientTransport.Send(sendCtx, &Message{"testMessageType", []byte{}})
+
+	assert.Error(t, err)
+
+	assert.Error(t, clientTransport.Error())
 }
 
 // This was all mostly to prove that performance of encoding/decoding was
