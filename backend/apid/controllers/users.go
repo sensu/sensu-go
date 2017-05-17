@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -39,7 +38,7 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("USER: " + user.Username + user.Password)
+
 	err = user.Validate()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
