@@ -9,6 +9,7 @@ type APIClient interface {
 	EntityAPIClient
 	EventAPIClient
 	HandlerAPIClient
+	UserAPIClient
 }
 
 // AssetAPIClient client methods for assets
@@ -40,4 +41,9 @@ type HandlerAPIClient interface {
 	ListHandlers() ([]types.Handler, error)
 	CreateHandler(*types.Handler) error
 	DeleteHandler(*types.Handler) error
+}
+
+// UserAPIClient client methods for checks
+type UserAPIClient interface {
+	CreateUser(*types.User) error
 }

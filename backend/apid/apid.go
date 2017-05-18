@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/controllers"
+	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -21,10 +22,11 @@ type APId struct {
 	wg       *sync.WaitGroup
 	errChan  chan error
 
-	Store         store.Store
-	Host          string
-	Port          int
-	BackendStatus func() types.StatusMap
+	Authentication authentication.Provider
+	BackendStatus  func() types.StatusMap
+	Host           string
+	Port           int
+	Store          store.Store
 }
 
 // Start Apid.
@@ -117,6 +119,12 @@ func httpRouter(a *APId) *mux.Router {
 		Store: a.Store,
 	}
 	eventsController.Register(r)
+
+	usersController := &controllers.UsersController{
+		Authentication: a.Authentication,
+		Store:          a.Store,
+	}
+	usersController.Register(r)
 
 	assetsController := &controllers.AssetsController{
 		Store: a.Store,

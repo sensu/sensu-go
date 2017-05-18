@@ -37,6 +37,10 @@ type Store interface {
 	UpdateEvent(event *types.Event) error
 	DeleteEventByEntityCheck(entityID, checkID string) error
 
+	// Users
+	CreateUser(user *types.User) error
+
+	// Assets
 	AssetStore
 }
 
