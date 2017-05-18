@@ -8,7 +8,7 @@ type User struct {
 	Password string `json:"password,omitempty"`
 }
 
-// FixtureEntity returns a testing fixture for an Entity object.
+// FixtureUser returns a testing fixture for an Entity object.
 func FixtureUser(username string) *User {
 	return &User{
 		Username: username,
@@ -24,7 +24,7 @@ func (u *User) Validate() error {
 	return nil
 }
 
-// Validate returns an error if the entity is invalid.
+// ValidatePassword returns an error if the entity is invalid.
 func (u *User) ValidatePassword() error {
 	if u.Password == "" {
 		return errors.New("password can't be empty")
