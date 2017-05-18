@@ -23,6 +23,9 @@ type Handler struct {
 
 	// Handlers is a list of handlers for a handler set.
 	Handlers []string `json:"handlers,omitempty"`
+
+	// Env is a list of environment variables to use with command execution
+	Env []string `json:"environment,omitempty"`
 }
 
 // HandlerSocket contains configuration for a TCP or UDP handler.

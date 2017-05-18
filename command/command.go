@@ -41,6 +41,7 @@ type Execution struct {
 	// Command is the command to be executed.
 	Command string
 
+	// Env ...
 	Env []string
 
 	// Input to provide the command via STDIN.

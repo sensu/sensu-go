@@ -86,6 +86,17 @@ func printChecksToTable(queryResults []types.Check, io io.Writer) {
 				return strings.Join(check.Handlers, ",")
 			},
 		},
+		{
+			Title: "Dependencies",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.Check)
+				names := []string{}
+				for _, asset := range check.RuntimeDependencies {
+					names = append(names, asset.Name)
+				}
+				return strings.Join(names, ",")
+			},
+		},
 	})
 
 	table.Render(io, rows)

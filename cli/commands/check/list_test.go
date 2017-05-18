@@ -34,6 +34,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "json")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -43,6 +44,31 @@ func TestListCommandRunEClosure(t *testing.T) {
 }
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
+	assert := assert.New(t)
+	cli := newCLI()
+
+	check := types.FixtureCheck("name-one")
+	check.RuntimeDependencies = []types.Asset{
+		*types.FixtureAsset("asset-one"),
+	}
+
+	client := cli.Client.(*client.MockClient)
+	client.On("ListChecks").Return([]types.Check{*check}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "tabular")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Contains(out, "Name")         // heading
+	assert.Contains(out, "Command")      // heading
+	assert.Contains(out, "Dependencies") // heading
+	assert.Contains(out, "name-one")     // check name
+	assert.Contains(out, "asset-one")    // asset name
+	assert.Nil(err)
+}
+
+func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()

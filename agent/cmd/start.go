@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -22,6 +24,7 @@ const (
 	flagSubscriptions         = "subscriptions"
 	flagDeregister            = "deregister"
 	flagDeregistrationHandler = "deregistration-handler"
+	flagCacheDir              = "cache-dir"
 )
 
 func init() {
@@ -46,6 +49,7 @@ func newStartCommand() *cobra.Command {
 			cfg.BackendURL = viper.GetString(flagBackendURL)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
+			cfg.CacheDir = viper.GetString(flagCacheDir)
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
@@ -79,6 +83,25 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
+	var defaultCacheDir string
+
+	switch runtime.GOOS {
+	case "windows":
+		programDataDir := os.Getenv("PROGRAMDATA")
+		defaultCacheDir = filepath.Join(programDataDir, "sensu", "cache")
+	default:
+		defaultCacheDir = "/var/cache/sensu"
+	}
+
+	cmd.Flags().String(flagCacheDir, defaultCacheDir, "path to store cached data")
+	viper.BindPFlag(flagCacheDir, cmd.Flags().Lookup(flagCacheDir))
+
+	cmd.Flags().Bool(flagDeregister, false, "ephemeral agent")
+	viper.BindPFlag(flagDeregister, cmd.Flags().Lookup(flagDeregister))
+
+	cmd.Flags().String(flagDeregistrationHandler, "", "deregistration handler that should process the entity deregistration event.")
+	viper.BindPFlag(flagDeregistrationHandler, cmd.Flags().Lookup(flagDeregistrationHandler))
+
 	cmd.Flags().String(flagBackendURL, "ws://localhost:8081", "ws/wss URL of Sensu backend server(s)")
 	viper.BindPFlag(flagBackendURL, cmd.Flags().Lookup(flagBackendURL))
 
@@ -87,12 +110,6 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().String(flagSubscriptions, "", "comma-delimited list of agent subscriptions")
 	viper.BindPFlag(flagSubscriptions, cmd.Flags().Lookup(flagSubscriptions))
-
-	cmd.Flags().Bool(flagDeregister, false, "ephemeral agent")
-	viper.BindPFlag(flagDeregister, cmd.Flags().Lookup(flagDeregister))
-
-	cmd.Flags().String(flagDeregistrationHandler, "", "deregistration handler that should process the entity deregistration event.")
-	viper.BindPFlag(flagDeregistrationHandler, cmd.Flags().Lookup(flagDeregistrationHandler))
 
 	return cmd
 }

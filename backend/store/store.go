@@ -40,6 +40,17 @@ type Store interface {
 	// Users
 	CreateUser(user *types.User) error
 
+	// Assets
+	AssetStore
+}
+
+// AssetStore manage assets
+type AssetStore interface {
+	GetAssets() ([]*types.Asset, error)
+	GetAssetByName(assetName string) (*types.Asset, error)
+	UpdateAsset(asset *types.Asset) error
+	DeleteAssetByName(assetName string) error
+
 	KeepaliveStore
 }
 

@@ -66,6 +66,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 
 	mutatorExec.Command = mutator.Command
 	mutatorExec.Timeout = mutator.Timeout
+	mutatorExec.Env = mutator.Env
 
 	eventData, err := json.Marshal(event)
 

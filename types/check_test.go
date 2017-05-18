@@ -29,6 +29,14 @@ func TestFixtureCheckIsValid(t *testing.T) {
 	c := FixtureCheck("check")
 	assert.Equal(t, "check", c.Name)
 	assert.NoError(t, c.Validate())
+
+	c.RuntimeDependencies = []Asset{
+		{Name: "Good", URL: "https://sweet.sweet/good/url.boy"},
+	}
+	assert.NoError(t, c.Validate())
+
+	c.RuntimeDependencies = []Asset{{Name: ""}}
+	assert.Error(t, c.Validate())
 }
 
 func TestMergeWith(t *testing.T) {

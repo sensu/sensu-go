@@ -126,5 +126,10 @@ func httpRouter(a *APId) *mux.Router {
 	}
 	usersController.Register(r)
 
+	assetsController := &controllers.AssetsController{
+		Store: a.Store,
+	}
+	assetsController.Register(r)
+
 	return r
 }

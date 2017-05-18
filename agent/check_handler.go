@@ -34,10 +34,31 @@ func (a *Agent) handleCheck(payload []byte) error {
 }
 
 func (a *Agent) executeCheck(event *types.Event) {
+	// TODO(james):
+	//
+	// Currently /all/ dependencies are available to each and every
+	// check, this could easily lead to conflicts in the future. As such, at some
+	// point we'll need to retrieve a subset of the dependencies, install, inject,
+	// etc.
+	deps := a.dependencyManager
+
+	// Ensure that the dependency manager is aware of all the assets required to
+	// execute the given check.
+	deps.Merge(event.Check.RuntimeDependencies)
+
 	ex := &command.Execution{
+		// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
+		// availabe when when the command is executed.
+		Env:     deps.Env(),
 		Command: event.Check.Command,
 	}
 	event.Check.Executed = time.Now().Unix()
+
+	// Ensure that all the dependencies are installed.
+	if err := deps.Install(); err != nil {
+		logger.Error("error installing dependencies: ", err.Error())
+		return
+	}
 
 	_, err := command.ExecuteCommand(context.Background(), ex)
 	if err != nil {
