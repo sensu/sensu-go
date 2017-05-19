@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 // EntitiesController defines the fields required by EntitiesController.
@@ -18,7 +19,7 @@ type EntitiesController struct {
 // respective handlers defined within this Controller.
 func (c *EntitiesController) Register(r *mux.Router) {
 	r.HandleFunc("/entities", c.many).Methods(http.MethodGet)
-	r.HandleFunc("/entities/{id}", c.single).Methods(http.MethodGet)
+	r.HandleFunc("/entities/{id}", c.single).Methods(http.MethodGet, http.MethodDelete)
 }
 
 // many handles GET requests to the /entities endpoint.
@@ -43,24 +44,42 @@ func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
 func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-
-	entity, err := c.Store.GetEntityByID(id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if entity == nil {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
-
-	eb, err := json.Marshal(entity)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	method := r.Method
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(w, string(eb))
+
+	var (
+		entity *types.Entity
+		err    error
+	)
+
+	if method == http.MethodGet || method == http.MethodDelete {
+		entity, err = c.Store.GetEntityByID(id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if entity == nil {
+			http.NotFound(w, r)
+			return
+		}
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		eb, err := json.Marshal(entity)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprint(w, string(eb))
+	case http.MethodDelete:
+		err := c.Store.DeleteEntityByID(id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 }
