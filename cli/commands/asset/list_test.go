@@ -43,7 +43,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestListCommandRunEClosure(t *testing.T) {
+func TestListCommandRunEClosureWithJSON(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
