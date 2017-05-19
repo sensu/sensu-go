@@ -13,5 +13,21 @@ func TestUserStorage(t *testing.T) {
 		user := types.FixtureUser("foo")
 		err := store.CreateUser(user)
 		assert.NoError(t, err)
+
+		// User already exist
+		err = store.CreateUser(user)
+		assert.Error(t, err)
+
+		mockedUser := types.FixtureUser("bar")
+		err = store.UpdateUser(mockedUser)
+		assert.NoError(t, err)
+
+		result, err := store.GetUser(mockedUser.Username)
+		assert.NoError(t, err)
+		assert.Equal(t, mockedUser.Username, result.Username)
+
+		// Missing user
+		_, err = store.GetUser("foobar")
+		assert.Error(t, err)
 	})
 }

@@ -24,7 +24,7 @@ func TestMiddlewareDisabledAuth(t *testing.T) {
 	defer server.Close()
 
 	// Disabled authentication
-	provider.On("Name").Return("none")
+	provider.On("AuthEnabled").Return(false)
 	res, err := http.Get(server.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -36,7 +36,7 @@ func TestMiddlewareNoCredentials(t *testing.T) {
 	defer server.Close()
 
 	// No credentials passed
-	provider.On("Name").Return("basic")
+	provider.On("AuthEnabled").Return(true)
 	res, err := http.Get(server.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
@@ -48,7 +48,7 @@ func TestMiddlewareInvalidCredentials(t *testing.T) {
 	defer server.Close()
 
 	// Invalid credentials
-	provider.On("Name").Return("basic")
+	provider.On("AuthEnabled").Return(true)
 	provider.On("Authenticate").Return(&types.User{}, fmt.Errorf(""))
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -64,7 +64,7 @@ func TestMiddlewareValidCredentials(t *testing.T) {
 	defer server.Close()
 
 	// Invalid credentials
-	provider.On("Name").Return("basic")
+	provider.On("AuthEnabled").Return(true)
 	provider.On("Authenticate").Return(&types.User{}, nil)
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)

@@ -8,7 +8,7 @@ import (
 func Middleware(provider Provider, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if authentication is enabled
-		if provider.Name() == "none" {
+		if !provider.AuthEnabled() {
 			next.ServeHTTP(w, r)
 			return
 		}
