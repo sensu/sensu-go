@@ -42,10 +42,11 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := httpRouter(a)
+	routerStack := authentication.Middleware(a.Authentication, router)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      router,
+		Handler:      routerStack,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

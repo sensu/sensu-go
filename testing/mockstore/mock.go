@@ -171,6 +171,18 @@ func (s *MockStore) CreateUser(user *types.User) error {
 	return args.Error(0)
 }
 
+// GetUser ...
+func (s *MockStore) GetUser(username string) (*types.User, error) {
+	args := s.Called(username)
+	return args.Get(0).(*types.User), args.Error(1)
+}
+
+// UpdateUser ...
+func (s *MockStore) UpdateUser(user *types.User) error {
+	args := s.Called(user)
+	return args.Error(0)
+}
+
 // Assets
 
 // GetAssets ...

@@ -1,8 +1,11 @@
 package client
 
 import (
+	"github.com/Sirupsen/logrus"
 	resty "gopkg.in/resty.v0"
 )
+
+var logger *logrus.Entry
 
 // RestClient wraps resty.Client
 type RestClient struct {
@@ -12,12 +15,22 @@ type RestClient struct {
 	configured bool
 }
 
+func init() {
+	logger = logrus.WithFields(logrus.Fields{
+		"component": "cli-client",
+	})
+}
+
 // New builds a new client with defaults
 func New(config Config) *RestClient {
 	c := &RestClient{client: resty.New(), config: config}
-	c.client.SetLogger(&Logger{})
 	c.client.SetHeader("Accept", "application/json")
 	c.client.SetHeader("Content-Type", "application/json")
+
+	// logging
+	w := logger.Writer()
+	defer w.Close()
+	c.client.SetLogger(w)
 
 	return c
 }
@@ -28,7 +41,17 @@ func (c *RestClient) configure() {
 	}
 
 	c.client.SetHostURL(c.config.GetString("api-url"))
-	c.client.SetAuthToken(c.config.GetString("secret"))
+
+	// Token authentication (Not implemented yet)
+	//c.client.SetAuthToken(c.config.GetString("secret"))
+
+	// Password authentication
+	username := c.config.GetString("userid")
+	password := c.config.GetString("secret")
+	if username != "" && password != "" {
+		c.client.SetBasicAuth(username, password)
+	}
+
 	c.configured = true
 }
 
