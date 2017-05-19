@@ -65,8 +65,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("command", "c", "", "the command the check should run")
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
-	cmd.Flags().StringSliceP("subscriptions", "s", []string{}, "comma separated list of subscribers")
-	cmd.Flags().StringSlice("handlers", []string{}, "comma separated list of handlers")
+	cmd.Flags().StringSliceP("subscription", "s", []string{}, "topic check requests will be sent to")
+	cmd.Flags().StringSlice("handler", []string{}, "handler to invoke when check fails")
 	cmd.Flags().StringSliceP("runtime-dependency", "d", []string{}, "asset this check depends on")
 	cmd.Flags().StringSlice("runtime-dependency-url", []string{}, "URL of asset this check depends on")
 
@@ -82,10 +82,10 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
 	opts.Interval, _ = flags.GetString("interval")
 
-	subscriptions, _ := flags.GetStringSlice("subscriptions")
+	subscriptions, _ := flags.GetStringSlice("subscription")
 	opts.Subscriptions = strings.Join(subscriptions, ",")
 
-	handlers, _ := flags.GetStringSlice("handlers")
+	handlers, _ := flags.GetStringSlice("handler")
 	opts.Handlers = strings.Join(handlers, ",")
 
 	dependencies, _ := flags.GetStringSlice("runtime-dependency")
@@ -117,14 +117,12 @@ func (opts *checkOpts) administerQuestionnaire() {
 			Validate: survey.Required,
 		},
 		{
-			Name:     "handlers",
-			Prompt:   &survey.Input{"Handlers:", ""},
-			Validate: survey.Required,
+			Name:   "handlers",
+			Prompt: &survey.Input{"Handlers:", ""},
 		},
 		{
-			Name:     "dependencies",
-			Prompt:   &survey.Input{"Runtime Dependencies:", ""},
-			Validate: survey.Required,
+			Name:   "dependencies",
+			Prompt: &survey.Input{"Runtime Dependencies:", ""},
 		},
 	}
 
