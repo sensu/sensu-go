@@ -12,6 +12,21 @@ func TestFixtureHandler(t *testing.T) {
 	assert.NoError(t, handler.Validate())
 }
 
+func TestFixtureSetHandler(t *testing.T) {
+	handler := FixtureSetHandler("handler")
+	assert.Equal(t, "handler", handler.Name)
+	assert.NoError(t, handler.Validate())
+}
+
+func TestFixtureSocketHandler(t *testing.T) {
+	handler := FixtureSocketHandler("handler", "tcp")
+	assert.Equal(t, "handler", handler.Name)
+	assert.Equal(t, "tcp", handler.Type)
+	assert.NotNil(t, handler.Socket.Host)
+	assert.NotNil(t, handler.Socket.Port)
+	assert.NoError(t, handler.Validate())
+}
+
 func TestHandlerValidate(t *testing.T) {
 	var h Handler
 

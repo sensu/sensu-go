@@ -60,3 +60,21 @@ func FixtureHandler(name string) *Handler {
 		Command: "command",
 	}
 }
+
+// FixtureSocketHandler returns a Handler fixture for testing.
+func FixtureSocketHandler(name string, proto string) *Handler {
+	handler := FixtureHandler(name)
+	handler.Type = proto
+	handler.Socket = HandlerSocket{
+		Host: "127.0.0.1",
+		Port: 3001,
+	}
+	return handler
+}
+
+// FixtureSetHandler returns a Handler fixture for testing.
+func FixtureSetHandler(name string, handlers ...string) *Handler {
+	handler := FixtureHandler(name)
+	handler.Handlers = handlers
+	return handler
+}

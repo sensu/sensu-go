@@ -40,6 +40,25 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestListCommandRunEClosureWithTable(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := newCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListHandlers").Return([]types.Handler{
+		*types.FixtureSetHandler("one", "two", "three"),
+		*types.FixtureSocketHandler("two", "tcp"),
+		*types.FixtureHandler("three"),
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "tabular")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+}
+
 func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
