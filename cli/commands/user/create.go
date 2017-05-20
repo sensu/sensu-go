@@ -18,7 +18,7 @@ type createOpts struct {
 // CreateCommand adds command that allows user to create new users
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
+		Use:          "create NAME",
 		Short:        "create new users",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -55,6 +55,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("username", "u", "", "Username")
 	cmd.Flags().StringP("password", "p", "", "Password")
+
+	// Mark flags are required for bash-completions
+	cmd.MarkFlagRequired("username")
+	cmd.MarkFlagRequired("password")
 
 	return cmd
 }

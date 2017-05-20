@@ -16,7 +16,7 @@ import (
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	exec := createExecutor{client: cli.Client}
 	cmd := &cobra.Command{
-		Use:    "create [NAME]",
+		Use:    "create NAME",
 		Short:  "create new assets",
 		RunE:   exec.run,
 		Hidden: true,
@@ -24,6 +24,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("url", "u", "", "the URL of the asset")
 	cmd.Flags().StringSliceP("metadata", "m", []string{}, "metadata associated with asset")
+
+	// Mark flags are required for bash-completions
+	cmd.MarkFlagRequired("url")
 
 	return cmd
 }

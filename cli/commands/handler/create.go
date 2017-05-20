@@ -26,7 +26,7 @@ type handlerOpts struct {
 // CreateCommand adds command that allows the user to create new handlers
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
+		Use:          "create NAME",
 		Short:        "create new handlers",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,7 +62,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("type", "t", "", "type of handler (pipe, tcp, udp, or set)")
+	cmd.Flags().StringP("type", "t", "pipe", "type of handler (pipe, tcp, udp, or set)")
 	cmd.Flags().StringP("mutator", "m", "", "Sensu event mutator (name) to use to mutate event data for the handler")
 	cmd.Flags().StringP("command", "c", "", "command to be executed. The event data is passed to the process via STDIN")
 	cmd.Flags().StringP("timeout", "i", "", "execution duration timeout in seconds (hard stop)")

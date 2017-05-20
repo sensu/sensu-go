@@ -29,7 +29,7 @@ const (
 // CreateCommand adds command that allows user to create new checks
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
+		Use:          "create NAME",
 		Short:        "create new checks",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -58,7 +58,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "OK")
+			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}
@@ -69,6 +69,11 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringSlice("handlers", []string{}, "comma separated list of handlers")
 	cmd.Flags().StringSliceP("runtime-dependency", "d", []string{}, "asset this check depends on")
 	cmd.Flags().StringSlice("runtime-dependency-url", []string{}, "URL of asset this check depends on")
+
+	// Mark flags are required for bash-completions
+	cmd.MarkFlagRequired("command")
+	cmd.MarkFlagRequired("interval")
+	cmd.MarkFlagRequired("subscription")
 
 	return cmd
 }
