@@ -54,6 +54,29 @@ func (s *etcdStore) GetUser(username string) (*types.User, error) {
 	return user, nil
 }
 
+// GetUsers retrieves all users
+func (s *etcdStore) GetUsers() ([]*types.User, error) {
+	resp, err := s.kvc.Get(context.TODO(), getUserPath(""), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return []*types.User{}, nil
+	}
+
+	usersArray := make([]*types.User, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		user := &types.User{}
+		err = json.Unmarshal(kv.Value, user)
+		if err != nil {
+			return nil, err
+		}
+		usersArray[i] = user
+	}
+
+	return usersArray, nil
+}
+
 func (s *etcdStore) UpdateUser(user *types.User) error {
 	bytes, err := json.Marshal(user)
 	if err != nil {
