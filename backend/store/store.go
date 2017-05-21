@@ -40,6 +40,7 @@ type Store interface {
 	// Users
 	CreateUser(user *types.User) error
 	GetUser(username string) (*types.User, error)
+	GetUsers() ([]*types.User, error)
 	UpdateUser(user *types.User) error
 
 	// Assets

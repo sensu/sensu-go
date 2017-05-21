@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -20,7 +21,30 @@ type UsersController struct {
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *UsersController) Register(r *mux.Router) {
+	r.HandleFunc("/users", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/users", c.updateUser).Methods(http.MethodPut)
+}
+
+// many handles GET requests to /users
+func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
+	users, err := c.Store.GetUsers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Obfustace users password for security
+	for i := range users {
+		users[i].Password = ""
+	}
+
+	usersBytes, err := json.Marshal(users)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, string(usersBytes))
 }
 
 func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {

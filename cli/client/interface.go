@@ -46,4 +46,5 @@ type HandlerAPIClient interface {
 // UserAPIClient client methods for checks
 type UserAPIClient interface {
 	CreateUser(*types.User) error
+	ListUsers() ([]types.User, error)
 }
