@@ -10,6 +10,7 @@ type Store interface {
 	GetEntityByID(id string) (*types.Entity, error)
 	UpdateEntity(e *types.Entity) error
 	DeleteEntity(e *types.Entity) error
+	DeleteEntityByID(id string) error
 	GetEntities() ([]*types.Entity, error)
 
 	// Handlers

@@ -33,6 +33,12 @@ func (s *MockStore) DeleteEntity(e *types.Entity) error {
 	return args.Error(0)
 }
 
+// DeleteEntityByID ...
+func (s *MockStore) DeleteEntityByID(id string) error {
+	args := s.Called(id)
+	return args.Error(0)
+}
+
 // GetEntities ...
 func (s *MockStore) GetEntities() ([]*types.Entity, error) {
 	args := s.Called()

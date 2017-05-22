@@ -25,3 +25,9 @@ func (client *RestClient) FetchEntity(ID string) (entity types.Entity, err error
 
 	return
 }
+
+// DeleteEntity deletes given entitiy from the configured sensu instance
+func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
+	_, err = client.R().Delete("/entities/" + entity.ID)
+	return err
+}

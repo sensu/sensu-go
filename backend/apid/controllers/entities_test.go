@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -67,4 +68,25 @@ func TestHttpApiEntityGet(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.EqualValues(t, entity1, returnedEntity)
+}
+
+func TestHttpApiEntityDelete(t *testing.T) {
+	assert := assert.New(t)
+
+	store := &mockstore.MockStore{}
+
+	c := &EntitiesController{
+		Store: store,
+	}
+
+	entity := types.FixtureEntity("entity1")
+	store.On("GetEntityByID", "entity1").Return(entity, nil)
+	store.On("DeleteEntityByID", "entity1").Return(nil)
+	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/entities/entity1"), nil)
+	deleteRes := processRequest(c, deleteReq)
+
+	store.AssertCalled(t, "GetEntityByID", "entity1")
+	store.AssertCalled(t, "DeleteEntityByID", "entity1")
+
+	assert.Equal(http.StatusOK, deleteRes.Code)
 }

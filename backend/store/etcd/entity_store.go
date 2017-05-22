@@ -27,6 +27,11 @@ func (s *etcdStore) DeleteEntity(e *types.Entity) error {
 	return err
 }
 
+func (s *etcdStore) DeleteEntityByID(id string) error {
+	_, err := s.kvc.Delete(context.TODO(), getEntityPath(id))
+	return err
+}
+
 func (s *etcdStore) GetEntityByID(id string) (*types.Entity, error) {
 	resp, err := s.kvc.Get(context.TODO(), getEntityPath(id), clientv3.WithLimit(1))
 	if err != nil {
