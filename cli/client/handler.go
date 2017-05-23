@@ -2,18 +2,26 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
 
 // ListHandlers fetches all handlers from configured Sensu instance
-func (client *RestClient) ListHandlers() (handlers []types.Handler, err error) {
-	r, err := client.R().Get("/handlers")
-	if err == nil {
-		err = json.Unmarshal(r.Body(), &handlers)
+func (client *RestClient) ListHandlers() ([]types.Handler, error) {
+	var handlers []types.Handler
+
+	res, err := client.R().Get("/handlers")
+	if err != nil {
+		return handlers, err
 	}
 
-	return
+	if res.StatusCode() >= 400 {
+		return handlers, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &handlers)
+	return handlers, err
 }
 
 // CreateHandler creates new handler on configured Sensu instance
