@@ -11,7 +11,7 @@ spec:
         app: dummy-service
     spec:
       containers:
-          # My Cool Service
+        # My Cool Service
         - name: dummy-service
           image: grepory/dummy
           ports:

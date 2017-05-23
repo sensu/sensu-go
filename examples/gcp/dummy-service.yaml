@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dummy-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: dummy-service
+  ports:
+      # Dummy service HTTP
+    - name: dummy-service
+      protocol: TCP
+      # Load Balancer Port
+      port: 80
+      # Container Port
+      targetPort: 80
