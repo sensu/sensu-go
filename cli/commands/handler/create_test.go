@@ -27,7 +27,7 @@ func TestCreateCommandRunEClosureWithoutAllFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("timeout", "15")
+	cmd.Flags().Set("type", "")
 	out, err := test.RunCmd(cmd, []string{"my-handler"})
 
 	assert.Regexp("Usage", out) // usage should print out
