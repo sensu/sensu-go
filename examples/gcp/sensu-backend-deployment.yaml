@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: sensu-backend
-          image: us.gcr.io/monitorama-166316/sensu
+          image: us.gcr.io/monitorama-166316/sensu:demo
+          imagePullPolicy: Always
           # Only one process!
           command: ["/opt/bin/sensu-backend", "start"]
           ports:

@@ -12,8 +12,9 @@ spec:
     spec:
       containers:
         - name: sensu-agent
-          image: us.gcr.io/monitorama-166316/sensu-agent
-          command: ["/opt/sensu/bin/sensu-agent", "start"]
+          image: us.gcr.io/monitorama-166316/sensu-agent:demo
+          imagePullPolicy: Always
+          command: ["/opt/bin/sensu-agent", "start"]
           env:
             - name: SENSU_BACKEND_URL
               value: ws://sensu-backend.default.svc.cluster.local:8081

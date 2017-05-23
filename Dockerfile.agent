@@ -1,0 +1,13 @@
+FROM alpine
+
+ENV SENSU_ID ""
+ENV SENSU_BACKEND_URL ""
+ENV SENSU_SUBSCRIPTIONS ""
+
+RUN apk update
+RUN apk add ca-certificates
+RUN apk add curl
+RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+
+COPY target/linux-amd64/sensu-agent /opt/bin/sensu-agent
+COPY examples/checks/http_check.sh /opt/bin/http_check.sh
