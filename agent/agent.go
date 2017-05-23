@@ -34,7 +34,7 @@ type Config struct {
 	// Subscriptions is an array of subscription names. Default: empty array.
 	Subscriptions []string
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
-	// keepalive to sensu-backend. Default: 60
+	// keepalive to sensu-backend. Default: 20
 	KeepaliveInterval int
 	// Deregister indicates whether the entity is ephemeral
 	Deregister bool

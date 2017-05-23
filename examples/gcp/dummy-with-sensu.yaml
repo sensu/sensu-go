@@ -20,6 +20,8 @@ spec:
               value: ws://sensu-backend.default.svc.cluster.local:8081
             - name: SENSU_SUBSCRIPTIONS
               value: dummy
+            - name: SENSU_DEREGISTER
+              value: deregister
         # My Cool Service
         - name: dummy-service
           image: grepory/dummy

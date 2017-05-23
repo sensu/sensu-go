@@ -12,7 +12,7 @@ import (
 const (
 	// DefaultKeepaliveTimeout is the amount of time we consider a Keepalive
 	// valid for.
-	DefaultKeepaliveTimeout = 120 // seconds
+	DefaultKeepaliveTimeout = 30 // seconds TODO: make this configurable
 )
 
 var keepaliveTimeout = 0
