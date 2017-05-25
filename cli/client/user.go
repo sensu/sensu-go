@@ -29,6 +29,21 @@ func (client *RestClient) CreateUser(user *types.User) error {
 	return nil
 }
 
+// DeleteUser deletes a user on configured Sensu instance
+func (client *RestClient) DeleteUser(username string) error {
+	res, err := client.R().Delete("/users/" + username)
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
 // ListUsers fetches all users from configured Sensu instance
 func (client *RestClient) ListUsers() ([]types.User, error) {
 	var users []types.User

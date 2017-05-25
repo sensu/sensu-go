@@ -36,6 +36,24 @@ func (s *etcdStore) CreateUser(u *types.User) error {
 	return nil
 }
 
+func (s *etcdStore) DeleteUserByName(username string) error {
+	user, err := s.GetUser(username)
+	if err != nil {
+		return err
+	}
+
+	user.Disabled = true
+
+	// TODO: Find out some kind of mechanism to perform a transaction so the user
+	// isn't modified by something else meanwhile
+	err = s.UpdateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *etcdStore) GetUser(username string) (*types.User, error) {
 	resp, err := s.kvc.Get(context.TODO(), getUserPath(username), clientv3.WithLimit(1))
 	if err != nil {
@@ -64,14 +82,18 @@ func (s *etcdStore) GetUsers() ([]*types.User, error) {
 		return []*types.User{}, nil
 	}
 
-	usersArray := make([]*types.User, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	usersArray := []*types.User{}
+	for _, kv := range resp.Kvs {
 		user := &types.User{}
 		err = json.Unmarshal(kv.Value, user)
 		if err != nil {
 			return nil, err
 		}
-		usersArray[i] = user
+
+		// Verify that the user is not disabled
+		if !user.Disabled {
+			usersArray = append(usersArray, user)
+		}
 	}
 
 	return usersArray, nil

@@ -21,6 +21,20 @@ func TestAuthenticateMissingUser(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestAuthenticateDisabledUser(t *testing.T) {
+	b := &Basic{}
+	store := &mockstore.MockStore{}
+	b.Store = store
+
+	user := types.FixtureUser("foo")
+	user.Password = "$2a$10$iyYyGmveS9dcYp5DHMbOm.LShX806vB0ClzoPyt1TIgkZ9KQ62cOO"
+	user.Disabled = true
+	store.On("GetUser", "foo").Return(user, nil)
+
+	_, err := b.Authenticate("foo", "P@ssw0rd!")
+	assert.Error(t, err)
+}
+
 func TestAuthenticateWrongPassword(t *testing.T) {
 	b := &Basic{}
 	store := &mockstore.MockStore{}

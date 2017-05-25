@@ -24,7 +24,22 @@ func (c *UsersController) Register(r *mux.Router) {
 	r.HandleFunc("/users", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/users", c.updateUser).Methods(http.MethodPut)
 	r.HandleFunc("/users/{username}", c.single).Methods(http.MethodGet)
+	r.HandleFunc("/users/{username}", c.deleteUser).Methods(http.MethodDelete)
+}
 
+// deleteUser handles DELETE requests to /users/:username
+func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	username := vars["username"]
+
+	err := c.Store.DeleteUserByName(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	// TODO: Verified the proper return code for DELETE method
+	w.WriteHeader(http.StatusAccepted)
+	return
 }
 
 // many handles GET requests to /users

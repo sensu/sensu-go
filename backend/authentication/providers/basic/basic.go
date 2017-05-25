@@ -21,6 +21,10 @@ func (b *Basic) Authenticate(username, password string) (*types.User, error) {
 		return nil, fmt.Errorf("User %s does not exist", username)
 	}
 
+	if user.Disabled {
+		return nil, fmt.Errorf("User %s is disabled", username)
+	}
+
 	ok := checkPassword(user.Password, password)
 	if !ok {
 		return nil, fmt.Errorf("Wrong password for user %s", username)

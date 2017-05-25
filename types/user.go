@@ -6,6 +6,7 @@ import "errors"
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password,omitempty"`
+	Disabled bool   `json:"disabled"`
 }
 
 // FixtureUser returns a testing fixture for an Entity object.

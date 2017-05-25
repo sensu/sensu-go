@@ -14,6 +14,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDeleteUser(t *testing.T) {
+	store := &mockstore.MockStore{}
+	u := &UsersController{
+		Store: store,
+	}
+
+	store.On("DeleteUserByName", "foo").Return(nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/users/foo", nil)
+	res := processRequest(u, req)
+
+	assert.Equal(t, http.StatusAccepted, res.Code)
+
+	// Invalid user
+	store.On("DeleteUserByName", "bar").Return(fmt.Errorf(""))
+	req, _ = http.NewRequest(http.MethodDelete, "/users/bar", nil)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+}
+
 func TestMany(t *testing.T) {
 	store := &mockstore.MockStore{}
 
