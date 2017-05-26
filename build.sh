@@ -37,6 +37,7 @@ install_deps () {
 	go get github.com/gordonklaus/ineffassign
 	go get github.com/jgautheron/goconst/cmd/goconst
 	go get -u github.com/golang/lint/golint
+	go get -u github.com/UnnoTed/fileb0x
 }
 
 build_tool_binary () {
@@ -62,6 +63,10 @@ build_binary () {
 	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
 	echo $outfile
+}
+
+build_static_assets () {
+	fileb0x backend/dashboardd/b0x.yaml
 }
 
 build_tools () {
@@ -103,6 +108,10 @@ build_command () {
 
 	if [ ! -d bin/ ]; then
 		mkdir -p bin/
+	fi
+
+	if [ "$cmd" == "backend" ]; then
+		build_static_assets
 	fi
 
 	echo "Building $cmd for ${GOOS}-${GOARCH}"
