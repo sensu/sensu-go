@@ -1,7 +1,6 @@
 package keepalived
 
 import (
-	"encoding/json"
 	"errors"
 	"testing"
 
@@ -30,12 +29,8 @@ func TestInvalidJSON(t *testing.T) {
 	k.Store = store
 	k.Start()
 	k.keepaliveChan <- []byte(".")
-
-	event1Bytes, _ := json.Marshal(event1)
-	k.keepaliveChan <- event1Bytes
-
-	event2Bytes, _ := json.Marshal(event2)
-	k.keepaliveChan <- event2Bytes
+	k.keepaliveChan <- event1
+	k.keepaliveChan <- event2
 
 	k.Stop()
 }

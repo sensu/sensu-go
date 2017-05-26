@@ -15,7 +15,7 @@ type mockMessageBus struct {
 	mock.Mock
 }
 
-func (m *mockMessageBus) Subscribe(topic, consumer string, channel chan<- []byte) error {
+func (m *mockMessageBus) Subscribe(topic, consumer string, channel chan<- interface{}) error {
 	args := m.Called(topic, consumer, channel)
 	return args.Error(0)
 }
@@ -23,7 +23,7 @@ func (m *mockMessageBus) Unsubscribe(topic, consumer string) error {
 	args := m.Called(topic, consumer)
 	return args.Error(0)
 }
-func (m *mockMessageBus) Publish(topic string, message []byte) error {
+func (m *mockMessageBus) Publish(topic string, message interface{}) error {
 	args := m.Called(topic, message)
 	return args.Error(0)
 }

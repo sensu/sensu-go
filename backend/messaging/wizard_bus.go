@@ -30,8 +30,8 @@ type WizardBus struct {
 // consumer channel bindings.
 type WizardTopic struct {
 	mutex      *sync.RWMutex
-	bindings   map[string]chan<- []byte
-	sendBuffer chan []byte
+	bindings   map[string]chan<- interface{}
+	sendBuffer chan interface{}
 }
 
 // Start ...
@@ -85,8 +85,8 @@ func (b *WizardBus) Err() <-chan error {
 func (b *WizardBus) createTopic(topic string) *WizardTopic {
 	wTopic := &WizardTopic{
 		mutex:      &sync.RWMutex{},
-		bindings:   make(map[string](chan<- []byte)),
-		sendBuffer: make(chan []byte, sendBufferQueueLength),
+		bindings:   make(map[string](chan<- interface{})),
+		sendBuffer: make(chan interface{}, sendBufferQueueLength),
 	}
 
 	b.wg.Add(1)
@@ -138,7 +138,7 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 // missing), unlocks the WizardBus mutex, locks the WizardTopic's
 // mutex (RW), adds the consumer channel to the WizardTopic's
 // bindings, and unlocks the WizardTopics mutex.
-func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- []byte) error {
+func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- interface{}) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}
@@ -193,7 +193,7 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 
 // Publish publishes a message to a topic. If the topic does not
 // exist, this is a noop.
-func (b *WizardBus) Publish(topic string, msg []byte) error {
+func (b *WizardBus) Publish(topic string, msg interface{}) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}

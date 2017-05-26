@@ -13,7 +13,7 @@ import (
 
 var (
 	logger = logrus.WithFields(logrus.Fields{
-		"component": "backend",
+		"component": "eventd",
 	})
 )
 
@@ -23,7 +23,7 @@ type Eventd struct {
 	MessageBus   messaging.MessageBus
 	HandlerCount int
 
-	eventChan    chan []byte
+	eventChan    chan interface{}
 	errChan      chan error
 	shutdownChan chan struct{}
 	wg           *sync.WaitGroup
@@ -46,7 +46,7 @@ func (e *Eventd) Start() error {
 	e.errChan = make(chan error, 1)
 	e.shutdownChan = make(chan struct{}, 1)
 
-	ch := make(chan []byte, 100)
+	ch := make(chan interface{}, 100)
 	e.eventChan = ch
 
 	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, "eventd", ch)
@@ -65,7 +65,6 @@ func (e *Eventd) startHandlers() {
 	for i := 0; i < e.HandlerCount; i++ {
 		go func() {
 			var event *types.Event
-			var err error
 			defer e.wg.Done()
 
 			for {
@@ -86,11 +85,10 @@ func (e *Eventd) startHandlers() {
 						e.errChan <- errors.New("event channel closed")
 						return
 					}
-					logger.Debugf("eventd - handling event: %s", string(msg))
-					event = &types.Event{}
-					err = json.Unmarshal(msg, event)
-					if err != nil {
-						logger.Errorf("eventd - error handling event: %s", err.Error())
+
+					event, ok = msg.(*types.Event)
+					if !ok {
+						logger.Errorf("received non-Event on event channel")
 						continue
 					}
 

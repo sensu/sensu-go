@@ -76,7 +76,7 @@ type Agent struct {
 	config       *Config
 	backendURL   string
 	handler      *handler.MessageHandler
-	conn         *transport.Transport
+	conn         transport.Transport
 	sendq        chan *transport.Message
 	stopping     chan struct{}
 	stopped      chan struct{}
@@ -119,7 +119,7 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 	}
 }
 
-func (a *Agent) receivePump(wg *sync.WaitGroup, conn *transport.Transport) {
+func (a *Agent) receivePump(wg *sync.WaitGroup, conn transport.Transport) {
 	defer func() {
 		wg.Done()
 		logger.Info("recv pump shutting down")
@@ -158,7 +158,7 @@ func (a *Agent) sendMessage(msgType string, payload []byte) {
 	a.sendq <- msg
 }
 
-func (a *Agent) sendPump(wg *sync.WaitGroup, conn *transport.Transport) {
+func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
 	defer func() {
 		wg.Done()
 		logger.Info("sendpump shutting down")

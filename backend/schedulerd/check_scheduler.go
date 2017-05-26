@@ -3,7 +3,6 @@ package schedulerd
 import (
 	"crypto/md5"
 	"encoding/binary"
-	"encoding/json"
 	"sync"
 	"time"
 
@@ -61,13 +60,8 @@ func (s *CheckScheduler) Start() error {
 						Timestamp: time.Now().Unix(),
 						Check:     s.Check,
 					}
-					evtBytes, err := json.Marshal(evt)
-					if err != nil {
-						logger.Info("error marshalling check in scheduler: ", err.Error())
-						continue
-					}
 
-					if err := s.MessageBus.Publish(sub, evtBytes); err != nil {
+					if err := s.MessageBus.Publish(sub, evt); err != nil {
 						logger.Info("error publishing check request: ", err.Error())
 					}
 				}

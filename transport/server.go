@@ -20,7 +20,7 @@ func NewServer() *Server {
 
 // Serve is used to initialize a websocket connection and returns an pointer to
 // a Transport used to communicate with that client.
-func (s *Server) Serve(w http.ResponseWriter, r *http.Request) (*Transport, error) {
+func (s *Server) Serve(w http.ResponseWriter, r *http.Request) (Transport, error) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err

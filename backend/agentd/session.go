@@ -19,14 +19,14 @@ import (
 type Session struct {
 	ID string
 
-	conn          *transport.Transport
+	conn          transport.Transport
 	store         store.Store
 	handler       *handler.MessageHandler
 	stopping      chan struct{}
 	stopped       chan struct{}
 	sendq         chan *transport.Message
 	subscriptions []string
-	checkChannel  chan []byte
+	checkChannel  chan interface{}
 	bus           messaging.MessageBus
 }
 
@@ -39,7 +39,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 }
 
 // NewSession ...
-func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
+func NewSession(conn transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func NewSession(conn *transport.Transport, bus messaging.MessageBus, store store
 		stopping:     make(chan struct{}, 1),
 		stopped:      make(chan struct{}),
 		sendq:        make(chan *transport.Message, 10),
-		checkChannel: make(chan []byte, 100),
+		checkChannel: make(chan interface{}, 100),
 
 		store: store,
 		bus:   bus,
@@ -153,10 +153,21 @@ func (s *Session) subPump(wg *sync.WaitGroup) {
 
 	for {
 		select {
-		case check := <-s.checkChannel:
+		case c := <-s.checkChannel:
+			event, ok := c.(*types.Event)
+			if !ok {
+				logger.Errorf("session received non-Event over check channel")
+				continue
+			}
+
+			eventBytes, err := json.Marshal(&event)
+			if err != nil {
+				logger.WithError(err).Error("session failed to serialize check")
+			}
+
 			msg := &transport.Message{
 				Type:    types.EventType,
-				Payload: check,
+				Payload: eventBytes,
 			}
 			s.sendq <- msg
 		case <-s.stopping:
@@ -246,9 +257,13 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive contains invalid timestamp")
 	}
 
-	return s.bus.Publish(messaging.TopicKeepalive, payload)
+	return s.bus.Publish(messaging.TopicKeepalive, keepalive)
 }
 
 func (s *Session) handleEvent(payload []byte) error {
-	return s.bus.Publish(messaging.TopicEventRaw, payload)
+	event := &types.Event{}
+	if err := json.Unmarshal(payload, event); err != nil {
+		return err
+	}
+	return s.bus.Publish(messaging.TopicEventRaw, event)
 }

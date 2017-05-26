@@ -38,7 +38,6 @@ func (k *Keepalived) processKeepalives(ec map[string](chan *types.Event)) {
 
 	var (
 		channel chan *types.Event
-		ok      bool
 	)
 
 	stoppingMonitors := make(chan struct{})
@@ -47,9 +46,9 @@ func (k *Keepalived) processKeepalives(ec map[string](chan *types.Event)) {
 		select {
 		case msg, open := <-k.keepaliveChan:
 			if open {
-				event := &types.Event{}
-				if err := json.Unmarshal(msg, event); err != nil {
-					logger.WithError(err).Error("error unmarshaling keepalive event")
+				event, ok := msg.(*types.Event)
+				if !ok {
+					logger.Error("keepalived received non-Event on keepalive channel")
 					continue
 				}
 

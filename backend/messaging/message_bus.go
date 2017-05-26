@@ -22,7 +22,7 @@ type MessageBus interface {
 	// Subscribe allows a consumer to subscribe to a topic,
 	// binding a read-only channel to the topic. Topic messages
 	// are delivered to the channel as simple byte arrays.
-	Subscribe(topic string, consumer string, channel chan<- []byte) error
+	Subscribe(topic string, consumer string, channel chan<- interface{}) error
 
 	// Unsubscribe allows a consumer to unsubscribe from a topic,
 	// removing its read-only channel from the topic's bindings.
@@ -31,5 +31,5 @@ type MessageBus interface {
 	Unsubscribe(topic string, consumer string) error
 
 	// Publish sends a message to a topic.
-	Publish(topic string, message []byte) error
+	Publish(topic string, message interface{}) error
 }
