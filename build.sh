@@ -65,10 +65,6 @@ build_binary () {
 	echo $outfile
 }
 
-build_static_assets () {
-	fileb0x backend/dashboardd/b0x.yaml
-}
-
 build_tools () {
 	echo "Running tool & plugin builds..."
 
@@ -108,10 +104,6 @@ build_command () {
 
 	if [ ! -d bin/ ]; then
 		mkdir -p bin/
-	fi
-
-	if [ "$cmd" == "backend" ]; then
-		build_static_assets
 	fi
 
 	echo "Building $cmd for ${GOOS}-${GOARCH}"
@@ -167,6 +159,10 @@ docker_commands () {
 	docker build -t sensu/sensu .
 }
 
+static_assets () {
+	fileb0x backend/dashboardd/b0x.yaml
+}
+
 if [ "$cmd" == "deps" ]; then
 	install_deps
 elif [ "$cmd" == "quality" ]; then
@@ -190,6 +186,8 @@ elif [ "$cmd" == "build_backend" ]; then
 	build_command backend
 elif [ "$cmd" == "build_cli" ]; then
 	build_command cli
+elif [ "$cmd" == "static_assets" ]; then
+	static_assets
 else
 	install_deps
 	linter_commands
