@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -20,7 +21,82 @@ type UsersController struct {
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *UsersController) Register(r *mux.Router) {
-	r.HandleFunc("/users", c.updateUser).Methods(http.MethodPut)
+	r.HandleFunc("/rbac/users", c.many).Methods(http.MethodGet)
+	r.HandleFunc("/rbac/users", c.updateUser).Methods(http.MethodPut)
+	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
+	r.HandleFunc("/rbac/users/{username}", c.deleteUser).Methods(http.MethodDelete)
+}
+
+// deleteUser handles DELETE requests to /users/:username
+func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	username := vars["username"]
+
+	err := c.Store.DeleteUserByName(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	// TODO: Verified the proper return code for DELETE method
+	w.WriteHeader(http.StatusAccepted)
+	return
+}
+
+// many handles GET requests to /users
+func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
+	users, err := c.Store.GetUsers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Obfustace users password for security
+	for i := range users {
+		users[i].Password = ""
+	}
+
+	usersBytes, err := json.Marshal(users)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, string(usersBytes))
+}
+
+// single handles requests to /users/:username
+func (c *UsersController) single(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	username := vars["username"]
+
+	var (
+		user *types.User
+		err  error
+	)
+
+	user, err = c.Store.GetUser(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if user == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Obfustace user password for security
+	user.Password = ""
+
+	userBytes, err := json.Marshal(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, string(userBytes))
+
 }
 
 func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {

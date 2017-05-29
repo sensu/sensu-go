@@ -48,7 +48,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "OK")
+			fmt.Fprintf(cmd.OutOrStdout(), "Created")
 			return nil
 		},
 	}
@@ -71,13 +71,17 @@ func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
 func (opts *createOpts) administerQuestionnaire() {
 	var qs = []*survey.Question{
 		{
-			Name:     "username",
-			Prompt:   &survey.Input{"Username:", ""},
+			Name: "username",
+			Prompt: &survey.Input{
+				Message: "Username:",
+			},
 			Validate: survey.Required,
 		},
 		{
-			Name:     "password",
-			Prompt:   &survey.Password{"Password:"},
+			Name: "password",
+			Prompt: &survey.Password{
+				Message: "Password:",
+			},
 			Validate: survey.Required,
 		},
 	}

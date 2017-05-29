@@ -16,7 +16,7 @@ func (client *RestClient) CreateUser(user *types.User) error {
 
 	res, err := client.R().
 		SetBody(bytes).
-		Put("/users")
+		Put("/rbac/users")
 
 	if err != nil {
 		return err
@@ -27,4 +27,36 @@ func (client *RestClient) CreateUser(user *types.User) error {
 	}
 
 	return nil
+}
+
+// DeleteUser deletes a user on configured Sensu instance
+func (client *RestClient) DeleteUser(username string) error {
+	res, err := client.R().Delete("/rbac/users/" + username)
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
+// ListUsers fetches all users from configured Sensu instance
+func (client *RestClient) ListUsers() ([]types.User, error) {
+	var users []types.User
+
+	res, err := client.R().Get("/rbac/users")
+	if err != nil {
+		return users, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return users, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &users)
+	return users, err
 }
