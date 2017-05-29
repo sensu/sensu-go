@@ -16,7 +16,7 @@ func (client *RestClient) CreateUser(user *types.User) error {
 
 	res, err := client.R().
 		SetBody(bytes).
-		Put("/users")
+		Put("/rbac/users")
 
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (client *RestClient) CreateUser(user *types.User) error {
 
 // DeleteUser deletes a user on configured Sensu instance
 func (client *RestClient) DeleteUser(username string) error {
-	res, err := client.R().Delete("/users/" + username)
+	res, err := client.R().Delete("/rbac/users/" + username)
 
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (client *RestClient) DeleteUser(username string) error {
 func (client *RestClient) ListUsers() ([]types.User, error) {
 	var users []types.User
 
-	res, err := client.R().Get("/users")
+	res, err := client.R().Get("/rbac/users")
 	if err != nil {
 		return users, err
 	}

@@ -21,10 +21,10 @@ type UsersController struct {
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *UsersController) Register(r *mux.Router) {
-	r.HandleFunc("/users", c.many).Methods(http.MethodGet)
-	r.HandleFunc("/users", c.updateUser).Methods(http.MethodPut)
-	r.HandleFunc("/users/{username}", c.single).Methods(http.MethodGet)
-	r.HandleFunc("/users/{username}", c.deleteUser).Methods(http.MethodDelete)
+	r.HandleFunc("/rbac/users", c.many).Methods(http.MethodGet)
+	r.HandleFunc("/rbac/users", c.updateUser).Methods(http.MethodPut)
+	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
+	r.HandleFunc("/rbac/users/{username}", c.deleteUser).Methods(http.MethodDelete)
 }
 
 // deleteUser handles DELETE requests to /users/:username

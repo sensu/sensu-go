@@ -21,14 +21,14 @@ func TestDeleteUser(t *testing.T) {
 	}
 
 	store.On("DeleteUserByName", "foo").Return(nil)
-	req, _ := http.NewRequest(http.MethodDelete, "/users/foo", nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/rbac/users/foo", nil)
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusAccepted, res.Code)
 
 	// Invalid user
 	store.On("DeleteUserByName", "bar").Return(fmt.Errorf(""))
-	req, _ = http.NewRequest(http.MethodDelete, "/users/bar", nil)
+	req, _ = http.NewRequest(http.MethodDelete, "/rbac/users/bar", nil)
 	res = processRequest(u, req)
 
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -50,7 +50,7 @@ func TestMany(t *testing.T) {
 		user2,
 	}
 	store.On("GetUsers").Return(users, nil)
-	req, _ := http.NewRequest("GET", "/users", nil)
+	req, _ := http.NewRequest("GET", "/rbac/users", nil)
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -76,7 +76,7 @@ func TestManyError(t *testing.T) {
 
 	users := []*types.User{}
 	store.On("GetUsers").Return(users, errors.New("error"))
-	req, _ := http.NewRequest("GET", "/users", nil)
+	req, _ := http.NewRequest("GET", "/rbac/users", nil)
 	res := processRequest(u, req)
 
 	body := res.Body.Bytes()
@@ -94,7 +94,7 @@ func TestSingle(t *testing.T) {
 
 	var nilUser *types.User
 	store.On("GetUser", "foo").Return(nilUser, nil)
-	req, _ := http.NewRequest("GET", "/users/foo", nil)
+	req, _ := http.NewRequest("GET", "/rbac/users/foo", nil)
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusNotFound, res.Code)
@@ -102,7 +102,7 @@ func TestSingle(t *testing.T) {
 	user := types.FixtureUser("bar")
 	user.Password = "P@ssw0rd!"
 	store.On("GetUser", "bar").Return(user, nil)
-	req, _ = http.NewRequest("GET", "/users/bar", nil)
+	req, _ = http.NewRequest("GET", "/rbac/users/bar", nil)
 	res = processRequest(u, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -130,7 +130,7 @@ func TestUpdateUser(t *testing.T) {
 	user.Password = "P@ssw0rd!"
 	userBytes, _ := json.Marshal(user)
 
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/users"), bytes.NewBuffer(userBytes))
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -148,7 +148,7 @@ func TestUpdateUserError(t *testing.T) {
 	user.Password = "P@ssw0rd!"
 	userBytes, _ := json.Marshal(user)
 
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/users"), bytes.NewBuffer(userBytes))
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
