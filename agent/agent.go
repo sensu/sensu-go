@@ -73,15 +73,15 @@ func NewConfig() *Config {
 
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
-	config            *Config
-	backendURL        string
-	handler           *handler.MessageHandler
-	conn              *transport.Transport
-	sendq             chan *transport.Message
-	stopping          chan struct{}
-	stopped           chan struct{}
-	entity            *types.Entity
-	dependencyManager *DependencyManager
+	config       *Config
+	backendURL   string
+	handler      *handler.MessageHandler
+	conn         *transport.Transport
+	sendq        chan *transport.Message
+	stopping     chan struct{}
+	stopped      chan struct{}
+	entity       *types.Entity
+	assetManager *AssetManager
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -96,7 +96,7 @@ func NewAgent(config *Config) *Agent {
 	}
 
 	agent.handler.AddHandler(types.EventType, agent.handleCheck)
-	agent.dependencyManager = NewDependencyManager(config.CacheDir)
+	agent.assetManager = NewAssetManager(config.CacheDir)
 
 	return agent
 }
