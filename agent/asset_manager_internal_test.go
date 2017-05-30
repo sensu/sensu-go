@@ -214,7 +214,7 @@ func (suite *DependencyTestSuite) TestIsCachedDirIsNotDirectory() {
 	suite.Error(err)
 }
 
-func TestRuntimeDependencies(t *testing.T) {
+func TestRuntimeAssets(t *testing.T) {
 	suite.Run(t, new(ManagerTestSuite))
 	suite.Run(t, new(DependencyTestSuite))
 }

@@ -36,15 +36,14 @@ func (a *Agent) handleCheck(payload []byte) error {
 func (a *Agent) executeCheck(event *types.Event) {
 	// TODO(james):
 	//
-	// Currently /all/ dependencies are available to each and every
-	// check, this could easily lead to conflicts in the future. As such, at some
-	// point we'll need to retrieve a subset of the dependencies, install, inject,
-	// etc.
+	// Currently /all/ assets are available to each and every check, this
+	// could easily lead to conflicts in the future. As such, at some point
+	// we'll need to retrieve a subset of the dependencies, install, inject, etc.
 	assets := a.assetManager
 
 	// Ensure that the asset manager is aware of all the assets required to
 	// execute the given check.
-	assets.Merge(event.Check.RuntimeDependencies)
+	assets.Merge(event.Check.RuntimeAssets)
 
 	ex := &command.Execution{
 		// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are

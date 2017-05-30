@@ -30,12 +30,12 @@ func TestFixtureCheckIsValid(t *testing.T) {
 	assert.Equal(t, "check", c.Name)
 	assert.NoError(t, c.Validate())
 
-	c.RuntimeDependencies = []Asset{
+	c.RuntimeAssets = []Asset{
 		{Name: "Good", URL: "https://sweet.sweet/good/url.boy"},
 	}
 	assert.NoError(t, c.Validate())
 
-	c.RuntimeDependencies = []Asset{{Name: ""}}
+	c.RuntimeAssets = []Asset{{Name: ""}}
 	assert.Error(t, c.Validate())
 }
 

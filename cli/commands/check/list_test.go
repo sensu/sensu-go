@@ -48,7 +48,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	cli := newCLI()
 
 	check := types.FixtureCheck("name-one")
-	check.RuntimeDependencies = []types.Asset{
+	check.RuntimeAssets = []types.Asset{
 		*types.FixtureAsset("asset-one"),
 	}
 
