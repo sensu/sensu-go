@@ -7,6 +7,7 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -195,7 +196,7 @@ func (opts *handlerOpts) toHandler() *types.Handler {
 	}
 
 	if len(opts.Handlers) > 0 {
-		handlers := helpers.SafeSplitCSV(opts.Handlers, ",")
+		handlers := helpers.SafeSplitCSV(opts.Handlers)
 		handler.Handlers = make([]string, len(handlers))
 		for i, h := range handlers {
 			handler.Handlers[i] = strings.TrimSpace(h)
