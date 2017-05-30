@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// InfoCommand defines new entity info command
-func InfoCommand(cli *cli.SensuCli) *cobra.Command {
+// ShowCommand defines new entity info command
+func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [ID]",
 		Short:        "show detailed entity information",

@@ -58,8 +58,10 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "Host")
+	assert.Contains(out, "ID")
 	assert.Contains(out, "OS")
+	assert.Contains(out, "Subscriptions")
+	assert.Contains(out, "Last Seen")
 	assert.Nil(err)
 }
 
