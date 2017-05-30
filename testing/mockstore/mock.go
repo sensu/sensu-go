@@ -13,7 +13,79 @@ type MockStore struct {
 	mock.Mock
 }
 
-// Entities
+//// Assets
+
+// GetAssets ...
+func (s *MockStore) GetAssets() ([]*types.Asset, error) {
+	args := s.Called()
+	return args.Get(0).([]*types.Asset), args.Error(1)
+}
+
+// GetAssetByName ...
+func (s *MockStore) GetAssetByName(name string) (*types.Asset, error) {
+	args := s.Called(name)
+	return args.Get(0).(*types.Asset), args.Error(1)
+}
+
+// DeleteAssetByName ...
+func (s *MockStore) DeleteAssetByName(name string) error {
+	args := s.Called(name)
+	return args.Error(0)
+}
+
+// UpdateAsset ...
+func (s *MockStore) UpdateAsset(asset *types.Asset) error {
+	args := s.Called(asset)
+	return args.Error(0)
+}
+
+//// Authentication
+
+// CreateJWTSecret ...
+func (s *MockStore) CreateJWTSecret(secret []byte) error {
+	args := s.Called()
+	return args.Error(0)
+}
+
+// GetJWTSecret ...
+func (s *MockStore) GetJWTSecret() ([]byte, error) {
+	args := s.Called()
+	return []byte(args.String(0)), args.Error(1)
+}
+
+// UpdateJWTSecret ...
+func (s *MockStore) UpdateJWTSecret(secret []byte) error {
+	args := s.Called(secret)
+	return args.Error(0)
+}
+
+//// Checks
+
+// GetChecks ...
+func (s *MockStore) GetChecks() ([]*types.Check, error) {
+	args := s.Called()
+	return args.Get(0).([]*types.Check), args.Error(1)
+}
+
+// GetCheckByName ...
+func (s *MockStore) GetCheckByName(name string) (*types.Check, error) {
+	args := s.Called(name)
+	return args.Get(0).(*types.Check), args.Error(1)
+}
+
+// DeleteCheckByName ...
+func (s *MockStore) DeleteCheckByName(name string) error {
+	args := s.Called(name)
+	return args.Error(0)
+}
+
+// UpdateCheck ...
+func (s *MockStore) UpdateCheck(check *types.Check) error {
+	args := s.Called(check)
+	return args.Error(0)
+}
+
+//// Entities
 
 // GetEntityByID ...
 func (s *MockStore) GetEntityByID(id string) (*types.Entity, error) {
@@ -45,85 +117,7 @@ func (s *MockStore) GetEntities() ([]*types.Entity, error) {
 	return args.Get(0).([]*types.Entity), args.Error(1)
 }
 
-// Handlers
-
-// GetHandlers ...
-func (s *MockStore) GetHandlers() ([]*types.Handler, error) {
-	args := s.Called()
-	return args.Get(0).([]*types.Handler), args.Error(1)
-}
-
-// GetHandlerByName ...
-func (s *MockStore) GetHandlerByName(name string) (*types.Handler, error) {
-	args := s.Called(name)
-	return args.Get(0).(*types.Handler), args.Error(1)
-}
-
-// DeleteHandlerByName ...
-func (s *MockStore) DeleteHandlerByName(name string) error {
-	args := s.Called(name)
-	return args.Error(0)
-}
-
-// UpdateHandler ...
-func (s *MockStore) UpdateHandler(handler *types.Handler) error {
-	args := s.Called(handler)
-	return args.Error(0)
-}
-
-// Mutators
-
-// GetMutators ...
-func (s *MockStore) GetMutators() ([]*types.Mutator, error) {
-	args := s.Called()
-	return args.Get(0).([]*types.Mutator), args.Error(1)
-}
-
-// GetMutatorByName ...
-func (s *MockStore) GetMutatorByName(name string) (*types.Mutator, error) {
-	args := s.Called(name)
-	return args.Get(0).(*types.Mutator), args.Error(1)
-}
-
-// DeleteMutatorByName ...
-func (s *MockStore) DeleteMutatorByName(name string) error {
-	args := s.Called(name)
-	return args.Error(0)
-}
-
-// UpdateMutator ...
-func (s *MockStore) UpdateMutator(mutator *types.Mutator) error {
-	args := s.Called(mutator)
-	return args.Error(0)
-}
-
-// Checks
-
-// GetChecks ...
-func (s *MockStore) GetChecks() ([]*types.Check, error) {
-	args := s.Called()
-	return args.Get(0).([]*types.Check), args.Error(1)
-}
-
-// GetCheckByName ...
-func (s *MockStore) GetCheckByName(name string) (*types.Check, error) {
-	args := s.Called(name)
-	return args.Get(0).(*types.Check), args.Error(1)
-}
-
-// DeleteCheckByName ...
-func (s *MockStore) DeleteCheckByName(name string) error {
-	args := s.Called(name)
-	return args.Error(0)
-}
-
-// UpdateCheck ...
-func (s *MockStore) UpdateCheck(check *types.Check) error {
-	args := s.Called(check)
-	return args.Error(0)
-}
-
-// Events
+//// Events
 
 // GetEvents ...
 func (s *MockStore) GetEvents() ([]*types.Event, error) {
@@ -155,7 +149,33 @@ func (s *MockStore) DeleteEventByEntityCheck(entityID, checkID string) error {
 	return args.Error(0)
 }
 
-// Keepalives
+//// Handlers
+
+// GetHandlers ...
+func (s *MockStore) GetHandlers() ([]*types.Handler, error) {
+	args := s.Called()
+	return args.Get(0).([]*types.Handler), args.Error(1)
+}
+
+// GetHandlerByName ...
+func (s *MockStore) GetHandlerByName(name string) (*types.Handler, error) {
+	args := s.Called(name)
+	return args.Get(0).(*types.Handler), args.Error(1)
+}
+
+// DeleteHandlerByName ...
+func (s *MockStore) DeleteHandlerByName(name string) error {
+	args := s.Called(name)
+	return args.Error(0)
+}
+
+// UpdateHandler ...
+func (s *MockStore) UpdateHandler(handler *types.Handler) error {
+	args := s.Called(handler)
+	return args.Error(0)
+}
+
+//// Keepalives
 
 // UpdateKeepalive ...
 func (s *MockStore) UpdateKeepalive(entityID string, expiration int64) error {
@@ -169,7 +189,33 @@ func (s *MockStore) GetKeepalive(entityID string) (int64, error) {
 	return args.Get(0).(int64), args.Error(1)
 }
 
-// Users
+//// Mutators
+
+// GetMutators ...
+func (s *MockStore) GetMutators() ([]*types.Mutator, error) {
+	args := s.Called()
+	return args.Get(0).([]*types.Mutator), args.Error(1)
+}
+
+// GetMutatorByName ...
+func (s *MockStore) GetMutatorByName(name string) (*types.Mutator, error) {
+	args := s.Called(name)
+	return args.Get(0).(*types.Mutator), args.Error(1)
+}
+
+// DeleteMutatorByName ...
+func (s *MockStore) DeleteMutatorByName(name string) error {
+	args := s.Called(name)
+	return args.Error(0)
+}
+
+// UpdateMutator ...
+func (s *MockStore) UpdateMutator(mutator *types.Mutator) error {
+	args := s.Called(mutator)
+	return args.Error(0)
+}
+
+//// Users
 
 // CreateUser ...
 func (s *MockStore) CreateUser(user *types.User) error {
@@ -198,31 +244,5 @@ func (s *MockStore) GetUsers() ([]*types.User, error) {
 // UpdateUser ...
 func (s *MockStore) UpdateUser(user *types.User) error {
 	args := s.Called(user)
-	return args.Error(0)
-}
-
-// Assets
-
-// GetAssets ...
-func (s *MockStore) GetAssets() ([]*types.Asset, error) {
-	args := s.Called()
-	return args.Get(0).([]*types.Asset), args.Error(1)
-}
-
-// GetAssetByName ...
-func (s *MockStore) GetAssetByName(name string) (*types.Asset, error) {
-	args := s.Called(name)
-	return args.Get(0).(*types.Asset), args.Error(1)
-}
-
-// DeleteAssetByName ...
-func (s *MockStore) DeleteAssetByName(name string) error {
-	args := s.Called(name)
-	return args.Error(0)
-}
-
-// UpdateAsset ...
-func (s *MockStore) UpdateAsset(asset *types.Asset) error {
-	args := s.Called(asset)
 	return args.Error(0)
 }

@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -60,16 +61,56 @@ func TestMiddlewareInvalidCredentials(t *testing.T) {
 
 func TestMiddlewareValidCredentials(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Middleware(provider, testHandler()))
+	server := httptest.NewServer(Middleware(provider,
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// The claims should be defined in the request context
+			claims := getClaimsFromContext(r)
+			assert.Equal(t, "foo", claims["sub"])
+
+			return
+		}),
+	))
 	defer server.Close()
 
-	// Invalid credentials
+	// Valid credentials
+	user := types.FixtureUser("foo")
 	provider.On("AuthEnabled").Return(true)
-	provider.On("Authenticate").Return(&types.User{}, nil)
+	provider.On("Authenticate").Return(user, nil)
+
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
 	req.SetBasicAuth("foo", "P@ssw0rd!")
+
 	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	// The response should not contain the signed token
+	body, _ := ioutil.ReadAll(res.Body)
+	bodyString := string(body)
+	assert.Empty(t, bodyString)
+}
+
+func TestMiddlewareLogin(t *testing.T) {
+	provider := &mockprovider.MockProvider{}
+	server := httptest.NewServer(Middleware(provider, testHandler()))
+	defer server.Close()
+
+	// Valid credentials
+	user := types.FixtureUser("foo")
+	provider.On("AuthEnabled").Return(true)
+	provider.On("Authenticate").Return(user, nil)
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", server.URL+"/auth", nil)
+	req.SetBasicAuth("foo", "P@ssw0rd!")
+
+	res, err := client.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	// The response should contain the signed token
+	body, _ := ioutil.ReadAll(res.Body)
+	bodyString := string(body)
+	assert.NotEmpty(t, bodyString)
 }

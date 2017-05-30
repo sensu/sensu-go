@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
+	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
@@ -150,11 +151,15 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	// Initializes the JWT secret
+	authentication.InitSecret(st)
+
 	// TODO(Simon): We need to determine the authentication driver from the config
 	auth := &basic.Basic{
 		Enabled: b.Config.APIAuthentication,
 		Store:   st,
 	}
+
 	b.apid = &apid.APId{
 		Authentication: auth,
 		Store:          st,
