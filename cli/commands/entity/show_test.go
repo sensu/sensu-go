@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInfoCommand(t *testing.T) {
+func TestShowCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := InfoCommand(cli)
+	cmd := ShowCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
@@ -22,14 +22,14 @@ func TestInfoCommand(t *testing.T) {
 	assert.Regexp("entity", cmd.Short)
 }
 
-func TestInfoCommandRunEClosure(t *testing.T) {
+func TestShowCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchEntity", "in").Return(*types.FixtureEntity("name-one"), nil)
 
-	cmd := InfoCommand(cli)
+	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
 
 	assert.NotEmpty(out)
@@ -37,11 +37,11 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestInfoCommandRunMissingArgs(t *testing.T) {
+func TestShowCommandRunMissingArgs(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := InfoCommand(cli)
+	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -49,14 +49,14 @@ func TestInfoCommandRunMissingArgs(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestInfoCommandRunEClosureWithTable(t *testing.T) {
+func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchEntity", "in").Return(*types.FixtureEntity("name-one"), nil)
 
-	cmd := InfoCommand(cli)
+	cmd := ShowCommand(cli)
 	cmd.Flags().Set("format", "tabular")
 
 	out, err := test.RunCmd(cmd, []string{"in"})
@@ -67,14 +67,14 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestInfoCommandRunEClosureWithErr(t *testing.T) {
+func TestShowCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchEntity", "in").Return(types.Entity{}, errors.New("my-err"))
 
-	cmd := InfoCommand(cli)
+	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
 
 	assert.NotNil(err)

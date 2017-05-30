@@ -50,7 +50,7 @@ func printEntitiesToTable(queryResults []types.Entity, writer io.Writer) {
 
 	table := table.New([]*table.Column{
 		{
-			Title:       "Host",
+			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				entity, _ := data.(types.Entity)
