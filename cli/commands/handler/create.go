@@ -195,7 +195,7 @@ func (opts *handlerOpts) toHandler() *types.Handler {
 	}
 
 	if len(opts.Handlers) > 0 {
-		handlers := strings.Split(opts.Handlers, ",")
+		handlers := helpers.SafeSplitCSV(opts.Handlers, ",")
 		handler.Handlers = make([]string, len(handlers))
 		for i, h := range handlers {
 			handler.Handlers[i] = strings.TrimSpace(h)

@@ -3,11 +3,11 @@ package check
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -65,15 +65,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("command", "c", "", "the command the check should run")
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
-	cmd.Flags().StringSliceP("subscription", "s", []string{}, "topic check requests will be sent to")
-	cmd.Flags().StringSlice("handler", []string{}, "handler to invoke when check fails")
-	cmd.Flags().StringSliceP("runtime-dependency", "d", []string{}, "asset this check depends on")
-	cmd.Flags().StringSlice("runtime-dependency-url", []string{}, "URL of asset this check depends on")
+	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
+	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
+	cmd.Flags().StringP("runtime-dependencies", "d", "", "comma separated list of assets this check depends on")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("command")
 	cmd.MarkFlagRequired("interval")
-	cmd.MarkFlagRequired("subscription")
+	cmd.MarkFlagRequired("subscriptions")
 
 	return cmd
 }
@@ -81,15 +80,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
 	opts.Interval, _ = flags.GetString("interval")
-
-	subscriptions, _ := flags.GetStringSlice("subscription")
-	opts.Subscriptions = strings.Join(subscriptions, ",")
-
-	handlers, _ := flags.GetStringSlice("handler")
-	opts.Handlers = strings.Join(handlers, ",")
-
-	dependencies, _ := flags.GetStringSlice("runtime-dependency")
-	opts.Dependencies = strings.Join(dependencies, ",")
+	opts.Subscriptions, _ = flags.GetString("subscriptions")
+	opts.Handlers, _ = flags.GetString("handlers")
+	opts.Dependencies, _ = flags.GetString("runtime-dependencies")
 }
 
 func (opts *checkOpts) administerQuestionnaire() {
@@ -135,14 +128,14 @@ func buildCheck(opts *checkOpts, client client.APIClient) *types.Check {
 		Name:                opts.Name,
 		Interval:            interval,
 		Command:             opts.Command,
-		Subscriptions:       strings.Split(opts.Subscriptions, ","),
-		Handlers:            strings.Split(opts.Handlers, ","),
+		Subscriptions:       helpers.SafeSplitCSV(opts.Subscriptions),
+		Handlers:            helpers.SafeSplitCSV(opts.Handlers),
 		RuntimeDependencies: []types.Asset{},
 	}
 
 	if len(opts.Dependencies) > 0 {
 		assets, _ := client.ListAssets()
-		dependencies := strings.Split(opts.Dependencies, ",")
+		dependencies := helpers.SafeSplitCSV(opts.Dependencies)
 
 		for _, asset := range assets {
 			for _, givenName := range dependencies {
