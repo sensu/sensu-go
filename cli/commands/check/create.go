@@ -19,7 +19,7 @@ type checkOpts struct {
 	Interval      string `survey:"interval"`
 	Subscriptions string `survey:"subscriptions"`
 	Handlers      string `survey:"handlers"`
-	Dependencies  string `survey:"dependencies"`
+	RuntimeAssets string `survey:"assets"`
 }
 
 const (
@@ -67,7 +67,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
-	cmd.Flags().StringP("runtime-dependencies", "d", "", "comma separated list of assets this check depends on")
+	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("command")
@@ -82,7 +82,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Interval, _ = flags.GetString("interval")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")
-	opts.Dependencies, _ = flags.GetString("runtime-dependencies")
+	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 }
 
 func (opts *checkOpts) administerQuestionnaire() {
@@ -114,8 +114,8 @@ func (opts *checkOpts) administerQuestionnaire() {
 			Prompt: &survey.Input{"Handlers:", ""},
 		},
 		{
-			Name:   "dependencies",
-			Prompt: &survey.Input{"Runtime Dependencies:", ""},
+			Name:   "assets",
+			Prompt: &survey.Input{"Runtime Assets:", ""},
 		},
 	}
 
@@ -125,22 +125,22 @@ func (opts *checkOpts) administerQuestionnaire() {
 func buildCheck(opts *checkOpts, client client.APIClient) *types.Check {
 	interval, _ := strconv.Atoi(opts.Interval)
 	check := &types.Check{
-		Name:                opts.Name,
-		Interval:            interval,
-		Command:             opts.Command,
-		Subscriptions:       helpers.SafeSplitCSV(opts.Subscriptions),
-		Handlers:            helpers.SafeSplitCSV(opts.Handlers),
-		RuntimeDependencies: []types.Asset{},
+		Name:          opts.Name,
+		Interval:      interval,
+		Command:       opts.Command,
+		Subscriptions: helpers.SafeSplitCSV(opts.Subscriptions),
+		Handlers:      helpers.SafeSplitCSV(opts.Handlers),
+		RuntimeAssets: []types.Asset{},
 	}
 
-	if len(opts.Dependencies) > 0 {
+	if len(opts.RuntimeAssets) > 0 {
 		assets, _ := client.ListAssets()
-		dependencies := helpers.SafeSplitCSV(opts.Dependencies)
+		givenAssetNames := helpers.SafeSplitCSV(opts.RuntimeAssets)
 
 		for _, asset := range assets {
-			for _, givenName := range dependencies {
+			for _, givenName := range givenAssetNames {
 				if asset.Name == givenName {
-					check.RuntimeDependencies = append(check.RuntimeDependencies, asset)
+					check.RuntimeAssets = append(check.RuntimeAssets, asset)
 					break
 				}
 			}

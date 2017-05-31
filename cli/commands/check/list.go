@@ -91,7 +91,7 @@ func printChecksToTable(queryResults []types.Check, io io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.Check)
 				names := []string{}
-				for _, asset := range check.RuntimeDependencies {
+				for _, asset := range check.RuntimeAssets {
 					names = append(names, asset.Name)
 				}
 				return strings.Join(names, ",")

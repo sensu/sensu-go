@@ -25,8 +25,8 @@ const (
 	depsCachePath = "deps"
 )
 
-// DependencyManager manages caching & installation of dependencies
-type DependencyManager struct {
+// AssetManager manages caching & installation of dependencies
+type AssetManager struct {
 	// BaseEnv env vars that dependencies are injected into; defaults to sys vars
 	BaseEnv []string
 
@@ -35,9 +35,9 @@ type DependencyManager struct {
 	env       []string
 }
 
-// NewDependencyManager given agent returns instantiated DependencyManager
-func NewDependencyManager(agentCacheDir string) *DependencyManager {
-	manager := &DependencyManager{}
+// NewAssetManager given agent returns instantiated AssetManager
+func NewAssetManager(agentCacheDir string) *AssetManager {
+	manager := &AssetManager{}
 	manager.SetCacheDir(agentCacheDir)
 	manager.Reset()
 
@@ -45,13 +45,13 @@ func NewDependencyManager(agentCacheDir string) *DependencyManager {
 }
 
 // SetCacheDir sets cache directory given a base directory
-func (m *DependencyManager) SetCacheDir(baseDir string) {
+func (m *AssetManager) SetCacheDir(baseDir string) {
 	m.cacheDir = filepath.Join(baseDir, depsCachePath)
 	m.env = nil // Clear environment as it is likely pointing to the wrong paths
 }
 
 // Merge updates list of known dependencies given a list of assets
-func (m *DependencyManager) Merge(assets []types.Asset) {
+func (m *AssetManager) Merge(assets []types.Asset) {
 	for _, asset := range assets {
 		// Do nothing if we already know about the dependency
 		if m.knownDeps[asset.Hash] != nil {
@@ -67,7 +67,7 @@ func (m *DependencyManager) Merge(assets []types.Asset) {
 }
 
 // Install - ensures that all known dependencies are installed
-func (m *DependencyManager) Install() error {
+func (m *AssetManager) Install() error {
 	for _, dep := range m.knownDeps {
 		if err := dep.install(); err != nil {
 			return err
@@ -80,7 +80,7 @@ func (m *DependencyManager) Install() error {
 // Env returns a copy of the current environment with PATH, LD_LIBRARY_PATH, &
 // CPATH updated to include dependency paths. In this way the execution context
 // allows the check to reference binary & libraries provided by dependencies.
-func (m *DependencyManager) Env() []string {
+func (m *AssetManager) Env() []string {
 	if m.env != nil {
 		return m.env
 	}
@@ -128,13 +128,13 @@ func (m *DependencyManager) Env() []string {
 // recompute the next time a check is run.
 //
 // NOTE: Cache on disk is not cleared.
-func (m *DependencyManager) Reset() {
+func (m *AssetManager) Reset() {
 	m.knownDeps = map[string]*runtimeDependency{}
 	m.BaseEnv = os.Environ()
 	m.env = nil
 }
 
-func (m *DependencyManager) paths() []string {
+func (m *AssetManager) paths() []string {
 	paths := []string{}
 
 	for _, dep := range m.knownDeps {
@@ -145,7 +145,7 @@ func (m *DependencyManager) paths() []string {
 }
 
 type runtimeDependency struct {
-	manager *DependencyManager
+	manager *AssetManager
 	asset   *types.Asset
 }
 

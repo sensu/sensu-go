@@ -19,7 +19,7 @@ type ManagerTestSuite struct {
 	suite.Suite
 	agent       *Agent
 	dep         *runtimeDependency
-	manager     *DependencyManager
+	manager     *AssetManager
 	assetServer *httptest.Server
 }
 
@@ -45,7 +45,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-")
 
 	// Ex. manager
-	manager := NewDependencyManager(tmpDir)
+	manager := NewAssetManager(tmpDir)
 	dep := &runtimeDependency{manager: manager, asset: asset}
 	manager.knownDeps["test"] = dep
 
@@ -62,7 +62,7 @@ func (suite *ManagerTestSuite) AfterTest() {
 }
 
 func (suite *ManagerTestSuite) TestNewDepManager() {
-	manager := NewDependencyManager("./tmp")
+	manager := NewAssetManager("./tmp")
 
 	suite.NotNil(manager)
 	suite.Contains(manager.cacheDir, "tmp")
@@ -130,7 +130,7 @@ type DependencyTestSuite struct {
 
 	assetServer  *httptest.Server
 	dep          *runtimeDependency
-	manager      *DependencyManager
+	manager      *AssetManager
 	responseBody string
 	responseType string
 }
@@ -150,7 +150,7 @@ func (suite *DependencyTestSuite) SetupTest() {
 	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-test")
 
 	// Ex. Dep
-	suite.manager = &DependencyManager{cacheDir: tmpDir}
+	suite.manager = &AssetManager{cacheDir: tmpDir}
 	suite.dep = &runtimeDependency{
 		manager: suite.manager,
 		asset: &types.Asset{
@@ -214,7 +214,7 @@ func (suite *DependencyTestSuite) TestIsCachedDirIsNotDirectory() {
 	suite.Error(err)
 }
 
-func TestRuntimeDependencies(t *testing.T) {
+func TestRuntimeAssets(t *testing.T) {
 	suite.Run(t, new(ManagerTestSuite))
 	suite.Run(t, new(DependencyTestSuite))
 }
