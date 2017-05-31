@@ -50,9 +50,13 @@ func InitSecret(store store.Store) error {
 }
 
 // getClaimsFromContext retrieves the JWT claims from the request context
-func getClaimsFromContext(r *http.Request) jwt.MapClaims {
+func getClaimsFromContext(r *http.Request) *types.Claims {
 	if value := context.Get(r, claimsKey); value != nil {
-		return value.(jwt.MapClaims)
+		claims, ok := value.(types.Claims)
+		if !ok {
+			return nil
+		}
+		return &claims
 	}
 	return nil
 }
@@ -65,13 +69,16 @@ func newToken(user *types.User) (*jwt.Token, string, error) {
 		return nil, "", err
 	}
 
-	// Create a new token object, specifying signing method and the claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iat": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
-		"iss": issuer,
-		"jti": hex.EncodeToString(jti),
-		"sub": user.Username,
-	})
+	claims := types.Claims{
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt: time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+			Issuer:   issuer,
+			Id:       hex.EncodeToString(jti),
+			Subject:  user.Username,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString(secret)
@@ -84,7 +91,7 @@ func newToken(user *types.User) (*jwt.Token, string, error) {
 
 // parseToken takes the token string and parse it to verify its integrity
 func parseToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -97,7 +104,7 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	if _, ok := token.Claims.(jwt.MapClaims); !ok || !token.Valid {
+	if _, ok := token.Claims.(*types.Claims); !ok || !token.Valid {
 		return nil, fmt.Errorf("Invalid JSON Web Token")
 	}
 
@@ -107,6 +114,6 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 // setClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
 func setClaimsIntoContext(r *http.Request, token *jwt.Token) {
-	claims, _ := token.Claims.(jwt.MapClaims)
+	claims, _ := token.Claims.(types.Claims)
 	context.Set(r, claimsKey, claims)
 }

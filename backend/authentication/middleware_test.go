@@ -65,7 +65,7 @@ func TestMiddlewareValidCredentials(t *testing.T) {
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// The claims should be defined in the request context
 			claims := getClaimsFromContext(r)
-			assert.Equal(t, "foo", claims["sub"])
+			assert.Equal(t, "foo", claims.Subject)
 
 			return
 		}),

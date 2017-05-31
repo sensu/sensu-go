@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +18,7 @@ func TestClaimsContext(t *testing.T) {
 
 	setClaimsIntoContext(r, token)
 	claims := getClaimsFromContext(r)
-	assert.Equal(t, user.Username, claims["sub"])
+	assert.Equal(t, user.Username, claims.Subject)
 }
 
 func TestInitSecret(t *testing.T) {
@@ -55,8 +54,6 @@ func TestInitSecretEtcdError(t *testing.T) {
 }
 
 func TestNewTokenAndParseToken(t *testing.T) {
-	var date float64
-
 	secret = []byte("foobar")
 	user := types.FixtureUser("foo")
 
@@ -68,9 +65,9 @@ func TestNewTokenAndParseToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	claims, _ := token.Claims.(jwt.MapClaims)
-	assert.Equal(t, user.Username, claims["sub"])
-	assert.Equal(t, issuer, claims["iss"])
-	assert.NotEmpty(t, claims["jti"])
-	assert.IsType(t, date, claims["iat"])
+	claims, _ := token.Claims.(*types.Claims)
+	assert.Equal(t, user.Username, claims.Subject)
+	assert.Equal(t, issuer, claims.Issuer)
+	assert.NotEmpty(t, claims.Id)
+	assert.NotZero(t, claims.IssuedAt)
 }
