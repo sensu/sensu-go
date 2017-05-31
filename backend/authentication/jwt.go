@@ -70,7 +70,6 @@ func newToken(user *types.User) (*jwt.Token, string, error) {
 		"iat": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
 		"iss": issuer,
 		"jti": hex.EncodeToString(jti),
-		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
 		"sub": user.Username,
 	})
 

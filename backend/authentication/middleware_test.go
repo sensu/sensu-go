@@ -114,3 +114,47 @@ func TestMiddlewareLogin(t *testing.T) {
 	bodyString := string(body)
 	assert.NotEmpty(t, bodyString)
 }
+
+func TestMiddlewareJWT(t *testing.T) {
+	provider := &mockprovider.MockProvider{}
+	server := httptest.NewServer(Middleware(provider, testHandler()))
+	defer server.Close()
+
+	provider.On("AuthEnabled").Return(true)
+
+	// Valid JWT
+	secret = []byte("foobar")
+	user := types.FixtureUser("foo")
+	_, tokenString, _ := newToken(user)
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", server.URL, nil)
+
+	// Add the bearer token in the Authorization header
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
+
+	res, err := client.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}
+
+func TestMiddlewareInvalidJWT(t *testing.T) {
+	provider := &mockprovider.MockProvider{}
+	server := httptest.NewServer(Middleware(provider, testHandler()))
+	defer server.Close()
+
+	provider.On("AuthEnabled").Return(true)
+
+	// Valid JWT
+	tokenString := "foobar"
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", server.URL, nil)
+
+	// Add the bearer token in the Authorization header
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
+
+	res, err := client.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+}

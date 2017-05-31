@@ -73,5 +73,4 @@ func TestNewTokenAndParseToken(t *testing.T) {
 	assert.Equal(t, issuer, claims["iss"])
 	assert.NotEmpty(t, claims["jti"])
 	assert.IsType(t, date, claims["iat"])
-	assert.IsType(t, date, claims["nbf"])
 }
