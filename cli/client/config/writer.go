@@ -10,13 +10,6 @@ import (
 	toml "github.com/pelletier/go-toml"
 )
 
-// AccessToken (is temporary wrapper)
-type AccessToken struct {
-	token        string
-	refreshToken string
-	expiresAt    time.Time
-}
-
 // WriteCredentials writes the given credentials to a file
 func (c *MultiConfig) WriteCredentials(url string, token *AccessToken) error {
 	config := emptyTomlTree()
@@ -41,9 +34,9 @@ func (c *MultiConfig) WriteCredentials(url string, token *AccessToken) error {
 
 	// Update profile
 	profile.Set("api-url", url)
-	profile.Set("secret", token.token)
-	profile.Set("refresh-token", token.refreshToken)
-	profile.Set("expires-at", strconv.FormatInt(token.expiresAt.Unix(), 10))
+	profile.Set("secret", token.Token)
+	profile.Set("refresh-token", token.RefreshToken)
+	profile.Set("expires-at", strconv.FormatInt(token.ExpiresAt.Unix(), 10))
 	config.Set(profileKey, profile)
 
 	// Write config

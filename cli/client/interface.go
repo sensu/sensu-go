@@ -4,12 +4,19 @@ import "github.com/sensu/sensu-go/types"
 
 // APIClient client methods across the Sensu API
 type APIClient interface {
+	AuthenticationAPIClient
 	AssetAPIClient
 	CheckAPIClient
 	EntityAPIClient
 	EventAPIClient
 	HandlerAPIClient
 	UserAPIClient
+}
+
+// AuthenticationAPIClient client methods for authenticating
+type AuthenticationAPIClient interface {
+	CreateAccessToken(string userid, string secret) (AccessToken, error)
+	RefreshAccessToken(string refreshToken) (AccessToken, error)
 }
 
 // AssetAPIClient client methods for assets
