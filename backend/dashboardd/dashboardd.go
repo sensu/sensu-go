@@ -104,7 +104,11 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	r.Handle("/entities", httputil.NewSingleHostReverseProxy(target))
 
 	// Serve static content
-	r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(http.Dir(d.Dir))))
+	if d.Dir != "" {
+		r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(http.Dir(d.Dir))))
+	} else {
+		r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(HTTP)))
+	}
 
 	return r
 }

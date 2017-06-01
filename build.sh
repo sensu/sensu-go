@@ -37,6 +37,7 @@ install_deps () {
 	go get github.com/gordonklaus/ineffassign
 	go get github.com/jgautheron/goconst/cmd/goconst
 	go get -u github.com/golang/lint/golint
+	go get -u github.com/UnnoTed/fileb0x
 }
 
 build_tool_binary () {
@@ -158,6 +159,10 @@ docker_commands () {
 	docker build -t sensu/sensu .
 }
 
+static_assets () {
+	fileb0x backend/dashboardd/b0x.yaml
+}
+
 if [ "$cmd" == "deps" ]; then
 	install_deps
 elif [ "$cmd" == "quality" ]; then
@@ -181,6 +186,8 @@ elif [ "$cmd" == "build_backend" ]; then
 	build_command backend
 elif [ "$cmd" == "build_cli" ]; then
 	build_command cli
+elif [ "$cmd" == "static_assets" ]; then
+	static_assets
 else
 	install_deps
 	linter_commands
