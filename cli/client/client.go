@@ -2,6 +2,7 @@ package client
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/sensu/sensu-go/cli/client/config"
 	resty "gopkg.in/resty.v0"
 )
 
@@ -10,7 +11,7 @@ var logger *logrus.Entry
 // RestClient wraps resty.Client
 type RestClient struct {
 	client *resty.Client
-	config Config
+	config config.Config
 
 	configured bool
 }
@@ -22,7 +23,7 @@ func init() {
 }
 
 // New builds a new client with defaults
-func New(config Config) *RestClient {
+func New(config config.Config) *RestClient {
 	c := &RestClient{client: resty.New(), config: config}
 	c.client.SetHeader("Accept", "application/json")
 	c.client.SetHeader("Content-Type", "application/json")

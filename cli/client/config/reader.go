@@ -1,24 +1,11 @@
-package client
+package config
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-)
-
-const (
-	// SENSU_PROFILE or --profile
-	profileKey     = "profile"
-	profileDefault = "default"
-)
-
-var (
-	// ConfigFilePath contains path to configuration file
-	ConfigFilePath string
 )
 
 // Config ...
@@ -30,12 +17,26 @@ type Config interface {
 
 // MultiConfig wraps viper library
 type MultiConfig struct {
-	viper *viper.Viper
+	// Handles determining the curretly selected profile
+	profile *viper.Viper
+
+	// Handler retrieving credentials for the selected profile
+	credentials *viper.Viper
 }
 
 // NewConfig reads configuration file, sets up ENV variables,
 // configures defaults and returns new a Config w/ given values.
 func NewConfig() (*MultiConfig, error) {
+	credentialsConf, err := newCredentialsConfig()
+	config := &MultiConfig{
+		profile:     newProfilesConfig(),
+		credentials: credentialsConf,
+	}
+
+	return config, err
+}
+
+func newProfilesConfig() *viper.Viper {
 	v := viper.New()
 
 	// Set the default profile
@@ -43,27 +44,41 @@ func NewConfig() (*MultiConfig, error) {
 
 	// ENV variables
 	v.SetEnvPrefix("SENSU")
-	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.BindEnv(profileKey)
+
+	return v
+}
+
+func newCredentialsConfig() (*viper.Viper, error) {
+	v := viper.New()
+
+	// ENV variables
+	v.SetEnvPrefix("SENSU")
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.BindEnv("api-url")
 	v.BindEnv("secret")
 
 	// Configuration file
-	v.SetConfigFile(ConfigFilePath)
+	v.SetConfigFile(CredentialsFilePath)
 	v.SetConfigType("toml")
 
-	err := v.ReadInConfig()
-	return &MultiConfig{viper: v}, err
+	// Open the configuration file and watch it in case the token is refeshed
+	err := v.ReadInConfig() //
+	v.WatchConfig()
+
+	return v, err
 }
 
 // Get value from configuration for given key
 func (c *MultiConfig) Get(key string) interface{} {
-	if val := c.viper.Get(key); val != "" && val != nil {
+	if key == profileKey {
+		return c.profile.Get(key)
+	} else if val := c.credentials.Get(key); val != "" && val != nil {
 		return val
 	}
 
 	key = fmt.Sprintf("%s.%s", c.Get(profileKey), key)
-	return c.viper.Get(key)
+	return c.credentials.Get(key)
 }
 
 // GetString value from configuration for given key
@@ -75,11 +90,7 @@ func (c *MultiConfig) GetString(key string) string {
 // BindPFlag binds given pflag to config
 func (c *MultiConfig) BindPFlag(key string, flag *pflag.Flag) {
 	if flag != nil {
-		c.viper.BindPFlag(key, flag)
+		c.profile.BindPFlag(key, flag)
+		c.credentials.BindPFlag(key, flag)
 	}
-}
-
-func init() {
-	h, _ := homedir.Dir()
-	ConfigFilePath = filepath.Join(h, ".config", "sensu", "profiles")
 }
