@@ -1,4 +1,4 @@
-package authentication
+package jwt
 
 import (
 	"fmt"
@@ -10,15 +10,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAccessTokenAndParseToken(t *testing.T) {
+	secret = []byte("foobar")
+	username := "foo"
+
+	_, tokenString, err := AccessToken(username)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, tokenString)
+
+	token, err := ParseToken(tokenString)
+	assert.NoError(t, err)
+	assert.NotNil(t, token)
+
+	claims, _ := token.Claims.(*types.Claims)
+	assert.Equal(t, username, claims.Subject)
+	assert.Equal(t, issuer, claims.Issuer)
+	assert.NotEmpty(t, claims.Id)
+	assert.NotZero(t, claims.IssuedAt)
+}
+
 func TestClaimsContext(t *testing.T) {
-	user := types.FixtureUser("foo")
-	token, _, _ := newToken(user)
+	username := "foo"
+	token, _, _ := AccessToken(username)
 
 	r, _ := http.NewRequest("GET", "/foo", nil)
 
-	setClaimsIntoContext(r, token)
-	claims := getClaimsFromContext(r)
-	assert.Equal(t, user.Username, claims.Subject)
+	SetClaimsIntoContext(r, token)
+	claims := GetClaimsFromContext(r)
+	assert.Equal(t, username, claims.Subject)
+}
+
+func TestGetClaims(t *testing.T) {
+	username := "foo"
+	token, _, _ := AccessToken(username)
+
+	claims, err := GetClaims(token)
+	assert.NoError(t, err)
+	assert.Equal(t, username, claims.Subject)
 }
 
 func TestInitSecret(t *testing.T) {
@@ -51,23 +79,4 @@ func TestInitSecretEtcdError(t *testing.T) {
 	err := InitSecret(store)
 	assert.Error(t, err)
 	assert.Equal(t, []byte(nil), secret)
-}
-
-func TestNewTokenAndParseToken(t *testing.T) {
-	secret = []byte("foobar")
-	user := types.FixtureUser("foo")
-
-	_, tokenString, err := newToken(user)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, tokenString)
-
-	token, err := parseToken(tokenString)
-	assert.NoError(t, err)
-	assert.NotNil(t, token)
-
-	claims, _ := token.Claims.(*types.Claims)
-	assert.Equal(t, user.Username, claims.Subject)
-	assert.Equal(t, issuer, claims.Issuer)
-	assert.NotEmpty(t, claims.Id)
-	assert.NotZero(t, claims.IssuedAt)
 }

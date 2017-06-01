@@ -89,7 +89,9 @@ func httpRouter(a *APId) *mux.Router {
 	}
 	assetsController.Register(r)
 
-	authenticationController := &controllers.AuthenticationController{}
+	authenticationController := &controllers.AuthenticationController{
+		Provider: a.Authentication,
+	}
 	authenticationController.Register(r)
 
 	checksController := &controllers.ChecksController{
@@ -130,8 +132,8 @@ func httpRouter(a *APId) *mux.Router {
 	mutatorsController.Register(r)
 
 	usersController := &controllers.UsersController{
-		Authentication: a.Authentication,
-		Store:          a.Store,
+		Provider: a.Authentication,
+		Store:    a.Store,
 	}
 	usersController.Register(r)
 

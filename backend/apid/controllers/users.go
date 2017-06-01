@@ -14,8 +14,8 @@ import (
 
 // UsersController defines the fields required by UsersController.
 type UsersController struct {
-	Authentication authentication.Provider
-	Store          store.Store
+	Provider authentication.Provider
+	Store    store.Store
 }
 
 // Register should define an association between HTTP routes and their
@@ -127,7 +127,7 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.Authentication.CreateUser(&user)
+	err = c.Provider.CreateUser(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -3,6 +3,8 @@ package authentication
 import (
 	"net/http"
 	"strings"
+
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 )
 
 // Middleware is a HTTP middleware that enforces authentication
@@ -14,39 +16,46 @@ func Middleware(provider Provider, next http.Handler) http.Handler {
 			return
 		}
 
-		// Does credentials were provided in the Authorization header?
-		username, password, ok := r.BasicAuth()
-		if ok {
-			user, err := provider.Authenticate(username, password)
-			if err != nil {
-				logger.WithField(
-					"user", username,
-				).Info("Authentication failed. Invalid username or password")
-				http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-				return
-			}
-
-			// Create the token and a signed version
-			token, tokenString, err := newToken(user)
-			if err != nil {
-				logger.WithField(
-					"user", username,
-				).Infof("Authentication failed: %s", err.Error())
-				http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-				return
-			}
-
-			// Set the claims into the request context
-			setClaimsIntoContext(r, token)
-
-			// Add the signed token to the response if login
-			if r.URL.Path == "/auth" {
-				w.Write([]byte(tokenString))
-			}
-
+		// TODO (Simon): We should probably avoid applying this middleware to the
+		// login route instead
+		if r.URL.Path == "/auth" {
 			next.ServeHTTP(w, r)
 			return
 		}
+
+		// // Does credentials were provided in the Authorization header?
+		// username, password, ok := r.BasicAuth()
+		// if ok {
+		// 	user, err := provider.Authenticate(username, password)
+		// 	if err != nil {
+		// 		logger.WithField(
+		// 			"user", username,
+		// 		).Info("Authentication failed. Invalid username or password")
+		// 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		// 		return
+		// 	}
+		//
+		// // Create the token and a signed version
+		// token, tokenString, err := jwt.AccessToken(user.Username)
+		// if err != nil {
+		// 	logger.WithField(
+		// 		"user", username,
+		// 	).Infof("Authentication failed: %s", err.Error())
+		// 	http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		// 	return
+		// }
+		//
+		// 	// Set the claims into the request context
+		// 	jwt.SetClaimsIntoContext(r, token)
+		//
+		// 	// Add the signed token to the response if login
+		// 	if r.URL.Path == "/auth" {
+		// 		w.Write([]byte(tokenString))
+		// 	}
+		//
+		// 	next.ServeHTTP(w, r)
+		// 	return
+		// }
 
 		// Does a bearer token was provided in the Authorization header?
 		var tokenString string
@@ -57,7 +66,7 @@ func Middleware(provider Provider, next http.Handler) http.Handler {
 		}
 
 		if tokenString != "" {
-			token, err := parseToken(tokenString)
+			token, err := jwt.ParseToken(tokenString)
 			if err != nil {
 				logger.Infof("Authentication failed, error parsing token: %s", err.Error())
 				http.Error(w, "Request unauthorized", http.StatusUnauthorized)
@@ -65,7 +74,7 @@ func Middleware(provider Provider, next http.Handler) http.Handler {
 			}
 
 			// Set the claims into the request context
-			setClaimsIntoContext(r, token)
+			jwt.SetClaimsIntoContext(r, token)
 
 			next.ServeHTTP(w, r)
 			return
