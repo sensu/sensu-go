@@ -233,7 +233,7 @@ func (d *runtimeDependency) install() error {
 	// of our asset to it.
 	binDir := filepath.Join(d.path(), "bin")
 	if err = os.MkdirAll(binDir, 0755); err != nil {
-		return fmt.Errorf("unable to create cache directory '%s'", d.path(), err)
+		return fmt.Errorf("unable to create cache directory '%s': %s", d.path(), err.Error())
 	}
 
 	// If file is an archive attempt to extract it

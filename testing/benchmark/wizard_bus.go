@@ -49,7 +49,7 @@ func newWizardBusCommand() *cobra.Command {
 						for _, t := range topics {
 							go func(topic string) {
 								msg := strconv.FormatInt(tm.UnixNano(), 10)
-								bus.Publish(topic, []byte(msg))
+								bus.Publish(topic, msg)
 								wg.Done()
 							}(t)
 						}
@@ -68,7 +68,7 @@ func newWizardBusCommand() *cobra.Command {
 			for i := 0; i < numClients; i++ {
 				uid, _ := uuid.NewRandom()
 				clientID := uid.String()
-				ch := make(chan []byte, 100)
+				ch := make(chan interface{}, 100)
 				for _, t := range topics {
 					bus.Subscribe(t, clientID, ch)
 				}
@@ -76,8 +76,9 @@ func newWizardBusCommand() *cobra.Command {
 					delay := make([]float64, numMessages)
 					for msgCounter := 0; msgCounter < numMessages; msgCounter++ {
 						msg := <-ch
+						msgStr := msg.(string)
 						received := time.Now().UnixNano()
-						sent, _ := strconv.ParseInt(string(msg), 10, 64)
+						sent, _ := strconv.ParseInt(msgStr, 10, 64)
 						delay[msgCounter] = float64(received) - float64(sent)
 					}
 

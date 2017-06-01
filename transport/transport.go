@@ -59,34 +59,54 @@ type Message struct {
 	Payload []byte
 }
 
-// A Transport is a connection between sensu Agents and Backends.
-type Transport struct {
+// The Transport interface defines the set of methods available to a connection
+// between the Sensu backend and agent.
+type Transport interface {
+	// Closed returns true if the underlying connection is closed.
+	Closed() bool
+
+	// Close will cleanly shutdown a sensu transport connection.
+	Close() error
+
+	// Send is used to send a message over the transport. It takes a message type
+	// hint and a serialized payload. Send will block until the message has been
+	// sent. Send is synchronous, returning nil if the write to the underlying
+	// socket was successful and an error otherwise.
+	Send(*Message) error
+
+	// Receive is used to receive a message from the transport. It takes a context
+	// and blocks until the next message is received from the transport.
+	Receive() (*Message, error)
+}
+
+// A WebSocketTransport is a connection between sensu Agents and Backends over
+// WebSocket.
+type WebSocketTransport struct {
 	Connection *websocket.Conn
 	closed     bool
 	mutex      *sync.RWMutex
 }
 
 // NewTransport creates an initialized Transport and return its pointer.
-func NewTransport(conn *websocket.Conn) *Transport {
-	return &Transport{
+func NewTransport(conn *websocket.Conn) Transport {
+	return &WebSocketTransport{
 		Connection: conn,
 		closed:     false,
 		mutex:      &sync.RWMutex{},
 	}
 }
 
-// Closed returns true if the underlying connection is closed.
-func (t *Transport) Closed() bool {
+// Closed returns true if the underlying websocket connection has been closed.
+func (t *WebSocketTransport) Closed() bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 	return t.closed
 }
 
-// Send is used to send a message over the transport. It takes a message type
-// hint and a serialized payload. Send will block until the message has been
-// sent. Send is synchronous, returning nil if the write to the underlying
-// socket was successful and an error otherwise.
-func (t *Transport) Send(m *Message) error {
+// Send a message over the websocket connection. If the connection has been
+// closed, returns a ClosedError. Returns a ConnectionError if the websocket
+// connection returns an error while sending, but the connection is still open.
+func (t *WebSocketTransport) Send(m *Message) error {
 	t.mutex.RLock()
 	if t.closed {
 		t.mutex.RUnlock()
@@ -113,9 +133,10 @@ func (t *Transport) Send(m *Message) error {
 	return nil
 }
 
-// Receive is used to receive a message from the transport. It takes a context
-// and blocks until the next message is received from the transport.
-func (t *Transport) Receive() (*Message, error) {
+// Receive a message over the websocket connection. Like Send, returns either
+// a ClosedError or a ConnectionError if unable to receive a message. Receive
+// blocks until the connection has a message ready or a timeout is reached.
+func (t *WebSocketTransport) Receive() (*Message, error) {
 	t.mutex.RLock()
 	if t.closed {
 		t.mutex.RUnlock()
@@ -143,7 +164,18 @@ func (t *Transport) Receive() (*Message, error) {
 	return &Message{msgType, payload}, nil
 }
 
-// Close will cleanly shutdown a websocket connection.
-func (t *Transport) Close() error {
+// Close attempts to send a "going away" message over the websocket connection.
+// This will cause a Write over the websocket transport, which can cause a
+// panic. We rescue potential panics and consider the connection closed,
+// returning nil, because the connection _will_ be closed. Hay!
+func (t *WebSocketTransport) Close() error {
+	t.mutex.Lock()
+	defer func() {
+		// WriteMessage can annoyingly panic, because the websocket conn isn't safe
+		// for concurrent use. Recover here, and unlock the mutex.
+		recover()
+		t.mutex.Unlock()
+	}()
+	t.closed = true
 	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
 }

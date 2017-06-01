@@ -1,7 +1,6 @@
 package eventd
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -27,19 +26,16 @@ func TestEventHandling(t *testing.T) {
 	err := e.Start()
 	assert.NoError(t, err)
 
-	bus.Publish(messaging.TopicEventRaw, []byte("{}"))
+	bus.Publish(messaging.TopicEventRaw, nil)
 
 	badEvent := &types.Event{}
 	badEvent.Check = &types.Check{}
 	badEvent.Entity = &types.Entity{}
 	badEvent.Timestamp = time.Now().Unix()
 
-	eventBytes, _ := json.Marshal(badEvent)
-	bus.Publish(messaging.TopicEventRaw, eventBytes)
+	bus.Publish(messaging.TopicEventRaw, badEvent)
 
 	event := types.FixtureEvent("entity", "check")
-
-	eventBytes, _ = json.Marshal(event)
 
 	var nilEvent *types.Event
 	// no previous event.
@@ -48,8 +44,10 @@ func TestEventHandling(t *testing.T) {
 	// will be deserialized, so we mock it with a function pointer instead.
 	mockStore.On("UpdateEvent", mock.AnythingOfType("*types.Event")).Return(nil)
 
-	bus.Publish(messaging.TopicEventRaw, eventBytes)
+	bus.Publish(messaging.TopicEventRaw, event)
 
 	err = e.Stop()
 	assert.NoError(t, err)
+
+	mockStore.AssertCalled(t, "UpdateEvent", mock.AnythingOfType("*types.Event"))
 }

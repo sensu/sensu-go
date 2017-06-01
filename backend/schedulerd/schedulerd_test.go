@@ -1,7 +1,6 @@
 package schedulerd
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"testing"
@@ -46,7 +45,7 @@ func TestSchedulerd(t *testing.T) {
 		}
 		checker.Start()
 
-		ch := make(chan []byte, 10)
+		ch := make(chan interface{}, 10)
 		assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
 
 		check := &types.Check{
@@ -65,8 +64,8 @@ func TestSchedulerd(t *testing.T) {
 		assert.NoError(t, bus.Stop())
 
 		for msg := range ch {
-			evt := &types.Event{}
-			assert.NoError(t, json.Unmarshal(msg, evt))
+			evt, ok := msg.(*types.Event)
+			assert.True(t, ok)
 			assert.EqualValues(t, check, evt.Check)
 		}
 	})

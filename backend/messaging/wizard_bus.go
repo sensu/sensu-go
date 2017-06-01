@@ -17,6 +17,13 @@ var (
 )
 
 // WizardBus is an in-memory message bus.
+//
+// For every topic, WizardBus creates a new goroutine responsible for fanning
+// messages out to each subscriber for a given topic. Any type can be passed
+// across a WizardTopic and it is up to the consumers/producers to coordinate
+// around a particular topic type. Care should be taken not to send multiple
+// message types over a single topic, however, as we do not want to introduce
+// a dependency on reflection to determine the type of the received interface{}.
 type WizardBus struct {
 	stopping chan struct{}
 	running  *atomic.Value
@@ -30,8 +37,8 @@ type WizardBus struct {
 // consumer channel bindings.
 type WizardTopic struct {
 	mutex      *sync.RWMutex
-	bindings   map[string]chan<- []byte
-	sendBuffer chan []byte
+	bindings   map[string]chan<- interface{}
+	sendBuffer chan interface{}
 }
 
 // Start ...
@@ -85,8 +92,8 @@ func (b *WizardBus) Err() <-chan error {
 func (b *WizardBus) createTopic(topic string) *WizardTopic {
 	wTopic := &WizardTopic{
 		mutex:      &sync.RWMutex{},
-		bindings:   make(map[string](chan<- []byte)),
-		sendBuffer: make(chan []byte, sendBufferQueueLength),
+		bindings:   make(map[string](chan<- interface{})),
+		sendBuffer: make(chan interface{}, sendBufferQueueLength),
 	}
 
 	b.wg.Add(1)
@@ -138,7 +145,14 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 // missing), unlocks the WizardBus mutex, locks the WizardTopic's
 // mutex (RW), adds the consumer channel to the WizardTopic's
 // bindings, and unlocks the WizardTopics mutex.
-func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- []byte) error {
+//
+// WARNING:
+//
+// Messages received over a topic should be considered IMMUTABLE by consumers.
+// Modifying received messages will introduce data races. While these _may_ be
+// detected by the Golang race detector, this is not always the case and is
+// only exacerbated by the fact that we test each package individually.
+func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- interface{}) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}
@@ -193,7 +207,7 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 
 // Publish publishes a message to a topic. If the topic does not
 // exist, this is a noop.
-func (b *WizardBus) Publish(topic string, msg []byte) error {
+func (b *WizardBus) Publish(topic string, msg interface{}) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}

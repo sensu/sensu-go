@@ -24,7 +24,7 @@ type Keepalived struct {
 
 	wg            *sync.WaitGroup
 	stopping      chan struct{}
-	keepaliveChan chan []byte
+	keepaliveChan chan interface{}
 	errChan       chan error
 }
 
@@ -39,7 +39,7 @@ func (k *Keepalived) Start() error {
 		return errors.New("no keepalive store found")
 	}
 
-	k.keepaliveChan = make(chan []byte, 10)
+	k.keepaliveChan = make(chan interface{}, 10)
 	err := k.MessageBus.Subscribe(messaging.TopicKeepalive, "keepalived", k.keepaliveChan)
 	if err != nil {
 		return err

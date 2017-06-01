@@ -51,7 +51,7 @@ func TestClosedWebsocket(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		transport, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		transport.Connection.Close()
+		transport.Close()
 		done <- struct{}{}
 	}))
 	defer ts.Close()
@@ -61,7 +61,7 @@ func TestClosedWebsocket(t *testing.T) {
 	<-done
 	// At this point we should receive a connection closed message.
 	_, err = clientTransport.Receive()
-	assert.IsType(t, ConnectionError{}, err)
+	assert.IsType(t, ClosedError{}, err)
 
 	err = clientTransport.Send(&Message{"testMessageType", []byte{}})
 	assert.IsType(t, ClosedError{}, err)

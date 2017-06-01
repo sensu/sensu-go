@@ -2,7 +2,6 @@
 package pipelined
 
 import (
-	"encoding/json"
 	"errors"
 	"sync"
 	"sync/atomic"
@@ -27,7 +26,7 @@ type Pipelined struct {
 	running   *atomic.Value
 	wg        *sync.WaitGroup
 	errChan   chan error
-	eventChan chan []byte
+	eventChan chan interface{}
 
 	Store      store.Store
 	MessageBus messaging.MessageBus
@@ -50,7 +49,7 @@ func (p *Pipelined) Start() error {
 
 	p.errChan = make(chan error, 1)
 
-	p.eventChan = make(chan []byte, 100)
+	p.eventChan = make(chan interface{}, 100)
 
 	if err := p.MessageBus.Subscribe(messaging.TopicEvent, "pipelined", p.eventChan); err != nil {
 		return err
@@ -87,7 +86,7 @@ func (p *Pipelined) Err() <-chan error {
 // createPipelines creates several goroutines, responsible for pulling
 // Sensu events from a channel (bound to message bus "event" topic)
 // and for handling them.
-func (p *Pipelined) createPipelines(count int, channel chan []byte) error {
+func (p *Pipelined) createPipelines(count int, channel chan interface{}) error {
 	for i := 1; i <= count; i++ {
 		p.wg.Add(1)
 		go func() {
@@ -97,10 +96,8 @@ func (p *Pipelined) createPipelines(count int, channel chan []byte) error {
 				case <-p.stopping:
 					return
 				case msg := <-channel:
-					event := &types.Event{}
-					err := json.Unmarshal(msg, event)
-
-					if err != nil {
+					event, ok := msg.(*types.Event)
+					if !ok {
 						continue
 					}
 
