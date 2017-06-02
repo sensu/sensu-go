@@ -10,9 +10,7 @@ type Store interface {
 	AssetStore
 
 	// Authentication
-	CreateJWTSecret([]byte) error
-	GetJWTSecret() ([]byte, error)
-	UpdateJWTSecret([]byte) error
+	AuthenticationStore
 
 	// Checks
 	GetChecks() ([]*types.Check, error)
@@ -62,6 +60,13 @@ type AssetStore interface {
 	DeleteAssetByName(assetName string) error
 
 	KeepaliveStore
+}
+
+// AuthenticationStore is responsible for managing the authentication state
+type AuthenticationStore interface {
+	CreateJWTSecret([]byte) error
+	GetJWTSecret() ([]byte, error)
+	UpdateJWTSecret([]byte) error
 }
 
 // KeepaliveStore is responsible for updating entity keepalive data.
