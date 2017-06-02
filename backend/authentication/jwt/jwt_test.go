@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +21,7 @@ func TestAccessTokenAndParseToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	claims, _ := token.Claims.(*types.Claims)
+	claims, _ := token.Claims.(*Claims)
 	assert.Equal(t, username, claims.Subject)
 	assert.NotEmpty(t, claims.Id)
 	assert.NotZero(t, claims.IssuedAt)

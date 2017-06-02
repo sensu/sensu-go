@@ -9,7 +9,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
 
@@ -21,6 +20,11 @@ const (
 	claimsKey = "JWTClaims"
 )
 
+// Claims represents the JWT claims
+type Claims struct {
+	jwt.StandardClaims
+}
+
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
 func AccessToken(username string) (*jwt.Token, string, error) {
@@ -30,7 +34,7 @@ func AccessToken(username string) (*jwt.Token, string, error) {
 		return nil, "", err
 	}
 
-	claims := types.Claims{
+	claims := Claims{
 		StandardClaims: jwt.StandardClaims{
 			Id:       hex.EncodeToString(jti),
 			IssuedAt: time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
@@ -50,8 +54,8 @@ func AccessToken(username string) (*jwt.Token, string, error) {
 }
 
 // GetClaims returns the claims from a token
-func GetClaims(token *jwt.Token) (*types.Claims, error) {
-	if claims, ok := token.Claims.(types.Claims); ok {
+func GetClaims(token *jwt.Token) (*Claims, error) {
+	if claims, ok := token.Claims.(Claims); ok {
 		return &claims, nil
 	}
 
@@ -59,9 +63,9 @@ func GetClaims(token *jwt.Token) (*types.Claims, error) {
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
-func GetClaimsFromContext(r *http.Request) *types.Claims {
+func GetClaimsFromContext(r *http.Request) *Claims {
 	if value := context.Get(r, claimsKey); value != nil {
-		claims, ok := value.(types.Claims)
+		claims, ok := value.(Claims)
 		if !ok {
 			return nil
 		}
@@ -101,7 +105,7 @@ func InitSecret(store store.Store) error {
 
 // ParseToken takes a signed token and parse it to verify its integrity
 func ParseToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -114,7 +118,7 @@ func ParseToken(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	if _, ok := token.Claims.(*types.Claims); !ok || !token.Valid {
+	if _, ok := token.Claims.(*Claims); !ok || !token.Valid {
 		return nil, fmt.Errorf("Invalid JSON Web Token")
 	}
 
@@ -124,6 +128,6 @@ func ParseToken(tokenString string) (*jwt.Token, error) {
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
 func SetClaimsIntoContext(r *http.Request, token *jwt.Token) {
-	claims, _ := token.Claims.(types.Claims)
+	claims, _ := token.Claims.(Claims)
 	context.Set(r, claimsKey, claims)
 }
