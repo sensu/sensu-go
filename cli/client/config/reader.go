@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/pflag"
@@ -66,7 +67,7 @@ func (c *MultiConfig) Get(key string) interface{} {
 		return val
 	}
 
-	key = fmt.Sprintf("%s.%s", c.Get(profileKey), key)
+	key = c.prependProfileTo(key)
 	return c.credentials.Get(key)
 }
 
@@ -74,6 +75,16 @@ func (c *MultiConfig) Get(key string) interface{} {
 func (c *MultiConfig) GetString(key string) string {
 	val, _ := c.Get(key).(string)
 	return val
+}
+
+// GetTime value from configuration for given key
+func (c *MultiConfig) GetTime(key string) time.Time {
+	key = c.prependProfileTo(key)
+	return c.credentials.GetTime(key)
+}
+
+func (c *MultiConfig) prependProfileTo(key string) string {
+	return fmt.Sprintf("%s.%s", c.Get(profileKey), key)
 }
 
 // BindPFlag binds given pflag to config

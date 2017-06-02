@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	creds "github.com/sensu/sensu-go/cli/client/credentials"
 	"github.com/spf13/pflag"
 )
@@ -15,6 +17,7 @@ type Config interface {
 type ReadConfig interface {
 	Get(key string) interface{}
 	GetString(key string) string
+	GetTime(key string) time.Time
 	BindPFlag(key string, flag *pflag.Flag)
 }
 
