@@ -15,7 +15,7 @@ import (
 type authenticationSuccessResponse struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresAt    int64  `json:"expires_at"`
-	RefreshToken string `json:"refresh_token,omitempty"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 // AuthenticationController handles authentication related requests

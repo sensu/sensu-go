@@ -1,6 +1,8 @@
 package configure
 
 import (
+	"fmt"
+
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
 	clientconfig "github.com/sensu/sensu-go/cli/client/config"
@@ -21,17 +23,48 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		Use:          "configure",
 		Short:        "Configure Sensu CLI options",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			// Get new values via interactive questions
-			_, err := gatherConfigValues(cli.Config)
+			configValues, err := gatherConfigValues(cli.Config)
 			if err != nil {
-				return err
+				fmt.Fprintln(cmd.OutOrStderr(), err)
+				return
 			}
 
-			// TODO: Authenticate.
-			// TODO: Write new configuration file.
+			// Write new API URL to disk
+			if err = cli.Config.WriteURL(configValues.URL); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s.\n",
+					err,
+				)
+				return
+			}
 
-			return nil
+			// Authenticate
+			token, err := cli.Client.CreateAccessToken(configValues.UserID, configValues.Password)
+			if err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to authenticate with error: %s.\n",
+					err,
+				)
+				return
+			} else if token == nil {
+				fmt.Fprintln(cmd.OutOrStderr(), "Bad username or password.")
+				return
+			}
+
+			// Write new credentials to disk
+			if err = cli.Config.WriteCredentials(token); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s\n",
+					err,
+				)
+			}
+
+			return
 		},
 		Annotations: map[string]string{
 			// We want to be able to run this command regardless of whether the CLI

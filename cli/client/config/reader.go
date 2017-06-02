@@ -4,25 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
-
-// Config ...
-type Config interface {
-	Get(key string) interface{}
-	GetString(key string) string
-	BindPFlag(key string, flag *pflag.Flag)
-}
-
-// MultiConfig wraps viper library
-type MultiConfig struct {
-	// Handles determining the curretly selected profile
-	profile *viper.Viper
-
-	// Handler retrieving credentials for the selected profile
-	credentials *viper.Viper
-}
 
 // NewConfig reads configuration file, sets up ENV variables,
 // configures defaults and returns new a Config w/ given values.
@@ -63,9 +48,13 @@ func newCredentialsConfig() (*viper.Viper, error) {
 	v.SetConfigType("toml")
 
 	// Open the configuration file and watch it in case the token is refeshed
-	err := v.ReadInConfig() //
 	v.WatchConfig()
+	v.OnConfigChange(func(e fsnotify.Event) {
+		// NOTE: https://github.com/spf13/viper/pull/299
+		// TODO: log something?
+	})
 
+	err := v.ReadInConfig()
 	return v, err
 }
 

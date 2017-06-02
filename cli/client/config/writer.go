@@ -2,16 +2,59 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
-	"strconv"
-	"time"
 
 	toml "github.com/pelletier/go-toml"
+	creds "github.com/sensu/sensu-go/cli/client/credentials"
 )
 
+// WriteURL writes the given API URL to the credentials file
+func (c *MultiConfig) WriteURL(URL string) error {
+	profile := c.GetString(profileKey)
+	writer := &credentialsWriter{profile: profile}
+
+	// Read configuration file
+	if err := writer.read(); err != nil {
+		return err
+	}
+
+	// Update profile
+	writer.set("api-url", URL)
+
+	// Write config
+	err := writer.writeToDisk()
+	return err
+}
+
 // WriteCredentials writes the given credentials to a file
-func (c *MultiConfig) WriteCredentials(url string, token *AccessToken) error {
+func (c *MultiConfig) WriteCredentials(token *creds.AccessToken) error {
+	profile := c.GetString(profileKey)
+	writer := &credentialsWriter{profile: profile}
+
+	// Read configuration file
+	if err := writer.read(); err != nil {
+		return err
+	}
+
+	// Update profile
+	writer.set("secret", token.Token)
+	writer.set("refresh-token", token.RefreshToken)
+	writer.set("expires-at", token.ExpiresAt.Unix())
+
+	// Write config
+	err := writer.writeToDisk()
+	return err
+}
+
+type credentialsWriter struct {
+	profile       string
+	config        *toml.TomlTree
+	relevantCreds *toml.TomlTree
+}
+
+func (w *credentialsWriter) read() error {
 	config := emptyTomlTree()
 
 	// Read configuration file
@@ -25,28 +68,33 @@ func (c *MultiConfig) WriteCredentials(url string, token *AccessToken) error {
 		os.MkdirAll(path.Dir(CredentialsFilePath), 0755)
 	}
 
-	// Get the configuation values for the specified profile
-	profileVal := c.GetString(profileKey)
-	profile, ok := config.Get(profileVal).(*toml.TomlTree)
+	relevantCreds, ok := config.Get(w.profile).(*toml.TomlTree)
 	if !ok {
-		profile = emptyTomlTree()
+		relevantCreds = emptyTomlTree()
+		config.Set(w.profile, relevantCreds)
 	}
 
-	// Update profile
-	profile.Set("api-url", url)
-	profile.Set("secret", token.Token)
-	profile.Set("refresh-token", token.RefreshToken)
-	profile.Set("expires-at", strconv.FormatInt(token.ExpiresAt.Unix(), 10))
-	config.Set(profileKey, profile)
+	w.config = config
+	w.relevantCreds = relevantCreds
+	return nil
+}
 
-	// Write config
-	f, err := os.Create(CredentialsFilePath)
+func (w *credentialsWriter) set(key string, data interface{}) {
+	w.relevantCreds.Set(key, data)
+}
+
+func (w *credentialsWriter) writeToDisk() error {
+	f, err := ioutil.TempFile("", "credentials")
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	_, err = config.WriteTo(f)
+	if _, err = w.config.WriteTo(f); err != nil {
+		return err
+	}
+
+	err = os.Rename(f.Name(), CredentialsFilePath)
 	return err
 }
 
