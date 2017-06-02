@@ -34,7 +34,6 @@ func Middleware(provider Provider, next http.Handler) http.Handler {
 		if tokenString != "" {
 			token, err := jwt.ParseToken(tokenString)
 			if err != nil {
-				logger.Infof("Authentication failed, error parsing token: %s", err.Error())
 				http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 				return
 			}
