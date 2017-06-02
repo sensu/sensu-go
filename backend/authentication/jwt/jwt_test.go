@@ -24,7 +24,6 @@ func TestAccessTokenAndParseToken(t *testing.T) {
 
 	claims, _ := token.Claims.(*types.Claims)
 	assert.Equal(t, username, claims.Subject)
-	assert.Equal(t, issuer, claims.Issuer)
 	assert.NotEmpty(t, claims.Id)
 	assert.NotZero(t, claims.IssuedAt)
 }

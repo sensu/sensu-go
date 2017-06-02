@@ -16,8 +16,9 @@ import (
 var secret []byte
 
 const (
+	// claimsKey contains the key name used to store the JWT claims within
+	// the context of a request
 	claimsKey = "JWTClaims"
-	issuer    = "sensu.io"
 )
 
 // AccessToken creates a new access token and returns it in both JWT and
@@ -33,7 +34,6 @@ func AccessToken(username string) (*jwt.Token, string, error) {
 		StandardClaims: jwt.StandardClaims{
 			Id:       hex.EncodeToString(jti),
 			IssuedAt: time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
-			Issuer:   issuer,
 			Subject:  username,
 		},
 	}
