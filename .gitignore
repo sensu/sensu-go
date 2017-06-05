@@ -12,5 +12,7 @@ yarn-error.log*
 
 # misc
 .DS_Store
+debug.test
 
+# benchmark artifact
 testing/benchmark/benchmark
