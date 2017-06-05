@@ -2,9 +2,7 @@ package agentd
 
 import (
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"strings"
+	"errors"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -15,49 +13,151 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type testTransport struct {
+	sendCh  chan *transport.Message
+	closed  bool
+	sendErr error
+	recvErr error
+}
+
+func (t testTransport) Closed() bool {
+	return t.closed
+}
+
+func (t testTransport) Close() error {
+	t.closed = true
+	return nil
+}
+
+func (t testTransport) Send(msg *transport.Message) error {
+	if t.sendErr != nil {
+		return t.sendErr
+	}
+	t.sendCh <- msg
+	return nil
+}
+
+func (t testTransport) Receive() (*transport.Message, error) {
+	if t.recvErr != nil {
+		return nil, t.recvErr
+	}
+	return <-t.sendCh, nil
+}
+
 func TestGoodHandshake(t *testing.T) {
-	done := make(chan struct{})
-	server := transport.NewServer()
-	var session *Session
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
 
 	st := &mockstore.MockStore{}
 	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
-		assert.NoError(t, err)
-		bus := &messaging.WizardBus{}
-		bus.Start()
-		session, err = NewSession(conn, bus, st)
-		assert.NoError(t, err)
-		err = session.Start()
-		assert.NoError(t, err)
-		done <- struct{}{}
-		session.Stop()
-	}))
-	defer ts.Close()
-
-	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	conn, err := transport.Connect(wsURL)
+	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
-
-	entity := &types.AgentHandshake{
-		ID:            "id",
-		Subscriptions: []string{"subscription1"},
+	if err != nil {
+		assert.FailNow(t, "unable to create session")
 	}
-	payload, err := json.Marshal(entity)
-	assert.NoError(t, err)
-	msg := &transport.Message{
+	assert.NotNil(t, session)
+
+	hsBytes, _ := json.Marshal(&types.AgentHandshake{
+		Subscriptions: []string{"testing"},
+	})
+	conn.Send(&transport.Message{
 		Type:    types.AgentHandshakeType,
-		Payload: payload,
+		Payload: hsBytes,
+	})
+	assert.NoError(t, session.Start())
+}
+
+func TestBadHandshake(t *testing.T) {
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
 	}
-	err = conn.Send(msg)
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
+
+	st := &mockstore.MockStore{}
+
+	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
-	resp, err := conn.Receive()
+	if err != nil {
+		assert.FailNow(t, "unable to create session")
+	}
+	assert.NotNil(t, session)
+
+	conn.Send(&transport.Message{
+		Type:    types.AgentHandshakeType,
+		Payload: []byte("..."),
+	})
+	assert.Error(t, session.Start())
+}
+
+func TestNoHandshake(t *testing.T) {
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
+
+	st := &mockstore.MockStore{}
+
+	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
-	assert.Equal(t, types.BackendHandshakeType, resp.Type)
-	handshake := types.BackendHandshake{}
-	err = json.Unmarshal(resp.Payload, &handshake)
+	if err != nil {
+		assert.FailNow(t, "unable to create session")
+	}
+	assert.NotNil(t, session)
+
+	conn.Send(&transport.Message{
+		Type:    types.EventType,
+		Payload: []byte("..."),
+	})
+	assert.Error(t, session.Start())
+}
+
+func TestSendError(t *testing.T) {
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
+
+	st := &mockstore.MockStore{}
+
+	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
-	<-done
+	if err != nil {
+		assert.FailNow(t, "unable to create session")
+	}
+	assert.NotNil(t, session)
+
+	conn.sendErr = errors.New("error")
+	assert.Error(t, session.Start())
+}
+
+func TestReceiveError(t *testing.T) {
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
+
+	st := &mockstore.MockStore{}
+
+	session, err := NewSession(conn, bus, st)
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "unable to create session")
+	}
+	assert.NotNil(t, session)
+
+	conn.recvErr = errors.New("error")
+	assert.Error(t, session.Start())
 }

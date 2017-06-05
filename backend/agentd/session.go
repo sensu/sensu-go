@@ -15,7 +15,11 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// A Session ...
+// A Session is a server-side connection between a Sensu backend server and
+// the Sensu agent process via the Sensu transport. It is responsible for
+// relaying messages to the message bus on behalf of the agent and from the
+// bus to the agent from other daemons. It handles transport handshaking and
+// transport channel multiplexing/demultiplexing.
 type Session struct {
 	ID string
 
@@ -38,7 +42,8 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 	return handler
 }
 
-// NewSession ...
+// NewSession creates a new Session object given the triple of a transport
+// connection, message bus, and store.
 func NewSession(conn transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
@@ -60,6 +65,11 @@ func NewSession(conn transport.Transport, bus messaging.MessageBus, store store.
 	return s, nil
 }
 
+// the handshake is asynchronous, but the Transport Receive() method is blocking,
+// so we send our backend handshake before waiting on the agent handshake.
+// Once we have the agent handshake, which is just an Entity object, we
+// subscribe to the corresponding channels on the message bus that match the
+// agent's subscriptions.
 func (s *Session) handshake() error {
 	handshake := &types.BackendHandshake{}
 	hsBytes, err := json.Marshal(handshake)
@@ -67,11 +77,15 @@ func (s *Session) handshake() error {
 		return fmt.Errorf("error marshaling handshake: %s", err.Error())
 	}
 
-	// shoot first, ask questions later.
+	// shoot first, ask questions later, because Receive() is blocking and
+	// Send() is not.
 	msg := &transport.Message{
 		Type:    types.BackendHandshakeType,
 		Payload: hsBytes,
 	}
+
+	// TODO(grep): This will block indefinitely. We need to start managing
+	// timeouts in transport.WebsocketTransport.
 	err = s.conn.Send(msg)
 	if err != nil {
 		return fmt.Errorf("error sending backend handshake: %s", err.Error())
@@ -211,7 +225,12 @@ func (s *Session) sendPump(wg *sync.WaitGroup) {
 	}
 }
 
-// Start a Session
+// Start a Session.
+// 1. Perform the handshake (this blocks)
+// 2. Start send pump
+// 3. Start receive pump
+// 4. Start subscription pump
+// 5. Ensure bus unsubscribe when the session shuts down.
 func (s *Session) Start() error {
 	err := s.handshake()
 	if err != nil {
