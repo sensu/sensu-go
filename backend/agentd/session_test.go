@@ -53,10 +53,37 @@ func TestGoodHandshake(t *testing.T) {
 	}
 	assert.NotNil(t, session)
 
-	hsBytes, _ := json.Marshal(&types.AgentHandshake{})
+	hsBytes, _ := json.Marshal(&types.AgentHandshake{
+		Subscriptions: []string{"testing"},
+	})
 	conn.Send(&transport.Message{
 		Type:    types.AgentHandshakeType,
 		Payload: hsBytes,
 	})
 	assert.NoError(t, session.Start())
+}
+
+func TestBadHandshake(t *testing.T) {
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
+
+	st := &mockstore.MockStore{}
+	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+
+	session, err := NewSession(conn, bus, st)
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "unable to create session")
+	}
+	assert.NotNil(t, session)
+
+	conn.Send(&transport.Message{
+		Type:    types.AgentHandshakeType,
+		Payload: []byte("..."),
+	})
+	assert.Error(t, session.Start())
 }
