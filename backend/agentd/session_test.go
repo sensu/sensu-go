@@ -2,9 +2,6 @@ package agentd
 
 import (
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -15,49 +12,51 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type testTransport struct {
+	sendCh chan *transport.Message
+	closed bool
+}
+
+func (t testTransport) Closed() bool {
+	return t.closed
+}
+
+func (t testTransport) Close() error {
+	t.closed = true
+	return nil
+}
+
+func (t testTransport) Send(msg *transport.Message) error {
+	t.sendCh <- msg
+	return nil
+}
+
+func (t testTransport) Receive() (*transport.Message, error) {
+	return <-t.sendCh, nil
+}
+
 func TestGoodHandshake(t *testing.T) {
-	done := make(chan struct{})
-	server := transport.NewServer()
-	var session *Session
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
 
 	st := &mockstore.MockStore{}
 	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
-		assert.NoError(t, err)
-		bus := &messaging.WizardBus{}
-		bus.Start()
-		session, err = NewSession(conn, bus, st)
-		assert.NoError(t, err)
-		err = session.Start()
-		assert.NoError(t, err)
-		done <- struct{}{}
-		session.Stop()
-	}))
-	defer ts.Close()
-
-	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	conn, err := transport.Connect(wsURL)
+	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
-
-	entity := &types.AgentHandshake{
-		ID:            "id",
-		Subscriptions: []string{"subscription1"},
+	if err != nil {
+		assert.FailNow(t, "unable to create session")
 	}
-	payload, err := json.Marshal(entity)
-	assert.NoError(t, err)
-	msg := &transport.Message{
+	assert.NotNil(t, session)
+
+	hsBytes, _ := json.Marshal(&types.AgentHandshake{})
+	conn.Send(&transport.Message{
 		Type:    types.AgentHandshakeType,
-		Payload: payload,
-	}
-	err = conn.Send(msg)
-	assert.NoError(t, err)
-	resp, err := conn.Receive()
-	assert.NoError(t, err)
-	assert.Equal(t, types.BackendHandshakeType, resp.Type)
-	handshake := types.BackendHandshake{}
-	err = json.Unmarshal(resp.Payload, &handshake)
-	assert.NoError(t, err)
-	<-done
+		Payload: hsBytes,
+	})
+	assert.NoError(t, session.Start())
 }
