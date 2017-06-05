@@ -1,6 +1,9 @@
 package testing
 
 import (
+	"time"
+
+	"github.com/sensu/sensu-go/cli/client/credentials"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,6 +24,24 @@ func (c *MockConfig) Get(key string) interface{} {
 func (c *MockConfig) GetString(key string) string {
 	args := c.Called(key)
 	return args.Get(0).(string)
+}
+
+// GetTime for use with mock package
+func (c *MockConfig) GetTime(key string) time.Time {
+	args := c.Called(key)
+	return args.Get(0).(time.Time)
+}
+
+// WriteURL for use with mock package
+func (c *MockConfig) WriteURL(URL string) error {
+	args := c.Called(URL)
+	return args.Error(0)
+}
+
+// WriteCredentials for use with mock package
+func (c *MockConfig) WriteCredentials(token *credentials.AccessToken) error {
+	args := c.Called(token)
+	return args.Error(0)
 }
 
 // BindPFlag for use with mock package
