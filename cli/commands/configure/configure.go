@@ -64,6 +64,8 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
+			// TODO: Write CLI preferences to disk
+
 			return
 		},
 		Annotations: map[string]string{
