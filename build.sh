@@ -37,7 +37,6 @@ install_deps () {
 	go get github.com/gordonklaus/ineffassign
 	go get github.com/jgautheron/goconst/cmd/goconst
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/UnnoTed/fileb0x
 }
 
 build_tool_binary () {
@@ -160,6 +159,7 @@ docker_commands () {
 }
 
 static_assets () {
+	# go get -u github.com/UnnoTed/fileb0x
 	fileb0x backend/dashboardd/b0x.yaml
 }
 
