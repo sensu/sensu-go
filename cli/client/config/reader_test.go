@@ -1,4 +1,4 @@
-package client
+package config
 
 import (
 	"io/ioutil"
@@ -12,7 +12,7 @@ func TestNewConfig(t *testing.T) {
 	assert := assert.New(t)
 
 	// Return includes err when configuration file doesn't exist
-	ConfigFilePath = "~/.sensu/config/no_comprende"
+	CredentialsFilePath = "~/.sensu/config/no_comprende"
 	config, err := NewConfig()
 
 	assert.NotNil(config, "NewConfig should still return a valid config")
@@ -32,7 +32,7 @@ func TestGet(t *testing.T) {
   api-url = "http://anna.tomato"
 	`)
 	tmpFile.Close()
-	ConfigFilePath = tmpFile.Name()
+	CredentialsFilePath = tmpFile.Name()
 
 	config, _ := NewConfig()
 	var result string
@@ -49,5 +49,5 @@ func TestGet(t *testing.T) {
 	// Return given (unnested) environment var
 	os.Setenv("SENSU_API_URL", "http://test.local")
 	result = config.GetString("api-url")
-	assert.Equal(result, "http://test.local", "ENV variables value is returned")
+	assert.Equal("http://test.local", result, "ENV variables value is returned")
 }

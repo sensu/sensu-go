@@ -2,22 +2,19 @@ package configure
 
 import (
 	"fmt"
-	"os"
-	"path"
 
 	"github.com/AlecAivazis/survey"
-	toml "github.com/pelletier/go-toml"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
+	clientconfig "github.com/sensu/sensu-go/cli/client/config"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 )
 
 type answers struct {
-	URL    string `survey:"url"`
-	UserID string `survey:"userid"`
-	Secret string
-	Output string
+	URL      string `survey:"url"`
+	UserID   string `survey:"userid"`
+	Password string
+	Output   string
 }
 
 // Command defines new configuration command
@@ -26,44 +23,50 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		Use:          "configure",
 		Short:        "Configure Sensu CLI options",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			config := emptyTomlTree()
-
-			// Read configuration file
-			if _, err := os.Stat(client.ConfigFilePath); err == nil {
-				config, err = toml.LoadFile(client.ConfigFilePath)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "Error loading config:")
-					return err
-				}
-			} else {
-				// Ensure that the path to the configuration exists
-				os.MkdirAll(path.Dir(client.ConfigFilePath), 0755)
-			}
-
-			// Get the configuation values for the specified profile
-			profileKey := cli.Config.GetString("profile")
-			profile, ok := config.Get(profileKey).(*toml.TomlTree)
-			if !ok {
-				profile = emptyTomlTree()
-			}
-
+		Run: func(cmd *cobra.Command, args []string) {
 			// Get new values via interactive questions
-			v, err := gatherConfigValues(profile)
+			configValues, err := gatherConfigValues(cli.Config)
 			if err != nil {
-				return err
+				fmt.Fprintln(cmd.OutOrStderr(), err)
+				return
 			}
 
-			// Update profile
-			profile.Set("api-url", v.URL)
-			profile.Set("userid", v.UserID)
-			profile.Set("secret", v.Secret)
-			config.Set(profileKey, profile)
+			// Write new API URL to disk
+			if err = cli.Config.WriteURL(configValues.URL); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s.\n",
+					err,
+				)
+				return
+			}
 
-			// Write config
-			writeNewConfig(config)
+			// Authenticate
+			token, err := cli.Client.CreateAccessToken(configValues.UserID, configValues.Password)
+			if err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to authenticate with error: %s.\n",
+					err,
+				)
+				return
+			} else if token == nil {
+				fmt.Fprintln(cmd.OutOrStderr(), "Bad username or password.")
+				return
+			}
 
-			return nil
+			// Write new credentials to disk
+			if err = cli.Config.WriteCredentials(token); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s\n",
+					err,
+				)
+			}
+
+			// TODO: Write CLI preferences to disk
+
+			return
 		},
 		Annotations: map[string]string{
 			// We want to be able to run this command regardless of whether the CLI
@@ -73,11 +76,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 }
 
-func gatherConfigValues(config *toml.TomlTree) (*answers, error) {
+func gatherConfigValues(config clientconfig.Config) (*answers, error) {
 	qs := []*survey.Question{
 		askForURL(config),
-		askForUsername(config),
-		askForSecret(),
+		askForUsername(),
+		askForPassword(),
 		askForDefaultOutput(),
 	}
 
@@ -86,8 +89,8 @@ func gatherConfigValues(config *toml.TomlTree) (*answers, error) {
 	return res, err
 }
 
-func askForURL(config *toml.TomlTree) *survey.Question {
-	url, _ := config.Get("api-url").(string)
+func askForURL(config clientconfig.Config) *survey.Question {
+	url := config.GetString("api-url")
 
 	return &survey.Question{
 		Name:   "url",
@@ -95,18 +98,16 @@ func askForURL(config *toml.TomlTree) *survey.Question {
 	}
 }
 
-func askForUsername(config *toml.TomlTree) *survey.Question {
-	userid, _ := config.Get("userid").(string)
-
+func askForUsername() *survey.Question {
 	return &survey.Question{
 		Name:   "userid",
-		Prompt: &survey.Input{"Email:", userid},
+		Prompt: &survey.Input{"Email:", ""},
 	}
 }
 
-func askForSecret() *survey.Question {
+func askForPassword() *survey.Question {
 	return &survey.Question{
-		Name:   "secret",
+		Name:   "password",
 		Prompt: &survey.Password{Message: "Password:"},
 	}
 }
@@ -120,20 +121,4 @@ func askForDefaultOutput() *survey.Question {
 			Default: "none",
 		},
 	}
-}
-
-func writeNewConfig(config *toml.TomlTree) error {
-	f, err := os.Create(client.ConfigFilePath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = config.WriteTo(f)
-	return err
-}
-
-func emptyTomlTree() *toml.TomlTree {
-	empty, _ := toml.TreeFromMap(make(map[string]interface{}))
-	return empty
 }

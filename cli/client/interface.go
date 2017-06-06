@@ -1,15 +1,25 @@
 package client
 
-import "github.com/sensu/sensu-go/types"
+import (
+	creds "github.com/sensu/sensu-go/cli/client/credentials"
+	"github.com/sensu/sensu-go/types"
+)
 
 // APIClient client methods across the Sensu API
 type APIClient interface {
+	AuthenticationAPIClient
 	AssetAPIClient
 	CheckAPIClient
 	EntityAPIClient
 	EventAPIClient
 	HandlerAPIClient
 	UserAPIClient
+}
+
+// AuthenticationAPIClient client methods for authenticating
+type AuthenticationAPIClient interface {
+	CreateAccessToken(userid string, secret string) (*creds.AccessToken, error)
+	RefreshAccessToken(refreshToken string) (*creds.AccessToken, error)
 }
 
 // AssetAPIClient client methods for assets

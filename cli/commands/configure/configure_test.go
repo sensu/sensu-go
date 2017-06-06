@@ -14,7 +14,7 @@ func TestCommand(t *testing.T) {
 	cmd := Command(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
-	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
+	assert.NotNil(cmd.Run, "cmd should be able to be executed")
 	assert.Regexp("configure", cmd.Use)
 	assert.Regexp("Configure Sensu", cmd.Short)
 }
