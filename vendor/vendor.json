@@ -1016,6 +1016,18 @@
 			"revisionTime": "2017-03-08T20:54:49Z"
 		},
 		{
+			"checksumSHA1": "yppNZB5y0GmJrt/TYOASrhe2oVc=",
+			"path": "golang.org/x/net/webdav",
+			"revision": "3470a06c1357df533e251f14d3a181f67396fe35",
+			"revisionTime": "2017-05-26T16:42:14Z"
+		},
+		{
+			"checksumSHA1": "XgtZlzd39qIkBHs6XYrq9dhTCog=",
+			"path": "golang.org/x/net/webdav/internal/xml",
+			"revision": "3470a06c1357df533e251f14d3a181f67396fe35",
+			"revisionTime": "2017-05-26T16:42:14Z"
+		},
+		{
 			"checksumSHA1": "7EZyXN0EmZLgGxZxK01IJua4c8o=",
 			"path": "golang.org/x/net/websocket",
 			"revision": "feeb485667d1fdabe727840fe00adc22431bc86e",
