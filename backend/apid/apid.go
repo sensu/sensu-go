@@ -84,6 +84,16 @@ func (a *APId) Err() <-chan error {
 func httpRouter(a *APId) *mux.Router {
 	r := mux.NewRouter()
 
+	assetsController := &controllers.AssetsController{
+		Store: a.Store,
+	}
+	assetsController.Register(r)
+
+	authenticationController := &controllers.AuthenticationController{
+		Provider: a.Authentication,
+	}
+	authenticationController.Register(r)
+
 	checksController := &controllers.ChecksController{
 		Store: a.Store,
 	}
@@ -94,21 +104,15 @@ func httpRouter(a *APId) *mux.Router {
 	}
 	entitiesController.Register(r)
 
+	eventsController := &controllers.EventsController{
+		Store: a.Store,
+	}
+	eventsController.Register(r)
+
 	handlersController := &controllers.HandlersController{
 		Store: a.Store,
 	}
 	handlersController.Register(r)
-
-	mutatorsController := &controllers.MutatorsController{
-		Store: a.Store,
-	}
-	mutatorsController.Register(r)
-
-	infoController := &controllers.InfoController{
-		Store:  a.Store,
-		Status: a.BackendStatus,
-	}
-	infoController.Register(r)
 
 	healthController := &controllers.HealthController{
 		Store:  a.Store,
@@ -116,21 +120,22 @@ func httpRouter(a *APId) *mux.Router {
 	}
 	healthController.Register(r)
 
-	eventsController := &controllers.EventsController{
+	infoController := &controllers.InfoController{
+		Store:  a.Store,
+		Status: a.BackendStatus,
+	}
+	infoController.Register(r)
+
+	mutatorsController := &controllers.MutatorsController{
 		Store: a.Store,
 	}
-	eventsController.Register(r)
+	mutatorsController.Register(r)
 
 	usersController := &controllers.UsersController{
-		Authentication: a.Authentication,
-		Store:          a.Store,
+		Provider: a.Authentication,
+		Store:    a.Store,
 	}
 	usersController.Register(r)
-
-	assetsController := &controllers.AssetsController{
-		Store: a.Store,
-	}
-	assetsController.Register(r)
 
 	return r
 }

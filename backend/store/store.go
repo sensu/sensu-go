@@ -6,12 +6,31 @@ import (
 
 // A Store is responsible for managing durable state for Sensu backends.
 type Store interface {
+	// Assets
+	AssetStore
+
+	// Authentication
+	AuthenticationStore
+
+	// Checks
+	GetChecks() ([]*types.Check, error)
+	GetCheckByName(name string) (*types.Check, error)
+	DeleteCheckByName(name string) error
+	UpdateCheck(check *types.Check) error
+
 	// Entities
 	GetEntityByID(id string) (*types.Entity, error)
 	UpdateEntity(e *types.Entity) error
 	DeleteEntity(e *types.Entity) error
 	DeleteEntityByID(id string) error
 	GetEntities() ([]*types.Entity, error)
+
+	// Events
+	GetEvents() ([]*types.Event, error)
+	GetEventsByEntity(entityID string) ([]*types.Event, error)
+	GetEventByEntityCheck(entityID, checkID string) (*types.Event, error)
+	UpdateEvent(event *types.Event) error
+	DeleteEventByEntityCheck(entityID, checkID string) error
 
 	// Handlers
 	GetHandlers() ([]*types.Handler, error)
@@ -25,28 +44,12 @@ type Store interface {
 	DeleteMutatorByName(name string) error
 	UpdateMutator(mutator *types.Mutator) error
 
-	// Checks
-	GetChecks() ([]*types.Check, error)
-	GetCheckByName(name string) (*types.Check, error)
-	DeleteCheckByName(name string) error
-	UpdateCheck(check *types.Check) error
-
-	// Events
-	GetEvents() ([]*types.Event, error)
-	GetEventsByEntity(entityID string) ([]*types.Event, error)
-	GetEventByEntityCheck(entityID, checkID string) (*types.Event, error)
-	UpdateEvent(event *types.Event) error
-	DeleteEventByEntityCheck(entityID, checkID string) error
-
 	// Users
 	CreateUser(user *types.User) error
 	DeleteUserByName(username string) error
 	GetUser(username string) (*types.User, error)
 	GetUsers() ([]*types.User, error)
 	UpdateUser(user *types.User) error
-
-	// Assets
-	AssetStore
 }
 
 // AssetStore manage assets
@@ -57,6 +60,13 @@ type AssetStore interface {
 	DeleteAssetByName(assetName string) error
 
 	KeepaliveStore
+}
+
+// AuthenticationStore is responsible for managing the authentication state
+type AuthenticationStore interface {
+	CreateJWTSecret([]byte) error
+	GetJWTSecret() ([]byte, error)
+	UpdateJWTSecret([]byte) error
 }
 
 // KeepaliveStore is responsible for updating entity keepalive data.

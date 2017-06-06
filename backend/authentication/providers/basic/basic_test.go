@@ -82,7 +82,7 @@ func TestHashPassword(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestCheckPasswod(t *testing.T) {
+func TestCheckPassword(t *testing.T) {
 	hash := "$2a$10$iyYyGmveS9dcYp5DHMbOm.LShX806vB0ClzoPyt1TIgkZ9KQ62cOO"
 	password := "P@ssw0rd!"
 

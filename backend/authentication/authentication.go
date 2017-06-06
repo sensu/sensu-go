@@ -1,6 +1,8 @@
 package authentication
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/types"
+)
 
 // Provider represents an authenticated provider
 type Provider interface {

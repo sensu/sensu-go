@@ -121,7 +121,7 @@ func TestSingle(t *testing.T) {
 func TestUpdateUser(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
 	u := &UsersController{
-		Authentication: provider,
+		Provider: provider,
 	}
 
 	provider.On("CreateUser").Return(fmt.Errorf(""))
@@ -139,7 +139,7 @@ func TestUpdateUser(t *testing.T) {
 func TestUpdateUserError(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
 	u := &UsersController{
-		Authentication: provider,
+		Provider: provider,
 	}
 
 	provider.On("CreateUser").Return(fmt.Errorf(""))
