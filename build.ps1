@@ -134,17 +134,13 @@ function test_commands
   ForEach ($pkg in $packages) {
     go test -timeout=60s -v -coverprofile="profile.out" -covermode=atomic $pkg
     If ($LASTEXITCODE -ne 0) {
-      $failed = 1
+      echo "Testing failed..."
+      exit 1
     }
     If (Test-Path "profile.out") {
       cat "profile.out" >> "coverage.txt"
       rm "profile.out"
     }
-  }
-
-  If ($failed -ne 0) {
-    echo "Unit testing failed..."
-    exit 1
   }
 }
 
