@@ -13,12 +13,12 @@ import (
 
 var (
 	logger = logrus.WithFields(logrus.Fields{
-		"component": "eventd",
+		"component": ComponentName,
 	})
 )
 
 const (
-	SubscriberName = "eventd"
+	ComponentName = "eventd"
 )
 
 // Eventd handles incoming sensu events and stores them in etcd.
@@ -53,7 +53,7 @@ func (e *Eventd) Start() error {
 	ch := make(chan interface{}, 100)
 	e.eventChan = ch
 
-	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, SubscriberName, ch)
+	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, ComponentName, ch)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 // Stop eventd.
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
-	e.MessageBus.Unsubscribe(messaging.TopicEventRaw, SubscriberName)
+	e.MessageBus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
 	close(e.shutdownChan)
 	e.wg.Wait()
 	return nil
