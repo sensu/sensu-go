@@ -88,8 +88,8 @@ func (b *backendProcess) Kill() error {
 }
 
 type agentProcess struct {
-	BackendURL string
-	AgentID    string
+	BackendURLs []string
+	AgentID     string
 
 	Stdout io.Reader
 	Stderr io.Reader
@@ -99,7 +99,7 @@ type agentProcess struct {
 
 func (a *agentProcess) Start() error {
 	exe := filepath.Join(binDir, "sensu-agent")
-	cmd := exec.Command(exe, "start", "--backend-url", a.BackendURL, "--id", a.AgentID, "--subscriptions", "test")
+	cmd := exec.Command(exe, "start", "--backend-url", a.BackendURLs[0], "--backend-url", a.BackendURLs[1], "--id", a.AgentID, "--subscriptions", "test")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err

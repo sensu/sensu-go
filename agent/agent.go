@@ -29,8 +29,8 @@ const (
 type Config struct {
 	// AgentID is the entity ID for the running agent. Default is hostname.
 	AgentID string
-	// BackendURL is the URL to the Sensu Backend. Default: ws://127.0.0.1:8080
-	BackendURL string
+	// BackendURLs is a list of URLs for the Sensu Backend. Default: ws://127.0.0.1:8080
+	BackendURLs []string
 	// Subscriptions is an array of subscription names. Default: empty array.
 	Subscriptions []string
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
@@ -55,7 +55,7 @@ func init() {
 // NewConfig provides a new Config object initialized with defaults.
 func NewConfig() *Config {
 	c := &Config{
-		BackendURL:        "ws://127.0.0.1:8081",
+		BackendURLs:       []string{"ws://127.0.0.1:8081"},
 		Subscriptions:     []string{},
 		KeepaliveInterval: 20,
 		CacheDir:          "/var/cache/sensu",
@@ -73,26 +73,26 @@ func NewConfig() *Config {
 
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
-	config       *Config
-	backendURL   string
-	handler      *handler.MessageHandler
-	conn         transport.Transport
-	sendq        chan *transport.Message
-	stopping     chan struct{}
-	stopped      chan struct{}
-	entity       *types.Entity
-	assetManager *AssetManager
+	config          *Config
+	backendSelector BackendSelector
+	handler         *handler.MessageHandler
+	conn            transport.Transport
+	sendq           chan *transport.Message
+	stopping        chan struct{}
+	stopped         chan struct{}
+	entity          *types.Entity
+	assetManager    *AssetManager
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
 func NewAgent(config *Config) *Agent {
 	agent := &Agent{
-		config:     config,
-		backendURL: config.BackendURL,
-		handler:    handler.NewMessageHandler(),
-		stopping:   make(chan struct{}),
-		stopped:    make(chan struct{}),
-		sendq:      make(chan *transport.Message, 10),
+		config:          config,
+		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
+		handler:         handler.NewMessageHandler(),
+		stopping:        make(chan struct{}),
+		stopped:         make(chan struct{}),
+		sendq:           make(chan *transport.Message, 10),
 	}
 
 	agent.handler.AddHandler(types.EventType, agent.handleCheck)
@@ -304,7 +304,7 @@ func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
 	// here as well. yeah. i think we should do that instead.
-	conn, err := transport.Connect(a.config.BackendURL)
+	conn, err := transport.Connect(a.backendSelector.Select())
 	if err != nil {
 		return err
 	}
@@ -338,23 +338,19 @@ func (a *Agent) Run() error {
 				return
 
 			case <-pumpsReturned:
-				logger.Info("disconnected - attempting to reconnect: ", a.backendURL)
-				conn, err := transport.Connect(a.backendURL)
+				nextBackend := a.backendSelector.Select()
+				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
+				conn, err := transport.Connect(nextBackend)
 				if err != nil {
 					logger.Error("connection error:", err.Error())
 					// TODO(greg): exponential backoff
 					time.Sleep(1 * time.Second)
 					retries++
-					// TODO(greg): Figure out a max backoff / max retries thing
-					// before we fail over to the configured backend url
-					if retries >= 30 {
-						a.backendURL = a.config.BackendURL
-					}
 					continue
 				}
 
 				a.conn = conn
-				logger.Info("reconnected: ", a.backendURL)
+				logger.Info("reconnected: ", nextBackend)
 
 				err = a.handshake()
 				if err != nil {

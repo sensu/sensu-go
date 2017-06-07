@@ -46,7 +46,7 @@ func newStartCommand() *cobra.Command {
 		Short: "start the sensu agent",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := agent.NewConfig()
-			cfg.BackendURL = viper.GetString(flagBackendURL)
+			cfg.BackendURLs = viper.GetStringSlice(flagBackendURL)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
 			cfg.CacheDir = viper.GetString(flagCacheDir)
@@ -102,7 +102,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagDeregistrationHandler, "", "deregistration handler that should process the entity deregistration event.")
 	viper.BindPFlag(flagDeregistrationHandler, cmd.Flags().Lookup(flagDeregistrationHandler))
 
-	cmd.Flags().String(flagBackendURL, "ws://localhost:8081", "ws/wss URL of Sensu backend server(s)")
+	cmd.Flags().StringSlice(flagBackendURL, []string{"ws://localhost:8081"}, "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
 	viper.BindPFlag(flagBackendURL, cmd.Flags().Lookup(flagBackendURL))
 
 	cmd.Flags().String(flagAgentID, "", "agent ID (defaults to hostname)")
