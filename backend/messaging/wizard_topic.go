@@ -43,7 +43,7 @@ func (wTopic *WizardTopic) Unsubscribe(consumer string) {
 // Close all WizardTopic bindings.
 func (wTopic *WizardTopic) Close() {
 	wTopic.Lock()
-	for consumer, _ := range wTopic.Bindings {
+	for consumer := range wTopic.Bindings {
 		delete(wTopic.Bindings, consumer)
 	}
 	wTopic.Unlock()
