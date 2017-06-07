@@ -61,6 +61,8 @@ func (k *Keepalived) Start() error {
 // shutdown.
 func (k *Keepalived) Stop() error {
 	close(k.stopping)
+	k.MessageBus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
+	close(k.keepaliveChan)
 	k.wg.Wait()
 	close(k.errChan)
 	return nil
