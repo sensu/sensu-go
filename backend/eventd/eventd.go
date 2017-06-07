@@ -17,17 +17,20 @@ var (
 	})
 )
 
+const (
+	SubscriberName = "eventd"
+)
+
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
 	Store        store.Store
 	MessageBus   messaging.MessageBus
 	HandlerCount int
 
-	eventChan      chan interface{}
-	errChan        chan error
-	shutdownChan   chan struct{}
-	wg             *sync.WaitGroup
-	subscriberName string
+	eventChan    chan interface{}
+	errChan      chan error
+	shutdownChan chan struct{}
+	wg           *sync.WaitGroup
 }
 
 // Start eventd.
@@ -50,8 +53,7 @@ func (e *Eventd) Start() error {
 	ch := make(chan interface{}, 100)
 	e.eventChan = ch
 
-	e.subscriberName = "eventd"
-	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, e.subscriberName, ch)
+	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, SubscriberName, ch)
 	if err != nil {
 		return err
 	}
@@ -160,7 +162,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 // Stop eventd.
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
-	e.MessageBus.Unsubscribe(messaging.TopicEventRaw, e.subscriberName)
+	e.MessageBus.Unsubscribe(messaging.TopicEventRaw, SubscriberName)
 	close(e.shutdownChan)
 	e.wg.Wait()
 	return nil
