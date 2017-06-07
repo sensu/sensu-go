@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -84,17 +83,14 @@ func (w *credentialsWriter) set(key string, data interface{}) {
 }
 
 func (w *credentialsWriter) writeToDisk() error {
-	f, err := ioutil.TempFile("", "credentials")
+	// Create or open file in write mode
+	f, err := os.Create(CredentialsFilePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	if _, err = w.config.WriteTo(f); err != nil {
-		return err
-	}
-
-	err = os.Rename(f.Name(), CredentialsFilePath)
+	_, err = w.config.WriteTo(f)
 	return err
 }
 
