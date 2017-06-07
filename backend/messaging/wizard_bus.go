@@ -61,9 +61,11 @@ func (b *WizardBus) Stop() error {
 	close(b.errchan)
 	b.wg.Wait()
 	for _, wTopic := range b.topics {
+		wTopic.mutex.Lock()
 		for _, binding := range wTopic.bindings {
 			close(binding)
 		}
+		wTopic.mutex.Unlock()
 	}
 	return nil
 }
@@ -197,6 +199,7 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 	if ok {
 		wTopic.mutex.Lock()
 
+		close(wTopic.bindings[consumer])
 		delete(wTopic.bindings, consumer)
 
 		wTopic.mutex.Unlock()
