@@ -35,6 +35,7 @@ func TestCheckScheduler(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	scheduler.Stop()
 	assert.NoError(t, bus.Stop())
+	close(c1)
 
 	messages := []*types.Event{}
 	for msg := range c1 {

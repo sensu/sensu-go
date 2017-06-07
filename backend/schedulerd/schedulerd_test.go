@@ -62,6 +62,7 @@ func TestSchedulerd(t *testing.T) {
 		time.Sleep(1 * time.Second)
 		assert.NoError(t, checker.Stop())
 		assert.NoError(t, bus.Stop())
+		close(ch)
 
 		for msg := range ch {
 			evt, ok := msg.(*types.Event)
