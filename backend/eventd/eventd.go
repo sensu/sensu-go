@@ -11,14 +11,16 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const (
+	// ComponentName identifies Eventd as the component/daemon implemented in this
+	// package.
+	ComponentName = "eventd"
+)
+
 var (
 	logger = logrus.WithFields(logrus.Fields{
 		"component": ComponentName,
 	})
-)
-
-const (
-	ComponentName = "eventd"
 )
 
 // Eventd handles incoming sensu events and stores them in etcd.
