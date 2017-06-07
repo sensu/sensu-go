@@ -60,8 +60,9 @@ func TestAgentKeepalives(t *testing.T) {
 	}
 
 	ap := &agentProcess{
-		BackendURL: backendWSURL,
-		AgentID:    "TestKeepalives",
+		// testing the StringSlice for backend-url and the backend selector.
+		BackendURLs: []string{backendWSURL, backendWSURL},
+		AgentID:     "TestKeepalives",
 	}
 
 	backendHealthy := false

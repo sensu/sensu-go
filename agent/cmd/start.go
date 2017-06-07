@@ -102,7 +102,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagDeregistrationHandler, "", "deregistration handler that should process the entity deregistration event.")
 	viper.BindPFlag(flagDeregistrationHandler, cmd.Flags().Lookup(flagDeregistrationHandler))
 
-	cmd.Flags().StringArray(flagBackendURL, []string{"ws://localhost:8081"}, "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
+	cmd.Flags().StringSlice(flagBackendURL, []string{"ws://localhost:8081"}, "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
 	viper.BindPFlag(flagBackendURL, cmd.Flags().Lookup(flagBackendURL))
 
 	cmd.Flags().String(flagAgentID, "", "agent ID (defaults to hostname)")
