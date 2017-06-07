@@ -164,6 +164,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
 	e.MessageBus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
+	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()
 	return nil

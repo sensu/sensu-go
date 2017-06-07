@@ -41,6 +41,9 @@ func TestWizardBus(t *testing.T) {
 	assert.NoError(t, b.Unsubscribe("topic", "consumer4"))
 
 	b.Stop()
+	close(c1)
+	close(c2)
+	close(c3)
 
 	received := 0
 	messages := []string{}
