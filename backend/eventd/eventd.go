@@ -92,7 +92,6 @@ func (e *Eventd) startHandlers() {
 					// NOTE: Should that be the case? If eventd is signalling that it has,
 					// effectively, shutdown, why would something else be responsible for
 					// shutting it down.
-					logger.Info("handling message: ", msg, ok)
 					if !ok {
 						// This only buffers a single error. We can't block on
 						// sending these or shutdown will block indefinitely.
