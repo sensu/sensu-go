@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -108,64 +107,17 @@ func TestMutatorStorage(t *testing.T) {
 	})
 }
 
-func TestCheckStorage(t *testing.T) {
-	testWithEtcd(t, func(store store.Store) {
-		// We should receive an empty slice if no results were found
-		checks, err := store.GetChecks()
-		assert.NoError(t, err)
-		assert.NotNil(t, checks)
-
-		check := &types.Check{
-			Name:          "check1",
-			Interval:      60,
-			Subscriptions: []string{"subscription1"},
-			Command:       "command1",
-		}
-
-		err = store.UpdateCheck(check)
-		assert.NoError(t, err)
-		retrieved, err := store.GetCheckByName("check1")
-		assert.NoError(t, err)
-		assert.NotNil(t, retrieved)
-
-		assert.Equal(t, check.Name, retrieved.Name)
-		assert.Equal(t, check.Interval, retrieved.Interval)
-		assert.Equal(t, check.Subscriptions, retrieved.Subscriptions)
-		assert.Equal(t, check.Command, retrieved.Command)
-
-		checks, err = store.GetChecks()
-		assert.NoError(t, err)
-		assert.NotEmpty(t, checks)
-		assert.Equal(t, 1, len(checks))
-	})
-}
-
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		sysinfo, _ := system.Info()
-
 		// We should receive an empty slice if no results were found
 		events, err := store.GetEvents()
 		assert.NoError(t, err)
 		assert.NotNil(t, events)
 
-		event := &types.Event{
-			Entity: &types.Entity{
-				ID:     "entity1",
-				Class:  "system",
-				System: sysinfo,
-			},
-			Check: &types.Check{
-				Name:          "check1",
-				Interval:      60,
-				Subscriptions: []string{"subscription1"},
-				Command:       "command1",
-			},
-		}
-
+		event := types.FixtureEvent("entity1", "check1")
 		assert.NoError(t, store.UpdateEvent(event))
 
-		newEv, err := store.GetEventByEntityCheck(event.Entity.ID, event.Check.Name)
+		newEv, err := store.GetEventByEntityCheck(event.Entity.ID, event.Check.Config.Name)
 		assert.NoError(t, err)
 		assert.EqualValues(t, event, newEv)
 
@@ -191,8 +143,8 @@ func TestEventStorage(t *testing.T) {
 		assert.Equal(t, 1, len(events))
 		assert.EqualValues(t, event, events[0])
 
-		assert.NoError(t, store.DeleteEventByEntityCheck(event.Entity.ID, event.Check.Name))
-		newEv, err = store.GetEventByEntityCheck(event.Entity.ID, event.Check.Name)
+		assert.NoError(t, store.DeleteEventByEntityCheck(event.Entity.ID, event.Check.Config.Name))
+		newEv, err = store.GetEventByEntityCheck(event.Entity.ID, event.Check.Config.Name)
 		assert.Nil(t, newEv)
 		assert.NoError(t, err)
 

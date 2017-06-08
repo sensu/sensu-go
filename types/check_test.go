@@ -6,8 +6,37 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckConfigurationValidate(t *testing.T) {
-	var c CheckConfiguration
+func TestCheckValidate(t *testing.T) {
+	var c Check
+
+	// Invalid status
+	assert.Error(t, c.Validate())
+	c.Status = 0
+
+	// Invalid output
+	assert.Error(t, c.Validate())
+	c.Output = "fun"
+
+	// Valid w/o config
+	assert.NoError(t, c.Validate())
+	c.Config = &CheckConfig{
+		Name: "test",
+	}
+
+	// Invalid w/ bad config
+	assert.Error(t, c.Validate())
+	c.Config = &CheckConfig{
+		Name:     "test",
+		Interval: 10,
+		Command:  "yes",
+	}
+
+	// Valid check
+	assert.NoError(t, c.Validate())
+}
+
+func TestCheckConfig(t *testing.T) {
+	var c CheckConfig
 
 	// Invalid name
 	assert.Error(t, c.Validate())
@@ -27,7 +56,7 @@ func TestCheckConfigurationValidate(t *testing.T) {
 
 func TestFixtureCheckIsValid(t *testing.T) {
 	c := FixtureCheck("check")
-	config := c.Configuration
+	config := c.Config
 
 	assert.Equal(t, "check", config.Name)
 	assert.NoError(t, config.Validate())

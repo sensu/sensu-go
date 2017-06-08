@@ -12,8 +12,8 @@ type Store interface {
 	// Authentication
 	AuthenticationStore
 
-	// Checks
-	CheckStore
+	// CheckConfigurations
+	CheckConfigStore
 
 	// Entities
 	EntityStore
@@ -49,12 +49,12 @@ type AuthenticationStore interface {
 	UpdateJWTSecret([]byte) error
 }
 
-// CheckStore provides an interface for interacting & persisting checks
-type CheckStore interface {
-	GetChecks() ([]*types.Check, error)
-	GetCheckByName(name string) (*types.Check, error)
-	DeleteCheckByName(name string) error
-	UpdateCheck(check *types.Check) error
+// CheckConfigStore provides an interface for interacting & persisting checks
+type CheckConfigStore interface {
+	GetCheckConfigs() ([]*types.CheckConfig, error)
+	GetCheckConfigByName(name string) (*types.CheckConfig, error)
+	DeleteCheckConfigByName(name string) error
+	UpdateCheckConfig(check *types.CheckConfig) error
 }
 
 // EntityStore provides an interface for interacting & persisting entities
