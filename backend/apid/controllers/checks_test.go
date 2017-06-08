@@ -21,11 +21,11 @@ func TestHttpApiChecksGet(t *testing.T) {
 		Store: store,
 	}
 
-	checks := []*types.Check{
-		types.FixtureCheck("check1"),
-		types.FixtureCheck("check2"),
+	checks := []*types.CheckConfig{
+		types.FixtureCheckConfig("check1"),
+		types.FixtureCheckConfig("check2"),
 	}
-	store.On("GetChecks").Return(checks, nil)
+	store.On("GetCheckConfigs").Return(checks, nil)
 	req, _ := http.NewRequest("GET", "/checks", nil)
 	res := processRequest(c, req)
 
@@ -33,7 +33,7 @@ func TestHttpApiChecksGet(t *testing.T) {
 
 	body := res.Body.Bytes()
 
-	returnedChecks := []*types.Check{}
+	returnedChecks := []*types.CheckConfig{}
 	err := json.Unmarshal(body, &returnedChecks)
 
 	assert.NoError(t, err)
@@ -47,8 +47,8 @@ func TestHttpApiChecksGetError(t *testing.T) {
 		Store: store,
 	}
 
-	var nilChecks []*types.Check
-	store.On("GetChecks").Return(nilChecks, errors.New("error"))
+	var nilChecks []*types.CheckConfig
+	store.On("GetCheckConfigs").Return(nilChecks, errors.New("error"))
 	req, _ := http.NewRequest("GET", "/checks", nil)
 	res := processRequest(c, req)
 
@@ -65,15 +65,15 @@ func TestHttpApiCheckGet(t *testing.T) {
 		Store: store,
 	}
 
-	var nilCheck *types.Check
-	store.On("GetCheckByName", "somecheck").Return(nilCheck, nil)
+	var nilCheck *types.CheckConfig
+	store.On("GetCheckConfigByName", "somecheck").Return(nilCheck, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/checks/somecheck", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
 
-	check1 := types.FixtureCheck("check1")
-	store.On("GetCheckByName", "check1").Return(check1, nil)
+	check1 := types.FixtureCheckConfig("check1")
+	store.On("GetCheckConfigByName", "check1").Return(check1, nil)
 	foundReq, _ := http.NewRequest("GET", "/checks/check1", nil)
 	foundRes := processRequest(c, foundReq)
 
@@ -81,7 +81,7 @@ func TestHttpApiCheckGet(t *testing.T) {
 
 	body := foundRes.Body.Bytes()
 
-	check := &types.Check{}
+	check := &types.CheckConfig{}
 	err := json.Unmarshal(body, &check)
 
 	assert.NoError(t, err)
@@ -98,11 +98,11 @@ func TestHttpApiCheckPut(t *testing.T) {
 		Store: store,
 	}
 
-	check := types.FixtureCheck("check1")
+	check := types.FixtureCheckConfig("check1")
 	updatedCheckJSON, _ := json.Marshal(check)
 
-	store.On("UpdateCheck", mock.AnythingOfType("*types.Check")).Return(nil).Run(func(args mock.Arguments) {
-		receivedCheck := args.Get(0).(*types.Check)
+	store.On("UpdateCheckConfig", mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
+		receivedCheck := args.Get(0).(*types.CheckConfig)
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
 	})
@@ -119,11 +119,11 @@ func TestHttpApiCheckPost(t *testing.T) {
 		Store: store,
 	}
 
-	check := types.FixtureCheck("check1")
+	check := types.FixtureCheckConfig("check1")
 	updatedCheckJSON, _ := json.Marshal(check)
 
-	store.On("UpdateCheck", mock.AnythingOfType("*types.Check")).Return(nil).Run(func(args mock.Arguments) {
-		receivedCheck := args.Get(0).(*types.Check)
+	store.On("UpdateCheckConfig", mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
+		receivedCheck := args.Get(0).(*types.CheckConfig)
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
 	})
@@ -140,9 +140,9 @@ func TestHttpApiCheckDelete(t *testing.T) {
 		Store: store,
 	}
 
-	check := types.FixtureCheck("check1")
-	store.On("GetCheckByName", "check1").Return(check, nil)
-	store.On("DeleteCheckByName", "check1").Return(nil)
+	check := types.FixtureCheckConfig("check1")
+	store.On("GetCheckConfigByName", "check1").Return(check, nil)
+	store.On("DeleteCheckConfigByName", "check1").Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/checks/check1"), nil)
 	deleteRes := processRequest(c, deleteReq)
 

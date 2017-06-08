@@ -26,7 +26,7 @@ func (c *ChecksController) Register(r *mux.Router) {
 
 // many handles requests to /checks
 func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
-	checks, err := c.Store.GetChecks()
+	checks, err := c.Store.GetCheckConfigs()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -48,12 +48,12 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 	method := r.Method
 
 	var (
-		check *types.Check
+		check *types.CheckConfig
 		err   error
 	)
 
 	if method == http.MethodGet || method == http.MethodDelete {
-		check, err = c.Store.GetCheckByName(name)
+		check, err = c.Store.GetCheckConfigByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -75,7 +75,7 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, string(checkBytes))
 	case http.MethodPut, http.MethodPost:
-		newCheck := &types.Check{}
+		newCheck := &types.CheckConfig{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,14 +94,14 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = c.Store.UpdateCheck(newCheck)
+		err = c.Store.UpdateCheckConfig(newCheck)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		return
 	case http.MethodDelete:
-		err := c.Store.DeleteCheckByName(name)
+		err := c.Store.DeleteCheckConfigByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
