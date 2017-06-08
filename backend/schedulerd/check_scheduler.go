@@ -77,6 +77,7 @@ func (s *CheckScheduler) Start() error {
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
 	close(s.stopping)
+	s.wg.Wait()
 	return nil
 }
 

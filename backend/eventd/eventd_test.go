@@ -40,8 +40,6 @@ func TestEventHandling(t *testing.T) {
 	var nilEvent *types.Event
 	// no previous event.
 	mockStore.On("GetEventByEntityCheck", "entity", "check").Return(nilEvent, nil)
-	// We can't directly mock this, because we don't have access to the event that
-	// will be deserialized, so we mock it with a function pointer instead.
 	mockStore.On("UpdateEvent", mock.AnythingOfType("*types.Event")).Return(nil)
 
 	bus.Publish(messaging.TopicEventRaw, event)

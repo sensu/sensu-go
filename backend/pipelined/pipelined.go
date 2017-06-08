@@ -68,7 +68,8 @@ func (p *Pipelined) Stop() error {
 	close(p.stopping)
 	p.wg.Wait()
 	close(p.errChan)
-	// eventChan is closed by MessageBus Stop()
+	p.MessageBus.Unsubscribe(messaging.TopicEvent, "pipelined")
+	close(p.eventChan)
 
 	return nil
 }

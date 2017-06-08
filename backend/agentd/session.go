@@ -27,7 +27,7 @@ type Session struct {
 	store         store.Store
 	handler       *handler.MessageHandler
 	stopping      chan struct{}
-	stopped       chan struct{}
+	wg            *sync.WaitGroup
 	sendq         chan *transport.Message
 	subscriptions []string
 	checkChannel  chan interface{}
@@ -54,7 +54,7 @@ func NewSession(conn transport.Transport, bus messaging.MessageBus, store store.
 		ID:           id.String(),
 		conn:         conn,
 		stopping:     make(chan struct{}, 1),
-		stopped:      make(chan struct{}),
+		wg:           &sync.WaitGroup{},
 		sendq:        make(chan *transport.Message, 10),
 		checkChannel: make(chan interface{}, 100),
 
@@ -133,10 +133,10 @@ func (s *Session) receiveMessages(out chan *transport.Message) {
 	}
 }
 
-func (s *Session) recvPump(wg *sync.WaitGroup) {
+func (s *Session) recvPump() {
 	defer func() {
 		logger.Info("session disconnected - stopping recvPump")
-		wg.Done()
+		s.wg.Done()
 	}()
 
 	msgChannel := make(chan *transport.Message)
@@ -159,9 +159,9 @@ func (s *Session) recvPump(wg *sync.WaitGroup) {
 	}
 }
 
-func (s *Session) subPump(wg *sync.WaitGroup) {
+func (s *Session) subPump() {
 	defer func() {
-		wg.Done()
+		s.wg.Done()
 		logger.Info("shutting down - stopping subPump")
 	}()
 
@@ -195,9 +195,9 @@ func (s *Session) subPump(wg *sync.WaitGroup) {
 	}
 }
 
-func (s *Session) sendPump(wg *sync.WaitGroup) {
+func (s *Session) sendPump() {
 	defer func() {
-		wg.Done()
+		s.wg.Done()
 		logger.Info("shutting down - stopping sendPump")
 	}()
 
@@ -237,18 +237,11 @@ func (s *Session) Start() error {
 		return err
 	}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(3)
-	go s.sendPump(wg)
-	go s.recvPump(wg)
-	go s.subPump(wg)
-	go func(wg *sync.WaitGroup) {
-		wg.Wait()
-		for _, sub := range s.subscriptions {
-			s.bus.Unsubscribe(sub, s.ID)
-		}
-		close(s.stopped)
-	}(wg)
+	s.wg = &sync.WaitGroup{}
+	s.wg.Add(3)
+	go s.sendPump()
+	go s.recvPump()
+	go s.subPump()
 
 	return nil
 }
@@ -257,7 +250,11 @@ func (s *Session) Start() error {
 // shutdown. Blocks until the session has shutdown.
 func (s *Session) Stop() {
 	close(s.stopping)
-	<-s.stopped
+	s.wg.Wait()
+	for _, sub := range s.subscriptions {
+		s.bus.Unsubscribe(sub, s.ID)
+	}
+	close(s.checkChannel)
 }
 
 func (s *Session) handleKeepalive(payload []byte) error {
