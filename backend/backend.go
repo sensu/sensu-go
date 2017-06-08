@@ -259,18 +259,36 @@ func (b *Backend) Run() error {
 	if err := b.etcd.Shutdown(); err != nil {
 		logger.Errorf("error shutting down etcd: %s", err.Error())
 	}
+
+	// stop allowing API connections
 	logger.Info("shutting down apid")
 	b.apid.Stop()
-	logger.Info("shutting down agentd")
-	b.agentd.Stop()
-	logger.Info("shutting down schedulerd")
-	b.schedulerd.Stop()
-	logger.Info("shutting down message bus")
-	b.messageBus.Stop()
-	logger.Info("shutting down pipelined")
-	b.pipelined.Stop()
+
+	// stop allowing dashboard connections
 	logger.Info("shutting down dashboardd")
 	b.dashboardd.Stop()
+
+	// disconnect all agents and don't allow any more to connect.
+	logger.Info("shutting down agentd")
+	b.agentd.Stop()
+
+	// stop scheduling checks.
+	logger.Info("shutting down schedulerd")
+	b.schedulerd.Stop()
+
+	// Shutting down eventd will cause it to drain events to the bus
+	logger.Info("shutting down eventd")
+	b.eventd.Stop()
+
+	// Once events have been drained from eventd, pipelined can finish
+	// processing events.
+	logger.Info("shutting down pipelined")
+	b.pipelined.Stop()
+
+	// finally shutdown the message bus once all other components have stopped
+	// using it.
+	logger.Info("shutting down message bus")
+	b.messageBus.Stop()
 
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
