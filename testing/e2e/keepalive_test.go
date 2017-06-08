@@ -110,7 +110,7 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NotEmpty(t, entities[0].System.Hostname)
 	assert.NotZero(t, entities[0].LastSeen)
 
-	check := &types.Check{
+	check := &types.CheckConfig{
 		Name:          "testcheck",
 		Command:       "echo output",
 		Interval:      1,
@@ -130,7 +130,7 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, falseAbsPath)
 
-	check = &types.Check{
+	check = &types.CheckConfig{
 		Name:          "testcheck2",
 		Command:       falseAbsPath,
 		Interval:      1,
@@ -158,6 +158,6 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
-	assert.Equal(t, "testcheck2", event.Check.Name)
+	assert.Equal(t, "testcheck2", event.Check.Config.Name)
 	// TODO(greg): ensure results are as expected.
 }
