@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckValidate(t *testing.T) {
-	var c Check
+func TestCheckConfigurationValidate(t *testing.T) {
+	var c CheckConfiguration
 
 	// Invalid name
 	assert.Error(t, c.Validate())
@@ -27,16 +27,18 @@ func TestCheckValidate(t *testing.T) {
 
 func TestFixtureCheckIsValid(t *testing.T) {
 	c := FixtureCheck("check")
-	assert.Equal(t, "check", c.Name)
-	assert.NoError(t, c.Validate())
+	config := c.Configuration
 
-	c.RuntimeAssets = []Asset{
+	assert.Equal(t, "check", config.Name)
+	assert.NoError(t, config.Validate())
+
+	config.RuntimeAssets = []Asset{
 		{Name: "Good", URL: "https://sweet.sweet/good/url.boy"},
 	}
-	assert.NoError(t, c.Validate())
+	assert.NoError(t, config.Validate())
 
-	c.RuntimeAssets = []Asset{{Name: ""}}
-	assert.Error(t, c.Validate())
+	config.RuntimeAssets = []Asset{{Name: ""}}
+	assert.Error(t, config.Validate())
 }
 
 func TestMergeWith(t *testing.T) {

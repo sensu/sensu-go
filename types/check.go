@@ -9,22 +9,8 @@ import (
 // A Check is a check specification and optionally the results of the check's
 // execution.
 type Check struct {
-	// Name is the unique identifier for a check.
-	Name string `json:"name"`
-
-	// Interval is the interval, in seconds, at which the check should be
-	// run.
-	Interval int `json:"interval"`
-
-	// Subscriptions is the list of subscribers for the check.
-	Subscriptions []string `json:"subscriptions"`
-
-	// Command is the command to be executed.
-	Command string `json:"command"`
-
-	// Handlers are the event handler for the check (incidents
-	// and/or metrics).
-	Handlers []string `json:"handlers"`
+	// Configuration is the specification of a check.
+	Configuration *CheckConfiguration `json:"configuration,omitempty"`
 
 	// Output from the execution of Command.
 	Output string `json:"output,omitempty"`
@@ -43,13 +29,32 @@ type Check struct {
 
 	// History is the check state history.
 	History []CheckHistory `json:"history,omitempty"`
+}
+
+// CheckConfiguration is the specification of a check.
+type CheckConfiguration struct {
+	// Name is the unique identifier for a check.
+	Name string `json:"name"`
+
+	// Interval is the interval, in seconds, at which the check should be run.
+	Interval int `json:"interval"`
+
+	// Subscriptions is the list of subscribers for the check.
+	Subscriptions []string `json:"subscriptions"`
+
+	// Command is the command to be executed.
+	Command string `json:"command"`
+
+	// Handlers are the event handler for the check (incidents
+	// and/or metrics).
+	Handlers []string `json:"handlers"`
 
 	// RuntimeAssets are a list of assets required to execute check.
 	RuntimeAssets []Asset `json:"runtime_assets"`
 }
 
 // Validate returns an error if the check does not pass validation tests.
-func (c *Check) Validate() error {
+func (c *CheckConfiguration) Validate() error {
 	err := validateName(c.Name)
 	if err != nil {
 		return errors.New("check name " + err.Error())
@@ -108,11 +113,24 @@ func (c *Check) MergeWith(chk *Check) {
 	c.History = history
 }
 
+// FixtureCheckConfiguration returns a fixture for a CheckConfiguration object.
+func FixtureCheckConfiguration(id string) *CheckConfiguration {
+	interval := 60
+
+	return &CheckConfiguration{
+		Name:          id,
+		Interval:      interval,
+		Subscriptions: []string{},
+		Command:       "command",
+		Handlers:      []string{},
+		RuntimeAssets: []Asset{},
+	}
+}
+
 // FixtureCheck returns a fixture for a Check object.
 func FixtureCheck(id string) *Check {
 	t := time.Now().Unix()
-	interval := 60
-
+	config := FixtureCheckConfiguration(id)
 	history := make([]CheckHistory, 21)
 	for i := 0; i < 21; i++ {
 		history[i] = CheckHistory{
@@ -122,16 +140,11 @@ func FixtureCheck(id string) *Check {
 	}
 
 	return &Check{
-		Name:          id,
-		Interval:      interval,
-		Subscriptions: []string{},
-		Command:       "command",
 		Status:        0,
 		Issued:        t,
 		Executed:      t + 1,
 		Duration:      1.0,
-		Handlers:      []string{},
 		History:       history,
-		RuntimeAssets: []Asset{},
+		Configuration: config,
 	}
 }
