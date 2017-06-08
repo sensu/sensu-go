@@ -135,7 +135,6 @@ func (b *Backend) Run() error {
 
 	b.schedulerd = &schedulerd.Schedulerd{
 		MessageBus: b.messageBus,
-		Client:     cli,
 		Store:      st,
 	}
 	err = b.schedulerd.Start()

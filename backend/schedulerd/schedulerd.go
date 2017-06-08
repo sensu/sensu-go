@@ -1,14 +1,11 @@
 package schedulerd
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -17,12 +14,10 @@ import (
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
-	Client     *clientv3.Client
 	Store      store.Store
 	MessageBus messaging.MessageBus
 
 	schedulers *schedulerCollection
-	watcher    clientv3.Watcher
 	wg         *sync.WaitGroup
 	errChan    chan error
 	stopping   chan struct{}
@@ -30,10 +25,6 @@ type Schedulerd struct {
 
 // Start the Scheduler daemon.
 func (s *Schedulerd) Start() error {
-	if s.Client == nil {
-		return errors.New("no etcd client available")
-	}
-
 	if s.Store == nil {
 		return errors.New("no store available")
 	}
@@ -50,7 +41,6 @@ func (s *Schedulerd) Start() error {
 	// during our initial reconciliation phase.
 	s.wg = &sync.WaitGroup{}
 	s.stopping = make(chan struct{})
-	s.startWatcher()
 	s.reconcile()
 	s.startReconciler()
 	return nil
@@ -59,7 +49,6 @@ func (s *Schedulerd) Start() error {
 // Stop the scheduler daemon.
 func (s *Schedulerd) Stop() error {
 	close(s.stopping)
-	s.watcher.Close()
 	s.schedulers.stopAll()
 	// let the event queue drain so that we don't panic inside the loop.
 	// TODO(greg): get ride of this dependency.
@@ -96,76 +85,19 @@ func (s *Schedulerd) startReconciler() {
 	}()
 }
 
-// All the watcher has to do is make sure that we have schedulers for any checks
-// that are created. Once the scheduler is in place, it will self manage.
-func (s *Schedulerd) startWatcher() {
-	s.wg.Add(1)
-
-	go func() {
-		defer s.wg.Done()
-		for {
-			select {
-			case <-s.stopping:
-				return
-			default:
-				// TODO(grep): this should probably come from our own factory. have a
-				// WatchFactory interface that takes a *clientv3.Client and returns a
-				// clientv3.Watcher (interface). Then we can have the etcd factory and
-				// the testing factory so we can do unit testing.
-				s.watcher = clientv3.NewWatcher(s.Client)
-			}
-			for resp := range s.watcher.Watch(
-				context.TODO(),
-				"/sensu.io/checks",
-				clientv3.WithPrefix(),
-				clientv3.WithFilterDelete(),
-				clientv3.WithFilterPut(),
-				clientv3.WithCreatedNotify(),
-			) {
-				for _, ev := range resp.Events {
-					check := &types.Check{}
-					err := json.Unmarshal(ev.Kv.Value, check)
-					if err != nil {
-						logger.Errorf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
-						continue
-					}
-
-					// Error is handled inconsistently (differs from usage in #reconcile)
-					if err = s.schedulers.add(check); err != nil {
-						logger.Error("error starting scheduler for check: ", check.Name)
-					}
-				}
-			}
-			// TODO(greg): exponential backoff
-			time.Sleep(1 * time.Second)
-		}
-	}()
-}
-
 func (s *Schedulerd) reconcile() error {
-	checks, err := s.Store.GetChecks()
+	checks, err := s.Store.GetCheckConfigs()
 	if err != nil {
 		return err
 	}
 
 	for _, check := range checks {
-		// Error is handled inconsistently (differs from usage in #startWatcher)
 		if err := s.schedulers.add(check); err != nil {
 			return err
 		}
 	}
 
 	return err
-}
-
-func (s *Schedulerd) newSchedulerFromCheck(check *types.Check) *CheckScheduler {
-	scheduler := &CheckScheduler{
-		MessageBus: s.MessageBus,
-		Store:      s.Store,
-		Check:      check,
-		wg:         s.wg,
-	}
-	return scheduler
 }
 
 type schedulerCollection struct {
@@ -175,7 +107,7 @@ type schedulerCollection struct {
 	stopped *atomic.Value
 	wg      *sync.WaitGroup
 
-	createScheduler func(check *types.Check) *CheckScheduler
+	createScheduler func(check *types.CheckConfig) *CheckScheduler
 }
 
 func newSchedulerCollection(msgBus messaging.MessageBus, store store.Store) *schedulerCollection {
@@ -183,12 +115,12 @@ func newSchedulerCollection(msgBus messaging.MessageBus, store store.Store) *sch
 	stopped := &atomic.Value{}
 	stopped.Store(false)
 
-	createScheduler := func(check *types.Check) *CheckScheduler {
+	createScheduler := func(check *types.CheckConfig) *CheckScheduler {
 		return &CheckScheduler{
-			MessageBus: msgBus,
-			Store:      store,
-			Check:      check,
-			wg:         wg,
+			CheckConfig: check,
+			MessageBus:  msgBus,
+			Store:       store,
+			wg:          wg,
 		}
 	}
 
@@ -203,7 +135,7 @@ func newSchedulerCollection(msgBus messaging.MessageBus, store store.Store) *sch
 	return collection
 }
 
-func (collectionPtr *schedulerCollection) add(check *types.Check) error {
+func (collectionPtr *schedulerCollection) add(check *types.CheckConfig) error {
 	// Guard against updates while the daemon is shutting down
 	if collectionPtr.stopped.Load().(bool) {
 		return nil

@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// CheckConfigType is the message type string for check configurations.
+const CheckConfigType = "check_config"
+
 // A Check is a check specification and optionally the results of the check's
 // execution.
 type Check struct {

@@ -16,16 +16,16 @@ func TestCheckScheduler(t *testing.T) {
 	assert.NoError(t, bus.Start())
 
 	st := &mockstore.MockStore{}
-	check := types.FixtureCheck("check1")
+	check := types.FixtureCheckConfig("check1")
 	check.Interval = 1
 	check.Subscriptions = []string{"subscription1"}
-	st.On("GetCheckByName", "check1").Return(check, nil)
+	st.On("GetCheckConfigByName", "check1").Return(check, nil)
 
 	scheduler := &CheckScheduler{
-		MessageBus: bus,
-		Store:      st,
-		Check:      check,
-		wg:         &sync.WaitGroup{},
+		MessageBus:  bus,
+		Store:       st,
+		CheckConfig: check,
+		wg:          &sync.WaitGroup{},
 	}
 
 	c1 := make(chan interface{}, 10)
@@ -37,13 +37,13 @@ func TestCheckScheduler(t *testing.T) {
 	assert.NoError(t, bus.Stop())
 	close(c1)
 
-	messages := []*types.Event{}
+	messages := []*types.CheckConfig{}
 	for msg := range c1 {
-		evt, ok := msg.(*types.Event)
+		res, ok := msg.(*types.CheckConfig)
 		assert.True(t, ok)
-		messages = append(messages, evt)
+		messages = append(messages, res)
 	}
-	evt := messages[0]
+	res := messages[0]
 	assert.Equal(t, 1, len(messages))
-	assert.Equal(t, "check1", evt.Check.Name)
+	assert.Equal(t, "check1", res.Name)
 }

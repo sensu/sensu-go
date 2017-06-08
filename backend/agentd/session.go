@@ -168,20 +168,20 @@ func (s *Session) subPump() {
 	for {
 		select {
 		case c := <-s.checkChannel:
-			event, ok := c.(*types.Event)
+			checkConfig, ok := c.(*types.CheckConfig)
 			if !ok {
-				logger.Errorf("session received non-Event over check channel")
+				logger.Errorf("session received non-config over check channel")
 				continue
 			}
 
-			eventBytes, err := json.Marshal(&event)
+			configBytes, err := json.Marshal(checkConfig)
 			if err != nil {
 				logger.WithError(err).Error("session failed to serialize check")
 			}
 
 			msg := &transport.Message{
-				Type:    types.EventType,
-				Payload: eventBytes,
+				Type:    types.CheckConfigType,
+				Payload: configBytes,
 			}
 			s.sendq <- msg
 		case <-s.stopping:
