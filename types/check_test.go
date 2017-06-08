@@ -10,12 +10,9 @@ func TestCheckValidate(t *testing.T) {
 	var c Check
 
 	// Invalid status
+	c.Status = -1
 	assert.Error(t, c.Validate())
 	c.Status = 0
-
-	// Invalid output
-	assert.Error(t, c.Validate())
-	c.Output = "fun"
 
 	// Valid w/o config
 	assert.NoError(t, c.Validate())
