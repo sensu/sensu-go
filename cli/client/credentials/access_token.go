@@ -8,9 +8,9 @@ import (
 
 // AccessToken wraps user's authorization secret
 type AccessToken struct {
-	Token        string
-	RefreshToken string
-	ExpiresAt    time.Time
+	Token        string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token"`
+	ExpiresAt    time.Time `json:"expires_at"`
 }
 
 // UnmarshalJSON updates access token given payload

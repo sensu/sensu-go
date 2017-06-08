@@ -34,24 +34,25 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*cred
 
 // RefreshAccessToken returns a new access token given valid refresh token
 func (client *RestClient) RefreshAccessToken(token string) (*creds.AccessToken, error) {
-	// Make sure any existing auth token doesn't get injected instead
-	client.ClearAuthToken()
-	defer client.Reset()
-
-	// Pack refresh token and exec request
-	bytes, _ := json.Marshal(map[string]string{"refresh_token": token})
-	res, err := client.R().SetBody(bytes).Post("/auth/token")
+	res, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]string{"refresh_token": token}).
+		SetResult(&creds.AccessToken{}).
+		Post("/auth/token")
 	if err != nil {
 		return nil, err
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, errors.New("Bad refresh token")
+		return nil, fmt.Errorf("The server returned the error: %d %s",
+			res.StatusCode(),
+			res.String(),
+		)
 	}
 
-	var accessToken *creds.AccessToken
-	if err = json.Unmarshal(res.Body(), accessToken); err != nil {
-		return nil, fmt.Errorf("Unable to unmarshal response from server. %s", err)
+	accessToken, ok := res.Result().(*creds.AccessToken)
+	if !ok {
+		return nil, fmt.Errorf("Unable to unmarshal response from server")
 	}
 
 	return accessToken, err
