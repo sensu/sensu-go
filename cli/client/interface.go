@@ -18,7 +18,7 @@ type APIClient interface {
 
 // AuthenticationAPIClient client methods for authenticating
 type AuthenticationAPIClient interface {
-	CreateAccessToken(userid string, secret string) (*creds.AccessToken, error)
+	CreateAccessToken(url string, userid string, secret string) (*creds.AccessToken, error)
 	RefreshAccessToken(refreshToken string) (*creds.AccessToken, error)
 }
 

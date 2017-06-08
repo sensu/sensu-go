@@ -42,7 +42,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Authenticate
-			token, err := cli.Client.CreateAccessToken(configValues.UserID, configValues.Password)
+			token, err := cli.Client.CreateAccessToken(configValues.URL, configValues.UserID, configValues.Password)
 			if err != nil {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),

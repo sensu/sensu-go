@@ -9,13 +9,13 @@ import (
 )
 
 // CreateAccessToken returns a new access token given userid and password
-func (client *RestClient) CreateAccessToken(userid, password string) (*creds.AccessToken, error) {
+func (client *RestClient) CreateAccessToken(url, userid, password string) (*creds.AccessToken, error) {
 	// Make sure any existing auth token doesn't get injected instead
 	client.ClearAuthToken()
 	defer client.Reset()
 
 	// Execute
-	res, err := client.R().SetBasicAuth(userid, password).Get("/auth")
+	res, err := client.R().SetBasicAuth(userid, password).Get(url + "/auth")
 	if err != nil {
 		return nil, err
 	}
