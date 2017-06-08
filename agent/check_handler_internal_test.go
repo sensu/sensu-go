@@ -15,10 +15,7 @@ var binDir = filepath.Join("..", "bin")
 var toolsDir = filepath.Join(binDir, "tools")
 
 func TestExecuteCheck(t *testing.T) {
-	check := types.FixtureCheck("check")
-
-	event := &types.Event{}
-	event.Check = check
+	checkConfig := types.FixtureCheckConfig("check")
 
 	config := NewConfig()
 	agent := NewAgent(config)
@@ -26,23 +23,25 @@ func TestExecuteCheck(t *testing.T) {
 	agent.sendq = ch
 
 	truePath := util.CommandPath(filepath.Join(toolsDir, "true"))
-	check.Command = truePath
+	checkConfig.Command = truePath
 
-	agent.executeCheck(event)
+	agent.executeCheck(checkConfig)
 
 	msg := <-ch
 
+	event := &types.Event{}
 	assert.NoError(t, json.Unmarshal(msg.Payload, event))
 	assert.NotZero(t, event.Timestamp)
 	assert.Equal(t, 0, event.Check.Status)
 
 	falsePath := util.CommandPath(filepath.Join(toolsDir, "false"))
-	check.Command = falsePath
+	checkConfig.Command = falsePath
 
-	agent.executeCheck(event)
+	agent.executeCheck(checkConfig)
 
 	msg = <-ch
 
+	event = &types.Event{}
 	assert.NoError(t, json.Unmarshal(msg.Payload, event))
 	assert.NotZero(t, event.Timestamp)
 	assert.Equal(t, 1, event.Check.Status)

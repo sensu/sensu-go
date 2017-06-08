@@ -128,11 +128,6 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	cli, err := b.etcd.NewClient()
-	if err != nil {
-		return err
-	}
-
 	b.schedulerd = &schedulerd.Schedulerd{
 		MessageBus: b.messageBus,
 		Store:      st,

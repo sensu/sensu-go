@@ -12,28 +12,28 @@ import (
 
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(payload []byte) error {
-	event := &types.Event{}
-	err := json.Unmarshal(payload, event)
+	checkConfig := &types.CheckConfig{}
+	err := json.Unmarshal(payload, checkConfig)
 	if err != nil {
 		return err
 	}
 
-	if event.Check == nil {
-		return errors.New("no check found in event")
+	if checkConfig == nil {
+		return errors.New("given check configuration appears invalid")
 	}
 
-	if err := event.Check.Validate(); err != nil {
+	if err := checkConfig.Validate(); err != nil {
 		return err
 	}
 
-	logger.Info("scheduling check execution: ", event.Check.Name)
+	logger.Info("scheduling check execution: ", checkConfig.Name)
 
-	go a.executeCheck(event)
+	go a.executeCheck(checkConfig)
 
 	return nil
 }
 
-func (a *Agent) executeCheck(event *types.Event) {
+func (a *Agent) executeCheck(checkConfig *types.CheckConfig) {
 	// TODO(james):
 	//
 	// Currently /all/ assets are available to each and every check, this
@@ -43,15 +43,20 @@ func (a *Agent) executeCheck(event *types.Event) {
 
 	// Ensure that the asset manager is aware of all the assets required to
 	// execute the given check.
-	assets.Merge(event.Check.RuntimeAssets)
+	assets.Merge(checkConfig.RuntimeAssets)
 
 	ex := &command.Execution{
 		// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
 		// availabe when when the command is executed.
 		Env:     assets.Env(),
-		Command: event.Check.Command,
+		Command: checkConfig.Command,
 	}
-	event.Check.Executed = time.Now().Unix()
+	event := &types.Event{
+		Check: &types.Check{
+			Config:   checkConfig,
+			Executed: time.Now().Unix(),
+		},
+	}
 
 	// Ensure that all the dependencies are installed.
 	if err := assets.Install(); err != nil {

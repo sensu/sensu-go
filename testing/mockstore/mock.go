@@ -61,7 +61,7 @@ func (s *MockStore) UpdateJWTSecret(secret []byte) error {
 
 //// CheckConfigs
 
-// GetCheckConfgs ...
+// GetCheckConfigs ...
 func (s *MockStore) GetCheckConfigs() ([]*types.CheckConfig, error) {
 	args := s.Called()
 	return args.Get(0).([]*types.CheckConfig), args.Error(1)
