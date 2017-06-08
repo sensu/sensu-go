@@ -22,8 +22,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			name := args[0]
-			handler := &types.Check{Name: name}
-			err := cli.Client.DeleteCheck(handler)
+			check := &types.CheckConfig{Name: name}
+			err := cli.Client.DeleteCheck(check)
 			if err != nil {
 				return err
 			}

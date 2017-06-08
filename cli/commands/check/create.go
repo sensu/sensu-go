@@ -122,9 +122,9 @@ func (opts *checkOpts) administerQuestionnaire() {
 	survey.Ask(qs, opts)
 }
 
-func buildCheck(opts *checkOpts, client client.APIClient) *types.Check {
+func buildCheck(opts *checkOpts, client client.APIClient) *types.CheckConfig {
 	interval, _ := strconv.Atoi(opts.Interval)
-	check := &types.Check{
+	check := &types.CheckConfig{
 		Name:          opts.Name,
 		Interval:      interval,
 		Command:       opts.Command,

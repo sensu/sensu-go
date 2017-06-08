@@ -28,9 +28,9 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.Check{
-		*types.FixtureCheck("name-one"),
-		*types.FixtureCheck("name-two"),
+	client.On("ListChecks").Return([]types.CheckConfig{
+		*types.FixtureCheckConfig("name-one"),
+		*types.FixtureCheckConfig("name-two"),
 	}, nil)
 
 	cmd := ListCommand(cli)
@@ -47,13 +47,13 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := newCLI()
 
-	check := types.FixtureCheck("name-one")
+	check := types.FixtureCheckConfig("name-one")
 	check.RuntimeAssets = []types.Asset{
 		*types.FixtureAsset("asset-one"),
 	}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.Check{*check}, nil)
+	client.On("ListChecks").Return([]types.CheckConfig{*check}, nil)
 
 	cmd := ListCommand(cli)
 	cmd.Flags().Set("format", "tabular")
@@ -73,7 +73,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.Check{}, errors.New("my-err"))
+	client.On("ListChecks").Return([]types.CheckConfig{}, errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

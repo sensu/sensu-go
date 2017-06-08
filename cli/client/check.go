@@ -8,8 +8,8 @@ import (
 )
 
 // ListChecks fetches all checks from configured Sensu instance
-func (client *RestClient) ListChecks() ([]types.Check, error) {
-	var checks []types.Check
+func (client *RestClient) ListChecks() ([]types.CheckConfig, error) {
+	var checks []types.CheckConfig
 	res, err := client.R().Get("/checks")
 	if err != nil {
 		return checks, err
@@ -24,7 +24,7 @@ func (client *RestClient) ListChecks() ([]types.Check, error) {
 }
 
 // CreateCheck creates new check on configured Sensu instance
-func (client *RestClient) CreateCheck(check *types.Check) (err error) {
+func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {
 	bytes, err := json.Marshal(check)
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func (client *RestClient) CreateCheck(check *types.Check) (err error) {
 }
 
 // DeleteCheck deletes check from configured Sensu instance
-func (client *RestClient) DeleteCheck(check *types.Check) error {
+func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
 	res, err := client.R().Delete("/checks/" + check.Name)
 
 	if err != nil {

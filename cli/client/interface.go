@@ -30,9 +30,9 @@ type AssetAPIClient interface {
 
 // CheckAPIClient client methods for checks
 type CheckAPIClient interface {
-	ListChecks() ([]types.Check, error)
-	CreateCheck(*types.Check) error
-	DeleteCheck(*types.Check) error
+	ListChecks() ([]types.CheckConfig, error)
+	CreateCheck(*types.CheckConfig) error
+	DeleteCheck(*types.CheckConfig) error
 }
 
 // EntityAPIClient client methods for entities
