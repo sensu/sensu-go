@@ -16,18 +16,14 @@ func TestSchedulerdReconcile(t *testing.T) {
 	store.On("GetChecks").Return([]*types.Check{check1}, nil)
 	store.On("GetCheckByName", "check1").Return(check1, nil)
 
-	c := &Schedulerd{
-		Store:           store,
-		schedulersMutex: &sync.Mutex{},
-		schedulers:      map[string]*CheckScheduler{},
-		wg:              &sync.WaitGroup{},
-	}
+	c := &Schedulerd{Store: store, wg: &sync.WaitGroup{}}
+	c.schedulers = newSchedulerCollection(nil, store)
 
-	assert.Equal(t, 0, len(c.schedulers))
+	assert.Equal(t, 0, len(c.schedulers.items))
 
 	c.reconcile()
 
-	assert.Equal(t, 1, len(c.schedulers))
+	assert.Equal(t, 1, len(c.schedulers.items))
 
 	var nilCheck *types.Check
 	store.On("GetCheckByName", "check1").Return(nilCheck, nil)

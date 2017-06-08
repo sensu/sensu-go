@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -20,12 +21,11 @@ type Schedulerd struct {
 	Store      store.Store
 	MessageBus messaging.MessageBus
 
-	schedulers      map[string]*CheckScheduler
-	schedulersMutex *sync.Mutex
-	watcher         clientv3.Watcher
-	wg              *sync.WaitGroup
-	errChan         chan error
-	stopping        chan struct{}
+	schedulers *schedulerCollection
+	watcher    clientv3.Watcher
+	wg         *sync.WaitGroup
+	errChan    chan error
+	stopping   chan struct{}
 }
 
 // Start the Scheduler daemon.
@@ -42,9 +42,7 @@ func (s *Schedulerd) Start() error {
 		return errors.New("no message bus found")
 	}
 
-	s.schedulers = map[string]*CheckScheduler{}
-	s.schedulersMutex = &sync.Mutex{}
-
+	s.schedulers = newSchedulerCollection(s.MessageBus, s.Store)
 	s.errChan = make(chan error, 1)
 
 	// The reconciler and the watchers have to be a little coordinated. We start
@@ -62,6 +60,7 @@ func (s *Schedulerd) Start() error {
 func (s *Schedulerd) Stop() error {
 	close(s.stopping)
 	s.watcher.Close()
+	s.schedulers.stopAll()
 	// let the event queue drain so that we don't panic inside the loop.
 	// TODO(greg): get ride of this dependency.
 	s.wg.Wait()
@@ -124,22 +123,17 @@ func (s *Schedulerd) startWatcher() {
 				clientv3.WithCreatedNotify(),
 			) {
 				for _, ev := range resp.Events {
-					s.schedulersMutex.Lock()
 					check := &types.Check{}
 					err := json.Unmarshal(ev.Kv.Value, check)
 					if err != nil {
 						logger.Errorf("error unmarshalling check \"%s\": %s", string(ev.Kv.Value), err.Error())
-						s.schedulersMutex.Unlock()
 						continue
 					}
-					scheduler := s.newSchedulerFromCheck(check)
-					s.schedulers[check.Name] = scheduler
-					err = scheduler.Start()
-					if err != nil {
+
+					// Error is handled inconsistently (differs from usage in #reconcile)
+					if err = s.schedulers.add(check); err != nil {
 						logger.Error("error starting scheduler for check: ", check.Name)
-						s.schedulersMutex.Unlock()
 					}
-					s.schedulersMutex.Unlock()
 				}
 			}
 			// TODO(greg): exponential backoff
@@ -155,19 +149,13 @@ func (s *Schedulerd) reconcile() error {
 	}
 
 	for _, check := range checks {
-		s.schedulersMutex.Lock()
-		if _, ok := s.schedulers[check.Name]; !ok {
-			scheduler := s.newSchedulerFromCheck(check)
-			err = scheduler.Start()
-			if err != nil {
-				s.schedulersMutex.Unlock()
-				return err
-			}
-			s.schedulers[check.Name] = scheduler
+		// Error is handled inconsistently (differs from usage in #startWatcher)
+		if err := s.schedulers.add(check); err != nil {
+			return err
 		}
-		s.schedulersMutex.Unlock()
 	}
-	return nil
+
+	return err
 }
 
 func (s *Schedulerd) newSchedulerFromCheck(check *types.Check) *CheckScheduler {
@@ -178,4 +166,79 @@ func (s *Schedulerd) newSchedulerFromCheck(check *types.Check) *CheckScheduler {
 		wg:         s.wg,
 	}
 	return scheduler
+}
+
+type schedulerCollection struct {
+	items map[string]*CheckScheduler
+	mutex *sync.Mutex
+
+	stopped *atomic.Value
+	wg      *sync.WaitGroup
+
+	createScheduler func(check *types.Check) *CheckScheduler
+}
+
+func newSchedulerCollection(msgBus messaging.MessageBus, store store.Store) *schedulerCollection {
+	wg := &sync.WaitGroup{}
+	stopped := &atomic.Value{}
+	stopped.Store(false)
+
+	createScheduler := func(check *types.Check) *CheckScheduler {
+		return &CheckScheduler{
+			MessageBus: msgBus,
+			Store:      store,
+			Check:      check,
+			wg:         wg,
+		}
+	}
+
+	collection := &schedulerCollection{
+		createScheduler: createScheduler,
+		items:           map[string]*CheckScheduler{},
+		mutex:           &sync.Mutex{},
+		stopped:         stopped,
+		wg:              wg,
+	}
+
+	return collection
+}
+
+func (collectionPtr *schedulerCollection) add(check *types.Check) error {
+	// Guard against updates while the daemon is shutting down
+	if collectionPtr.stopped.Load().(bool) {
+		return nil
+	}
+
+	// Avoid competing updates
+	collectionPtr.mutex.Lock()
+	defer collectionPtr.mutex.Unlock()
+
+	// Guard against creating a duplicate scheduler; schedulers are able to update
+	// their internal state with any changes that occur to their associated check.
+	if existing := collectionPtr.items[check.Name]; existing != nil {
+		return nil
+	}
+
+	// Create new scheduler & start it
+	scheduler := collectionPtr.createScheduler(check)
+	if err := scheduler.Start(); err != nil {
+		return err
+	}
+
+	// Register new check scheduler
+	collectionPtr.items[check.Name] = scheduler
+	return nil
+}
+
+func (collectionPtr *schedulerCollection) stopAll() {
+	// Await any pending updates before shutting down
+	collectionPtr.mutex.Lock()
+	collectionPtr.stopped.Store(true)
+
+	for n, scheduler := range collectionPtr.items {
+		delete(collectionPtr.items, n)
+		scheduler.Stop()
+	}
+
+	collectionPtr.wg.Wait()
 }
