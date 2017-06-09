@@ -6,7 +6,7 @@ import (
 	"path"
 
 	toml "github.com/pelletier/go-toml"
-	creds "github.com/sensu/sensu-go/cli/client/credentials"
+	"github.com/sensu/sensu-go/types"
 )
 
 // WriteURL writes the given API URL to the credentials file
@@ -28,7 +28,7 @@ func (c *MultiConfig) WriteURL(URL string) error {
 }
 
 // WriteCredentials writes the given credentials to a file
-func (c *MultiConfig) WriteCredentials(token *creds.AccessToken) error {
+func (c *MultiConfig) WriteCredentials(tokens *types.Tokens) error {
 	profile := c.GetString(profileKey)
 	writer := &credentialsWriter{profile: profile}
 
@@ -38,9 +38,9 @@ func (c *MultiConfig) WriteCredentials(token *creds.AccessToken) error {
 	}
 
 	// Update profile
-	writer.set("secret", token.Token)
-	writer.set("refresh-token", token.RefreshToken)
-	writer.set("expires-at", token.ExpiresAt.Unix())
+	writer.set("secret", tokens.Access)
+	writer.set("refresh-token", tokens.Refresh)
+	writer.set("expires-at", tokens.ExpiresAt)
 
 	// Write config
 	err := writer.writeToDisk()

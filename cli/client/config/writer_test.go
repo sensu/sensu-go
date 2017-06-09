@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli/client/credentials"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -32,7 +32,7 @@ func (suite *ConfigWriterSuite) TestWriteURL() {
 }
 
 func (suite *ConfigWriterSuite) TestWriteCredentials() {
-	err := suite.config.WriteCredentials(&credentials.AccessToken{})
+	err := suite.config.WriteCredentials(&types.Tokens{})
 	suite.NoError(err, "Writes credentials w/o error")
 }
 

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	creds "github.com/sensu/sensu-go/cli/client/credentials"
+	"github.com/sensu/sensu-go/types"
 )
 
 // CreateAccessToken returns a new access token given userid and password
-func (client *RestClient) CreateAccessToken(url, userid, password string) (*creds.AccessToken, error) {
+func (client *RestClient) CreateAccessToken(url, userid, password string) (*types.Tokens, error) {
 	// Make sure any existing auth token doesn't get injected instead
 	client.ClearAuthToken()
 	defer client.Reset()
@@ -24,20 +24,20 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*cred
 		return nil, errors.New("Bad username or password given")
 	}
 
-	var token creds.AccessToken
-	if err = json.Unmarshal(res.Body(), &token); err != nil {
+	var tokens types.Tokens
+	if err = json.Unmarshal(res.Body(), &tokens); err != nil {
 		return nil, errors.New("Unable to unmarshal response from server")
 	}
 
-	return &token, err
+	return &tokens, err
 }
 
 // RefreshAccessToken returns a new access token given valid refresh token
-func (client *RestClient) RefreshAccessToken(token string) (*creds.AccessToken, error) {
+func (client *RestClient) RefreshAccessToken(token string) (*types.Tokens, error) {
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(map[string]string{"refresh_token": token}).
-		SetResult(&creds.AccessToken{}).
+		SetResult(&types.Tokens{}).
 		Post("/auth/token")
 	if err != nil {
 		return nil, err
@@ -50,10 +50,15 @@ func (client *RestClient) RefreshAccessToken(token string) (*creds.AccessToken, 
 		)
 	}
 
-	accessToken, ok := res.Result().(*creds.AccessToken)
+	tokens, ok := res.Result().(*types.Tokens)
 	if !ok {
 		return nil, fmt.Errorf("Unable to unmarshal response from server")
 	}
 
-	return accessToken, err
+	err = tokens.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return tokens, err
 }

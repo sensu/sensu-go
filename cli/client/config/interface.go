@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	creds "github.com/sensu/sensu-go/cli/client/credentials"
+	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
@@ -24,5 +24,5 @@ type ReadConfig interface {
 // WriteConfig ...
 type WriteConfig interface {
 	WriteURL(URL string) error
-	WriteCredentials(token *creds.AccessToken) error
+	WriteCredentials(tokens *types.Tokens) error
 }

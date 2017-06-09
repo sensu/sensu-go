@@ -3,7 +3,7 @@ package testing
 import (
 	"time"
 
-	"github.com/sensu/sensu-go/cli/client/credentials"
+	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/mock"
 )
@@ -39,8 +39,8 @@ func (c *MockConfig) WriteURL(URL string) error {
 }
 
 // WriteCredentials for use with mock package
-func (c *MockConfig) WriteCredentials(token *credentials.AccessToken) error {
-	args := c.Called(token)
+func (c *MockConfig) WriteCredentials(tokens *types.Tokens) error {
+	args := c.Called(tokens)
 	return args.Error(0)
 }
 

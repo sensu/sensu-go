@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	defaultExpiration = time.Minute * time.Duration(1)
+	defaultExpiration = time.Minute * time.Duration(15)
 	secret            []byte
 )
 

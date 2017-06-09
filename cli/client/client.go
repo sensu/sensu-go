@@ -67,7 +67,7 @@ func New(config config.Config) *RestClient {
 
 		// TODO: Move this into it's own file / package
 		// Request a new access token from the server
-		newAccessToken, err := client.RefreshAccessToken(refreshToken)
+		tokens, err := client.RefreshAccessToken(refreshToken)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to request new refresh token; client returned '%s'",
@@ -76,7 +76,7 @@ func New(config config.Config) *RestClient {
 		}
 
 		// Write new tokens to disk
-		err = config.WriteCredentials(newAccessToken)
+		err = config.WriteCredentials(tokens)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to update configuration with new refresh token (%s)",
@@ -87,7 +87,7 @@ func New(config config.Config) *RestClient {
 		// We can now mark the token as valid
 		client.expiredToken = false
 
-		c.SetAuthToken(newAccessToken.Token)
+		c.SetAuthToken(tokens.Access)
 
 		return nil
 	})

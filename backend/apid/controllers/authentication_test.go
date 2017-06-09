@@ -62,13 +62,13 @@ func TestLoginSuccessful(t *testing.T) {
 
 	// We should have the access token
 	body := res.Body.Bytes()
-	response := &AuthenticationBody{}
+	response := &types.Tokens{}
 	err := json.Unmarshal(body, &response)
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, response.AccessToken)
+	assert.NotEmpty(t, response.Access)
 	assert.NotZero(t, response.ExpiresAt)
-	assert.NotEmpty(t, response.RefreshToken)
+	assert.NotEmpty(t, response.Refresh)
 }
 
 func TestTokenNoAccessToken(t *testing.T) {
@@ -105,7 +105,7 @@ func TestTokenInvalidRefreshToken(t *testing.T) {
 	a := &AuthenticationController{}
 	_, tokenString, _ := jwt.AccessToken("foo")
 	refreshTokenString := "foobar"
-	body := &AuthenticationBody{RefreshToken: refreshTokenString}
+	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
@@ -119,7 +119,7 @@ func TestTokenWrongSub(t *testing.T) {
 	a := &AuthenticationController{}
 	_, tokenString, _ := jwt.AccessToken("foo")
 	refreshTokenString, _ := jwt.RefreshToken("bar")
-	body := &AuthenticationBody{RefreshToken: refreshTokenString}
+	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
@@ -133,7 +133,7 @@ func TestTokenSuccess(t *testing.T) {
 	a := &AuthenticationController{}
 	_, tokenString, _ := jwt.AccessToken("foo")
 	refreshTokenString, _ := jwt.RefreshToken("foo")
-	body := &AuthenticationBody{RefreshToken: refreshTokenString}
+	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
@@ -144,12 +144,12 @@ func TestTokenSuccess(t *testing.T) {
 
 	// We should have the access token
 	resBody := res.Body.Bytes()
-	response := &AuthenticationBody{}
+	response := &types.Tokens{}
 	err := json.Unmarshal(resBody, &response)
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, response.AccessToken)
-	assert.NotEqual(t, tokenString, response.AccessToken)
+	assert.NotEmpty(t, response.Access)
+	assert.NotEqual(t, tokenString, response.Access)
 	assert.NotZero(t, response.ExpiresAt)
-	assert.NotEmpty(t, response.RefreshToken)
+	assert.NotEmpty(t, response.Refresh)
 }

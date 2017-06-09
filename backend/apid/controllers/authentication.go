@@ -8,15 +8,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/types"
 )
-
-// AuthenticationBody contains the structure for the request and response body
-// of the authentication endpoints
-type AuthenticationBody struct {
-	AccessToken  string `json:"access_token"`
-	ExpiresAt    int64  `json:"expires_at"`
-	RefreshToken string `json:"refresh_token"`
-}
 
 // AuthenticationController handles authentication related requests
 type AuthenticationController struct {
@@ -78,10 +71,10 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Prepare the response body
-	response := &AuthenticationBody{
-		AccessToken:  tokenString,
-		ExpiresAt:    claims.ExpiresAt,
-		RefreshToken: refreshTokenString,
+	response := &types.Tokens{
+		Access:    tokenString,
+		ExpiresAt: claims.ExpiresAt,
+		Refresh:   refreshTokenString,
 	}
 
 	resBytes, err := json.Marshal(response)
@@ -119,7 +112,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	payload := &AuthenticationBody{}
+	payload := &types.Tokens{}
 	err = decoder.Decode(payload)
 	if err != nil {
 		logger.Infof("Could not decode the refresh token: %s", err.Error())
@@ -129,7 +122,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	defer r.Body.Close()
 
 	// Now we want to validate the refresh token
-	refreshToken, err := jwt.ValidateToken(payload.RefreshToken)
+	refreshToken, err := jwt.ValidateToken(payload.Refresh)
 	if err != nil {
 		logger.Infof("The refresh token is invalid: %s", err.Error())
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
@@ -184,10 +177,10 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Prepare the response body
-	response := &AuthenticationBody{
-		AccessToken:  accessTokenString,
-		ExpiresAt:    accessClaims.ExpiresAt,
-		RefreshToken: payload.RefreshToken,
+	response := &types.Tokens{
+		Access:    accessTokenString,
+		ExpiresAt: accessClaims.ExpiresAt,
+		Refresh:   payload.Refresh,
 	}
 
 	resBytes, err := json.Marshal(response)
