@@ -10,9 +10,9 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 )
 
-// authenticationBody contains the structure for the request and response body
+// AuthenticationBody contains the structure for the request and response body
 // of the authentication endpoints
-type authenticationBody struct {
+type AuthenticationBody struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresAt    int64  `json:"expires_at"`
 	RefreshToken string `json:"refresh_token"`
@@ -78,7 +78,7 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Prepare the response body
-	response := &authenticationBody{
+	response := &AuthenticationBody{
 		AccessToken:  tokenString,
 		ExpiresAt:    claims.ExpiresAt,
 		RefreshToken: refreshTokenString,
@@ -119,7 +119,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	payload := &authenticationBody{}
+	payload := &AuthenticationBody{}
 	err = decoder.Decode(payload)
 	if err != nil {
 		logger.Infof("Could not decode the refresh token: %s", err.Error())
@@ -184,7 +184,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Prepare the response body
-	response := &authenticationBody{
+	response := &AuthenticationBody{
 		AccessToken:  accessTokenString,
 		ExpiresAt:    accessClaims.ExpiresAt,
 		RefreshToken: payload.RefreshToken,

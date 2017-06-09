@@ -62,7 +62,7 @@ func TestLoginSuccessful(t *testing.T) {
 
 	// We should have the access token
 	body := res.Body.Bytes()
-	response := &authenticationBody{}
+	response := &AuthenticationBody{}
 	err := json.Unmarshal(body, &response)
 
 	assert.NoError(t, err)
@@ -105,7 +105,7 @@ func TestTokenInvalidRefreshToken(t *testing.T) {
 	a := &AuthenticationController{}
 	_, tokenString, _ := jwt.AccessToken("foo")
 	refreshTokenString := "foobar"
-	body := &authenticationBody{RefreshToken: refreshTokenString}
+	body := &AuthenticationBody{RefreshToken: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
@@ -119,7 +119,7 @@ func TestTokenWrongSub(t *testing.T) {
 	a := &AuthenticationController{}
 	_, tokenString, _ := jwt.AccessToken("foo")
 	refreshTokenString, _ := jwt.RefreshToken("bar")
-	body := &authenticationBody{RefreshToken: refreshTokenString}
+	body := &AuthenticationBody{RefreshToken: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
@@ -133,7 +133,7 @@ func TestTokenSuccess(t *testing.T) {
 	a := &AuthenticationController{}
 	_, tokenString, _ := jwt.AccessToken("foo")
 	refreshTokenString, _ := jwt.RefreshToken("foo")
-	body := &authenticationBody{RefreshToken: refreshTokenString}
+	body := &AuthenticationBody{RefreshToken: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
@@ -144,7 +144,7 @@ func TestTokenSuccess(t *testing.T) {
 
 	// We should have the access token
 	resBody := res.Body.Bytes()
-	response := &authenticationBody{}
+	response := &AuthenticationBody{}
 	err := json.Unmarshal(resBody, &response)
 
 	assert.NoError(t, err)
