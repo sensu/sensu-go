@@ -17,10 +17,11 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	stopping chan struct{}
-	running  *atomic.Value
-	wg       *sync.WaitGroup
-	errChan  chan error
+	stopping   chan struct{}
+	running    *atomic.Value
+	wg         *sync.WaitGroup
+	errChan    chan error
+	httpServer *http.Server
 
 	Authentication authentication.Provider
 	BackendStatus  func() types.StatusMap
@@ -44,18 +45,23 @@ func (a *APId) Start() error {
 	router := httpRouter(a)
 	routerStack := authentication.Middleware(a.Authentication, router)
 
-	server := &http.Server{
+	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      routerStack,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	logger.Info("starting apid on address: ", server.Addr)
+	logger.Info("starting apid on address: ", a.httpServer.Addr)
+	a.wg.Add(1)
 
 	go func() {
 		defer a.wg.Done()
-		server.ListenAndServe()
+		if err := a.httpServer.ListenAndServe(); err != nil {
+			// TODO (JK): need a way to handle closing things like errChan, etc.
+			// in cases where there's a failure to start the daemon
+			logger.Errorf("failed to start http server: %s", err.Error())
+		}
 	}()
 
 	return nil
@@ -63,6 +69,14 @@ func (a *APId) Start() error {
 
 // Stop httpApi.
 func (a *APId) Stop() error {
+	if err := a.httpServer.Shutdown(nil); err != nil {
+		// failure/timeout shutting down the server gracefully
+		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
+		if closeErr := a.httpServer.Close(); closeErr != nil {
+			logger.Error("failed to shutdown http server forcefully")
+		}
+	}
+
 	a.running.Store(false)
 	close(a.stopping)
 	a.wg.Wait()
