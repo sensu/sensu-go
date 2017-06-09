@@ -40,7 +40,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.Check")).Return(nil)
+	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
 
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("command", "echo 'heyhey'")
@@ -55,7 +55,7 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.Check")).Return(nil)
+	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
 	client.On("ListAssets").Return([]types.Asset{
 		*types.FixtureAsset("ruby23"),
 		*types.FixtureAsset("ruby22"),
@@ -75,7 +75,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.Check")).Return(errors.New("whoops"))
+	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("command", "echo 'heyhey'")

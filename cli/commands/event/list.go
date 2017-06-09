@@ -60,7 +60,7 @@ func printEventsToTable(queryResults []types.Event, io io.Writer) {
 			Title: "Check",
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
-				return event.Check.Name
+				return event.Check.Config.Name
 			},
 		},
 		{

@@ -9,6 +9,32 @@ import (
 func TestCheckValidate(t *testing.T) {
 	var c Check
 
+	// Invalid status
+	c.Status = -1
+	assert.Error(t, c.Validate())
+	c.Status = 0
+
+	// Valid w/o config
+	assert.NoError(t, c.Validate())
+	c.Config = &CheckConfig{
+		Name: "test",
+	}
+
+	// Invalid w/ bad config
+	assert.Error(t, c.Validate())
+	c.Config = &CheckConfig{
+		Name:     "test",
+		Interval: 10,
+		Command:  "yes",
+	}
+
+	// Valid check
+	assert.NoError(t, c.Validate())
+}
+
+func TestCheckConfig(t *testing.T) {
+	var c CheckConfig
+
 	// Invalid name
 	assert.Error(t, c.Validate())
 	c.Name = "foo"
@@ -27,16 +53,18 @@ func TestCheckValidate(t *testing.T) {
 
 func TestFixtureCheckIsValid(t *testing.T) {
 	c := FixtureCheck("check")
-	assert.Equal(t, "check", c.Name)
-	assert.NoError(t, c.Validate())
+	config := c.Config
 
-	c.RuntimeAssets = []Asset{
+	assert.Equal(t, "check", config.Name)
+	assert.NoError(t, config.Validate())
+
+	config.RuntimeAssets = []Asset{
 		{Name: "Good", URL: "https://sweet.sweet/good/url.boy"},
 	}
-	assert.NoError(t, c.Validate())
+	assert.NoError(t, config.Validate())
 
-	c.RuntimeAssets = []Asset{{Name: ""}}
-	assert.Error(t, c.Validate())
+	config.RuntimeAssets = []Asset{{Name: ""}}
+	assert.Error(t, config.Validate())
 }
 
 func TestMergeWith(t *testing.T) {

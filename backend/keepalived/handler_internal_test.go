@@ -122,7 +122,7 @@ func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregister() {
 
 	s.store.On("DeleteEntity", event.Entity).Return(nil).Run(func(args mock.Arguments) { close(entityDeleted) })
 	s.store.On("GetEventsByEntity", event.Entity.ID).Return(mockEvents, nil)
-	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Name).Return(nil).Run(func(args mock.Arguments) { close(eventDeleted) })
+	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Config.Name).Return(nil).Run(func(args mock.Arguments) { close(eventDeleted) })
 	s.bus.On("Publish", messaging.TopicEvent, mock.AnythingOfType("[]uint8")).Return(nil).Run(func(args mock.Arguments) { close(eventPublished) })
 
 	ch := make(chan *types.Event)
@@ -152,13 +152,13 @@ func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregistrationHandler() {
 
 	s.store.On("DeleteEntity", event.Entity).Return(nil)
 	s.store.On("GetEventsByEntity", event.Entity.ID).Return(mockEvents, nil)
-	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Name).Return(nil)
+	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Config.Name).Return(nil)
 	s.bus.On("Publish", messaging.TopicEvent, mock.AnythingOfType("[]uint8")).Return(nil).Run(func(args mock.Arguments) {
 		publishedEvent := types.Event{}
 		_ = json.Unmarshal(args[1].([]byte), &publishedEvent)
 
-		if publishedEvent.Check.Name == "deregistration" {
-			s.Equal([]string{"deregistration"}, publishedEvent.Check.Handlers)
+		if publishedEvent.Check.Config.Name == "deregistration" {
+			s.Equal([]string{"deregistration"}, publishedEvent.Check.Config.Handlers)
 			close(eventPublished)
 		}
 	})

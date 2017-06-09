@@ -95,7 +95,7 @@ func NewAgent(config *Config) *Agent {
 		sendq:           make(chan *transport.Message, 10),
 	}
 
-	agent.handler.AddHandler(types.EventType, agent.handleCheck)
+	agent.handler.AddHandler(types.CheckConfigType, agent.handleCheck)
 	agent.assetManager = NewAssetManager(config.CacheDir)
 
 	return agent

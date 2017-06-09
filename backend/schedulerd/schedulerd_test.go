@@ -31,14 +31,11 @@ func TestSchedulerd(t *testing.T) {
 		assert.NoError(t, err)
 		defer e.Shutdown()
 
-		cli, err := e.NewClient()
-		assert.NoError(t, err)
 		st, err := e.NewStore()
 		bus := &messaging.WizardBus{}
 		assert.NoError(t, bus.Start())
 
 		checker := &Schedulerd{
-			Client:     cli,
 			Store:      st,
 			MessageBus: bus,
 			wg:         &sync.WaitGroup{},
@@ -48,26 +45,21 @@ func TestSchedulerd(t *testing.T) {
 		ch := make(chan interface{}, 10)
 		assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
 
-		check := &types.Check{
-			Name:          "check_name",
-			Interval:      1,
-			Command:       "command",
-			Subscriptions: []string{"subscription"},
-		}
+		check := types.FixtureCheckConfig("check_name")
 		assert.NoError(t, check.Validate())
-		assert.NoError(t, st.UpdateCheck(check))
+		assert.NoError(t, st.UpdateCheckConfig(check))
 
 		time.Sleep(1 * time.Second)
-		assert.NoError(t, st.DeleteCheckByName(check.Name))
+		assert.NoError(t, st.DeleteCheckConfigByName(check.Name))
 		time.Sleep(1 * time.Second)
 		assert.NoError(t, checker.Stop())
 		assert.NoError(t, bus.Stop())
 		close(ch)
 
 		for msg := range ch {
-			evt, ok := msg.(*types.Event)
+			result, ok := msg.(*types.CheckConfig)
 			assert.True(t, ok)
-			assert.EqualValues(t, check, evt.Check)
+			assert.EqualValues(t, check, result)
 		}
 	})
 }

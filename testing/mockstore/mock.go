@@ -59,28 +59,28 @@ func (s *MockStore) UpdateJWTSecret(secret []byte) error {
 	return args.Error(0)
 }
 
-//// Checks
+//// CheckConfigs
 
-// GetChecks ...
-func (s *MockStore) GetChecks() ([]*types.Check, error) {
+// GetCheckConfigs ...
+func (s *MockStore) GetCheckConfigs() ([]*types.CheckConfig, error) {
 	args := s.Called()
-	return args.Get(0).([]*types.Check), args.Error(1)
+	return args.Get(0).([]*types.CheckConfig), args.Error(1)
 }
 
-// GetCheckByName ...
-func (s *MockStore) GetCheckByName(name string) (*types.Check, error) {
+// GetCheckConfigByName ...
+func (s *MockStore) GetCheckConfigByName(name string) (*types.CheckConfig, error) {
 	args := s.Called(name)
-	return args.Get(0).(*types.Check), args.Error(1)
+	return args.Get(0).(*types.CheckConfig), args.Error(1)
 }
 
-// DeleteCheckByName ...
-func (s *MockStore) DeleteCheckByName(name string) error {
+// DeleteCheckConfigByName ...
+func (s *MockStore) DeleteCheckConfigByName(name string) error {
 	args := s.Called(name)
 	return args.Error(0)
 }
 
-// UpdateCheck ...
-func (s *MockStore) UpdateCheck(check *types.Check) error {
+// UpdateCheckConfig ...
+func (s *MockStore) UpdateCheckConfig(check *types.CheckConfig) error {
 	args := s.Called(check)
 	return args.Error(0)
 }

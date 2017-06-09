@@ -31,7 +31,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			if format == "json" {
 				helpers.PrintJSON(r, cmd.OutOrStdout())
 			} else {
-				printChecksToTable(r, cmd.OutOrStdout())
+				printCheckConfigsToTable(r, cmd.OutOrStdout())
 			}
 
 			return nil
@@ -43,7 +43,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printChecksToTable(queryResults []types.Check, io io.Writer) {
+func printCheckConfigsToTable(queryResults []types.CheckConfig, io io.Writer) {
 	rows := make([]*table.Row, len(queryResults))
 	for i, result := range queryResults {
 		rows[i] = &table.Row{Value: result}
@@ -54,42 +54,42 @@ func printChecksToTable(queryResults []types.Check, io io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.Check)
+				check, _ := data.(types.CheckConfig)
 				return check.Name
 			},
 		},
 		{
 			Title: "Command",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.Check)
+				check, _ := data.(types.CheckConfig)
 				return check.Command
 			},
 		},
 		{
 			Title: "Interval",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.Check)
+				check, _ := data.(types.CheckConfig)
 				return strconv.Itoa(check.Interval)
 			},
 		},
 		{
 			Title: "Subscriptions",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.Check)
+				check, _ := data.(types.CheckConfig)
 				return strings.Join(check.Subscriptions, ",")
 			},
 		},
 		{
 			Title: "Handlers",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.Check)
+				check, _ := data.(types.CheckConfig)
 				return strings.Join(check.Handlers, ",")
 			},
 		},
 		{
 			Title: "Dependencies",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.Check)
+				check, _ := data.(types.CheckConfig)
 				names := []string{}
 				for _, asset := range check.RuntimeAssets {
 					names = append(names, asset.Name)

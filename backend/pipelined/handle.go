@@ -23,7 +23,7 @@ const (
 // errors are only logged and used for flow control, they will not
 // interupt event handling.
 func (p *Pipelined) handleEvent(event *types.Event) error {
-	handlers, err := p.expandHandlers(event.Check.Handlers, 1)
+	handlers, err := p.expandHandlers(event.Check.Config.Handlers, 1)
 
 	if err != nil {
 		return err

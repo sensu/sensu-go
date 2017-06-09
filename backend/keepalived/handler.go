@@ -91,7 +91,7 @@ func (k *Keepalived) deregisterEntity(entity *types.Entity) {
 	}
 
 	for _, event := range events {
-		if err := k.Store.DeleteEventByEntityCheck(entity.ID, event.Check.Name); err != nil {
+		if err := k.Store.DeleteEventByEntityCheck(entity.ID, event.Check.Config.Name); err != nil {
 			logger.WithError(err).Error("error deleting event for entity")
 		}
 
@@ -109,12 +109,14 @@ func (k *Keepalived) deregisterEntity(entity *types.Entity) {
 
 	if entity.Deregistration.Handler != "" {
 		deregistrationCheck := &types.Check{
-			Name:          "deregistration",
-			Interval:      DefaultKeepaliveTimeout,
-			Subscriptions: []string{""},
-			Command:       "",
-			Handlers:      []string{entity.Deregistration.Handler},
-			Status:        1,
+			Config: &types.CheckConfig{
+				Name:          "deregistration",
+				Interval:      DefaultKeepaliveTimeout,
+				Subscriptions: []string{""},
+				Command:       "",
+				Handlers:      []string{entity.Deregistration.Handler},
+			},
+			Status: 1,
 		}
 
 		deregistrationEvent := types.Event{
@@ -133,11 +135,13 @@ func (k *Keepalived) deregisterEntity(entity *types.Entity) {
 
 func (k *Keepalived) createKeepaliveEvent(entity *types.Entity) {
 	keepaliveCheck := &types.Check{
-		Name:          "keepalive",
-		Interval:      DefaultKeepaliveTimeout,
-		Subscriptions: []string{""},
-		Command:       "",
-		Handlers:      []string{"keepalive"},
+		Config: &types.CheckConfig{
+			Name:          "keepalive",
+			Interval:      DefaultKeepaliveTimeout,
+			Subscriptions: []string{""},
+			Command:       "",
+			Handlers:      []string{"keepalive"},
+		},
 	}
 	keepaliveEvent := &types.Event{
 		Entity: entity,

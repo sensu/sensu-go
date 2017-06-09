@@ -24,10 +24,6 @@ func getMutatorsPath(name string) string {
 	return fmt.Sprintf("%s/mutators/%s", etcdRoot, name)
 }
 
-func getChecksPath(name string) string {
-	return fmt.Sprintf("%s/checks/%s", etcdRoot, name)
-}
-
 func getEventsPath(args ...string) string {
 	return fmt.Sprintf("%s/events/%s", etcdRoot, strings.Join(args, "/"))
 }
@@ -167,70 +163,6 @@ func (s *etcdStore) UpdateMutator(mutator *types.Mutator) error {
 	return nil
 }
 
-// Checks
-func (s *etcdStore) GetChecks() ([]*types.Check, error) {
-	resp, err := s.kvc.Get(context.TODO(), getChecksPath(""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.Check{}, nil
-	}
-
-	checksArray := make([]*types.Check, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
-		check := &types.Check{}
-		err = json.Unmarshal(kv.Value, check)
-		if err != nil {
-			return nil, err
-		}
-		checksArray[i] = check
-	}
-
-	return checksArray, nil
-}
-
-func (s *etcdStore) GetCheckByName(name string) (*types.Check, error) {
-	resp, err := s.kvc.Get(context.TODO(), getChecksPath(name))
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-
-	checkBytes := resp.Kvs[0].Value
-	check := &types.Check{}
-	if err := json.Unmarshal(checkBytes, check); err != nil {
-		return nil, err
-	}
-
-	return check, nil
-}
-
-func (s *etcdStore) DeleteCheckByName(name string) error {
-	_, err := s.kvc.Delete(context.TODO(), getChecksPath(name))
-	return err
-}
-
-func (s *etcdStore) UpdateCheck(check *types.Check) error {
-	if err := check.Validate(); err != nil {
-		return err
-	}
-
-	checkBytes, err := json.Marshal(check)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.kvc.Put(context.TODO(), getChecksPath(check.Name), string(checkBytes))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Events
 
 func (s *etcdStore) GetEvents() ([]*types.Event, error) {
@@ -324,7 +256,7 @@ func (s *etcdStore) UpdateEvent(event *types.Event) error {
 	}
 
 	entityID := event.Entity.ID
-	checkID := event.Check.Name
+	checkID := event.Check.Config.Name
 
 	_, err = s.kvc.Put(context.TODO(), getEventsPath(entityID, checkID), string(eventBytes))
 	if err != nil {

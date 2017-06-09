@@ -24,7 +24,7 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 				return nil
 			}
 
-			check := &types.Check{}
+			check := &types.CheckConfig{}
 			dec := json.NewDecoder(bufio.NewReader(os.Stdin))
 			dec.Decode(check)
 
