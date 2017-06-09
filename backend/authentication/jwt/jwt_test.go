@@ -45,8 +45,6 @@ func TestGetClaims(t *testing.T) {
 
 	_, err := GetClaims(token)
 	assert.NoError(t, err)
-	// fmt.Println(claims)
-	// assert.Equal(t, username, claims.Subject)
 }
 
 func TestExtractBearerToken(t *testing.T) {
