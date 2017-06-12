@@ -83,6 +83,15 @@ type HandlerStore interface {
 	UpdateHandler(handler *types.Handler) error
 }
 
+// KeepaliveStore is responsible for updating entity keepalive data.
+type KeepaliveStore interface {
+	// UpdateKeepalive updates the current expiration time for an entity's
+	// keepalive.
+	UpdateKeepalive(org, entityID string, expiration int64) error
+	// GetKeepalive gets the current expiration for an entity's keepalive.
+	GetKeepalive(org, entityID string) (int64, error)
+}
+
 // MutatorStore provides an interface for interacting & persisting mutators
 type MutatorStore interface {
 	GetMutators(org string) ([]*types.Mutator, error)
@@ -98,14 +107,4 @@ type UserStore interface {
 	GetUser(username string) (*types.User, error)
 	GetUsers() ([]*types.User, error)
 	UpdateUser(user *types.User) error
-}
-
-// KeepaliveStore is responsible for updating entity keepalive data.
-type KeepaliveStore interface {
-	// UpdateKeepalive updates the current expiration time for an entity's
-	// keepalive.
-	UpdateKeepalive(entityID string, expiration int64) error
-
-	// GetKeepalive gets the current expiration for an entity's keepalive.
-	GetKeepalive(entityID string) (int64, error)
 }

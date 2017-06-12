@@ -85,13 +85,15 @@ func (k *Keepalived) deregisterEntity(entity *types.Entity) {
 		logger.WithError(err).Error("error deleting entity in store")
 	}
 
-	events, err := k.Store.GetEventsByEntity(entity.ID)
+	events, err := k.Store.GetEventsByEntity(entity.Organization, entity.ID)
 	if err != nil {
 		logger.WithError(err).Error("error fetching events for entity")
 	}
 
 	for _, event := range events {
-		if err := k.Store.DeleteEventByEntityCheck(entity.ID, event.Check.Config.Name); err != nil {
+		if err := k.Store.DeleteEventByEntityCheck(
+			entity.Organization, entity.ID, event.Check.Config.Name,
+		); err != nil {
 			logger.WithError(err).Error("error deleting event for entity")
 		}
 
@@ -165,7 +167,7 @@ func (k *Keepalived) monitorEntity(ch chan *types.Event, entity *types.Entity, s
 	for {
 		select {
 		case event := <-ch:
-			if err := k.Store.UpdateKeepalive(event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
+			if err := k.Store.UpdateKeepalive(event.Entity.Organization, event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
 				logger.WithError(err).Error("error updating keepalive in store")
 				continue
 			}
