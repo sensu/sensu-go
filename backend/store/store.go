@@ -68,11 +68,11 @@ type EntityStore interface {
 
 // EventStore provides an interface for interacting & persisting events
 type EventStore interface {
-	GetEvents() ([]*types.Event, error)
-	GetEventsByEntity(entityID string) ([]*types.Event, error)
-	GetEventByEntityCheck(entityID, checkID string) (*types.Event, error)
+	GetEvents(org string) ([]*types.Event, error)
+	GetEventsByEntity(org, entityID string) ([]*types.Event, error)
+	GetEventByEntityCheck(org, entityID, checkID string) (*types.Event, error)
 	UpdateEvent(event *types.Event) error
-	DeleteEventByEntityCheck(entityID, checkID string) error
+	DeleteEventByEntityCheck(org, entityID, checkID string) error
 }
 
 // HandlerStore provides an interface for interacting & persisting handlers
