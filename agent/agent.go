@@ -42,6 +42,8 @@ type Config struct {
 	DeregistrationHandler string
 	// CacheDir path where cached data is stored
 	CacheDir string
+	// Organization sets the Agent's RBAC organization identifier
+	Organization string
 }
 
 var logger *logrus.Entry
@@ -59,6 +61,7 @@ func NewConfig() *Config {
 		Subscriptions:     []string{},
 		KeepaliveInterval: 20,
 		CacheDir:          "/var/cache/sensu",
+		Organization:      "default",
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
