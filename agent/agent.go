@@ -235,6 +235,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			Class:         "agent",
 			Subscriptions: a.config.Subscriptions,
 			Deregister:    a.config.Deregister,
+			Organization:  a.config.Organization,
 		}
 
 		if a.config.DeregistrationHandler != "" {
