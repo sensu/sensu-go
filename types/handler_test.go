@@ -38,6 +38,10 @@ func TestHandlerValidate(t *testing.T) {
 	assert.Error(t, h.Validate())
 	h.Type = "pipe"
 
+	// Invalid organization
+	assert.Error(t, h.Validate())
+	h.Organization = "default"
+
 	// Valid handler
 	assert.NoError(t, h.Validate())
 }
