@@ -3,37 +3,55 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
-func getEntityPath(id string) string {
-	return fmt.Sprintf("%s/entities/%s", etcdRoot, id)
+const (
+	entityPathPrefix = "entities"
+)
+
+func getEntityPath(org, id string) string {
+	return path.Join(etcdRoot, entityPathPrefix, org, id)
 }
 
 func (s *etcdStore) UpdateEntity(e *types.Entity) error {
+	if err := e.Validate(); err != nil {
+		return err
+	}
+
 	eStr, err := json.Marshal(e)
 	if err != nil {
 		return err
 	}
-	_, err = s.kvc.Put(context.TODO(), getEntityPath(e.ID), string(eStr))
+	_, err = s.kvc.Put(context.TODO(), getEntityPath(e.Organization, e.ID), string(eStr))
 	return err
 }
 
 func (s *etcdStore) DeleteEntity(e *types.Entity) error {
-	_, err := s.kvc.Delete(context.TODO(), getEntityPath(e.ID))
+	if err := e.Validate(); err != nil {
+		return err
+	}
+	_, err := s.kvc.Delete(context.TODO(), getEntityPath(e.Organization, e.ID))
 	return err
 }
 
-func (s *etcdStore) DeleteEntityByID(id string) error {
-	_, err := s.kvc.Delete(context.TODO(), getEntityPath(id))
+func (s *etcdStore) DeleteEntityByID(org, id string) error {
+	if org == "" || id == "" {
+		return errors.New("must specify organization and id")
+	}
+	_, err := s.kvc.Delete(context.TODO(), getEntityPath(org, id))
 	return err
 }
 
-func (s *etcdStore) GetEntityByID(id string) (*types.Entity, error) {
-	resp, err := s.kvc.Get(context.TODO(), getEntityPath(id), clientv3.WithLimit(1))
+func (s *etcdStore) GetEntityByID(org, id string) (*types.Entity, error) {
+	if org == "" || id == "" {
+		return nil, errors.New("must specify organization and id")
+	}
+	resp, err := s.kvc.Get(context.TODO(), getEntityPath(org, id), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +66,10 @@ func (s *etcdStore) GetEntityByID(id string) (*types.Entity, error) {
 	return entity, nil
 }
 
-func (s *etcdStore) GetEntities() ([]*types.Entity, error) {
-	resp, err := s.kvc.Get(context.TODO(), getEntityPath(""), clientv3.WithPrefix())
+// GetEntities takes an optional org argument, an empty string will return
+// all entities.
+func (s *etcdStore) GetEntities(org string) ([]*types.Entity, error) {
+	resp, err := s.kvc.Get(context.TODO(), getEntityPath(org, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

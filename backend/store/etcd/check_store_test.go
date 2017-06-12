@@ -15,12 +15,7 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, checks)
 
-		check := &types.CheckConfig{
-			Name:          "check1",
-			Interval:      60,
-			Subscriptions: []string{"subscription1"},
-			Command:       "command1",
-		}
+		check := types.FixtureCheckConfig("check1")
 
 		err = store.UpdateCheckConfig(check)
 		assert.NoError(t, err)

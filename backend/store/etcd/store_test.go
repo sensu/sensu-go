@@ -51,12 +51,7 @@ func TestHandlerStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, handlers)
 
-		handler := &types.Handler{
-			Name:    "handler1",
-			Type:    "pipe",
-			Command: "cat",
-			Timeout: 10,
-		}
+		handler := types.FixtureHandler("handler1")
 
 		err = store.UpdateHandler(handler)
 		assert.NoError(t, err)

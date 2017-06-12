@@ -59,11 +59,11 @@ type CheckConfigStore interface {
 
 // EntityStore provides an interface for interacting & persisting entities
 type EntityStore interface {
-	GetEntityByID(id string) (*types.Entity, error)
+	GetEntityByID(org, id string) (*types.Entity, error)
 	UpdateEntity(e *types.Entity) error
 	DeleteEntity(e *types.Entity) error
-	DeleteEntityByID(id string) error
-	GetEntities() ([]*types.Entity, error)
+	DeleteEntityByID(org, id string) error
+	GetEntities(org string) ([]*types.Entity, error)
 }
 
 // EventStore provides an interface for interacting & persisting events
