@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -29,7 +30,8 @@ func TestCheckScheduler(t *testing.T) {
 	}
 
 	c1 := make(chan interface{}, 10)
-	assert.NoError(t, bus.Subscribe("subscription1", "channel1", c1))
+	topic := fmt.Sprintf("%s:%s:subscription1", messaging.TopicSubscriptions, check.Organization)
+	assert.NoError(t, bus.Subscribe(topic, "channel1", c1))
 
 	assert.NoError(t, scheduler.Start())
 	time.Sleep(1 * time.Second)

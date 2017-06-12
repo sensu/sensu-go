@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -11,7 +10,6 @@ import (
 // organization returns any organization provided as a URL query value
 func organization(r *http.Request) string {
 	org := r.URL.Query().Get("org")
-	fmt.Println(org)
 	if org == "" {
 		return "default"
 	}

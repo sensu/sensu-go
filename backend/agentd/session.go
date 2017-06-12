@@ -105,7 +105,8 @@ func (s *Session) handshake() error {
 
 	s.subscriptions = agentHandshake.Subscriptions
 	for _, sub := range s.subscriptions {
-		if err := s.bus.Subscribe(sub, s.ID, s.checkChannel); err != nil {
+		topic := fmt.Sprintf("%s:%s:%s", messaging.TopicSubscriptions, agentHandshake.Organization, sub)
+		if err := s.bus.Subscribe(topic, s.ID, s.checkChannel); err != nil {
 			return err
 		}
 	}

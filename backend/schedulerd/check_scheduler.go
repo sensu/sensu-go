@@ -3,6 +3,7 @@ package schedulerd
 import (
 	"crypto/md5"
 	"encoding/binary"
+	"fmt"
 	"sync"
 	"time"
 
@@ -56,7 +57,8 @@ func (s *CheckScheduler) Start() error {
 
 				timer.Reset(time.Duration(time.Second * time.Duration(checkConfig.Interval)))
 				for _, sub := range checkConfig.Subscriptions {
-					if err := s.MessageBus.Publish(sub, checkConfig); err != nil {
+					topic := fmt.Sprintf("%s:%s:%s", messaging.TopicSubscriptions, s.CheckConfig.Organization, sub)
+					if err := s.MessageBus.Publish(topic, checkConfig); err != nil {
 						logger.Info("error publishing check request: ", err.Error())
 					}
 				}

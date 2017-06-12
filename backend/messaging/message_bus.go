@@ -13,6 +13,9 @@ const (
 	// TopicEventRaw is the Session -> Eventd channel -- for raw events directly
 	// from agents, subscribe to this.
 	TopicEventRaw = "sensu:event-raw"
+
+	// TopicSubscriptions is the topic prefix for each subscription
+	TopicSubscriptions = "sensu:check"
 )
 
 // MessageBus is the interface to the internal messaging system.
