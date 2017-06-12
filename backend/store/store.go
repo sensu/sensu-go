@@ -85,9 +85,9 @@ type HandlerStore interface {
 
 // MutatorStore provides an interface for interacting & persisting mutators
 type MutatorStore interface {
-	GetMutators() ([]*types.Mutator, error)
-	GetMutatorByName(name string) (*types.Mutator, error)
-	DeleteMutatorByName(name string) error
+	GetMutators(org string) ([]*types.Mutator, error)
+	GetMutatorByName(org, name string) (*types.Mutator, error)
+	DeleteMutatorByName(org, name string) error
 	UpdateMutator(mutator *types.Mutator) error
 }
 
