@@ -31,7 +31,7 @@ type AssetManager struct {
 	BaseEnv []string
 
 	cacheDir  string
-	knownDeps map[string]*runtimeDependency
+	knownDeps map[string]*ManagedAsset
 	env       []string
 }
 
@@ -59,7 +59,7 @@ func (m *AssetManager) Merge(assets []types.Asset) {
 		}
 
 		m.env = nil // Clears env forcing us to re-construct on next exec
-		m.knownDeps[asset.Hash] = &runtimeDependency{
+		m.knownDeps[asset.Hash] = &ManagedAsset{
 			manager: m,
 			asset:   &asset,
 		}
@@ -129,7 +129,7 @@ func (m *AssetManager) Env() []string {
 //
 // NOTE: Cache on disk is not cleared.
 func (m *AssetManager) Reset() {
-	m.knownDeps = map[string]*runtimeDependency{}
+	m.knownDeps = map[string]*ManagedAsset{}
 	m.BaseEnv = os.Environ()
 	m.env = nil
 }
@@ -144,19 +144,19 @@ func (m *AssetManager) paths() []string {
 	return paths
 }
 
-type runtimeDependency struct {
+type ManagedAsset struct {
 	manager *AssetManager
 	asset   *types.Asset
 }
 
-func (d *runtimeDependency) path() string {
+func (d *ManagedAsset) path() string {
 	return filepath.Join(
 		d.manager.cacheDir,
 		d.asset.Hash,
 	)
 }
 
-func (d *runtimeDependency) isCached() (bool, error) {
+func (d *ManagedAsset) isCached() (bool, error) {
 	if info, err := os.Stat(d.path()); err != nil {
 		return false, nil
 	} else if !info.IsDir() {
@@ -166,7 +166,7 @@ func (d *runtimeDependency) isCached() (bool, error) {
 	return true, nil
 }
 
-func (d *runtimeDependency) fetch() (*http.Response, error) {
+func (d *ManagedAsset) fetch() (*http.Response, error) {
 	// GET asset w/ timeout
 	netClient := &http.Client{Timeout: fetchTimeout}
 	r, err := netClient.Get(d.asset.URL)
@@ -179,11 +179,14 @@ func (d *runtimeDependency) fetch() (*http.Response, error) {
 
 // Downloads the given depdencies asset to the cache directory.
 // TODO(james): ugly; too many responsibilities
-func (d *runtimeDependency) install() error {
+func (d *ManagedAsset) install() error {
 	// Check that asset hasn't already been retrieved
 	if cached, err := d.isCached(); cached || err != nil {
 		return err
 	}
+
+	// TODO: Obtain a lock
+	// TODO: Write completed
 
 	logger.WithFields(logrus.Fields{
 		"asset_name": d.asset.Name,

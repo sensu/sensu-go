@@ -18,7 +18,7 @@ import (
 type ManagerTestSuite struct {
 	suite.Suite
 	agent       *Agent
-	dep         *runtimeDependency
+	dep         *ManagedAsset
 	manager     *AssetManager
 	assetServer *httptest.Server
 }
@@ -46,7 +46,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 
 	// Ex. manager
 	manager := NewAssetManager(tmpDir)
-	dep := &runtimeDependency{manager: manager, asset: asset}
+	dep := &ManagedAsset{manager: manager, asset: asset}
 	manager.knownDeps["test"] = dep
 
 	suite.dep = dep
@@ -129,7 +129,7 @@ type DependencyTestSuite struct {
 	suite.Suite
 
 	assetServer  *httptest.Server
-	dep          *runtimeDependency
+	dep          *ManagedAsset
 	manager      *AssetManager
 	responseBody string
 	responseType string
@@ -151,7 +151,7 @@ func (suite *DependencyTestSuite) SetupTest() {
 
 	// Ex. Dep
 	suite.manager = &AssetManager{cacheDir: tmpDir}
-	suite.dep = &runtimeDependency{
+	suite.dep = &ManagedAsset{
 		manager: suite.manager,
 		asset: &types.Asset{
 			Name: "ruby24",
