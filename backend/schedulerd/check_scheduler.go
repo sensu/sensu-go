@@ -37,7 +37,7 @@ func (s *CheckScheduler) Start() error {
 		for {
 			select {
 			case <-timer.C:
-				checkConfig, err := s.Store.GetCheckConfigByName(s.CheckConfig.Name)
+				checkConfig, err := s.Store.GetCheckConfigByName(s.CheckConfig.Organization, s.CheckConfig.Name)
 				if err != nil {
 					logger.Info("error getting check from store: ", err.Error())
 					// TODO(grep): what do we do when we cannot talk to the store?

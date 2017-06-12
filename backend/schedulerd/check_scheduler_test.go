@@ -15,15 +15,15 @@ func TestCheckScheduler(t *testing.T) {
 	bus := &messaging.WizardBus{}
 	assert.NoError(t, bus.Start())
 
-	st := &mockstore.MockStore{}
+	store := &mockstore.MockStore{}
 	check := types.FixtureCheckConfig("check1")
 	check.Interval = 1
 	check.Subscriptions = []string{"subscription1"}
-	st.On("GetCheckConfigByName", "check1").Return(check, nil)
+	store.On("GetCheckConfigByName", "default", "check1").Return(check, nil)
 
 	scheduler := &CheckScheduler{
 		MessageBus:  bus,
-		Store:       st,
+		Store:       store,
 		CheckConfig: check,
 		wg:          &sync.WaitGroup{},
 	}

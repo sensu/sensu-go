@@ -50,7 +50,7 @@ func TestSchedulerd(t *testing.T) {
 		assert.NoError(t, st.UpdateCheckConfig(check))
 
 		time.Sleep(1 * time.Second)
-		assert.NoError(t, st.DeleteCheckConfigByName(check.Name))
+		assert.NoError(t, st.DeleteCheckConfigByName(check.Organization, check.Name))
 		time.Sleep(1 * time.Second)
 		assert.NoError(t, checker.Stop())
 		assert.NoError(t, bus.Stop())
