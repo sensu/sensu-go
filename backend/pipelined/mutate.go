@@ -24,7 +24,7 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 		return eventData, nil
 	}
 
-	mutator, err := p.Store.GetMutatorByName(handler.Mutator)
+	mutator, err := p.Store.GetMutatorByName(event.Entity.Organization, handler.Mutator)
 
 	if mutator == nil {
 		if err != nil {

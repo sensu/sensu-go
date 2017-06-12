@@ -55,7 +55,7 @@ func TestPipelinedHandleEvent(t *testing.T) {
 	assert.NoError(t, p.handleEvent(event))
 
 	event.Check.Config.Handlers = []string{"handler1"}
-	store.On("GetHandlerByName", "handler1").Return(handler, nil)
+	store.On("GetHandlerByName", "default", "handler1").Return(handler, nil)
 	assert.NoError(t, p.handleEvent(event))
 }
 
@@ -65,9 +65,9 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 	store := &mockstore.MockStore{}
 	p.Store = store
 	handler1 := types.FixtureHandler("handler1")
-	store.On("GetHandlerByName", "handler1").Return(handler1, nil)
+	store.On("GetHandlerByName", "default", "handler1").Return(handler1, nil)
 
-	oneLevel, err := p.expandHandlers([]string{"handler1"}, 1)
+	oneLevel, err := p.expandHandlers("default", []string{"handler1"}, 1)
 	assert.NoError(t, err)
 
 	expanded := map[string]*types.Handler{"handler1": handler1}
@@ -82,11 +82,11 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 	handler3.Handlers = []string{"handler1", "handler2"}
 
 	var nilHandler *types.Handler
-	store.On("GetHandlerByName", "unknown").Return(nilHandler, nil)
-	store.On("GetHandlerByName", "handler2").Return(handler2, nil)
-	store.On("GetHandlerByName", "handler3").Return(handler3, nil)
+	store.On("GetHandlerByName", "default", "unknown").Return(nilHandler, nil)
+	store.On("GetHandlerByName", "default", "handler2").Return(handler2, nil)
+	store.On("GetHandlerByName", "default", "handler3").Return(handler3, nil)
 
-	twoLevels, err := p.expandHandlers([]string{"handler3"}, 1)
+	twoLevels, err := p.expandHandlers("default", []string{"handler3"}, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, expanded, twoLevels)
 
@@ -94,8 +94,8 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 	handler4.Type = "set"
 	handler4.Handlers = []string{"handler2", "handler3"}
 
-	store.On("GetHandlerByName", "handler4").Return(handler4, nil)
-	threeLevels, err := p.expandHandlers([]string{"handler4"}, 1)
+	store.On("GetHandlerByName", "default", "handler4").Return(handler4, nil)
+	threeLevels, err := p.expandHandlers("default", []string{"handler4"}, 1)
 
 	assert.NoError(t, err)
 

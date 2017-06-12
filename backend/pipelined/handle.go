@@ -23,7 +23,7 @@ const (
 // errors are only logged and used for flow control, they will not
 // interupt event handling.
 func (p *Pipelined) handleEvent(event *types.Event) error {
-	handlers, err := p.expandHandlers(event.Check.Config.Handlers, 1)
+	handlers, err := p.expandHandlers(event.Entity.Organization, event.Check.Config.Handlers, 1)
 
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 // expandHandlers turns a list of Sensu handler names into a list of
 // handlers, while expanding handler sets with support for some
 // nesting. Handlers are fetched from etcd.
-func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*types.Handler, error) {
+func (p *Pipelined) expandHandlers(org string, handlers []string, level int) (map[string]*types.Handler, error) {
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
 	}
@@ -68,7 +68,7 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 	expanded := map[string]*types.Handler{}
 
 	for _, handlerName := range handlers {
-		handler, err := p.Store.GetHandlerByName(handlerName)
+		handler, err := p.Store.GetHandlerByName(org, handlerName)
 
 		if handler == nil {
 			if err != nil {
@@ -81,7 +81,7 @@ func (p *Pipelined) expandHandlers(handlers []string, level int) (map[string]*ty
 
 		if handler.Type == "set" {
 			level++
-			setHandlers, err := p.expandHandlers(handler.Handlers, level)
+			setHandlers, err := p.expandHandlers(org, handler.Handlers, level)
 
 			if err != nil {
 				logger.Error("pipelined failed to expand handler set: ", err.Error())
