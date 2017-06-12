@@ -47,7 +47,7 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 func TestHandlerStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		// We should receive an empty slice if no results were found
-		handlers, err := store.GetHandlers()
+		handlers, err := store.GetHandlers("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, handlers)
 
@@ -56,7 +56,7 @@ func TestHandlerStorage(t *testing.T) {
 		err = store.UpdateHandler(handler)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetHandlerByName("handler1")
+		retrieved, err := store.GetHandlerByName("default", "handler1")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 
@@ -65,7 +65,7 @@ func TestHandlerStorage(t *testing.T) {
 		assert.Equal(t, handler.Command, retrieved.Command)
 		assert.Equal(t, handler.Timeout, retrieved.Timeout)
 
-		handlers, err = store.GetHandlers()
+		handlers, err = store.GetHandlers("default")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, handlers)
 		assert.Equal(t, 1, len(handlers))

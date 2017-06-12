@@ -77,9 +77,9 @@ type EventStore interface {
 
 // HandlerStore provides an interface for interacting & persisting handlers
 type HandlerStore interface {
-	GetHandlers() ([]*types.Handler, error)
-	GetHandlerByName(name string) (*types.Handler, error)
-	DeleteHandlerByName(name string) error
+	GetHandlers(org string) ([]*types.Handler, error)
+	GetHandlerByName(org, name string) (*types.Handler, error)
+	DeleteHandlerByName(org, name string) error
 	UpdateHandler(handler *types.Handler) error
 }
 

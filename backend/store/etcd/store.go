@@ -16,10 +16,6 @@ const (
 	etcdRoot = "/sensu.io"
 )
 
-func getHandlersPath(name string) string {
-	return fmt.Sprintf("%s/handlers/%s", etcdRoot, name)
-}
-
 func getMutatorsPath(name string) string {
 	return fmt.Sprintf("%s/mutators/%s", etcdRoot, name)
 }
@@ -33,70 +29,6 @@ type etcdStore struct {
 	client *clientv3.Client
 	kvc    clientv3.KV
 	etcd   *Etcd
-}
-
-// Handlers
-func (s *etcdStore) GetHandlers() ([]*types.Handler, error) {
-	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.Handler{}, nil
-	}
-
-	handlersArray := make([]*types.Handler, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
-		handler := &types.Handler{}
-		err = json.Unmarshal(kv.Value, handler)
-		if err != nil {
-			return nil, err
-		}
-		handlersArray[i] = handler
-	}
-
-	return handlersArray, nil
-}
-
-func (s *etcdStore) GetHandlerByName(name string) (*types.Handler, error) {
-	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(name))
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-
-	handlerBytes := resp.Kvs[0].Value
-	handler := &types.Handler{}
-	if err := json.Unmarshal(handlerBytes, handler); err != nil {
-		return nil, err
-	}
-
-	return handler, nil
-}
-
-func (s *etcdStore) DeleteHandlerByName(name string) error {
-	_, err := s.kvc.Delete(context.TODO(), getHandlersPath(name))
-	return err
-}
-
-func (s *etcdStore) UpdateHandler(handler *types.Handler) error {
-	if err := handler.Validate(); err != nil {
-		return err
-	}
-
-	handlerBytes, err := json.Marshal(handler)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.kvc.Put(context.TODO(), getHandlersPath(handler.Name), string(handlerBytes))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Mutators
