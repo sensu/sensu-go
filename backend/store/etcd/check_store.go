@@ -3,18 +3,25 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
-func getCheckConfigsPath(name string) string {
-	return fmt.Sprintf("%s/checks/%s", etcdRoot, name)
+const (
+	checksPathPrefix = "checks"
+)
+
+func getCheckConfigsPath(org, name string) string {
+	return path.Join(etcdRoot, checksPathPrefix, org, name)
 }
 
-func (s *etcdStore) GetCheckConfigs() ([]*types.CheckConfig, error) {
-	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(""), clientv3.WithPrefix())
+// GetCheckConfigs returns check configurations for an (optional) organization.
+// If org is the empty string, it returns all check configs.
+func (s *etcdStore) GetCheckConfigs(org string) ([]*types.CheckConfig, error) {
+	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(org, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +42,11 @@ func (s *etcdStore) GetCheckConfigs() ([]*types.CheckConfig, error) {
 	return checksArray, nil
 }
 
-func (s *etcdStore) GetCheckConfigByName(name string) (*types.CheckConfig, error) {
-	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(name))
+func (s *etcdStore) GetCheckConfigByName(org, name string) (*types.CheckConfig, error) {
+	if org == "" || name == "" {
+		return nil, errors.New("must specify organization and name")
+	}
+	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(org, name))
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +63,11 @@ func (s *etcdStore) GetCheckConfigByName(name string) (*types.CheckConfig, error
 	return check, nil
 }
 
-func (s *etcdStore) DeleteCheckConfigByName(name string) error {
-	_, err := s.kvc.Delete(context.TODO(), getCheckConfigsPath(name))
+func (s *etcdStore) DeleteCheckConfigByName(org, name string) error {
+	if org == "" || name == "" {
+		return errors.New("must specify organization and name")
+	}
+	_, err := s.kvc.Delete(context.TODO(), getCheckConfigsPath(org, name))
 	return err
 }
 
@@ -68,7 +81,7 @@ func (s *etcdStore) UpdateCheckConfig(check *types.CheckConfig) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getCheckConfigsPath(check.Name), string(checkBytes))
+	_, err = s.kvc.Put(context.TODO(), getCheckConfigsPath(check.Organization, check.Name), string(checkBytes))
 	if err != nil {
 		return err
 	}

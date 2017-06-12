@@ -51,9 +51,9 @@ type AuthenticationStore interface {
 
 // CheckConfigStore provides an interface for interacting & persisting checks
 type CheckConfigStore interface {
-	GetCheckConfigs() ([]*types.CheckConfig, error)
-	GetCheckConfigByName(name string) (*types.CheckConfig, error)
-	DeleteCheckConfigByName(name string) error
+	GetCheckConfigs(org string) ([]*types.CheckConfig, error)
+	GetCheckConfigByName(org, name string) (*types.CheckConfig, error)
+	DeleteCheckConfigByName(org, name string) error
 	UpdateCheckConfig(check *types.CheckConfig) error
 }
 
