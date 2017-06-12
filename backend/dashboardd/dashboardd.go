@@ -33,6 +33,7 @@ type Dashboardd struct {
 	wg            *sync.WaitGroup
 	errChan       chan error
 	BackendStatus func() types.StatusMap
+	httpServer    *http.Server
 
 	Config
 }
@@ -55,18 +56,21 @@ func (d *Dashboardd) Start() error {
 
 	router := httpRouter(d)
 
-	server := &http.Server{
+	d.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", d.Host, d.Port),
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	logger.Info("starting dashboardd on address: ", server.Addr)
+	logger.Info("starting dashboardd on address: ", d.httpServer.Addr)
+	d.wg.Add(1)
 
 	go func() {
 		defer d.wg.Done()
-		server.ListenAndServe()
+		if err := d.httpServer.ListenAndServe(); err != nil {
+			logger.Errorf("failed to start http server: %s", err.Error())
+		}
 	}()
 
 	return nil
@@ -74,6 +78,14 @@ func (d *Dashboardd) Start() error {
 
 // Stop dashboardd.
 func (d *Dashboardd) Stop() error {
+	if err := d.httpServer.Shutdown(nil); err != nil {
+		// failure/timeout shutting down the server gracefully
+		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
+		if closeErr := d.httpServer.Close(); closeErr != nil {
+			logger.Error("failed to shutdown http server forcefully")
+		}
+	}
+
 	close(d.stopping)
 	d.wg.Wait()
 	close(d.errChan)
