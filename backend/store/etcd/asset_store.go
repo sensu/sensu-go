@@ -3,21 +3,24 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
-// Asset
+const (
+	assetsPathPrefix = "assets"
+)
 
-func getAssetsPath(name string) string {
-	return fmt.Sprintf("%s/assets/%s", etcdRoot, name)
+func getAssetsPath(org, name string) string {
+	return path.Join(etcdRoot, assetsPathPrefix, org, name)
 }
 
 // GetAssets fetches all assets from the store
-func (s *etcdStore) GetAssets() ([]*types.Asset, error) {
-	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(""), clientv3.WithPrefix())
+func (s *etcdStore) GetAssets(org string) ([]*types.Asset, error) {
+	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(org, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +41,12 @@ func (s *etcdStore) GetAssets() ([]*types.Asset, error) {
 	return assetArray, nil
 }
 
-func (s *etcdStore) GetAssetByName(name string) (*types.Asset, error) {
-	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(name))
+func (s *etcdStore) GetAssetByName(org, name string) (*types.Asset, error) {
+	if org == "" || name == "" {
+		return nil, errors.New("must specify organization and name")
+	}
+
+	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(org, name))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +73,7 @@ func (s *etcdStore) UpdateAsset(asset *types.Asset) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getAssetsPath(asset.Name), string(assetBytes))
+	_, err = s.kvc.Put(context.TODO(), getAssetsPath(asset.Organization, asset.Name), string(assetBytes))
 	if err != nil {
 		return err
 	}
@@ -75,7 +82,11 @@ func (s *etcdStore) UpdateAsset(asset *types.Asset) error {
 }
 
 // TODO Cleanup associated checks?
-func (s *etcdStore) DeleteAssetByName(name string) error {
-	_, err := s.kvc.Delete(context.TODO(), getAssetsPath(name))
+func (s *etcdStore) DeleteAssetByName(org, name string) error {
+	if org == "" || name == "" {
+		return errors.New("must specify organization and name")
+	}
+
+	_, err := s.kvc.Delete(context.TODO(), getAssetsPath(org, name))
 	return err
 }

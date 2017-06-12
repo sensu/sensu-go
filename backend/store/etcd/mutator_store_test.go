@@ -11,19 +11,15 @@ import (
 func TestMutatorStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		// We should receive an empty slice if no results were found
-		mutators, err := store.GetMutators()
+		mutators, err := store.GetMutators("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, mutators)
 
-		mutator := &types.Mutator{
-			Name:    "mutator1",
-			Command: "command1",
-			Timeout: 10,
-		}
+		mutator := types.FixtureMutator("mutator1")
 
 		err = store.UpdateMutator(mutator)
 		assert.NoError(t, err)
-		retrieved, err := store.GetMutatorByName("mutator1")
+		retrieved, err := store.GetMutatorByName("default", "mutator1")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 
@@ -31,9 +27,13 @@ func TestMutatorStorage(t *testing.T) {
 		assert.Equal(t, mutator.Command, retrieved.Command)
 		assert.Equal(t, mutator.Timeout, retrieved.Timeout)
 
-		mutators, err = store.GetMutators()
+		mutators, err = store.GetMutators("default")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, mutators)
 		assert.Equal(t, 1, len(mutators))
+
+		mutators, err = store.GetMutators("foo")
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(mutators))
 	})
 }

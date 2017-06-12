@@ -36,10 +36,10 @@ type Store interface {
 
 // AssetStore manage assets
 type AssetStore interface {
-	GetAssets() ([]*types.Asset, error)
-	GetAssetByName(assetName string) (*types.Asset, error)
+	GetAssets(org string) ([]*types.Asset, error)
+	GetAssetByName(org, name string) (*types.Asset, error)
 	UpdateAsset(asset *types.Asset) error
-	DeleteAssetByName(assetName string) error
+	DeleteAssetByName(org, name string) error
 }
 
 // AuthenticationStore is responsible for managing the authentication state

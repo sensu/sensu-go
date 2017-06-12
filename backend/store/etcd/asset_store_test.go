@@ -15,7 +15,7 @@ func TestAssetStorage(t *testing.T) {
 		err := store.UpdateAsset(asset)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetAssetByName("ruby")
+		retrieved, err := store.GetAssetByName("default", "ruby")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 
@@ -24,7 +24,7 @@ func TestAssetStorage(t *testing.T) {
 		assert.Equal(t, asset.Hash, retrieved.Hash)
 		assert.Equal(t, asset.Metadata, retrieved.Metadata)
 
-		assets, err := store.GetAssets()
+		assets, err := store.GetAssets("default")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, assets)
 		assert.Equal(t, 1, len(assets))

@@ -64,7 +64,7 @@ func TestFixtureCheckIsValid(t *testing.T) {
 	assert.NoError(t, config.Validate())
 
 	config.RuntimeAssets = []Asset{
-		{Name: "Good", URL: "https://sweet.sweet/good/url.boy"},
+		*FixtureAsset("good"),
 	}
 	assert.NoError(t, config.Validate())
 
