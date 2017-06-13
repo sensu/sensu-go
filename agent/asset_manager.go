@@ -147,6 +147,7 @@ func (m *AssetManager) paths() []string {
 	return paths
 }
 
+// A ManagedAsset refers to an asset that is currently in use by the agent.
 type ManagedAsset struct {
 	manager *AssetManager
 	asset   *types.Asset
@@ -177,12 +178,13 @@ func (d *ManagedAsset) isInstalled() (bool, error) {
 func (d *ManagedAsset) markAsInstalled() error {
 	installfile := filepath.Join(d.path(), ".installed")
 
-	if file, err := os.Create(installfile); err != nil {
-		return err
-	} else {
-		_, err = file.Write([]byte{}) // empty file
+	file, err := os.Create(installfile)
+	if err != nil {
 		return err
 	}
+
+	_, err = file.Write([]byte{}) // empty file
+	return err
 }
 
 // Avoid competing installation of assets
