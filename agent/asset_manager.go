@@ -17,6 +17,7 @@ import (
 	"github.com/mholt/archiver"
 	lockfile "github.com/nightlyone/lockfile"
 	"github.com/sensu/sensu-go/types"
+	filetype "gopkg.in/h2non/filetype.v1"
 )
 
 const (
@@ -167,7 +168,7 @@ func (d *ManagedAsset) isInstalled() (bool, error) {
 		return true, fmt.Errorf("'%s' is a directory", info.Name())
 	}
 
-	// TODO (james): memoize; frequently hitting FS likely to be expensive.
+	// TODO (james): memoize; frequently hitting FS likely to be bottleneck
 	return true, nil
 }
 
@@ -278,15 +279,25 @@ func (d *ManagedAsset) install() error {
 		)
 	}
 
+	// Read header
+	header := make([]byte, 261)
+	tmpFile.Seek(0, 0)
+	if _, err = tmpFile.Read(header); err != nil {
+		return fmt.Errorf("unable to read asset header: %s", err)
+	}
+
 	// Ensure file is synced and closed before we try to extract or move it.
 	tmpFile.Close()
 
 	// If file is an archive attempt to extract it
-	// NOTE(james): For demo purposes, super naive. Having this feature probably
-	// doesn't event make sense for the prod release..
-	switch r.Header.Get("Content-Type") {
-	case "application/x-tar":
+	fileKind, _ := filetype.Match(header)
+	switch {
+	case fileKind.MIME.Value == "application/x-tar":
 		if err = archiver.Tar.Open(tmpFile.Name(), d.path()); err != nil {
+			return fmt.Errorf("Unable to extract asset to cache directory. %s", err)
+		}
+	case fileKind.MIME.Value == "application/gzip":
+		if err = archiver.TarGz.Open(tmpFile.Name(), d.path()); err != nil {
 			return fmt.Errorf("Unable to extract asset to cache directory. %s", err)
 		}
 	default:
