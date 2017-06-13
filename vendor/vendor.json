@@ -63,6 +63,12 @@
 			"revisionTime": "2017-01-31T19:20:18Z"
 		},
 		{
+			"checksumSHA1": "NfQBkfSVHEmnR2OaORxdOXmhLcs=",
+			"path": "github.com/cenkalti/backoff",
+			"revision": "5d150e7eec023ce7a124856b37c68e54b4050ac7",
+			"revisionTime": "2017-03-29T03:22:34Z"
+		},
+		{
 			"checksumSHA1": "4GS621dykxRvARNowEjBllj5gcg=",
 			"path": "github.com/chzyer/readline",
 			"revision": "62c6fe6193755f722b8b8788aa7357be55a50ff1",
@@ -712,6 +718,12 @@
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "cc8532a8e9a55ea36402aa21efdf403a60d34096",
 			"revisionTime": "2017-04-22T00:02:51Z"
+		},
+		{
+			"checksumSHA1": "aCtmlyAgau9n0UHs8Pk+3xfIaVk=",
+			"path": "github.com/nightlyone/lockfile",
+			"revision": "1d49c987357a327b5b03aa84cbddd582c328615d",
+			"revisionTime": "2016-09-28T00:14:32Z"
 		},
 		{
 			"checksumSHA1": "H4cr9VWdZBK2OqHE1bnxMthh4ak=",
