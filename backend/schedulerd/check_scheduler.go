@@ -58,6 +58,7 @@ func (s *CheckScheduler) Start() error {
 				timer.Reset(time.Duration(time.Second * time.Duration(checkConfig.Interval)))
 				for _, sub := range checkConfig.Subscriptions {
 					topic := fmt.Sprintf("%s:%s:%s", messaging.TopicSubscriptions, s.CheckConfig.Organization, sub)
+					logger.Debugf("Sending check request for %s on topic %s", s.CheckConfig.Name, topic)
 					if err := s.MessageBus.Publish(topic, checkConfig); err != nil {
 						logger.Info("error publishing check request: ", err.Error())
 					}

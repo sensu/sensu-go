@@ -259,6 +259,7 @@ func (a *Agent) handshake() error {
 	handshake := &types.AgentHandshake{
 		ID:            a.config.AgentID,
 		Subscriptions: a.config.Subscriptions,
+		Organization:  a.config.Organization,
 	}
 	msgBytes, err := json.Marshal(handshake)
 	if err != nil {
