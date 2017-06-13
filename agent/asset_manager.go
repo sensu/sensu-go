@@ -288,25 +288,27 @@ func (d *ManagedAsset) install() error {
 		return fmt.Errorf("unable to read asset header: %s", err)
 	}
 
-	// Ensure file is synced and closed before we try to extract or move it.
-	tmpFile.Close()
-
 	// If file is an archive attempt to extract it
 	fileKind, _ := filetype.Match(header)
 	switch {
 	case fileKind.MIME.Value == "application/x-tar":
+		tmpFile.Close()
 		if err = archiver.Tar.Open(tmpFile.Name(), d.path()); err != nil {
 			return fmt.Errorf("Unable to extract asset to cache directory. %s", err)
 		}
 	case fileKind.MIME.Value == "application/gzip":
+		tmpFile.Close()
 		if err = archiver.TarGz.Open(tmpFile.Name(), d.path()); err != nil {
 			return fmt.Errorf("Unable to extract asset to cache directory. %s", err)
 		}
 	default:
-		filename := filepath.Join(binDir, d.asset.Filename())
-		if err = os.Rename(tmpFile.Name(), filename); err != nil {
+		tmpFile.Seek(0, 0)
+		newFile, _ := os.Create(filepath.Join(binDir, d.asset.Filename()))
+		if _, err = io.Copy(newFile, tmpFile); err != nil {
 			return fmt.Errorf("Unable to copy asset to cache directory. %s", err)
 		}
+		newFile.Sync()
+		newFile.Close()
 	}
 
 	// Write .completed file
