@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/cenkalti/backoff"
 	"github.com/mholt/archiver"
+	lockfile "github.com/nightlyone/lockfile"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -156,14 +158,51 @@ func (d *ManagedAsset) path() string {
 	)
 }
 
-func (d *ManagedAsset) isCached() (bool, error) {
-	if info, err := os.Stat(d.path()); err != nil {
+func (d *ManagedAsset) isInstalled() (bool, error) {
+	installfile := filepath.Join(d.path(), ".installed")
+
+	if info, err := os.Stat(installfile); err != nil {
 		return false, nil
-	} else if !info.IsDir() {
-		return true, fmt.Errorf("'%s' is not a directory", info.Name())
+	} else if info.IsDir() {
+		return true, fmt.Errorf("'%s' is a directory", info.Name())
 	}
 
+	// TODO (james): memoize; frequently hitting FS likely to be expensive.
 	return true, nil
+}
+
+// Add .installed file to asset directory to help us determine if the asset has
+// already been installed.
+func (d *ManagedAsset) markAsInstalled() error {
+	installfile := filepath.Join(d.path(), ".installed")
+
+	if file, err := os.Create(installfile); err != nil {
+		return err
+	} else {
+		_, err = file.Write([]byte{}) // empty file
+		return err
+	}
+}
+
+// Avoid competing installation of assets
+func (d *ManagedAsset) awaitLock() (*lockfile.Lockfile, error) {
+	lockfile, _ := lockfile.New(filepath.Join(d.path(), ".lock"))
+
+	// Try to lock the asset directory for purpose of writing
+	if err := lockfile.TryLock(); err == nil {
+		return &lockfile, nil
+	}
+
+	// If we fail to get a lock, retry for 90s
+	expBackoff := backoff.NewExponentialBackOff()
+	expBackoff.InitialInterval = 50 * time.Millisecond
+	expBackoff.MaxElapsedTime = 90 * time.Second
+	expBackoff.Multiplier = 1.5
+	if err := backoff.Retry(lockfile.TryLock, expBackoff); err != nil {
+		return nil, err
+	}
+
+	return &lockfile, nil
 }
 
 func (d *ManagedAsset) fetch() (*http.Response, error) {
@@ -180,13 +219,23 @@ func (d *ManagedAsset) fetch() (*http.Response, error) {
 // Downloads the given depdencies asset to the cache directory.
 // TODO(james): ugly; too many responsibilities
 func (d *ManagedAsset) install() error {
-	// Check that asset hasn't already been retrieved
-	if cached, err := d.isCached(); cached || err != nil {
+	// Check that asset hasn't already been installed
+	if cached, err := d.isInstalled(); cached || err != nil {
 		return err
 	}
 
-	// TODO: Obtain a lock
-	// TODO: Write completed
+	// Ensure that cache directory exists before we attempt to write the contents
+	// of our asset to it.
+	binDir := filepath.Join(d.path(), "bin")
+	if err := os.MkdirAll(binDir, 0755); err != nil {
+		return fmt.Errorf("unable to create cache directory '%s': %s", d.path(), err.Error())
+	}
+
+	// Obtain a lock to avoid clobbering competing installs
+	lockfile, err := d.awaitLock()
+	if err != nil {
+		return fmt.Errorf("unable to obtain a lock for asset '%s' in a timely manner", d.asset.Name)
+	}
 
 	logger.WithFields(logrus.Fields{
 		"asset_name": d.asset.Name,
@@ -232,13 +281,6 @@ func (d *ManagedAsset) install() error {
 	// Ensure file is synced and closed before we try to extract or move it.
 	tmpFile.Close()
 
-	// Ensure that cache directory exists before we attempt to write the contents
-	// of our asset to it.
-	binDir := filepath.Join(d.path(), "bin")
-	if err = os.MkdirAll(binDir, 0755); err != nil {
-		return fmt.Errorf("unable to create cache directory '%s': %s", d.path(), err.Error())
-	}
-
 	// If file is an archive attempt to extract it
 	// NOTE(james): For demo purposes, super naive. Having this feature probably
 	// doesn't event make sense for the prod release..
@@ -253,6 +295,12 @@ func (d *ManagedAsset) install() error {
 			return fmt.Errorf("Unable to copy asset to cache directory. %s", err)
 		}
 	}
+
+	// Write .completed file
+	d.markAsInstalled()
+
+	// Unlock directory so we allow others others to write again
+	lockfile.Unlock()
 
 	return nil
 }
