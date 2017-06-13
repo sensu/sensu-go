@@ -6,6 +6,14 @@
 
 ## API
 
+### Checks
+
+#### Create a check
+
+```
+curl -i -X POST -H 'Content-Type: application/json' -d '{"name": "check1", "interval": 60, "command": "echo 0", "subscriptions": "linux", "organization": "default"}' http://127.0.0.1:8080/checks
+```
+
 ### Events
 
 #### Update an event
