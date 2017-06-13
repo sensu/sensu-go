@@ -34,16 +34,9 @@ func (a *Agent) handleCheck(payload []byte) error {
 }
 
 func (a *Agent) executeCheck(checkConfig *types.CheckConfig) {
-	// TODO(james):
-	//
-	// Currently /all/ assets are available to each and every check, this
-	// could easily lead to conflicts in the future. As such, at some point
-	// we'll need to retrieve a subset of the dependencies, install, inject, etc.
-	assets := a.assetManager
-
 	// Ensure that the asset manager is aware of all the assets required to
 	// execute the given check.
-	assets.Merge(checkConfig.RuntimeAssets)
+	assets := a.assetManager.RegisterSet(checkConfig.RuntimeAssets)
 
 	ex := &command.Execution{
 		// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
@@ -59,7 +52,7 @@ func (a *Agent) executeCheck(checkConfig *types.CheckConfig) {
 	}
 
 	// Ensure that all the dependencies are installed.
-	if err := assets.Install(); err != nil {
+	if err := assets.InstallAll(); err != nil {
 		logger.Error("error installing dependencies: ", err.Error())
 		return
 	}
