@@ -12,6 +12,7 @@ type Entity struct {
 	LastSeen       int64          `json:"last_seen,omitempty"`
 	Deregister     bool           `json:"deregister"`
 	Deregistration Deregistration `json:"deregistration"`
+	Organization   string         `json:"organization"`
 }
 
 // System contains information about the system that the Agent process
@@ -57,6 +58,10 @@ func (e *Entity) Validate() error {
 		return errors.New("entity class " + err.Error())
 	}
 
+	if e.Organization == "" {
+		return errors.New("organization must be set")
+	}
+
 	return nil
 }
 
@@ -66,5 +71,6 @@ func FixtureEntity(id string) *Entity {
 		ID:            id,
 		Class:         "host",
 		Subscriptions: []string{"subscription"},
+		Organization:  "default",
 	}
 }

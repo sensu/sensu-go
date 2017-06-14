@@ -25,7 +25,9 @@ func (c *HandlersController) Register(r *mux.Router) {
 
 // many handles requests to /handlers
 func (c *HandlersController) many(w http.ResponseWriter, r *http.Request) {
-	handlers, err := c.Store.GetHandlers()
+	org := organization(r)
+
+	handlers, err := c.Store.GetHandlers(org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -51,8 +53,10 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 		err     error
 	)
 
+	org := organization(r)
+
 	if method == http.MethodGet || method == http.MethodDelete {
-		handler, err = c.Store.GetHandlerByName(name)
+		handler, err = c.Store.GetHandlerByName(org, name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -100,7 +104,7 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case http.MethodDelete:
-		err := c.Store.DeleteHandlerByName(name)
+		err := c.Store.DeleteHandlerByName(org, name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

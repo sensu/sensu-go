@@ -1,6 +1,10 @@
 package messaging
 
-import "github.com/sensu/sensu-go/backend/daemon"
+import (
+	"fmt"
+
+	"github.com/sensu/sensu-go/backend/daemon"
+)
 
 const (
 	// TopicEvent is the topic for events that have been written to Etcd and
@@ -13,6 +17,9 @@ const (
 	// TopicEventRaw is the Session -> Eventd channel -- for raw events directly
 	// from agents, subscribe to this.
 	TopicEventRaw = "sensu:event-raw"
+
+	// TopicSubscriptions is the topic prefix for each subscription
+	TopicSubscriptions = "sensu:check"
 )
 
 // MessageBus is the interface to the internal messaging system.
@@ -43,4 +50,10 @@ type MessageBus interface {
 
 	// Publish sends a message to a topic.
 	Publish(topic string, message interface{}) error
+}
+
+// SubscriptionTopic is a helper to determine the proper topic name for a
+// subscription based on the organization
+func SubscriptionTopic(org, sub string) string {
+	return fmt.Sprintf("%s:%s:%s", TopicSubscriptions, org, sub)
 }

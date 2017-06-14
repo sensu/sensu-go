@@ -25,6 +25,9 @@ type Asset struct {
 
 	// Metadata is a set of key value pair associated with the asset.
 	Metadata map[string]string `json:"metadata"`
+
+	// Organization indicates to which org an asset belongs
+	Organization string `json:"organization"`
 }
 
 // Validate returns an error if the asset contains invalid values.
@@ -35,6 +38,10 @@ func (a *Asset) Validate() error {
 
 	if a.URL == "" {
 		return errors.New("URL cannot be empty")
+	}
+
+	if a.Organization == "" {
+		return errors.New("Organization cannot be empty")
 	}
 
 	u, err := url.Parse(a.URL)
@@ -92,5 +99,6 @@ func FixtureAsset(name string) *Asset {
 			"Content-Type":            "application/zip",
 			"X-Intended-Distribution": "trusty-14",
 		},
+		Organization: "default",
 	}
 }

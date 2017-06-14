@@ -23,6 +23,10 @@ func TestMutatorValidate(t *testing.T) {
 	assert.Error(t, m.Validate())
 	m.Command = "echo 'foo'"
 
+	// Invalid organization
+	assert.Error(t, m.Validate())
+	m.Organization = "default"
+
 	// Valid mutator
 	assert.NoError(t, m.Validate())
 }

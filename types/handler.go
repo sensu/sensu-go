@@ -26,6 +26,9 @@ type Handler struct {
 
 	// Env is a list of environment variables to use with command execution
 	Env []string `json:"environment,omitempty"`
+
+	// Organization indicates to which org a handler belongs to
+	Organization string `json:"organization"`
 }
 
 // HandlerSocket contains configuration for a TCP or UDP handler.
@@ -49,15 +52,20 @@ func (h *Handler) Validate() error {
 		return errors.New("handler type " + err.Error())
 	}
 
+	if h.Organization == "" {
+		return errors.New("organization must be set")
+	}
+
 	return nil
 }
 
 // FixtureHandler returns a Handler fixture for testing.
 func FixtureHandler(name string) *Handler {
 	return &Handler{
-		Name:    name,
-		Type:    "pipe",
-		Command: "command",
+		Name:         name,
+		Type:         "pipe",
+		Command:      "command",
+		Organization: "default",
 	}
 }
 

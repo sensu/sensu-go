@@ -11,7 +11,7 @@ import (
 func TestEntityStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		// We should receive an empty slice if no results were found
-		entities, err := store.GetEntities()
+		entities, err := store.GetEntities("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, entities)
 
@@ -19,11 +19,11 @@ func TestEntityStorage(t *testing.T) {
 		err = store.UpdateEntity(entity)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetEntityByID(entity.ID)
+		retrieved, err := store.GetEntityByID(entity.Organization, entity.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, entity.ID, retrieved.ID)
 
-		entities, err = store.GetEntities()
+		entities, err = store.GetEntities("default")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(entities))
 		assert.Equal(t, entity.ID, entities[0].ID)
@@ -31,7 +31,7 @@ func TestEntityStorage(t *testing.T) {
 		err = store.DeleteEntity(entity)
 		assert.NoError(t, err)
 
-		retrieved, err = store.GetEntityByID(entity.ID)
+		retrieved, err = store.GetEntityByID(entity.Organization, entity.ID)
 		assert.Nil(t, retrieved)
 		assert.NoError(t, err)
 

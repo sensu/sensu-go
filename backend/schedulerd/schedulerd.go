@@ -86,13 +86,13 @@ func (s *Schedulerd) startReconciler() {
 }
 
 func (s *Schedulerd) reconcile() error {
-	checks, err := s.Store.GetCheckConfigs()
+	checks, err := s.Store.GetCheckConfigs("")
 	if err != nil {
 		return err
 	}
 
 	for _, check := range checks {
-		if err := s.schedulers.add(check); err != nil {
+		if err = s.schedulers.add(check); err != nil {
 			return err
 		}
 	}

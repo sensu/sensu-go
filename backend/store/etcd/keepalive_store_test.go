@@ -9,14 +9,14 @@ import (
 
 func TestKeepaliveStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		err := store.UpdateKeepalive("entity", 1)
+		err := store.UpdateKeepalive("default", "entity", 1)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetKeepalive("notfound")
+		retrieved, err := store.GetKeepalive("default", "notfound")
 		assert.NoError(t, err)
 		assert.Zero(t, retrieved)
 
-		retrieved, err = store.GetKeepalive("entity")
+		retrieved, err = store.GetKeepalive("default", "entity")
 		assert.NoError(t, err)
 		assert.NotZero(t, retrieved)
 		assert.Equal(t, int64(1), retrieved)

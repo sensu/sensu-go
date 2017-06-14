@@ -54,6 +54,9 @@ type CheckConfig struct {
 
 	// RuntimeAssets are a list of assets required to execute check.
 	RuntimeAssets []Asset `json:"runtime_assets"`
+
+	// Organization indicates to which org a check belongs to
+	Organization string `json:"organization"`
 }
 
 // Validate returns an error if the check does not pass validation tests.
@@ -84,6 +87,10 @@ func (c *CheckConfig) Validate() error {
 
 	if c.Command == "" {
 		return errors.New("check command must be set")
+	}
+
+	if c.Organization == "" {
+		return errors.New("organization must be set")
 	}
 
 	for _, asset := range c.RuntimeAssets {
@@ -142,6 +149,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Command:       "command",
 		Handlers:      []string{},
 		RuntimeAssets: []Asset{},
+		Organization:  "default",
 	}
 }
 

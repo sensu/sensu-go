@@ -2,16 +2,20 @@ package etcd
 
 import (
 	"context"
-	"fmt"
+	"path"
 	"strconv"
 )
 
-func getKeepalivePath(entityID string) string {
-	return fmt.Sprintf("%s/keepalives/%s", etcdRoot, entityID)
+const (
+	keepalivesPathPrefix = "keepalives"
+)
+
+func getKeepalivePath(org, id string) string {
+	return path.Join(etcdRoot, keepalivesPathPrefix, org, id)
 }
 
-func (s *etcdStore) GetKeepalive(entityID string) (int64, error) {
-	resp, err := s.client.Get(context.Background(), getKeepalivePath(entityID))
+func (s *etcdStore) GetKeepalive(org, entityID string) (int64, error) {
+	resp, err := s.client.Get(context.Background(), getKeepalivePath(org, entityID))
 	if err != nil {
 		return 0, err
 	}
@@ -29,8 +33,8 @@ func (s *etcdStore) GetKeepalive(entityID string) (int64, error) {
 	return expiration, nil
 }
 
-func (s *etcdStore) UpdateKeepalive(entityID string, expiration int64) error {
+func (s *etcdStore) UpdateKeepalive(org, entityID string, expiration int64) error {
 	expirationStr := strconv.FormatInt(expiration, 10)
-	_, err := s.client.Put(context.Background(), getKeepalivePath(entityID), expirationStr)
+	_, err := s.client.Put(context.Background(), getKeepalivePath(org, entityID), expirationStr)
 	return err
 }

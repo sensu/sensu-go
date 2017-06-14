@@ -11,20 +11,15 @@ import (
 func TestCheckConfigStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		// We should receive an empty slice if no results were found
-		checks, err := store.GetCheckConfigs()
+		checks, err := store.GetCheckConfigs("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, checks)
 
-		check := &types.CheckConfig{
-			Name:          "check1",
-			Interval:      60,
-			Subscriptions: []string{"subscription1"},
-			Command:       "command1",
-		}
+		check := types.FixtureCheckConfig("check1")
 
 		err = store.UpdateCheckConfig(check)
 		assert.NoError(t, err)
-		retrieved, err := store.GetCheckConfigByName("check1")
+		retrieved, err := store.GetCheckConfigByName("default", "check1")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 
@@ -33,7 +28,7 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.Equal(t, check.Subscriptions, retrieved.Subscriptions)
 		assert.Equal(t, check.Command, retrieved.Command)
 
-		checks, err = store.GetCheckConfigs()
+		checks, err = store.GetCheckConfigs("default")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, checks)
 		assert.Equal(t, 1, len(checks))

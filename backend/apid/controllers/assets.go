@@ -25,7 +25,8 @@ func (c *AssetsController) Register(r *mux.Router) {
 
 // many handles requests to /assets
 func (c *AssetsController) many(w http.ResponseWriter, r *http.Request) {
-	assets, err := c.Store.GetAssets()
+	org := organization(r)
+	assets, err := c.Store.GetAssets(org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -53,7 +54,9 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if method == http.MethodGet || method == http.MethodDelete {
-		asset, err = c.Store.GetAssetByName(name)
+		org := organization(r)
+
+		asset, err = c.Store.GetAssetByName(org, name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -96,16 +99,16 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if err := newAsset.Validate(); err != nil {
+		if err = newAsset.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = c.Store.UpdateAsset(newAsset)
-		if err != nil {
+		if err = c.Store.UpdateAsset(newAsset); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		return
 	}
 }

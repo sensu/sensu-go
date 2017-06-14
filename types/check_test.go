@@ -23,9 +23,10 @@ func TestCheckValidate(t *testing.T) {
 	// Invalid w/ bad config
 	assert.Error(t, c.Validate())
 	c.Config = &CheckConfig{
-		Name:     "test",
-		Interval: 10,
-		Command:  "yes",
+		Name:         "test",
+		Interval:     10,
+		Command:      "yes",
+		Organization: "default",
 	}
 
 	// Valid check
@@ -47,6 +48,10 @@ func TestCheckConfig(t *testing.T) {
 	assert.Error(t, c.Validate())
 	c.Command = "echo 'foo'"
 
+	// Invalid organization
+	assert.Error(t, c.Validate())
+	c.Organization = "default"
+
 	// Valid check
 	assert.NoError(t, c.Validate())
 }
@@ -59,7 +64,7 @@ func TestFixtureCheckIsValid(t *testing.T) {
 	assert.NoError(t, config.Validate())
 
 	config.RuntimeAssets = []Asset{
-		{Name: "Good", URL: "https://sweet.sweet/good/url.boy"},
+		*FixtureAsset("good"),
 	}
 	assert.NoError(t, config.Validate())
 

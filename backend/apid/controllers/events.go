@@ -26,10 +26,11 @@ func (c *EventsController) Register(r *mux.Router) {
 
 func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	entityID := vars["entity"]
 	// Do we need to test that this isn't empty? We should figure that out.
+	entityID := vars["entity"]
+	org := organization(r)
 
-	events, err := c.Store.GetEventsByEntity(entityID)
+	events, err := c.Store.GetEventsByEntity(org, entityID)
 	if err != nil {
 		http.Error(w, "error getting events for entity", http.StatusInternalServerError)
 		return
@@ -54,8 +55,9 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 	vars := mux.Vars(r)
 	entityID := vars["entity"]
 	checkID := vars["check"]
+	org := organization(r)
 
-	event, err := c.Store.GetEventByEntityCheck(entityID, checkID)
+	event, err := c.Store.GetEventByEntityCheck(org, entityID, checkID)
 	if err != nil {
 		http.Error(w, "error getting event for check", http.StatusInternalServerError)
 		return
@@ -77,7 +79,9 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
-	events, err := c.Store.GetEvents()
+	org := organization(r)
+
+	events, err := c.Store.GetEvents(org)
 	if err != nil {
 		http.Error(w, "error getting events", http.StatusInternalServerError)
 		return

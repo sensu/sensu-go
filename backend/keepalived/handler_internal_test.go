@@ -77,7 +77,7 @@ func (s *HandlerTestSuite) TestKeepaliveUpdates() {
 
 	keepaliveUpdated := make(chan struct{})
 
-	s.store.On("UpdateKeepalive", event.Entity.ID, mock.AnythingOfType("int64")).Return(nil).Run(func(args mock.Arguments) { close(keepaliveUpdated) })
+	s.store.On("UpdateKeepalive", event.Entity.Organization, event.Entity.ID, mock.AnythingOfType("int64")).Return(nil).Run(func(args mock.Arguments) { close(keepaliveUpdated) })
 
 	ch := make(chan *types.Event)
 
@@ -121,8 +121,8 @@ func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregister() {
 	}
 
 	s.store.On("DeleteEntity", event.Entity).Return(nil).Run(func(args mock.Arguments) { close(entityDeleted) })
-	s.store.On("GetEventsByEntity", event.Entity.ID).Return(mockEvents, nil)
-	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Config.Name).Return(nil).Run(func(args mock.Arguments) { close(eventDeleted) })
+	s.store.On("GetEventsByEntity", event.Entity.Organization, event.Entity.ID).Return(mockEvents, nil)
+	s.store.On("DeleteEventByEntityCheck", event.Entity.Organization, event.Entity.ID, event.Check.Config.Name).Return(nil).Run(func(args mock.Arguments) { close(eventDeleted) })
 	s.bus.On("Publish", messaging.TopicEvent, mock.AnythingOfType("[]uint8")).Return(nil).Run(func(args mock.Arguments) { close(eventPublished) })
 
 	ch := make(chan *types.Event)
@@ -151,8 +151,8 @@ func (s *HandlerTestSuite) TestKeepaliveTimeoutDeregistrationHandler() {
 	}
 
 	s.store.On("DeleteEntity", event.Entity).Return(nil)
-	s.store.On("GetEventsByEntity", event.Entity.ID).Return(mockEvents, nil)
-	s.store.On("DeleteEventByEntityCheck", event.Entity.ID, event.Check.Config.Name).Return(nil)
+	s.store.On("GetEventsByEntity", event.Entity.Organization, event.Entity.ID).Return(mockEvents, nil)
+	s.store.On("DeleteEventByEntityCheck", event.Entity.Organization, event.Entity.ID, event.Check.Config.Name).Return(nil)
 	s.bus.On("Publish", messaging.TopicEvent, mock.AnythingOfType("[]uint8")).Return(nil).Run(func(args mock.Arguments) {
 		publishedEvent := types.Event{}
 		_ = json.Unmarshal(args[1].([]byte), &publishedEvent)

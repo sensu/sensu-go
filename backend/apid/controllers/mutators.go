@@ -25,7 +25,9 @@ func (c *MutatorsController) Register(r *mux.Router) {
 
 // many handles requests to /mutators
 func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
-	mutators, err := c.Store.GetMutators()
+	org := organization(r)
+
+	mutators, err := c.Store.GetMutators(org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -51,8 +53,10 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 		err     error
 	)
 
+	org := organization(r)
+
 	if method == http.MethodGet || method == http.MethodDelete {
-		mutator, err = c.Store.GetMutatorByName(name)
+		mutator, err = c.Store.GetMutatorByName(org, name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -100,7 +104,7 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case http.MethodDelete:
-		err := c.Store.DeleteMutatorByName(name)
+		err := c.Store.DeleteMutatorByName(org, name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

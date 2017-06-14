@@ -37,7 +37,7 @@ func (s *CheckScheduler) Start() error {
 		for {
 			select {
 			case <-timer.C:
-				checkConfig, err := s.Store.GetCheckConfigByName(s.CheckConfig.Name)
+				checkConfig, err := s.Store.GetCheckConfigByName(s.CheckConfig.Organization, s.CheckConfig.Name)
 				if err != nil {
 					logger.Info("error getting check from store: ", err.Error())
 					// TODO(grep): what do we do when we cannot talk to the store?
@@ -56,7 +56,9 @@ func (s *CheckScheduler) Start() error {
 
 				timer.Reset(time.Duration(time.Second * time.Duration(checkConfig.Interval)))
 				for _, sub := range checkConfig.Subscriptions {
-					if err := s.MessageBus.Publish(sub, checkConfig); err != nil {
+					topic := messaging.SubscriptionTopic(s.CheckConfig.Organization, sub)
+					logger.Debugf("Sending check request for %s on topic %s", s.CheckConfig.Name, topic)
+					if err := s.MessageBus.Publish(topic, checkConfig); err != nil {
 						logger.Info("error publishing check request: ", err.Error())
 					}
 				}

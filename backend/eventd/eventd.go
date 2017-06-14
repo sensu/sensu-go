@@ -129,7 +129,9 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	prevEvent, err := e.Store.GetEventByEntityCheck(event.Entity.ID, event.Check.Config.Name)
+	prevEvent, err := e.Store.GetEventByEntityCheck(
+		event.Entity.Organization, event.Entity.ID, event.Check.Config.Name,
+	)
 	if err != nil {
 		return err
 	}

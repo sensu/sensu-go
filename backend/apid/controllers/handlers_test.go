@@ -24,7 +24,7 @@ func TestHttpAPIHandlersGet(t *testing.T) {
 		types.FixtureHandler("handler1"),
 		types.FixtureHandler("handler2"),
 	}
-	store.On("GetHandlers").Return(handlers, nil)
+	store.On("GetHandlers", "default").Return(handlers, nil)
 	req, _ := http.NewRequest("GET", "/handlers", nil)
 	res := processRequest(c, req)
 
@@ -50,14 +50,14 @@ func TestHttpAPIHandlerGet(t *testing.T) {
 	}
 
 	var nilHandler *types.Handler
-	store.On("GetHandlerByName", "somehandler").Return(nilHandler, nil)
+	store.On("GetHandlerByName", "default", "somehandler").Return(nilHandler, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/handlers/somehandler", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
 
 	handler := types.FixtureHandler("handler1")
-	store.On("GetHandlerByName", "handler1").Return(handler, nil)
+	store.On("GetHandlerByName", "default", "handler1").Return(handler, nil)
 	foundReq, _ := http.NewRequest("GET", "/handlers/handler1", nil)
 	foundRes := processRequest(c, foundReq)
 
@@ -126,8 +126,8 @@ func TestHttpAPIHandlerDelete(t *testing.T) {
 
 	handler := types.FixtureHandler(handlerName)
 
-	store.On("GetHandlerByName", handlerName).Return(handler, nil)
-	store.On("DeleteHandlerByName", handlerName).Return(nil)
+	store.On("GetHandlerByName", "default", handlerName).Return(handler, nil)
+	store.On("DeleteHandlerByName", "default", handlerName).Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/handlers/%s", handlerName), nil)
 	deleteRes := processRequest(c, deleteReq)
 

@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -15,21 +16,22 @@ func TestCheckScheduler(t *testing.T) {
 	bus := &messaging.WizardBus{}
 	assert.NoError(t, bus.Start())
 
-	st := &mockstore.MockStore{}
+	store := &mockstore.MockStore{}
 	check := types.FixtureCheckConfig("check1")
 	check.Interval = 1
 	check.Subscriptions = []string{"subscription1"}
-	st.On("GetCheckConfigByName", "check1").Return(check, nil)
+	store.On("GetCheckConfigByName", "default", "check1").Return(check, nil)
 
 	scheduler := &CheckScheduler{
 		MessageBus:  bus,
-		Store:       st,
+		Store:       store,
 		CheckConfig: check,
 		wg:          &sync.WaitGroup{},
 	}
 
 	c1 := make(chan interface{}, 10)
-	assert.NoError(t, bus.Subscribe("subscription1", "channel1", c1))
+	topic := fmt.Sprintf("%s:%s:subscription1", messaging.TopicSubscriptions, check.Organization)
+	assert.NoError(t, bus.Subscribe(topic, "channel1", c1))
 
 	assert.NoError(t, scheduler.Start())
 	time.Sleep(1 * time.Second)
