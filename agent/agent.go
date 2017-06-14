@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/sensu/sensu-go/agent/assetmanager"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
@@ -84,7 +85,7 @@ type Agent struct {
 	stopping        chan struct{}
 	stopped         chan struct{}
 	entity          *types.Entity
-	assetManager    *AssetManager
+	assetManager    *assetmanager.Manager
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -99,7 +100,7 @@ func NewAgent(config *Config) *Agent {
 	}
 
 	agent.handler.AddHandler(types.CheckConfigType, agent.handleCheck)
-	agent.assetManager = NewAssetManager(config.CacheDir)
+	agent.assetManager = assetmanager.New(config.CacheDir)
 
 	return agent
 }
