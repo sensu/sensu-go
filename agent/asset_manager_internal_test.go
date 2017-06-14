@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -18,7 +18,7 @@ import (
 type ManagerTestSuite struct {
 	suite.Suite
 	agent       *Agent
-	dep         *runtimeDependency
+	dep         *ManagedAsset
 	manager     *AssetManager
 	assetServer *httptest.Server
 }
@@ -46,7 +46,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 
 	// Ex. manager
 	manager := NewAssetManager(tmpDir)
-	dep := &runtimeDependency{manager: manager, asset: asset}
+	dep := &ManagedAsset{manager: manager, asset: asset}
 	manager.knownDeps["test"] = dep
 
 	suite.dep = dep
@@ -129,7 +129,7 @@ type DependencyTestSuite struct {
 	suite.Suite
 
 	assetServer  *httptest.Server
-	dep          *runtimeDependency
+	dep          *ManagedAsset
 	manager      *AssetManager
 	responseBody string
 	responseType string
@@ -151,7 +151,7 @@ func (suite *DependencyTestSuite) SetupTest() {
 
 	// Ex. Dep
 	suite.manager = &AssetManager{cacheDir: tmpDir}
-	suite.dep = &runtimeDependency{
+	suite.dep = &ManagedAsset{
 		manager: suite.manager,
 		asset: &types.Asset{
 			Name: "ruby24",
@@ -185,6 +185,29 @@ func (suite *DependencyTestSuite) TestInstall() {
 	suite.NoError(err)
 }
 
+func (suite *DependencyTestSuite) TestParallelInstall() {
+	suite.responseBody = "abc"
+	suite.dep.asset.Hash = stringToSHA256(suite.responseBody)
+
+	errs := make(chan error, 5)
+	install := func() {
+		err := suite.dep.install()
+		errs <- err
+	}
+
+	go install()
+	go install()
+	go install()
+	go install()
+	go install()
+
+	suite.NoError(<-errs)
+	suite.NoError(<-errs)
+	suite.NoError(<-errs)
+	suite.NoError(<-errs)
+	suite.NoError(<-errs)
+}
+
 func (suite *DependencyTestSuite) TestInstallBadAssetHash() {
 	suite.responseBody = "abc"
 	suite.dep.asset.Hash = "bad bad hash boy"
@@ -193,23 +216,23 @@ func (suite *DependencyTestSuite) TestInstallBadAssetHash() {
 	suite.Error(err)
 }
 
-func (suite *DependencyTestSuite) TestIsCached() {
+func (suite *DependencyTestSuite) TestIsInstalled() {
 	fmt.Println(suite.dep.path())
-	cached, err := suite.dep.isCached()
+	cached, err := suite.dep.isInstalled()
 	suite.False(cached)
 	suite.NoError(err)
 
 	os.MkdirAll(suite.dep.path(), 0755)
-	cached, err = suite.dep.isCached()
+	suite.dep.markAsInstalled()
+	cached, err = suite.dep.isInstalled()
 	suite.True(cached)
 	suite.NoError(err)
 }
 
-func (suite *DependencyTestSuite) TestIsCachedDirIsNotDirectory() {
-	os.MkdirAll(path.Dir(suite.dep.path()), 0755)
-	os.OpenFile(suite.dep.path(), os.O_RDONLY|os.O_CREATE, 0666)
+func (suite *DependencyTestSuite) TestIsCachedDirIsDirectory() {
+	os.MkdirAll(filepath.Join(suite.dep.path(), ".installed"), 0755)
+	cached, err := suite.dep.isInstalled()
 
-	cached, err := suite.dep.isCached()
 	suite.True(cached)
 	suite.Error(err)
 }

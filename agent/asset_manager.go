@@ -13,8 +13,11 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/cenkalti/backoff"
 	"github.com/mholt/archiver"
+	lockfile "github.com/nightlyone/lockfile"
 	"github.com/sensu/sensu-go/types"
+	filetype "gopkg.in/h2non/filetype.v1"
 )
 
 const (
@@ -31,7 +34,7 @@ type AssetManager struct {
 	BaseEnv []string
 
 	cacheDir  string
-	knownDeps map[string]*runtimeDependency
+	knownDeps map[string]*ManagedAsset
 	env       []string
 }
 
@@ -59,7 +62,7 @@ func (m *AssetManager) Merge(assets []types.Asset) {
 		}
 
 		m.env = nil // Clears env forcing us to re-construct on next exec
-		m.knownDeps[asset.Hash] = &runtimeDependency{
+		m.knownDeps[asset.Hash] = &ManagedAsset{
 			manager: m,
 			asset:   &asset,
 		}
@@ -129,7 +132,7 @@ func (m *AssetManager) Env() []string {
 //
 // NOTE: Cache on disk is not cleared.
 func (m *AssetManager) Reset() {
-	m.knownDeps = map[string]*runtimeDependency{}
+	m.knownDeps = map[string]*ManagedAsset{}
 	m.BaseEnv = os.Environ()
 	m.env = nil
 }
@@ -144,29 +147,68 @@ func (m *AssetManager) paths() []string {
 	return paths
 }
 
-type runtimeDependency struct {
+// A ManagedAsset refers to an asset that is currently in use by the agent.
+type ManagedAsset struct {
 	manager *AssetManager
 	asset   *types.Asset
 }
 
-func (d *runtimeDependency) path() string {
+func (d *ManagedAsset) path() string {
 	return filepath.Join(
 		d.manager.cacheDir,
 		d.asset.Hash,
 	)
 }
 
-func (d *runtimeDependency) isCached() (bool, error) {
-	if info, err := os.Stat(d.path()); err != nil {
+func (d *ManagedAsset) isInstalled() (bool, error) {
+	installfile := filepath.Join(d.path(), ".installed")
+
+	if info, err := os.Stat(installfile); err != nil {
 		return false, nil
-	} else if !info.IsDir() {
-		return true, fmt.Errorf("'%s' is not a directory", info.Name())
+	} else if info.IsDir() {
+		return true, fmt.Errorf("'%s' is a directory", info.Name())
 	}
 
+	// TODO (james): memoize; frequently hitting FS likely to be bottleneck
 	return true, nil
 }
 
-func (d *runtimeDependency) fetch() (*http.Response, error) {
+// Add .installed file to asset directory to help us determine if the asset has
+// already been installed.
+func (d *ManagedAsset) markAsInstalled() error {
+	installfile := filepath.Join(d.path(), ".installed")
+
+	file, err := os.Create(installfile)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write([]byte{}) // empty file
+	return err
+}
+
+// Avoid competing installation of assets
+func (d *ManagedAsset) awaitLock() (*lockfile.Lockfile, error) {
+	lockfile, _ := lockfile.New(filepath.Join(d.path(), ".lock"))
+
+	// Try to lock the asset directory for purpose of writing
+	if err := lockfile.TryLock(); err == nil {
+		return &lockfile, nil
+	}
+
+	// If we fail to get a lock, retry for 90s
+	expBackoff := backoff.NewExponentialBackOff()
+	expBackoff.InitialInterval = 50 * time.Millisecond
+	expBackoff.MaxElapsedTime = 90 * time.Second
+	expBackoff.Multiplier = 1.5
+	if err := backoff.Retry(lockfile.TryLock, expBackoff); err != nil {
+		return nil, err
+	}
+
+	return &lockfile, nil
+}
+
+func (d *ManagedAsset) fetch() (*http.Response, error) {
 	// GET asset w/ timeout
 	netClient := &http.Client{Timeout: fetchTimeout}
 	r, err := netClient.Get(d.asset.URL)
@@ -179,9 +221,26 @@ func (d *runtimeDependency) fetch() (*http.Response, error) {
 
 // Downloads the given depdencies asset to the cache directory.
 // TODO(james): ugly; too many responsibilities
-func (d *runtimeDependency) install() error {
-	// Check that asset hasn't already been retrieved
-	if cached, err := d.isCached(); cached || err != nil {
+func (d *ManagedAsset) install() error {
+	// Ensure that cache directory exists before we attempt to write the contents
+	// of our asset to it.
+	//
+	// TODO (james): it is not ideal that we have to create this directory before
+	// obtaining the lock.
+	binDir := filepath.Join(d.path(), "bin")
+	if err := os.MkdirAll(binDir, 0755); err != nil {
+		return fmt.Errorf("unable to create cache directory '%s': %s", d.path(), err.Error())
+	}
+
+	// Obtain a lock to avoid clobbering competing installs
+	lockfile, err := d.awaitLock()
+	if err != nil {
+		return fmt.Errorf("unable to obtain a lock for asset '%s' in a timely manner", d.asset.Name)
+	}
+	defer lockfile.Unlock()
+
+	// Check that asset hasn't already been installed
+	if cached, err := d.isInstalled(); cached || err != nil {
 		return err
 	}
 
@@ -226,30 +285,38 @@ func (d *runtimeDependency) install() error {
 		)
 	}
 
-	// Ensure file is synced and closed before we try to extract or move it.
-	tmpFile.Close()
-
-	// Ensure that cache directory exists before we attempt to write the contents
-	// of our asset to it.
-	binDir := filepath.Join(d.path(), "bin")
-	if err = os.MkdirAll(binDir, 0755); err != nil {
-		return fmt.Errorf("unable to create cache directory '%s': %s", d.path(), err.Error())
+	// Read header
+	header := make([]byte, 261)
+	tmpFile.Seek(0, 0)
+	if _, err = tmpFile.Read(header); err != nil {
+		return fmt.Errorf("unable to read asset header: %s", err)
 	}
 
 	// If file is an archive attempt to extract it
-	// NOTE(james): For demo purposes, super naive. Having this feature probably
-	// doesn't event make sense for the prod release..
-	switch r.Header.Get("Content-Type") {
-	case "application/x-tar":
+	fileKind, _ := filetype.Match(header)
+	switch {
+	case fileKind.MIME.Value == "application/x-tar":
+		tmpFile.Close()
 		if err = archiver.Tar.Open(tmpFile.Name(), d.path()); err != nil {
 			return fmt.Errorf("Unable to extract asset to cache directory. %s", err)
 		}
+	case fileKind.MIME.Value == "application/gzip":
+		tmpFile.Close()
+		if err = archiver.TarGz.Open(tmpFile.Name(), d.path()); err != nil {
+			return fmt.Errorf("Unable to extract asset to cache directory. %s", err)
+		}
 	default:
-		filename := filepath.Join(binDir, d.asset.Filename())
-		if err = os.Rename(tmpFile.Name(), filename); err != nil {
+		tmpFile.Seek(0, 0)
+		newFile, _ := os.Create(filepath.Join(binDir, d.asset.Filename()))
+		if _, err = io.Copy(newFile, tmpFile); err != nil {
 			return fmt.Errorf("Unable to copy asset to cache directory. %s", err)
 		}
+		newFile.Sync()
+		newFile.Close()
 	}
+
+	// Write .completed file
+	d.markAsInstalled()
 
 	return nil
 }
