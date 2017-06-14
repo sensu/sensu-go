@@ -27,7 +27,7 @@ func TestCreateAccessToken(t *testing.T) {
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
 	mockConfig.On("GetString", "api-url").Return("")
-	mockConfig.On("GetString", "secret").Return("")
+	mockConfig.On("GetString", "access-token").Return("")
 
 	token, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.NoError(t, err)
@@ -47,7 +47,7 @@ func TestCreateAccessTokenForbidden(t *testing.T) {
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
 	mockConfig.On("GetString", "api-url").Return("")
-	mockConfig.On("GetString", "secret").Return("")
+	mockConfig.On("GetString", "access-token").Return("")
 
 	_, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.Error(t, err)
@@ -69,7 +69,7 @@ func TestRefreshAccessToken(t *testing.T) {
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
 	mockConfig.On("GetString", "api-url").Return(server.URL)
-	mockConfig.On("GetString", "secret").Return("foo")
+	mockConfig.On("GetString", "access-token").Return("foo")
 
 	token, err := client.RefreshAccessToken("bar")
 	assert.NoError(t, err)
@@ -89,7 +89,7 @@ func TestRefreshAccessTokenForbidden(t *testing.T) {
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
 	mockConfig.On("GetString", "api-url").Return(server.URL)
-	mockConfig.On("GetString", "secret").Return("foo")
+	mockConfig.On("GetString", "access-token").Return("foo")
 
 	_, err := client.RefreshAccessToken("bar")
 	assert.Error(t, err)

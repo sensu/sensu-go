@@ -12,7 +12,7 @@ import (
 
 type answers struct {
 	URL      string `survey:"url"`
-	UserID   string `survey:"userid"`
+	Username string `survey:"username"`
 	Password string
 	Output   string
 }
@@ -42,7 +42,9 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Authenticate
-			token, err := cli.Client.CreateAccessToken(configValues.URL, configValues.UserID, configValues.Password)
+			token, err := cli.Client.CreateAccessToken(
+				configValues.URL, configValues.Username, configValues.Password,
+			)
 			if err != nil {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),
@@ -93,15 +95,21 @@ func askForURL(config clientconfig.Config) *survey.Question {
 	url := config.GetString("api-url")
 
 	return &survey.Question{
-		Name:   "url",
-		Prompt: &survey.Input{"Sensu Base URL:", url},
+		Name: "url",
+		Prompt: &survey.Input{
+			Message: "Sensu Base URL:",
+			Default: url,
+		},
 	}
 }
 
 func askForUsername() *survey.Question {
 	return &survey.Question{
-		Name:   "userid",
-		Prompt: &survey.Input{"Email:", ""},
+		Name: "username",
+		Prompt: &survey.Input{
+			Message: "Username:",
+			Default: "",
+		},
 	}
 }
 

@@ -42,7 +42,6 @@ func newCredentialsConfig() (*viper.Viper, error) {
 	v.SetEnvPrefix("SENSU")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.BindEnv("api-url")
-	v.BindEnv("secret")
 
 	// Configuration file
 	v.SetConfigFile(CredentialsFilePath)

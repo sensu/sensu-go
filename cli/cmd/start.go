@@ -52,7 +52,6 @@ func configureRootCmd() *cobra.Command {
 
 	// Global flags
 	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
-	cmd.PersistentFlags().StringP("api-secret", "", "", "secret used to authorize your requests to your specified Sensu installation")
 	cmd.PersistentFlags().StringP("profile", "", "default", "configuration values to use")
 
 	return cmd

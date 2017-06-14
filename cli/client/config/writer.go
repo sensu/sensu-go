@@ -38,7 +38,7 @@ func (c *MultiConfig) WriteCredentials(tokens *types.Tokens) error {
 	}
 
 	// Update profile
-	writer.set("secret", tokens.Access)
+	writer.set("access-token", tokens.Access)
 	writer.set("refresh-token", tokens.Refresh)
 	writer.set("expires-at", tokens.ExpiresAt)
 

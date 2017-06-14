@@ -129,7 +129,7 @@ func (client *RestClient) configure() {
 
 	// Set URL & access token
 	restyInst.SetHostURL(config.GetString("api-url"))
-	restyInst.SetAuthToken(config.GetString("secret"))
+	restyInst.SetAuthToken(config.GetString("access-token"))
 
 	client.configured = true
 }

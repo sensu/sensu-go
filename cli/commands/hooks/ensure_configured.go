@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"errors"
+
 	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,7 @@ const (
 )
 
 // ConfigurationPresent - unless the given command specifies that configuration
-// is not required, func checks that host & secret have been configured.
+// is not required, func checks that host & access-token have been configured.
 func ConfigurationPresent(cmd *cobra.Command, cli *cli.SensuCli) error {
 	// If the command was configured to ignore whether or not the CLI has been
 	// configured stop execution.
@@ -33,8 +34,8 @@ func ConfigurationPresent(cmd *cobra.Command, cli *cli.SensuCli) error {
 		return nil
 	}
 
-	// Check that both a URL and a secret are present
-	if cli.Config.GetString("api-url") == "" || cli.Config.GetString("secret") == "" {
+	// Check that both a URL and an access token are present
+	if cli.Config.GetString("api-url") == "" || cli.Config.GetString("access-token") == "" {
 		return errors.New("Unable to locate credentials. You can configure credentials by running \"sensu-cli configure\"")
 	}
 

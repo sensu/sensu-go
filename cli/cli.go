@@ -19,7 +19,6 @@ type SensuCli struct {
 func New(flags *pflag.FlagSet) *SensuCli {
 	clientConfig, _ := clientconfig.NewConfig()
 	clientConfig.BindPFlag("api-url", flags.Lookup("api-url"))
-	clientConfig.BindPFlag("secret", flags.Lookup("api-secret"))
 	clientConfig.BindPFlag("profile", flags.Lookup("profile"))
 
 	client := client.New(clientConfig)
