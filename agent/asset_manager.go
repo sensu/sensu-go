@@ -222,13 +222,11 @@ func (d *ManagedAsset) fetch() (*http.Response, error) {
 // Downloads the given depdencies asset to the cache directory.
 // TODO(james): ugly; too many responsibilities
 func (d *ManagedAsset) install() error {
-	// Check that asset hasn't already been installed
-	if cached, err := d.isInstalled(); cached || err != nil {
-		return err
-	}
-
 	// Ensure that cache directory exists before we attempt to write the contents
 	// of our asset to it.
+	//
+	// TODO (james): it is not ideal that we have to create this directory before
+	// obtaining the lock.
 	binDir := filepath.Join(d.path(), "bin")
 	if err := os.MkdirAll(binDir, 0755); err != nil {
 		return fmt.Errorf("unable to create cache directory '%s': %s", d.path(), err.Error())
@@ -238,6 +236,12 @@ func (d *ManagedAsset) install() error {
 	lockfile, err := d.awaitLock()
 	if err != nil {
 		return fmt.Errorf("unable to obtain a lock for asset '%s' in a timely manner", d.asset.Name)
+	}
+	defer lockfile.Unlock()
+
+	// Check that asset hasn't already been installed
+	if cached, err := d.isInstalled(); cached || err != nil {
+		return err
 	}
 
 	logger.WithFields(logrus.Fields{
@@ -313,9 +317,6 @@ func (d *ManagedAsset) install() error {
 
 	// Write .completed file
 	d.markAsInstalled()
-
-	// Unlock directory so we allow others others to write again
-	lockfile.Unlock()
 
 	return nil
 }
