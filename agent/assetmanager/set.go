@@ -51,8 +51,6 @@ func (setPtr *RuntimeAssetSet) computeEnv(baseEnv []string) {
 		pair := strings.Split(e, "=")
 		key, val := pair[0], pair[1]
 
-		// TODO: Currently, if the existing ENV did not include PATH, LD, etc.
-		// they will not be added.
 		switch key {
 		case "PATH":
 			val = injectPathsIntoEnvVar(assetPaths, val, "bin")

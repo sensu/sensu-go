@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -73,7 +74,7 @@ func (suite *AssetSetTestSuite) TestManagerPaths() {
 }
 
 func (suite *AssetSetTestSuite) TestComputeEnv() {
-	suite.asset.path = "/test"
+	suite.asset.path = filepath.Join("tmp", "test")
 	suite.assetSet.computeEnv([]string{
 		"PATH=tmp/bin",
 		"LD_LIBRARY_PATH=tmp/lib",

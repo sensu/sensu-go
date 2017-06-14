@@ -3,6 +3,7 @@ package assetmanager
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -19,7 +20,7 @@ func New(agentCacheDir string) *Manager {
 	manager.store = NewAssetStore()
 	manager.factory = &AssetFactory{
 		CacheDir: agentCacheDir,
-		BaseEnv:  os.Environ(),
+		BaseEnv:  getSystemEnviron(),
 	}
 
 	return manager
@@ -47,6 +48,34 @@ func (mngrPtr *Manager) SetCacheDir(baseDir string) {
 //
 // NOTE: Cache on disk is not cleared.
 func (mngrPtr *Manager) Reset() {
-	mngrPtr.factory.BaseEnv = os.Environ()
+	mngrPtr.factory.BaseEnv = getSystemEnviron()
 	mngrPtr.store.Clear()
+}
+
+// Get system ENV variables and append any PATH, LD_LIBRARY_PATH,  & CPATH if
+// missing.
+func getSystemEnviron() []string {
+	env := os.Environ()
+	presentVars := map[string]bool{
+		"PATH":            false,
+		"LD_LIBRARY_PATH": false,
+		"CPATH":           false,
+	}
+
+	for _, e := range env {
+		pair := strings.Split(e, "=")
+		key, _ := pair[0], pair[1]
+
+		if presentVars[key] != true {
+			presentVars[key] = true
+		}
+	}
+
+	for key, val := range presentVars {
+		if val == false {
+			env = append(env, key+"=")
+		}
+	}
+
+	return env
 }

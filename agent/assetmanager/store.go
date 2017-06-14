@@ -32,15 +32,15 @@ func (storePtr *AssetStore) FetchAsset(asset *types.Asset, newFn newAssetFn) *Ru
 	key := asset.Hash
 
 	// Return asset if it is already in the store
-	if rAsset := storePtr.getAsset(key); rAsset != nil {
-		return rAsset
+	if runtimeAsset := storePtr.getAsset(key); runtimeAsset != nil {
+		return runtimeAsset
 	}
 
 	// Instantiate & store
-	rAsset := newFn(asset)
-	storePtr.setAsset(key, rAsset)
+	runtimeAsset := newFn(asset)
+	storePtr.setAsset(key, runtimeAsset)
 
-	return rAsset
+	return runtimeAsset
 }
 
 func (storePtr *AssetStore) getAsset(key string) *RuntimeAsset {
