@@ -12,28 +12,32 @@ import (
 
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(payload []byte) error {
-	checkConfig := &types.CheckConfig{}
-	err := json.Unmarshal(payload, checkConfig)
+	request := &types.CheckRequest{}
+	err := json.Unmarshal(payload, request)
 	if err != nil {
 		return err
 	}
 
-	if checkConfig == nil {
+	if request == nil {
 		return errors.New("given check configuration appears invalid")
 	}
 
+	checkConfig := request.Config
 	if err := checkConfig.Validate(); err != nil {
 		return err
 	}
 
 	logger.Info("scheduling check execution: ", checkConfig.Name)
 
-	go a.executeCheck(checkConfig)
+	go a.executeCheck(request)
 
 	return nil
 }
 
-func (a *Agent) executeCheck(checkConfig *types.CheckConfig) {
+func (a *Agent) executeCheck(request *types.CheckRequest) {
+	checkConfig := request.Config
+	checkAssets := request.ExpandedAssets
+
 	// Ensure that the asset manager is aware of all the assets required to
 	// execute the given check.
 	assets := a.assetManager.RegisterSet(checkConfig.RuntimeAssets)

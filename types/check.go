@@ -6,8 +6,17 @@ import (
 	"time"
 )
 
-// CheckConfigType is the message type string for check configurations.
-const CheckConfigType = "check_config"
+// CheckRequestType is the message type string for check request.
+const CheckRequestType = "check_request"
+
+// A CheckRequest represents a request to execute a check
+type CheckRequest struct {
+	// Config is the specification of a check.
+	Config *CheckConfig `json:"config,omitempty"`
+
+	// ExpandedAssets are a list of assets required to execute check.
+	ExpandedAssets []Asset `json:"assets,omitempty"`
+}
 
 // A Check is a check specification and optionally the results of the check's
 // execution.
@@ -53,7 +62,7 @@ type CheckConfig struct {
 	Handlers []string `json:"handlers"`
 
 	// RuntimeAssets are a list of assets required to execute check.
-	RuntimeAssets []Asset `json:"runtime_assets"`
+	RuntimeAssets []string `json:"runtime_assets"`
 
 	// Organization indicates to which org a check belongs to
 	Organization string `json:"organization"`
@@ -93,11 +102,12 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("organization must be set")
 	}
 
-	for _, asset := range c.RuntimeAssets {
-		if err := asset.Validate(); err != nil {
-			return err
-		}
-	}
+	// TODO: Validate given assets for likely duplicates
+	// for _, asset := range c.RuntimeAssets {
+	// 	if err := asset.Validate(); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -148,7 +158,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Subscriptions: []string{},
 		Command:       "command",
 		Handlers:      []string{},
-		RuntimeAssets: []Asset{},
+		RuntimeAssets: []string{"ruby-2-4-2"},
 		Organization:  "default",
 	}
 }

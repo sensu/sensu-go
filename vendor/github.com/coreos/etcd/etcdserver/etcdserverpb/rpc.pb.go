@@ -223,6 +223,35 @@ func (m *ResponseHeader) String() string            { return proto.CompactTextSt
 func (*ResponseHeader) ProtoMessage()               {}
 func (*ResponseHeader) Descriptor() ([]byte, []int) { return fileDescriptorRpc, []int{0} }
 
+// Pulled in from https://github.com/coreos/etcd/commit/4ebeba0e1802fcf3ab3defe37566447fe7899ee9
+func (m *ResponseHeader) GetClusterId() uint64 {
+	if m != nil {
+		return m.ClusterId
+	}
+	return 0
+}
+
+func (m *ResponseHeader) GetMemberId() uint64 {
+	if m != nil {
+		return m.MemberId
+	}
+	return 0
+}
+
+func (m *ResponseHeader) GetRevision() int64 {
+	if m != nil {
+		return m.Revision
+	}
+	return 0
+}
+
+func (m *ResponseHeader) GetRaftTerm() uint64 {
+	if m != nil {
+		return m.RaftTerm
+	}
+	return 0
+}
+
 type RangeRequest struct {
 	// key is the first key for the range. If range_end is not given, the request only looks up key.
 	Key []byte `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`

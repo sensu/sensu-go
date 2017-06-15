@@ -11,54 +11,47 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// CheckScheduler TODO
+// A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
-	MessageBus  messaging.MessageBus
-	Store       store.Store
-	CheckConfig *types.CheckConfig
+	CheckName string
+	CheckOrg  string
 
-	wg       *sync.WaitGroup
+	Cache      *CheckCache
+	MessageBus messaging.MessageBus
+	WaitGroup  *sync.WaitGroup
+
 	stopping chan struct{}
 }
 
 // Start scheduler, ...
-func (s *CheckScheduler) Start() error {
+func (s *CheckScheduler) Start(initialInterval int64) error {
 	s.stopping = make(chan struct{})
+	s.WaitGroup.Add(1)
 
-	splayHash := calcExecutionSplay(s.CheckConfig.Name)
+	splayHash := calcExecutionSplay(s.CheckName)
 
-	s.wg.Add(1)
 	// TODO(greg): Refactor this part to make the code more easily tested.
 	go func() {
-		nextExecution := calcNextExecution(splayHash, s.CheckConfig.Interval)
+		nextExecution := calcNextExecution(splayHash, initialInterval)
 		timer := time.NewTimer(nextExecution)
 
-		defer s.wg.Done()
+		defer s.WaitGroup.Done()
 		for {
 			select {
 			case <-timer.C:
-				checkConfig, err := s.Store.GetCheckConfigByName(s.CheckConfig.Organization, s.CheckConfig.Name)
-				if err != nil {
-					logger.Info("error getting check from store: ", err.Error())
-					// TODO(grep): what do we do when we cannot talk to the store?
-					continue
-				}
-
-				if checkConfig == nil {
+				request := s.buildRequest()
+				if request == nil {
 					// The check has been deleted, and there was no error talking to etcd.
 					timer.Stop()
 					close(s.stopping)
 					return
 				}
 
-				// update our pointer to the check
-				s.CheckConfig = checkConfig
-
 				timer.Reset(time.Duration(time.Second * time.Duration(checkConfig.Interval)))
-				for _, sub := range checkConfig.Subscriptions {
-					topic := messaging.SubscriptionTopic(s.CheckConfig.Organization, sub)
-					logger.Debugf("Sending check request for %s on topic %s", s.CheckConfig.Name, topic)
-					if err := s.MessageBus.Publish(topic, checkConfig); err != nil {
+				for _, sub := range request.Config.Subscriptions {
+					topic := messaging.SubscriptionTopic(s.CheckOrg, sub)
+					logger.Debugf("Sending check request for %s on topic %s", s.CheckName, topic)
+					if err := s.MessageBus.Publish(topic, request); err != nil {
 						logger.Info("error publishing check request: ", err.Error())
 					}
 				}
@@ -74,8 +67,43 @@ func (s *CheckScheduler) Start() error {
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
 	close(s.stopping)
-	s.wg.Wait()
+	s.WaitGroup.Wait()
 	return nil
+}
+
+func (s *CheckScheduler) buildRequest() (*types.CheckRequest, error) {
+	cache := s.Cache
+	request := &types.CheckRequest{}
+
+	// Get Check
+	check := cache.GetCheck(s.CheckName, s.CheckOrg)
+	request.Check = check
+
+	if check == nil {
+		return nil
+	}
+
+	// Guard against iterating over assets if there are no assets associated with
+	// the check in the first place.
+	if len(check.RuntimeAssets) == 0 {
+		return request
+	}
+
+	// Get Assets & filter out those that are irrelevant
+	allAssets := cache.GetAssetsInOrg(s.CheckOrg)
+	for _, asset := range allAssets {
+		if assetIsRelevant(asset, check) {
+			request.Assets = append(request.Assets, asset)
+		}
+	}
+
+	return request
+}
+
+func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
+	for _, assetName := range check.RuntimeAssets {
+		return strings.HasPrefix(asset.Name, assetName)
+	}
 }
 
 // Calculate a check execution splay to ensure
