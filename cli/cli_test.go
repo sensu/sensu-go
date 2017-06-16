@@ -12,7 +12,8 @@ func TestNew(t *testing.T) {
 
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	flags.String("api-url", "", "")
-	flags.String("profile", "", "")
+	flags.Set("api-url", "http://localhost:8080")
+
 	c := New(flags)
 
 	// Ensure that given SensuCli instance is complete
@@ -21,10 +22,5 @@ func TestNew(t *testing.T) {
 	assert.NotNil(c.Client, "New should include Client")
 	assert.NotNil(c.Logger, "New should include Logger")
 
-	// Ensure that flags are correctly set
-	flags.Set("api-url", "http://localhost:8080")
-	flags.Set("profile", "sensu")
-
-	assert.Equal(c.Config.GetString("api-url"), "http://localhost:8080")
-	assert.Equal(c.Config.GetString("profile"), "sensu")
+	assert.Equal(c.Config.APIUrl(), "http://localhost:8080")
 }

@@ -32,7 +32,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Write new API URL to disk
-			if err = cli.Config.WriteURL(configValues.URL); err != nil {
+			if err = cli.Config.SaveAPIUrl(configValues.URL); err != nil {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),
 					"Unable to write new configuration file with error: %s.\n",
@@ -42,7 +42,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Authenticate
-			token, err := cli.Client.CreateAccessToken(
+			tokens, err := cli.Client.CreateAccessToken(
 				configValues.URL, configValues.Username, configValues.Password,
 			)
 			if err != nil {
@@ -52,13 +52,13 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 					err,
 				)
 				return
-			} else if token == nil {
+			} else if tokens == nil {
 				fmt.Fprintln(cmd.OutOrStderr(), "Bad username or password.")
 				return
 			}
 
 			// Write new credentials to disk
-			if err = cli.Config.WriteCredentials(token); err != nil {
+			if err = cli.Config.SaveTokens(tokens); err != nil {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),
 					"Unable to write new configuration file with error: %s\n",
@@ -92,7 +92,7 @@ func gatherConfigValues(config clientconfig.Config) (*answers, error) {
 }
 
 func askForURL(config clientconfig.Config) *survey.Question {
-	url := config.GetString("api-url")
+	url := config.APIUrl()
 
 	return &survey.Question{
 		Name: "url",

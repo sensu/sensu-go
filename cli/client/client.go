@@ -50,15 +50,15 @@ func New(config config.Config) *RestClient {
 			return nil
 		}
 
-		expiry := config.GetTime("expires-at")
-		refreshToken := config.GetString("refresh-token")
+		tokens := config.Tokens()
+		expiry := time.Unix(tokens.ExpiresAt, 0)
 
 		// No-op if token has not yet expired
 		if hasExpired := expiry.Before(time.Now()); !hasExpired {
 			return nil
 		}
 
-		if refreshToken == "" {
+		if tokens.Refresh == "" {
 			return errors.New("configured access token has expired")
 		}
 
@@ -67,7 +67,7 @@ func New(config config.Config) *RestClient {
 
 		// TODO: Move this into it's own file / package
 		// Request a new access token from the server
-		tokens, err := client.RefreshAccessToken(refreshToken)
+		tokens, err := client.RefreshAccessToken(tokens.Refresh)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to request new refresh token; client returned '%s'",
@@ -76,7 +76,7 @@ func New(config config.Config) *RestClient {
 		}
 
 		// Write new tokens to disk
-		err = config.WriteCredentials(tokens)
+		err = config.SaveTokens(tokens)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to update configuration with new refresh token (%s)",
@@ -128,8 +128,12 @@ func (client *RestClient) configure() {
 	config := client.config
 
 	// Set URL & access token
-	restyInst.SetHostURL(config.GetString("api-url"))
-	restyInst.SetAuthToken(config.GetString("access-token"))
+	restyInst.SetHostURL(config.APIUrl())
+
+	tokens := config.Tokens()
+	if tokens != nil && tokens.Access != "" {
+		restyInst.SetAuthToken(tokens.Access)
+	}
 
 	client.configured = true
 }

@@ -35,7 +35,8 @@ func ConfigurationPresent(cmd *cobra.Command, cli *cli.SensuCli) error {
 	}
 
 	// Check that both a URL and an access token are present
-	if cli.Config.GetString("api-url") == "" || cli.Config.GetString("access-token") == "" {
+	tokens := cli.Config.Tokens()
+	if cli.Config.APIUrl() == "" || tokens == nil || tokens.Access == "" {
 		return errors.New("Unable to locate credentials. You can configure credentials by running \"sensu-cli configure\"")
 	}
 

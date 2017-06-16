@@ -11,7 +11,7 @@ import (
 // configuration the user's configured default format is used as the flag's
 // default value.
 func AddFormatFlag(flags *pflag.FlagSet, config clientconfig.Config) {
-	defaultFormat := config.GetString("format")
+	defaultFormat := config.Format()
 
 	// Ensure that the configured default is trimmed and all lowercase
 	// to match our command's expectations of a format.

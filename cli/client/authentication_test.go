@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	config "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 
 	resty "gopkg.in/resty.v0"
@@ -26,8 +27,8 @@ func TestCreateAccessToken(t *testing.T) {
 	restyInst := resty.New()
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
-	mockConfig.On("GetString", "api-url").Return("")
-	mockConfig.On("GetString", "access-token").Return("")
+	mockConfig.On("APIUrl").Return("")
+	mockConfig.On("Tokens").Return(&types.Tokens{})
 
 	token, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.NoError(t, err)
@@ -46,8 +47,8 @@ func TestCreateAccessTokenForbidden(t *testing.T) {
 	restyInst := resty.New()
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
-	mockConfig.On("GetString", "api-url").Return("")
-	mockConfig.On("GetString", "access-token").Return("")
+	mockConfig.On("APIUrl").Return("")
+	mockConfig.On("Tokens").Return(&types.Tokens{})
 
 	_, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.Error(t, err)
@@ -68,8 +69,8 @@ func TestRefreshAccessToken(t *testing.T) {
 	restyInst := resty.New()
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
-	mockConfig.On("GetString", "api-url").Return(server.URL)
-	mockConfig.On("GetString", "access-token").Return("foo")
+	mockConfig.On("APIUrl").Return(server.URL)
+	mockConfig.On("Tokens").Return(&types.Tokens{Access: "foo"})
 
 	token, err := client.RefreshAccessToken("bar")
 	assert.NoError(t, err)
@@ -88,8 +89,8 @@ func TestRefreshAccessTokenForbidden(t *testing.T) {
 	restyInst := resty.New()
 	client := &RestClient{resty: restyInst, config: mockConfig}
 
-	mockConfig.On("GetString", "api-url").Return(server.URL)
-	mockConfig.On("GetString", "access-token").Return("foo")
+	mockConfig.On("APIUrl").Return(server.URL)
+	mockConfig.On("Tokens").Return(&types.Tokens{Access: "foo"})
 
 	_, err := client.RefreshAccessToken("bar")
 	assert.Error(t, err)
