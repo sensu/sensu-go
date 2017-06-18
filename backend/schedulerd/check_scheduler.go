@@ -28,26 +28,27 @@ func (s *CheckScheduler) Start(initialInterval int64) error {
 	s.stopping = make(chan struct{})
 	s.WaitGroup.Add(1)
 
-	splayHash := calcExecutionSplay(s.CheckName)
+	timer := NewCheckTimer(s.CheckName, initialInterval)
 
 	// TODO(greg): Refactor this part to make the code more easily tested.
 	go func() {
-		nextExecution := calcNextExecution(splayHash, initialInterval)
-		timer := time.NewTimer(nextExecution)
-
+		timer.Start()
+		defer timer.Stop()
 		defer s.WaitGroup.Done()
+
 		for {
 			select {
 			case <-timer.C:
 				request := s.buildRequest()
 				if request == nil {
 					// The check has been deleted, and there was no error talking to etcd.
-					timer.Stop()
 					close(s.stopping)
 					return
 				}
 
-				timer.Reset(time.Duration(time.Second * time.Duration(checkConfig.Interval)))
+				timer.SetInterval(request.Config.Interval)
+				timer.Next()
+
 				for _, sub := range request.Config.Subscriptions {
 					topic := messaging.SubscriptionTopic(s.CheckOrg, sub)
 					logger.Debugf("Sending check request for %s on topic %s", s.CheckName, topic)
@@ -56,7 +57,6 @@ func (s *CheckScheduler) Start(initialInterval int64) error {
 					}
 				}
 			case <-s.stopping:
-				timer.Stop()
 				return
 			}
 		}
@@ -106,19 +106,51 @@ func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
 	}
 }
 
-// Calculate a check execution splay to ensure
-// execution is consistent between process restarts.
-func calcExecutionSplay(checkName string) uint64 {
-	sum := md5.Sum([]byte(checkName))
-
-	return binary.LittleEndian.Uint64(sum[:])
+// A CheckTimer handles starting a stopping timers for a given check
+type CheckTimer struct {
+	interval time.Duration
+	splay    uint64
+	timer    *time.Timer
 }
 
-// Calculate the next execution time for a given time and a check interval
-// (in seconds) as an int.
-func calcNextExecution(splay uint64, intervalSeconds int) time.Duration {
-	// current_time = (Time.now.to_f * 1000).to_i
+// NewCheckTimer establishes new check timer given a name & an initial interval
+func NewCheckTimer(name string, interval int) *CheckTimer {
+	// Calculate a check execution splay to ensure
+	// execution is consistent between process restarts.
+	sum := md5.Sum([]byte(name))
+	splay := binary.LittleEndian.Uint64(sum[:])
+
+	timer := &CheckTimer{splay: splay}
+	timer.SetInterval(interval)
+	return timer
+}
+
+// C channel emits events when timer's duration has reaached 0
+func (timerPtr *CheckTimer) C() <-chan Time {
+	return timerPtr.timer.C
+}
+
+// SetInterval updates the interval in which timers are set
+func (timerPtr *CheckTimer) SetInterval(i int) {
+	timerPrt.interval = time.Duration(time.Second * time.Duration(i))
+}
+
+// Start sets up a new timer
+func (timerPtr *CheckTimer) Start() {
+	// Calculate the first execution time using splay & interval
 	now := time.Now().UnixNano() / int64(time.Millisecond)
-	offset := (splay - uint64(now)) % uint64(intervalSeconds*1000)
-	return time.Duration(offset) * time.Millisecond
+	offset := (splay - uint64(now)) % uint64(timerPtr.interval)
+
+	// Initialize new timer w/ initial exec time
+	timerPtr.timer = time.NewTimer(time.Duration(offset) * time.Millisecond)
+}
+
+// Next reset's timer using interval
+func (timerPtr *CheckTimer) Next() {
+	timerPtr.timer.Reset(timer.interval)
+}
+
+// Stop ends the timer
+func (timerPtr *CheckTimer) Stop() {
+	timerPtr.timer.Stop()
 }

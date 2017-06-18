@@ -21,12 +21,12 @@ type SyncronizeChecks struct {
 
 // Sync fetches results from the store and passes them up w/ given handler
 func (syncPtr *CheckSyncer) Sync() error {
-	if results, err = syncPtr.Store.GetCheck(""); err != nil {
-		return err
+	results, err = syncPtr.Store.GetCheck("")
+	if err == nil {
+		syncPtr.OnUpdate(results)
 	}
 
-	syncPtr.OnUpdate(results)
-	return nil
+	return err
 }
 
 // SyncronizeAssets fetches assets from the store and bubbles up results
@@ -37,11 +37,11 @@ type SyncronizeAssets struct {
 
 // Sync fetches results from the store and passes them up w/ given handler
 func (syncPtr *AssetSyncer) Sync() error {
-	if results, err = syncPtr.Store.GetAsset(""); err != nil {
-		return err
+	results, err = syncPtr.Store.GetAsset("")
+	if err == nil {
+		syncPtr.OnUpdate(results)
 	}
 
-	syncPtr.OnUpdate(results)
 	return nil
 }
 
