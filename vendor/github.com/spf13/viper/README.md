@@ -12,7 +12,7 @@ Many Go projects are built using Viper including:
 * [BloomApi](https://www.bloomapi.com/)
 * [doctl](https://github.com/digitalocean/doctl)
 
- [![Build Status](https://travis-ci.org/spf13/viper.svg)](https://travis-ci.org/spf13/viper) [![Join the chat at https://gitter.im/spf13/viper](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spf13/viper?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/spf13/viper.svg)](https://travis-ci.org/spf13/viper) [![Join the chat at https://gitter.im/spf13/viper](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spf13/viper?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![GoDoc](https://godoc.org/github.com/spf13/viper?status.svg)](https://godoc.org/github.com/spf13/viper)
 
 
 ## What is Viper?
@@ -277,10 +277,10 @@ Viper provides two Go interfaces to bind other flag systems if you don't use `Pf
 
 ```go
 type myFlag struct {}
-func (f myFlag) IsChanged() { return false }
-func (f myFlag) Name() { return "my-flag-name" }
-func (f myFlag) ValueString() { return "my-flag-value" }
-func (f myFlag) ValueType() { return "string" }
+func (f myFlag) HasChanged() bool { return false }
+func (f myFlag) Name() string { return "my-flag-name" }
+func (f myFlag) ValueString() string { return "my-flag-value" }
+func (f myFlag) ValueType() string { return "string" }
 ```
 
 Once your flag implements this interface, you can simply tell Viper to bind it:
@@ -458,16 +458,17 @@ Viper can access a nested field by passing a `.` delimited path of keys:
 GetString("datastore.metric.host") // (returns "127.0.0.1")
 ```
 
-This obeys the precedence rules established above; the search for the root key
-(in this example, `datastore`) will cascade through the remaining configuration
-registries until found. The search for the sub-keys (`metric` and `host`),
-however, will not.
+This obeys the precedence rules established above; the search for the path
+will cascade through the remaining configuration registries until found.
 
-For example, if the `metric` key was not defined in the configuration loaded
-from file, but was defined in the defaults, Viper would return the zero value.
+For example, given this configuration file, both `datastore.metric.host` and
+`datastore.metric.port` are already defined (and may be overridden). If in addition
+`datastore.metric.protocol` was defined in the defaults, Viper would also find it.
 
-On the other hand, if the primary key was not defined, Viper would go through
-the remaining registries looking for it.
+However, if `datastore.metric` was overridden (by a flag, an environment variable,
+the `Set()` method, …) with an immediate value, then all sub-keys of
+`datastore.metric` become undefined, they are “shadowed” by the higher-priority
+configuration level.
 
 Lastly, if there exists a key that matches the delimited key path, its value
 will be returned instead. E.g.
@@ -491,7 +492,7 @@ will be returned instead. E.g.
     }
 }
 
-GetString("datastore.metric.host") //returns "0.0.0.0"
+GetString("datastore.metric.host") // returns "0.0.0.0"
 ```
 
 ### Extract sub-tree
@@ -574,13 +575,13 @@ initialization needed to begin using Viper. Since most applications will want
 to use a single central repository for their configuration, the viper package
 provides this. It is similar to a singleton.
 
-In all of the examples above, they demonstrate using viper in it's singleton
+In all of the examples above, they demonstrate using viper in its singleton
 style approach.
 
 ### Working with multiple vipers
 
 You can also create many different vipers for use in your application. Each will
-have it’s own unique set of configurations and values. Each can read from a
+have its own unique set of configurations and values. Each can read from a
 different config file, key value store, etc. All of the functions that viper
 package supports are mirrored as methods on a viper.
 
