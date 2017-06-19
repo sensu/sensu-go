@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -48,11 +49,27 @@ func (syncPtr *SyncronizeAssets) Sync() error {
 // A SyncResourceScheduler schedules synchronization handlers to be run at a
 // given interval.
 type SyncResourceScheduler struct {
-	Syncers  []ResourceSync
-	Interval int
+	Syncers []ResourceSync
 
+	interval  *atomic.Value
 	waitGroup *sync.WaitGroup
 	stopping  chan struct{}
+}
+
+// NewSyncResourceScheduler instantiates new scheduler to sync resources
+func NewSyncResourceScheduler(syncers []ResourceSync, interval int) *SyncResourceScheduler {
+	scheduler := &SyncResourceScheduler{
+		Syncers:   syncers,
+		interval:  &atomic.Value{},
+		waitGroup: &sync.WaitGroup{},
+	}
+	scheduler.SetInterval(interval)
+	return scheduler
+}
+
+// SetInterval ...
+func (recPtr *SyncResourceScheduler) SetInterval(i int) {
+	recPtr.interval.Store(i)
 }
 
 // Start the scheduler
@@ -64,7 +81,9 @@ func (recPtr *SyncResourceScheduler) Start() {
 	recPtr.waitGroup.Add(1)
 
 	go func() {
-		ticker := time.NewTicker(time.Duration(recPtr.Interval) * time.Second)
+		interval := recPtr.interval.Load().(int)
+		ticker := time.NewTicker(time.Duration(interval) * time.Second)
+
 		for {
 			select {
 			case <-recPtr.stopping:

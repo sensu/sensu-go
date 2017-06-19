@@ -8,6 +8,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const synchronizeMinInterval int = 90
+
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
@@ -41,9 +43,8 @@ func (s *Schedulerd) Start() error {
 	s.errChan = make(chan error, 1)
 
 	// Sync
-	s.syncResourceScheduler = &SyncResourceScheduler{
-		Interval: 30,
-		Syncers: []ResourceSync{
+	s.syncResourceScheduler = NewSyncResourceScheduler(
+		[]ResourceSync{
 			&SyncronizeChecks{
 				Store:    s.Store,
 				OnUpdate: s.checksUpdatedHandler,
@@ -53,7 +54,8 @@ func (s *Schedulerd) Start() error {
 				OnUpdate: s.assetsUpdatedHandler,
 			},
 		},
-	}
+		synchronizeMinInterval,
+	)
 	s.syncResourceScheduler.Start()
 
 	return nil
@@ -84,7 +86,7 @@ func (s *Schedulerd) checksUpdatedHandler(checks []*types.CheckConfig) {
 		state.SetChecks(checks)
 	})
 
-	minInterval := s.syncResourceScheduler.Interval
+	minInterval := synchronizeMinInterval
 	for _, check := range checks {
 		// Ensure check scheduler has the check
 		s.schedulerManager.Run(check)
@@ -96,7 +98,7 @@ func (s *Schedulerd) checksUpdatedHandler(checks []*types.CheckConfig) {
 	}
 
 	// Update sync interval
-	s.syncResourceScheduler.Interval = minInterval
+	s.syncResourceScheduler.SetInterval(minInterval)
 }
 
 func (s *Schedulerd) assetsUpdatedHandler(assets []*types.Asset) {

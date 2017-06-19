@@ -106,7 +106,6 @@ func (suite *TimerSuite) TestStop() {
 type CheckExecSuite struct {
 	suite.Suite
 	check  *types.CheckConfig
-	asset  *types.CheckConfig
 	exec   *CheckExecutor
 	msgBus messaging.MessageBus
 }
@@ -117,14 +116,13 @@ func (suite *CheckExecSuite) SetupTest() {
 
 	request := types.FixtureCheckRequest("check1")
 	asset := request.ExpandedAssets[0]
+	suite.check = request.Config
 
 	state := &SchedulerState{}
 	state.SetChecks([]*types.CheckConfig{request.Config})
 	state.SetAssets([]*types.Asset{&asset})
 
 	suite.exec = &CheckExecutor{
-		Name:  request.Config.Name,
-		Org:   request.Config.Organization,
 		State: state,
 		Bus:   suite.msgBus,
 	}
@@ -135,15 +133,19 @@ func (suite *CheckExecSuite) AfterTest() {
 }
 
 func (suite *CheckExecSuite) TestBuild() {
-	request, err := suite.exec.BuildRequest()
+	check := suite.check
+	request := suite.exec.BuildRequest(check)
+	suite.NotNil(request)
 	suite.NotNil(request.Config)
+	suite.NotNil(request.ExpandedAssets)
 	suite.NotEmpty(request.ExpandedAssets)
-	suite.NoError(err)
+	suite.Len(request.ExpandedAssets, 1)
 
-	suite.exec.Name = "asdfasdfasdf"
-	request, err = suite.exec.BuildRequest()
-	suite.Nil(request)
-	suite.Error(err)
+	check.RuntimeAssets = []string{}
+	request = suite.exec.BuildRequest(check)
+	suite.NotNil(request)
+	suite.NotNil(request.Config)
+	suite.Empty(request.ExpandedAssets)
 }
 
 func TestRunExecSuite(t *testing.T) {

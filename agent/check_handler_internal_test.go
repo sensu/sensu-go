@@ -15,8 +15,8 @@ var binDir = filepath.Join("..", "bin")
 var toolsDir = filepath.Join(binDir, "tools")
 
 func TestExecuteCheck(t *testing.T) {
-	request := types.FixtureCheckRequest("check")
-	checkConfig := request.Config
+	checkConfig := types.FixtureCheckConfig("check")
+	request := &types.CheckRequest{Config: checkConfig}
 
 	config := NewConfig()
 	agent := NewAgent(config)

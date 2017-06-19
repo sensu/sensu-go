@@ -3,7 +3,6 @@ package schedulerd
 import (
 	"crypto/md5"
 	"encoding/binary"
-	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -30,11 +29,7 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 	s.WaitGroup.Add(1)
 
 	timer := NewCheckTimer(s.CheckName, initialInterval)
-	executor := &CheckExecutor{
-		Name: s.CheckName,
-		Org:  s.CheckOrg,
-		Bus:  s.MessageBus,
-	}
+	executor := &CheckExecutor{Bus: s.MessageBus}
 
 	// TODO(greg): Refactor this part to make the code more easily tested.
 	go func() {
@@ -45,24 +40,25 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 		for {
 			select {
 			case <-timer.C():
-				// Point executor to lastest copy of the scheduler state
-				executor.State = s.StateManager.State()
+				// Fetch check from scheduler's state
+				state := s.StateManager.State()
+				check := state.GetCheck(s.CheckName, s.CheckOrg)
 
-				// Build new check request
-				request, err := executor.BuildRequest()
-
-				// The check has been deleted, and there was no error talking to etcd.
-				if err != nil {
+				// The check has been deleted
+				if check == nil {
 					close(s.stopping)
 					return
 				}
 
 				// Reset timer
-				timer.SetInterval(request.Config.Interval)
+				timer.SetInterval(check.Interval)
 				timer.Next()
 
+				// Point executor to lastest copy of the scheduler state
+				executor.State = state
+
 				// Publish check request
-				executor.Execute(request)
+				executor.Execute(check)
 			case <-s.stopping:
 				return
 			}
@@ -79,20 +75,20 @@ func (s *CheckScheduler) Stop() error {
 	return nil
 }
 
+// CheckExecutor builds request & publishes
 type CheckExecutor struct {
-	Name  string
-	Org   string
 	Bus   messaging.MessageBus
 	State *SchedulerState
 }
 
-func (execPtr *CheckExecutor) Execute(request *types.CheckRequest) error {
+// Execute queues reqest on message bus
+func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
 	var err error
-	config := request.Config
+	request := execPtr.BuildRequest(check)
 
-	for _, sub := range config.Subscriptions {
-		topic := messaging.SubscriptionTopic(config.Organization, sub)
-		logger.Debugf("Sending check request for %s on topic %s", config.Name, topic)
+	for _, sub := range check.Subscriptions {
+		topic := messaging.SubscriptionTopic(check.Organization, sub)
+		logger.Debugf("Sending check request for %s on topic %s", check.Name, topic)
 
 		if pubErr := execPtr.Bus.Publish(topic, request); err != nil {
 			logger.Info("error publishing check request: ", err.Error())
@@ -103,34 +99,26 @@ func (execPtr *CheckExecutor) Execute(request *types.CheckRequest) error {
 	return err
 }
 
-func (execPtr *CheckExecutor) BuildRequest() (*types.CheckRequest, error) {
+// BuildRequest given check config fetches associated assets and builds request
+func (execPtr *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.CheckRequest {
 	request := &types.CheckRequest{}
-
-	// Get Check
-	check := execPtr.State.GetCheck(execPtr.Name, execPtr.Org)
 	request.Config = check
-
-	// Guard against case whether check is no longer in the store; likely due to
-	// being deleted.
-	if check == nil {
-		return nil, errors.New("unable to find the check in the store")
-	}
 
 	// Guard against iterating over assets if there are no assets associated with
 	// the check in the first place.
 	if len(check.RuntimeAssets) == 0 {
-		return request, nil
+		return request
 	}
 
 	// Explode assets; get assets & filter out those that are irrelevant
-	allAssets := execPtr.State.GetAssetsInOrg(execPtr.Org)
+	allAssets := execPtr.State.GetAssetsInOrg(check.Organization)
 	for _, asset := range allAssets {
 		if assetIsRelevant(asset, check) {
 			request.ExpandedAssets = append(request.ExpandedAssets, *asset)
 		}
 	}
 
-	return request, nil
+	return request
 }
 
 func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {

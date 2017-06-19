@@ -45,28 +45,9 @@ func TestSyncronizeAssets(t *testing.T) {
 func TestSyncScheduler(t *testing.T) {
 	assert := assert.New(t)
 
-	scheduler := &SyncResourceScheduler{Interval: 30}
+	scheduler := NewSyncResourceScheduler([]ResourceSync{}, 30)
 	scheduler.Start()
 
 	err := scheduler.Stop()
 	assert.NoError(err)
 }
-
-// 	check1 := types.FixtureCheckConfig("check1")
-// 	store.On("GetCheckConfigs", "").Return([]*types.CheckConfig{check1}, nil)
-//
-// 	c := &Schedulerd{Store: store, wg: &sync.WaitGroup{}}
-// 	c.schedulers = newSchedulerCollection(nil, store)
-//
-// 	assert.Equal(t, 0, len(c.schedulers.items))
-//
-// 	c.reconcile()
-//
-// 	assert.Equal(t, 1, len(c.schedulers.items))
-//
-// 	var nilCheck *types.Check
-// 	store.On("GetCheckConfigByName", "default", "check1").Return(nilCheck, nil)
-// 	store.On("GetCheckConfigs", "").Return(nil, nil)
-//
-// 	assert.NoError(t, c.reconcile())
-// }

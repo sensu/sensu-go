@@ -25,7 +25,7 @@ func TestHttpApiAssetsGet(t *testing.T) {
 		types.FixtureAsset("one"),
 		types.FixtureAsset("two"),
 	}
-	store.On("GetAssets", "default", "").Return(assets, nil)
+	store.On("GetAssets", "default").Return(assets, nil)
 
 	req, _ := http.NewRequest("GET", "/assets", nil)
 	res := processRequest(a, req)
@@ -48,7 +48,7 @@ func TestHttpApiAssetsGetError(t *testing.T) {
 	}
 
 	var nilAssets []*types.Asset
-	store.On("GetAssets", "default", "").Return(nilAssets, errors.New("error"))
+	store.On("GetAssets", "default").Return(nilAssets, errors.New("error"))
 
 	req, _ := http.NewRequest("GET", "/assets", nil)
 	res := processRequest(a, req)

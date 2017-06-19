@@ -29,19 +29,18 @@ func (cachePtr *StateManager) State() *SchedulerState {
 
 // Update synchronously updates state w/ result of closure
 func (cachePtr *StateManager) Update(updateFn func(newState *SchedulerState)) {
-	// Shallow copy contents
-	newState := SchedulerState{
-		checks: cachePtr.state.checks,
-		assets: cachePtr.state.assets,
-	}
-
 	// Lock to avoid competing updates
 	cachePtr.mutex.Lock()
 	defer cachePtr.mutex.Unlock()
 
+	// Shallow copy content
+	oldState := cachePtr.state
+	newState := &SchedulerState{}
+	*newState = *oldState
+
 	// Pass to caller
-	updateFn(&newState)
-	cachePtr.state = &newState
+	updateFn(newState)
+	cachePtr.state = newState
 }
 
 // A SchedulerState represents the internal state of the cache
@@ -64,6 +63,7 @@ func (statePtr *SchedulerState) GetAssetsInOrg(org string) (res []*types.Asset) 
 	return
 }
 
+// SetChecks overwrites current set of checks w/ given
 func (statePtr *SchedulerState) SetChecks(checks []*types.CheckConfig) {
 	statePtr.checks = make(map[string]*types.CheckConfig)
 	for _, check := range checks {
@@ -71,6 +71,7 @@ func (statePtr *SchedulerState) SetChecks(checks []*types.CheckConfig) {
 	}
 }
 
+// SetAssets overwrites current set of assets w/ given
 func (statePtr *SchedulerState) SetAssets(assets []*types.Asset) {
 	statePtr.assets = make(map[string]map[string]*types.Asset)
 	for _, asset := range assets {

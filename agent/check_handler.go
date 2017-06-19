@@ -40,7 +40,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 
 	// Ensure that the asset manager is aware of all the assets required to
 	// execute the given check.
-	assets := a.assetManager.RegisterSet(checkConfig.RuntimeAssets)
+	assets := a.assetManager.RegisterSet(checkAssets)
 
 	ex := &command.Execution{
 		// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
