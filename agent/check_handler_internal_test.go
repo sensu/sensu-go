@@ -15,7 +15,8 @@ var binDir = filepath.Join("..", "bin")
 var toolsDir = filepath.Join(binDir, "tools")
 
 func TestExecuteCheck(t *testing.T) {
-	checkConfig := types.FixtureCheckConfig("check")
+	request := types.FixtureCheckRequest("check")
+	checkConfig := request.Config
 
 	config := NewConfig()
 	agent := NewAgent(config)
@@ -25,7 +26,7 @@ func TestExecuteCheck(t *testing.T) {
 	truePath := util.CommandPath(filepath.Join(toolsDir, "true"))
 	checkConfig.Command = truePath
 
-	agent.executeCheck(checkConfig)
+	agent.executeCheck(request)
 
 	msg := <-ch
 
@@ -37,7 +38,7 @@ func TestExecuteCheck(t *testing.T) {
 	falsePath := util.CommandPath(filepath.Join(toolsDir, "false"))
 	checkConfig.Command = falsePath
 
-	agent.executeCheck(checkConfig)
+	agent.executeCheck(request)
 
 	msg = <-ch
 

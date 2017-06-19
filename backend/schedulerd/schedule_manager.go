@@ -4,7 +4,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/coreos/etcd/store"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
 )
@@ -20,18 +19,18 @@ type ScheduleManager struct {
 	createScheduler func(check *types.CheckConfig) *CheckScheduler
 }
 
-func newScheduleManager(msgBus messaging.MessageBus, cache *CheckCache) *ScheduleManager {
+func newScheduleManager(msgBus messaging.MessageBus, state *StateManager) *ScheduleManager {
 	wg := &sync.WaitGroup{}
 	stopped := &atomic.Value{}
 	stopped.Store(false)
 
 	createScheduler := func(check *types.CheckConfig) *CheckScheduler {
 		return &CheckScheduler{
-			CheckName:  check.Name,
-			CheckOrg:   check.Organization,
-			MessageBus: msgBus,
-			WaitGroup:  wg,
-			Cache:      cache,
+			CheckName:    check.Name,
+			CheckOrg:     check.Organization,
+			MessageBus:   msgBus,
+			WaitGroup:    wg,
+			StateManager: state,
 		}
 	}
 

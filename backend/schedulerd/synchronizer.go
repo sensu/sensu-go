@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/etcd/store"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -16,12 +16,12 @@ type ResourceSync interface {
 // SyncronizeChecks fetches checks from the store and bubbles up results
 type SyncronizeChecks struct {
 	Store    store.CheckConfigStore
-	OnUpdate func(*[]types.Check)
+	OnUpdate func([]*types.CheckConfig)
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *CheckSyncer) Sync() error {
-	results, err = syncPtr.Store.GetCheck("")
+func (syncPtr *SyncronizeChecks) Sync() error {
+	results, err := syncPtr.Store.GetCheckConfigs("")
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}
@@ -32,38 +32,39 @@ func (syncPtr *CheckSyncer) Sync() error {
 // SyncronizeAssets fetches assets from the store and bubbles up results
 type SyncronizeAssets struct {
 	Store    store.AssetStore
-	OnUpdate func(*[]types.Asset)
+	OnUpdate func([]*types.Asset)
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *AssetSyncer) Sync() error {
-	results, err = syncPtr.Store.GetAsset("")
+func (syncPtr *SyncronizeAssets) Sync() error {
+	results, err := syncPtr.Store.GetAssets("")
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}
 
-	return nil
+	return err
 }
 
 // A SyncResourceScheduler schedules synchronization handlers to be run at a
 // given interval.
 type SyncResourceScheduler struct {
 	Syncers  []ResourceSync
-	Interval uint64
+	Interval int
 
 	waitGroup *sync.WaitGroup
 	stopping  chan struct{}
 }
 
 // Start the scheduler
-func (recPtr *CheckReconciler) Start() {
+func (recPtr *SyncResourceScheduler) Start() {
 	recPtr.Sync()
 
 	recPtr.stopping = make(chan struct{})
+	recPtr.waitGroup = &sync.WaitGroup{}
 	recPtr.waitGroup.Add(1)
 
 	go func() {
-		ticker := time.NewTicker(recPtr.Interval * time.Second)
+		ticker := time.NewTicker(time.Duration(recPtr.Interval) * time.Second)
 		for {
 			select {
 			case <-recPtr.stopping:
@@ -78,14 +79,15 @@ func (recPtr *CheckReconciler) Start() {
 }
 
 // Sync executes all syncronizers
-func (recPtr *CheckReconciler) Sync() {
+func (recPtr *SyncResourceScheduler) Sync() {
 	for _, syncer := range recPtr.Syncers {
 		go syncer.Sync()
 	}
 }
 
 // Stop the scheduler
-func (recPtr *CheckReconciler) Stop() error {
+func (recPtr *SyncResourceScheduler) Stop() error {
 	close(recPtr.stopping)
 	recPtr.waitGroup.Wait()
+	return nil
 }

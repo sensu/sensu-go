@@ -148,6 +148,18 @@ func (c *Check) MergeWith(chk *Check) {
 	c.History = history
 }
 
+// FixtureCheckRequest returns a fixture for a CheckRequest object.
+func FixtureCheckRequest(id string) *CheckRequest {
+	config := FixtureCheckConfig(id)
+
+	return &CheckRequest{
+		Config: config,
+		ExpandedAssets: []Asset{
+			*FixtureAsset("ruby-2-4-2"),
+		},
+	}
+}
+
 // FixtureCheckConfig returns a fixture for a CheckConfig object.
 func FixtureCheckConfig(id string) *CheckConfig {
 	interval := 60
