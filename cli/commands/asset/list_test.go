@@ -28,7 +28,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	cli := newCLI()
 
 	config := cli.Config.(*client.MockConfig)
-	config.On("GetString", "format").Return("tabular")
+	config.On("Format").Return("tabular")
 
 	client := cli.Client.(*client.MockClient)
 	client.On("ListAssets").Return([]types.Asset{
@@ -78,7 +78,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 func newCLI() *cli.SensuCli {
 	cli := test.NewMockCLI()
 	config := cli.Config.(*client.MockConfig)
-	config.On("GetString", "format").Return("json")
+	config.On("Format").Return("json")
 
 	return cli
 }

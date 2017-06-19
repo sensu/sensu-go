@@ -7,7 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
-	clientconfig "github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/cli/client/config/basic"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/spf13/cobra"
 )
@@ -25,11 +25,11 @@ func NewMockCLI() *cli.SensuCli {
 
 // SimpleSensuCLI return SensuCLI instance w/ given client & live config
 func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
-	config, _ := clientconfig.NewConfig()
+	c := basic.Load(nil, "")
 
 	return &cli.SensuCli{
 		Client: apiClient,
-		Config: config,
+		Config: c,
 	}
 }
 
