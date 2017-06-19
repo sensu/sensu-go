@@ -53,10 +53,6 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 	return manager
 }
 
-func (mngrPtr *ScheduleManager) Start() {
-	mngrPtr.stopped.Store(false)
-}
-
 // Run starts a new scheduler for the given check
 func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 	// Guard against updates while the daemon is shutting down
@@ -84,6 +80,11 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 	// Register new check scheduler
 	mngrPtr.items[check.Name] = scheduler
 	return nil
+}
+
+// Start ...
+func (mngrPtr *ScheduleManager) Start() {
+	mngrPtr.stopped.Store(false)
 }
 
 // Stop closes all the schedulers
