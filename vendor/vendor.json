@@ -486,10 +486,6 @@
 			"revisionTime": "2016-07-04T02:36:33Z"
 		},
 		{
-			"path": "github.com/etcd/pkg",
-			"revision": ""
-		},
-		{
 			"checksumSHA1": "muGVyM8mY3/gcap6kr4Ib3F5Xn4=",
 			"path": "github.com/ghodss/yaml",
 			"revision": "04f313413ffd65ce25f2541bfd2b2ceec5c0908c",
@@ -634,18 +630,10 @@
 			"revisionTime": "2017-02-16T13:00:38Z"
 		},
 		{
-			"path": "github.com/mholt/archiver/tar",
-			"revision": ""
-		},
-		{
-			"path": "github.com/mholt/archiver/tar.go",
-			"revision": ""
-		},
-		{
-			"checksumSHA1": "V/quM7+em2ByJbWBLOsEwnY3j/Q=",
+			"checksumSHA1": "Lnv1MZJu56aDzs5/EebdCuq3OFI=",
 			"path": "github.com/mitchellh/go-homedir",
-			"revision": "b8bc1bf767474819792c23f32d8286a45736f1c6",
-			"revisionTime": "2016-12-03T19:45:07Z"
+			"revision": "981ab348d865cf048eb7d17e78ac7192632d8415",
+			"revisionTime": "2016-03-01T18:31:30Z"
 		},
 		{
 			"checksumSHA1": "c1JIqjo91nD1RMFImnW69n8jtj8=",
@@ -785,6 +773,12 @@
 			"path": "github.com/spf13/pflag",
 			"revision": "2300d0f8576fe575f71aaa5b9bbe4e1b0dc2eb51",
 			"revisionTime": "2017-04-18T05:23:14Z"
+		},
+		{
+			"checksumSHA1": "c95O+eiZqqbHBDb8oy+RqzUBzRg=",
+			"path": "github.com/spf13/viper",
+			"revision": "382f87b929b84ce13e9c8a375a4b217f224e6c65",
+			"revisionTime": "2016-09-26T15:04:02Z"
 		},
 		{
 			"checksumSHA1": "EO+jcRet/AJ6IY3lBO8l8BLsZWg=",
@@ -1032,10 +1026,6 @@
 			"path": "gopkg.in/yaml.v2",
 			"revision": "a3f3340b5840cee44f372bddb5880fcbc419b46a",
 			"revisionTime": "2017-02-08T14:18:51Z"
-		},
-		{
-			"path": "https://github.com/mitchellh/go-homedir",
-			"revision": ""
 		}
 	],
 	"rootPath": "github.com/sensu/sensu-go"
