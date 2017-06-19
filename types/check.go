@@ -102,12 +102,11 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("organization must be set")
 	}
 
-	// TODO: Validate given assets for likely duplicates
-	// for _, asset := range c.RuntimeAssets {
-	// 	if err := asset.Validate(); err != nil {
-	// 		return err
-	// 	}
-	// }
+	for _, assetName := range c.RuntimeAssets {
+		if err = ValidateAssetName(assetName); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
