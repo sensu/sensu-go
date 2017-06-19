@@ -45,7 +45,7 @@ func TestSyncronizeAssets(t *testing.T) {
 func TestSyncScheduler(t *testing.T) {
 	assert := assert.New(t)
 
-	scheduler := NewSyncResourceScheduler([]ResourceSync{}, 30)
+	scheduler := NewSynchronizeStateScheduler(30)
 	scheduler.Start()
 
 	err := scheduler.Stop()

@@ -16,74 +16,86 @@ type ScheduleManager struct {
 	stopped *atomic.Value
 	wg      *sync.WaitGroup
 
-	createScheduler func(check *types.CheckConfig) *CheckScheduler
+	newSchedulerFn func(check *types.CheckConfig) *CheckScheduler
 }
 
-func newScheduleManager(msgBus messaging.MessageBus, state *StateManager) *ScheduleManager {
+// NewScheduleManager ...
+func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *ScheduleManager {
 	wg := &sync.WaitGroup{}
 	stopped := &atomic.Value{}
-	stopped.Store(false)
 
-	createScheduler := func(check *types.CheckConfig) *CheckScheduler {
+	newSchedulerFn := func(check *types.CheckConfig) *CheckScheduler {
 		return &CheckScheduler{
 			CheckName:    check.Name,
 			CheckOrg:     check.Organization,
 			MessageBus:   msgBus,
 			WaitGroup:    wg,
-			StateManager: state,
+			StateManager: stateMngr,
 		}
 	}
 
-	collection := &ScheduleManager{
-		createScheduler: createScheduler,
-		items:           map[string]*CheckScheduler{},
-		mutex:           &sync.Mutex{},
-		stopped:         stopped,
-		wg:              wg,
+	manager := &ScheduleManager{
+		newSchedulerFn: newSchedulerFn,
+
+		items:   map[string]*CheckScheduler{},
+		mutex:   &sync.Mutex{},
+		stopped: stopped,
+		wg:      wg,
 	}
 
-	return collection
+	// Listen to state updates and add schedulers if necassarily
+	stateMngr.OnChecksChange = func(state *SchedulerState) {
+		for _, check := range state.checks {
+			manager.Run(check)
+		}
+	}
+
+	return manager
+}
+
+func (mngrPtr *ScheduleManager) Start() {
+	mngrPtr.stopped.Store(false)
 }
 
 // Run starts a new scheduler for the given check
-func (collectionPtr *ScheduleManager) Run(check *types.CheckConfig) error {
+func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 	// Guard against updates while the daemon is shutting down
-	if collectionPtr.stopped.Load().(bool) {
+	if mngrPtr.stopped.Load().(bool) {
 		return nil
 	}
 
 	// Avoid competing updates
-	collectionPtr.mutex.Lock()
-	defer collectionPtr.mutex.Unlock()
+	mngrPtr.mutex.Lock()
+	defer mngrPtr.mutex.Unlock()
 
 	// Guard against creating a duplicate scheduler; schedulers are able to update
 	// their internal state with any changes that occur to their associated check.
 	key := concatUniqueKey(check.Name, check.Organization)
-	if existing := collectionPtr.items[key]; existing != nil {
+	if existing := mngrPtr.items[key]; existing != nil {
 		return nil
 	}
 
 	// Create new scheduler & start it
-	scheduler := collectionPtr.createScheduler(check)
+	scheduler := mngrPtr.newSchedulerFn(check)
 	if err := scheduler.Start(check.Interval); err != nil {
 		return err
 	}
 
 	// Register new check scheduler
-	collectionPtr.items[check.Name] = scheduler
+	mngrPtr.items[check.Name] = scheduler
 	return nil
 }
 
 // Stop closes all the schedulers
-func (collectionPtr *ScheduleManager) Stop() {
+func (mngrPtr *ScheduleManager) Stop() {
 	// Await any pending updates before shutting down
-	collectionPtr.mutex.Lock()
-	collectionPtr.stopped.Store(true)
+	mngrPtr.mutex.Lock()
+	mngrPtr.stopped.Store(true)
 
-	for n, scheduler := range collectionPtr.items {
-		delete(collectionPtr.items, n)
+	for n, scheduler := range mngrPtr.items {
+		delete(mngrPtr.items, n)
 		scheduler.Stop()
 	}
 
-	collectionPtr.wg.Wait()
+	mngrPtr.wg.Wait()
 }

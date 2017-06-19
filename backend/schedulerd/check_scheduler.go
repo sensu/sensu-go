@@ -55,7 +55,7 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 				timer.Next()
 
 				// Point executor to lastest copy of the scheduler state
-				executor.State = state
+				executor.State = &state
 
 				// Publish check request
 				executor.Execute(check)
