@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -22,7 +23,7 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 	suite.check = types.FixtureCheckConfig("check1")
 	suite.msgBus = &messaging.WizardBus{}
 
-	manager := NewStateManager()
+	manager := NewStateManager(&mockstore.MockStore{})
 	manager.Update(func(state *SchedulerState) {
 		state.SetChecks([]*types.CheckConfig{suite.check})
 	})

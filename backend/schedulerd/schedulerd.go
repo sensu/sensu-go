@@ -5,10 +5,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
-
-const synchronizeMinInterval int = 90
 
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
@@ -16,9 +13,8 @@ type Schedulerd struct {
 	Store      store.Store
 	MessageBus messaging.MessageBus
 
-	stateManager          *StateManager
-	schedulerManager      *ScheduleManager
-	syncResourceScheduler *SyncResourceScheduler
+	stateManager     *StateManager
+	schedulerManager *ScheduleManager
 
 	errChan chan error
 }
@@ -33,37 +29,25 @@ func (s *Schedulerd) Start() error {
 		return errors.New("no message bus found")
 	}
 
-	// Cache
-	s.stateManager = NewStateManager()
+	// State
+	s.stateManager = NewStateManager(s.Store)
 
 	// Check Schedulers
-	s.schedulerManager = newScheduleManager(s.MessageBus, s.stateManager)
+	s.schedulerManager = NewScheduleManager(s.MessageBus, s.stateManager)
 
 	// Sync
 	s.errChan = make(chan error, 1)
 
-	// Sync
-	s.syncResourceScheduler = NewSyncResourceScheduler(
-		[]ResourceSync{
-			&SyncronizeChecks{
-				Store:    s.Store,
-				OnUpdate: s.checksUpdatedHandler,
-			},
-			&SyncronizeAssets{
-				Store:    s.Store,
-				OnUpdate: s.assetsUpdatedHandler,
-			},
-		},
-		synchronizeMinInterval,
-	)
-	s.syncResourceScheduler.Start()
+	// Start
+	s.schedulerManager.Start()
+	s.stateManager.Start()
 
 	return nil
 }
 
 // Stop the scheduler daemon.
 func (s *Schedulerd) Stop() error {
-	s.syncResourceScheduler.Stop()
+	s.stateManager.Stop()
 	s.schedulerManager.Stop()
 
 	close(s.errChan)
@@ -78,32 +62,4 @@ func (s *Schedulerd) Status() error {
 // Err returns a channel on which to listen for terminal errors.
 func (s *Schedulerd) Err() <-chan error {
 	return s.errChan
-}
-
-func (s *Schedulerd) checksUpdatedHandler(checks []*types.CheckConfig) {
-	// Update state
-	s.stateManager.Update(func(state *SchedulerState) {
-		state.SetChecks(checks)
-	})
-
-	minInterval := synchronizeMinInterval
-	for _, check := range checks {
-		// Ensure check scheduler has the check
-		s.schedulerManager.Run(check)
-
-		// Find min interval
-		if check.Interval < minInterval {
-			minInterval = check.Interval
-		}
-	}
-
-	// Update sync interval
-	s.syncResourceScheduler.SetInterval(minInterval)
-}
-
-func (s *Schedulerd) assetsUpdatedHandler(assets []*types.Asset) {
-	// Update state
-	s.stateManager.Update(func(state *SchedulerState) {
-		state.SetAssets(assets)
-	})
 }

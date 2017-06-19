@@ -46,34 +46,34 @@ func (syncPtr *SyncronizeAssets) Sync() error {
 	return err
 }
 
-// A SyncResourceScheduler schedules synchronization handlers to be run at a
+// SynchronizeStateScheduler schedules synchronization handlers to be run at a
 // given interval.
-type SyncResourceScheduler struct {
-	Syncers []ResourceSync
+type SynchronizeStateScheduler struct {
+	synchronizers []ResourceSync
 
 	interval  *atomic.Value
 	waitGroup *sync.WaitGroup
 	stopping  chan struct{}
 }
 
-// NewSyncResourceScheduler instantiates new scheduler to sync resources
-func NewSyncResourceScheduler(syncers []ResourceSync, interval int) *SyncResourceScheduler {
-	scheduler := &SyncResourceScheduler{
-		Syncers:   syncers,
-		interval:  &atomic.Value{},
-		waitGroup: &sync.WaitGroup{},
+// NewSynchronizeStateScheduler instantiates new scheduler to sync resources
+func NewSynchronizeStateScheduler(interval int, syncs ...ResourceSync) *SynchronizeStateScheduler {
+	scheduler := &SynchronizeStateScheduler{
+		synchronizers: syncs,
+		waitGroup:     &sync.WaitGroup{},
+		interval:      &atomic.Value{},
 	}
 	scheduler.SetInterval(interval)
 	return scheduler
 }
 
 // SetInterval ...
-func (recPtr *SyncResourceScheduler) SetInterval(i int) {
+func (recPtr *SynchronizeStateScheduler) SetInterval(i int) {
 	recPtr.interval.Store(i)
 }
 
 // Start the scheduler
-func (recPtr *SyncResourceScheduler) Start() {
+func (recPtr *SynchronizeStateScheduler) Start() {
 	recPtr.Sync()
 
 	recPtr.stopping = make(chan struct{})
@@ -97,15 +97,15 @@ func (recPtr *SyncResourceScheduler) Start() {
 	}()
 }
 
-// Sync executes all syncronizers
-func (recPtr *SyncResourceScheduler) Sync() {
-	for _, syncer := range recPtr.Syncers {
+// Sync executes all synchronizers
+func (recPtr *SynchronizeStateScheduler) Sync() {
+	for _, syncer := range recPtr.synchronizers {
 		go syncer.Sync()
 	}
 }
 
 // Stop the scheduler
-func (recPtr *SyncResourceScheduler) Stop() error {
+func (recPtr *SynchronizeStateScheduler) Stop() error {
 	close(recPtr.stopping)
 	recPtr.waitGroup.Wait()
 	return nil

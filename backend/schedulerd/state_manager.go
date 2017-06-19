@@ -3,44 +3,122 @@ package schedulerd
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
+
+// SynchronizeMinInterval minimum interval inwhich we poll the store for updates
+const SynchronizeMinInterval int = 90
 
 // A StateManager keeps copies of unmarshal'd resources schedulerd requires to run
 // efficiently schedule checks.
 type StateManager struct {
-	state *SchedulerState
+	OnChecksChange func(state *SchedulerState)
+
+	state *atomic.Value
 	mutex *sync.Mutex
+
+	synchronizer *SynchronizeStateScheduler
 }
 
 // NewStateManager returns a new instance of schedulerd's cache
-func NewStateManager() *StateManager {
-	return &StateManager{
-		state: &SchedulerState{},
+func NewStateManager(store store.Store) *StateManager {
+	manager := &StateManager{
+		OnChecksChange: func(state *SchedulerState) {},
+
+		state: &atomic.Value{},
 		mutex: &sync.Mutex{},
 	}
+	manager.Swap(&SchedulerState{})
+
+	manager.synchronizer = NewSynchronizeStateScheduler(
+		SynchronizeMinInterval,
+		&SyncronizeChecks{
+			Store:    store,
+			OnUpdate: manager.updateChecks,
+		},
+		&SyncronizeAssets{
+			Store:    store,
+			OnUpdate: manager.updateAssets,
+		},
+	)
+
+	return manager
+}
+
+// Start keeping state synchronized
+func (mngrPtr *StateManager) Start() {
+	mngrPtr.synchronizer.Start()
+}
+
+// Stop keeping state synchronized
+func (mngrPtr *StateManager) Stop() error {
+	return mngrPtr.synchronizer.Stop()
 }
 
 // State returns reference to current state of the cache
-func (cachePtr *StateManager) State() *SchedulerState {
-	return cachePtr.state
+func (mngrPtr *StateManager) State() *SchedulerState {
+	return mngrPtr.state.Load().(*SchedulerState)
 }
 
 // Update synchronously updates state w/ result of closure
-func (cachePtr *StateManager) Update(updateFn func(newState *SchedulerState)) {
-	// Lock to avoid competing updates
-	cachePtr.mutex.Lock()
-	defer cachePtr.mutex.Unlock()
+func (mngrPtr *StateManager) Update(updateFn func(newState *SchedulerState)) {
+	mngrPtr.updateState(updateFn)
 
-	// Shallow copy content
-	oldState := cachePtr.state
+	state := mngrPtr.State()
+	mngrPtr.OnChecksChange(state)
+}
+
+// Swap state atom
+func (mngrPtr *StateManager) Swap(state *SchedulerState) {
+	mngrPtr.state.Store(state)
+}
+
+func (mngrPtr *StateManager) updateChecks(checks []*types.CheckConfig) {
+	mngrPtr.updateState(func(state *SchedulerState) {
+		state.SetChecks(checks)
+		mngrPtr.OnChecksChange(state)
+	})
+
+	mngrPtr.updateSyncInterval()
+}
+
+func (mngrPtr *StateManager) updateAssets(assets []*types.Asset) {
+	mngrPtr.updateState(func(state *SchedulerState) {
+		state.SetAssets(assets)
+	})
+}
+
+func (mngrPtr *StateManager) updateState(updateFn func(newState *SchedulerState)) {
+	// Lock to avoid competing updates
+	mngrPtr.mutex.Lock()
+	defer mngrPtr.mutex.Unlock()
+
+	// Shallow copy contents of state
+	oldState := mngrPtr.State()
 	newState := &SchedulerState{}
 	*newState = *oldState
 
 	// Pass to caller
 	updateFn(newState)
-	cachePtr.state = newState
+	mngrPtr.Swap(newState)
+}
+
+func (mngrPtr *StateManager) updateSyncInterval() {
+	state := mngrPtr.State()
+
+	// Find min interval
+	minInterval := SynchronizeMinInterval
+	for _, check := range state.checks {
+		if check.Interval < minInterval {
+			minInterval = check.Interval
+		}
+	}
+
+	// Set updated interval
+	mngrPtr.synchronizer.SetInterval(minInterval)
 }
 
 // A SchedulerState represents the internal state of the cache
