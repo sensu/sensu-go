@@ -10,13 +10,11 @@ import (
 )
 
 // SynchronizeMinInterval minimum interval inwhich we poll the store for updates
-const SynchronizeMinInterval int = 90
+const SynchronizeMinInterval = 15
 
 // A StateManager keeps copies of unmarshal'd resources schedulerd requires to run
 // efficiently schedule checks.
 type StateManager struct {
-	OnChecksChange func(state *SchedulerState)
-
 	state *atomic.Value
 	mutex *sync.Mutex
 
@@ -26,8 +24,6 @@ type StateManager struct {
 // NewStateManager returns a new instance of schedulerd's cache
 func NewStateManager(store store.Store) *StateManager {
 	manager := &StateManager{
-		OnChecksChange: func(state *SchedulerState) {},
-
 		state: &atomic.Value{},
 		mutex: &sync.Mutex{},
 	}
@@ -66,9 +62,6 @@ func (mngrPtr *StateManager) State() *SchedulerState {
 // Update synchronously updates state w/ result of closure
 func (mngrPtr *StateManager) Update(updateFn func(newState *SchedulerState)) {
 	mngrPtr.updateState(updateFn)
-
-	state := mngrPtr.State()
-	mngrPtr.OnChecksChange(state)
 }
 
 // Swap state atom
@@ -79,7 +72,6 @@ func (mngrPtr *StateManager) Swap(state *SchedulerState) {
 func (mngrPtr *StateManager) updateChecks(checks []*types.CheckConfig) {
 	mngrPtr.updateState(func(state *SchedulerState) {
 		state.SetChecks(checks)
-		mngrPtr.OnChecksChange(state)
 	})
 
 	mngrPtr.updateSyncInterval()
@@ -125,6 +117,11 @@ func (mngrPtr *StateManager) updateSyncInterval() {
 type SchedulerState struct {
 	checks map[string]*types.CheckConfig
 	assets map[string]map[string]*types.Asset
+}
+
+// Checks returns all checks in the state
+func (statePtr *SchedulerState) Checks() map[string]*types.CheckConfig {
+	return statePtr.checks
 }
 
 // GetCheck returns check given name and organization

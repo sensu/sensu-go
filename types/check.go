@@ -112,6 +112,26 @@ func (c *CheckConfig) Validate() error {
 	return nil
 }
 
+// IsAssetRelevantToCheck returns true if the given asset matches one of the
+// runtime asset prefixes specified on the given check.
+//
+// eg.
+//
+// CheckConfig{RutimeAssets: ["ruby/2-4"]}      Asset{Name: "ruby/2-4/linux-amd-64"} == true
+// CheckConfig{RutimeAssets: ["ruby/2-4/arch"]} Asset{Name: "ruby/2-4/arch"} == true
+// CheckConfig{RutimeAssets: ["ruby/2-3"]}      Asset{Name: "ruby/2-4/arch"} == false
+// CheckConfig{RutimeAssets: ["ruby/2-4"]}      Asset{Name: "disk_full.rb"} == false
+//
+func IsAssetRelevantToCheck(check *CheckConfig, asset *types.Asset) {
+	for _, assetName := range check.RuntimeAssets {
+		if strings.HasPrefix(asset.Name, assetName) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // CheckHistory is a record of a check execution and its status.
 type CheckHistory struct {
 	Status   int   `json:"status"`
