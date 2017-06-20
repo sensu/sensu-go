@@ -41,35 +41,35 @@ func (schedulerPtr *Scheduler) Start() {
 	wg.Add(1)
 	schedulerPtr.waitGroup = wg
 
-	// Start timer
-	// NOTE: for consistency we use time until next second ticks past as duration
-	timer := time.NewTimer(time.Duration(time.Now().UnixNano()) % SchedulerInterval)
+	// Start interval
+	interval := &SchedulerInterval{}
+	interval.Start()
 
 	go func() {
 		defer wg.Done()
 
-		select {
-		case <-schedulerPtr.stopping:
-			return
-		case <-timer.C:
-			// Reset the timer to the next interval
-			t := time.Now()
-			timer.Reset(time.Duration(t.UnixNano()) % SchedulerInterval)
+		for {
+			interval.Wait()
 
-			// Grab state atom
-			state := schedulerPtr.StateManager.State()
-			taskCtx := &TaskContext{
-				MessageBus: schedulerPtr.MessageBus,
-				State:      &state,
-			}
+			select {
+			case <-schedulerPtr.stopping:
+				return
+			default:
+				// Grab state atom
+				state := schedulerPtr.StateManager.State()
+				taskCtx := TaskContext{
+					MessageBus: schedulerPtr.MessageBus,
+					State:      &state,
+				}
 
-			// Iterate over every check looking for relevant
-			for _, check := range state.Checks() {
-				task := &Task{Check: check, Time: &t}
+				// Iterate over every check looking for relevant tasks
+				for _, check := range state.Checks() {
+					task := Task{Check: check, Timeframe: &interval.Timeframe}
 
-				// If the check should be run at this interval queue it
-				if task.ShouldRun() {
-					DoTaskAsync(task, taskCtx, schedulerPtr.waitGroup)
+					// If the check should be run at this interval queue it
+					if task.ShouldRun() {
+						DoTaskAsync(task, schedulerPtr.waitGroup)
+					}
 				}
 			}
 		}
@@ -82,10 +82,55 @@ func (schedulerPtr *Scheduler) Stop() {
 	schedulerPtr.waitGroup.Wait()
 }
 
+type Timeframe struct {
+	Start time.Time
+	End   time.Time
+}
+
+func (framePtr *Timeframe) Contains(t *time.Time) bool {
+	timeNano := t.UnixNano()
+	return (timeNano >= framePtr.Start.UnixNano() && timeNano < framePtr.End.UnixNano())
+}
+
+type SchedulerInterval struct {
+	Timeframe
+}
+
+func (intPtr *SchedulerInterval) Start() {
+	time := time.Now()
+
+	// Counter intuitively we also apply the start date to the End field. This is
+	// because when the Wait method is first called it will copy of the contents
+	// of End into the Start date.
+	intPtr.Start = time
+	intPtr.End = time
+}
+
+func (intPtr *SchedulerInterval) Wait() {
+	// Apply the past end date to the our next start date. We use the end date
+	// instead of the current time to ensure that there are never any gaps in our
+	// time frame.
+	intPtr.Start = intPtr.End
+
+	// Set the end time to the nearest tick
+	curTime := time.Now()
+	timeUntilNextInterval := curTime.UnixNano() % SchedulerInterval
+	intPtr.End = curTime.Add(timeUntilNextInterval)
+
+	// Sleep until were needed again
+	time.Sleep(timeUntilNextInterval)
+}
+
+// TaskContext ...
+type TaskContext struct {
+	State      *SchedulerState
+	MessageBus messaging.MessageBus
+}
+
 // Task ...
 type Task struct {
-	Time  *time.Time
-	Check *types.CheckConfig
+	Timeframe *Timeframe
+	Check     *types.CheckConfig
 }
 
 // ShouldRun determine if the task should be run at this time
@@ -99,40 +144,40 @@ func (taskPtr *Task) ShouldRun() bool {
 
 	// Determine the duration of time until our the next
 	// time the task needs to be run
-	now := uint64(taskPtr.Time.UnixNano())
-	offset := (splay - now) % uint64(interval)
+	t := uint64(taskPtr.Timeframe.Start.UnixNano())
+	offset := (splay - t) % uint64(interval)
 	timeUntilNextRun := time.Duration(offset) / time.Nanosecond
 
-	// If the check's interval intersects the schedulers we run the task
-	return timeUntilNextRun < SchedulerInterval
+	// Return true if the next time the check should be run
+	// intersects with the last timeframe.
+	return taskPtr.Timeframe.Contains(t.Add(timeUntilNextRun))
+}
+
+// Run task in given context
+func (taskPtr *Task) Run(ctx *TaskContext) error {
+	run := TaskRunner{Task: &task, Ctx: &taskCtx}
+	return run.Run()
+}
+
+// TaskRunner runs given task
+type TaskRunner struct {
+	Task *Task
+	Ctx  *TaskContext
 }
 
 // Run ...
-func (taskPtr *Task) Run(ctx *TaskContext) {
-	request := taskPtr.buildRequest(ctx)
-	taskPtr.publishRequest(request, ctx)
-	// TODO: What do we do w/ any errors?
-}
+func (runPtr *TaskRunner) Run() error {
+	// Build the check request we'll send off
+	request := runPtr.buildRequest()
 
-func (taskPtr *Task) publishRequest(request *types.CheckRequest, ctx *TaskContext) error {
-	var err error
-
-	check := taskPtr.Check
-	for _, sub := range check.Subscriptions {
-		topic := messaging.SubscriptionTopic(check.Organization, sub)
-		logger.Debugf("Sending check request for %s on topic %s", check.Name, topic)
-
-		if pubErr := ctx.MessageBus.Publish(topic, request); err != nil {
-			logger.Info("error publishing check request: ", err.Error())
-			err = pubErr
-		}
-	}
+	// Publish check request to all subscribers
+	err := runPtr.publishRequest(request)
 	return err
 }
 
 // given check config fetches associated assets and builds request
-func (taskPtr *Task) buildRequest(ctx *TaskContext) *types.CheckRequest {
-	check := taskPtr.Check
+func (runPtr *TaskRunner) buildRequest() *types.CheckRequest {
+	check := runPtr.Task.Check
 
 	// ...
 	request := &types.CheckRequest{}
@@ -145,9 +190,9 @@ func (taskPtr *Task) buildRequest(ctx *TaskContext) *types.CheckRequest {
 	}
 
 	// Explode assets; get assets & filter out those that are irrelevant
-	allAssets := ctx.State.GetAssetsInOrg(check.Organization)
+	allAssets := runPtr.Ctx.State.GetAssetsInOrg(check.Organization)
 	for _, asset := range allAssets {
-		if assetIsRelevantToCheck(check, asset) {
+		if types.IsAssetIsRelevantToCheck(check, asset) {
 			request.ExpandedAssets = append(request.ExpandedAssets, *asset)
 		}
 	}
@@ -155,28 +200,29 @@ func (taskPtr *Task) buildRequest(ctx *TaskContext) *types.CheckRequest {
 	return request
 }
 
-// TaskContext ...
-type TaskContext struct {
-	State      *SchedulerState
-	MessageBus messaging.MessageBus
+func (runPtr *TaskRunner) publishRequest(request *types.CheckRequest) error {
+	var err error
+
+	check := runPtr.Check
+	for _, sub := range check.Subscriptions {
+		topic := messaging.SubscriptionTopic(check.Organization, sub)
+		logger.Debugf("Sending check request for %s on topic %s", check.Name, topic)
+
+		if pubErr := runPtr.Ctx.MessageBus.Publish(topic, request); err != nil {
+			logger.Info("error publishing check request: ", err.Error())
+			err = pubErr
+		}
+	}
+	return err
 }
 
-// DoTaskAsync ...
+// DoTaskAsync runs given task in goroutine and increments given waitgroup. Used
+// so that we ensure that all tasks have been completed stopping the deamon.
 func DoTaskAsync(task *Task, ctx *TaskContext, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
+		// TODO: What do we do w/ any errors? is there an error channel?
 		task.Run(ctx)
 		wg.Done()
 	}()
-}
-
-// Determine if the any of the check's runtime assets match the given assets
-func assetIsRelevantToCheck(check *types.CheckConfig, asset *types.Asset) bool {
-	for _, assetName := range check.RuntimeAssets {
-		if strings.HasPrefix(asset.Name, assetName) {
-			return true
-		}
-	}
-
-	return false
 }
