@@ -48,9 +48,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	cli := newCLI()
 
 	check := types.FixtureCheckConfig("name-one")
-	check.RuntimeAssets = []types.Asset{
-		*types.FixtureAsset("asset-one"),
-	}
+	check.RuntimeAssets = []string{"asset-one"}
 
 	client := cli.Client.(*client.MockClient)
 	client.On("ListChecks").Return([]types.CheckConfig{*check}, nil)
@@ -60,11 +58,12 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "Name")         // heading
-	assert.Contains(out, "Command")      // heading
-	assert.Contains(out, "Dependencies") // heading
-	assert.Contains(out, "name-one")     // check name
-	assert.Contains(out, "asset-one")    // asset name
+	assert.Contains(out, "Name")      // heading
+	assert.Contains(out, "Command")   // heading
+	assert.Contains(out, "Assets")    // heading
+	assert.Contains(out, "name-one")  // check name
+	assert.Contains(out, "asset-one") // asset name
+	assert.Contains(out, "60")        // interval
 	assert.Nil(err)
 }
 

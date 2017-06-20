@@ -17,6 +17,9 @@ func NewMockCLI() *cli.SensuCli {
 	config := &clientmock.MockConfig{}
 	client := &clientmock.MockClient{}
 
+	// Set defaults ...
+	config.On("Organization").Return("default")
+
 	return &cli.SensuCli{
 		Client: client,
 		Config: config,

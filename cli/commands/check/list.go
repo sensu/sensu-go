@@ -87,14 +87,10 @@ func printCheckConfigsToTable(queryResults []types.CheckConfig, io io.Writer) {
 			},
 		},
 		{
-			Title: "Dependencies",
+			Title: "Assets",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)
-				names := []string{}
-				for _, asset := range check.RuntimeAssets {
-					names = append(names, asset.Name)
-				}
-				return strings.Join(names, ",")
+				return strings.Join(check.RuntimeAssets, ",")
 			},
 		},
 	})

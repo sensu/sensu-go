@@ -13,7 +13,11 @@ func SafeSplitCSV(i string) []string {
 	trimmed := strings.TrimSpace(i)
 	trimmed = commaWhitespaceRegex.ReplaceAllString(trimmed, ",")
 
-	return strings.Split(trimmed, ",")
+	if len(trimmed) > 0 {
+		return strings.Split(trimmed, ",")
+	}
+
+	return []string{}
 }
 
 func init() {
