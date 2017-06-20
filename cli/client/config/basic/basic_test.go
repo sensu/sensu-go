@@ -13,10 +13,9 @@ import (
 
 func TestFlags(t *testing.T) {
 	flags := pflag.NewFlagSet("api-url", pflag.ContinueOnError)
-	flags.String("api-url", "", "")
-	flags.Set("api-url", "foo")
+	flags.String("api-url", "foo", "")
 
-	config := Load(flags, "")
+	config := Load(flags)
 	assert.NotNil(t, config)
 
 	assert.Equal(t, "foo", config.APIUrl())
@@ -26,6 +25,10 @@ func TestLoad(t *testing.T) {
 	// Create a dummy directory for testing
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
 
 	// Create a dummy cluster file
 	cluster := &Cluster{APIUrl: "localhost"}
@@ -39,14 +42,18 @@ func TestLoad(t *testing.T) {
 	profilePath := filepath.Join(dir, profileFilename)
 	_ = ioutil.WriteFile(profilePath, profileBytes, 0644)
 
-	config := Load(nil, dir)
+	config := Load(flags)
 	assert.NotNil(t, config)
 	assert.Equal(t, profile.Format, config.Format())
 	assert.Equal(t, cluster.APIUrl, config.APIUrl())
 }
 
 func TestLoadMissingFiles(t *testing.T) {
-	config := Load(nil, "/tmp/sensu")
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", "/tmp/sensu", "")
+
+	config := Load(flags)
 	assert.NotNil(t, config)
 }
 

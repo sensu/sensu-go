@@ -25,7 +25,7 @@ func NewMockCLI() *cli.SensuCli {
 
 // SimpleSensuCLI return SensuCLI instance w/ given client & live config
 func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
-	c := basic.Load(nil, "")
+	c := basic.Load(nil)
 
 	return &cli.SensuCli{
 		Client: apiClient,

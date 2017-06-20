@@ -39,19 +39,23 @@ type Profile struct {
 }
 
 // Load imports the CLI configuration and returns an initialized Config struct
-func Load(flags *pflag.FlagSet, path string) *Config {
+func Load(flags *pflag.FlagSet) *Config {
 	config := &Config{}
 
-	// Save the path for later use
-	config.path = path
+	// Retrieve the path of the configuration directory
+	if flags != nil {
+		if value, err := flags.GetString("config-dir"); err == nil && value != "" {
+			config.path = value
+		}
+	}
 
 	// Load the profile config file
-	if err := config.open(filepath.Join(path, profileFilename)); err != nil {
+	if err := config.open(profileFilename); err != nil {
 		logger.Debug(err)
 	}
 
 	// Load the cluster config file
-	if err := config.open(filepath.Join(path, clusterFilename)); err != nil {
+	if err := config.open(clusterFilename); err != nil {
 		logger.Debug(err)
 	}
 
@@ -73,7 +77,7 @@ func (c *Config) flags(flags *pflag.FlagSet) {
 }
 
 func (c *Config) open(path string) error {
-	content, err := ioutil.ReadFile(path)
+	content, err := ioutil.ReadFile(filepath.Join(c.path, path))
 	if err != nil {
 		return err
 	}

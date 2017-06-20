@@ -15,7 +15,12 @@ import (
 func TestSaveAPIUrl(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)
-	config := Load(nil, dir)
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
 
 	url := "http://127.0.0.1:8080"
 	config.SaveAPIUrl(url)
@@ -25,7 +30,12 @@ func TestSaveAPIUrl(t *testing.T) {
 func TestSaveFormat(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)
-	config := Load(nil, dir)
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
 
 	format := "json"
 	config.SaveFormat(format)
@@ -35,7 +45,12 @@ func TestSaveFormat(t *testing.T) {
 func TestSaveOrganization(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)
-	config := Load(nil, dir)
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
 
 	org := "json"
 	config.SaveOrganization(org)
@@ -45,7 +60,12 @@ func TestSaveOrganization(t *testing.T) {
 func TestSaveTokens(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)
-	config := Load(nil, dir)
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
 
 	tokens := &types.Tokens{Access: "foo"}
 	config.SaveTokens(tokens)
@@ -57,9 +77,13 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)
 
+	// Set flags
 	flags := pflag.NewFlagSet("api-url", pflag.ContinueOnError)
-	flags.String("api-url", "", "")
-	flags.Set("api-url", "setFromFlag")
+	flags.String("api-url", "setFromFlag", "")
+
+	dirFlag := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	dirFlag.String("config-dir", dir, "")
+	flags.AddFlagSet(dirFlag)
 
 	// Create a dummy cluster file
 	cluster := &Cluster{APIUrl: "setFromFile"}
@@ -67,27 +91,32 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 	clusterPath := filepath.Join(dir, clusterFilename)
 	_ = ioutil.WriteFile(clusterPath, clusterBytes, 0644)
 
-	config := Load(flags, dir)
+	config := Load(flags)
 
 	tokens := &types.Tokens{Access: "foo"}
 	config.SaveTokens(tokens)
 	assert.Equal(t, tokens, config.Tokens())
 
 	// Make sure we didn't override the orginal API URL
-	configFile := Load(nil, dir)
+	configFile := Load(dirFlag)
 	assert.Equal(t, "setFromFile", configFile.APIUrl())
 }
 
 func TestWrite(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)
-	config := Load(nil, dir)
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
 
 	url := "http://127.0.0.1:8080"
 	config.SaveAPIUrl(url)
 	assert.Equal(t, url, config.APIUrl())
 
 	// Reload the config files to make sure the changes were saved
-	config2 := Load(nil, dir)
+	config2 := Load(flags)
 	assert.Equal(t, config.APIUrl(), config2.APIUrl())
 }
