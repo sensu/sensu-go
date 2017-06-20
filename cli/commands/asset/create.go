@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -14,11 +15,14 @@ import (
 
 // CreateCommand adds command that allows user to create new assets
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
-	exec := createExecutor{client: cli.Client}
+	exec := &CreateExecutor{
+		Client: cli.Client,
+		Org:    cli.Config.Organization(),
+	}
 	cmd := &cobra.Command{
 		Use:    "create NAME",
 		Short:  "create new assets",
-		RunE:   exec.run,
+		RunE:   exec.Run,
 		Hidden: true,
 	}
 
@@ -27,25 +31,39 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("url")
+	cmd.MarkFlagRequired("organization")
 
 	return cmd
 }
 
-type createExecutor struct {
-	client client.APIClient
+// CreateExecutor executes create asset command
+type CreateExecutor struct {
+	Client client.APIClient
+	Org    string
 }
 
-func (e *createExecutor) run(cmd *cobra.Command, args []string) error {
-	asset, err := configureNewAsset(cmd.Flags(), args)
-	if err != nil {
-		return err
+// Run runs the command given arguments
+func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
+	if len(args) > 1 {
+		return errors.New("too many arguments given")
+	}
+
+	cfg := ConfigureAsset{
+		Flags: cmd.Flags(),
+		Args:  args,
+		Org:   exePtr.Org,
+	}
+
+	asset, errs := cfg.Configure()
+	if len(errs) > 0 {
+		return helpers.JoinErrors("Bad inputs: ", errs)
 	}
 
 	if err := asset.Validate(); err != nil {
 		return err
 	}
 
-	if err := e.client.CreateAsset(asset); err != nil {
+	if err := exePtr.Client.CreateAsset(asset); err != nil {
 		return err
 	}
 
@@ -53,48 +71,84 @@ func (e *createExecutor) run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func configureNewAsset(flags *pflag.FlagSet, args []string) (*types.Asset, error) {
-	opts := assetOpts{asset: &types.Asset{}}
-	opts.configure(flags, args)
-	return opts.asset, opts.err
+// ConfigureAsset given details configures a new asset
+type ConfigureAsset struct {
+	Flags *pflag.FlagSet
+	Args  []string
+	Org   string
+
+	cfg    *Config
+	errors []error
 }
 
-type assetOpts struct {
-	asset *types.Asset
-	err   error
+// Configure returns a new asset or returns error if arguments are invalid
+func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
+	cfg := &Config{}
+
+	cfgPtr.cfg = cfg
+	cfgPtr.setName()
+	cfgPtr.setOrg()
+	cfgPtr.setURL()
+	cfgPtr.setMeta()
+
+	asset := types.Asset{}
+	cfg.Copy(&asset)
+
+	return &asset, cfgPtr.errors
 }
 
-func (e *assetOpts) configure(flags *pflag.FlagSet, args []string) {
-	e.setName(args)
-	e.setURL(flags)
-	e.setMeta(flags)
-}
+func (cfgPtr *ConfigureAsset) setName() {
+	args := cfgPtr.Args
 
-func (e *assetOpts) setName(args []string) {
 	if len(args) == 1 {
-		e.asset.Name = args[0]
-	} else if len(args) > 1 {
-		e.err = errors.New("too many arguments given")
+		cfgPtr.cfg.Name = args[0]
 	} else {
-		e.err = errors.New("please provide a name for given asset")
+		cfgPtr.addError(errors.New("please provide a name"))
 	}
 }
 
-func (e *assetOpts) setURL(flags *pflag.FlagSet) {
-	if url, err := flags.GetString("url"); err != nil {
-		e.err = err
+func (cfgPtr *ConfigureAsset) setOrg() {
+	if len(cfgPtr.Org) == 0 {
+		cfgPtr.addError(errors.New("organization name cannot be blank"))
+	}
+
+	cfgPtr.cfg.Org = cfgPtr.Org
+}
+
+func (cfgPtr *ConfigureAsset) setURL() {
+	if url, err := cfgPtr.Flags.GetString("url"); err != nil {
+		panic(err)
 	} else {
-		e.asset.URL = url
+		cfgPtr.cfg.URL = url
 	}
 }
 
-func (e *assetOpts) setMeta(flags *pflag.FlagSet) {
-	metadata, err := flags.GetStringSlice("metadata")
+func (cfgPtr *ConfigureAsset) setMeta() {
+	if meta, err := cfgPtr.Flags.GetStringSlice("metadata"); err != nil {
+		panic(err)
+	} else {
+		err = cfgPtr.cfg.SetMeta(meta)
+		cfgPtr.addError(err)
+	}
+}
+
+func (cfgPtr *ConfigureAsset) addError(err error) {
 	if err != nil {
-		e.err = err
+		cfgPtr.errors = append(cfgPtr.errors, err)
 	}
+}
 
-	e.asset.Metadata = make(map[string]string, len(metadata))
+// Config represents configurable attributes of an asset
+type Config struct {
+	Name string
+	Org  string
+	URL  string
+	Meta map[string]string
+}
+
+// SetMeta sets metadata given values
+func (cfgPtr *Config) SetMeta(metadata []string) error {
+	cfgPtr.Meta = make(map[string]string, len(metadata))
 	for _, meta := range metadata {
 		// TODO(james): naive
 		splitMeta := strings.SplitAfterN(meta, ":", 2)
@@ -102,15 +156,22 @@ func (e *assetOpts) setMeta(flags *pflag.FlagSet) {
 		if len(splitMeta) == 2 {
 			key := strings.TrimSpace(strings.TrimRight(splitMeta[0], ":"))
 			val := strings.TrimSpace(splitMeta[1])
-			e.asset.Metadata[key] = val
+			cfgPtr.Meta[key] = val
 		} else {
-			err := fmt.Sprintf(
+			return fmt.Errorf(
 				"Metadata value '%s' appears invalid;"+
 					"should be in format 'KEY: VALUE'.",
 				splitMeta,
 			)
-			e.err = errors.New(err)
-			break
 		}
 	}
+	return nil
+}
+
+// Copy applies configured details to given asset
+func (cfgPtr *Config) Copy(asset *types.Asset) {
+	asset.Name = cfgPtr.Name
+	asset.Organization = cfgPtr.Org
+	asset.URL = cfgPtr.URL
+	asset.Metadata = cfgPtr.Meta
 }

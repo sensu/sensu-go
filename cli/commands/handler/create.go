@@ -22,6 +22,7 @@ type handlerOpts struct {
 	Handlers   string `survey:"handler"`
 	SocketHost string `survey:"socketHost"`
 	SocketPort string `survey:"socketPort"`
+	Org        string
 }
 
 // CreateCommand adds command that allows the user to create new handlers
@@ -33,7 +34,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
+
 			opts := &handlerOpts{}
+			opts.Org = cli.Config.Organization()
 
 			if len(args) > 0 {
 				opts.Name = args[0]
@@ -172,6 +175,7 @@ func (opts *handlerOpts) queryForHandlers() {
 func (opts *handlerOpts) toHandler() *types.Handler {
 	handler := &types.Handler{}
 	handler.Name = opts.Name
+	handler.Organization = opts.Org
 	handler.Type = strings.ToLower(opts.Type)
 
 	if len(opts.Mutator) > 0 {
