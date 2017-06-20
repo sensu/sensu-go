@@ -34,7 +34,8 @@ type Cluster struct {
 
 // Profile contains the active configuration
 type Profile struct {
-	Format string `json:"format"`
+	Format       string `json:"format"`
+	Organization string `json:"organization"`
 }
 
 // Load imports the CLI configuration and returns an initialized Config struct

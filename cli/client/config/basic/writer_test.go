@@ -32,6 +32,16 @@ func TestSaveFormat(t *testing.T) {
 	assert.Equal(t, format, config.Format())
 }
 
+func TestSaveOrganization(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "sensu")
+	defer os.RemoveAll(dir)
+	config := Load(nil, dir)
+
+	org := "json"
+	config.SaveOrganization(org)
+	assert.Equal(t, org, config.Organization())
+}
+
 func TestSaveTokens(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)

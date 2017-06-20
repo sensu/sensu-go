@@ -25,9 +25,27 @@ func (m *MockConfig) Format() string {
 	return args.String(0)
 }
 
+// Organization mocks the organization config
+func (m *MockConfig) Organization() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // SaveAPIUrl mocks saving the API URL
 func (m *MockConfig) SaveAPIUrl(url string) error {
 	args := m.Called(url)
+	return args.Error(0)
+}
+
+// SaveFormat mocks saving the format
+func (m *MockConfig) SaveFormat(format string) error {
+	args := m.Called(format)
+	return args.Error(0)
+}
+
+// SaveOrganization mocks saving the organization
+func (m *MockConfig) SaveOrganization(org string) error {
+	args := m.Called(org)
 	return args.Error(0)
 }
 

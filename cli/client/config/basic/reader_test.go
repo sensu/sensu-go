@@ -17,6 +17,11 @@ func TestFormat(t *testing.T) {
 	assert.Equal(t, config.Profile.Format, config.Format())
 }
 
+func TestOrganization(t *testing.T) {
+	config := &Config{Profile: Profile{Organization: "dev"}}
+	assert.Equal(t, config.Profile.Organization, config.Organization())
+}
+
 func TestTokens(t *testing.T) {
 	tokens := &types.Tokens{Access: "foobar"}
 	config := &Config{Cluster: Cluster{Tokens: tokens}}

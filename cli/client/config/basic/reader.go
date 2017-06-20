@@ -12,6 +12,11 @@ func (c *Config) Format() string {
 	return c.Profile.Format
 }
 
+// Organization returns the user's active organization
+func (c *Config) Organization() string {
+	return c.Profile.Organization
+}
+
 // Tokens returns the active cluster JWT
 func (c *Config) Tokens() *types.Tokens {
 	return c.Cluster.Tokens

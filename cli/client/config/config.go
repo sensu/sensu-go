@@ -12,6 +12,7 @@ type Config interface {
 type Read interface {
 	APIUrl() string
 	Format() string
+	Organization() string
 	Tokens() *types.Tokens
 }
 
@@ -19,5 +20,6 @@ type Read interface {
 type Write interface {
 	SaveAPIUrl(string) error
 	SaveFormat(string) error
+	SaveOrganization(string) error
 	SaveTokens(*types.Tokens) error
 }

@@ -22,6 +22,13 @@ func (c *Config) SaveFormat(format string) error {
 	return write(c.Profile, filepath.Join(c.path, profileFilename))
 }
 
+// SaveOrganization saves the user's default organization to a configuration file
+func (c *Config) SaveOrganization(org string) error {
+	c.Profile.Organization = org
+
+	return write(c.Profile, filepath.Join(c.path, profileFilename))
+}
+
 // SaveTokens saves the JWT into a configuration file
 func (c *Config) SaveTokens(tokens *types.Tokens) error {
 	// Update the configuration loaded in memory
