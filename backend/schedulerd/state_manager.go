@@ -118,6 +118,11 @@ type SchedulerState struct {
 	assets map[string]map[string]*types.Asset
 }
 
+// Checks returns all checks in the state
+func (statePtr *SchedulerState) Checks() map[string]*types.CheckConfig {
+	return statePtr.checks
+}
+
 // GetCheck returns check given name and organization
 func (statePtr *SchedulerState) GetCheck(name, org string) *types.CheckConfig {
 	key := concatUniqueKey(name, org)

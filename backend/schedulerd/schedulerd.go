@@ -13,8 +13,8 @@ type Schedulerd struct {
 	Store      store.Store
 	MessageBus messaging.MessageBus
 
-	stateManager     *StateManager
-	schedulerManager *ScheduleManager
+	stateManager *StateManager
+	scheduler    *Scheduler
 
 	errChan chan error
 }
@@ -32,14 +32,17 @@ func (s *Schedulerd) Start() error {
 	// State
 	s.stateManager = NewStateManager(s.Store)
 
-	// Check Schedulers
-	s.schedulerManager = NewScheduleManager(s.MessageBus, s.stateManager)
+	// Scheduler
+	s.scheduler = &Scheduler{
+		StateManager: s.stateManager,
+		MessageBus:   s.MessageBus,
+	}
 
 	// Sync
 	s.errChan = make(chan error, 1)
 
 	// Start
-	s.schedulerManager.Start()
+	s.scheduler.Start()
 	s.stateManager.Start()
 
 	return nil
@@ -48,7 +51,7 @@ func (s *Schedulerd) Start() error {
 // Stop the scheduler daemon.
 func (s *Schedulerd) Stop() error {
 	s.stateManager.Stop()
-	s.schedulerManager.Stop()
+	s.scheduler.Stop()
 
 	close(s.errChan)
 	return nil
