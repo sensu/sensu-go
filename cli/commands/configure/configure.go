@@ -5,16 +5,17 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
-	clientconfig "github.com/sensu/sensu-go/cli/client/config"
+	config "github.com/sensu/sensu-go/cli/client/config"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 )
 
 type answers struct {
-	URL      string `survey:"url"`
-	UserID   string `survey:"userid"`
-	Password string
-	Output   string
+	URL          string `survey:"url"`
+	Username     string `survey:"username"`
+	Password     string
+	Format       string `survey:"format"`
+	Organization string `survey:"organization"`
 }
 
 // Command defines new configuration command
@@ -32,7 +33,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Write new API URL to disk
-			if err = cli.Config.WriteURL(configValues.URL); err != nil {
+			if err = cli.Config.SaveAPIUrl(configValues.URL); err != nil {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),
 					"Unable to write new configuration file with error: %s.\n",
@@ -42,7 +43,9 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Authenticate
-			token, err := cli.Client.CreateAccessToken(configValues.URL, configValues.UserID, configValues.Password)
+			tokens, err := cli.Client.CreateAccessToken(
+				configValues.URL, configValues.Username, configValues.Password,
+			)
 			if err != nil {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),
@@ -50,13 +53,13 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 					err,
 				)
 				return
-			} else if token == nil {
+			} else if tokens == nil {
 				fmt.Fprintln(cmd.OutOrStderr(), "Bad username or password.")
 				return
 			}
 
 			// Write new credentials to disk
-			if err = cli.Config.WriteCredentials(token); err != nil {
+			if err = cli.Config.SaveTokens(tokens); err != nil {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),
 					"Unable to write new configuration file with error: %s\n",
@@ -64,7 +67,22 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
-			// TODO: Write CLI preferences to disk
+			// Write CLI preferences to disk
+			if err = cli.Config.SaveFormat(configValues.Format); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s\n",
+					err,
+				)
+			}
+
+			if err = cli.Config.SaveOrganization(configValues.Organization); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s\n",
+					err,
+				)
+			}
 
 			return
 		},
@@ -76,12 +94,13 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 }
 
-func gatherConfigValues(config clientconfig.Config) (*answers, error) {
+func gatherConfigValues(c config.Config) (*answers, error) {
 	qs := []*survey.Question{
-		askForURL(config),
+		askForURL(c),
 		askForUsername(),
 		askForPassword(),
-		askForDefaultOutput(),
+		askForOrganization(c),
+		askForDefaultFormat(c),
 	}
 
 	res := &answers{}
@@ -89,19 +108,25 @@ func gatherConfigValues(config clientconfig.Config) (*answers, error) {
 	return res, err
 }
 
-func askForURL(config clientconfig.Config) *survey.Question {
-	url := config.GetString("api-url")
+func askForURL(c config.Config) *survey.Question {
+	url := c.APIUrl()
 
 	return &survey.Question{
-		Name:   "url",
-		Prompt: &survey.Input{"Sensu Base URL:", url},
+		Name: "url",
+		Prompt: &survey.Input{
+			Message: "Sensu Base URL:",
+			Default: url,
+		},
 	}
 }
 
 func askForUsername() *survey.Question {
 	return &survey.Question{
-		Name:   "userid",
-		Prompt: &survey.Input{"Email:", ""},
+		Name: "username",
+		Prompt: &survey.Input{
+			Message: "Username:",
+			Default: "",
+		},
 	}
 }
 
@@ -112,13 +137,27 @@ func askForPassword() *survey.Question {
 	}
 }
 
-func askForDefaultOutput() *survey.Question {
+func askForDefaultFormat(c config.Config) *survey.Question {
+	format := c.Format()
+
 	return &survey.Question{
-		Name: "output",
+		Name: "format",
 		Prompt: &survey.Select{
-			Message: "Preferred output:",
+			Message: "Preferred output format:",
 			Options: []string{"none", "json", "yaml"},
-			Default: "none",
+			Default: format,
+		},
+	}
+}
+
+func askForOrganization(c config.Config) *survey.Question {
+	organization := c.Organization()
+
+	return &survey.Question{
+		Name: "organization",
+		Prompt: &survey.Input{
+			Message: "Organization:",
+			Default: organization,
 		},
 	}
 }

@@ -82,6 +82,6 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 func newConfiguredCLI() *cli.SensuCli {
 	cli := test.NewMockCLI()
 	config := cli.Config.(*client.MockConfig)
-	config.On("GetString", "format").Return("json")
+	config.On("Format").Return("json")
 	return cli
 }

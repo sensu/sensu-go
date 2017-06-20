@@ -14,7 +14,7 @@ func TestAddFormatFlag(t *testing.T) {
 	flags := &pflag.FlagSet{}
 
 	config := &client.MockConfig{}
-	config.On("GetString", "format").Return("json")
+	config.On("Format").Return("json")
 
 	AddFormatFlag(flags, config)
 
@@ -29,7 +29,7 @@ func TestAddFormatFlagWithBadChars(t *testing.T) {
 	flags := &pflag.FlagSet{}
 
 	config := &client.MockConfig{}
-	config.On("GetString", "format").Return("JSon")
+	config.On("Format").Return("JSon")
 
 	AddFormatFlag(flags, config)
 
@@ -44,7 +44,7 @@ func TestAddFormatFlagNoDefault(t *testing.T) {
 	flags := &pflag.FlagSet{}
 
 	config := &client.MockConfig{}
-	config.On("GetString", "format").Return("")
+	config.On("Format").Return("")
 
 	AddFormatFlag(flags, config)
 
@@ -59,7 +59,7 @@ func TestAddFormatFlagUnknownDefault(t *testing.T) {
 	flags := &pflag.FlagSet{}
 
 	config := &client.MockConfig{}
-	config.On("GetString", "format").Return("blob")
+	config.On("Format").Return("blob")
 
 	AddFormatFlag(flags, config)
 

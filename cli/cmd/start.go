@@ -3,12 +3,24 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 )
+
+var (
+	// sensuPath contains the path to CLI configuration files
+	sensuPath string
+)
+
+func init() {
+	h, _ := homedir.Dir()
+	sensuPath = filepath.Join(h, ".config", "sensu")
+}
 
 func main() {
 	rootCmd := configureRootCmd()
@@ -52,8 +64,7 @@ func configureRootCmd() *cobra.Command {
 
 	// Global flags
 	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
-	cmd.PersistentFlags().StringP("api-secret", "", "", "secret used to authorize your requests to your specified Sensu installation")
-	cmd.PersistentFlags().StringP("profile", "", "default", "configuration values to use")
+	cmd.PersistentFlags().StringP("config-dir", "d", sensuPath, "directory of configuration files to load")
 
 	return cmd
 }
