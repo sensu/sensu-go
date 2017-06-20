@@ -10,11 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	defaultFormat       = "none"
-	defaultOrganization = "default"
-)
-
 type answers struct {
 	URL          string `survey:"url"`
 	Username     string `survey:"username"`
@@ -144,9 +139,6 @@ func askForPassword() *survey.Question {
 
 func askForDefaultFormat(c config.Config) *survey.Question {
 	format := c.Format()
-	if format == "" {
-		format = defaultFormat
-	}
 
 	return &survey.Question{
 		Name: "format",
@@ -160,9 +152,6 @@ func askForDefaultFormat(c config.Config) *survey.Question {
 
 func askForOrganization(c config.Config) *survey.Question {
 	organization := c.Organization()
-	if organization == "" {
-		organization = defaultOrganization
-	}
 
 	return &survey.Question{
 		Name: "organization",

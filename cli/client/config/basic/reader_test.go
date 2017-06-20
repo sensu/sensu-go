@@ -17,9 +17,19 @@ func TestFormat(t *testing.T) {
 	assert.Equal(t, config.Profile.Format, config.Format())
 }
 
+func TestFormatDefault(t *testing.T) {
+	config := &Config{}
+	assert.Equal(t, defaultFormat, config.Format())
+}
+
 func TestOrganization(t *testing.T) {
 	config := &Config{Profile: Profile{Organization: "dev"}}
 	assert.Equal(t, config.Profile.Organization, config.Organization())
+}
+
+func TestOrganizationDefault(t *testing.T) {
+	config := &Config{}
+	assert.Equal(t, defaultOrganization, config.Organization())
 }
 
 func TestTokens(t *testing.T) {
