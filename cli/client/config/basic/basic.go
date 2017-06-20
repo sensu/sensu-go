@@ -47,6 +47,10 @@ func Load(flags *pflag.FlagSet) *Config {
 		if value, err := flags.GetString("config-dir"); err == nil && value != "" {
 			config.path = value
 		}
+
+		if value, err := flags.GetString("organization"); err == nil && value != "" {
+			config.Profile.Organization = value
+		}
 	}
 
 	// Load the profile config file

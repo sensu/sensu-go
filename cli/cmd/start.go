@@ -12,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// OrganizationFlagDefault default value to use for organization
+const OrganizationFlagDefault = "default"
+
 var (
 	// sensuPath contains the path to CLI configuration files
 	sensuPath string
@@ -65,6 +68,7 @@ func configureRootCmd() *cobra.Command {
 	// Global flags
 	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
 	cmd.PersistentFlags().StringP("config-dir", "d", sensuPath, "directory of configuration files to load")
+	cmd.PersistentFlags().StringP("organization", "", OrganizationFlagDefault, "organization in which we perform actions")
 
 	return cmd
 }

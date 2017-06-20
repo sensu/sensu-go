@@ -71,9 +71,9 @@ func TestCreateExectorBadURLGiven(t *testing.T) {
 	cmd := CreateCommand(cli)
 
 	cmd.Flags().Set("url", "my-bad-bad-url-boy")
-	exec := &createExecutor{client: cli.Client}
+	exec := &CreateExecutor{Client: cli.Client}
 
-	err := exec.run(cmd, []string{"ruby22"})
+	err := exec.Run(cmd, []string{"ruby22"})
 	assert.Error(err)
 }
 
@@ -86,30 +86,40 @@ func TestConfigureAsset(t *testing.T) {
 
 	// Too many args
 	flags.Set("url", "http://lol")
-	asset, err := configureNewAsset(flags, []string{"one", "too many"})
-	assert.Error(err)
+	cfg := ConfigureAsset{Flags: flags, Args: []string{"one", "too many"}, Org: "default"}
+	asset, errs := cfg.Configure()
+	assert.NotEmpty(errs)
 	assert.Empty(asset.Name)
+
+	// Empty org
+	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: ""}
+	asset, errs = cfg.Configure()
+	assert.NotEmpty(errs)
+	assert.Empty(asset.Organization)
 
 	// No args
-	asset, err = configureNewAsset(flags, []string{})
-	assert.Error(err)
+	cfg = ConfigureAsset{Flags: flags, Args: []string{}, Org: "default"}
+	asset, errs = cfg.Configure()
+	assert.NotEmpty(errs)
 	assert.Empty(asset.Name)
 
-	// Given single argument
-	asset, err = configureNewAsset(flags, []string{"ruby22"})
-	assert.Nil(err)
+	// Given name
+	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
+	asset, errs = cfg.Configure()
+	assert.Empty(errs)
 	assert.Equal("ruby22", asset.Name)
 
 	// Valid Metadata
 	flags.Set("metadata", "One: Two")
 	flags.Set("metadata", "  Three : Four ")
-	asset, err = configureNewAsset(flags, []string{"name"})
-	assert.Nil(err)
+	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
+	asset, errs = cfg.Configure()
+	assert.Empty(errs)
 	assert.NotEmpty(asset.Metadata)
 	assert.Equal("Two", asset.Metadata["One"])
 
 	// Bad Metadata
 	flags.Set("metadata", "Five- Six")
-	asset, err = configureNewAsset(flags, []string{"name"})
-	assert.Error(err)
+	asset, errs = cfg.Configure()
+	assert.NotEmpty(errs)
 }

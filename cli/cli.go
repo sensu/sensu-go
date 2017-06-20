@@ -19,7 +19,6 @@ type SensuCli struct {
 // New SensuCLI given persistent flags from command
 func New(flags *pflag.FlagSet) *SensuCli {
 	conf := basic.Load(flags)
-
 	client := client.New(conf)
 	logger := logrus.WithFields(logrus.Fields{
 		"component": "cli-client",

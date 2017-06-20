@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 )
@@ -104,7 +105,7 @@ func (c *CheckConfig) Validate() error {
 
 	for _, assetName := range c.RuntimeAssets {
 		if err = ValidateAssetName(assetName); err != nil {
-			return err
+			return fmt.Errorf("asset's %s", err)
 		}
 	}
 

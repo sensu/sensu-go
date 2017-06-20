@@ -20,6 +20,7 @@ type checkOpts struct {
 	Subscriptions string `survey:"subscriptions"`
 	Handlers      string `survey:"handlers"`
 	RuntimeAssets string `survey:"assets"`
+	Org           string
 }
 
 const (
@@ -35,7 +36,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
+
 			opts := &checkOpts{}
+			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
 				opts.administerQuestionnaire()
@@ -133,6 +136,7 @@ func buildCheck(opts *checkOpts, client client.APIClient) *types.CheckConfig {
 	interval, _ := strconv.Atoi(opts.Interval)
 	check := &types.CheckConfig{
 		Name:          opts.Name,
+		Organization:  opts.Org,
 		Interval:      interval,
 		Command:       opts.Command,
 		Subscriptions: helpers.SafeSplitCSV(opts.Subscriptions),

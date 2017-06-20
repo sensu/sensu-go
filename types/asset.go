@@ -45,12 +45,12 @@ func (a *Asset) Validate() error {
 	}
 
 	if a.Organization == "" {
-		return errors.New("Organization cannot be empty")
+		return errors.New("organization cannot be empty")
 	}
 
 	u, err := url.Parse(a.URL)
 	if err != nil {
-		return errors.New("Invalid URL provided")
+		return errors.New("invalid URL provided")
 	}
 
 	if u.Scheme != "https" && u.Scheme != "http" {
@@ -63,12 +63,12 @@ func (a *Asset) Validate() error {
 // ValidateAssetName validates that asset's name is valid
 func ValidateAssetName(name string) error {
 	if name == "" {
-		return errors.New("Name cannot be empty")
+		return errors.New("name cannot be empty")
 	}
 
 	if !AssetNameRegex.MatchString(name) {
 		return errors.New(
-			"Name must be lowercase and may only contain forward slashes, underscores, dashes and numbers",
+			"name must be lowercase and may only contain forward slashes, underscores, dashes and numbers",
 		)
 	}
 
