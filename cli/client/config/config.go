@@ -18,5 +18,6 @@ type Read interface {
 // Write contains all methods related to setting and writting configuration
 type Write interface {
 	SaveAPIUrl(string) error
+	SaveFormat(string) error
 	SaveTokens(*types.Tokens) error
 }

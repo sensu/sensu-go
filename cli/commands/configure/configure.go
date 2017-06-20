@@ -14,7 +14,7 @@ type answers struct {
 	URL      string `survey:"url"`
 	Username string `survey:"username"`
 	Password string
-	Output   string
+	Format   string `survey:"format"`
 }
 
 // Command defines new configuration command
@@ -66,7 +66,14 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
-			// TODO: Write CLI preferences to disk
+			// Write CLI preferences to disk
+			if err = cli.Config.SaveFormat(configValues.Format); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s\n",
+					err,
+				)
+			}
 
 			return
 		},
@@ -83,7 +90,7 @@ func gatherConfigValues(config clientconfig.Config) (*answers, error) {
 		askForURL(config),
 		askForUsername(),
 		askForPassword(),
-		askForDefaultOutput(),
+		askForDefaultFormat(),
 	}
 
 	res := &answers{}
@@ -120,11 +127,11 @@ func askForPassword() *survey.Question {
 	}
 }
 
-func askForDefaultOutput() *survey.Question {
+func askForDefaultFormat() *survey.Question {
 	return &survey.Question{
-		Name: "output",
+		Name: "format",
 		Prompt: &survey.Select{
-			Message: "Preferred output:",
+			Message: "Preferred output format:",
 			Options: []string{"none", "json", "yaml"},
 			Default: "none",
 		},
