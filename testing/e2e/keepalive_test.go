@@ -115,6 +115,7 @@ func TestAgentKeepalives(t *testing.T) {
 		Command:       "echo output",
 		Interval:      1,
 		Subscriptions: []string{"test"},
+		Organization:  "default",
 	}
 	checkBytes, err := json.Marshal(check)
 	assert.NoError(t, err)
@@ -135,6 +136,7 @@ func TestAgentKeepalives(t *testing.T) {
 		Command:       falseAbsPath,
 		Interval:      1,
 		Subscriptions: []string{"test"},
+		Organization:  "default",
 	}
 	checkBytes, err = json.Marshal(check)
 	assert.NoError(t, err)
