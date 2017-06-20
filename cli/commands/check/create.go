@@ -54,6 +54,13 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			//
+			// TODO:
+			//
+			// Current validation is a bit too laissez faire. For usability we should
+			// determine whether there are assets / handlers / mutators associated w/
+			// the check and warn the user if they do not exist yet.
+
 			if err := cli.Client.CreateCheck(check); err != nil {
 				return err
 			}
@@ -130,21 +137,7 @@ func buildCheck(opts *checkOpts, client client.APIClient) *types.CheckConfig {
 		Command:       opts.Command,
 		Subscriptions: helpers.SafeSplitCSV(opts.Subscriptions),
 		Handlers:      helpers.SafeSplitCSV(opts.Handlers),
-		RuntimeAssets: []types.Asset{},
-	}
-
-	if len(opts.RuntimeAssets) > 0 {
-		assets, _ := client.ListAssets()
-		givenAssetNames := helpers.SafeSplitCSV(opts.RuntimeAssets)
-
-		for _, asset := range assets {
-			for _, givenName := range givenAssetNames {
-				if asset.Name == givenName {
-					check.RuntimeAssets = append(check.RuntimeAssets, asset)
-					break
-				}
-			}
-		}
+		RuntimeAssets: helpers.SafeSplitCSV(opts.RuntimeAssets),
 	}
 
 	return check

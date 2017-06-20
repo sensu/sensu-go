@@ -6,8 +6,17 @@ import (
 	"time"
 )
 
-// CheckConfigType is the message type string for check configurations.
-const CheckConfigType = "check_config"
+// CheckRequestType is the message type string for check request.
+const CheckRequestType = "check_request"
+
+// A CheckRequest represents a request to execute a check
+type CheckRequest struct {
+	// Config is the specification of a check.
+	Config *CheckConfig `json:"config,omitempty"`
+
+	// ExpandedAssets are a list of assets required to execute check.
+	ExpandedAssets []Asset `json:"assets,omitempty"`
+}
 
 // A Check is a check specification and optionally the results of the check's
 // execution.
@@ -53,7 +62,7 @@ type CheckConfig struct {
 	Handlers []string `json:"handlers"`
 
 	// RuntimeAssets are a list of assets required to execute check.
-	RuntimeAssets []Asset `json:"runtime_assets"`
+	RuntimeAssets []string `json:"runtime_assets"`
 
 	// Organization indicates to which org a check belongs to
 	Organization string `json:"organization"`
@@ -93,8 +102,8 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("organization must be set")
 	}
 
-	for _, asset := range c.RuntimeAssets {
-		if err := asset.Validate(); err != nil {
+	for _, assetName := range c.RuntimeAssets {
+		if err = ValidateAssetName(assetName); err != nil {
 			return err
 		}
 	}
@@ -138,6 +147,18 @@ func (c *Check) MergeWith(chk *Check) {
 	c.History = history
 }
 
+// FixtureCheckRequest returns a fixture for a CheckRequest object.
+func FixtureCheckRequest(id string) *CheckRequest {
+	config := FixtureCheckConfig(id)
+
+	return &CheckRequest{
+		Config: config,
+		ExpandedAssets: []Asset{
+			*FixtureAsset("ruby-2-4-2"),
+		},
+	}
+}
+
 // FixtureCheckConfig returns a fixture for a CheckConfig object.
 func FixtureCheckConfig(id string) *CheckConfig {
 	interval := 60
@@ -148,7 +169,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Subscriptions: []string{},
 		Command:       "command",
 		Handlers:      []string{},
-		RuntimeAssets: []Asset{},
+		RuntimeAssets: []string{"ruby-2-4-2"},
 		Organization:  "default",
 	}
 }

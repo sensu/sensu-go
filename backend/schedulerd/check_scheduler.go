@@ -3,94 +3,182 @@ package schedulerd
 import (
 	"crypto/md5"
 	"encoding/binary"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
-// CheckScheduler TODO
+// A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
-	MessageBus  messaging.MessageBus
-	Store       store.Store
-	CheckConfig *types.CheckConfig
+	CheckName string
+	CheckOrg  string
 
-	wg       *sync.WaitGroup
+	StateManager *StateManager
+	MessageBus   messaging.MessageBus
+	WaitGroup    *sync.WaitGroup
+
 	stopping chan struct{}
 }
 
 // Start scheduler, ...
-func (s *CheckScheduler) Start() error {
+func (s *CheckScheduler) Start(initialInterval int) error {
 	s.stopping = make(chan struct{})
+	s.WaitGroup.Add(1)
 
-	splayHash := calcExecutionSplay(s.CheckConfig.Name)
+	timer := NewCheckTimer(s.CheckName, initialInterval)
+	executor := &CheckExecutor{Bus: s.MessageBus}
 
-	s.wg.Add(1)
 	// TODO(greg): Refactor this part to make the code more easily tested.
 	go func() {
-		nextExecution := calcNextExecution(splayHash, s.CheckConfig.Interval)
-		timer := time.NewTimer(nextExecution)
+		timer.Start()
+		defer timer.Stop()
+		defer s.WaitGroup.Done()
 
-		defer s.wg.Done()
 		for {
 			select {
-			case <-timer.C:
-				checkConfig, err := s.Store.GetCheckConfigByName(s.CheckConfig.Organization, s.CheckConfig.Name)
-				if err != nil {
-					logger.Info("error getting check from store: ", err.Error())
-					// TODO(grep): what do we do when we cannot talk to the store?
-					continue
-				}
+			case <-timer.C():
+				// Fetch check from scheduler's state
+				state := s.StateManager.State()
+				check := state.GetCheck(s.CheckName, s.CheckOrg)
 
-				if checkConfig == nil {
-					// The check has been deleted, and there was no error talking to etcd.
-					timer.Stop()
+				// The check has been deleted
+				if check == nil {
 					close(s.stopping)
 					return
 				}
 
-				// update our pointer to the check
-				s.CheckConfig = checkConfig
+				// Reset timer
+				timer.SetInterval(check.Interval)
+				timer.Next()
 
-				timer.Reset(time.Duration(time.Second * time.Duration(checkConfig.Interval)))
-				for _, sub := range checkConfig.Subscriptions {
-					topic := messaging.SubscriptionTopic(s.CheckConfig.Organization, sub)
-					logger.Debugf("Sending check request for %s on topic %s", s.CheckConfig.Name, topic)
-					if err := s.MessageBus.Publish(topic, checkConfig); err != nil {
-						logger.Info("error publishing check request: ", err.Error())
-					}
-				}
+				// Point executor to lastest copy of the scheduler state
+				executor.State = state
+
+				// Publish check request
+				executor.Execute(check)
 			case <-s.stopping:
-				timer.Stop()
 				return
 			}
 		}
 	}()
+
 	return nil
 }
 
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
 	close(s.stopping)
-	s.wg.Wait()
+	s.WaitGroup.Wait()
 	return nil
 }
 
-// Calculate a check execution splay to ensure
-// execution is consistent between process restarts.
-func calcExecutionSplay(checkName string) uint64 {
-	sum := md5.Sum([]byte(checkName))
-
-	return binary.LittleEndian.Uint64(sum[:])
+// CheckExecutor builds request & publishes
+type CheckExecutor struct {
+	Bus   messaging.MessageBus
+	State *SchedulerState
 }
 
-// Calculate the next execution time for a given time and a check interval
-// (in seconds) as an int.
-func calcNextExecution(splay uint64, intervalSeconds int) time.Duration {
-	// current_time = (Time.now.to_f * 1000).to_i
-	now := time.Now().UnixNano() / int64(time.Millisecond)
-	offset := (splay - uint64(now)) % uint64(intervalSeconds*1000)
-	return time.Duration(offset) * time.Millisecond
+// Execute queues reqest on message bus
+func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
+	var err error
+	request := execPtr.BuildRequest(check)
+
+	for _, sub := range check.Subscriptions {
+		topic := messaging.SubscriptionTopic(check.Organization, sub)
+		logger.Debugf("Sending check request for %s on topic %s", check.Name, topic)
+
+		if pubErr := execPtr.Bus.Publish(topic, request); err != nil {
+			logger.Info("error publishing check request: ", err.Error())
+			err = pubErr
+		}
+	}
+
+	return err
+}
+
+// BuildRequest given check config fetches associated assets and builds request
+func (execPtr *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.CheckRequest {
+	request := &types.CheckRequest{}
+	request.Config = check
+
+	// Guard against iterating over assets if there are no assets associated with
+	// the check in the first place.
+	if len(check.RuntimeAssets) == 0 {
+		return request
+	}
+
+	// Explode assets; get assets & filter out those that are irrelevant
+	allAssets := execPtr.State.GetAssetsInOrg(check.Organization)
+	for _, asset := range allAssets {
+		if assetIsRelevant(asset, check) {
+			request.ExpandedAssets = append(request.ExpandedAssets, *asset)
+		}
+	}
+
+	return request
+}
+
+func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
+	for _, assetName := range check.RuntimeAssets {
+		if strings.HasPrefix(asset.Name, assetName) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// A CheckTimer handles starting a stopping timers for a given check
+type CheckTimer struct {
+	interval time.Duration
+	splay    uint64
+	timer    *time.Timer
+}
+
+// NewCheckTimer establishes new check timer given a name & an initial interval
+func NewCheckTimer(name string, interval int) *CheckTimer {
+	// Calculate a check execution splay to ensure
+	// execution is consistent between process restarts.
+	sum := md5.Sum([]byte(name))
+	splay := binary.LittleEndian.Uint64(sum[:])
+
+	timer := &CheckTimer{splay: splay}
+	timer.SetInterval(interval)
+	return timer
+}
+
+// C channel emits events when timer's duration has reaached 0
+func (timerPtr *CheckTimer) C() <-chan time.Time {
+	return timerPtr.timer.C
+}
+
+// SetInterval updates the interval in which timers are set
+func (timerPtr *CheckTimer) SetInterval(i int) {
+	timerPtr.interval = time.Duration(time.Second * time.Duration(i))
+}
+
+// Start sets up a new timer
+func (timerPtr *CheckTimer) Start() {
+	initOffset := timerPtr.calcInitialOffset()
+	timerPtr.timer = time.NewTimer(initOffset)
+}
+
+// Next reset's timer using interval
+func (timerPtr *CheckTimer) Next() {
+	timerPtr.timer.Reset(timerPtr.interval)
+}
+
+// Stop ends the timer
+func (timerPtr *CheckTimer) Stop() bool {
+	return timerPtr.timer.Stop()
+}
+
+// Calculate the first execution time using splay & interval
+func (timerPtr *CheckTimer) calcInitialOffset() time.Duration {
+	now := uint64(time.Now().UnixNano())
+	offset := (timerPtr.splay - now) % uint64(timerPtr.interval)
+	return time.Duration(offset) / time.Nanosecond
 }

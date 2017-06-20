@@ -9,8 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"time"
 )
+
+// AssetNameRegex used to validate name of asset
+var AssetNameRegex = regexp.MustCompile(`^[a-z0-9\/\_\.\-]+$`)
 
 // Asset defines an asset agents install as a dependency for a check.
 type Asset struct {
@@ -32,8 +36,8 @@ type Asset struct {
 
 // Validate returns an error if the asset contains invalid values.
 func (a *Asset) Validate() error {
-	if a.Name == "" {
-		return errors.New("Name cannot be empty")
+	if err := ValidateAssetName(a.Name); err != nil {
+		return err
 	}
 
 	if a.URL == "" {
@@ -51,6 +55,21 @@ func (a *Asset) Validate() error {
 
 	if u.Scheme != "https" && u.Scheme != "http" {
 		return errors.New("URL must be HTTP or HTTPS")
+	}
+
+	return nil
+}
+
+// ValidateAssetName validates that asset's name is valid
+func ValidateAssetName(name string) error {
+	if name == "" {
+		return errors.New("Name cannot be empty")
+	}
+
+	if !AssetNameRegex.MatchString(name) {
+		return errors.New(
+			"Name must be lowercase and may only contain forward slashes, underscores, dashes and numbers",
+		)
 	}
 
 	return nil

@@ -170,19 +170,19 @@ func (s *Session) subPump() {
 	for {
 		select {
 		case c := <-s.checkChannel:
-			checkConfig, ok := c.(*types.CheckConfig)
+			request, ok := c.(*types.CheckRequest)
 			if !ok {
 				logger.Errorf("session received non-config over check channel")
 				continue
 			}
 
-			configBytes, err := json.Marshal(checkConfig)
+			configBytes, err := json.Marshal(request)
 			if err != nil {
-				logger.WithError(err).Error("session failed to serialize check")
+				logger.WithError(err).Error("session failed to serialize check request")
 			}
 
 			msg := &transport.Message{
-				Type:    types.CheckConfigType,
+				Type:    types.CheckRequestType,
 				Payload: configBytes,
 			}
 			s.sendq <- msg
@@ -266,7 +266,7 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return err
 	}
 
-	// TODO(greg): better entity validation than this garbaje.
+	// TODO(greg): better entity validation than this garbage.
 	if keepalive.Entity == nil {
 		return errors.New("keepalive does not contain an entity")
 	}

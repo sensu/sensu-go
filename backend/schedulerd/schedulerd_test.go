@@ -2,7 +2,6 @@ package schedulerd
 
 import (
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -38,7 +37,6 @@ func TestSchedulerd(t *testing.T) {
 		checker := &Schedulerd{
 			Store:      st,
 			MessageBus: bus,
-			wg:         &sync.WaitGroup{},
 		}
 		checker.Start()
 

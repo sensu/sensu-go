@@ -63,12 +63,10 @@ func TestFixtureCheckIsValid(t *testing.T) {
 	assert.Equal(t, "check", config.Name)
 	assert.NoError(t, config.Validate())
 
-	config.RuntimeAssets = []Asset{
-		*FixtureAsset("good"),
-	}
+	config.RuntimeAssets = []string{"good"}
 	assert.NoError(t, config.Validate())
 
-	config.RuntimeAssets = []Asset{{Name: ""}}
+	config.RuntimeAssets = []string{"BAD--a!!!---ASDFASDF$$$$"}
 	assert.Error(t, config.Validate())
 }
 

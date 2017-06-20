@@ -56,14 +56,10 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
-	client.On("ListAssets").Return([]types.Asset{
-		*types.FixtureAsset("ruby23"),
-		*types.FixtureAsset("ruby22"),
-	}, nil)
 
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("command", "echo 'heyhey'")
-	cmd.Flags().Set("runtime-dependency", "ruby22")
+	cmd.Flags().Set("runtime-assets", "ruby22")
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
 	assert.Regexp("OK", out)
