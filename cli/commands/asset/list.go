@@ -80,8 +80,8 @@ func printAssetsToTable(queryResults []types.Asset, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				asset, _ := data.(types.Asset)
 
-				if len(asset.Hash) >= 7 {
-					return string(asset.Hash[0:7])
+				if len(asset.Sha512) >= 7 {
+					return string(asset.Sha512[0:7])
 				}
 				return ""
 			},

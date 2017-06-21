@@ -25,7 +25,7 @@ type AssetSetTestSuite struct {
 func (suite *AssetSetTestSuite) SetupTest() {
 	// Ex script
 	exBody := readFixture("rubby-on-rails.tar")
-	exHash := stringToSHA256(exBody)
+	exSha512 := stringToSHA512(exBody)
 
 	// Setup a fake server to fake retrieving the asset
 	suite.assetServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func (suite *AssetSetTestSuite) SetupTest() {
 	// Ex. asset
 	asset := types.FixtureAsset("asset")
 	asset.Name = "ruby24"
-	asset.Hash = exHash
+	asset.Sha512 = exSha512
 	asset.URL = suite.assetServer.URL + "/myfile"
 
 	// Create a fake cache directory so that we have a safe place to test results

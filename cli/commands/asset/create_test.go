@@ -43,6 +43,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("url", "http://lol")
+	cmd.Flags().Set("sha512", "12345qwerty")
 	out, err := test.RunCmd(cmd, []string{"ruby22"})
 
 	assert.Regexp("OK", out)
@@ -57,6 +58,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateAsset", mock.AnythingOfType("*types.Asset")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
+	cmd.Flags().Set("sha512", "12345qwerty")
 	cmd.Flags().Set("url", "http://lol")
 	out, err := test.RunCmd(cmd, []string{"ruby22"})
 
@@ -82,10 +84,10 @@ func TestConfigureAsset(t *testing.T) {
 
 	flags := &pflag.FlagSet{}
 	flags.StringSlice("metadata", []string{}, "")
-	flags.String("url", "", "")
+	flags.String("sha512", "12345qwerty", "")
+	flags.String("url", "http://lol", "")
 
 	// Too many args
-	flags.Set("url", "http://lol")
 	cfg := ConfigureAsset{Flags: flags, Args: []string{"one", "too many"}, Org: "default"}
 	asset, errs := cfg.Configure()
 	assert.NotEmpty(errs)

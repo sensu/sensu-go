@@ -29,7 +29,7 @@ func NewAssetStore() *AssetStore {
 
 // FetchAsset - fetches asset from store, otherwise creates & adds it
 func (storePtr *AssetStore) FetchAsset(asset *types.Asset, newFn newAssetFn) *RuntimeAsset {
-	key := asset.Hash
+	key := asset.Sha512
 
 	// Return asset if it is already in the store
 	if runtimeAsset := storePtr.getAsset(key); runtimeAsset != nil {
@@ -95,7 +95,7 @@ func (storePtr *AssetStore) Clear() {
 func concatAssetSetKey(runtimeAssets []*RuntimeAsset) string {
 	names := make([]string, len(runtimeAssets))
 	for _, runtimeAsset := range runtimeAssets {
-		names = append(names, runtimeAsset.asset.Hash[:7])
+		names = append(names, runtimeAsset.asset.Sha512[:7])
 	}
 
 	sort.Strings(names)

@@ -1,7 +1,7 @@
 package assetmanager
 
 import (
-	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -34,7 +34,7 @@ type RuntimeAsset struct {
 
 // NewRuntimeAsset given asset and pathPrefix return new managed asset
 func NewRuntimeAsset(asset *types.Asset, pathPrefix string) *RuntimeAsset {
-	path := filepath.Join(pathPrefix, asset.Hash)
+	path := filepath.Join(pathPrefix, asset.Sha512)
 	return &RuntimeAsset{path: path, asset: asset}
 }
 
@@ -144,17 +144,17 @@ func (d *RuntimeAsset) install() error {
 	tmpFile.Seek(0, 0)
 
 	// Generate checksum for downloaded file
-	h := sha256.New()
+	h := sha512.New()
 	if _, err = io.Copy(h, tmpFile); err != nil {
 		return fmt.Errorf("generating checksum for asset failed: %s", err.Error())
 	}
 
 	// Check that fetched file's checksum matches given
 	responseBodySum := hex.EncodeToString(h.Sum(nil))
-	if d.asset.Hash != responseBodySum {
+	if d.asset.Sha512 != responseBodySum {
 		return fmt.Errorf(
 			"fetched asset did not match '%s' '%s'",
-			d.asset.Hash,
+			d.asset.Sha512,
 			responseBodySum,
 		)
 	}
