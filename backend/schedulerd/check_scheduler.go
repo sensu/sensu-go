@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
 )
@@ -20,6 +21,7 @@ type CheckScheduler struct {
 	MessageBus   messaging.MessageBus
 	WaitGroup    *sync.WaitGroup
 
+	logger   *logrus.Entry
 	stopping chan struct{}
 }
 
@@ -27,6 +29,9 @@ type CheckScheduler struct {
 func (s *CheckScheduler) Start(initialInterval int) error {
 	s.stopping = make(chan struct{})
 	s.WaitGroup.Add(1)
+
+	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg})
+	s.logger.Infof("Starting new scheduler")
 
 	timer := NewCheckTimer(s.CheckName, initialInterval)
 	executor := &CheckExecutor{Bus: s.MessageBus}
@@ -46,7 +51,7 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 
 				// The check has been deleted
 				if check == nil {
-					close(s.stopping)
+					s.logger.Infof("Check no longer in state")
 					return
 				}
 
@@ -70,8 +75,11 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
+	s.logger.Infof("Stopping scheduler")
+
 	close(s.stopping)
 	s.WaitGroup.Wait()
+
 	return nil
 }
 

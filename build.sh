@@ -121,7 +121,7 @@ linter_commands () {
 	fi
 }
 
-test_commands () {
+unit_test_commands () {
 	echo "Running tests..."
 
 	echo "" > coverage.txt
@@ -172,14 +172,15 @@ if [ "$cmd" == "deps" ]; then
 	install_deps
 elif [ "$cmd" == "quality" ]; then
 	linter_commands
-	test_commands
+	unit_test_commands
 elif [ "$cmd" == "lint" ]; then
 	linter_commands
 elif [ "$cmd" == "unit" ]; then
-	test_commands
+	unit_test_commands
 elif [ "$cmd" == "build_tools" ]; then
 	build_tools
 elif [ "$cmd" == "e2e" ]; then
+	build_commands
 	e2e_commands
 elif [ "$cmd" == "build" ]; then
 	build_commands
@@ -197,7 +198,7 @@ else
 	install_deps
 	linter_commands
 	build_tools
-	test_commands
+	unit_test_commands
 	build_commands
 	e2e_commands
 fi

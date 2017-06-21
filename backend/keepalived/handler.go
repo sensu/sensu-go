@@ -117,6 +117,7 @@ func (k *Keepalived) deregisterEntity(entity *types.Entity) {
 				Subscriptions: []string{""},
 				Command:       "",
 				Handlers:      []string{entity.Deregistration.Handler},
+				Organization:  entity.Organization,
 			},
 			Status: 1,
 		}
@@ -143,6 +144,7 @@ func (k *Keepalived) createKeepaliveEvent(entity *types.Entity) {
 			Subscriptions: []string{""},
 			Command:       "",
 			Handlers:      []string{"keepalive"},
+			Organization:  entity.Organization,
 		},
 	}
 	keepaliveEvent := &types.Event{

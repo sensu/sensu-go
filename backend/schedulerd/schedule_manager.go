@@ -73,6 +73,8 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 
 	// Create new scheduler & start it
 	scheduler := mngrPtr.newSchedulerFn(check)
+
+	// Start scheduling check
 	if err := scheduler.Start(check.Interval); err != nil {
 		return err
 	}
@@ -84,6 +86,7 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 
 // Start ...
 func (mngrPtr *ScheduleManager) Start() {
+	logger.Info("Starting scheduler manager")
 	mngrPtr.stopped.Store(false)
 }
 

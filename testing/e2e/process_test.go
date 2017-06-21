@@ -99,7 +99,14 @@ type agentProcess struct {
 
 func (a *agentProcess) Start() error {
 	exe := filepath.Join(binDir, "sensu-agent")
-	cmd := exec.Command(exe, "start", "--backend-url", a.BackendURLs[0], "--backend-url", a.BackendURLs[1], "--id", a.AgentID, "--subscriptions", "test")
+	cmd := exec.Command(
+		exe, "start",
+		"--backend-url", a.BackendURLs[0],
+		"--backend-url", a.BackendURLs[1],
+		"--id", a.AgentID,
+		"--subscriptions", "test",
+		"--organization", "default",
+	)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
