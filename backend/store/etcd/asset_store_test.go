@@ -21,7 +21,7 @@ func TestAssetStorage(t *testing.T) {
 
 		assert.Equal(t, asset.Name, retrieved.Name)
 		assert.Equal(t, asset.URL, retrieved.URL)
-		assert.Equal(t, asset.Hash, retrieved.Hash)
+		assert.Equal(t, asset.Sha512, retrieved.Sha512)
 		assert.Equal(t, asset.Metadata, retrieved.Metadata)
 
 		assets, err := store.GetAssets("default")

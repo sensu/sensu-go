@@ -25,12 +25,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE:  exec.Run,
 	}
 
+	cmd.Flags().StringP("sha512", "", "", "SHA-512 checksum of the asset's archive")
 	cmd.Flags().StringP("url", "u", "", "the URL of the asset")
 	cmd.Flags().StringSliceP("metadata", "m", []string{}, "metadata associated with asset")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("url")
 	cmd.MarkFlagRequired("organization")
+	cmd.MarkFlagRequired("sha512")
+	cmd.MarkFlagRequired("url")
 
 	return cmd
 }
@@ -87,6 +89,7 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 	cfgPtr.cfg = cfg
 	cfgPtr.setName()
 	cfgPtr.setOrg()
+	cfgPtr.setSha512()
 	cfgPtr.setURL()
 	cfgPtr.setMeta()
 
@@ -114,6 +117,14 @@ func (cfgPtr *ConfigureAsset) setOrg() {
 	cfgPtr.cfg.Org = cfgPtr.Org
 }
 
+func (cfgPtr *ConfigureAsset) setSha512() {
+	if sha512, err := cfgPtr.Flags.GetString("sha512"); err != nil {
+		panic(err)
+	} else {
+		cfgPtr.cfg.Sha512 = sha512
+	}
+}
+
 func (cfgPtr *ConfigureAsset) setURL() {
 	if url, err := cfgPtr.Flags.GetString("url"); err != nil {
 		panic(err)
@@ -139,10 +150,11 @@ func (cfgPtr *ConfigureAsset) addError(err error) {
 
 // Config represents configurable attributes of an asset
 type Config struct {
-	Name string
-	Org  string
-	URL  string
-	Meta map[string]string
+	Name   string
+	Org    string
+	Sha512 string
+	URL    string
+	Meta   map[string]string
 }
 
 // SetMeta sets metadata given values
@@ -171,6 +183,7 @@ func (cfgPtr *Config) SetMeta(metadata []string) error {
 func (cfgPtr *Config) Copy(asset *types.Asset) {
 	asset.Name = cfgPtr.Name
 	asset.Organization = cfgPtr.Org
+	asset.Sha512 = cfgPtr.Sha512
 	asset.URL = cfgPtr.URL
 	asset.Metadata = cfgPtr.Meta
 }
