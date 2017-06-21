@@ -1,7 +1,7 @@
 package assetmanager
 
 import (
-	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"io/ioutil"
 	"path/filepath"
@@ -15,8 +15,8 @@ func readFixture(file string) string {
 	return string(bytes)
 }
 
-func stringToSHA256(str string) string {
-	h := sha256.New()
+func stringToSHA512(str string) string {
+	h := sha512.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
 }

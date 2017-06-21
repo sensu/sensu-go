@@ -40,9 +40,9 @@ func (suite *RuntimeAssetTestSuite) SetupTest() {
 	suite.dep = &RuntimeAsset{
 		path: tmpDir,
 		asset: &types.Asset{
-			Name: "ruby24",
-			Hash: "123456",
-			URL:  suite.assetServer.URL + "/myfile",
+			Name:   "ruby24",
+			Sha512: "123456",
+			URL:    suite.assetServer.URL + "/myfile",
 		},
 	}
 }
@@ -65,7 +65,7 @@ func (suite *RuntimeAssetTestSuite) TestFetch() {
 
 func (suite *RuntimeAssetTestSuite) TestInstall() {
 	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.dep.asset.Hash = stringToSHA256(suite.responseBody)
+	suite.dep.asset.Sha512 = stringToSHA512(suite.responseBody)
 
 	err := suite.dep.install()
 	suite.NoError(err)
@@ -73,7 +73,7 @@ func (suite *RuntimeAssetTestSuite) TestInstall() {
 
 func (suite *RuntimeAssetTestSuite) TestParallelInstall() {
 	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.dep.asset.Hash = stringToSHA256(suite.responseBody)
+	suite.dep.asset.Sha512 = stringToSHA512(suite.responseBody)
 
 	errs := make(chan error, 5)
 	install := func() {
@@ -96,7 +96,7 @@ func (suite *RuntimeAssetTestSuite) TestParallelInstall() {
 
 func (suite *RuntimeAssetTestSuite) TestInstallBadAssetHash() {
 	suite.responseBody = "abc"
-	suite.dep.asset.Hash = "bad bad hash boy"
+	suite.dep.asset.Sha512 = "bad bad hash boy"
 
 	err := suite.dep.install()
 	suite.Error(err)

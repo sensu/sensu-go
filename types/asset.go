@@ -2,15 +2,11 @@ package types
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"io"
-	"net/http"
 	"net/url"
 	"path"
 	"regexp"
-	"time"
 )
 
 // AssetNameRegex used to validate name of asset
@@ -24,8 +20,8 @@ type Asset struct {
 	// Url is the location of the asset.
 	URL string `json:"url"`
 
-	// Hash digest of asset
-	Hash string `json:"hash"`
+	// Sha512 is the SHA-512 checksum of the asset
+	Sha512 string `json:"sha512"`
 
 	// Metadata is a set of key value pair associated with the asset.
 	Metadata map[string]string `json:"metadata"`
@@ -40,12 +36,16 @@ func (a *Asset) Validate() error {
 		return err
 	}
 
-	if a.URL == "" {
-		return errors.New("URL cannot be empty")
-	}
-
 	if a.Organization == "" {
 		return errors.New("organization cannot be empty")
+	}
+
+	if a.Sha512 == "" {
+		return errors.New("SHA-512 checksum cannot be empty")
+	}
+
+	if a.URL == "" {
+		return errors.New("URL cannot be empty")
 	}
 
 	u, err := url.Parse(a.URL)
@@ -75,24 +75,6 @@ func ValidateAssetName(name string) error {
 	return nil
 }
 
-// UpdateHash sets Hash value from given URL
-func (a *Asset) UpdateHash() (err error) {
-	netClient := &http.Client{Timeout: time.Second * 10}
-	h := sha256.New()
-
-	r, err := netClient.Get(a.URL)
-	if err != nil {
-		return
-	}
-
-	if _, err = io.Copy(h, r.Body); err != nil {
-		return
-	}
-
-	a.Hash = hex.EncodeToString(h.Sum(nil))
-	return
-}
-
 // Filename returns the filename of the underlying asset; pulled from the URL
 func (a *Asset) Filename() string {
 	u, err := url.Parse(a.URL)
@@ -111,9 +93,9 @@ func FixtureAsset(name string) *Asset {
 	hash := hex.EncodeToString(bytes)
 
 	return &Asset{
-		Name: name,
-		Hash: hash,
-		URL:  "https://localhost/" + hash + ".zip",
+		Name:   name,
+		Sha512: "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
+		URL:    "https://localhost/" + hash + ".zip",
 		Metadata: map[string]string{
 			"Content-Type":            "application/zip",
 			"X-Intended-Distribution": "trusty-14",
