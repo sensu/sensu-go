@@ -20,10 +20,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		Org:    cli.Config.Organization(),
 	}
 	cmd := &cobra.Command{
-		Use:    "create NAME",
-		Short:  "create new assets",
-		RunE:   exec.Run,
-		Hidden: true,
+		Use:   "create NAME",
+		Short: "create new assets",
+		RunE:  exec.Run,
 	}
 
 	cmd.Flags().StringP("url", "u", "", "the URL of the asset")
