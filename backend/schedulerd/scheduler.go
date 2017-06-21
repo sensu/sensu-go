@@ -14,10 +14,14 @@ import (
 //
 // tldr;
 //
-// - sets up up interval that runs every second
-// - on interval grab all checks from state atom
-// - filter checks that should be queued within the next 1000 milliseconds
-// - queue filtered set of checks
+// 1. Sleep until next next tick. (~1 second.)
+// 2. If we've received a message on the 'stopping' channel go to step 8.
+// 3. Grab the most recent copy of the state.
+// 4. Iterate over the checks contained in our state. After exhausting list go to step 7.
+// 5. For each check determine if duration of time until it's next execution is less than our delta. If so go to step 6 else continue iterating.
+// 6. Spawn goroutine to build & publish check request. Go to step 4.
+// 7. Go to step 1.
+// 8. Done.
 //
 
 // SchedulerInterval frequency in which we schedule checks
@@ -68,6 +72,10 @@ func (schedulerPtr *Scheduler) Start() {
 
 					// If the check should be run at this interval queue it
 					if task.ShouldRun() {
+
+						// TODO: As mentioned by grep, waitGroup is (probably?) extraneous.
+						// If the message bus is no longer running it will return an error
+						// but wont panic or cause any unintentional side-effects.
 						DoTaskAsync(task, schedulerPtr.waitGroup)
 					}
 				}
@@ -82,11 +90,14 @@ func (schedulerPtr *Scheduler) Stop() {
 	schedulerPtr.waitGroup.Wait()
 }
 
+// TODO: Rename to TimeDelta or more simply Delta(?)
 type Timeframe struct {
 	Start time.Time
-	End   time.Time
+	// TODO: End/Delta time.Duration
+	End time.Time
 }
 
+// TODO: Probably remove me.
 func (framePtr *Timeframe) Contains(t *time.Time) bool {
 	timeNano := t.UnixNano()
 	return (timeNano >= framePtr.Start.UnixNano() && timeNano < framePtr.End.UnixNano())
@@ -113,13 +124,22 @@ func (intPtr *SchedulerInterval) Wait() {
 	intPtr.Start = intPtr.End
 
 	// Set the end time to the nearest tick
-	curTime := time.Now()
-	timeUntilNextInterval := curTime.UnixNano() % SchedulerInterval
-	intPtr.End = curTime.Add(timeUntilNextInterval)
+	start := time.Now()
+	delta := SchedulerInterval + (start.UnixNano() % SchedulerInterval) // TODO: Persist
+	intPtr.End = start.Add(timeUntilNextInterval)                       // TODO: Remove & simply set delta
 
 	// Sleep until were needed again
-	time.Sleep(timeUntilNextInterval)
+	time.Sleep(delta)
 }
+
+//
+// TODO:
+//
+// Task, TaskContext & TaskRunner are far too generic. Run loop has a single
+// resposiblity.
+//
+// Maybe pull over CheckExecutor from existing implentation?
+//
 
 // TaskContext ...
 type TaskContext struct {
@@ -150,6 +170,7 @@ func (taskPtr *Task) ShouldRun() bool {
 
 	// Return true if the next time the check should be run
 	// intersects with the last timeframe.
+	// TODO: Determine if timeUntilNextRun < Delta
 	return taskPtr.Timeframe.Contains(t.Add(timeUntilNextRun))
 }
 
