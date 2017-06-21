@@ -55,6 +55,6 @@ curl -i -X PUT -H 'Content-Type: application/json' -d '{"username": "foo", "pass
 
 #### API Authentication
 
-Use the `--api-authentication` flag with **sensu-backend** binary.
+Use the `--api-authentication` flag with the **sensu-backend** binary.
 
 ## Sensu CLI
