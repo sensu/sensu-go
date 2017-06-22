@@ -33,6 +33,12 @@
 			"revisionTime": "2016-06-22T17:32:16Z"
 		},
 		{
+			"checksumSHA1": "vpSdUHNbSiJiHYfVt8Y/iBN7B4o=",
+			"path": "github.com/Knetic/govaluate",
+			"revision": "91facc4ae520fef82c9aee6b6ae720d9ae789131",
+			"revisionTime": "2017-06-21T16:20:16Z"
+		},
+		{
 			"checksumSHA1": "ZKxETlJdB2XubMrZnXB0FQimVA8=",
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "10f801ebc38b33738c9d17d50860f484a0988ff5",
@@ -1164,6 +1170,10 @@
 			"path": "gopkg.in/yaml.v2",
 			"revision": "a3f3340b5840cee44f372bddb5880fcbc419b46a",
 			"revisionTime": "2017-02-08T14:18:51Z"
+		},
+		{
+			"path": "https://github.com/Knetic/govaluate.git",
+			"revision": ""
 		}
 	],
 	"rootPath": "github.com/sensu/sensu-go"
