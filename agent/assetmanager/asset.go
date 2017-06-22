@@ -3,6 +3,7 @@ package assetmanager
 import (
 	"crypto/sha512"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Knetic/govaluate"
 	"github.com/cenkalti/backoff"
 	"github.com/mholt/archiver"
 	"github.com/nightlyone/lockfile"
@@ -36,6 +38,28 @@ type RuntimeAsset struct {
 func NewRuntimeAsset(asset *types.Asset, pathPrefix string) *RuntimeAsset {
 	path := filepath.Join(pathPrefix, asset.Sha512)
 	return &RuntimeAsset{path: path, asset: asset}
+}
+
+func (d *RuntimeAsset) isRelevantTo(entity types.Entity) (bool, error) {
+	params := make(map[string]interface{}, 1)
+	params["entity"] = entity
+
+	for _, filter := range d.asset.Filters {
+		exp, err := govaluate.NewEvaluableExpression(filter)
+		if err != nil {
+			return false, err
+		}
+
+		if res, err := exp.Evaluate(params); err != nil {
+			return false, err
+		} else if resBool, ok := res.(bool); !ok {
+			return false, errors.New("expression result was non-boolean value")
+		} else if !resBool {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func (d *RuntimeAsset) isInstalled() (bool, error) {

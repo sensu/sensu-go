@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent/assetmanager"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
@@ -45,14 +44,6 @@ type Config struct {
 	CacheDir string
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
-}
-
-var logger *logrus.Entry
-
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "agent",
-	})
 }
 
 // NewConfig provides a new Config object initialized with defaults.
@@ -100,7 +91,7 @@ func NewAgent(config *Config) *Agent {
 	}
 
 	agent.handler.AddHandler(types.CheckRequestType, agent.handleCheck)
-	agent.assetManager = assetmanager.New(config.CacheDir)
+	agent.assetManager = assetmanager.New(config.CacheDir, agent.getAgentEntity())
 
 	return agent
 }
