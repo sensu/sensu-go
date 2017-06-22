@@ -15,6 +15,8 @@ var binDir = filepath.Join("..", "bin")
 var toolsDir = filepath.Join(binDir, "tools")
 
 func TestExecuteCheck(t *testing.T) {
+	assert := assert.New(t)
+
 	checkConfig := types.FixtureCheckConfig("check")
 	request := &types.CheckRequest{Config: checkConfig}
 
@@ -31,9 +33,9 @@ func TestExecuteCheck(t *testing.T) {
 	msg := <-ch
 
 	event := &types.Event{}
-	assert.NoError(t, json.Unmarshal(msg.Payload, event))
-	assert.NotZero(t, event.Timestamp)
-	assert.Equal(t, 0, event.Check.Status)
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.Equal(0, event.Check.Status)
 
 	falsePath := util.CommandPath(filepath.Join(toolsDir, "false"))
 	checkConfig.Command = falsePath
@@ -43,7 +45,18 @@ func TestExecuteCheck(t *testing.T) {
 	msg = <-ch
 
 	event = &types.Event{}
-	assert.NoError(t, json.Unmarshal(msg.Payload, event))
-	assert.NotZero(t, event.Timestamp)
-	assert.Equal(t, 1, event.Check.Status)
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.Equal(1, event.Check.Status)
+
+	checkConfig.Interval = -15
+	agent.executeCheck(request)
+
+	msg = <-ch
+
+	event = &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.Equal(event.Check.Status, 3, "Unknown status code is returned")
+	assert.Contains(event.Check.Output, "check is invalid")
 }
