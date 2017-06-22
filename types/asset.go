@@ -4,9 +4,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"regexp"
+	"time"
+
+	"github.com/Knetic/govaluate"
 )
 
 // AssetNameRegex used to validate name of asset
@@ -60,6 +66,30 @@ func (a *Asset) Validate() error {
 
 	if u.Scheme != "https" && u.Scheme != "http" {
 		return errors.New("URL must be HTTP or HTTPS")
+	}
+
+	for _, filter := range a.Filters {
+		if err := ValidateAssetFilter(filter); err != nil {
+			return fmt.Errorf("invalid filter syntax for '%s'", filter)
+		}
+	}
+
+	return nil
+}
+
+// ValidateAssetFilter ensure that the given filter is can be parse successfully
+// and that it does not contain any modifier tokens.
+func ValidateAssetFilter(filter string) error {
+	exp, err := govaluate.NewEvaluableExpression(filter)
+	if err != nil {
+		return err
+	}
+
+	// Do not allow modifier tokens (eg. +, -, /, *, **, &, etc.)
+	for _, token := range exp.Tokens() {
+		if token.Kind == govaluate.MODIFIER {
+			return errors.New("invalid token encountered")
+		}
 	}
 
 	return nil
