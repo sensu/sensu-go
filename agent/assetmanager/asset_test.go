@@ -118,7 +118,7 @@ func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
 
 func (suite *RuntimeAssetTestSuite) TestInstall() {
 	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.asset.Sha512 = stringToSHA256(suite.responseBody)
+	suite.asset.Sha512 = stringToSHA512(suite.responseBody)
 
 	err := suite.runtimeAsset.install()
 	suite.NoError(err)
@@ -126,7 +126,7 @@ func (suite *RuntimeAssetTestSuite) TestInstall() {
 
 func (suite *RuntimeAssetTestSuite) TestParallelInstall() {
 	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.asset.Sha512 = stringToSHA256(suite.responseBody)
+	suite.asset.Sha512 = stringToSHA512(suite.responseBody)
 
 	errs := make(chan error, 5)
 	install := func() {
