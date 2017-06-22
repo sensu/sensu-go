@@ -26,6 +26,11 @@ type Asset struct {
 	// Metadata is a set of key value pair associated with the asset.
 	Metadata map[string]string `json:"metadata"`
 
+	// Filters is a collection of sensu queries, used by the system to determine
+	// if the asset should be installed. If more than one filter is present the
+	// queries are joined by the "AND" operator.
+	Filters []string `json:"filters"`
+
 	// Organization indicates to which org an asset belongs
 	Organization string `json:"organization"`
 }
