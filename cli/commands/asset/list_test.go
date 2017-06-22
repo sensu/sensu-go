@@ -28,7 +28,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	cli := newCLI()
 
 	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("tabular")
+	config.On("Format").Return("none")
 
 	client := cli.Client.(*client.MockClient)
 	client.On("ListAssets").Return([]types.Asset{

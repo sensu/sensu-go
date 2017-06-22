@@ -20,12 +20,16 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list assets",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			format, _ := cmd.Flags().GetString("format")
-
 			// Fetch assets from API
 			r, err := cli.Client.ListAssets()
 			if err != nil {
 				return err
+			}
+
+			// Determine the format to use to output the data
+			var format string
+			if format, _ = cmd.Flags().GetString("format"); format == "" {
+				format = cli.Config.Format()
 			}
 
 			if format == "json" {

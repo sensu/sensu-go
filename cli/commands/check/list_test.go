@@ -54,7 +54,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	client.On("ListChecks").Return([]types.CheckConfig{*check}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "tabular")
+	cmd.Flags().Set("format", "none")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
