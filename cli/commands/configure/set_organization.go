@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 )
 
+// SetOrgCommand given argument changes organization for active profile
 func SetOrgCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "set-organization [ORGANIZATION]",
@@ -31,6 +33,11 @@ func SetOrgCommand(cli *cli.SensuCli) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
+		},
+		Annotations: map[string]string{
+			// We want to be able to run this command regardless of whether the CLI
+			// has been configured.
+			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
 		},
 	}
 }
