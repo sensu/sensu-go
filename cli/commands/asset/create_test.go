@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -79,49 +80,119 @@ func TestCreateExectorBadURLGiven(t *testing.T) {
 	assert.Error(err)
 }
 
-func TestConfigureAsset(t *testing.T) {
-	assert := assert.New(t)
+type ConfigureAssetSuite struct {
+	suite.Suite
+	flags *pflag.FlagSet
+}
 
+func (suite *ConfigureAssetSuite) SetupTest() {
 	flags := &pflag.FlagSet{}
 	flags.StringSlice("metadata", []string{}, "")
 	flags.String("sha512", "12345qwerty", "")
+	flags.StringSlice("filter", []string{}, "")
 	flags.String("url", "http://lol", "")
+	suite.flags = flags
+}
 
-	// Too many args
-	cfg := ConfigureAsset{Flags: flags, Args: []string{"one", "too many"}, Org: "default"}
+// Too many args
+func (suite *ConfigureAssetSuite) TestTooManyArgs() {
+	cfg := ConfigureAsset{
+		Flags: suite.flags,
+		Args:  []string{"one", "too many"},
+		Org:   "default",
+	}
+
 	asset, errs := cfg.Configure()
-	assert.NotEmpty(errs)
-	assert.Empty(asset.Name)
+	suite.NotEmpty(errs, "Error claiming an over abundance of flags is present")
+	suite.Empty(asset.Name, "Name should not be set")
+}
 
-	// Empty org
-	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: ""}
-	asset, errs = cfg.Configure()
-	assert.NotEmpty(errs)
-	assert.Empty(asset.Organization)
+// Empty org
+func (suite *ConfigureAssetSuite) TestEmptyOrg() {
+	cfg := ConfigureAsset{
+		Flags: suite.flags,
+		Args:  []string{"ruby22"},
+		Org:   "",
+	}
 
-	// No args
-	cfg = ConfigureAsset{Flags: flags, Args: []string{}, Org: "default"}
-	asset, errs = cfg.Configure()
-	assert.NotEmpty(errs)
-	assert.Empty(asset.Name)
+	asset, errs := cfg.Configure()
+	suite.NotEmpty(errs, "Error should be present for missing org")
+	suite.Empty(asset.Organization, "Organization should not be set")
+}
 
-	// Given name
-	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
-	asset, errs = cfg.Configure()
-	assert.Empty(errs)
-	assert.Equal("ruby22", asset.Name)
+// No args
+func (suite *ConfigureAssetSuite) TestMissingArgs() {
+	cfg := ConfigureAsset{
+		Flags: suite.flags,
+		Args:  []string{},
+		Org:   "default",
+	}
 
-	// Valid Metadata
-	flags.Set("metadata", "One: Two")
-	flags.Set("metadata", "  Three : Four ")
-	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
-	asset, errs = cfg.Configure()
-	assert.Empty(errs)
-	assert.NotEmpty(asset.Metadata)
-	assert.Equal("Two", asset.Metadata["One"])
+	asset, errs := cfg.Configure()
+	suite.NotEmpty(errs, "Should contain error for missing name")
+	suite.Empty(asset.Name, "Should not be set")
+}
 
-	// Bad Metadata
-	flags.Set("metadata", "Five- Six")
-	asset, errs = cfg.Configure()
-	assert.NotEmpty(errs)
+// Given name
+func (suite *ConfigureAssetSuite) TestGivenValidName() {
+	cfg := ConfigureAsset{
+		Flags: suite.flags,
+		Args:  []string{"ruby22"},
+		Org:   "default",
+	}
+
+	asset, errs := cfg.Configure()
+	suite.Empty(errs)
+	suite.Equal("ruby22", asset.Name)
+}
+
+// Valid Metadata
+func (suite *ConfigureAssetSuite) TestValidMetadata() {
+	suite.flags.Set("metadata", "One: Two")
+	suite.flags.Set("metadata", "  Three : Four ")
+
+	cfg := ConfigureAsset{
+		Flags: suite.flags,
+		Args:  []string{"ruby22"},
+		Org:   "default",
+	}
+
+	asset, errs := cfg.Configure()
+	suite.Empty(errs)
+	suite.NotEmpty(asset.Metadata, "Metadata field should have been set")
+	suite.Equal("Two", asset.Metadata["One"], "Metadata param 'one' is set")
+}
+
+// Bad Metadata
+func (suite *ConfigureAssetSuite) TestBadMetadata() {
+	suite.flags.Set("metadata", "Five- Six")
+
+	cfg := ConfigureAsset{
+		Flags: suite.flags,
+		Args:  []string{"ruby22"},
+		Org:   "default",
+	}
+
+	asset, errs := cfg.Configure()
+	suite.NotEmpty(errs, "Contains error regarding metadata format")
+	suite.Empty(asset.Metadata, "Metadata is not set")
+}
+
+// Valid filters
+func (suite *ConfigureAssetSuite) TestValidFilters() {
+	suite.flags.Set("filter", "entity.System.OS = 'meowmix'")
+
+	cfg := ConfigureAsset{
+		Flags: suite.flags,
+		Args:  []string{"ruby22"},
+		Org:   "default",
+	}
+
+	asset, errs := cfg.Configure()
+	suite.Empty(errs)
+	suite.NotEmpty(asset.Filters, "Filters should have been set")
+}
+
+func TestRunSuites(t *testing.T) {
+	suite.Run(t, new(ConfigureAssetSuite))
 }
