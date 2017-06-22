@@ -22,9 +22,10 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		// Management Commands
 		asset.HelpCommand(cli),
 		check.HelpCommand(cli),
+		configure.HelpCommand(cli),
+		entity.HelpCommand(cli),
 		event.HelpCommand(cli),
 		handler.HelpCommand(cli),
-		entity.HelpCommand(cli),
 		user.HelpCommand(cli),
 	)
 
