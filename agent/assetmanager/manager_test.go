@@ -22,6 +22,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 
 	// Ex. manager
 	manager := &Manager{}
+	manager.entity = &types.Entity{}
 	manager.store = NewAssetStore()
 	manager.factory = &AssetFactory{
 		CacheDir: tmpDir,
@@ -36,7 +37,7 @@ func (suite *ManagerTestSuite) AfterTest() {
 }
 
 func (suite *ManagerTestSuite) TestNewManager() {
-	manager := New("./tmp")
+	manager := New("./tmp", &types.Entity{})
 
 	suite.NotNil(manager)
 	suite.NotNil(manager.store)

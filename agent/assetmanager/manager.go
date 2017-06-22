@@ -12,11 +12,13 @@ import (
 type Manager struct {
 	factory *AssetFactory
 	store   *AssetStore
+	entity  *types.Entity
 }
 
 // New - given agent returns instantiated Manager
-func New(agentCacheDir string) *Manager {
+func New(agentCacheDir string, entity *types.Entity) *Manager {
 	manager := &Manager{}
+	manager.entity = entity
 	manager.store = NewAssetStore()
 	manager.factory = &AssetFactory{
 		CacheDir: agentCacheDir,
@@ -34,7 +36,18 @@ func (mngrPtr *Manager) RegisterSet(assets []types.Asset) *RuntimeAssetSet {
 		runtimeAssets[i] = runtimeAsset
 	}
 
-	return mngrPtr.store.FetchSet(runtimeAssets, mngrPtr.factory.NewAssetSet)
+	filteredRuntimeAssets := []*RuntimeAsset{}
+	for _, runtimeAsset := range runtimeAssets {
+		if relevant, err := runtimeAsset.isRelevantTo(*mngrPtr.entity); err != nil {
+			logger.Infof("asset '%s' was filtered", runtimeAsset.asset.Name)
+		} else if !relevant {
+			logger.Infof("asset '%s' was filtered", runtimeAsset.asset.Name)
+		} else {
+			filteredRuntimeAssets = append(filteredRuntimeAssets, runtimeAsset)
+		}
+	}
+
+	return mngrPtr.store.FetchSet(filteredRuntimeAssets, mngrPtr.factory.NewAssetSet)
 }
 
 // SetCacheDir sets cache directory given a base directory

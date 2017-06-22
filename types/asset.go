@@ -5,12 +5,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"path"
 	"regexp"
-	"time"
 
 	"github.com/Knetic/govaluate"
 )
