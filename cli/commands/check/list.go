@@ -19,12 +19,16 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list checks",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format, _ := cmd.Flags().GetString("format")
-
 			// Fetch checks from the API
 			r, err := cli.Client.ListChecks()
 			if err != nil {
 				return err
+			}
+
+			// Determine the format to use to output the data
+			var format string
+			if format, _ = cmd.Flags().GetString("format"); format == "" {
+				format = cli.Config.Format()
 			}
 
 			// Print out events in requested format
