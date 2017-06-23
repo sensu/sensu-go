@@ -23,9 +23,13 @@ var (
 	deregistrationHandler string
 	stateDir              string
 
-	etcdClientListenURL string
-	etcdPeerListenURL   string
-	etcdInitialCluster  string
+	etcdListenClientURL         string
+	etcdListenPeerURL           string
+	etcdInitialCluster          string
+	etcdInitialClusterState     string
+	etcdName                    string
+	etcdInitialClusterToken     string
+	etcdInitialAdvertisePeerURL string
 )
 
 func init() {
@@ -50,20 +54,33 @@ func newStartCommand() *cobra.Command {
 				StateDir:              stateDir,
 			}
 
-			// we have defaults for this in the backend config. this is basically
-			// because we don't _actually_ want people using these flags. they're
-			// mostly just for testing. can we kill these from the shipped binary?
-			// - grep
-			if etcdClientListenURL != "" {
-				cfg.EtcdListenClientURL = etcdClientListenURL
+			// TODO(grep): make configuration of etcd saner.
+			if etcdListenClientURL != "" {
+				cfg.EtcdListenClientURL = etcdListenClientURL
 			}
 
-			if etcdPeerListenURL != "" {
-				cfg.EtcdListenPeerURL = etcdPeerListenURL
+			if etcdListenPeerURL != "" {
+				cfg.EtcdListenPeerURL = etcdListenPeerURL
 			}
 
 			if etcdInitialCluster != "" {
 				cfg.EtcdInitialCluster = etcdInitialCluster
+			}
+
+			if etcdInitialClusterState != "" {
+				cfg.EtcdInitialClusterState = etcdInitialClusterState
+			}
+
+			if etcdInitialAdvertisePeerURL != "" {
+				cfg.EtcdInitialAdvertisePeerURL = etcdInitialAdvertisePeerURL
+			}
+
+			if etcdInitialClusterToken != "" {
+				cfg.EtcdInitialClusterToken = etcdInitialClusterToken
+			}
+
+			if etcdName != "" {
+				cfg.EtcdName = etcdName
 			}
 
 			sensuBackend, err := backend.NewBackend(cfg)
@@ -105,13 +122,13 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&deregistrationHandler, "deregistration-handler", "", "Default deregistration handler")
 	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", defaultStateDir, "path to sensu state storage")
 
-	// For now don't set defaults for these. This allows us to control defaults on NewBackend(). We may wish
-	// to do something more interesting here as well--e.g. only expose these settings via some kind of compile
-	// feature flag so that they're used only for testing, etc. But for now, we make these easily configurable
-	// for end-to-end testing. -grep
-	cmd.Flags().StringVar(&etcdClientListenURL, "store-client-url", "", "store client listen URL")
-	cmd.Flags().StringVar(&etcdPeerListenURL, "store-peer-url", "", "store peer URL")
+	cmd.Flags().StringVar(&etcdListenClientURL, "store-client-url", "", "store client listen URL")
+	cmd.Flags().StringVar(&etcdListenPeerURL, "store-peer-url", "", "store peer URL")
 	cmd.Flags().StringVar(&etcdInitialCluster, "store-initial-cluster", "", "store initial cluster")
+	cmd.Flags().StringVar(&etcdInitialAdvertisePeerURL, "store-initial-advertise-peer-url", "", "store initial advertise peer URL")
+	cmd.Flags().StringVar(&etcdInitialClusterState, "store-initial-cluster-state", "", "store initial cluster state")
+	cmd.Flags().StringVar(&etcdInitialClusterToken, "store-initial-cluster-token", "", "store initial cluster token")
+	cmd.Flags().StringVar(&etcdName, "store-node-name", "", "store cluster member node name")
 
 	return cmd
 }
