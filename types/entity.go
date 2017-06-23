@@ -48,13 +48,11 @@ type Deregistration struct {
 
 // Validate returns an error if the entity is invalid.
 func (e *Entity) Validate() error {
-	err := validateName(e.ID)
-	if err != nil {
+	if err := ValidateName(e.ID); err != nil {
 		return errors.New("entity id " + err.Error())
 	}
 
-	err = validateName(e.Class)
-	if err != nil {
+	if err := ValidateName(e.Class); err != nil {
 		return errors.New("entity class " + err.Error())
 	}
 

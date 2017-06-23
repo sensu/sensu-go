@@ -17,8 +17,16 @@ func TestValidateHandlerType(t *testing.T) {
 }
 
 func TestValidateName(t *testing.T) {
-	assert.Error(t, validateName(""))
-	assert.Error(t, validateName("foo bar"))
-	assert.Error(t, validateName("foo@bar"))
-	assert.NoError(t, validateName("foo-bar"))
+	assert.Error(t, ValidateName(""))
+	assert.Error(t, ValidateName("foo bar"))
+	assert.Error(t, ValidateName("foo@bar"))
+	assert.NoError(t, ValidateName("foo-bar"))
+}
+
+func TestValidateNameStrict(t *testing.T) {
+	assert.Error(t, ValidateNameStrict(""))
+	assert.Error(t, ValidateNameStrict("foo bar"))
+	assert.Error(t, ValidateNameStrict("foo@bar"))
+	assert.Error(t, ValidateNameStrict("FOO-bar"))
+	assert.NoError(t, ValidateNameStrict("foo-bar_2"))
 }
