@@ -47,7 +47,7 @@ func (s *etcdStore) GetRole(org, name string) (*types.Role, error) {
 	}
 
 	if len(resp.Kvs) == 0 {
-		return *types.Role{}, nil
+		return &types.Role{}, nil
 	}
 
 	roles, err := unmarshalRole(resp.Kvs)
