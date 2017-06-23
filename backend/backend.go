@@ -21,13 +21,13 @@ import (
 )
 
 const (
-	// Default Etcd Peer URL (single-node cluster only)
+	// DefaultEtcdName is the default etcd member node name (single-node cluster only)
 	DefaultEtcdName = "default"
 
-	// DefaultEtcdClientURL
+	// DefaultEtcdClientURL is the default URL to listen for Etcd clients
 	DefaultEtcdClientURL = "http://127.0.0.1:2379"
 
-	// Default Etcd Peer URL (single-node cluster only)
+	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
 	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
 )
 
