@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/util"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -28,15 +29,16 @@ func TestHTTPListener(t *testing.T) {
 		fmt.Println(initCluster)
 
 		b, err := NewBackend(&Config{
-			AgentHost:           "127.0.0.1",
-			AgentPort:           agentPort,
-			APIHost:             "127.0.0.1",
-			APIPort:             apiPort,
-			DashboardHost:       "127.0.0.1",
-			StateDir:            path,
-			EtcdClientListenURL: clURL,
-			EtcdPeerListenURL:   apURL,
-			EtcdInitialCluster:  initCluster,
+			AgentHost:               "127.0.0.1",
+			AgentPort:               agentPort,
+			APIHost:                 "127.0.0.1",
+			APIPort:                 apiPort,
+			DashboardHost:           "127.0.0.1",
+			StateDir:                path,
+			EtcdListenClientURL:     clURL,
+			EtcdListenPeerURL:       apURL,
+			EtcdInitialCluster:      initCluster,
+			EtcdInitialClusterState: etcd.ClusterStateNew,
 		})
 		assert.NoError(t, err)
 		if err != nil {

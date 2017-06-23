@@ -55,11 +55,11 @@ func newStartCommand() *cobra.Command {
 			// mostly just for testing. can we kill these from the shipped binary?
 			// - grep
 			if etcdClientListenURL != "" {
-				cfg.EtcdClientListenURL = etcdClientListenURL
+				cfg.EtcdListenClientURL = etcdClientListenURL
 			}
 
 			if etcdPeerListenURL != "" {
-				cfg.EtcdPeerListenURL = etcdPeerListenURL
+				cfg.EtcdListenPeerURL = etcdPeerListenURL
 			}
 
 			if etcdInitialCluster != "" {

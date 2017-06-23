@@ -20,6 +20,17 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const (
+	// Default Etcd Peer URL (single-node cluster only)
+	DefaultEtcdName = "default"
+
+	// DefaultEtcdClientURL
+	DefaultEtcdClientURL = "http://127.0.0.1:2379"
+
+	// Default Etcd Peer URL (single-node cluster only)
+	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
+)
+
 var (
 	// upgrader is safe for concurrent use, and we don't need any particularly
 	// specialized configurations for different uses.
@@ -28,19 +39,33 @@ var (
 
 // Config specifies a Backend configuration.
 type Config struct {
-	AgentHost             string
-	AgentPort             int
-	APIAuthentication     bool
-	APIHost               string
-	APIPort               int
-	DashboardDir          string
-	DashboardHost         string
-	DashboardPort         int
+	// Backend Configuration
+	StateDir string
+
+	// Agentd Configuration
+	AgentHost string
+	AgentPort int
+
+	// Apid Configuration
+	APIAuthentication bool
+	APIHost           string
+	APIPort           int
+
+	// Dashboardd Configuration
+	DashboardDir  string
+	DashboardHost string
+	DashboardPort int
+
+	// Pipelined Configuration
 	DeregistrationHandler string
-	StateDir              string
-	EtcdClientListenURL   string
-	EtcdPeerListenURL     string
-	EtcdInitialCluster    string
+
+	// Etcd configuration
+	EtcdInitialClusterToken string
+	EtcdInitialClusterState string
+	EtcdInitialCluster      string
+	EtcdListenClientURL     string
+	EtcdListenPeerURL       string
+	EtcdName                string
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -67,16 +92,24 @@ type Backend struct {
 func NewBackend(config *Config) (*Backend, error) {
 	// In other places we have a NewConfig() method, but I think that doing it
 	// this way is more safe, because it doesn't require "trust" in callers.
-	if config.EtcdClientListenURL == "" {
-		config.EtcdClientListenURL = "http://127.0.0.1:2379"
+	if config.EtcdListenClientURL == "" {
+		config.EtcdListenClientURL = DefaultEtcdClientURL
 	}
 
-	if config.EtcdPeerListenURL == "" {
-		config.EtcdPeerListenURL = "http://127.0.0.1:2380"
+	if config.EtcdListenPeerURL == "" {
+		config.EtcdListenPeerURL = DefaultEtcdPeerURL
 	}
 
 	if config.EtcdInitialCluster == "" {
-		config.EtcdInitialCluster = "default=http://127.0.0.1:2380"
+		config.EtcdInitialCluster = fmt.Sprintf("%s=%s", DefaultEtcdName, DefaultEtcdPeerURL)
+	}
+
+	if config.EtcdInitialClusterState == "" {
+		config.EtcdInitialClusterState = etcd.ClusterStateNew
+	}
+
+	if config.EtcdName == "" {
+		config.EtcdName = DefaultEtcdName
 	}
 
 	if config.APIPort == 0 {
@@ -97,10 +130,14 @@ func NewBackend(config *Config) (*Backend, error) {
 	// we go ahead and setup and start etcd here, because we'll have to pass
 	// a store along to the API.
 	cfg := etcd.NewConfig()
-	cfg.StateDir = b.Config.StateDir
-	cfg.ClientListenURL = b.Config.EtcdClientListenURL
-	cfg.PeerListenURL = b.Config.EtcdPeerListenURL
-	cfg.InitialCluster = b.Config.EtcdInitialCluster
+	cfg.DataDir = config.StateDir
+	cfg.ListenClientURL = config.EtcdListenClientURL
+	cfg.ListenPeerURL = config.EtcdListenPeerURL
+	cfg.InitialCluster = config.EtcdInitialCluster
+	cfg.InitialClusterState = config.EtcdInitialClusterState
+	cfg.InitialAdvertisePeerURL = config.EtcdListenPeerURL
+	cfg.Name = config.EtcdName
+
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error starting etcd: %s", err.Error())

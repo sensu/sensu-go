@@ -31,22 +31,31 @@ const (
 	PeerListenURL = "http://127.0.0.1:2380"
 	// InitialCluster is the default initial cluster
 	InitialCluster = "default=http://127.0.0.1:2380"
+
+	// ClusterStateNew specifies this is a new etcd cluster
+	ClusterStateNew = "new"
+	// ClusterStateExisting specifies ths is an existing etcd cluster
+	ClusterStateExisting = "existing"
 )
 
 // Config is a configuration for the embedded etcd
 type Config struct {
-	StateDir        string
-	PeerListenURL   string
-	ClientListenURL string
-	InitialCluster  string
+	DataDir                 string
+	Name                    string // Cluster Member Name
+	ListenPeerURL           string
+	ListenClientURL         string
+	InitialCluster          string
+	InitialClusterState     string
+	InitialClusterToken     string
+	InitialAdvertisePeerURL string
 }
 
 // NewConfig returns a pointer to an initialized Config object with defaults.
 func NewConfig() *Config {
 	c := &Config{}
-	c.StateDir = StateDir
-	c.ClientListenURL = ClientListenURL
-	c.PeerListenURL = PeerListenURL
+	c.DataDir = StateDir
+	c.ListenClientURL = ClientListenURL
+	c.ListenPeerURL = PeerListenURL
 	c.InitialCluster = InitialCluster
 
 	return c
@@ -87,8 +96,11 @@ type Etcd struct {
 // terminal errors.
 func NewEtcd(config *Config) (*Etcd, error) {
 	cfg := embed.NewConfig()
-	cfgDir := filepath.Join(config.StateDir, "etcd", "data")
-	walDir := filepath.Join(config.StateDir, "etcd", "wal")
+
+	cfg.Name = config.Name
+
+	cfgDir := filepath.Join(config.DataDir, "etcd", "data")
+	walDir := filepath.Join(config.DataDir, "etcd", "wal")
 	cfg.Dir = cfgDir
 	cfg.WalDir = walDir
 	if err := ensureDir(cfgDir); err != nil {
@@ -98,22 +110,28 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, err
 	}
 
-	clURL, err := url.Parse(config.ClientListenURL)
+	listenClientURL, err := url.Parse(config.ListenClientURL)
 	if err != nil {
 		return nil, err
 	}
 
-	apURL, err := url.Parse(config.PeerListenURL)
+	listenPeerURL, err := url.Parse(config.ListenPeerURL)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.ACUrls = []url.URL{*clURL}
-	cfg.APUrls = []url.URL{*apURL}
-	cfg.LCUrls = []url.URL{*clURL}
-	cfg.LPUrls = []url.URL{*apURL}
+	advertisePeerURL, err := url.Parse(config.InitialAdvertisePeerURL)
+	if err != nil {
+		return nil, err
+	}
 
+	cfg.ACUrls = []url.URL{*listenClientURL}
+	cfg.APUrls = []url.URL{*advertisePeerURL}
+	cfg.LCUrls = []url.URL{*listenClientURL}
+	cfg.LPUrls = []url.URL{*listenPeerURL}
+	cfg.InitialClusterToken = config.InitialClusterToken
 	cfg.InitialCluster = config.InitialCluster
+	cfg.ClusterState = config.InitialClusterState
 
 	capnslog.SetFormatter(NewLogrusFormatter())
 
@@ -149,7 +167,7 @@ func (e *Etcd) Shutdown() error {
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{e.cfg.ClientListenURL},
+		Endpoints:   []string{e.cfg.ListenClientURL},
 		DialTimeout: 5 * time.Second,
 	})
 	if err != nil {
@@ -170,7 +188,7 @@ func (e *Etcd) Healthy() bool {
 	// parameters that are useful?
 	//
 	// https://godoc.org/github.com/coreos/etcd/etcdserver/etcdserverpb#StatusResponse
-	_, err = mapi.Status(context.TODO(), e.cfg.ClientListenURL)
+	_, err = mapi.Status(context.TODO(), e.cfg.ListenClientURL)
 	if err != nil {
 		return false
 	}
