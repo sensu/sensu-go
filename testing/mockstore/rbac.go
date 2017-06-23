@@ -1,5 +1,7 @@
 package mockstore
 
+import "github.com/sensu/sensu-go/types"
+
 // GetRoles ...
 func (s *MockStore) GetRoles(org string) ([]*types.Role, error) {
 	args := s.Called(org)

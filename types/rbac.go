@@ -6,20 +6,30 @@ import (
 )
 
 const (
+	// RuleTypeAll matches all actions
 	RuleTypeAll = "*"
 
+	// RulePermCreate create action
 	RulePermCreate = "create"
-	RulePermRead   = "read"
+
+	// RulePermRead read action
+	RulePermRead = "read"
+
+	// RulePermUpdate update action
 	RulePermUpdate = "update"
+
+	// RulePermDelete delete action
 	RulePermDelete = "delete"
 )
 
+// Rule maps permissions to a given type
 type Rule struct {
 	Organization string   `json:"organization"`
 	Type         string   `json:"type"`
 	Permissions  []string `json:"permissions"`
 }
 
+// Role describes set of rules
 type Role struct {
 	Name  string `json:"name"`
 	Rules []Rule `json:"rules"`
@@ -76,6 +86,7 @@ func (r *Role) Validate() error {
 //
 // Fixtures
 
+// FixtureRule returns a partial rule
 func FixtureRule(organization string) *Rule {
 	return &Rule{
 		Organization: organization,
@@ -89,6 +100,7 @@ func FixtureRule(organization string) *Rule {
 	}
 }
 
+// FixtureRole returns a partial role
 func FixtureRole(name string, org string) *Role {
 	return &Role{
 		Name: name,
