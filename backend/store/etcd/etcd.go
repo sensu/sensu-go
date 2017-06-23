@@ -31,7 +31,8 @@ const (
 	PeerListenURL = "http://127.0.0.1:2380"
 	// InitialCluster is the default initial cluster
 	InitialCluster = "default=http://127.0.0.1:2380"
-
+	// DefaultNodeName is the default name for this cluster member
+	DefaultNodeName = "default"
 	// ClusterStateNew specifies this is a new etcd cluster
 	ClusterStateNew = "new"
 	// ClusterStateExisting specifies ths is an existing etcd cluster
@@ -57,6 +58,9 @@ func NewConfig() *Config {
 	c.ListenClientURL = ClientListenURL
 	c.ListenPeerURL = PeerListenURL
 	c.InitialCluster = InitialCluster
+	c.InitialClusterState = ClusterStateNew
+	c.Name = DefaultNodeName
+	c.InitialAdvertisePeerURL = PeerListenURL
 
 	return c
 }

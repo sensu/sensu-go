@@ -60,12 +60,13 @@ type Config struct {
 	DeregistrationHandler string
 
 	// Etcd configuration
-	EtcdInitialClusterToken string
-	EtcdInitialClusterState string
-	EtcdInitialCluster      string
-	EtcdListenClientURL     string
-	EtcdListenPeerURL       string
-	EtcdName                string
+	EtcdInitialAdvertisePeerURL string
+	EtcdInitialClusterToken     string
+	EtcdInitialClusterState     string
+	EtcdInitialCluster          string
+	EtcdListenClientURL         string
+	EtcdListenPeerURL           string
+	EtcdName                    string
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -108,6 +109,10 @@ func NewBackend(config *Config) (*Backend, error) {
 		config.EtcdInitialClusterState = etcd.ClusterStateNew
 	}
 
+	if config.EtcdInitialAdvertisePeerURL == "" {
+		config.EtcdInitialAdvertisePeerURL = DefaultEtcdPeerURL
+	}
+
 	if config.EtcdName == "" {
 		config.EtcdName = DefaultEtcdName
 	}
@@ -135,7 +140,7 @@ func NewBackend(config *Config) (*Backend, error) {
 	cfg.ListenPeerURL = config.EtcdListenPeerURL
 	cfg.InitialCluster = config.EtcdInitialCluster
 	cfg.InitialClusterState = config.EtcdInitialClusterState
-	cfg.InitialAdvertisePeerURL = config.EtcdListenPeerURL
+	cfg.InitialAdvertisePeerURL = config.EtcdInitialAdvertisePeerURL
 	cfg.Name = config.EtcdName
 
 	e, err := etcd.NewEtcd(cfg)
