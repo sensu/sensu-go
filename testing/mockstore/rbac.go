@@ -9,7 +9,7 @@ func (s *MockStore) GetRoles() ([]*types.Role, error) {
 }
 
 // GetRole ...
-func (s *MockStore) GetRole(name string) (*types.Role, error) {
+func (s *MockStore) GetRoleByName(name string) (*types.Role, error) {
 	args := s.Called(name)
 	return args.Get(0).(*types.Role), args.Error(1)
 }
@@ -28,6 +28,6 @@ func (s *MockStore) UpdateRole(role *types.Role) error {
 
 // DeleteRoleByName ...
 func (s *MockStore) DeleteRoleByName(name string) error {
-	args := s.Called(role)
+	args := s.Called(name)
 	return args.Error(0)
 }

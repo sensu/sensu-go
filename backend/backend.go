@@ -128,6 +128,9 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	// Seed initial data
+	seedInitialData(st)
+
 	b.schedulerd = &schedulerd.Schedulerd{
 		MessageBus: b.messageBus,
 		Store:      st,

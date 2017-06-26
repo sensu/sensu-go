@@ -34,8 +34,8 @@ func (s *etcdStore) GetRoles() ([]*types.Role, error) {
 	return unmarshalRole(resp.Kvs)
 }
 
-// GetRole ...
-func (s *etcdStore) GetRole(name string) (*types.Role, error) {
+// GetRoleByName ...
+func (s *etcdStore) GetRoleByName(name string) (*types.Role, error) {
 	resp, err := s.kvc.Get(
 		context.TODO(),
 		getRolePath(name),
@@ -52,7 +52,7 @@ func (s *etcdStore) GetRole(name string) (*types.Role, error) {
 
 	roles, err := unmarshalRole(resp.Kvs)
 	if err != nil {
-		return []*types.Role{}, err
+		return &types.Role{}, err
 	}
 
 	return roles[0], nil

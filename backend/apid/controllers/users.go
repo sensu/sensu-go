@@ -151,8 +151,8 @@ func validateRoles(store store.Store, givenRoles []string) error {
 
 	for _, givenRole := range givenRoles {
 		present := false
-		for storedRole, _ := range storedRoles {
-			if givenRole == storedRole {
+		for _, storedRole := range storedRoles {
+			if givenRole == storedRole.Name {
 				present = true
 				break
 			}

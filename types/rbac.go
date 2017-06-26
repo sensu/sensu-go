@@ -22,6 +22,16 @@ const (
 	RulePermDelete = "delete"
 )
 
+var (
+	// RuleAllPerms all actions
+	RuleAllPerms = []string{
+		RulePermCreate,
+		RulePermRead,
+		RulePermUpdate,
+		RulePermDelete,
+	}
+)
+
 // Rule maps permissions to a given type
 type Rule struct {
 	Type         string   `json:"type"`
