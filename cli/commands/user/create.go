@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 )
 
 type createOpts struct {
@@ -78,7 +79,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Username, _ = flags.GetString("username")
 	opts.Password, _ = flags.GetString("password")
-	opts.Roles, _ = helpers.SafeSplitCSV(flags.GetString("roles"))
+	opts.Roles, _ = flags.GetString("roles")
 }
 
 func (opts *createOpts) administerQuestionnaire() {
