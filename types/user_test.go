@@ -9,6 +9,7 @@ import (
 func TestFixtureUser(t *testing.T) {
 	u := FixtureUser("foo")
 	assert.Equal(t, "foo", u.Username)
+	assert.Contains(t, u.Roles, "default")
 }
 
 func TestUserValidate(t *testing.T) {

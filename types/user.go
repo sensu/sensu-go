@@ -6,13 +6,16 @@ import "errors"
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password,omitempty"`
-	Disabled bool   `json:"disabled"`
+
+	Roles    []string `json:"roles"`
+	Disabled bool     `json:"disabled"`
 }
 
 // FixtureUser returns a testing fixture for an Entity object.
 func FixtureUser(username string) *User {
 	return &User{
 		Username: username,
+		Roles:    []string{"default"},
 	}
 }
 
