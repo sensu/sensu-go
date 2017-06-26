@@ -74,7 +74,7 @@ func (a *Asset) Validate() error {
 	return nil
 }
 
-// ValidateAssetFilter ensure that the given filter is can be parse successfully
+// ValidateAssetFilter ensure that the given filter can be parsed successfully
 // and that it does not contain any modifier tokens.
 func ValidateAssetFilter(filter string) error {
 	exp, err := govaluate.NewEvaluableExpression(filter)

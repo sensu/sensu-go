@@ -39,9 +39,9 @@ func (mngrPtr *Manager) RegisterSet(assets []types.Asset) *RuntimeAssetSet {
 	filteredRuntimeAssets := []*RuntimeAsset{}
 	for _, runtimeAsset := range runtimeAssets {
 		if relevant, err := runtimeAsset.isRelevantTo(*mngrPtr.entity); err != nil {
-			logger.Infof("asset '%s' was filtered", runtimeAsset.asset.Name)
+			logger.Debugf("asset '%s' was filtered", runtimeAsset.asset.Name)
 		} else if !relevant {
-			logger.Infof("asset '%s' was filtered", runtimeAsset.asset.Name)
+			logger.Debugf("asset '%s' was filtered", runtimeAsset.asset.Name)
 		} else {
 			filteredRuntimeAssets = append(filteredRuntimeAssets, runtimeAsset)
 		}
