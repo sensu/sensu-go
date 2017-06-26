@@ -127,6 +127,12 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = validateRoles(c.Store, user.Roles)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	err = c.Provider.CreateUser(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -135,4 +141,27 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	return
+}
+
+func validateRoles(store store.Store, givenRoles []string) error {
+	storedRoles, err := store.GetRoles()
+	if err != nil {
+		return err
+	}
+
+	for _, givenRole := range givenRoles {
+		present := false
+		for storedRole, _ := range storedRoles {
+			if givenRole == storedRole {
+				present = true
+				break
+			}
+		}
+
+		if !present {
+			return fmt.Errorf("given role '%s' is not valid", givenRole)
+		}
+	}
+
+	return nil
 }
