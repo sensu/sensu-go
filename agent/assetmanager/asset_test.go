@@ -17,7 +17,9 @@ type RuntimeAssetTestSuite struct {
 	suite.Suite
 
 	assetServer  *httptest.Server
-	dep          *RuntimeAsset
+	asset        *types.Asset
+	runtimeAsset *RuntimeAsset
+
 	responseBody string
 	responseType string
 }
@@ -34,16 +36,19 @@ func (suite *RuntimeAssetTestSuite) SetupTest() {
 	suite.responseType = "text"
 
 	// Create a fake cache directory so that we have a safe place to test results
-	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-test")
+	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-runtimeAssets-test")
+
+	// Test asset
+	suite.asset = &types.Asset{
+		Name:   "ruby24",
+		Sha512: "123456",
+		URL:    suite.assetServer.URL + "/myfile",
+	}
 
 	// Ex. Dep
-	suite.dep = &RuntimeAsset{
-		path: tmpDir,
-		asset: &types.Asset{
-			Name:   "ruby24",
-			Sha512: "123456",
-			URL:    suite.assetServer.URL + "/myfile",
-		},
+	suite.runtimeAsset = &RuntimeAsset{
+		path:  tmpDir,
+		asset: suite.asset,
 	}
 }
 
@@ -52,32 +57,80 @@ func (suite *RuntimeAssetTestSuite) AfterTest() {
 	suite.assetServer.Close()
 
 	// Remove tmpdir
-	os.RemoveAll(suite.dep.path)
+	os.RemoveAll(suite.runtimeAsset.path)
 }
 
 func (suite *RuntimeAssetTestSuite) TestFetch() {
 	suite.responseBody = "abc"
 
-	res, err := suite.dep.fetch()
+	res, err := suite.runtimeAsset.fetch()
 	suite.NotNil(res)
 	suite.NoError(err)
 }
 
+func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
+	// Passing
+	entity := &types.Entity{
+		System: types.System{
+			Hostname: "space.localdomain",
+			Platform: "darwin",
+		},
+	}
+	suite.asset.Filters = []string{
+		`entity.System.Hostname == "space.localdomain"`, // same
+		`entity.System.Platform == "darwin"`,            // same
+	}
+
+	ok, err := suite.runtimeAsset.isRelevantTo(*entity)
+	suite.True(ok, "filters match entity's system definition")
+	suite.NoError(err)
+
+	// Failing
+	suite.asset.Filters = []string{
+		`entity.System.Hostname == "space.localdomain"`, // same
+		`entity.System.Platform == "ubuntu"`,            // diff
+	}
+
+	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
+	suite.False(ok, "filters do not match entity's system definition")
+	suite.NoError(err)
+
+	// With error
+	suite.asset.Filters = []string{
+		`entity.System.Hostname == "space.localdomain"`, // same
+		`entity.System.Platform =  "ubuntu"`,            // bad syntax
+	}
+
+	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
+	suite.False(ok)
+	suite.Error(err, "Returns error when filter is invalid")
+
+	// Filter is not predicate
+	suite.asset.Filters = []string{
+		`entity.System.Hostname == "space.localdomain"`, // same
+		`entity.LastSeen + 10`,                          // returns int64
+	}
+
+	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
+	suite.False(ok)
+	suite.Error(err, "Returns error when filter returns not bool value")
+}
+
 func (suite *RuntimeAssetTestSuite) TestInstall() {
 	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.dep.asset.Sha512 = stringToSHA512(suite.responseBody)
+	suite.asset.Sha512 = stringToSHA512(suite.responseBody)
 
-	err := suite.dep.install()
+	err := suite.runtimeAsset.install()
 	suite.NoError(err)
 }
 
 func (suite *RuntimeAssetTestSuite) TestParallelInstall() {
 	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.dep.asset.Sha512 = stringToSHA512(suite.responseBody)
+	suite.asset.Sha512 = stringToSHA512(suite.responseBody)
 
 	errs := make(chan error, 5)
 	install := func() {
-		err := suite.dep.install()
+		err := suite.runtimeAsset.install()
 		errs <- err
 	}
 
@@ -96,28 +149,28 @@ func (suite *RuntimeAssetTestSuite) TestParallelInstall() {
 
 func (suite *RuntimeAssetTestSuite) TestInstallBadAssetHash() {
 	suite.responseBody = "abc"
-	suite.dep.asset.Sha512 = "bad bad hash boy"
+	suite.asset.Sha512 = "bad bad hash boy"
 
-	err := suite.dep.install()
+	err := suite.runtimeAsset.install()
 	suite.Error(err)
 }
 
 func (suite *RuntimeAssetTestSuite) TestIsInstalled() {
-	fmt.Println(suite.dep.path)
-	cached, err := suite.dep.isInstalled()
+	fmt.Println(suite.runtimeAsset.path)
+	cached, err := suite.runtimeAsset.isInstalled()
 	suite.False(cached)
 	suite.NoError(err)
 
-	os.MkdirAll(suite.dep.path, 0755)
-	suite.dep.markAsInstalled()
-	cached, err = suite.dep.isInstalled()
+	os.MkdirAll(suite.runtimeAsset.path, 0755)
+	suite.runtimeAsset.markAsInstalled()
+	cached, err = suite.runtimeAsset.isInstalled()
 	suite.True(cached)
 	suite.NoError(err)
 }
 
 func (suite *RuntimeAssetTestSuite) TestIsCachedDirIsDirectory() {
-	os.MkdirAll(filepath.Join(suite.dep.path, ".installed"), 0755)
-	cached, err := suite.dep.isInstalled()
+	os.MkdirAll(filepath.Join(suite.runtimeAsset.path, ".installed"), 0755)
+	cached, err := suite.runtimeAsset.isInstalled()
 
 	suite.True(cached)
 	suite.Error(err)

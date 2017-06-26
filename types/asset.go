@@ -4,9 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
 	"regexp"
+
+	"github.com/Knetic/govaluate"
 )
 
 // AssetNameRegex used to validate name of asset
@@ -25,6 +28,11 @@ type Asset struct {
 
 	// Metadata is a set of key value pair associated with the asset.
 	Metadata map[string]string `json:"metadata"`
+
+	// Filters is a collection of sensu queries, used by the system to determine
+	// if the asset should be installed. If more than one filter is present the
+	// queries are joined by the "AND" operator.
+	Filters []string `json:"filters"`
 
 	// Organization indicates to which org an asset belongs
 	Organization string `json:"organization"`
@@ -55,6 +63,30 @@ func (a *Asset) Validate() error {
 
 	if u.Scheme != "https" && u.Scheme != "http" {
 		return errors.New("URL must be HTTP or HTTPS")
+	}
+
+	for _, filter := range a.Filters {
+		if err := ValidateAssetFilter(filter); err != nil {
+			return fmt.Errorf("invalid filter syntax for '%s'", filter)
+		}
+	}
+
+	return nil
+}
+
+// ValidateAssetFilter ensure that the given filter can be parsed successfully
+// and that it does not contain any modifier tokens.
+func ValidateAssetFilter(filter string) error {
+	exp, err := govaluate.NewEvaluableExpression(filter)
+	if err != nil {
+		return err
+	}
+
+	// Do not allow modifier tokens (eg. +, -, /, *, **, &, etc.)
+	for _, token := range exp.Tokens() {
+		if token.Kind == govaluate.MODIFIER {
+			return errors.New("invalid token encountered")
+		}
 	}
 
 	return nil
