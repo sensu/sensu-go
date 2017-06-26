@@ -105,11 +105,11 @@ type MutatorStore interface {
 
 // RBACStore provides an interface for interacting & persisting users
 type RBACStore interface {
-	GetRoles(org string) ([]*types.Role, error)
-	GetRoleByName(org, name string) (*types.Role, error)
+	GetRoles() ([]*types.Role, error)
+	GetRoleByName(name string) (*types.Role, error)
 	CreateRole(role *types.Role) error
 	UpdateRole(role *types.Role) error
-	DeleteRoleByName(org, name string) error
+	DeleteRoleByName(name string) error
 }
 
 // UserStore provides an interface for interacting & persisting users

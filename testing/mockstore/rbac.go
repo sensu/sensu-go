@@ -3,14 +3,14 @@ package mockstore
 import "github.com/sensu/sensu-go/types"
 
 // GetRoles ...
-func (s *MockStore) GetRoles(org string) ([]*types.Role, error) {
-	args := s.Called(org)
+func (s *MockStore) GetRoles() ([]*types.Role, error) {
+	args := s.Called()
 	return args.Get(0).([]*types.Role), args.Error(1)
 }
 
 // GetRole ...
-func (s *MockStore) GetRole(org, name string) (*types.Role, error) {
-	args := s.Called(org.name)
+func (s *MockStore) GetRole(name string) (*types.Role, error) {
+	args := s.Called(name)
 	return args.Get(0).(*types.Role), args.Error(1)
 }
 
@@ -27,7 +27,7 @@ func (s *MockStore) UpdateRole(role *types.Role) error {
 }
 
 // DeleteRoleByName ...
-func (s *MockStore) DeleteRoleByName(org, name string) error {
-	args := s.Called(org, role)
+func (s *MockStore) DeleteRoleByName(name string) error {
+	args := s.Called(role)
 	return args.Error(0)
 }

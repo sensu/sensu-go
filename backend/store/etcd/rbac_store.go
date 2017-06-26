@@ -15,15 +15,15 @@ const (
 	rolePathPrefix = "roles"
 )
 
-func getRolePath(org, name string) string {
-	return path.Join(etcdRoot, rolePathPrefix, org, name)
+func getRolePath(name string) string {
+	return path.Join(etcdRoot, rolePathPrefix, name)
 }
 
 // GetRoles ...
-func (s *etcdStore) GetRoles(org string) ([]*types.Role, error) {
+func (s *etcdStore) GetRoles() ([]*types.Role, error) {
 	resp, err := s.kvc.Get(
 		context.TODO(),
-		getRolePath(org, ""),
+		getRolePath(""),
 		clientv3.WithPrefix(),
 	)
 
@@ -35,10 +35,10 @@ func (s *etcdStore) GetRoles(org string) ([]*types.Role, error) {
 }
 
 // GetRole ...
-func (s *etcdStore) GetRole(org, name string) (*types.Role, error) {
+func (s *etcdStore) GetRole(name string) (*types.Role, error) {
 	resp, err := s.kvc.Get(
 		context.TODO(),
-		getRolePath(org, name),
+		getRolePath(name),
 		clientv3.WithPrefix(),
 	)
 
@@ -71,7 +71,7 @@ func (s *etcdStore) CreateRole(role *types.Role) error {
 
 	_, err = s.kvc.Put(
 		context.TODO(),
-		getRolePath(role.Organization, role.Name),
+		getRolePath(role.Name),
 		string(roleBytes),
 	)
 
@@ -95,7 +95,7 @@ func (s *etcdStore) UpdateRole(role *types.Role) error {
 
 	_, err = s.kvc.Put(
 		context.TODO(),
-		getRolePath(role.Organization, role.Name),
+		getRolePath(role.Name),
 		string(roleBytes),
 	)
 
@@ -107,11 +107,11 @@ func (s *etcdStore) UpdateRole(role *types.Role) error {
 }
 
 // DeleteRoleByName ...
-func (s *etcdStore) DeleteRoleByName(org, name string) error {
-	if org == "" || name == "" {
-		return errors.New("must specify organization and name")
+func (s *etcdStore) DeleteRoleByName(name string) error {
+	if name == "" {
+		return errors.New("must specify name")
 	}
-	_, err := s.kvc.Delete(context.TODO(), getRolePath(org, name))
+	_, err := s.kvc.Delete(context.TODO(), getRolePath(name))
 	return err
 }
 
