@@ -14,6 +14,7 @@ import (
 type createOpts struct {
 	Username string `survey:"username"`
 	Password string `survey:"password"`
+	Roles    string `survey:"roles"`
 }
 
 // CreateCommand adds command that allows user to create new users
@@ -44,6 +45,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			if len(user.Roles) == 0 {
+				user.Roles = []string{"default"}
+			}
+
 			err := cli.Client.CreateUser(user)
 			if err != nil {
 				return err
@@ -61,6 +66,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("username", "u", "", "Username")
 	cmd.Flags().StringP("password", "p", "", "Password")
+	cmd.Flags().StringP("roles", "r", "", "Comma separated list of roles to assign")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("username")
@@ -72,6 +78,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Username, _ = flags.GetString("username")
 	opts.Password, _ = flags.GetString("password")
+	opts.Roles, _ = helpers.SafeSplitCSV(flags.GetString("roles"))
 }
 
 func (opts *createOpts) administerQuestionnaire() {
@@ -90,6 +97,13 @@ func (opts *createOpts) administerQuestionnaire() {
 			},
 			Validate: survey.Required,
 		},
+		{
+			Name: "roles",
+			Prompt: &survey.Input{
+				Message: "Roles:",
+			},
+			Validate: survey.Required,
+		},
 	}
 
 	survey.Ask(qs, opts)
@@ -99,5 +113,6 @@ func (opts *createOpts) toUser() *types.User {
 	return &types.User{
 		Username: opts.Username,
 		Password: opts.Password,
+		Roles:    helpers.SafeSplitCSV(opts.Roles),
 	}
 }
