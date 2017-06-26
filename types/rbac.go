@@ -24,15 +24,15 @@ const (
 
 // Rule maps permissions to a given type
 type Rule struct {
-	Type        string   `json:"type"`
-	Permissions []string `json:"permissions"`
+	Type         string   `json:"type"`
+	Organization string   `json:"organization"`
+	Permissions  []string `json:"permissions"`
 }
 
 // Role describes set of rules
 type Role struct {
-	Name         string `json:"name"`
-	Organization string `json:"organization"`
-	Rules        []Rule `json:"rules"`
+	Name  string `json:"name"`
+	Rules []Rule `json:"rules"`
 }
 
 //
@@ -42,6 +42,10 @@ type Role struct {
 func (r *Rule) Validate() error {
 	if r.Type == "" {
 		return errors.New("type can't be empty")
+	}
+
+	if err := ValidateNameStrict(r.Organization); err != nil {
+		return errors.New("organization " + err.Error())
 	}
 
 	if len(r.Permissions) == 0 {
@@ -72,10 +76,6 @@ func (r *Role) Validate() error {
 		return errors.New("name " + err.Error())
 	}
 
-	if err := ValidateNameStrict(r.Organization); err != nil {
-		return errors.New("organization " + err.Error())
-	}
-
 	if len(r.Rules) == 0 {
 		return errors.New("rules must at least contain one element")
 	}
@@ -87,9 +87,10 @@ func (r *Role) Validate() error {
 // Fixtures
 
 // FixtureRule returns a partial rule
-func FixtureRule() *Rule {
+func FixtureRule(org string) *Rule {
 	return &Rule{
-		Type: RuleTypeAll,
+		Type:         RuleTypeAll,
+		Organization: org,
 		Permissions: []string{
 			RulePermCreate,
 			RulePermRead,
@@ -102,10 +103,9 @@ func FixtureRule() *Rule {
 // FixtureRole returns a partial role
 func FixtureRole(name string, org string) *Role {
 	return &Role{
-		Name:         name,
-		Organization: org,
+		Name: name,
 		Rules: []Rule{
-			*FixtureRule(),
+			*FixtureRule(org),
 		},
 	}
 }

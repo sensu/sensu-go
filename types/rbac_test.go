@@ -7,34 +7,36 @@ import (
 )
 
 func TestFixtureRule(t *testing.T) {
-	r := FixtureRule()
+	r := FixtureRule("foo")
 	assert.Equal(t, "*", r.Type)
+	assert.Equal(t, "foo", r.Organization)
 	assert.Equal(t, []string{"create", "read", "update", "delete"}, r.Permissions)
 }
 
 func TestFixtureRole(t *testing.T) {
 	r := FixtureRole("foo", "bar")
 	assert.Equal(t, "foo", r.Name)
-	assert.Equal(t, "bar", r.Organization)
 	assert.NotEmpty(t, r.Rules)
 }
 
 func TestRuleValidate(t *testing.T) {
-	r := &Rule{}
+	r := &Rule{Type: "battlestar"}
 
 	// Empty organization
 	assert.Error(t, r.Validate())
+	r.Organization = "bar"
 
 	// No permissions
-	r.Type = "battlestar"
 	assert.Error(t, r.Validate())
+	r.Permissions = []string{"docking"}
 
 	// Invalid permissions
-	r.Permissions = []string{"docking"}
 	assert.Error(t, r.Validate())
-
 	r.Permissions = []string{"create"}
+
+	// Valid params
 	assert.Equal(t, "battlestar", r.Type)
+	assert.Equal(t, "bar", r.Organization)
 	assert.Equal(t, []string{"create"}, r.Permissions)
 	assert.NoError(t, r.Validate())
 }
@@ -45,14 +47,9 @@ func TestRoleValidate(t *testing.T) {
 	// Valid
 	assert.NoError(t, r.Validate())
 	assert.Equal(t, "foo", r.Name)
-	assert.Equal(t, "bar", r.Organization)
 
 	// Bad name
 	r.Name = "FOO/bar/10"
-	assert.Error(t, r.Validate())
-
-	// Empty org
-	r.Organization = "colonial-fleet"
 	assert.Error(t, r.Validate())
 
 	// No rules
