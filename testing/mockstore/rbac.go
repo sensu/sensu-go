@@ -11,7 +11,12 @@ func (s *MockStore) GetRoles() ([]*types.Role, error) {
 // GetRoleByName ...
 func (s *MockStore) GetRoleByName(name string) (*types.Role, error) {
 	args := s.Called(name)
-	return args.Get(0).(*types.Role), args.Error(1)
+	err := args.Error(1)
+
+	if role, ok := args.Get(0).(*types.Role); ok {
+		return role, err
+	}
+	return nil, err
 }
 
 // CreateRole ...
