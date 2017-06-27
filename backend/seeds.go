@@ -33,6 +33,11 @@ func seedInitialData(store store.Store) error {
 		return err
 	}
 
+	// Default organization
+	if err := setupDefaultOrganization(store); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -44,5 +49,12 @@ func setupAdminRole(store store.Store) error {
 			Organization: "*",
 			Permissions:  types.RuleAllPerms,
 		}},
+	})
+}
+
+func setupDefaultOrganization(store store.Store) error {
+	return store.UpdateOrganization(&types.Organization{
+		Name:        "default",
+		Description: "Default organization",
 	})
 }

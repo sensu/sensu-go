@@ -31,9 +31,5 @@ func TestMutatorStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, mutators)
 		assert.Equal(t, 1, len(mutators))
-
-		mutators, err = store.GetMutators("foo")
-		assert.NoError(t, err)
-		assert.Equal(t, 0, len(mutators))
 	})
 }

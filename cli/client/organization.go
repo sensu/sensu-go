@@ -1,0 +1,62 @@
+package client
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/sensu/sensu-go/types"
+)
+
+// CreateOrganization creates new org on configured Sensu instance
+func (client *RestClient) CreateOrganization(org *types.Organization) error {
+	bytes, err := json.Marshal(org)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().
+		SetBody(bytes).
+		Post("/rbac/organizations")
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
+// DeleteOrganization deletes an organization on configured Sensu instance
+func (client *RestClient) DeleteOrganization(org string) error {
+	res, err := client.R().Delete("/rbac/organizations/" + org)
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
+// ListOrganizations fetches all organizations from configured Sensu instance
+func (client *RestClient) ListOrganizations() ([]types.Organization, error) {
+	var orgs []types.Organization
+
+	res, err := client.R().Get("/rbac/organizations")
+	if err != nil {
+		return orgs, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return orgs, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &orgs)
+	return orgs, err
+}

@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"strconv"
 )
@@ -15,6 +16,11 @@ func getKeepalivePath(org, id string) string {
 }
 
 func (s *etcdStore) GetKeepalive(org, entityID string) (int64, error) {
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return 0, fmt.Errorf("the organization '%s' is invalid", org)
+	}
+
 	resp, err := s.client.Get(context.Background(), getKeepalivePath(org, entityID))
 	if err != nil {
 		return 0, err
@@ -34,6 +40,11 @@ func (s *etcdStore) GetKeepalive(org, entityID string) (int64, error) {
 }
 
 func (s *etcdStore) UpdateKeepalive(org, entityID string, expiration int64) error {
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return fmt.Errorf("the organization '%s' is invalid", org)
+	}
+
 	expirationStr := strconv.FormatInt(expiration, 10)
 	_, err := s.client.Put(context.Background(), getKeepalivePath(org, entityID), expirationStr)
 	return err

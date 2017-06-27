@@ -103,6 +103,11 @@ func (s *Session) handshake() error {
 		return fmt.Errorf("error unmarshaling agent handshake: %s", err.Error())
 	}
 
+	// Validate the agent organization
+	if _, err = s.store.GetOrganizationByName(agentHandshake.Organization); err != nil {
+		return fmt.Errorf("the organization '%s' is invalid", agentHandshake.Organization)
+	}
+
 	s.subscriptions = agentHandshake.Subscriptions
 	for _, sub := range s.subscriptions {
 		topic := messaging.SubscriptionTopic(agentHandshake.Organization, sub)

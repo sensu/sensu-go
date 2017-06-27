@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/util"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,6 +42,11 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 		if err != nil {
 			assert.FailNow(t, "failed to get store from etcd")
 		}
+
+		// Mock a default organization
+		s.UpdateOrganization(&types.Organization{
+			Name: "default",
+		})
 
 		f(s)
 	})

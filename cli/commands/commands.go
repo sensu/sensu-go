@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/entity"
 	"github.com/sensu/sensu-go/cli/commands/event"
 	"github.com/sensu/sensu-go/cli/commands/handler"
+	"github.com/sensu/sensu-go/cli/commands/organization"
 	"github.com/sensu/sensu-go/cli/commands/user"
 	"github.com/spf13/cobra"
 )
@@ -26,6 +27,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		entity.HelpCommand(cli),
 		event.HelpCommand(cli),
 		handler.HelpCommand(cli),
+		organization.HelpCommand(cli),
 		user.HelpCommand(cli),
 	)
 

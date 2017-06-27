@@ -28,6 +28,7 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	// Do we need to test that this isn't empty? We should figure that out.
 	entityID := vars["entity"]
+
 	org := organization(r)
 
 	events, err := c.Store.GetEventsByEntity(org, entityID)
@@ -55,6 +56,7 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 	vars := mux.Vars(r)
 	entityID := vars["entity"]
 	checkID := vars["check"]
+
 	org := organization(r)
 
 	event, err := c.Store.GetEventByEntityCheck(org, entityID, checkID)

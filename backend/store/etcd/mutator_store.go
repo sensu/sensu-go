@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -21,6 +22,13 @@ func getMutatorsPath(org, name string) string {
 // Mutators gets the list of mutators for an (optional) organization. If org is
 // the empty string, GetMutators returns all mutators for all orgs.
 func (s *etcdStore) GetMutators(org string) ([]*types.Mutator, error) {
+	// Verify that the organization exist
+	if org != "" {
+		if _, err := s.GetOrganizationByName(org); err != nil {
+			return nil, fmt.Errorf("the organization '%s' is invalid", org)
+		}
+	}
+
 	resp, err := s.kvc.Get(context.TODO(), getMutatorsPath(org, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
@@ -46,6 +54,12 @@ func (s *etcdStore) GetMutatorByName(org, name string) (*types.Mutator, error) {
 	if org == "" || name == "" {
 		return nil, errors.New("must specify organization and name of mutator")
 	}
+
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return nil, fmt.Errorf("the organization '%s' is invalid", org)
+	}
+
 	resp, err := s.kvc.Get(context.TODO(), getMutatorsPath(org, name))
 	if err != nil {
 		return nil, err
@@ -67,6 +81,12 @@ func (s *etcdStore) DeleteMutatorByName(org, name string) error {
 	if org == "" || name == "" {
 		return errors.New("must specify organization and name of mutator")
 	}
+
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return fmt.Errorf("the organization '%s' is invalid", org)
+	}
+
 	_, err := s.kvc.Delete(context.TODO(), getMutatorsPath(org, name))
 	return err
 }

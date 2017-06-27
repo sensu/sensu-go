@@ -27,6 +27,9 @@ type Store interface {
 	// Mutators
 	MutatorStore
 
+	// Organizations
+	OrganizationStore
+
 	// RBAC
 	RBACStore
 
@@ -104,6 +107,14 @@ type MutatorStore interface {
 	GetMutatorByName(org, name string) (*types.Mutator, error)
 	DeleteMutatorByName(org, name string) error
 	UpdateMutator(mutator *types.Mutator) error
+}
+
+// OrganizationStore provides an interface for interacting & persisting orgs
+type OrganizationStore interface {
+	DeleteOrganizationByName(name string) error
+	GetOrganizations() ([]*types.Organization, error)
+	GetOrganizationByName(name string) (*types.Organization, error)
+	UpdateOrganization(*types.Organization) error
 }
 
 // RBACStore provides an interface for interacting & persisting users

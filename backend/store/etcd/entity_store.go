@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -43,6 +44,12 @@ func (s *etcdStore) DeleteEntityByID(org, id string) error {
 	if org == "" || id == "" {
 		return errors.New("must specify organization and id")
 	}
+
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return fmt.Errorf("the organization '%s' is invalid", org)
+	}
+
 	_, err := s.kvc.Delete(context.TODO(), getEntityPath(org, id))
 	return err
 }
@@ -51,6 +58,12 @@ func (s *etcdStore) GetEntityByID(org, id string) (*types.Entity, error) {
 	if org == "" || id == "" {
 		return nil, errors.New("must specify organization and id")
 	}
+
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return nil, fmt.Errorf("the organization '%s' is invalid", org)
+	}
+
 	resp, err := s.kvc.Get(context.TODO(), getEntityPath(org, id), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
@@ -69,6 +82,13 @@ func (s *etcdStore) GetEntityByID(org, id string) (*types.Entity, error) {
 // GetEntities takes an optional org argument, an empty string will return
 // all entities.
 func (s *etcdStore) GetEntities(org string) ([]*types.Entity, error) {
+	// Verify that the organization exist
+	if org != "" {
+		if _, err := s.GetOrganizationByName(org); err != nil {
+			return nil, fmt.Errorf("the organization '%s' is invalid", org)
+		}
+	}
+
 	resp, err := s.kvc.Get(context.TODO(), getEntityPath(org, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err

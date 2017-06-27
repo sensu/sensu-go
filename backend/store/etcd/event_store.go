@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -23,6 +24,12 @@ func getEventsPath(org, entityID, checkID string) string {
 // GetEvents returns the events for an (optional) organization. If org is the
 // empty string, GetEvents returns all events for all orgs.
 func (s *etcdStore) GetEvents(org string) ([]*types.Event, error) {
+	// Verify that the organization exist
+	if org != "" {
+		if _, err := s.GetOrganizationByName(org); err != nil {
+			return nil, fmt.Errorf("the organization '%s' is invalid", org)
+		}
+	}
 	resp, err := s.kvc.Get(context.Background(), getEventsPath(org, "", ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
@@ -49,6 +56,12 @@ func (s *etcdStore) GetEventsByEntity(org, entityID string) ([]*types.Event, err
 	if org == "" || entityID == "" {
 		return nil, errors.New("must specify organization and entity id")
 	}
+
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return nil, fmt.Errorf("the organization '%s' is invalid", org)
+	}
+
 	resp, err := s.kvc.Get(context.Background(), getEventsPath(org, entityID, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
@@ -74,6 +87,11 @@ func (s *etcdStore) GetEventsByEntity(org, entityID string) ([]*types.Event, err
 func (s *etcdStore) GetEventByEntityCheck(org, entityID, checkID string) (*types.Event, error) {
 	if org == "" || entityID == "" || checkID == "" {
 		return nil, errors.New("must specify organization, entity, and check id")
+	}
+
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return nil, fmt.Errorf("the organization '%s' is invalid", org)
 	}
 
 	resp, err := s.kvc.Get(context.Background(), getEventsPath(org, entityID, checkID), clientv3.WithPrefix())
@@ -126,6 +144,11 @@ func (s *etcdStore) UpdateEvent(event *types.Event) error {
 func (s *etcdStore) DeleteEventByEntityCheck(org, entityID, checkID string) error {
 	if org == "" || entityID == "" || checkID == "" {
 		return errors.New("must specify organization, entity, and check id")
+	}
+
+	// Verify that the organization exist
+	if _, err := s.GetOrganizationByName(org); err != nil {
+		return fmt.Errorf("the organization '%s' is invalid", org)
 	}
 
 	_, err := s.kvc.Delete(context.TODO(), getEventsPath(org, entityID, checkID))
