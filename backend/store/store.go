@@ -107,7 +107,6 @@ type MutatorStore interface {
 type RBACStore interface {
 	GetRoles() ([]*types.Role, error)
 	GetRoleByName(name string) (*types.Role, error)
-	CreateRole(role *types.Role) error
 	UpdateRole(role *types.Role) error
 	DeleteRoleByName(name string) error
 }

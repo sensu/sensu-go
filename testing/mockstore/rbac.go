@@ -14,12 +14,6 @@ func (s *MockStore) GetRoleByName(name string) (*types.Role, error) {
 	return args.Get(0).(*types.Role), args.Error(1)
 }
 
-// CreateRole ...
-func (s *MockStore) CreateRole(role *types.Role) error {
-	args := s.Called(role)
-	return args.Error(0)
-}
-
 // UpdateRole ...
 func (s *MockStore) UpdateRole(role *types.Role) error {
 	args := s.Called(role)

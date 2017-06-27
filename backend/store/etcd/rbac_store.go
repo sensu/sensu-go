@@ -58,30 +58,6 @@ func (s *etcdStore) GetRoleByName(name string) (*types.Role, error) {
 	return roles[0], nil
 }
 
-// CreateRole ...
-func (s *etcdStore) CreateRole(role *types.Role) error {
-	if err := role.Validate(); err != nil {
-		return err
-	}
-
-	roleBytes, err := json.Marshal(role)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.kvc.Put(
-		context.TODO(),
-		getRolePath(role.Name),
-		string(roleBytes),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // UpdateRole ...
 func (s *etcdStore) UpdateRole(role *types.Role) error {
 	if err := role.Validate(); err != nil {
