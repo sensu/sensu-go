@@ -36,7 +36,7 @@ func ValidateName(name string) error {
 }
 
 // ValidateNameStrict validates the name of an element so it's not empty and it
-// does not contains specical characters. Compatible with Sensu 1.0.
+// does not contains specical characters. Not compatible with Sensu 1.0 resources.
 func ValidateNameStrict(name string) error {
 	return validateNameWithPattern(name, StrictNameRegex)
 }
