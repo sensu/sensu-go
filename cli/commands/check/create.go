@@ -133,11 +133,11 @@ func (opts *checkOpts) administerQuestionnaire() {
 }
 
 func buildCheck(opts *checkOpts, client client.APIClient) *types.CheckConfig {
-	interval, _ := strconv.Atoi(opts.Interval)
+	interval, _ := strconv.ParseUint(opts.Interval, 10, 32)
 	check := &types.CheckConfig{
 		Name:          opts.Name,
 		Organization:  opts.Org,
-		Interval:      interval,
+		Interval:      uint(interval),
 		Command:       opts.Command,
 		Subscriptions: helpers.SafeSplitCSV(opts.Subscriptions),
 		Handlers:      helpers.SafeSplitCSV(opts.Handlers),

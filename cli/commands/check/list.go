@@ -73,7 +73,8 @@ func printCheckConfigsToTable(queryResults []types.CheckConfig, io io.Writer) {
 			Title: "Interval",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)
-				return strconv.Itoa(check.Interval)
+				interval := strconv.FormatUint(uint64(check.Interval), 10)
+				return interval
 			},
 		},
 		{

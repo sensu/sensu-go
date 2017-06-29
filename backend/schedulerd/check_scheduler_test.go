@@ -80,7 +80,7 @@ func (suite *TimerSuite) TestSplay() {
 }
 
 func (suite *TimerSuite) TestInitialOffset() {
-	inputs := []int{1, 10, 60}
+	inputs := []uint{1, 10, 60}
 	for _, intervalSeconds := range inputs {
 		now := time.Now()
 		timer := NewCheckTimer("check1", intervalSeconds)

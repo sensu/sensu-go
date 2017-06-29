@@ -10,7 +10,7 @@ import (
 )
 
 // SynchronizeMinInterval minimum interval inwhich we poll the store for updates
-const SynchronizeMinInterval = 10
+const SynchronizeMinInterval = uint(10)
 
 // A StateManager keeps copies of unmarshal'd resources schedulerd requires to run
 // efficiently schedule checks.

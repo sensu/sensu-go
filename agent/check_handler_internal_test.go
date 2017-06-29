@@ -49,7 +49,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(1, event.Check.Status)
 
-	checkConfig.Interval = -15
+	checkConfig.Interval = 0
 	agent.executeCheck(request)
 
 	msg = <-ch

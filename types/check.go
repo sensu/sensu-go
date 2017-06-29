@@ -50,7 +50,7 @@ type CheckConfig struct {
 	Name string `json:"name"`
 
 	// Interval is the interval, in seconds, at which the check should be run.
-	Interval int `json:"interval"`
+	Interval uint `json:"interval"`
 
 	// Subscriptions is the list of subscribers for the check.
 	Subscriptions []string `json:"subscriptions"`
@@ -91,7 +91,7 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("check name " + err.Error())
 	}
 
-	if c.Interval <= 0 {
+	if c.Interval == 0 {
 		return errors.New("check interval must be greater than 0")
 	}
 
@@ -162,7 +162,7 @@ func FixtureCheckRequest(id string) *CheckRequest {
 
 // FixtureCheckConfig returns a fixture for a CheckConfig object.
 func FixtureCheckConfig(id string) *CheckConfig {
-	interval := 60
+	interval := uint(60)
 
 	return &CheckConfig{
 		Name:          id,
