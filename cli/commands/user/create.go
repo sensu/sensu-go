@@ -103,7 +103,6 @@ func (opts *createOpts) administerQuestionnaire() {
 			Prompt: &survey.Input{
 				Message: "Roles:",
 			},
-			Validate: survey.Required,
 		},
 	}
 
