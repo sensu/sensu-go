@@ -150,18 +150,19 @@ func validateRoles(store store.Store, givenRoles []string) error {
 	}
 
 	for _, givenRole := range givenRoles {
-		present := false
-		for _, storedRole := range storedRoles {
-			if givenRole == storedRole.Name {
-				present = true
-				break
-			}
-		}
-
-		if !present {
+		if present := hasRole(storedRoles, givenRole); !present {
 			return fmt.Errorf("given role '%s' is not valid", givenRole)
 		}
 	}
 
 	return nil
+}
+
+func hasRole(roles []Role, roleName string) bool {
+	for _, role := range roles {
+		if roleName == role.Name {
+			return true
+		}
+	}
+	return false
 }
