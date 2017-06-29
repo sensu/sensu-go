@@ -57,7 +57,7 @@ type SynchronizeStateScheduler struct {
 }
 
 // NewSynchronizeStateScheduler instantiates new scheduler to sync resources
-func NewSynchronizeStateScheduler(interval int, syncs ...ResourceSync) *SynchronizeStateScheduler {
+func NewSynchronizeStateScheduler(interval uint, syncs ...ResourceSync) *SynchronizeStateScheduler {
 	scheduler := &SynchronizeStateScheduler{
 		synchronizers: syncs,
 		waitGroup:     &sync.WaitGroup{},
@@ -68,7 +68,7 @@ func NewSynchronizeStateScheduler(interval int, syncs ...ResourceSync) *Synchron
 }
 
 // SetInterval ...
-func (recPtr *SynchronizeStateScheduler) SetInterval(i int) {
+func (recPtr *SynchronizeStateScheduler) SetInterval(i uint) {
 	recPtr.interval.Store(i)
 }
 
@@ -81,7 +81,7 @@ func (recPtr *SynchronizeStateScheduler) Start() {
 	recPtr.waitGroup.Add(1)
 
 	go func() {
-		interval := recPtr.interval.Load().(int)
+		interval := recPtr.interval.Load().(uint)
 		ticker := time.NewTicker(time.Duration(interval) * time.Second)
 
 		for {

@@ -26,7 +26,7 @@ type CheckScheduler struct {
 }
 
 // Start scheduler, ...
-func (s *CheckScheduler) Start(initialInterval int) error {
+func (s *CheckScheduler) Start(initialInterval uint) error {
 	s.stopping = make(chan struct{})
 	s.WaitGroup.Add(1)
 
@@ -147,7 +147,7 @@ type CheckTimer struct {
 }
 
 // NewCheckTimer establishes new check timer given a name & an initial interval
-func NewCheckTimer(name string, interval int) *CheckTimer {
+func NewCheckTimer(name string, interval uint) *CheckTimer {
 	// Calculate a check execution splay to ensure
 	// execution is consistent between process restarts.
 	sum := md5.Sum([]byte(name))
@@ -164,7 +164,7 @@ func (timerPtr *CheckTimer) C() <-chan time.Time {
 }
 
 // SetInterval updates the interval in which timers are set
-func (timerPtr *CheckTimer) SetInterval(i int) {
+func (timerPtr *CheckTimer) SetInterval(i uint) {
 	timerPtr.interval = time.Duration(time.Second * time.Duration(i))
 }
 
