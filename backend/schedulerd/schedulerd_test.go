@@ -21,11 +21,14 @@ func TestSchedulerd(t *testing.T) {
 		}
 
 		cfg := etcd.NewConfig()
-		cfg.StateDir = tmpDir
+		cfg.DataDir = tmpDir
 
-		cfg.ClientListenURL = fmt.Sprintf("http://127.0.0.1:%d", p[0])
-		cfg.PeerListenURL = fmt.Sprintf("http://127.0.0.1:%d", p[1])
+		peerURL := fmt.Sprintf("http://127.0.0.1:%d", p[1])
+
+		cfg.ListenClientURL = fmt.Sprintf("http://127.0.0.1:%d", p[0])
+		cfg.ListenPeerURL = peerURL
 		cfg.InitialCluster = fmt.Sprintf("default=http://127.0.0.1:%d", p[1])
+		cfg.InitialAdvertisePeerURL = peerURL
 		e, err := etcd.NewEtcd(cfg)
 		assert.NoError(t, err)
 		defer e.Shutdown()

@@ -22,10 +22,13 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 		initCluster := fmt.Sprintf("default=%s", apURL)
 
 		cfg := NewConfig()
-		cfg.StateDir = tmpDir
-		cfg.ClientListenURL = clURL
-		cfg.PeerListenURL = apURL
+		cfg.DataDir = tmpDir
+		cfg.ListenClientURL = clURL
+		cfg.ListenPeerURL = apURL
 		cfg.InitialCluster = initCluster
+		cfg.InitialClusterState = ClusterStateNew
+		cfg.InitialAdvertisePeerURL = apURL
+		cfg.Name = "default"
 
 		e, err := NewEtcd(cfg)
 		assert.NoError(t, err)

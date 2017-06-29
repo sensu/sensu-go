@@ -11,16 +11,19 @@ import (
 )
 
 type backendProcess struct {
-	AgentHost          string
-	AgentPort          int
-	APIHost            string
-	APIPort            int
-	DashboardHost      string
-	DashboardPort      int
-	StateDir           string
-	EtcdPeerURL        string
-	EtcdClientURL      string
-	EtcdInitialCluster string
+	AgentHost               string
+	AgentPort               int
+	APIHost                 string
+	APIPort                 int
+	DashboardHost           string
+	DashboardPort           int
+	StateDir                string
+	EtcdPeerURL             string
+	EtcdClientURL           string
+	EtcdInitialCluster      string
+	EtcdInitialClusterState string
+	EtcdName                string
+	EtcdInitialClusterToken string
 
 	Stdout io.Reader
 	Stderr io.Reader
@@ -46,6 +49,10 @@ func (b *backendProcess) Start() error {
 		"--store-client-url", b.EtcdClientURL,
 		"--store-peer-url", b.EtcdPeerURL,
 		"--store-initial-cluster", b.EtcdInitialCluster,
+		"--store-initial-cluster-state", b.EtcdInitialClusterState,
+		"--store-node-name", b.EtcdName,
+		"--store-initial-advertise-peer-url", b.EtcdPeerURL,
+		"--store-initial-cluster-token", b.EtcdInitialClusterToken,
 	)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
