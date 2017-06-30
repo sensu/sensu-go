@@ -158,7 +158,7 @@ func validateRoles(store store.Store, givenRoles []string) error {
 	return nil
 }
 
-func hasRole(roles []Role, roleName string) bool {
+func hasRole(roles []*types.Role, roleName string) bool {
 	for _, role := range roles {
 		if roleName == role.Name {
 			return true

@@ -66,7 +66,8 @@ func TestListCommandRunEClosureWithRoles(t *testing.T) {
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("username", "bob")
 	cmd.Flags().Set("password", "b0b")
-	cmd.Flags().Set("roles", "    default,   meowmix    ")
+	cmd.Flags().Set("roles", "     meowmix , marxist   ")
+	cmd.Flags().Set("admin", "t")
 
 	out, err := test.RunCmd(cmd, []string{})
 
