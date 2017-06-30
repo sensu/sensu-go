@@ -18,7 +18,7 @@ func seedInitialData(store store.Store) error {
 
 func setupDefaultRole(store store.Store) error {
 	return store.UpdateRole(&types.Role{
-		Name: "default",
+		Name: "admin",
 		Rules: []types.Rule{{
 			Type:         "*",
 			Organization: "*",
