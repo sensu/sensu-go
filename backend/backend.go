@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/gorilla/websocket"
 
@@ -160,7 +161,6 @@ func (b *Backend) Run() error {
 	if err := b.messageBus.Start(); err != nil {
 		return err
 	}
-
 	// Right now, instantiating a new Etcd will start etcd. If we change that
 	// s.t. Etcd has its own Start() method, conforming to Daemon, then we will
 	// want to make sure that we aren't calling NewClient before starting it,
@@ -294,6 +294,8 @@ func (b *Backend) Run() error {
 	logger.Info("shutting down etcd")
 	defer func() {
 		if err := recover(); err != nil {
+			trace := debug.Stack()
+			logger.Errorf("panic in %s", trace)
 			logger.Error("recovering from panic, shutting down etcd")
 		}
 		b.etcd.Shutdown()
