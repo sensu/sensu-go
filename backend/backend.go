@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/gorilla/websocket"
 
@@ -294,7 +295,9 @@ func (b *Backend) Run() error {
 	logger.Info("shutting down etcd")
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Errorf("recovering from panic, shutting down etcd")
+			trace := debug.Stack()
+			logger.Errorf("panic in %s", trace)
+			logger.Error("recovering from panic, shutting down etcd")
 		}
 		b.etcd.Shutdown()
 	}()
