@@ -295,6 +295,7 @@ func (b *Backend) Run() error {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("recovering from panic, shutting down etcd")
+			logger.Errorf("recovering from panic, shutting down etcd")
 		}
 		b.etcd.Shutdown()
 	}()
