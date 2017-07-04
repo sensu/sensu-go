@@ -21,6 +21,7 @@ type RolesController struct {
 func (c *RolesController) Register(r *mux.Router) {
 	r.HandleFunc("/rbac/roles", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/roles/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
+	r.HandleFunc("/rbac/roles/{name}/rules/{type}", c.rules).Methods(http.MethodPut, http.MethodDelete)
 }
 
 func (c *RolesController) many(w http.ResponseWriter, r *http.Request) {
@@ -104,5 +105,62 @@ func (c *RolesController) single(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func (c *RolesController) rules(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+
+	role, err := c.Store.GetRoleByName(name)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if role == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPut:
+		newRule := types.Rule{}
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		err = json.Unmarshal(bodyBytes, &newRule)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		role.Rules = append(role.Rules, newRule)
+		if err = role.Validate(); err != nil {
+			fmt.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	case http.MethodDelete:
+		newRuleSet := []types.Rule{}
+		ruleType := vars["type"]
+
+		for _, rule := range role.Rules {
+			if rule.Type != ruleType {
+				newRuleSet = append(newRuleSet, rule)
+			}
+		}
+
+		role.Rules = newRuleSet
+	}
+
+	err = c.Store.UpdateRole(role)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
