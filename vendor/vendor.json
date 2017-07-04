@@ -113,6 +113,12 @@
 			"revisionTime": "2017-03-12T07:30:33Z"
 		},
 		{
+			"checksumSHA1": "Y/l16oYdxL0RgQj+Ot4j1R70I4k=",
+			"path": "github.com/coreos/etcd/clientv3/concurrency",
+			"revision": "1408b337b67d4cb8355b3666b7eb8aaefbbfc167",
+			"revisionTime": "2017-07-01T05:03:43Z"
+		},
+		{
 			"checksumSHA1": "A+bxRVxwiX2GRArjmHMGIl9uNyI=",
 			"path": "github.com/coreos/etcd/compactor",
 			"revision": "76aa7f69357420f1802d4d959ade999e63269942",

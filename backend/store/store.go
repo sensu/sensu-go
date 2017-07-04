@@ -35,6 +35,9 @@ type Store interface {
 
 	// Keepalives
 	KeepaliveStore
+
+	// Initialization of store
+	NewInitializer() (Initializer, error)
 }
 
 // AssetStore manage assets
@@ -118,4 +121,13 @@ type UserStore interface {
 	GetUser(username string) (*types.User, error)
 	GetUsers() ([]*types.User, error)
 	UpdateUser(user *types.User) error
+}
+
+// Initializer utility provides way to determine if store is initialized
+// and mechanism for setting it to the initialized state.
+type Initializer interface {
+	Lock() error
+	Unlock() error
+	IsInitialized() (bool, error)
+	Finalize() error
 }

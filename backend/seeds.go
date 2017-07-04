@@ -8,15 +8,35 @@ import (
 // SeedInitialData seeds initial data into the store. Ideally this operation is
 // idempotent and can be safely run every time the backend starts.
 func seedInitialData(store store.Store) error {
-	// Default role
-	if err := setupDefaultRole(store); err != nil {
+	initializer, _ := store.NewInitializer()
+
+	// Lock initialization key to avoid competing installations
+	if err := initializer.Lock(); err != nil {
+		return err
+	}
+	defer initializer.Unlock()
+
+	// Check that the store hasn't already been seeded
+	if initialized, err := initializer.IsInitialized(); err != nil {
+		return err
+	} else if initialized {
+		return nil
+	}
+
+	// Set default role
+	if err := setupAdminRole(store); err != nil {
+		return err
+	}
+
+	// Set initialized flag
+	if err := initializer.Finalize(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func setupDefaultRole(store store.Store) error {
+func setupAdminRole(store store.Store) error {
 	return store.UpdateRole(&types.Role{
 		Name: "admin",
 		Rules: []types.Rule{{
