@@ -52,7 +52,7 @@ func TestRoleValidate(t *testing.T) {
 	r.Name = "FOO/bar/10"
 	assert.Error(t, r.Validate())
 
-	// No rules
-	r.Rules = []Rule{}
+	// Bad rules
+	r.Rules = []Rule{{Type: "sdfadfsadsfasdf@##@$!@$"}}
 	assert.Error(t, r.Validate())
 }

@@ -14,6 +14,7 @@ type APIClient interface {
 	HandlerAPIClient
 	OrganizationAPIClient
 	UserAPIClient
+	RoleAPIClient
 }
 
 // AuthenticationAPIClient client methods for authenticating
@@ -61,9 +62,18 @@ type OrganizationAPIClient interface {
 	ListOrganizations() ([]types.Organization, error)
 }
 
-// UserAPIClient client methods for checks
+// UserAPIClient client methods for users
 type UserAPIClient interface {
 	CreateUser(*types.User) error
 	DeleteUser(string) error
 	ListUsers() ([]types.User, error)
+}
+
+// RoleAPIClient client methods for role
+type RoleAPIClient interface {
+	CreateRole(*types.Role) error
+	DeleteRole(string) error
+	ListRoles() ([]types.Role, error)
+	// AddRule(role string, rule *types.Rule) error
+	// RemoveRule(t string) error
 }

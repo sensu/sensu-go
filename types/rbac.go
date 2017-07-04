@@ -86,8 +86,12 @@ func (r *Role) Validate() error {
 		return errors.New("name " + err.Error())
 	}
 
-	if len(r.Rules) == 0 {
-		return errors.New("rules must at least contain one element")
+	for _, rule := range r.Rules {
+		if err := rule.Validate(); err != nil {
+			return fmt.Errorf("rule %s", err)
+		}
+
+		// TODO: Check for duplicate rule definitions?
 	}
 
 	return nil
