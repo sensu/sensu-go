@@ -1,11 +1,9 @@
 package keepalived
 
 import (
-	"encoding/json"
 	"sync"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -81,31 +79,16 @@ func (k *Keepalived) processKeepalives(ec map[string](chan *types.Event)) {
 }
 
 func (k *Keepalived) deregisterEntity(entity *types.Entity) {
-	if err := k.deregistrationAdapter.Deregister(entity); err != nil {
+	if err := k.deregistration.Deregister(entity); err != nil {
 		logger.WithError(err).Error("error deregistering entity")
 	}
 }
 
 func (k *Keepalived) createKeepaliveEvent(entity *types.Entity) {
-	keepaliveCheck := &types.Check{
-		Config: &types.CheckConfig{
-			Name:          "keepalive",
-			Interval:      DefaultKeepaliveTimeout,
-			Subscriptions: []string{""},
-			Command:       "",
-			Handlers:      []string{"keepalive"},
-			Organization:  entity.Organization,
-		},
+	if err := k.eventCreator.Warn(entity); err != nil {
+		logger.WithError(err).Error("error sending keepalive alert")
 	}
-	keepaliveEvent := &types.Event{
-		Entity: entity,
-		Check:  keepaliveCheck,
-	}
-	eventBytes, err := json.Marshal(keepaliveEvent)
-	if err != nil {
-		logger.Errorf("error serializing keepalive event: %s", err.Error())
-	}
-	k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
+
 }
 
 func (k *Keepalived) monitorEntity(ch chan *types.Event, entity *types.Entity, stoppingMonitors chan struct{}) {

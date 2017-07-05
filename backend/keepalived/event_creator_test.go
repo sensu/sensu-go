@@ -1,4 +1,4 @@
-package adapters
+package keepalived
 
 import (
 	"testing"
@@ -38,4 +38,19 @@ func TestCriticalEvent(t *testing.T) {
 	}
 	entity := types.FixtureEntity("entity")
 	assert.NoError(creator.Critical(entity))
+}
+
+func TestResolveEvent(t *testing.T) {
+	assert := assert.New(t)
+
+	mockBus := &mockbus.MockBus{}
+	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		event := args[1].(*types.Event)
+		assert.Equal(0, event.Check.Status)
+	})
+	creator := &MessageBusEventCreator{
+		MessageBus: mockBus,
+	}
+	entity := types.FixtureEntity("entity")
+	assert.NoError(creator.Resolve(entity))
 }

@@ -1,4 +1,4 @@
-package adapters
+package keepalived
 
 import (
 	"github.com/sensu/sensu-go/backend/messaging"

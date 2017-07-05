@@ -1,4 +1,4 @@
-package adapters
+package keepalived
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// A DeregistrationAdapter provides a mechanism for deregistering entities and
+// A Deregisterer provides a mechanism for deregistering entities and
 // notifying the rest of the backend when a deregistration occurs.
-type DeregistrationAdapter interface {
+type Deregisterer interface {
 	// Deregister an entity and return an error if there was any problem during the
 	// deregistration process.
 	Deregister(e *types.Entity) error
