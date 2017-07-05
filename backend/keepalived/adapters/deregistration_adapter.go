@@ -68,7 +68,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 			Status: 1,
 		}
 
-		deregistrationEvent := types.Event{
+		deregistrationEvent := &types.Event{
 			Entity: entity,
 			Check:  deregistrationCheck,
 		}
