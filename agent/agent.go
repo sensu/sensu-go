@@ -36,6 +36,9 @@ type Config struct {
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
 	// keepalive to sensu-backend. Default: 60
 	KeepaliveInterval int
+	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
+	// back the backend.
+	KeepaliveTimeout uint
 	// Deregister indicates whether the entity is ephemeral
 	Deregister bool
 	// DeregistrationHandler specifies a single deregistration handler
@@ -52,6 +55,7 @@ func NewConfig() *Config {
 		BackendURLs:       []string{"ws://127.0.0.1:8081"},
 		Subscriptions:     []string{},
 		KeepaliveInterval: 20,
+		KeepaliveTimeout:  120,
 		CacheDir:          "/var/cache/sensu",
 		Organization:      "default",
 	}
@@ -223,11 +227,12 @@ func (a *Agent) sendKeepalive() error {
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
-			ID:            a.config.AgentID,
-			Class:         "agent",
-			Subscriptions: a.config.Subscriptions,
-			Deregister:    a.config.Deregister,
-			Organization:  a.config.Organization,
+			ID:               a.config.AgentID,
+			Class:            "agent",
+			Subscriptions:    a.config.Subscriptions,
+			Deregister:       a.config.Deregister,
+			KeepaliveTimeout: a.config.KeepaliveTimeout,
+			Organization:     a.config.Organization,
 		}
 
 		if a.config.DeregistrationHandler != "" {

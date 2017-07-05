@@ -5,14 +5,15 @@ import "errors"
 // Entity is the Entity supplying the event. The default Entity for any
 // Event is the running Agent process--if the Event is sent by an Agent.
 type Entity struct {
-	ID             string         `json:"id"`
-	Class          string         `json:"class"`
-	System         System         `json:"system,omitempty"`
-	Subscriptions  []string       `json:"subscriptions,omitempty"`
-	LastSeen       int64          `json:"last_seen,omitempty"`
-	Deregister     bool           `json:"deregister"`
-	Deregistration Deregistration `json:"deregistration"`
-	Organization   string         `json:"organization"`
+	ID               string         `json:"id"`
+	Class            string         `json:"class"`
+	System           System         `json:"system,omitempty"`
+	Subscriptions    []string       `json:"subscriptions,omitempty"`
+	LastSeen         int64          `json:"last_seen,omitempty"`
+	Deregister       bool           `json:"deregister"`
+	Deregistration   Deregistration `json:"deregistration"`
+	KeepaliveTimeout uint           `json:"keepalive_timeout"`
+	Organization     string         `json:"organization"`
 }
 
 // System contains information about the system that the Agent process
