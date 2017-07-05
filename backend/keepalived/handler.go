@@ -81,58 +81,8 @@ func (k *Keepalived) processKeepalives(ec map[string](chan *types.Event)) {
 }
 
 func (k *Keepalived) deregisterEntity(entity *types.Entity) {
-	if err := k.Store.DeleteEntity(entity); err != nil {
-		logger.WithError(err).Error("error deleting entity in store")
-	}
-
-	events, err := k.Store.GetEventsByEntity(entity.Organization, entity.ID)
-	if err != nil {
-		logger.WithError(err).Error("error fetching events for entity")
-	}
-
-	for _, event := range events {
-		if err := k.Store.DeleteEventByEntityCheck(
-			entity.Organization, entity.ID, event.Check.Config.Name,
-		); err != nil {
-			logger.WithError(err).Error("error deleting event for entity")
-		}
-
-		event.Check.Output = "Resolving due to entity deregistering"
-		event.Check.Status = 0
-		event.Check.History = []types.CheckHistory{}
-
-		eventBytes, err := json.Marshal(event)
-		if err != nil {
-			logger.Errorf("error serializing event: %s", err.Error())
-		}
-
-		k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
-	}
-
-	if entity.Deregistration.Handler != "" {
-		deregistrationCheck := &types.Check{
-			Config: &types.CheckConfig{
-				Name:          "deregistration",
-				Interval:      DefaultKeepaliveTimeout,
-				Subscriptions: []string{""},
-				Command:       "",
-				Handlers:      []string{entity.Deregistration.Handler},
-				Organization:  entity.Organization,
-			},
-			Status: 1,
-		}
-
-		deregistrationEvent := types.Event{
-			Entity: entity,
-			Check:  deregistrationCheck,
-		}
-
-		eventBytes, err := json.Marshal(deregistrationEvent)
-		if err != nil {
-			logger.Errorf("error serializing deregistration event: %s", err.Error())
-		}
-
-		k.MessageBus.Publish(messaging.TopicEvent, eventBytes)
+	if err := k.deregistrationAdapter.Deregister(entity); err != nil {
+		logger.WithError(err).Error("error deregistering entity")
 	}
 }
 

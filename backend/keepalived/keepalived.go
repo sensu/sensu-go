@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/sensu/sensu-go/backend/keepalived/adapters"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -22,10 +23,11 @@ type Keepalived struct {
 	Store                 store.Store
 	DeregistrationHandler string
 
-	wg            *sync.WaitGroup
-	stopping      chan struct{}
-	keepaliveChan chan interface{}
-	errChan       chan error
+	deregistrationAdapter *adapters.Deregistration
+	wg                    *sync.WaitGroup
+	stopping              chan struct{}
+	keepaliveChan         chan interface{}
+	errChan               chan error
 }
 
 // Start starts the daemon, returning an error if preconditions for startup
@@ -37,6 +39,11 @@ func (k *Keepalived) Start() error {
 
 	if k.Store == nil {
 		return errors.New("no keepalive store found")
+	}
+
+	k.deregistrationAdapter = &adapters.Deregistration{
+		Store:      k.Store,
+		MessageBus: k.MessageBus,
 	}
 
 	k.keepaliveChan = make(chan interface{}, 10)
