@@ -2,26 +2,31 @@ package etcd
 
 import (
 	"context"
-	"fmt"
 	"path"
 	"strconv"
+
+	"github.com/sensu/sensu-go/types"
 )
 
 const (
 	keepalivesPathPrefix = "keepalives"
 )
 
-func getKeepalivePath(org, id string) string {
+func getKeepalivePath(ctx context.Context, id string) string {
+	var org string
+
+	// Determine the organization
+	if value := ctx.Value(types.OrganizationKey); value != nil {
+		org = value.(string)
+	} else {
+		org = ""
+	}
+
 	return path.Join(etcdRoot, keepalivesPathPrefix, org, id)
 }
 
-func (s *etcdStore) GetKeepalive(org, entityID string) (int64, error) {
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return 0, fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
-	resp, err := s.client.Get(context.Background(), getKeepalivePath(org, entityID))
+func (s *etcdStore) GetKeepalive(ctx context.Context, entityID string) (int64, error) {
+	resp, err := s.client.Get(context.Background(), getKeepalivePath(ctx, entityID))
 	if err != nil {
 		return 0, err
 	}
@@ -39,13 +44,8 @@ func (s *etcdStore) GetKeepalive(org, entityID string) (int64, error) {
 	return expiration, nil
 }
 
-func (s *etcdStore) UpdateKeepalive(org, entityID string, expiration int64) error {
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
+func (s *etcdStore) UpdateKeepalive(ctx context.Context, entityID string, expiration int64) error {
 	expirationStr := strconv.FormatInt(expiration, 10)
-	_, err := s.client.Put(context.Background(), getKeepalivePath(org, entityID), expirationStr)
+	_, err := s.client.Put(context.Background(), getKeepalivePath(ctx, entityID), expirationStr)
 	return err
 }

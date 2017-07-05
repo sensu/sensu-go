@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestHttpApiEntitiesGet(t *testing.T) {
@@ -22,7 +23,7 @@ func TestHttpApiEntitiesGet(t *testing.T) {
 		types.FixtureEntity("entity1"),
 		types.FixtureEntity("entity2"),
 	}
-	store.On("GetEntities", "default").Return(entities, nil)
+	store.On("GetEntities", mock.AnythingOfType("*context.valueCtx")).Return(entities, nil)
 	req, _ := http.NewRequest("GET", "/entities", nil)
 	res := processRequest(c, req)
 
@@ -48,14 +49,14 @@ func TestHttpApiEntityGet(t *testing.T) {
 	}
 
 	var nilEntity *types.Entity
-	store.On("GetEntityByID", "default", "someentity").Return(nilEntity, nil)
+	store.On("GetEntityByID", mock.AnythingOfType("*context.valueCtx"), "someentity").Return(nilEntity, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/entities/someentity", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
 
 	entity1 := types.FixtureEntity("entity1")
-	store.On("GetEntityByID", "default", "entity1").Return(entity1, nil)
+	store.On("GetEntityByID", mock.AnythingOfType("*context.valueCtx"), "entity1").Return(entity1, nil)
 	foundReq, _ := http.NewRequest("GET", "/entities/entity1", nil)
 	foundRes := processRequest(c, foundReq)
 
@@ -80,13 +81,13 @@ func TestHttpApiEntityDelete(t *testing.T) {
 	}
 
 	entity := types.FixtureEntity("entity1")
-	store.On("GetEntityByID", "default", "entity1").Return(entity, nil)
-	store.On("DeleteEntityByID", "default", "entity1").Return(nil)
+	store.On("GetEntityByID", mock.AnythingOfType("*context.valueCtx"), "entity1").Return(entity, nil)
+	store.On("DeleteEntityByID", mock.AnythingOfType("*context.valueCtx"), "entity1").Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/entities/entity1"), nil)
 	deleteRes := processRequest(c, deleteReq)
 
-	store.AssertCalled(t, "GetEntityByID", "default", "entity1")
-	store.AssertCalled(t, "DeleteEntityByID", "default", "entity1")
+	store.AssertCalled(t, "GetEntityByID", mock.AnythingOfType("*context.valueCtx"), "entity1")
+	store.AssertCalled(t, "DeleteEntityByID", mock.AnythingOfType("*context.valueCtx"), "entity1")
 
 	assert.Equal(http.StatusOK, deleteRes.Code)
 }

@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -10,17 +11,18 @@ import (
 
 func TestHandlerStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		handler := types.FixtureHandler("handler1")
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, handler.Organization)
+
 		// We should receive an empty slice if no results were found
-		handlers, err := store.GetHandlers("default")
+		handlers, err := store.GetHandlers(ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, handlers)
-
-		handler := types.FixtureHandler("handler1")
 
 		err = store.UpdateHandler(handler)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetHandlerByName("default", "handler1")
+		retrieved, err := store.GetHandlerByName(ctx, "handler1")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 
@@ -29,7 +31,7 @@ func TestHandlerStorage(t *testing.T) {
 		assert.Equal(t, handler.Command, retrieved.Command)
 		assert.Equal(t, handler.Timeout, retrieved.Timeout)
 
-		handlers, err = store.GetHandlers("default")
+		handlers, err = store.GetHandlers(ctx)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, handlers)
 		assert.Equal(t, 1, len(handlers))

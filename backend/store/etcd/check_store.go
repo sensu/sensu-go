@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -15,21 +14,36 @@ const (
 	checksPathPrefix = "checks"
 )
 
-func getCheckConfigsPath(org, name string) string {
+func getCheckConfigPath(check *types.CheckConfig) string {
+	return path.Join(etcdRoot, checksPathPrefix, check.Organization, check.Name)
+}
+
+func getCheckConfigsPath(ctx context.Context, name string) string {
+	var org string
+
+	// Determine the organization
+	if value := ctx.Value(types.OrganizationKey); value != nil {
+		org = value.(string)
+	} else {
+		org = ""
+	}
+
 	return path.Join(etcdRoot, checksPathPrefix, org, name)
+}
+
+func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) error {
+	if name == "" {
+		return errors.New("must specify name")
+	}
+
+	_, err := s.kvc.Delete(context.TODO(), getCheckConfigsPath(ctx, name))
+	return err
 }
 
 // GetCheckConfigs returns check configurations for an (optional) organization.
 // If org is the empty string, it returns all check configs.
-func (s *etcdStore) GetCheckConfigs(org string) ([]*types.CheckConfig, error) {
-	// Verify that the organization exist
-	if org != "" {
-		if _, err := s.GetOrganizationByName(org); err != nil {
-			return nil, fmt.Errorf("the organization '%s' is invalid", org)
-		}
-	}
-
-	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(org, ""), clientv3.WithPrefix())
+func (s *etcdStore) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
+	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -50,17 +64,12 @@ func (s *etcdStore) GetCheckConfigs(org string) ([]*types.CheckConfig, error) {
 	return checksArray, nil
 }
 
-func (s *etcdStore) GetCheckConfigByName(org, name string) (*types.CheckConfig, error) {
-	if org == "" || name == "" {
-		return nil, errors.New("must specify organization and name")
+func (s *etcdStore) GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error) {
+	if name == "" {
+		return nil, errors.New("must specify name")
 	}
 
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return nil, fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
-	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(org, name))
+	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -77,20 +86,6 @@ func (s *etcdStore) GetCheckConfigByName(org, name string) (*types.CheckConfig, 
 	return check, nil
 }
 
-func (s *etcdStore) DeleteCheckConfigByName(org, name string) error {
-	if org == "" || name == "" {
-		return errors.New("must specify organization and name")
-	}
-
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
-	_, err := s.kvc.Delete(context.TODO(), getCheckConfigsPath(org, name))
-	return err
-}
-
 func (s *etcdStore) UpdateCheckConfig(check *types.CheckConfig) error {
 	if err := check.Validate(); err != nil {
 		return err
@@ -101,7 +96,7 @@ func (s *etcdStore) UpdateCheckConfig(check *types.CheckConfig) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getCheckConfigsPath(check.Organization, check.Name), string(checkBytes))
+	_, err = s.kvc.Put(context.TODO(), getCheckConfigPath(check), string(checkBytes))
 	if err != nil {
 		return err
 	}

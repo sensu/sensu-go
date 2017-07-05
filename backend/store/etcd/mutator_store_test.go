@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -10,16 +11,18 @@ import (
 
 func TestMutatorStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		mutator := types.FixtureMutator("mutator1")
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, mutator.Organization)
+
 		// We should receive an empty slice if no results were found
-		mutators, err := store.GetMutators("default")
+		mutators, err := store.GetMutators(ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, mutators)
 
-		mutator := types.FixtureMutator("mutator1")
-
 		err = store.UpdateMutator(mutator)
 		assert.NoError(t, err)
-		retrieved, err := store.GetMutatorByName("default", "mutator1")
+
+		retrieved, err := store.GetMutatorByName(ctx, "mutator1")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 
@@ -27,7 +30,7 @@ func TestMutatorStorage(t *testing.T) {
 		assert.Equal(t, mutator.Command, retrieved.Command)
 		assert.Equal(t, mutator.Timeout, retrieved.Timeout)
 
-		mutators, err = store.GetMutators("default")
+		mutators, err = store.GetMutators(ctx)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, mutators)
 		assert.Equal(t, 1, len(mutators))

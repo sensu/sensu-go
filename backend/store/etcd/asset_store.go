@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -15,20 +14,36 @@ const (
 	assetsPathPrefix = "assets"
 )
 
-func getAssetsPath(org, name string) string {
+func getAssetPath(asset *types.Asset) string {
+	return path.Join(etcdRoot, assetsPathPrefix, asset.Organization, asset.Name)
+}
+
+func getAssetsPath(ctx context.Context, name string) string {
+	var org string
+
+	// Determine the organization
+	if value := ctx.Value(types.OrganizationKey); value != nil {
+		org = value.(string)
+	} else {
+		org = ""
+	}
+
 	return path.Join(etcdRoot, assetsPathPrefix, org, name)
 }
 
-// GetAssets fetches all assets from the store
-func (s *etcdStore) GetAssets(org string) ([]*types.Asset, error) {
-	// Verify that the organization exist
-	if org != "" {
-		if _, err := s.GetOrganizationByName(org); err != nil {
-			return nil, fmt.Errorf("the organization '%s' is invalid", org)
-		}
+// TODO Cleanup associated checks?
+func (s *etcdStore) DeleteAssetByName(ctx context.Context, name string) error {
+	if name == "" {
+		return errors.New("must specify name")
 	}
 
-	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(org, ""), clientv3.WithPrefix())
+	_, err := s.kvc.Delete(context.TODO(), getAssetsPath(ctx, name))
+	return err
+}
+
+// GetAssets fetches all assets from the store
+func (s *etcdStore) GetAssets(ctx context.Context) ([]*types.Asset, error) {
+	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -49,17 +64,12 @@ func (s *etcdStore) GetAssets(org string) ([]*types.Asset, error) {
 	return assetArray, nil
 }
 
-func (s *etcdStore) GetAssetByName(org, name string) (*types.Asset, error) {
-	if org == "" || name == "" {
+func (s *etcdStore) GetAssetByName(ctx context.Context, name string) (*types.Asset, error) {
+	if name == "" {
 		return nil, errors.New("must specify organization and name")
 	}
 
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return nil, fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
-	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(org, name))
+	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -86,25 +96,10 @@ func (s *etcdStore) UpdateAsset(asset *types.Asset) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getAssetsPath(asset.Organization, asset.Name), string(assetBytes))
+	_, err = s.kvc.Put(context.TODO(), getAssetPath(asset), string(assetBytes))
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// TODO Cleanup associated checks?
-func (s *etcdStore) DeleteAssetByName(org, name string) error {
-	if org == "" || name == "" {
-		return errors.New("must specify organization and name")
-	}
-
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
-	_, err := s.kvc.Delete(context.TODO(), getAssetsPath(org, name))
-	return err
 }

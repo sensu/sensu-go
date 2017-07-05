@@ -45,7 +45,7 @@ func (a *APId) Start() error {
 
 	router := httpRouter(a)
 	routerStack := authentication.Middleware(a.Authentication, router)
-	routerStack = middlewares.ValidateOrganization(routerStack, a.Store)
+	routerStack = middlewares.Organization(routerStack, a.Store)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
