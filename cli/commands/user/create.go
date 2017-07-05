@@ -5,6 +5,7 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -14,6 +15,8 @@ import (
 type createOpts struct {
 	Username string `survey:"username"`
 	Password string `survey:"password"`
+	Roles    string `survey:"roles"`
+	Admin    bool
 }
 
 // CreateCommand adds command that allows user to create new users
@@ -61,6 +64,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("username", "u", "", "Username")
 	cmd.Flags().StringP("password", "p", "", "Password")
+	cmd.Flags().Bool("admin", false, "Give user the administrator role")
+	cmd.Flags().StringP("roles", "r", "", "Comma separated list of roles to assign")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("username")
@@ -72,6 +77,11 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Username, _ = flags.GetString("username")
 	opts.Password, _ = flags.GetString("password")
+	opts.Roles, _ = flags.GetString("roles")
+
+	if isAdmin, _ := flags.GetBool("admin"); isAdmin {
+		opts.Admin = isAdmin
+	}
 }
 
 func (opts *createOpts) administerQuestionnaire() {
@@ -90,14 +100,27 @@ func (opts *createOpts) administerQuestionnaire() {
 			},
 			Validate: survey.Required,
 		},
+		{
+			Name: "roles",
+			Prompt: &survey.Input{
+				Message: "Roles:",
+			},
+		},
 	}
 
 	survey.Ask(qs, opts)
 }
 
 func (opts *createOpts) toUser() *types.User {
+	roles := helpers.SafeSplitCSV(opts.Roles)
+
+	if opts.Admin {
+		roles = append(roles, "admin")
+	}
+
 	return &types.User{
 		Username: opts.Username,
 		Password: opts.Password,
+		Roles:    roles,
 	}
 }

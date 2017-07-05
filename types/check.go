@@ -86,8 +86,7 @@ func (c *Check) Validate() error {
 
 // Validate returns an error if the check does not pass validation tests.
 func (c *CheckConfig) Validate() error {
-	err := validateName(c.Name)
-	if err != nil {
+	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}
 
@@ -104,7 +103,7 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	for _, assetName := range c.RuntimeAssets {
-		if err = ValidateAssetName(assetName); err != nil {
+		if err := ValidateAssetName(assetName); err != nil {
 			return fmt.Errorf("asset's %s", err)
 		}
 	}

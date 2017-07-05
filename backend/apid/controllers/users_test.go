@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDeleteUser(t *testing.T) {
@@ -119,16 +120,48 @@ func TestSingle(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
+	store := &mockstore.MockStore{}
 	provider := &mockprovider.MockProvider{}
 	u := &UsersController{
 		Provider: provider,
+		Store: store,
 	}
 
-	provider.On("CreateUser").Return(fmt.Errorf(""))
+	storedRoles := []*types.Role{
+		{Name: "default"},
+	}
 
 	user := types.FixtureUser("foo")
 	user.Password = "P@ssw0rd!"
 	userBytes, _ := json.Marshal(user)
+
+	store.On("GetRoles").Return(storedRoles, nil)
+	provider.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
+
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
+	res := processRequest(u, req)
+
+	assert.Equal(t, http.StatusCreated, res.Code)
+}
+
+func TestUpdateUserError(t *testing.T) {
+	store := &mockstore.MockStore{}
+	provider := &mockprovider.MockProvider{}
+	u := &UsersController{
+		Provider: provider,
+		Store: store,
+	}
+
+	storedRoles := []*types.Role{
+		{Name: "default"},
+	}
+
+	user := types.FixtureUser("foo")
+	user.Password = "P@ssw0rd!"
+	userBytes, _ := json.Marshal(user)
+
+	store.On("GetRoles").Return(storedRoles, nil)
+	provider.On("CreateUser", mock.AnythingOfType("*types.User")).Return(fmt.Errorf(""))
 
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
@@ -136,20 +169,31 @@ func TestUpdateUser(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 
-func TestUpdateUserError(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
-	u := &UsersController{
-		Provider: provider,
+func TestValidateRoles(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	roles := []string{"roleOne", "roleTwo"}
+
+	storedRoles := []*types.Role{
+		{Name: "roleOne"},
+		{Name: "roleTwo"},
 	}
 
-	provider.On("CreateUser").Return(fmt.Errorf(""))
 
-	user := types.FixtureUser("foo")
-	user.Password = "P@ssw0rd!"
-	userBytes, _ := json.Marshal(user)
+	store.On("GetRoles").Return(storedRoles, nil)
 
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
-	res := processRequest(u, req)
+	assert.NoError(t, validateRoles(store, roles))
+}
 
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+func TestValidateRolesError(t *testing.T) {
+	store := &mockstore.MockStore{}
+	roles := []string{"roleOne", "roleTwo"}
+
+	storedRoles := []*types.Role{
+		{Name: "roleOne"},
+	}
+
+	store.On("GetRoles").Return(storedRoles, nil)
+
+	assert.Error(t, validateRoles(store, roles))
 }

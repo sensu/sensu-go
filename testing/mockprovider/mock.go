@@ -27,6 +27,6 @@ func (m *MockProvider) AuthEnabled() bool {
 
 // CreateUser mocks the user creation
 func (m *MockProvider) CreateUser(user *types.User) error {
-	args := m.Called()
+	args := m.Called(user)
 	return args.Error(0)
 }

@@ -27,11 +27,17 @@ type Store interface {
 	// Mutators
 	MutatorStore
 
+	// RBAC
+	RBACStore
+
 	// Users
 	UserStore
 
 	// Keepalives
 	KeepaliveStore
+
+	// Initialization of store
+	NewInitializer() (Initializer, error)
 }
 
 // AssetStore manage assets
@@ -100,6 +106,14 @@ type MutatorStore interface {
 	UpdateMutator(mutator *types.Mutator) error
 }
 
+// RBACStore provides an interface for interacting & persisting users
+type RBACStore interface {
+	GetRoles() ([]*types.Role, error)
+	GetRoleByName(name string) (*types.Role, error)
+	UpdateRole(role *types.Role) error
+	DeleteRoleByName(name string) error
+}
+
 // UserStore provides an interface for interacting & persisting users
 type UserStore interface {
 	CreateUser(user *types.User) error
@@ -107,4 +121,13 @@ type UserStore interface {
 	GetUser(username string) (*types.User, error)
 	GetUsers() ([]*types.User, error)
 	UpdateUser(user *types.User) error
+}
+
+// Initializer utility provides way to determine if store is initialized
+// and mechanism for setting it to the initialized state.
+type Initializer interface {
+	Lock() error
+	Close() error
+	IsInitialized() (bool, error)
+	FlagAsInitialized() error
 }
