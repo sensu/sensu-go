@@ -11,22 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestNoDeregister(t *testing.T) {
-	assert := assert.New(t)
-
-	mockStore := &mockstore.MockStore{}
-	mockBus := &mockbus.MockBus{}
-
-	adapter := &Deregistration{
-		Store:      mockStore,
-		MessageBus: mockBus,
-	}
-
-	entity := types.FixtureEntity("entity1")
-
-	assert.NoError(adapter.Deregister(entity))
-}
-
 func TestDeregister(t *testing.T) {
 	assert := assert.New(t)
 

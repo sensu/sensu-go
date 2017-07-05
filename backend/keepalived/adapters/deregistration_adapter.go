@@ -8,8 +8,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// A DeregistrationAdapter provides a mechanism for deregistering entities if the
-// entity has a deregistration handler.
+// A DeregistrationAdapter provides a mechanism for deregistering entities and
+// notifying the rest of the backend when a deregistration occurs.
 type DeregistrationAdapter interface {
 	// Deregister an entity and return an error if there was any problem during the
 	// deregistration process.
@@ -23,13 +23,8 @@ type Deregistration struct {
 	MessageBus messaging.MessageBus
 }
 
-// Deregister an entity and all of its associated events, if the entity is
-// configured to deregister.
+// Deregister an entity and all of its associated events.
 func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
-	if !entity.Deregister {
-		return nil
-	}
-
 	if err := adapterPtr.Store.DeleteEntity(entity); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err.Error())
 	}
