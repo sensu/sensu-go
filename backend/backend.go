@@ -136,7 +136,6 @@ func NewBackend(config *Config) (*Backend, error) {
 	// we go ahead and setup and start etcd here, because we'll have to pass
 	// a store along to the API.
 	cfg := etcd.NewConfig()
-	panic("test panic after calling etcd.NewConfig()")
 	cfg.DataDir = config.StateDir
 	cfg.ListenClientURL = config.EtcdListenClientURL
 	cfg.ListenPeerURL = config.EtcdListenPeerURL
@@ -296,7 +295,7 @@ func (b *Backend) Run() error {
 	logger.Info("shutting down etcd")
 	defer func() {
 		if err := recover(); err != nil {
-			trace := debug.Stack()
+			trace := string(debug.Stack())
 			logger.Errorf("panic in %s", trace)
 			logger.Errorf("recovering from panic due to error %s, shutting down etcd", err)
 		}
