@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/gorilla/websocket"
 
@@ -295,9 +296,14 @@ func (b *Backend) Run() error {
 	}
 
 	logger.Info("shutting down etcd")
-	if err := b.etcd.Shutdown(); err != nil {
-		logger.Errorf("error shutting down etcd: %s", err.Error())
-	}
+	defer func() {
+		if err := recover(); err != nil {
+			trace := string(debug.Stack())
+			logger.Errorf("panic in %s", trace)
+			logger.Errorf("recovering from panic due to error %s, shutting down etcd", err)
+		}
+		b.etcd.Shutdown()
+	}()
 
 	// stop allowing API connections
 	logger.Info("shutting down apid")
