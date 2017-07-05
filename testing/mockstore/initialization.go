@@ -18,8 +18,8 @@ func (s *StoreInitializer) Lock() error {
 	return s.Err
 }
 
-// Unlock ...
-func (s *StoreInitializer) Unlock() error {
+// Close ...
+func (s *StoreInitializer) Close() error {
 	return s.Err
 }
 
@@ -28,8 +28,8 @@ func (s *StoreInitializer) IsInitialized() (bool, error) {
 	return s.Initialized, s.Err
 }
 
-// Finalize ...
-func (s *StoreInitializer) Finalize() error {
+// FlagAsInitialized ...
+func (s *StoreInitializer) FlagAsInitialized() error {
 	s.Initialized = true
 	return s.Err
 }

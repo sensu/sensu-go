@@ -14,7 +14,7 @@ func seedInitialData(store store.Store) error {
 	if err := initializer.Lock(); err != nil {
 		return err
 	}
-	defer initializer.Unlock()
+	defer initializer.Close()
 
 	// Check that the store hasn't already been seeded
 	if initialized, err := initializer.IsInitialized(); err != nil {
@@ -29,7 +29,7 @@ func seedInitialData(store store.Store) error {
 	}
 
 	// Set initialized flag
-	if err := initializer.Finalize(); err != nil {
+	if err := initializer.FlagAsInitialized(); err != nil {
 		return err
 	}
 

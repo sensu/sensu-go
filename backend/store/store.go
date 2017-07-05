@@ -127,7 +127,7 @@ type UserStore interface {
 // and mechanism for setting it to the initialized state.
 type Initializer interface {
 	Lock() error
-	Unlock() error
+	Close() error
 	IsInitialized() (bool, error)
-	Finalize() error
+	FlagAsInitialized() error
 }

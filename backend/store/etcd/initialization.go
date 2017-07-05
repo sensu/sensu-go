@@ -15,10 +15,11 @@ const (
 
 // StoreInitializer ...
 type StoreInitializer struct {
-	mutex  *concurrency.Mutex
-	client *clientv3.Client
+	mutex *concurrency.Mutex
+	ctx   context.Context
 
-	ctx context.Context
+	session *concurrency.Session
+	client  *clientv3.Client
 }
 
 // NewInitializer returns a new store initializer
@@ -30,9 +31,10 @@ func (store *etcdStore) NewInitializer() (store.Initializer, error) {
 	}
 
 	return &StoreInitializer{
-		mutex:  concurrency.NewMutex(session, initializationLockKey),
-		ctx:    context.TODO(),
-		client: client,
+		mutex:   concurrency.NewMutex(session, initializationLockKey),
+		session: session,
+		client:  client,
+		ctx:     context.TODO(),
 	}, nil
 }
 
@@ -55,8 +57,8 @@ func (s *StoreInitializer) IsInitialized() (bool, error) {
 	return r.Count > 0, nil
 }
 
-// Finalize - set .initialized key
-func (s *StoreInitializer) Finalize() error {
+// FlagAsInitialized - set .initialized key
+func (s *StoreInitializer) FlagAsInitialized() error {
 	if _, err := s.client.Put(s.ctx, initializationKey, "1"); err != nil {
 		return err
 	}
@@ -64,7 +66,16 @@ func (s *StoreInitializer) Finalize() error {
 	return nil
 }
 
-// Unlock mutex
-func (s *StoreInitializer) Unlock() error {
-	return s.mutex.Unlock(s.ctx)
+// Close session & unlock
+func (s *StoreInitializer) Close() error {
+	if err := s.mutex.Unlock(s.ctx); err != nil {
+		return err
+	}
+
+	if err := s.session.Close(); err != nil {
+		return err
+	}
+	<-s.session.Done()
+
+	return nil
 }
