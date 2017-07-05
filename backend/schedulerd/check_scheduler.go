@@ -31,7 +31,7 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 	s.WaitGroup.Add(1)
 
 	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg})
-	s.logger.Infof("Starting new scheduler")
+	s.logger.Infof("starting new scheduler")
 
 	timer := NewCheckTimer(s.CheckName, initialInterval)
 	executor := &CheckExecutor{Bus: s.MessageBus}
@@ -44,6 +44,8 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 
 		for {
 			select {
+			case <-s.stopping:
+				return
 			case <-timer.C():
 				// Fetch check from scheduler's state
 				state := s.StateManager.State()
@@ -51,7 +53,7 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 
 				// The check has been deleted
 				if check == nil {
-					s.logger.Infof("Check no longer in state")
+					s.logger.Infof("check no longer in state")
 					return
 				}
 
@@ -64,8 +66,6 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 
 				// Publish check request
 				executor.Execute(check)
-			case <-s.stopping:
-				return
 			}
 		}
 	}()
@@ -75,10 +75,8 @@ func (s *CheckScheduler) Start(initialInterval int) error {
 
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
-	s.logger.Infof("Stopping scheduler")
-
+	s.logger.Infof("stopping scheduler")
 	close(s.stopping)
-	s.WaitGroup.Wait()
 
 	return nil
 }
@@ -96,7 +94,7 @@ func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
 
 	for _, sub := range check.Subscriptions {
 		topic := messaging.SubscriptionTopic(check.Organization, sub)
-		logger.Debugf("Sending check request for %s on topic %s", check.Name, topic)
+		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
 		if pubErr := execPtr.Bus.Publish(topic, request); err != nil {
 			logger.Info("error publishing check request: ", err.Error())

@@ -80,13 +80,13 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 	}
 
 	// Register new check scheduler
-	mngrPtr.items[check.Name] = scheduler
+	mngrPtr.items[key] = scheduler
 	return nil
 }
 
 // Start ...
 func (mngrPtr *ScheduleManager) Start() {
-	logger.Info("Starting scheduler manager")
+	logger.Info("starting scheduler manager")
 	mngrPtr.stopped.Store(false)
 }
 
