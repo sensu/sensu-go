@@ -297,7 +297,7 @@ func (b *Backend) Run() error {
 		if err := recover(); err != nil {
 			trace := debug.Stack()
 			logger.Errorf("panic in %s", trace)
-			logger.Error("recovering from panic, shutting down etcd")
+			logger.Errorf("recovering from panic due to error %s, shutting down etcd", err)
 		}
 		b.etcd.Shutdown()
 	}()
