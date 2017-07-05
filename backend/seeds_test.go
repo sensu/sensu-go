@@ -12,6 +12,7 @@ import (
 func TestSeedDefaultRole(t *testing.T) {
 	store := &mockstore.MockStore{}
 	store.On("UpdateRole", mock.AnythingOfType("*types.Role")).Return(nil)
+	store.On("UpdateOrganization", mock.AnythingOfType("*types.Organization")).Return(nil)
 
 	seedInitialData(store)
 	store.AssertCalled(t, "UpdateRole", mock.AnythingOfType("*types.Role"))

@@ -12,6 +12,7 @@ type APIClient interface {
 	EntityAPIClient
 	EventAPIClient
 	HandlerAPIClient
+	OrganizationAPIClient
 	UserAPIClient
 }
 
@@ -51,6 +52,13 @@ type HandlerAPIClient interface {
 	ListHandlers() ([]types.Handler, error)
 	CreateHandler(*types.Handler) error
 	DeleteHandler(*types.Handler) error
+}
+
+// OrganizationAPIClient client methods for organizations
+type OrganizationAPIClient interface {
+	CreateOrganization(*types.Organization) error
+	DeleteOrganization(string) error
+	ListOrganizations() ([]types.Organization, error)
 }
 
 // UserAPIClient client methods for checks

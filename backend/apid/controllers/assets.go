@@ -26,6 +26,7 @@ func (c *AssetsController) Register(r *mux.Router) {
 // many handles requests to /assets
 func (c *AssetsController) many(w http.ResponseWriter, r *http.Request) {
 	org := organization(r)
+
 	assets, err := c.Store.GetAssets(org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

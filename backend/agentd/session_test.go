@@ -54,6 +54,7 @@ func TestGoodHandshake(t *testing.T) {
 
 	st := &mockstore.MockStore{}
 	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+	st.On("GetOrganizationByName", mock.AnythingOfType("string")).Return(&types.Organization{}, nil)
 
 	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
@@ -93,6 +94,33 @@ func TestBadHandshake(t *testing.T) {
 		Type:    types.AgentHandshakeType,
 		Payload: []byte("..."),
 	})
+	assert.Error(t, session.Start())
+}
+
+func TestBadOrganizationHandshake(t *testing.T) {
+	conn := testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus := &messaging.WizardBus{}
+	bus.Start()
+
+	st := &mockstore.MockStore{}
+	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+	st.On("GetOrganizationByName", mock.AnythingOfType("string")).Return(
+		&types.Organization{},
+		errors.New("error"),
+	)
+
+	session, _ := NewSession(conn, bus, st)
+	hsBytes, _ := json.Marshal(&types.AgentHandshake{
+		Subscriptions: []string{"testing"},
+	})
+	conn.Send(&transport.Message{
+		Type:    types.AgentHandshakeType,
+		Payload: hsBytes,
+	})
+
 	assert.Error(t, session.Start())
 }
 

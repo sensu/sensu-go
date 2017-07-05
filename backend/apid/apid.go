@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/controllers"
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -44,6 +45,7 @@ func (a *APId) Start() error {
 
 	router := httpRouter(a)
 	routerStack := authentication.Middleware(a.Authentication, router)
+	routerStack = middlewares.ValidateOrganization(routerStack, a.Store)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -144,6 +146,11 @@ func httpRouter(a *APId) *mux.Router {
 		Store: a.Store,
 	}
 	mutatorsController.Register(r)
+
+	organizationsController := &controllers.OrganizationsController{
+		Store: a.Store,
+	}
+	organizationsController.Register(r)
 
 	usersController := &controllers.UsersController{
 		Provider: a.Authentication,
