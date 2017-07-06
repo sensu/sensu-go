@@ -5,31 +5,83 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/stretchr/testify/assert"
+	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestStartStop(t *testing.T) {
-	k := &Keepalived{}
-	assert.Error(t, k.Start())
+type KeepalivedTestSuite struct {
+	suite.Suite
+	Keepalived   *Keepalived
+	MessageBus   messaging.MessageBus
+	Store        *mockstore.MockStore
+	Deregisterer *mockDeregisterer
+	EventCreator *mockCreator
+}
 
-	messageBus := &messaging.WizardBus{}
-	k.MessageBus = messageBus
-	assert.Error(t, k.Start())
-	messageBus.Start()
-	defer messageBus.Stop()
+func (suite *KeepalivedTestSuite) SetupTest() {
+	suite.MessageBus = &messaging.WizardBus{}
+	suite.MessageBus.Start()
+
+	mockStore := &mockstore.MockStore{}
+	dereg := &mockDeregisterer{}
+	creator := &mockCreator{}
+
+	suite.Deregisterer = dereg
+	suite.EventCreator = creator
+	suite.Store = mockStore
+
+	keepalived := &Keepalived{
+		Store:      suite.Store,
+		MessageBus: suite.MessageBus,
+		MonitorFactory: func(e *types.Entity) Monitor {
+			return &KeepaliveMonitor{
+				Entity:       e,
+				Deregisterer: dereg,
+				EventCreator: creator,
+				Store:        mockStore,
+			}
+		},
+	}
+
+	suite.Keepalived = keepalived
+}
+
+func (suite *KeepalivedTestSuite) AfterTest() {
+	suite.MessageBus.Stop()
+	suite.Keepalived.Stop()
+}
+
+func (suite *KeepalivedTestSuite) TestStartStop() {
+	k := &Keepalived{}
+	suite.Error(k.Start())
+
+	k.MessageBus = suite.MessageBus
+	suite.Error(k.Start())
 
 	store := &mockstore.MockStore{}
 	k.Store = store
-	assert.NoError(t, k.Start())
+	suite.NoError(k.Start())
 
-	assert.NoError(t, k.Status())
+	suite.NoError(k.Status())
 
 	var err error
 	select {
 	case err = <-k.Err():
 	default:
 	}
-	assert.NoError(t, err)
+	suite.NoError(err)
 
-	assert.NoError(t, k.Stop())
+	suite.NoError(k.Stop())
+}
+
+func (suite *KeepalivedTestSuite) TestEventProcessing() {
+	suite.NoError(suite.Keepalived.Start())
+	event := types.FixtureEvent("check", "entity")
+
+	suite.Store.On("UpdateKeepalive", event.Entity.Organization, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout)).Return(nil)
+	suite.Keepalived.keepaliveChan <- event
+}
+
+func TestKeepalivedSuite(t *testing.T) {
+	suite.Run(t, new(KeepalivedTestSuite))
 }
