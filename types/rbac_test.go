@@ -39,6 +39,10 @@ func TestRuleValidate(t *testing.T) {
 	assert.Equal(t, "bar", r.Organization)
 	assert.Equal(t, []string{"create"}, r.Permissions)
 	assert.NoError(t, r.Validate())
+
+	// Wildcard org
+	r.Organization = "*"
+	assert.NoError(t, r.Validate())
 }
 
 func TestRoleValidate(t *testing.T) {

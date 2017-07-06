@@ -172,7 +172,10 @@ func (b *Backend) Run() error {
 	}
 
 	// Seed initial data
-	seedInitialData(st)
+	err = seedInitialData(st)
+	if err != nil {
+		return err
+	}
 
 	b.schedulerd = &schedulerd.Schedulerd{
 		MessageBus: b.messageBus,

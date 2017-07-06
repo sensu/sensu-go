@@ -54,8 +54,10 @@ func (r *Rule) Validate() error {
 		return errors.New("type can't be empty")
 	}
 
-	if err := ValidateNameStrict(r.Organization); err != nil {
-		return errors.New("organization " + err.Error())
+	if r.Organization != "*" {
+		if err := ValidateNameStrict(r.Organization); err != nil {
+			return errors.New("organization " + err.Error())
+		}
 	}
 
 	if len(r.Permissions) == 0 {
