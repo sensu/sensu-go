@@ -94,7 +94,7 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = c.Store.UpdateHandler(newHandler)
+		err = c.Store.UpdateHandler(r.Context(), newHandler)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

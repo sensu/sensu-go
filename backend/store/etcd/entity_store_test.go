@@ -19,7 +19,7 @@ func TestEntityStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, entities)
 
-		err = store.UpdateEntity(entity)
+		err = store.UpdateEntity(ctx, entity)
 		assert.NoError(t, err)
 
 		retrieved, err := store.GetEntityByID(ctx, entity.ID)
@@ -31,7 +31,7 @@ func TestEntityStorage(t *testing.T) {
 		assert.Equal(t, 1, len(entities))
 		assert.Equal(t, entity.ID, entities[0].ID)
 
-		err = store.DeleteEntity(entity)
+		err = store.DeleteEntity(ctx, entity)
 		assert.NoError(t, err)
 
 		retrieved, err = store.GetEntityByID(ctx, entity.ID)
@@ -39,7 +39,7 @@ func TestEntityStorage(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Nonexistent entity deletion should return no error.
-		err = store.DeleteEntity(entity)
+		err = store.DeleteEntity(ctx, entity)
 		assert.NoError(t, err)
 	})
 }

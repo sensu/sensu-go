@@ -94,7 +94,7 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = c.Store.UpdateMutator(newMutator)
+		err = c.Store.UpdateMutator(r.Context(), newMutator)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

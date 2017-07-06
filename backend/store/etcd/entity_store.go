@@ -31,7 +31,7 @@ func getEntitiesPath(ctx context.Context, id string) string {
 	return path.Join(etcdRoot, entityPathPrefix, org, id)
 }
 
-func (s *etcdStore) DeleteEntity(e *types.Entity) error {
+func (s *etcdStore) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (s *etcdStore) GetEntities(ctx context.Context) ([]*types.Entity, error) {
 	return earr, nil
 }
 
-func (s *etcdStore) UpdateEntity(e *types.Entity) error {
+func (s *etcdStore) UpdateEntity(ctx context.Context, e *types.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}

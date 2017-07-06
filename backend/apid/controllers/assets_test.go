@@ -101,8 +101,8 @@ func TestHttpApiAssetPut(t *testing.T) {
 	asset := types.FixtureAsset("ruby21")
 	updatedAssetJSON, _ := json.Marshal(asset)
 
-	store.On("UpdateAsset", mock.AnythingOfType("*types.Asset")).Return(nil).Run(func(args mock.Arguments) {
-		receivedAsset := args.Get(0).(*types.Asset)
+	store.On("UpdateAsset", mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*types.Asset")).Return(nil).Run(func(args mock.Arguments) {
+		receivedAsset := args.Get(1).(*types.Asset)
 		assert.NoError(receivedAsset.Validate())
 		assert.EqualValues(asset, receivedAsset)
 	})

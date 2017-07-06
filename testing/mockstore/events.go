@@ -31,7 +31,7 @@ func (s *MockStore) GetEventByEntityCheck(ctx context.Context, entityID, checkID
 }
 
 // UpdateEvent ...
-func (s *MockStore) UpdateEvent(event *types.Event) error {
+func (s *MockStore) UpdateEvent(ctx context.Context, event *types.Event) error {
 	args := s.Called(event)
 	return args.Error(0)
 }

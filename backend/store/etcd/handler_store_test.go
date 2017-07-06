@@ -19,7 +19,7 @@ func TestHandlerStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, handlers)
 
-		err = store.UpdateHandler(handler)
+		err = store.UpdateHandler(ctx, handler)
 		assert.NoError(t, err)
 
 		retrieved, err := store.GetHandlerByName(ctx, "handler1")

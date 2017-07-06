@@ -19,7 +19,7 @@ func TestMutatorStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, mutators)
 
-		err = store.UpdateMutator(mutator)
+		err = store.UpdateMutator(ctx, mutator)
 		assert.NoError(t, err)
 
 		retrieved, err := store.GetMutatorByName(ctx, "mutator1")

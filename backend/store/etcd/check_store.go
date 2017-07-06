@@ -86,7 +86,7 @@ func (s *etcdStore) GetCheckConfigByName(ctx context.Context, name string) (*typ
 	return check, nil
 }
 
-func (s *etcdStore) UpdateCheckConfig(check *types.CheckConfig) error {
+func (s *etcdStore) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
 	if err := check.Validate(); err != nil {
 		return err
 	}

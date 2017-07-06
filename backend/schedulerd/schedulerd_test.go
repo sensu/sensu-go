@@ -56,7 +56,7 @@ func TestSchedulerd(t *testing.T) {
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
 
 		assert.NoError(t, check.Validate())
-		assert.NoError(t, st.UpdateCheckConfig(check))
+		assert.NoError(t, st.UpdateCheckConfig(ctx, check))
 
 		time.Sleep(1 * time.Second)
 

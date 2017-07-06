@@ -7,8 +7,8 @@ import (
 )
 
 // DeleteEntity ...
-func (s *MockStore) DeleteEntity(e *types.Entity) error {
-	args := s.Called(e)
+func (s *MockStore) DeleteEntity(ctx context.Context, e *types.Entity) error {
+	args := s.Called(ctx, e)
 	return args.Error(0)
 }
 
@@ -31,7 +31,7 @@ func (s *MockStore) GetEntityByID(ctx context.Context, id string) (*types.Entity
 }
 
 // UpdateEntity ...
-func (s *MockStore) UpdateEntity(e *types.Entity) error {
-	args := s.Called(e)
+func (s *MockStore) UpdateEntity(ctx context.Context, e *types.Entity) error {
+	args := s.Called(ctx, e)
 	return args.Error(0)
 }

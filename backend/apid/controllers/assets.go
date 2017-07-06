@@ -94,7 +94,7 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err = c.Store.UpdateAsset(newAsset); err != nil {
+		if err = c.Store.UpdateAsset(r.Context(), newAsset); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

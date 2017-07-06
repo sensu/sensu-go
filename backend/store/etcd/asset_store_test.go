@@ -14,7 +14,7 @@ func TestAssetStorage(t *testing.T) {
 		asset := types.FixtureAsset("ruby")
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, asset.Organization)
 
-		err := store.UpdateAsset(asset)
+		err := store.UpdateAsset(ctx, asset)
 		assert.NoError(t, err)
 
 		retrieved, err := store.GetAssetByName(ctx, "ruby")

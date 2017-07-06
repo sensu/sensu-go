@@ -25,7 +25,7 @@ func (s *MockStore) GetAssetByName(ctx context.Context, name string) (*types.Ass
 }
 
 // UpdateAsset ...
-func (s *MockStore) UpdateAsset(asset *types.Asset) error {
-	args := s.Called(asset)
+func (s *MockStore) UpdateAsset(ctx context.Context, asset *types.Asset) error {
+	args := s.Called(ctx, asset)
 	return args.Error(0)
 }

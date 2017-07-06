@@ -86,7 +86,7 @@ func (s *etcdStore) GetHandlerByName(ctx context.Context, name string) (*types.H
 	return handler, nil
 }
 
-func (s *etcdStore) UpdateHandler(handler *types.Handler) error {
+func (s *etcdStore) UpdateHandler(ctx context.Context, handler *types.Handler) error {
 	if err := handler.Validate(); err != nil {
 		return err
 	}

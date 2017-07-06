@@ -50,7 +50,7 @@ type AssetStore interface {
 	DeleteAssetByName(context.Context, string) error
 	GetAssets(context.Context) ([]*types.Asset, error)
 	GetAssetByName(context.Context, string) (*types.Asset, error)
-	UpdateAsset(*types.Asset) error
+	UpdateAsset(context.Context, *types.Asset) error
 }
 
 // AuthenticationStore is responsible for managing the authentication state
@@ -65,16 +65,16 @@ type CheckConfigStore interface {
 	DeleteCheckConfigByName(context.Context, string) error
 	GetCheckConfigs(context.Context) ([]*types.CheckConfig, error)
 	GetCheckConfigByName(context.Context, string) (*types.CheckConfig, error)
-	UpdateCheckConfig(*types.CheckConfig) error
+	UpdateCheckConfig(context.Context, *types.CheckConfig) error
 }
 
 // EntityStore provides an interface for interacting & persisting entities
 type EntityStore interface {
-	DeleteEntity(*types.Entity) error
+	DeleteEntity(context.Context, *types.Entity) error
 	DeleteEntityByID(context.Context, string) error
 	GetEntities(context.Context) ([]*types.Entity, error)
 	GetEntityByID(context.Context, string) (*types.Entity, error)
-	UpdateEntity(*types.Entity) error
+	UpdateEntity(context.Context, *types.Entity) error
 }
 
 // EventStore provides an interface for interacting & persisting events
@@ -83,7 +83,7 @@ type EventStore interface {
 	GetEvents(context.Context) ([]*types.Event, error)
 	GetEventsByEntity(context.Context, string) ([]*types.Event, error)
 	GetEventByEntityCheck(context.Context, string, string) (*types.Event, error)
-	UpdateEvent(*types.Event) error
+	UpdateEvent(context.Context, *types.Event) error
 }
 
 // HandlerStore provides an interface for interacting & persisting handlers
@@ -91,7 +91,7 @@ type HandlerStore interface {
 	DeleteHandlerByName(context.Context, string) error
 	GetHandlers(context.Context) ([]*types.Handler, error)
 	GetHandlerByName(context.Context, string) (*types.Handler, error)
-	UpdateHandler(*types.Handler) error
+	UpdateHandler(context.Context, *types.Handler) error
 }
 
 // KeepaliveStore is responsible for updating entity keepalive data.
@@ -108,7 +108,7 @@ type MutatorStore interface {
 	DeleteMutatorByName(context.Context, string) error
 	GetMutators(context.Context) ([]*types.Mutator, error)
 	GetMutatorByName(context.Context, string) (*types.Mutator, error)
-	UpdateMutator(*types.Mutator) error
+	UpdateMutator(context.Context, *types.Mutator) error
 }
 
 // OrganizationStore provides an interface for interacting & persisting orgs

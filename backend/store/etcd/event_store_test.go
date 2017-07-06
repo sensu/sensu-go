@@ -19,7 +19,7 @@ func TestEventStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, events)
 
-		err = store.UpdateEvent(event)
+		err = store.UpdateEvent(ctx, event)
 		assert.NoError(t, err)
 
 		newEv, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")

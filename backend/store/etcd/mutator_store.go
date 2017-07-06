@@ -86,7 +86,7 @@ func (s *etcdStore) GetMutatorByName(ctx context.Context, name string) (*types.M
 	return mutator, nil
 }
 
-func (s *etcdStore) UpdateMutator(mutator *types.Mutator) error {
+func (s *etcdStore) UpdateMutator(ctx context.Context, mutator *types.Mutator) error {
 	if err := mutator.Validate(); err != nil {
 		return err
 	}

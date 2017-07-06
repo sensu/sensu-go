@@ -86,7 +86,7 @@ func (s *etcdStore) GetAssetByName(ctx context.Context, name string) (*types.Ass
 	return asset, nil
 }
 
-func (s *etcdStore) UpdateAsset(asset *types.Asset) error {
+func (s *etcdStore) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 	if err := asset.Validate(); err != nil {
 		return err
 	}

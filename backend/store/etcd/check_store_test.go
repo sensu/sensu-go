@@ -19,7 +19,7 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, checks)
 
-		err = store.UpdateCheckConfig(check)
+		err = store.UpdateCheckConfig(ctx, check)
 		assert.NoError(t, err)
 
 		retrieved, err := store.GetCheckConfigByName(ctx, "check1")

@@ -25,7 +25,7 @@ func (s *MockStore) GetMutatorByName(ctx context.Context, name string) (*types.M
 }
 
 // UpdateMutator ...
-func (s *MockStore) UpdateMutator(mutator *types.Mutator) error {
+func (s *MockStore) UpdateMutator(ctx context.Context, mutator *types.Mutator) error {
 	args := s.Called(mutator)
 	return args.Error(0)
 }

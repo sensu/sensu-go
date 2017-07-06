@@ -25,7 +25,7 @@ func (s *MockStore) GetHandlerByName(ctx context.Context, name string) (*types.H
 }
 
 // UpdateHandler ...
-func (s *MockStore) UpdateHandler(handler *types.Handler) error {
+func (s *MockStore) UpdateHandler(ctx context.Context, handler *types.Handler) error {
 	args := s.Called(handler)
 	return args.Error(0)
 }

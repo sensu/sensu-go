@@ -25,7 +25,7 @@ func (s *MockStore) GetCheckConfigByName(ctx context.Context, name string) (*typ
 }
 
 // UpdateCheckConfig ...
-func (s *MockStore) UpdateCheckConfig(check *types.CheckConfig) error {
-	args := s.Called(check)
+func (s *MockStore) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
+	args := s.Called(ctx, check)
 	return args.Error(0)
 }

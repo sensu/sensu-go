@@ -139,7 +139,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	}
 
 	if prevEvent == nil {
-		err = e.Store.UpdateEvent(event)
+		err = e.Store.UpdateEvent(ctx, event)
 		if err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	event.Check.MergeWith(prevEvent.Check)
 
-	err = e.Store.UpdateEvent(event)
+	err = e.Store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
 	}

@@ -104,7 +104,7 @@ func (c *EventsController) updateEvents(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = c.Store.UpdateEvent(&event)
+	err = c.Store.UpdateEvent(r.Context(), &event)
 	if err != nil {
 		logger.Error("invalid event: ", err.Error())
 		http.Error(w, "invalid event", http.StatusInternalServerError)

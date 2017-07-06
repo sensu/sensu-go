@@ -94,7 +94,7 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = c.Store.UpdateCheckConfig(newCheck)
+		err = c.Store.UpdateCheckConfig(r.Context(), newCheck)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

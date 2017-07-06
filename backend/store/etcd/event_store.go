@@ -120,7 +120,7 @@ func (s *etcdStore) GetEventByEntityCheck(ctx context.Context, entityID, checkID
 	return event, nil
 }
 
-func (s *etcdStore) UpdateEvent(event *types.Event) error {
+func (s *etcdStore) UpdateEvent(ctx context.Context, event *types.Event) error {
 	if event.Check == nil {
 		return errors.New("event has no check")
 	}

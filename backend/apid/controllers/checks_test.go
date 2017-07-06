@@ -101,8 +101,8 @@ func TestHttpApiCheckPut(t *testing.T) {
 	check := types.FixtureCheckConfig("check1")
 	updatedCheckJSON, _ := json.Marshal(check)
 
-	store.On("UpdateCheckConfig", mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
-		receivedCheck := args.Get(0).(*types.CheckConfig)
+	store.On("UpdateCheckConfig", mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
+		receivedCheck := args.Get(1).(*types.CheckConfig)
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
 	})
@@ -122,8 +122,8 @@ func TestHttpApiCheckPost(t *testing.T) {
 	check := types.FixtureCheckConfig("check1")
 	updatedCheckJSON, _ := json.Marshal(check)
 
-	store.On("UpdateCheckConfig", mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
-		receivedCheck := args.Get(0).(*types.CheckConfig)
+	store.On("UpdateCheckConfig", mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
+		receivedCheck := args.Get(1).(*types.CheckConfig)
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
 	})
