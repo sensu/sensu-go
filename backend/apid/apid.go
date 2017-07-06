@@ -44,7 +44,7 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := httpRouter(a)
-	routerStack := authentication.Middleware(a.Authentication, router)
+	routerStack := middlewares.Authentication(router, a.Authentication)
 	routerStack = middlewares.Organization(routerStack, a.Store)
 
 	a.httpServer = &http.Server{

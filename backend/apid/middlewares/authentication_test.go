@@ -1,4 +1,4 @@
-package authentication
+package middlewares
 
 import (
 	"fmt"
@@ -11,16 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func testHandler() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Success")
-		return
-	})
-}
-
 func TestMiddlewareDisabledAuth(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Middleware(provider, testHandler()))
+	server := httptest.NewServer(Authentication(testHandler(), provider))
 	defer server.Close()
 
 	// Disabled authentication
@@ -32,7 +25,7 @@ func TestMiddlewareDisabledAuth(t *testing.T) {
 
 func TestMiddlewareNoCredentials(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Middleware(provider, testHandler()))
+	server := httptest.NewServer(Authentication(testHandler(), provider))
 	defer server.Close()
 
 	// No credentials passed
@@ -44,7 +37,7 @@ func TestMiddlewareNoCredentials(t *testing.T) {
 
 func TestMiddlewareJWT(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Middleware(provider, testHandler()))
+	server := httptest.NewServer(Authentication(testHandler(), provider))
 	defer server.Close()
 
 	provider.On("AuthEnabled").Return(true)
@@ -65,7 +58,7 @@ func TestMiddlewareJWT(t *testing.T) {
 
 func TestMiddlewareInvalidJWT(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Middleware(provider, testHandler()))
+	server := httptest.NewServer(Authentication(testHandler(), provider))
 	defer server.Close()
 
 	provider.On("AuthEnabled").Return(true)

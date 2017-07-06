@@ -1,13 +1,14 @@
-package authentication
+package middlewares
 
 import (
 	"net/http"
 
+	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 )
 
-// Middleware is a HTTP middleware that enforces authentication
-func Middleware(provider Provider, next http.Handler) http.Handler {
+// Authentication is a HTTP middleware that enforces authentication
+func Authentication(next http.Handler, provider authentication.Provider) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if authentication is enabled
 		if !provider.AuthEnabled() {
