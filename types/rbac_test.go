@@ -39,6 +39,10 @@ func TestRuleValidate(t *testing.T) {
 	assert.Equal(t, "bar", r.Organization)
 	assert.Equal(t, []string{"create"}, r.Permissions)
 	assert.NoError(t, r.Validate())
+
+	// Wildcard org
+	r.Organization = "*"
+	assert.NoError(t, r.Validate())
 }
 
 func TestRoleValidate(t *testing.T) {
@@ -52,7 +56,7 @@ func TestRoleValidate(t *testing.T) {
 	r.Name = "FOO/bar/10"
 	assert.Error(t, r.Validate())
 
-	// No rules
-	r.Rules = []Rule{}
+	// Bad rules
+	r.Rules = []Rule{{Type: "sdfadfsadsfasdf@##@$!@$"}}
 	assert.Error(t, r.Validate())
 }

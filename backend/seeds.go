@@ -23,18 +23,20 @@ func seedInitialData(store store.Store) error {
 		return nil
 	}
 
+	logger.Debug("seeding etcd store w/ intial data")
+
 	// Set default role
 	if err := setupAdminRole(store); err != nil {
 		return err
 	}
 
-	// Set initialized flag
-	if err := initializer.FlagAsInitialized(); err != nil {
+	// Default organization
+	if err := setupDefaultOrganization(store); err != nil {
 		return err
 	}
 
-	// Default organization
-	if err := setupDefaultOrganization(store); err != nil {
+	// Set initialized flag
+	if err := initializer.FlagAsInitialized(); err != nil {
 		return err
 	}
 

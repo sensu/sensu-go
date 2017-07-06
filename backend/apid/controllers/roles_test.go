@@ -166,6 +166,89 @@ func (suite *RolesControllerSuite) TestDeleteRole() {
 	suite.Empty(res.Body.Bytes())
 }
 
+func (suite *RolesControllerSuite) TestRuleNotFound() {
+	key := "/rbac/roles/404/rules/asdfasd"
+	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer([]byte("")))
+
+	suite.store.On("GetRoleByName", "404").Return(nil, nil)
+
+	res := processRequest(suite.controller, req)
+	suite.Equal(http.StatusNotFound, res.Code)
+}
+
+func (suite *RolesControllerSuite) TestPutRule() {
+	role := &types.Role{Name: "test"}
+	rule := &types.Rule{Type: "*", Organization: "default", Permissions: []string{"create"}}
+	ruleJSON, _ := json.Marshal(rule)
+
+	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
+	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer(ruleJSON))
+
+	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
+	suite.store.On("UpdateRole", role).Return(nil)
+
+	res := processRequest(suite.controller, req)
+	suite.Equal(http.StatusOK, res.Code)
+	suite.Empty(res.Body.Bytes())
+}
+
+func (suite *RolesControllerSuite) TestPutRuleBadRule() {
+	role := &types.Role{Name: "test"}
+	rule := &types.Rule{Type: "*", Permissions: []string{"create"}}
+	ruleJSON, _ := json.Marshal(rule)
+
+	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
+	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer(ruleJSON))
+
+	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
+	suite.store.On("UpdateRole", role).Return(nil)
+
+	res := processRequest(suite.controller, req)
+	suite.Equal(http.StatusBadRequest, res.Code)
+}
+
+func (suite *RolesControllerSuite) TestPutRuleBadData() {
+	role := &types.Role{Name: "test"}
+	rule := &types.Rule{Type: "*", Permissions: []string{"create"}}
+
+	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
+	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer([]byte("asdfasdf")))
+
+	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
+
+	res := processRequest(suite.controller, req)
+	suite.Equal(http.StatusBadRequest, res.Code)
+}
+
+func (suite *RolesControllerSuite) TestRemoveRule() {
+	role := &types.Role{Name: "test"}
+	rule := &types.Rule{Type: "*", Organization: "default", Permissions: []string{"create"}}
+
+	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
+	req, _ := http.NewRequest("DELETE", key, nil)
+
+	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
+	suite.store.On("UpdateRole", role).Return(nil)
+
+	res := processRequest(suite.controller, req)
+	suite.Equal(http.StatusOK, res.Code)
+	suite.Empty(res.Body.Bytes())
+}
+
+func (suite *RolesControllerSuite) TestRuleStoreFailure() {
+	role := &types.Role{Name: "test"}
+	rule := &types.Rule{Type: "*", Organization: "default", Permissions: []string{"create"}}
+
+	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
+	req, _ := http.NewRequest("DELETE", key, nil)
+
+	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
+	suite.store.On("UpdateRole", role).Return(fmt.Errorf("storage unavailable"))
+
+	res := processRequest(suite.controller, req)
+	suite.Equal(http.StatusInternalServerError, res.Code)
+}
+
 func TestRolesController(t *testing.T) {
 	suite.Run(t, new(RolesControllerSuite))
 }
