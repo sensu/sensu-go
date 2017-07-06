@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -82,12 +83,12 @@ func (suite *KeepalivedTestSuite) TestEventProcessing() {
 	suite.Keepalived.MonitorFactory = nil
 	suite.NoError(suite.Keepalived.Start())
 	event := types.FixtureEvent("check", "entity")
-	suite.Store.On("UpdateEntity", event.Entity).Return(nil)
-	suite.Store.On("UpdateKeepalive", event.Entity.Organization, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout)).Return(nil)
+	suite.Store.On("UpdateEntity", mock.AnythingOfType("*context.valueCtx"), event.Entity).Return(nil)
+	suite.Store.On("UpdateKeepalive", mock.AnythingOfType("*context.valueCtx"), event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout)).Return(nil)
 	suite.Keepalived.keepaliveChan <- event
 	time.Sleep(100 * time.Millisecond)
-	suite.Store.AssertCalled(suite.T(), "UpdateEntity", event.Entity)
-	suite.Store.AssertCalled(suite.T(), "UpdateKeepalive", event.Entity.Organization, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout))
+	suite.Store.AssertCalled(suite.T(), "UpdateEntity", mock.AnythingOfType("*context.valueCtx"), event.Entity)
+	suite.Store.AssertCalled(suite.T(), "UpdateKeepalive", mock.AnythingOfType("*context.valueCtx"), event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout))
 }
 
 func TestKeepalivedSuite(t *testing.T) {

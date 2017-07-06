@@ -1,6 +1,7 @@
 package keepalived
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -25,18 +26,20 @@ type Deregistration struct {
 
 // Deregister an entity and all of its associated events.
 func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
-	if err := adapterPtr.Store.DeleteEntity(entity); err != nil {
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
+
+	if err := adapterPtr.Store.DeleteEntity(ctx, entity); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err.Error())
 	}
 
-	events, err := adapterPtr.Store.GetEventsByEntity(entity.Organization, entity.ID)
+	events, err := adapterPtr.Store.GetEventsByEntity(ctx, entity.ID)
 	if err != nil {
 		return fmt.Errorf("error fetching events for entity: %s", err.Error())
 	}
 
 	for _, event := range events {
 		if err := adapterPtr.Store.DeleteEventByEntityCheck(
-			entity.Organization, entity.ID, event.Check.Config.Name,
+			ctx, entity.ID, event.Check.Config.Name,
 		); err != nil {
 			return fmt.Errorf("error deleting event for entity: %s", err.Error())
 		}

@@ -1,6 +1,7 @@
 package keepalived
 
 import (
+	"context"
 	"sync/atomic"
 	"time"
 
@@ -74,12 +75,13 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 
 	entity := event.Entity
 	entity.LastSeen = event.Timestamp
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
 
-	if err := monitorPtr.Store.UpdateEntity(entity); err != nil {
+	if err := monitorPtr.Store.UpdateEntity(ctx, entity); err != nil {
 		logger.WithError(err).Error("error updating entity in store")
 	}
 
-	if err := monitorPtr.Store.UpdateKeepalive(event.Entity.Organization, event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
+	if err := monitorPtr.Store.UpdateKeepalive(ctx, event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
 		return err
 	}
 

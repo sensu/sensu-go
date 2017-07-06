@@ -1,6 +1,7 @@
 package keepalived
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -149,7 +150,8 @@ func (k *Keepalived) processKeepalives() {
 		}
 		entity.LastSeen = event.Timestamp
 
-		if err := k.Store.UpdateEntity(event.Entity); err != nil {
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
+		if err := k.Store.UpdateEntity(ctx, event.Entity); err != nil {
 			logger.WithError(err).Error("error updating entity in store")
 		}
 
