@@ -26,6 +26,8 @@ const (
 	flagDeregister            = "deregister"
 	flagDeregistrationHandler = "deregistration-handler"
 	flagCacheDir              = "cache-dir"
+	flagKeepaliveTimeout      = "keepalive-timeout"
+	flagKeepaliveInterval     = "keepalive-interval"
 )
 
 func init() {
@@ -115,6 +117,12 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().String(flagSubscriptions, "", "comma-delimited list of agent subscriptions")
 	viper.BindPFlag(flagSubscriptions, cmd.Flags().Lookup(flagSubscriptions))
+
+	cmd.Flags().Uint(flagKeepaliveTimeout, 120, "number of seconds until agent is considered dead by backend")
+	viper.BindPFlag(flagKeepaliveTimeout, cmd.Flags().Lookup(flagKeepaliveTimeout))
+
+	cmd.Flags().Int(flagKeepaliveInterval, 20, "number of seconds to send between keepalive events")
+	viper.BindPFlag(flagKeepaliveInterval, cmd.Flags().Lookup(flagKeepaliveInterval))
 
 	return cmd
 }
