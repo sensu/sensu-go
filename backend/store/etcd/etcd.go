@@ -49,7 +49,10 @@ type Config struct {
 	InitialClusterState     string
 	InitialClusterToken     string
 	InitialAdvertisePeerURL string
+	TLSConfig				*TLSConfig
 }
+
+type TLSConfig transport.TLSInfo
 
 // NewConfig returns a pointer to an initialized Config object with defaults.
 func NewConfig() *Config {
@@ -136,6 +139,10 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.InitialClusterToken = config.InitialClusterToken
 	cfg.InitialCluster = config.InitialCluster
 	cfg.ClusterState = config.InitialClusterState
+
+	if config.TLSConfig != nil {
+		cfg.ClientTLSInfo = *(*transport.TLSInfo)(config.TLSConfig)
+	}
 
 	capnslog.SetFormatter(NewLogrusFormatter())
 

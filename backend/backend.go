@@ -151,6 +151,14 @@ func NewBackend(config *Config) (*Backend, error) {
 	cfg.InitialAdvertisePeerURL = config.EtcdInitialAdvertisePeerURL
 	cfg.Name = config.EtcdName
 
+	if config.TLS != nil {
+		cfg.TLSConfig = etcd.TLSConfig{
+			config.TLS.CertFile, 
+			config.TLS.KeyFile, 
+			config.TLS.ClientCertAuth,
+		}
+	}
+	
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error starting etcd: %s", err.Error())
