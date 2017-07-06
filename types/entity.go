@@ -69,9 +69,10 @@ func (e *Entity) Validate() error {
 // FixtureEntity returns a testing fixture for an Entity object.
 func FixtureEntity(id string) *Entity {
 	return &Entity{
-		ID:            id,
-		Class:         "host",
-		Subscriptions: []string{"subscription"},
-		Organization:  "default",
+		ID:               id,
+		Class:            "host",
+		Subscriptions:    []string{"subscription"},
+		Organization:     "default",
+		KeepaliveTimeout: 120,
 	}
 }
