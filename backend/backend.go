@@ -1,7 +1,10 @@
 package backend
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"runtime/debug"
 
 	"github.com/gorilla/websocket"
@@ -66,14 +69,13 @@ type Config struct {
 	EtcdListenPeerURL           string
 	EtcdName                    string
 
-	TLS							*TLSConfig
-	// TLS things should go here (as a composite struct maybe?)
+	TLS *TLSConfig
 }
 
 // TLS config for Etcd and backend listeners
 type TLSConfig struct {
-	CertFile	   string
-	KeyFile 	   string
+	CertFile       string
+	KeyFile        string
 	ClientCertAuth string
 }
 
@@ -94,6 +96,8 @@ type Backend struct {
 	eventd     daemon.Daemon
 	pipelined  daemon.Daemon
 	keepalived daemon.Daemon
+
+	tlsConfig *tls.Config
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -132,12 +136,40 @@ func NewBackend(config *Config) (*Backend, error) {
 	if config.AgentPort == 0 {
 		config.AgentPort = 8081
 	}
+	var tlsConfig *tls.Config
+
+	// Check for TLS config and load certs if present
+	if config.TLS != nil {
+
+		// Client cert
+		cert, err := tls.LoadX509KeyPair(config.TLS.CertFile, config.TLS.KeyFile)
+		if err != nil {
+			// do something with the error
+			logger.Errorf("Error loading tls client certificate: %s", err)
+		}
+
+		// CA Cert
+		caCert, err := ioutil.ReadFile(config.TLS.ClientCertAuth)
+		if err != nil {
+			logger.Errorf("Error loading tls CA cert: %s", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		tlsConfig = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      caCertPool,
+		}
+		tlsConfig.BuildNameToCertificate()
+	}
 
 	b := &Backend{
 		Config: config,
 
 		done:         make(chan struct{}),
 		shutdownChan: make(chan struct{}),
+		tlsConfig:    tlsConfig,
 	}
 
 	// we go ahead and setup and start etcd here, because we'll have to pass
@@ -152,13 +184,16 @@ func NewBackend(config *Config) (*Backend, error) {
 	cfg.Name = config.EtcdName
 
 	if config.TLS != nil {
-		cfg.TLSConfig = etcd.TLSConfig{
-			config.TLS.CertFile, 
-			config.TLS.KeyFile, 
-			config.TLS.ClientCertAuth,
+		cfg.TLSConfig = &etcd.TLSConfig{
+			Info: etcd.TLSInfo{
+				CertFile: config.TLS.CertFile,
+				KeyFile:  config.TLS.KeyFile,
+				CAFile:   config.TLS.ClientCertAuth,
+			},
+			TLS: *tlsConfig,
 		}
 	}
-	
+
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error starting etcd: %s", err.Error())

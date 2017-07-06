@@ -8,6 +8,7 @@ package etcd
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/url"
 	"os"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
+	"github.com/coreos/etcd/pkg/transport"
 	"github.com/coreos/pkg/capnslog"
 )
 
@@ -49,10 +51,17 @@ type Config struct {
 	InitialClusterState     string
 	InitialClusterToken     string
 	InitialAdvertisePeerURL string
-	TLSConfig				*TLSConfig
+	TLSConfig               *TLSConfig
 }
 
-type TLSConfig transport.TLSInfo
+type TLSConfig struct {
+	Info TLSInfo
+	TLS  tls.Config
+}
+
+type TLSInfo transport.TLSInfo
+
+// type TLSConfig transport.TLSInfo
 
 // NewConfig returns a pointer to an initialized Config object with defaults.
 func NewConfig() *Config {
@@ -141,7 +150,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.ClusterState = config.InitialClusterState
 
 	if config.TLSConfig != nil {
-		cfg.ClientTLSInfo = *(*transport.TLSInfo)(config.TLSConfig)
+		cfg.ClientTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)
 	}
 
 	capnslog.SetFormatter(NewLogrusFormatter())
@@ -177,9 +186,14 @@ func (e *Etcd) Shutdown() error {
 
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
+	var tlsCfg *tls.Config
+	if e.cfg.TLSConfig != nil {
+		tlsCfg = &e.cfg.TLSConfig.TLS
+	}
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{e.cfg.ListenClientURL},
 		DialTimeout: 5 * time.Second,
+		TLS:         tlsCfg,
 	})
 	if err != nil {
 		return nil, err
