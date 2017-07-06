@@ -3,6 +3,7 @@ package keepalived
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -33,6 +34,7 @@ type Keepalived struct {
 	DeregistrationHandler string
 	MonitorFactory        MonitorFactoryFunc
 
+	mu            *sync.Mutex
 	monitors      map[string]Monitor
 	wg            *sync.WaitGroup
 	keepaliveChan chan interface{}
@@ -76,9 +78,12 @@ func (k *Keepalived) Start() error {
 		k.HandlerCount = DefaultHandlerCount
 	}
 
+	k.mu = &sync.Mutex{}
 	k.monitors = map[string]Monitor{}
 
 	k.startWorkers()
+
+	k.startMonitorSweeper()
 
 	k.errChan = make(chan error, 1)
 	return nil
@@ -109,8 +114,6 @@ func (k *Keepalived) Err() <-chan error {
 }
 
 func (k *Keepalived) startWorkers() {
-	mutex := &sync.Mutex{}
-
 	// concurrent access to entityChannels map is problematic
 	// because of race conditions :(
 	k.HandlerCount = 1
@@ -119,11 +122,11 @@ func (k *Keepalived) startWorkers() {
 	k.wg.Add(k.HandlerCount)
 
 	for i := 0; i < k.HandlerCount; i++ {
-		go k.processKeepalives(mutex)
+		go k.processKeepalives()
 	}
 }
 
-func (k *Keepalived) processKeepalives(mutex *sync.Mutex) {
+func (k *Keepalived) processKeepalives() {
 	defer k.wg.Done()
 
 	var (
@@ -152,17 +155,35 @@ func (k *Keepalived) processKeepalives(mutex *sync.Mutex) {
 
 		// TODO(greg): This is a good candidate for a concurrent map
 		// when it's released.
-		mutex.Lock()
+		k.mu.Lock()
 		monitor, ok = k.monitors[entity.ID]
 		if !ok {
 			monitor = k.MonitorFactory(entity)
 			monitor.Start()
 			k.monitors[entity.ID] = monitor
 		}
-		mutex.Unlock()
+		k.mu.Unlock()
 
 		if err := monitor.Update(event); err != nil {
 			logger.WithError(err).Error("error monitoring entity")
 		}
 	}
+}
+
+// startMonitorSweeper spins off into oblivion if Keepalived is stopped until
+// the monitors map is empty, and then the goroutine stops.
+func (k *Keepalived) startMonitorSweeper() {
+	go func() {
+		timer := time.NewTimer(10 * time.Minute)
+		for {
+			<-timer.C
+			for key, monitor := range k.monitors {
+				if monitor.IsStopped() {
+					k.mu.Lock()
+					delete(k.monitors, key)
+					k.mu.Unlock()
+				}
+			}
+		}
+	}()
 }

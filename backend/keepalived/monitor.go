@@ -13,6 +13,7 @@ type Monitor interface {
 	Update(event *types.Event) error
 	Start()
 	Stop()
+	IsStopped() bool
 }
 
 // KeepaliveMonitor is a managed timer that is reset whenever the monitor
@@ -56,10 +57,9 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 					}
 					monitorPtr.Stop()
 					return
-				} else {
-					if err := monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
-						logger.WithError(err).Error("error sending keepalive event")
-					}
+				}
+				if err := monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
+					logger.WithError(err).Error("error sending keepalive event")
 				}
 			}
 			timer.Reset(timerDuration)
@@ -92,5 +92,5 @@ func (monitorPtr *KeepaliveMonitor) Stop() {
 
 // IsStopped returns true if the Monitor has been stopped.
 func (monitorPtr *KeepaliveMonitor) IsStopped() bool {
-	return monitorPtr.stopped > 0
+	return atomic.LoadInt32(&monitorPtr.stopped) > 0
 }
