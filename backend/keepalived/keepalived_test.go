@@ -2,6 +2,7 @@ package keepalived
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -81,8 +82,12 @@ func (suite *KeepalivedTestSuite) TestEventProcessing() {
 	suite.Keepalived.MonitorFactory = nil
 	suite.NoError(suite.Keepalived.Start())
 	event := types.FixtureEvent("check", "entity")
+	suite.Store.On("UpdateEntity", event.Entity).Return(nil)
 	suite.Store.On("UpdateKeepalive", event.Entity.Organization, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout)).Return(nil)
 	suite.Keepalived.keepaliveChan <- event
+	time.Sleep(100 * time.Millisecond)
+	suite.Store.AssertCalled(suite.T(), "UpdateEntity", event.Entity)
+	suite.Store.AssertCalled(suite.T(), "UpdateKeepalive", event.Entity.Organization, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout))
 }
 
 func TestKeepalivedSuite(t *testing.T) {

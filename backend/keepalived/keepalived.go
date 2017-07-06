@@ -33,12 +33,10 @@ type Keepalived struct {
 	DeregistrationHandler string
 	MonitorFactory        MonitorFactoryFunc
 
-	monitors       map[string]Monitor
-	deregistration Deregisterer
-	eventCreator   EventCreator
-	wg             *sync.WaitGroup
-	keepaliveChan  chan interface{}
-	errChan        chan error
+	monitors      map[string]Monitor
+	wg            *sync.WaitGroup
+	keepaliveChan chan interface{}
+	errChan       chan error
 }
 
 // Start starts the daemon, returning an error if preconditions for startup
@@ -66,15 +64,6 @@ func (k *Keepalived) Start() error {
 				Store: k.Store,
 			}
 		}
-	}
-
-	k.deregistration = &Deregistration{
-		Store:      k.Store,
-		MessageBus: k.MessageBus,
-	}
-
-	k.eventCreator = &MessageBusEventCreator{
-		MessageBus: k.MessageBus,
 	}
 
 	k.keepaliveChan = make(chan interface{}, 10)
@@ -156,6 +145,10 @@ func (k *Keepalived) processKeepalives(mutex *sync.Mutex) {
 			continue
 		}
 		entity.LastSeen = event.Timestamp
+
+		if err := k.Store.UpdateEntity(event.Entity); err != nil {
+			logger.WithError(err).Error("error updating entity in store")
+		}
 
 		// TODO(greg): This is a good candidate for a concurrent map
 		// when it's released.
