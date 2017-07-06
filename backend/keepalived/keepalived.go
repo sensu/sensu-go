@@ -63,6 +63,7 @@ func (k *Keepalived) Start() error {
 				EventCreator: &MessageBusEventCreator{
 					MessageBus: k.MessageBus,
 				},
+				Store: k.Store,
 			}
 		}
 	}

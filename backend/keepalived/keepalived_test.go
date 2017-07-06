@@ -58,9 +58,12 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 	k.MessageBus = suite.MessageBus
 	suite.Error(k.Start())
 
+	k.MonitorFactory = nil
+
 	store := &mockstore.MockStore{}
 	k.Store = store
 	suite.NoError(k.Start())
+	suite.NotNil(k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
 
 	suite.NoError(k.Status())
 
@@ -75,9 +78,9 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 }
 
 func (suite *KeepalivedTestSuite) TestEventProcessing() {
+	suite.Keepalived.MonitorFactory = nil
 	suite.NoError(suite.Keepalived.Start())
 	event := types.FixtureEvent("check", "entity")
-
 	suite.Store.On("UpdateKeepalive", event.Entity.Organization, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout)).Return(nil)
 	suite.Keepalived.keepaliveChan <- event
 }
