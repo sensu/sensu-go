@@ -72,6 +72,13 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 	monitorPtr.reset <- struct{}{}
 
+	entity := event.Entity
+	entity.LastSeen = event.Timestamp
+
+	if err := monitorPtr.Store.UpdateEntity(entity); err != nil {
+		logger.WithError(err).Error("error updating entity in store")
+	}
+
 	if err := monitorPtr.Store.UpdateKeepalive(event.Entity.Organization, event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
 		return err
 	}
