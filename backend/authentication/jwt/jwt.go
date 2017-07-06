@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -8,15 +9,17 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/context"
 	"github.com/sensu/sensu-go/backend/store"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
 
+// Define the key type to avoid key collisions in context
+type key int
+
 const (
 	// claimsKey contains the key name used to store the JWT claims within
 	// the context of a request
-	claimsKey = "JWTClaims"
+	claimsKey key = iota
 )
 
 var (
@@ -68,7 +71,7 @@ func GetClaims(token *jwt.Token) (*Claims, error) {
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
 func GetClaimsFromContext(r *http.Request) *Claims {
-	if value := context.Get(r, claimsKey); value != nil {
+	if value := r.Context().Value(claimsKey); value != nil {
 		claims, ok := value.(*Claims)
 		if !ok {
 			return nil
@@ -160,9 +163,9 @@ func RefreshToken(username string) (string, error) {
 
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
-func SetClaimsIntoContext(r *http.Request, token *jwt.Token) {
+func SetClaimsIntoContext(r *http.Request, token *jwt.Token) context.Context {
 	claims, _ := token.Claims.(*Claims)
-	context.Set(r, claimsKey, claims)
+	return context.WithValue(r.Context(), claimsKey, claims)
 }
 
 // ValidateExpiredToken verifies that the provided token is valid, even if
