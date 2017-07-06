@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"syscall"
+	"fmt"
 
 	"github.com/sensu/sensu-go/backend"
 	"github.com/spf13/cobra"
@@ -29,6 +30,10 @@ var (
 	etcdName                    string
 	etcdInitialClusterToken     string
 	etcdInitialAdvertisePeerURL string
+
+	certFile       string
+	keyFile        string
+	clientCertAuth string
 )
 
 func init() {
@@ -81,6 +86,23 @@ func newStartCommand() *cobra.Command {
 				cfg.EtcdName = etcdName
 			}
 
+			if certFile != "" && keyFile != "" && clientCertAuth != "" {
+				cfg.TLS = &backend.TLSConfig{certFile, keyFile, clientCertAuth}
+			} else if certFile != "" || keyFile != "" || clientCertAuth != "" {
+				emptyFlags := []string{}
+				if certFile == "" {
+					emptyFlags = append(emptyFlags, "cert-file")
+				}
+				if keyFile == "" {
+					emptyFlags = append(emptyFlags, "key-file")
+				}
+				if clientCertAuth == "" {
+					emptyFlags = append(emptyFlags, "client-cert-auth")
+				}
+
+				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
+			}
+
 			sensuBackend, err := backend.NewBackend(cfg)
 			if err != nil {
 				return err
@@ -126,6 +148,9 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&etcdInitialClusterState, "store-initial-cluster-state", "", "store initial cluster state")
 	cmd.Flags().StringVar(&etcdInitialClusterToken, "store-initial-cluster-token", "", "store initial cluster token")
 	cmd.Flags().StringVar(&etcdName, "store-node-name", "", "store cluster member node name")
+	cmd.Flags().StringVar(&certFile, "cert-file", "", "tls certificate")
+	cmd.Flags().StringVar(&keyFile, "key-file", "", "tls certificate")
+	cmd.Flags().StringVar(&clientCertAuth, "client-cert-auth", "", "tls certificate authority")
 
 	return cmd
 }
