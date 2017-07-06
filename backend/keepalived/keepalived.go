@@ -19,6 +19,9 @@ const (
 	DefaultKeepaliveTimeout = 120 // seconds
 )
 
+// MonitorFactoryFunc takes an entity and returns a Monitor. Keepalived can
+// take a MonitorFactoryFunc that stubs/mocks a Deregisterer and/or an
+// EventCreator to make it easier to test.
 type MonitorFactoryFunc func(e *types.Entity) Monitor
 
 // Keepalived is responsible for monitoring keepalive events and recording

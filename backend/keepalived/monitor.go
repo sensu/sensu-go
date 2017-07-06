@@ -14,6 +14,8 @@ type Monitor interface {
 	Stop()
 }
 
+// KeepaliveMonitor is a managed timer that is reset whenever the monitor
+// observes a Keepalive event via the Update() function.
 type KeepaliveMonitor struct {
 	Entity       *types.Entity
 	Deregisterer Deregisterer
@@ -62,6 +64,7 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 			}
 		}
 	}()
+	<-running
 }
 
 // Update causes the KeepaliveMonitor to observe the event.
