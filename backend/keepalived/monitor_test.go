@@ -57,6 +57,14 @@ func TestMonitorUpdate(t *testing.T) {
 	assert.NoError(monitor.Update(event))
 }
 
+func TestStop(t *testing.T) {
+	monitor := &KeepaliveMonitor{
+		reset: make(chan interface{}),
+	}
+	monitor.Stop()
+	assert.True(t, monitor.IsStopped(), "IsStopped returns true if stopped")
+}
+
 func TestMonitorDeregistration(t *testing.T) {
 	entity := types.FixtureEntity("entity")
 	entity.KeepaliveTimeout = 0
@@ -72,6 +80,7 @@ func TestMonitorDeregistration(t *testing.T) {
 	monitor.Start()
 	time.Sleep(100 * time.Millisecond)
 	dereg.AssertCalled(t, "Deregister", entity)
+	assert.True(t, monitor.IsStopped(), "monitor is stopped after deregistration")
 }
 
 func TestMonitorAlert(t *testing.T) {
