@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func testHandler() http.HandlerFunc {
@@ -21,7 +22,7 @@ func testHandler() http.HandlerFunc {
 
 func TestValidateOrganization(t *testing.T) {
 	store := &mockstore.MockStore{}
-	store.On("GetOrganizationByName", "foo").Return(&types.Organization{}, nil)
+	store.On("GetOrganizationByName", mock.Anything, "foo").Return(&types.Organization{}, nil)
 
 	server := httptest.NewServer(Organization(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +67,11 @@ func TestValidateNoOrganization(t *testing.T) {
 
 func TestValidateOrganizationError(t *testing.T) {
 	store := &mockstore.MockStore{}
-	store.On("GetOrganizationByName", "foo").Return(&types.Organization{}, errors.New("error"))
+	store.On(
+		"GetOrganizationByName",
+		mock.Anything,
+		"foo",
+	).Return(&types.Organization{}, errors.New("error"))
 
 	server := httptest.NewServer(Organization(testHandler(), store))
 	defer server.Close()

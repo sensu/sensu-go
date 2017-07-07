@@ -20,7 +20,11 @@ func TestCreateOrg(t *testing.T) {
 		Store: store,
 	}
 
-	store.On("UpdateOrganization", mock.AnythingOfType("*types.Organization")).Return(nil)
+	store.On(
+		"UpdateOrganization",
+		mock.Anything,
+		mock.AnythingOfType("*types.Organization"),
+	).Return(nil)
 
 	org := types.FixtureOrganization("foo")
 	orgBytes, _ := json.Marshal(org)
@@ -37,7 +41,11 @@ func TestCreateOrgError(t *testing.T) {
 		Store: store,
 	}
 
-	store.On("UpdateOrganization", mock.AnythingOfType("*types.Organization")).Return(fmt.Errorf("error"))
+	store.On(
+		"UpdateOrganization",
+		mock.Anything,
+		mock.AnythingOfType("*types.Organization"),
+	).Return(fmt.Errorf("error"))
 
 	org := types.FixtureOrganization("foo")
 	orgBytes, _ := json.Marshal(org)
@@ -54,14 +62,14 @@ func TestDeleteOrg(t *testing.T) {
 		Store: store,
 	}
 
-	store.On("DeleteOrganizationByName", "foo").Return(nil)
+	store.On("DeleteOrganizationByName", mock.Anything, "foo").Return(nil)
 	req, _ := http.NewRequest(http.MethodDelete, "/rbac/organizations/foo", nil)
 	res := processRequest(controller, req)
 
 	assert.Equal(t, http.StatusAccepted, res.Code)
 
 	// Invalid org
-	store.On("DeleteOrganizationByName", "bar").Return(fmt.Errorf(""))
+	store.On("DeleteOrganizationByName", mock.Anything, "bar").Return(fmt.Errorf(""))
 	req, _ = http.NewRequest(http.MethodDelete, "/rbac/organizations/bar", nil)
 	res = processRequest(controller, req)
 
@@ -82,7 +90,7 @@ func TestManyOrg(t *testing.T) {
 		org1,
 		org2,
 	}
-	store.On("GetOrganizations").Return(orgs, nil)
+	store.On("GetOrganizations", mock.Anything).Return(orgs, nil)
 	req, _ := http.NewRequest("GET", "/rbac/organizations", nil)
 	res := processRequest(controller, req)
 
@@ -105,7 +113,7 @@ func TestManyOrgError(t *testing.T) {
 	}
 
 	orgs := []*types.Organization{}
-	store.On("GetOrganizations").Return(orgs, errors.New("error"))
+	store.On("GetOrganizations", mock.Anything).Return(orgs, errors.New("error"))
 	req, _ := http.NewRequest("GET", "/rbac/organizations", nil)
 	res := processRequest(controller, req)
 
@@ -123,14 +131,14 @@ func TestSingleOrg(t *testing.T) {
 	}
 
 	var nilOrg *types.Organization
-	store.On("GetOrganizationByName", "foo").Return(nilOrg, nil)
+	store.On("GetOrganizationByName", mock.Anything, "foo").Return(nilOrg, nil)
 	req, _ := http.NewRequest("GET", "/rbac/organizations/foo", nil)
 	res := processRequest(controller, req)
 
 	assert.Equal(t, http.StatusNotFound, res.Code)
 
 	org := types.FixtureOrganization("bar")
-	store.On("GetOrganizationByName", "bar").Return(org, nil)
+	store.On("GetOrganizationByName", mock.Anything, "bar").Return(org, nil)
 	req, _ = http.NewRequest("GET", "/rbac/organizations/bar", nil)
 	res = processRequest(controller, req)
 

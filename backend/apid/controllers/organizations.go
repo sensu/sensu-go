@@ -30,7 +30,7 @@ func (o *OrganizationsController) delete(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	org := vars["organization"]
 
-	err := o.Store.DeleteOrganizationByName(org)
+	err := o.Store.DeleteOrganizationByName(r.Context(), org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -41,7 +41,7 @@ func (o *OrganizationsController) delete(w http.ResponseWriter, r *http.Request)
 
 // many returns all organizations
 func (o *OrganizationsController) many(w http.ResponseWriter, r *http.Request) {
-	orgs, err := o.Store.GetOrganizations()
+	orgs, err := o.Store.GetOrganizations(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -66,7 +66,7 @@ func (o *OrganizationsController) single(w http.ResponseWriter, r *http.Request)
 		err error
 	)
 
-	org, err = o.Store.GetOrganizationByName(name)
+	org, err = o.Store.GetOrganizationByName(r.Context(), name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -111,7 +111,7 @@ func (o *OrganizationsController) update(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = o.Store.UpdateOrganization(&org)
+	err = o.Store.UpdateOrganization(r.Context(), &org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

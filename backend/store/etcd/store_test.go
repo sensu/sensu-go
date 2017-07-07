@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"testing"
@@ -44,7 +45,7 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 		}
 
 		// Mock a default organization
-		s.UpdateOrganization(&types.Organization{
+		s.UpdateOrganization(context.Background(), &types.Organization{
 			Name: "default",
 		})
 

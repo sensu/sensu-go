@@ -39,9 +39,11 @@ func TestSchedulerd(t *testing.T) {
 		assert.NoError(t, bus.Start())
 
 		// Mock a default organization
-		st.UpdateOrganization(&types.Organization{
-			Name: "default",
-		})
+		st.UpdateOrganization(
+			context.Background(),
+			&types.Organization{
+				Name: "default",
+			})
 
 		checker := &Schedulerd{
 			Store:      st,

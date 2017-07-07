@@ -1,6 +1,8 @@
 package backend
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -55,8 +57,10 @@ func setupAdminRole(store store.Store) error {
 }
 
 func setupDefaultOrganization(store store.Store) error {
-	return store.UpdateOrganization(&types.Organization{
-		Name:        "default",
-		Description: "Default organization",
-	})
+	return store.UpdateOrganization(
+		context.Background(),
+		&types.Organization{
+			Name:        "default",
+			Description: "Default organization",
+		})
 }

@@ -22,7 +22,7 @@ func Organization(next http.Handler, store store.Store) http.Handler {
 			org = defaultOrganization
 		} else {
 			// Verify that the organization exist
-			if _, err := store.GetOrganizationByName(org); err != nil {
+			if _, err := store.GetOrganizationByName(r.Context(), org); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}

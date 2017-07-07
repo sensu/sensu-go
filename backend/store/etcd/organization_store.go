@@ -21,7 +21,7 @@ func getOrganizationsPath(name string) string {
 }
 
 // DeleteOrganizationByName deletes the organization named *name*
-func (s *etcdStore) DeleteOrganizationByName(name string) error {
+func (s *etcdStore) DeleteOrganizationByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name")
 	}
@@ -39,7 +39,7 @@ func (s *etcdStore) DeleteOrganizationByName(name string) error {
 }
 
 // GetOrganizationByName returns a single organization named *name*
-func (s *etcdStore) GetOrganizationByName(name string) (*types.Organization, error) {
+func (s *etcdStore) GetOrganizationByName(ctx context.Context, name string) (*types.Organization, error) {
 	resp, err := s.kvc.Get(
 		context.TODO(),
 		getOrganizationsPath(name),
@@ -62,7 +62,7 @@ func (s *etcdStore) GetOrganizationByName(name string) (*types.Organization, err
 }
 
 // GetOrganizations returns all organizations
-func (s *etcdStore) GetOrganizations() ([]*types.Organization, error) {
+func (s *etcdStore) GetOrganizations(ctx context.Context) ([]*types.Organization, error) {
 	resp, err := s.kvc.Get(
 		context.TODO(),
 		getOrganizationsPath(""),
@@ -77,7 +77,7 @@ func (s *etcdStore) GetOrganizations() ([]*types.Organization, error) {
 }
 
 // UpdateOrganization updates an organization with the provided org
-func (s *etcdStore) UpdateOrganization(org *types.Organization) error {
+func (s *etcdStore) UpdateOrganization(ctx context.Context, org *types.Organization) error {
 	if err := org.Validate(); err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -10,39 +11,41 @@ import (
 
 func TestOrgStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		ctx := context.Background()
+
 		// We should receive the default organization (set in store_test.go)
-		orgs, err := store.GetOrganizations()
+		orgs, err := store.GetOrganizations(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(orgs))
 
 		org := types.FixtureOrganization("foo")
-		err = store.UpdateOrganization(org)
+		err = store.UpdateOrganization(ctx, org)
 		assert.NoError(t, err)
 
-		result, err := store.GetOrganizationByName(org.Name)
+		result, err := store.GetOrganizationByName(ctx, org.Name)
 		assert.NoError(t, err)
 		assert.Equal(t, org.Name, result.Name)
 
 		// Missing organization
-		_, err = store.GetOrganizationByName("foobar")
+		_, err = store.GetOrganizationByName(ctx, "foobar")
 		assert.Error(t, err)
 
 		// Get all organizations
-		orgs, err = store.GetOrganizations()
+		orgs, err = store.GetOrganizations(ctx)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, orgs)
 		assert.Equal(t, 2, len(orgs))
 
 		// Delete an org
-		err = store.DeleteOrganizationByName(org.Name)
+		err = store.DeleteOrganizationByName(ctx, org.Name)
 		assert.NoError(t, err)
 
 		// Delete a missing org
-		err = store.DeleteOrganizationByName("foobar")
+		err = store.DeleteOrganizationByName(ctx, "foobar")
 		assert.Error(t, err)
 
 		// Get again all organizations
-		orgs, err = store.GetOrganizations()
+		orgs, err = store.GetOrganizations(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(orgs))
 	})

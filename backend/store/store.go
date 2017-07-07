@@ -113,10 +113,10 @@ type MutatorStore interface {
 
 // OrganizationStore provides an interface for interacting & persisting orgs
 type OrganizationStore interface {
-	DeleteOrganizationByName(name string) error
-	GetOrganizations() ([]*types.Organization, error)
-	GetOrganizationByName(name string) (*types.Organization, error)
-	UpdateOrganization(*types.Organization) error
+	DeleteOrganizationByName(context.Context, string) error
+	GetOrganizations(context.Context) ([]*types.Organization, error)
+	GetOrganizationByName(context.Context, string) (*types.Organization, error)
+	UpdateOrganization(context.Context, *types.Organization) error
 }
 
 // RBACStore provides an interface for interacting & persisting users
