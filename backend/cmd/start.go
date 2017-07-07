@@ -1,14 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"syscall"
-	"fmt"
 
 	"github.com/sensu/sensu-go/backend"
+	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -87,7 +88,7 @@ func newStartCommand() *cobra.Command {
 			}
 
 			if certFile != "" && keyFile != "" && clientCertAuth != "" {
-				cfg.TLS = &backend.TLSConfig{certFile, keyFile, clientCertAuth}
+				cfg.TLS = &types.TLSConfig{certFile, keyFile, clientCertAuth}
 			} else if certFile != "" || keyFile != "" || clientCertAuth != "" {
 				emptyFlags := []string{}
 				if certFile == "" {

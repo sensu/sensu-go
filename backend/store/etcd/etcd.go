@@ -54,11 +54,13 @@ type Config struct {
 	TLSConfig               *TLSConfig
 }
 
+// TLSConfig wraps Crypto TLSInfo
 type TLSConfig struct {
 	Info TLSInfo
 	TLS  tls.Config
 }
 
+// TLSInfo wraps etcd transport TLSInfo
 type TLSInfo transport.TLSInfo
 
 // NewConfig returns a pointer to an initialized Config object with defaults.

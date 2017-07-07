@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -22,15 +23,17 @@ var (
 
 // Agentd is the backend HTTP API.
 type Agentd struct {
-	stopping chan struct{}
-	running  *atomic.Value
-	wg       *sync.WaitGroup
-	errChan  chan error
+	stopping   chan struct{}
+	running    *atomic.Value
+	wg         *sync.WaitGroup
+	errChan    chan error
+	httpServer *http.Server
 
 	Store      store.Store
 	Host       string
 	Port       int
 	MessageBus messaging.MessageBus
+	TLS        *types.TLSConfig
 }
 
 // Start Agentd.
@@ -47,18 +50,26 @@ func (a *Agentd) Start() error {
 
 	handler := http.HandlerFunc(a.webSocketHandler)
 
-	server := &http.Server{
+	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	logger.Info("starting agentd on address: ", server.Addr)
-
+	logger.Info("starting agentd on address: ", a.httpServer.Addr)
+	a.wg.Add(1)
 	go func() {
 		defer a.wg.Done()
-		server.ListenAndServe()
+		var err error
+		if a.TLS != nil {
+			err = a.httpServer.ListenAndServeTLS(a.TLS.CertFile, a.TLS.KeyFile)
+		} else {
+			err = a.httpServer.ListenAndServe()
+		}
+		if err != nil {
+			logger.Errorf("failed to start https server %s", err.Error())
+		}
 	}()
 
 	return nil
@@ -66,6 +77,13 @@ func (a *Agentd) Start() error {
 
 // Stop Agentd.
 func (a *Agentd) Stop() error {
+	if err := a.httpServer.Shutdown(nil); err != nil {
+		// failure/timeout shutting down the server gracefully
+		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
+		if closeErr := a.httpServer.Close(); closeErr != nil {
+			logger.Error("failed to shutdown http server forcefully")
+		}
+	}
 	a.running.Store(false)
 	close(a.stopping)
 	a.wg.Wait()

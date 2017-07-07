@@ -69,14 +69,7 @@ type Config struct {
 	EtcdListenPeerURL           string
 	EtcdName                    string
 
-	TLS *TLSConfig
-}
-
-// TLS config for Etcd and backend listeners
-type TLSConfig struct {
-	CertFile       string
-	KeyFile        string
-	ClientCertAuth string
+	TLS *types.TLSConfig
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -256,7 +249,9 @@ func (b *Backend) Run() error {
 		Host:          b.Config.APIHost,
 		Port:          b.Config.APIPort,
 		BackendStatus: b.Status,
+		TLS:           b.Config.TLS,
 	}
+
 	if err := b.apid.Start(); err != nil {
 		return err
 	}
@@ -266,6 +261,7 @@ func (b *Backend) Run() error {
 		Host:       b.Config.AgentHost,
 		Port:       b.Config.AgentPort,
 		MessageBus: b.messageBus,
+		TLS:        b.Config.TLS,
 	}
 	if err := b.agentd.Start(); err != nil {
 		return err
@@ -277,6 +273,7 @@ func (b *Backend) Run() error {
 			Dir:  b.Config.DashboardDir,
 			Host: b.Config.DashboardHost,
 			Port: b.Config.DashboardPort,
+			TLS:  b.Config.TLS,
 		},
 	}
 	if err := b.dashboardd.Start(); err != nil {

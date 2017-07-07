@@ -24,6 +24,7 @@ type Config struct {
 	Dir  string
 	Host string
 	Port int
+	TLS  *types.TLSConfig
 }
 
 // Dashboardd represents the dashboard daemon
@@ -68,8 +69,17 @@ func (d *Dashboardd) Start() error {
 
 	go func() {
 		defer d.wg.Done()
-		if err := d.httpServer.ListenAndServe(); err != nil {
-			logger.Errorf("failed to start http server: %s", err.Error())
+		var err error
+		TLS := d.Config.TLS
+		if TLS != nil {
+			err = d.httpServer.ListenAndServeTLS(TLS.CertFile, TLS.KeyFile)
+		} else {
+			err = d.httpServer.ListenAndServe()
+		}
+		// TODO (JK): need a way to handle closing things like errChan, etc.
+		// in cases where there's a failure to start the daemon
+		if err != nil {
+			logger.Errorf("failed to start https server %s", err.Error())
 		}
 	}()
 
