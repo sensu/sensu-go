@@ -1,6 +1,8 @@
 package store
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -45,10 +47,10 @@ type Store interface {
 
 // AssetStore manage assets
 type AssetStore interface {
-	GetAssets(org string) ([]*types.Asset, error)
-	GetAssetByName(org, name string) (*types.Asset, error)
-	UpdateAsset(asset *types.Asset) error
-	DeleteAssetByName(org, name string) error
+	DeleteAssetByName(context.Context, string) error
+	GetAssets(context.Context) ([]*types.Asset, error)
+	GetAssetByName(context.Context, string) (*types.Asset, error)
+	UpdateAsset(context.Context, *types.Asset) error
 }
 
 // AuthenticationStore is responsible for managing the authentication state
@@ -60,61 +62,61 @@ type AuthenticationStore interface {
 
 // CheckConfigStore provides an interface for interacting & persisting checks
 type CheckConfigStore interface {
-	GetCheckConfigs(org string) ([]*types.CheckConfig, error)
-	GetCheckConfigByName(org, name string) (*types.CheckConfig, error)
-	DeleteCheckConfigByName(org, name string) error
-	UpdateCheckConfig(check *types.CheckConfig) error
+	DeleteCheckConfigByName(context.Context, string) error
+	GetCheckConfigs(context.Context) ([]*types.CheckConfig, error)
+	GetCheckConfigByName(context.Context, string) (*types.CheckConfig, error)
+	UpdateCheckConfig(context.Context, *types.CheckConfig) error
 }
 
 // EntityStore provides an interface for interacting & persisting entities
 type EntityStore interface {
-	GetEntityByID(org, id string) (*types.Entity, error)
-	UpdateEntity(e *types.Entity) error
-	DeleteEntity(e *types.Entity) error
-	DeleteEntityByID(org, id string) error
-	GetEntities(org string) ([]*types.Entity, error)
+	DeleteEntity(context.Context, *types.Entity) error
+	DeleteEntityByID(context.Context, string) error
+	GetEntities(context.Context) ([]*types.Entity, error)
+	GetEntityByID(context.Context, string) (*types.Entity, error)
+	UpdateEntity(context.Context, *types.Entity) error
 }
 
 // EventStore provides an interface for interacting & persisting events
 type EventStore interface {
-	GetEvents(org string) ([]*types.Event, error)
-	GetEventsByEntity(org, entityID string) ([]*types.Event, error)
-	GetEventByEntityCheck(org, entityID, checkID string) (*types.Event, error)
-	UpdateEvent(event *types.Event) error
-	DeleteEventByEntityCheck(org, entityID, checkID string) error
+	DeleteEventByEntityCheck(context.Context, string, string) error
+	GetEvents(context.Context) ([]*types.Event, error)
+	GetEventsByEntity(context.Context, string) ([]*types.Event, error)
+	GetEventByEntityCheck(context.Context, string, string) (*types.Event, error)
+	UpdateEvent(context.Context, *types.Event) error
 }
 
 // HandlerStore provides an interface for interacting & persisting handlers
 type HandlerStore interface {
-	GetHandlers(org string) ([]*types.Handler, error)
-	GetHandlerByName(org, name string) (*types.Handler, error)
-	DeleteHandlerByName(org, name string) error
-	UpdateHandler(handler *types.Handler) error
+	DeleteHandlerByName(context.Context, string) error
+	GetHandlers(context.Context) ([]*types.Handler, error)
+	GetHandlerByName(context.Context, string) (*types.Handler, error)
+	UpdateHandler(context.Context, *types.Handler) error
 }
 
 // KeepaliveStore is responsible for updating entity keepalive data.
 type KeepaliveStore interface {
+	// GetKeepalive gets the current expiration for an entity's keepalive.
+	GetKeepalive(context.Context, string) (int64, error)
 	// UpdateKeepalive updates the current expiration time for an entity's
 	// keepalive.
-	UpdateKeepalive(org, entityID string, expiration int64) error
-	// GetKeepalive gets the current expiration for an entity's keepalive.
-	GetKeepalive(org, entityID string) (int64, error)
+	UpdateKeepalive(context.Context, string, int64) error
 }
 
 // MutatorStore provides an interface for interacting & persisting mutators
 type MutatorStore interface {
-	GetMutators(org string) ([]*types.Mutator, error)
-	GetMutatorByName(org, name string) (*types.Mutator, error)
-	DeleteMutatorByName(org, name string) error
-	UpdateMutator(mutator *types.Mutator) error
+	DeleteMutatorByName(context.Context, string) error
+	GetMutators(context.Context) ([]*types.Mutator, error)
+	GetMutatorByName(context.Context, string) (*types.Mutator, error)
+	UpdateMutator(context.Context, *types.Mutator) error
 }
 
 // OrganizationStore provides an interface for interacting & persisting orgs
 type OrganizationStore interface {
-	DeleteOrganizationByName(name string) error
-	GetOrganizations() ([]*types.Organization, error)
-	GetOrganizationByName(name string) (*types.Organization, error)
-	UpdateOrganization(*types.Organization) error
+	DeleteOrganizationByName(context.Context, string) error
+	GetOrganizations(context.Context) ([]*types.Organization, error)
+	GetOrganizationByName(context.Context, string) (*types.Organization, error)
+	UpdateOrganization(context.Context, *types.Organization) error
 }
 
 // RBACStore provides an interface for interacting & persisting users

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -15,20 +14,36 @@ const (
 	handlersPathPrefix = "handlers"
 )
 
-func getHandlersPath(org, name string) string {
+func getHandlerPath(handler *types.Handler) string {
+	return path.Join(etcdRoot, handlersPathPrefix, handler.Organization, handler.Name)
+}
+
+func getHandlersPath(ctx context.Context, name string) string {
+	var org string
+
+	// Determine the organization
+	if value := ctx.Value(types.OrganizationKey); value != nil {
+		org = value.(string)
+	} else {
+		org = ""
+	}
+
 	return path.Join(etcdRoot, handlersPathPrefix, org, name)
 }
 
-// Handlers gets the list of handlers for an (optional) organization. Passing
-// the empty string as the org will return all handlers.
-func (s *etcdStore) GetHandlers(org string) ([]*types.Handler, error) {
-	// Verify that the organization exist
-	if org != "" {
-		if _, err := s.GetOrganizationByName(org); err != nil {
-			return nil, fmt.Errorf("the organization '%s' is invalid", org)
-		}
+func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error {
+	if name == "" {
+		return errors.New("must specify name of handler")
 	}
-	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(org, ""), clientv3.WithPrefix())
+
+	_, err := s.kvc.Delete(context.TODO(), getHandlersPath(ctx, name))
+	return err
+}
+
+// GetHandlers gets the list of handlers for an (optional) organization. Passing
+// the empty string as the org will return all handlers.
+func (s *etcdStore) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
+	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -49,17 +64,12 @@ func (s *etcdStore) GetHandlers(org string) ([]*types.Handler, error) {
 	return handlersArray, nil
 }
 
-func (s *etcdStore) GetHandlerByName(org, name string) (*types.Handler, error) {
-	if org == "" || name == "" {
-		return nil, errors.New("must specify organization and name of handler")
+func (s *etcdStore) GetHandlerByName(ctx context.Context, name string) (*types.Handler, error) {
+	if name == "" {
+		return nil, errors.New("must specify name of handler")
 	}
 
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return nil, fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
-	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(org, name))
+	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -76,21 +86,7 @@ func (s *etcdStore) GetHandlerByName(org, name string) (*types.Handler, error) {
 	return handler, nil
 }
 
-func (s *etcdStore) DeleteHandlerByName(org, name string) error {
-	if org == "" || name == "" {
-		return errors.New("must specify organization and name of handler")
-	}
-
-	// Verify that the organization exist
-	if _, err := s.GetOrganizationByName(org); err != nil {
-		return fmt.Errorf("the organization '%s' is invalid", org)
-	}
-
-	_, err := s.kvc.Delete(context.TODO(), getHandlersPath(org, name))
-	return err
-}
-
-func (s *etcdStore) UpdateHandler(handler *types.Handler) error {
+func (s *etcdStore) UpdateHandler(ctx context.Context, handler *types.Handler) error {
 	if err := handler.Validate(); err != nil {
 		return err
 	}
@@ -100,7 +96,7 @@ func (s *etcdStore) UpdateHandler(handler *types.Handler) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getHandlersPath(handler.Organization, handler.Name), string(handlerBytes))
+	_, err = s.kvc.Put(context.TODO(), getHandlerPath(handler), string(handlerBytes))
 	if err != nil {
 		return err
 	}

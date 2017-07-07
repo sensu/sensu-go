@@ -25,9 +25,7 @@ func (c *MutatorsController) Register(r *mux.Router) {
 
 // many handles requests to /mutators
 func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
-	org := organization(r)
-
-	mutators, err := c.Store.GetMutators(org)
+	mutators, err := c.Store.GetMutators(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -53,10 +51,8 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 		err     error
 	)
 
-	org := organization(r)
-
 	if method == http.MethodGet || method == http.MethodDelete {
-		mutator, err = c.Store.GetMutatorByName(org, name)
+		mutator, err = c.Store.GetMutatorByName(r.Context(), name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -98,13 +94,13 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = c.Store.UpdateMutator(newMutator)
+		err = c.Store.UpdateMutator(r.Context(), newMutator)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	case http.MethodDelete:
-		err := c.Store.DeleteMutatorByName(org, name)
+		err := c.Store.DeleteMutatorByName(r.Context(), name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

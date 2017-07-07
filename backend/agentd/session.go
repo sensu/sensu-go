@@ -1,6 +1,7 @@
 package agentd
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -104,7 +105,8 @@ func (s *Session) handshake() error {
 	}
 
 	// Validate the agent organization
-	if _, err = s.store.GetOrganizationByName(agentHandshake.Organization); err != nil {
+	ctx := context.TODO()
+	if _, err = s.store.GetOrganizationByName(ctx, agentHandshake.Organization); err != nil {
 		return fmt.Errorf("the organization '%s' is invalid", agentHandshake.Organization)
 	}
 

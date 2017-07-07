@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -22,7 +23,7 @@ type SyncronizeChecks struct {
 
 // Sync fetches results from the store and passes them up w/ given handler
 func (syncPtr *SyncronizeChecks) Sync() error {
-	results, err := syncPtr.Store.GetCheckConfigs("")
+	results, err := syncPtr.Store.GetCheckConfigs(context.TODO())
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}
@@ -38,7 +39,7 @@ type SyncronizeAssets struct {
 
 // Sync fetches results from the store and passes them up w/ given handler
 func (syncPtr *SyncronizeAssets) Sync() error {
-	results, err := syncPtr.Store.GetAssets("")
+	results, err := syncPtr.Store.GetAssets(context.TODO())
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}

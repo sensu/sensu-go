@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -38,9 +39,11 @@ func TestSchedulerd(t *testing.T) {
 		assert.NoError(t, bus.Start())
 
 		// Mock a default organization
-		st.UpdateOrganization(&types.Organization{
-			Name: "default",
-		})
+		st.UpdateOrganization(
+			context.Background(),
+			&types.Organization{
+				Name: "default",
+			})
 
 		checker := &Schedulerd{
 			Store:      st,
@@ -52,12 +55,18 @@ func TestSchedulerd(t *testing.T) {
 		assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
 
 		check := types.FixtureCheckConfig("check_name")
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
+
 		assert.NoError(t, check.Validate())
-		assert.NoError(t, st.UpdateCheckConfig(check))
+		assert.NoError(t, st.UpdateCheckConfig(ctx, check))
 
 		time.Sleep(1 * time.Second)
-		assert.NoError(t, st.DeleteCheckConfigByName(check.Organization, check.Name))
+
+		err = st.DeleteCheckConfigByName(ctx, check.Name)
+		assert.NoError(t, err)
+
 		time.Sleep(1 * time.Second)
+
 		assert.NoError(t, checker.Stop())
 		assert.NoError(t, bus.Stop())
 		close(ch)

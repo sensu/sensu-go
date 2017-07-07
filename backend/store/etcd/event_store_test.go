@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -10,47 +11,50 @@ import (
 
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		event := types.FixtureEvent("entity1", "check1")
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
+
 		// We should receive an empty slice if no results were found
-		events, err := store.GetEvents("default")
+		events, err := store.GetEvents(ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, events)
 
-		event := types.FixtureEvent("entity1", "check1")
-		assert.NoError(t, store.UpdateEvent(event))
+		err = store.UpdateEvent(ctx, event)
+		assert.NoError(t, err)
 
-		newEv, err := store.GetEventByEntityCheck("default", "entity1", "check1")
+		newEv, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
 		assert.NoError(t, err)
 		assert.EqualValues(t, event, newEv)
 
-		events, err = store.GetEvents("default")
+		events, err = store.GetEvents(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
 		assert.EqualValues(t, event, events[0])
 
-		newEv, err = store.GetEventByEntityCheck("default", "", "foo")
+		newEv, err = store.GetEventByEntityCheck(ctx, "", "foo")
 		assert.Nil(t, newEv)
 		assert.Error(t, err)
 
-		newEv, err = store.GetEventByEntityCheck("default", "foo", "")
+		newEv, err = store.GetEventByEntityCheck(ctx, "foo", "")
 		assert.Nil(t, newEv)
 		assert.Error(t, err)
 
-		newEv, err = store.GetEventByEntityCheck("default", "foo", "foo")
+		newEv, err = store.GetEventByEntityCheck(ctx, "foo", "foo")
 		assert.Nil(t, newEv)
 		assert.Nil(t, err)
 
-		events, err = store.GetEventsByEntity("default", "entity1")
+		events, err = store.GetEventsByEntity(ctx, "entity1")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
 		assert.EqualValues(t, event, events[0])
 
-		assert.NoError(t, store.DeleteEventByEntityCheck("default", "entity1", "check1"))
-		newEv, err = store.GetEventByEntityCheck("default", "entity1", "check1")
+		assert.NoError(t, store.DeleteEventByEntityCheck(ctx, "entity1", "check1"))
+		newEv, err = store.GetEventByEntityCheck(ctx, "entity1", "check1")
 		assert.Nil(t, newEv)
 		assert.NoError(t, err)
 
-		assert.Error(t, store.DeleteEventByEntityCheck("", "", ""))
-		assert.Error(t, store.DeleteEventByEntityCheck("default", "", "foo"))
-		assert.Error(t, store.DeleteEventByEntityCheck("default", "foo", ""))
+		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "", ""))
+		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "", "foo"))
+		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "foo", ""))
 	})
 }

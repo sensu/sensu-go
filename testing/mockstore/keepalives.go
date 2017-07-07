@@ -1,15 +1,15 @@
 package mockstore
 
-//// Keepalives
-
-// UpdateKeepalive ...
-func (s *MockStore) UpdateKeepalive(org, entityID string, expiration int64) error {
-	args := s.Called(org, entityID, expiration)
-	return args.Error(0)
-}
+import "context"
 
 // GetKeepalive ...
-func (s *MockStore) GetKeepalive(org, entityID string) (int64, error) {
-	args := s.Called(org, entityID)
+func (s *MockStore) GetKeepalive(ctx context.Context, entityID string) (int64, error) {
+	args := s.Called(ctx, entityID)
 	return args.Get(0).(int64), args.Error(1)
+}
+
+// UpdateKeepalive ...
+func (s *MockStore) UpdateKeepalive(ctx context.Context, entityID string, expiration int64) error {
+	args := s.Called(ctx, entityID, expiration)
+	return args.Error(0)
 }

@@ -29,9 +29,7 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 	// Do we need to test that this isn't empty? We should figure that out.
 	entityID := vars["entity"]
 
-	org := organization(r)
-
-	events, err := c.Store.GetEventsByEntity(org, entityID)
+	events, err := c.Store.GetEventsByEntity(r.Context(), entityID)
 	if err != nil {
 		http.Error(w, "error getting events for entity", http.StatusInternalServerError)
 		return
@@ -57,9 +55,7 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 	entityID := vars["entity"]
 	checkID := vars["check"]
 
-	org := organization(r)
-
-	event, err := c.Store.GetEventByEntityCheck(org, entityID, checkID)
+	event, err := c.Store.GetEventByEntityCheck(r.Context(), entityID, checkID)
 	if err != nil {
 		http.Error(w, "error getting event for check", http.StatusInternalServerError)
 		return
@@ -81,9 +77,7 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
-	org := organization(r)
-
-	events, err := c.Store.GetEvents(org)
+	events, err := c.Store.GetEvents(r.Context())
 	if err != nil {
 		http.Error(w, "error getting events", http.StatusInternalServerError)
 		return
@@ -110,7 +104,7 @@ func (c *EventsController) updateEvents(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = c.Store.UpdateEvent(&event)
+	err = c.Store.UpdateEvent(r.Context(), &event)
 	if err != nil {
 		logger.Error("invalid event: ", err.Error())
 		http.Error(w, "invalid event", http.StatusInternalServerError)

@@ -53,8 +53,16 @@ func TestGoodHandshake(t *testing.T) {
 	bus.Start()
 
 	st := &mockstore.MockStore{}
-	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
-	st.On("GetOrganizationByName", mock.AnythingOfType("string")).Return(&types.Organization{}, nil)
+	st.On(
+		"UpdateEntity",
+		mock.Anything,
+		mock.AnythingOfType("*types.Entity"),
+	).Return(nil)
+	st.On(
+		"GetOrganizationByName",
+		mock.Anything,
+		mock.AnythingOfType("string"),
+	).Return(&types.Organization{}, nil)
 
 	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
@@ -106,8 +114,16 @@ func TestBadOrganizationHandshake(t *testing.T) {
 	bus.Start()
 
 	st := &mockstore.MockStore{}
-	st.On("UpdateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
-	st.On("GetOrganizationByName", mock.AnythingOfType("string")).Return(
+	st.On(
+		"UpdateEntity",
+		mock.Anything,
+		mock.AnythingOfType("*types.Entity"),
+	).Return(nil)
+	st.On(
+		"GetOrganizationByName",
+		mock.Anything,
+		mock.AnythingOfType("string"),
+	).Return(
 		&types.Organization{},
 		errors.New("error"),
 	)

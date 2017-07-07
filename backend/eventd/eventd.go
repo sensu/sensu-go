@@ -1,6 +1,7 @@
 package eventd
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"sync"
@@ -129,15 +130,16 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	prevEvent, err := e.Store.GetEventByEntityCheck(
-		event.Entity.Organization, event.Entity.ID, event.Check.Config.Name,
+		ctx, event.Entity.ID, event.Check.Config.Name,
 	)
 	if err != nil {
 		return err
 	}
 
 	if prevEvent == nil {
-		err = e.Store.UpdateEvent(event)
+		err = e.Store.UpdateEvent(ctx, event)
 		if err != nil {
 			return err
 		}
@@ -150,7 +152,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	event.Check.MergeWith(prevEvent.Check)
 
-	err = e.Store.UpdateEvent(event)
+	err = e.Store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
 	}

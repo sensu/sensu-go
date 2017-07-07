@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/context"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func testHandler() http.HandlerFunc {
@@ -22,15 +22,15 @@ func testHandler() http.HandlerFunc {
 
 func TestValidateOrganization(t *testing.T) {
 	store := &mockstore.MockStore{}
-	store.On("GetOrganizationByName", "foo").Return(&types.Organization{}, nil)
+	store.On("GetOrganizationByName", mock.Anything, "foo").Return(&types.Organization{}, nil)
 
-	server := httptest.NewServer(ValidateOrganization(
+	server := httptest.NewServer(Organization(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Make sure that the organization is within the request context
-			value := context.Get(r, OrganizationKey)
-			assert.NotNil(t, value)
-			organizationFromContext, _ := value.(string)
-			assert.Equal(t, "foo", organizationFromContext)
+			org := r.Context().Value(types.OrganizationKey)
+			assert.NotNil(t, org)
+			orgString, _ := org.(string)
+			assert.Equal(t, "foo", orgString)
 
 			return
 		}),
@@ -54,7 +54,7 @@ func TestValidateOrganization(t *testing.T) {
 func TestValidateNoOrganization(t *testing.T) {
 	store := &mockstore.MockStore{}
 
-	server := httptest.NewServer(ValidateOrganization(testHandler(), store))
+	server := httptest.NewServer(Organization(testHandler(), store))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -67,9 +67,13 @@ func TestValidateNoOrganization(t *testing.T) {
 
 func TestValidateOrganizationError(t *testing.T) {
 	store := &mockstore.MockStore{}
-	store.On("GetOrganizationByName", "foo").Return(&types.Organization{}, errors.New("error"))
+	store.On(
+		"GetOrganizationByName",
+		mock.Anything,
+		"foo",
+	).Return(&types.Organization{}, errors.New("error"))
 
-	server := httptest.NewServer(ValidateOrganization(testHandler(), store))
+	server := httptest.NewServer(Organization(testHandler(), store))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)

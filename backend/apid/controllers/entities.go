@@ -24,9 +24,7 @@ func (c *EntitiesController) Register(r *mux.Router) {
 
 // many handles GET requests to the /entities endpoint.
 func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
-	org := organization(r)
-
-	es, err := c.Store.GetEntities(org)
+	es, err := c.Store.GetEntities(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -55,10 +53,8 @@ func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 		err    error
 	)
 
-	org := organization(r)
-
 	if method == http.MethodGet || method == http.MethodDelete {
-		entity, err = c.Store.GetEntityByID(org, id)
+		entity, err = c.Store.GetEntityByID(r.Context(), id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -80,7 +76,7 @@ func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprint(w, string(eb))
 	case http.MethodDelete:
-		err := c.Store.DeleteEntityByID(org, id)
+		err := c.Store.DeleteEntityByID(r.Context(), id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

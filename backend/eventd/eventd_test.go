@@ -39,7 +39,12 @@ func TestEventHandling(t *testing.T) {
 
 	var nilEvent *types.Event
 	// no previous event.
-	mockStore.On("GetEventByEntityCheck", "default", "entity", "check").Return(nilEvent, nil)
+	mockStore.On(
+		"GetEventByEntityCheck",
+		mock.Anything,
+		"entity",
+		"check",
+	).Return(nilEvent, nil)
 	mockStore.On("UpdateEvent", mock.AnythingOfType("*types.Event")).Return(nil)
 
 	bus.Publish(messaging.TopicEventRaw, event)

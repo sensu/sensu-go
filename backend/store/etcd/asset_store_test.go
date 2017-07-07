@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -11,11 +12,12 @@ import (
 func TestAssetStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		asset := types.FixtureAsset("ruby")
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, asset.Organization)
 
-		err := store.UpdateAsset(asset)
+		err := store.UpdateAsset(ctx, asset)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetAssetByName("default", "ruby")
+		retrieved, err := store.GetAssetByName(ctx, "ruby")
 		assert.NoError(t, err)
 		assert.NotNil(t, retrieved)
 
@@ -24,7 +26,7 @@ func TestAssetStorage(t *testing.T) {
 		assert.Equal(t, asset.Sha512, retrieved.Sha512)
 		assert.Equal(t, asset.Metadata, retrieved.Metadata)
 
-		assets, err := store.GetAssets("default")
+		assets, err := store.GetAssets(ctx)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, assets)
 		assert.Equal(t, 1, len(assets))

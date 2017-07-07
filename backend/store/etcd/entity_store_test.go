@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -10,33 +11,35 @@ import (
 
 func TestEntityStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
+		entity := types.FixtureEntity("entity")
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
+
 		// We should receive an empty slice if no results were found
-		entities, err := store.GetEntities("default")
+		entities, err := store.GetEntities(ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, entities)
 
-		entity := types.FixtureEntity("entity")
-		err = store.UpdateEntity(entity)
+		err = store.UpdateEntity(ctx, entity)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetEntityByID(entity.Organization, entity.ID)
+		retrieved, err := store.GetEntityByID(ctx, entity.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, entity.ID, retrieved.ID)
 
-		entities, err = store.GetEntities("default")
+		entities, err = store.GetEntities(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(entities))
 		assert.Equal(t, entity.ID, entities[0].ID)
 
-		err = store.DeleteEntity(entity)
+		err = store.DeleteEntity(ctx, entity)
 		assert.NoError(t, err)
 
-		retrieved, err = store.GetEntityByID(entity.Organization, entity.ID)
+		retrieved, err = store.GetEntityByID(ctx, entity.ID)
 		assert.Nil(t, retrieved)
 		assert.NoError(t, err)
 
 		// Nonexistent entity deletion should return no error.
-		err = store.DeleteEntity(entity)
+		err = store.DeleteEntity(ctx, entity)
 		assert.NoError(t, err)
 	})
 }

@@ -26,9 +26,7 @@ func (c *ChecksController) Register(r *mux.Router) {
 
 // many handles requests to /checks
 func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
-	org := organization(r)
-
-	checks, err := c.Store.GetCheckConfigs(org)
+	checks, err := c.Store.GetCheckConfigs(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -54,10 +52,8 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 		err   error
 	)
 
-	org := organization(r)
-
 	if method == http.MethodGet || method == http.MethodDelete {
-		check, err = c.Store.GetCheckConfigByName(org, name)
+		check, err = c.Store.GetCheckConfigByName(r.Context(), name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -98,14 +94,14 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = c.Store.UpdateCheckConfig(newCheck)
+		err = c.Store.UpdateCheckConfig(r.Context(), newCheck)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		return
 	case http.MethodDelete:
-		err := c.Store.DeleteCheckConfigByName(org, name)
+		err := c.Store.DeleteCheckConfigByName(r.Context(), name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
