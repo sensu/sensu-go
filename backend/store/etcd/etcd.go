@@ -61,8 +61,6 @@ type TLSConfig struct {
 
 type TLSInfo transport.TLSInfo
 
-// type TLSConfig transport.TLSInfo
-
 // NewConfig returns a pointer to an initialized Config object with defaults.
 func NewConfig() *Config {
 	c := &Config{}

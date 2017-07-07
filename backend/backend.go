@@ -96,8 +96,6 @@ type Backend struct {
 	eventd     daemon.Daemon
 	pipelined  daemon.Daemon
 	keepalived daemon.Daemon
-
-	tlsConfig *tls.Config
 }
 
 // NewBackend will, given a Config, create an initialized Backend and return a
@@ -145,13 +143,13 @@ func NewBackend(config *Config) (*Backend, error) {
 		cert, err := tls.LoadX509KeyPair(config.TLS.CertFile, config.TLS.KeyFile)
 		if err != nil {
 			// do something with the error
-			logger.Errorf("Error loading tls client certificate: %s", err)
+			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
 		}
 
 		// CA Cert
 		caCert, err := ioutil.ReadFile(config.TLS.ClientCertAuth)
 		if err != nil {
-			logger.Errorf("Error loading tls CA cert: %s", err)
+			return nil, fmt.Errorf("Error loading tls CA cert: %s", err)
 		}
 
 		caCertPool := x509.NewCertPool()
@@ -169,7 +167,6 @@ func NewBackend(config *Config) (*Backend, error) {
 
 		done:         make(chan struct{}),
 		shutdownChan: make(chan struct{}),
-		tlsConfig:    tlsConfig,
 	}
 
 	// we go ahead and setup and start etcd here, because we'll have to pass
@@ -244,6 +241,16 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	// Initializes the JWT secret
+	jwt.InitSecret(st)
+
+	// TODO(Simon): We need to determine the authentication driver from the config
+	auth := &basic.Basic{
+		Enabled: b.Config.APIAuthentication,
+		Store:   st,
+	}
+
+	// TLS config gets passed down here
 	b.apid = &apid.APId{
 		Store:         st,
 		Host:          b.Config.APIHost,
