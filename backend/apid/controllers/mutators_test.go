@@ -25,7 +25,7 @@ func TestHttpApiMutatorsGet(t *testing.T) {
 		types.FixtureMutator("mutator2"),
 	}
 
-	store.On("GetMutators", mock.AnythingOfType("*context.valueCtx")).Return(mutators, nil)
+	store.On("GetMutators", mock.Anything).Return(mutators, nil)
 	req, _ := http.NewRequest("GET", "/mutators", nil)
 	res := processRequest(c, req)
 
@@ -51,7 +51,7 @@ func TestHttpApiMutatorGet(t *testing.T) {
 	}
 
 	var nilMutator *types.Mutator
-	store.On("GetMutatorByName", mock.AnythingOfType("*context.valueCtx"), "somemutator").Return(nilMutator, nil)
+	store.On("GetMutatorByName", mock.Anything, "somemutator").Return(nilMutator, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/mutators/somemutator", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
@@ -59,7 +59,7 @@ func TestHttpApiMutatorGet(t *testing.T) {
 
 	mutatorName := "mutator1"
 	mutator := types.FixtureMutator(mutatorName)
-	store.On("GetMutatorByName", mock.AnythingOfType("*context.valueCtx"), mutatorName).Return(mutator, nil)
+	store.On("GetMutatorByName", mock.Anything, mutatorName).Return(mutator, nil)
 	foundReq, _ := http.NewRequest("GET", fmt.Sprintf("/mutators/%s", mutatorName), nil)
 	foundRes := processRequest(c, foundReq)
 
@@ -127,8 +127,8 @@ func TestHttpApiMutatorDelete(t *testing.T) {
 
 	mutatorName := "mutator1"
 	mutator := types.FixtureMutator(mutatorName)
-	store.On("GetMutatorByName", mock.AnythingOfType("*context.valueCtx"), mutatorName).Return(mutator, nil)
-	store.On("DeleteMutatorByName", mock.AnythingOfType("*context.valueCtx"), mutatorName).Return(nil)
+	store.On("GetMutatorByName", mock.Anything, mutatorName).Return(mutator, nil)
+	store.On("DeleteMutatorByName", mock.Anything, mutatorName).Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/mutators/%s", mutatorName), nil)
 	deleteRes := processRequest(c, deleteReq)
 

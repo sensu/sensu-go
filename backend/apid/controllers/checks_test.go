@@ -25,7 +25,7 @@ func TestHttpApiChecksGet(t *testing.T) {
 		types.FixtureCheckConfig("check1"),
 		types.FixtureCheckConfig("check2"),
 	}
-	store.On("GetCheckConfigs", mock.AnythingOfType("*context.valueCtx")).Return(checks, nil)
+	store.On("GetCheckConfigs", mock.Anything).Return(checks, nil)
 	req, _ := http.NewRequest("GET", "/checks", nil)
 	res := processRequest(c, req)
 
@@ -48,7 +48,7 @@ func TestHttpApiChecksGetError(t *testing.T) {
 	}
 
 	var nilChecks []*types.CheckConfig
-	store.On("GetCheckConfigs", mock.AnythingOfType("*context.valueCtx")).Return(nilChecks, errors.New("error"))
+	store.On("GetCheckConfigs", mock.Anything).Return(nilChecks, errors.New("error"))
 	req, _ := http.NewRequest("GET", "/checks", nil)
 	res := processRequest(c, req)
 
@@ -66,14 +66,14 @@ func TestHttpApiCheckGet(t *testing.T) {
 	}
 
 	var nilCheck *types.CheckConfig
-	store.On("GetCheckConfigByName", mock.AnythingOfType("*context.valueCtx"), "somecheck").Return(nilCheck, nil)
+	store.On("GetCheckConfigByName", mock.Anything, "somecheck").Return(nilCheck, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/checks/somecheck", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
 
 	check1 := types.FixtureCheckConfig("check1")
-	store.On("GetCheckConfigByName", mock.AnythingOfType("*context.valueCtx"), "check1").Return(check1, nil)
+	store.On("GetCheckConfigByName", mock.Anything, "check1").Return(check1, nil)
 	foundReq, _ := http.NewRequest("GET", "/checks/check1", nil)
 	foundRes := processRequest(c, foundReq)
 
@@ -101,7 +101,7 @@ func TestHttpApiCheckPut(t *testing.T) {
 	check := types.FixtureCheckConfig("check1")
 	updatedCheckJSON, _ := json.Marshal(check)
 
-	store.On("UpdateCheckConfig", mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
+	store.On("UpdateCheckConfig", mock.Anything, mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
 		receivedCheck := args.Get(1).(*types.CheckConfig)
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
@@ -122,7 +122,7 @@ func TestHttpApiCheckPost(t *testing.T) {
 	check := types.FixtureCheckConfig("check1")
 	updatedCheckJSON, _ := json.Marshal(check)
 
-	store.On("UpdateCheckConfig", mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
+	store.On("UpdateCheckConfig", mock.Anything, mock.AnythingOfType("*types.CheckConfig")).Return(nil).Run(func(args mock.Arguments) {
 		receivedCheck := args.Get(1).(*types.CheckConfig)
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
@@ -141,8 +141,8 @@ func TestHttpApiCheckDelete(t *testing.T) {
 	}
 
 	check := types.FixtureCheckConfig("check1")
-	store.On("GetCheckConfigByName", mock.AnythingOfType("*context.valueCtx"), "check1").Return(check, nil)
-	store.On("DeleteCheckConfigByName", mock.AnythingOfType("*context.valueCtx"), "check1").Return(nil)
+	store.On("GetCheckConfigByName", mock.Anything, "check1").Return(check, nil)
+	store.On("DeleteCheckConfigByName", mock.Anything, "check1").Return(nil)
 	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/checks/check1"), nil)
 	deleteRes := processRequest(c, deleteReq)
 

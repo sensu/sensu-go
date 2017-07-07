@@ -25,7 +25,7 @@ func TestHttpApiAssetsGet(t *testing.T) {
 		types.FixtureAsset("one"),
 		types.FixtureAsset("two"),
 	}
-	store.On("GetAssets", mock.AnythingOfType("*context.valueCtx")).Return(assets, nil)
+	store.On("GetAssets", mock.Anything).Return(assets, nil)
 
 	req, _ := http.NewRequest("GET", "/assets", nil)
 	res := processRequest(a, req)
@@ -48,7 +48,7 @@ func TestHttpApiAssetsGetError(t *testing.T) {
 	}
 
 	var nilAssets []*types.Asset
-	store.On("GetAssets", mock.AnythingOfType("*context.valueCtx")).Return(nilAssets, errors.New("error"))
+	store.On("GetAssets", mock.Anything).Return(nilAssets, errors.New("error"))
 
 	req, _ := http.NewRequest("GET", "/assets", nil)
 	res := processRequest(a, req)
@@ -67,14 +67,14 @@ func TestHttpApiAssetGet(t *testing.T) {
 	}
 
 	var nilAsset *types.Asset
-	store.On("GetAssetByName", mock.AnythingOfType("*context.valueCtx"), "ruby21").Return(nilAsset, nil)
+	store.On("GetAssetByName", mock.Anything, "ruby21").Return(nilAsset, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/asset/ruby21", nil)
 	notFoundRes := processRequest(a, notFoundReq)
 
 	assert.Equal(http.StatusNotFound, notFoundRes.Code)
 
 	asset := types.FixtureAsset("ruby22")
-	store.On("GetAssetByName", mock.AnythingOfType("*context.valueCtx"), "ruby22").Return(asset, nil)
+	store.On("GetAssetByName", mock.Anything, "ruby22").Return(asset, nil)
 	foundReq, _ := http.NewRequest("GET", "/assets/ruby22", nil)
 	foundRes := processRequest(a, foundReq)
 
@@ -101,7 +101,7 @@ func TestHttpApiAssetPut(t *testing.T) {
 	asset := types.FixtureAsset("ruby21")
 	updatedAssetJSON, _ := json.Marshal(asset)
 
-	store.On("UpdateAsset", mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*types.Asset")).Return(nil).Run(func(args mock.Arguments) {
+	store.On("UpdateAsset", mock.Anything, mock.AnythingOfType("*types.Asset")).Return(nil).Run(func(args mock.Arguments) {
 		receivedAsset := args.Get(1).(*types.Asset)
 		assert.NoError(receivedAsset.Validate())
 		assert.EqualValues(asset, receivedAsset)

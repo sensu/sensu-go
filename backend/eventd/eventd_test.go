@@ -41,7 +41,7 @@ func TestEventHandling(t *testing.T) {
 	// no previous event.
 	mockStore.On(
 		"GetEventByEntityCheck",
-		mock.AnythingOfType("*context.valueCtx"),
+		mock.Anything,
 		"entity",
 		"check",
 	).Return(nilEvent, nil)
