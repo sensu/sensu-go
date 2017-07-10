@@ -14,7 +14,6 @@ import (
 var (
 	agentHost             string
 	agentPort             int
-	apiAuthentication     bool
 	apiHost               string
 	apiPort               int
 	dashboardDir          string
@@ -44,7 +43,6 @@ func newStartCommand() *cobra.Command {
 			cfg := &backend.Config{
 				AgentHost:             agentHost,
 				AgentPort:             agentPort,
-				APIAuthentication:     apiAuthentication,
 				APIHost:               apiHost,
 				APIPort:               apiPort,
 				DashboardDir:          dashboardDir,
@@ -113,7 +111,6 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().StringVar(&agentHost, "agent-host", "0.0.0.0", "Agent listener host")
 	cmd.Flags().IntVar(&agentPort, "agent-port", 8081, "Agent listener port")
-	cmd.Flags().BoolVar(&apiAuthentication, "api-authentication", false, "Enable API authentication")
 	cmd.Flags().StringVar(&apiHost, "api-host", "0.0.0.0", "HTTP API listener host")
 	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
 	cmd.Flags().StringVar(&dashboardDir, "dashboard-dir", "", "path to sensu dashboard static assets")

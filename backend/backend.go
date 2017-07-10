@@ -48,9 +48,8 @@ type Config struct {
 	AgentPort int
 
 	// Apid Configuration
-	APIAuthentication bool
-	APIHost           string
-	APIPort           int
+	APIHost string
+	APIPort int
 
 	// Dashboardd Configuration
 	DashboardDir  string
@@ -199,7 +198,7 @@ func (b *Backend) Run() error {
 
 	// TODO(Simon): We need to determine the authentication driver from the config
 	auth := &basic.Basic{
-		Enabled: b.Config.APIAuthentication,
+		Enabled: true,
 		Store:   st,
 	}
 
