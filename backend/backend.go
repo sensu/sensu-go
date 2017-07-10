@@ -140,7 +140,7 @@ func NewBackend(config *Config) (*Backend, error) {
 		}
 
 		// CA Cert
-		caCert, err := ioutil.ReadFile(config.TLS.ClientCertAuth)
+		caCert, err := ioutil.ReadFile(config.TLS.TrustedCAFile)
 		if err != nil {
 			return nil, fmt.Errorf("Error loading tls CA cert: %s", err)
 		}
@@ -176,9 +176,9 @@ func NewBackend(config *Config) (*Backend, error) {
 	if config.TLS != nil {
 		cfg.TLSConfig = &etcd.TLSConfig{
 			Info: etcd.TLSInfo{
-				CertFile: config.TLS.CertFile,
-				KeyFile:  config.TLS.KeyFile,
-				CAFile:   config.TLS.ClientCertAuth,
+				CertFile:      config.TLS.CertFile,
+				KeyFile:       config.TLS.KeyFile,
+				TrustedCAFile: config.TLS.TrustedCAFile,
 			},
 			TLS: *tlsConfig,
 		}

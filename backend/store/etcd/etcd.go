@@ -151,6 +151,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	if config.TLSConfig != nil {
 		cfg.ClientTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)
+		cfg.ClientTLSInfo.ClientCertAuth = true
 	}
 
 	capnslog.SetFormatter(NewLogrusFormatter())

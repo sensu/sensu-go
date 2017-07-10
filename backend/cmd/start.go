@@ -32,9 +32,9 @@ var (
 	etcdInitialClusterToken     string
 	etcdInitialAdvertisePeerURL string
 
-	certFile       string
-	keyFile        string
-	clientCertAuth string
+	certFile      string
+	keyFile       string
+	trustedCAFile string
 )
 
 func init() {
@@ -87,9 +87,9 @@ func newStartCommand() *cobra.Command {
 				cfg.EtcdName = etcdName
 			}
 
-			if certFile != "" && keyFile != "" && clientCertAuth != "" {
-				cfg.TLS = &types.TLSConfig{certFile, keyFile, clientCertAuth}
-			} else if certFile != "" || keyFile != "" || clientCertAuth != "" {
+			if certFile != "" && keyFile != "" && trustedCAFile != "" {
+				cfg.TLS = &types.TLSConfig{certFile, keyFile, trustedCAFile}
+			} else if certFile != "" || keyFile != "" || trustedCAFile != "" {
 				emptyFlags := []string{}
 				if certFile == "" {
 					emptyFlags = append(emptyFlags, "cert-file")
@@ -97,8 +97,8 @@ func newStartCommand() *cobra.Command {
 				if keyFile == "" {
 					emptyFlags = append(emptyFlags, "key-file")
 				}
-				if clientCertAuth == "" {
-					emptyFlags = append(emptyFlags, "client-cert-auth")
+				if trustedCAFile == "" {
+					emptyFlags = append(emptyFlags, "trusted-ca-file")
 				}
 
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
@@ -151,7 +151,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&etcdName, "store-node-name", "", "store cluster member node name")
 	cmd.Flags().StringVar(&certFile, "cert-file", "", "tls certificate")
 	cmd.Flags().StringVar(&keyFile, "key-file", "", "tls certificate")
-	cmd.Flags().StringVar(&clientCertAuth, "client-cert-auth", "", "tls certificate authority")
+	cmd.Flags().StringVar(&trustedCAFile, "client-cert-auth", "", "tls certificate authority")
 
 	return cmd
 }
