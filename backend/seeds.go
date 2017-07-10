@@ -3,13 +3,15 @@ package backend
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/authentication"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // SeedInitialData seeds initial data into the store. Ideally this operation is
 // idempotent and can be safely run every time the backend starts.
-func seedInitialData(store store.Store) error {
+func seedInitialData(store store.Store, provider authentication.Provider) error {
 	initializer, _ := store.NewInitializer()
 
 	// Lock initialization key to avoid competing installations
@@ -29,6 +31,14 @@ func seedInitialData(store store.Store) error {
 
 	// Set default role
 	if err := setupAdminRole(store); err != nil {
+		return err
+	}
+
+	// Initializes the JWT secret
+	jwt.InitSecret(store)
+
+	// Default user
+	if err := setupDefaultUser(provider); err != nil {
 		return err
 	}
 
@@ -63,4 +73,15 @@ func setupDefaultOrganization(store store.Store) error {
 			Name:        "default",
 			Description: "Default organization",
 		})
+}
+
+func setupDefaultUser(provider authentication.Provider) error {
+	// Set default user
+	admin := &types.User{
+		Username: "admin",
+		Password: "P@ssw0rd!",
+		Roles:    []string{"admin"},
+	}
+
+	return provider.CreateUser(admin)
 }

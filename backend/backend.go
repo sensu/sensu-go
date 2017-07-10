@@ -8,7 +8,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
@@ -170,8 +169,14 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	// Initialize the authentication provider
+	authProvider := &basic.Basic{
+		Enabled: true,
+		Store:   st,
+	}
+
 	// Seed initial data
-	err = seedInitialData(st)
+	err = seedInitialData(st, authProvider)
 	if err != nil {
 		return err
 	}
@@ -193,17 +198,8 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	// Initializes the JWT secret
-	jwt.InitSecret(st)
-
-	// TODO(Simon): We need to determine the authentication driver from the config
-	auth := &basic.Basic{
-		Enabled: true,
-		Store:   st,
-	}
-
 	b.apid = &apid.APId{
-		Authentication: auth,
+		Authentication: authProvider,
 		Store:          st,
 		Host:           b.Config.APIHost,
 		Port:           b.Config.APIPort,
