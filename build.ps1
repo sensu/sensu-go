@@ -53,9 +53,22 @@ function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string
   return $outfile
 }
 
-function build_binary([string]$goos, [string]$goarch, [string]$bin)
+function cmd_name_map([string]$cmd)
 {
-  $outfile = "target/$goos-$goarch/sensu-$bin.exe"
+  switch ($env:GOOS)
+  {
+    "backend"
+      return "sensu-backend"
+    "agent"
+      return "sensu-agent"
+    "cli"
+      return "sensuctl"
+  }
+}
+
+function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd_name)
+{
+  $outfile = "target/$goos-$goarch/$cmd_name.exe"
   $env:GOOS = $goos
   $env:GOARCH = $goarch
   go build -i -o $outfile "$REPO_PATH/$bin/cmd/..."
@@ -103,12 +116,14 @@ function build_commands
 
 function build_command([string]$bin)
 {
+  $cmd_name = cmd_name_map $bin
+
   If (!(Test-Path -Path "bin")) {
     New-Item -ItemType directory -Path "bin" | out-null
   }
 
   echo "Building $bin for $env:GOOS-$env:GOARCH"
-  $out = build_binary $env:GOOS $env:GOARCH $bin
+  $out = build_binary $env:GOOS $env:GOARCH $bin $cmd_name
   Remove-Item -Path "bin/$(Split-Path -Leaf $out)" -EA SilentlyContinue
   cp $out bin
 }
