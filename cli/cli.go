@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// SensuCmdName name of the command
 const SensuCmdName = "sensuctl"
 
 // SensuCli is an instance of the Sensu command line client;
