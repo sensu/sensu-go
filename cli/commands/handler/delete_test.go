@@ -28,6 +28,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	cli := test.NewMockCLI()
 	cmd := DeleteCommand(cli)
 	cmd.Flags().Set("timeout", "15")
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
@@ -42,6 +43,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("DeleteHandler", mock.AnythingOfType("*types.Handler")).Return(nil)
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{"test-handler"})
 
 	assert.Regexp("OK", out)
@@ -56,9 +58,21 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("DeleteHandler", mock.AnythingOfType("*types.Handler")).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{"test-handler"})
 
 	assert.Empty(out)
 	assert.NotNil(err)
 	assert.Equal("oh noes", err.Error())
+}
+
+func TestDeleteCommandRunEFailConfirm(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	cmd := DeleteCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"meowmix"})
+
+	assert.Contains(out, "Canceled")
+	assert.NoError(err)
 }

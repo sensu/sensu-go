@@ -6,6 +6,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -13,13 +14,16 @@ import (
 // DeleteCommand adds a command that allows user to delete entities
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	exec := &deleteExecutor{client: cli.Client}
-
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:          "delete [ID]",
 		Short:        "delete entity given ID",
 		RunE:         exec.run,
 		SilenceUsage: true,
 	}
+
+	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+
+	return cmd
 }
 
 type deleteExecutor struct {
@@ -32,6 +36,13 @@ func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		cmd.Help()
 		return nil
+	}
+
+	if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
+		if confirmed := helpers.ConfirmDelete(id, cmd.OutOrStdout()); !confirmed {
+			fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
+			return nil
+		}
 	}
 
 	if err := e.deleteEntityByID(id); err != nil {

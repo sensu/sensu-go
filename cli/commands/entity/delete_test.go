@@ -27,6 +27,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	cmd.Flags().Set("timeout", "15")
 	out, err := test.RunCmd(cmd, []string{})
 
@@ -42,6 +43,7 @@ func TestDeleteCommandRunEClosureMissingFlags(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotContains(out, "OK")
@@ -57,6 +59,8 @@ func TestDeleteCommandRunEClosureTooManyFlags(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
+
 	out, err := test.RunCmd(cmd, []string{"one", "two"})
 
 	assert.NotContains(out, "OK")
@@ -72,6 +76,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{"my-ID"})
 
 	assert.Regexp("OK", out)
@@ -86,9 +91,21 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{"test-handler"})
 
 	assert.Empty(out)
 	assert.NotNil(err)
 	assert.Equal("oh noes", err.Error())
+}
+
+func TestDeleteCommandRunEFailConfirm(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	cmd := DeleteCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"test-handler"})
+
+	assert.Contains(out, "Canceled")
+	assert.NoError(err)
 }

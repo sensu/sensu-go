@@ -26,6 +26,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
@@ -40,6 +41,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("DeleteRole", "foo").Return(nil)
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	assert.Regexp("Deleted", out)
@@ -54,9 +56,21 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("DeleteRole", "bar").Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
+	cmd.Flags().Set("skip-confirm", "t")
 	out, err := test.RunCmd(cmd, []string{"bar"})
 
 	assert.Empty(out)
 	assert.NotNil(err)
 	assert.Equal("oh noes", err.Error())
+}
+
+func TestDeleteCommandRunEFailConfirm(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	cmd := DeleteCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"bar"})
+
+	assert.Contains(out, "Canceled")
+	assert.NoError(err)
 }

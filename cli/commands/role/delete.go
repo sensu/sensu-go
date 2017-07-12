@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
 )
 
 // DeleteCommand defines new command to delete roles
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:          "delete NAME",
 		Short:        "delete role given name",
 		SilenceUsage: true,
@@ -21,6 +22,14 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			name := args[0]
+
+			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
+				if confirmed := helpers.ConfirmDelete(name, cmd.OutOrStdout()); !confirmed {
+					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
+					return nil
+				}
+			}
+
 			err := cli.Client.DeleteRole(name)
 			if err != nil {
 				return err
@@ -30,4 +39,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+
+	return cmd
 }
