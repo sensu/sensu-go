@@ -55,14 +55,17 @@ function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string
 
 function cmd_name_map([string]$cmd)
 {
-  switch ($env:GOOS)
+  switch ($cmd)
   {
-    "backend"
+    "backend" {
       return "sensu-backend"
-    "agent"
+    }
+    "agent" {
       return "sensu-agent"
-    "cli"
+    }
+    "cli" {
       return "sensuctl"
+    }
   }
 }
 
