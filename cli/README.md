@@ -25,7 +25,7 @@ fi
 When bash-completion is available we can add the following to your `~/.bash_profile`:
 
 ```bash
-source <(sensu-cli completion bash)
+source <(sensuctl completion bash)
 ```
 
 You can now source your `~/.bash_profile` or launch a new terminal to utilize completion.
@@ -39,7 +39,7 @@ source ~/.bash_profile
 Add the following to your `~/.zshrc`:
 
 ```bash
-source <(sensu-cli completion zsh)
+source <(sensuctl completion zsh)
 ```
 
 You can now source your `~/.zshrc` or launch a new terminal to utilize completion.
@@ -50,15 +50,15 @@ source ~/.zshrc
 
 ### Usage
 
-sensu-cli:
-> $ sensu-cli <kbd>Tab</kbd>
+sensuctl:
+> $ sensuctl <kbd>Tab</kbd>
 ```
 check       configure   event       user
 asset       completion  entity      handler
 ```
 
-sensu-cli:
-> $ sensu-cli check <kbd>Tab</kbd>
+sensuctl:
+> $ sensuctl check <kbd>Tab</kbd>
 ```
 create  delete  import  list
 ```
