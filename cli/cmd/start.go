@@ -92,8 +92,8 @@ func main() {
 func configureRootCmd() *cobra.Command {
 	showVersion := false
 	cmd := &cobra.Command{
-		Use:          "sensu-cli",
-		Short:        "A tool to help manage Sensu",
+		Use:          cli.SensuCmdName,
+		Short:        cli.SensuCmdName + " controls Sensu instances",
 		SilenceUsage: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			if showVersion {

@@ -3,6 +3,7 @@ package completion
 import (
 	"fmt"
 
+	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 )
@@ -15,11 +16,11 @@ sourcing it from the .bash_profile or .zshrc.
 
 For help using with ZSH:
 
-    $ sensu-cli completion zsh -h
+    $ ` + cli.SensuCmdName + ` completion zsh -h
 
 For help using with Bash:
 
-    $ sensu-cli completion bash -h
+    $ ` + cli.SensuCmdName + ` completion bash -h
 	`
 
 	zshShell  = "zsh"

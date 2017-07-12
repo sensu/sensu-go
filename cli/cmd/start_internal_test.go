@@ -41,7 +41,7 @@ func TestConfigureRootCmd(t *testing.T) {
 	cmd := configureRootCmd()
 
 	assert.NotNil(cmd, "Returns a Command instance")
-	assert.Equal("sensu-cli", cmd.Use, "Configures the name")
+	assert.Equal("sensuctl", cmd.Use, "Configures the name")
 	assert.NotNil(cmd.Flags().Lookup("version"), "Configures version flag")
 
 	// Run command w/o any flags

@@ -37,6 +37,23 @@ install_deps () {
 	go get github.com/gordonklaus/ineffassign
 	go get github.com/jgautheron/goconst/cmd/goconst
 	go get -u github.com/golang/lint/golint
+	go get -u github.com/UnnoTed/fileb0x
+}
+
+cmd_name_map() {
+  local cmd=$1
+
+  case "$cmd" in
+    backend)
+      echo "sensu-backend"
+      ;;
+    agent)
+      echo "sensu-agent"
+      ;;
+    cli)
+      echo "sensuctl"
+      ;;
+  esac
 }
 
 build_tool_binary () {
@@ -56,8 +73,9 @@ build_binary () {
 	local goos=$1
 	local goarch=$2
 	local cmd=$3
+	local cmd_name=$4
 
-	local outfile="target/${goos}-${goarch}/sensu-${cmd}"
+	local outfile="target/${goos}-${goarch}/${cmd_name}"
 
 	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
@@ -100,13 +118,14 @@ build_commands () {
 
 build_command () {
 	local cmd=$1
+  local cmd_name=$(cmd_name_map $cmd)
 
 	if [ ! -d bin/ ]; then
 		mkdir -p bin/
 	fi
 
 	echo "Building $cmd for ${GOOS}-${GOARCH}"
-	out=$(build_binary $GOOS $GOARCH $cmd)
+	out=$(build_binary $GOOS $GOARCH $cmd $cmd_name)
 	rm -f bin/$(basename $out)
 	cp ${out} bin
 }
@@ -158,13 +177,13 @@ docker_commands () {
 
 	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
-		build_binary linux amd64 $cmd
+    local cmd_name=$(cmd_name_map $cmd)
+		build_binary linux amd64 $cmd $cmd_name
 	done
 	docker build -t sensu/sensu .
 }
 
 static_assets () {
-	# go get -u github.com/UnnoTed/fileb0x
 	fileb0x backend/dashboardd/b0x.yaml
 }
 

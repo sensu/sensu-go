@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
 )
 
 const (
 	zshUsage = `
 # Add the following to your ~/.zshrc
-source <(sensu-cli completion zsh)
+source <(` + cli.SensuCmdName + `sensuctl completion zsh)
 
 # You can source your ~/.zshrc or launch a new terminal to utilize completion.
 source ~/.zshrc
