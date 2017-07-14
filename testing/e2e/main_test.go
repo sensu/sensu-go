@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/pkg/fileutil"
-	"github.com/sensu/sensu-go/testing/util"
+	"github.com/sensu/sensu-go/testing/testutil"
 )
 
 var binDir string
@@ -17,8 +17,8 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&binDir, "bin-dir", "../../bin", "directory containing sensu binaries")
 	flag.Parse()
 
-	agentBin := util.CommandPath("sensu-agent")
-	backendBin := util.CommandPath("sensu-backend")
+	agentBin := testutil.CommandPath("sensu-agent")
+	backendBin := testutil.CommandPath("sensu-backend")
 
 	agentPath := filepath.Join(binDir, agentBin)
 	backendPath := filepath.Join(binDir, backendBin)

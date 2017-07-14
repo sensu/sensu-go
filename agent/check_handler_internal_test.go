@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/util"
+	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ func TestExecuteCheck(t *testing.T) {
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
-	truePath := util.CommandPath(filepath.Join(toolsDir, "true"))
+	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
 	checkConfig.Command = truePath
 
 	agent.executeCheck(request)
@@ -37,7 +37,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(0, event.Check.Status)
 
-	falsePath := util.CommandPath(filepath.Join(toolsDir, "false"))
+	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
 	checkConfig.Command = falsePath
 
 	agent.executeCheck(request)
