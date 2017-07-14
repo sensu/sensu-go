@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/testing/util"
+	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +60,7 @@ func TestExecuteCommand(t *testing.T) {
 
 	catExec, catErr := ExecuteCommand(context.Background(), cat)
 	assert.Equal(t, nil, catErr)
-	assert.Equal(t, "bar", util.CleanOutput(catExec.Output))
+	assert.Equal(t, "bar", testutil.CleanOutput(catExec.Output))
 	assert.Equal(t, 0, catExec.Status)
 	assert.NotEqual(t, 0, catExec.Duration)
 
@@ -69,7 +69,7 @@ func TestExecuteCommand(t *testing.T) {
 
 	falseExec, falseErr := ExecuteCommand(context.Background(), falseCmd)
 	assert.Equal(t, nil, falseErr)
-	assert.Equal(t, "", util.CleanOutput(falseExec.Output))
+	assert.Equal(t, "", testutil.CleanOutput(falseExec.Output))
 	assert.Equal(t, 1, falseExec.Status)
 	assert.NotEqual(t, 0, falseExec.Duration)
 
@@ -78,7 +78,7 @@ func TestExecuteCommand(t *testing.T) {
 
 	outputsExec, outputsErr := ExecuteCommand(context.Background(), outputs)
 	assert.Equal(t, nil, outputsErr)
-	assert.Equal(t, "bar\n", util.CleanOutput(outputsExec.Output))
+	assert.Equal(t, "bar\n", testutil.CleanOutput(outputsExec.Output))
 	assert.Equal(t, 0, outputsExec.Status)
 	assert.NotEqual(t, 0, outputsExec.Duration)
 
@@ -88,7 +88,7 @@ func TestExecuteCommand(t *testing.T) {
 
 	sleepExec, sleepErr := ExecuteCommand(context.Background(), sleep)
 	assert.Equal(t, nil, sleepErr)
-	assert.Equal(t, "Execution timed out\n", util.CleanOutput(sleepExec.Output))
+	assert.Equal(t, "Execution timed out\n", testutil.CleanOutput(sleepExec.Output))
 	assert.Equal(t, 2, sleepExec.Status)
 	assert.NotEqual(t, 0, sleepExec.Duration)
 }

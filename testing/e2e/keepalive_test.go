@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/testing/util"
+	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +21,7 @@ import (
 // I'd love to see this organized better.
 func TestAgentKeepalives(t *testing.T) {
 	ports := make([]int, 5)
-	err := util.RandomPorts(ports)
+	err := testutil.RandomPorts(ports)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	falsePath := util.CommandPath(filepath.Join(binDir, "false"))
+	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
 	falseAbsPath, err := filepath.Abs(falsePath)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, falseAbsPath)

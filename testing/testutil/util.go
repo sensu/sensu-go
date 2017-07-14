@@ -1,24 +1,26 @@
-package util
+package testutil
 
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"runtime"
 	"strings"
+	"testing"
 )
 
-// WithTempDir runs function f within a temporary directory whose contents
-// will be removed when execution of the function is finished.
-func WithTempDir(f func(string)) {
+// TempDir provides a test with a temporary directory (under os.TempDir())
+// returning the absolute path to the directory and a remove() function
+// that should be deferred immediately after calling TempDir(t) to recursively
+// delete the contents of the directory.
+func TempDir(t *testing.T) (tmpDir string, remove func()) {
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	defer os.RemoveAll(tmpDir)
 	if err != nil {
-		log.Panic(err)
+		t.FailNow()
 	}
-	f(tmpDir)
+
+	return tmpDir, func() { os.RemoveAll(tmpDir) }
 }
 
 // RandomPorts generates len(p) random ports and assigns them to elements of p.
