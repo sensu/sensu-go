@@ -42,6 +42,24 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 
 			case <-timer.C:
 				// timed out keepalive
+
+				// test to see if the entity still exists (it may have been deleted)
+				event, err := monitorPtr.Store.GetEventByEntityCheck(context.TODO(), monitorPtr.Entity.ID, "keepalive")
+				if err != nil {
+					// this should be a temporary error talking to the store. keep trying until
+					// the store starts responding again.
+					logger.WithError(err).Error("error getting keepalive event for client")
+					break
+				}
+
+				// if the agent disconnected and reconnected elsewhere, stop the monitor
+				// and return.
+				if event != nil && event.Check.Status == 0 {
+					monitorPtr.Stop()
+					return
+				}
+
+				// if the entity is supposed to be deregistered, do so.
 				if monitorPtr.Entity.Deregister {
 					if err := monitorPtr.Deregisterer.Deregister(monitorPtr.Entity); err != nil {
 						logger.WithError(err).Error("error deregistering entity")
@@ -49,6 +67,8 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 					monitorPtr.Stop()
 					return
 				}
+
+				// this is a real keepalive event, emit it.
 				if err := monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
 					logger.WithError(err).Error("error sending keepalive event")
 				}
