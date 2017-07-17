@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
@@ -13,8 +15,33 @@ func getUserPath(id string) string {
 	return fmt.Sprintf("%s/users/%s", etcdRoot, id)
 }
 
+func (s *etcdStore) AuthenticateUser(username, password string) (*types.User, error) {
+	user, err := s.GetUser(username)
+	if err != nil {
+		return nil, fmt.Errorf("User %s does not exist", username)
+	}
+
+	if user.Disabled {
+		return nil, fmt.Errorf("User %s is disabled", username)
+	}
+
+	ok := checkPassword(user.Password, password)
+	if !ok {
+		return nil, fmt.Errorf("Wrong password for user %s", username)
+	}
+
+	return user, nil
+}
+
 // CreateUser creates a new user
 func (s *etcdStore) CreateUser(u *types.User) error {
+	// Hash the password
+	hash, err := hashPassword(u.Password)
+	if err != nil {
+		return err
+	}
+	u.Password = hash
+
 	userBytes, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -99,11 +126,29 @@ func (s *etcdStore) GetUsers() ([]*types.User, error) {
 	return usersArray, nil
 }
 
-func (s *etcdStore) UpdateUser(user *types.User) error {
-	bytes, err := json.Marshal(user)
+func (s *etcdStore) UpdateUser(u *types.User) error {
+	// Hash the password
+	hash, err := hashPassword(u.Password)
 	if err != nil {
 		return err
 	}
-	_, err = s.kvc.Put(context.TODO(), getUserPath(user.Username), string(bytes))
+	u.Password = hash
+
+	bytes, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.kvc.Put(context.TODO(), getUserPath(u.Username), string(bytes))
 	return err
+}
+
+func checkPassword(hash, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func hashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash), err
 }

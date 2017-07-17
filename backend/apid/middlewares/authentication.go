@@ -3,12 +3,11 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 )
 
 // Authentication is a HTTP middleware that enforces authentication
-func Authentication(next http.Handler, provider authentication.Provider) http.Handler {
+func Authentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO (Simon): We should probably avoid applying this middleware to these
 		// routes instead...

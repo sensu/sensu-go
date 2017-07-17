@@ -8,7 +8,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
-	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/eventd"
@@ -169,13 +168,8 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	// Initialize the authentication provider
-	authProvider := &basic.Basic{
-		Store: st,
-	}
-
 	// Seed initial data
-	err = seedInitialData(st, authProvider)
+	err = seedInitialData(st)
 	if err != nil {
 		return err
 	}
@@ -198,11 +192,10 @@ func (b *Backend) Run() error {
 	}
 
 	b.apid = &apid.APId{
-		Authentication: authProvider,
-		Store:          st,
-		Host:           b.Config.APIHost,
-		Port:           b.Config.APIPort,
-		BackendStatus:  b.Status,
+		Store:         st,
+		Host:          b.Config.APIHost,
+		Port:          b.Config.APIPort,
+		BackendStatus: b.Status,
 	}
 	if err := b.apid.Start(); err != nil {
 		return err

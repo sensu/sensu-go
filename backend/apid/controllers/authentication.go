@@ -6,14 +6,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // AuthenticationController handles authentication related requests
 type AuthenticationController struct {
-	Provider authentication.Provider
+	Store store.Store
 }
 
 // Register the EventsController with a mux.Router.
@@ -32,7 +32,7 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Authenticate against the provider
-	user, err := a.Provider.Authenticate(username, password)
+	user, err := a.Store.AuthenticateUser(username, password)
 	if err != nil {
 		logger.WithField(
 			"user", username,

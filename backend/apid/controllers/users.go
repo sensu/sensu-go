@@ -7,15 +7,13 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // UsersController defines the fields required by UsersController.
 type UsersController struct {
-	Provider authentication.Provider
-	Store    store.Store
+	Store store.Store
 }
 
 // Register should define an association between HTTP routes and their
@@ -133,7 +131,7 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.Provider.CreateUser(&user)
+	err = c.Store.CreateUser(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

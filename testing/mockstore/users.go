@@ -2,7 +2,11 @@ package mockstore
 
 import "github.com/sensu/sensu-go/types"
 
-//// Users
+// AuthenticateUser ...
+func (s *MockStore) AuthenticateUser(username, password string) (*types.User, error) {
+	args := s.Called(username, password)
+	return args.Get(0).(*types.User), args.Error(1)
+}
 
 // CreateUser ...
 func (s *MockStore) CreateUser(user *types.User) error {

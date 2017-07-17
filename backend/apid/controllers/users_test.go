@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/mockprovider"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -121,9 +120,7 @@ func TestSingle(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	store := &mockstore.MockStore{}
-	provider := &mockprovider.MockProvider{}
 	u := &UsersController{
-		Provider: provider,
 		Store: store,
 	}
 
@@ -136,7 +133,7 @@ func TestUpdateUser(t *testing.T) {
 	userBytes, _ := json.Marshal(user)
 
 	store.On("GetRoles").Return(storedRoles, nil)
-	provider.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
+	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
@@ -146,9 +143,7 @@ func TestUpdateUser(t *testing.T) {
 
 func TestUpdateUserError(t *testing.T) {
 	store := &mockstore.MockStore{}
-	provider := &mockprovider.MockProvider{}
 	u := &UsersController{
-		Provider: provider,
 		Store: store,
 	}
 
@@ -161,7 +156,7 @@ func TestUpdateUserError(t *testing.T) {
 	userBytes, _ := json.Marshal(user)
 
 	store.On("GetRoles").Return(storedRoles, nil)
-	provider.On("CreateUser", mock.AnythingOfType("*types.User")).Return(fmt.Errorf(""))
+	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(fmt.Errorf(""))
 
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
@@ -178,7 +173,6 @@ func TestValidateRoles(t *testing.T) {
 		{Name: "roleOne"},
 		{Name: "roleTwo"},
 	}
-
 
 	store.On("GetRoles").Return(storedRoles, nil)
 
