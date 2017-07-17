@@ -10,12 +10,6 @@ import (
 // Authentication is a HTTP middleware that enforces authentication
 func Authentication(next http.Handler, provider authentication.Provider) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if authentication is enabled
-		if !provider.AuthEnabled() {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		// TODO (Simon): We should probably avoid applying this middleware to these
 		// routes instead...
 		if r.URL.Path == "/auth" || r.URL.Path == "/auth/token" {

@@ -7,6 +7,5 @@ import (
 // Provider represents an authenticated provider
 type Provider interface {
 	Authenticate(string, string) (*types.User, error)
-	AuthEnabled() bool
 	CreateUser(*types.User) error
 }

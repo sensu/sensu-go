@@ -171,8 +171,7 @@ func (b *Backend) Run() error {
 
 	// Initialize the authentication provider
 	authProvider := &basic.Basic{
-		Enabled: true,
-		Store:   st,
+		Store: st,
 	}
 
 	// Seed initial data

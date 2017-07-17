@@ -11,18 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMiddlewareDisabledAuth(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Authentication(testHandler(), provider))
-	defer server.Close()
-
-	// Disabled authentication
-	provider.On("AuthEnabled").Return(false)
-	res, err := http.Get(server.URL)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
 func TestMiddlewareNoCredentials(t *testing.T) {
 	provider := &mockprovider.MockProvider{}
 	server := httptest.NewServer(Authentication(testHandler(), provider))

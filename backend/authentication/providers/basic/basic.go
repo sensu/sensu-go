@@ -10,8 +10,7 @@ import (
 
 // Basic represents the HTTP basic authentication provider
 type Basic struct {
-	Enabled bool
-	Store   store.Store
+	Store store.Store
 }
 
 // Authenticate tries to authenticate the provided username & password combination
@@ -31,11 +30,6 @@ func (b *Basic) Authenticate(username, password string) (*types.User, error) {
 	}
 
 	return user, nil
-}
-
-// AuthEnabled indicates whether authentication is enabled
-func (b *Basic) AuthEnabled() bool {
-	return b.Enabled
 }
 
 // CreateUser adds a new user through the store
