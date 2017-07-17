@@ -28,7 +28,7 @@ func Authorization(next http.Handler, store store.Store) http.Handler {
 			http.Error(w, "Error fetching user from store", http.StatusInternalServerError)
 		}
 
-		userRoles := []*types.Role{}
+		userRoles := []types.Role{}
 
 		for _, userRoleName := range user.Roles {
 			// TODO: (JK) we're not protecting against cases where a
