@@ -31,7 +31,6 @@ func (client *RestClient) FetchEntity(ID string) (*types.Entity, error) {
 
 // ListEntities fetches all entities from configured Sensu instance
 func (client *RestClient) ListEntities() ([]types.Entity, error) {
-	fmt.Println(client.config.Tokens())
 	var entities []types.Entity
 
 	res, err := client.R().Get("/entities")
