@@ -32,8 +32,8 @@ type Store interface {
 	// Organizations
 	OrganizationStore
 
-	// RBAC
-	RBACStore
+	// Roles
+	RoleStore
 
 	// Users
 	UserStore
@@ -119,12 +119,12 @@ type OrganizationStore interface {
 	UpdateOrganization(context.Context, *types.Organization) error
 }
 
-// RBACStore provides an interface for interacting & persisting users
-type RBACStore interface {
+// RoleStore provides an interface for interacting & persisting users
+type RoleStore interface {
+	DeleteRoleByName(name string) error
 	GetRoles() ([]*types.Role, error)
 	GetRoleByName(name string) (*types.Role, error)
 	UpdateRole(role *types.Role) error
-	DeleteRoleByName(name string) error
 }
 
 // UserStore provides an interface for interacting & persisting users
