@@ -15,6 +15,10 @@ type EntitiesController struct {
 	Store store.Store
 }
 
+const (
+	Resource = "entities"
+)
+
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *EntitiesController) Register(r *mux.Router) {
@@ -24,6 +28,11 @@ func (c *EntitiesController) Register(r *mux.Router) {
 
 // many handles GET requests to the /entities endpoint.
 func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
+	if !ContextCanAccessResource(r.Context(), Resource, types.RulePermRead) {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	es, err := c.Store.GetEntities(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -14,7 +14,7 @@ func Authentication(next http.Handler) http.Handler {
 			token, err := jwt.ValidateToken(tokenString)
 			if err == nil {
 				// Set the claims into the request context
-				ctx := jwt.SetClaimsIntoContext(r, token)
+				ctx := jwt.SetClaimsIntoContext(r.Context(), token)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return

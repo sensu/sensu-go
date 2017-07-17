@@ -46,7 +46,8 @@ func (a *APId) Start() error {
 	serveMux := http.NewServeMux()
 
 	// Define the middlewares used for restricted resources, from last to first
-	restrictedResources := middlewares.Organization(router, a.Store)
+	restrictedResources := middlewares.Authorization(router, a.Store)
+	restrictedResources = middlewares.Organization(restrictedResources, a.Store)
 	restrictedResources = middlewares.AllowList(restrictedResources, a.Store)
 	restrictedResources = middlewares.Authentication(restrictedResources)
 
