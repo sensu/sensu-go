@@ -35,7 +35,7 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 	keepalived := &Keepalived{
 		Store:      suite.Store,
 		MessageBus: suite.MessageBus,
-		MonitorFactory: func(e *types.Entity) Monitor {
+		MonitorFactory: func(e *types.Entity) *KeepaliveMonitor {
 			return &KeepaliveMonitor{
 				Entity:       e,
 				Deregisterer: dereg,

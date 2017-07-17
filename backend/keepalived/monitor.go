@@ -9,14 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// A Monitor observes events and takes actions based on them.
-type Monitor interface {
-	Update(event *types.Event) error
-	Start()
-	Stop()
-	IsStopped() bool
-}
-
 // KeepaliveMonitor is a managed timer that is reset whenever the monitor
 // observes a Keepalive event via the Update() function.
 type KeepaliveMonitor struct {
