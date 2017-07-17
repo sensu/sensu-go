@@ -14,8 +14,8 @@ func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
 }
 
 // FetchEntity fetches a specific entity
-func (client *RestClient) FetchEntity(ID string) (types.Entity, error) {
-	var entity types.Entity
+func (client *RestClient) FetchEntity(ID string) (*types.Entity, error) {
+	var entity *types.Entity
 	res, err := client.R().Get("/entities/" + ID)
 	if err != nil {
 		return entity, err
