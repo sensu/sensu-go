@@ -50,11 +50,3 @@ curl -i -X PUT -H 'Content-Type: application/json' -d '{"check": {"name": "check
 ```
 curl -i -X PUT -H 'Content-Type: application/json' -d '{"username": "foo", "password": "P@ssw0rd!"}' http://127.0.0.1:8080/users
 ```
-
-### Configuration
-
-#### API Authentication
-
-Use the `--api-authentication` flag with the **sensu-backend** binary.
-
-## Sensu CLI
