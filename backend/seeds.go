@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -29,6 +30,14 @@ func seedInitialData(store store.Store) error {
 
 	// Set default role
 	if err := setupAdminRole(store); err != nil {
+		return err
+	}
+
+	// Initializes the JWT secret
+	jwt.InitSecret(store)
+
+	// Default user
+	if err := setupDefaultUser(store); err != nil {
 		return err
 	}
 
@@ -63,4 +72,15 @@ func setupDefaultOrganization(store store.Store) error {
 			Name:        "default",
 			Description: "Default organization",
 		})
+}
+
+func setupDefaultUser(store store.Store) error {
+	// Set default user
+	admin := &types.User{
+		Username: "admin",
+		Password: "P@ssw0rd!",
+		Roles:    []string{"admin"},
+	}
+
+	return store.CreateUser(admin)
 }

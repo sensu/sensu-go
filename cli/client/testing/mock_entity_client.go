@@ -9,9 +9,9 @@ func (c *MockClient) ListEntities() ([]types.Entity, error) {
 }
 
 // FetchEntity for use with mock lib
-func (c *MockClient) FetchEntity(ID string) (types.Entity, error) {
+func (c *MockClient) FetchEntity(ID string) (*types.Entity, error) {
 	args := c.Called(ID)
-	return args.Get(0).(types.Entity), args.Error(1)
+	return args.Get(0).(*types.Entity), args.Error(1)
 }
 
 // DeleteEntity for use with mock lib

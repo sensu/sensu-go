@@ -8,8 +8,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/eventd"
@@ -48,9 +46,8 @@ type Config struct {
 	AgentPort int
 
 	// Apid Configuration
-	APIAuthentication bool
-	APIHost           string
-	APIPort           int
+	APIHost string
+	APIPort int
 
 	// Dashboardd Configuration
 	DashboardDir  string
@@ -194,21 +191,11 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	// Initializes the JWT secret
-	jwt.InitSecret(st)
-
-	// TODO(Simon): We need to determine the authentication driver from the config
-	auth := &basic.Basic{
-		Enabled: b.Config.APIAuthentication,
-		Store:   st,
-	}
-
 	b.apid = &apid.APId{
-		Authentication: auth,
-		Store:          st,
-		Host:           b.Config.APIHost,
-		Port:           b.Config.APIPort,
-		BackendStatus:  b.Status,
+		Store:         st,
+		Host:          b.Config.APIHost,
+		Port:          b.Config.APIPort,
+		BackendStatus: b.Status,
 	}
 	if err := b.apid.Start(); err != nil {
 		return err

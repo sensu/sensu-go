@@ -7,26 +7,15 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// ListEntities fetches all entities from configured Sensu instance
-func (client *RestClient) ListEntities() ([]types.Entity, error) {
-	var entities []types.Entity
-
-	res, err := client.R().Get("/entities")
-	if err != nil {
-		return entities, err
-	}
-
-	if res.StatusCode() >= 400 {
-		return entities, fmt.Errorf("%v", res.String())
-	}
-
-	err = json.Unmarshal(res.Body(), &entities)
-	return entities, err
+// DeleteEntity deletes given entitiy from the configured sensu instance
+func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
+	_, err = client.R().Delete("/entities/" + entity.ID)
+	return err
 }
 
-// FetchEntity fetches all entities from configured Sensu instance
-func (client *RestClient) FetchEntity(ID string) (types.Entity, error) {
-	var entity types.Entity
+// FetchEntity fetches a specific entity
+func (client *RestClient) FetchEntity(ID string) (*types.Entity, error) {
+	var entity *types.Entity
 	res, err := client.R().Get("/entities/" + ID)
 	if err != nil {
 		return entity, err
@@ -40,8 +29,20 @@ func (client *RestClient) FetchEntity(ID string) (types.Entity, error) {
 	return entity, err
 }
 
-// DeleteEntity deletes given entitiy from the configured sensu instance
-func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
-	_, err = client.R().Delete("/entities/" + entity.ID)
-	return err
+// ListEntities fetches all entities from configured Sensu instance
+func (client *RestClient) ListEntities() ([]types.Entity, error) {
+	fmt.Println(client.config.Tokens())
+	var entities []types.Entity
+
+	res, err := client.R().Get("/entities")
+	if err != nil {
+		return entities, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return entities, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &entities)
+	return entities, err
 }

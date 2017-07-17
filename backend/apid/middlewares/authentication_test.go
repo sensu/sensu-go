@@ -7,40 +7,22 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/testing/mockprovider"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMiddlewareDisabledAuth(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Authentication(testHandler(), provider))
-	defer server.Close()
-
-	// Disabled authentication
-	provider.On("AuthEnabled").Return(false)
-	res, err := http.Get(server.URL)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
 func TestMiddlewareNoCredentials(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Authentication(testHandler(), provider))
+	server := httptest.NewServer(Authentication(testHandler()))
 	defer server.Close()
 
 	// No credentials passed
-	provider.On("AuthEnabled").Return(true)
 	res, err := http.Get(server.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
 
 func TestMiddlewareJWT(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Authentication(testHandler(), provider))
+	server := httptest.NewServer(Authentication(testHandler()))
 	defer server.Close()
-
-	provider.On("AuthEnabled").Return(true)
 
 	// Valid JWT
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -57,11 +39,8 @@ func TestMiddlewareJWT(t *testing.T) {
 }
 
 func TestMiddlewareInvalidJWT(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
-	server := httptest.NewServer(Authentication(testHandler(), provider))
+	server := httptest.NewServer(Authentication(testHandler()))
 	defer server.Close()
-
-	provider.On("AuthEnabled").Return(true)
 
 	// Valid JWT
 	tokenString := "foobar"

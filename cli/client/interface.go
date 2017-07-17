@@ -13,8 +13,8 @@ type APIClient interface {
 	EventAPIClient
 	HandlerAPIClient
 	OrganizationAPIClient
-	UserAPIClient
 	RoleAPIClient
+	UserAPIClient
 }
 
 // AuthenticationAPIClient client methods for authenticating
@@ -25,34 +25,36 @@ type AuthenticationAPIClient interface {
 
 // AssetAPIClient client methods for assets
 type AssetAPIClient interface {
-	ListAssets() ([]types.Asset, error)
 	CreateAsset(*types.Asset) error
+	ListAssets() ([]types.Asset, error)
 }
 
 // CheckAPIClient client methods for checks
 type CheckAPIClient interface {
-	ListChecks() ([]types.CheckConfig, error)
 	CreateCheck(*types.CheckConfig) error
 	DeleteCheck(*types.CheckConfig) error
+	FetchCheck(string) (*types.CheckConfig, error)
+	ListChecks() ([]types.CheckConfig, error)
 }
 
 // EntityAPIClient client methods for entities
 type EntityAPIClient interface {
-	ListEntities() ([]types.Entity, error)
-	FetchEntity(ID string) (types.Entity, error)
 	DeleteEntity(entity *types.Entity) error
+	FetchEntity(ID string) (*types.Entity, error)
+	ListEntities() ([]types.Entity, error)
 }
 
 // EventAPIClient client methods for events
 type EventAPIClient interface {
+	FetchEvent(string, string) (*types.Event, error)
 	ListEvents() ([]types.Event, error)
 }
 
 // HandlerAPIClient client methods for handlers
 type HandlerAPIClient interface {
-	ListHandlers() ([]types.Handler, error)
 	CreateHandler(*types.Handler) error
 	DeleteHandler(*types.Handler) error
+	ListHandlers() ([]types.Handler, error)
 }
 
 // OrganizationAPIClient client methods for organizations

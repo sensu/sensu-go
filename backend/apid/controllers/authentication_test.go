@@ -8,18 +8,16 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/testing/mockprovider"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLoginNoCredentials(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
+	store := &mockstore.MockStore{}
 	a := &AuthenticationController{
-		Provider: provider,
+		Store: store,
 	}
-
-	provider.On("AuthEnabled").Return(true)
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 
@@ -28,14 +26,13 @@ func TestLoginNoCredentials(t *testing.T) {
 }
 
 func TestLoginInvalidCredentials(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
+	store := &mockstore.MockStore{}
 	a := &AuthenticationController{
-		Provider: provider,
+		Store: store,
 	}
 
 	user := types.FixtureUser("foo")
-	provider.On("AuthEnabled").Return(true)
-	provider.On("Authenticate").Return(user, fmt.Errorf("Error"))
+	store.On("AuthenticateUser", "foo", "P@ssw0rd!").Return(user, fmt.Errorf("Error"))
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 	req.SetBasicAuth("foo", "P@ssw0rd!")
@@ -45,14 +42,13 @@ func TestLoginInvalidCredentials(t *testing.T) {
 }
 
 func TestLoginSuccessful(t *testing.T) {
-	provider := &mockprovider.MockProvider{}
+	store := &mockstore.MockStore{}
 	a := &AuthenticationController{
-		Provider: provider,
+		Store: store,
 	}
 
 	user := types.FixtureUser("foo")
-	provider.On("AuthEnabled").Return(true)
-	provider.On("Authenticate").Return(user, nil)
+	store.On("AuthenticateUser", "foo", "P@ssw0rd!").Return(user, nil)
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 	req.SetBasicAuth("foo", "P@ssw0rd!")

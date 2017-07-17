@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/controllers"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
-	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -24,11 +23,10 @@ type APId struct {
 	errChan    chan error
 	httpServer *http.Server
 
-	Authentication authentication.Provider
-	BackendStatus  func() types.StatusMap
-	Host           string
-	Port           int
-	Store          store.Store
+	BackendStatus func() types.StatusMap
+	Host          string
+	Port          int
+	Store         store.Store
 }
 
 // Start Apid.
@@ -44,7 +42,7 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := httpRouter(a)
-	routerStack := middlewares.Authentication(router, a.Authentication)
+	routerStack := middlewares.Authentication(router)
 	routerStack = middlewares.Organization(routerStack, a.Store)
 
 	a.httpServer = &http.Server{
@@ -106,7 +104,7 @@ func httpRouter(a *APId) *mux.Router {
 	assetsController.Register(r)
 
 	authenticationController := &controllers.AuthenticationController{
-		Provider: a.Authentication,
+		Store: a.Store,
 	}
 	authenticationController.Register(r)
 
@@ -153,8 +151,7 @@ func httpRouter(a *APId) *mux.Router {
 	organizationsController.Register(r)
 
 	usersController := &controllers.UsersController{
-		Provider: a.Authentication,
-		Store:    a.Store,
+		Store: a.Store,
 	}
 	usersController.Register(r)
 

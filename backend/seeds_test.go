@@ -17,6 +17,7 @@ func TestSeedDefaultRole(t *testing.T) {
 		mock.Anything,
 		mock.AnythingOfType("*types.Organization"),
 	).Return(nil)
+	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	seedInitialData(store)
 	store.AssertCalled(t, "UpdateRole", mock.AnythingOfType("*types.Role"))
@@ -25,7 +26,7 @@ func TestSeedDefaultRole(t *testing.T) {
 func TestSeedDefaultRoleWithError(t *testing.T) {
 	assert := assert.New(t)
 	store := &mockstore.MockStore{}
-
 	store.On("UpdateRole", mock.AnythingOfType("*types.Role")).Return(errors.New(""))
+
 	assert.Error(seedInitialData(store))
 }

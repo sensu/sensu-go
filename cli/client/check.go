@@ -7,22 +7,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// ListChecks fetches all checks from configured Sensu instance
-func (client *RestClient) ListChecks() ([]types.CheckConfig, error) {
-	var checks []types.CheckConfig
-	res, err := client.R().Get("/checks")
-	if err != nil {
-		return checks, err
-	}
-
-	if res.StatusCode() >= 400 {
-		return checks, fmt.Errorf("%v", res.String())
-	}
-
-	err = json.Unmarshal(res.Body(), &checks)
-	return checks, err
-}
-
 // CreateCheck creates new check on configured Sensu instance
 func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {
 	bytes, err := json.Marshal(check)
@@ -58,4 +42,37 @@ func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
 	}
 
 	return nil
+}
+
+// FetchCheck fetches a specific check
+func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
+	var check *types.CheckConfig
+
+	res, err := client.R().Get("/checks/" + name)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return nil, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &check)
+	return check, err
+}
+
+// ListChecks fetches all checks from configured Sensu instance
+func (client *RestClient) ListChecks() ([]types.CheckConfig, error) {
+	var checks []types.CheckConfig
+	res, err := client.R().Get("/checks")
+	if err != nil {
+		return checks, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return checks, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &checks)
+	return checks, err
 }

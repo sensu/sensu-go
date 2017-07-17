@@ -27,7 +27,7 @@ func TestShowCommandRunEClosure(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchEntity", "in").Return(*types.FixtureEntity("name-one"), nil)
+	client.On("FetchEntity", "in").Return(types.FixtureEntity("name-one"), nil)
 
 	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
@@ -54,7 +54,7 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchEntity", "in").Return(*types.FixtureEntity("name-one"), nil)
+	client.On("FetchEntity", "in").Return(types.FixtureEntity("name-one"), nil)
 
 	cmd := ShowCommand(cli)
 	cmd.Flags().Set("format", "tabular")
@@ -72,7 +72,7 @@ func TestShowCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchEntity", "in").Return(types.Entity{}, errors.New("my-err"))
+	client.On("FetchEntity", "in").Return(&types.Entity{}, errors.New("my-err"))
 
 	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})

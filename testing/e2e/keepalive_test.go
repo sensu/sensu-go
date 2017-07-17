@@ -1,8 +1,6 @@
 package e2e
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/client/config/basic"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -76,8 +76,8 @@ func TestAgentKeepalives(t *testing.T) {
 			continue
 		}
 		resp.Body.Close()
-		if resp.StatusCode != 200 {
-			log.Printf("backend returned non-200 status code: %d\n", resp.StatusCode)
+		if resp.StatusCode != 200 && resp.StatusCode != 401 {
+			log.Printf("backend returned non-200/401 status code: %d\n", resp.StatusCode)
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -85,6 +85,16 @@ func TestAgentKeepalives(t *testing.T) {
 	}
 
 	assert.True(t, backendHealthy)
+
+	// Create an authenticated HTTP Sensu client
+	clientConfig := &basic.Config{
+		Cluster: basic.Cluster{
+			APIUrl: backendHTTPURL,
+		},
+	}
+	sensuClient := client.New(clientConfig)
+	tokens, _ := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
+	clientConfig.Cluster.Tokens = tokens
 
 	err = ap.Start()
 	assert.NoError(t, err)
@@ -97,14 +107,8 @@ func TestAgentKeepalives(t *testing.T) {
 	// Give it a second to make sure we've sent a keepalive.
 	time.Sleep(5 * time.Second)
 
-	resp, err := http.Get(fmt.Sprintf("%s/entities", backendHTTPURL))
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	defer resp.Body.Close()
-	entities := []*types.Entity{}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	assert.NoError(t, err)
-	err = json.Unmarshal(bodyBytes, &entities)
+	// Retrieve the entitites
+	entities, err := sensuClient.ListEntities()
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(entities))
 	assert.Equal(t, "TestKeepalives", entities[0].ID)
@@ -112,6 +116,7 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NotEmpty(t, entities[0].System.Hostname)
 	assert.NotZero(t, entities[0].LastSeen)
 
+	// Create a check
 	check := &types.CheckConfig{
 		Name:          "testcheck",
 		Command:       "echo output",
@@ -119,14 +124,12 @@ func TestAgentKeepalives(t *testing.T) {
 		Subscriptions: []string{"test"},
 		Organization:  "default",
 	}
-	checkBytes, err := json.Marshal(check)
+	err = sensuClient.CreateCheck(check)
 	assert.NoError(t, err)
-	resp, err = http.Post(fmt.Sprintf("%s/checks/testcheck", backendHTTPURL), "application/json", bytes.NewBuffer(checkBytes))
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Retrieve the check
+	_, err = sensuClient.FetchCheck(check.Name)
 	assert.NoError(t, err)
-	resp, err = http.Get(fmt.Sprintf("%s/checks/testcheck", backendHTTPURL))
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
 	falseAbsPath, err := filepath.Abs(falsePath)
@@ -140,24 +143,14 @@ func TestAgentKeepalives(t *testing.T) {
 		Subscriptions: []string{"test"},
 		Organization:  "default",
 	}
-	checkBytes, err = json.Marshal(check)
-	assert.NoError(t, err)
-	resp, err = http.Post(fmt.Sprintf("%s/checks/testcheck2", backendHTTPURL), "application/json", bytes.NewBuffer(checkBytes))
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	err = sensuClient.CreateCheck(check)
 	assert.NoError(t, err)
 
 	time.Sleep(30 * time.Second)
 
 	// At this point, we should have 21 failing status codes for testcheck2
-	resp, err = http.Get(fmt.Sprintf("%s/events/TestKeepalives/testcheck2", backendHTTPURL))
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	event, err := sensuClient.FetchEvent(ap.AgentID, check.Name)
 	assert.NoError(t, err)
-
-	eventBytes, err := ioutil.ReadAll(resp.Body)
-	assert.NoError(t, err)
-	resp.Body.Close()
-	event := &types.Event{}
-	json.Unmarshal(eventBytes, event)
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)

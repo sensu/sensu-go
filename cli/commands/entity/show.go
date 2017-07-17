@@ -49,7 +49,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEntityToList(r types.Entity, writer io.Writer) {
+func printEntityToList(r *types.Entity, writer io.Writer) {
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{
