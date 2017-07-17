@@ -36,9 +36,7 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 	monitorPtr.timer = time.NewTimer(timerDuration)
 	monitorPtr.reset = make(chan interface{})
 
-	running := make(chan interface{})
 	go func() {
-		close(running)
 		timer := monitorPtr.timer
 		for {
 			select {
@@ -66,7 +64,6 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 			timer.Reset(timerDuration)
 		}
 	}()
-	<-running
 }
 
 // Update causes the KeepaliveMonitor to observe the event.
