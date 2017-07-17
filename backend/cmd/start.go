@@ -150,8 +150,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&etcdInitialClusterToken, "store-initial-cluster-token", "", "store initial cluster token")
 	cmd.Flags().StringVar(&etcdName, "store-node-name", "", "store cluster member node name")
 	cmd.Flags().StringVar(&certFile, "cert-file", "", "tls certificate")
-	cmd.Flags().StringVar(&keyFile, "key-file", "", "tls certificate")
-	cmd.Flags().StringVar(&trustedCAFile, "client-cert-auth", "", "tls certificate authority")
+	cmd.Flags().StringVar(&keyFile, "key-file", "", "tls certificate key")
+	cmd.Flags().StringVar(&trustedCAFile, "trusted-ca-file", "", "tls certificate authority")
 
 	return cmd
 }
