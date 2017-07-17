@@ -26,6 +26,9 @@ type Store interface {
 	// Handlers
 	HandlerStore
 
+	// Keepalives
+	KeepaliveStore
+
 	// Mutators
 	MutatorStore
 
@@ -35,11 +38,11 @@ type Store interface {
 	// Roles
 	RoleStore
 
+	// Tokens
+	TokenStore
+
 	// Users
 	UserStore
-
-	// Keepalives
-	KeepaliveStore
 
 	// Initialization of store
 	NewInitializer() (Initializer, error)
@@ -125,6 +128,12 @@ type RoleStore interface {
 	GetRoles() ([]*types.Role, error)
 	GetRoleByName(name string) (*types.Role, error)
 	UpdateRole(role *types.Role) error
+}
+
+// TokenStore provides an interface for interacting with the JWT whitelist
+type TokenStore interface {
+	CreateToken(*types.Claims) error
+	DeleteToken(string) error
 }
 
 // UserStore provides an interface for interacting & persisting users

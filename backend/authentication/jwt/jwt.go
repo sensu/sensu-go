@@ -10,6 +10,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
 
@@ -27,11 +28,6 @@ var (
 	secret            []byte
 )
 
-// Claims represents the JWT claims
-type Claims struct {
-	jwt.StandardClaims
-}
-
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
 func AccessToken(username string) (*jwt.Token, string, error) {
@@ -41,7 +37,7 @@ func AccessToken(username string) (*jwt.Token, string, error) {
 		return nil, "", err
 	}
 
-	claims := Claims{
+	claims := types.Claims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(defaultExpiration).Unix(),
 			Id:        hex.EncodeToString(jti),
@@ -61,8 +57,8 @@ func AccessToken(username string) (*jwt.Token, string, error) {
 }
 
 // GetClaims returns the claims from a token
-func GetClaims(token *jwt.Token) (*Claims, error) {
-	if claims, ok := token.Claims.(*Claims); ok {
+func GetClaims(token *jwt.Token) (*types.Claims, error) {
+	if claims, ok := token.Claims.(*types.Claims); ok {
 		return claims, nil
 	}
 
@@ -70,9 +66,9 @@ func GetClaims(token *jwt.Token) (*Claims, error) {
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
-func GetClaimsFromContext(r *http.Request) *Claims {
+func GetClaimsFromContext(r *http.Request) *types.Claims {
 	if value := r.Context().Value(claimsKey); value != nil {
-		claims, ok := value.(*Claims)
+		claims, ok := value.(*types.Claims)
 		if !ok {
 			return nil
 		}
@@ -126,7 +122,7 @@ func InitSecret(store store.Store) error {
 
 // parseToken takes a signed token and parse it to verify its integrity
 func parseToken(tokenString string) (*jwt.Token, error) {
-	return jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	return jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -164,7 +160,7 @@ func RefreshToken(username string) (string, error) {
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
 func SetClaimsIntoContext(r *http.Request, token *jwt.Token) context.Context {
-	claims, _ := token.Claims.(*Claims)
+	claims, _ := token.Claims.(*types.Claims)
 	return context.WithValue(r.Context(), claimsKey, claims)
 }
 
@@ -176,7 +172,7 @@ func ValidateExpiredToken(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	if _, ok := token.Claims.(*Claims); ok {
+	if _, ok := token.Claims.(*types.Claims); ok {
 		if token.Valid {
 			return token, nil
 		}
@@ -206,7 +202,7 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	if _, ok := token.Claims.(*Claims); ok && token.Valid {
+	if _, ok := token.Claims.(*types.Claims); ok && token.Valid {
 		return token, nil
 	}
 
