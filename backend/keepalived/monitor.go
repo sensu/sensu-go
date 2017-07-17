@@ -92,3 +92,12 @@ func (monitorPtr *KeepaliveMonitor) Stop() {
 func (monitorPtr *KeepaliveMonitor) IsStopped() bool {
 	return atomic.LoadInt32(&monitorPtr.stopped) > 0
 }
+
+// Reset the monitor's timer to emit an event at a given time.
+func (monitorPtr *KeepaliveMonitor) Reset(t int64) {
+	d := time.Duration(t - time.Now().Unix())
+	if d < 0 {
+		d = 0
+	}
+	monitorPtr.timer.Reset(d)
+}
