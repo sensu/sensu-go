@@ -82,6 +82,10 @@ func (k *Keepalived) Start() error {
 	k.mu = &sync.Mutex{}
 	k.monitors = map[string]*KeepaliveMonitor{}
 
+	if err := k.initFromStore(); err != nil {
+		return err
+	}
+
 	k.startWorkers()
 
 	k.startMonitorSweeper()
@@ -112,6 +116,40 @@ func (k *Keepalived) Status() error {
 // indicating a premature shutdown of the Daemon.
 func (k *Keepalived) Err() <-chan error {
 	return k.errChan
+}
+
+func (k *Keepalived) initFromStore() error {
+	// For which clients were we previously alerting?
+	keepalives, err := k.Store.GetFailingKeepalives(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	for _, keepalive := range keepalives {
+		entityCtx := context.WithValue(context.TODO(), types.OrganizationKey, keepalive.Organization)
+		event, err := k.Store.GetEventByEntityCheck(entityCtx, keepalive.EntityID, "keepalive")
+		if err != nil {
+			return err
+		}
+
+		// if there's no event, the entity was deregistered/deleted.
+		if event == nil {
+			continue
+		}
+
+		// if another backend picked it up, it will be passing.
+		if event.Check.Status == 0 {
+			continue
+		}
+
+		// Recreate the monitor and reset its timer to alert when it's going to
+		// timeout.
+		monitor := k.MonitorFactory(event.Entity)
+		monitor.Reset(keepalive.Time)
+		k.monitors[keepalive.EntityID] = monitor
+	}
+
+	return nil
 }
 
 func (k *Keepalived) startWorkers() {

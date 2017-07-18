@@ -53,7 +53,7 @@ func TestMonitorUpdate(t *testing.T) {
 	monitor.Start()
 
 	mockStore.On("UpdateEntity", mock.Anything, entity).Return(nil)
-	mockStore.On("UpdateKeepalive", mock.Anything, entity.ID, mock.AnythingOfType("int64")).Return(nil)
+	mockStore.On("UpdateKeepalive", mock.Anything, entity, mock.AnythingOfType("int64")).Return(nil)
 
 	assert.NoError(monitor.Update(event))
 }
