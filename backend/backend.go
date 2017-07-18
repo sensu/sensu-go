@@ -27,7 +27,7 @@ const (
 	DefaultEtcdName = "default"
 
 	// DefaultEtcdClientURL is the default URL to listen for Etcd clients
-	DefaultEtcdClientURL = "https://127.0.0.1:2379"
+	DefaultEtcdClientURL = "http://127.0.0.1:2379"
 
 	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
 	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
