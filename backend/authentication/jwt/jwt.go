@@ -62,7 +62,7 @@ func GetClaims(token *jwt.Token) (*types.Claims, error) {
 		return claims, nil
 	}
 
-	return nil, fmt.Errorf("Could not parse the token claims")
+	return nil, fmt.Errorf("could not parse the token claims")
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
@@ -125,7 +125,7 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 	return jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		// secret is a []byte containing the secret
@@ -134,27 +134,29 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 }
 
 // RefreshToken returns a refresh token for a specific user
-func RefreshToken(username string) (string, error) {
+func RefreshToken(username string) (*jwt.Token, string, error) {
 	// Create a unique identifier for the token
 	jti, err := utilbytes.Random(16)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
-	claims := &jwt.StandardClaims{
-		Id:      hex.EncodeToString(jti),
-		Subject: username,
+	claims := types.Claims{
+		StandardClaims: jwt.StandardClaims{
+			Id:      hex.EncodeToString(jti),
+			Subject: username,
+		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 
 	// Sign the token as a string using the secret
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
-	return tokenString, nil
+	return token, tokenString, nil
 }
 
 // SetClaimsIntoContext adds the token claims into the request context for

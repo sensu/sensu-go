@@ -99,7 +99,7 @@ func TestInitSecretEtcdError(t *testing.T) {
 func TestRefreshToken(t *testing.T) {
 	secret = []byte("foobar")
 	username := "foo"
-	tokenString, err := RefreshToken(username)
+	_, tokenString, err := RefreshToken(username)
 	assert.NoError(t, err)
 
 	token, err := ValidateToken(tokenString)
