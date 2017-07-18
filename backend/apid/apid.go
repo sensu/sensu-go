@@ -42,8 +42,12 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := httpRouter(a)
-	routerStack := middlewares.Authentication(router)
-	routerStack = middlewares.Organization(routerStack, a.Store)
+
+	// Define the middlewares from last to first
+	// TODO: We need to exclude the /auth route from some of these middlewares
+	routerStack := middlewares.Organization(router, a.Store)
+	routerStack = middlewares.Whitelist(routerStack, a.Store)
+	routerStack = middlewares.Authentication(routerStack)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
