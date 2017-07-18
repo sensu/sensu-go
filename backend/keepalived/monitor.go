@@ -90,6 +90,15 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 		logger.WithError(err).Error("error updating entity in store")
 	}
 
+	prevEvent, err := monitorPtr.Store.GetEventByEntityCheck(ctx, entity.ID, "keepalive")
+	if err != nil {
+		logger.WithError(err).Error("error getting previous event from store")
+	}
+
+	if prevEvent != nil && prevEvent.Check.Status != 0 {
+		monitorPtr.EventCreator.Resolve(entity)
+	}
+
 	return nil
 }
 

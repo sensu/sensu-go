@@ -53,7 +53,9 @@ func TestMonitorUpdate(t *testing.T) {
 	monitor.Start()
 
 	mockStore.On("UpdateEntity", mock.Anything, entity).Return(nil)
-	mockStore.On("UpdateKeepalive", mock.Anything, entity, mock.AnythingOfType("int64")).Return(nil)
+
+	failingEvent := types.FixtureEvent("entity", "keepalive")
+	mockStore.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(failingEvent, nil)
 
 	assert.NoError(monitor.Update(event))
 }
@@ -111,4 +113,28 @@ func TestMonitorAlert(t *testing.T) {
 	monitor.Start()
 	time.Sleep(100 * time.Millisecond)
 	creator.AssertCalled(t, "Warn", entity)
+}
+
+func TestMonitorResolve(t *testing.T) {
+	entity := types.FixtureEntity("entity")
+	entity.KeepaliveTimeout = 120
+	entity.Deregister = false
+	creator := &mockCreator{}
+	creator.On("Resolve", entity).Return(nil)
+
+	event := createEvent(entity)
+
+	store := &mockstore.MockStore{}
+	store.On("GetEventByEntityCheck", mock.Anything, entity.ID, "keepalive").Return(event, nil)
+	store.On("UpdateEntity", mock.Anything, entity).Return(nil)
+
+	monitor := &KeepaliveMonitor{
+		Entity:       entity,
+		EventCreator: creator,
+		Store:        store,
+	}
+
+	monitor.Start()
+	assert.NoError(t, monitor.Update(event))
+	creator.AssertCalled(t, "Resolve", entity)
 }
