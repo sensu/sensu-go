@@ -151,7 +151,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	if config.TLSConfig != nil {
 		cfg.ClientTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)
-		cfg.ClientTLSInfo.ClientCertAuth = true
+		fmt.Println(cfg.ClientTLSInfo)
+		cfg.ClientTLSInfo.ClientCertAuth = false
 	}
 
 	capnslog.SetFormatter(NewLogrusFormatter())
@@ -190,6 +191,8 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	var tlsCfg *tls.Config
 	if e.cfg.TLSConfig != nil {
 		tlsCfg = &e.cfg.TLSConfig.TLS
+	} else {
+		tlsCfg = &tls.Config{InsecureSkipVerify: false}
 	}
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{e.cfg.ListenClientURL},

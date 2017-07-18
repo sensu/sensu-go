@@ -86,7 +86,7 @@ func TestHTTPSListener(t *testing.T) {
 	path, remove := testutil.TempDir(t)
 	defer remove()
 
-	ports := make([]int, 4)
+	ports := make([]int, 5)
 	err := testutil.RandomPorts(ports)
 	if err != nil {
 		log.Panic(err)
@@ -95,6 +95,7 @@ func TestHTTPSListener(t *testing.T) {
 	apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
 	agentPort := ports[2]
 	apiPort := ports[3]
+	dashboardPort := ports[4]
 	initCluster := fmt.Sprintf("default=%s", apURL)
 	fmt.Println(initCluster)
 
@@ -104,13 +105,14 @@ func TestHTTPSListener(t *testing.T) {
 		APIHost:                     "127.0.0.1",
 		APIPort:                     apiPort,
 		DashboardHost:               "127.0.0.1",
+		DashboardPort:               dashboardPort,
 		StateDir:                    path,
 		EtcdListenClientURL:         clURL,
 		EtcdListenPeerURL:           apURL,
 		EtcdInitialCluster:          initCluster,
 		EtcdInitialClusterState:     etcd.ClusterStateNew,
 		EtcdInitialAdvertisePeerURL: apURL,
-		TLS: &types.TLSConfig{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem"},
+		TLS: &types.TLSConfig{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem", true},
 	})
 	assert.NoError(t, err)
 	if err != nil {
@@ -125,7 +127,7 @@ func TestHTTPSListener(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", agentPort))
 		if derr != nil {
-			fmt.Println("Waiting for backend to start")
+			fmt.Println("Waiting for agentd to start")
 			time.Sleep(time.Duration(i) * time.Second)
 		} else {
 			conn.Close()
@@ -133,7 +135,29 @@ func TestHTTPSListener(t *testing.T) {
 		}
 	}
 
-	client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort))
+	for i := 0; i < 5; i++ {
+		conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", apiPort))
+		if derr != nil {
+			fmt.Println("Waiting for apid to start")
+			time.Sleep(time.Duration(i) * time.Second)
+		} else {
+			conn.Close()
+			continue
+		}
+	}
+
+	for i := 0; i < 5; i++ {
+		conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", dashboardPort))
+		if derr != nil {
+			fmt.Println("Waiting for dashboardd to start")
+			time.Sleep(time.Duration(i) * time.Second)
+		} else {
+			conn.Close()
+			continue
+		}
+	}
+
+	client, err := transport.Connect(fmt.Sprintf("ws://localhost:%d/", agentPort))
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 

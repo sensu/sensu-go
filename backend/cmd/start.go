@@ -32,9 +32,10 @@ var (
 	etcdInitialClusterToken     string
 	etcdInitialAdvertisePeerURL string
 
-	certFile      string
-	keyFile       string
-	trustedCAFile string
+	certFile              string
+	keyFile               string
+	trustedCAFile         string
+	insecureSkipTLSVerify bool
 )
 
 func init() {
@@ -88,7 +89,7 @@ func newStartCommand() *cobra.Command {
 			}
 
 			if certFile != "" && keyFile != "" && trustedCAFile != "" {
-				cfg.TLS = &types.TLSConfig{certFile, keyFile, trustedCAFile}
+				cfg.TLS = &types.TLSConfig{certFile, keyFile, trustedCAFile, insecureSkipTLSVerify}
 			} else if certFile != "" || keyFile != "" || trustedCAFile != "" {
 				emptyFlags := []string{}
 				if certFile == "" {
@@ -152,6 +153,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&certFile, "cert-file", "", "tls certificate")
 	cmd.Flags().StringVar(&keyFile, "key-file", "", "tls certificate key")
 	cmd.Flags().StringVar(&trustedCAFile, "trusted-ca-file", "", "tls certificate authority")
+	cmd.Flags().BoolVar(&insecureSkipTLSVerify, "insecure-skip-tls-verify", false, "skip ssl verification")
 
 	return cmd
 }
