@@ -1,6 +1,8 @@
 package types
 
-import "errors"
+import (
+	"errors"
+)
 
 // Entity is the Entity supplying the event. The default Entity for any
 // Event is the running Agent process--if the Event is sent by an Agent.
