@@ -90,7 +90,7 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 		logger.WithError(err).Error("error updating entity in store")
 	}
 
-	return nil
+	return monitorPtr.EventCreator.Pass(entity)
 }
 
 // Stop the KeepaliveMonitor

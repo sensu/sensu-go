@@ -85,8 +85,12 @@ func (suite *KeepalivedTestSuite) TestEventProcessing() {
 	suite.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
 	suite.Keepalived.MonitorFactory = nil
 	suite.NoError(suite.Keepalived.Start())
-	event := types.FixtureEvent("check", "entity")
+	event := types.FixtureEvent("entity", "keepalive")
+	event.Check.Status = 1
+
 	suite.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
+
+	suite.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
 	suite.Keepalived.keepaliveChan <- event
 	time.Sleep(100 * time.Millisecond)
 	suite.Store.AssertCalled(suite.T(), "UpdateEntity", mock.Anything, event.Entity)

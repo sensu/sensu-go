@@ -22,7 +22,7 @@ func (m *mockCreator) Critical(e *types.Entity) error {
 	args := m.Called(e)
 	return args.Error(0)
 }
-func (m *mockCreator) Resolve(e *types.Entity) error {
+func (m *mockCreator) Pass(e *types.Entity) error {
 	args := m.Called(e)
 	return args.Error(0)
 }
@@ -46,14 +46,20 @@ func TestMonitorUpdate(t *testing.T) {
 		Entity: entity,
 	}
 
+	creator := &mockCreator{}
+	creator.On("Pass", entity).Return(nil)
+
 	monitor := &KeepaliveMonitor{
-		Entity: entity,
-		Store:  mockStore,
+		Entity:       entity,
+		EventCreator: creator,
+		Store:        mockStore,
 	}
 	monitor.Start()
 
 	mockStore.On("UpdateEntity", mock.Anything, entity).Return(nil)
-	mockStore.On("UpdateKeepalive", mock.Anything, entity, mock.AnythingOfType("int64")).Return(nil)
+
+	failingEvent := types.FixtureEvent("entity", "keepalive")
+	mockStore.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(failingEvent, nil)
 
 	assert.NoError(monitor.Update(event))
 }
