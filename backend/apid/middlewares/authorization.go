@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -12,7 +13,7 @@ import (
 // Authorization is an HTTP middleware that enforces authorization
 func Authorization(next http.Handler, store store.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims := jwt.GetClaimsFromContext(r)
+		claims := jwt.GetClaimsFromContext(r.Context())
 		if claims == nil {
 			http.Error(w, "No claims found for JWT", http.StatusInternalServerError)
 			return
@@ -28,7 +29,7 @@ func Authorization(next http.Handler, store store.Store) http.Handler {
 			http.Error(w, "Error fetching user from store", http.StatusInternalServerError)
 		}
 
-		userRoles := []types.Role{}
+		userRoles := []*types.Role{}
 
 		for _, userRoleName := range user.Roles {
 			// TODO: (JK) we're not protecting against cases where a
@@ -41,7 +42,7 @@ func Authorization(next http.Handler, store store.Store) http.Handler {
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), "roles", userRoles)
+		ctx := context.WithValue(r.Context(), authorization.ContextRoleKey, userRoles)
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})

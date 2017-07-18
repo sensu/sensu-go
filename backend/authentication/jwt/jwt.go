@@ -66,7 +66,7 @@ func GetClaims(token *jwt.Token) (*types.Claims, error) {
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
-func GetClaimsFromContext(ctx *context.Context) *Claims {
+func GetClaimsFromContext(ctx context.Context) *Claims {
 	if value := ctx.Value(claimsKey); value != nil {
 		claims, ok := value.(*types.Claims)
 		if !ok {
@@ -161,7 +161,7 @@ func RefreshToken(username string) (*jwt.Token, string, error) {
 
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
-func SetClaimsIntoContext(ctx *context.Context, token *jwt.Token) context.Context {
+func SetClaimsIntoContext(ctx context.Context, token *jwt.Token) context.Context {
 	claims, _ := token.Claims.(*types.Claims)
 	return context.WithValue(ctx, claimsKey, claims)
 }

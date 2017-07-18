@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -16,7 +17,7 @@ type EntitiesController struct {
 }
 
 const (
-	Resource = "entities"
+	resource = "entities"
 )
 
 // Register should define an association between HTTP routes and their
@@ -28,7 +29,7 @@ func (c *EntitiesController) Register(r *mux.Router) {
 
 // many handles GET requests to the /entities endpoint.
 func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
-	if !ContextCanAccessResource(r.Context(), Resource, types.RulePermRead) {
+	if !authorization.ContextCanAccessResource(r.Context(), resource, types.RulePermRead) {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
