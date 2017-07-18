@@ -186,12 +186,6 @@ func (k *Keepalived) processKeepalives() {
 			logger.WithError(err).Error("invalid keepalive event")
 			continue
 		}
-		entity.LastSeen = event.Timestamp
-
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-		if err := k.Store.UpdateEntity(ctx, event.Entity); err != nil {
-			logger.WithError(err).Error("error updating entity in store")
-		}
 
 		// TODO(greg): This is a good candidate for a concurrent map
 		// when it's released.
