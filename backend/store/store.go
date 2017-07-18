@@ -134,6 +134,7 @@ type RoleStore interface {
 type TokenStore interface {
 	CreateToken(*types.Claims) error
 	DeleteToken(string) error
+	GetToken(string) (*types.Claims, error)
 }
 
 // UserStore provides an interface for interacting & persisting users
