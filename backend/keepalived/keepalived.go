@@ -153,10 +153,6 @@ func (k *Keepalived) initFromStore() error {
 }
 
 func (k *Keepalived) startWorkers() {
-	// concurrent access to entityChannels map is problematic
-	// because of race conditions :(
-	k.HandlerCount = 1
-
 	k.wg = &sync.WaitGroup{}
 	k.wg.Add(k.HandlerCount)
 
