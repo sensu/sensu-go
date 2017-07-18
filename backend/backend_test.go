@@ -83,69 +83,70 @@ func TestHTTPListener(t *testing.T) {
 }
 
 func TestHTTPSListener(t *testing.T) {
-	util.WithTempDir(func(path string) {
-		ports := make([]int, 4)
-		err := util.RandomPorts(ports)
-		if err != nil {
-			log.Panic(err)
-		}
-		clURL := fmt.Sprintf("https://127.0.0.1:%d", ports[0])
-		apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
-		agentPort := ports[2]
-		apiPort := ports[3]
-		initCluster := fmt.Sprintf("default=%s", apURL)
-		fmt.Println(initCluster)
+	path, remove := testutil.TempDir(t)
+	defer remove()
 
-		b, err := NewBackend(&Config{
-			AgentHost:                   "127.0.0.1",
-			AgentPort:                   agentPort,
-			APIHost:                     "127.0.0.1",
-			APIPort:                     apiPort,
-			DashboardHost:               "127.0.0.1",
-			StateDir:                    path,
-			EtcdListenClientURL:         clURL,
-			EtcdListenPeerURL:           apURL,
-			EtcdInitialCluster:          initCluster,
-			EtcdInitialClusterState:     etcd.ClusterStateNew,
-			EtcdInitialAdvertisePeerURL: apURL,
-			TLS: &types.TLSConfig{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem"},
-		})
-		assert.NoError(t, err)
-		if err != nil {
-			assert.FailNow(t, "failed to start backend")
-		}
+	ports := make([]int, 4)
+	err := testutil.RandomPorts(ports)
+	if err != nil {
+		log.Panic(err)
+	}
+	clURL := fmt.Sprintf("https://127.0.0.1:%d", ports[0])
+	apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
+	agentPort := ports[2]
+	apiPort := ports[3]
+	initCluster := fmt.Sprintf("default=%s", apURL)
+	fmt.Println(initCluster)
 
-		go func() {
-			err = b.Run()
-			assert.NoError(t, err)
-		}()
-
-		for i := 0; i < 5; i++ {
-			conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", agentPort))
-			if derr != nil {
-				fmt.Println("Waiting for backend to start")
-				time.Sleep(time.Duration(i) * time.Second)
-			} else {
-				conn.Close()
-				continue
-			}
-		}
-
-		client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort))
-		assert.NoError(t, err)
-		assert.NotNil(t, client)
-
-		msg := &transport.Message{
-			Type:    types.AgentHandshakeType,
-			Payload: []byte("{}"),
-		}
-		err = client.Send(msg)
-		assert.NoError(t, err)
-		resp, err := client.Receive()
-		assert.NoError(t, err)
-		assert.Equal(t, types.BackendHandshakeType, resp.Type)
-
-		assert.NoError(t, client.Close())
-		b.Stop()
+	b, err := NewBackend(&Config{
+		AgentHost:                   "127.0.0.1",
+		AgentPort:                   agentPort,
+		APIHost:                     "127.0.0.1",
+		APIPort:                     apiPort,
+		DashboardHost:               "127.0.0.1",
+		StateDir:                    path,
+		EtcdListenClientURL:         clURL,
+		EtcdListenPeerURL:           apURL,
+		EtcdInitialCluster:          initCluster,
+		EtcdInitialClusterState:     etcd.ClusterStateNew,
+		EtcdInitialAdvertisePeerURL: apURL,
+		TLS: &types.TLSConfig{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem"},
 	})
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "failed to start backend")
+	}
+
+	go func() {
+		err = b.Run()
+		assert.NoError(t, err)
+	}()
+
+	for i := 0; i < 5; i++ {
+		conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", agentPort))
+		if derr != nil {
+			fmt.Println("Waiting for backend to start")
+			time.Sleep(time.Duration(i) * time.Second)
+		} else {
+			conn.Close()
+			continue
+		}
+	}
+
+	client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort))
+	assert.NoError(t, err)
+	assert.NotNil(t, client)
+
+	msg := &transport.Message{
+		Type:    types.AgentHandshakeType,
+		Payload: []byte("{}"),
+	}
+	err = client.Send(msg)
+	assert.NoError(t, err)
+	resp, err := client.Receive()
+	assert.NoError(t, err)
+	assert.Equal(t, types.BackendHandshakeType, resp.Type)
+
+	assert.NoError(t, client.Close())
+	b.Stop()
 }

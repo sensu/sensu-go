@@ -234,15 +234,6 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	// Initializes the JWT secret
-	jwt.InitSecret(st)
-
-	// TODO(Simon): We need to determine the authentication driver from the config
-	auth := &basic.Basic{
-		Enabled: b.Config.APIAuthentication,
-		Store:   st,
-	}
-
 	// TLS config gets passed down here
 	b.apid = &apid.APId{
 		Store:         st,
