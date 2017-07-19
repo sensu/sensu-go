@@ -89,7 +89,7 @@ func newStartCommand() *cobra.Command {
 			}
 
 			if certFile != "" && keyFile != "" && trustedCAFile != "" {
-				cfg.TLS = &types.TLSConfig{certFile, keyFile, trustedCAFile, insecureSkipTLSVerify}
+				cfg.TLS = &types.TLSOptions{certFile, keyFile, trustedCAFile, insecureSkipTLSVerify}
 			} else if certFile != "" || keyFile != "" || trustedCAFile != "" {
 				emptyFlags := []string{}
 				if certFile == "" {

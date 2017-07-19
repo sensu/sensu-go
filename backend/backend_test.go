@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -113,7 +112,7 @@ func TestHTTPSListener(t *testing.T) {
 		EtcdInitialCluster:          initCluster,
 		EtcdInitialClusterState:     etcd.ClusterStateNew,
 		EtcdInitialAdvertisePeerURL: apURL,
-		TLS: &types.TLSConfig{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem", true},
+		TLS: &types.TLSOptions{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem", true},
 	})
 	assert.NoError(t, err)
 	if err != nil {
@@ -158,8 +157,8 @@ func TestHTTPSListener(t *testing.T) {
 		}
 	}
 
-	wsTlsCfg := &tls.Config{InsecureSkipVerify: true}
-	client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort), wsTlsCfg)
+	wsTLSCfg := &types.TLSOptions{InsecureSkipVerify: true}
+	client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort), wsTLSCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 

@@ -27,7 +27,7 @@ type APId struct {
 	Host          string
 	Port          int
 	Store         store.Store
-	TLS           *types.TLSConfig
+	TLS           *types.TLSOptions
 }
 
 // Start Apid.

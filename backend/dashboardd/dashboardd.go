@@ -24,7 +24,7 @@ type Config struct {
 	Dir  string
 	Host string
 	Port int
-	TLS  *types.TLSConfig
+	TLS  *types.TLSOptions
 }
 
 // Dashboardd represents the dashboard daemon

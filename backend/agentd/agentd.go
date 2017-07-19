@@ -33,7 +33,7 @@ type Agentd struct {
 	Host       string
 	Port       int
 	MessageBus messaging.MessageBus
-	TLS        *types.TLSConfig
+	TLS        *types.TLSOptions
 }
 
 // Start Agentd.

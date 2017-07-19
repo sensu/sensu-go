@@ -2,9 +2,7 @@ package backend
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"runtime/debug"
 
 	"github.com/gorilla/websocket"
@@ -69,7 +67,7 @@ type Config struct {
 	EtcdListenPeerURL           string
 	EtcdName                    string
 
-	TLS *types.TLSConfig
+	TLS *types.TLSOptions
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -127,32 +125,17 @@ func NewBackend(config *Config) (*Backend, error) {
 	if config.AgentPort == 0 {
 		config.AgentPort = 8081
 	}
-	var tlsConfig *tls.Config
 
 	// Check for TLS config and load certs if present
+	var (
+		tlsConfig *tls.Config
+		err       error
+	)
 	if config.TLS != nil {
-
-		// Client cert
-		cert, err := tls.LoadX509KeyPair(config.TLS.CertFile, config.TLS.KeyFile)
+		tlsConfig, err = config.TLS.ToTLSConfig()
 		if err != nil {
-			// do something with the error
-			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
+			return nil, err
 		}
-
-		// CA Cert
-		caCert, err := ioutil.ReadFile(config.TLS.TrustedCAFile)
-		if err != nil {
-			return nil, fmt.Errorf("Error loading tls CA cert: %s", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-
-		tlsConfig = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			RootCAs:      caCertPool,
-		}
-		tlsConfig.BuildNameToCertificate()
 	}
 
 	b := &Backend{
