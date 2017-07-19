@@ -118,3 +118,19 @@ func TestMonitorAlert(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	creator.AssertCalled(t, "Warn", entity)
 }
+
+func TestExternalResolution(t *testing.T) {
+	assert := assert.New(t)
+	event := types.FixtureEvent("entity", "keepalive")
+	store := &mockstore.MockStore{}
+	store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+	event.Entity.KeepaliveTimeout = 0
+
+	monitor := &KeepaliveMonitor{
+		Entity: event.Entity,
+		Store:  store,
+	}
+	monitor.Start()
+	time.Sleep(100 * time.Millisecond)
+	assert.True(monitor.IsStopped())
+}
