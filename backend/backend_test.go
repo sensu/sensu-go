@@ -92,7 +92,7 @@ func TestHTTPSListener(t *testing.T) {
 		log.Panic(err)
 	}
 	clURL := fmt.Sprintf("https://127.0.0.1:%d", ports[0])
-	apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
+	apURL := fmt.Sprintf("https://127.0.0.1:%d", ports[1])
 	agentPort := ports[2]
 	apiPort := ports[3]
 	dashboardPort := ports[4]
