@@ -54,31 +54,101 @@ func (suite *KeepalivedTestSuite) AfterTest() {
 }
 
 func (suite *KeepalivedTestSuite) TestStartStop() {
-	k := &Keepalived{}
-	suite.Error(k.Start())
-
-	k.MessageBus = suite.MessageBus
-	suite.Error(k.Start())
-
-	k.MonitorFactory = nil
-
-	store := &mockstore.MockStore{}
-	store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
-
-	k.Store = store
-	suite.NoError(k.Start())
-	suite.NotNil(k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
-
-	suite.NoError(k.Status())
-
-	var err error
-	select {
-	case err = <-k.Err():
-	default:
+	failingEvent := func(e *types.Event) *types.Event {
+		e.Check.Status = 1
+		return e
 	}
-	suite.NoError(err)
 
-	suite.NoError(k.Stop())
+	tt := []struct {
+		name     string
+		records  []*types.KeepaliveRecord
+		events   []*types.Event
+		monitors int
+	}{
+		{
+			name:     "No Keepalives",
+			records:  nil,
+			events:   nil,
+			monitors: 0,
+		},
+		{
+			name: "Passing Keepalives",
+			records: []*types.KeepaliveRecord{
+				{
+					EntityID:     "entity1",
+					Organization: "org",
+					Time:         0,
+				},
+				{
+					EntityID:     "entity2",
+					Organization: "org",
+					Time:         0,
+				},
+			},
+			events: []*types.Event{
+				types.FixtureEvent("entity1", "keepalive"),
+				types.FixtureEvent("entity2", "keepalive"),
+			},
+			monitors: 0,
+		},
+		{
+			name: "Failing Keepalives",
+			records: []*types.KeepaliveRecord{
+				{
+					EntityID:     "entity1",
+					Organization: "org",
+					Time:         0,
+				},
+				{
+					EntityID:     "entity2",
+					Organization: "org",
+					Time:         0,
+				},
+			},
+			events: []*types.Event{
+				failingEvent(types.FixtureEvent("entity1", "keepalive")),
+				failingEvent(types.FixtureEvent("entity2", "keepalive")),
+			},
+			monitors: 2,
+		},
+	}
+
+	t := suite.T()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			k := &Keepalived{}
+			suite.Error(k.Start())
+
+			k.MessageBus = suite.MessageBus
+			suite.Error(k.Start())
+
+			k.MonitorFactory = nil
+
+			store := &mockstore.MockStore{}
+			store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
+			for _, event := range tc.events {
+				store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+			}
+
+			k.Store = store
+			suite.NoError(k.Start())
+			suite.NotNil(k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
+
+			suite.NoError(k.Status())
+
+			var err error
+			select {
+			case err = <-k.Err():
+			default:
+			}
+			suite.NoError(err)
+
+			suite.NoError(k.Stop())
+
+			suite.Equal(tc.monitors, len(k.monitors))
+		})
+	}
+
 }
 
 func (suite *KeepalivedTestSuite) TestEventProcessing() {

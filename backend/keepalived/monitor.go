@@ -111,9 +111,14 @@ func (monitorPtr *KeepaliveMonitor) IsStopped() bool {
 
 // Reset the monitor's timer to emit an event at a given time.
 func (monitorPtr *KeepaliveMonitor) Reset(t int64) {
+	if monitorPtr.timer == nil {
+		monitorPtr.Start()
+	}
+
 	d := time.Duration(t - time.Now().Unix())
 	if d < 0 {
 		d = 0
 	}
+
 	monitorPtr.timer.Reset(d)
 }
