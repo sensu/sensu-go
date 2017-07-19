@@ -23,6 +23,11 @@ func (s *etcdStore) UpdateFailingKeepalive(ctx context.Context, entity *types.En
 	return err
 }
 
+func (s *etcdStore) DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error {
+	_, err := s.client.Delete(ctx, path.Join(s.keepalivesPath, entity.Organization, entity.ID))
+	return err
+}
+
 func (s *etcdStore) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error) {
 	resp, err := s.client.Get(ctx, path.Join(s.keepalivesPath), clientv3.WithPrefix())
 	if err != nil {

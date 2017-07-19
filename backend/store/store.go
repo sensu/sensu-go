@@ -96,6 +96,8 @@ type HandlerStore interface {
 
 // KeepaliveStore is responsible for updating entity keepalive data.
 type KeepaliveStore interface {
+	// DeleteFailingKeepalive deletes a failing keepalive record for an entity.
+	DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error
 	// GetFailingKeepalives gets the list of failing keepalives for a given
 	// backend.
 	GetFailingKeepalives(context.Context) ([]*types.KeepaliveRecord, error)

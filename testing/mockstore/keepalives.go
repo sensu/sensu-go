@@ -6,6 +6,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// DeleteFailingKeepalive ...
+func (s *MockStore) DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error {
+	args := s.Called(ctx, entity)
+	return args.Error(0)
+}
+
 // GetFailingKeepalives ...
 func (s *MockStore) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error) {
 	args := s.Called(ctx)

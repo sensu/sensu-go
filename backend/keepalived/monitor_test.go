@@ -125,6 +125,8 @@ func TestExternalResolution(t *testing.T) {
 	event := types.FixtureEvent("entity", "keepalive")
 	store := &mockstore.MockStore{}
 	store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+	store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
+
 	event.Entity.KeepaliveTimeout = 0
 
 	monitor := &KeepaliveMonitor{
@@ -141,6 +143,7 @@ func TestReset(t *testing.T) {
 	event := types.FixtureEvent("entity", "keepalive")
 	store := &mockstore.MockStore{}
 	store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+	store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
 	event.Entity.KeepaliveTimeout = 120
 
 	monitor := &KeepaliveMonitor{

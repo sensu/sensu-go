@@ -20,6 +20,7 @@ type KeepaliveMonitor struct {
 	reset   chan interface{}
 	timer   *time.Timer
 	stopped int32
+	failing int32
 }
 
 // Start initializes the monitor and starts its monitoring goroutine.
@@ -27,11 +28,9 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 	timerDuration := time.Duration(monitorPtr.Entity.KeepaliveTimeout) * time.Second
 	monitorPtr.timer = time.NewTimer(timerDuration)
 	monitorPtr.reset = make(chan interface{})
-
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, monitorPtr.Entity.Organization)
-
 	go func() {
 		timer := monitorPtr.timer
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, monitorPtr.Entity.Organization)
 
 		var (
 			event   *types.Event
@@ -65,6 +64,7 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 				// if the agent disconnected and reconnected elsewhere, stop the monitor
 				// and return.
 				if event != nil && event.Check.Status == 0 {
+					monitorPtr.Store.DeleteFailingKeepalive(ctx, monitorPtr.Entity)
 					monitorPtr.Stop()
 					return
 				}
@@ -87,6 +87,8 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 				if err = monitorPtr.Store.UpdateFailingKeepalive(ctx, monitorPtr.Entity, timeout); err != nil {
 					logger.WithError(err).Error("error updating failing keepalive in store")
 				}
+
+				atomic.CompareAndSwapInt32(&monitorPtr.failing, 0, 1)
 			}
 			timer.Reset(timerDuration)
 		}
@@ -95,9 +97,14 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 
 // Update causes the KeepaliveMonitor to observe the event.
 func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
+	entity := event.Entity
+
+	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
+		monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity)
+	}
+
 	monitorPtr.reset <- struct{}{}
 
-	entity := event.Entity
 	entity.LastSeen = event.Timestamp
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
 
