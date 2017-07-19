@@ -192,6 +192,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	if e.cfg.TLSConfig != nil {
 		tlsCfg = &e.cfg.TLSConfig.TLS
 	}
+
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{e.cfg.ListenClientURL},
 		DialTimeout: 5 * time.Second,

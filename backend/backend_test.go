@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -64,7 +65,7 @@ func TestHTTPListener(t *testing.T) {
 		}
 	}
 
-	client, err := transport.Connect(fmt.Sprintf("ws://localhost:%d/", agentPort))
+	client, err := transport.Connect(fmt.Sprintf("ws://localhost:%d/", agentPort), nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 
@@ -157,7 +158,8 @@ func TestHTTPSListener(t *testing.T) {
 		}
 	}
 
-	client, err := transport.Connect(fmt.Sprintf("ws://localhost:%d/", agentPort))
+	wsTlsCfg := &tls.Config{InsecureSkipVerify: true}
+	client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort), wsTlsCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 

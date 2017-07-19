@@ -62,12 +62,11 @@ func (a *Agentd) Start() error {
 	go func() {
 		defer a.wg.Done()
 		var err error
-		err = a.httpServer.ListenAndServe()
-		// if a.TLS != nil {
-		//	err = a.httpServer.ListenAndServeTLS(a.TLS.CertFile, a.TLS.KeyFile)
-		// } else {
-		//	err = a.httpServer.ListenAndServe()
-		// }
+		if a.TLS != nil {
+			err = a.httpServer.ListenAndServeTLS(a.TLS.CertFile, a.TLS.KeyFile)
+		} else {
+			err = a.httpServer.ListenAndServe()
+		}
 		if err != nil && err != http.ErrServerClosed {
 			logger.Errorf("failed to start http/https server %s", err.Error())
 		}
