@@ -33,8 +33,7 @@ func TestValidateOrganization(t *testing.T) {
 			assert.Equal(t, "foo", orgString)
 
 			return
-		}),
-		store))
+		}), store))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -43,8 +42,7 @@ func TestValidateOrganization(t *testing.T) {
 	query.Add("org", "foo")
 	req.URL.RawQuery = query.Encode()
 
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.DefaultClient.Do(req)
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -58,8 +56,7 @@ func TestValidateNoOrganization(t *testing.T) {
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.DefaultClient.Do(req)
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -82,8 +79,7 @@ func TestValidateOrganizationError(t *testing.T) {
 	query.Add("org", "foo")
 	req.URL.RawQuery = query.Encode()
 
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.DefaultClient.Do(req)
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)

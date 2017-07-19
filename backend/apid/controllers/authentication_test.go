@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -69,68 +72,6 @@ func TestLoginSuccessful(t *testing.T) {
 	assert.NotEmpty(t, response.Refresh)
 }
 
-func TestTokenNoAccessToken(t *testing.T) {
-	a := &AuthenticationController{}
-
-	req, _ := http.NewRequest(http.MethodPost, "/auth/token", nil)
-	res := processRequest(a, req)
-
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
-}
-
-func TestTokenInvalidAccessToken(t *testing.T) {
-	a := &AuthenticationController{}
-
-	req, _ := http.NewRequest(http.MethodPost, "/auth/token", nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", "foobar"))
-	res := processRequest(a, req)
-
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
-}
-
-func TestTokenNoRefreshToken(t *testing.T) {
-	a := &AuthenticationController{}
-	_, tokenString, _ := jwt.AccessToken("foo")
-
-	req, _ := http.NewRequest(http.MethodPost, "/auth/token", nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-	res := processRequest(a, req)
-	assert.Equal(t, http.StatusBadRequest, res.Code)
-
-	req, _ = http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer([]byte("foo")))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-	res = processRequest(a, req)
-	assert.Equal(t, http.StatusBadRequest, res.Code)
-}
-
-func TestTokenInvalidRefreshToken(t *testing.T) {
-	a := &AuthenticationController{}
-	_, tokenString, _ := jwt.AccessToken("foo")
-	refreshTokenString := "foobar"
-	body := &types.Tokens{Refresh: refreshTokenString}
-	payload, _ := json.Marshal(body)
-
-	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-	res := processRequest(a, req)
-
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
-}
-
-func TestTokenWrongSub(t *testing.T) {
-	a := &AuthenticationController{}
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("bar")
-	body := &types.Tokens{Refresh: refreshTokenString}
-	payload, _ := json.Marshal(body)
-
-	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-	res := processRequest(a, req)
-
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
-}
-
 func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := &AuthenticationController{
@@ -147,7 +88,7 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-	res := processRequest(a, req)
+	res := processRequestWithRefreshToken(a, req)
 
 	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
@@ -170,7 +111,7 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-	res := processRequest(a, req)
+	res := processRequestWithRefreshToken(a, req)
 
 	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
@@ -193,7 +134,7 @@ func TestTokenSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-	res := processRequest(a, req)
+	res := processRequestWithRefreshToken(a, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
 
@@ -207,4 +148,14 @@ func TestTokenSuccess(t *testing.T) {
 	assert.NotEqual(t, tokenString, response.Access)
 	assert.NotZero(t, response.ExpiresAt)
 	assert.NotEmpty(t, response.Refresh)
+}
+
+func processRequestWithRefreshToken(c *AuthenticationController, req *http.Request) *httptest.ResponseRecorder {
+	router := mux.NewRouter()
+	c.Register(router)
+	routerStack := middlewares.RefreshToken(router, c.Store)
+	res := httptest.NewRecorder()
+	routerStack.ServeHTTP(res, req)
+
+	return res
 }

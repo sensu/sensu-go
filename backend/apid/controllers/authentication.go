@@ -20,6 +20,7 @@ type AuthenticationController struct {
 func (a *AuthenticationController) Register(r *mux.Router) {
 	r.HandleFunc("/auth", a.login).Methods(http.MethodGet)
 	r.HandleFunc("/auth/token", a.token).Methods(http.MethodPost)
+	r.HandleFunc("/auth/logout", a.logout).Methods(http.MethodPost)
 }
 
 // login handles the login flow
@@ -113,72 +114,37 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	fmt.Fprintf(w, string(resBytes))
 }
 
+// logout handles the logout flow
+func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // token handles logic for issuing new access tokens
 func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the bearer token
-	accessTokenString := jwt.ExtractBearerToken(r)
-	if accessTokenString == "" {
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+	var accessClaims, refreshClaims *types.Claims
+
+	// Get the access token claims
+	if value := r.Context().Value(types.AccessTokenClaims); value != nil {
+		accessClaims = value.(*types.Claims)
+	} else {
+		http.Error(w, "could not retrieve the access token claims", http.StatusUnauthorized)
 		return
 	}
 
-	// We first need to validate that the access token is still valid, even if
-	// it's expired
-	accessToken, err := jwt.ValidateExpiredToken(accessTokenString)
-	if err != nil {
-		logger.Errorf("access token is invalid: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+	// Get the refresh token claims
+	if value := r.Context().Value(types.RefreshTokenClaims); value != nil {
+		refreshClaims = value.(*types.Claims)
+	} else {
+		http.Error(w, "could not retrieve the refresh token claims", http.StatusUnauthorized)
 		return
 	}
 
-	// Retrieve the refresh token
-	if r.Body == nil {
-		http.Error(w, "", http.StatusBadRequest)
-		return
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	payload := &types.Tokens{}
-	err = decoder.Decode(payload)
-	if err != nil {
-		logger.Errorf("Could not decode the refresh token: %s", err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	// Now we want to validate the refresh token
-	refreshToken, err := jwt.ValidateToken(payload.Refresh)
-	if err != nil {
-		logger.Errorf("refresh token is invalid: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	// Retrieve the claims for both tokens
-	accessClaims, err := jwt.GetClaims(accessToken)
-	if err != nil {
-		logger.Errorf("could not parse the access token claims: %s", err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	refreshClaims, err := jwt.GetClaims(refreshToken)
-	if err != nil {
-		logger.Errorf("could not parse the refresh token claims: %s", err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Make sure the refresh token belongs to the same user as the access token
-	if accessClaims.Subject == "" || accessClaims.Subject != refreshClaims.Subject {
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("the access and refresh tokens subject do not match: %s != %s",
-			accessClaims.Subject,
-			refreshClaims.Subject,
-		)
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+	// Get the refresh token string
+	var refreshString string
+	if value := r.Context().Value(types.RefreshTokenString); value != nil {
+		refreshString = value.(string)
+	} else {
+		http.Error(w, "could not retrieve the refresh token string", http.StatusUnauthorized)
 		return
 	}
 
@@ -192,7 +158,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Remove the old access token from the whitelist
-	if err = a.Store.DeleteToken(accessClaims.Id); err != nil {
+	if err := a.Store.DeleteToken(accessClaims.Id); err != nil {
 		// Only log the error, the access token could already have been pruned
 		logger.WithField(
 			"user", refreshClaims.Subject,
@@ -200,7 +166,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Issue a new access token
-	accessToken, accessTokenString, err = jwt.AccessToken(refreshClaims.Subject)
+	accessToken, accessTokenString, err := jwt.AccessToken(refreshClaims.Subject)
 	if err != nil {
 		logger.WithField(
 			"user", refreshClaims.Subject,
@@ -232,7 +198,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	response := &types.Tokens{
 		Access:    accessTokenString,
 		ExpiresAt: accessClaims.ExpiresAt,
-		Refresh:   payload.Refresh,
+		Refresh:   refreshString,
 	}
 
 	resBytes, err := json.Marshal(response)
