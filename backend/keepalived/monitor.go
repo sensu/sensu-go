@@ -9,14 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// A Monitor observes events and takes actions based on them.
-type Monitor interface {
-	Update(event *types.Event) error
-	Start()
-	Stop()
-	IsStopped() bool
-}
-
 // KeepaliveMonitor is a managed timer that is reset whenever the monitor
 // observes a Keepalive event via the Update() function.
 type KeepaliveMonitor struct {
@@ -28,6 +20,7 @@ type KeepaliveMonitor struct {
 	reset   chan interface{}
 	timer   *time.Timer
 	stopped int32
+	failing int32
 }
 
 // Start initializes the monitor and starts its monitoring goroutine.
@@ -35,11 +28,16 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 	timerDuration := time.Duration(monitorPtr.Entity.KeepaliveTimeout) * time.Second
 	monitorPtr.timer = time.NewTimer(timerDuration)
 	monitorPtr.reset = make(chan interface{})
-
-	running := make(chan interface{})
 	go func() {
-		close(running)
 		timer := monitorPtr.timer
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, monitorPtr.Entity.Organization)
+
+		var (
+			event   *types.Event
+			err     error
+			timeout int64
+		)
+
 		for {
 			select {
 			case <-monitorPtr.reset:
@@ -52,28 +50,61 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 
 			case <-timer.C:
 				// timed out keepalive
+
+				// test to see if the entity still exists (it may have been deleted)
+
+				event, err = monitorPtr.Store.GetEventByEntityCheck(ctx, monitorPtr.Entity.ID, "keepalive")
+				if err != nil {
+					// this should be a temporary error talking to the store. keep trying until
+					// the store starts responding again.
+					logger.WithError(err).Error("error getting keepalive event for client")
+					break
+				}
+
+				// if the agent disconnected and reconnected elsewhere, stop the monitor
+				// and return.
+				if event != nil && event.Check.Status == 0 {
+					monitorPtr.Store.DeleteFailingKeepalive(ctx, monitorPtr.Entity)
+					monitorPtr.Stop()
+					return
+				}
+
+				// if the entity is supposed to be deregistered, do so.
 				if monitorPtr.Entity.Deregister {
-					if err := monitorPtr.Deregisterer.Deregister(monitorPtr.Entity); err != nil {
+					if err = monitorPtr.Deregisterer.Deregister(monitorPtr.Entity); err != nil {
 						logger.WithError(err).Error("error deregistering entity")
 					}
 					monitorPtr.Stop()
 					return
 				}
-				if err := monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
+
+				// this is a real keepalive event, emit it.
+				if err = monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
 					logger.WithError(err).Error("error sending keepalive event")
 				}
+
+				timeout = time.Now().Unix() + int64(monitorPtr.Entity.KeepaliveTimeout)
+				if err = monitorPtr.Store.UpdateFailingKeepalive(ctx, monitorPtr.Entity, timeout); err != nil {
+					logger.WithError(err).Error("error updating failing keepalive in store")
+				}
+
+				atomic.CompareAndSwapInt32(&monitorPtr.failing, 0, 1)
 			}
 			timer.Reset(timerDuration)
 		}
 	}()
-	<-running
 }
 
 // Update causes the KeepaliveMonitor to observe the event.
 func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
+	entity := event.Entity
+
+	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
+		monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity)
+	}
+
 	monitorPtr.reset <- struct{}{}
 
-	entity := event.Entity
 	entity.LastSeen = event.Timestamp
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
 
@@ -81,11 +112,7 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 		logger.WithError(err).Error("error updating entity in store")
 	}
 
-	if err := monitorPtr.Store.UpdateKeepalive(ctx, event.Entity.ID, event.Timestamp+DefaultKeepaliveTimeout); err != nil {
-		return err
-	}
-
-	return nil
+	return monitorPtr.EventCreator.Pass(entity)
 }
 
 // Stop the KeepaliveMonitor
@@ -102,4 +129,18 @@ func (monitorPtr *KeepaliveMonitor) Stop() {
 // IsStopped returns true if the Monitor has been stopped.
 func (monitorPtr *KeepaliveMonitor) IsStopped() bool {
 	return atomic.LoadInt32(&monitorPtr.stopped) > 0
+}
+
+// Reset the monitor's timer to emit an event at a given time.
+func (monitorPtr *KeepaliveMonitor) Reset(t int64) {
+	if monitorPtr.timer == nil {
+		monitorPtr.Start()
+	}
+
+	d := time.Duration(t - time.Now().Unix())
+	if d < 0 {
+		d = 0
+	}
+
+	monitorPtr.timer.Reset(d)
 }

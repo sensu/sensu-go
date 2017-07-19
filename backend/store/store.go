@@ -96,11 +96,14 @@ type HandlerStore interface {
 
 // KeepaliveStore is responsible for updating entity keepalive data.
 type KeepaliveStore interface {
-	// GetKeepalive gets the current expiration for an entity's keepalive.
-	GetKeepalive(context.Context, string) (int64, error)
+	// DeleteFailingKeepalive deletes a failing keepalive record for an entity.
+	DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error
+	// GetFailingKeepalives gets the list of failing keepalives for a given
+	// backend.
+	GetFailingKeepalives(context.Context) ([]*types.KeepaliveRecord, error)
 	// UpdateKeepalive updates the current expiration time for an entity's
 	// keepalive.
-	UpdateKeepalive(context.Context, string, int64) error
+	UpdateFailingKeepalive(context.Context, *types.Entity, int64) error
 }
 
 // MutatorStore provides an interface for interacting & persisting mutators

@@ -14,7 +14,7 @@ func TestWarnEvent(t *testing.T) {
 	assert := assert.New(t)
 
 	mockBus := &mockbus.MockBus{}
-	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockBus.On("Publish", messaging.TopicEventRaw, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)
 		assert.Equal(1, event.Check.Status)
 	})
@@ -29,7 +29,7 @@ func TestCriticalEvent(t *testing.T) {
 	assert := assert.New(t)
 
 	mockBus := &mockbus.MockBus{}
-	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockBus.On("Publish", messaging.TopicEventRaw, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)
 		assert.Equal(2, event.Check.Status)
 	})
@@ -44,7 +44,7 @@ func TestResolveEvent(t *testing.T) {
 	assert := assert.New(t)
 
 	mockBus := &mockbus.MockBus{}
-	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+	mockBus.On("Publish", messaging.TopicEventRaw, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)
 		assert.Equal(0, event.Check.Status)
 	})
@@ -52,5 +52,5 @@ func TestResolveEvent(t *testing.T) {
 		MessageBus: mockBus,
 	}
 	entity := types.FixtureEntity("entity")
-	assert.NoError(creator.Resolve(entity))
+	assert.NoError(creator.Pass(entity))
 }

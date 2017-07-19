@@ -9,7 +9,7 @@ import (
 type EventCreator interface {
 	Warn(entity *types.Entity) error
 	Critical(entity *types.Entity) error
-	Resolve(entity *types.Entity) error
+	Pass(entity *types.Entity) error
 }
 
 // MessageBusEventCreator publishes a message to WizardBus when Alert or Resolve
@@ -20,29 +20,29 @@ type MessageBusEventCreator struct {
 
 // Warn sends a check with status of warn for a keepalive.
 func (creatorPtr *MessageBusEventCreator) Warn(entity *types.Entity) error {
-	event := creatorPtr.createEvent(entity)
+	event := createEvent(entity)
 	event.Check.Status = 1
 
-	return creatorPtr.MessageBus.Publish(messaging.TopicEvent, event)
+	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
 }
 
 // Critical sends a check with status of critical for a keepalive.
 func (creatorPtr *MessageBusEventCreator) Critical(entity *types.Entity) error {
-	event := creatorPtr.createEvent(entity)
+	event := createEvent(entity)
 	event.Check.Status = 2
 
-	return creatorPtr.MessageBus.Publish(messaging.TopicEvent, event)
+	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
 }
 
-// Resolve sends a check with a status of OK for a keepalive.
-func (creatorPtr *MessageBusEventCreator) Resolve(entity *types.Entity) error {
-	event := creatorPtr.createEvent(entity)
+// Pass sends a check with a status of OK for a keepalive.
+func (creatorPtr *MessageBusEventCreator) Pass(entity *types.Entity) error {
+	event := createEvent(entity)
 	event.Check.Status = 0
 
-	return creatorPtr.MessageBus.Publish(messaging.TopicEvent, event)
+	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
 }
 
-func (creatorPtr *MessageBusEventCreator) createEvent(entity *types.Entity) *types.Event {
+func createEvent(entity *types.Entity) *types.Event {
 	keepaliveCheck := &types.Check{
 		Config: &types.CheckConfig{
 			Name:          "keepalive",

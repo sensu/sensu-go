@@ -12,17 +12,13 @@ import (
 func TestKeepaliveStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
+		entity := types.FixtureEntity("entity")
 
-		err := store.UpdateKeepalive(ctx, "entity", 1)
+		err := store.UpdateFailingKeepalive(ctx, entity, 1)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetKeepalive(ctx, "notfound")
+		records, err := store.GetFailingKeepalives(context.Background())
 		assert.NoError(t, err)
-		assert.Zero(t, retrieved)
-
-		retrieved, err = store.GetKeepalive(ctx, "entity")
-		assert.NoError(t, err)
-		assert.NotZero(t, retrieved)
-		assert.Equal(t, int64(1), retrieved)
+		assert.Equal(t, 1, len(records))
 	})
 }

@@ -1,6 +1,8 @@
 package etcd
 
 import (
+	"path"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -14,6 +16,8 @@ type etcdStore struct {
 	client *clientv3.Client
 	kvc    clientv3.KV
 	etcd   *Etcd
+
+	keepalivesPath string
 }
 
 // NewStore ...
@@ -28,5 +32,7 @@ func (e *Etcd) NewStore() (store.Store, error) {
 		client: c,
 		kvc:    clientv3.NewKV(c),
 	}
+
+	store.keepalivesPath = path.Join(etcdRoot, keepalivesPathPrefix, store.etcd.cfg.Name)
 	return store, nil
 }

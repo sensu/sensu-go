@@ -24,7 +24,7 @@ const (
 // MonitorFactoryFunc takes an entity and returns a Monitor. Keepalived can
 // take a MonitorFactoryFunc that stubs/mocks a Deregisterer and/or an
 // EventCreator to make it easier to test.
-type MonitorFactoryFunc func(e *types.Entity) Monitor
+type MonitorFactoryFunc func(e *types.Entity) *KeepaliveMonitor
 
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
@@ -36,7 +36,7 @@ type Keepalived struct {
 	MonitorFactory        MonitorFactoryFunc
 
 	mu            *sync.Mutex
-	monitors      map[string]Monitor
+	monitors      map[string]*KeepaliveMonitor
 	wg            *sync.WaitGroup
 	keepaliveChan chan interface{}
 	errChan       chan error
@@ -54,7 +54,7 @@ func (k *Keepalived) Start() error {
 	}
 
 	if k.MonitorFactory == nil {
-		k.MonitorFactory = func(e *types.Entity) Monitor {
+		k.MonitorFactory = func(e *types.Entity) *KeepaliveMonitor {
 			return &KeepaliveMonitor{
 				Entity: e,
 				Deregisterer: &Deregistration{
@@ -80,7 +80,11 @@ func (k *Keepalived) Start() error {
 	}
 
 	k.mu = &sync.Mutex{}
-	k.monitors = map[string]Monitor{}
+	k.monitors = map[string]*KeepaliveMonitor{}
+
+	if err := k.initFromStore(); err != nil {
+		return err
+	}
 
 	k.startWorkers()
 
@@ -114,11 +118,41 @@ func (k *Keepalived) Err() <-chan error {
 	return k.errChan
 }
 
-func (k *Keepalived) startWorkers() {
-	// concurrent access to entityChannels map is problematic
-	// because of race conditions :(
-	k.HandlerCount = 1
+func (k *Keepalived) initFromStore() error {
+	// For which clients were we previously alerting?
+	keepalives, err := k.Store.GetFailingKeepalives(context.TODO())
+	if err != nil {
+		return err
+	}
 
+	for _, keepalive := range keepalives {
+		entityCtx := context.WithValue(context.TODO(), types.OrganizationKey, keepalive.Organization)
+		event, err := k.Store.GetEventByEntityCheck(entityCtx, keepalive.EntityID, "keepalive")
+		if err != nil {
+			return err
+		}
+
+		// if there's no event, the entity was deregistered/deleted.
+		if event == nil {
+			continue
+		}
+
+		// if another backend picked it up, it will be passing.
+		if event.Check.Status == 0 {
+			continue
+		}
+
+		// Recreate the monitor and reset its timer to alert when it's going to
+		// timeout.
+		monitor := k.MonitorFactory(event.Entity)
+		monitor.Reset(keepalive.Time)
+		k.monitors[keepalive.EntityID] = monitor
+	}
+
+	return nil
+}
+
+func (k *Keepalived) startWorkers() {
 	k.wg = &sync.WaitGroup{}
 	k.wg.Add(k.HandlerCount)
 
@@ -131,7 +165,7 @@ func (k *Keepalived) processKeepalives() {
 	defer k.wg.Done()
 
 	var (
-		monitor Monitor
+		monitor *KeepaliveMonitor
 		event   *types.Event
 		ok      bool
 	)
@@ -147,12 +181,6 @@ func (k *Keepalived) processKeepalives() {
 		if err := entity.Validate(); err != nil {
 			logger.WithError(err).Error("invalid keepalive event")
 			continue
-		}
-		entity.LastSeen = event.Timestamp
-
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-		if err := k.Store.UpdateEntity(ctx, event.Entity); err != nil {
-			logger.WithError(err).Error("error updating entity in store")
 		}
 
 		// TODO(greg): This is a good candidate for a concurrent map

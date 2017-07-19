@@ -94,10 +94,6 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("check interval must be greater than 0")
 	}
 
-	if c.Command == "" {
-		return errors.New("check command must be set")
-	}
-
 	if c.Organization == "" {
 		return errors.New("organization must be set")
 	}

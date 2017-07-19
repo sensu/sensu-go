@@ -35,7 +35,7 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 	keepalived := &Keepalived{
 		Store:      suite.Store,
 		MessageBus: suite.MessageBus,
-		MonitorFactory: func(e *types.Entity) Monitor {
+		MonitorFactory: func(e *types.Entity) *KeepaliveMonitor {
 			return &KeepaliveMonitor{
 				Entity:       e,
 				Deregisterer: dereg,
@@ -54,41 +54,119 @@ func (suite *KeepalivedTestSuite) AfterTest() {
 }
 
 func (suite *KeepalivedTestSuite) TestStartStop() {
-	k := &Keepalived{}
-	suite.Error(k.Start())
-
-	k.MessageBus = suite.MessageBus
-	suite.Error(k.Start())
-
-	k.MonitorFactory = nil
-
-	store := &mockstore.MockStore{}
-	k.Store = store
-	suite.NoError(k.Start())
-	suite.NotNil(k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
-
-	suite.NoError(k.Status())
-
-	var err error
-	select {
-	case err = <-k.Err():
-	default:
+	failingEvent := func(e *types.Event) *types.Event {
+		e.Check.Status = 1
+		return e
 	}
-	suite.NoError(err)
 
-	suite.NoError(k.Stop())
+	tt := []struct {
+		name     string
+		records  []*types.KeepaliveRecord
+		events   []*types.Event
+		monitors int
+	}{
+		{
+			name:     "No Keepalives",
+			records:  nil,
+			events:   nil,
+			monitors: 0,
+		},
+		{
+			name: "Passing Keepalives",
+			records: []*types.KeepaliveRecord{
+				{
+					EntityID:     "entity1",
+					Organization: "org",
+					Time:         0,
+				},
+				{
+					EntityID:     "entity2",
+					Organization: "org",
+					Time:         0,
+				},
+			},
+			events: []*types.Event{
+				types.FixtureEvent("entity1", "keepalive"),
+				types.FixtureEvent("entity2", "keepalive"),
+			},
+			monitors: 0,
+		},
+		{
+			name: "Failing Keepalives",
+			records: []*types.KeepaliveRecord{
+				{
+					EntityID:     "entity1",
+					Organization: "org",
+					Time:         0,
+				},
+				{
+					EntityID:     "entity2",
+					Organization: "org",
+					Time:         0,
+				},
+			},
+			events: []*types.Event{
+				failingEvent(types.FixtureEvent("entity1", "keepalive")),
+				failingEvent(types.FixtureEvent("entity2", "keepalive")),
+			},
+			monitors: 2,
+		},
+	}
+
+	t := suite.T()
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			k := &Keepalived{}
+			suite.Error(k.Start())
+
+			k.MessageBus = suite.MessageBus
+			suite.Error(k.Start())
+
+			k.MonitorFactory = nil
+
+			store := &mockstore.MockStore{}
+			store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
+			for _, event := range tc.events {
+				store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+				if event.Check.Status != 0 {
+					store.On("UpdateFailingKeepalive", mock.Anything, event.Entity, mock.AnythingOfType("int64")).Return(nil)
+				}
+			}
+
+			k.Store = store
+			suite.NoError(k.Start())
+			suite.NotNil(k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
+
+			suite.NoError(k.Status())
+
+			var err error
+			select {
+			case err = <-k.Err():
+			default:
+			}
+			suite.NoError(err)
+
+			suite.NoError(k.Stop())
+
+			suite.Equal(tc.monitors, len(k.monitors))
+		})
+	}
+
 }
 
 func (suite *KeepalivedTestSuite) TestEventProcessing() {
+	suite.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
 	suite.Keepalived.MonitorFactory = nil
 	suite.NoError(suite.Keepalived.Start())
-	event := types.FixtureEvent("check", "entity")
+	event := types.FixtureEvent("entity", "keepalive")
+	event.Check.Status = 1
+
 	suite.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
-	suite.Store.On("UpdateKeepalive", mock.Anything, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout)).Return(nil)
+
+	suite.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
 	suite.Keepalived.keepaliveChan <- event
 	time.Sleep(100 * time.Millisecond)
 	suite.Store.AssertCalled(suite.T(), "UpdateEntity", mock.Anything, event.Entity)
-	suite.Store.AssertCalled(suite.T(), "UpdateKeepalive", mock.Anything, event.Entity.ID, event.Timestamp+int64(event.Entity.KeepaliveTimeout))
 }
 
 func TestKeepalivedSuite(t *testing.T) {

@@ -2,9 +2,10 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"path"
-	"strconv"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -12,40 +13,38 @@ const (
 	keepalivesPathPrefix = "keepalives"
 )
 
-func getKeepalivePath(ctx context.Context, id string) string {
-	var org string
-
-	// Determine the organization
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		org = value.(string)
-	} else {
-		org = ""
-	}
-
-	return path.Join(etcdRoot, keepalivesPathPrefix, org, id)
-}
-
-func (s *etcdStore) GetKeepalive(ctx context.Context, entityID string) (int64, error) {
-	resp, err := s.client.Get(context.Background(), getKeepalivePath(ctx, entityID))
+func (s *etcdStore) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity, expiration int64) error {
+	kr := types.NewKeepaliveRecord(entity, expiration)
+	krBytes, err := json.Marshal(kr)
 	if err != nil {
-		return 0, err
+		return err
 	}
-
-	if len(resp.Kvs) == 0 {
-		return 0, nil
-	}
-
-	expirationStr := string(resp.Kvs[0].Value)
-	expiration, err := strconv.ParseInt(expirationStr, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return expiration, nil
-}
-
-func (s *etcdStore) UpdateKeepalive(ctx context.Context, entityID string, expiration int64) error {
-	expirationStr := strconv.FormatInt(expiration, 10)
-	_, err := s.client.Put(context.Background(), getKeepalivePath(ctx, entityID), expirationStr)
+	_, err = s.client.Put(context.Background(), path.Join(s.keepalivesPath, entity.Organization, entity.ID), string(krBytes))
 	return err
+}
+
+func (s *etcdStore) DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error {
+	_, err := s.client.Delete(ctx, path.Join(s.keepalivesPath, entity.Organization, entity.ID))
+	return err
+}
+
+func (s *etcdStore) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error) {
+	resp, err := s.client.Get(ctx, path.Join(s.keepalivesPath), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+
+	keepalives := []*types.KeepaliveRecord{}
+	for _, kv := range resp.Kvs {
+		keepalive := &types.KeepaliveRecord{}
+		if err := json.Unmarshal(kv.Value, keepalive); err != nil {
+			// if we have a problem deserializing a keepalive record, delete that record
+			// ignoring any errors we have along the way.
+			s.client.Delete(ctx, string(kv.Key))
+			continue
+		}
+		keepalives = append(keepalives, keepalive)
+	}
+
+	return keepalives, nil
 }
