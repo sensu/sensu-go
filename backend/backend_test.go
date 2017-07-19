@@ -99,6 +99,8 @@ func TestHTTPSListener(t *testing.T) {
 	initCluster := fmt.Sprintf("default=%s", apURL)
 	fmt.Println(initCluster)
 
+	tlsOpts := &types.TLSOptions{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem", false}
+
 	b, err := NewBackend(&Config{
 		AgentHost:                   "127.0.0.1",
 		AgentPort:                   agentPort,
@@ -112,7 +114,7 @@ func TestHTTPSListener(t *testing.T) {
 		EtcdInitialCluster:          initCluster,
 		EtcdInitialClusterState:     etcd.ClusterStateNew,
 		EtcdInitialAdvertisePeerURL: apURL,
-		TLS: &types.TLSOptions{"../util/ssl/etcd1.pem", "../util/ssl/etcd1-key.pem", "../util/ssl/ca.pem", true},
+		TLS: tlsOpts,
 	})
 	assert.NoError(t, err)
 	if err != nil {
@@ -157,8 +159,7 @@ func TestHTTPSListener(t *testing.T) {
 		}
 	}
 
-	wsTLSCfg := &types.TLSOptions{InsecureSkipVerify: true}
-	client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort), wsTLSCfg)
+	client, err := transport.Connect(fmt.Sprintf("wss://localhost:%d/", agentPort), tlsOpts)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 
