@@ -18,7 +18,7 @@ func Whitelist(next http.Handler, store store.Store) http.Handler {
 
 		// Validate that the JWT is whitelisted
 		if _, err := store.GetToken(claims.Id); err != nil {
-			http.Error(w, "Request unauthorized, the token is unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Request unauthorized, the access token is not whitelisted", http.StatusUnauthorized)
 			return
 		}
 

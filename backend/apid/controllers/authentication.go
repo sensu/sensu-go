@@ -126,7 +126,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	// it's expired
 	accessToken, err := jwt.ValidateExpiredToken(accessTokenString)
 	if err != nil {
-		logger.Infof("access token is invalid: %s", err.Error())
+		logger.Errorf("access token is invalid: %s", err.Error())
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -141,7 +141,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	payload := &types.Tokens{}
 	err = decoder.Decode(payload)
 	if err != nil {
-		logger.Infof("Could not decode the refresh token: %s", err.Error())
+		logger.Errorf("Could not decode the refresh token: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -150,7 +150,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	// Now we want to validate the refresh token
 	refreshToken, err := jwt.ValidateToken(payload.Refresh)
 	if err != nil {
-		logger.Infof("refresh token is invalid: %s", err.Error())
+		logger.Errorf("refresh token is invalid: %s", err.Error())
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -158,14 +158,14 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	// Retrieve the claims for both tokens
 	accessClaims, err := jwt.GetClaims(accessToken)
 	if err != nil {
-		logger.Infof("could not parse the access token claims: %s", err.Error())
+		logger.Errorf("could not parse the access token claims: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	refreshClaims, err := jwt.GetClaims(refreshToken)
 	if err != nil {
-		logger.Infof("could not parse the refresh token claims: %s", err.Error())
+		logger.Errorf("could not parse the refresh token claims: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -174,7 +174,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	if accessClaims.Subject == "" || accessClaims.Subject != refreshClaims.Subject {
 		logger.WithField(
 			"user", refreshClaims.Subject,
-		).Infof("the access and refresh tokens subject do not match: %s != %s",
+		).Errorf("the access and refresh tokens subject do not match: %s != %s",
 			accessClaims.Subject,
 			refreshClaims.Subject,
 		)
@@ -182,12 +182,29 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Make sure the refresh token is whitelisted
+	if _, err := a.Store.GetToken(refreshClaims.Id); err != nil {
+		logger.WithField(
+			"user", refreshClaims.Subject,
+		).Errorf("the refresh token is not whitelisted: %s", err.Error())
+		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Remove the old access token from the whitelist
+	if err = a.Store.DeleteToken(accessClaims.Id); err != nil {
+		// Only log the error, the access token could already have been pruned
+		logger.WithField(
+			"user", refreshClaims.Subject,
+		).Errorf("could not remove the access token from the whitelist: %s", err.Error())
+	}
+
 	// Issue a new access token
 	accessToken, accessTokenString, err = jwt.AccessToken(refreshClaims.Subject)
 	if err != nil {
 		logger.WithField(
 			"user", refreshClaims.Subject,
-		).Infof("could not issue a new access token: %s", err.Error())
+		).Errorf("could not issue a new access token: %s", err.Error())
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -197,7 +214,16 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		logger.WithField(
 			"user", refreshClaims.Subject,
-		).Infof("could not issue a new access token: %s", err.Error())
+		).Errorf("could not issue a new access token: %s", err.Error())
+		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Store the new access token in the whitelist
+	if err = a.Store.CreateToken(accessClaims); err != nil {
+		logger.WithField(
+			"user", refreshClaims.Subject,
+		).Errorf("could not add the new access token to the whitelist: %s", err.Error())
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 		return
 	}

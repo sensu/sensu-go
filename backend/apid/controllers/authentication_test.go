@@ -95,7 +95,11 @@ func TestTokenNoRefreshToken(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodPost, "/auth/token", nil)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 	res := processRequest(a, req)
+	assert.Equal(t, http.StatusBadRequest, res.Code)
 
+	req, _ = http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer([]byte("foo")))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
+	res = processRequest(a, req)
 	assert.Equal(t, http.StatusBadRequest, res.Code)
 }
 
@@ -127,8 +131,61 @@ func TestTokenWrongSub(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
+func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
+	store := &mockstore.MockStore{}
+	a := &AuthenticationController{
+		Store: store,
+	}
+
+	// Mock calls to the store
+	store.On("GetToken", mock.AnythingOfType("string")).Return(&types.Claims{}, fmt.Errorf("error"))
+
+	_, tokenString, _ := jwt.AccessToken("foo")
+	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	body := &types.Tokens{Refresh: refreshTokenString}
+	payload, _ := json.Marshal(body)
+
+	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
+	res := processRequest(a, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+}
+
+func TestTokenCannotWhitelistAccessToken(t *testing.T) {
+	store := &mockstore.MockStore{}
+	a := &AuthenticationController{
+		Store: store,
+	}
+
+	// Mock calls to the store
+	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(fmt.Errorf("error"))
+	store.On("DeleteToken", mock.AnythingOfType("string")).Return(nil)
+	store.On("GetToken", mock.AnythingOfType("string")).Return(&types.Claims{}, nil)
+
+	_, tokenString, _ := jwt.AccessToken("foo")
+	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	body := &types.Tokens{Refresh: refreshTokenString}
+	payload, _ := json.Marshal(body)
+
+	req, _ := http.NewRequest(http.MethodPost, "/auth/token", bytes.NewBuffer(payload))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
+	res := processRequest(a, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+}
+
 func TestTokenSuccess(t *testing.T) {
-	a := &AuthenticationController{}
+	store := &mockstore.MockStore{}
+	a := &AuthenticationController{
+		Store: store,
+	}
+
+	// Mock calls to the store
+	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
+	store.On("DeleteToken", mock.AnythingOfType("string")).Return(fmt.Errorf("error"))
+	store.On("GetToken", mock.AnythingOfType("string")).Return(&types.Claims{}, nil)
+
 	_, tokenString, _ := jwt.AccessToken("foo")
 	_, refreshTokenString, _ := jwt.RefreshToken("foo")
 	body := &types.Tokens{Refresh: refreshTokenString}
