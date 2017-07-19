@@ -134,3 +134,20 @@ func TestExternalResolution(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	assert.True(monitor.IsStopped())
 }
+
+func TestReset(t *testing.T) {
+	assert := assert.New(t)
+	event := types.FixtureEvent("entity", "keepalive")
+	store := &mockstore.MockStore{}
+	store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+	event.Entity.KeepaliveTimeout = 120
+
+	monitor := &KeepaliveMonitor{
+		Entity: event.Entity,
+		Store:  store,
+	}
+
+	monitor.Reset(time.Now().Unix())
+	time.Sleep(100 * time.Millisecond)
+	assert.True(monitor.IsStopped())
+}
