@@ -107,6 +107,7 @@ func TestMonitorAlert(t *testing.T) {
 
 	store := &mockstore.MockStore{}
 	store.On("GetEventByEntityCheck", mock.Anything, entity.ID, "keepalive").Return(event, nil)
+	store.On("UpdateFailingKeepalive", mock.Anything, entity, mock.AnythingOfType("int64")).Return(nil)
 
 	monitor := &KeepaliveMonitor{
 		Entity:       entity,

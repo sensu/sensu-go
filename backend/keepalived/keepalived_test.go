@@ -128,6 +128,9 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 			store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
 			for _, event := range tc.events {
 				store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+				if event.Check.Status != 0 {
+					store.On("UpdateFailingKeepalive", mock.Anything, event.Entity, mock.AnythingOfType("int64")).Return(nil)
+				}
 			}
 
 			k.Store = store

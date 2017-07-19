@@ -28,8 +28,17 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 	monitorPtr.timer = time.NewTimer(timerDuration)
 	monitorPtr.reset = make(chan interface{})
 
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, monitorPtr.Entity.Organization)
+
 	go func() {
 		timer := monitorPtr.timer
+
+		var (
+			event   *types.Event
+			err     error
+			timeout int64
+		)
+
 		for {
 			select {
 			case <-monitorPtr.reset:
@@ -44,7 +53,8 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 				// timed out keepalive
 
 				// test to see if the entity still exists (it may have been deleted)
-				event, err := monitorPtr.Store.GetEventByEntityCheck(context.TODO(), monitorPtr.Entity.ID, "keepalive")
+
+				event, err = monitorPtr.Store.GetEventByEntityCheck(ctx, monitorPtr.Entity.ID, "keepalive")
 				if err != nil {
 					// this should be a temporary error talking to the store. keep trying until
 					// the store starts responding again.
@@ -61,7 +71,7 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 
 				// if the entity is supposed to be deregistered, do so.
 				if monitorPtr.Entity.Deregister {
-					if err := monitorPtr.Deregisterer.Deregister(monitorPtr.Entity); err != nil {
+					if err = monitorPtr.Deregisterer.Deregister(monitorPtr.Entity); err != nil {
 						logger.WithError(err).Error("error deregistering entity")
 					}
 					monitorPtr.Stop()
@@ -69,8 +79,13 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 				}
 
 				// this is a real keepalive event, emit it.
-				if err := monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
+				if err = monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
 					logger.WithError(err).Error("error sending keepalive event")
+				}
+
+				timeout = time.Now().Unix() + int64(monitorPtr.Entity.KeepaliveTimeout)
+				if err = monitorPtr.Store.UpdateFailingKeepalive(ctx, monitorPtr.Entity, timeout); err != nil {
+					logger.WithError(err).Error("error updating failing keepalive in store")
 				}
 			}
 			timer.Reset(timerDuration)
