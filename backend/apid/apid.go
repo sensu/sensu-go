@@ -43,15 +43,22 @@ func (a *APId) Start() error {
 
 	router := httpRouter(a)
 
-	// Define the middlewares from last to first
-	// TODO: We need to exclude the /auth route from some of these middlewares
-	routerStack := middlewares.Organization(router, a.Store)
-	routerStack = middlewares.Whitelist(routerStack, a.Store)
-	routerStack = middlewares.Authentication(routerStack)
+	// Define the middlewares related to authentication, from last to first
+	authMiddlewares := middlewares.Organization(router, a.Store)
+	authMiddlewares = middlewares.Whitelist(authMiddlewares, a.Store)
+	authMiddlewares = middlewares.Authentication(authMiddlewares)
+
+	serveMux := http.NewServeMux()
+	serveMux.Handle("/", authMiddlewares)
+
+	// Don't apply the authentication middlewares to some specific /auth routes,
+	// so we'll use the original router instead
+	serveMux.Handle("/auth", router)
+	serveMux.Handle("/auth/token", router)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      routerStack,
+		Handler:      serveMux,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
