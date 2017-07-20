@@ -26,6 +26,9 @@ const (
 
 	// RuleTypeAsset access control for asset objects
 	RuleTypeAsset = "assets"
+
+	// RuleTypeCheck access control for check objects
+	RuleTypeCheck = "checks"
 )
 
 var (

@@ -7,18 +7,22 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // ChecksController defines the fields required by ChecksController.
 type ChecksController struct {
-	Store store.Store
+	Store     store.Store
+	abilities authorization.Ability
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *ChecksController) Register(r *mux.Router) {
+	c.abilities = authorization.Ability{Resource: types.RuleTypeCheck}
+
 	r.HandleFunc("/checks", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/checks", c.single).Methods(http.MethodPost)
 	r.HandleFunc("/checks/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
@@ -26,6 +30,12 @@ func (c *ChecksController) Register(r *mux.Router) {
 
 // many handles requests to /checks
 func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
+	abilities := c.abilities.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	checks, err := c.Store.GetCheckConfigs(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -46,6 +56,15 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name, _ := vars["name"]
 	method := r.Method
+
+	abilities := c.abilities.WithContext(r.Context())
+	switch {
+	case r.Method == http.MethodGet && !abilities.CanRead():
+		fallthrough
+	case r.Method == http.MethodDelete && !abilities.CanDelete():
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	var (
 		check *types.CheckConfig
@@ -75,6 +94,14 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, string(checkBytes))
 	case http.MethodPut, http.MethodPost:
+		switch {
+		case check == nil && !abilities.CanCreate():
+			fallthrough
+		case check != nil && !abilities.CanUpdate():
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		newCheck := &types.CheckConfig{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
