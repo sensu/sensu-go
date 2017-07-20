@@ -21,7 +21,7 @@ type HandlersController struct {
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *HandlersController) Register(r *mux.Router) {
-	c.abilities = authorization.Ability{Resource: types.RuleTypeCheck}
+	c.abilities = authorization.Ability{Resource: types.RuleTypeHandler}
 
 	r.HandleFunc("/handlers", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/handlers/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)

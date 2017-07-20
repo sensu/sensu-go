@@ -35,6 +35,9 @@ const (
 
 	// RuleTypeHandler access control for handler objects
 	RuleTypeHandler = "handlers"
+
+	// RuleTypeMutator access control for mutator objects
+	RuleTypeMutator = "mutators"
 )
 
 var (
