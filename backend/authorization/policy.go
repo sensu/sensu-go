@@ -41,31 +41,26 @@ func (ability Ability) WithContext(ctx context.Context) Ability {
 }
 
 // CanRead returns true if actor has read access to resource.
-func (abilityPtr *Ability) CanRead() bool {
+func (abilityPtr *Ability) CanRead() bool { // nolint
 	return abilityPtr.canPerform(types.RulePermRead)
 }
 
 // CanCreate returns true if actor has create access to resource.
-func (abilityPtr *Ability) CanCreate() bool {
+func (abilityPtr *Ability) CanCreate() bool { // nolint
 	return abilityPtr.canPerform(types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has update access to resource.
-func (abilityPtr *Ability) CanUpdate() bool {
+func (abilityPtr *Ability) CanUpdate() bool { // nolint
 	return abilityPtr.canPerform(types.RulePermUpdate)
 }
 
-// CanCreateOrUpdate returns true if actor has create/update access to resource.
-func (abilityPtr *Ability) CanCreateOrUpdate() bool {
-	return abilityPtr.CanCreate() || abilityPtr.CanUpdate()
-}
-
 // CanDelete returns true if actor has update access to resource.
-func (abilityPtr *Ability) CanDelete() bool {
+func (abilityPtr *Ability) CanDelete() bool { // nolint
 	return abilityPtr.canPerform(types.RulePermDelete)
 }
 
-func (abilityPtr *Ability) canPerform(action string) bool {
+func (abilityPtr *Ability) canPerform(action string) bool { // nolint
 	return CanAccessResource(
 		abilityPtr.Actor,
 		abilityPtr.Resource,

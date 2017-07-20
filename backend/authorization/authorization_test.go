@@ -1,7 +1,6 @@
 package authorization
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -74,7 +73,7 @@ func TestMatchesRuleOrganization(t *testing.T) {
 	}
 }
 
-func TestContextCanAccessResource(t *testing.T) {
+func TestCanAccessResource(t *testing.T) {
 	testCases := []struct {
 		TestName     string
 		Resource     string
@@ -88,19 +87,17 @@ func TestContextCanAccessResource(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.TestName, func(t *testing.T) {
 			assert := assert.New(t)
-
-			rules := []types.Rule{
-				{"entities", "sensu", []string{types.RulePermRead}},
+			actor := Actor{
+				Organization: tc.Organization,
+				Roles: []*types.Role{{
+					Name: "foo",
+					Rules: []types.Rule{
+						{"entities", "sensu", []string{types.RulePermRead}},
+					},
+				}},
 			}
 
-			roles := []types.Role{
-				{"test", rules},
-			}
-
-			ctx := context.TODO()
-			ctx = context.WithValue(ctx, types.OrganizationKey, tc.Organization)
-			ctx = context.WithValue(ctx, ContextRoleKey, roles)
-			assert.Equal(tc.Want, ContextCanAccessResource(ctx, tc.Resource, tc.Action))
+			assert.Equal(tc.Want, CanAccessResource(actor, tc.Resource, tc.Action))
 		})
 	}
 }
