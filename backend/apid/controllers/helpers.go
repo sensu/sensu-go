@@ -45,7 +45,7 @@ func requestWithOrganization(r *http.Request, organization string) *http.Request
 }
 
 func requestWithFullAccess(r *http.Request) *http.Request {
-	userRoles := []*types.Role{types.FixtureRole("test", "default")}
+	userRoles := []*types.Role{types.FixtureRole("test", "*")}
 	context := context.WithValue(
 		r.Context(),
 		authorization.ContextRoleKey,

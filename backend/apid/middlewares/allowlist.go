@@ -10,7 +10,7 @@ import (
 // AllowList verifies that the access token provided is authorized
 func AllowList(next http.Handler, store store.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims := jwt.GetClaimsFromContext(r)
+		claims := jwt.GetClaimsFromContext(r.Context())
 		if claims == nil {
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return

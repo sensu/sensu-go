@@ -23,22 +23,29 @@ func TestDeleteUser(t *testing.T) {
 	store.On("DeleteUserByName", "foo").Return(nil)
 	store.On("DeleteTokensByUsername", "foo").Return(nil)
 
-	req, _ := http.NewRequest(http.MethodDelete, "/rbac/users/foo", nil)
+	req := newRequest(http.MethodDelete, "/rbac/users/foo", nil)
 	res := processRequest(u, req)
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// Invalid user
 	store.On("DeleteUserByName", "bar").Return(fmt.Errorf("error"))
-	req, _ = http.NewRequest(http.MethodDelete, "/rbac/users/bar", nil)
+	req = newRequest(http.MethodDelete, "/rbac/users/bar", nil)
 	res = processRequest(u, req)
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 	// Unable to delete the tokens
 	store.On("DeleteUserByName", "foo").Return(nil)
 	store.On("DeleteTokensByUsername", "foo").Return(fmt.Errorf("error"))
-	req, _ = http.NewRequest(http.MethodDelete, "/rbac/users/bar", nil)
+	req = newRequest(http.MethodDelete, "/rbac/users/bar", nil)
 	res = processRequest(u, req)
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	// Unauthorized user
+	req = newRequest(http.MethodDelete, "/rbac/users/bar", nil)
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestMany(t *testing.T) {
@@ -57,7 +64,7 @@ func TestMany(t *testing.T) {
 		user2,
 	}
 	store.On("GetUsers").Return(users, nil)
-	req, _ := http.NewRequest("GET", "/rbac/users", nil)
+	req := newRequest("GET", "/rbac/users", nil)
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -72,6 +79,13 @@ func TestMany(t *testing.T) {
 
 	// The users passwords should be obfuscated
 	assert.Empty(t, returnedUsers[0].Password)
+
+	// Unauthorized user
+	req = newRequest(http.MethodGet, "/rbac/users", nil)
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestManyError(t *testing.T) {
@@ -83,7 +97,7 @@ func TestManyError(t *testing.T) {
 
 	users := []*types.User{}
 	store.On("GetUsers").Return(users, errors.New("error"))
-	req, _ := http.NewRequest("GET", "/rbac/users", nil)
+	req := newRequest("GET", "/rbac/users", nil)
 	res := processRequest(u, req)
 
 	body := res.Body.Bytes()
@@ -101,7 +115,7 @@ func TestSingle(t *testing.T) {
 
 	var nilUser *types.User
 	store.On("GetUser", "foo").Return(nilUser, nil)
-	req, _ := http.NewRequest("GET", "/rbac/users/foo", nil)
+	req := newRequest("GET", "/rbac/users/foo", nil)
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusNotFound, res.Code)
@@ -109,7 +123,7 @@ func TestSingle(t *testing.T) {
 	user := types.FixtureUser("bar")
 	user.Password = "P@ssw0rd!"
 	store.On("GetUser", "bar").Return(user, nil)
-	req, _ = http.NewRequest("GET", "/rbac/users/bar", nil)
+	req = newRequest("GET", "/rbac/users/bar", nil)
 	res = processRequest(u, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -123,6 +137,13 @@ func TestSingle(t *testing.T) {
 
 	// The user password should be obfuscated
 	assert.Empty(t, result.Password)
+
+	// Unauthorized user
+	req = newRequest(http.MethodGet, "/rbac/users/bar", nil)
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestUpdateUser(t *testing.T) {
@@ -142,10 +163,17 @@ func TestUpdateUser(t *testing.T) {
 	store.On("GetRoles").Return(storedRoles, nil)
 	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
+	req := newRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusCreated, res.Code)
+
+	// Unauthorized user
+	req = newRequest(http.MethodPut, "/rbac/users", bytes.NewBuffer(userBytes))
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestUpdateUserError(t *testing.T) {
@@ -165,7 +193,7 @@ func TestUpdateUserError(t *testing.T) {
 	store.On("GetRoles").Return(storedRoles, nil)
 	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(fmt.Errorf(""))
 
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
+	req := newRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
 
 	assert.Equal(t, http.StatusInternalServerError, res.Code)

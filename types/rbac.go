@@ -38,6 +38,12 @@ const (
 
 	// RuleTypeMutator access control for mutator objects
 	RuleTypeMutator = "mutators"
+
+	// RuleTypeOrganization access control for organization objects
+	RuleTypeOrganization = "organizations"
+
+	// RuleTypeUser access control for user objects
+	RuleTypeUser = "users"
 )
 
 var (

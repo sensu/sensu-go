@@ -49,7 +49,7 @@ func TestAuthorization(t *testing.T) {
 		Disabled: false,
 	}
 
-	claims := sensujwt.Claims{
+	claims := types.Claims{
 		StandardClaims: jwt.StandardClaims{
 			Subject: user.Username,
 		},
