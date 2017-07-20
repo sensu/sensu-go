@@ -116,7 +116,42 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 
 // logout handles the logout flow
 func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request) {
+	var accessClaims, refreshClaims *types.Claims
 
+	// Get the access token claims
+	if value := r.Context().Value(types.AccessTokenClaims); value != nil {
+		accessClaims = value.(*types.Claims)
+	} else {
+		http.Error(w, "could not retrieve the access token claims", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the refresh token claims
+	if value := r.Context().Value(types.RefreshTokenClaims); value != nil {
+		refreshClaims = value.(*types.Claims)
+	} else {
+		http.Error(w, "could not retrieve the refresh token claims", http.StatusUnauthorized)
+		return
+	}
+
+	// Remove the refresh token from the whitelist
+	if err := a.Store.DeleteToken(refreshClaims.Id); err != nil {
+		logger.WithField(
+			"user", refreshClaims.Subject,
+		).Errorf("could not remove the refresh token from the whitelist: %s", err.Error())
+		http.Error(w, "ould not remove the refresh token from the whitelist", http.StatusUnauthorized)
+		return
+	}
+
+	// Remove the access token from the whitelist
+	if err := a.Store.DeleteToken(accessClaims.Id); err != nil {
+		// Only log the error, the access token could already have been pruned
+		logger.WithField(
+			"user", refreshClaims.Subject,
+		).Errorf("could not remove the access token from the whitelist: %s", err.Error())
+	}
+
+	return
 }
 
 // token handles logic for issuing new access tokens

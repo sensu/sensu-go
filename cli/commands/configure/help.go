@@ -8,8 +8,8 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "Configure values",
+		Use:   "configure",
+		Short: "Configure Sensu CLI options",
 	}
 
 	// Add sub-commands

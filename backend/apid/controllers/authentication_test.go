@@ -72,6 +72,48 @@ func TestLoginSuccessful(t *testing.T) {
 	assert.NotEmpty(t, response.Refresh)
 }
 
+func TestLogoutNotWhitelisted(t *testing.T) {
+	store := &mockstore.MockStore{}
+	a := &AuthenticationController{
+		Store: store,
+	}
+
+	// Mock calls to the store
+	store.On("DeleteToken", mock.AnythingOfType("string")).Return(fmt.Errorf("error"))
+
+	_, tokenString, _ := jwt.AccessToken("foo")
+	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	body := &types.Tokens{Refresh: refreshTokenString}
+	payload, _ := json.Marshal(body)
+
+	req, _ := http.NewRequest(http.MethodPost, "/auth/logout", bytes.NewBuffer(payload))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
+	res := processRequestWithRefreshToken(a, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+}
+
+func TestLogoutSuccess(t *testing.T) {
+	store := &mockstore.MockStore{}
+	a := &AuthenticationController{
+		Store: store,
+	}
+
+	// Mock calls to the store
+	store.On("DeleteToken", mock.AnythingOfType("string")).Return(nil)
+
+	_, tokenString, _ := jwt.AccessToken("foo")
+	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	body := &types.Tokens{Refresh: refreshTokenString}
+	payload, _ := json.Marshal(body)
+
+	req, _ := http.NewRequest(http.MethodPost, "/auth/logout", bytes.NewBuffer(payload))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
+	res := processRequestWithRefreshToken(a, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
 func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := &AuthenticationController{

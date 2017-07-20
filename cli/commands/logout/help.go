@@ -1,4 +1,4 @@
-package role
+package logout
 
 import (
 	"github.com/sensu/sensu-go/cli"
@@ -8,16 +8,9 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "role",
-		Short: "Manage roles",
+		Use:   "logout",
+		Short: "Logout from the configured user",
 	}
-
-	// Add sub-commands
-	cmd.AddCommand(
-		CreateCommand(cli),
-		DeleteCommand(cli),
-		ListCommand(cli),
-	)
 
 	return cmd
 }
