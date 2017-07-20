@@ -29,6 +29,9 @@ const (
 
 	// RuleTypeCheck access control for check objects
 	RuleTypeCheck = "checks"
+
+	// RuleTypeEvent access control for event objects
+	RuleTypeEvent = "events"
 )
 
 var (
