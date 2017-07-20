@@ -21,17 +21,20 @@ const (
 	// RulePermDelete delete action
 	RulePermDelete = "delete"
 
-	// RuleTypeEntity access control for entity objects
-	RuleTypeEntity = "entities"
-
 	// RuleTypeAsset access control for asset objects
 	RuleTypeAsset = "assets"
 
 	// RuleTypeCheck access control for check objects
 	RuleTypeCheck = "checks"
 
+	// RuleTypeEntity access control for entity objects
+	RuleTypeEntity = "entities"
+
 	// RuleTypeEvent access control for event objects
 	RuleTypeEvent = "events"
+
+	// RuleTypeHandler access control for handler objects
+	RuleTypeHandler = "handlers"
 )
 
 var (
