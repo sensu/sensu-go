@@ -30,13 +30,17 @@ func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	err := c.Store.DeleteUserByName(username)
-	if err != nil {
+	if err := c.Store.DeleteUserByName(username); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// TODO: Verified the proper return code for DELETE method
-	w.WriteHeader(http.StatusAccepted)
+	if err := c.Store.DeleteTokensByUsername(username); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	return
 }
 

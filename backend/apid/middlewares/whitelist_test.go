@@ -17,7 +17,7 @@ func TestWhitelist(t *testing.T) {
 	claims, _ := jwt.GetClaims(token)
 
 	store := &mockstore.MockStore{}
-	store.On("GetToken", claims.Id).Return(claims, nil)
+	store.On("GetToken", claims.Subject, claims.Id).Return(claims, nil)
 
 	server := httptest.NewServer(Authentication(Whitelist(testHandler(), store)))
 	defer server.Close()
@@ -38,7 +38,7 @@ func TestMissingTokenFromWhitelist(t *testing.T) {
 	claims, _ := jwt.GetClaims(token)
 
 	store := &mockstore.MockStore{}
-	store.On("GetToken", claims.Id).Return(claims, fmt.Errorf("error"))
+	store.On("GetToken", claims.Subject, claims.Id).Return(claims, fmt.Errorf("error"))
 
 	server := httptest.NewServer(Authentication(Whitelist(testHandler(), store)))
 	defer server.Close()

@@ -21,16 +21,23 @@ func TestDeleteUser(t *testing.T) {
 	}
 
 	store.On("DeleteUserByName", "foo").Return(nil)
+	store.On("DeleteTokensByUsername", "foo").Return(nil)
+
 	req, _ := http.NewRequest(http.MethodDelete, "/rbac/users/foo", nil)
 	res := processRequest(u, req)
-
-	assert.Equal(t, http.StatusAccepted, res.Code)
+	assert.Equal(t, http.StatusOK, res.Code)
 
 	// Invalid user
-	store.On("DeleteUserByName", "bar").Return(fmt.Errorf(""))
+	store.On("DeleteUserByName", "bar").Return(fmt.Errorf("error"))
 	req, _ = http.NewRequest(http.MethodDelete, "/rbac/users/bar", nil)
 	res = processRequest(u, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
 
+	// Unable to delete the tokens
+	store.On("DeleteUserByName", "foo").Return(nil)
+	store.On("DeleteTokensByUsername", "foo").Return(fmt.Errorf("error"))
+	req, _ = http.NewRequest(http.MethodDelete, "/rbac/users/bar", nil)
+	res = processRequest(u, req)
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 

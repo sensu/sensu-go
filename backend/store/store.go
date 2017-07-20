@@ -133,8 +133,9 @@ type RoleStore interface {
 // TokenStore provides an interface for interacting with the JWT whitelist
 type TokenStore interface {
 	CreateToken(*types.Claims) error
-	DeleteToken(string) error
-	GetToken(string) (*types.Claims, error)
+	DeleteToken(string, string) error
+	DeleteTokensByUsername(string) error
+	GetToken(string, string) (*types.Claims, error)
 }
 
 // UserStore provides an interface for interacting & persisting users

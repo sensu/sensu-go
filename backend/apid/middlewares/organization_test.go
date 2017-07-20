@@ -46,7 +46,6 @@ func TestValidateOrganization(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-
 }
 
 func TestValidateNoOrganization(t *testing.T) {
