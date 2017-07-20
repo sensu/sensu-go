@@ -20,6 +20,12 @@ const (
 
 	// RulePermDelete delete action
 	RulePermDelete = "delete"
+
+	// RuleTypeEntity access control for entity objects
+	RuleTypeEntity = "entities"
+
+	// RuleTypeAsset access control for asset objects
+	RuleTypeAsset = "assets"
 )
 
 var (

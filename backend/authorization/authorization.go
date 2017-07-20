@@ -1,7 +1,6 @@
 package authorization
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/sensu/sensu-go/types"
@@ -37,17 +36,16 @@ func matchesRuleOrganization(rule types.Rule, organization string) bool {
 	return rule.Organization == organization || rule.Organization == "*"
 }
 
-// ContextCanAccessResource will verify whether or not a user has permission to
+// CanAccessResource will verify whether or not a user has permission to perform
 // an action, for a resource, within an organization
-func ContextCanAccessResource(ctx context.Context, resource, action string) bool {
-	organization := ctx.Value(types.OrganizationKey).(string)
-	roles := ctx.Value(ContextRoleKey).([]types.Role)
-	for _, role := range roles {
+func CanAccessResource(actor Actor, resource, action string) bool {
+	// TODO (JP): flatten rules prior to storing in actor?
+	for _, role := range actor.Roles {
 		for _, rule := range role.Rules {
 			if !matchesRuleType(rule, resource) {
 				continue
 			}
-			if !matchesRuleOrganization(rule, organization) {
+			if !matchesRuleOrganization(rule, actor.Organization) {
 				continue
 			}
 			if hasPermission(rule, action) {
