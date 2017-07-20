@@ -42,19 +42,24 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := httpRouter(a)
-
-	// Define the middlewares related to authentication, from last to first
-	authMiddlewares := middlewares.Organization(router, a.Store)
-	authMiddlewares = middlewares.Whitelist(authMiddlewares, a.Store)
-	authMiddlewares = middlewares.Authentication(authMiddlewares)
-
 	serveMux := http.NewServeMux()
-	serveMux.Handle("/", authMiddlewares)
 
-	// Don't apply the authentication middlewares to some specific /auth routes,
-	// so we'll use the original router instead
+	// Define the middlewares used for restricted resources, from last to first
+	restrictedResources := middlewares.Organization(router, a.Store)
+	restrictedResources = middlewares.Whitelist(restrictedResources, a.Store)
+	restrictedResources = middlewares.Authentication(restrictedResources)
+
+	// By default, apply the restrictedResources chained middlewares to all resources
+	serveMux.Handle("/", restrictedResources)
+
+	// We don't need any middleware for handling the login flow, so use the
+	// original router
 	serveMux.Handle("/auth", router)
-	serveMux.Handle("/auth/token", router)
+
+	// Resources using the /auth/ prefix only need to use a specific middleware,
+	// that validates both access and refresh tokens
+	authenticationResources := middlewares.RefreshToken(router, a.Store)
+	serveMux.Handle("/auth/", authenticationResources)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
