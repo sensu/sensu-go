@@ -3,6 +3,7 @@ package authorization
 import (
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -53,6 +54,13 @@ func CanAccessResource(actor Actor, resource, action string) bool {
 			}
 		}
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"actor":    actor,
+		"resource": resource,
+		"action":   action,
+	}).Debug("request to resource not allowed")
+
 	return false
 }
 

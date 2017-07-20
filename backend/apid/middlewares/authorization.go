@@ -10,8 +10,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+type Authorization struct {
+	Store store.Store
+}
+
 // Authorization is an HTTP middleware that enforces authorization
-func Authorization(next http.Handler, store store.Store) http.Handler {
+func (a Authorization) Register(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		claims := jwt.GetClaimsFromContext(r.Context())
 		if claims == nil {
@@ -19,12 +23,12 @@ func Authorization(next http.Handler, store store.Store) http.Handler {
 			return
 		}
 
-		roles, err := store.GetRoles()
+		roles, err := a.Store.GetRoles()
 		if err != nil {
 			http.Error(w, "Error fetching roles from store", http.StatusInternalServerError)
 		}
 
-		user, err := store.GetUser(claims.StandardClaims.Subject)
+		user, err := a.Store.GetUser(claims.StandardClaims.Subject)
 		if err != nil {
 			http.Error(w, "Error fetching user from store", http.StatusInternalServerError)
 		}

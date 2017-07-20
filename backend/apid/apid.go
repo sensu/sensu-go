@@ -119,18 +119,13 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
-func httpRouter(a *APId) *mux.Router {
+func commonRoutes(a *APId) http.Handler {
 	r := mux.NewRouter()
 
 	assetsController := &controllers.AssetsController{
 		Store: a.Store,
 	}
 	assetsController.Register(r)
-
-	authenticationController := &controllers.AuthenticationController{
-		Store: a.Store,
-	}
-	authenticationController.Register(r)
 
 	checksController := &controllers.ChecksController{
 		Store: a.Store,
@@ -179,5 +174,48 @@ func httpRouter(a *APId) *mux.Router {
 	}
 	usersController.Register(r)
 
+	return ApplyMiddleware(
+		r,
+		middlewares.Organization{Store: a.Store},
+		middlewares.Authentication{},
+		middlewares.Authorization{Store: a.Store},
+	)
+}
+
+func unauthenticatedRoutes(a *APId) *mux.Router {
+	r := mux.NewRouter()
+
+	authenticationController := &controllers.AuthenticationController{
+		Store: a.Store,
+	}
+	authenticationController.Register(r)
+
 	return r
+}
+
+func AppendHandler(handler http.Handler, handlers ...http.Handler) http.Handler {
+	if len(handlers) == 0 {
+		return handler
+	}
+
+	next, handlers := handlers[len(handlers)-1], handlers[:len(handlers)-1]
+
+	return AppendHandler(
+		http.HandlerFunc(next.ServeHTTP),
+		handlers...,
+	)
+}
+
+// ApplyMiddleware apply given middleware left to right
+func ApplyMiddleware(handler http.Handler, middlewares ...middlewares.HTTPMiddleware) http.Handler {
+	for i := len(middlewares)/2 - 1; i >= 0; i-- {
+		opp := len(middlewares) - 1 - i
+		middlewares[i], middlewares[opp] = middlewares[opp], middlewares[i]
+	}
+
+	for _, middleware := range middlewares {
+		handler = middleware.Register(handler)
+	}
+
+	return handler
 }

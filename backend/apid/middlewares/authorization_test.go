@@ -82,7 +82,8 @@ func TestAuthorization(t *testing.T) {
 
 	// handler needs a context with claims already populated
 	next := TestHandler{}
-	handler := Authorization(&next, store)
+	mware := Authorization{Store: store}
+	handler := mware.Register(&next)
 	handler.ServeHTTP(w, req.WithContext(ctx))
 
 	want := roles

@@ -6,8 +6,10 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 )
 
+type Authentication struct{}
+
 // Authentication is a HTTP middleware that enforces authentication
-func Authentication(next http.Handler) http.Handler {
+func (a Authentication) Register(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := jwt.ExtractBearerToken(r)
 		if tokenString != "" {

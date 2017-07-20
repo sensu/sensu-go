@@ -12,17 +12,20 @@ const (
 	defaultOrganization = "default"
 )
 
-// Organization retrieves any organization passed as a query parameter
-// and validates its existence against the data store and then adds it to the
-// request context
-func Organization(next http.Handler, store store.Store) http.Handler {
+type Organization struct {
+	Store store.Store
+}
+
+// Register retrieves any organization passed as a query parameter and validate
+// its existence against the data store and then adds it to the request context
+func (m Organization) Register(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		org := r.URL.Query().Get("org")
 		if org == "" {
 			org = defaultOrganization
 		} else {
 			// Verify that the organization exist
-			if _, err := store.GetOrganizationByName(r.Context(), org); err != nil {
+			if _, err := m.Store.GetOrganizationByName(r.Context(), org); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
