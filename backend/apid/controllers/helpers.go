@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +21,7 @@ func processRequest(c Controller, req *http.Request) *httptest.ResponseRecorder 
 }
 
 func newRequest(meth, url string, body io.Reader) *http.Request {
-	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/entities/entity1"), nil)
+	req, _ := http.NewRequest(meth, url, body)
 	req = requestWithDefaultContext(req)
 
 	return req
@@ -51,6 +50,16 @@ func requestWithFullAccess(r *http.Request) *http.Request {
 		r.Context(),
 		authorization.ContextRoleKey,
 		userRoles,
+	)
+
+	return r.WithContext(context)
+}
+
+func requestWithNoAccess(r *http.Request) *http.Request {
+	context := context.WithValue(
+		r.Context(),
+		authorization.ContextRoleKey,
+		[]*types.Role{},
 	)
 
 	return r.WithContext(context)

@@ -55,6 +55,11 @@ func (abilityPtr *Ability) CanUpdate() bool {
 	return abilityPtr.canPerform(types.RulePermUpdate)
 }
 
+// CanCreateOrUpdate returns true if actor has create/update access to resource.
+func (abilityPtr *Ability) CanCreateOrUpdate() bool {
+	return abilityPtr.CanCreate() || abilityPtr.CanUpdate()
+}
+
 // CanDelete returns true if actor has update access to resource.
 func (abilityPtr *Ability) CanDelete() bool {
 	return abilityPtr.canPerform(types.RulePermDelete)
