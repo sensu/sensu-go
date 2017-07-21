@@ -10,11 +10,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// Authorization is an HTTP middleware that enforces authorization
 type Authorization struct {
 	Store store.Store
 }
 
-// Authorization is an HTTP middleware that enforces authorization
+// Register middleware
 func (a Authorization) Register(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		claims := jwt.GetClaimsFromContext(r.Context())

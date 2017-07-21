@@ -12,12 +12,13 @@ const (
 	defaultOrganization = "default"
 )
 
+// Organization retrieves any organization passed as a query parameter and validate
+// its existence against the data store and then adds it to the request context
 type Organization struct {
 	Store store.Store
 }
 
-// Register retrieves any organization passed as a query parameter and validate
-// its existence against the data store and then adds it to the request context
+// Register middleware
 func (m Organization) Register(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		org := r.URL.Query().Get("org")
