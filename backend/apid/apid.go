@@ -43,8 +43,8 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := mux.NewRouter()
-	registerAuthenticationResources(a, router)
-	registerRestrictedResources(a, router)
+	registerAuthenticationResources(router, a.Store)
+	registerRestrictedResources(router, a.Store, a.BackendStatus)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -102,83 +102,86 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
-func registerAuthenticationResources(a *APId, p *mux.Router) {
-	authRouter := NewSubrouter(p, middlewares.RefreshToken{})
+func registerAuthenticationResources(router *mux.Router, store store.Store) {
+	authRouter := NewSubrouter(router, middlewares.RefreshToken{})
 
-	authenticationController := &controllers.AuthenticationController{
-		Store: a.Store,
-	}
+	authenticationController := controllers.AuthenticationController{Store: store}
 	authenticationController.Register(authRouter)
 }
 
-func registerRestrictedResources(a *APId, router *mux.Router) {
+func registerRestrictedResources(
+	router *mux.Router,
+	store store.Store,
+	bStatus func() types.StatusMap,
+) {
 	commonRouter := NewSubrouter(
 		router,
-		middlewares.Organization{Store: a.Store},
+		middlewares.Organization{Store: store},
 		middlewares.Authentication{},
-		middlewares.AllowList{a.Store},
-		middlewares.Authorization{Store: a.Store},
+		middlewares.AllowList{Store: store},
+		middlewares.Authorization{Store: store},
 	)
 
 	assetsController := &controllers.AssetsController{
-		Store: a.Store,
+		Store: store,
 	}
 	assetsController.Register(commonRouter)
 
 	authenticationController := &controllers.AuthenticationController{
-		Store: a.Store,
+		Store: store,
 	}
 	authenticationController.Register(commonRouter)
 
 	checksController := &controllers.ChecksController{
-		Store: a.Store,
+		Store: store,
 	}
 	checksController.Register(commonRouter)
 
 	entitiesController := &controllers.EntitiesController{
-		Store: a.Store,
+		Store: store,
 	}
 	entitiesController.Register(commonRouter)
 
 	eventsController := &controllers.EventsController{
-		Store: a.Store,
+		Store: store,
 	}
 	eventsController.Register(commonRouter)
 
 	handlersController := &controllers.HandlersController{
-		Store: a.Store,
+		Store: store,
 	}
 	handlersController.Register(commonRouter)
 
 	healthController := &controllers.HealthController{
-		Store:  a.Store,
-		Status: a.BackendStatus,
+		Store:  store,
+		Status: bStatus,
 	}
 	healthController.Register(commonRouter)
 
 	infoController := &controllers.InfoController{
-		Store:  a.Store,
-		Status: a.BackendStatus,
+		Store:  store,
+		Status: bStatus,
 	}
 	infoController.Register(commonRouter)
 
 	mutatorsController := &controllers.MutatorsController{
-		Store: a.Store,
+		Store: store,
 	}
 	mutatorsController.Register(commonRouter)
 
 	organizationsController := &controllers.OrganizationsController{
-		Store: a.Store,
+		Store: store,
 	}
 	organizationsController.Register(commonRouter)
 
 	usersController := &controllers.UsersController{
-		Store: a.Store,
+		Store: store,
 	}
 	usersController.Register(commonRouter)
 }
 
-// NewSubrouter
+// NewSubrouter returns new mux router w/ given router as parent and given
+// middleware wrapped around handler.
 func NewSubrouter(router *mux.Router, ms ...middlewares.HTTPMiddleware) *mux.Router {
 	subRoute := router.NewRoute()
 	subRouter := subRoute.Subrouter()
