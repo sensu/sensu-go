@@ -190,7 +190,7 @@ func TestTokenSuccess(t *testing.T) {
 		"DeleteTokens",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("[]string"),
-	).Return(fmt.Errorf("error"))
+	).Return(nil)
 	store.On(
 		"GetToken",
 		mock.AnythingOfType("string"),

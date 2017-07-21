@@ -181,9 +181,10 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 
 	// Remove the old access token from the access list
 	if err := a.Store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
-		// Only log the error, the access token could already have been pruned
 		err = fmt.Errorf("could not remove the access token from the access list: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Issue a new access token
