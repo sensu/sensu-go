@@ -46,7 +46,7 @@ func (a *APId) Start() error {
 
 	// Define the middlewares used for restricted resources, from last to first
 	restrictedResources := middlewares.Organization(router, a.Store)
-	restrictedResources = middlewares.Whitelist(restrictedResources, a.Store)
+	restrictedResources = middlewares.AllowList(restrictedResources, a.Store)
 	restrictedResources = middlewares.Authentication(restrictedResources)
 
 	// By default, apply the restrictedResources chained middlewares to all resources

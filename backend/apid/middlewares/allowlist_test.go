@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWhitelist(t *testing.T) {
+func TestAllowList(t *testing.T) {
 	// Create a token
 	token, tokenString, _ := jwt.AccessToken("foo")
 	claims, _ := jwt.GetClaims(token)
@@ -19,7 +19,7 @@ func TestWhitelist(t *testing.T) {
 	store := &mockstore.MockStore{}
 	store.On("GetToken", claims.Subject, claims.Id).Return(claims, nil)
 
-	server := httptest.NewServer(Authentication(Whitelist(testHandler(), store)))
+	server := httptest.NewServer(Authentication(AllowList(testHandler(), store)))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -32,7 +32,7 @@ func TestWhitelist(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
-func TestMissingTokenFromWhitelist(t *testing.T) {
+func TestMissingTokenFromAllowList(t *testing.T) {
 	// Create a token
 	token, tokenString, _ := jwt.AccessToken("foo")
 	claims, _ := jwt.GetClaims(token)
@@ -40,7 +40,7 @@ func TestMissingTokenFromWhitelist(t *testing.T) {
 	store := &mockstore.MockStore{}
 	store.On("GetToken", claims.Subject, claims.Id).Return(claims, fmt.Errorf("error"))
 
-	server := httptest.NewServer(Authentication(Whitelist(testHandler(), store)))
+	server := httptest.NewServer(Authentication(AllowList(testHandler(), store)))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -53,10 +53,10 @@ func TestMissingTokenFromWhitelist(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
 
-func TestWhitelistNoTokenIntoContext(t *testing.T) {
+func TestAllowListNoTokenIntoContext(t *testing.T) {
 	store := &mockstore.MockStore{}
 
-	server := httptest.NewServer(Whitelist(testHandler(), store))
+	server := httptest.NewServer(AllowList(testHandler(), store))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)

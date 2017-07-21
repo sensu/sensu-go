@@ -130,7 +130,7 @@ type RBACStore interface {
 	DeleteRoleByName(name string) error
 }
 
-// TokenStore provides an interface for interacting with the JWT whitelist
+// TokenStore provides an interface for interacting with the JWT access list
 type TokenStore interface {
 	CreateToken(*types.Claims) error
 	DeleteTokens(string, []string) error

@@ -76,16 +76,16 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Store the access and refresh tokens in the whitelist
+	// Store the access and refresh tokens in the access list
 	if err = a.Store.CreateToken(claims); err != nil {
-		err = fmt.Errorf("could not add the access token to the whitelist: %s", err.Error())
+		err = fmt.Errorf("could not add the access token to the access list: %s", err.Error())
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = a.Store.CreateToken(refreshClaims); err != nil {
-		err = fmt.Errorf("could not add the refresh token to the whitelist: %s", err.Error())
+		err = fmt.Errorf("could not add the refresh token to the access list: %s", err.Error())
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -130,10 +130,10 @@ func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Remove the access & refresh tokens from the whitelist
+	// Remove the access & refresh tokens from the access list
 	tokensToRemove := []string{accessClaims.Id, refreshClaims.Id}
 	if err := a.Store.DeleteTokens(refreshClaims.Subject, tokensToRemove); err != nil {
-		err = fmt.Errorf("could not remove the access and refresh tokens from the whitelist: %s", err.Error())
+		err = fmt.Errorf("could not remove the access and refresh tokens from the access list: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -171,18 +171,18 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Make sure the refresh token is whitelisted
+	// Make sure the refresh token is authorized in the access list
 	if _, err := a.Store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		err = fmt.Errorf("the refresh token is not whitelisted: %s", err.Error())
+		err = fmt.Errorf("the refresh token is not authorized: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Remove the old access token from the whitelist
+	// Remove the old access token from the access list
 	if err := a.Store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
 		// Only log the error, the access token could already have been pruned
-		err = fmt.Errorf("could not remove the access token from the whitelist: %s", err.Error())
+		err = fmt.Errorf("could not remove the access token from the access list: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 	}
 
@@ -204,9 +204,9 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Store the new access token in the whitelist
+	// Store the new access token in the access list
 	if err = a.Store.CreateToken(accessClaims); err != nil {
-		err = fmt.Errorf("could not add the new access token to the whitelist: %s", err.Error())
+		err = fmt.Errorf("could not add the new access token to the access list: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

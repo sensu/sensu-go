@@ -7,8 +7,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// Whitelist verifies if the access token provided is whitelisted
-func Whitelist(next http.Handler, store store.Store) http.Handler {
+// AllowList verifies that the access token provided is authorized
+func AllowList(next http.Handler, store store.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		claims := jwt.GetClaimsFromContext(r)
 		if claims == nil {
@@ -16,7 +16,7 @@ func Whitelist(next http.Handler, store store.Store) http.Handler {
 			return
 		}
 
-		// Validate that the JWT is whitelisted
+		// Validate that the JWT is authorized
 		if _, err := store.GetToken(claims.Subject, claims.Id); err != nil {
 			logger.WithField(
 				"user", claims.Subject,
