@@ -149,7 +149,7 @@ Commands:
 
 {{- if hasManagementSubCommands . }}
 
-Managment Commands:
+Management Commands:
 
 {{- range managementSubCommands . }}
   {{rpad .Name .NamePadding }} {{.Short}}
