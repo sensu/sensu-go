@@ -11,7 +11,7 @@ import (
 )
 
 // RefreshToken middleware retrieves and validates a refresh token, provided
-// in the body of a request, against an access token and the acces list. Then,
+// in the body of a request, against an access token and the access list. Then,
 // it adds the claims of both access and refresh tokens into the request
 // context for easier consumption later
 func RefreshToken(next http.Handler, store store.Store) http.Handler {
