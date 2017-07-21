@@ -35,8 +35,8 @@ type Store interface {
 	// Organizations
 	OrganizationStore
 
-	// Roles
-	RoleStore
+	// RBAC
+	RBACStore
 
 	// Tokens
 	TokenStore
@@ -122,12 +122,12 @@ type OrganizationStore interface {
 	UpdateOrganization(context.Context, *types.Organization) error
 }
 
-// RoleStore provides an interface for interacting & persisting users
-type RoleStore interface {
-	DeleteRoleByName(name string) error
+// RBACStore provides an interface for interacting & persisting users
+type RBACStore interface {
 	GetRoles() ([]*types.Role, error)
 	GetRoleByName(name string) (*types.Role, error)
 	UpdateRole(role *types.Role) error
+	DeleteRoleByName(name string) error
 }
 
 // TokenStore provides an interface for interacting with the JWT whitelist
