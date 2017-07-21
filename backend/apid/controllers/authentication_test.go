@@ -36,7 +36,7 @@ func TestLoginInvalidCredentials(t *testing.T) {
 	}
 
 	user := types.FixtureUser("foo")
-	store.On("AuthenticateUser", "foo", "P@ssw0rd!").Return(user, fmt.Errorf("Error"))
+	store.On("AuthenticateUser", "foo", "P@ssw0rd!").Return(user, fmt.Errorf("error"))
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 	req.SetBasicAuth("foo", "P@ssw0rd!")
@@ -94,7 +94,7 @@ func TestLogoutNotWhitelisted(t *testing.T) {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 	res := processRequestWithRefreshToken(a, req)
 
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 
 func TestLogoutSuccess(t *testing.T) {
@@ -144,7 +144,7 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 	res := processRequestWithRefreshToken(a, req)
 
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 
 func TestTokenCannotWhitelistAccessToken(t *testing.T) {
@@ -175,7 +175,7 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 	res := processRequestWithRefreshToken(a, req)
 
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 
 func TestTokenSuccess(t *testing.T) {

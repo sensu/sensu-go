@@ -37,7 +37,7 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		logger.WithField(
 			"user", username,
-		).Info("invalid username and/or password")
+		).Errorf("invalid username and/or password: %s", err.Error())
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -45,55 +45,49 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	// Create the token and a signed version
 	token, tokenString, err := jwt.AccessToken(user.Username)
 	if err != nil {
-		logger.WithField(
-			"user", username,
-		).Errorf("could not issue an access token, %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not issue an access token: %s", err.Error())
+		logger.WithField("user", username).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Retrieve the claims because we later need the expiration
 	claims, err := jwt.GetClaims(token)
 	if err != nil {
-		logger.WithField(
-			"user", username,
-		).Error("could not get the access token claims")
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not get the access token claims: %s", err.Error())
+		logger.WithField("user", username).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	refreshToken, refreshTokenString, err := jwt.RefreshToken(user.Username)
 	if err != nil {
-		logger.WithField(
-			"user", username,
-		).Errorf("could not issue a refresh token, %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not issue a refresh token: %s", err.Error())
+		logger.WithField("user", username).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	refreshClaims, err := jwt.GetClaims(refreshToken)
 	if err != nil {
-		logger.WithField(
-			"user", username,
-		).Error("could not get the refresh token claims")
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not get the refresh token claims: %s", err.Error())
+		logger.WithField("user", username).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Store the access and refresh tokens in the whitelist
 	if err = a.Store.CreateToken(claims); err != nil {
-		logger.WithField(
-			"user", username,
-		).Errorf("could not add the access token to the whitelist: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not add the access token to the whitelist: %s", err.Error())
+		logger.WithField("user", username).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = a.Store.CreateToken(refreshClaims); err != nil {
-		logger.WithField(
-			"user", username,
-		).Errorf("could not add the access token to the whitelist: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not add the refresh token to the whitelist: %s", err.Error())
+		logger.WithField("user", username).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -106,6 +100,8 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 
 	resBytes, err := json.Marshal(response)
 	if err != nil {
+		err = fmt.Errorf("could not not marshal response: %s", err.Error())
+		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -122,7 +118,7 @@ func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request
 	if value := r.Context().Value(types.AccessTokenClaims); value != nil {
 		accessClaims = value.(*types.Claims)
 	} else {
-		http.Error(w, "could not retrieve the access token claims", http.StatusUnauthorized)
+		http.Error(w, "could not retrieve the access token claims", http.StatusBadRequest)
 		return
 	}
 
@@ -130,25 +126,23 @@ func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request
 	if value := r.Context().Value(types.RefreshTokenClaims); value != nil {
 		refreshClaims = value.(*types.Claims)
 	} else {
-		http.Error(w, "could not retrieve the refresh token claims", http.StatusUnauthorized)
+		http.Error(w, "could not retrieve the refresh token claims", http.StatusBadRequest)
 		return
 	}
 
 	// Remove the refresh token from the whitelist
 	if err := a.Store.DeleteToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("could not remove the refresh token from the whitelist: %s", err.Error())
-		http.Error(w, "ould not remove the refresh token from the whitelist", http.StatusUnauthorized)
+		err = fmt.Errorf("could not remove the refresh token from the whitelist: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Remove the access token from the whitelist
 	if err := a.Store.DeleteToken(accessClaims.Subject, accessClaims.Id); err != nil {
 		// Only log the error, the access token could already have been pruned
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("could not remove the access token from the whitelist: %s", err.Error())
+		err = fmt.Errorf("could not remove the accessz token from the whitelist: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
 	}
 
 	return
@@ -162,7 +156,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	if value := r.Context().Value(types.AccessTokenClaims); value != nil {
 		accessClaims = value.(*types.Claims)
 	} else {
-		http.Error(w, "could not retrieve the access token claims", http.StatusUnauthorized)
+		http.Error(w, "could not retrieve the access token claims", http.StatusBadRequest)
 		return
 	}
 
@@ -170,7 +164,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	if value := r.Context().Value(types.RefreshTokenClaims); value != nil {
 		refreshClaims = value.(*types.Claims)
 	} else {
-		http.Error(w, "could not retrieve the refresh token claims", http.StatusUnauthorized)
+		http.Error(w, "could not retrieve the refresh token claims", http.StatusBadRequest)
 		return
 	}
 
@@ -179,53 +173,48 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	if value := r.Context().Value(types.RefreshTokenString); value != nil {
 		refreshString = value.(string)
 	} else {
-		http.Error(w, "could not retrieve the refresh token string", http.StatusUnauthorized)
+		http.Error(w, "could not retrieve the refresh token string", http.StatusBadRequest)
 		return
 	}
 
 	// Make sure the refresh token is whitelisted
 	if _, err := a.Store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("the refresh token is not whitelisted: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("the refresh token is not whitelisted: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Remove the old access token from the whitelist
 	if err := a.Store.DeleteToken(accessClaims.Subject, accessClaims.Id); err != nil {
 		// Only log the error, the access token could already have been pruned
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("could not remove the access token from the whitelist: %s", err.Error())
+		err = fmt.Errorf("could not remove the access token from the whitelist: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
 	}
 
 	// Issue a new access token
 	accessToken, accessTokenString, err := jwt.AccessToken(refreshClaims.Subject)
 	if err != nil {
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("could not issue a new access token: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not issue a new access token: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Retrieve the claims because we later need the expiration
 	accessClaims, err = jwt.GetClaims(accessToken)
 	if err != nil {
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("could not issue a new access token: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not issue a new access token: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Store the new access token in the whitelist
 	if err = a.Store.CreateToken(accessClaims); err != nil {
-		logger.WithField(
-			"user", refreshClaims.Subject,
-		).Errorf("could not add the new access token to the whitelist: %s", err.Error())
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		err = fmt.Errorf("could not add the new access token to the whitelist: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -238,6 +227,8 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 
 	resBytes, err := json.Marshal(response)
 	if err != nil {
+		err = fmt.Errorf("could not not marshal response: %s", err.Error())
+		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
