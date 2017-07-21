@@ -43,8 +43,8 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := mux.NewRouter()
-	registerUnauthenticatedRoutes(a, router)
-	registerCommonRoutes(a, router)
+	registerAuthenticationResources(a, router)
+	registerRestrictedResources(a, router)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -102,18 +102,23 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
-func registerUnauthenticatedRoutes(a *APId, p *mux.Router) {
-	r := p.NewRoute().Subrouter()
+func registerAuthenticationResources(a *APId, p *mux.Router) {
+	authRouter := NewSubrouter(p, middlewares.RefreshToken{})
 
 	authenticationController := &controllers.AuthenticationController{
 		Store: a.Store,
 	}
-	authenticationController.Register(r)
+	authenticationController.Register(authRouter)
 }
 
-func registerCommonRoutes(a *APId, router *mux.Router) {
-	commonRoute := router.NewRoute()
-	commonRouter := commonRoute.Subrouter()
+func registerRestrictedResources(a *APId, router *mux.Router) {
+	commonRouter := NewSubrouter(
+		router,
+		middlewares.Organization{Store: a.Store},
+		middlewares.Authentication{},
+		middlewares.AllowList{a.Store},
+		middlewares.Authorization{Store: a.Store},
+	)
 
 	assetsController := &controllers.AssetsController{
 		Store: a.Store,
@@ -171,26 +176,27 @@ func registerCommonRoutes(a *APId, router *mux.Router) {
 		Store: a.Store,
 	}
 	usersController.Register(commonRouter)
+}
+
+// NewSubrouter
+func NewSubrouter(router *mux.Router, ms ...middlewares.HTTPMiddleware) *mux.Router {
+	subRoute := router.NewRoute()
+	subRouter := subRoute.Subrouter()
 
 	// Wrap common routes in auth & organization middleware
-	commonRoute.MatcherFunc(func(r *http.Request, m *mux.RouteMatch) bool {
+	subRoute.MatcherFunc(func(r *http.Request, m *mux.RouteMatch) bool {
 		// Check if the request matches any of the common routes
-		if !commonRouter.Match(r, m) {
+		if !subRouter.Match(r, m) {
 			return false
 		}
 
 		// Wrap handler in common middleware
-		m.Handler = ApplyMiddleware(
-			m.Handler,
-			middlewares.Organization{Store: a.Store},
-			middlewares.Authentication{},
-			middlewares.Authorization{Store: a.Store},
-			middlewares.AllowList{a.Store},
-			// logging, etc.
-		)
+		m.Handler = ApplyMiddleware(m.Handler, ms...)
 
 		return true
 	})
+
+	return subRouter
 }
 
 // ApplyMiddleware apply given middleware left to right

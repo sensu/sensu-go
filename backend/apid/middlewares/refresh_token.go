@@ -4,9 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"regexp"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/types"
+)
+
+var (
+	basicAuthRegex = regexp.MustCompile("^Basic ")
 )
 
 // RefreshToken middleware retrieves and validates a refresh token, provided
@@ -19,8 +24,11 @@ func (m RefreshToken) Register(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the bearer token
 		accessTokenString := jwt.ExtractBearerToken(r)
-		if accessTokenString == "" {
-			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+
+		// Ignore authorization header if BASIC auth
+		if basicAuthRegex.MatchString(accessTokenString) {
+			// http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+			next.ServeHTTP(w, r)
 			return
 		}
 
