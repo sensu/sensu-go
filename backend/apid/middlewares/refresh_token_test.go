@@ -9,14 +9,13 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRefreshTokenNoAccessToken(t *testing.T) {
-	store := &mockstore.MockStore{}
-	server := httptest.NewServer(RefreshToken(testHandler(), store))
+	mware := RefreshToken{}
+	server := httptest.NewServer(mware.Register(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, nil)
@@ -27,8 +26,8 @@ func TestRefreshTokenNoAccessToken(t *testing.T) {
 }
 
 func TestRefreshTokenInvalidAccessToken(t *testing.T) {
-	store := &mockstore.MockStore{}
-	server := httptest.NewServer(RefreshToken(testHandler(), store))
+	mware := RefreshToken{}
+	server := httptest.NewServer(mware.Register(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, nil)
@@ -40,8 +39,8 @@ func TestRefreshTokenInvalidAccessToken(t *testing.T) {
 }
 
 func TTestRefreshTokenNoRefreshToken(t *testing.T) {
-	store := &mockstore.MockStore{}
-	server := httptest.NewServer(RefreshToken(testHandler(), store))
+	mware := RefreshToken{}
+	server := httptest.NewServer(mware.Register(testHandler()))
 	defer server.Close()
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -62,8 +61,8 @@ func TTestRefreshTokenNoRefreshToken(t *testing.T) {
 }
 
 func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
-	store := &mockstore.MockStore{}
-	server := httptest.NewServer(RefreshToken(testHandler(), store))
+	mware := RefreshToken{}
+	server := httptest.NewServer(mware.Register(testHandler()))
 	defer server.Close()
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -80,8 +79,8 @@ func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
 }
 
 func TestRefreshTokenMismatchingSub(t *testing.T) {
-	store := &mockstore.MockStore{}
-	server := httptest.NewServer(RefreshToken(testHandler(), store))
+	mware := RefreshToken{}
+	server := httptest.NewServer(mware.Register(testHandler()))
 	defer server.Close()
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -98,8 +97,8 @@ func TestRefreshTokenMismatchingSub(t *testing.T) {
 }
 
 func TestRefreshTokenSuccess(t *testing.T) {
-	store := &mockstore.MockStore{}
-	server := httptest.NewServer(RefreshToken(
+	mware := RefreshToken{}
+	server := httptest.NewServer(mware.Register(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Make sure the context has been injected with the tokens info
 			assert.NotNil(t, r.Context().Value(types.AccessTokenClaims))
@@ -107,7 +106,8 @@ func TestRefreshTokenSuccess(t *testing.T) {
 			assert.NotNil(t, r.Context().Value(types.RefreshTokenString))
 
 			return
-		}), store))
+		}),
+	))
 	defer server.Close()
 
 	_, tokenString, _ := jwt.AccessToken("foo")

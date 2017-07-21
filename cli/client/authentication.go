@@ -21,7 +21,7 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*type
 	}
 
 	if res.StatusCode() == 401 {
-		return nil, errors.New("Bad username or password given")
+		return nil, errors.New(string(res.Body()))
 	} else if res.StatusCode() >= 400 {
 		// TODO: (JK) we may want to expose a bit more of the error here
 		return nil, errors.New("Received an unexpected response from the API")

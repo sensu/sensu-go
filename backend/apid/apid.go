@@ -42,30 +42,13 @@ func (a *APId) Start() error {
 
 	a.errChan = make(chan error, 1)
 
-	router := httpRouter(a)
-	serveMux := http.NewServeMux()
-
-	// Define the middlewares used for restricted resources, from last to first
-	restrictedResources := middlewares.Authorization(router, a.Store)
-	restrictedResources = middlewares.Organization(restrictedResources, a.Store)
-	restrictedResources = middlewares.AllowList(restrictedResources, a.Store)
-	restrictedResources = middlewares.Authentication(restrictedResources)
-
-	// By default, apply the restrictedResources chained middlewares to all resources
-	serveMux.Handle("/", restrictedResources)
-
-	// We don't need any middleware for handling the login flow, so use the
-	// original router
-	serveMux.Handle("/auth", router)
-
-	// Resources using the /auth/ prefix only need to use a specific middleware,
-	// that validates both access and refresh tokens
-	authenticationResources := middlewares.RefreshToken(router, a.Store)
-	serveMux.Handle("/auth/", authenticationResources)
+	router := mux.NewRouter()
+	registerUnauthenticatedRoutes(a, router)
+	registerCommonRoutes(a, router)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      serveMux,
+		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -119,102 +102,104 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
-func commonRoutes(a *APId) http.Handler {
-	r := mux.NewRouter()
-
-	assetsController := &controllers.AssetsController{
-		Store: a.Store,
-	}
-	assetsController.Register(r)
-
-	checksController := &controllers.ChecksController{
-		Store: a.Store,
-	}
-	checksController.Register(r)
-
-	entitiesController := &controllers.EntitiesController{
-		Store: a.Store,
-	}
-	entitiesController.Register(r)
-
-	eventsController := &controllers.EventsController{
-		Store: a.Store,
-	}
-	eventsController.Register(r)
-
-	handlersController := &controllers.HandlersController{
-		Store: a.Store,
-	}
-	handlersController.Register(r)
-
-	healthController := &controllers.HealthController{
-		Store:  a.Store,
-		Status: a.BackendStatus,
-	}
-	healthController.Register(r)
-
-	infoController := &controllers.InfoController{
-		Store:  a.Store,
-		Status: a.BackendStatus,
-	}
-	infoController.Register(r)
-
-	mutatorsController := &controllers.MutatorsController{
-		Store: a.Store,
-	}
-	mutatorsController.Register(r)
-
-	organizationsController := &controllers.OrganizationsController{
-		Store: a.Store,
-	}
-	organizationsController.Register(r)
-
-	usersController := &controllers.UsersController{
-		Store: a.Store,
-	}
-	usersController.Register(r)
-
-	return ApplyMiddleware(
-		r,
-		middlewares.Organization{Store: a.Store},
-		middlewares.Authentication{},
-		middlewares.Authorization{Store: a.Store},
-	)
-}
-
-func unauthenticatedRoutes(a *APId) *mux.Router {
-	r := mux.NewRouter()
+func registerUnauthenticatedRoutes(a *APId, p *mux.Router) {
+	r := p.NewRoute().Subrouter()
 
 	authenticationController := &controllers.AuthenticationController{
 		Store: a.Store,
 	}
 	authenticationController.Register(r)
-
-	return r
 }
 
-func AppendHandler(handler http.Handler, handlers ...http.Handler) http.Handler {
-	if len(handlers) == 0 {
-		return handler
+func registerCommonRoutes(a *APId, router *mux.Router) {
+	commonRoute := router.NewRoute()
+	commonRouter := commonRoute.Subrouter()
+
+	assetsController := &controllers.AssetsController{
+		Store: a.Store,
 	}
+	assetsController.Register(commonRouter)
 
-	next, handlers := handlers[len(handlers)-1], handlers[:len(handlers)-1]
+	authenticationController := &controllers.AuthenticationController{
+		Store: a.Store,
+	}
+	authenticationController.Register(commonRouter)
 
-	return AppendHandler(
-		http.HandlerFunc(next.ServeHTTP),
-		handlers...,
-	)
+	checksController := &controllers.ChecksController{
+		Store: a.Store,
+	}
+	checksController.Register(commonRouter)
+
+	entitiesController := &controllers.EntitiesController{
+		Store: a.Store,
+	}
+	entitiesController.Register(commonRouter)
+
+	eventsController := &controllers.EventsController{
+		Store: a.Store,
+	}
+	eventsController.Register(commonRouter)
+
+	handlersController := &controllers.HandlersController{
+		Store: a.Store,
+	}
+	handlersController.Register(commonRouter)
+
+	healthController := &controllers.HealthController{
+		Store:  a.Store,
+		Status: a.BackendStatus,
+	}
+	healthController.Register(commonRouter)
+
+	infoController := &controllers.InfoController{
+		Store:  a.Store,
+		Status: a.BackendStatus,
+	}
+	infoController.Register(commonRouter)
+
+	mutatorsController := &controllers.MutatorsController{
+		Store: a.Store,
+	}
+	mutatorsController.Register(commonRouter)
+
+	organizationsController := &controllers.OrganizationsController{
+		Store: a.Store,
+	}
+	organizationsController.Register(commonRouter)
+
+	usersController := &controllers.UsersController{
+		Store: a.Store,
+	}
+	usersController.Register(commonRouter)
+
+	// Wrap common routes in auth & organization middleware
+	commonRoute.MatcherFunc(func(r *http.Request, m *mux.RouteMatch) bool {
+		// Check if the request matches any of the common routes
+		if !commonRouter.Match(r, m) {
+			return false
+		}
+
+		// Wrap handler in common middleware
+		m.Handler = ApplyMiddleware(
+			m.Handler,
+			middlewares.Organization{Store: a.Store},
+			middlewares.Authentication{},
+			middlewares.Authorization{Store: a.Store},
+			middlewares.AllowList{a.Store},
+			// logging, etc.
+		)
+
+		return true
+	})
 }
 
 // ApplyMiddleware apply given middleware left to right
-func ApplyMiddleware(handler http.Handler, middlewares ...middlewares.HTTPMiddleware) http.Handler {
-	for i := len(middlewares)/2 - 1; i >= 0; i-- {
-		opp := len(middlewares) - 1 - i
-		middlewares[i], middlewares[opp] = middlewares[opp], middlewares[i]
-	}
+func ApplyMiddleware(handler http.Handler, ms ...middlewares.HTTPMiddleware) http.Handler {
+	var m middlewares.HTTPMiddleware
 
-	for _, middleware := range middlewares {
-		handler = middleware.Register(handler)
+	for len(ms) > 0 {
+		m, ms = ms[len(ms)-1], ms[:len(ms)-1]
+		handler = m.Register(handler)
 	}
 
 	return handler

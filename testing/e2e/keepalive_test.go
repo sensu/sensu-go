@@ -94,7 +94,6 @@ func TestAgentKeepalives(t *testing.T) {
 	}
 	sensuClient := client.New(clientConfig)
 	tokens, err := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
-	fmt.Println("tokens", tokens, err)
 	clientConfig.Cluster.Tokens = tokens
 
 	err = ap.Start()

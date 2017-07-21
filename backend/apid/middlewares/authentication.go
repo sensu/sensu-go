@@ -24,7 +24,7 @@ func (a Authentication) Register(next http.Handler) http.Handler {
 		}
 
 		// The user is not authenticated
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Bad credentials given", http.StatusUnauthorized)
 		return
 	})
 }
