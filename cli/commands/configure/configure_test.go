@@ -16,5 +16,5 @@ func TestCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.Run, "cmd should be able to be executed")
 	assert.Regexp("configure", cmd.Use)
-	assert.Regexp("Configure Sensu", cmd.Short)
+	assert.Regexp("Initialize sensuctl configuration", cmd.Short)
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/asset"
 	"github.com/sensu/sensu-go/cli/commands/check"
 	"github.com/sensu/sensu-go/cli/commands/completion"
+	"github.com/sensu/sensu-go/cli/commands/config"
 	"github.com/sensu/sensu-go/cli/commands/configure"
 	"github.com/sensu/sensu-go/cli/commands/entity"
 	"github.com/sensu/sensu-go/cli/commands/event"
@@ -26,6 +27,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		// Management Commands
 		asset.HelpCommand(cli),
 		check.HelpCommand(cli),
+		config.HelpCommand(cli),
 		entity.HelpCommand(cli),
 		event.HelpCommand(cli),
 		handler.HelpCommand(cli),

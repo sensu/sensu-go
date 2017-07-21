@@ -1,4 +1,4 @@
-package logout
+package config
 
 import (
 	"github.com/sensu/sensu-go/cli"
@@ -8,9 +8,14 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "logout",
-		Short: "Logout from the configured user",
+		Use:   "config",
+		Short: "Modify sensuctl configuration",
 	}
+
+	// Add sub-commands
+	cmd.AddCommand(
+		SetOrgCommand(cli),
+	)
 
 	return cmd
 }

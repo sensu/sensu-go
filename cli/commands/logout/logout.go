@@ -12,7 +12,7 @@ import (
 func Command(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "logout",
-		Short:        "Logout from the configured user",
+		Short:        "Logout from sensuctl",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Logout from the configured Sensu instance
