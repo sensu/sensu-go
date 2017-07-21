@@ -130,19 +130,13 @@ func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Remove the refresh token from the whitelist
-	if err := a.Store.DeleteToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		err = fmt.Errorf("could not remove the refresh token from the whitelist: %s", err.Error())
+	// Remove the access & refresh tokens from the whitelist
+	tokensToRemove := []string{accessClaims.Id, refreshClaims.Id}
+	if err := a.Store.DeleteTokens(refreshClaims.Subject, tokensToRemove); err != nil {
+		err = fmt.Errorf("could not remove the access and refresh tokens from the whitelist: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	// Remove the access token from the whitelist
-	if err := a.Store.DeleteToken(accessClaims.Subject, accessClaims.Id); err != nil {
-		// Only log the error, the access token could already have been pruned
-		err = fmt.Errorf("could not remove the accessz token from the whitelist: %s", err.Error())
-		logger.WithField("user", refreshClaims.Subject).Error(err)
 	}
 
 	return
@@ -186,7 +180,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Remove the old access token from the whitelist
-	if err := a.Store.DeleteToken(accessClaims.Subject, accessClaims.Id); err != nil {
+	if err := a.Store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
 		// Only log the error, the access token could already have been pruned
 		err = fmt.Errorf("could not remove the access token from the whitelist: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)

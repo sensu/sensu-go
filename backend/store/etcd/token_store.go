@@ -24,13 +24,28 @@ func (s *etcdStore) CreateToken(claims *types.Claims) error {
 	return err
 }
 
-func (s *etcdStore) DeleteToken(subject, id string) error {
-	if subject == "" || id == "" {
-		return errors.New("must specify token subject and ID")
+// DeleteTokens deletes multiples tokens, belonging to the same subject, with
+// a transaction
+func (s *etcdStore) DeleteTokens(subject string, ids []string) error {
+	if subject == "" || len(ids) == 0 {
+		return errors.New("must specify token subject and at least one ID")
 	}
 
-	_, err := s.kvc.Delete(context.TODO(), getTokenPath(subject, id))
-	return err
+	// Construct the list of operations to make in the transaction
+	ops := make([]clientv3.Op, len(ids))
+	for i := range ops {
+		ops[i] = clientv3.OpDelete(getTokenPath(subject, ids[i]))
+	}
+
+	res, err := s.kvc.Txn(context.TODO()).Then(ops...).Commit()
+	if err != nil {
+		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf("could not delete all tokens")
+	}
+
+	return nil
 }
 
 func (s *etcdStore) DeleteTokensByUsername(username string) error {

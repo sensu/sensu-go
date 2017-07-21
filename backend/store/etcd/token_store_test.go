@@ -24,7 +24,7 @@ func TestTokensStorage(t *testing.T) {
 		assert.NotNil(t, result)
 
 		// Delete the stored token
-		err = store.DeleteToken(claims.Subject, claims.Id)
+		err = store.DeleteTokens(claims.Subject, []string{claims.Id})
 		assert.NoError(t, err)
 		_, err = store.GetToken(claims.Subject, claims.Id)
 		assert.Error(t, err)

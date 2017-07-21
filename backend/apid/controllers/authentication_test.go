@@ -80,9 +80,9 @@ func TestLogoutNotWhitelisted(t *testing.T) {
 
 	// Mock calls to the store
 	store.On(
-		"DeleteToken",
+		"DeleteTokens",
 		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("[]string"),
 	).Return(fmt.Errorf("error"))
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -105,9 +105,9 @@ func TestLogoutSuccess(t *testing.T) {
 
 	// Mock calls to the store
 	store.On(
-		"DeleteToken",
+		"DeleteTokens",
 		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("[]string"),
 	).Return(nil)
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -156,9 +156,9 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 	// Mock calls to the store
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(fmt.Errorf("error"))
 	store.On(
-		"DeleteToken",
+		"DeleteTokens",
 		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("[]string"),
 	).Return(nil)
 	store.On(
 		"GetToken",
@@ -187,9 +187,9 @@ func TestTokenSuccess(t *testing.T) {
 	// Mock calls to the store
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
 	store.On(
-		"DeleteToken",
+		"DeleteTokens",
 		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("[]string"),
 	).Return(fmt.Errorf("error"))
 	store.On(
 		"GetToken",

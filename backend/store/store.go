@@ -133,7 +133,7 @@ type RBACStore interface {
 // TokenStore provides an interface for interacting with the JWT whitelist
 type TokenStore interface {
 	CreateToken(*types.Claims) error
-	DeleteToken(string, string) error
+	DeleteTokens(string, []string) error
 	DeleteTokensByUsername(string) error
 	GetToken(string, string) (*types.Claims, error)
 }

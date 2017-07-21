@@ -8,9 +8,9 @@ func (s *MockStore) CreateToken(claims *types.Claims) error {
 	return args.Error(0)
 }
 
-// DeleteToken ...
-func (s *MockStore) DeleteToken(subject, id string) error {
-	args := s.Called(subject, id)
+// DeleteTokens ...
+func (s *MockStore) DeleteTokens(subject string, ids []string) error {
+	args := s.Called(subject, ids)
 	return args.Error(0)
 }
 
