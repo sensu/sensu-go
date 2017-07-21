@@ -67,7 +67,7 @@ func (a *APId) Start() error {
 		// TODO (JK): need a way to handle closing things like errChan, etc.
 		// in cases where there's a failure to start the daemon
 		if err != nil && err != http.ErrServerClosed {
-			logger.Errorf("failed to start http/https server %s", err.Error())
+			a.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
 		}
 	}()
 

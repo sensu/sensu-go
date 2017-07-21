@@ -28,7 +28,6 @@ func TestBackendHTTPListener(t *testing.T) {
 	// tc = Test Case
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			fmt.Println("In table driven test, TLS options are %s", tc.tls)
 			path, remove := testutil.TempDir(t)
 			defer remove()
 
