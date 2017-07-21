@@ -64,18 +64,32 @@ func (s *etcdStore) CreateUser(u *types.User) error {
 }
 
 func (s *etcdStore) DeleteUserByName(username string) error {
+	// Retrieve the user
 	user, err := s.GetUser(username)
 	if err != nil {
 		return err
 	}
 
+	// Mark it as disabled
 	user.Disabled = true
 
-	// TODO: Find out some kind of mechanism to perform a transaction so the user
-	// isn't modified by something else meanwhile
-	err = s.UpdateUser(user)
+	// Marshal the user struct
+	userBytes, err := json.Marshal(user)
 	if err != nil {
 		return err
+	}
+
+	// Construct the list of operations to make in the transaction
+	ops := make([]clientv3.Op, 2)
+	ops[0] = clientv3.OpPut(getUserPath(username), string(userBytes))
+	ops[1] = clientv3.OpDelete(getTokenPath(username, ""), clientv3.WithPrefix())
+
+	res, err := s.kvc.Txn(context.TODO()).Then(ops...).Commit()
+	if err != nil {
+		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf("could not properly delete the user")
 	}
 
 	return nil

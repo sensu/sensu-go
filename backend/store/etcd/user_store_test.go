@@ -3,6 +3,7 @@ package etcd
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -58,13 +59,24 @@ func TestUserStorage(t *testing.T) {
 		assert.NotEmpty(t, users)
 		assert.Equal(t, 2, len(users))
 
-		// Disable a user
+		// Generate a token for the bar user
+		token, _, _ := jwt.AccessToken("bar")
+		claims, _ := jwt.GetClaims(token)
+		err = store.CreateToken(claims)
+		assert.NoError(t, err)
+
+		// Disable a user, which also removes all issued tokens
 		err = store.DeleteUserByName("bar")
 		assert.NoError(t, err)
 
+		// Make sure the user is disabled
 		result, err = store.GetUser("bar")
 		assert.NoError(t, err)
 		assert.True(t, result.Disabled)
+
+		// Make sure the token was revoked
+		_, err = store.GetToken(claims.Subject, claims.Id)
+		assert.Error(t, err)
 
 		// Authentication should be unsuccessful with a disabled user
 		_, err = store.AuthenticateUser("bar", password)

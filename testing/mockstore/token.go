@@ -14,12 +14,6 @@ func (s *MockStore) DeleteTokens(subject string, ids []string) error {
 	return args.Error(0)
 }
 
-// DeleteTokensByUsername ...
-func (s *MockStore) DeleteTokensByUsername(username string) error {
-	args := s.Called(username)
-	return args.Error(0)
-}
-
 // GetToken ...
 func (s *MockStore) GetToken(subject, id string) (*types.Claims, error) {
 	args := s.Called(subject, id)

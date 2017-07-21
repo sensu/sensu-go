@@ -35,11 +35,6 @@ func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := c.Store.DeleteTokensByUsername(username); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 	return
 }

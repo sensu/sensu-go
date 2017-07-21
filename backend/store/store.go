@@ -134,7 +134,6 @@ type RBACStore interface {
 type TokenStore interface {
 	CreateToken(*types.Claims) error
 	DeleteTokens(string, []string) error
-	DeleteTokensByUsername(string) error
 	GetToken(string, string) (*types.Claims, error)
 }
 

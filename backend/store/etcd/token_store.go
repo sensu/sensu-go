@@ -48,15 +48,6 @@ func (s *etcdStore) DeleteTokens(subject string, ids []string) error {
 	return nil
 }
 
-func (s *etcdStore) DeleteTokensByUsername(username string) error {
-	if username == "" {
-		return errors.New("must specify username")
-	}
-
-	_, err := s.kvc.Delete(context.TODO(), getTokenPath(username, ""), clientv3.WithPrefix())
-	return err
-}
-
 func (s *etcdStore) GetToken(subject, id string) (*types.Claims, error) {
 	resp, err := s.kvc.Get(context.TODO(), getTokenPath(subject, id), clientv3.WithLimit(1))
 	if err != nil {
