@@ -2,14 +2,6 @@ package types
 
 import "errors"
 
-// Define the key type to avoid key collisions in context
-type key int
-
-const (
-	// OrganizationKey contains the key name to retrieve the org from context
-	OrganizationKey key = iota
-)
-
 // Organization represents a Sensu organization in RBAC
 type Organization struct {
 	Description string `json:"description"`

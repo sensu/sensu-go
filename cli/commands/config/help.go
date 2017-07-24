@@ -1,4 +1,4 @@
-package configure
+package config
 
 import (
 	"github.com/sensu/sensu-go/cli"
@@ -9,7 +9,7 @@ import (
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
-		Short: "Configure values",
+		Short: "Modify sensuctl configuration",
 	}
 
 	// Add sub-commands

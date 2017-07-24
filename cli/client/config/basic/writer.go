@@ -3,6 +3,7 @@ package basic
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/sensu/sensu-go/types"
@@ -44,6 +45,12 @@ func (c *Config) SaveTokens(tokens *types.Tokens) error {
 }
 
 func write(data interface{}, path string) error {
+	// Make sure the directory exists
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		os.MkdirAll(dir, os.ModePerm)
+	}
+
 	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err

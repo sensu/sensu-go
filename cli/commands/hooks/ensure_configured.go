@@ -1,7 +1,8 @@
 package hooks
 
 import (
-	"errors"
+	"fmt"
+	"os"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
@@ -37,7 +38,10 @@ func ConfigurationPresent(cmd *cobra.Command, cli *cli.SensuCli) error {
 	// Check that both a URL and an access token are present
 	tokens := cli.Config.Tokens()
 	if cli.Config.APIUrl() == "" || tokens == nil || tokens.Access == "" {
-		return errors.New("Unable to locate credentials. You can configure credentials by running \"sensu-cli configure\"")
+		return fmt.Errorf(
+			"Unable to locate credentials. You can configure credentials by running \"%s configure\"",
+			os.Args[0],
+		)
 	}
 
 	return nil

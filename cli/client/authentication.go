@@ -32,6 +32,26 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*type
 	return &tokens, err
 }
 
+// Logout performs a logout of the configured user
+func (client *RestClient) Logout(token string) error {
+	res, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]string{"refresh_token": token}).
+		Post("/auth/logout")
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("The server returned the error: %d %s",
+			res.StatusCode(),
+			res.String(),
+		)
+	}
+
+	return nil
+}
+
 // RefreshAccessToken returns a new access token given valid refresh token
 func (client *RestClient) RefreshAccessToken(token string) (*types.Tokens, error) {
 	res, err := client.R().

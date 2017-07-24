@@ -26,6 +26,9 @@ type Store interface {
 	// Handlers
 	HandlerStore
 
+	// Keepalives
+	KeepaliveStore
+
 	// Mutators
 	MutatorStore
 
@@ -35,11 +38,11 @@ type Store interface {
 	// RBAC
 	RBACStore
 
+	// Tokens
+	TokenStore
+
 	// Users
 	UserStore
-
-	// Keepalives
-	KeepaliveStore
 
 	// Initialization of store
 	NewInitializer() (Initializer, error)
@@ -128,6 +131,13 @@ type RBACStore interface {
 	GetRoleByName(name string) (*types.Role, error)
 	UpdateRole(role *types.Role) error
 	DeleteRoleByName(name string) error
+}
+
+// TokenStore provides an interface for interacting with the JWT access list
+type TokenStore interface {
+	CreateToken(*types.Claims) error
+	DeleteTokens(string, []string) error
+	GetToken(string, string) (*types.Claims, error)
 }
 
 // UserStore provides an interface for interacting & persisting users

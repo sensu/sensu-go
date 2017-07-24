@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,7 @@ func TestAccessToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	claims, _ := token.Claims.(*Claims)
+	claims, _ := token.Claims.(*types.Claims)
 	assert.Equal(t, username, claims.Subject)
 	assert.NotEmpty(t, claims.Id)
 	assert.NotZero(t, claims.ExpiresAt)
@@ -98,14 +99,14 @@ func TestInitSecretEtcdError(t *testing.T) {
 func TestRefreshToken(t *testing.T) {
 	secret = []byte("foobar")
 	username := "foo"
-	tokenString, err := RefreshToken(username)
+	_, tokenString, err := RefreshToken(username)
 	assert.NoError(t, err)
 
 	token, err := ValidateToken(tokenString)
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	claims, _ := token.Claims.(*Claims)
+	claims, _ := token.Claims.(*types.Claims)
 	assert.Equal(t, username, claims.Subject)
 	assert.NotEmpty(t, claims.Id)
 }

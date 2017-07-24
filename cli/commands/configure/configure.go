@@ -22,7 +22,7 @@ type answers struct {
 func Command(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "configure",
-		Short:        "Configure Sensu CLI options",
+		Short:        "Initialize sensuctl configuration",
 		SilenceUsage: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			// Get new values via interactive questions
