@@ -84,3 +84,14 @@ func setupDefaultUser(store store.Store) error {
 
 	return store.CreateUser(admin)
 }
+
+func setupDefaultAgentUser(store store.Store) error {
+	// default agent user/pass
+	agent := &types.User{
+		Username: "agent",
+		Password: "P@ssw0rd!",
+		Roles:    []string{"agent"},
+	}
+
+	return store.CreateUser(agent)
+}
