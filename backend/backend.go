@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"crypto/tls"
 	"fmt"
 	"runtime/debug"
 
@@ -65,6 +66,8 @@ type Config struct {
 	EtcdListenClientURL         string
 	EtcdListenPeerURL           string
 	EtcdName                    string
+
+	TLS *types.TLSOptions
 }
 
 // A Backend is a Sensu Backend server responsible for handling incoming
@@ -123,6 +126,18 @@ func NewBackend(config *Config) (*Backend, error) {
 		config.AgentPort = 8081
 	}
 
+	// Check for TLS config and load certs if present
+	var (
+		tlsConfig *tls.Config
+		err       error
+	)
+	if config.TLS != nil {
+		tlsConfig, err = config.TLS.ToTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	b := &Backend{
 		Config: config,
 
@@ -140,6 +155,17 @@ func NewBackend(config *Config) (*Backend, error) {
 	cfg.InitialClusterState = config.EtcdInitialClusterState
 	cfg.InitialAdvertisePeerURL = config.EtcdInitialAdvertisePeerURL
 	cfg.Name = config.EtcdName
+
+	if config.TLS != nil {
+		cfg.TLSConfig = &etcd.TLSConfig{
+			Info: etcd.TLSInfo{
+				CertFile:      config.TLS.CertFile,
+				KeyFile:       config.TLS.KeyFile,
+				TrustedCAFile: config.TLS.TrustedCAFile,
+			},
+			TLS: *tlsConfig,
+		}
+	}
 
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
@@ -191,12 +217,15 @@ func (b *Backend) Run() error {
 		return err
 	}
 
+	// TLS config gets passed down here
 	b.apid = &apid.APId{
 		Store:         st,
 		Host:          b.Config.APIHost,
 		Port:          b.Config.APIPort,
 		BackendStatus: b.Status,
+		TLS:           b.Config.TLS,
 	}
+
 	if err := b.apid.Start(); err != nil {
 		return err
 	}
@@ -206,6 +235,7 @@ func (b *Backend) Run() error {
 		Host:       b.Config.AgentHost,
 		Port:       b.Config.AgentPort,
 		MessageBus: b.messageBus,
+		TLS:        b.Config.TLS,
 	}
 	if err := b.agentd.Start(); err != nil {
 		return err
@@ -217,6 +247,7 @@ func (b *Backend) Run() error {
 			Dir:  b.Config.DashboardDir,
 			Host: b.Config.DashboardHost,
 			Port: b.Config.DashboardPort,
+			TLS:  b.Config.TLS,
 		},
 	}
 	if err := b.dashboardd.Start(); err != nil {

@@ -47,6 +47,8 @@ type Config struct {
 	CacheDir string
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
+	// TLS sets the TLSConfig for agent TLS options
+	TLS *types.TLSOptions
 }
 
 // NewConfig provides a new Config object initialized with defaults.
@@ -306,7 +308,7 @@ func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
 	// here as well. yeah. i think we should do that instead.
-	conn, err := transport.Connect(a.backendSelector.Select())
+	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS)
 	if err != nil {
 		return err
 	}
@@ -342,7 +344,7 @@ func (a *Agent) Run() error {
 			case <-pumpsReturned:
 				nextBackend := a.backendSelector.Select()
 				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
-				conn, err := transport.Connect(nextBackend)
+				conn, err := transport.Connect(nextBackend, a.config.TLS)
 				if err != nil {
 					logger.Error("connection error:", err.Error())
 					// TODO(greg): exponential backoff

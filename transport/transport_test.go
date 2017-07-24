@@ -34,7 +34,7 @@ func TestTransportSendReceive(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
+	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1), nil)
 	assert.NoError(t, err)
 	msgBytes, err := json.Marshal(testMessage)
 	assert.NoError(t, err)
@@ -56,7 +56,7 @@ func TestClosedWebsocket(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1))
+	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1), nil)
 	assert.NoError(t, err)
 	<-done
 	// At this point we should receive a connection closed message.

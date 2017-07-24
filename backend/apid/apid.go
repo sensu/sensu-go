@@ -27,6 +27,7 @@ type APId struct {
 	Host          string
 	Port          int
 	Store         store.Store
+	TLS           *types.TLSOptions
 }
 
 // Start Apid.
@@ -57,10 +58,16 @@ func (a *APId) Start() error {
 
 	go func() {
 		defer a.wg.Done()
-		if err := a.httpServer.ListenAndServe(); err != nil {
-			// TODO (JK): need a way to handle closing things like errChan, etc.
-			// in cases where there's a failure to start the daemon
-			logger.Errorf("failed to start http server: %s", err.Error())
+		var err error
+		if a.TLS != nil {
+			err = a.httpServer.ListenAndServeTLS(a.TLS.CertFile, a.TLS.KeyFile)
+		} else {
+			err = a.httpServer.ListenAndServe()
+		}
+		// TODO (JK): need a way to handle closing things like errChan, etc.
+		// in cases where there's a failure to start the daemon
+		if err != nil && err != http.ErrServerClosed {
+			a.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
 		}
 	}()
 
