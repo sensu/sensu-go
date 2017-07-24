@@ -47,6 +47,8 @@ type Config struct {
 	CacheDir string
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
+	// User sets the Agent's username
+	User string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
 }
@@ -60,6 +62,7 @@ func NewConfig() *Config {
 		KeepaliveTimeout:  120,
 		CacheDir:          "/var/cache/sensu",
 		Organization:      "default",
+		User:              "agent",
 	}
 	hostname, err := os.Hostname()
 	if err != nil {

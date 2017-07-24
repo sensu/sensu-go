@@ -120,7 +120,6 @@ func TestBackendHTTPListener(t *testing.T) {
 
 			assert.NoError(t, client.Close())
 			b.Stop()
-			// here is your original function body but tlsOpts is now tc.tls
 		})
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
@@ -50,15 +51,24 @@ func (a *Agentd) Start() error {
 
 	handler := http.HandlerFunc(a.webSocketHandler)
 
+	// what else do I need to add to apply this to incoming ws traffic?
+	// Do we need to check the allow list for the agent user; ie is there
+	// a case in which we would ever want to deny agent user?
+	handlerAuth := middlewares.AllowList(handler, a.Store)
+	handlerAuth = middlewares.Authentication(handlerAuth)
+
+	// added here (handler) but that results in nil pointer
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      handler,
+		Handler:      handlerAuth,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
 	a.wg.Add(1)
+
+	//
 	go func() {
 		defer a.wg.Done()
 		var err error
