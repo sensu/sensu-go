@@ -51,13 +51,9 @@ func (a *Agentd) Start() error {
 
 	handler := http.HandlerFunc(a.webSocketHandler)
 
-	// what else do I need to add to apply this to incoming ws traffic?
-	// Do we need to check the allow list for the agent user; ie is there
-	// a case in which we would ever want to deny agent user?
 	handlerAuth := middlewares.AllowList(handler, a.Store)
 	handlerAuth = middlewares.Authentication(handlerAuth)
 
-	// added here (handler) but that results in nil pointer
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handlerAuth,

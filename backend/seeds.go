@@ -41,6 +41,11 @@ func seedInitialData(store store.Store) error {
 		return err
 	}
 
+	// Default Agent user
+	if err := setupDefaultAgentUser(store); err != nil {
+		return err
+	}
+
 	// Default organization
 	if err := setupDefaultOrganization(store); err != nil {
 		return err

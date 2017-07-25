@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/agentd"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
@@ -104,7 +107,12 @@ func TestBackendHTTPListener(t *testing.T) {
 				}
 			}
 
-			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls)
+			accessToken, accessTokenString, _ := jwt.AccessToken("agent")
+			claims, err := jwt.GetClaims(accessToken)
+			agentd := b.agentd.(*agentd.Agentd)
+			err = agentd.Store.CreateToken(claims)
+
+			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls, http.Header{"Authorization": {"Bearer " + accessTokenString}})
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
 
