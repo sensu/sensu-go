@@ -20,6 +20,7 @@ var (
 // context for easier consumption later
 type RefreshToken struct{}
 
+// Register ...
 func (m RefreshToken) Register(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the bearer token
