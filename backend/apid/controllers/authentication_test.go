@@ -222,8 +222,9 @@ func TestTokenSuccess(t *testing.T) {
 
 func processRequestWithRefreshToken(c *AuthenticationController, req *http.Request) *httptest.ResponseRecorder {
 	router := mux.NewRouter()
+	middleware := middlewares.RefreshToken{}
 	c.Register(router)
-	routerStack := middlewares.RefreshToken(router, c.Store)
+	routerStack := middleware.Register(router)
 	res := httptest.NewRecorder()
 	routerStack.ServeHTTP(res, req)
 
