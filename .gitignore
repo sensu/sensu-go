@@ -13,3 +13,14 @@ yarn-error.log*
 # misc
 .DS_Store
 debug.test
+
+# packaging
+.vagrant/
+*.deb
+*.rpm
+*.pkg
+*.dmg
+*.bff
+*.solaris
+*.txz
+*.tar.gz
