@@ -82,7 +82,26 @@ fpm --input-type dir \
     --vendor "$PACKAGE_VENDOR" \
     --category "$PACKAGE_DEB_CATEGORY" \
     --maintainer "$PACKAGE_MAINTAINER" \
-    --deb-priority extra \ # TODO: figure out if this should actually be extra
+    --deb-priority extra \
     --deb-init packaging/services/sysv/etc/init.d/$SERVICE_NAME \
     --deb-default packaging/services/sysv/etc/default/$SERVICE_NAME \
+    $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH
+
+# deb - sysvinit
+fpm --input-type dir \
+    --output-type deb \
+    --name $PACKAGE_NAME \
+    --version $PACKAGE_VERSION \
+    --iteration $PACKAGE_ITERATION \
+    --architecture $PACKAGE_ARCH \
+    --package "${PACKAGE_NAME}_${PACKAGE_VERSION}-${PACKAGE_ITERATION}_${PACKAGE_ARCH}_systemd.deb" \
+    --description "$PACKAGE_DESCRIPTION" \
+    --url "$PACKAGE_URL" \
+    --license "$PACKAGE_LICENSE" \
+    --vendor "$PACKAGE_VENDOR" \
+    --category "$PACKAGE_DEB_CATEGORY" \
+    --maintainer "$PACKAGE_MAINTAINER" \
+    --deb-priority extra \
+    --deb-systemd packaging/services/systemd/etc/systemd/system/$SERVICE_NAME.service \
+    --deb-default packaging/services/systemd/etc/default/$SERVICE_NAME \
     $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH
