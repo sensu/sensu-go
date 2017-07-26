@@ -15,6 +15,7 @@ yarn-error.log*
 debug.test
 
 # packaging
+*.log
 .vagrant/
 *.deb
 *.rpm
