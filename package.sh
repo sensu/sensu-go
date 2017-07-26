@@ -84,6 +84,21 @@ generate_service_files () {
 mkdir -p packages/sysvinit
 mkdir -p packages/systemd
 
+prefix="packaging/hooks/common"
+common_files="os-functions,group-functions,user-functions"
+
+# render deb hooks
+erb prefix=$prefix common_files=$common_files packaging/hooks/deb/preinst.erb > packaging/hooks/deb/preinst
+erb prefix=$prefix common_files=$common_files packaging/hooks/deb/postinst.erb > packaging/hooks/deb/postinst
+erb prefix=$prefix common_files=$common_files packaging/hooks/deb/prerm.erb > packaging/hooks/deb/prerm
+erb prefix=$prefix common_files=$common_files packaging/hooks/deb/postrm.erb > packaging/hooks/deb/postrm
+
+# render rpm hooks
+erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/pre.erb > packaging/hooks/rpm/pre
+erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/post.erb > packaging/hooks/rpm/post
+erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/preun.erb > packaging/hooks/rpm/preun
+erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/postun.erb > packaging/hooks/rpm/postun
+
 # deb - sysvinit
 fpm --input-type dir \
     --output-type deb \
@@ -101,6 +116,10 @@ fpm --input-type dir \
     --deb-priority extra \
     --deb-init packaging/services/sysv/etc/init.d/$SERVICE_NAME \
     --deb-default packaging/services/sysv/etc/default/$SERVICE_NAME \
+    --before-install packaging/hooks/deb/preinst \
+    --before-remove packaging/hooks/deb/prerm \
+    --after-install packaging/hooks/deb/postinst \
+    --after-remove packaging/hooks/deb/postrm \
     $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH
 
 # deb - systemd
@@ -120,9 +139,11 @@ fpm --input-type dir \
     --deb-priority extra \
     --deb-systemd packaging/services/systemd/etc/systemd/system/$SERVICE_NAME.service \
     --deb-default packaging/services/systemd/etc/default/$SERVICE_NAME \
+    --before-install packaging/hooks/deb/preinst \
+    --before-remove packaging/hooks/deb/prerm \
+    --after-install packaging/hooks/deb/postinst \
+    --after-remove packaging/hooks/deb/postrm \
     $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH
-
-#
 
 rpm_arch=$(safe_rpm_arch $PACKAGE_ARCH)
 
@@ -140,6 +161,10 @@ fpm --input-type dir \
     --vendor "$PACKAGE_VENDOR" \
     --maintainer "$PACKAGE_MAINTAINER" \
     --rpm-init packaging/services/sysv/etc/init.d/$SERVICE_NAME \
+    --before-install packaging/hooks/rpm/pre \
+    --before-remove packaging/hooks/rpm/preun \
+    --after-install packaging/hooks/rpm/post \
+    --after-remove packaging/hooks/rpm/postun \
     $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH \
     packaging/services/sysv/etc/default/$SERVICE_NAME=/etc/default/
 
@@ -156,6 +181,10 @@ fpm --input-type dir \
     --license "$PACKAGE_LICENSE" \
     --vendor "$PACKAGE_VENDOR" \
     --maintainer "$PACKAGE_MAINTAINER" \
+    --before-install packaging/hooks/rpm/pre \
+    --before-remove packaging/hooks/rpm/preun \
+    --after-install packaging/hooks/rpm/post \
+    --after-remove packaging/hooks/rpm/postun \
     $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH \
     packaging/services/systemd/etc/systemd/system/$SERVICE_NAME.service=/lib/systemd/system/ \
     packaging/services/systemd/etc/default/$SERVICE_NAME=/etc/default/

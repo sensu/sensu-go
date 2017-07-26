@@ -25,3 +25,8 @@ debug.test
 *.solaris
 *.txz
 *.tar.gz
+packages/*
+packaging/hooks/deb/*
+!packaging/hooks/deb/*.erb
+packaging/hooks/rpm/*
+!packaging/hooks/rpm/*.erb

@@ -1,0 +1,23 @@
+detected_os()
+{
+    platform="unknown"
+    unamestr=`uname`
+    if [ "$unamestr" = "AIX" ]; then
+	platform="aix"
+    elif [ "$unamestr" = "Darwin" ]; then
+	platform="mac"
+    elif [ "$unamestr" = "FreeBSD" ]; then
+	platform="freebsd"
+    elif [ "$unamestr" = "Linux" ]; then
+	platform="linux"
+    elif [ "$unamestr" = "SunOS" ]; then
+	platform="solaris"
+    fi
+    echo $platform
+}
+
+os=`detected_os`
+if [ $os = "unknown" ]; then
+    echo "Unsupported OS"
+    exit 1
+fi
