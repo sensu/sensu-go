@@ -7,7 +7,6 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	sensujwt "github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -87,7 +86,7 @@ func TestAuthorization(t *testing.T) {
 	handler.ServeHTTP(w, req.WithContext(ctx))
 
 	want := roles
-	got := next.reqCtx.Value(authorization.ContextRoleKey)
+	got := next.reqCtx.Value(types.AuthorizationRoleKey)
 
 	assert.Equal(want, got)
 }

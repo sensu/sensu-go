@@ -29,7 +29,11 @@ func TestNewActorFromContext(t *testing.T) {
 
 	t.Run("given context w/ org & roles", func(t *testing.T) {
 		tCtx := context.WithValue(ctx, types.OrganizationKey, "default")
-		tCtx = context.WithValue(tCtx, ContextRoleKey, []*types.Role{types.FixtureRole("x", "y")})
+		tCtx = context.WithValue(
+			tCtx,
+			types.AuthorizationRoleKey,
+			[]*types.Role{types.FixtureRole("x", "y")},
+		)
 		actor = NewActorFromContext(tCtx)
 		assert.NotNil(t, actor)
 		assert.Equal(t, actor.Organization, "default")
@@ -40,7 +44,11 @@ func TestNewActorFromContext(t *testing.T) {
 func TestAbilityWithContext(t *testing.T) {
 	ctx := context.TODO()
 	ctx = context.WithValue(ctx, types.OrganizationKey, "default")
-	ctx = context.WithValue(ctx, ContextRoleKey, []*types.Role{types.FixtureRole("x", "y")})
+	ctx = context.WithValue(
+		ctx,
+		types.AuthorizationRoleKey,
+		[]*types.Role{types.FixtureRole("x", "y")},
+	)
 
 	ability := Ability{}
 	result := ability.WithContext(ctx)

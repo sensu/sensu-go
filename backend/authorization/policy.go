@@ -21,7 +21,7 @@ func NewActorFromContext(ctx context.Context) Actor {
 		actor.Organization = organization
 	}
 
-	if roles, ok := ctx.Value(ContextRoleKey).([]*types.Role); ok {
+	if roles, ok := ctx.Value(types.AuthorizationRoleKey).([]*types.Role); ok {
 		actor.Roles = roles
 	}
 

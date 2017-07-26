@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -48,7 +47,7 @@ func requestWithFullAccess(r *http.Request) *http.Request {
 	userRoles := []*types.Role{types.FixtureRole("test", "*")}
 	context := context.WithValue(
 		r.Context(),
-		authorization.ContextRoleKey,
+		types.AuthorizationRoleKey,
 		userRoles,
 	)
 
@@ -58,7 +57,7 @@ func requestWithFullAccess(r *http.Request) *http.Request {
 func requestWithNoAccess(r *http.Request) *http.Request {
 	context := context.WithValue(
 		r.Context(),
-		authorization.ContextRoleKey,
+		types.AuthorizationRoleKey,
 		[]*types.Role{},
 	)
 

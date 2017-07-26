@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -47,7 +46,7 @@ func (a Authorization) Register(next http.Handler) http.Handler {
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), authorization.ContextRoleKey, userRoles)
+		ctx := context.WithValue(r.Context(), types.AuthorizationRoleKey, userRoles)
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})

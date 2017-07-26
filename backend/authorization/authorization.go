@@ -7,15 +7,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// Define the key type to avoid collisions in context
-type key int
-
-const (
-	// ContextRoleKey is the key name used to store a user's roles within
-	// the context of a request
-	ContextRoleKey key = iota
-)
-
 func hasPermission(rule types.Rule, action string) bool {
 	for _, permission := range rule.Permissions {
 		if permission == action {
