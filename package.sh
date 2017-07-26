@@ -29,6 +29,15 @@ BINARY_START_ARGS="start"
 BINARY_TARGET_PATH=/usr/bin/$BINARY_NAME
 BINARY_SOURCE_PATH=target/$TARGET_OS-$TARGET_ARCH/$BINARY_NAME
 
+# safe_rpm_arch takes a go-compatible arch and will return an rpm-compatible arch
+# e.g. amd64 -> x86_64
+#
+safe_rpm_arch () {
+    if [ $1 = "amd64" ]; then
+	echo "x86_64"
+    fi
+}
+
 # safe_rpm_version will return a version string that is rpm-compatible
 # e.g.
 #
@@ -115,14 +124,16 @@ fpm --input-type dir \
 
 #
 
+rpm_arch=$(safe_rpm_arch $PACKAGE_ARCH)
+
 # rpm - sysvinit
 fpm --input-type dir \
     --output-type rpm \
     --name $PACKAGE_NAME \
     --version $PACKAGE_VERSION \
     --iteration $PACKAGE_ITERATION \
-    --architecture $PACKAGE_ARCH \
-    --package "packages/sysvinit/${PACKAGE_NAME}-${PACKAGE_VERSION}-${PACKAGE_ITERATION}.${PACKAGE_ARCH}.rpm" \
+    --architecture $rpm_arch \
+    --package "packages/sysvinit/${PACKAGE_NAME}-${PACKAGE_VERSION}-${PACKAGE_ITERATION}.${rpm_arch}.rpm" \
     --description "$PACKAGE_DESCRIPTION" \
     --url "$PACKAGE_URL" \
     --license "$PACKAGE_LICENSE" \
@@ -138,8 +149,8 @@ fpm --input-type dir \
     --name $PACKAGE_NAME \
     --version $PACKAGE_VERSION \
     --iteration $PACKAGE_ITERATION \
-    --architecture $PACKAGE_ARCH \
-    --package "packages/systemd/${PACKAGE_NAME}-${PACKAGE_VERSION}-${PACKAGE_ITERATION}.${PACKAGE_ARCH}.rpm" \
+    --architecture $rpm_arch \
+    --package "packages/systemd/${PACKAGE_NAME}-${PACKAGE_VERSION}-${PACKAGE_ITERATION}.${rpm_arch}.rpm" \
     --description "$PACKAGE_DESCRIPTION" \
     --url "$PACKAGE_URL" \
     --license "$PACKAGE_LICENSE" \
