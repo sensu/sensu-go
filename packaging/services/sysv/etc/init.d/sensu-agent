@@ -19,7 +19,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 export PATH
 
 name=sensu-agent
-program=/usr/local/bin/sensu-agent
+program=/usr/bin/sensu-agent
 args=start
 pidfile="/var/run/$name.pid"
 user="sensu"

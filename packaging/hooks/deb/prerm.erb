@@ -2,7 +2,14 @@
 <%= (common_files || "").split(",").inject("") { |res, f| res + File.read(File.join(prefix, f)) + "\n" } %>
 
 case "$1" in
-    remove|upgrade|deconfigure|failed-upgrade)
+    remove)
+	if [ -f /lib/systemd/system/$service.service ]; then
+	    systemctl --system daemon-reload >/dev/null || true
+	fi
+
+	;;
+
+    upgrade|deconfigure|failed-upgrade)
 	;;
 
     *)

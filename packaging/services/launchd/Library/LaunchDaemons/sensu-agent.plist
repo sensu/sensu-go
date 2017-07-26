@@ -4,9 +4,9 @@
   <dict>
     <key>Disabled</key><false/>
     <key>Label</key><string>sensu-agent</string>
-    <key>Program</key><string>/usr/local/bin/sensu-agent</string>
+    <key>Program</key><string>/usr/bin/sensu-agent</string>
     <key>ProgramArguments</key><array>
-      <string>/usr/local/bin/sensu-agent</string>
+      <string>/usr/bin/sensu-agent</string>
       <string>start</string>
     </array>
     <key>KeepAlive</key> <true/>

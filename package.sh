@@ -32,7 +32,7 @@ BINARY_SOURCE_PATH=target/$TARGET_OS-$TARGET_ARCH/$BINARY_NAME
 # safe_rpm_arch takes a go-compatible arch and will return an rpm-compatible arch
 # e.g. amd64 -> x86_64
 #
-safe_rpm_arch () {
+safe_rpm_arch() {
     if [ $1 = "amd64" ]; then
 	echo "x86_64"
     fi
@@ -41,7 +41,7 @@ safe_rpm_arch () {
 # safe_rpm_version will return a version string that is rpm-compatible
 # e.g.
 #
-safe_rpm_version () {
+safe_rpm_version() {
     echo "Not implemented yet"
     exit 1
 }
@@ -49,7 +49,7 @@ safe_rpm_version () {
 # safe_debian_version will return a version string that is debian-compatible
 # e.g. 1.0.0alpha1, 1.0.0beta3
 # https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version
-safe_debian_version () {
+safe_debian_version() {
     echo "Not implemented yet"
     exit 1
 }
@@ -57,12 +57,12 @@ safe_debian_version () {
 # safe_freebsd_version will return a version string that is freebsd-compatible
 # e.g. 1.0.0a1, 1.0.0b3
 # https://www.freebsd.org/doc/en/books/porters-handbook/makefile-naming.html#porting-pkgname-format
-safe_freebsd_version () {
+safe_freebsd_version() {
     echo "Not implemented yet"
     exit 1
 }
 
-generate_service_files () {
+generate_services() {
     for platform in sysv systemd launchd; do
 	if [ platform = launchd ]; then
 	    service_user=_$SERVICE_USER
@@ -77,29 +77,32 @@ generate_service_files () {
 	pleaserun -p $platform --overwrite --no-install-actions \
 		  --install-prefix packaging/services/$platform \
 		  --user $service_user --group $service_group \
-		  $BINARY_TARGET $BINARY_START_ARGS
+		  $BINARY_TARGET_PATH $BINARY_START_ARGS
     done
 }
 
-mkdir -p packages/sysvinit
-mkdir -p packages/systemd
+generate_hooks() {
+    prefix="packaging/hooks/common"
+    common_files="os-functions,group-functions,user-functions"
 
-prefix="packaging/hooks/common"
-common_files="os-functions,group-functions,user-functions"
+    # render deb hooks
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/preinst.erb > packaging/hooks/deb/preinst
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/postinst.erb > packaging/hooks/deb/postinst
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/prerm.erb > packaging/hooks/deb/prerm
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/postrm.erb > packaging/hooks/deb/postrm
 
-# render deb hooks
-erb prefix=$prefix common_files=$common_files packaging/hooks/deb/preinst.erb > packaging/hooks/deb/preinst
-erb prefix=$prefix common_files=$common_files packaging/hooks/deb/postinst.erb > packaging/hooks/deb/postinst
-erb prefix=$prefix common_files=$common_files packaging/hooks/deb/prerm.erb > packaging/hooks/deb/prerm
-erb prefix=$prefix common_files=$common_files packaging/hooks/deb/postrm.erb > packaging/hooks/deb/postrm
+    # render rpm hooks
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/pre.erb > packaging/hooks/rpm/pre
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/post.erb > packaging/hooks/rpm/post
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/preun.erb > packaging/hooks/rpm/preun
+    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/postun.erb > packaging/hooks/rpm/postun
+}
 
-# render rpm hooks
-erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/pre.erb > packaging/hooks/rpm/pre
-erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/post.erb > packaging/hooks/rpm/post
-erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/preun.erb > packaging/hooks/rpm/preun
-erb prefix=$prefix common_files=$common_files packaging/hooks/rpm/postun.erb > packaging/hooks/rpm/postun
+build_package() {
+    mkdir -p packages/sysvinit
+    mkdir -p packages/systemd
 
-# deb - sysvinit
+    # deb - sysvinit
 fpm --input-type dir \
     --output-type deb \
     --name $PACKAGE_NAME \
@@ -137,13 +140,13 @@ fpm --input-type dir \
     --category "$PACKAGE_DEB_CATEGORY" \
     --maintainer "$PACKAGE_MAINTAINER" \
     --deb-priority extra \
-    --deb-systemd packaging/services/systemd/etc/systemd/system/$SERVICE_NAME.service \
     --deb-default packaging/services/systemd/etc/default/$SERVICE_NAME \
     --before-install packaging/hooks/deb/preinst \
     --before-remove packaging/hooks/deb/prerm \
     --after-install packaging/hooks/deb/postinst \
     --after-remove packaging/hooks/deb/postrm \
-    $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH
+    $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH \
+    packaging/services/systemd/etc/systemd/system/$SERVICE_NAME.service=/lib/systemd/system/
 
 rpm_arch=$(safe_rpm_arch $PACKAGE_ARCH)
 
@@ -186,5 +189,28 @@ fpm --input-type dir \
     --after-install packaging/hooks/rpm/post \
     --after-remove packaging/hooks/rpm/postun \
     $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH \
-    packaging/services/systemd/etc/systemd/system/$SERVICE_NAME.service=/lib/systemd/system/ \
+    packaging/services/systemd/etc/systemd/system/$SERVICE_NAME.service=/usr/lib/systemd/system/ \
     packaging/services/systemd/etc/default/$SERVICE_NAME=/etc/default/
+}
+
+case "$1" in
+    services)
+	generate_services
+	;;
+
+    hooks)
+	generate_hooks
+	;;
+
+    build)
+	generate_services
+	generate_hooks
+	build_package
+	;;
+
+    *)
+	echo "$0: Invalid option."
+	echo "Valid options: services, hooks, build"
+	exit 1
+	;;
+esac

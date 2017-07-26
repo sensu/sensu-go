@@ -5,6 +5,11 @@ case "$1" in
     configure)
 	create_group
 	create_user
+
+	if [ -f /lib/systemd/system/$service.service ]; then
+	    systemctl --system daemon-reload >/dev/null || true
+	fi
+
 	;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
