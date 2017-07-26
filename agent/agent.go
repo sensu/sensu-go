@@ -8,11 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/assetmanager"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
@@ -64,6 +66,7 @@ func NewConfig() *Config {
 		Organization:      "default",
 		User:              "agent",
 	}
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		logger.Error("error getting hostname: ", err.Error())
@@ -262,6 +265,7 @@ func (a *Agent) handshake() error {
 		ID:            a.config.AgentID,
 		Subscriptions: a.config.Subscriptions,
 		Organization:  a.config.Organization,
+		User:          a.config.User,
 	}
 	msgBytes, err := json.Marshal(handshake)
 	if err != nil {
@@ -311,7 +315,10 @@ func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
 	// here as well. yeah. i think we should do that instead.
-	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS)
+	_, tokenString, _ := jwt.AccessToken(a.config.User)
+	// _, err := jwt.GetClaims(token)
+	header := http.Header{"Authorization": {"Bearer " + tokenString}}
+	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, header)
 	if err != nil {
 		return err
 	}
@@ -347,7 +354,7 @@ func (a *Agent) Run() error {
 			case <-pumpsReturned:
 				nextBackend := a.backendSelector.Select()
 				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
-				conn, err := transport.Connect(nextBackend, a.config.TLS)
+				conn, err := transport.Connect(nextBackend, a.config.TLS, header)
 				if err != nil {
 					logger.Error("connection error:", err.Error())
 					// TODO(greg): exponential backoff
