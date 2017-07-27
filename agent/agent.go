@@ -31,8 +31,10 @@ const (
 type Config struct {
 	// AgentID is the entity ID for the running agent. Default is hostname.
 	AgentID string
-	// BackendURLs is a list of URLs for the Sensu Backend. Default: ws://127.0.0.1:8080
+	// BackendURLs is a list of URLs for the Sensu Backend. Default: ws://127.0.0.1:8081
 	BackendURLs []string
+	// ApiURL is the URL for api auth purposes. Default: http://127.0.0.1:8080
+	ApiURL []string
 	// Subscriptions is an array of subscription names. Default: empty array.
 	Subscriptions []string
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
@@ -51,6 +53,8 @@ type Config struct {
 	Organization string
 	// User sets the Agent's username
 	User string
+	// Password sets Agent's password
+	Password string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
 }
@@ -59,12 +63,14 @@ type Config struct {
 func NewConfig() *Config {
 	c := &Config{
 		BackendURLs:       []string{"ws://127.0.0.1:8081"},
+		ApiURL:            []string{"http://127.0.0.1:8080"},
 		Subscriptions:     []string{},
 		KeepaliveInterval: 20,
 		KeepaliveTimeout:  120,
 		CacheDir:          "/var/cache/sensu",
 		Organization:      "default",
 		User:              "agent",
+		Password:          "P@ssw0rd!",
 	}
 
 	hostname, err := os.Hostname()
@@ -241,6 +247,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			Deregister:       a.config.Deregister,
 			KeepaliveTimeout: a.config.KeepaliveTimeout,
 			Organization:     a.config.Organization,
+			User:             a.config.User,
 		}
 
 		if a.config.DeregistrationHandler != "" {
@@ -315,9 +322,13 @@ func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
 	// here as well. yeah. i think we should do that instead.
-	_, tokenString, _ := jwt.AccessToken(a.config.User)
+
+	// req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
+	// req.SetBasicAuth(, "P@ssw0rd!")
+
+	// token, tokenString, _ := jwt.AccessToken(a.config.User)
 	// _, err := jwt.GetClaims(token)
-	header := http.Header{"Authorization": {"Bearer " + tokenString}}
+	// header := http.Header{"Authorization": {"Bearer " + tokenString}}
 	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, header)
 	if err != nil {
 		return err

@@ -20,6 +20,7 @@ var (
 
 const (
 	flagBackendURL            = "backend-url"
+	flagApiURL                = "api-url"
 	flagAgentID               = "id"
 	flagOrganization          = "organization"
 	flagUser                  = "user"

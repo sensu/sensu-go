@@ -15,4 +15,6 @@ const (
 	RefreshTokenClaims
 	// RefreshTokenString contains the key name to retrieve the refresh token string
 	RefreshTokenString
+	// ClaimsKey contains key name to retrieve the jwt claims from context
+	ClaimsKey
 )
