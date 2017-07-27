@@ -29,38 +29,9 @@ BINARY_START_ARGS="start"
 BINARY_TARGET_PATH=/usr/bin/$BINARY_NAME
 BINARY_SOURCE_PATH=target/$TARGET_OS-$TARGET_ARCH/$BINARY_NAME
 
-# safe_rpm_arch takes a go-compatible arch and will return an rpm-compatible arch
-# e.g. amd64 -> x86_64
-#
-safe_rpm_arch() {
-    if [ $1 = "amd64" ]; then
-	echo "x86_64"
-    fi
-}
-
-# safe_rpm_version will return a version string that is rpm-compatible
-# e.g.
-#
-safe_rpm_version() {
-    echo "Not implemented yet"
-    exit 1
-}
-
-# safe_debian_version will return a version string that is debian-compatible
-# e.g. 1.0.0alpha1, 1.0.0beta3
-# https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version
-safe_debian_version() {
-    echo "Not implemented yet"
-    exit 1
-}
-
-# safe_freebsd_version will return a version string that is freebsd-compatible
-# e.g. 1.0.0a1, 1.0.0b3
-# https://www.freebsd.org/doc/en/books/porters-handbook/makefile-naming.html#porting-pkgname-format
-safe_freebsd_version() {
-    echo "Not implemented yet"
-    exit 1
-}
+. packaging/helpers/rpm-functions.sh
+. packaging/helpers/deb-functions.sh
+. packaging/helpers/freebsd-functions.sh
 
 generate_services() {
     for platform in sysv systemd launchd; do
@@ -82,20 +53,22 @@ generate_services() {
 }
 
 generate_hooks() {
+    hooks_path="packaging/hooks"
+    common_path="${hooks_path}/common"
     prefix="packaging/hooks/common"
     common_files="os-functions,group-functions,user-functions"
 
     # render deb hooks
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/preinst.erb > packaging/hooks/deb/preinst
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/postinst.erb > packaging/hooks/deb/postinst
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/prerm.erb > packaging/hooks/deb/prerm
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/deb/postrm.erb > packaging/hooks/deb/postrm
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/deb/preinst.erb > $hooks_path/deb/preinst
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/deb/postinst.erb > $hooks_path/deb/postinst
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/deb/prerm.erb > $hooks_path/deb/prerm
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/deb/postrm.erb > $hooks_path/deb/postrm
 
     # render rpm hooks
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/pre.erb > packaging/hooks/rpm/pre
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/post.erb > packaging/hooks/rpm/post
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/preun.erb > packaging/hooks/rpm/preun
-    erb service=$SERVICE_NAME prefix=$prefix common_files=$common_files packaging/hooks/rpm/postun.erb > packaging/hooks/rpm/postun
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/rpm/pre.erb > $hooks_path/rpm/pre
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/rpm/post.erb > $hooks_path/rpm/post
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/rpm/preun.erb > $hooks_path/rpm/preun
+    erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/rpm/postun.erb > $hooks_path/rpm/postun
 }
 
 build_package() {
