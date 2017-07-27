@@ -1,16 +1,17 @@
 version: '3'
 services:
   sensu-backend1:
-    image: sensuapp/sensu
+    image: sensuapp/sensu-go
     command: /opt/sensu/bin/backend.sh
     hostname: backend1
+    restart: always
     ports:
       - "2379:2379"
       - "2380:2380"
       - "8080:8080"
       - "8081:8081"
   sensu-agent1:
-    image: sensuapp/sensu
+    image: sensuapp/sensu-go
     command: /opt/sensu/bin/agent.sh
     hostname: agent1
     restart: always
