@@ -23,6 +23,10 @@ var (
 // signed format, along with any error
 func AccessToken(username string) (*jwt.Token, string, error) {
 	claims, err := NewClaims(username)
+	if err != nil {
+		return nil, "", err
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Sign the token as a string using the secret

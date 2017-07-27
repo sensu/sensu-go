@@ -8,13 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
+	// "net/http"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/assetmanager"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
@@ -33,8 +32,6 @@ type Config struct {
 	AgentID string
 	// BackendURLs is a list of URLs for the Sensu Backend. Default: ws://127.0.0.1:8081
 	BackendURLs []string
-	// ApiURL is the URL for api auth purposes. Default: http://127.0.0.1:8080
-	ApiURL []string
 	// Subscriptions is an array of subscription names. Default: empty array.
 	Subscriptions []string
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
@@ -63,7 +60,6 @@ type Config struct {
 func NewConfig() *Config {
 	c := &Config{
 		BackendURLs:       []string{"ws://127.0.0.1:8081"},
-		ApiURL:            []string{"http://127.0.0.1:8080"},
 		Subscriptions:     []string{},
 		KeepaliveInterval: 20,
 		KeepaliveTimeout:  120,
@@ -329,7 +325,7 @@ func (a *Agent) Run() error {
 	// token, tokenString, _ := jwt.AccessToken(a.config.User)
 	// _, err := jwt.GetClaims(token)
 	// header := http.Header{"Authorization": {"Bearer " + tokenString}}
-	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, header)
+	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, nil)
 	if err != nil {
 		return err
 	}
@@ -365,7 +361,7 @@ func (a *Agent) Run() error {
 			case <-pumpsReturned:
 				nextBackend := a.backendSelector.Select()
 				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
-				conn, err := transport.Connect(nextBackend, a.config.TLS, header)
+				conn, err := transport.Connect(nextBackend, a.config.TLS, nil)
 				if err != nil {
 					logger.Error("connection error:", err.Error())
 					// TODO(greg): exponential backoff

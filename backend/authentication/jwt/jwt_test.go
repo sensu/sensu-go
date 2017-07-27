@@ -35,7 +35,7 @@ func TestClaimsContext(t *testing.T) {
 
 	r, _ := http.NewRequest("GET", "/foo", nil)
 
-	ctx := SetClaimsIntoContext(r, token.Claims)
+	ctx := SetClaimsIntoContext(r, token.Claims.(*types.Claims))
 	claims := GetClaimsFromContext(r.WithContext(ctx))
 	assert.Equal(t, username, claims.Subject)
 }
