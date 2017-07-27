@@ -5,10 +5,11 @@
 package agent
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	// "net/http"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -318,14 +319,11 @@ func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
 	// here as well. yeah. i think we should do that instead.
+	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
+	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
+	header := http.Header{"Authorization": {"Basic " + userCredentials}}
 
-	// req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
-	// req.SetBasicAuth(, "P@ssw0rd!")
-
-	// token, tokenString, _ := jwt.AccessToken(a.config.User)
-	// _, err := jwt.GetClaims(token)
-	// header := http.Header{"Authorization": {"Bearer " + tokenString}}
-	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, nil)
+	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, header)
 	if err != nil {
 		return err
 	}
@@ -361,7 +359,7 @@ func (a *Agent) Run() error {
 			case <-pumpsReturned:
 				nextBackend := a.backendSelector.Select()
 				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
-				conn, err := transport.Connect(nextBackend, a.config.TLS, nil)
+				conn, err := transport.Connect(nextBackend, a.config.TLS, header)
 				if err != nil {
 					logger.Error("connection error:", err.Error())
 					// TODO(greg): exponential backoff

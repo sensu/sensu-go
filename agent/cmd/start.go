@@ -23,6 +23,7 @@ const (
 	flagAgentID               = "id"
 	flagOrganization          = "organization"
 	flagUser                  = "user"
+	flagPassword              = "password"
 	flagSubscriptions         = "subscriptions"
 	flagDeregister            = "deregister"
 	flagDeregistrationHandler = "deregistration-handler"
@@ -104,6 +105,9 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().String(flagUser, "agent", "agent user")
 	viper.BindPFlag(flagUser, cmd.Flags().Lookup(flagUser))
+
+	cmd.Flags().String(flagPassword, "P@ssw0rd!", "agent password")
+	viper.BindPFlag(flagPassword, cmd.Flags().Lookup(flagPassword))
 
 	cmd.Flags().String(flagCacheDir, defaultCacheDir, "path to store cached data")
 	viper.BindPFlag(flagCacheDir, cmd.Flags().Lookup(flagCacheDir))
