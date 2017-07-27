@@ -1,6 +1,10 @@
+sudo: required
+services:
+  - docker
+
 language: go
 go:
-    - 1.8.x
+  - 1.8.x
 branches:
   only:
     - master
@@ -8,5 +12,6 @@ install:
   - ./build.sh deps
 script:
   - ./build.sh
+  - ./build.sh docker
 after_success:
   - ./codecov.sh -t $CODECOV_TOKEN
