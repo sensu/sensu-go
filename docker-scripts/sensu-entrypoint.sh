@@ -3,6 +3,5 @@
 SENSU=/opt/sensu
 
 called=$(basename $0)
-shift
 
 ${SENSU}/bin/${called} $@

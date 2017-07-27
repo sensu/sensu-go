@@ -112,8 +112,8 @@ func configureRootCmd() *cobra.Command {
 
 	// Global flags
 	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
-	cmd.PersistentFlags().StringP("config-dir", "d", sensuConfigPath, "path to directory containing configuration files")
-	cmd.PersistentFlags().StringP("cache-dir", "t", sensuCachePath, "path to directory containing cache & temporary files")
+	cmd.PersistentFlags().StringP("config-dir", "", sensuConfigPath, "path to directory containing configuration files")
+	cmd.PersistentFlags().StringP("cache-dir", "", sensuCachePath, "path to directory containing cache & temporary files")
 	cmd.PersistentFlags().StringP("organization", "", OrganizationFlagDefault, "organization in which we perform actions")
 
 	return cmd
