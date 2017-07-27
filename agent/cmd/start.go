@@ -57,6 +57,7 @@ func newStartCommand() *cobra.Command {
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Organization = viper.GetString(flagOrganization)
 			cfg.User = viper.GetString(flagUser)
+			cfg.Password = viper.GetString(flagPassword)
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
