@@ -52,11 +52,11 @@ func (a *Agentd) Start() error {
 	handler := http.HandlerFunc(a.webSocketHandler)
 
 	// TODO: add JWT authentication support
-	handlerAuth := middlewares.BasicAuthentication(handler, a.Store)
+	handler = middlewares.BasicAuthentication(handler, a.Store)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      handlerAuth,
+		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -64,7 +64,6 @@ func (a *Agentd) Start() error {
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
 	a.wg.Add(1)
 
-	//
 	go func() {
 		defer a.wg.Done()
 		var err error
