@@ -26,7 +26,7 @@ func TestHttpApiChecksGet(t *testing.T) {
 		types.FixtureCheckConfig("check2"),
 	}
 	store.On("GetCheckConfigs", mock.Anything).Return(checks, nil)
-	req, _ := http.NewRequest("GET", "/checks", nil)
+	req := newRequest("GET", "/checks", nil)
 	res := processRequest(c, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -49,13 +49,23 @@ func TestHttpApiChecksGetError(t *testing.T) {
 
 	var nilChecks []*types.CheckConfig
 	store.On("GetCheckConfigs", mock.Anything).Return(nilChecks, errors.New("error"))
-	req, _ := http.NewRequest("GET", "/checks", nil)
+	req := newRequest("GET", "/checks", nil)
 	res := processRequest(c, req)
 
 	body := res.Body.Bytes()
 
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
 	assert.Equal(t, "error\n", string(body))
+}
+
+func TestHttpApiChecksGetUnauthorized(t *testing.T) {
+	controller := ChecksController{}
+
+	req := newRequest("GET", "/checks", nil)
+	req = requestWithNoAccess(req)
+
+	res := processRequest(&controller, req)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestHttpApiCheckGet(t *testing.T) {
@@ -67,14 +77,14 @@ func TestHttpApiCheckGet(t *testing.T) {
 
 	var nilCheck *types.CheckConfig
 	store.On("GetCheckConfigByName", mock.Anything, "somecheck").Return(nilCheck, nil)
-	notFoundReq, _ := http.NewRequest("GET", "/checks/somecheck", nil)
+	notFoundReq := newRequest("GET", "/checks/somecheck", nil)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
 
 	check1 := types.FixtureCheckConfig("check1")
 	store.On("GetCheckConfigByName", mock.Anything, "check1").Return(check1, nil)
-	foundReq, _ := http.NewRequest("GET", "/checks/check1", nil)
+	foundReq := newRequest("GET", "/checks/check1", nil)
 	foundRes := processRequest(c, foundReq)
 
 	assert.Equal(t, http.StatusOK, foundRes.Code)
@@ -89,6 +99,16 @@ func TestHttpApiCheckGet(t *testing.T) {
 	assert.NotNil(t, check.Command)
 	assert.NotEqual(t, check.Name, "")
 	assert.NotEqual(t, check.Command, "")
+}
+
+func TestHttpApiChecksGetByNameUnauthorized(t *testing.T) {
+	controller := ChecksController{}
+
+	req := newRequest("GET", "/checks/asdjflas", nil)
+	req = requestWithNoAccess(req)
+
+	res := processRequest(&controller, req)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestHttpApiCheckPut(t *testing.T) {
@@ -106,10 +126,16 @@ func TestHttpApiCheckPut(t *testing.T) {
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
 	})
-	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/checks/%s", "check1"), bytes.NewBuffer(updatedCheckJSON))
+	putReq := newRequest("PUT", fmt.Sprintf("/checks/%s", "check1"), bytes.NewBuffer(updatedCheckJSON))
 	putRes := processRequest(c, putReq)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
+
+	unauthReq := newRequest("PUT", "/checks/check1", nil)
+	unauthReq = requestWithNoAccess(unauthReq)
+
+	unauthRes := processRequest(c, unauthReq)
+	assert.Equal(t, http.StatusUnauthorized, unauthRes.Code)
 }
 
 func TestHttpApiCheckPost(t *testing.T) {
@@ -127,10 +153,16 @@ func TestHttpApiCheckPost(t *testing.T) {
 		assert.NoError(t, receivedCheck.Validate())
 		assert.EqualValues(t, check, receivedCheck)
 	})
-	putReq, _ := http.NewRequest("POST", fmt.Sprintf("/checks/check1"), bytes.NewBuffer(updatedCheckJSON))
+	putReq := newRequest("POST", fmt.Sprintf("/checks/check1"), bytes.NewBuffer(updatedCheckJSON))
 	putRes := processRequest(c, putReq)
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
+
+	unauthReq := newRequest("POST", "/checks/check1", nil)
+	unauthReq = requestWithNoAccess(unauthReq)
+
+	unauthRes := processRequest(c, unauthReq)
+	assert.Equal(t, http.StatusUnauthorized, unauthRes.Code)
 }
 
 func TestHttpApiCheckDelete(t *testing.T) {
@@ -143,8 +175,18 @@ func TestHttpApiCheckDelete(t *testing.T) {
 	check := types.FixtureCheckConfig("check1")
 	store.On("GetCheckConfigByName", mock.Anything, "check1").Return(check, nil)
 	store.On("DeleteCheckConfigByName", mock.Anything, "check1").Return(nil)
-	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/checks/check1"), nil)
+	deleteReq := newRequest("DELETE", fmt.Sprintf("/checks/check1"), nil)
 	deleteRes := processRequest(c, deleteReq)
 
 	assert.Equal(t, http.StatusOK, deleteRes.Code)
+}
+
+func TestHttpApiChecksDeleteUnauthorized(t *testing.T) {
+	controller := ChecksController{}
+
+	req := newRequest("DELETE", "/checks/check1", nil)
+	req = requestWithNoAccess(req)
+
+	res := processRequest(&controller, req)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }

@@ -7,18 +7,22 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // UsersController defines the fields required by UsersController.
 type UsersController struct {
-	Store store.Store
+	Store     store.Store
+	abilities authorization.Ability
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *UsersController) Register(r *mux.Router) {
+	c.abilities = authorization.Ability{Resource: types.RuleTypeUser}
+
 	r.HandleFunc("/rbac/users", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/users", c.updateUser).Methods(http.MethodPut)
 	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
@@ -29,6 +33,12 @@ func (c *UsersController) Register(r *mux.Router) {
 func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
+
+	abilities := c.abilities.WithContext(r.Context())
+	if !abilities.CanDelete() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	if err := c.Store.DeleteUserByName(username); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -41,6 +51,12 @@ func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 // many handles GET requests to /users
 func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
+	abilities := c.abilities.WithContext(r.Context())
+	if !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	users, err := c.Store.GetUsers()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -65,6 +81,12 @@ func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
 func (c *UsersController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
+
+	abilities := c.abilities.WithContext(r.Context())
+	if !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	var (
 		user *types.User
@@ -98,6 +120,12 @@ func (c *UsersController) single(w http.ResponseWriter, r *http.Request) {
 
 func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 	var user types.User
+
+	abilities := c.abilities.WithContext(r.Context())
+	if !abilities.CanCreate() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {

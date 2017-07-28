@@ -27,7 +27,7 @@ func TestHttpApiAssetsGet(t *testing.T) {
 	}
 	store.On("GetAssets", mock.Anything).Return(assets, nil)
 
-	req, _ := http.NewRequest("GET", "/assets", nil)
+	req := newRequest("GET", "/assets", nil)
 	res := processRequest(a, req)
 
 	assert.Equal(http.StatusOK, res.Code)
@@ -38,6 +38,11 @@ func TestHttpApiAssetsGet(t *testing.T) {
 
 	assert.NoError(err)
 	assert.EqualValues(assets, assetList)
+
+	unauthReq := newRequest("GET", "/assets", nil)
+	unauthReq = requestWithNoAccess(unauthReq)
+	unauthRes := processRequest(a, unauthReq)
+	assert.Equal(http.StatusUnauthorized, unauthRes.Code)
 }
 
 func TestHttpApiAssetsGetError(t *testing.T) {
@@ -50,7 +55,7 @@ func TestHttpApiAssetsGetError(t *testing.T) {
 	var nilAssets []*types.Asset
 	store.On("GetAssets", mock.Anything).Return(nilAssets, errors.New("error"))
 
-	req, _ := http.NewRequest("GET", "/assets", nil)
+	req := newRequest("GET", "/assets", nil)
 	res := processRequest(a, req)
 	body := res.Body.Bytes()
 
@@ -68,14 +73,14 @@ func TestHttpApiAssetGet(t *testing.T) {
 
 	var nilAsset *types.Asset
 	store.On("GetAssetByName", mock.Anything, "ruby21").Return(nilAsset, nil)
-	notFoundReq, _ := http.NewRequest("GET", "/asset/ruby21", nil)
+	notFoundReq := newRequest("GET", "/asset/ruby21", nil)
 	notFoundRes := processRequest(a, notFoundReq)
 
 	assert.Equal(http.StatusNotFound, notFoundRes.Code)
 
 	asset := types.FixtureAsset("ruby22")
 	store.On("GetAssetByName", mock.Anything, "ruby22").Return(asset, nil)
-	foundReq, _ := http.NewRequest("GET", "/assets/ruby22", nil)
+	foundReq := newRequest("GET", "/assets/ruby22", nil)
 	foundRes := processRequest(a, foundReq)
 
 	assert.Equal(http.StatusOK, foundRes.Code)
@@ -89,6 +94,17 @@ func TestHttpApiAssetGet(t *testing.T) {
 	assert.NotNil(asset.URL)
 	assert.NotEqual(asset.Name, "")
 	assert.NotEqual(asset.URL, "")
+}
+
+func TestHttpApiAssetGetUnauthorized(t *testing.T) {
+	assert := assert.New(t)
+	controller := AssetsController{}
+
+	req := newRequest("GET", "/assets/ruby23", nil)
+	req = requestWithNoAccess(req)
+
+	res := processRequest(&controller, req)
+	assert.Equal(http.StatusUnauthorized, res.Code)
 }
 
 func TestHttpApiAssetPut(t *testing.T) {
@@ -106,7 +122,7 @@ func TestHttpApiAssetPut(t *testing.T) {
 		assert.NoError(receivedAsset.Validate())
 		assert.EqualValues(asset, receivedAsset)
 	})
-	putReq, _ := http.NewRequest("PUT", fmt.Sprintf("/assets/%s", "ruby21"), bytes.NewBuffer(updatedAssetJSON))
+	putReq := newRequest("PUT", fmt.Sprintf("/assets/%s", "ruby21"), bytes.NewBuffer(updatedAssetJSON))
 	putRes := processRequest(a, putReq)
 
 	assert.Equal(http.StatusOK, putRes.Code)

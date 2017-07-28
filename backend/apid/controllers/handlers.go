@@ -7,24 +7,34 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // HandlersController defines the fields required by HandlersController.
 type HandlersController struct {
-	Store store.Store
+	Store     store.Store
+	abilities authorization.Ability
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *HandlersController) Register(r *mux.Router) {
+	c.abilities = authorization.Ability{Resource: types.RuleTypeHandler}
+
 	r.HandleFunc("/handlers", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/handlers/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 }
 
 // many handles requests to /handlers
 func (c *HandlersController) many(w http.ResponseWriter, r *http.Request) {
+	abilities := c.abilities.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	handlers, err := c.Store.GetHandlers(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -45,6 +55,15 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	method := r.Method
+
+	abilities := c.abilities.WithContext(r.Context())
+	switch {
+	case r.Method == http.MethodGet && !abilities.CanRead():
+		fallthrough
+	case r.Method == http.MethodDelete && !abilities.CanDelete():
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	var (
 		handler *types.Handler
@@ -75,6 +94,14 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(handlerBytes))
 	case http.MethodPut, http.MethodPost:
+		switch {
+		case handler == nil && !abilities.CanCreate():
+			fallthrough
+		case handler != nil && !abilities.CanUpdate():
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		newHandler := &types.Handler{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {

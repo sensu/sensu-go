@@ -29,10 +29,17 @@ func TestCreateOrg(t *testing.T) {
 	org := types.FixtureOrganization("foo")
 	orgBytes, _ := json.Marshal(org)
 
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/rbac/organizations"), bytes.NewBuffer(orgBytes))
+	req := newRequest(http.MethodPost, fmt.Sprintf("/rbac/organizations"), bytes.NewBuffer(orgBytes))
 	res := processRequest(controller, req)
 
 	assert.Equal(t, http.StatusCreated, res.Code)
+
+	// Unauthorized
+	req = newRequest(http.MethodPost, "/rbac/organizations", bytes.NewBuffer(orgBytes))
+	req = requestWithNoAccess(req)
+	res = processRequest(controller, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestCreateOrgError(t *testing.T) {
@@ -50,7 +57,7 @@ func TestCreateOrgError(t *testing.T) {
 	org := types.FixtureOrganization("foo")
 	orgBytes, _ := json.Marshal(org)
 
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/rbac/organizations"), bytes.NewBuffer(orgBytes))
+	req := newRequest(http.MethodPost, fmt.Sprintf("/rbac/organizations"), bytes.NewBuffer(orgBytes))
 	res := processRequest(controller, req)
 
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -63,17 +70,25 @@ func TestDeleteOrg(t *testing.T) {
 	}
 
 	store.On("DeleteOrganizationByName", mock.Anything, "foo").Return(nil)
-	req, _ := http.NewRequest(http.MethodDelete, "/rbac/organizations/foo", nil)
+	req := newRequest(http.MethodDelete, "/rbac/organizations/foo", nil)
 	res := processRequest(controller, req)
 
 	assert.Equal(t, http.StatusAccepted, res.Code)
 
 	// Invalid org
 	store.On("DeleteOrganizationByName", mock.Anything, "bar").Return(fmt.Errorf(""))
-	req, _ = http.NewRequest(http.MethodDelete, "/rbac/organizations/bar", nil)
+	req = newRequest(http.MethodDelete, "/rbac/organizations/bar", nil)
 	res = processRequest(controller, req)
 
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	// Unauthorized
+	store.On("DeleteOrganizationByName", mock.Anything, "bar").Return(fmt.Errorf(""))
+	req = newRequest(http.MethodDelete, "/rbac/organizations/bar", nil)
+	req = requestWithNoAccess(req)
+	res = processRequest(controller, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestManyOrg(t *testing.T) {
@@ -91,7 +106,7 @@ func TestManyOrg(t *testing.T) {
 		org2,
 	}
 	store.On("GetOrganizations", mock.Anything).Return(orgs, nil)
-	req, _ := http.NewRequest("GET", "/rbac/organizations", nil)
+	req := newRequest("GET", "/rbac/organizations", nil)
 	res := processRequest(controller, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -114,7 +129,7 @@ func TestManyOrgError(t *testing.T) {
 
 	orgs := []*types.Organization{}
 	store.On("GetOrganizations", mock.Anything).Return(orgs, errors.New("error"))
-	req, _ := http.NewRequest("GET", "/rbac/organizations", nil)
+	req := newRequest("GET", "/rbac/organizations", nil)
 	res := processRequest(controller, req)
 
 	body := res.Body.Bytes()
@@ -132,14 +147,14 @@ func TestSingleOrg(t *testing.T) {
 
 	var nilOrg *types.Organization
 	store.On("GetOrganizationByName", mock.Anything, "foo").Return(nilOrg, nil)
-	req, _ := http.NewRequest("GET", "/rbac/organizations/foo", nil)
+	req := newRequest("GET", "/rbac/organizations/foo", nil)
 	res := processRequest(controller, req)
 
 	assert.Equal(t, http.StatusNotFound, res.Code)
 
 	org := types.FixtureOrganization("bar")
 	store.On("GetOrganizationByName", mock.Anything, "bar").Return(org, nil)
-	req, _ = http.NewRequest("GET", "/rbac/organizations/bar", nil)
+	req = newRequest("GET", "/rbac/organizations/bar", nil)
 	res = processRequest(controller, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)

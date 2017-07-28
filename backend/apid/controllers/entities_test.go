@@ -25,6 +25,7 @@ func TestHttpApiEntitiesGet(t *testing.T) {
 	}
 	store.On("GetEntities", mock.Anything).Return(entities, nil)
 	req, _ := http.NewRequest("GET", "/entities", nil)
+	req = requestWithDefaultContext(req)
 	res := processRequest(c, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -51,6 +52,7 @@ func TestHttpApiEntityGet(t *testing.T) {
 	var nilEntity *types.Entity
 	store.On("GetEntityByID", mock.Anything, "someentity").Return(nilEntity, nil)
 	notFoundReq, _ := http.NewRequest("GET", "/entities/someentity", nil)
+	notFoundReq = requestWithDefaultContext(notFoundReq)
 	notFoundRes := processRequest(c, notFoundReq)
 
 	assert.Equal(t, http.StatusNotFound, notFoundRes.Code)
@@ -58,6 +60,7 @@ func TestHttpApiEntityGet(t *testing.T) {
 	entity1 := types.FixtureEntity("entity1")
 	store.On("GetEntityByID", mock.Anything, "entity1").Return(entity1, nil)
 	foundReq, _ := http.NewRequest("GET", "/entities/entity1", nil)
+	foundReq = requestWithDefaultContext(foundReq)
 	foundRes := processRequest(c, foundReq)
 
 	assert.Equal(t, http.StatusOK, foundRes.Code)
@@ -83,7 +86,7 @@ func TestHttpApiEntityDelete(t *testing.T) {
 	entity := types.FixtureEntity("entity1")
 	store.On("GetEntityByID", mock.Anything, "entity1").Return(entity, nil)
 	store.On("DeleteEntityByID", mock.Anything, "entity1").Return(nil)
-	deleteReq, _ := http.NewRequest("DELETE", fmt.Sprintf("/entities/entity1"), nil)
+	deleteReq := newRequest("DELETE", fmt.Sprintf("/entities/entity1"), nil)
 	deleteRes := processRequest(c, deleteReq)
 
 	store.AssertCalled(t, "GetEntityByID", mock.Anything, "entity1")

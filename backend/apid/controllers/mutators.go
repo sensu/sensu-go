@@ -7,24 +7,34 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // MutatorsController defines the fields required by MutatorsController.
 type MutatorsController struct {
-	Store store.Store
+	Store     store.Store
+	abilities authorization.Ability
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *MutatorsController) Register(r *mux.Router) {
+	c.abilities = authorization.Ability{Resource: types.RuleTypeMutator}
+
 	r.HandleFunc("/mutators", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/mutators/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 }
 
 // many handles requests to /mutators
 func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
+	abilities := c.abilities.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	mutators, err := c.Store.GetMutators(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -45,6 +55,15 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	method := r.Method
+
+	abilities := c.abilities.WithContext(r.Context())
+	switch {
+	case r.Method == http.MethodGet && !abilities.CanRead():
+		fallthrough
+	case r.Method == http.MethodDelete && !abilities.CanDelete():
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	var (
 		mutator *types.Mutator
@@ -75,6 +94,14 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(mutatorBytes))
 	case http.MethodPut, http.MethodPost:
+		switch {
+		case mutator == nil && !abilities.CanCreate():
+			fallthrough
+		case mutator != nil && !abilities.CanUpdate():
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		newMutator := &types.Mutator{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {

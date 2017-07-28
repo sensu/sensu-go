@@ -66,8 +66,8 @@ func GetClaims(token *jwt.Token) (*types.Claims, error) {
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
-func GetClaimsFromContext(r *http.Request) *types.Claims {
-	if value := r.Context().Value(claimsKey); value != nil {
+func GetClaimsFromContext(ctx context.Context) *types.Claims {
+	if value := ctx.Value(claimsKey); value != nil {
 		claims, ok := value.(*types.Claims)
 		if !ok {
 			return nil
@@ -161,9 +161,9 @@ func RefreshToken(username string) (*jwt.Token, string, error) {
 
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
-func SetClaimsIntoContext(r *http.Request, token *jwt.Token) context.Context {
+func SetClaimsIntoContext(ctx context.Context, token *jwt.Token) context.Context {
 	claims, _ := token.Claims.(*types.Claims)
-	return context.WithValue(r.Context(), claimsKey, claims)
+	return context.WithValue(ctx, claimsKey, claims)
 }
 
 // ValidateExpiredToken verifies that the provided token is valid, even if

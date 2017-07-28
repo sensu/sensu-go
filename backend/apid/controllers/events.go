@@ -6,17 +6,21 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // EventsController handles requests for /events
 type EventsController struct {
-	Store store.Store
+	Store     store.Store
+	abilities authorization.Ability
 }
 
 // Register the EventsController with a mux.Router.
 func (c *EventsController) Register(r *mux.Router) {
+	c.abilities = authorization.Ability{Resource: types.RuleTypeEvent}
+
 	r.HandleFunc("/events", c.events).Methods(http.MethodGet)
 	r.HandleFunc("/events", c.updateEvents).Methods(http.MethodPut)
 	r.HandleFunc("/events/{entity}", c.entityEvents).Methods(http.MethodGet)
@@ -28,6 +32,12 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	// Do we need to test that this isn't empty? We should figure that out.
 	entityID := vars["entity"]
+
+	abilities := c.abilities.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	events, err := c.Store.GetEventsByEntity(r.Context(), entityID)
 	if err != nil {
@@ -55,6 +65,12 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 	entityID := vars["entity"]
 	checkID := vars["check"]
 
+	abilities := c.abilities.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	event, err := c.Store.GetEventByEntityCheck(r.Context(), entityID, checkID)
 	if err != nil {
 		http.Error(w, "error getting event for check", http.StatusInternalServerError)
@@ -77,6 +93,12 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
+	abilities := c.abilities.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanRead() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	events, err := c.Store.GetEvents(r.Context())
 	if err != nil {
 		http.Error(w, "error getting events", http.StatusInternalServerError)
@@ -94,6 +116,12 @@ func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *EventsController) updateEvents(w http.ResponseWriter, r *http.Request) {
+	abilities := c.abilities.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanUpdate() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	var event types.Event
 

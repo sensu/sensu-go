@@ -42,29 +42,13 @@ func (a *APId) Start() error {
 
 	a.errChan = make(chan error, 1)
 
-	router := httpRouter(a)
-	serveMux := http.NewServeMux()
-
-	// Define the middlewares used for restricted resources, from last to first
-	restrictedResources := middlewares.Organization(router, a.Store)
-	restrictedResources = middlewares.AllowList(restrictedResources, a.Store)
-	restrictedResources = middlewares.Authentication(restrictedResources)
-
-	// By default, apply the restrictedResources chained middlewares to all resources
-	serveMux.Handle("/", restrictedResources)
-
-	// We don't need any middleware for handling the login flow, so use the
-	// original router
-	serveMux.Handle("/auth", router)
-
-	// Resources using the /auth/ prefix only need to use a specific middleware,
-	// that validates both access and refresh tokens
-	authenticationResources := middlewares.RefreshToken(router, a.Store)
-	serveMux.Handle("/auth/", authenticationResources)
+	router := mux.NewRouter()
+	registerAuthenticationResources(router, a.Store)
+	registerRestrictedResources(router, a.Store, a.BackendStatus)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      serveMux,
+		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -118,65 +102,80 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
-func httpRouter(a *APId) *mux.Router {
-	r := mux.NewRouter()
+func registerAuthenticationResources(router *mux.Router, store store.Store) {
+	authRouter := NewSubrouter(router.NewRoute(), middlewares.RefreshToken{})
+
+	authenticationController := controllers.AuthenticationController{Store: store}
+	authenticationController.Register(authRouter)
+}
+
+func registerRestrictedResources(
+	router *mux.Router,
+	store store.Store,
+	bStatus func() types.StatusMap,
+) {
+	commonRouter := NewSubrouter(
+		router.NewRoute(),
+		middlewares.Organization{Store: store},
+		middlewares.Authentication{},
+		middlewares.AllowList{Store: store},
+		middlewares.Authorization{Store: store},
+	)
 
 	assetsController := &controllers.AssetsController{
-		Store: a.Store,
+		Store: store,
 	}
-	assetsController.Register(r)
+	assetsController.Register(commonRouter)
 
 	authenticationController := &controllers.AuthenticationController{
-		Store: a.Store,
+		Store: store,
 	}
-	authenticationController.Register(r)
+	authenticationController.Register(commonRouter)
 
 	checksController := &controllers.ChecksController{
-		Store: a.Store,
+		Store: store,
 	}
-	checksController.Register(r)
+	checksController.Register(commonRouter)
 
 	entitiesController := &controllers.EntitiesController{
-		Store: a.Store,
+		Store: store,
 	}
-	entitiesController.Register(r)
+	entitiesController.Register(commonRouter)
 
 	eventsController := &controllers.EventsController{
-		Store: a.Store,
+		Store: store,
 	}
-	eventsController.Register(r)
+	eventsController.Register(commonRouter)
 
 	handlersController := &controllers.HandlersController{
-		Store: a.Store,
+		Store: store,
 	}
-	handlersController.Register(r)
+	handlersController.Register(commonRouter)
 
 	healthController := &controllers.HealthController{
-		Store:  a.Store,
-		Status: a.BackendStatus,
+		Store:  store,
+		Status: bStatus,
 	}
-	healthController.Register(r)
+	healthController.Register(commonRouter)
 
 	infoController := &controllers.InfoController{
-		Store:  a.Store,
-		Status: a.BackendStatus,
+		Store:  store,
+		Status: bStatus,
 	}
-	infoController.Register(r)
+	infoController.Register(commonRouter)
 
 	mutatorsController := &controllers.MutatorsController{
-		Store: a.Store,
+		Store: store,
 	}
-	mutatorsController.Register(r)
+	mutatorsController.Register(commonRouter)
 
 	organizationsController := &controllers.OrganizationsController{
-		Store: a.Store,
+		Store: store,
 	}
-	organizationsController.Register(r)
+	organizationsController.Register(commonRouter)
 
 	usersController := &controllers.UsersController{
-		Store: a.Store,
+		Store: store,
 	}
-	usersController.Register(r)
-
-	return r
+	usersController.Register(commonRouter)
 }
