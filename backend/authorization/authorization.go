@@ -50,7 +50,7 @@ func CanAccessResource(actor Actor, resource, action string) bool {
 		"actor":    actor,
 		"resource": resource,
 		"action":   action,
-	}).Debug("request to resource not allowed")
+	}).Info("request to resource not allowed")
 
 	return false
 }
