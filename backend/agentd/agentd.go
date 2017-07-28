@@ -49,10 +49,10 @@ func (a *Agentd) Start() error {
 
 	a.errChan = make(chan error, 1)
 
-	handler := http.HandlerFunc(a.webSocketHandler)
+	// handler := http.HandlerFunc(a.webSocketHandler)
 
 	// TODO: add JWT authentication support
-	handler = middlewares.BasicAuthentication(handler, a.Store)
+	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.Store)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),

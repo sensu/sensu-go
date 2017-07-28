@@ -66,8 +66,8 @@ func GetClaims(token *jwt.Token) (*types.Claims, error) {
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
-func GetClaimsFromContext(r *http.Request) *types.Claims {
-	if value := r.Context().Value(types.ClaimsKey); value != nil {
+func GetClaimsFromContext(ctx context.Context) *types.Claims {
+	if value := ctx.Value(types.ClaimsKey); value != nil {
 		claims, ok := value.(*types.Claims)
 		if !ok {
 			return nil
