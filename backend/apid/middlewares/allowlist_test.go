@@ -21,7 +21,7 @@ func TestAllowList(t *testing.T) {
 
 	authMware := Authentication{}
 	allowMware := AllowList{Store: store}
-	server := httptest.NewServer(authMware.Register(allowMware.Register(testHandler())))
+	server := httptest.NewServer(authMware.Then(allowMware.Then(testHandler())))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -44,7 +44,7 @@ func TestMissingTokenFromAllowList(t *testing.T) {
 
 	auth := Authentication{}
 	allow := AllowList{Store: store}
-	server := httptest.NewServer(auth.Register(allow.Register(testHandler())))
+	server := httptest.NewServer(auth.Then(allow.Then(testHandler())))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -61,7 +61,7 @@ func TestAllowListNoTokenIntoContext(t *testing.T) {
 	store := &mockstore.MockStore{}
 
 	allow := AllowList{Store: store}
-	server := httptest.NewServer(allow.Register(testHandler()))
+	server := httptest.NewServer(allow.Then(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)

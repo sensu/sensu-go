@@ -103,7 +103,7 @@ func (a *APId) Err() <-chan error {
 }
 
 func registerAuthenticationResources(router *mux.Router, store store.Store) {
-	authRouter := NewSubrouter(router, middlewares.RefreshToken{})
+	authRouter := NewSubrouter(router.NewRoute(), middlewares.RefreshToken{})
 
 	authenticationController := controllers.AuthenticationController{Store: store}
 	authenticationController.Register(authRouter)
@@ -115,7 +115,7 @@ func registerRestrictedResources(
 	bStatus func() types.StatusMap,
 ) {
 	commonRouter := NewSubrouter(
-		router,
+		router.NewRoute(),
 		middlewares.Organization{Store: store},
 		middlewares.Authentication{},
 		middlewares.AllowList{Store: store},
@@ -178,38 +178,4 @@ func registerRestrictedResources(
 		Store: store,
 	}
 	usersController.Register(commonRouter)
-}
-
-// NewSubrouter returns new mux router w/ given router as parent and given
-// middleware wrapped around handler.
-func NewSubrouter(router *mux.Router, ms ...middlewares.HTTPMiddleware) *mux.Router {
-	subRoute := router.NewRoute()
-	subRouter := subRoute.Subrouter()
-
-	// Wrap common routes in auth & organization middleware
-	subRoute.MatcherFunc(func(r *http.Request, m *mux.RouteMatch) bool {
-		// Check if the request matches any of the common routes
-		if !subRouter.Match(r, m) {
-			return false
-		}
-
-		// Wrap handler in common middleware
-		m.Handler = ApplyMiddleware(m.Handler, ms...)
-
-		return true
-	})
-
-	return subRouter
-}
-
-// ApplyMiddleware apply given middleware left to right
-func ApplyMiddleware(handler http.Handler, ms ...middlewares.HTTPMiddleware) http.Handler {
-	var m middlewares.HTTPMiddleware
-
-	for len(ms) > 0 {
-		m, ms = ms[len(ms)-1], ms[:len(ms)-1]
-		handler = m.Register(handler)
-	}
-
-	return handler
 }

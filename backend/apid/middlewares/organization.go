@@ -18,8 +18,8 @@ type Organization struct {
 	Store store.Store
 }
 
-// Register middleware
-func (m Organization) Register(next http.Handler) http.Handler {
+// Then middleware
+func (m Organization) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		org := r.URL.Query().Get("org")
 		if org == "" {

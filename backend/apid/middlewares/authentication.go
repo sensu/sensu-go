@@ -9,8 +9,8 @@ import (
 // Authentication is a HTTP middleware that enforces authentication
 type Authentication struct{}
 
-// Register middleware
-func (a Authentication) Register(next http.Handler) http.Handler {
+// Then middleware
+func (a Authentication) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := jwt.ExtractBearerToken(r)
 		if tokenString != "" {

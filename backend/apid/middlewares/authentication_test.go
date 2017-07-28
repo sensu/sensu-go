@@ -12,7 +12,7 @@ import (
 
 func TestMiddlewareNoCredentials(t *testing.T) {
 	mware := Authentication{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	// No credentials passed
@@ -23,7 +23,7 @@ func TestMiddlewareNoCredentials(t *testing.T) {
 
 func TestMiddlewareJWT(t *testing.T) {
 	mware := Authentication{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	// Valid JWT
@@ -42,7 +42,7 @@ func TestMiddlewareJWT(t *testing.T) {
 
 func TestMiddlewareInvalidJWT(t *testing.T) {
 	mware := Authentication{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	// Valid JWT

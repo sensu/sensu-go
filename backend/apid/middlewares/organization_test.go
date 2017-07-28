@@ -25,7 +25,7 @@ func TestValidateOrganization(t *testing.T) {
 	store.On("GetOrganizationByName", mock.Anything, "foo").Return(&types.Organization{}, nil)
 
 	mware := Organization{Store: store}
-	server := httptest.NewServer(mware.Register(
+	server := httptest.NewServer(mware.Then(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Make sure that the organization is within the request context
 			org := r.Context().Value(types.OrganizationKey)
@@ -54,7 +54,7 @@ func TestValidateNoOrganization(t *testing.T) {
 	store := &mockstore.MockStore{}
 
 	mware := Organization{Store: store}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -73,7 +73,7 @@ func TestValidateOrganizationError(t *testing.T) {
 	).Return(&types.Organization{}, errors.New("error"))
 
 	mware := Organization{Store: store}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)

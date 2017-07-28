@@ -12,8 +12,8 @@ type AllowList struct {
 	Store store.Store
 }
 
-// Register ...
-func (m AllowList) Register(next http.Handler) http.Handler {
+// Then ...
+func (m AllowList) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		claims := jwt.GetClaimsFromContext(r.Context())
 		if claims == nil {

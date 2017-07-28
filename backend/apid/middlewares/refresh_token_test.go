@@ -15,7 +15,7 @@ import (
 
 func TestRefreshTokenNoAccessToken(t *testing.T) {
 	mware := RefreshToken{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, nil)
@@ -27,7 +27,7 @@ func TestRefreshTokenNoAccessToken(t *testing.T) {
 
 func TestRefreshTokenInvalidAccessToken(t *testing.T) {
 	mware := RefreshToken{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, nil)
@@ -40,7 +40,7 @@ func TestRefreshTokenInvalidAccessToken(t *testing.T) {
 
 func TTestRefreshTokenNoRefreshToken(t *testing.T) {
 	mware := RefreshToken{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -62,7 +62,7 @@ func TTestRefreshTokenNoRefreshToken(t *testing.T) {
 
 func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
 	mware := RefreshToken{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -80,7 +80,7 @@ func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
 
 func TestRefreshTokenMismatchingSub(t *testing.T) {
 	mware := RefreshToken{}
-	server := httptest.NewServer(mware.Register(testHandler()))
+	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	_, tokenString, _ := jwt.AccessToken("foo")
@@ -98,7 +98,7 @@ func TestRefreshTokenMismatchingSub(t *testing.T) {
 
 func TestRefreshTokenSuccess(t *testing.T) {
 	mware := RefreshToken{}
-	server := httptest.NewServer(mware.Register(
+	server := httptest.NewServer(mware.Then(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Make sure the context has been injected with the tokens info
 			assert.NotNil(t, r.Context().Value(types.AccessTokenClaims))

@@ -224,7 +224,7 @@ func processRequestWithRefreshToken(c *AuthenticationController, req *http.Reque
 	router := mux.NewRouter()
 	middleware := middlewares.RefreshToken{}
 	c.Register(router)
-	routerStack := middleware.Register(router)
+	routerStack := middleware.Then(router)
 	res := httptest.NewRecorder()
 	routerStack.ServeHTTP(res, req)
 
