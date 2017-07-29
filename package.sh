@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # TODO: figure out if FPM still sets a default epoch
 
@@ -28,6 +28,18 @@ BINARY_START_ARGS="start"
 # C:\Program Files\Sensu\sensu-agent\bin : windows (drive should be chooseable by user)
 BINARY_TARGET_PATH=/usr/bin/$BINARY_NAME
 BINARY_SOURCE_PATH=target/$TARGET_OS-$TARGET_ARCH/$BINARY_NAME
+
+declare -A FLAGS
+
+FLAGS["--input-type"]="dir"
+FLAGS["--output-type"]="deb"
+FLAGS["--name"]=$PACKAGE_NAME
+FLAGS["--version"]=$PACKAGE_VERSION
+FLAGS["--iteration"]=$PACKAGE_ITERATION
+FLAGS["--architecture"]=$PACKAGE_ARCH
+FLAGS["--package"]="packages/sysvinit/${PACKAGE_NAME}_${PACKAGE_VERSION}-${PACKAGE_ITERATION}_${PACKAGE_ARCH}.deb"
+FLAGS["--description"]="$PACKAGE_DESCRIPTION"
+
 
 . packaging/helpers/rpm-functions.sh
 . packaging/helpers/deb-functions.sh
@@ -71,12 +83,39 @@ generate_hooks() {
     erb service=$SERVICE_NAME prefix=$common_path common_files=$common_files $hooks_path/rpm/postun.erb > $hooks_path/rpm/postun
 }
 
+common_flags() {
+    flags=(
+    --input-type dir
+    --output-type deb
+    --name $PACKAGE_NAME
+    --version $PACKAGE_VERSION
+    --iteration $PACKAGE_ITERATION
+    --architecture $PACKAGE_ARCH
+    --package \"packages/sysvinit/${PACKAGE_NAME}_${PACKAGE_VERSION}-${PACKAGE_ITERATION}_${PACKAGE_ARCH}.deb\"
+    --description \"$PACKAGE_DESCRIPTION\"
+    --url \"$PACKAGE_URL\"
+    --license \"$PACKAGE_LICENSE\"
+    --vendor \"$PACKAGE_VENDOR\"
+    --category \"$PACKAGE_DEB_CATEGORY\"
+    --maintainer \"$PACKAGE_MAINTAINER\"
+    --deb-priority extra
+    --deb-init packaging/services/sysv/etc/init.d/$SERVICE_NAME
+    --deb-default packaging/services/sysv/etc/default/$SERVICE_NAME
+    --before-install packaging/hooks/deb/preinst
+    --before-remove packaging/hooks/deb/prerm
+    --after-install packaging/hooks/deb/postinst
+    --after-remove packaging/hooks/deb/postrm
+    $BINARY_SOURCE_PATH=$BINARY_TARGET_PATH
+    )
+    printf '%s ' "${flags[@]}"
+}
+
 build_package() {
     mkdir -p packages/sysvinit
     mkdir -p packages/systemd
 
     # deb - sysvinit
-fpm --input-type dir \
+    fpm --input-type dir \
     --output-type deb \
     --name $PACKAGE_NAME \
     --version $PACKAGE_VERSION \
@@ -179,6 +218,18 @@ case "$1" in
 	generate_services
 	generate_hooks
 	build_package
+	;;
+
+    common_flags)
+	#common_flags
+	#echo $(common_flags)
+	#fpm "${common_flags}"
+	#fpm $(common_flags)
+	#fpm "${DEB_FPM_FLAGS[@]}"
+	fpm_flags=()
+	for flag in "${!FLAGS[@]}"; do fpm_flags+=$(eval "$flag \"${FLAGS[$flag]}\" "); done
+	echo "${fpm_flags[@]}"
+	fpm "${fpm_flags[@]}"
 	;;
 
     *)
