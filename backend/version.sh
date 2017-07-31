@@ -1,0 +1,4 @@
+#!/bin/sh
+
+BUILD_VERSION=2.0.0
+BUILD_ITERATION=1

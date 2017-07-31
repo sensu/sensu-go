@@ -77,7 +77,20 @@ build_binary () {
 
 	local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-	GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+	. $cmd/version.sh
+
+	local version=$BUILD_VERSION
+	local iteration=$BUILD_ITERATION
+	local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
+	local build_sha=$(git rev-parse HEAD)
+
+	local version_pkg="github.com/sensu/sensu-go/version"
+	local ldflags="-X $version_pkg.Version=${version}"
+	local ldflags+=" -X $version_pkg.Iteration=${iteration}"
+	local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
+	local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
+
+	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
 	echo $outfile
 }
@@ -118,7 +131,7 @@ build_commands () {
 
 build_command () {
 	local cmd=$1
-  local cmd_name=$(cmd_name_map $cmd)
+	local cmd_name=$(cmd_name_map $cmd)
 
 	if [ ! -d bin/ ]; then
 		mkdir -p bin/
@@ -146,10 +159,10 @@ unit_test_commands () {
 	echo "" > coverage.txt
 	for pkg in $(go list ./... | egrep -v '(testing|vendor)'); do
 		go test -timeout=60s -v $RACE -coverprofile=profile.out -covermode=atomic $pkg
-                if [ $? -ne 0 ]; then
-                  echo "Tests failed..."
-                  exit 1
-                fi
+		if [ $? -ne 0 ]; then
+		  echo "Tests failed..."
+		  exit 1
+		fi
 
 		if [ -f profile.out ]; then
 			cat profile.out >> coverage.txt
@@ -177,7 +190,7 @@ docker_commands () {
 
 	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
-    local cmd_name=$(cmd_name_map $cmd)
+		local cmd_name=$(cmd_name_map $cmd)
 		build_binary linux amd64 $cmd $cmd_name
 	done
 	docker build -t sensu/sensu .
