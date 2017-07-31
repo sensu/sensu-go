@@ -2,7 +2,7 @@ version: '3'
 services:
   sensu-backend1:
     image: sensuapp/sensu-go
-    command: /opt/sensu/bin/backend.sh
+    command: sensu-backend start --store-client-url http://127.0.0.1:2379
     hostname: backend1
     restart: always
     ports:
@@ -12,7 +12,7 @@ services:
       - "8081:8081"
   sensu-agent1:
     image: sensuapp/sensu-go
-    command: /opt/sensu/bin/agent.sh
+    command: sensu-agent start --backend-url wss://sensu-backend1:8081 --subscriptions test
     hostname: agent1
     restart: always
     links:
