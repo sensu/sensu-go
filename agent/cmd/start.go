@@ -22,6 +22,8 @@ const (
 	flagBackendURL            = "backend-url"
 	flagAgentID               = "id"
 	flagOrganization          = "organization"
+	flagUser                  = "user"
+	flagPassword              = "password"
 	flagSubscriptions         = "subscriptions"
 	flagDeregister            = "deregister"
 	flagDeregistrationHandler = "deregistration-handler"
@@ -54,6 +56,8 @@ func newStartCommand() *cobra.Command {
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Organization = viper.GetString(flagOrganization)
+			cfg.User = viper.GetString(flagUser)
+			cfg.Password = viper.GetString(flagPassword)
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
@@ -99,6 +103,12 @@ func newStartCommand() *cobra.Command {
 
 	cmd.Flags().String(flagOrganization, "default", "agent organization")
 	viper.BindPFlag(flagOrganization, cmd.Flags().Lookup(flagOrganization))
+
+	cmd.Flags().String(flagUser, "agent", "agent user")
+	viper.BindPFlag(flagUser, cmd.Flags().Lookup(flagUser))
+
+	cmd.Flags().String(flagPassword, "P@ssw0rd!", "agent password")
+	viper.BindPFlag(flagPassword, cmd.Flags().Lookup(flagPassword))
 
 	cmd.Flags().String(flagCacheDir, defaultCacheDir, "path to store cached data")
 	viper.BindPFlag(flagCacheDir, cmd.Flags().Lookup(flagCacheDir))

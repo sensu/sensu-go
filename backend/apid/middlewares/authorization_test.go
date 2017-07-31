@@ -76,7 +76,7 @@ func TestAuthorization(t *testing.T) {
 
 	// create a mock http request w/user context
 	req, _ := http.NewRequest("GET", "/foo", nil)
-	ctx := sensujwt.SetClaimsIntoContext(req.Context(), token)
+	ctx := sensujwt.SetClaimsIntoContext(req, token.Claims.(*types.Claims))
 	w := TestResponseWriter{}
 
 	// handler needs a context with claims already populated

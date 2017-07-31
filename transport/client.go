@@ -2,6 +2,7 @@ package transport
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/gorilla/websocket"
@@ -11,7 +12,7 @@ import (
 // Connect causes the transport Client to connect to a given websocket backend.
 // This is a thin wrapper around a websocket connection that makes the
 // connection safe for concurrent use by multiple goroutines.
-func Connect(wsServerURL string, tlsOpts *types.TLSOptions) (Transport, error) {
+func Connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header) (Transport, error) {
 	// TODO(grep): configurable max sendq depth
 	u, err := url.Parse(wsServerURL)
 	if err != nil {
@@ -27,8 +28,9 @@ func Connect(wsServerURL string, tlsOpts *types.TLSOptions) (Transport, error) {
 		}
 	}
 
-	conn, resp, err := dialer.Dial(u.String(), nil)
+	conn, resp, err := dialer.Dial(u.String(), requestHeader)
 	if err != nil {
+		fmt.Printf("Error is %s %s", err, resp.StatusCode)
 		if err == websocket.ErrBadHandshake {
 			return nil, fmt.Errorf("handshake failed with status %d", resp.StatusCode)
 		}

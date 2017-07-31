@@ -16,6 +16,7 @@ type Entity struct {
 	Deregistration   Deregistration `json:"deregistration"`
 	KeepaliveTimeout uint           `json:"keepalive_timeout"`
 	Organization     string         `json:"organization"`
+	User             string         `json:"user"`
 }
 
 // System contains information about the system that the Agent process

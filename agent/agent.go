@@ -5,9 +5,11 @@
 package agent
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -29,7 +31,7 @@ const (
 type Config struct {
 	// AgentID is the entity ID for the running agent. Default is hostname.
 	AgentID string
-	// BackendURLs is a list of URLs for the Sensu Backend. Default: ws://127.0.0.1:8080
+	// BackendURLs is a list of URLs for the Sensu Backend. Default: ws://127.0.0.1:8081
 	BackendURLs []string
 	// Subscriptions is an array of subscription names. Default: empty array.
 	Subscriptions []string
@@ -47,6 +49,10 @@ type Config struct {
 	CacheDir string
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
+	// User sets the Agent's username
+	User string
+	// Password sets Agent's password
+	Password string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
 }
@@ -60,7 +66,10 @@ func NewConfig() *Config {
 		KeepaliveTimeout:  120,
 		CacheDir:          "/var/cache/sensu",
 		Organization:      "default",
+		User:              "agent",
+		Password:          "P@ssw0rd!",
 	}
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		logger.Error("error getting hostname: ", err.Error())
@@ -235,6 +244,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			Deregister:       a.config.Deregister,
 			KeepaliveTimeout: a.config.KeepaliveTimeout,
 			Organization:     a.config.Organization,
+			User:             a.config.User,
 		}
 
 		if a.config.DeregistrationHandler != "" {
@@ -259,6 +269,7 @@ func (a *Agent) handshake() error {
 		ID:            a.config.AgentID,
 		Subscriptions: a.config.Subscriptions,
 		Organization:  a.config.Organization,
+		User:          a.config.User,
 	}
 	msgBytes, err := json.Marshal(handshake)
 	if err != nil {
@@ -308,7 +319,11 @@ func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
 	// here as well. yeah. i think we should do that instead.
-	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS)
+	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
+	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
+	header := http.Header{"Authorization": {"Basic " + userCredentials}}
+
+	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, header)
 	if err != nil {
 		return err
 	}
@@ -344,7 +359,7 @@ func (a *Agent) Run() error {
 			case <-pumpsReturned:
 				nextBackend := a.backendSelector.Select()
 				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
-				conn, err := transport.Connect(nextBackend, a.config.TLS)
+				conn, err := transport.Connect(nextBackend, a.config.TLS, header)
 				if err != nil {
 					logger.Error("connection error:", err.Error())
 					// TODO(greg): exponential backoff

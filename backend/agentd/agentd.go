@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
@@ -48,7 +49,10 @@ func (a *Agentd) Start() error {
 
 	a.errChan = make(chan error, 1)
 
-	handler := http.HandlerFunc(a.webSocketHandler)
+	// handler := http.HandlerFunc(a.webSocketHandler)
+
+	// TODO: add JWT authentication support
+	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.Store)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -59,6 +63,7 @@ func (a *Agentd) Start() error {
 
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
 	a.wg.Add(1)
+
 	go func() {
 		defer a.wg.Done()
 		var err error

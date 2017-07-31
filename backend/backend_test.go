@@ -1,9 +1,11 @@
 package backend
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"testing"
 	"time"
 
@@ -103,8 +105,9 @@ func TestBackendHTTPListener(t *testing.T) {
 					continue
 				}
 			}
+			userCredentials := base64.StdEncoding.EncodeToString([]byte("agent:P@ssw0rd!"))
 
-			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls)
+			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls, http.Header{"Authorization": {"Basic " + userCredentials}})
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
 
@@ -120,7 +123,6 @@ func TestBackendHTTPListener(t *testing.T) {
 
 			assert.NoError(t, client.Close())
 			b.Stop()
-			// here is your original function body but tlsOpts is now tc.tls
 		})
 	}
 }

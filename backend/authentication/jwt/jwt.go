@@ -14,15 +14,6 @@ import (
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
 
-// Define the key type to avoid key collisions in context
-type key int
-
-const (
-	// claimsKey contains the key name used to store the JWT claims within
-	// the context of a request
-	claimsKey key = iota
-)
-
 var (
 	defaultExpiration = time.Minute * time.Duration(15)
 	secret            []byte
@@ -31,10 +22,28 @@ var (
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
 func AccessToken(username string) (*jwt.Token, string, error) {
+	claims, err := NewClaims(username)
+	if err != nil {
+		return nil, "", err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Sign the token as a string using the secret
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return token, tokenString, nil
+}
+
+// NewClaims creates new claim based on username
+func NewClaims(username string) (*types.Claims, error) {
 	// Create a unique identifier for the token
 	jti, err := utilbytes.Random(16)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	claims := types.Claims{
@@ -44,16 +53,7 @@ func AccessToken(username string) (*jwt.Token, string, error) {
 			Subject:   username,
 		},
 	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
-
-	// Sign the token as a string using the secret
-	tokenString, err := token.SignedString(secret)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return token, tokenString, nil
+	return &claims, nil
 }
 
 // GetClaims returns the claims from a token
@@ -67,7 +67,7 @@ func GetClaims(token *jwt.Token) (*types.Claims, error) {
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
 func GetClaimsFromContext(ctx context.Context) *types.Claims {
-	if value := ctx.Value(claimsKey); value != nil {
+	if value := ctx.Value(types.ClaimsKey); value != nil {
 		claims, ok := value.(*types.Claims)
 		if !ok {
 			return nil
@@ -161,9 +161,8 @@ func RefreshToken(username string) (*jwt.Token, string, error) {
 
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
-func SetClaimsIntoContext(ctx context.Context, token *jwt.Token) context.Context {
-	claims, _ := token.Claims.(*types.Claims)
-	return context.WithValue(ctx, claimsKey, claims)
+func SetClaimsIntoContext(r *http.Request, claims *types.Claims) context.Context {
+	return context.WithValue(r.Context(), types.ClaimsKey, claims)
 }
 
 // ValidateExpiredToken verifies that the provided token is valid, even if
