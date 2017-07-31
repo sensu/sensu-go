@@ -77,10 +77,8 @@ build_binary () {
 
 	local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-	. $cmd/version.sh
-
-	local version=$BUILD_VERSION
-	local iteration=$BUILD_ITERATION
+	local version=$(cat version/version.txt)
+	local iteration=$(cat version/iteration.txt)
 	local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
 	local build_sha=$(git rev-parse HEAD)
 
