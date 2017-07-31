@@ -118,7 +118,7 @@ func newVersionCommand() *cobra.Command {
 		Short: "Show the sensu-ctl version information",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("sensu-ctl version %s, build %s, built %s\n",
-				version.VersionWithIteration(),
+				version.WithIteration(),
 				version.BuildSHA,
 				version.BuildDate,
 			)
