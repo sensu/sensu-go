@@ -180,7 +180,7 @@ docker_commands () {
     local cmd_name=$(cmd_name_map $cmd)
 		build_binary linux amd64 $cmd $cmd_name
 	done
-	docker build -t sensu/sensu .
+	docker build -t sensuapp/sensu-go .
 }
 
 static_assets () {
