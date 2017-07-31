@@ -91,18 +91,10 @@ func main() {
 }
 
 func configureRootCmd() *cobra.Command {
-	showVersion := false
 	cmd := &cobra.Command{
 		Use:          cli.SensuCmdName,
 		Short:        cli.SensuCmdName + " controls Sensu instances",
 		SilenceUsage: true,
-		Run: func(cmd *cobra.Command, args []string) {
-			if showVersion {
-				showCLIVersion()
-			} else {
-				cmd.Help()
-			}
-		},
 	}
 
 	// Templates
@@ -134,11 +126,6 @@ func newVersionCommand() *cobra.Command {
 	}
 
 	return cmd
-}
-
-func showCLIVersion() {
-	// TODO: 😰
-	fmt.Printf("Sensu CLI version %s\n", "0.1.alpha")
 }
 
 var usageTemplate = `Usage:
