@@ -1,1 +1,1 @@
-launchctl load /Library/LaunchDaemons/sensu-agent.plist
+launchctl load /Library/LaunchDaemons/sensu-backend.plist

@@ -1,1 +1,1 @@
-ARCHITECTURE=amd64
+FPM_FLAGS+=--architecture amd64
