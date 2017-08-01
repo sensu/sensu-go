@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// SeedInitialData seeds initial data into the store. Ideally this operation is
+// seedInitialData seeds initial data into the store. Ideally this operation is
 // idempotent and can be safely run every time the backend starts.
 func seedInitialData(store store.Store) error {
 	initializer, _ := store.NewInitializer()
@@ -51,6 +51,11 @@ func seedInitialData(store store.Store) error {
 		return err
 	}
 
+	// Default environment
+	if err := setupDefaultEnvironment(store); err != nil {
+		return err
+	}
+
 	// Set initialized flag
 	if err := initializer.FlagAsInitialized(); err != nil {
 		return err
@@ -68,6 +73,16 @@ func setupAdminRole(store store.Store) error {
 			Permissions:  types.RuleAllPerms,
 		}},
 	})
+}
+
+func setupDefaultEnvironment(store store.Store) error {
+	return store.UpdateEnvironment(
+		context.Background(),
+		"default",
+		&types.Environment{
+			Name:        "default",
+			Description: "Default environment",
+		})
 }
 
 func setupDefaultOrganization(store store.Store) error {
