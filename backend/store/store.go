@@ -20,6 +20,9 @@ type Store interface {
 	// Entities
 	EntityStore
 
+	// Environments
+	EnvironmentStore
+
 	// Events
 	EventStore
 
@@ -78,6 +81,14 @@ type EntityStore interface {
 	GetEntities(context.Context) ([]*types.Entity, error)
 	GetEntityByID(context.Context, string) (*types.Entity, error)
 	UpdateEntity(context.Context, *types.Entity) error
+}
+
+// EnvironmentStore provides an interface for interacting & persisting environments
+type EnvironmentStore interface {
+	DeleteEnvironment(context.Context, string, string) error
+	GetEnvironment(context.Context, string, string) (*types.Environment, error)
+	GetEnvironments(context.Context, string) ([]*types.Environment, error)
+	UpdateEnvironment(context.Context, string, *types.Environment) error
 }
 
 // EventStore provides an interface for interacting & persisting events
