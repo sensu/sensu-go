@@ -35,6 +35,20 @@ func (sc *StdoutCapture) StopCapture() (string, error) {
 	return string(bytes), nil
 }
 
+func TestConfigureVersionCmd(t *testing.T) {
+	assert := assert.New(t)
+	stdout := test.NewFileCapture(&os.Stdout)
+	cmd := newVersionCommand()
+	assert.NotNil(cmd, "Returns a Command instance")
+	assert.Equal("version", cmd.Use, "Configures the name")
+
+	// Run command w/o any flags
+	stdout.Start()
+	cmd.Run(cmd, []string{})
+	stdout.Stop()
+	assert.Regexp("sensu-ctl version", stdout.Output())
+}
+
 func TestConfigureRootCmd(t *testing.T) {
 	assert := assert.New(t)
 	stdout := test.NewFileCapture(&os.Stdout)
@@ -42,18 +56,10 @@ func TestConfigureRootCmd(t *testing.T) {
 
 	assert.NotNil(cmd, "Returns a Command instance")
 	assert.Equal("sensuctl", cmd.Use, "Configures the name")
-	assert.NotNil(cmd.Flags().Lookup("version"), "Configures version flag")
 
 	// Run command w/o any flags
 	stdout.Start()
 	cmd.Run(cmd, []string{})
 	stdout.Stop()
 	assert.Regexp("Usage:", stdout.Output())
-
-	// Run command w/ version flag
-	stdout.Start()
-	cmd.Flags().Set("version", "t")
-	cmd.Run(cmd, []string{})
-	stdout.Stop()
-	assert.Regexp("Sensu CLI version", stdout.Output())
 }

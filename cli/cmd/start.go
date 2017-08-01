@@ -95,6 +95,9 @@ func configureRootCmd() *cobra.Command {
 		Use:          cli.SensuCmdName,
 		Short:        cli.SensuCmdName + " controls Sensu instances",
 		SilenceUsage: true,
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.Help()
+		},
 	}
 
 	// Templates
