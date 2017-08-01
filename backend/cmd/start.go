@@ -10,6 +10,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +40,24 @@ var (
 )
 
 func init() {
+	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newStartCommand())
+}
+
+func newVersionCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Show the sensu-backend version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("sensu-backend version %s, build %s, built %s\n",
+				version.WithIteration(),
+				version.BuildSHA,
+				version.BuildDate,
+			)
+		},
+	}
+
+	return cmd
 }
 
 func newStartCommand() *cobra.Command {

@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
+	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
 )
 
@@ -90,25 +91,20 @@ func main() {
 }
 
 func configureRootCmd() *cobra.Command {
-	showVersion := false
 	cmd := &cobra.Command{
 		Use:          cli.SensuCmdName,
 		Short:        cli.SensuCmdName + " controls Sensu instances",
 		SilenceUsage: true,
 		Run: func(cmd *cobra.Command, args []string) {
-			if showVersion {
-				showCLIVersion()
-			} else {
-				cmd.Help()
-			}
+			cmd.Help()
 		},
 	}
 
 	// Templates
 	cmd.SetUsageTemplate(usageTemplate)
 
-	// Version flag
-	cmd.Flags().BoolVarP(&showVersion, "version", "v", false, "print version information")
+	// Version command
+	cmd.AddCommand(newVersionCommand())
 
 	// Global flags
 	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
@@ -119,9 +115,20 @@ func configureRootCmd() *cobra.Command {
 	return cmd
 }
 
-func showCLIVersion() {
-	// TODO: 😰
-	fmt.Printf("Sensu CLI version %s\n", "0.1.alpha")
+func newVersionCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Show the sensu-ctl version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("sensu-ctl version %s, build %s, built %s\n",
+				version.WithIteration(),
+				version.BuildSHA,
+				version.BuildDate,
+			)
+		},
+	}
+
+	return cmd
 }
 
 var usageTemplate = `Usage:

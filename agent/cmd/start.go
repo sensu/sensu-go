@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,11 +40,28 @@ func init() {
 		"component": "cmd",
 	})
 
+	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newStartCommand())
 
 	viper.SetEnvPrefix("sensu")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
+}
+
+func newVersionCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Show the sensu-agent version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("sensu-agent version %s, build %s, built %s\n",
+				version.WithIteration(),
+				version.BuildSHA,
+				version.BuildDate,
+			)
+		},
+	}
+
+	return cmd
 }
 
 func newStartCommand() *cobra.Command {
