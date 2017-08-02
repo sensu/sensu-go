@@ -27,6 +27,7 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 	newSchedulerFn := func(check *types.CheckConfig) *CheckScheduler {
 		return &CheckScheduler{
 			CheckName:    check.Name,
+			CheckEnv:     check.Environment,
 			CheckOrg:     check.Organization,
 			MessageBus:   msgBus,
 			WaitGroup:    wg,
@@ -66,7 +67,7 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 
 	// Guard against creating a duplicate scheduler; schedulers are able to update
 	// their internal state with any changes that occur to their associated check.
-	key := concatUniqueKey(check.Name, check.Organization)
+	key := concatUniqueKey(check.Name, check.Organization, check.Environment)
 	if existing := mngrPtr.items[key]; existing != nil {
 		return nil
 	}

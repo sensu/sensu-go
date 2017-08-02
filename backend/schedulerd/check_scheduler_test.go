@@ -30,6 +30,7 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 
 	suite.scheduler = &CheckScheduler{
 		CheckName:    suite.check.Name,
+		CheckEnv:     suite.check.Environment,
 		CheckOrg:     suite.check.Organization,
 		StateManager: manager,
 		MessageBus:   suite.msgBus,
@@ -46,7 +47,12 @@ func (suite *CheckSchedulerSuite) TestStart() {
 	check.Subscriptions = []string{"subscription1"}
 
 	c1 := make(chan interface{}, 10)
-	topic := fmt.Sprintf("%s:%s:subscription1", messaging.TopicSubscriptions, check.Organization)
+	topic := fmt.Sprintf(
+		"%s:%s:%s:subscription1",
+		messaging.TopicSubscriptions,
+		check.Organization,
+		check.Environment,
+	)
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
 	suite.NoError(suite.scheduler.Start(1))

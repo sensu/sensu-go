@@ -131,6 +131,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	}
 
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+
 	prevEvent, err := e.Store.GetEventByEntityCheck(
 		ctx, event.Entity.ID, event.Check.Config.Name,
 	)

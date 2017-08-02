@@ -128,8 +128,8 @@ type SchedulerState struct {
 }
 
 // GetCheck returns check given name and organization
-func (statePtr *SchedulerState) GetCheck(name, org string) *types.CheckConfig {
-	key := concatUniqueKey(name, org)
+func (statePtr *SchedulerState) GetCheck(name, org, env string) *types.CheckConfig {
+	key := concatUniqueKey(name, org, env)
 	return statePtr.checks[key]
 }
 
@@ -158,7 +158,7 @@ func (statePtr *SchedulerState) SetAssets(assets []*types.Asset) {
 }
 
 func (statePtr *SchedulerState) addCheck(check *types.CheckConfig) {
-	key := concatUniqueKey(check.Name, check.Organization)
+	key := concatUniqueKey(check.Name, check.Organization, check.Environment)
 	statePtr.checks[key] = check
 }
 
@@ -172,6 +172,6 @@ func (statePtr *SchedulerState) addAsset(asset *types.Asset) {
 	statePtr.assets[org][key] = asset
 }
 
-func concatUniqueKey(name, org string) string {
-	return strings.Join([]string{name, org}, "-")
+func concatUniqueKey(args ...string) string {
+	return strings.Join(args, "-")
 }

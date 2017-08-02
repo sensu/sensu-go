@@ -272,6 +272,7 @@ func (a *Agent) handshake() error {
 	handshake := &types.AgentHandshake{
 		ID:            a.config.AgentID,
 		Subscriptions: a.config.Subscriptions,
+		Environment:   a.config.Environment,
 		Organization:  a.config.Organization,
 		User:          a.config.User,
 	}

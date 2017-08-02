@@ -13,6 +13,7 @@ func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		event := types.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
 		// We should receive an empty slice if no results were found
 		events, err := store.GetEvents(ctx)

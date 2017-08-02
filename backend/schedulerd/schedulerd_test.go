@@ -58,6 +58,7 @@ func TestSchedulerd(t *testing.T) {
 
 	check := types.FixtureCheckConfig("check_name")
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, check.Environment)
 
 	assert.NoError(t, check.Validate())
 	assert.NoError(t, st.UpdateCheckConfig(ctx, check))

@@ -23,6 +23,7 @@ var (
 const (
 	flagBackendURL            = "backend-url"
 	flagAgentID               = "id"
+	flagEnvironment           = "environment"
 	flagOrganization          = "organization"
 	flagUser                  = "user"
 	flagPassword              = "password"
@@ -74,6 +75,7 @@ func newStartCommand() *cobra.Command {
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
 			cfg.CacheDir = viper.GetString(flagCacheDir)
+			cfg.Environment = viper.GetString(flagEnvironment)
 			cfg.Organization = viper.GetString(flagOrganization)
 			cfg.User = viper.GetString(flagUser)
 			cfg.Password = viper.GetString(flagPassword)
@@ -119,6 +121,9 @@ func newStartCommand() *cobra.Command {
 	default:
 		defaultCacheDir = "/var/cache/sensu"
 	}
+
+	cmd.Flags().String(flagEnvironment, "default", "agent environment")
+	viper.BindPFlag(flagEnvironment, cmd.Flags().Lookup(flagEnvironment))
 
 	cmd.Flags().String(flagOrganization, "default", "agent organization")
 	viper.BindPFlag(flagOrganization, cmd.Flags().Lookup(flagOrganization))

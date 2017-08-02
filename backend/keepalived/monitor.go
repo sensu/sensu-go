@@ -31,6 +31,7 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 	go func() {
 		timer := monitorPtr.timer
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, monitorPtr.Entity.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, monitorPtr.Entity.Environment)
 
 		var (
 			event   *types.Event
@@ -107,6 +108,7 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 
 	entity.LastSeen = event.Timestamp
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, monitorPtr.Entity.Environment)
 
 	if err := monitorPtr.Store.UpdateEntity(ctx, entity); err != nil {
 		logger.WithError(err).Error("error updating entity in store")

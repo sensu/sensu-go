@@ -13,6 +13,7 @@ func TestCheckConfigStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		check := types.FixtureCheckConfig("check1")
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, check.Environment)
 
 		// We should receive an empty slice if no results were found
 		checks, err := store.GetCheckConfigs(ctx)

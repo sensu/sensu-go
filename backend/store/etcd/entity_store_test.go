@@ -13,6 +13,7 @@ func TestEntityStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		entity := types.FixtureEntity("entity")
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
 
 		// We should receive an empty slice if no results were found
 		entities, err := store.GetEntities(ctx)

@@ -25,7 +25,7 @@ type Handler struct {
 	Handlers []string `json:"handlers,omitempty"`
 
 	// Env is a list of environment variables to use with command execution
-	Env []string `json:"environment,omitempty"`
+	Env []string `json:"env,omitempty"`
 
 	// Environment indicates to which env a handler belongs to
 	Environment string `json:"environment"`

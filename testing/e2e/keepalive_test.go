@@ -122,6 +122,7 @@ func TestAgentKeepalives(t *testing.T) {
 		Command:       "echo output",
 		Interval:      1,
 		Subscriptions: []string{"test"},
+		Environment:   "default",
 		Organization:  "default",
 	}
 	err = sensuClient.CreateCheck(check)
@@ -141,6 +142,7 @@ func TestAgentKeepalives(t *testing.T) {
 		Command:       falseAbsPath,
 		Interval:      1,
 		Subscriptions: []string{"test"},
+		Environment:   "default",
 		Organization:  "default",
 	}
 	err = sensuClient.CreateCheck(check)
