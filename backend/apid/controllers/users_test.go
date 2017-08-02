@@ -84,8 +84,12 @@ func TestMany(t *testing.T) {
 	req = newRequest(http.MethodGet, "/rbac/users", nil)
 	req = requestWithNoAccess(req)
 	res = processRequest(u, req)
+	assert.Equal(t, http.StatusOK, res.Code)
 
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
+	unauthUsers := []*types.User{}
+	err = json.Unmarshal(res.Body.Bytes(), &unauthUsers)
+	assert.NoError(t, err)
+	assert.Empty(t, unauthUsers)
 }
 
 func TestManyError(t *testing.T) {

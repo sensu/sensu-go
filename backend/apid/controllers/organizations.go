@@ -35,7 +35,7 @@ func (o *OrganizationsController) delete(w http.ResponseWriter, r *http.Request)
 	org := vars["organization"]
 
 	abilities := o.abilities.WithContext(r.Context())
-	abilities.Actor.Organization = org
+	// abilities.context.Organization = org // TODO: Set organization method?
 
 	if !abilities.CanDelete() {
 		authorization.UnauthorizedAccessToResource(w)
@@ -80,7 +80,7 @@ func (o *OrganizationsController) single(w http.ResponseWriter, r *http.Request)
 	name := vars["organization"]
 
 	abilities := o.abilities.WithContext(r.Context())
-	abilities.Actor.Organization = name
+	// abilities.context.Organization = org // TODO: Set organization method?
 
 	if !abilities.CanRead() {
 		authorization.UnauthorizedAccessToResource(w)
@@ -126,7 +126,7 @@ func (o *OrganizationsController) update(w http.ResponseWriter, r *http.Request)
 	defer r.Body.Close()
 
 	abilities := o.abilities.WithContext(r.Context())
-	abilities.Actor.Organization = org.Name
+	// abilities.Actor.Organization = org.Name // TODO: Set org?
 
 	if !abilities.CanCreate() {
 		authorization.UnauthorizedAccessToResource(w)
