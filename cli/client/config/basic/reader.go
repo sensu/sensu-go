@@ -1,6 +1,8 @@
 package basic
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/types"
+)
 
 const (
 	defaultFormat       = "none"

@@ -62,7 +62,7 @@ func (o *EnvironmentsController) many(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, string(bytes))
 }
 
-// single returns a specific organization
+// single returns a specific environment
 func (o *EnvironmentsController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	org := vars["organization"]
@@ -90,7 +90,7 @@ func (o *EnvironmentsController) single(w http.ResponseWriter, r *http.Request) 
 
 }
 
-// update handles the update of a specific organization
+// update handles the update of a specific environment
 func (o *EnvironmentsController) update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	org := vars["organization"]

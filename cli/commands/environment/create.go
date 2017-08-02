@@ -1,4 +1,4 @@
-package organization
+package environment
 
 import (
 	"fmt"
@@ -12,20 +12,22 @@ import (
 )
 
 type createOpts struct {
-	Description string `survey:"description"`
-	Name        string `survey:"name"`
+	Description  string `survey:"description"`
+	Name         string `survey:"name"`
+	Organization string `survey:"organization"`
 }
 
-// CreateCommand adds command that allows users to create new organizations
+// CreateCommand adds command that allows users to create new environments
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "create NAME",
-		Short:        "create new organization",
+		Short:        "create new environment",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
 			opts := &createOpts{}
+			opts.Organization = cli.Config.Organization()
 
 			if isInteractive {
 				opts.administerQuestionnaire()
@@ -36,15 +38,19 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			org := opts.toOrganization()
-			if err := org.Validate(); err != nil {
+			org, env := opts.toEnvironment()
+			if org == "" {
+				return fmt.Errorf("an organization must be provided")
+			}
+
+			if err := env.Validate(); err != nil {
 				if !isInteractive {
 					cmd.SilenceUsage = false
 				}
 				return err
 			}
 
-			if err := cli.Client.CreateOrganization(org); err != nil {
+			if err := cli.Client.CreateEnvironment(org, env); err != nil {
 				return err
 			}
 
@@ -58,8 +64,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("description", "", "", "Description of organization")
-	cmd.Flags().StringP("name", "", "", "Name of organization")
+	cmd.Flags().StringP("description", "", "", "Description of environment")
+	cmd.Flags().StringP("name", "", "", "Name of environment")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("name")
@@ -92,8 +98,8 @@ func (opts *createOpts) administerQuestionnaire() {
 	survey.Ask(qs, opts)
 }
 
-func (opts *createOpts) toOrganization() *types.Organization {
-	return &types.Organization{
+func (opts *createOpts) toEnvironment() (string, *types.Environment) {
+	return opts.Organization, &types.Environment{
 		Description: opts.Description,
 		Name:        opts.Name,
 	}

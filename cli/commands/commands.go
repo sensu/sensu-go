@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/config"
 	"github.com/sensu/sensu-go/cli/commands/configure"
 	"github.com/sensu/sensu-go/cli/commands/entity"
+	"github.com/sensu/sensu-go/cli/commands/environment"
 	"github.com/sensu/sensu-go/cli/commands/event"
 	"github.com/sensu/sensu-go/cli/commands/handler"
 	"github.com/sensu/sensu-go/cli/commands/logout"
@@ -29,6 +30,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		check.HelpCommand(cli),
 		config.HelpCommand(cli),
 		entity.HelpCommand(cli),
+		environment.HelpCommand(cli),
 		event.HelpCommand(cli),
 		handler.HelpCommand(cli),
 		organization.HelpCommand(cli),

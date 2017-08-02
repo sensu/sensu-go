@@ -142,6 +142,11 @@ func registerRestrictedResources(
 	}
 	entitiesController.Register(commonRouter)
 
+	environmentsConroller := &controllers.EnvironmentsController{
+		Store: store,
+	}
+	environmentsConroller.Register(commonRouter)
+
 	eventsController := &controllers.EventsController{
 		Store: store,
 	}
