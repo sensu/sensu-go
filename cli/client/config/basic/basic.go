@@ -34,6 +34,7 @@ type Cluster struct {
 
 // Profile contains the active configuration
 type Profile struct {
+	Environment  string `json:"environment"`
 	Format       string `json:"format"`
 	Organization string `json:"organization"`
 }
@@ -46,6 +47,10 @@ func Load(flags *pflag.FlagSet) *Config {
 	if flags != nil {
 		if value, err := flags.GetString("config-dir"); err == nil && value != "" {
 			config.path = value
+		}
+
+		if value, err := flags.GetString("environment"); err == nil && value != "" {
+			config.Profile.Environment = value
 		}
 
 		if value, err := flags.GetString("organization"); err == nil && value != "" {

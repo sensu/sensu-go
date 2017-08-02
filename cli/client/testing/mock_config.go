@@ -19,6 +19,12 @@ func (m *MockConfig) APIUrl() string {
 	return args.String(0)
 }
 
+// Environment mocks the environment config
+func (m *MockConfig) Environment() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // Format mocks the format config
 func (m *MockConfig) Format() string {
 	args := m.Called()
@@ -34,6 +40,12 @@ func (m *MockConfig) Organization() string {
 // SaveAPIUrl mocks saving the API URL
 func (m *MockConfig) SaveAPIUrl(url string) error {
 	args := m.Called(url)
+	return args.Error(0)
+}
+
+// SaveEnvironment mocks saving the environment
+func (m *MockConfig) SaveEnvironment(env string) error {
+	args := m.Called(env)
 	return args.Error(0)
 }
 

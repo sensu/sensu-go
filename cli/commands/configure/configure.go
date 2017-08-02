@@ -14,6 +14,7 @@ type answers struct {
 	URL          string `survey:"url"`
 	Username     string `survey:"username"`
 	Password     string
+	Environment  string `survey:"environment"`
 	Format       string `survey:"format"`
 	Organization string `survey:"organization"`
 }
@@ -67,6 +68,14 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
+			if err = cli.Config.SaveEnvironment(configValues.Environment); err != nil {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Unable to write new configuration file with error: %s\n",
+					err,
+				)
+			}
+
 			// Write CLI preferences to disk
 			if err = cli.Config.SaveFormat(configValues.Format); err != nil {
 				fmt.Fprintf(
@@ -100,6 +109,7 @@ func gatherConfigValues(c config.Config) (*answers, error) {
 		askForUsername(),
 		askForPassword(),
 		askForOrganization(c),
+		askForEnvironment(c),
 		askForDefaultFormat(c),
 	}
 
@@ -146,6 +156,18 @@ func askForDefaultFormat(c config.Config) *survey.Question {
 			Message: "Preferred output format:",
 			Options: []string{"none", "json"},
 			Default: format,
+		},
+	}
+}
+
+func askForEnvironment(c config.Config) *survey.Question {
+	env := c.Environment()
+
+	return &survey.Question{
+		Name: "environment",
+		Prompt: &survey.Input{
+			Message: "Environment:",
+			Default: env,
 		},
 	}
 }

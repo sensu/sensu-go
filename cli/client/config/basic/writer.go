@@ -16,6 +16,13 @@ func (c *Config) SaveAPIUrl(url string) error {
 	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
 }
 
+// SaveEnvironment saves the user's default environment to a configuration file
+func (c *Config) SaveEnvironment(env string) error {
+	c.Profile.Environment = env
+
+	return write(c.Profile, filepath.Join(c.path, profileFilename))
+}
+
 // SaveFormat saves the user's format preference into a configuration file
 func (c *Config) SaveFormat(format string) error {
 	c.Profile.Format = format
