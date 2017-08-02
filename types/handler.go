@@ -27,6 +27,9 @@ type Handler struct {
 	// Env is a list of environment variables to use with command execution
 	Env []string `json:"environment,omitempty"`
 
+	// Environment indicates to which env a handler belongs to
+	Environment string `json:"environment"`
+
 	// Organization indicates to which org a handler belongs to
 	Organization string `json:"organization"`
 }
@@ -50,6 +53,10 @@ func (h *Handler) Validate() error {
 		return errors.New("handler type " + err.Error())
 	}
 
+	if h.Environment == "" {
+		return errors.New("environment must be set")
+	}
+
 	if h.Organization == "" {
 		return errors.New("organization must be set")
 	}
@@ -63,6 +70,7 @@ func FixtureHandler(name string) *Handler {
 		Name:         name,
 		Type:         "pipe",
 		Command:      "command",
+		Environment:  "default",
 		Organization: "default",
 	}
 }

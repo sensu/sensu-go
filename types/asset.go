@@ -34,7 +34,10 @@ type Asset struct {
 	// queries are joined by the "AND" operator.
 	Filters []string `json:"filters"`
 
-	// Organization indicates to which org an asset belongs
+	// Environment indicates to which env an asset belongs to
+	Environment string `json:"environment"`
+
+	// Organization indicates to which org an asset belongs to
 	Organization string `json:"organization"`
 }
 
@@ -42,6 +45,10 @@ type Asset struct {
 func (a *Asset) Validate() error {
 	if err := ValidateAssetName(a.Name); err != nil {
 		return err
+	}
+
+	if a.Environment == "" {
+		return errors.New("environment cannot be empty")
 	}
 
 	if a.Organization == "" {
@@ -132,6 +139,7 @@ func FixtureAsset(name string) *Asset {
 			"Content-Type":            "application/zip",
 			"X-Intended-Distribution": "trusty-14",
 		},
+		Environment:  "default",
 		Organization: "default",
 	}
 }

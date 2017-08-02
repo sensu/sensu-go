@@ -15,6 +15,7 @@ type Entity struct {
 	Deregister       bool           `json:"deregister"`
 	Deregistration   Deregistration `json:"deregistration"`
 	KeepaliveTimeout uint           `json:"keepalive_timeout"`
+	Environment      string         `json:"environment"`
 	Organization     string         `json:"organization"`
 	User             string         `json:"user"`
 }
@@ -60,6 +61,10 @@ func (e *Entity) Validate() error {
 		return errors.New("entity class " + err.Error())
 	}
 
+	if e.Environment == "" {
+		return errors.New("environment must be set")
+	}
+
 	if e.Organization == "" {
 		return errors.New("organization must be set")
 	}
@@ -73,6 +78,7 @@ func FixtureEntity(id string) *Entity {
 		ID:               id,
 		Class:            "host",
 		Subscriptions:    []string{"subscription"},
+		Environment:      "default",
 		Organization:     "default",
 		KeepaliveTimeout: 120,
 	}

@@ -47,6 +47,8 @@ type Config struct {
 	DeregistrationHandler string
 	// CacheDir path where cached data is stored
 	CacheDir string
+	// Environment sets the Agent's RBAC environment identifier
+	Environment string
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
 	// User sets the Agent's username
@@ -65,6 +67,7 @@ func NewConfig() *Config {
 		KeepaliveInterval: 20,
 		KeepaliveTimeout:  120,
 		CacheDir:          "/var/cache/sensu",
+		Environment:       "default",
 		Organization:      "default",
 		User:              "agent",
 		Password:          "P@ssw0rd!",
@@ -243,6 +246,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			Subscriptions:    a.config.Subscriptions,
 			Deregister:       a.config.Deregister,
 			KeepaliveTimeout: a.config.KeepaliveTimeout,
+			Environment:      a.config.Environment,
 			Organization:     a.config.Organization,
 			User:             a.config.User,
 		}
