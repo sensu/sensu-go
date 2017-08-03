@@ -64,6 +64,24 @@ func TestValidateNoOrganization(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
+func TestValidateWildcard(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	mware := Organization{Store: store}
+	server := httptest.NewServer(mware.Then(testHandler()))
+	defer server.Close()
+
+	req, _ := http.NewRequest("GET", server.URL, nil)
+	query := req.URL.Query()
+	query.Add("org", "*")
+	req.URL.RawQuery = query.Encode()
+
+	res, err := http.DefaultClient.Do(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}
+
 func TestValidateOrganizationError(t *testing.T) {
 	store := &mockstore.MockStore{}
 	store.On(

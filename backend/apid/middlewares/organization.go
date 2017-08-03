@@ -24,6 +24,8 @@ func (m Organization) Then(next http.Handler) http.Handler {
 		org := r.URL.Query().Get("org")
 		if org == "" {
 			org = defaultOrganization
+		} else if org == "*" {
+			org = ""
 		} else {
 			// Verify that the organization exist
 			if _, err := m.Store.GetOrganizationByName(r.Context(), org); err != nil {
