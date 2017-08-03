@@ -14,23 +14,20 @@ import (
 
 // MutatorsController defines the fields required by MutatorsController.
 type MutatorsController struct {
-	Store     store.Store
-	abilities authorization.Ability
+	Store store.Store
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *MutatorsController) Register(r *mux.Router) {
-	c.abilities = authorization.Ability{Resource: types.RuleTypeMutator}
-
 	r.HandleFunc("/mutators", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/mutators/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
 }
 
 // many handles requests to /mutators
 func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanRead() {
+	abilities := authorization.Mutators.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -40,6 +37,9 @@ func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectMutators(&mutators, abilities.CanRead)
 
 	mutatorsBytes, err := json.Marshal(mutators)
 	if err != nil {
@@ -56,11 +56,8 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 	name := vars["name"]
 	method := r.Method
 
-	abilities := c.abilities.WithContext(r.Context())
-	switch {
-	case r.Method == http.MethodGet && !abilities.CanRead():
-		fallthrough
-	case r.Method == http.MethodDelete && !abilities.CanDelete():
+	abilities := authorization.Mutators.WithContext(r.Context())
+	if method == http.MethodDelete && !abilities.CanDelete() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -85,6 +82,11 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
+		if !abilities.CanRead(mutator) {
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		mutatorBytes, err := json.Marshal(mutator)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -133,4 +135,14 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func rejectMutators(records *[]*types.Mutator, predicate func(*types.Mutator) bool) {
+	new := make([]*types.Mutator, 0, len(*records))
+	for _, record := range *records {
+		if predicate(record) {
+			new = append(new, record)
+		}
+	}
+	*records = new
 }
