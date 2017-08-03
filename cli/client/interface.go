@@ -42,7 +42,7 @@ type CheckAPIClient interface {
 type EntityAPIClient interface {
 	DeleteEntity(entity *types.Entity) error
 	FetchEntity(ID string) (*types.Entity, error)
-	ListEntities() ([]types.Entity, error)
+	ListEntities(string) ([]types.Entity, error)
 }
 
 // EventAPIClient client methods for events
