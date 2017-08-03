@@ -51,6 +51,28 @@ func TestMatchesRuleType(t *testing.T) {
 	}
 }
 
+func TestMatchesRuleEnvironment(t *testing.T) {
+	testCases := []struct {
+		RuleEnvironment string
+		Environment     string
+		Want            bool
+	}{
+		{"dev", "prod", false},
+		{"dev", "dev", true},
+		{"*", "dev", true},
+	}
+	for _, tc := range testCases {
+		testName := fmt.Sprintf("%s matches %s", tc.RuleEnvironment, tc.Environment)
+		t.Run(testName, func(t *testing.T) {
+			assert := assert.New(t)
+			rule := types.Rule{
+				Environment: tc.RuleEnvironment,
+			}
+			assert.Equal(tc.Want, matchesRuleEnvironment(rule, tc.Environment))
+		})
+	}
+}
+
 func TestMatchesRuleOrganization(t *testing.T) {
 	testCases := []struct {
 		RuleOrganization string
@@ -77,12 +99,13 @@ func TestCanAccessResource(t *testing.T) {
 	testCases := []struct {
 		TestName     string
 		Resource     string
+		Environment  string
 		Organization string
 		Action       string
 		Want         bool
 	}{
-		{"NoMatches", "checks", "notsensu", types.RulePermCreate, false},
-		{"AllMatch", "entities", "sensu", types.RulePermRead, true},
+		{"NoMatches", "checks", "prod", "notsensu", types.RulePermCreate, false},
+		{"AllMatch", "entities", "dev", "sensu", types.RulePermRead, true},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.TestName, func(t *testing.T) {
@@ -90,11 +113,16 @@ func TestCanAccessResource(t *testing.T) {
 			actor := Actor{
 				Name: "bob",
 				Rules: []types.Rule{
-					{"entities", "sensu", []string{types.RulePermRead}},
+					{
+						Type:         "entities",
+						Organization: "sensu",
+						Environment:  "dev",
+						Permissions:  []string{types.RulePermRead},
+					},
 				},
 			}
 
-			assert.Equal(tc.Want, CanAccessResource(actor, tc.Organization, tc.Resource, tc.Action))
+			assert.Equal(tc.Want, CanAccessResource(actor, tc.Organization, tc.Environment, tc.Resource, tc.Action))
 		})
 	}
 }

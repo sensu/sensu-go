@@ -42,6 +42,7 @@ func (p *OrganizationPolicy) CanRead(org *types.Organization) bool {
 	return CanAccessResource(
 		p.Context().Actor,
 		org.Name,
+		"*",
 		p.Resource(),
 		types.RulePermRead,
 	)

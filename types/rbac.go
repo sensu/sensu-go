@@ -30,6 +30,9 @@ const (
 	// RuleTypeEntity access control for entity objects
 	RuleTypeEntity = "entities"
 
+	// RuleTypeEnvironment access control for organization objects
+	RuleTypeEnvironment = "environments"
+
 	// RuleTypeEvent access control for event objects
 	RuleTypeEvent = "events"
 
@@ -62,6 +65,7 @@ var (
 // Rule maps permissions to a given type
 type Rule struct {
 	Type         string   `json:"type"`
+	Environment  string   `json:"environment"`
 	Organization string   `json:"organization"`
 	Permissions  []string `json:"permissions"`
 }
@@ -79,6 +83,12 @@ type Role struct {
 func (r *Rule) Validate() error {
 	if r.Type == "" {
 		return errors.New("type can't be empty")
+	}
+
+	if r.Environment != "*" {
+		if err := ValidateNameStrict(r.Environment); err != nil {
+			return errors.New("environment " + err.Error())
+		}
 	}
 
 	if r.Organization != "*" {
@@ -130,9 +140,10 @@ func (r *Role) Validate() error {
 // Fixtures
 
 // FixtureRule returns a partial rule
-func FixtureRule(org string) *Rule {
+func FixtureRule(org, env string) *Rule {
 	return &Rule{
 		Type:         RuleTypeAll,
+		Environment:  env,
 		Organization: org,
 		Permissions: []string{
 			RulePermCreate,
@@ -144,11 +155,11 @@ func FixtureRule(org string) *Rule {
 }
 
 // FixtureRole returns a partial role
-func FixtureRole(name string, org string) *Role {
+func FixtureRole(name, org, env string) *Role {
 	return &Role{
 		Name: name,
 		Rules: []Rule{
-			*FixtureRule(org),
+			*FixtureRule(org, env),
 		},
 	}
 }

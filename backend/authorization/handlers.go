@@ -37,7 +37,7 @@ func (p *HandlerPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *HandlerPolicy) CanRead(handler *types.Handler) bool {
-	return canPerformOn(p, handler.Organization, types.RulePermRead)
+	return canPerformOn(p, handler.Organization, handler.Environment, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.

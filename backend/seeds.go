@@ -69,6 +69,7 @@ func setupAdminRole(store store.Store) error {
 		Name: "admin",
 		Rules: []types.Rule{{
 			Type:         "*",
+			Environment:  "*",
 			Organization: "*",
 			Permissions:  types.RuleAllPerms,
 		}},
