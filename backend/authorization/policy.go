@@ -42,18 +42,14 @@ type Policy interface { // TODO: rename to ...?
 }
 
 func canPerform(policy Policy, action string) bool {
+	return canPerformOn(policy, policy.Context().Organization, action)
+}
+
+func canPerformOn(policy Policy, organization, action string) bool {
 	return CanAccessResource(
 		policy.Context().Actor,
-		policy.Context().Organization,
+		organization,
 		policy.Resource(),
 		action,
 	)
-}
-
-func canPerformOn(policy Policy, org, action string) bool {
-	if policy.Context().Organization != org {
-		return false
-	}
-
-	return canPerform(policy, action)
 }
