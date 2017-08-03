@@ -35,7 +35,7 @@ func (suite *RolesControllerSuite) TestGetRoles() {
 	}
 	suite.store.On("GetRoles").Return(roles, nil)
 
-	req, _ := http.NewRequest("GET", "/rbac/roles", nil)
+	req := newRequest("GET", "/rbac/roles", nil)
 	res := processRequest(suite.controller, req)
 
 	suite.Equal(http.StatusOK, res.Code)
@@ -55,7 +55,7 @@ func (suite *RolesControllerSuite) TestGetRolesWithStoreError() {
 	roles := []*types.Role{}
 	suite.store.On("GetRoles").Return(roles, fmt.Errorf(""))
 
-	req, _ := http.NewRequest("GET", "/rbac/roles", nil)
+	req := newRequest("GET", "/rbac/roles", nil)
 	res := processRequest(suite.controller, req)
 
 	suite.Equal(http.StatusInternalServerError, res.Code)
@@ -65,7 +65,7 @@ func (suite *RolesControllerSuite) TestGetRoleWithStoreError() {
 	rName := "bob"
 	suite.store.On("GetRoleByName", rName).Return(&types.Role{}, fmt.Errorf(""))
 
-	req, _ := http.NewRequest("GET", "/rbac/roles/"+rName, nil)
+	req := newRequest("GET", "/rbac/roles/"+rName, nil)
 	res := processRequest(suite.controller, req)
 
 	suite.Equal(http.StatusInternalServerError, res.Code)
@@ -75,7 +75,7 @@ func (suite *RolesControllerSuite) TestGeRoleNotFound() {
 	rName := "bob"
 	suite.store.On("GetRoleByName", rName).Return(nil, nil)
 
-	req, _ := http.NewRequest("GET", "/rbac/roles/"+rName, nil)
+	req := newRequest("GET", "/rbac/roles/"+rName, nil)
 	res := processRequest(suite.controller, req)
 
 	suite.Equal(http.StatusNotFound, res.Code)
@@ -86,7 +86,7 @@ func (suite *RolesControllerSuite) TestGetRole() {
 	role := &types.Role{}
 	suite.store.On("GetRoleByName", name).Return(role, nil)
 
-	req, _ := http.NewRequest("GET", "/rbac/roles/"+name, nil)
+	req := newRequest("GET", "/rbac/roles/"+name, nil)
 	res := processRequest(suite.controller, req)
 
 	suite.Equal(http.StatusOK, res.Code)
@@ -100,7 +100,7 @@ func (suite *RolesControllerSuite) TestCreateRoleWithError() {
 
 	suite.store.On("UpdateRole", mock.AnythingOfType("*types.Role")).Return(fmt.Errorf(""))
 
-	req, _ := http.NewRequest("PUT", "/rbac/roles/"+name, bytes.NewBuffer(roleJSON))
+	req := newRequest("PUT", "/rbac/roles/"+name, bytes.NewBuffer(roleJSON))
 	res := processRequest(suite.controller, req)
 
 	suite.Equal(http.StatusInternalServerError, res.Code)
@@ -109,7 +109,7 @@ func (suite *RolesControllerSuite) TestCreateRoleWithError() {
 func (suite *RolesControllerSuite) TestCreateRoleWithBadData() {
 	name := "bob"
 	roleBytes := bytes.NewBuffer([]byte("kasjdlfkajs;dlf"))
-	req, _ := http.NewRequest("PUT", "/rbac/roles/"+name, roleBytes)
+	req := newRequest("PUT", "/rbac/roles/"+name, roleBytes)
 
 	res := processRequest(suite.controller, req)
 	suite.Equal(http.StatusBadRequest, res.Code)
@@ -121,7 +121,7 @@ func (suite *RolesControllerSuite) TestCreateRoleWithInvalidRole() {
 	role.Name = "Really;Bad--Invalid--!!!Name"
 
 	roleJSON, _ := json.Marshal(role)
-	req, _ := http.NewRequest("PUT", "/rbac/roles/"+name, bytes.NewBuffer(roleJSON))
+	req := newRequest("PUT", "/rbac/roles/"+name, bytes.NewBuffer(roleJSON))
 
 	res := processRequest(suite.controller, req)
 	suite.Equal(http.StatusBadRequest, res.Code)
@@ -132,7 +132,7 @@ func (suite *RolesControllerSuite) TestCreateRole() {
 	role := types.FixtureRole(name, "my-org")
 
 	roleJSON, _ := json.Marshal(role)
-	req, _ := http.NewRequest("PUT", "/rbac/roles/"+name, bytes.NewBuffer(roleJSON))
+	req := newRequest("PUT", "/rbac/roles/"+name, bytes.NewBuffer(roleJSON))
 
 	suite.store.On("UpdateRole", mock.AnythingOfType("*types.Role")).Return(nil)
 
@@ -144,7 +144,7 @@ func (suite *RolesControllerSuite) TestCreateRole() {
 func (suite *RolesControllerSuite) TestDeleteRoleWithStoreError() {
 	name := "bob"
 	role := &types.Role{}
-	req, _ := http.NewRequest("DELETE", "/rbac/roles/"+name, nil)
+	req := newRequest("DELETE", "/rbac/roles/"+name, nil)
 
 	suite.store.On("GetRoleByName", name).Return(role, nil)
 	suite.store.On("DeleteRoleByName", name).Return(errors.New(""))
@@ -156,7 +156,7 @@ func (suite *RolesControllerSuite) TestDeleteRoleWithStoreError() {
 func (suite *RolesControllerSuite) TestDeleteRole() {
 	name := "bob"
 	role := &types.Role{}
-	req, _ := http.NewRequest("DELETE", "/rbac/roles/"+name, nil)
+	req := newRequest("DELETE", "/rbac/roles/"+name, nil)
 
 	suite.store.On("GetRoleByName", name).Return(role, nil)
 	suite.store.On("DeleteRoleByName", name).Return(nil)
@@ -168,7 +168,7 @@ func (suite *RolesControllerSuite) TestDeleteRole() {
 
 func (suite *RolesControllerSuite) TestRuleNotFound() {
 	key := "/rbac/roles/404/rules/asdfasd"
-	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer([]byte("")))
+	req := newRequest("PUT", key, bytes.NewBuffer([]byte("")))
 
 	suite.store.On("GetRoleByName", "404").Return(nil, nil)
 
@@ -182,7 +182,7 @@ func (suite *RolesControllerSuite) TestPutRule() {
 	ruleJSON, _ := json.Marshal(rule)
 
 	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
-	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer(ruleJSON))
+	req := newRequest("PUT", key, bytes.NewBuffer(ruleJSON))
 
 	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
 	suite.store.On("UpdateRole", role).Return(nil)
@@ -198,7 +198,7 @@ func (suite *RolesControllerSuite) TestPutRuleBadRule() {
 	ruleJSON, _ := json.Marshal(rule)
 
 	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
-	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer(ruleJSON))
+	req := newRequest("PUT", key, bytes.NewBuffer(ruleJSON))
 
 	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
 	suite.store.On("UpdateRole", role).Return(nil)
@@ -212,7 +212,7 @@ func (suite *RolesControllerSuite) TestPutRuleBadData() {
 	rule := &types.Rule{Type: "*", Permissions: []string{"create"}}
 
 	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
-	req, _ := http.NewRequest("PUT", key, bytes.NewBuffer([]byte("asdfasdf")))
+	req := newRequest("PUT", key, bytes.NewBuffer([]byte("asdfasdf")))
 
 	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
 
@@ -225,7 +225,7 @@ func (suite *RolesControllerSuite) TestRemoveRule() {
 	rule := &types.Rule{Type: "*", Organization: "default", Permissions: []string{"create"}}
 
 	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
-	req, _ := http.NewRequest("DELETE", key, nil)
+	req := newRequest("DELETE", key, nil)
 
 	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
 	suite.store.On("UpdateRole", role).Return(nil)
@@ -240,7 +240,7 @@ func (suite *RolesControllerSuite) TestRuleStoreFailure() {
 	rule := &types.Rule{Type: "*", Organization: "default", Permissions: []string{"create"}}
 
 	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type
-	req, _ := http.NewRequest("DELETE", key, nil)
+	req := newRequest("DELETE", key, nil)
 
 	suite.store.On("GetRoleByName", role.Name).Return(role, nil)
 	suite.store.On("UpdateRole", role).Return(fmt.Errorf("storage unavailable"))
