@@ -15,17 +15,17 @@ type MutatorPolicy struct {
 }
 
 // Resource this policy is associated with
-func (u *MutatorPolicy) Resource() string {
+func (p *MutatorPolicy) Resource() string {
 	return types.RuleTypeMutator
 }
 
-// Context(ual) info this instance of the policy is associated with
-func (u *MutatorPolicy) Context() Context {
-	return u.context
+// Context info this instance of the policy is associated with
+func (p *MutatorPolicy) Context() Context {
+	return p.context
 }
 
 // WithContext returns new policy populated with rules & organization.
-func (p MutatorPolicy) WithContext(ctx context.Context) MutatorPolicy {
+func (p MutatorPolicy) WithContext(ctx context.Context) MutatorPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
 }

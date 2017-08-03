@@ -15,17 +15,17 @@ type AssetPolicy struct {
 }
 
 // Resource this policy is associated with
-func (u *AssetPolicy) Resource() string {
+func (p *AssetPolicy) Resource() string {
 	return types.RuleTypeAsset
 }
 
-// Context(ual) info this instance of the policy is associated with
-func (u *AssetPolicy) Context() Context {
-	return u.context
+// Context info this instance of the policy is associated with
+func (p *AssetPolicy) Context() Context {
+	return p.context
 }
 
 // WithContext returns new policy populated with rules & organization.
-func (p AssetPolicy) WithContext(ctx context.Context) AssetPolicy {
+func (p AssetPolicy) WithContext(ctx context.Context) AssetPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
 }

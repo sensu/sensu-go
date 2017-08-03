@@ -20,7 +20,7 @@ type Context struct {
 	Organization string
 }
 
-// ExtractAuthoriationContext extracts authorization details from a context
+// ExtractValueFromContext extracts authorization details from a context
 func ExtractValueFromContext(ctx context.Context) Context {
 	context := Context{}
 
@@ -33,50 +33,6 @@ func ExtractValueFromContext(ctx context.Context) Context {
 	}
 
 	return context
-}
-
-// Ability encapsulates the abilities a user can perform on a resource.
-type Ability struct {
-	Resource     string
-	Organization string
-	Actor
-}
-
-// WithContext returns new Ability populated with rules & organization.
-func (ability Ability) WithContext(ctx context.Context) Ability {
-	v := ExtractValueFromContext(ctx)
-	ability.Actor = v.Actor // TODO: RIP
-	ability.Organization = v.Organization
-	return ability
-}
-
-// CanRead returns true if actor has read access to resource.
-func (abilityPtr *Ability) CanRead() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermRead)
-}
-
-// CanCreate returns true if actor has create access to resource.
-func (abilityPtr *Ability) CanCreate() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermCreate)
-}
-
-// CanUpdate returns true if actor has update access to resource.
-func (abilityPtr *Ability) CanUpdate() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermUpdate)
-}
-
-// CanDelete returns true if actor has update access to resource.
-func (abilityPtr *Ability) CanDelete() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermDelete)
-}
-
-func (abilityPtr *Ability) canPerform(action string) bool { // nolint
-	return CanAccessResource(
-		abilityPtr.Actor,
-		abilityPtr.Organization,
-		abilityPtr.Resource,
-		action,
-	)
 }
 
 // Policy ...

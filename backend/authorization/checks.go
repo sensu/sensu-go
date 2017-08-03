@@ -15,17 +15,17 @@ type CheckPolicy struct {
 }
 
 // Resource this policy is associated with
-func (u *CheckPolicy) Resource() string {
+func (p *CheckPolicy) Resource() string {
 	return types.RuleTypeCheck
 }
 
-// Context(ual) info this instance of the policy is associated with
-func (u *CheckPolicy) Context() Context {
-	return u.context
+// Context info this instance of the policy is associated with
+func (p *CheckPolicy) Context() Context {
+	return p.context
 }
 
 // WithContext returns new policy populated with rules & organization.
-func (p CheckPolicy) WithContext(ctx context.Context) CheckPolicy {
+func (p CheckPolicy) WithContext(ctx context.Context) CheckPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
 }

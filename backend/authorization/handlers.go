@@ -15,17 +15,17 @@ type HandlerPolicy struct {
 }
 
 // Resource this policy is associated with
-func (u *HandlerPolicy) Resource() string {
+func (p *HandlerPolicy) Resource() string {
 	return types.RuleTypeHandler
 }
 
-// Context(ual) info this instance of the policy is associated with
-func (u *HandlerPolicy) Context() Context {
+// Context info this instance of the policy is associated with
+func (p *HandlerPolicy) Context() Context {
 	return u.context
 }
 
 // WithContext returns new policy populated with rules & organization.
-func (p HandlerPolicy) WithContext(ctx context.Context) HandlerPolicy {
+func (p HandlerPolicy) WithContext(ctx context.Context) HandlerPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
 }

@@ -15,17 +15,17 @@ type OrganizationPolicy struct {
 }
 
 // Resource this policy is associated with
-func (u *OrganizationPolicy) Resource() string {
+func (p *OrganizationPolicy) Resource() string {
 	return types.RuleTypeOrganization
 }
 
-// Context(ual) info this instance of the policy is associated with
-func (u *OrganizationPolicy) Context() Context {
-	return u.context
+// Context info this instance of the policy is associated with
+func (p *OrganizationPolicy) Context() Context {
+	return p.context
 }
 
 // WithContext returns new policy populated with rules & organization.
-func (p OrganizationPolicy) WithContext(ctx context.Context) OrganizationPolicy {
+func (p OrganizationPolicy) WithContext(ctx context.Context) OrganizationPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	p.context.Organization = "*"
 
