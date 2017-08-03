@@ -98,7 +98,12 @@ func TestHttpApiAssetGet(t *testing.T) {
 
 func TestHttpApiAssetGetUnauthorized(t *testing.T) {
 	assert := assert.New(t)
-	controller := AssetsController{}
+
+	store := &mockstore.MockStore{}
+	controller := AssetsController{Store: store}
+
+	asset := types.FixtureAsset("ruby23")
+	store.On("GetAssetByName", mock.Anything, "ruby23").Return(asset, nil)
 
 	req := newRequest("GET", "/assets/ruby23", nil)
 	req = requestWithNoAccess(req)

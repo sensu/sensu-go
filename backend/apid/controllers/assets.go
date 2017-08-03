@@ -14,23 +14,20 @@ import (
 
 // AssetsController defines those fields required.
 type AssetsController struct {
-	Store     store.Store
-	abilities authorization.Ability
+	Store store.Store
 }
 
 // Register defines an association between HTTP routes and their respective
 // handlers defined within this controller.
 func (c *AssetsController) Register(r *mux.Router) {
-	c.abilities = authorization.Ability{Resource: types.RuleTypeAsset}
-
 	r.HandleFunc("/assets", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/assets/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost)
 }
 
 // many handles requests to /assets
 func (c *AssetsController) many(w http.ResponseWriter, r *http.Request) {
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanRead() {
+	abilities := authorization.Assets.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -47,6 +44,9 @@ func (c *AssetsController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Reject those resources the viewer is unauthorized to view
+	rejectAssets(&assets, abilities.CanRead)
+
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, "%s", assetBytes)
 }
@@ -57,11 +57,7 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 	name, _ := vars["name"]
 	method := r.Method
 
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanRead() {
-		authorization.UnauthorizedAccessToResource(w)
-		return
-	}
+	abilities := authorization.Assets.WithContext(r.Context())
 
 	var (
 		asset *types.Asset
@@ -86,6 +82,11 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 		assetBytes, err := json.Marshal(asset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if !abilities.CanRead(asset) {
+			authorization.UnauthorizedAccessToResource(w)
 			return
 		}
 
@@ -125,4 +126,14 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+}
+
+func rejectAssets(records *[]*types.Asset, predicate func(*types.Asset) bool) {
+	new := make([]*types.Asset, 0, len(*records))
+	for _, record := range *records {
+		if predicate(record) {
+			new = append(new, record)
+		}
+	}
+	*records = new
 }
