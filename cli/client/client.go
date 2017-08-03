@@ -38,6 +38,12 @@ func New(config config.Config) *RestClient {
 
 	// Check that Access-Token has not expired
 	restyInst.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
+		// Pass the organization and environment as query parameters
+		r.SetQueryParams(map[string]string{
+			"env": config.Environment(),
+			"org": config.Organization(),
+		})
+
 		// Guard against requests that are not sending auth details
 		if c.Token == "" || r.UserInfo != nil {
 			return nil

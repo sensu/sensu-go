@@ -2,10 +2,7 @@ package e2e
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -20,81 +17,28 @@ import (
 // TODO(greg): Yeah, this is really just one enormous test for all e2e stuff.
 // I'd love to see this organized better.
 func TestAgentKeepalives(t *testing.T) {
-	ports := make([]int, 5)
-	err := testutil.RandomPorts(ports)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Start the backend
+	bep, cleanup := newBackendProcess()
+	defer cleanup()
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
-	if err != nil {
-		log.Panic(err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	etcdClientURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
-	etcdPeerURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
-	apiPort := ports[2]
-	agentPort := ports[3]
-	dashboardPort := ports[4]
-	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", agentPort)
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", apiPort)
-	initialCluster := fmt.Sprintf("default=%s", etcdPeerURL)
-
-	bep := &backendProcess{
-		AgentHost:               "127.0.0.1",
-		AgentPort:               agentPort,
-		APIHost:                 "127.0.0.1",
-		APIPort:                 apiPort,
-		DashboardHost:           "127.0.0.1",
-		DashboardPort:           dashboardPort,
-		StateDir:                tmpDir,
-		EtcdClientURL:           etcdClientURL,
-		EtcdPeerURL:             etcdPeerURL,
-		EtcdInitialCluster:      initialCluster,
-		EtcdInitialClusterState: "new",
-		EtcdName:                "default",
-	}
-
-	err = bep.Start()
+	err := bep.Start()
 	if err != nil {
 		log.Panic(err)
 	}
 
+	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", bep.AgentPort)
+	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
+
+	// Make sure the backend is available
+	backendIsOnline := waitForBackend(backendHTTPURL)
+	assert.True(t, backendIsOnline)
+
+	// Configure the agent
 	ap := &agentProcess{
 		// testing the StringSlice for backend-url and the backend selector.
 		BackendURLs: []string{backendWSURL, backendWSURL},
 		AgentID:     "TestKeepalives",
 	}
-
-	backendHealthy := false
-	for i := 0; i < 10; i++ {
-		resp, getErr := http.Get(fmt.Sprintf("%s/health", backendHTTPURL))
-		if getErr != nil {
-			log.Println("backend not ready, sleeping...")
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		resp.Body.Close()
-		if resp.StatusCode != 200 && resp.StatusCode != 401 {
-			log.Printf("backend returned non-200/401 status code: %d\n", resp.StatusCode)
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		backendHealthy = true
-	}
-
-	assert.True(t, backendHealthy)
-
-	// Create an authenticated HTTP Sensu client
-	clientConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-	}
-	sensuClient := client.New(clientConfig)
-	tokens, _ := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
-	clientConfig.Cluster.Tokens = tokens
 
 	err = ap.Start()
 	assert.NoError(t, err)
@@ -106,6 +50,16 @@ func TestAgentKeepalives(t *testing.T) {
 
 	// Give it a second to make sure we've sent a keepalive.
 	time.Sleep(5 * time.Second)
+
+	// Create an authenticated HTTP Sensu client
+	clientConfig := &basic.Config{
+		Cluster: basic.Cluster{
+			APIUrl: backendHTTPURL,
+		},
+	}
+	sensuClient := client.New(clientConfig)
+	tokens, _ := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
+	clientConfig.Cluster.Tokens = tokens
 
 	// Retrieve the entitites
 	entities, err := sensuClient.ListEntities()
