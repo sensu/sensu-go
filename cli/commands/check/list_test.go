@@ -9,6 +9,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCommand(t *testing.T) {
@@ -28,7 +29,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.CheckConfig{
+	client.On("ListChecks", mock.Anything).Return([]types.CheckConfig{
 		*types.FixtureCheckConfig("name-one"),
 		*types.FixtureCheckConfig("name-two"),
 	}, nil)
@@ -43,6 +44,24 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestListCommandRunEClosureWithAll(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := newCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListChecks", "*").Return([]types.CheckConfig{
+		*types.FixtureCheckConfig("name-one"),
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "json")
+	cmd.Flags().Set("all-organizations", "t")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+}
+
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := newCLI()
@@ -51,7 +70,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	check.RuntimeAssets = []string{"asset-one"}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.CheckConfig{*check}, nil)
+	client.On("ListChecks", mock.Anything).Return([]types.CheckConfig{*check}, nil)
 
 	cmd := ListCommand(cli)
 	cmd.Flags().Set("format", "none")
@@ -72,7 +91,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks").Return([]types.CheckConfig{}, errors.New("my-err"))
+	client.On("ListChecks", mock.Anything).Return([]types.CheckConfig{}, errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

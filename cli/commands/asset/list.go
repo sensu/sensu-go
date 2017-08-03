@@ -20,8 +20,13 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list assets",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			org := cli.Config.Organization()
+			if ok, _ := cmd.Flags().GetBool("all-organizations"); ok {
+				org = "*"
+			}
+
 			// Fetch assets from API
-			r, err := cli.Client.ListAssets()
+			r, err := cli.Client.ListAssets(org)
 			if err != nil {
 				return err
 			}
@@ -43,6 +48,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+	cmd.Flags().Bool("all-organizations", false, "Include records from all organizations")
 
 	return cmd
 }
