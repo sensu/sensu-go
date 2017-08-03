@@ -56,12 +56,8 @@ func requestWithOrganization(r *http.Request, organization string) *http.Request
 }
 
 func requestWithFullAccess(r *http.Request) *http.Request {
-<<<<<<< HEAD
-	userRules := []types.Rule{*types.FixtureRule("*")}
+	userRules := []types.Rule{*types.FixtureRule("*", "*")}
 	actor := authorization.Actor{Name: "sensu", Rules: userRules}
-=======
-	userRoles := []*types.Role{types.FixtureRole("test", "*", "*")}
->>>>>>> Add environments to RBAC
 	context := context.WithValue(
 		r.Context(),
 		types.AuthorizationActorKey,
