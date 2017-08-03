@@ -14,15 +14,12 @@ import (
 
 // ChecksController defines the fields required by ChecksController.
 type ChecksController struct {
-	Store     store.Store
-	abilities authorization.Ability
+	Store store.Store
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *ChecksController) Register(r *mux.Router) {
-	c.abilities = authorization.Ability{Resource: types.RuleTypeCheck}
-
 	r.HandleFunc("/checks", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/checks", c.single).Methods(http.MethodPost)
 	r.HandleFunc("/checks/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete)
@@ -30,8 +27,8 @@ func (c *ChecksController) Register(r *mux.Router) {
 
 // many handles requests to /checks
 func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanRead() {
+	abilities := authorization.Checks.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -41,6 +38,9 @@ func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectChecks(&checks, abilities.CanRead)
 
 	checksBytes, err := json.Marshal(checks)
 	if err != nil {
@@ -57,11 +57,8 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 	name, _ := vars["name"]
 	method := r.Method
 
-	abilities := c.abilities.WithContext(r.Context())
-	switch {
-	case r.Method == http.MethodGet && !abilities.CanRead():
-		fallthrough
-	case r.Method == http.MethodDelete && !abilities.CanDelete():
+	abilities := authorization.Checks.WithContext(r.Context())
+	if r.Method == http.MethodDelete && !abilities.CanDelete() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -89,6 +86,11 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 		checkBytes, err := json.Marshal(check)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if !abilities.CanRead(check) {
+			authorization.UnauthorizedAccessToResource(w)
 			return
 		}
 
@@ -135,4 +137,14 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+}
+
+func rejectChecks(records *[]*types.CheckConfig, predicate func(*types.CheckConfig) bool) {
+	new := make([]*types.CheckConfig, 0, len(*records))
+	for _, record := range *records {
+		if predicate(record) {
+			new = append(new, record)
+		}
+	}
+	*records = new
 }

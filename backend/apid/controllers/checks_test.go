@@ -102,9 +102,13 @@ func TestHttpApiCheckGet(t *testing.T) {
 }
 
 func TestHttpApiChecksGetByNameUnauthorized(t *testing.T) {
-	controller := ChecksController{}
+	store := &mockstore.MockStore{}
+	controller := ChecksController{Store: store}
 
-	req := newRequest("GET", "/checks/asdjflas", nil)
+	check := types.FixtureCheckConfig("nil")
+	store.On("GetCheckConfigByName", mock.Anything, "nil").Return(check, nil)
+
+	req := newRequest("GET", "/checks/nil", nil)
 	req = requestWithNoAccess(req)
 
 	res := processRequest(&controller, req)
