@@ -21,7 +21,7 @@ func (p *UserPolicy) Resource() string {
 
 // Context info this instance of the policy is associated with
 func (p *UserPolicy) Context() Context {
-	return u.context
+	return p.context
 }
 
 // WithContext returns new policy populated with rules & organization.
