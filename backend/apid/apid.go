@@ -179,6 +179,11 @@ func registerRestrictedResources(
 	}
 	organizationsController.Register(commonRouter)
 
+	rolesController := &controllers.RolesController{
+		Store: store,
+	}
+	rolesController.Register(commonRouter)
+
 	usersController := &controllers.UsersController{
 		Store: store,
 	}

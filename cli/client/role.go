@@ -50,10 +50,12 @@ func (client *RestClient) ListRoles() ([]types.Role, error) {
 
 	res, err := client.R().Get("/rbac/roles")
 	if err != nil {
+		fmt.Println(err)
 		return roles, err
 	}
 
 	if res.StatusCode() >= 400 {
+		fmt.Println(res)
 		return roles, fmt.Errorf("%v", res.String())
 	}
 
