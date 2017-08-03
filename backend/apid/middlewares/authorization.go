@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -33,20 +34,24 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 			http.Error(w, "Error fetching user from store", http.StatusInternalServerError)
 		}
 
-		userRoles := []*types.Role{}
-
+		userRules := []types.Rule{}
 		for _, userRoleName := range user.Roles {
 			// TODO: (JK) we're not protecting against cases where a
 			// userRoleName doesn't actually have a corresponding role
 			for _, role := range roles {
 				if userRoleName == role.Name {
-					userRoles = append(userRoles, role)
+					userRules = append(userRules, role.Rules...)
 					break
 				}
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), types.AuthorizationRoleKey, userRoles)
+		actor := authorization.Actor{
+			Name:  claims.Subject,
+			Rules: userRules,
+		}
+
+		ctx := context.WithValue(r.Context(), types.AuthorizationActorKey, actor)
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})

@@ -88,16 +88,13 @@ func TestCanAccessResource(t *testing.T) {
 		t.Run(tc.TestName, func(t *testing.T) {
 			assert := assert.New(t)
 			actor := Actor{
-				Organization: tc.Organization,
-				Roles: []*types.Role{{
-					Name: "foo",
-					Rules: []types.Rule{
-						{"entities", "sensu", []string{types.RulePermRead}},
-					},
-				}},
+				Name: "bob",
+				Rules: []types.Rule{
+					{"entities", "sensu", []string{types.RulePermRead}},
+				},
 			}
 
-			assert.Equal(tc.Want, CanAccessResource(actor, tc.Resource, tc.Action))
+			assert.Equal(tc.Want, CanAccessResource(actor, tc.Organization, tc.Resource, tc.Action))
 		})
 	}
 }

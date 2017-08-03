@@ -14,15 +14,12 @@ import (
 
 // UsersController defines the fields required by UsersController.
 type UsersController struct {
-	Store     store.Store
-	abilities authorization.Ability
+	Store store.Store
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *UsersController) Register(r *mux.Router) {
-	c.abilities = authorization.Ability{Resource: types.RuleTypeUser}
-
 	r.HandleFunc("/rbac/users", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/users", c.updateUser).Methods(http.MethodPut)
 	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
@@ -32,15 +29,15 @@ func (c *UsersController) Register(r *mux.Router) {
 // deleteUser handles DELETE requests to /users/:username
 func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	username := vars["username"]
+	user := types.User{Username: vars["username"]}
 
-	abilities := c.abilities.WithContext(r.Context())
-	if !abilities.CanDelete() {
+	abilities := authorization.Users.WithContext(r.Context())
+	if !abilities.CanDelete(&user) {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
 
-	if err := c.Store.DeleteUserByName(username); err != nil {
+	if err := c.Store.DeleteUserByName(user.Username); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -51,8 +48,8 @@ func (c *UsersController) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 // many handles GET requests to /users
 func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
-	abilities := c.abilities.WithContext(r.Context())
-	if !abilities.CanRead() {
+	abilities := authorization.Users.WithContext(r.Context())
+	if !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -62,6 +59,9 @@ func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectUsers(&users, abilities.CanRead)
 
 	// Obfustace users password for security
 	for i := range users {
@@ -82,12 +82,6 @@ func (c *UsersController) single(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	abilities := c.abilities.WithContext(r.Context())
-	if !abilities.CanRead() {
-		authorization.UnauthorizedAccessToResource(w)
-		return
-	}
-
 	var (
 		user *types.User
 		err  error
@@ -101,6 +95,12 @@ func (c *UsersController) single(w http.ResponseWriter, r *http.Request) {
 
 	if user == nil {
 		http.NotFound(w, r)
+		return
+	}
+
+	abilities := authorization.Users.WithContext(r.Context())
+	if !abilities.CanRead(user) {
+		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
 
@@ -121,12 +121,6 @@ func (c *UsersController) single(w http.ResponseWriter, r *http.Request) {
 func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 	var user types.User
 
-	abilities := c.abilities.WithContext(r.Context())
-	if !abilities.CanCreate() {
-		authorization.UnauthorizedAccessToResource(w)
-		return
-	}
-
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -137,6 +131,13 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Differeniate between create & update
+	abilities := authorization.Users.WithContext(r.Context())
+	if !abilities.CanUpdate(&user) {
+		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
 
@@ -190,4 +191,13 @@ func hasRole(roles []*types.Role, roleName string) bool {
 		}
 	}
 	return false
+}
+
+func rejectUsers(records *[]*types.User, predicate func(*types.User) bool) {
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
+		}
+	}
 }

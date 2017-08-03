@@ -14,15 +14,12 @@ import (
 
 // OrganizationsController defines the fields required for this controller.
 type OrganizationsController struct {
-	Store     store.Store
-	abilities authorization.Ability
+	Store store.Store
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (o *OrganizationsController) Register(r *mux.Router) {
-	o.abilities = authorization.Ability{Resource: types.RuleTypeOrganization}
-
 	r.HandleFunc("/rbac/organizations", o.many).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/organizations", o.update).Methods(http.MethodPost)
 	r.HandleFunc("/rbac/organizations/{organization}", o.single).Methods(http.MethodGet)
@@ -34,9 +31,7 @@ func (o *OrganizationsController) delete(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	org := vars["organization"]
 
-	abilities := o.abilities.WithContext(r.Context())
-	abilities.Actor.Organization = org
-
+	abilities := authorization.Organizations.WithContext(r.Context())
 	if !abilities.CanDelete() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
@@ -53,8 +48,8 @@ func (o *OrganizationsController) delete(w http.ResponseWriter, r *http.Request)
 
 // many returns all organizations
 func (o *OrganizationsController) many(w http.ResponseWriter, r *http.Request) {
-	abilities := o.abilities.WithContext(r.Context())
-	if !abilities.CanRead() {
+	abilities := authorization.Organizations.WithContext(r.Context())
+	if !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -64,6 +59,9 @@ func (o *OrganizationsController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectOrganizations(&orgs, abilities.CanRead)
 
 	bytes, err := json.Marshal(orgs)
 	if err != nil {
@@ -79,13 +77,7 @@ func (o *OrganizationsController) single(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	name := vars["organization"]
 
-	abilities := o.abilities.WithContext(r.Context())
-	abilities.Actor.Organization = name
-
-	if !abilities.CanRead() {
-		authorization.UnauthorizedAccessToResource(w)
-		return
-	}
+	abilities := authorization.Organizations.WithContext(r.Context())
 
 	var (
 		org *types.Organization
@@ -100,6 +92,11 @@ func (o *OrganizationsController) single(w http.ResponseWriter, r *http.Request)
 
 	if org == nil {
 		http.NotFound(w, r)
+		return
+	}
+
+	if !abilities.CanRead(org) {
+		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
 
@@ -125,9 +122,7 @@ func (o *OrganizationsController) update(w http.ResponseWriter, r *http.Request)
 	}
 	defer r.Body.Close()
 
-	abilities := o.abilities.WithContext(r.Context())
-	abilities.Actor.Organization = org.Name
-
+	abilities := authorization.Organizations.WithContext(r.Context())
 	if !abilities.CanCreate() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
@@ -153,4 +148,13 @@ func (o *OrganizationsController) update(w http.ResponseWriter, r *http.Request)
 
 	w.WriteHeader(http.StatusCreated)
 	return
+}
+
+func rejectOrganizations(records *[]*types.Organization, predicate func(*types.Organization) bool) {
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
+		}
+	}
 }

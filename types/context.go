@@ -7,8 +7,11 @@ const (
 	// OrganizationKey contains the key name to retrieve the org from context
 	OrganizationKey key = iota
 	// AuthorizationRoleKey is the key name used to store a user's roles within
-	// a context
+	// a context TODO: Remove
 	AuthorizationRoleKey
+	// AuthorizationActorKey is the key name used to store a user's details within
+	// a context
+	AuthorizationActorKey
 	// AccessTokenClaims contains the key name to retrieve the access token claims
 	AccessTokenClaims
 	// RefreshTokenClaims contains the key name to retrieve the refresh token claims

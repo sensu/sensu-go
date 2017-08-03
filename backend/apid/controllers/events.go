@@ -13,14 +13,11 @@ import (
 
 // EventsController handles requests for /events
 type EventsController struct {
-	Store     store.Store
-	abilities authorization.Ability
+	Store store.Store
 }
 
 // Register the EventsController with a mux.Router.
 func (c *EventsController) Register(r *mux.Router) {
-	c.abilities = authorization.Ability{Resource: types.RuleTypeEvent}
-
 	r.HandleFunc("/events", c.events).Methods(http.MethodGet)
 	r.HandleFunc("/events", c.updateEvents).Methods(http.MethodPut)
 	r.HandleFunc("/events/{entity}", c.entityEvents).Methods(http.MethodGet)
@@ -33,8 +30,8 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 	// Do we need to test that this isn't empty? We should figure that out.
 	entityID := vars["entity"]
 
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanRead() {
+	abilities := authorization.Events.WithContext(r.Context())
+	if r.Method == http.MethodGet && !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -49,6 +46,9 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "events not found", http.StatusNotFound)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectEvents(&events, abilities.CanRead)
 
 	jsonStr, err := json.Marshal(events)
 	if err != nil {
@@ -65,12 +65,6 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 	entityID := vars["entity"]
 	checkID := vars["check"]
 
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanRead() {
-		authorization.UnauthorizedAccessToResource(w)
-		return
-	}
-
 	event, err := c.Store.GetEventByEntityCheck(r.Context(), entityID, checkID)
 	if err != nil {
 		http.Error(w, "error getting event for check", http.StatusInternalServerError)
@@ -79,6 +73,12 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 
 	if event == nil {
 		http.Error(w, "event not found", http.StatusNotFound)
+		return
+	}
+
+	abilities := authorization.Events.WithContext(r.Context())
+	if !abilities.CanRead(event) {
+		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
 
@@ -93,8 +93,8 @@ func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanRead() {
+	abilities := authorization.Events.WithContext(r.Context())
+	if !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -104,6 +104,9 @@ func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error getting events", http.StatusInternalServerError)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectEvents(&events, abilities.CanRead)
 
 	jsonStr, err := json.Marshal(events)
 	if err != nil {
@@ -116,8 +119,8 @@ func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *EventsController) updateEvents(w http.ResponseWriter, r *http.Request) {
-	abilities := c.abilities.WithContext(r.Context())
-	if r.Method == http.MethodGet && !abilities.CanUpdate() {
+	abilities := authorization.Events.WithContext(r.Context())
+	if !abilities.CanUpdate() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -160,4 +163,13 @@ func (c *EventsController) updateEvents(w http.ResponseWriter, r *http.Request) 
 	//
 	// w.Header().Set("Content-Type", "application/json")
 	// fmt.Fprint(w, string(jsonStr))
+}
+
+func rejectEvents(records *[]*types.Event, predicate func(*types.Event) bool) {
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
+		}
+	}
 }

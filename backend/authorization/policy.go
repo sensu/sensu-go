@@ -9,61 +9,47 @@ import (
 // Actor describes an entity who can perform actions within the system that are
 // bound by access controls.
 type Actor struct {
-	Organization string
-	Roles        []*types.Role
+	Name  string
+	Rules []types.Rule
 }
 
-// NewActorFromContext given request context returns new actor.
-func NewActorFromContext(ctx context.Context) Actor {
-	actor := Actor{}
+// Context holds the organization the action is associated with and the user
+// making said action.
+type Context struct {
+	Actor        Actor
+	Organization string
+}
+
+// ExtractValueFromContext extracts authorization details from a context
+func ExtractValueFromContext(ctx context.Context) Context {
+	context := Context{}
 
 	if organization, ok := ctx.Value(types.OrganizationKey).(string); ok {
-		actor.Organization = organization
+		context.Organization = organization
 	}
 
-	if roles, ok := ctx.Value(types.AuthorizationRoleKey).([]*types.Role); ok {
-		actor.Roles = roles
+	if actor, ok := ctx.Value(types.AuthorizationActorKey).(Actor); ok {
+		context.Actor = actor
 	}
 
-	return actor
+	return context
 }
 
-// Ability encapsulates the abilities a user can perform on a resource.
-type Ability struct {
-	Resource string
-	Actor
+// Policy ...
+type Policy interface { // TODO: rename to ...?
+	Resource() string
+	Context() Context
 }
 
-// WithContext returns new Ability populated with rules & organization.
-func (ability Ability) WithContext(ctx context.Context) Ability {
-	ability.Actor = NewActorFromContext(ctx)
-	return ability
+func canPerform(policy Policy, action string) bool {
+	return canPerformOn(policy, policy.Context().Organization, action)
 }
 
-// CanRead returns true if actor has read access to resource.
-func (abilityPtr *Ability) CanRead() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermRead)
-}
-
-// CanCreate returns true if actor has create access to resource.
-func (abilityPtr *Ability) CanCreate() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermCreate)
-}
-
-// CanUpdate returns true if actor has update access to resource.
-func (abilityPtr *Ability) CanUpdate() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermUpdate)
-}
-
-// CanDelete returns true if actor has update access to resource.
-func (abilityPtr *Ability) CanDelete() bool { // nolint
-	return abilityPtr.canPerform(types.RulePermDelete)
-}
-
-func (abilityPtr *Ability) canPerform(action string) bool { // nolint
+func canPerformOn(policy Policy, organization, action string) bool {
 	return CanAccessResource(
-		abilityPtr.Actor,
-		abilityPtr.Resource,
+		policy.Context().Actor,
+		organization,
+		policy.Resource(),
 		action,
 	)
 }

@@ -13,26 +13,23 @@ import (
 
 // EntitiesController defines the fields required by EntitiesController.
 type EntitiesController struct {
-	Store     store.Store
-	abilities authorization.Ability
+	Store store.Store
 }
 
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *EntitiesController) Register(r *mux.Router) {
-	c.abilities = authorization.Ability{Resource: types.RuleTypeEntity}
-
 	r.HandleFunc("/entities", c.many).Methods(http.MethodGet)
 	r.HandleFunc("/entities/{id}", c.single).Methods(http.MethodGet, http.MethodDelete)
 }
 
 func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
-	policy := c.abilities.WithContext(r.Context())
+	abilities := authorization.Entities.WithContext(r.Context())
 
 	switch {
-	case r.Method == http.MethodGet && !policy.CanRead():
+	case r.Method == http.MethodGet && !abilities.CanList():
 		fallthrough
-	case r.Method == http.MethodPost && !policy.CanCreate():
+	case r.Method == http.MethodPost && !abilities.CanCreate():
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -42,6 +39,9 @@ func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectEntities(&es, abilities.CanRead)
 
 	esb, err := json.Marshal(es)
 	if err != nil {
@@ -61,11 +61,8 @@ func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	policy := c.abilities.WithContext(r.Context())
-	switch {
-	case r.Method == http.MethodGet && !policy.CanRead():
-		fallthrough
-	case r.Method == http.MethodDelete && !policy.CanDelete():
+	policy := authorization.Entities.WithContext(r.Context())
+	if r.Method == http.MethodDelete && !policy.CanDelete() {
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -90,6 +87,11 @@ func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
+		if !policy.CanRead(entity) {
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		eb, err := json.Marshal(entity)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -102,6 +104,15 @@ func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+	}
+}
+
+func rejectEntities(records *[]*types.Entity, predicate func(*types.Entity) bool) {
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
 		}
 	}
 }

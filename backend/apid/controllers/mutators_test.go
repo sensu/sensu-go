@@ -82,7 +82,11 @@ func TestHttpApiMutatorGet(t *testing.T) {
 }
 
 func TestHttpApiMutatorGetUnauthorized(t *testing.T) {
-	controller := MutatorsController{}
+	store := &mockstore.MockStore{}
+	controller := MutatorsController{Store: store}
+
+	mutator := types.FixtureMutator("name")
+	store.On("GetMutatorByName", mock.Anything, "name").Return(mutator, nil)
 
 	req := newRequest("GET", "/mutators/name", nil)
 	req = requestWithNoAccess(req)

@@ -30,19 +30,17 @@ func matchesRuleOrganization(rule types.Rule, organization string) bool {
 
 // CanAccessResource will verify whether or not a user has permission to perform
 // an action, for a resource, within an organization
-func CanAccessResource(actor Actor, resource, action string) bool {
-	// TODO (JP): flatten rules prior to storing in actor?
-	for _, role := range actor.Roles {
-		for _, rule := range role.Rules {
-			if !matchesRuleType(rule, resource) {
-				continue
-			}
-			if !matchesRuleOrganization(rule, actor.Organization) {
-				continue
-			}
-			if hasPermission(rule, action) {
-				return true
-			}
+func CanAccessResource(actor Actor, org, resource, action string) bool {
+	// TODO: Reject irrelevant rules?
+	for _, rule := range actor.Rules {
+		if !matchesRuleType(rule, resource) {
+			continue
+		}
+		if !matchesRuleOrganization(rule, org) {
+			continue
+		}
+		if hasPermission(rule, action) {
+			return true
 		}
 	}
 

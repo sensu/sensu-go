@@ -42,6 +42,9 @@ const (
 	// RuleTypeOrganization access control for organization objects
 	RuleTypeOrganization = "organizations"
 
+	// RuleTypeRole access control for role objects
+	RuleTypeRole = "roles"
+
 	// RuleTypeUser access control for user objects
 	RuleTypeUser = "users"
 )

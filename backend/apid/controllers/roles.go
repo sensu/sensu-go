@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -25,11 +26,20 @@ func (c *RolesController) Register(r *mux.Router) {
 }
 
 func (c *RolesController) many(w http.ResponseWriter, r *http.Request) {
+	abilities := authorization.Roles.WithContext(r.Context())
+	if !abilities.CanList() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
 	roles, err := c.Store.GetRoles()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Reject those resources the viewer is unauthorized to view
+	rejectRoles(&roles, abilities.CanRead)
 
 	rolesBytes, err := json.Marshal(roles)
 	if err != nil {
@@ -64,8 +74,15 @@ func (c *RolesController) single(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	abilities := authorization.Roles.WithContext(r.Context())
+
 	switch method {
 	case http.MethodGet:
+		if !abilities.CanRead(role) {
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		roleBytes, err := json.Marshal(role)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -75,6 +92,11 @@ func (c *RolesController) single(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(roleBytes))
 	case http.MethodPut, http.MethodPost:
+		if !abilities.CanCreate() {
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		newRole := &types.Role{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -100,6 +122,11 @@ func (c *RolesController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case http.MethodDelete:
+		if !abilities.CanDelete() {
+			authorization.UnauthorizedAccessToResource(w)
+			return
+		}
+
 		err := c.Store.DeleteRoleByName(name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -111,6 +138,12 @@ func (c *RolesController) single(w http.ResponseWriter, r *http.Request) {
 func (c *RolesController) rules(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
+
+	abilities := authorization.Roles.WithContext(r.Context())
+	if !abilities.CanUpdate() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
 
 	role, err := c.Store.GetRoleByName(name)
 	if err != nil {
@@ -162,5 +195,14 @@ func (c *RolesController) rules(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func rejectRoles(records *[]*types.Role, predicate func(*types.Role) bool) {
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
+		}
 	}
 }

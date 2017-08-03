@@ -83,9 +83,13 @@ func TestHttpAPIHandlerGet(t *testing.T) {
 }
 
 func TestHttpAPIHandlerGetUnauthorized(t *testing.T) {
-	controller := HandlersController{}
+	store := &mockstore.MockStore{}
+	controller := HandlersController{Store: store}
 
-	req := newRequest("GET", "/handlers/meow", nil)
+	handler := types.FixtureHandler("handler1")
+	store.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
+
+	req := newRequest("GET", "/handlers/handler1", nil)
 	req = requestWithNoAccess(req)
 
 	res := processRequest(&controller, req)
