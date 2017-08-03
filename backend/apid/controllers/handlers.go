@@ -138,11 +138,10 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 }
 
 func rejectHandlers(records *[]*types.Handler, predicate func(*types.Handler) bool) {
-	new := make([]*types.Handler, 0, len(*records))
-	for _, record := range *records {
-		if predicate(record) {
-			new = append(new, record)
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
 		}
 	}
-	*records = new
 }

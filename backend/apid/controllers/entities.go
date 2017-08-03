@@ -109,11 +109,10 @@ func (c *EntitiesController) single(w http.ResponseWriter, r *http.Request) {
 }
 
 func rejectEntities(records *[]*types.Entity, predicate func(*types.Entity) bool) {
-	new := make([]*types.Entity, 0, len(*records))
-	for _, record := range *records {
-		if predicate(record) {
-			new = append(new, record)
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
 		}
 	}
-	*records = new
 }

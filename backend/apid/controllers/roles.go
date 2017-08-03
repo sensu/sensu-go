@@ -199,11 +199,10 @@ func (c *RolesController) rules(w http.ResponseWriter, r *http.Request) {
 }
 
 func rejectRoles(records *[]*types.Role, predicate func(*types.Role) bool) {
-	new := make([]*types.Role, 0, len(*records))
-	for _, record := range *records {
-		if predicate(record) {
-			new = append(new, record)
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
 		}
 	}
-	*records = new
 }

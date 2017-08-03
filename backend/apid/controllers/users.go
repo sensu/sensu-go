@@ -193,12 +193,11 @@ func hasRole(roles []*types.Role, roleName string) bool {
 	return false
 }
 
-func rejectUsers(users *[]*types.User, predicate func(*types.User) bool) {
-	newUsers := make([]*types.User, 0, len(*users))
-	for _, user := range *users {
-		if predicate(user) {
-			newUsers = append(newUsers, user)
+func rejectUsers(records *[]*types.User, predicate func(*types.User) bool) {
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
 		}
 	}
-	*users = newUsers
 }

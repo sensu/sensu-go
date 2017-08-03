@@ -129,11 +129,10 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 }
 
 func rejectAssets(records *[]*types.Asset, predicate func(*types.Asset) bool) {
-	new := make([]*types.Asset, 0, len(*records))
-	for _, record := range *records {
-		if predicate(record) {
-			new = append(new, record)
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
 		}
 	}
-	*records = new
 }

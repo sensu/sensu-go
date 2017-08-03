@@ -151,11 +151,10 @@ func (o *OrganizationsController) update(w http.ResponseWriter, r *http.Request)
 }
 
 func rejectOrganizations(records *[]*types.Organization, predicate func(*types.Organization) bool) {
-	new := make([]*types.Organization, 0, len(*records))
-	for _, record := range *records {
-		if predicate(record) {
-			new = append(new, record)
+	for i := 0; i < len(*records); i++ {
+		if !predicate((*records)[i]) {
+			*records = append((*records)[:i], (*records)[i+1:]...)
+			i--
 		}
 	}
-	*records = new
 }
