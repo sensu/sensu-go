@@ -19,8 +19,13 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list checks",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			org := cli.Config.Organization()
+			if ok, _ := cmd.Flags().GetBool("all-organizations"); ok {
+				org = "*"
+			}
+
 			// Fetch checks from the API
-			r, err := cli.Client.ListChecks()
+			r, err := cli.Client.ListChecks(org)
 			if err != nil {
 				return err
 			}
@@ -43,6 +48,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+	cmd.Flags().Bool("all-organizations", false, "Include records from all organizations")
 
 	return cmd
 }

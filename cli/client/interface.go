@@ -35,7 +35,7 @@ type CheckAPIClient interface {
 	CreateCheck(*types.CheckConfig) error
 	DeleteCheck(*types.CheckConfig) error
 	FetchCheck(string) (*types.CheckConfig, error)
-	ListChecks() ([]types.CheckConfig, error)
+	ListChecks(string) ([]types.CheckConfig, error)
 }
 
 // EntityAPIClient client methods for entities
