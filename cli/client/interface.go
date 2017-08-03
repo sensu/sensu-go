@@ -55,7 +55,7 @@ type EventAPIClient interface {
 type HandlerAPIClient interface {
 	CreateHandler(*types.Handler) error
 	DeleteHandler(*types.Handler) error
-	ListHandlers() ([]types.Handler, error)
+	ListHandlers(string) ([]types.Handler, error)
 }
 
 // OrganizationAPIClient client methods for organizations
