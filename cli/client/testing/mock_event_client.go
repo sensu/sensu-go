@@ -9,7 +9,7 @@ func (c *MockClient) FetchEvent(entity, check string) (*types.Event, error) {
 }
 
 // ListEvents for use with mock lib
-func (c *MockClient) ListEvents() ([]types.Event, error) {
-	args := c.Called()
+func (c *MockClient) ListEvents(org string) ([]types.Event, error) {
+	args := c.Called(org)
 	return args.Get(0).([]types.Event), args.Error(1)
 }

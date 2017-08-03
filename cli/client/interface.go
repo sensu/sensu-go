@@ -48,7 +48,7 @@ type EntityAPIClient interface {
 // EventAPIClient client methods for events
 type EventAPIClient interface {
 	FetchEvent(string, string) (*types.Event, error)
-	ListEvents() ([]types.Event, error)
+	ListEvents(string) ([]types.Event, error)
 }
 
 // HandlerAPIClient client methods for handlers
