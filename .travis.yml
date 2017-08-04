@@ -15,9 +15,9 @@ script:
 after_success:
   - "./codecov.sh -t $CODECOV_TOKEN"
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
-      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-      docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
-      docker push sensuapp/sensu-go:master
+      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+      docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master;
+      docker push sensuapp/sensu-go:master;
     fi
 env:
   global:
