@@ -3,15 +3,15 @@
 <plist version="1.0">
   <dict>
     <key>Disabled</key><false/>
-    <key>Label</key><string>sensu-agent</string>
-    <key>Program</key><string>/usr/local/bin/sensu-agent</string>
+    <key>Label</key><string>sensu-</string>
+    <key>Program</key><string>/usr/local/bin/sensu-</string>
     <key>ProgramArguments</key><array>
-      <string>/usr/local/bin/sensu-agent</string>
+      <string>/usr/local/bin/sensu-</string>
       
     </array>
     <key>KeepAlive</key> <true/>
-    <key>StandardOutPath</key> <string>/var/log/sensu-agent-stdout.log</string>
-    <key>StandardErrorPath</key> <string>/var/log/sensu-agent-stderr.log</string>
+    <key>StandardOutPath</key> <string>/var/log/sensu--stdout.log</string>
+    <key>StandardErrorPath</key> <string>/var/log/sensu--stderr.log</string>
     <key>EnvironmentVariables</key>
     <dict>
     </dict>

@@ -1,11 +1,29 @@
-TARGET_OS=linux
-TARGET_ARCH=amd64
+.PHONY: default clean
+.PHONY: android darwin dragonfly freebsd linux netbsd openbsd plan9 solaris windows
+.PHONY: sensu_agent sensu_backend sensu_cli
+.PHONY: services hooks packages rpms debs
 
-# Load version & iteration from file
-VERSION=1.0.0
-ITERATION=1
+ANDROID_ARCHITECTURES   := arm
+DARWIN_ARCHITECTURES    := 386 amd64 # arm arm64
+DRAGONFLY_ARCHITECTURES := amd64
+FREEBSD_ARCHITECTURES   := 386 amd64 arm
+LINUX_ARCHITECTURES     := 386 amd64 #arm arm64 mips mipsle mips64 mips64le ppc64 ppc64le
+NETBSD_ARCHITECTURES    := 386 amd64 arm
+OPENBSD_ARCHITECTURES   := 386 amd64 arm
+PLAN9_ARCHITECTURES     := 386 amd64
+SOLARIS_ARCHITECTURES   := amd64
+WINDOWS_ARCHITECTURES   := 386 amd64
 
-NAME=sensu-$(COMPONENT)
+##
+# Setup
+##
+$(shell mkdir -p out)
+
+##
+# FPM
+##
+VERSION=$(shell cat version/version.txt)
+ITERATION=$(shell cat version/iteration.txt)
 ARCHITECTURE=$(GOARCH)
 DESCRIPTION="Sensu is a monitoring thing"
 LICENSE=MIT
@@ -13,62 +31,222 @@ VENDOR="Sensu, Inc."
 MAINTAINER="Sensu Support <support@sensu.io>"
 URL="https://sensuapp.org"
 
-SERVICE_NAME=sensu-$(COMPONENT)
-SERVICE_USER=sensu
-SERVICE_GROUP=sensu
-
-BINARY_NAME=sensu-backend
-BINARY_START_ARGUMENTS="start"
-
-# /usr/bin : linux
-# /usr/local/bin : macOS, freebsd, openbsd, solaris, maybe aix?
-# C:\Program Files\Sensu\sensu-agent\bin : windows (drive should be chooseable by user)
-BINARY_TARGET_PATH=/usr/bin/$(BINARY_NAME)
-BINARY_SOURCE_PATH=target/$(TARGET_OS)-$(TARGET_ARCH)/$(BINARY_NAME)
-
-FILES_MAP = \
-	$(BINARY_SOURCE_PATH)=$(BINARY_TARGET_PATH)
+BIN_SOURCE_DIR=target/$(GOOS)-$(GOARCH)
 
 FPM_FLAGS = \
-	--input-type dir \
-	--output-type deb \
-	--name $(NAME) \
 	--version $(VERSION) \
 	--iteration $(ITERATION) \
-	--architecture $(ARCHITECTURE) \
-	--description $(DESCRIPTION) \
 	--url $(URL) \
 	--license $(LICENSE) \
 	--vendor $(VENDOR) \
 	--maintainer $(MAINTAINER)
 
-PACKAGE_TYPES = \
-	deb \
-	rpm
+##
+# Services
+##
+SERVICE_USER=sensu
+SERVICE_GROUP=sensu
+SERVICE_USER_MAC=_$(SERVICE_USER)
+SERVICE_GROUP_MAC=_$(SERVICE_GROUP)
 
-ifeq ($(filter $(PACKAGE_TYPE),$(PACKAGE_TYPES)),)
-    $(error PACKAGE_TYPE environment variable must be set to one of [$(PACKAGE_TYPES)])
-endif
+##
+# Hooks
+##
+HOOKS_BASE_PATH=packaging/hooks
+HOOKS_VALUES=prefix=$(HOOKS_BASE_PATH)/common
+HOOKS_VALUES+= common_files=os-functions,group-functions,user-functions
 
-include packaging/$(PACKAGE_TYPE).mk
-
-.PHONY: default
+##
+# Targets
+##
 default: all
 
-all: services hooks package
+all: linux
 
-.PHONY: clean
 clean:
-	rm -r build
+	rm -r out/
 
-.PHONY: services
-services:
-	@echo "Not implemented yet"
+##
+# Operating system targets
+##
 
-.PHONY: hooks
-hooks:
-	@echo "Not implemented yet"
 
-.PHONY: package
-package:
-	#fpm $(FPM_FLAGS) $(FILES_MAP)
+#android: arm
+
+darwin: export GOOS=darwin
+darwin: export BIN_TARGET_DIR=/usr/local/bin
+darwin: export PLATFORM_SERVICES=service_launchd
+darwin:
+	for arch in $(DARWIN_ARCHITECTURES); do \
+	    make GOARCH=$$arch sensu; \
+	done
+
+#dragonfly: amd64
+
+#freebsd: 386 amd64 arm
+
+linux: export GOOS=linux
+linux: export BIN_TARGET_DIR=/usr/bin
+linux: export PLATFORM_SERVICES=service_sysvinit service_systemd
+linux: export HOOKS := hooks_deb hooks_rpm
+linux: export PACKAGERS := deb rpm
+linux:
+	for arch in $(LINUX_ARCHITECTURES); do \
+	    make GOARCH=$$arch sensu; \
+	done
+
+#netbsd: 386 amd64 arm
+
+#openbsd: 386 amd64 arm
+
+#plan9: 386 amd64
+
+#solaris: amd64
+
+#windows: 386 amd64
+
+##
+# Sensu targets
+##
+sensu:
+	make sensu_backend SERVICES="$(PLATFORM_SERVICES)"
+	make sensu_agent SERVICES="$(PLATFORM_SERVICES)"
+	make sensu_cli SERVICES="service_none"
+
+sensu_agent: FPM_FLAGS+= --name sensu-agent
+sensu_agent: FPM_FLAGS+= --description "Sensu agent description here"
+sensu_agent: BIN_NAME=sensu-agent
+sensu_agent: export SERVICE_NAME=sensu-agent
+sensu_agent: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-agent
+sensu_agent: SERVICE_COMMAND_ARGUMENTS="start"
+sensu_agent: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-agent=$(BIN_TARGET_DIR)/sensu-agent
+sensu_agent: build_agent services hooks packages
+
+sensu_backend: FPM_FLAGS+= --name sensu-backend
+sensu_backend: FPM_FLAGS+= --description "Sensu backend description here"
+sensu_backend: BIN_NAME=sensu-backend
+sensu_backend: export SERVICE_NAME=sensu-backend
+sensu_backend: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-backend
+sensu_backend: SERVICE_COMMAND_ARGUMENTS="start"
+sensu_backend: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-backend=$(BIN_TARGET_DIR)/sensu-backend
+sensu_backend: build_backend services hooks packages
+
+sensu_cli: FPM_FLAGS+= --name sensu-cli
+sensu_cli: FPM_FLAGS+= --description "Sensu cli description here"
+sensu_cli: BIN_NAME=sensuctl
+sensu_cli: FILES_MAP=$(BIN_SOURCE_DIR)/sensuctl=$(BIN_TARGET_DIR)/sensuctl
+sensu_cli: export SERVICE_NAME=sensu-cli
+sensu_cli: build_cli hooks packages
+
+##
+# Compile targets
+##
+build_agent:
+	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_agent
+
+build_backend:
+	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_backend
+
+build_cli:
+	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_cli
+
+##
+# Service targets
+##
+services: $(SERVICES)
+
+service_none:
+	@echo "no-op"
+
+service_sysvinit:
+	pleaserun -p sysv --overwrite --no-install-actions \
+	--install-prefix packaging/services/$(SERVICE_NAME)/sysvinit \
+	--user $(SERVICE_USER) --group $(SERVICE_GROUP) \
+	$(SERVICE_COMMAND_PATH) $(SERVICE_COMMAND_ARGS)
+
+service_systemd:
+	pleaserun -p systemd --overwrite --no-install-actions \
+	--install-prefix packaging/services/$(SERVICE_NAME)/systemd \
+	--user $(SERVICE_USER) --group $(SERVICE_GROUP) \
+	$(SERVICE_COMMAND_PATH) $(SERVICE_COMMAND_ARGS)
+
+service_launchd:
+	pleaserun -p launchd --overwrite --no-install-actions \
+	--install-prefix packaging/services/$(SERVICE_NAME)/launchd \
+	--user $(SERVICE_USER_MAC) --group $(SERVICE_GROUP_MAC) \
+	$(SERVICE_COMMAND_PATH) $(SERVICE_COMMAND_ARGS)
+
+##
+# Hook targets
+##
+hooks: HOOKS_VALUES += service=$(SERVICE_NAME)
+hooks: $(HOOKS)
+
+hooks_deb: export HOOK_PACKAGER=deb
+hooks_deb:
+	make render_hooks
+
+hooks_rpm: export HOOK_PACKAGER=rpm
+hooks_rpm:
+	make render_hooks
+
+render_hooks: HOOKS_PATH=$(HOOKS_BASE_PATH)/$(SERVICE_NAME)/$(HOOK_PACKAGER)
+render_hooks:
+	erb $(HOOKS_VALUES) $(HOOKS_PATH)/before-install.erb > $(HOOKS_PATH)/before-install
+	erb $(HOOKS_VALUES) $(HOOKS_PATH)/after-install.erb > $(HOOKS_PATH)/after-install
+	erb $(HOOKS_VALUES) $(HOOKS_PATH)/before-remove.erb > $(HOOKS_PATH)/before-remove
+	erb $(HOOKS_VALUES) $(HOOKS_PATH)/after-remove.erb > $(HOOKS_PATH)/after-remove
+
+##
+# Package targets
+##
+packages: $(PACKAGERS)
+
+# deb
+deb: FPM_INITIAL_FLAGS=-s dir -t deb
+deb: FPM_FLAGS += --architecture $(GOARCH)
+deb: FPM_FLAGS+= --before-install packaging/hooks/$(SERVICE_NAME)/deb/before-install
+deb: FPM_FLAGS+= --after-install packaging/hooks/$(SERVICE_NAME)/deb/after-install
+deb: FPM_FLAGS+= --before-remove packaging/hooks/$(SERVICE_NAME)/deb/before-remove
+deb: FPM_FLAGS+= --after-remove packaging/hooks/$(SERVICE_NAME)/deb/after-remove
+deb: $(addprefix deb_, $(SERVICES))
+
+deb_service_none: FPM_FLAGS += --package out/deb/none/
+deb_service_none:
+	mkdir -p out/deb/none
+	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
+
+deb_service_sysvinit: FPM_FLAGS += --package out/deb/sysvinit/
+deb_service_sysvinit: FPM_FLAGS += --deb-init packaging/services/$(SERVICE_NAME)/sysvinit/etc/init.d/$(SERVICE_NAME)
+deb_service_sysvinit:
+	mkdir -p out/deb/sysvinit
+	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
+
+deb_service_systemd: FPM_FLAGS += --package out/deb/systemd/
+deb_service_systemd:
+	mkdir -p out/deb/systemd
+	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
+
+# rpm
+rpm: FPM_INITIAL_FLAGS=-s dir -t rpm
+rpm: FPM_FLAGS+= --architecture $(shell packaging/rpm/safe-architecture.sh $(GOARCH))
+rpm: FPM_FLAGS+= --before-install packaging/hooks/$(SERVICE_NAME)/rpm/before-install
+rpm: FPM_FLAGS+= --after-install packaging/hooks/$(SERVICE_NAME)/rpm/after-install
+rpm: FPM_FLAGS+= --before-remove packaging/hooks/$(SERVICE_NAME)/rpm/before-remove
+rpm: FPM_FLAGS+= --after-remove packaging/hooks/$(SERVICE_NAME)/rpm/after-remove
+rpm: $(addprefix rpm_, $(SERVICES))
+
+rpm_service_none: FPM_FLAGS += --package out/rpm/none/
+rpm_service_none:
+	mkdir -p out/rpm/none
+	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
+
+rpm_service_sysvinit: FPM_FLAGS += --package out/rpm/sysvinit/
+rpm_service_sysvinit:
+	mkdir -p out/rpm/sysvinit
+	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
+
+rpm_service_systemd: FPM_FLAGS += --package out/rpm/systemd/
+rpm_service_systemd:
+	mkdir -p out/rpm/systemd
+	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
