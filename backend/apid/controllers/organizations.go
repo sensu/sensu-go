@@ -119,12 +119,6 @@ func (o *OrganizationsController) update(w http.ResponseWriter, r *http.Request)
 	}
 	defer r.Body.Close()
 
-	abilities := authorization.Organizations.WithContext(r.Context())
-	if !abilities.CanCreate() {
-		authorization.UnauthorizedAccessToResource(w)
-		return
-	}
-
 	err = json.Unmarshal(bodyBytes, &org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -134,6 +128,12 @@ func (o *OrganizationsController) update(w http.ResponseWriter, r *http.Request)
 	err = org.Validate()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	abilities := authorization.Organizations.WithContext(r.Context())
+	if !abilities.CanCreate(&org) {
+		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
 

@@ -115,7 +115,7 @@ func TestHttpAPIHandlerPut(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
 
-	unauthReq := newRequest("PUT", "/handlers/"+handler.Name, nil)
+	unauthReq := newRequest("PUT", "/handlers/"+handler.Name, bytes.NewBuffer(updatedHandlerJSON))
 	unauthReq = requestWithNoAccess(unauthReq)
 
 	unauthRes := processRequest(c, unauthReq)
@@ -144,7 +144,7 @@ func TestHttpAPIHandlerPost(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
 
-	unauthReq := newRequest("POST", "/handlers/"+handler.Name, nil)
+	unauthReq := newRequest("POST", "/handlers/"+handler.Name, bytes.NewBuffer(updatedHandlerJSON))
 	unauthReq = requestWithNoAccess(unauthReq)
 
 	unauthRes := processRequest(c, unauthReq)

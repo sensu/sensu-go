@@ -43,7 +43,7 @@ func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 		if !matchesRuleOrganization(rule, org) {
 			continue
 		}
-		if !matchesRuleEnvironment(rule, env) {
+		if resource != types.RuleTypeAsset && resource != types.RuleTypeOrganization && !matchesRuleEnvironment(rule, env) {
 			continue
 		}
 		if hasPermission(rule, action) {

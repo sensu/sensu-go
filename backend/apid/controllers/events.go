@@ -119,50 +119,27 @@ func (c *EventsController) events(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *EventsController) updateEvents(w http.ResponseWriter, r *http.Request) {
-	abilities := authorization.Events.WithContext(r.Context())
-	if !abilities.CanUpdate() {
-		authorization.UnauthorizedAccessToResource(w)
-		return
-	}
-
+	var event *types.Event
 	decoder := json.NewDecoder(r.Body)
-	var event types.Event
-
-	err := decoder.Decode(&event)
+	err := decoder.Decode(event)
 	if err != nil {
 		logger.Error("error decoding the body: ", err.Error())
 		http.Error(w, "error decoding the body", http.StatusInternalServerError)
 		return
 	}
 
-	err = c.Store.UpdateEvent(r.Context(), &event)
+	abilities := authorization.Events.WithContext(r.Context())
+	if !abilities.CanUpdate(event) {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
+	err = c.Store.UpdateEvent(r.Context(), event)
 	if err != nil {
 		logger.Error("invalid event: ", err.Error())
 		http.Error(w, "invalid event", http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println(event)
-	// events, err := c.Store.GetEvents()
-	// if err != nil {
-	// 	http.Error(w, "error getting events", http.StatusInternalServerError)
-	// 	return
-	// }
-	//
-	// // If the events slice is empty, we want to return an empty array instead
-	// // of null for easier consumption
-	// if len(events) == 0 {
-	// 	events = make([]*types.Event, 0)
-	// }
-	//
-	// jsonStr, err := json.Marshal(events)
-	// if err != nil {
-	// 	http.Error(w, "error marshalling response", http.StatusInternalServerError)
-	// 	return
-	// }
-	//
-	// w.Header().Set("Content-Type", "application/json")
-	// fmt.Fprint(w, string(jsonStr))
 }
 
 func rejectEvents(records *[]*types.Event, predicate func(*types.Event) bool) {

@@ -96,14 +96,6 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, string(checkBytes))
 	case http.MethodPut, http.MethodPost:
-		switch {
-		case check == nil && !abilities.CanCreate():
-			fallthrough
-		case check != nil && !abilities.CanUpdate():
-			authorization.UnauthorizedAccessToResource(w)
-			return
-		}
-
 		newCheck := &types.CheckConfig{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -120,6 +112,14 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 
 		if err = newCheck.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		switch {
+		case check == nil && !abilities.CanCreate(newCheck):
+			fallthrough
+		case check != nil && !abilities.CanUpdate(newCheck):
+			authorization.UnauthorizedAccessToResource(w)
 			return
 		}
 

@@ -96,14 +96,6 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(handlerBytes))
 	case http.MethodPut, http.MethodPost:
-		switch {
-		case handler == nil && !abilities.CanCreate():
-			fallthrough
-		case handler != nil && !abilities.CanUpdate():
-			authorization.UnauthorizedAccessToResource(w)
-			return
-		}
-
 		newHandler := &types.Handler{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -120,6 +112,14 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 
 		if err = newHandler.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		switch {
+		case handler == nil && !abilities.CanCreate(newHandler):
+			fallthrough
+		case handler != nil && !abilities.CanUpdate(newHandler):
+			authorization.UnauthorizedAccessToResource(w)
 			return
 		}
 
