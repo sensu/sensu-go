@@ -250,3 +250,144 @@ rpm_service_systemd: FPM_FLAGS += --package out/rpm/systemd/
 rpm_service_systemd:
 	mkdir -p out/rpm/systemd
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
+
+##
+# publish targets
+##
+
+# every deb distro/version supported by packagecloud.io (2017-08-04)
+DEB_SYSVINIT_DISTRO_VERSIONS=
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/warty
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/hoary
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/breezy
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/dapper
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/edgy
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/feisty
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/gutsy
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/hardy
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/intrepid
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/jaunty
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/karmic
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/lucid
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/maverick
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/natty
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/oneiric
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/precise
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/quantal
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/raring
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/saucy
+DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/trusty
+#DEB_SYSVINIT_DISTRO_VERSIONS += ubuntu/utopic
+#DEB_SYSVINIT_DISTRO_VERSIONS += debian/etch
+#DEB_SYSVINIT_DISTRO_VERSIONS += debian/lenny
+#DEB_SYSVINIT_DISTRO_VERSIONS += debian/squeeze
+#DEB_SYSVINIT_DISTRO_VERSIONS += debian/wheezy
+#DEB_SYSVINIT_DISTRO_VERSIONS += raspbian/wheezy
+#DEB_SYSVINIT_DISTRO_VERSIONS += elementaryos/jupiter
+#DEB_SYSVINIT_DISTRO_VERSIONS += elementaryos/luna
+#DEB_SYSVINIT_DISTRO_VERSIONS += elementaryos/freya
+#DEB_SYSVINIT_DISTRO_VERSIONS += linuxmint/petria
+#DEB_SYSVINIT_DISTRO_VERSIONS += linuxmint/qiana
+#DEB_SYSVINIT_DISTRO_VERSIONS += linuxmint/rebecca
+#DEB_SYSVINIT_DISTRO_VERSIONS += linuxmint/rafaela
+#DEB_SYSVINIT_DISTRO_VERSIONS += linuxmint/rosa
+
+DEB_SYSTEMD_DISTRO_VERSIONS=
+#DEB_SYSTEMD_DISTRO_VERSIONS += ubuntu/vivid
+#DEB_SYSTEMD_DISTRO_VERSIONS += ubuntu/wily
+DEB_SYSTEMD_DISTRO_VERSIONS += ubuntu/xenial
+#DEB_SYSTEMD_DISTRO_VERSIONS += ubuntu/yakkety
+#DEB_SYSTEMD_DISTRO_VERSIONS += ubuntu/zesty
+#DEB_SYSTEMD_DISTRO_VERSIONS += debian/jessie
+#DEB_SYSTEMD_DISTRO_VERSIONS += debian/stretch
+#DEB_SYSTEMD_DISTRO_VERSIONS += debian/buster
+#DEB_SYSTEMD_DISTRO_VERSIONS += raspbian/jessie
+#DEB_SYSTEMD_DISTRO_VERSIONS += raspbian/stretch
+#DEB_SYSTEMD_DISTRO_VERSIONS += raspbian/buster
+#DEB_SYSTEMD_DISTRO_VERSIONS += linuxmint/sarah
+#DEB_SYSTEMD_DISTRO_VERSIONS += linuxmint/serena
+
+DEB_DISTRO_VERSIONS:=$(DEB_SYSVINIT_DISTRO_VERSIONS) $(DEB_SYSTEMD_DISTRO_VERSIONS)
+
+# every rpm distro/version supported by packagecloud.io (2017-08-04)
+RPM_SYSVINIT_DISTRO_VERSIONS=
+#RPM_SYSVINIT_DISTRO_VERSIONS += el/5
+RPM_SYSVINIT_DISTRO_VERSIONS += el/6
+#RPM_SYSVINIT_DISTRO_VERSIONS += ol/5
+#RPM_SYSVINIT_DISTRO_VERSIONS += ol/6
+#RPM_SYSVINIT_DISTRO_VERSIONS += scientific/5
+#RPM_SYSVINIT_DISTRO_VERSIONS += scientific/6
+#RPM_SYSVINIT_DISTRO_VERSIONS += sles/11.4
+#RPM_SYSVINIT_DISTRO_VERSIONS += fedora/14
+#RPM_SYSVINIT_DISTRO_VERSIONS += poky/jethro
+#RPM_SYSVINIT_DISTRO_VERSIONS += poky/kogroth
+
+RPM_SYSTEMD_DISTRO_VERSIONS=
+RPM_SYSTEMD_DISTRO_VERSIONS += el/7
+#RPM_SYSTEMD_DISTRO_VERSIONS += ol/7
+#RPM_SYSTEMD_DISTRO_VERSIONS += scientific/7
+#RPM_SYSTEMD_DISTRO_VERSIONS += sles/12.0
+#RPM_SYSTEMD_DISTRO_VERSIONS += sles/12.1
+#RPM_SYSTEMD_DISTRO_VERSIONS += sles/12.2
+#RPM_SYSTEMD_DISTRO_VERSIONS += opensuse/13.1
+#RPM_SYSTEMD_DISTRO_VERSIONS += opensuse/13.2
+#RPM_SYSTEMD_DISTRO_VERSIONS += opensuse/42.1
+#RPM_SYSTEMD_DISTRO_VERSIONS += opensuse/42.2
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/15
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/16
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/17
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/18
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/19
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/20
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/21
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/22
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/23
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/24
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/25
+#RPM_SYSTEMD_DISTRO_VERSIONS += fedora/26
+
+RPM_DISTRO_VERSIONS:=$(RPM_SYSVINIT_DISTRO_VERSIONS) $(RPM_SYSTEMD_DISTRO_VERSIONS)
+
+SYSVINIT_DISTRO_VERSIONS:=$(DEB_SYSVINIT_DISTRO_VERSIONS) $(RPM_SYSVINIT_DISTRO_VERSIONS)
+SYSTEMD_DISTRO_VERSIONS:=$(DEB_SYSTEMD_DISTRO_VERSIONS) $(RPM_SYSTEMD_DISTRO_VERSIONS)
+ALL_DISTRO_VERSIONS:=$(DEB_DISTRO_VERSIONS) $(RPM_DISTRO_VERSIONS)
+
+publish:
+	make publish-noservice-packages
+	make publish-sysvinit-packages
+	make publish-systemd-packages
+
+PC_PUSH_CMD=package_cloud push --skip-errors
+
+##
+# publish packages without a service
+##
+publish-noservice-packages: $(addprefix publish-noservice-package-,$(ALL_DISTRO_VERSIONS))
+
+$(addprefix publish-noservice-package-,$(DEB_DISTRO_VERSIONS)):
+	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-noservice-package-,,$@) out/deb/none/*
+
+$(addprefix publish-noservice-package-,$(RPM_DISTRO_VERSIONS)):
+	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-noservice-package-,,$@) out/rpm/none/*
+
+##
+# publish packages with sysvinit
+##
+publish-sysvinit-packages: $(addprefix publish-sysvinit-package-,$(SYSVINIT_DISTRO_VERSIONS))
+
+$(addprefix publish-sysvinit-package-,$(DEB_SYSVINIT_DISTRO_VERSIONS)):
+	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-sysvinit-package-,,$@) out/deb/sysvinit/*
+
+$(addprefix publish-sysvinit-package-,$(RPM_SYSVINIT_DISTRO_VERSIONS)):
+	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-sysvinit-package-,,$@) out/rpm/sysvinit/*
+
+##
+# publish packages with systemd
+##
+publish-systemd-packages: $(addprefix publish-systemd-package-,$(SYSTEMD_DISTRO_VERSIONS))
+
+$(addprefix publish-systemd-package-,$(DEB_SYSTEMD_DISTRO_VERSIONS)):
+	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-systemd-package-,,$@) out/deb/systemd/*
+
+$(addprefix publish-systemd-package-,$(RPM_SYSTEMD_DISTRO_VERSIONS)):
+	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-systemd-package-,,$@) out/rpm/systemd/*
