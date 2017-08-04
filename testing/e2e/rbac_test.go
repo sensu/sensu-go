@@ -186,13 +186,15 @@ func TestRBAC(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, &checks[0], prodCheck)
 
-	forbiddenCheck := types.FixtureCheckConfig("forbidden")
-	forbiddenCheck.Organization = "acme"
-	forbiddenCheck.Environment = "prod"
 	// Make sure a client can't create objects outside of its role
-	if err := devClient.CreateCheck(forbiddenCheck); err == nil {
-		// TODO (Simon): This check fails, which means RBAC is broken!
-		// assert.Fail(t, "devClient should not be able to create into the prod env")
+	if err := devClient.CreateCheck(defaultCheck); err == nil {
+		// TODO (Simon): We have an error,  which means RBAC is broken!
+		assert.Fail(t, "devClient should not be able to create into the default org")
+	}
+
+	if err := devClient.CreateCheck(prodCheck); err == nil {
+		// TODO (Simon): We have an error,  which means RBAC is broken!
+		assert.Fail(t, "devClient should not be able to create into the prod env")
 	}
 
 	// Make sure a client can't delete objects outside of its role
