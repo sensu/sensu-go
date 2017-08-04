@@ -11,6 +11,7 @@ Vagrant.configure("2") do |config|
     apt-get install -y ruby ruby-dev build-essential rpm rpmlint
     gem install --no-ri --no-rdoc fpm
     gem install --no-ri --no-rdoc pleaserun
+    gem install --no-ri --no-rdoc packagecloud
     wget https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz
     tar -C /usr/local -zxvf go1.8.3.linux-amd64.tar.gz
     chown -R ubuntu:ubuntu /usr/local/go

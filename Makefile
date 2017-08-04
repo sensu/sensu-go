@@ -204,7 +204,7 @@ packages: $(PACKAGERS)
 
 # deb
 deb: FPM_INITIAL_FLAGS=-s dir -t deb
-deb: FPM_FLAGS += --architecture $(GOARCH)
+deb: FPM_FLAGS += --architecture $(shell packaging/deb/safe-architecture.sh $(GOARCH))
 deb: FPM_FLAGS+= --before-install packaging/hooks/$(SERVICE_NAME)/deb/before-install
 deb: FPM_FLAGS+= --after-install packaging/hooks/$(SERVICE_NAME)/deb/after-install
 deb: FPM_FLAGS+= --before-remove packaging/hooks/$(SERVICE_NAME)/deb/before-remove
