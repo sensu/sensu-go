@@ -15,7 +15,7 @@ const (
 )
 
 func getCheckConfigPath(check *types.CheckConfig) string {
-	return path.Join(etcdRoot, checksPathPrefix, check.Organization, check.Organization, check.Name)
+	return path.Join(etcdRoot, checksPathPrefix, check.Organization, check.Environment, check.Name)
 }
 
 func getCheckConfigsPath(ctx context.Context, name string) string {
