@@ -3,6 +3,7 @@ package agentd
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -59,10 +60,11 @@ func TestGoodHandshake(t *testing.T) {
 		mock.AnythingOfType("*types.Entity"),
 	).Return(nil)
 	st.On(
-		"GetOrganizationByName",
+		"GetEnvironment",
 		mock.Anything,
 		mock.AnythingOfType("string"),
-	).Return(&types.Organization{}, nil)
+		mock.AnythingOfType("string"),
+	).Return(&types.Environment{}, nil)
 
 	session, err := NewSession(conn, bus, st)
 	assert.NoError(t, err)
@@ -120,13 +122,11 @@ func TestBadOrganizationHandshake(t *testing.T) {
 		mock.AnythingOfType("*types.Entity"),
 	).Return(nil)
 	st.On(
-		"GetOrganizationByName",
+		"GetEnvironment",
 		mock.Anything,
 		mock.AnythingOfType("string"),
-	).Return(
-		&types.Organization{},
-		errors.New("error"),
-	)
+		mock.AnythingOfType("string"),
+	).Return(&types.Environment{}, fmt.Errorf("error"))
 
 	session, _ := NewSession(conn, bus, st)
 	hsBytes, _ := json.Marshal(&types.AgentHandshake{

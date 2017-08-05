@@ -20,11 +20,16 @@ func testHandler() http.HandlerFunc {
 	})
 }
 
-func TestValidateOrganization(t *testing.T) {
+func TestEnvironment(t *testing.T) {
 	store := &mockstore.MockStore{}
-	store.On("GetOrganizationByName", mock.Anything, "foo").Return(&types.Organization{}, nil)
+	store.On(
+		"GetEnvironment",
+		mock.Anything,
+		"foo",
+		"bar",
+	).Return(&types.Environment{}, nil)
 
-	mware := Organization{Store: store}
+	mware := Environment{Store: store}
 	server := httptest.NewServer(mware.Then(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Make sure that the organization is within the request context
@@ -32,6 +37,11 @@ func TestValidateOrganization(t *testing.T) {
 			assert.NotNil(t, org)
 			orgString, _ := org.(string)
 			assert.Equal(t, "foo", orgString)
+
+			env := r.Context().Value(types.EnvironmentKey)
+			assert.NotNil(t, env)
+			envString, _ := env.(string)
+			assert.Equal(t, "bar", envString)
 
 			return
 		}),
@@ -41,6 +51,7 @@ func TestValidateOrganization(t *testing.T) {
 	req, _ := http.NewRequest("GET", server.URL, nil)
 	// Add a query parameter for the organization
 	query := req.URL.Query()
+	query.Add("env", "bar")
 	query.Add("org", "foo")
 	req.URL.RawQuery = query.Encode()
 
@@ -50,53 +61,43 @@ func TestValidateOrganization(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
-func TestValidateNoOrganization(t *testing.T) {
-	store := &mockstore.MockStore{}
-
-	mware := Organization{Store: store}
-	server := httptest.NewServer(mware.Then(testHandler()))
-	defer server.Close()
-
-	req, _ := http.NewRequest("GET", server.URL, nil)
-	res, err := http.DefaultClient.Do(req)
-
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
-func TestValidateWildcard(t *testing.T) {
-	store := &mockstore.MockStore{}
-
-	mware := Organization{Store: store}
-	server := httptest.NewServer(mware.Then(testHandler()))
-	defer server.Close()
-
-	req, _ := http.NewRequest("GET", server.URL, nil)
-	query := req.URL.Query()
-	query.Add("org", "*")
-	req.URL.RawQuery = query.Encode()
-
-	res, err := http.DefaultClient.Do(req)
-
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
-func TestValidateOrganizationError(t *testing.T) {
+func TestEnvironmentNoParameters(t *testing.T) {
 	store := &mockstore.MockStore{}
 	store.On(
-		"GetOrganizationByName",
+		"GetEnvironment",
+		mock.Anything,
+		"default",
+		"default",
+	).Return(&types.Environment{}, nil)
+
+	mware := Environment{Store: store}
+	server := httptest.NewServer(mware.Then(testHandler()))
+	defer server.Close()
+
+	req, _ := http.NewRequest("GET", server.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}
+
+func TestEnvironmentError(t *testing.T) {
+	store := &mockstore.MockStore{}
+	store.On(
+		"GetEnvironment",
 		mock.Anything,
 		"foo",
-	).Return(&types.Organization{}, errors.New("error"))
+		"bar",
+	).Return(&types.Environment{}, errors.New("error"))
 
-	mware := Organization{Store: store}
+	mware := Environment{Store: store}
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
 	// Add a query parameter for the organization
 	query := req.URL.Query()
+	query.Add("env", "bar")
 	query.Add("org", "foo")
 	req.URL.RawQuery = query.Encode()
 
@@ -104,4 +105,29 @@ func TestValidateOrganizationError(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+}
+
+func TestValidateWildcard(t *testing.T) {
+	store := &mockstore.MockStore{}
+	store.On(
+		"GetEnvironment",
+		mock.Anything,
+		"default",
+		"default",
+	).Return(&types.Environment{}, nil)
+
+	mware := Environment{Store: store}
+	server := httptest.NewServer(mware.Then(testHandler()))
+	defer server.Close()
+
+	req, _ := http.NewRequest("GET", server.URL, nil)
+	query := req.URL.Query()
+	query.Add("env", "*")
+	query.Add("org", "*")
+	req.URL.RawQuery = query.Encode()
+
+	res, err := http.DefaultClient.Do(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }

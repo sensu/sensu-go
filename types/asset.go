@@ -34,7 +34,7 @@ type Asset struct {
 	// queries are joined by the "AND" operator.
 	Filters []string `json:"filters"`
 
-	// Organization indicates to which org an asset belongs
+	// Organization indicates to which org an asset belongs to
 	Organization string `json:"organization"`
 }
 

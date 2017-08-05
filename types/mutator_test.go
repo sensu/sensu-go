@@ -27,6 +27,10 @@ func TestMutatorValidate(t *testing.T) {
 	assert.Error(t, m.Validate())
 	m.Organization = "default"
 
+	// Invalid environment
+	assert.Error(t, m.Validate())
+	m.Environment = "default"
+
 	// Valid mutator
 	assert.NoError(t, m.Validate())
 }

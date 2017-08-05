@@ -15,20 +15,14 @@ const (
 )
 
 func getCheckConfigPath(check *types.CheckConfig) string {
-	return path.Join(etcdRoot, checksPathPrefix, check.Organization, check.Name)
+	return path.Join(etcdRoot, checksPathPrefix, check.Organization, check.Environment, check.Name)
 }
 
 func getCheckConfigsPath(ctx context.Context, name string) string {
-	var org string
+	env := environment(ctx)
+	org := organization(ctx)
 
-	// Determine the organization
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		org = value.(string)
-	} else {
-		org = ""
-	}
-
-	return path.Join(etcdRoot, checksPathPrefix, org, name)
+	return path.Join(etcdRoot, checksPathPrefix, org, env, name)
 }
 
 func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) error {

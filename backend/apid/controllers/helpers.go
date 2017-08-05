@@ -28,10 +28,21 @@ func newRequest(meth, url string, body io.Reader) *http.Request {
 }
 
 func requestWithDefaultContext(req *http.Request) *http.Request {
+	req = requestWithEnvironment(req, "default")
 	req = requestWithOrganization(req, "default")
 	req = requestWithFullAccess(req)
 
 	return req
+}
+
+func requestWithEnvironment(r *http.Request, environment string) *http.Request {
+	context := context.WithValue(
+		r.Context(),
+		types.EnvironmentKey,
+		environment,
+	)
+
+	return r.WithContext(context)
 }
 
 func requestWithOrganization(r *http.Request, organization string) *http.Request {
@@ -45,7 +56,7 @@ func requestWithOrganization(r *http.Request, organization string) *http.Request
 }
 
 func requestWithFullAccess(r *http.Request) *http.Request {
-	userRules := []types.Rule{*types.FixtureRule("*")}
+	userRules := []types.Rule{*types.FixtureRule("*", "*")}
 	actor := authorization.Actor{Name: "sensu", Rules: userRules}
 	context := context.WithValue(
 		r.Context(),

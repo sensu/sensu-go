@@ -18,8 +18,8 @@ func (o *Organization) Validate() error {
 }
 
 // FixtureOrganization returns a mocked organization
-func FixtureOrganization(org string) *Organization {
+func FixtureOrganization(name string) *Organization {
 	return &Organization{
-		Name: org,
+		Name: name,
 	}
 }

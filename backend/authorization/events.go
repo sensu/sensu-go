@@ -37,7 +37,7 @@ func (p *EventPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *EventPolicy) CanRead(event *types.Event) bool {
-	return canPerformOn(p, event.Entity.Organization, types.RulePermRead)
+	return canPerformOn(p, event.Entity.Organization, event.Entity.Environment, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.

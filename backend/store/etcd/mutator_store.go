@@ -15,20 +15,14 @@ const (
 )
 
 func getMutatorPath(mutator *types.Mutator) string {
-	return path.Join(etcdRoot, mutatorsPathPrefix, mutator.Organization, mutator.Name)
+	return path.Join(etcdRoot, mutatorsPathPrefix, mutator.Organization, mutator.Environment, mutator.Name)
 }
 
 func getMutatorsPath(ctx context.Context, name string) string {
-	var org string
+	env := environment(ctx)
+	org := organization(ctx)
 
-	// Determine the organization
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		org = value.(string)
-	} else {
-		org = ""
-	}
-
-	return path.Join(etcdRoot, mutatorsPathPrefix, org, name)
+	return path.Join(etcdRoot, mutatorsPathPrefix, org, env, name)
 }
 
 func (s *etcdStore) DeleteMutatorByName(ctx context.Context, name string) error {

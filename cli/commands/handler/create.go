@@ -22,6 +22,7 @@ type handlerOpts struct {
 	Handlers   string `survey:"handler"`
 	SocketHost string `survey:"socketHost"`
 	SocketPort string `survey:"socketPort"`
+	Env        string
 	Org        string
 }
 
@@ -36,6 +37,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := &handlerOpts{}
+			opts.Env = cli.Config.Environment()
 			opts.Org = cli.Config.Organization()
 
 			if len(args) > 0 {
@@ -175,6 +177,7 @@ func (opts *handlerOpts) queryForHandlers() {
 func (opts *handlerOpts) toHandler() *types.Handler {
 	handler := &types.Handler{}
 	handler.Name = opts.Name
+	handler.Environment = opts.Env
 	handler.Organization = opts.Org
 	handler.Type = strings.ToLower(opts.Type)
 

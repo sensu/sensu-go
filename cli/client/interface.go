@@ -10,6 +10,7 @@ type APIClient interface {
 	AssetAPIClient
 	CheckAPIClient
 	EntityAPIClient
+	EnvironmentAPIClient
 	EventAPIClient
 	HandlerAPIClient
 	OrganizationAPIClient
@@ -43,6 +44,13 @@ type EntityAPIClient interface {
 	DeleteEntity(entity *types.Entity) error
 	FetchEntity(ID string) (*types.Entity, error)
 	ListEntities() ([]types.Entity, error)
+}
+
+// EnvironmentAPIClient client methods for environments
+type EnvironmentAPIClient interface {
+	CreateEnvironment(string, *types.Environment) error
+	DeleteEnvironment(string, string) error
+	ListEnvironments(string) ([]types.Environment, error)
 }
 
 // EventAPIClient client methods for events

@@ -11,8 +11,9 @@ import (
 
 func TestKeepaliveStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
 		entity := types.FixtureEntity("entity")
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Environment)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
 
 		err := store.UpdateFailingKeepalive(ctx, entity, 1)
 		assert.NoError(t, err)

@@ -15,20 +15,14 @@ const (
 )
 
 func getEntityPath(entity *types.Entity) string {
-	return path.Join(etcdRoot, entityPathPrefix, entity.Organization, entity.ID)
+	return path.Join(etcdRoot, entityPathPrefix, entity.Organization, entity.Environment, entity.ID)
 }
 
 func getEntitiesPath(ctx context.Context, id string) string {
-	var org string
+	env := environment(ctx)
+	org := organization(ctx)
 
-	// Determine the organization
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		org = value.(string)
-	} else {
-		org = ""
-	}
-
-	return path.Join(etcdRoot, entityPathPrefix, org, id)
+	return path.Join(etcdRoot, entityPathPrefix, org, env, id)
 }
 
 func (s *etcdStore) DeleteEntity(ctx context.Context, e *types.Entity) error {

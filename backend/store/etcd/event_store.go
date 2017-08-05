@@ -19,22 +19,17 @@ func getEventPath(event *types.Event) string {
 		etcdRoot,
 		eventsPathPrefix,
 		event.Entity.Organization,
+		event.Entity.Environment,
 		event.Entity.ID,
 		event.Check.Config.Name,
 	)
 }
 
 func getEventsPath(ctx context.Context, entity, check string) string {
-	var org string
+	env := environment(ctx)
+	org := organization(ctx)
 
-	// Determine the organization
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		org = value.(string)
-	} else {
-		org = ""
-	}
-
-	return path.Join(etcdRoot, eventsPathPrefix, org, entity, check)
+	return path.Join(etcdRoot, eventsPathPrefix, org, env, entity, check)
 }
 
 func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID string) error {

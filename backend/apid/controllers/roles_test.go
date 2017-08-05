@@ -30,8 +30,8 @@ func (suite *RolesControllerSuite) SetupTest() {
 
 func (suite *RolesControllerSuite) TestGetRoles() {
 	roles := []*types.Role{
-		types.FixtureRole("bob", "builders"),
-		types.FixtureRole("fred", "builders"),
+		types.FixtureRole("bob", "acme", "dev"),
+		types.FixtureRole("fred", "acme", "prod"),
 	}
 	suite.store.On("GetRoles").Return(roles, nil)
 
@@ -95,7 +95,7 @@ func (suite *RolesControllerSuite) TestGetRole() {
 
 func (suite *RolesControllerSuite) TestCreateRoleWithError() {
 	name := "bob"
-	role := types.FixtureRole("name", "org")
+	role := types.FixtureRole("name", "acme", "dev")
 	roleJSON, _ := json.Marshal(role)
 
 	suite.store.On("UpdateRole", mock.AnythingOfType("*types.Role")).Return(fmt.Errorf(""))
@@ -117,7 +117,7 @@ func (suite *RolesControllerSuite) TestCreateRoleWithBadData() {
 
 func (suite *RolesControllerSuite) TestCreateRoleWithInvalidRole() {
 	name := "bob"
-	role := types.FixtureRole("name", "org")
+	role := types.FixtureRole("name", "acme", "dev")
 	role.Name = "Really;Bad--Invalid--!!!Name"
 
 	roleJSON, _ := json.Marshal(role)
@@ -129,7 +129,7 @@ func (suite *RolesControllerSuite) TestCreateRoleWithInvalidRole() {
 
 func (suite *RolesControllerSuite) TestCreateRole() {
 	name := "bob"
-	role := types.FixtureRole(name, "my-org")
+	role := types.FixtureRole(name, "acme", "dev")
 
 	roleJSON, _ := json.Marshal(role)
 	req := newRequest("PUT", "/rbac/roles/"+name, bytes.NewBuffer(roleJSON))
@@ -178,7 +178,12 @@ func (suite *RolesControllerSuite) TestRuleNotFound() {
 
 func (suite *RolesControllerSuite) TestPutRule() {
 	role := &types.Role{Name: "test"}
-	rule := &types.Rule{Type: "*", Organization: "default", Permissions: []string{"create"}}
+	rule := &types.Rule{
+		Type:         "*",
+		Environment:  "default",
+		Organization: "default",
+		Permissions:  []string{"create"},
+	}
 	ruleJSON, _ := json.Marshal(rule)
 
 	key := "/rbac/roles/" + role.Name + "/rules/" + rule.Type

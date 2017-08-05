@@ -42,6 +42,10 @@ func TestHandlerValidate(t *testing.T) {
 	assert.Error(t, h.Validate())
 	h.Organization = "default"
 
+	// Invalid environment
+	assert.Error(t, h.Validate())
+	h.Environment = "default"
+
 	// Valid handler
 	assert.NoError(t, h.Validate())
 }

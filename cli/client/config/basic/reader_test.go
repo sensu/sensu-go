@@ -12,6 +12,16 @@ func TestAPIUrl(t *testing.T) {
 	assert.Equal(t, config.Cluster.APIUrl, config.APIUrl())
 }
 
+func TestEnvironment(t *testing.T) {
+	config := &Config{Profile: Profile{Environment: "dev"}}
+	assert.Equal(t, config.Profile.Environment, config.Environment())
+}
+
+func TestEnvironmentDefault(t *testing.T) {
+	config := &Config{}
+	assert.Equal(t, defaultEnvironment, config.Environment())
+}
+
 func TestFormat(t *testing.T) {
 	config := &Config{Profile: Profile{Format: "json"}}
 	assert.Equal(t, config.Profile.Format, config.Format())

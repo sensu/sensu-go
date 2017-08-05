@@ -19,14 +19,7 @@ func getAssetPath(asset *types.Asset) string {
 }
 
 func getAssetsPath(ctx context.Context, name string) string {
-	var org string
-
-	// Determine the organization
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		org = value.(string)
-	} else {
-		org = ""
-	}
+	org := organization(ctx)
 
 	return path.Join(etcdRoot, assetsPathPrefix, org, name)
 }

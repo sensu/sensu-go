@@ -15,6 +15,7 @@ import (
 // A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
 	CheckName string
+	CheckEnv  string
 	CheckOrg  string
 
 	StateManager *StateManager
@@ -30,7 +31,7 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 	s.stopping = make(chan struct{})
 	s.WaitGroup.Add(1)
 
-	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg})
+	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg, "env": s.CheckEnv})
 	s.logger.Infof("starting new scheduler")
 
 	timer := NewCheckTimer(s.CheckName, initialInterval)
@@ -49,7 +50,7 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 			case <-timer.C():
 				// Fetch check from scheduler's state
 				state := s.StateManager.State()
-				check := state.GetCheck(s.CheckName, s.CheckOrg)
+				check := state.GetCheck(s.CheckName, s.CheckOrg, s.CheckEnv)
 
 				// The check has been deleted
 				if check == nil {
@@ -93,7 +94,7 @@ func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
 	request := execPtr.BuildRequest(check)
 
 	for _, sub := range check.Subscriptions {
-		topic := messaging.SubscriptionTopic(check.Organization, sub)
+		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
 		if pubErr := execPtr.Bus.Publish(topic, request); err != nil {

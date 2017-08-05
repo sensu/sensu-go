@@ -22,6 +22,10 @@ func matchesRuleType(rule types.Rule, resource string) bool {
 	return rule.Type == resource || rule.Type == "*"
 }
 
+func matchesRuleEnvironment(rule types.Rule, environment string) bool {
+	return rule.Environment == environment || rule.Environment == "*"
+}
+
 // TODO (JK): this function may end up becoming more complex if
 // we decide to use "*" as more than a way of saying "all organizations"
 func matchesRuleOrganization(rule types.Rule, organization string) bool {
@@ -30,13 +34,16 @@ func matchesRuleOrganization(rule types.Rule, organization string) bool {
 
 // CanAccessResource will verify whether or not a user has permission to perform
 // an action, for a resource, within an organization
-func CanAccessResource(actor Actor, org, resource, action string) bool {
+func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 	// TODO: Reject irrelevant rules?
 	for _, rule := range actor.Rules {
 		if !matchesRuleType(rule, resource) {
 			continue
 		}
 		if !matchesRuleOrganization(rule, org) {
+			continue
+		}
+		if !matchesRuleEnvironment(rule, env) {
 			continue
 		}
 		if hasPermission(rule, action) {

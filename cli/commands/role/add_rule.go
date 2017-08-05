@@ -15,6 +15,7 @@ type ruleOpts struct {
 	Role        string   `survey:"role"`
 	Type        string   `survey:"type"`
 	Permissions []string `survey:"permissions"`
+	Env         string
 	Org         string
 }
 
@@ -29,6 +30,7 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := &ruleOpts{}
+			opts.Env = cli.Config.Environment()
 			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
@@ -113,6 +115,7 @@ func (opts *ruleOpts) administerQuestionnaire() {
 
 func (opts *ruleOpts) Copy(rule *types.Rule) {
 	rule.Type = opts.Type
+	rule.Environment = opts.Env
 	rule.Organization = opts.Org
 	rule.Permissions = opts.Permissions
 }

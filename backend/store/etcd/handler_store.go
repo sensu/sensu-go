@@ -15,20 +15,14 @@ const (
 )
 
 func getHandlerPath(handler *types.Handler) string {
-	return path.Join(etcdRoot, handlersPathPrefix, handler.Organization, handler.Name)
+	return path.Join(etcdRoot, handlersPathPrefix, handler.Organization, handler.Environment, handler.Name)
 }
 
 func getHandlersPath(ctx context.Context, name string) string {
-	var org string
+	env := environment(ctx)
+	org := organization(ctx)
 
-	// Determine the organization
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		org = value.(string)
-	} else {
-		org = ""
-	}
-
-	return path.Join(etcdRoot, handlersPathPrefix, org, name)
+	return path.Join(etcdRoot, handlersPathPrefix, org, env, name)
 }
 
 func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error {

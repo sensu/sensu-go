@@ -65,6 +65,9 @@ type CheckConfig struct {
 	// RuntimeAssets are a list of assets required to execute check.
 	RuntimeAssets []string `json:"runtime_assets"`
 
+	// Environment indicates to which env a check belongs to
+	Environment string `json:"environment"`
+
 	// Organization indicates to which org a check belongs to
 	Organization string `json:"organization"`
 }
@@ -92,6 +95,10 @@ func (c *CheckConfig) Validate() error {
 
 	if c.Interval == 0 {
 		return errors.New("check interval must be greater than 0")
+	}
+
+	if c.Environment == "" {
+		return errors.New("environment cannot be empty")
 	}
 
 	if c.Organization == "" {
@@ -166,6 +173,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Command:       "command",
 		Handlers:      []string{},
 		RuntimeAssets: []string{"ruby-2-4-2"},
+		Environment:   "default",
 		Organization:  "default",
 	}
 }

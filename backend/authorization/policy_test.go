@@ -29,10 +29,11 @@ func TestNewAuthContext(t *testing.T) {
 
 	t.Run("given context w/ org & roles", func(t *testing.T) {
 		tCtx := context.WithValue(ctx, types.OrganizationKey, "default")
+		tCtx = context.WithValue(tCtx, types.EnvironmentKey, "dev")
 		tCtx = context.WithValue(
 			tCtx,
 			types.AuthorizationRoleKey,
-			[]*types.Role{types.FixtureRole("x", "y")},
+			[]*types.Role{types.FixtureRole("x", "y", "z")},
 		)
 		authCtx = ExtractValueFromContext(tCtx)
 		assert.NotNil(t, authCtx)

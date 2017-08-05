@@ -17,6 +17,7 @@ type Actor struct {
 // making said action.
 type Context struct {
 	Actor        Actor
+	Environment  string
 	Organization string
 }
 
@@ -26,6 +27,10 @@ func ExtractValueFromContext(ctx context.Context) Context {
 
 	if organization, ok := ctx.Value(types.OrganizationKey).(string); ok {
 		context.Organization = organization
+	}
+
+	if environment, ok := ctx.Value(types.EnvironmentKey).(string); ok {
+		context.Environment = environment
 	}
 
 	if actor, ok := ctx.Value(types.AuthorizationActorKey).(Actor); ok {
@@ -42,13 +47,19 @@ type Policy interface { // TODO: rename to ...?
 }
 
 func canPerform(policy Policy, action string) bool {
-	return canPerformOn(policy, policy.Context().Organization, action)
+	return canPerformOn(
+		policy,
+		policy.Context().Organization,
+		policy.Context().Environment,
+		action,
+	)
 }
 
-func canPerformOn(policy Policy, organization, action string) bool {
+func canPerformOn(policy Policy, organization, environment, action string) bool {
 	return CanAccessResource(
 		policy.Context().Actor,
 		organization,
+		environment,
 		policy.Resource(),
 		action,
 	)

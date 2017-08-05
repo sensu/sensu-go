@@ -104,15 +104,15 @@ func (s *Session) handshake() error {
 		return fmt.Errorf("error unmarshaling agent handshake: %s", err.Error())
 	}
 
-	// Validate the agent organization
+	// Validate the agent organization and environment
 	ctx := context.TODO()
-	if _, err = s.store.GetOrganizationByName(ctx, agentHandshake.Organization); err != nil {
-		return fmt.Errorf("the organization '%s' is invalid", agentHandshake.Organization)
+	if _, err = s.store.GetEnvironment(ctx, agentHandshake.Organization, agentHandshake.Environment); err != nil {
+		return fmt.Errorf("the environment '%s:%s' is invalid", agentHandshake.Organization, agentHandshake.Environment)
 	}
 
 	s.subscriptions = agentHandshake.Subscriptions
 	for _, sub := range s.subscriptions {
-		topic := messaging.SubscriptionTopic(agentHandshake.Organization, sub)
+		topic := messaging.SubscriptionTopic(agentHandshake.Organization, agentHandshake.Environment, sub)
 		logger.Debugf("Subscribing to topic %s", topic)
 		if err := s.bus.Subscribe(topic, s.ID, s.checkChannel); err != nil {
 			return err

@@ -20,6 +20,7 @@ type checkOpts struct {
 	Subscriptions string `survey:"subscriptions"`
 	Handlers      string `survey:"handlers"`
 	RuntimeAssets string `survey:"assets"`
+	Env           string
 	Org           string
 }
 
@@ -38,6 +39,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := &checkOpts{}
+			opts.Env = cli.Config.Environment()
 			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
@@ -136,6 +138,7 @@ func buildCheck(opts *checkOpts, client client.APIClient) *types.CheckConfig {
 	interval, _ := strconv.ParseUint(opts.Interval, 10, 32)
 	check := &types.CheckConfig{
 		Name:          opts.Name,
+		Environment:   opts.Env,
 		Organization:  opts.Org,
 		Interval:      uint(interval),
 		Command:       opts.Command,

@@ -27,6 +27,21 @@ func TestSaveAPIUrl(t *testing.T) {
 	assert.Equal(t, url, config.APIUrl())
 }
 
+func TestSaveEnvironment(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "sensu")
+	defer os.RemoveAll(dir)
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
+
+	env := "json"
+	config.SaveEnvironment(env)
+	assert.Equal(t, env, config.Environment())
+}
+
 func TestSaveFormat(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "sensu")
 	defer os.RemoveAll(dir)

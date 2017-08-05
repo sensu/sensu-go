@@ -40,6 +40,7 @@ func (o *OrganizationsController) delete(w http.ResponseWriter, r *http.Request)
 	err := o.Store.DeleteOrganizationByName(r.Context(), org)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)
@@ -66,6 +67,7 @@ func (o *OrganizationsController) many(w http.ResponseWriter, r *http.Request) {
 	bytes, err := json.Marshal(orgs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -79,12 +81,7 @@ func (o *OrganizationsController) single(w http.ResponseWriter, r *http.Request)
 
 	abilities := authorization.Organizations.WithContext(r.Context())
 
-	var (
-		org *types.Organization
-		err error
-	)
-
-	org, err = o.Store.GetOrganizationByName(r.Context(), name)
+	org, err := o.Store.GetOrganizationByName(r.Context(), name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

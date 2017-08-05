@@ -37,7 +37,7 @@ func (p *AssetPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *AssetPolicy) CanRead(asset *types.Asset) bool {
-	return canPerformOn(p, asset.Organization, types.RulePermRead)
+	return canPerformOn(p, asset.Organization, "*", types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.

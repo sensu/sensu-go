@@ -112,6 +112,7 @@ func (a *agentProcess) Start() error {
 		"--backend-url", a.BackendURLs[1],
 		"--id", a.AgentID,
 		"--subscriptions", "test",
+		"--environment", "default",
 		"--organization", "default",
 	)
 	stdout, err := cmd.StdoutPipe()

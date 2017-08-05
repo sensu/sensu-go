@@ -37,7 +37,7 @@ func (p *MutatorPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *MutatorPolicy) CanRead(mutator *types.Mutator) bool {
-	return canPerformOn(p, mutator.Organization, types.RulePermRead)
+	return canPerformOn(p, mutator.Organization, mutator.Environment, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.

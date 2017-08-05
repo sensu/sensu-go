@@ -13,6 +13,7 @@ func TestMutatorStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		mutator := types.FixtureMutator("mutator1")
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, mutator.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, mutator.Environment)
 
 		// We should receive an empty slice if no results were found
 		mutators, err := store.GetMutators(ctx)

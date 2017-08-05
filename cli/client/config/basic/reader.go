@@ -1,8 +1,11 @@
 package basic
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/types"
+)
 
 const (
+	defaultEnvironment  = "default"
 	defaultFormat       = "none"
 	defaultOrganization = "default"
 )
@@ -10,6 +13,14 @@ const (
 // APIUrl returns the active cluster API URL
 func (c *Config) APIUrl() string {
 	return c.Cluster.APIUrl
+}
+
+// Environment returns the user's active environment
+func (c *Config) Environment() string {
+	if c.Profile.Environment == "" {
+		return defaultEnvironment
+	}
+	return c.Profile.Environment
 }
 
 // Format returns the user's preferred format

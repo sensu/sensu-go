@@ -17,6 +17,12 @@ func TestSeedDefaultRole(t *testing.T) {
 		mock.Anything,
 		mock.AnythingOfType("*types.Organization"),
 	).Return(nil)
+	store.On(
+		"UpdateEnvironment",
+		mock.Anything,
+		mock.AnythingOfType("string"),
+		mock.AnythingOfType("*types.Environment"),
+	).Return(nil)
 	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	seedInitialData(store)

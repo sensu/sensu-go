@@ -31,7 +31,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.administerQuestionnaire()
 			} else {
 				opts.withFlags(flags)
-				fmt.Println(len(args))
 				if len(args) > 0 {
 					opts.Name = args[0]
 				}
@@ -45,8 +44,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			err := cli.Client.CreateOrganization(org)
-			if err != nil {
+			if err := cli.Client.CreateOrganization(org); err != nil {
 				return err
 			}
 

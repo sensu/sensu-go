@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DeleteCommand adds a command that allows user to delete users
+// DeleteCommand adds a command that allows user to delete organizations
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "delete [ORGANIZATION]",
-		Short:        "delete provided organization",
+		Short:        "delete specified organization",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage

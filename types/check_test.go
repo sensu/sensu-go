@@ -26,6 +26,7 @@ func TestCheckValidate(t *testing.T) {
 		Name:         "test",
 		Interval:     10,
 		Command:      "yes",
+		Environment:  "default",
 		Organization: "default",
 	}
 
@@ -51,6 +52,10 @@ func TestCheckConfig(t *testing.T) {
 	// Invalid organization
 	assert.Error(t, c.Validate())
 	c.Organization = "default"
+
+	// Invalid environment
+	assert.Error(t, c.Validate())
+	c.Environment = "default"
 
 	// Valid check
 	assert.NoError(t, c.Validate())

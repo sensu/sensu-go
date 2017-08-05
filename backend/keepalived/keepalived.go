@@ -127,6 +127,7 @@ func (k *Keepalived) initFromStore() error {
 
 	for _, keepalive := range keepalives {
 		entityCtx := context.WithValue(context.TODO(), types.OrganizationKey, keepalive.Organization)
+		entityCtx = context.WithValue(entityCtx, types.EnvironmentKey, keepalive.Environment)
 		event, err := k.Store.GetEventByEntityCheck(entityCtx, keepalive.EntityID, "keepalive")
 		if err != nil {
 			return err

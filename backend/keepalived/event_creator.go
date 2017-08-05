@@ -50,6 +50,7 @@ func createEvent(entity *types.Entity) *types.Event {
 			Subscriptions: []string{""},
 			Command:       "",
 			Handlers:      []string{"keepalive"},
+			Environment:   entity.Environment,
 			Organization:  entity.Organization,
 		},
 		Status: 1,

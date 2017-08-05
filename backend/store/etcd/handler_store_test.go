@@ -13,6 +13,7 @@ func TestHandlerStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		handler := types.FixtureHandler("handler1")
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, handler.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, handler.Environment)
 
 		// We should receive an empty slice if no results were found
 		handlers, err := store.GetHandlers(ctx)

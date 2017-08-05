@@ -116,7 +116,7 @@ func registerRestrictedResources(
 ) {
 	commonRouter := NewSubrouter(
 		router.NewRoute(),
-		middlewares.Organization{Store: store},
+		middlewares.Environment{Store: store},
 		middlewares.Authentication{},
 		middlewares.AllowList{Store: store},
 		middlewares.Authorization{Store: store},
@@ -141,6 +141,11 @@ func registerRestrictedResources(
 		Store: store,
 	}
 	entitiesController.Register(commonRouter)
+
+	environmentsConroller := &controllers.EnvironmentsController{
+		Store: store,
+	}
+	environmentsConroller.Register(commonRouter)
 
 	eventsController := &controllers.EventsController{
 		Store: store,
@@ -173,6 +178,11 @@ func registerRestrictedResources(
 		Store: store,
 	}
 	organizationsController.Register(commonRouter)
+
+	rolesController := &controllers.RolesController{
+		Store: store,
+	}
+	rolesController.Register(commonRouter)
 
 	usersController := &controllers.UsersController{
 		Store: store,
