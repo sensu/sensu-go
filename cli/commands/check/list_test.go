@@ -6,6 +6,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -54,8 +55,8 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "json")
-	cmd.Flags().Set("all-organizations", "t")
+	cmd.Flags().Set(flags.Format, "json")
+	cmd.Flags().Set(flags.AllOrgs, "t")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
