@@ -6,9 +6,11 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCommand(t *testing.T) {
@@ -27,13 +29,13 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents").Return([]types.Event{
+	client.On("ListEvents", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 		*types.FixtureEvent("2", "funny"),
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "json")
+	cmd.Flags().Set(flags.Format, "json")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -42,17 +44,34 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
+	assert := assert.New(t)
+	cli := newConfiguredCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListEvents", "*").Return([]types.Event{
+		*types.FixtureEvent("1", "something"),
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set(flags.Format, "json")
+	cmd.Flags().Set(flags.AllOrgs, "t")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+}
+
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents").Return([]types.Event{
+	client.On("ListEvents", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 		*types.FixtureEvent("2", "funny"),
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "none")
+	cmd.Flags().Set(flags.Format, "none")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -69,7 +88,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents").Return([]types.Event{}, errors.New("fun-msg"))
+	client.On("ListEvents", mock.Anything).Return([]types.Event{}, errors.New("fun-msg"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

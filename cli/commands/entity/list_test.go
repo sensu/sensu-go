@@ -6,9 +6,11 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCommand(t *testing.T) {
@@ -28,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities").Return([]types.Entity{
+	client.On("ListEntities", mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-one"),
 		*types.FixtureEntity("name-two"),
 	}, nil)
@@ -42,18 +44,35 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := newCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListEntities", "*").Return([]types.Entity{
+		*types.FixtureEntity("name-two"),
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set(flags.AllOrgs, "t")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+}
+
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities").Return([]types.Entity{
+	client.On("ListEntities", mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-one"),
 		*types.FixtureEntity("name-two"),
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "none")
+	cmd.Flags().Set(flags.Format, "none")
 
 	out, err := test.RunCmd(cmd, []string{})
 
@@ -70,7 +89,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities").Return([]types.Entity{}, errors.New("my-err"))
+	client.On("ListEntities", mock.Anything).Return([]types.Entity{}, errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

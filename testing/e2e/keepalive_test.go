@@ -108,7 +108,7 @@ func TestAgentKeepalives(t *testing.T) {
 	time.Sleep(5 * time.Second)
 
 	// Retrieve the entitites
-	entities, err := sensuClient.ListEntities()
+	entities, err := sensuClient.ListEntities("*")
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(entities))
 	assert.Equal(t, "TestKeepalives", entities[0].ID)

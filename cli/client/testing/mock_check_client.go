@@ -21,7 +21,7 @@ func (c *MockClient) FetchCheck(name string) (*types.CheckConfig, error) {
 }
 
 // ListChecks for use with mock lib
-func (c *MockClient) ListChecks() ([]types.CheckConfig, error) {
-	args := c.Called()
+func (c *MockClient) ListChecks(org string) ([]types.CheckConfig, error) {
+	args := c.Called(org)
 	return args.Get(0).([]types.CheckConfig), args.Error(1)
 }

@@ -6,9 +6,11 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCommand(t *testing.T) {
@@ -28,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers").Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 	}, nil)
@@ -40,12 +42,29 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := newCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListHandlers", "*").Return([]types.Handler{
+		*types.FixtureHandler("one"),
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set(flags.AllOrgs, "t")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+}
+
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers").Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
 		*types.FixtureSetHandler("one", "two", "three"),
 		*types.FixtureSocketHandler("two", "tcp"),
 		*types.FixtureHandler("three"),
@@ -64,7 +83,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers").Return([]types.Handler{}, errors.New("fire"))
+	client.On("ListHandlers", mock.Anything).Return([]types.Handler{}, errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

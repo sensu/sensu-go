@@ -6,9 +6,11 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCommand(t *testing.T) {
@@ -31,7 +33,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	config.On("Format").Return("none")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListAssets").Return([]types.Asset{
+	client.On("ListAssets", mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 	}, nil)
@@ -43,12 +45,32 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
+	assert := assert.New(t)
+	cli := newCLI()
+
+	config := cli.Config.(*client.MockConfig)
+	config.On("Format").Return("none")
+
+	client := cli.Client.(*client.MockClient)
+	client.On("ListAssets", "*").Return([]types.Asset{
+		*types.FixtureAsset("one"),
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set(flags.AllOrgs, "t")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+}
+
 func TestListCommandRunEClosureWithJSON(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListAssets").Return([]types.Asset{
+	client.On("ListAssets", mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 	}, nil)
@@ -65,7 +87,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListAssets").Return([]types.Asset{}, errors.New("fire"))
+	client.On("ListAssets", mock.Anything).Return([]types.Asset{}, errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

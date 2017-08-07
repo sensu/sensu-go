@@ -8,10 +8,10 @@ import (
 )
 
 // ListHandlers fetches all handlers from configured Sensu instance
-func (client *RestClient) ListHandlers() ([]types.Handler, error) {
+func (client *RestClient) ListHandlers(org string) ([]types.Handler, error) {
 	var handlers []types.Handler
 
-	res, err := client.R().Get("/handlers")
+	res, err := client.R().Get("/handlers?org=" + org)
 	if err != nil {
 		return handlers, err
 	}

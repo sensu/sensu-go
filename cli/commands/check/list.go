@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
@@ -19,15 +20,20 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list checks",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			org := cli.Config.Organization()
+			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
+				org = "*"
+			}
+
 			// Fetch checks from the API
-			r, err := cli.Client.ListChecks()
+			r, err := cli.Client.ListChecks(org)
 			if err != nil {
 				return err
 			}
 
 			// Determine the format to use to output the data
 			var format string
-			if format, _ = cmd.Flags().GetString("format"); format == "" {
+			if format, _ = cmd.Flags().GetString(flags.Format); format == "" {
 				format = cli.Config.Format()
 			}
 
@@ -43,6 +49,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+	cmd.Flags().Bool(flags.AllOrgs, false, "Include records from all organizations")
 
 	return cmd
 }
