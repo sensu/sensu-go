@@ -4,10 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+
+	"github.com/sensu/sensu-go/testing/testutil"
 )
 
 type backendProcess struct {
@@ -29,6 +33,44 @@ type backendProcess struct {
 	Stderr io.Reader
 
 	cmd *exec.Cmd
+}
+
+// newBackendProcess initializes a backendProcess struct
+func newBackendProcess() (*backendProcess, func()) {
+	ports := make([]int, 5)
+	err := testutil.RandomPorts(ports)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	etcdClientURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
+	etcdPeerURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
+	apiPort := ports[2]
+	agentPort := ports[3]
+	dashboardPort := ports[4]
+	initialCluster := fmt.Sprintf("default=%s", etcdPeerURL)
+
+	bep := &backendProcess{
+		AgentHost:               "127.0.0.1",
+		AgentPort:               agentPort,
+		APIHost:                 "127.0.0.1",
+		APIPort:                 apiPort,
+		DashboardHost:           "127.0.0.1",
+		DashboardPort:           dashboardPort,
+		StateDir:                tmpDir,
+		EtcdClientURL:           etcdClientURL,
+		EtcdPeerURL:             etcdPeerURL,
+		EtcdInitialCluster:      initialCluster,
+		EtcdInitialClusterState: "new",
+		EtcdName:                "default",
+	}
+
+	return bep, func() { os.RemoveAll(tmpDir) }
 }
 
 // Start starts a backend process as configured. All exported variables in

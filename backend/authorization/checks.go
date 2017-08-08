@@ -41,13 +41,13 @@ func (p *CheckPolicy) CanRead(check *types.CheckConfig) bool {
 }
 
 // CanCreate returns true if actor has access to create.
-func (p *CheckPolicy) CanCreate() bool {
-	return canPerform(p, types.RulePermCreate)
+func (p *CheckPolicy) CanCreate(check *types.CheckConfig) bool {
+	return canPerformOn(p, check.Organization, check.Environment, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
-func (p *CheckPolicy) CanUpdate() bool {
-	return canPerform(p, types.RulePermUpdate)
+func (p *CheckPolicy) CanUpdate(check *types.CheckConfig) bool {
+	return canPerformOn(p, check.Organization, check.Environment, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

@@ -41,13 +41,13 @@ func (p *EntityPolicy) CanRead(entity *types.Entity) bool {
 }
 
 // CanCreate returns true if actor has access to create.
-func (p *EntityPolicy) CanCreate() bool {
-	return canPerform(p, types.RulePermCreate)
+func (p *EntityPolicy) CanCreate(entity *types.Entity) bool {
+	return canPerformOn(p, entity.Organization, entity.Environment, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
-func (p *EntityPolicy) CanUpdate() bool {
-	return canPerform(p, types.RulePermUpdate)
+func (p *EntityPolicy) CanUpdate(entity *types.Entity) bool {
+	return canPerformOn(p, entity.Organization, entity.Environment, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

@@ -138,7 +138,7 @@ func TestHttpApiMutatorPost(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
 
-	unauthReq := newRequest("POST", "/mutators/"+mutatorName, nil)
+	unauthReq := newRequest("POST", "/mutators/"+mutatorName, bytes.NewBuffer(updatedMutatorJSON))
 	unauthReq = requestWithNoAccess(unauthReq)
 
 	unauthRes := processRequest(c, unauthReq)

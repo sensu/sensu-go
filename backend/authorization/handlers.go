@@ -41,13 +41,13 @@ func (p *HandlerPolicy) CanRead(handler *types.Handler) bool {
 }
 
 // CanCreate returns true if actor has access to create.
-func (p *HandlerPolicy) CanCreate() bool {
-	return canPerform(p, types.RulePermCreate)
+func (p *HandlerPolicy) CanCreate(handler *types.Handler) bool {
+	return canPerformOn(p, handler.Organization, handler.Environment, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
-func (p *HandlerPolicy) CanUpdate() bool {
-	return canPerform(p, types.RulePermUpdate)
+func (p *HandlerPolicy) CanUpdate(handler *types.Handler) bool {
+	return canPerformOn(p, handler.Organization, handler.Environment, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

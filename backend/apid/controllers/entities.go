@@ -28,8 +28,6 @@ func (c *EntitiesController) many(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case r.Method == http.MethodGet && !abilities.CanList():
-		fallthrough
-	case r.Method == http.MethodPost && !abilities.CanCreate():
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}

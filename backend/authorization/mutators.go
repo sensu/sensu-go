@@ -41,13 +41,13 @@ func (p *MutatorPolicy) CanRead(mutator *types.Mutator) bool {
 }
 
 // CanCreate returns true if actor has access to create.
-func (p *MutatorPolicy) CanCreate() bool {
-	return canPerform(p, types.RulePermCreate)
+func (p *MutatorPolicy) CanCreate(mutator *types.Mutator) bool {
+	return canPerformOn(p, mutator.Organization, mutator.Environment, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
-func (p *MutatorPolicy) CanUpdate() bool {
-	return canPerform(p, types.RulePermUpdate)
+func (p *MutatorPolicy) CanUpdate(mutator *types.Mutator) bool {
+	return canPerformOn(p, mutator.Organization, mutator.Environment, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

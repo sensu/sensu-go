@@ -96,14 +96,6 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(mutatorBytes))
 	case http.MethodPut, http.MethodPost:
-		switch {
-		case mutator == nil && !abilities.CanCreate():
-			fallthrough
-		case mutator != nil && !abilities.CanUpdate():
-			authorization.UnauthorizedAccessToResource(w)
-			return
-		}
-
 		newMutator := &types.Mutator{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -120,6 +112,14 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 
 		if err = newMutator.Validate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		switch {
+		case mutator == nil && !abilities.CanCreate(newMutator):
+			fallthrough
+		case mutator != nil && !abilities.CanUpdate(newMutator):
+			authorization.UnauthorizedAccessToResource(w)
 			return
 		}
 

@@ -171,8 +171,7 @@ unit_test_commands () {
 
 e2e_commands () {
 	echo "Running e2e tests..."
-
-	go test -v ${REPO_PATH}/testing/e2e
+	go test -v ${REPO_PATH}/testing/e2e $@
 }
 
 docker_commands () {
@@ -211,7 +210,7 @@ elif [ "$cmd" == "build_tools" ]; then
 	build_tools
 elif [ "$cmd" == "e2e" ]; then
 	build_commands
-	e2e_commands
+	e2e_commands "${@:2}"
 elif [ "$cmd" == "build" ]; then
 	build_commands
 elif [ "$cmd" == "docker" ]; then

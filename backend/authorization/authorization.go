@@ -43,7 +43,7 @@ func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 		if !matchesRuleOrganization(rule, org) {
 			continue
 		}
-		if !matchesRuleEnvironment(rule, env) {
+		if resource != types.RuleTypeAsset && resource != types.RuleTypeOrganization && !matchesRuleEnvironment(rule, env) {
 			continue
 		}
 		if hasPermission(rule, action) {
@@ -52,9 +52,11 @@ func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"actor":    actor,
-		"resource": resource,
 		"action":   action,
+		"actor":    actor,
+		"env":      env,
+		"org":      org,
+		"resource": resource,
 	}).Info("request to resource not allowed")
 
 	return false

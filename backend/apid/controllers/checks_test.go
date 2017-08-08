@@ -135,7 +135,7 @@ func TestHttpApiCheckPut(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
 
-	unauthReq := newRequest("PUT", "/checks/check1", nil)
+	unauthReq := newRequest("PUT", "/checks/check1", bytes.NewBuffer(updatedCheckJSON))
 	unauthReq = requestWithNoAccess(unauthReq)
 
 	unauthRes := processRequest(c, unauthReq)
@@ -162,7 +162,7 @@ func TestHttpApiCheckPost(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, putRes.Code)
 
-	unauthReq := newRequest("POST", "/checks/check1", nil)
+	unauthReq := newRequest("POST", "/checks/check1", bytes.NewBuffer(updatedCheckJSON))
 	unauthReq = requestWithNoAccess(unauthReq)
 
 	unauthRes := processRequest(c, unauthReq)

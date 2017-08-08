@@ -16,7 +16,7 @@ func (client *RestClient) CreateRole(role *types.Role) error {
 
 	res, err := client.R().
 		SetBody(bytes).
-		Put("/rbac/roles")
+		Put("/rbac/roles/" + role.Name)
 
 	if err != nil {
 		return err

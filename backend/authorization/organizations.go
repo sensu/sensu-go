@@ -42,19 +42,19 @@ func (p *OrganizationPolicy) CanRead(org *types.Organization) bool {
 	return CanAccessResource(
 		p.Context().Actor,
 		org.Name,
-		"*",
+		"",
 		p.Resource(),
 		types.RulePermRead,
 	)
 }
 
 // CanCreate returns true if actor has access to create.
-func (p *OrganizationPolicy) CanCreate() bool {
+func (p *OrganizationPolicy) CanCreate(org *types.Organization) bool {
 	return canPerform(p, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
-func (p *OrganizationPolicy) CanUpdate() bool {
+func (p *OrganizationPolicy) CanUpdate(org *types.Organization) bool {
 	return canPerform(p, types.RulePermUpdate)
 }
 
