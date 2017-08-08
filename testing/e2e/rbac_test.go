@@ -174,15 +174,15 @@ func TestRBAC(t *testing.T) {
 	prodConfig.Cluster.Tokens = prodTokens
 
 	// Make sure each of these clients only has access to objects within its role
-	checks, err := defaultClient.ListChecks()
+	checks, err := defaultClient.ListChecks("acme")
 	assert.NoError(t, err)
 	assert.Equal(t, &checks[0], defaultCheck)
 
-	checks, err = devClient.ListChecks()
+	checks, err = devClient.ListChecks("acme")
 	assert.NoError(t, err)
 	assert.Equal(t, &checks[0], devCheck)
 
-	checks, err = prodClient.ListChecks()
+	checks, err = prodClient.ListChecks("acme")
 	assert.NoError(t, err)
 	assert.Equal(t, &checks[0], prodCheck)
 
