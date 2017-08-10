@@ -44,6 +44,23 @@ func (client *RestClient) DeleteRole(name string) error {
 	return nil
 }
 
+// FetchRole fetches role from configured Sensu instance
+func (client *RestClient) FetchRole(name string) (*types.Role, error) {
+	var role *types.Role
+
+	res, err := client.R().Get("/rbac/roles/" + name)
+	if err != nil {
+		return role, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return role, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &role)
+	return role, err
+}
+
 // ListRoles fetches all roles from configured Sensu instance
 func (client *RestClient) ListRoles() ([]types.Role, error) {
 	var roles []types.Role
@@ -68,7 +85,7 @@ func (client *RestClient) AddRule(roleName string, rule *types.Rule) error {
 		return err
 	}
 
-	key := "/rbac/roles/" + roleName + "/type/" + rule.Type
+	key := "/rbac/roles/" + roleName + "/rules/" + rule.Type
 	res, err := client.R().SetBody(bytes).Put(key)
 
 	if err != nil {
@@ -84,8 +101,8 @@ func (client *RestClient) AddRule(roleName string, rule *types.Rule) error {
 
 // RemoveRule removes rule from existing role for configured Sensu instance
 func (client *RestClient) RemoveRule(name string, t string) error {
-	key := "/rbac/roles/" + name + "/types/" + t
-	res, err := client.R().Delete(key)
+	path := "/rbac/roles/" + name + "/rules/" + t
+	res, err := client.R().Delete(path)
 
 	if err != nil {
 		return err

@@ -80,11 +80,14 @@ func (opts *ruleOpts) withFlags(flags *pflag.FlagSet) {
 
 	if create, _ := flags.GetBool("create"); create {
 		opts.Permissions = append(opts.Permissions, "create")
-	} else if read, _ := flags.GetBool("read"); read {
+	}
+	if read, _ := flags.GetBool("read"); read {
 		opts.Permissions = append(opts.Permissions, "read")
-	} else if update, _ := flags.GetBool("update"); update {
+	}
+	if update, _ := flags.GetBool("update"); update {
 		opts.Permissions = append(opts.Permissions, "update")
-	} else if delete, _ := flags.GetBool("delete"); delete {
+	}
+	if delete, _ := flags.GetBool("delete"); delete {
 		opts.Permissions = append(opts.Permissions, "delete")
 	}
 }
