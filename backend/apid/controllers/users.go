@@ -14,7 +14,10 @@ import (
 
 // UsersController defines the fields required by UsersController.
 type UsersController struct {
-	Store store.Store
+	Store interface {
+		store.UserStore
+		store.RBACStore
+	}
 }
 
 // Register should define an association between HTTP routes and their
@@ -24,6 +27,7 @@ func (c *UsersController) Register(r *mux.Router) {
 	r.HandleFunc("/rbac/users", c.updateUser).Methods(http.MethodPut)
 	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/users/{username}", c.deleteUser).Methods(http.MethodDelete)
+	r.HandleFunc("/rbac/users/{username}/password", c.password).Methods(http.MethodPut)
 }
 
 // deleteUser handles DELETE requests to /users/:username
@@ -134,9 +138,19 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Differeniate between create & update
+	isCreate := false
+	if u, err := c.Store.GetUser(user.Username); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} else if u == nil {
+		isCreate = true
+	}
+
 	abilities := authorization.Users.WithContext(r.Context())
-	if !abilities.CanUpdate(&user) {
+	switch {
+	case isCreate && !abilities.CanCreate():
+		fallthrough
+	case !isCreate && !abilities.CanUpdate(&user):
 		authorization.UnauthorizedAccessToResource(w)
 		return
 	}
@@ -169,7 +183,56 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func validateRoles(store store.Store, givenRoles []string) error {
+func (c *UsersController) password(w http.ResponseWriter, r *http.Request) {
+	var user *types.User
+	abilities := authorization.Users.WithContext(r.Context())
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	params := map[string]string{}
+	err = json.Unmarshal(bodyBytes, &params)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	vars := mux.Vars(r)
+	if user, err = c.Store.GetUser(vars["username"]); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if user == nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if !abilities.CanUpdate(user) {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
+	user.Password = params["password"]
+	if err = user.ValidatePassword(); err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
+
+	if err = c.Store.UpdateUser(user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func validateRoles(store store.RBACStore, givenRoles []string) error {
 	storedRoles, err := store.GetRoles()
 	if err != nil {
 		return err

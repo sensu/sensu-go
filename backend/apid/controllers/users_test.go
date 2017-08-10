@@ -165,6 +165,7 @@ func TestUpdateUser(t *testing.T) {
 	userBytes, _ := json.Marshal(user)
 
 	store.On("GetRoles").Return(storedRoles, nil)
+	store.On("GetUser", "foo").Return(user, nil)
 	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	req := newRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
@@ -195,11 +196,69 @@ func TestUpdateUserError(t *testing.T) {
 	userBytes, _ := json.Marshal(user)
 
 	store.On("GetRoles").Return(storedRoles, nil)
+	store.On("GetUser", "foo").Return(user, nil)
 	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(fmt.Errorf(""))
 
 	req := newRequest("PUT", fmt.Sprintf("/rbac/users"), bytes.NewBuffer(userBytes))
 	res := processRequest(u, req)
 
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+}
+
+func TestUpdatePassword(t *testing.T) {
+	store := &mockstore.MockStore{}
+	u := &UsersController{Store: store}
+
+	user := types.FixtureUser("foo")
+	params := map[string]string{"password": "Meowmix#123"}
+	paramsBytes, _ := json.Marshal(params)
+
+	store.On("GetUser", "foo").Return(user, nil)
+	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(nil)
+
+	req := newRequest("PUT", fmt.Sprintf("/rbac/users/foo/password"), bytes.NewBuffer(paramsBytes))
+	res := processRequest(u, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	// Bad body
+	req = newRequest(
+		"PUT",
+		"/rbac/users/foo/password",
+		bytes.NewBuffer([]byte("ksajdf")),
+	)
+
+	res = processRequest(u, req)
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+
+	// Unauthorized user
+	req = newRequest(http.MethodPut, "/rbac/users/foo/password", bytes.NewBuffer(paramsBytes))
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+	// Bad password
+	params = map[string]string{"password": "123"}
+	paramsBytes, _ = json.Marshal(params)
+
+	req = newRequest(
+		"PUT",
+		"/rbac/users/foo/password",
+		bytes.NewBuffer(paramsBytes),
+	)
+	res = processRequest(u, req)
+	assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+
+	// Bad response from store
+	store.On("GetUser", "foo2").Return(user, errors.New("test"))
+	req = newRequest(
+		"PUT",
+		"/rbac/users/foo2/password",
+		bytes.NewBuffer(paramsBytes),
+	)
+
+	res = processRequest(u, req)
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 

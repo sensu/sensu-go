@@ -3,8 +3,14 @@ package testing
 import "github.com/sensu/sensu-go/types"
 
 // CreateUser for use with mock lib
-func (c *MockClient) CreateUser(check *types.User) error {
-	args := c.Called(check)
+func (c *MockClient) CreateUser(user *types.User) error {
+	args := c.Called(user)
+	return args.Error(0)
+}
+
+// UpdatePassword for use with mock lib
+func (c *MockClient) UpdatePassword(username, pwd string) error {
+	args := c.Called(username, pwd)
 	return args.Error(0)
 }
 

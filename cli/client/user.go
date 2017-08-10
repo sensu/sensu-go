@@ -29,6 +29,28 @@ func (client *RestClient) CreateUser(user *types.User) error {
 	return nil
 }
 
+// UpdatePassword updates password of given user on configured Sensu instance
+func (client *RestClient) UpdatePassword(username, pwd string) error {
+	bytes, err := json.Marshal(map[string]string{"password": pwd})
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().
+		SetBody(bytes).
+		Put("/rbac/users/" + username + "/password")
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
 // DeleteUser deletes a user on configured Sensu instance
 func (client *RestClient) DeleteUser(username string) error {
 	res, err := client.R().Delete("/rbac/users/" + username)
