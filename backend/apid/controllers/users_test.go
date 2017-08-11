@@ -63,7 +63,7 @@ func TestMany(t *testing.T) {
 		user1,
 		user2,
 	}
-	store.On("GetUsers").Return(users, nil)
+	store.On("GetAllUsers").Return(users, nil)
 	req := newRequest("GET", "/rbac/users", nil)
 	res := processRequest(u, req)
 
@@ -100,7 +100,7 @@ func TestManyError(t *testing.T) {
 	}
 
 	users := []*types.User{}
-	store.On("GetUsers").Return(users, errors.New("error"))
+	store.On("GetAllUsers").Return(users, errors.New("error"))
 	req := newRequest("GET", "/rbac/users", nil)
 	res := processRequest(u, req)
 
@@ -257,6 +257,34 @@ func TestUpdatePassword(t *testing.T) {
 		"/rbac/users/foo2/password",
 		bytes.NewBuffer(paramsBytes),
 	)
+
+	res = processRequest(u, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+}
+
+func TestReinstateUser(t *testing.T) {
+	store := &mockstore.MockStore{}
+	u := &UsersController{Store: store}
+	user := types.FixtureUser("foo")
+
+	store.On("GetUser", "foo").Return(user, nil)
+	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(nil)
+
+	req := newRequest("PUT", fmt.Sprintf("/rbac/users/foo/reinstate"), nil)
+	res := processRequest(u, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	// Unauthorized user
+	req = newRequest(http.MethodPut, "/rbac/users/foo/reinstate", nil)
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+	// Bad response from store
+	store.On("GetUser", "foo2").Return(user, errors.New("test"))
+	req = newRequest("PUT", "/rbac/users/foo2/reinstate", nil)
 
 	res = processRequest(u, req)
 	assert.Equal(t, http.StatusInternalServerError, res.Code)

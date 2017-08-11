@@ -77,8 +77,9 @@ type OrganizationAPIClient interface {
 type UserAPIClient interface {
 	CreateUser(*types.User) error
 	UpdatePassword(string, string) error
-	DeleteUser(string) error
+	DisableUser(string) error
 	ListUsers() ([]types.User, error)
+	ReinstateUser(string) error
 }
 
 // RoleAPIClient client methods for role

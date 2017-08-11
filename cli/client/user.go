@@ -51,9 +51,24 @@ func (client *RestClient) UpdatePassword(username, pwd string) error {
 	return nil
 }
 
-// DeleteUser deletes a user on configured Sensu instance
-func (client *RestClient) DeleteUser(username string) error {
+// DisableUser disables a user on configured Sensu instance
+func (client *RestClient) DisableUser(username string) error {
 	res, err := client.R().Delete("/rbac/users/" + username)
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
+// ReinstateUser reinstates a disabled user on configured Sensu instance
+func (client *RestClient) ReinstateUser(uname string) error {
+	res, err := client.R().Put("/rbac/users/" + uname + "/reinstate")
 
 	if err != nil {
 		return err

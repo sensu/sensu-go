@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DeleteCommand adds a command that allows admin's to disable users
-func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
+// ReinstateCommand adds a command that allows user to delete users
+func ReinstateCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
-		Use:          "disable [USERNAME]",
-		Short:        "disable user given username",
+		Use:          "reinstate [USERNAME]",
+		Short:        "reinstate disabled user given username",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
@@ -21,12 +21,12 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			username := args[0]
-			err := cli.Client.DisableUser(username)
+			err := cli.Client.ReinstateUser(username)
 			if err != nil {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Disabled")
+			fmt.Fprintln(cmd.OutOrStdout(), "Reinstated")
 			return nil
 		},
 	}

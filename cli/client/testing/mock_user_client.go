@@ -14,9 +14,15 @@ func (c *MockClient) UpdatePassword(username, pwd string) error {
 	return args.Error(0)
 }
 
-// DeleteUser for use with mock lib
-func (c *MockClient) DeleteUser(username string) error {
+// DisableUser for use with mock lib
+func (c *MockClient) DisableUser(username string) error {
 	args := c.Called(username)
+	return args.Error(0)
+}
+
+// ReinstateUser for use with mock lib
+func (c *MockClient) ReinstateUser(uname string) error {
+	args := c.Called(uname)
 	return args.Error(0)
 }
 
