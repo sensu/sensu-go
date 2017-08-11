@@ -115,12 +115,12 @@ func (s *etcdStore) GetUser(username string) (*types.User, error) {
 
 // GetUsers retrieves all enabled users
 func (s *etcdStore) GetUsers() ([]*types.User, error) {
-	var allUsers []*types.User
-	if allUsers, err := s.GetAllUsers(); err != nil {
+	allUsers, err := s.GetAllUsers()
+	if err != nil {
 		return allUsers, err
 	}
 
-	users := make([]*types.User, len(allUsers))
+	var users []*types.User
 	for _, user := range allUsers {
 		// Verify that the user is not disabled
 		if !user.Disabled {
