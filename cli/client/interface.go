@@ -85,7 +85,9 @@ type UserAPIClient interface {
 type RoleAPIClient interface {
 	CreateRole(*types.Role) error
 	DeleteRole(string) error
+	FetchRole(string) (*types.Role, error)
 	ListRoles() ([]types.Role, error)
+
 	AddRule(role string, rule *types.Rule) error
 	RemoveRule(role string, ruleType string) error
 }

@@ -1,0 +1,92 @@
+package role
+
+import (
+	"errors"
+	"io"
+	"strings"
+
+	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/table"
+	"github.com/sensu/sensu-go/types"
+	"github.com/spf13/cobra"
+)
+
+// ListRulesCommand defines new command to list rules associated w/ a role
+func ListRulesCommand(cli *cli.SensuCli) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:          "list-rules ROLE",
+		Short:        "list rules associated with a role",
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return errors.New("must provide the name of a role")
+			}
+
+			// Fetch roles from API
+			r, err := cli.Client.FetchRole(args[0])
+			if err != nil {
+				return err
+			}
+
+			// Determine the format to use to output the data
+			var format string
+			if format, _ = cmd.Flags().GetString("format"); format == "" {
+				format = cli.Config.Format()
+			}
+
+			if format == "json" {
+				helpers.PrintJSON(r, cmd.OutOrStdout())
+			} else {
+				printRulesToTable(r, cmd.OutOrStdout())
+			}
+
+			return nil
+		},
+	}
+
+	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+
+	return cmd
+}
+
+func printRulesToTable(queryResults *types.Role, io io.Writer) {
+	rows := make([]*table.Row, len(queryResults.Rules))
+	for i, result := range queryResults.Rules {
+		rows[i] = &table.Row{Value: result}
+	}
+
+	table := table.New([]*table.Column{
+		{
+			Title:       "Type",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				rule, _ := data.(types.Rule)
+				return rule.Type
+			},
+		},
+		{
+			Title: "Org.",
+			CellTransformer: func(data interface{}) string {
+				rule, _ := data.(types.Rule)
+				return rule.Organization
+			},
+		},
+		{
+			Title: "Env.",
+			CellTransformer: func(data interface{}) string {
+				rule, _ := data.(types.Rule)
+				return rule.Environment
+			},
+		},
+		{
+			Title: "Permissions",
+			CellTransformer: func(data interface{}) string {
+				rule, _ := data.(types.Rule)
+				return strings.Join(rule.Permissions, ",")
+			},
+		},
+	})
+
+	table.Render(io, rows)
+}
