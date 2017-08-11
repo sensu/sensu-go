@@ -27,7 +27,13 @@ func (c *UsersController) Register(r *mux.Router) {
 	r.HandleFunc("/rbac/users", c.updateUser).Methods(http.MethodPut)
 	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/users/{username}", c.deleteUser).Methods(http.MethodDelete)
+
+	// TODO (JP): Lot of duplication between single, password & reinstate. Could probably be combined.
 	r.HandleFunc("/rbac/users/{username}/password", c.password).Methods(http.MethodPut)
+	r.HandleFunc("/rbac/users/{username}/reinstate", c.reinstate).Methods(http.MethodPut)
+
+	// Add/Remove Roles
+	r.HandleFunc("/rbac/users/{username}/roles/{role}", c.roles).Methods(http.MethodPut, http.MethodDelete)
 }
 
 // deleteUser handles DELETE requests to /users/:username
@@ -58,7 +64,7 @@ func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := c.Store.GetUsers()
+	users, err := c.Store.GetAllUsers()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -229,6 +235,89 @@ func (c *UsersController) password(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (c *UsersController) reinstate(w http.ResponseWriter, r *http.Request) {
+	var user *types.User
+	var err error
+
+	vars := mux.Vars(r)
+	abilities := authorization.Users.WithContext(r.Context())
+
+	if user, err = c.Store.GetUser(vars["username"]); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !abilities.CanUpdate(user) {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
+	user.Disabled = false
+	if err = c.Store.UpdateUser(user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func (c *UsersController) roles(w http.ResponseWriter, r *http.Request) {
+	var user *types.User
+	var err error
+
+	vars := mux.Vars(r)
+	role := vars["role"]
+	abilities := authorization.Users.WithContext(r.Context())
+
+	if user, err = c.Store.GetUser(vars["username"]); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !abilities.CanUpdate(user) {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPut:
+		var exists bool
+		for _, r := range user.Roles {
+			if r == role {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			user.Roles = append(user.Roles, role)
+		}
+	case http.MethodDelete:
+		newRoles := []string{}
+		for _, r := range user.Roles {
+			if r != role {
+				newRoles = append(newRoles, r)
+			}
+		}
+
+		user.Roles = newRoles
+	}
+
+	if err = validateRoles(c.Store, user.Roles); err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
+
+	if err = c.Store.UpdateUser(user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
 func validateRoles(store store.RBACStore, givenRoles []string) error {
 	storedRoles, err := store.GetRoles()
 	if err != nil {
@@ -236,6 +325,7 @@ func validateRoles(store store.RBACStore, givenRoles []string) error {
 	}
 
 	for _, givenRole := range givenRoles {
+		logger.Info(givenRole)
 		if present := hasRole(storedRoles, givenRole); !present {
 			return fmt.Errorf("given role '%s' is not valid", givenRole)
 		}

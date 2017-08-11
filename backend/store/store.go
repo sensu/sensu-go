@@ -158,6 +158,7 @@ type UserStore interface {
 	DeleteUserByName(username string) error
 	GetUser(username string) (*types.User, error)
 	GetUsers() ([]*types.User, error)
+	GetAllUsers() ([]*types.User, error)
 	UpdateUser(user *types.User) error
 }
 

@@ -9,23 +9,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDeleteCommand(t *testing.T) {
+func TestAddRoleCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
-	cmd := DeleteCommand(cli)
+	cmd := AddRoleCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
-	assert.Regexp("disable", cmd.Use)
-	assert.Regexp("disable user", cmd.Short)
+	assert.Regexp("add-role", cmd.Use)
+	assert.Regexp("add role", cmd.Short)
 }
 
-func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
+func TestAddRoleCommandRunEClosureWithoutName(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
-	cmd := DeleteCommand(cli)
+	cmd := AddRoleCommand(cli)
 	cmd.Flags().Set("timeout", "15")
 	out, err := test.RunCmd(cmd, []string{})
 
@@ -33,29 +33,29 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
+func TestAddRoleCommandRunEClosureWithFlags(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DisableUser", "foo").Return(nil)
+	client.On("AddRoleToUser", "foo", "bar").Return(nil)
 
-	cmd := DeleteCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"foo"})
+	cmd := AddRoleCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"foo", "bar"})
 
-	assert.Regexp("Disabled", out)
+	assert.Regexp("Added", out)
 	assert.Nil(err)
 }
 
-func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
+func TestAddRoleCommandRunEClosureWithServerErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DisableUser", "bar").Return(errors.New("oh noes"))
+	client.On("AddRoleToUser", "bar", "foo").Return(errors.New("oh noes"))
 
-	cmd := DeleteCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"bar"})
+	cmd := AddRoleCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"bar", "foo"})
 
 	assert.Empty(out)
 	assert.NotNil(err)

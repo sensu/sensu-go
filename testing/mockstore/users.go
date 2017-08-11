@@ -32,6 +32,12 @@ func (s *MockStore) GetUsers() ([]*types.User, error) {
 	return args.Get(0).([]*types.User), args.Error(1)
 }
 
+// GetAllUsers ...
+func (s *MockStore) GetAllUsers() ([]*types.User, error) {
+	args := s.Called()
+	return args.Get(0).([]*types.User), args.Error(1)
+}
+
 // UpdateUser ...
 func (s *MockStore) UpdateUser(user *types.User) error {
 	args := s.Called(user)

@@ -113,8 +113,26 @@ func (s *etcdStore) GetUser(username string) (*types.User, error) {
 	return user, nil
 }
 
-// GetUsers retrieves all users
+// GetUsers retrieves all enabled users
 func (s *etcdStore) GetUsers() ([]*types.User, error) {
+	allUsers, err := s.GetAllUsers()
+	if err != nil {
+		return allUsers, err
+	}
+
+	var users []*types.User
+	for _, user := range allUsers {
+		// Verify that the user is not disabled
+		if !user.Disabled {
+			users = append(users, user)
+		}
+	}
+
+	return users, nil
+}
+
+// GetAllUsers retrieves all users
+func (s *etcdStore) GetAllUsers() ([]*types.User, error) {
 	resp, err := s.kvc.Get(context.TODO(), getUserPath(""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
@@ -131,10 +149,7 @@ func (s *etcdStore) GetUsers() ([]*types.User, error) {
 			return nil, err
 		}
 
-		// Verify that the user is not disabled
-		if !user.Disabled {
-			usersArray = append(usersArray, user)
-		}
+		usersArray = append(usersArray, user)
 	}
 
 	return usersArray, nil

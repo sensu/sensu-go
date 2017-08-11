@@ -51,8 +51,31 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Empty(out)
-	assert.NotNil(err)
-	assert.Equal("fire", err.Error())
+	assert.Error(err)
+}
+
+func TestListCommandRunEClosureWithTable(t *testing.T) {
+	assert := assert.New(t)
+	cli := newCLI()
+
+	client := cli.Client.(*client.MockClient)
+	client.On("ListUsers").Return([]types.User{
+		*types.FixtureUser("one"),
+		*types.FixtureUser("two"),
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "none")
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Contains(out, "Username")
+	assert.Contains(out, "Roles")
+	assert.Contains(out, "Enabled")
+	assert.Contains(out, "one")
+	assert.Contains(out, "two")
+	assert.Contains(out, "true")
+	assert.NoError(err)
 }
 
 func newCLI() *cli.SensuCli {
