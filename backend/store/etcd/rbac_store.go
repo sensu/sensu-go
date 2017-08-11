@@ -39,7 +39,7 @@ func (s *etcdStore) GetRoleByName(name string) (*types.Role, error) {
 	resp, err := s.kvc.Get(
 		context.TODO(),
 		getRolePath(name),
-		clientv3.WithPrefix(),
+		clientv3.WithLimit(1),
 	)
 
 	if err != nil {
