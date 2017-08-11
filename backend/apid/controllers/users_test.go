@@ -290,6 +290,90 @@ func TestReinstateUser(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 
+func TestUserAddRole(t *testing.T) {
+	store := &mockstore.MockStore{}
+	u := &UsersController{Store: store}
+
+	user := types.FixtureUser("foo")
+	user.Roles = []string{}
+
+	store.On("GetRoles").Return([]*types.Role{{Name: "admin"}}, nil)
+	store.On("GetUser", "foo").Return(user, nil)
+	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(nil)
+
+	req := newRequest("PUT", fmt.Sprintf("/rbac/users/foo/roles/admin"), nil)
+	res := processRequest(u, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	// Unauthorized user
+	req = newRequest(http.MethodPut, "/rbac/users/foo/roles/admin", nil)
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+	// Invalid Role
+	req = newRequest(http.MethodPut, "/rbac/users/foo/roles/asdfasdfsa", nil)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+
+	// Bad response from store
+	store.On("GetUser", "foo2").Return(user, errors.New("test"))
+	req = newRequest("PUT", "/rbac/users/foo2/roles/admin", nil)
+
+	res = processRequest(u, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	// Bad response from store on save
+	store.On("GetUser", "foo2").Return(user, nil)
+	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(errors.New("test"))
+	req = newRequest("PUT", "/rbac/users/foo2/roles/admin", nil)
+
+	res = processRequest(u, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+}
+
+func TestUserRemoveRole(t *testing.T) {
+	store := &mockstore.MockStore{}
+	u := &UsersController{Store: store}
+
+	user := types.FixtureUser("foo")
+	user.Roles = []string{}
+
+	store.On("GetRoles").Return([]*types.Role{{Name: "admin"}}, nil)
+	store.On("GetUser", "foo").Return(user, nil)
+	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(nil)
+
+	req := newRequest(http.MethodDelete, fmt.Sprintf("/rbac/users/foo/roles/admin"), nil)
+	res := processRequest(u, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	// Unauthorized user
+	req = newRequest(http.MethodDelete, "/rbac/users/foo/roles/admin", nil)
+	req = requestWithNoAccess(req)
+	res = processRequest(u, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+	// Bad response from store
+	store.On("GetUser", "foo2").Return(user, errors.New("test"))
+	req = newRequest(http.MethodDelete, "/rbac/users/foo2/roles/admin", nil)
+
+	res = processRequest(u, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	// Bad response from store on save
+	store.On("GetUser", "foo2").Return(user, nil)
+	store.On("UpdateUser", mock.AnythingOfType("*types.User")).Return(errors.New("test"))
+	req = newRequest(http.MethodDelete, "/rbac/users/foo2/roles/admin", nil)
+
+	res = processRequest(u, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+}
+
 func TestValidateRoles(t *testing.T) {
 	store := &mockstore.MockStore{}
 
