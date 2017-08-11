@@ -300,6 +300,8 @@ func (c *UsersController) roles(w http.ResponseWriter, r *http.Request) {
 				newRoles = append(newRoles, r)
 			}
 		}
+
+		user.Roles = newRoles
 	}
 
 	if err = validateRoles(c.Store, user.Roles); err != nil {
