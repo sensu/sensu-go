@@ -56,10 +56,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-
-	cli := test.NewMockCLI()
-	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("none")
+	cli := newCLI()
 
 	client := cli.Client.(*client.MockClient)
 	client.On("ListUsers").Return([]types.User{
@@ -68,6 +65,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
+	cmd.Flags().Set("format", "none")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
