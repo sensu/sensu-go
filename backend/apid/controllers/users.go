@@ -139,10 +139,7 @@ func (c *UsersController) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isCreate := false
-	if u, err := c.Store.GetUser(user.Username); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} else if u == nil {
+	if u, _ := c.Store.GetUser(user.Username); u == nil {
 		isCreate = true
 	}
 
