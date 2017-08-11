@@ -2,9 +2,11 @@ package user
 
 import (
 	"io"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -57,6 +59,20 @@ func printUsersToTable(queryResults []types.User, io io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				user, _ := data.(types.User)
 				return user.Username
+			},
+		},
+		{
+			Title: "Roles",
+			CellTransformer: func(data interface{}) string {
+				user, _ := data.(types.User)
+				return strings.Join(user.Roles, ",")
+			},
+		},
+		{
+			Title: "Enabled",
+			CellTransformer: func(data interface{}) string {
+				user, _ := data.(types.User)
+				return globals.BooleanStyleP(!user.Disabled)
 			},
 		},
 	})

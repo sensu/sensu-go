@@ -27,7 +27,10 @@ func (c *UsersController) Register(r *mux.Router) {
 	r.HandleFunc("/rbac/users", c.updateUser).Methods(http.MethodPut)
 	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/users/{username}", c.deleteUser).Methods(http.MethodDelete)
+
+	// TODO (JP): Lot of duplication between single, password & reinstate. Could probably be combined.
 	r.HandleFunc("/rbac/users/{username}/password", c.password).Methods(http.MethodPut)
+	r.HandleFunc("/rbac/users/{username}/reinstate", c.reinstate).Methods(http.MethodPut)
 }
 
 // deleteUser handles DELETE requests to /users/:username
@@ -58,7 +61,7 @@ func (c *UsersController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := c.Store.GetUsers()
+	users, err := c.Store.GetAllUsers()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -220,6 +223,38 @@ func (c *UsersController) password(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = c.Store.UpdateUser(user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func (c *UsersController) reinstate(w http.ResponseWriter, r *http.Request) {
+	var user *types.User
+	var err error
+
+	vars := mux.Vars(r)
+	abilities := authorization.Users.WithContext(r.Context())
+
+	if user, err = c.Store.GetUser(vars["username"]); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if user == nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if !abilities.CanUpdate(user) {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
+	user.Disabled = false
 	if err = c.Store.UpdateUser(user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
