@@ -12,8 +12,11 @@ import (
 	"github.com/Knetic/govaluate"
 )
 
+// AssetNameRegexStr used to validate name of asset
+var AssetNameRegexStr = `[a-z0-9\/\_\.\-]+`
+
 // AssetNameRegex used to validate name of asset
-var AssetNameRegex = regexp.MustCompile(`^[a-z0-9\/\_\.\-]+$`)
+var AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
 
 // Asset defines an asset agents install as a dependency for a check.
 type Asset struct {

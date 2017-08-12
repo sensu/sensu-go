@@ -84,6 +84,7 @@ func TestConfigureAsset(t *testing.T) {
 
 	flags := &pflag.FlagSet{}
 	flags.StringSlice("metadata", []string{}, "")
+	flags.StringSlice("filter", []string{}, "")
 	flags.String("sha512", "12345qwerty", "")
 	flags.String("url", "http://lol", "")
 
@@ -98,12 +99,6 @@ func TestConfigureAsset(t *testing.T) {
 	asset, errs = cfg.Configure()
 	assert.NotEmpty(errs)
 	assert.Empty(asset.Organization)
-
-	// No args
-	cfg = ConfigureAsset{Flags: flags, Args: []string{}, Org: "default"}
-	asset, errs = cfg.Configure()
-	assert.NotEmpty(errs)
-	assert.Empty(asset.Name)
 
 	// Given name
 	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}

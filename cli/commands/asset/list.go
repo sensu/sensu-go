@@ -97,19 +97,6 @@ func printAssetsToTable(queryResults []types.Asset, writer io.Writer) {
 				return ""
 			},
 		},
-		{
-			Title: "Metadata",
-			CellTransformer: func(data interface{}) string {
-				asset, _ := data.(types.Asset)
-				output := ""
-
-				for k, v := range asset.Metadata {
-					output += k + ":" + v + " "
-				}
-
-				return output
-			},
-		},
 	})
 
 	table.Render(writer, rows)
