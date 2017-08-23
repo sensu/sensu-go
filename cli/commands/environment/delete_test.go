@@ -15,10 +15,12 @@ func TestDeleteCommand(t *testing.T) {
 		storeResponse  error
 		expectedOutput string
 		expectError    bool
+		skipConfirm    bool
 	}{
-		{"", nil, "Usage", false},
-		{"foo", fmt.Errorf("error"), "", true},
-		{"foo", nil, "Deleted", false},
+		{"", nil, "Usage", false, true},
+		{"foo", fmt.Errorf("error"), "", true, true},
+		{"foo", nil, "Deleted", false, true},
+		{"foo", nil, "Canceled", false, false},
 	}
 
 	for _, tc := range testCases {
@@ -37,6 +39,10 @@ func TestDeleteCommand(t *testing.T) {
 			).Return(tc.storeResponse)
 
 			cmd := DeleteCommand(cli)
+			if tc.skipConfirm {
+				cmd.Flags().Set("skip-confirm", "t")
+			}
+
 			out, err := test.RunCmd(cmd, []string{tc.name})
 
 			assert.Regexp(t, tc.expectedOutput, out)
