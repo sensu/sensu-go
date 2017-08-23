@@ -21,7 +21,10 @@ type AssetsController struct {
 // handlers defined within this controller.
 func (c *AssetsController) Register(r *mux.Router) {
 	r.HandleFunc("/assets", c.many).Methods(http.MethodGet)
-	r.HandleFunc("/assets/{name}", c.single).Methods(http.MethodGet, http.MethodPut, http.MethodPost)
+	r.NewRoute().
+		Path("/assets/{name:"+types.AssetNameRegexStr+"}").
+		Methods(http.MethodGet, http.MethodPut, http.MethodPost).
+		HandlerFunc(c.single)
 }
 
 // many handles requests to /assets

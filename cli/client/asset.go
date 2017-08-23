@@ -24,6 +24,23 @@ func (client *RestClient) ListAssets(org string) ([]types.Asset, error) {
 	return assets, err
 }
 
+// FetchAsset fetches an asset resource from the backend
+func (client *RestClient) FetchAsset(name string) (*types.Asset, error) {
+	var asset types.Asset
+
+	res, err := client.R().Get("/assets/" + name)
+	if err != nil {
+		return &asset, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return &asset, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &asset)
+	return &asset, err
+}
+
 // CreateAsset fetches an asset resource from the backend
 func (client *RestClient) CreateAsset(asset *types.Asset) error {
 	bytes, err := json.Marshal(asset)
