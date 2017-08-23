@@ -65,3 +65,14 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	assert.NotNil(err)
 	assert.Equal("oh noes", err.Error())
 }
+
+func TestDeleteCommandRunEFailConfirm(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	cmd := DeleteCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"test-handler"})
+
+	assert.Contains(out, "Canceled")
+	assert.NoError(err)
+}
