@@ -57,14 +57,14 @@ func printEnvironmentsToTable(queryResults []types.Environment, io io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				org, _ := data.(types.Organization)
+				org, _ := data.(types.Environment)
 				return org.Name
 			},
 		},
 		{
 			Title: "Description",
 			CellTransformer: func(data interface{}) string {
-				org, _ := data.(types.Organization)
+				org, _ := data.(types.Environment)
 				return org.Description
 			},
 		},
