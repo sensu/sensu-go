@@ -4,13 +4,15 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // DeleteCommand adds a command that allows user to delete checks
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:          "delete [NAME]",
 		Short:        "delete checks given name",
 		SilenceUsage: true,
@@ -22,6 +24,14 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			name := args[0]
+
+			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
+				if confirmed := helpers.ConfirmDelete(name, cmd.OutOrStdout()); !confirmed {
+					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
+					return nil
+				}
+			}
+
 			check := &types.CheckConfig{Name: name}
 			err := cli.Client.DeleteCheck(check)
 			if err != nil {
@@ -31,5 +41,14 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
+		Annotations: map[string]string{
+			// We want to be able to run this command regardless of whether the CLI
+			// has been configured.
+			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
+		},
 	}
+
+	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+
+	return cmd
 }

@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
 )
 
 // DeleteCommand adds a command that allows user to delete organizations
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:          "delete [ORGANIZATION]",
 		Short:        "delete specified organization",
 		SilenceUsage: true,
@@ -21,6 +22,14 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			org := args[0]
+
+			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
+				if confirmed := helpers.ConfirmDelete(org, cmd.OutOrStdout()); !confirmed {
+					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
+					return nil
+				}
+			}
+
 			err := cli.Client.DeleteOrganization(org)
 			if err != nil {
 				return err
@@ -30,4 +39,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+
+	return cmd
 }
