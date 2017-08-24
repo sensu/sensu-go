@@ -17,8 +17,7 @@ const (
 )
 
 func getEnvironmentsPath(org, env string) string {
-	orgPath := getOrganizationsPath(org)
-	return path.Join(orgPath, environmentsPathPrefix, env)
+	return path.Join(etcdRoot, environmentsPathPrefix, org, env)
 }
 
 // DeleteEnvironment deletes an environment
