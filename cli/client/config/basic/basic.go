@@ -48,14 +48,6 @@ func Load(flags *pflag.FlagSet) *Config {
 		if value, err := flags.GetString("config-dir"); err == nil && value != "" {
 			config.path = value
 		}
-
-		if value, err := flags.GetString("environment"); err == nil && value != "" {
-			config.Profile.Environment = value
-		}
-
-		if value, err := flags.GetString("organization"); err == nil && value != "" {
-			config.Profile.Organization = value
-		}
 	}
 
 	// Load the profile config file
@@ -77,6 +69,16 @@ func Load(flags *pflag.FlagSet) *Config {
 func (c *Config) flags(flags *pflag.FlagSet) {
 	if flags == nil {
 		return
+	}
+
+	// Override environment
+	if value, err := flags.GetString("environment"); err == nil && value != "" {
+		c.Profile.Environment = value
+	}
+
+	// Override organization
+	if value, err := flags.GetString("organization"); err == nil && value != "" {
+		c.Profile.Organization = value
 	}
 
 	// Set the API URL
