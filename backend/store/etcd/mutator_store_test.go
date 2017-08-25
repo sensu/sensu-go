@@ -35,5 +35,11 @@ func TestMutatorStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, mutators)
 		assert.Equal(t, 1, len(mutators))
+
+		// Updating a mutator in a nonexistent org and env should not work
+		mutator.Organization = "missing"
+		mutator.Environment = "missing"
+		err = store.UpdateMutator(ctx, mutator)
+		assert.Error(t, err)
 	})
 }

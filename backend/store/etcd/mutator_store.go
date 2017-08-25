@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -30,14 +31,14 @@ func (s *etcdStore) DeleteMutatorByName(ctx context.Context, name string) error 
 		return errors.New("must specify name of mutator")
 	}
 
-	_, err := s.kvc.Delete(context.TODO(), getMutatorsPath(ctx, name))
+	_, err := s.kvc.Delete(ctx, getMutatorsPath(ctx, name))
 	return err
 }
 
 // Mutators gets the list of mutators for an (optional) organization. If org is
 // the empty string, GetMutators returns all mutators for all orgs.
 func (s *etcdStore) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
-	resp, err := s.kvc.Get(context.TODO(), getMutatorsPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(ctx, getMutatorsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (s *etcdStore) GetMutatorByName(ctx context.Context, name string) (*types.M
 		return nil, errors.New("must specify name of mutator")
 	}
 
-	resp, err := s.kvc.Get(context.TODO(), getMutatorsPath(ctx, name))
+	resp, err := s.kvc.Get(ctx, getMutatorsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -90,9 +91,19 @@ func (s *etcdStore) UpdateMutator(ctx context.Context, mutator *types.Mutator) e
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getMutatorPath(mutator), string(mutatorBytes))
+	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(mutator.Organization, mutator.Environment)), ">", 0)
+	req := clientv3.OpPut(getMutatorPath(mutator), string(mutatorBytes))
+	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the mutator %s in environment %s/%s",
+			mutator.Name,
+			mutator.Organization,
+			mutator.Environment,
+		)
 	}
 
 	return nil

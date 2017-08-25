@@ -30,7 +30,7 @@ func TestEnvStorage(t *testing.T) {
 		envs, err := store.GetEnvironments(ctx, org)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, envs)
-		assert.Equal(t, 1, len(envs))
+		assert.Equal(t, 2, len(envs))
 
 		// Delete an environment
 		err = store.DeleteEnvironment(ctx, org, env.Name)
@@ -44,9 +44,9 @@ func TestEnvStorage(t *testing.T) {
 		err = store.UpdateEnvironment(ctx, "missing", env)
 		assert.Error(t, err)
 
-		// Retrieve all environments again
+		// Retrieve all environments again. We should have the default one
 		envs, err = store.GetEnvironments(ctx, org)
 		assert.NoError(t, err)
-		assert.Empty(t, envs)
+		assert.Equal(t, 1, len(envs))
 	})
 }

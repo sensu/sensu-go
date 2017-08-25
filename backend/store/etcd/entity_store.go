@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -29,7 +30,7 @@ func (s *etcdStore) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}
-	_, err := s.kvc.Delete(context.TODO(), getEntityPath(e))
+	_, err := s.kvc.Delete(ctx, getEntityPath(e))
 	return err
 }
 
@@ -38,7 +39,7 @@ func (s *etcdStore) DeleteEntityByID(ctx context.Context, id string) error {
 		return errors.New("must specify id")
 	}
 
-	_, err := s.kvc.Delete(context.TODO(), getEntitiesPath(ctx, id))
+	_, err := s.kvc.Delete(ctx, getEntitiesPath(ctx, id))
 	return err
 }
 
@@ -47,7 +48,7 @@ func (s *etcdStore) GetEntityByID(ctx context.Context, id string) (*types.Entity
 		return nil, errors.New("must specify id")
 	}
 
-	resp, err := s.kvc.Get(context.TODO(), getEntitiesPath(ctx, id), clientv3.WithLimit(1))
+	resp, err := s.kvc.Get(ctx, getEntitiesPath(ctx, id), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +66,7 @@ func (s *etcdStore) GetEntityByID(ctx context.Context, id string) (*types.Entity
 // GetEntities takes an optional org argument, an empty string will return
 // all entities.
 func (s *etcdStore) GetEntities(ctx context.Context) ([]*types.Entity, error) {
-	resp, err := s.kvc.Get(context.TODO(), getEntitiesPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(ctx, getEntitiesPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +96,21 @@ func (s *etcdStore) UpdateEntity(ctx context.Context, e *types.Entity) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.kvc.Put(context.TODO(), getEntityPath(e), string(eStr))
-	return err
+
+	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(e.Organization, e.Environment)), ">", 0)
+	req := clientv3.OpPut(getEntityPath(e), string(eStr))
+	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	if err != nil {
+		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the entity %s in environment %s/%s",
+			e.ID,
+			e.Organization,
+			e.Environment,
+		)
+	}
+
+	return nil
 }

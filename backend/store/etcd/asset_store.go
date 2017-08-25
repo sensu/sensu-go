@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -30,13 +31,13 @@ func (s *etcdStore) DeleteAssetByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.kvc.Delete(context.TODO(), getAssetsPath(ctx, name))
+	_, err := s.kvc.Delete(ctx, getAssetsPath(ctx, name))
 	return err
 }
 
 // GetAssets fetches all assets from the store
 func (s *etcdStore) GetAssets(ctx context.Context) ([]*types.Asset, error) {
-	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(ctx, getAssetsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (s *etcdStore) GetAssetByName(ctx context.Context, name string) (*types.Ass
 		return nil, errors.New("must specify organization and name")
 	}
 
-	resp, err := s.kvc.Get(context.TODO(), getAssetsPath(ctx, name))
+	resp, err := s.kvc.Get(ctx, getAssetsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +90,18 @@ func (s *etcdStore) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getAssetPath(asset), string(assetBytes))
+	cmp := clientv3.Compare(clientv3.Version(getOrganizationsPath(asset.Organization)), ">", 0)
+	req := clientv3.OpPut(getAssetPath(asset), string(assetBytes))
+	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the asset %s in organization %s",
+			asset.Name,
+			asset.Organization,
+		)
 	}
 
 	return nil

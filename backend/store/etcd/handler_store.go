@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -30,14 +31,14 @@ func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error 
 		return errors.New("must specify name of handler")
 	}
 
-	_, err := s.kvc.Delete(context.TODO(), getHandlersPath(ctx, name))
+	_, err := s.kvc.Delete(ctx, getHandlersPath(ctx, name))
 	return err
 }
 
 // GetHandlers gets the list of handlers for an (optional) organization. Passing
 // the empty string as the org will return all handlers.
 func (s *etcdStore) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
-	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(ctx, getHandlersPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (s *etcdStore) GetHandlerByName(ctx context.Context, name string) (*types.H
 		return nil, errors.New("must specify name of handler")
 	}
 
-	resp, err := s.kvc.Get(context.TODO(), getHandlersPath(ctx, name))
+	resp, err := s.kvc.Get(ctx, getHandlersPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -90,9 +91,19 @@ func (s *etcdStore) UpdateHandler(ctx context.Context, handler *types.Handler) e
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getHandlerPath(handler), string(handlerBytes))
+	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(handler.Organization, handler.Environment)), ">", 0)
+	req := clientv3.OpPut(getHandlerPath(handler), string(handlerBytes))
+	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the handler %s in environment %s/%s",
+			handler.Name,
+			handler.Organization,
+			handler.Environment,
+		)
 	}
 
 	return nil

@@ -47,6 +47,14 @@ func TestSchedulerd(t *testing.T) {
 			Name: "default",
 		})
 
+	// Mock a default environment
+	st.UpdateEnvironment(
+		context.Background(),
+		"default",
+		&types.Environment{
+			Name: "default",
+		})
+
 	checker := &Schedulerd{
 		Store:      st,
 		MessageBus: bus,

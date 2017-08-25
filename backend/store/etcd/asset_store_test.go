@@ -30,5 +30,10 @@ func TestAssetStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, assets)
 		assert.Equal(t, 1, len(assets))
+
+		// Updating an asset in a nonexistent org should not work
+		asset.Organization = "missing"
+		err = store.UpdateAsset(ctx, asset)
+		assert.Error(t, err)
 	})
 }

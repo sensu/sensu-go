@@ -26,7 +26,7 @@ func (s *etcdStore) DeleteEnvironment(ctx context.Context, org, env string) erro
 		return errors.New("must specify organization and environment name")
 	}
 
-	resp, err := s.kvc.Delete(context.TODO(), getEnvironmentsPath(org, env), clientv3.WithPrefix())
+	resp, err := s.kvc.Delete(ctx, getEnvironmentsPath(org, env), clientv3.WithPrefix())
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (s *etcdStore) DeleteEnvironment(ctx context.Context, org, env string) erro
 // GetEnvironment returns a single environment
 func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types.Environment, error) {
 	resp, err := s.kvc.Get(
-		context.TODO(),
+		ctx,
 		getEnvironmentsPath(org, env),
 		clientv3.WithLimit(1),
 	)
@@ -64,7 +64,7 @@ func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types
 // GetOrganizations returns all organizations
 func (s *etcdStore) GetEnvironments(ctx context.Context, org string) ([]*types.Environment, error) {
 	resp, err := s.kvc.Get(
-		context.TODO(),
+		ctx,
 		getEnvironmentsPath(org, "/"),
 		clientv3.WithPrefix(),
 	)
@@ -91,7 +91,7 @@ func (s *etcdStore) UpdateEnvironment(ctx context.Context, org string, env *type
 	// which we are creating this environment exists
 	cmp := clientv3.Compare(clientv3.Version(getOrganizationsPath(org)), ">", 0)
 	req := clientv3.OpPut(getEnvironmentsPath(org, env.Name), string(bytes))
-	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
+	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}
