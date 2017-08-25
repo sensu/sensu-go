@@ -18,7 +18,7 @@ func TestOrgStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(orgs))
 
-		org := types.FixtureOrganization("foo")
+		org := types.FixtureOrganization("acme")
 		err = store.UpdateOrganization(ctx, org)
 		assert.NoError(t, err)
 
@@ -27,8 +27,13 @@ func TestOrgStorage(t *testing.T) {
 		assert.Equal(t, org.Name, result.Name)
 
 		// Missing organization
-		_, err = store.GetOrganizationByName(ctx, "foobar")
+		_, err = store.GetOrganizationByName(ctx, "missing")
 		assert.Error(t, err)
+
+		// Create an environment within this new organization
+		env := types.FixtureEnvironment("dev")
+		err = store.UpdateEnvironment(ctx, org.Name, env)
+		assert.NoError(t, err)
 
 		// Get all organizations
 		orgs, err = store.GetOrganizations(ctx)
@@ -41,7 +46,7 @@ func TestOrgStorage(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Delete a missing org
-		err = store.DeleteOrganizationByName(ctx, "foobar")
+		err = store.DeleteOrganizationByName(ctx, "missing")
 		assert.Error(t, err)
 
 		// Get again all organizations
