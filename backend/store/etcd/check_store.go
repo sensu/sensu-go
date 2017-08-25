@@ -31,14 +31,14 @@ func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) er
 		return errors.New("must specify name")
 	}
 
-	_, err := s.kvc.Delete(context.TODO(), getCheckConfigsPath(ctx, name))
+	_, err := s.kvc.Delete(ctx, getCheckConfigsPath(ctx, name))
 	return err
 }
 
 // GetCheckConfigs returns check configurations for an (optional) organization.
 // If org is the empty string, it returns all check configs.
 func (s *etcdStore) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
-	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(ctx, getCheckConfigsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *etcdStore) GetCheckConfigByName(ctx context.Context, name string) (*typ
 		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.kvc.Get(context.TODO(), getCheckConfigsPath(ctx, name))
+	resp, err := s.kvc.Get(ctx, getCheckConfigsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (s *etcdStore) UpdateCheckConfig(ctx context.Context, check *types.CheckCon
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(check.Organization, check.Environment)), ">", 0)
 	req := clientv3.OpPut(getCheckConfigPath(check), string(checkBytes))
-	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
+	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

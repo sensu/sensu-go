@@ -38,7 +38,7 @@ func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, chec
 		return errors.New("must specify entity and check id")
 	}
 
-	_, err := s.kvc.Delete(context.TODO(), getEventsPath(ctx, entityID, checkID))
+	_, err := s.kvc.Delete(ctx, getEventsPath(ctx, entityID, checkID))
 	return err
 }
 
@@ -136,7 +136,7 @@ func (s *etcdStore) UpdateEvent(ctx context.Context, event *types.Event) error {
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(event.Entity.Organization, event.Entity.Environment)), ">", 0)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
-	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
+	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

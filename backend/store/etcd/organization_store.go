@@ -26,7 +26,7 @@ func (s *etcdStore) DeleteOrganizationByName(ctx context.Context, name string) e
 		return errors.New("must specify name")
 	}
 
-	resp, err := s.kvc.Delete(context.TODO(), getOrganizationsPath(name), clientv3.WithPrefix())
+	resp, err := s.kvc.Delete(ctx, getOrganizationsPath(name), clientv3.WithPrefix())
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (s *etcdStore) DeleteOrganizationByName(ctx context.Context, name string) e
 // GetOrganizationByName returns a single organization named *name*
 func (s *etcdStore) GetOrganizationByName(ctx context.Context, name string) (*types.Organization, error) {
 	resp, err := s.kvc.Get(
-		context.TODO(),
+		ctx,
 		getOrganizationsPath(name),
 		clientv3.WithLimit(1),
 	)
@@ -64,7 +64,7 @@ func (s *etcdStore) GetOrganizationByName(ctx context.Context, name string) (*ty
 // GetOrganizations returns all organizations
 func (s *etcdStore) GetOrganizations(ctx context.Context) ([]*types.Organization, error) {
 	resp, err := s.kvc.Get(
-		context.TODO(),
+		ctx,
 		getOrganizationsPath(""),
 		clientv3.WithPrefix(),
 	)
@@ -87,11 +87,7 @@ func (s *etcdStore) UpdateOrganization(ctx context.Context, org *types.Organizat
 		return err
 	}
 
-	_, err = s.kvc.Put(
-		context.TODO(),
-		getOrganizationsPath(org.Name),
-		string(bytes),
-	)
+	_, err = s.kvc.Put(ctx, getOrganizationsPath(org.Name), string(bytes))
 
 	if err != nil {
 		return err
