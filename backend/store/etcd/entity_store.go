@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -95,6 +96,21 @@ func (s *etcdStore) UpdateEntity(ctx context.Context, e *types.Entity) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.kvc.Put(context.TODO(), getEntityPath(e), string(eStr))
-	return err
+
+	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(e.Organization, e.Environment)), ">", 0)
+	req := clientv3.OpPut(getEntityPath(e), string(eStr))
+	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
+	if err != nil {
+		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the entity %s in environment %s/%s",
+			e.ID,
+			e.Organization,
+			e.Environment,
+		)
+	}
+
+	return nil
 }

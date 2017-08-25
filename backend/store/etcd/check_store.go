@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -90,9 +91,19 @@ func (s *etcdStore) UpdateCheckConfig(ctx context.Context, check *types.CheckCon
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getCheckConfigPath(check), string(checkBytes))
+	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(check.Organization, check.Environment)), ">", 0)
+	req := clientv3.OpPut(getCheckConfigPath(check), string(checkBytes))
+	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the check %s in environment %s/%s",
+			check.Name,
+			check.Organization,
+			check.Environment,
+		)
 	}
 
 	return nil

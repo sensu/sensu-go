@@ -57,5 +57,11 @@ func TestEventStorage(t *testing.T) {
 		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "", ""))
 		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "", "foo"))
 		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "foo", ""))
+
+		// Updating an event in an inexistant org and env should not work
+		event.Entity.Organization = "missing"
+		event.Entity.Environment = "missing"
+		err = store.UpdateEvent(ctx, event)
+		assert.Error(t, err)
 	})
 }

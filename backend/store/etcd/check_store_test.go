@@ -36,5 +36,11 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, checks)
 		assert.Equal(t, 1, len(checks))
+
+		// Updating a check in an inexistant org and env should not work
+		check.Organization = "missing"
+		check.Environment = "missing"
+		err = store.UpdateCheckConfig(ctx, check)
+		assert.Error(t, err)
 	})
 }

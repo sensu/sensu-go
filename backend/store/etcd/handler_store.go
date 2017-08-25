@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -90,9 +91,19 @@ func (s *etcdStore) UpdateHandler(ctx context.Context, handler *types.Handler) e
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getHandlerPath(handler), string(handlerBytes))
+	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(handler.Organization, handler.Environment)), ">", 0)
+	req := clientv3.OpPut(getHandlerPath(handler), string(handlerBytes))
+	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the handler %s in environment %s/%s",
+			handler.Name,
+			handler.Organization,
+			handler.Environment,
+		)
 	}
 
 	return nil

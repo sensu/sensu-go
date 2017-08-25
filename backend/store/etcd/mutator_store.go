@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -90,9 +91,19 @@ func (s *etcdStore) UpdateMutator(ctx context.Context, mutator *types.Mutator) e
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getMutatorPath(mutator), string(mutatorBytes))
+	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(mutator.Organization, mutator.Environment)), ">", 0)
+	req := clientv3.OpPut(getMutatorPath(mutator), string(mutatorBytes))
+	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
+	}
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the mutator %s in environment %s/%s",
+			mutator.Name,
+			mutator.Organization,
+			mutator.Environment,
+		)
 	}
 
 	return nil

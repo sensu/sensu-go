@@ -51,5 +51,12 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 		Name: "default",
 	})
 
+	// Mock a default environment
+	s.UpdateEnvironment(context.Background(),
+		"default",
+		&types.Environment{
+			Name: "default",
+		})
+
 	f(s)
 }
