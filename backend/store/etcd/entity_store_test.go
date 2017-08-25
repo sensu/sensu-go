@@ -43,7 +43,7 @@ func TestEntityStorage(t *testing.T) {
 		err = store.DeleteEntity(ctx, entity)
 		assert.NoError(t, err)
 
-		// Updating an enity in an inexistant org and env should not work
+		// Updating an enity in a nonexistent org and env should not work
 		entity.Organization = "missing"
 		entity.Environment = "missing"
 		err = store.UpdateEntity(ctx, entity)

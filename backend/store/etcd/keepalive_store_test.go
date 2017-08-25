@@ -22,7 +22,7 @@ func TestKeepaliveStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(records))
 
-		// Updating a keepalive in an inexistant org and env should not work
+		// Updating a keepalive in a nonexistent org and env should not work
 		entity.Organization = "missing"
 		entity.Environment = "missing"
 		err = store.UpdateFailingKeepalive(ctx, entity, 1)

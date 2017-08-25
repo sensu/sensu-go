@@ -37,7 +37,7 @@ func TestHandlerStorage(t *testing.T) {
 		assert.NotEmpty(t, handlers)
 		assert.Equal(t, 1, len(handlers))
 
-		// Updating a handler in an inexistant org and env should not work
+		// Updating a handler in a nonexistent org and env should not work
 		handler.Organization = "missing"
 		handler.Environment = "missing"
 		err = store.UpdateHandler(ctx, handler)
