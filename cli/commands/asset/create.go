@@ -106,6 +106,11 @@ func (cfgPtr *ConfigureAsset) administerQuestionaire() {
 			Validate: survey.Required,
 		},
 		{
+			Name:     "org",
+			Prompt:   &survey.Input{"Org:", cfgPtr.Org},
+			Validate: survey.Required,
+		},
+		{
 			Name:     "url",
 			Prompt:   &survey.Input{Message: "URL:"},
 			Validate: survey.Required,
