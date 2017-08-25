@@ -89,6 +89,13 @@
 			"revisionTime": "2017-01-10T19:26:07Z"
 		},
 		{
+			"checksumSHA1": "IYrmNlQxZYQ90HwTlO2y2IyE8To=",
+			"origin": "github.com/sensu/sensu-go/vendor/github.com/coreos/etcd",
+			"path": "github.com/coreos/etcd",
+			"revision": "65c054003f98ec92868a3bfe3f8859067b33d607",
+			"revisionTime": "2017-08-21T21:21:26Z"
+		},
+		{
 			"checksumSHA1": "sFGNqtSE3WlMiyT+JkVaW2OzstM=",
 			"path": "github.com/coreos/etcd/alarm",
 			"revision": "76aa7f69357420f1802d4d959ade999e63269942",
