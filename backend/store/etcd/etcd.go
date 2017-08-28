@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -140,10 +141,25 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	// a tls configuration.
 	if listenClientURL.Hostname() != "127.0.0.1" && listenClientURL.Hostname() != "localhost" {
 		// ensure we always listen on loopback
-		loopbackClientURL, _ := url.Parse(ClientListenURL)
-		if config.TLSConfig != nil {
-			loopbackClientURL.Scheme = "https"
+
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			return nil, err
 		}
+		l.Close()
+
+		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
+		if err != nil {
+			return nil, err
+		}
+
+		scheme := "http"
+		if config.TLSConfig != nil {
+			scheme = "https"
+		}
+
+		loopbackClientURL, _ := url.Parse(fmt.Sprintf("%s://127.0.0.1:%d", scheme, addr.Port))
+
 		clientURLs = append(clientURLs, *loopbackClientURL)
 		loopbackAddr = loopbackClientURL.String()
 	} else {
