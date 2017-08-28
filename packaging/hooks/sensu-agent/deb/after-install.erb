@@ -5,6 +5,8 @@ case "$1" in
     configure)
 	create_group
 	create_user
+	create_agent_directories
+	fix_agent_permissions
 
 	if [ -f /lib/systemd/system/$service.service ]; then
 	    systemctl --system daemon-reload >/dev/null || true

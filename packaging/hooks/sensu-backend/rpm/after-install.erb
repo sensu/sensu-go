@@ -3,6 +3,8 @@
 
 case "$1" in
     1) # initial install
+	create_backend_directories
+	fix_backend_permissions
 	;;
     2) # upgrade
 	;;

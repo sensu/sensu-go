@@ -54,7 +54,7 @@ SERVICE_GROUP_MAC=_$(SERVICE_GROUP)
 ##
 HOOKS_BASE_PATH=packaging/hooks
 HOOKS_VALUES=prefix=$(HOOKS_BASE_PATH)/common
-HOOKS_VALUES+= common_files=os-functions,group-functions,user-functions
+HOOKS_VALUES+= common_files=os-functions,group-functions,user-functions,other-functions
 
 ##
 # Targets

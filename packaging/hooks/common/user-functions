@@ -6,6 +6,9 @@ user_missing()
     if [ $os = "mac" ]; then
 	dscl . -list /Users | grep "^_sensu" > /dev/null
 	missing=$?
+    elif [ $os = "linux" ]; then
+	getent passwd sensu > /dev/null
+	missing=$?
     else
 	grep "^sensu:" /etc/passwd > /dev/null
 	missing=$?

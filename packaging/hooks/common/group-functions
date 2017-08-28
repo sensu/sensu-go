@@ -6,6 +6,9 @@ group_missing()
     if [ $os = "mac" ]; then
 	dscl . -list /Groups | grep "^_sensu" > /dev/null
 	missing=$?
+    elif [ $os = "linux" ]; then
+	getent group sensu > /dev/null
+	missing=$?
     else
 	grep "^sensu:" /etc/group > /dev/null
 	missing=$?
