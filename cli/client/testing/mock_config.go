@@ -72,3 +72,9 @@ func (m *MockConfig) Tokens() *types.Tokens {
 	args := m.Called()
 	return args.Get(0).(*types.Tokens)
 }
+
+// SetOrganization mocks the mutation
+func (m *MockConfig) SetOrganization(_ string) {}
+
+// SetEnvironment mocks the mutation
+func (m *MockConfig) SetEnvironment(_ string) {}

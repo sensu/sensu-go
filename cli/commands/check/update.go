@@ -4,48 +4,34 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
-// CreateCommand adds command that allows user to create new checks
-func CreateCommand(cli *cli.SensuCli) *cobra.Command {
+// UpdateCommand adds command that allows user to create new checks
+func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
-		Short:        "create new checks",
-		SilenceUsage: true,
+		Use:          "update NAME",
+		Short:        "update new checks",
+		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
-
-			opts := newCheckOpts()
-			opts.Env = cli.Config.Environment()
-			opts.Org = cli.Config.Organization()
-
-			if isInteractive {
-				opts.administerQuestionnaire(false)
-			} else {
-				opts.withFlags(flags)
-				if len(args) > 0 {
-					opts.Name = args[0]
-				}
-			}
-
-			// Apply given arguments to check
-			check := types.CheckConfig{}
-			opts.Copy(&check)
-
-			if err := check.Validate(); err != nil {
-				if !isInteractive {
-					cmd.SilenceUsage = false
-				}
+			// Fetch handlers from API
+			checkID := args[0]
+			check, err := cli.Client.FetchCheck(checkID)
+			if err != nil {
 				return err
 			}
 
-			// Ensure that the client is configured to create the check within the
-			// corrent context.
-			cli.Config.SetOrganization(check.Organization)
-			cli.Config.SetEnvironment(check.Environment)
+			// Administer questionnaire
+			opts := newCheckOpts()
+			opts.withCheck(check)
+			opts.administerQuestionnaire(true)
+
+			// Apply given arguments to check
+			opts.Copy(check)
+
+			if err := check.Validate(); err != nil {
+				return err
+			}
 
 			//
 			// TODO:
@@ -53,8 +39,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Current validation is a bit too laissez faire. For usability we should
 			// determine whether there are assets / handlers / mutators associated w/
 			// the check and warn the user if they do not exist yet.
-
-			if err := cli.Client.CreateCheck(&check); err != nil {
+			if err := cli.Client.CreateCheck(check); err != nil {
 				return err
 			}
 
