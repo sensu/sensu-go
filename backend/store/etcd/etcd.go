@@ -138,7 +138,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	var loopbackAddr string
 	// ensure we always listen on loopback, use https if we have
 	// a tls configuration.
-	if listenClientURL.Host != "127.0.0.1" && listenClientURL.Host != "localhost" {
+	if listenClientURL.Hostname() != "127.0.0.1" && listenClientURL.Hostname() != "localhost" {
 		// ensure we always listen on loopback
 		loopbackClientURL, _ := url.Parse(ClientListenURL)
 		if config.TLSConfig != nil {
