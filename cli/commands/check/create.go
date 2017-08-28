@@ -105,6 +105,22 @@ func (opts *checkOpts) administerQuestionnaire() {
 			Validate: survey.Required,
 		},
 		{
+			Name: "org",
+			Prompt: &survey.Input{
+				"Organization:",
+				opts.Org,
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "env",
+			Prompt: &survey.Input{
+				"Environment:",
+				opts.Env,
+			},
+			Validate: survey.Required,
+		},
+		{
 			Name:     "command",
 			Prompt:   &survey.Input{"Command:", ""},
 			Validate: survey.Required,
