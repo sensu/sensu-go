@@ -2,41 +2,19 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"syscall"
 
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
-)
-
-var (
-	agentHost             string
-	agentPort             int
-	apiHost               string
-	apiPort               int
-	dashboardDir          string
-	dashboardHost         string
-	dashboardPort         int
-	deregistrationHandler string
-	stateDir              string
-
-	etcdListenClientURL         string
-	etcdListenPeerURL           string
-	etcdInitialCluster          string
-	etcdInitialClusterState     string
-	etcdName                    string
-	etcdInitialClusterToken     string
-	etcdInitialAdvertisePeerURL string
-
-	certFile              string
-	keyFile               string
-	trustedCAFile         string
-	insecureSkipTLSVerify bool
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -61,50 +39,41 @@ func newVersionCommand() *cobra.Command {
 }
 
 func newStartCommand() *cobra.Command {
+	var setupErr error
+
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.BindPFlags(cmd.Flags())
+			if setupErr != nil {
+				return setupErr
+			}
+
 			cfg := &backend.Config{
-				AgentHost:             agentHost,
-				AgentPort:             agentPort,
-				APIHost:               apiHost,
-				APIPort:               apiPort,
-				DashboardDir:          dashboardDir,
-				DashboardHost:         dashboardHost,
-				DashboardPort:         dashboardPort,
-				DeregistrationHandler: deregistrationHandler,
-				StateDir:              stateDir,
+				AgentHost:             viper.GetString("agent-host"),
+				AgentPort:             viper.GetInt("agent-port"),
+				APIHost:               viper.GetString("api-host"),
+				APIPort:               viper.GetInt("api-port"),
+				DashboardDir:          viper.GetString("dashboard-dir"),
+				DashboardHost:         viper.GetString("dashboard-host"),
+				DashboardPort:         viper.GetInt("dashboard-port"),
+				DeregistrationHandler: viper.GetString("deregistration-handler"),
+				StateDir:              viper.GetString("state-dir"),
+
+				EtcdListenClientURL:         viper.GetString("store-client-url"),
+				EtcdListenPeerURL:           viper.GetString("store-peer-url"),
+				EtcdInitialCluster:          viper.GetString("store-initial-cluster"),
+				EtcdInitialClusterState:     viper.GetString("store-initial-cluster-state"),
+				EtcdInitialAdvertisePeerURL: viper.GetString("store-initial-advertise-peer-url"),
+				EtcdInitialClusterToken:     viper.GetString("store-initial-cluster-token"),
+				EtcdName:                    viper.GetString("store-node-name"),
 			}
 
-			// TODO(grep): make configuration of etcd saner.
-			if etcdListenClientURL != "" {
-				cfg.EtcdListenClientURL = etcdListenClientURL
-			}
-
-			if etcdListenPeerURL != "" {
-				cfg.EtcdListenPeerURL = etcdListenPeerURL
-			}
-
-			if etcdInitialCluster != "" {
-				cfg.EtcdInitialCluster = etcdInitialCluster
-			}
-
-			if etcdInitialClusterState != "" {
-				cfg.EtcdInitialClusterState = etcdInitialClusterState
-			}
-
-			if etcdInitialAdvertisePeerURL != "" {
-				cfg.EtcdInitialAdvertisePeerURL = etcdInitialAdvertisePeerURL
-			}
-
-			if etcdInitialClusterToken != "" {
-				cfg.EtcdInitialClusterToken = etcdInitialClusterToken
-			}
-
-			if etcdName != "" {
-				cfg.EtcdName = etcdName
-			}
+			certFile := viper.GetString("cert-file")
+			keyFile := viper.GetString("key-file")
+			trustedCAFile := viper.GetString("trusted-ca-file")
+			insecureSkipTLSVerify := viper.GetBool("insecure-skip-tls-verify")
 
 			if certFile != "" && keyFile != "" && trustedCAFile != "" {
 				cfg.TLS = &types.TLSOptions{certFile, keyFile, trustedCAFile, insecureSkipTLSVerify}
@@ -141,37 +110,74 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
-	var defaultStateDir string
+	// Set up distinct flagset for handling config file
+	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
+	configFlagSet.StringP("config-file", "c", filepath.Join(path.SystemConfigDir(), "backend.yml"), "path to sensu-backend config file")
+	configFlagSet.SetOutput(ioutil.Discard)
+	configFlagSet.Parse(os.Args[1:])
 
-	switch runtime.GOOS {
-	case "windows":
-		programDataDir := os.Getenv("PROGRAMDATA")
-		defaultStateDir = filepath.Join(programDataDir, "sensu")
-	default:
-		defaultStateDir = "/var/lib/sensu"
-	}
+	// Split given config file path / filename
+	configFile, _ := configFlagSet.GetString("config-file")
+	// configDir := filepath.Dir(configFile)
+	// configName := filepath.Base(configFile)
 
-	cmd.Flags().StringVar(&agentHost, "agent-host", "0.0.0.0", "Agent listener host")
-	cmd.Flags().IntVar(&agentPort, "agent-port", 8081, "Agent listener port")
-	cmd.Flags().StringVar(&apiHost, "api-host", "0.0.0.0", "HTTP API listener host")
-	cmd.Flags().IntVar(&apiPort, "api-port", 8080, "HTTP API port")
-	cmd.Flags().StringVar(&dashboardDir, "dashboard-dir", "", "path to sensu dashboard static assets")
-	cmd.Flags().StringVar(&dashboardHost, "dashboard-host", "0.0.0.0", "Dashboard listener host")
-	cmd.Flags().IntVar(&dashboardPort, "dashboard-port", 3000, "Dashboard listener port")
-	cmd.Flags().StringVar(&deregistrationHandler, "deregistration-handler", "", "Default deregistration handler")
-	cmd.Flags().StringVarP(&stateDir, "state-dir", "d", defaultStateDir, "path to sensu state storage")
+	// Configure location of backend configuration
+	// viper.AddConfigPath(configDir)
+	// viper.SetConfigName(configName)
+	viper.SetConfigType("yaml")
+	viper.SetConfigFile(configFile)
+	setupErr = viper.ReadInConfig()
 
-	cmd.Flags().StringVar(&etcdListenClientURL, "store-client-url", "", "store client listen URL")
-	cmd.Flags().StringVar(&etcdListenPeerURL, "store-peer-url", "", "store peer URL")
-	cmd.Flags().StringVar(&etcdInitialCluster, "store-initial-cluster", "", "store initial cluster")
-	cmd.Flags().StringVar(&etcdInitialAdvertisePeerURL, "store-initial-advertise-peer-url", "", "store initial advertise peer URL")
-	cmd.Flags().StringVar(&etcdInitialClusterState, "store-initial-cluster-state", "", "store initial cluster state")
-	cmd.Flags().StringVar(&etcdInitialClusterToken, "store-initial-cluster-token", "", "store initial cluster token")
-	cmd.Flags().StringVar(&etcdName, "store-node-name", "", "store cluster member node name")
-	cmd.Flags().StringVar(&certFile, "cert-file", "", "tls certificate")
-	cmd.Flags().StringVar(&keyFile, "key-file", "", "tls certificate key")
-	cmd.Flags().StringVar(&trustedCAFile, "trusted-ca-file", "", "tls certificate authority")
-	cmd.Flags().BoolVar(&insecureSkipTLSVerify, "insecure-skip-tls-verify", false, "skip ssl verification")
+	// Flag defaults
+	viper.SetDefault("agent-host", "[::]")
+	viper.SetDefault("agent-port", 8081)
+	viper.SetDefault("api-host", "[::]")
+	viper.SetDefault("api-port", 8080)
+	viper.SetDefault("dashboard-dir", "")
+	viper.SetDefault("dashboard-host", "[::]")
+	viper.SetDefault("dashboard-port", 3000)
+	viper.SetDefault("deregistration-handler", "")
+	viper.SetDefault("state-dir", path.SystemDataDir())
+	viper.SetDefault("cert-file", "")
+	viper.SetDefault("key-file", "")
+	viper.SetDefault("trusted-ca-file", "")
+	viper.SetDefault("insecure-skip-tls-verify", "")
+
+	// Etcd defaults
+	viper.SetDefault("store-client-url", "")
+	viper.SetDefault("store-peer-url", "")
+	viper.SetDefault("store-initial-cluster", "")
+	viper.SetDefault("store-initial-advertise-peer-url", "")
+	viper.SetDefault("store-initial-cluster-state", "")
+	viper.SetDefault("store-initial-cluster-token", "")
+	viper.SetDefault("store-node-name", "")
+
+	// Merge in config flag set so that it appears in command usage
+	cmd.Flags().AddFlagSet(configFlagSet)
+
+	// Flags
+	cmd.Flags().String("agent-host", viper.GetString("agent-host"), "agent listener host")
+	cmd.Flags().Int("agent-port", viper.GetInt("agent-port"), "agent listener port")
+	cmd.Flags().String("api-host", viper.GetString("api-host"), "http api listener host")
+	cmd.Flags().Int("api-port", viper.GetInt("api-port"), "http api port")
+	cmd.Flags().String("dashboard-dir", viper.GetString("dashboard-dir"), "path to sensu dashboard static assets")
+	cmd.Flags().String("dashboard-host", viper.GetString("dashboard-host"), "dashboard listener host")
+	cmd.Flags().Int("dashboard-port", viper.GetInt("dashboard-port"), "dashboard listener port")
+	cmd.Flags().String("deregistration-handler", viper.GetString("deregistration-handler"), "default deregistration handler")
+	cmd.Flags().StringP("state-dir", "d", viper.GetString("state-dir"), "path to sensu state storage")
+	cmd.Flags().String("cert-file", "", "tls certificate")
+	cmd.Flags().String("key-file", "", "tls certificate key")
+	cmd.Flags().String("trusted-ca-file", "", "tls certificate authority")
+	cmd.Flags().Bool("insecure-skip-tls-verify", false, "skip ssl verification")
+
+	// Etcd flags
+	cmd.Flags().String("store-client-url", "", "store client listen URL")
+	cmd.Flags().String("store-peer-url", "", "store peer URL")
+	cmd.Flags().String("store-initial-cluster", "", "store initial cluster")
+	cmd.Flags().String("store-initial-advertise-peer-url", "", "store initial advertise peer URL")
+	cmd.Flags().String("store-initial-cluster-state", "", "store initial cluster state")
+	cmd.Flags().String("store-initial-cluster-token", "", "store initial cluster token")
+	cmd.Flags().String("store-node-name", "", "store cluster member node name")
 
 	return cmd
 }
