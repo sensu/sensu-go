@@ -3,21 +3,11 @@ package user
 import (
 	"fmt"
 
-	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
-
-type createOpts struct {
-	Username string `survey:"username"`
-	Password string `survey:"password"`
-	Roles    string `survey:"roles"`
-	Admin    bool
-}
 
 // CreateCommand adds command that allows user to create new users
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
@@ -28,7 +18,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
-			opts := &createOpts{}
+			opts := newUserOpts()
 
 			if isInteractive {
 				opts.administerQuestionnaire()
@@ -39,7 +29,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			user := opts.toUser()
+			user := types.User{}
+			opts.Copy(&user)
+
 			if err := user.Validate(); err != nil {
 				if !isInteractive {
 					cmd.SilenceUsage = false
@@ -47,7 +39,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			err := cli.Client.CreateUser(user)
+			err := cli.Client.CreateUser(&user)
 			if err != nil {
 				return err
 			}
@@ -72,55 +64,4 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.MarkFlagRequired("password")
 
 	return cmd
-}
-
-func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
-	opts.Username, _ = flags.GetString("username")
-	opts.Password, _ = flags.GetString("password")
-	opts.Roles, _ = flags.GetString("roles")
-
-	if isAdmin, _ := flags.GetBool("admin"); isAdmin {
-		opts.Admin = isAdmin
-	}
-}
-
-func (opts *createOpts) administerQuestionnaire() {
-	var qs = []*survey.Question{
-		{
-			Name: "username",
-			Prompt: &survey.Input{
-				Message: "Username:",
-			},
-			Validate: survey.Required,
-		},
-		{
-			Name: "password",
-			Prompt: &survey.Password{
-				Message: "Password:",
-			},
-			Validate: survey.Required,
-		},
-		{
-			Name: "roles",
-			Prompt: &survey.Input{
-				Message: "Roles:",
-			},
-		},
-	}
-
-	survey.Ask(qs, opts)
-}
-
-func (opts *createOpts) toUser() *types.User {
-	roles := helpers.SafeSplitCSV(opts.Roles)
-
-	if opts.Admin {
-		roles = append(roles, "admin")
-	}
-
-	return &types.User{
-		Username: opts.Username,
-		Password: opts.Password,
-		Roles:    roles,
-	}
 }

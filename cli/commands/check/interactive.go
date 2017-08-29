@@ -51,7 +51,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 }
 
 func (opts *checkOpts) administerQuestionnaire(editing bool) {
-	var qs = []*survey.Question{}
+	var qs []*survey.Question
 
 	if !editing {
 		qs = append(qs, []*survey.Question{
