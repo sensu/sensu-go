@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
@@ -162,4 +163,34 @@ func (opts *handlerOpts) queryForHandlers() {
 	}
 
 	survey.Ask(qs, opts)
+}
+
+func (opts *handlerOpts) Copy(handler *types.Handler) {
+	handler.Name = opts.Name
+	handler.Environment = opts.Env
+	handler.Organization = opts.Org
+	handler.Type = strings.ToLower(opts.Type)
+	handler.Mutator = opts.Mutator
+	handler.Command = opts.Command
+
+	if len(opts.Timeout) > 0 {
+		t, _ := strconv.Atoi(opts.Timeout)
+		handler.Timeout = t
+	} else {
+		handler.Timeout = 0
+	}
+
+	if len(opts.SocketHost) > 0 && len(opts.SocketPort) > 0 {
+		p, _ := strconv.Atoi(opts.SocketPort)
+		handler.Socket = types.HandlerSocket{
+			Host: opts.SocketHost,
+			Port: p,
+		}
+	}
+
+	handlers := helpers.SafeSplitCSV(opts.Handlers)
+	handler.Handlers = make([]string, len(handlers))
+	for i, h := range handlers {
+		handler.Handlers[i] = strings.TrimSpace(h)
+	}
 }

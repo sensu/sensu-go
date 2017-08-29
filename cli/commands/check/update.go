@@ -11,10 +11,10 @@ import (
 func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "update NAME",
-		Short:        "update new checks",
+		Short:        "update checks",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Fetch handlers from API
+			// Fetch checks from API
 			checkID := args[0]
 			check, err := cli.Client.FetchCheck(checkID)
 			if err != nil {
@@ -47,17 +47,6 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().StringP("command", "c", "", "the command the check should run")
-	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
-	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
-	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
-	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
-
-	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("command")
-	cmd.MarkFlagRequired("interval")
-	cmd.MarkFlagRequired("subscriptions")
 
 	return cmd
 }

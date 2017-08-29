@@ -21,3 +21,9 @@ func (c *MockClient) DeleteHandler(h *types.Handler) error {
 	args := c.Called(h)
 	return args.Error(0)
 }
+
+// FetchHandler for use with mock lib
+func (c *MockClient) FetchHandler(name string) (*types.Handler, error) {
+	args := c.Called(name)
+	return args.Get(0).(*types.Handler), args.Error(1)
+}
