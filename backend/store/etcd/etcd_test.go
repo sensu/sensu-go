@@ -22,10 +22,9 @@ func TestNewEtcd(t *testing.T) {
 	if err != nil {
 		log.Panic(err)
 	}
-	clURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
-	apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
+	clURL := fmt.Sprintf("http://0.0.0.0:%d", ports[0])
+	apURL := fmt.Sprintf("http://0.0.0.0:%d", ports[1])
 	initCluster := fmt.Sprintf("default=%s", apURL)
-	fmt.Println(initCluster)
 
 	cfg := NewConfig()
 	cfg.DataDir = tmpDir

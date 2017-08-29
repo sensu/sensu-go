@@ -9,7 +9,9 @@ package etcd
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -99,8 +101,9 @@ func ensureDir(path string) error {
 
 // Etcd is a wrapper around github.com/coreos/etcd/embed.Etcd
 type Etcd struct {
-	cfg  *Config
-	etcd *embed.Etcd
+	cfg         *Config
+	etcd        *embed.Etcd
+	loopbackURL string
 }
 
 // NewEtcd returns a new, configured, and running Etcd. The running Etcd will
@@ -131,6 +134,38 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, err
 	}
 
+	clientURLs := []url.URL{*listenClientURL}
+
+	var loopbackAddr string
+	// ensure we always listen on loopback, use https if we have
+	// a tls configuration.
+	if listenClientURL.Hostname() != "127.0.0.1" && listenClientURL.Hostname() != "localhost" {
+		// ensure we always listen on loopback
+
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			return nil, err
+		}
+		l.Close()
+
+		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
+		if err != nil {
+			return nil, err
+		}
+
+		scheme := "http"
+		if config.TLSConfig != nil {
+			scheme = "https"
+		}
+
+		loopbackClientURL, _ := url.Parse(fmt.Sprintf("%s://127.0.0.1:%d", scheme, addr.Port))
+
+		clientURLs = append(clientURLs, *loopbackClientURL)
+		loopbackAddr = loopbackClientURL.String()
+	} else {
+		loopbackAddr = listenClientURL.String()
+	}
+
 	listenPeerURL, err := url.Parse(config.ListenPeerURL)
 	if err != nil {
 		return nil, err
@@ -143,7 +178,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	cfg.ACUrls = []url.URL{*listenClientURL}
 	cfg.APUrls = []url.URL{*advertisePeerURL}
-	cfg.LCUrls = []url.URL{*listenClientURL}
+	cfg.LCUrls = clientURLs
 	cfg.LPUrls = []url.URL{*listenPeerURL}
 	cfg.InitialClusterToken = config.InitialClusterToken
 	cfg.InitialCluster = config.InitialCluster
@@ -171,7 +206,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)
 	}
 
-	return &Etcd{config, e}, nil
+	return &Etcd{config, e, loopbackAddr}, nil
 }
 
 // Err returns the error channel for Etcd or nil if no etcd is started.
@@ -194,8 +229,13 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 		tlsCfg = &e.cfg.TLSConfig.TLS
 	}
 
+	listeners := e.etcd.Clients
+	if len(listeners) == 0 {
+		return nil, errors.New("no etcd client listeners found for server")
+	}
+
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{e.cfg.ListenClientURL},
+		Endpoints:   []string{e.loopbackURL},
 		DialTimeout: 5 * time.Second,
 		TLS:         tlsCfg,
 	})
