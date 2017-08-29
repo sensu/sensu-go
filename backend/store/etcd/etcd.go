@@ -222,36 +222,11 @@ func (e *Etcd) Shutdown() error {
 	return nil
 }
 
-// ShallowCopyTLSConfig creates a shallow copy of a tls.Config
-// since they aren't safe for reuse.
-func shallowCopyTLSConfig(cfg *tls.Config) *tls.Config {
-	ncfg := tls.Config{
-		Time:                     cfg.Time,
-		Certificates:             cfg.Certificates,
-		NameToCertificate:        cfg.NameToCertificate,
-		GetCertificate:           cfg.GetCertificate,
-		RootCAs:                  cfg.RootCAs,
-		NextProtos:               cfg.NextProtos,
-		ServerName:               cfg.ServerName,
-		ClientAuth:               cfg.ClientAuth,
-		ClientCAs:                cfg.ClientCAs,
-		InsecureSkipVerify:       cfg.InsecureSkipVerify,
-		CipherSuites:             cfg.CipherSuites,
-		PreferServerCipherSuites: cfg.PreferServerCipherSuites,
-		SessionTicketKey:         cfg.SessionTicketKey,
-		ClientSessionCache:       cfg.ClientSessionCache,
-		MinVersion:               cfg.MinVersion,
-		MaxVersion:               cfg.MaxVersion,
-		CurvePreferences:         cfg.CurvePreferences,
-	}
-	return &ncfg
-}
-
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	var tlsCfg *tls.Config
 	if e.cfg.TLSConfig != nil {
-		tlsCfg = shallowCopyTLSConfig(&e.cfg.TLSConfig.TLS)
+		tlsCfg = &e.cfg.TLSConfig.TLS
 	}
 
 	listeners := e.etcd.Clients

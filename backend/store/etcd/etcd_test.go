@@ -25,7 +25,6 @@ func TestNewEtcd(t *testing.T) {
 	clURL := fmt.Sprintf("http://0.0.0.0:%d", ports[0])
 	apURL := fmt.Sprintf("http://0.0.0.0:%d", ports[1])
 	initCluster := fmt.Sprintf("default=%s", apURL)
-	fmt.Println(initCluster)
 
 	cfg := NewConfig()
 	cfg.DataDir = tmpDir
