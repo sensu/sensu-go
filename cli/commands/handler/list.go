@@ -39,7 +39,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				helpers.PrintJSON(r, cmd.OutOrStdout())
+				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
+					return err
+				}
 			} else {
 				printHandlersToTable(r, cmd.OutOrStdout())
 			}
