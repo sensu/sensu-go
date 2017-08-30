@@ -3,73 +3,17 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
+	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
 )
 
 // OrganizationFlagDefault default value to use for organization
 const OrganizationFlagDefault = "default"
-
-var (
-	// sensuConfigPath contains the path to sensuctl configuration files
-	sensuConfigPath string
-
-	// sensuCachePath contains the path to sensuctl cache files
-	sensuCachePath string
-)
-
-func userConfigPath() string {
-	switch runtime.GOOS {
-	case "windows":
-		appDataPath := os.Getenv("APPDATA")
-		if appDataPath == "" {
-			h, _ := homedir.Dir()
-			appDataPath = filepath.Join(h, "AppData", "Roaming")
-		}
-		return filepath.Join(appDataPath, "sensu", "sensuctl")
-	default:
-		xdgConfigPath := os.Getenv("XDG_CONFIG_HOME")
-		if xdgConfigPath == "" {
-			h, _ := homedir.Dir()
-			xdgConfigPath = filepath.Join(h, ".config")
-		}
-		return filepath.Join(xdgConfigPath, "sensu", "sensuctl")
-	}
-}
-
-func userCachePath() string {
-	switch runtime.GOOS {
-	case "windows":
-		localAppDataPath := os.Getenv("LOCALAPP")
-		if localAppDataPath == "" {
-			h, _ := homedir.Dir()
-			localAppDataPath = filepath.Join(h, "AppData", "Local")
-		}
-		return filepath.Join(localAppDataPath, "sensu", "sensuctl")
-	case "darwin":
-		h, _ := homedir.Dir()
-		return filepath.Join(h, "Library", "Caches", "sensu", "sensuctl")
-	default:
-		xdgCachePath := os.Getenv("XDG_CACHE_HOME")
-		if xdgCachePath == "" {
-			h, _ := homedir.Dir()
-			xdgCachePath = filepath.Join(h, ".cache")
-		}
-		return filepath.Join(xdgCachePath, "sensu", "sensuctl")
-	}
-}
-
-func init() {
-	sensuConfigPath = userConfigPath()
-	sensuCachePath = userCachePath()
-}
 
 func main() {
 	rootCmd := configureRootCmd()
@@ -108,8 +52,8 @@ func configureRootCmd() *cobra.Command {
 
 	// Global flags
 	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
-	cmd.PersistentFlags().StringP("config-dir", "", sensuConfigPath, "path to directory containing configuration files")
-	cmd.PersistentFlags().StringP("cache-dir", "", sensuCachePath, "path to directory containing cache & temporary files")
+	cmd.PersistentFlags().StringP("config-dir", "", path.UserConfigDir("sensuctl"), "path to directory containing configuration files")
+	cmd.PersistentFlags().StringP("cache-dir", "", path.UserCacheDir("sensuctl"), "path to directory containing cache & temporary files")
 	cmd.PersistentFlags().StringP("organization", "", OrganizationFlagDefault, "organization in which we perform actions")
 
 	return cmd

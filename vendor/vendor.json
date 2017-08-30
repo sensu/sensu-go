@@ -90,7 +90,6 @@
 		},
 		{
 			"checksumSHA1": "IYrmNlQxZYQ90HwTlO2y2IyE8To=",
-			"origin": "github.com/sensu/sensu-go/vendor/github.com/coreos/etcd",
 			"path": "github.com/coreos/etcd",
 			"revision": "65c054003f98ec92868a3bfe3f8859067b33d607",
 			"revisionTime": "2017-08-21T21:21:26Z"
@@ -896,10 +895,10 @@
 			"revisionTime": "2017-04-18T05:23:14Z"
 		},
 		{
-			"checksumSHA1": "KgO3wjkSOm6H7cqTrBCzLyvj6+o=",
+			"checksumSHA1": "XeB0yeQkOMI+CWrllrbTrg4iOEs=",
 			"path": "github.com/spf13/viper",
-			"revision": "c1de95864d73a5465492829d7cb2dd422b19ac96",
-			"revisionTime": "2017-06-19T10:35:39Z"
+			"revision": "25b30aa063fc18e48662b86996252eabdcf2f0c7",
+			"revisionTime": "2017-07-23T05:52:07Z"
 		},
 		{
 			"checksumSHA1": "EO+jcRet/AJ6IY3lBO8l8BLsZWg=",
