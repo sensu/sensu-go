@@ -36,7 +36,9 @@ func ListRulesCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				helpers.PrintJSON(r, cmd.OutOrStdout())
+				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
+					return err
+				}
 			} else {
 				printRulesToTable(r, cmd.OutOrStdout())
 			}
