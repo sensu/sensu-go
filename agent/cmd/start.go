@@ -2,17 +2,19 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -66,10 +68,17 @@ func newVersionCommand() *cobra.Command {
 }
 
 func newStartCommand() *cobra.Command {
+	var setupErr error
+
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "start the sensu agent",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.BindPFlags(cmd.Flags())
+			if setupErr != nil {
+				return setupErr
+			}
+
 			cfg := agent.NewConfig()
 			cfg.BackendURLs = viper.GetStringSlice(flagBackendURL)
 			cfg.Deregister = viper.GetBool(flagDeregister)
@@ -112,51 +121,46 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
-	var defaultCacheDir string
+	// Set up distinct flagset for handling config file
+	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
+	configFlagSet.StringP("config-file", "c", filepath.Join(path.SystemConfigDir(), "agent.yml"), "path to sensu-agent config file")
+	configFlagSet.SetOutput(ioutil.Discard)
+	configFlagSet.Parse(os.Args[1:])
 
-	switch runtime.GOOS {
-	case "windows":
-		programDataDir := os.Getenv("PROGRAMDATA")
-		defaultCacheDir = filepath.Join(programDataDir, "sensu", "cache")
-	default:
-		defaultCacheDir = "/var/cache/sensu"
-	}
+	// Get the given config file path
+	configFile, _ := configFlagSet.GetString("config-file")
 
-	cmd.Flags().String(flagEnvironment, "default", "agent environment")
-	viper.BindPFlag(flagEnvironment, cmd.Flags().Lookup(flagEnvironment))
+	// Configure location of backend configuration
+	viper.SetConfigType("yaml")
+	viper.SetConfigFile(configFile)
+	setupErr = viper.ReadInConfig()
 
-	cmd.Flags().String(flagOrganization, "default", "agent organization")
-	viper.BindPFlag(flagOrganization, cmd.Flags().Lookup(flagOrganization))
+	// Flag defaults
+	viper.SetDefault(flagEnvironment, "default")
+	viper.SetDefault(flagOrganization, "default")
+	viper.SetDefault(flagUser, "agent")
+	viper.SetDefault(flagPassword, "P@ssw0rd!")
+	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensuctl"))
+	viper.SetDefault(flagDeregister, false)
+	viper.SetDefault(flagDeregistrationHandler, "")
+	viper.SetDefault(flagBackendURL, []string{"ws://127.0.0.1:8081"})
+	viper.SetDefault(flagAgentID, "")
+	viper.SetDefault(flagSubscriptions, "")
+	viper.SetDefault(flagKeepaliveTimeout, 120)
+	viper.SetDefault(flagKeepaliveInterval, 20)
 
-	cmd.Flags().String(flagUser, "agent", "agent user")
-	viper.BindPFlag(flagUser, cmd.Flags().Lookup(flagUser))
-
-	cmd.Flags().String(flagPassword, "P@ssw0rd!", "agent password")
-	viper.BindPFlag(flagPassword, cmd.Flags().Lookup(flagPassword))
-
-	cmd.Flags().String(flagCacheDir, defaultCacheDir, "path to store cached data")
-	viper.BindPFlag(flagCacheDir, cmd.Flags().Lookup(flagCacheDir))
-
-	cmd.Flags().Bool(flagDeregister, false, "ephemeral agent")
-	viper.BindPFlag(flagDeregister, cmd.Flags().Lookup(flagDeregister))
-
-	cmd.Flags().String(flagDeregistrationHandler, "", "deregistration handler that should process the entity deregistration event.")
-	viper.BindPFlag(flagDeregistrationHandler, cmd.Flags().Lookup(flagDeregistrationHandler))
-
-	cmd.Flags().StringSlice(flagBackendURL, []string{"ws://localhost:8081"}, "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
-	viper.BindPFlag(flagBackendURL, cmd.Flags().Lookup(flagBackendURL))
-
-	cmd.Flags().String(flagAgentID, "", "agent ID (defaults to hostname)")
-	viper.BindPFlag(flagAgentID, cmd.Flags().Lookup(flagAgentID))
-
-	cmd.Flags().String(flagSubscriptions, "", "comma-delimited list of agent subscriptions")
-	viper.BindPFlag(flagSubscriptions, cmd.Flags().Lookup(flagSubscriptions))
-
-	cmd.Flags().Uint(flagKeepaliveTimeout, 120, "number of seconds until agent is considered dead by backend")
-	viper.BindPFlag(flagKeepaliveTimeout, cmd.Flags().Lookup(flagKeepaliveTimeout))
-
-	cmd.Flags().Int(flagKeepaliveInterval, 20, "number of seconds to send between keepalive events")
-	viper.BindPFlag(flagKeepaliveInterval, cmd.Flags().Lookup(flagKeepaliveInterval))
+	cmd.Flags().String(flagEnvironment, viper.GetString(flagEnvironment), "agent environment")
+	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
+	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
+	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
+	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
+	cmd.Flags().Bool(flagDeregister, viper.GetBool(flagDeregister), "ephemeral agent")
+	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
+	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
+	cmd.Flags().String(flagAgentID, viper.GetString(flagAgentID), "agent ID (defaults to hostname)")
+	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
+	cmd.Flags().Uint(flagKeepaliveTimeout, uint(viper.Get(flagKeepaliveTimeout).(int)), "number of seconds until agent is considered dead by backend")
+	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 
 	return cmd
 }

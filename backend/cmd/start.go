@@ -17,6 +17,33 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	// Flag constants
+	flagConfigFile            = "config-file"
+	flagAgentHost             = "agent-host"
+	flagAgentPort             = "agent-port"
+	flagAPIHost               = "api-host"
+	flagAPIPort               = "api-port"
+	flagDashboardDir          = "dashboard-dir"
+	flagDashboardHost         = "dashboard-host"
+	flagDashboardPort         = "dashboard-port"
+	flagDeregistrationHandler = "deregistration-handler"
+	flagStateDir              = "state-dir"
+	flagCertFile              = "cert-file"
+	flagKeyFile               = "key-file"
+	flagTrustedCAFile         = "trusted-ca-file"
+	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
+
+	// Etcd flag constants
+	flagStoreClientURL               = "store-client-url"
+	flagStorePeerURL                 = "store-peer-url"
+	flagStoreInitialCluster          = "store-initial-cluster"
+	flagStoreInitialAdvertisePeerURL = "store-initial-advertise-peer-url"
+	flagStoreInitialClusterState     = "store-initial-cluster-state"
+	flagStoreInitialClusterToken     = "store-initial-cluster-token"
+	flagStoreNodeName                = "store-node-name"
+)
+
 func init() {
 	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newStartCommand())
@@ -51,42 +78,42 @@ func newStartCommand() *cobra.Command {
 			}
 
 			cfg := &backend.Config{
-				AgentHost:             viper.GetString("agent-host"),
-				AgentPort:             viper.GetInt("agent-port"),
-				APIHost:               viper.GetString("api-host"),
-				APIPort:               viper.GetInt("api-port"),
-				DashboardDir:          viper.GetString("dashboard-dir"),
-				DashboardHost:         viper.GetString("dashboard-host"),
-				DashboardPort:         viper.GetInt("dashboard-port"),
-				DeregistrationHandler: viper.GetString("deregistration-handler"),
-				StateDir:              viper.GetString("state-dir"),
+				AgentHost:             viper.GetString(flagAgentHost),
+				AgentPort:             viper.GetInt(flagAgentPort),
+				APIHost:               viper.GetString(flagAPIHost),
+				APIPort:               viper.GetInt(flagAPIPort),
+				DashboardDir:          viper.GetString(flagDashboardDir),
+				DashboardHost:         viper.GetString(flagDashboardHost),
+				DashboardPort:         viper.GetInt(flagDashboardPort),
+				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
+				StateDir:              viper.GetString(flagStateDir),
 
-				EtcdListenClientURL:         viper.GetString("store-client-url"),
-				EtcdListenPeerURL:           viper.GetString("store-peer-url"),
-				EtcdInitialCluster:          viper.GetString("store-initial-cluster"),
-				EtcdInitialClusterState:     viper.GetString("store-initial-cluster-state"),
-				EtcdInitialAdvertisePeerURL: viper.GetString("store-initial-advertise-peer-url"),
-				EtcdInitialClusterToken:     viper.GetString("store-initial-cluster-token"),
-				EtcdName:                    viper.GetString("store-node-name"),
+				EtcdListenClientURL:         viper.GetString(flagStoreClientURL),
+				EtcdListenPeerURL:           viper.GetString(flagStorePeerURL),
+				EtcdInitialCluster:          viper.GetString(flagStoreInitialCluster),
+				EtcdInitialClusterState:     viper.GetString(flagStoreInitialClusterState),
+				EtcdInitialAdvertisePeerURL: viper.GetString(flagStoreInitialAdvertisePeerURL),
+				EtcdInitialClusterToken:     viper.GetString(flagStoreInitialClusterToken),
+				EtcdName:                    viper.GetString(flagStoreNodeName),
 			}
 
-			certFile := viper.GetString("cert-file")
-			keyFile := viper.GetString("key-file")
-			trustedCAFile := viper.GetString("trusted-ca-file")
-			insecureSkipTLSVerify := viper.GetBool("insecure-skip-tls-verify")
+			certFile := viper.GetString(flagCertFile)
+			keyFile := viper.GetString(flagKeyFile)
+			trustedCAFile := viper.GetString(flagTrustedCAFile)
+			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
 
 			if certFile != "" && keyFile != "" && trustedCAFile != "" {
 				cfg.TLS = &types.TLSOptions{certFile, keyFile, trustedCAFile, insecureSkipTLSVerify}
 			} else if certFile != "" || keyFile != "" || trustedCAFile != "" {
 				emptyFlags := []string{}
 				if certFile == "" {
-					emptyFlags = append(emptyFlags, "cert-file")
+					emptyFlags = append(emptyFlags, flagCertFile)
 				}
 				if keyFile == "" {
-					emptyFlags = append(emptyFlags, "key-file")
+					emptyFlags = append(emptyFlags, flagKeyFile)
 				}
 				if trustedCAFile == "" {
-					emptyFlags = append(emptyFlags, "trusted-ca-file")
+					emptyFlags = append(emptyFlags, flagTrustedCAFile)
 				}
 
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
@@ -112,72 +139,68 @@ func newStartCommand() *cobra.Command {
 
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
-	configFlagSet.StringP("config-file", "c", filepath.Join(path.SystemConfigDir(), "backend.yml"), "path to sensu-backend config file")
+	configFlagSet.StringP(flagConfigFile, "c", filepath.Join(path.SystemConfigDir(), "backend.yml"), "path to sensu-backend config file")
 	configFlagSet.SetOutput(ioutil.Discard)
 	configFlagSet.Parse(os.Args[1:])
 
-	// Split given config file path / filename
-	configFile, _ := configFlagSet.GetString("config-file")
-	// configDir := filepath.Dir(configFile)
-	// configName := filepath.Base(configFile)
+	// Get the given config file path
+	configFile, _ := configFlagSet.GetString(flagConfigFile)
 
 	// Configure location of backend configuration
-	// viper.AddConfigPath(configDir)
-	// viper.SetConfigName(configName)
 	viper.SetConfigType("yaml")
 	viper.SetConfigFile(configFile)
 	setupErr = viper.ReadInConfig()
 
 	// Flag defaults
-	viper.SetDefault("agent-host", "[::]")
-	viper.SetDefault("agent-port", 8081)
-	viper.SetDefault("api-host", "[::]")
-	viper.SetDefault("api-port", 8080)
-	viper.SetDefault("dashboard-dir", "")
-	viper.SetDefault("dashboard-host", "[::]")
-	viper.SetDefault("dashboard-port", 3000)
-	viper.SetDefault("deregistration-handler", "")
-	viper.SetDefault("state-dir", path.SystemDataDir())
-	viper.SetDefault("cert-file", "")
-	viper.SetDefault("key-file", "")
-	viper.SetDefault("trusted-ca-file", "")
-	viper.SetDefault("insecure-skip-tls-verify", "")
+	viper.SetDefault(flagAgentHost, "[::]")
+	viper.SetDefault(flagAgentPort, 8081)
+	viper.SetDefault(flagAPIHost, "[::]")
+	viper.SetDefault(flagAPIPort, 8080)
+	viper.SetDefault(flagDashboardDir, "")
+	viper.SetDefault(flagDashboardHost, "[::]")
+	viper.SetDefault(flagDashboardPort, 3000)
+	viper.SetDefault(flagDeregistrationHandler, "")
+	viper.SetDefault(flagStateDir, path.SystemDataDir())
+	viper.SetDefault(flagCertFile, "")
+	viper.SetDefault(flagKeyFile, "")
+	viper.SetDefault(flagTrustedCAFile, "")
+	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 
 	// Etcd defaults
-	viper.SetDefault("store-client-url", "")
-	viper.SetDefault("store-peer-url", "")
-	viper.SetDefault("store-initial-cluster", "")
-	viper.SetDefault("store-initial-advertise-peer-url", "")
-	viper.SetDefault("store-initial-cluster-state", "")
-	viper.SetDefault("store-initial-cluster-token", "")
-	viper.SetDefault("store-node-name", "")
+	viper.SetDefault(flagStoreClientURL, "")
+	viper.SetDefault(flagStorePeerURL, "")
+	viper.SetDefault(flagStoreInitialCluster, "")
+	viper.SetDefault(flagStoreInitialAdvertisePeerURL, "")
+	viper.SetDefault(flagStoreInitialClusterState, "")
+	viper.SetDefault(flagStoreInitialClusterToken, "")
+	viper.SetDefault(flagStoreNodeName, "")
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
 
 	// Flags
-	cmd.Flags().String("agent-host", viper.GetString("agent-host"), "agent listener host")
-	cmd.Flags().Int("agent-port", viper.GetInt("agent-port"), "agent listener port")
-	cmd.Flags().String("api-host", viper.GetString("api-host"), "http api listener host")
-	cmd.Flags().Int("api-port", viper.GetInt("api-port"), "http api port")
-	cmd.Flags().String("dashboard-dir", viper.GetString("dashboard-dir"), "path to sensu dashboard static assets")
-	cmd.Flags().String("dashboard-host", viper.GetString("dashboard-host"), "dashboard listener host")
-	cmd.Flags().Int("dashboard-port", viper.GetInt("dashboard-port"), "dashboard listener port")
-	cmd.Flags().String("deregistration-handler", viper.GetString("deregistration-handler"), "default deregistration handler")
-	cmd.Flags().StringP("state-dir", "d", viper.GetString("state-dir"), "path to sensu state storage")
-	cmd.Flags().String("cert-file", "", "tls certificate")
-	cmd.Flags().String("key-file", "", "tls certificate key")
-	cmd.Flags().String("trusted-ca-file", "", "tls certificate authority")
-	cmd.Flags().Bool("insecure-skip-tls-verify", false, "skip ssl verification")
+	cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
+	cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
+	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "http api listener host")
+	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "http api port")
+	cmd.Flags().String(flagDashboardDir, viper.GetString(flagDashboardDir), "path to sensu dashboard static assets")
+	cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
+	cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
+	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
+	cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
+	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "tls certificate")
+	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "tls certificate key")
+	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "tls certificate authority")
+	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip ssl verification")
 
 	// Etcd flags
-	cmd.Flags().String("store-client-url", "", "store client listen URL")
-	cmd.Flags().String("store-peer-url", "", "store peer URL")
-	cmd.Flags().String("store-initial-cluster", "", "store initial cluster")
-	cmd.Flags().String("store-initial-advertise-peer-url", "", "store initial advertise peer URL")
-	cmd.Flags().String("store-initial-cluster-state", "", "store initial cluster state")
-	cmd.Flags().String("store-initial-cluster-token", "", "store initial cluster token")
-	cmd.Flags().String("store-node-name", "", "store cluster member node name")
+	cmd.Flags().String(flagStoreClientURL, viper.GetString(flagStoreClientURL), "store client listen URL")
+	cmd.Flags().String(flagStorePeerURL, viper.GetString(flagStorePeerURL), "store peer URL")
+	cmd.Flags().String(flagStoreInitialCluster, viper.GetString(flagStoreInitialCluster), "store initial cluster")
+	cmd.Flags().String(flagStoreInitialAdvertisePeerURL, viper.GetString(flagStoreInitialAdvertisePeerURL), "store initial advertise peer URL")
+	cmd.Flags().String(flagStoreInitialClusterState, viper.GetString(flagStoreInitialClusterState), "store initial cluster state")
+	cmd.Flags().String(flagStoreInitialClusterToken, viper.GetString(flagStoreInitialClusterToken), "store initial cluster token")
+	cmd.Flags().String(flagStoreNodeName, viper.GetString(flagStoreNodeName), "store cluster member node name")
 
 	return cmd
 }

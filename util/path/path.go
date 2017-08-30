@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	darwin  = "darwin"
+	freebsd = "freebsd"
 	windows = "windows"
 )
 
@@ -20,19 +22,19 @@ func windowsProgramDataPath() string {
 	return programDataPath
 }
 
-// SystemConfigDir ...
+// SystemConfigDir returns the path to the sensu config directory based on the runtime OS
 func SystemConfigDir() string {
 	switch runtime.GOOS {
 	case windows:
 		return filepath.Join(windowsProgramDataPath(), "sensu", "config")
-	case "freebsd":
+	case freebsd:
 		return filepath.Join("/usr/local/etc/sensu")
 	default:
 		return filepath.Join("/etc/sensu")
 	}
 }
 
-// SystemCacheDir ...
+// SystemCacheDir returns the path to the sensu cache directory based on the runtime OS
 func SystemCacheDir(exeName string) string {
 	switch runtime.GOOS {
 	case windows:
@@ -42,7 +44,7 @@ func SystemCacheDir(exeName string) string {
 	}
 }
 
-// SystemDataDir ...
+// SystemDataDir returns the path to the data (state) directory based on the runtime OS
 func SystemDataDir() string {
 	switch runtime.GOOS {
 	case windows:
@@ -52,17 +54,18 @@ func SystemDataDir() string {
 	}
 }
 
-// SystemPidDir ...
+// SystemPidDir returns the path to the pid directory based on the runtime OS
 func SystemPidDir() string {
 	switch runtime.GOOS {
 	case windows:
+		// TODO (JK): do we need a pid dir on windows?
 		return filepath.Join(windowsProgramDataPath(), "sensu", "run")
 	default:
 		return filepath.Join("/var/run/sensu")
 	}
 }
 
-// SystemLogDir ...
+// SystemLogDir returns the path to the log directory based on the runtime OS
 func SystemLogDir() string {
 	switch runtime.GOOS {
 	case windows:
@@ -72,7 +75,7 @@ func SystemLogDir() string {
 	}
 }
 
-// UserConfigDir ...
+// UserConfigDir returns the path to the current user's config directory based on the runtime OS
 func UserConfigDir(exeName string) string {
 	switch runtime.GOOS {
 	case windows:
@@ -92,7 +95,7 @@ func UserConfigDir(exeName string) string {
 	}
 }
 
-// UserCacheDir ...
+// UserCacheDir returns the path to the current user's cache directory based on the runtime OS
 func UserCacheDir(exeName string) string {
 	switch runtime.GOOS {
 	case windows:
@@ -102,7 +105,7 @@ func UserCacheDir(exeName string) string {
 			localAppDataPath = filepath.Join(h, "AppData", "Local")
 		}
 		return filepath.Join(localAppDataPath, "sensu", exeName)
-	case "darwin":
+	case darwin:
 		h, _ := homedir.Dir()
 		return filepath.Join(h, "Library", "Caches", "sensu", exeName)
 	default:
