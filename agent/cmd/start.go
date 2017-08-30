@@ -151,7 +151,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagOrganization, "default")
 	viper.SetDefault(flagUser, "agent")
 	viper.SetDefault(flagPassword, "P@ssw0rd!")
-	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensuctl"))
+	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-agent"))
 	viper.SetDefault(flagDeregister, false)
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagBackendURL, []string{"ws://127.0.0.1:8081"})

@@ -120,6 +120,7 @@ sensu_agent: export SERVICE_NAME=sensu-agent
 sensu_agent: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-agent
 sensu_agent: SERVICE_COMMAND_ARGUMENTS="start"
 sensu_agent: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-agent=$(BIN_TARGET_DIR)/sensu-agent
+sensu_agent: FILES_MAP+= packaging/files/agent.yml.example=/etc/sensu/agent.yml.example
 sensu_agent: build_agent services hooks packages
 
 sensu_backend: FPM_FLAGS+= --name sensu-backend
@@ -129,6 +130,7 @@ sensu_backend: export SERVICE_NAME=sensu-backend
 sensu_backend: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-backend
 sensu_backend: SERVICE_COMMAND_ARGUMENTS="start"
 sensu_backend: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-backend=$(BIN_TARGET_DIR)/sensu-backend
+sensu_backend: FILES_MAP+= packaging/files/backend.yml.example=/etc/sensu/backend.yml.example
 sensu_backend: build_backend services hooks packages
 
 sensu_cli: FPM_FLAGS+= --name sensu-cli

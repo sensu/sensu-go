@@ -1,0 +1,25 @@
+---
+##
+# agent configuration
+##
+#agent-id: ""
+#organization: "default"
+#environment: "default"
+#subscriptions: ""
+#backend-url:
+#  - "ws://127.0.0.1:8081"
+
+##
+# authentication configuration
+##
+#user: "agent"
+#password: "P@ssw0rd!"
+
+##
+# other
+##
+#cache-dir: "/var/cache/sensu/sensu-agent"
+#deregister: false
+#deregistration-handler: ""
+#keepalive-timeout: 120
+#keepalive-internal: 20

@@ -55,9 +55,11 @@ emit() {
 start() {
 
   # Ensure the log directory is setup correctly.
-  [ ! -d "/var/log" ] && mkdir "/var/log"
-  chown "$user":"$group" "/var/log"
-  chmod 755 "/var/log"
+  if [ ! -d "/var/log" ]; then 
+    mkdir "/var/log"
+    chown "$user":"$group" "/var/log"
+    chmod 755 "/var/log"
+  fi
 
 
   # Setup any environmental stuff beforehand
