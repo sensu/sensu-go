@@ -139,17 +139,27 @@ func newStartCommand() *cobra.Command {
 
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
-	configFlagSet.StringP(flagConfigFile, "c", filepath.Join(path.SystemConfigDir(), "backend.yml"), "path to sensu-backend config file")
+	configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-backend config file")
 	configFlagSet.SetOutput(ioutil.Discard)
 	configFlagSet.Parse(os.Args[1:])
 
 	// Get the given config file path
 	configFile, _ := configFlagSet.GetString(flagConfigFile)
+	configFilePath := configFile
+
+	// use the default config path if flagConfigFile was used
+	if configFile == "" {
+		configFilePath = filepath.Join(path.SystemConfigDir(), "backend.yml")
+	}
 
 	// Configure location of backend configuration
 	viper.SetConfigType("yaml")
-	viper.SetConfigFile(configFile)
-	setupErr = viper.ReadInConfig()
+	viper.SetConfigFile(configFilePath)
+
+	// Only error out if flagConfigFile is used
+	if err := viper.ReadInConfig(); err != nil && configFile != "" {
+		setupErr = err
+	}
 
 	// Flag defaults
 	viper.SetDefault(flagAgentHost, "[::]")
