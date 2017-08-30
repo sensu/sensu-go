@@ -73,6 +73,7 @@ type OrganizationAPIClient interface {
 	CreateOrganization(*types.Organization) error
 	DeleteOrganization(string) error
 	ListOrganizations() ([]types.Organization, error)
+	FetchOrganization(string) (*types.Organization, error)
 }
 
 // UserAPIClient client methods for users
