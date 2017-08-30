@@ -14,7 +14,13 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "update handlers",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			//Fetch handlers from API
+			// Print ot usage if we do not receive one argument
+			if len(args) != 1 {
+				cmd.Help()
+				return nil
+			}
+
+			// Fetch handlers from API
 			handlerName := args[0]
 			handler, err := cli.Client.FetchHandler(handlerName)
 			if err != nil {

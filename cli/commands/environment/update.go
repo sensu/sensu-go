@@ -1,4 +1,4 @@
-package organization
+package environment
 
 import (
 	"fmt"
@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// UpdateCommand allows the user to update organization
+// UpdateCommand allows the user to update environment
 func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "update NAME",
-		Short:        "update organization description",
+		Short:        "update environment description",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print ot usage if we do not receive one argument
@@ -20,25 +20,24 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return nil
 			}
 
-			// Fetch organizations from API
-			orgName := args[0]
-			org, err := cli.Client.FetchOrganization(orgName)
+			// Fetch environment from API
+			name := args[0]
+			env, err := cli.Client.FetchEnvironment(name)
 			if err != nil {
 				return err
 			}
 
-			opts := newOrgOpts()
-			opts.withOrg(org)
-
+			opts := envOpts{}
+			opts.Org = cli.Config.Organization()
+			opts.withEnv(env)
 			opts.administerQuestionnaire(true)
+			opts.Copy(env)
 
-			opts.Copy(org)
-
-			if err := org.Validate(); err != nil {
+			if err := env.Validate(); err != nil {
 				return err
 			}
 
-			if err := cli.Client.CreateOrganization(org); err != nil {
+			if err := cli.Client.CreateEnvironment(opts.Org, env); err != nil {
 				return err
 			}
 

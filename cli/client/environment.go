@@ -64,3 +64,25 @@ func (client *RestClient) ListEnvironments(org string) ([]types.Environment, err
 	err = json.Unmarshal(res.Body(), &envs)
 	return envs, err
 }
+
+// FetchEnvironment fetches an environment by name
+func (client *RestClient) FetchEnvironment(envName string) (*types.Environment, error) {
+	var env *types.Environment
+	path := fmt.Sprintf(
+		"/rbac/organizations/%s/environments/%s",
+		client.config.Organization(),
+		envName,
+	)
+
+	res, err := client.R().Get(path)
+	if err != nil {
+		return env, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return env, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &env)
+	return env, err
+}
