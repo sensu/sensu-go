@@ -10,7 +10,7 @@ Group=sensu
 # exist, it continues onward.
 EnvironmentFile=-/etc/default/sensu-agent
 EnvironmentFile=-/etc/sysconfig/sensu-agent
-ExecStart=/usr/bin/sensu-agent "start"
+ExecStart=/usr/bin/sensu-agent start
 Restart=always
 WorkingDirectory=/
 

@@ -1,7 +1,7 @@
 .PHONY: default clean
 .PHONY: android darwin dragonfly freebsd linux netbsd openbsd plan9 solaris windows
 .PHONY: sensu_agent sensu_backend sensu_cli
-.PHONY: services hooks packages rpms debs
+.PHONY: hooks packages rpms debs
 
 ANDROID_ARCHITECTURES   := arm
 DARWIN_ARCHITECTURES    := 386 amd64 # arm arm64
@@ -121,7 +121,7 @@ sensu_agent: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-agent
 sensu_agent: SERVICE_COMMAND_ARGS=start
 sensu_agent: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-agent=$(BIN_TARGET_DIR)/sensu-agent
 sensu_agent: FILES_MAP+= packaging/files/agent.yml.example=/etc/sensu/agent.yml.example
-sensu_agent: build_agent services hooks packages
+sensu_agent: build_agent hooks packages
 
 sensu_backend: FPM_FLAGS+= --name sensu-backend
 sensu_backend: FPM_FLAGS+= --description "Sensu backend description here"
@@ -131,7 +131,7 @@ sensu_backend: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-backend
 sensu_backend: SERVICE_COMMAND_ARGS=start -c /etc/sensu/backend.yml
 sensu_backend: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-backend=$(BIN_TARGET_DIR)/sensu-backend
 sensu_backend: FILES_MAP+= packaging/files/backend.yml.example=/etc/sensu/backend.yml.example
-sensu_backend: build_backend services hooks packages
+sensu_backend: build_backend hooks packages
 
 sensu_cli: FPM_FLAGS+= --name sensu-cli
 sensu_cli: FPM_FLAGS+= --description "Sensu cli description here"
@@ -151,32 +151,6 @@ build_backend:
 
 build_cli:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_cli
-
-##
-# Service targets
-##
-services: $(SERVICES)
-
-service_none:
-	@echo "no-op"
-
-service_sysvinit:
-	pleaserun -p sysv --overwrite --no-install-actions \
-	--install-prefix packaging/services/$(SERVICE_NAME)/sysvinit \
-	--user $(SERVICE_USER) --group $(SERVICE_GROUP) \
-	$(SERVICE_COMMAND_PATH) $(SERVICE_COMMAND_ARGS)
-
-service_systemd:
-	pleaserun -p systemd --overwrite --no-install-actions \
-	--install-prefix packaging/services/$(SERVICE_NAME)/systemd \
-	--user $(SERVICE_USER) --group $(SERVICE_GROUP) \
-	$(SERVICE_COMMAND_PATH) $(SERVICE_COMMAND_ARGS)
-
-service_launchd:
-	pleaserun -p launchd --overwrite --no-install-actions \
-	--install-prefix packaging/services/$(SERVICE_NAME)/launchd \
-	--user $(SERVICE_USER_MAC) --group $(SERVICE_GROUP_MAC) \
-	$(SERVICE_COMMAND_PATH) $(SERVICE_COMMAND_ARGS)
 
 ##
 # Hook targets

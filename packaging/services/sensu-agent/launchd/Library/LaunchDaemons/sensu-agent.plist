@@ -6,8 +6,7 @@
     <key>Label</key><string>sensu-agent</string>
     <key>Program</key><string>/usr/local/bin/sensu-agent</string>
     <key>ProgramArguments</key><array>
-      <string>/usr/local/bin/sensu-agent</string>
-      
+      <string>start</string>
     </array>
     <key>KeepAlive</key> <true/>
     <key>StandardOutPath</key> <string>/var/log/sensu-agent-stdout.log</string>
@@ -47,4 +46,3 @@
       -->
   </dict>
 </plist>
-

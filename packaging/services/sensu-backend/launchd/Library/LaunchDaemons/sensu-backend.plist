@@ -6,8 +6,7 @@
     <key>Label</key><string>sensu-backend</string>
     <key>Program</key><string>/usr/local/bin/sensu-backend</string>
     <key>ProgramArguments</key><array>
-      <string>/usr/local/bin/sensu-backend</string>
-      
+      <string>start -c /etc/sensu/backend.yml</string>
     </array>
     <key>KeepAlive</key> <true/>
     <key>StandardOutPath</key> <string>/var/log/sensu-backend-stdout.log</string>
@@ -47,4 +46,3 @@
       -->
   </dict>
 </plist>
-
