@@ -25,7 +25,7 @@ $(shell mkdir -p out)
 VERSION=$(shell cat version/version.txt)
 ITERATION=$(shell cat version/iteration.txt)
 ARCHITECTURE=$(GOARCH)
-DESCRIPTION="Sensu is a monitoring thing"
+DESCRIPTION="A monitoring framework that aims to be simple, malleable, and scalable."
 LICENSE=MIT
 VENDOR="Sensu, Inc."
 MAINTAINER="Sensu Support <support@sensu.io>"
