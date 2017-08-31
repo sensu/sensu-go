@@ -151,7 +151,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagOrganization, "default")
 	viper.SetDefault(flagUser, "agent")
 	viper.SetDefault(flagPassword, "P@ssw0rd!")
-	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensuctl"))
+	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-agent"))
 	viper.SetDefault(flagDeregister, false)
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagBackendURL, []string{"ws://127.0.0.1:8081"})
@@ -160,6 +160,10 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagKeepaliveTimeout, 120)
 	viper.SetDefault(flagKeepaliveInterval, 20)
 
+	// Merge in config flag set so that it appears in command usage
+	cmd.Flags().AddFlagSet(configFlagSet)
+
+	// Flags
 	cmd.Flags().String(flagEnvironment, viper.GetString(flagEnvironment), "agent environment")
 	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")

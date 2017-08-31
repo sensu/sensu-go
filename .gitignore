@@ -13,3 +13,20 @@ yarn-error.log*
 # misc
 .DS_Store
 debug.test
+
+# packaging
+*.log
+.vagrant/
+*.deb
+*.rpm
+*.pkg
+*.dmg
+*.bff
+*.solaris
+*.txz
+*.tar.gz
+packages/*
+packaging/hooks/*/deb/*
+!packaging/hooks/*/deb/*.erb
+packaging/hooks/*/rpm/*
+!packaging/hooks/*/rpm/*.erb
