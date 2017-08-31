@@ -60,3 +60,20 @@ func (client *RestClient) ListOrganizations() ([]types.Organization, error) {
 	err = json.Unmarshal(res.Body(), &orgs)
 	return orgs, err
 }
+
+// FetchOrganization fetches an organization by name
+func (client *RestClient) FetchOrganization(orgName string) (*types.Organization, error) {
+	var org *types.Organization
+
+	res, err := client.R().Get("/rbac/organizations/" + orgName)
+	if err != nil {
+		return org, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return org, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &org)
+	return org, err
+}

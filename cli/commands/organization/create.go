@@ -3,18 +3,11 @@ package organization
 import (
 	"fmt"
 
-	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
-
-type createOpts struct {
-	Description string `survey:"description"`
-	Name        string `survey:"name"`
-}
 
 // CreateCommand adds command that allows users to create new organizations
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
@@ -25,10 +18,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
-			opts := &createOpts{}
+			opts := newOrgOpts()
 
 			if isInteractive {
-				opts.administerQuestionnaire()
+				opts.administerQuestionnaire(false)
 			} else {
 				opts.withFlags(flags)
 				if len(args) > 0 {
@@ -36,7 +29,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			org := opts.toOrganization()
+			org := types.Organization{}
+			opts.Copy(&org)
+
 			if err := org.Validate(); err != nil {
 				if !isInteractive {
 					cmd.SilenceUsage = false
@@ -44,7 +39,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateOrganization(org); err != nil {
+			if err := cli.Client.CreateOrganization(&org); err != nil {
 				return err
 			}
 
@@ -65,36 +60,4 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.MarkFlagRequired("name")
 
 	return cmd
-}
-
-func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
-	opts.Description, _ = flags.GetString("description")
-	opts.Name, _ = flags.GetString("name")
-}
-
-func (opts *createOpts) administerQuestionnaire() {
-	var qs = []*survey.Question{
-		{
-			Name: "name",
-			Prompt: &survey.Input{
-				Message: "Name:",
-			},
-			Validate: survey.Required,
-		},
-		{
-			Name: "description",
-			Prompt: &survey.Input{
-				Message: "Description:",
-			},
-		},
-	}
-
-	survey.Ask(qs, opts)
-}
-
-func (opts *createOpts) toOrganization() *types.Organization {
-	return &types.Organization{
-		Description: opts.Description,
-		Name:        opts.Name,
-	}
 }

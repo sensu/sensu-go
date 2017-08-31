@@ -52,6 +52,7 @@ type EnvironmentAPIClient interface {
 	CreateEnvironment(string, *types.Environment) error
 	DeleteEnvironment(string, string) error
 	ListEnvironments(string) ([]types.Environment, error)
+	FetchEnvironment(string) (*types.Environment, error)
 }
 
 // EventAPIClient client methods for events
@@ -65,6 +66,7 @@ type HandlerAPIClient interface {
 	CreateHandler(*types.Handler) error
 	DeleteHandler(*types.Handler) error
 	ListHandlers(string) ([]types.Handler, error)
+	FetchHandler(string) (*types.Handler, error)
 }
 
 // OrganizationAPIClient client methods for organizations
@@ -72,6 +74,7 @@ type OrganizationAPIClient interface {
 	CreateOrganization(*types.Organization) error
 	DeleteOrganization(string) error
 	ListOrganizations() ([]types.Organization, error)
+	FetchOrganization(string) (*types.Organization, error)
 }
 
 // UserAPIClient client methods for users

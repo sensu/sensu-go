@@ -3,19 +3,11 @@ package environment
 import (
 	"fmt"
 
-	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
-
-type createOpts struct {
-	Description  string `survey:"description"`
-	Name         string `survey:"name"`
-	Organization string `survey:"organization"`
-}
 
 // CreateCommand adds command that allows users to create new environments
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
@@ -26,11 +18,11 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
-			opts := &createOpts{}
-			opts.Organization = cli.Config.Organization()
+			opts := envOpts{}
+			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
-				opts.administerQuestionnaire()
+				opts.administerQuestionnaire(false)
 			} else {
 				opts.withFlags(flags)
 				if len(args) > 0 {
@@ -38,10 +30,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			org, env := opts.toEnvironment()
-			if org == "" {
-				return fmt.Errorf("an organization must be provided")
-			}
+			env := types.Environment{}
+			opts.Copy(&env)
 
 			if err := env.Validate(); err != nil {
 				if !isInteractive {
@@ -50,7 +40,11 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateEnvironment(org, env); err != nil {
+			if opts.Org == "" {
+				return fmt.Errorf("an organization must be provided")
+			}
+
+			if err := cli.Client.CreateEnvironment(opts.Org, &env); err != nil {
 				return err
 			}
 
@@ -71,36 +65,4 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.MarkFlagRequired("name")
 
 	return cmd
-}
-
-func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
-	opts.Description, _ = flags.GetString("description")
-	opts.Name, _ = flags.GetString("name")
-}
-
-func (opts *createOpts) administerQuestionnaire() {
-	var qs = []*survey.Question{
-		{
-			Name: "name",
-			Prompt: &survey.Input{
-				Message: "Name:",
-			},
-			Validate: survey.Required,
-		},
-		{
-			Name: "description",
-			Prompt: &survey.Input{
-				Message: "Description:",
-			},
-		},
-	}
-
-	survey.Ask(qs, opts)
-}
-
-func (opts *createOpts) toEnvironment() (string, *types.Environment) {
-	return opts.Organization, &types.Environment{
-		Description: opts.Description,
-		Name:        opts.Name,
-	}
 }

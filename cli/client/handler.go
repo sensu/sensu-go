@@ -41,3 +41,20 @@ func (client *RestClient) DeleteHandler(handler *types.Handler) (err error) {
 	_, err = client.R().Delete("/handlers/" + handler.Name)
 	return err
 }
+
+// FetchHandler fetches a specific handler
+func (client *RestClient) FetchHandler(name string) (*types.Handler, error) {
+	var handler *types.Handler
+
+	res, err := client.R().Get("/handlers/" + name)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return nil, fmt.Errorf("%v", res.String())
+	}
+
+	err = json.Unmarshal(res.Body(), &handler)
+	return handler, err
+}

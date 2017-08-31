@@ -6,6 +6,13 @@ import "github.com/sensu/sensu-go/types"
 type Config interface {
 	Read
 	Write
+	Mutate
+}
+
+// Mutate mutates the current config but does not explicitly persist changes
+type Mutate interface {
+	SetOrganization(string)
+	SetEnvironment(string)
 }
 
 // Read contains all methods related to reading configuration

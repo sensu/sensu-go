@@ -12,9 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// OrganizationFlagDefault default value to use for organization
-const OrganizationFlagDefault = "default"
-
 func main() {
 	rootCmd := configureRootCmd()
 	sensuCli := cli.New(rootCmd.PersistentFlags())
@@ -54,7 +51,8 @@ func configureRootCmd() *cobra.Command {
 	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
 	cmd.PersistentFlags().StringP("config-dir", "", path.UserConfigDir("sensuctl"), "path to directory containing configuration files")
 	cmd.PersistentFlags().StringP("cache-dir", "", path.UserCacheDir("sensuctl"), "path to directory containing cache & temporary files")
-	cmd.PersistentFlags().StringP("organization", "", OrganizationFlagDefault, "organization in which we perform actions")
+	cmd.PersistentFlags().String("organization", "", "organization in which we perform actions")
+	cmd.PersistentFlags().String("environment", "", "environment in which we perform actions")
 
 	return cmd
 }
