@@ -118,7 +118,7 @@ sensu_agent: FPM_FLAGS+= --description "Sensu agent description here"
 sensu_agent: BIN_NAME=sensu-agent
 sensu_agent: export SERVICE_NAME=sensu-agent
 sensu_agent: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-agent
-sensu_agent: SERVICE_COMMAND_ARGUMENTS="start"
+sensu_agent: SERVICE_COMMAND_ARGS=start
 sensu_agent: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-agent=$(BIN_TARGET_DIR)/sensu-agent
 sensu_agent: FILES_MAP+= packaging/files/agent.yml.example=/etc/sensu/agent.yml.example
 sensu_agent: build_agent services hooks packages
@@ -128,7 +128,7 @@ sensu_backend: FPM_FLAGS+= --description "Sensu backend description here"
 sensu_backend: BIN_NAME=sensu-backend
 sensu_backend: export SERVICE_NAME=sensu-backend
 sensu_backend: SERVICE_COMMAND_PATH=$(BIN_TARGET_DIR)/sensu-backend
-sensu_backend: SERVICE_COMMAND_ARGUMENTS="start"
+sensu_backend: SERVICE_COMMAND_ARGS=start -c /etc/sensu/backend.yml
 sensu_backend: FILES_MAP=$(BIN_SOURCE_DIR)/sensu-backend=$(BIN_TARGET_DIR)/sensu-backend
 sensu_backend: FILES_MAP+= packaging/files/backend.yml.example=/etc/sensu/backend.yml.example
 sensu_backend: build_backend services hooks packages
@@ -219,12 +219,13 @@ deb_service_none:
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
 
 deb_service_sysvinit: FPM_FLAGS += --package out/deb/sysvinit/
-deb_service_sysvinit: FPM_FLAGS += --deb-init packaging/services/$(SERVICE_NAME)/sysvinit/etc/init.d/$(SERVICE_NAME)
+deb_service_sysvinit: FILES_MAP += packaging/services/$(SERVICE_NAME)/sysvinit/etc/init.d/$(SERVICE_NAME)
 deb_service_sysvinit:
 	mkdir -p out/deb/sysvinit
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
 
 deb_service_systemd: FPM_FLAGS += --package out/deb/systemd/
+deb_service_systemd: FILES_MAP += packaging/services/$(SERVICE_NAME)/systemd/etc/systemd/system/$(SERVICE_NAME).service=/lib/systemd/system/$(SERVICE_NAME).service
 deb_service_systemd:
 	mkdir -p out/deb/systemd
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
@@ -244,11 +245,13 @@ rpm_service_none:
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
 
 rpm_service_sysvinit: FPM_FLAGS += --package out/rpm/sysvinit/
+rpm_service_sysvinit: FILES_MAP += packaging/services/$(SERVICE_NAME)/sysvinit/etc/init.d/$(SERVICE_NAME)=/etc/init.d/$(SERVICE_NAME)
 rpm_service_sysvinit:
 	mkdir -p out/rpm/sysvinit
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
 
 rpm_service_systemd: FPM_FLAGS += --package out/rpm/systemd/
+rpm_service_systemd: FILES_MAP += packaging/services/$(SERVICE_NAME)/systemd/etc/systemd/system/$(SERVICE_NAME).service=/lib/systemd/system/$(SERVICE_NAME).service
 rpm_service_systemd:
 	mkdir -p out/rpm/systemd
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)

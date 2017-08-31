@@ -20,7 +20,7 @@ export PATH
 
 name=sensu-agent
 program=/usr/bin/sensu-agent
-args=''
+args=start
 pidfile="/var/run/$name.pid"
 user="sensu"
 group="sensu"

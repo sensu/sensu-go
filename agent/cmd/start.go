@@ -160,6 +160,10 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagKeepaliveTimeout, 120)
 	viper.SetDefault(flagKeepaliveInterval, 20)
 
+	// Merge in config flag set so that it appears in command usage
+	cmd.Flags().AddFlagSet(configFlagSet)
+
+	// Flags
 	cmd.Flags().String(flagEnvironment, viper.GetString(flagEnvironment), "agent environment")
 	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")

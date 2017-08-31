@@ -10,7 +10,7 @@ Group=sensu
 # exist, it continues onward.
 EnvironmentFile=-/etc/default/sensu-backend
 EnvironmentFile=-/etc/sysconfig/sensu-backend
-ExecStart=/usr/bin/sensu-backend 
+ExecStart=/usr/bin/sensu-backend "start" "-c" "/etc/sensu/backend.yml"
 Restart=always
 WorkingDirectory=/
 

@@ -20,7 +20,7 @@ export PATH
 
 name=sensu-backend
 program=/usr/bin/sensu-backend
-args=''
+args=start\ -c\ /etc/sensu/backend.yml
 pidfile="/var/run/$name.pid"
 user="sensu"
 group="sensu"
