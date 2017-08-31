@@ -88,7 +88,7 @@ func printEntitiesToTable(queryResults []types.Entity, writer io.Writer) {
 			Title: "Last Seen",
 			CellTransformer: func(data interface{}) string {
 				entity, _ := data.(types.Entity)
-				time := time.Unix(entity.LastSeen*int64(time.Second), 0)
+				time := time.Unix(entity.LastSeen, 0)
 				return time.String()
 			},
 		},
