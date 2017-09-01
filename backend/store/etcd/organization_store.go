@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/coreos/etcd/clientv3"
+	v3 "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/types"
 )
@@ -26,7 +26,21 @@ func (s *etcdStore) DeleteOrganizationByName(ctx context.Context, name string) e
 		return errors.New("must specify name")
 	}
 
-	resp, err := s.kvc.Delete(ctx, getOrganizationsPath(name), clientv3.WithPrefix())
+	// Validate whether there are any resources referencing the organization
+	getresp, err := s.kvc.Txn(ctx).Then(
+		v3.OpGet(checkKeyBuilder.withOrg(name).build()),
+	).Commit()
+	if err != nil {
+		return err
+	}
+
+	for _, r := range getresp.Responses {
+		if r.Size() > 0 {
+			return errors.New("organization is not empty") // TODO
+		}
+	}
+
+	resp, err := s.kvc.Delete(ctx, getOrganizationsPath(name), v3.WithPrefix())
 	if err != nil {
 		return err
 	}
@@ -43,7 +57,7 @@ func (s *etcdStore) GetOrganizationByName(ctx context.Context, name string) (*ty
 	resp, err := s.kvc.Get(
 		ctx,
 		getOrganizationsPath(name),
-		clientv3.WithLimit(1),
+		v3.WithLimit(1),
 	)
 	if err != nil {
 		return nil, err
@@ -66,7 +80,7 @@ func (s *etcdStore) GetOrganizations(ctx context.Context) ([]*types.Organization
 	resp, err := s.kvc.Get(
 		ctx,
 		getOrganizationsPath(""),
-		clientv3.WithPrefix(),
+		v3.WithPrefix(),
 	)
 
 	if err != nil {

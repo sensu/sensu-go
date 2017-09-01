@@ -114,6 +114,16 @@ func (c *CheckConfig) Validate() error {
 	return nil
 }
 
+// Org refers to the organization the check belongs to
+func (c *CheckConfig) Org() string {
+	return c.Organization
+}
+
+// Env refers to the organization the check belongs to
+func (c *CheckConfig) Env() string {
+	return c.Environment
+}
+
 // CheckHistory is a record of a check execution and its status.
 type CheckHistory struct {
 	Status   int   `json:"status"`
