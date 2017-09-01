@@ -23,6 +23,7 @@ $(shell mkdir -p out)
 # FPM
 ##
 VERSION=$(shell cat version/version.txt)
+PRERELEASE=$(shell cat version/prerelease.txt)
 ITERATION=$(shell cat version/iteration.txt)
 ARCHITECTURE=$(GOARCH)
 DESCRIPTION="A monitoring framework that aims to be simple, malleable, and scalable."
@@ -34,7 +35,7 @@ URL="https://sensuapp.org"
 BIN_SOURCE_DIR=target/$(GOOS)-$(GOARCH)
 
 FPM_FLAGS = \
-	--version $(VERSION) \
+	--version $(VERSION)-$(PRERELEASE) \
 	--iteration $(ITERATION) \
 	--url $(URL) \
 	--license $(LICENSE) \
