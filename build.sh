@@ -78,13 +78,13 @@ build_binary () {
 	local outfile="target/${goos}-${goarch}/${cmd_name}"
 
 	local version=$(cat version/version.txt)
-	local iteration=$(cat version/iteration.txt)
+	local prerelease=$(cat version/prerelease.txt)
 	local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
 	local build_sha=$(git rev-parse HEAD)
 
 	local version_pkg="github.com/sensu/sensu-go/version"
-	local ldflags="-X $version_pkg.Version=${version}"
-	local ldflags+=" -X $version_pkg.Iteration=${iteration}"
+	local ldflags=" -X $version_pkg.Version=${version}"
+	local ldflags+=" -X $version_pkg.PreReleaseIdentifier=${prerelease}"
 	local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
 	local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 
