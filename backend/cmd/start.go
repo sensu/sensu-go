@@ -55,7 +55,7 @@ func newVersionCommand() *cobra.Command {
 		Short: "Show the sensu-backend version information",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("sensu-backend version %s, build %s, built %s\n",
-				version.Version,
+				version.Semver(),
 				version.BuildSHA,
 				version.BuildDate,
 			)
