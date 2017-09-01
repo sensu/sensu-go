@@ -175,6 +175,8 @@ e2e_commands () {
 }
 
 docker_commands () {
+	local build_sha=$(git rev-parse HEAD)
+
 	for cmd in cat false sleep true; do
 		echo "Building tools/$cmd for linux-amd64"
 		build_tool_binary linux amd64 $cmd "tools"
@@ -190,7 +192,7 @@ docker_commands () {
 		local cmd_name=$(cmd_name_map $cmd)
 		build_binary linux amd64 $cmd $cmd_name
 	done
-	docker build -t sensuapp/sensu-go .
+	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
 }
 
 static_assets () {
