@@ -66,6 +66,7 @@ upload_binary() {
   local arch=$2
 
   gsutil -m cp -a public-read target/${os}-${arch}/* gs://${BUCKET}/${TAG}/${os}/${arch}/
+  echo "Uploaded to https://storage.googleapis.com/${BUCKET}/${TAG}/${os}/${arch}/"
 }
 
 update_latest_txt() {
