@@ -114,13 +114,13 @@ func (c *CheckConfig) Validate() error {
 	return nil
 }
 
-// Org refers to the organization the check belongs to
-func (c *CheckConfig) Org() string {
+// GetOrg refers to the organization the check belongs to
+func (c *CheckConfig) GetOrg() string {
 	return c.Organization
 }
 
-// Env refers to the organization the check belongs to
-func (c *CheckConfig) Env() string {
+// GetEnv refers to the organization the check belongs to
+func (c *CheckConfig) GetEnv() string {
 	return c.Environment
 }
 

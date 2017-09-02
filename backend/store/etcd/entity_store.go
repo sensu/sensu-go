@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
@@ -15,15 +14,16 @@ const (
 	entityPathPrefix = "entities"
 )
 
+var (
+	entityKeyBuilder = newKeyBuilder(entityPathPrefix)
+)
+
 func getEntityPath(entity *types.Entity) string {
-	return path.Join(etcdRoot, entityPathPrefix, entity.Organization, entity.Environment, entity.ID)
+	return entityKeyBuilder.withResource(entity).build(entity.ID)
 }
 
 func getEntitiesPath(ctx context.Context, id string) string {
-	env := environment(ctx)
-	org := organization(ctx)
-
-	return path.Join(etcdRoot, entityPathPrefix, org, env, id)
+	return entityKeyBuilder.withContext(ctx).build(id)
 }
 
 func (s *etcdStore) DeleteEntity(ctx context.Context, e *types.Entity) error {

@@ -44,6 +44,16 @@ func (m *Mutator) Validate() error {
 	return nil
 }
 
+// GetOrg refers to the organization the check belongs to
+func (m *Mutator) GetOrg() string {
+	return m.Organization
+}
+
+// GetEnv refers to the organization the check belongs to
+func (m *Mutator) GetEnv() string {
+	return m.Environment
+}
+
 // FixtureMutator returns a Mutator fixture for testing.
 func FixtureMutator(name string) *Mutator {
 	return &Mutator{

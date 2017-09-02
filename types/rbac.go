@@ -70,6 +70,16 @@ type Rule struct {
 	Permissions  []string `json:"permissions"`
 }
 
+// GetOrg refers to the organization the check belongs to
+func (r *Rule) GetOrg() string {
+	return r.Organization
+}
+
+// GetEnv refers to the organization the check belongs to
+func (r *Rule) GetEnv() string {
+	return r.Environment
+}
+
 // Role describes set of rules
 type Role struct {
 	Name  string `json:"name"`

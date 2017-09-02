@@ -28,7 +28,8 @@ func (s *etcdStore) DeleteOrganizationByName(ctx context.Context, name string) e
 
 	// Validate whether there are any resources referencing the organization
 	getresp, err := s.kvc.Txn(ctx).Then(
-		v3.OpGet(checkKeyBuilder.withOrg(name).build()),
+		v3.OpGet(checkKeyBuilder.withOrg(name).build(), v3.WithPrefix()),
+		v3.OpGet(entityKeyBuilder.withOrg(name).build(), v3.WithPrefix()),
 	).Commit()
 	if err != nil {
 		return err

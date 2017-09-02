@@ -72,6 +72,16 @@ func (e *Entity) Validate() error {
 	return nil
 }
 
+// GetOrg refers to the organization the check belongs to
+func (e *Entity) GetOrg() string {
+	return e.Organization
+}
+
+// GetEnv refers to the organization the check belongs to
+func (e *Entity) GetEnv() string {
+	return e.Environment
+}
+
 // FixtureEntity returns a testing fixture for an Entity object.
 func FixtureEntity(id string) *Entity {
 	return &Entity{
