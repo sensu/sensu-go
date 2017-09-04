@@ -18,14 +18,14 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "create new checks from STDIN",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			stat, _ := os.Stdin.Stat()
+			stat, _ := cli.InFile.Stat()
 			if stat.Mode()&os.ModeNamedPipe == 0 {
 				cmd.Help() // Print out usage
 				return nil
 			}
 
 			check := &types.CheckConfig{}
-			dec := json.NewDecoder(bufio.NewReader(os.Stdin))
+			dec := json.NewDecoder(bufio.NewReader(cli.InFile))
 			dec.Decode(check)
 
 			if err := check.Validate(); err != nil {
@@ -37,7 +37,7 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Println("OK")
+			fmt.Fprintln(cmd.OutOrStdout(), "Imported")
 			return nil
 		},
 	}

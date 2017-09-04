@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"os"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
@@ -17,6 +19,7 @@ type SensuCli struct {
 	Config config.Config
 	Client client.APIClient
 	Logger *logrus.Entry
+	InFile *os.File
 }
 
 // New SensuCLI given persistent flags from command
@@ -31,5 +34,6 @@ func New(flags *pflag.FlagSet) *SensuCli {
 		Client: client,
 		Config: conf,
 		Logger: logger,
+		InFile: os.Stdin,
 	}
 }

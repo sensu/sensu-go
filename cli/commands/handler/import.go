@@ -18,7 +18,7 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "create new handlers from STDIN",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			stat, _ := os.Stdin.Stat()
+			stat, _ := cli.InFile.Stat()
 
 			// If no data is present in STDIN print out usage
 			if stat.Mode()&os.ModeNamedPipe == 0 {
@@ -27,7 +27,7 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			handler := &types.Handler{}
-			dec := json.NewDecoder(bufio.NewReader(os.Stdin))
+			dec := json.NewDecoder(bufio.NewReader(cli.InFile))
 			dec.Decode(handler)
 
 			if err := handler.Validate(); err != nil {
@@ -39,7 +39,7 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Println("OK")
+			fmt.Fprintln(cmd.OutOrStdout(), "Imported")
 			return nil
 		},
 	}
