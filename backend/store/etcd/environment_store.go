@@ -5,19 +5,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
-	"github.com/coreos/etcd/clientv3"
+	v3 "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
+var (
 	environmentsPathPrefix = "environments"
+	environmentKeyBuilder  = newKeyBuilder(environmentsPathPrefix)
 )
 
 func getEnvironmentsPath(org, env string) string {
-	return path.Join(etcdRoot, environmentsPathPrefix, org, env)
+	return environmentKeyBuilder.withOrg(org).build(env)
 }
 
 // DeleteEnvironment deletes an environment
@@ -26,7 +26,40 @@ func (s *etcdStore) DeleteEnvironment(ctx context.Context, org, env string) erro
 		return errors.New("must specify organization and environment name")
 	}
 
-	resp, err := s.kvc.Delete(ctx, getEnvironmentsPath(org, env), clientv3.WithPrefix())
+	ctx = context.WithValue(ctx, types.OrganizationKey, org)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, env)
+
+	// Validate whether there are any resources referencing the organization
+	getresp, err := s.kvc.Txn(ctx).Then(
+		v3.OpGet(checkKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(entityKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(assetKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(handlerKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(mutatorKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
+	).Commit()
+	if err != nil {
+		return err
+	}
+	for _, r := range getresp.Responses {
+		if r.GetResponseRange().Count > 0 {
+			return errors.New("environment is not empty") // TODO
+		}
+	}
+
+	// Validate that there are no roles referencing the organization
+	roles, err := s.GetRoles()
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		for _, rule := range role.Rules {
+			if rule.Organization == org && rule.Environment == env {
+				return fmt.Errorf("environment is not empty; role '%s' references it", role.Name)
+			}
+		}
+	}
+
+	resp, err := s.kvc.Delete(ctx, getEnvironmentsPath(org, env), v3.WithPrefix())
 	if err != nil {
 		return err
 	}
@@ -43,7 +76,7 @@ func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types
 	resp, err := s.kvc.Get(
 		ctx,
 		getEnvironmentsPath(org, env),
-		clientv3.WithLimit(1),
+		v3.WithLimit(1),
 	)
 	if err != nil {
 		return nil, err
@@ -66,7 +99,7 @@ func (s *etcdStore) GetEnvironments(ctx context.Context, org string) ([]*types.E
 	resp, err := s.kvc.Get(
 		ctx,
 		getEnvironmentsPath(org, "/"),
-		clientv3.WithPrefix(),
+		v3.WithPrefix(),
 	)
 
 	if err != nil {
@@ -89,8 +122,8 @@ func (s *etcdStore) UpdateEnvironment(ctx context.Context, org string, env *type
 
 	// We need to prepare a transaction to verify that the organization under
 	// which we are creating this environment exists
-	cmp := clientv3.Compare(clientv3.Version(getOrganizationsPath(org)), ">", 0)
-	req := clientv3.OpPut(getEnvironmentsPath(org, env.Name), string(bytes))
+	cmp := v3.Compare(v3.Version(getOrganizationsPath(org)), ">", 0)
+	req := v3.OpPut(getEnvironmentsPath(org, env.Name), string(bytes))
 	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err

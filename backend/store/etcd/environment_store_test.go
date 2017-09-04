@@ -12,6 +12,8 @@ import (
 func TestEnvStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		ctx := context.Background()
+		ctx = context.WithValue(ctx, types.OrganizationKey, "default")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, "foo")
 
 		org := "default"
 		env := types.FixtureEnvironment("foo")
@@ -32,7 +34,22 @@ func TestEnvStorage(t *testing.T) {
 		assert.NotEmpty(t, envs)
 		assert.Equal(t, 2, len(envs))
 
+		// Delete a non-empty environment
+		exCheck := types.FixtureCheckConfig("id")
+		exCheck.Environment = env.Name
+		exCheck.Organization = org
+		store.UpdateCheckConfig(ctx, exCheck)
+		err = store.DeleteEnvironment(ctx, org, env.Name)
+		assert.Error(t, err)
+
+		// Delete a non-empty environment w/ role
+		store.DeleteCheckConfigByName(ctx, exCheck.Name)
+		store.UpdateRole(types.FixtureRole("1", org, env.Name))
+		err = store.DeleteEnvironment(ctx, org, env.Name)
+		assert.Error(t, err)
+
 		// Delete an environment
+		store.DeleteRoleByName("1")
 		err = store.DeleteEnvironment(ctx, org, env.Name)
 		assert.NoError(t, err)
 
