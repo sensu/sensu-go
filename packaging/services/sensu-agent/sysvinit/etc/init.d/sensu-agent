@@ -71,7 +71,7 @@ start() {
 
     cd \"$chdir\"
     exec \"$program\" $args
-  " >> /var/log/sensu-agent-stdout.log 2>> /var/log/sensu-agent-stderr.log &
+  " >> /var/log/sensu-agent.log 2>> /var/log/sensu-agent.log &
 
   # Generate the pidfile from here. If we instead made the forked process
   # generate it there will be a race condition between the pidfile writing

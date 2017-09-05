@@ -194,7 +194,7 @@ deb_service_none:
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)
 
 deb_service_sysvinit: FPM_FLAGS += --package out/deb/sysvinit/
-deb_service_sysvinit: FILES_MAP += packaging/services/$(SERVICE_NAME)/sysvinit/etc/init.d/$(SERVICE_NAME)
+deb_service_sysvinit: FILES_MAP += packaging/services/$(SERVICE_NAME)/sysvinit/etc/init.d/$(SERVICE_NAME)=/etc/init.d/$(SERVICE_NAME)
 deb_service_sysvinit:
 	mkdir -p out/deb/sysvinit
 	fpm $(FPM_INITIAL_FLAGS) $(FPM_FLAGS) $(FILES_MAP)

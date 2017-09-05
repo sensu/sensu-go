@@ -15,8 +15,8 @@ Vagrant.configure("2") do |config|
     tar -C /usr/local -zxvf go1.8.3.linux-amd64.tar.gz
     chown -R ubuntu:ubuntu /usr/local/go
     chown ubuntu:ubuntu /go
-    echo 'export GOROOT="/usr/local/go"' >> /home/ubuntu/.bashrc
-    echo 'export GOPATH="/go"' >> /home/ubuntu/.bashrc
-    echo 'export PATH="/usr/local/go/bin:$PATH"' >> /home/ubuntu/.bashrc
+    echo 'export GOROOT="/usr/local/go"' >> /home/ubuntu/.profile
+    echo 'export GOPATH="/go"' >> /home/ubuntu/.profile
+    echo 'export PATH="/usr/local/go/bin:$PATH"' >> /home/ubuntu/.profile
   SHELL
 end

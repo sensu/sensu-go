@@ -30,3 +30,5 @@ packaging/hooks/*/deb/*
 !packaging/hooks/*/deb/*.erb
 packaging/hooks/*/rpm/*
 !packaging/hooks/*/rpm/*.erb
+.kitchen/
+.kitchen.local.yml
