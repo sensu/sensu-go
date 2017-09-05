@@ -71,7 +71,7 @@ start() {
 
     cd \"$chdir\"
     exec \"$program\" $args
-  " >> /var/log/sensu/sensu-backend-sysvinit.log 2>> /var/log/sensu/sensu-backend-sysvinit.log &
+  " >> /var/log/sensu/sensu-backend.log 2>> /var/log/sensu/sensu-backend.log &
 
   # Generate the pidfile from here. If we instead made the forked process
   # generate it there will be a race condition between the pidfile writing
