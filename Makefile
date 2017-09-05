@@ -345,10 +345,10 @@ PC_PUSH_CMD=package_cloud push --skip-errors
 publish-noservice-packages: $(addprefix publish-noservice-package-,$(ALL_DISTRO_VERSIONS))
 
 $(addprefix publish-noservice-package-,$(DEB_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-noservice-package-,,$@) out/deb/none/*
+	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-noservice-package-,,$@) out/deb/none/*
 
 $(addprefix publish-noservice-package-,$(RPM_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-noservice-package-,,$@) out/rpm/none/*
+	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-noservice-package-,,$@) out/rpm/none/*
 
 ##
 # publish packages with sysvinit
@@ -356,10 +356,10 @@ $(addprefix publish-noservice-package-,$(RPM_DISTRO_VERSIONS)):
 publish-sysvinit-packages: $(addprefix publish-sysvinit-package-,$(SYSVINIT_DISTRO_VERSIONS))
 
 $(addprefix publish-sysvinit-package-,$(DEB_SYSVINIT_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-sysvinit-package-,,$@) out/deb/sysvinit/*
+	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-sysvinit-package-,,$@) out/deb/sysvinit/*
 
 $(addprefix publish-sysvinit-package-,$(RPM_SYSVINIT_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-sysvinit-package-,,$@) out/rpm/sysvinit/*
+	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-sysvinit-package-,,$@) out/rpm/sysvinit/*
 
 ##
 # publish packages with systemd
@@ -367,7 +367,7 @@ $(addprefix publish-sysvinit-package-,$(RPM_SYSVINIT_DISTRO_VERSIONS)):
 publish-systemd-packages: $(addprefix publish-systemd-package-,$(SYSTEMD_DISTRO_VERSIONS))
 
 $(addprefix publish-systemd-package-,$(DEB_SYSTEMD_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-systemd-package-,,$@) out/deb/systemd/*
+	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-systemd-package-,,$@) out/deb/systemd/*
 
 $(addprefix publish-systemd-package-,$(RPM_SYSTEMD_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu-test/sensu/$(subst publish-systemd-package-,,$@) out/rpm/systemd/*
+	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-systemd-package-,,$@) out/rpm/systemd/*
