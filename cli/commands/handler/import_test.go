@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"time"
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -40,7 +41,8 @@ func TestImportCommandRunEWithBadJSON(t *testing.T) {
 	assert := assert.New(t)
 
 	reader, writer, _ := os.Pipe()
-	writer.Write([]byte("one two three"))
+	writer.Write([]byte("one two   {three: 123}"))
+	time.Sleep(250 * time.Millisecond) // NOTE: Windows pipe's seem to be laggy
 
 	cli := newCLI()
 	cli.InFile = reader
@@ -61,6 +63,7 @@ func TestImportCommandRunEWithGoodJSON(t *testing.T) {
 	handler := types.FixtureHandler("foo")
 	handlerBytes, _ := json.Marshal(handler)
 	writer.Write(handlerBytes)
+	time.Sleep(250 * time.Millisecond) // NOTE: Windows pipe's seem to be laggy
 
 	client := cli.Client.(*client.MockClient)
 	client.On("CreateHandler", mock.Anything).Return(nil)
@@ -82,6 +85,7 @@ func TestImportCommandRunEWithBadResponse(t *testing.T) {
 	handler := types.FixtureHandler("foo")
 	handlerBytes, _ := json.Marshal(handler)
 	writer.Write(handlerBytes)
+	time.Sleep(250 * time.Millisecond) // NOTE: Windows pipe's seem to be laggy
 
 	client := cli.Client.(*client.MockClient)
 	client.On("CreateHandler", mock.Anything).Return(errors.New("a"))
