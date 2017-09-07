@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"testing"
-	"time"
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -40,60 +39,68 @@ func TestImportCommandRunE(t *testing.T) {
 func TestImportCommandRunEWithBadJSON(t *testing.T) {
 	assert := assert.New(t)
 
-	reader, writer, _ := os.Pipe()
-	writer.Write([]byte("one two   {three: 123}"))
-	time.Sleep(250 * time.Millisecond) // NOTE: Windows pipe's seem to be laggy
+	pipeWithContents([]byte("one two  {three: 123}"), func(reader *os.File) {
+		cli := newCLI()
+		cli.InFile = reader
+		cmd := ImportCommand(cli)
 
-	cli := newCLI()
-	cli.InFile = reader
-	cmd := ImportCommand(cli)
-
-	out, err := test.RunCmd(cmd, []string{"in"})
-	assert.Error(err)
-	assert.Empty(out)
+		out, err := test.RunCmd(cmd, []string{"in"})
+		assert.Error(err)
+		assert.Empty(out)
+	})
 }
 
 func TestImportCommandRunEWithGoodJSON(t *testing.T) {
 	assert := assert.New(t)
-	cli := newCLI()
-
-	reader, writer, _ := os.Pipe()
-	cli.InFile = reader
 
 	handler := types.FixtureHandler("foo")
 	handlerBytes, _ := json.Marshal(handler)
-	writer.Write(handlerBytes)
-	time.Sleep(250 * time.Millisecond) // NOTE: Windows pipe's seem to be laggy
 
-	client := cli.Client.(*client.MockClient)
-	client.On("CreateHandler", mock.Anything).Return(nil)
+	pipeWithContents(handlerBytes, func(reader *os.File) {
+		cli := newCLI()
+		cli.InFile = reader
 
-	cmd := ImportCommand(cli)
-	out, err := test.RunCmd(cmd, []string{})
+		client := cli.Client.(*client.MockClient)
+		client.On("CreateHandler", mock.Anything).Return(nil)
 
-	assert.NoError(err)
-	assert.Contains(out, "Imported")
+		cmd := ImportCommand(cli)
+		out, err := test.RunCmd(cmd, []string{})
+
+		assert.NoError(err)
+		assert.Contains(out, "Imported")
+	})
 }
 
 func TestImportCommandRunEWithBadResponse(t *testing.T) {
 	assert := assert.New(t)
 	cli := newCLI()
 
-	reader, writer, _ := os.Pipe()
-	cli.InFile = reader
-
 	handler := types.FixtureHandler("foo")
 	handlerBytes, _ := json.Marshal(handler)
-	writer.Write(handlerBytes)
-	time.Sleep(250 * time.Millisecond) // NOTE: Windows pipe's seem to be laggy
 
-	client := cli.Client.(*client.MockClient)
-	client.On("CreateHandler", mock.Anything).Return(errors.New("a"))
+	pipeWithContents(handlerBytes, func(reader *os.File) {
+		cli.InFile = reader
 
-	cmd := ImportCommand(cli)
-	out, err := test.RunCmd(cmd, []string{})
+		client := cli.Client.(*client.MockClient)
+		client.On("CreateHandler", mock.Anything).Return(errors.New("a"))
 
-	assert.NotContains(out, "Imported")
-	assert.Empty(out)
-	assert.Error(err)
+		cmd := ImportCommand(cli)
+		out, err := test.RunCmd(cmd, []string{})
+
+		assert.NotContains(out, "Imported")
+		assert.Empty(out)
+		assert.Error(err)
+	})
+}
+
+func pipeWithContents(c []byte, fn func(*os.File)) {
+	reader, writer, _ := os.Pipe()
+	writer.Write(c)
+
+	ch := make(chan struct{})
+	go func() {
+		fn(reader)
+		close(ch)
+	}()
+	<-ch
 }
