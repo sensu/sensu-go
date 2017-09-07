@@ -93,6 +93,8 @@ func TestImportCommandRunEWithBadResponse(t *testing.T) {
 	})
 }
 
+// NOTE: Windows issues with pipes seems to mean that writing and reading a pipe
+// in the same goroutine can cause panics
 func pipeWithContents(c []byte, fn func(*os.File)) {
 	reader, writer, _ := os.Pipe()
 	writer.Write(c)
