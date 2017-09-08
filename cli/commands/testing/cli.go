@@ -24,6 +24,7 @@ func NewMockCLI() *cli.SensuCli {
 	return &cli.SensuCli{
 		Client: client,
 		Config: config,
+		InFile: os.Stdin,
 	}
 }
 

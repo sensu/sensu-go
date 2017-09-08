@@ -10,12 +10,16 @@ image:
 
 environment:
   GOPATH: c:\gopath
+  GOVERSION: 1.9
 
   matrix:
     - GOARCH: 386
     - GOARCH: amd64
 
 install:
+  - rmdir c:\go /s /q
+  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.msi
+  - msiexec /i go%GOVERSION%.windows-amd64.msi /q
   - echo %PATH%
   - echo %GOPATH%
   - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
