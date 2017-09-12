@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"sync"
@@ -26,6 +27,7 @@ const (
 	// MaxMessageBufferSize specifies the maximum number of messages of a given
 	// type that an agent will queue before rejecting messages.
 	MaxMessageBufferSize = 10
+	ListenPort           = ":3030"
 )
 
 // A Config specifies Agent configuration.
@@ -122,6 +124,89 @@ func NewAgent(config *Config) *Agent {
 	return agent
 }
 
+func (a *Agent) tcpSocket() error {
+	fmt.Println("Starting TCP Socket")
+	logger.Debug("startin tcp server")
+	listen, err := net.Listen("tcp", ListenPort)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		defer listen.Close()
+		for {
+			conn, err := listen.Accept()
+			logger.Debug("accepted TCP connection")
+			if err != nil {
+				logger.Fatal(err)
+			}
+			go a.handleTCPMessages(conn)
+		}
+	}()
+	return err
+}
+
+func (a *Agent) udpSocket() error {
+	fmt.Println("Starting UDP socket")
+	UDPServerAddr, err := net.ResolveUDPAddr("udp", ListenPort)
+	if err != nil {
+		return err
+	}
+
+	listen, err := net.ListenUDP("udp", UDPServerAddr)
+	if err != nil {
+		return err
+	}
+
+	go a.handleUDPMessages(listen)
+	return nil
+}
+
+func (a *Agent) handleTCPMessages(c net.Conn) {
+	// check for entity - if no entity present, use agent's entity
+	// send data: call a.sendMessage(msgType string, payload []byte)
+	defer c.Close()
+	var buf [1500]byte
+	readLen, err := c.Read(buf[0:])
+	if err != nil {
+		logger.Error(err)
+	}
+	if err := a.parseBuffer(buf, readLen); err != nil {
+		logger.Errorf("Invalid event data: %s", err)
+		c.Write([]byte("invalid event data\n"))
+	} else {
+		a.sendMessage(types.EventType, buf[:readLen])
+	}
+}
+
+func (a *Agent) handleUDPMessages(c net.PacketConn) {
+	defer c.Close()
+	var buf [1500]byte
+	for {
+		readLen, _, err := c.ReadFrom(buf[0:])
+		if err != nil {
+			logger.Error(err)
+		}
+		fmt.Println(buf[:readLen])
+
+		if err := a.parseBuffer(buf, readLen); err != nil {
+			logger.Errorf("Invalid event data: %s", err)
+		} else {
+			a.sendMessage(types.EventType, buf[:readLen])
+		}
+	}
+}
+
+// check for presense of entity here and add if it doesn't exist in data
+func (a *Agent) parseBuffer(buffer [1500]byte, length int) (err error) {
+	readString := buffer[:length]
+
+	var event map[string]interface{}
+	if err = json.Unmarshal(readString, &event); err != nil {
+		return err
+	}
+	return nil
+}
 func (a *Agent) receiveMessages(out chan *transport.Message) {
 	defer close(out)
 	for {
@@ -329,6 +414,15 @@ func (a *Agent) Run() error {
 	}
 	a.conn = conn
 	err = a.handshake()
+	if err != nil {
+		return err
+	}
+
+	if err := a.udpSocket(); err != nil {
+		return err
+	}
+
+	err = a.tcpSocket()
 	if err != nil {
 		return err
 	}

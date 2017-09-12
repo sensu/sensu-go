@@ -2,6 +2,7 @@ package transport
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 
@@ -40,4 +41,14 @@ func Connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 	}
 
 	return NewTransport(conn), nil
+}
+
+// PacketClient creates a tcp client to send data to a tcp socket listener
+func PacketClient(socketType string, listenSocket string) net.Conn {
+	conn, err := net.Dial(socketType, listenSocket)
+
+	if err != nil {
+		fmt.Printf("Failed to create packet client %s", err)
+	}
+	return conn
 }
