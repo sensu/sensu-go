@@ -171,21 +171,20 @@ func TestReceiveLoopTCP(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-		msg, err := conn.Receive()
+		conn.Receive() // agent handshake
+		conn.Receive() // agent keepalive
+
+		msg, err := conn.Receive() // our message
 
 		assert.NoError(t, err)
 		assert.Equal(t, "event", msg.Type)
+
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
-		assert.NotNil(t, event.Entity)
-		assert.Equal(t, 123, event.Timestamp)
-		assert.NotEmpty(t, event.Entity.System.Hostname)
+		assert.Equal(t, int64(123), event.Timestamp)
 		done <- struct{}{}
 	}))
 	defer ts.Close()
-
-	tcpClient := transport.PacketClient("tcp", ":3030")
-	defer tcpClient.Close()
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 
@@ -198,9 +197,11 @@ func TestReceiveLoopTCP(t *testing.T) {
 		assert.FailNow(t, "agent failed to run")
 	}
 
-	tcpClient.Write([]byte(`{"timestamp":123}\n`))
+	tcpClient := transport.PacketClient("tcp", ":3030")
+	defer tcpClient.Close()
+
+	tcpClient.Write([]byte(`{"timestamp":123}`))
 	tcpClient.Close()
-	<-done
 	<-done
 	ta.Stop()
 }

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -125,41 +126,45 @@ func NewAgent(config *Config) *Agent {
 }
 
 func (a *Agent) tcpSocket() error {
-	fmt.Println("Starting TCP Socket")
-	logger.Debug("startin tcp server")
+	logger.Debug("starting TCP server")
 	listen, err := net.Listen("tcp", ListenPort)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		defer listen.Close()
 		for {
-			conn, err := listen.Accept()
-			logger.Debug("accepted TCP connection")
-			if err != nil {
-				logger.Fatal(err)
+			select {
+			case <-a.stopped:
+				listen.Close()
+				return
+			default:
+				conn, err := listen.Accept()
+				logger.Debug("accepted new TCP connection")
+				if err != nil {
+					logger.Error(err)
+					return
+				}
+				go a.handleTCPMessages(conn)
 			}
-			go a.handleTCPMessages(conn)
 		}
 	}()
 	return err
 }
 
 func (a *Agent) udpSocket() error {
-	fmt.Println("Starting UDP socket")
+	logger.Debug("starting UDP socket")
 	UDPServerAddr, err := net.ResolveUDPAddr("udp", ListenPort)
 	if err != nil {
 		return err
 	}
 
 	listen, err := net.ListenUDP("udp", UDPServerAddr)
-	if err != nil {
-		return err
+	if err == nil {
+		go a.handleUDPMessages(listen)
 	}
 
-	go a.handleUDPMessages(listen)
-	return nil
+	return err
 }
 
 func (a *Agent) handleTCPMessages(c net.Conn) {
@@ -167,32 +172,50 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 	// send data: call a.sendMessage(msgType string, payload []byte)
 	defer c.Close()
 	var buf [1500]byte
-	readLen, err := c.Read(buf[0:])
-	if err != nil {
-		logger.Error(err)
-	}
-	if err := a.parseBuffer(buf, readLen); err != nil {
-		logger.Errorf("Invalid event data: %s", err)
-		c.Write([]byte("invalid event data\n"))
-	} else {
-		a.sendMessage(types.EventType, buf[:readLen])
+
+	for {
+		select {
+		case <-a.stopped:
+			return
+		default:
+			readLen, err := c.Read(buf[0:])
+			if err == io.EOF {
+				continue
+			} else if err != nil {
+				logger.Error(err)
+			}
+
+			if err := a.parseBuffer(buf, readLen); err != nil {
+				logger.Errorf("Invalid event data: %s", err)
+				c.Write([]byte("invalid event data\n"))
+			} else {
+				logger.Info("Received message on TCP socket")
+				a.sendMessage(types.EventType, buf[:readLen])
+			}
+		}
 	}
 }
 
 func (a *Agent) handleUDPMessages(c net.PacketConn) {
 	defer c.Close()
 	var buf [1500]byte
-	for {
-		readLen, _, err := c.ReadFrom(buf[0:])
-		if err != nil {
-			logger.Error(err)
-		}
-		fmt.Println(buf[:readLen])
 
-		if err := a.parseBuffer(buf, readLen); err != nil {
-			logger.Errorf("Invalid event data: %s", err)
-		} else {
-			a.sendMessage(types.EventType, buf[:readLen])
+	for {
+		select {
+		case <-a.stopped:
+			return
+		default:
+			readLen, _, err := c.ReadFrom(buf[0:])
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+
+			if err := a.parseBuffer(buf, readLen); err != nil {
+				logger.Errorf("UDP Invalid event data: %s", err)
+			} else {
+				a.sendMessage(types.EventType, buf[:readLen])
+			}
 		}
 	}
 }
