@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
@@ -15,14 +14,16 @@ const (
 	assetsPathPrefix = "assets"
 )
 
+var (
+	assetKeyBuilder = newKeyBuilder(assetsPathPrefix)
+)
+
 func getAssetPath(asset *types.Asset) string {
-	return path.Join(etcdRoot, assetsPathPrefix, asset.Organization, asset.Name)
+	return assetKeyBuilder.withResource(asset).build(asset.Name)
 }
 
 func getAssetsPath(ctx context.Context, name string) string {
-	org := organization(ctx)
-
-	return path.Join(etcdRoot, assetsPathPrefix, org, name)
+	return assetKeyBuilder.withContext(ctx).build(name)
 }
 
 // TODO Cleanup associated checks?

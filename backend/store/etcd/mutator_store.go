@@ -5,25 +5,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
+var (
 	mutatorsPathPrefix = "mutators"
+	mutatorKeyBuilder  = newKeyBuilder(mutatorsPathPrefix)
 )
 
 func getMutatorPath(mutator *types.Mutator) string {
-	return path.Join(etcdRoot, mutatorsPathPrefix, mutator.Organization, mutator.Environment, mutator.Name)
+	return mutatorKeyBuilder.withResource(mutator).build(mutator.Name)
 }
 
 func getMutatorsPath(ctx context.Context, name string) string {
-	env := environment(ctx)
-	org := organization(ctx)
-
-	return path.Join(etcdRoot, mutatorsPathPrefix, org, env, name)
+	return mutatorKeyBuilder.withContext(ctx).build(name)
 }
 
 func (s *etcdStore) DeleteMutatorByName(ctx context.Context, name string) error {

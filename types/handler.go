@@ -64,6 +64,16 @@ func (h *Handler) Validate() error {
 	return nil
 }
 
+// GetOrg refers to the organization the check belongs to
+func (h *Handler) GetOrg() string {
+	return h.Organization
+}
+
+// GetEnv refers to the organization the check belongs to
+func (h *Handler) GetEnv() string {
+	return h.Environment
+}
+
 // FixtureHandler returns a Handler fixture for testing.
 func FixtureHandler(name string) *Handler {
 	return &Handler{

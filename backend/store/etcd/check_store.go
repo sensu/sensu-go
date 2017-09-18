@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
@@ -15,15 +14,16 @@ const (
 	checksPathPrefix = "checks"
 )
 
+var (
+	checkKeyBuilder = newKeyBuilder(checksPathPrefix)
+)
+
 func getCheckConfigPath(check *types.CheckConfig) string {
-	return path.Join(etcdRoot, checksPathPrefix, check.Organization, check.Environment, check.Name)
+	return checkKeyBuilder.withResource(check).build(check.Name)
 }
 
 func getCheckConfigsPath(ctx context.Context, name string) string {
-	env := environment(ctx)
-	org := organization(ctx)
-
-	return path.Join(etcdRoot, checksPathPrefix, org, env, name)
+	return checkKeyBuilder.withContext(ctx).build(name)
 }
 
 func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) error {

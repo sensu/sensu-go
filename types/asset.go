@@ -77,6 +77,16 @@ func (a *Asset) Validate() error {
 	return nil
 }
 
+// GetOrg refers to the organization the check belongs to
+func (a *Asset) GetOrg() string {
+	return a.Organization
+}
+
+// GetEnv refers to the organization the check belongs to
+func (a *Asset) GetEnv() string {
+	return ""
+}
+
 // ValidateAssetFilter ensure that the given filter can be parsed successfully
 // and that it does not contain any modifier tokens.
 func ValidateAssetFilter(filter string) error {

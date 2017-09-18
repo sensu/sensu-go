@@ -5,25 +5,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
+var (
 	handlersPathPrefix = "handlers"
+	handlerKeyBuilder  = newKeyBuilder(handlersPathPrefix)
 )
 
 func getHandlerPath(handler *types.Handler) string {
-	return path.Join(etcdRoot, handlersPathPrefix, handler.Organization, handler.Environment, handler.Name)
+	return handlerKeyBuilder.withResource(handler).build(handler.Name)
 }
 
 func getHandlersPath(ctx context.Context, name string) string {
-	env := environment(ctx)
-	org := organization(ctx)
-
-	return path.Join(etcdRoot, handlersPathPrefix, org, env, name)
+	return handlerKeyBuilder.withContext(ctx).build(name)
 }
 
 func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error {

@@ -41,7 +41,19 @@ func TestOrgStorage(t *testing.T) {
 		assert.NotEmpty(t, orgs)
 		assert.Equal(t, 2, len(orgs))
 
-		// Delete an org
+		// Delete a non-empty org
+		err = store.DeleteOrganizationByName(ctx, org.Name)
+		assert.Error(t, err)
+
+		// Delete a non-empty org w/ roles
+		store.DeleteEnvironment(ctx, org.Name, env.Name)
+		store.UpdateRole(types.FixtureRole("1", org.Name, env.Name))
+		store.UpdateRole(types.FixtureRole("2", "asdf", "asdf"))
+		err = store.DeleteOrganizationByName(ctx, org.Name)
+		assert.Error(t, err)
+
+		// Delete an empty org
+		store.DeleteRoleByName("1")
 		err = store.DeleteOrganizationByName(ctx, org.Name)
 		assert.NoError(t, err)
 
