@@ -5,6 +5,8 @@
 package agent
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -14,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"sync"
 	"time"
 
@@ -28,7 +31,8 @@ const (
 	// MaxMessageBufferSize specifies the maximum number of messages of a given
 	// type that an agent will queue before rejecting messages.
 	MaxMessageBufferSize = 10
-	ListenPort           = ":3030"
+	// ListenPort is used for TCP and UDP socket listeners on the agent.
+	ListenPort = ":3030"
 )
 
 // A Config specifies Agent configuration.
@@ -125,111 +129,171 @@ func NewAgent(config *Config) *Agent {
 	return agent
 }
 
-func (a *Agent) tcpSocket() error {
-	logger.Debug("starting TCP server")
-	listen, err := net.Listen("tcp", ListenPort)
+// createListenSockets UDP and TCP socket listeners on port 3030 for external check
+// events.
+func (a *Agent) createListenSockets() error {
+
+	// Setup UDP socket listener
+	logger.Infof("starting UDP listener on port %s", ListenPort)
+	UDPServerAddr, err := net.ResolveUDPAddr("udp", ListenPort)
+	if err != nil {
+		return err
+	}
+
+	udpListen, err := net.ListenUDP("udp", UDPServerAddr)
+	if err == nil {
+		go a.handleUDPMessages(udpListen)
+	}
+
+	// Setup TCP socket listener
+	// TODO: set a timeout value here with conn.SetReadDeadline (additional step
+	// after Accept())
+	TCPServerAddr, err := net.ResolveTCPAddr("tcp", ListenPort)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("starting TCP listener on port %s", ListenPort)
+	tcpListen, err := net.ListenTCP("tcp", TCPServerAddr)
 	if err != nil {
 		return err
 	}
 
 	go func() {
 		for {
+			conn, err := tcpListen.Accept()
+			// conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 			select {
-			case <-a.stopped:
-				listen.Close()
+			case <-a.stopping:
 				return
 			default:
-				conn, err := listen.Accept()
-				logger.Debug("accepted new TCP connection")
 				if err != nil {
 					logger.Error(err)
+					tcpListen.Close()
 					return
 				}
 				go a.handleTCPMessages(conn)
 			}
 		}
 	}()
-	return err
-}
 
-func (a *Agent) udpSocket() error {
-	logger.Debug("starting UDP socket")
-	UDPServerAddr, err := net.ResolveUDPAddr("udp", ListenPort)
-	if err != nil {
-		return err
-	}
-
-	listen, err := net.ListenUDP("udp", UDPServerAddr)
-	if err == nil {
-		go a.handleUDPMessages(listen)
-	}
+	go func() {
+		<-a.stopping
+		logger.Debug("TCP listener stopped")
+		tcpListen.Close()
+	}()
 
 	return err
 }
 
+// Streams can be of any length. The socket protocol does not require
+// any headers, instead the socket tries to parse everything it has
+// been sent each time a chunk of data arrives. Once the JSON parses
+// successfully, the Sensu client publishes the result. After
+// +WATCHDOG_DELAY+ (default is 500 msec) since the most recent chunk
+// of data was received, the agent will give up on the sender, and
+// instead respond +"invalid"+ and close the connection.
 func (a *Agent) handleTCPMessages(c net.Conn) {
-	// check for entity - if no entity present, use agent's entity
-	// send data: call a.sendMessage(msgType string, payload []byte)
 	defer c.Close()
-	var buf [1500]byte
-
+	var buf []byte
+	messageBuffer := bytes.NewBuffer(buf)
+	connReader := bufio.NewReader(c)
+	// Read incoming tcp messages from client until we hit a valid JSON message.
+	// Don't send zero-length (empty) reads to the parser.
+	// If we don't get valid JSON after <n> amount of time, close the
+	// connection(timeout).
 	for {
-		select {
-		case <-a.stopped:
+		bytesRead, err := connReader.WriteTo(messageBuffer)
+		if err == io.EOF {
 			return
-		default:
-			readLen, err := c.Read(buf[0:])
-			if err == io.EOF {
-				continue
-			} else if err != nil {
-				logger.Error(err)
+		} else if err != nil {
+			logger.Error(err)
+			return
+		} else if bytesRead == 0 {
+			return
+		}
+		// Check our received data for valid JSON
+		response, err := a.parseBuffer(messageBuffer.Bytes())
+		// If we get invalid JSON at this point, read again from client, add
+		// any new message to the buffer, and parse again.
+		if err != nil {
+			logger.Debugf("Invalid event data: %s", err)
+			messageBuffer.Write(buf)
+		} else if string(response) == "pong" {
+			logger.Debug("TCP socket received ping")
+			_, err = c.Write(response)
+			if err != nil {
+				logger.Errorf("could not write response to tcp socket %s", err)
 			}
-
-			if err := a.parseBuffer(buf, readLen); err != nil {
-				logger.Errorf("Invalid event data: %s", err)
-				c.Write([]byte("invalid event data\n"))
-			} else {
-				logger.Info("Received message on TCP socket")
-				a.sendMessage(types.EventType, buf[:readLen])
-			}
+		} else {
+			// At this point, should receive valid JSON, so send it along to the
+			// message sender and clear the buffer.
+			logger.Debug("Sending event")
+			a.sendMessage(types.EventType, response)
+			messageBuffer.Reset()
 		}
 	}
 }
 
 func (a *Agent) handleUDPMessages(c net.PacketConn) {
-	defer c.Close()
-	var buf [1500]byte
+	var buf []byte
+
+	go func() {
+		<-a.stopping
+		c.Close()
+	}()
 
 	for {
+		bytesRead, _, err := c.ReadFrom(buf[0:])
+		logger.Debugf("%d bytes read from UDP socket", bytesRead)
 		select {
-		case <-a.stopped:
+		case <-a.stopping:
+			logger.Debug("UDP listener stopped")
 			return
 		default:
-			readLen, _, err := c.ReadFrom(buf[0:])
 			if err != nil {
 				logger.Error(err)
-				continue
+				c.Close()
+				return
+			} else if bytesRead == 0 {
+				c.Close()
+				return
 			}
 
-			if err := a.parseBuffer(buf, readLen); err != nil {
+			if response, err := a.parseBuffer(buf); err != nil {
 				logger.Errorf("UDP Invalid event data: %s", err)
-			} else {
-				a.sendMessage(types.EventType, buf[:readLen])
+			} else if string(response) != "pong" {
+				a.sendMessage(types.EventType, response)
 			}
 		}
 	}
 }
 
-// check for presense of entity here and add if it doesn't exist in data
-func (a *Agent) parseBuffer(buffer [1500]byte, length int) (err error) {
-	readString := buffer[:length]
-
-	var event map[string]interface{}
-	if err = json.Unmarshal(readString, &event); err != nil {
-		return err
+// Check the packet contents. If it's a ping request, respond with
+// "pong". If data is not valid JSON, respond with an invalid message.
+// Valid JSON events are returned as a byte array, with the addition
+// of the agent's entity if it doesn't exist in the JSON.
+func (a *Agent) parseBuffer(buffer []byte) (response []byte, err error) {
+	match, _ := regexp.MatchString("\\s+ping\\s+", string(buffer))
+	if match {
+		return []byte("pong"), nil
 	}
-	return nil
+
+	var event types.Event
+	if err = json.Unmarshal(buffer, &event); err != nil {
+		return []byte("Invalid event data"), err
+	}
+	if event.Entity == nil {
+		event.Entity = a.entity
+	}
+	logger.Debug(event)
+	response, err = json.Marshal(event)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }
+
 func (a *Agent) receiveMessages(out chan *transport.Message) {
 	defer close(out)
 	for {
@@ -422,7 +486,8 @@ func (a *Agent) handshake() error {
 // agent's read and write pumps.
 //
 // If Run cannot establish an initial connection to the specified Backend
-// URL, Run will return an error.
+// URL, Run will return an error. Run will also return an error if it fails to
+// create TCP or UDP socket listeners.
 func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
@@ -441,12 +506,7 @@ func (a *Agent) Run() error {
 		return err
 	}
 
-	if err := a.udpSocket(); err != nil {
-		return err
-	}
-
-	err = a.tcpSocket()
-	if err != nil {
+	if err := a.createListenSockets(); err != nil {
 		return err
 	}
 
@@ -481,9 +541,9 @@ func (a *Agent) Run() error {
 		for {
 			select {
 			case <-a.stopping:
+				logger.Debug("pumps received stopping")
 				wg.Wait()
 				close(a.sendq)
-				close(a.stopped)
 				return
 
 			case <-pumpsReturned:

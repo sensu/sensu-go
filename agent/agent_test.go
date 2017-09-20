@@ -1,7 +1,9 @@
 package agent
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -178,10 +180,10 @@ func TestReceiveLoopTCP(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, "event", msg.Type)
-
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
 		assert.Equal(t, int64(123), event.Timestamp)
+		assert.NotNil(t, event.Entity)
 		done <- struct{}{}
 	}))
 	defer ts.Close()
@@ -201,6 +203,153 @@ func TestReceiveLoopTCP(t *testing.T) {
 	defer tcpClient.Close()
 
 	tcpClient.Write([]byte(`{"timestamp":123}`))
+	tcpClient.Close()
+	<-done
+	ta.Stop()
+}
+
+func TestReceiveLoopUDP(t *testing.T) {
+
+	done := make(chan struct{})
+	server := transport.NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		// throw away handshake
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
+		conn.Receive() // agent handshake
+		conn.Receive() // agent keepalive
+
+		msg, err := conn.Receive() // our message
+
+		assert.NoError(t, err)
+		assert.Equal(t, "event", msg.Type)
+
+		event := &types.Event{}
+		assert.NoError(t, json.Unmarshal(msg.Payload, event))
+		assert.Equal(t, int64(123), event.Timestamp)
+		assert.NotNil(t, event.Entity)
+		done <- struct{}{}
+	}))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+
+	cfg := NewConfig()
+	cfg.BackendURLs = []string{wsURL}
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
+
+	udpClient := transport.PacketClient("udp", ":3030")
+	defer udpClient.Close()
+
+	udpClient.Write([]byte(`{"timestamp":123}`))
+	udpClient.Close()
+	<-done
+	ta.Stop()
+}
+
+func TestReceiveLoopPing(t *testing.T) {
+
+	done := make(chan struct{})
+	server := transport.NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		// throw away handshake
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
+		conn.Receive() // agent handshake
+		conn.Receive() // agent keepalive
+
+		close(done)
+	}))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+
+	cfg := NewConfig()
+	cfg.BackendURLs = []string{wsURL}
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
+
+	tcpClient := transport.PacketClient("tcp", ":3030")
+	tcpClient.Write([]byte(" ping "))
+	readData := make([]byte, 4)
+	numBytes, err := bufio.NewReader(tcpClient).Read(readData)
+	if err != nil {
+		assert.FailNow(t, "failed to read tcpClient")
+	}
+	assert.Equal(t, "pong", string(readData[:numBytes]))
+	tcpClient.Close()
+	<-done
+	ta.Stop()
+}
+
+func TestReceiveLoopMultiWriteTCP(t *testing.T) {
+
+	done := make(chan struct{})
+	server := transport.NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		// throw away handshake
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
+		conn.Receive() // agent handshake
+		conn.Receive() // agent keepalive
+
+		msg, err := conn.Receive() // our message
+
+		assert.NoError(t, err)
+		assert.Equal(t, "event", msg.Type)
+		event := &types.Event{}
+		assert.NoError(t, json.Unmarshal(msg.Payload, event))
+		fmt.Println(event)
+		assert.Equal(t, int64(123), event.Timestamp)
+		assert.NotNil(t, event.Entity)
+		close(done)
+	}))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+
+	cfg := NewConfig()
+	cfg.BackendURLs = []string{wsURL}
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
+
+	var checkString string
+	for i := 0; i < 1500; i++ {
+		checkString += "a"
+	}
+
+	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
+	tcpClient := transport.PacketClient("tcp", ":3030")
+	tcpClient.Write(chunkData[:5])
+	tcpClient.Write(chunkData[5:])
 	tcpClient.Close()
 	<-done
 	ta.Stop()
