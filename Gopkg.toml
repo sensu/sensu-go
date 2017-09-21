@@ -131,6 +131,13 @@
   name = "github.com/grpc-ecosystem/grpc-gateway"
   revision = "fdcb7eab2d6ed4919e83ddcef4f199c161611e1f"
 
+#
+# Windows
+
 [[override]]
   name = "github.com/shirou/w32"
   branch = "master"
+
+[[override]]
+  name = "github.com/StackExchange/wmi"
+  revision = "9f32b5905fd6ce7384093f9d048437e79f7b4d85"

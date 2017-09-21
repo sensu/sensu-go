@@ -24,10 +24,9 @@
   version = "v1.0.3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/StackExchange/wmi"
   packages = ["."]
-  revision = "ea383cf3ba6ec950874b8486cd72356d007c768f"
+  revision = "9f32b5905fd6ce7384093f9d048437e79f7b4d85"
 
 [[projects]]
   branch = "master"
@@ -453,6 +452,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "10efac5a5bc9f90ffdc4bcb0e3affd2b6e3bb56fd199eee97248209f2f3e3cd2"
+  inputs-digest = "fb1fbc2717a326c3f7f240ab79553c3d442f1e432f32f32e49dfe0d7cda0641b"
   solver-name = "gps-cdcl"
   solver-version = 1
