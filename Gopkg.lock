@@ -3,9 +3,8 @@
 
 [[projects]]
   name = "github.com/AlecAivazis/survey"
-  packages = ["."]
-  revision = "9d910423e24aa6d7c7950160658c295e0734c7e0"
-  version = "1.3.1"
+  packages = [".","core","terminal"]
+  revision = "c10cbbc78a56bb1f5c62090f4c2813ffcb146a3a"
 
 [[projects]]
   branch = "dont_export_tests"
@@ -38,16 +37,9 @@
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
-  branch = "master"
   name = "github.com/bluele/slack"
   packages = ["."]
-  revision = "012784695381ff1fa896f80bda11534361fec8e0"
-
-[[projects]]
-  name = "github.com/boltdb/bolt"
-  packages = ["."]
-  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
-  version = "v1.3.1"
+  revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
 
 [[projects]]
   name = "github.com/cenkalti/backoff"
@@ -68,10 +60,15 @@
   revision = "30d10be492927e2dcae0089c374c455d42414fcb"
 
 [[projects]]
+  name = "github.com/coreos/bbolt"
+  packages = ["."]
+  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
+  version = "v1.3.0"
+
+[[projects]]
   name = "github.com/coreos/etcd"
   packages = ["alarm","auth","auth/authpb","client","clientv3","clientv3/concurrency","compactor","discovery","embed","error","etcdserver","etcdserver/api","etcdserver/api/etcdhttp","etcdserver/api/v2http","etcdserver/api/v2http/httptypes","etcdserver/api/v3client","etcdserver/api/v3election","etcdserver/api/v3election/v3electionpb","etcdserver/api/v3election/v3electionpb/gw","etcdserver/api/v3lock","etcdserver/api/v3lock/v3lockpb","etcdserver/api/v3lock/v3lockpb/gw","etcdserver/api/v3rpc","etcdserver/api/v3rpc/rpctypes","etcdserver/auth","etcdserver/etcdserverpb","etcdserver/etcdserverpb/gw","etcdserver/membership","etcdserver/stats","lease","lease/leasehttp","lease/leasepb","mvcc","mvcc/backend","mvcc/mvccpb","pkg/adt","pkg/contention","pkg/cors","pkg/cpuutil","pkg/crc","pkg/debugutil","pkg/fileutil","pkg/httputil","pkg/idutil","pkg/ioutil","pkg/logutil","pkg/monotime","pkg/netutil","pkg/pathutil","pkg/pbutil","pkg/runtime","pkg/schedule","pkg/srv","pkg/tlsutil","pkg/transport","pkg/types","pkg/wait","proxy/grpcproxy/adapter","raft","raft/raftpb","rafthttp","snap","snap/snappb","store","version","wal","wal/walpb"]
-  revision = "bb66589f8cf18960c7f3d56b1b83753caeed9c7a"
-  version = "v3.2.7"
+  revision = "65c054003f98ec92868a3bfe3f8859067b33d607"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -380,10 +377,9 @@
   version = "v1.1.4"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "54210f4e076c57f351166f0ed60e67d3fca57a36"
+  revision = "708a42d246822952f38190a8d8c4e6b16a0e600c"
 
 [[projects]]
   name = "github.com/ulikunitz/xz"
@@ -429,21 +425,21 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/time"
+  packages = ["rate"]
+  revision = "8be79e1e0910c292df4e79c241bb7e8f7e725959"
+
+[[projects]]
+  branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   revision = "1e559d0a00eef8a9a43151db4665280bd8dd5886"
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = [".","codes","connectivity","credentials","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","stats","status","tap","transport"]
+  packages = [".","codes","connectivity","credentials","grpclb/grpc_lb_v1/messages","grpclog","health","health/grpc_health_v1","internal","keepalive","metadata","naming","peer","stats","status","tap","transport"]
   revision = "f92cdcd7dcdc69e81b2d7b338479a19a8723cfa3"
   version = "v1.6.0"
-
-[[projects]]
-  name = "gopkg.in/AlecAivazis/survey.v1"
-  packages = ["core","terminal"]
-  revision = "9d910423e24aa6d7c7950160658c295e0734c7e0"
-  version = "1.3.1"
 
 [[projects]]
   name = "gopkg.in/h2non/filetype.v1"
@@ -466,6 +462,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "92c146d2b1de7a6caa6ad9bbbcaf74746187810e83c520e2f33ae5026076458c"
+  inputs-digest = "3975d834edf7dc88442c0ac3ed4e0a5803495f5ad4fd9e932dda4f3615dad257"
   solver-name = "gps-cdcl"
   solver-version = 1
