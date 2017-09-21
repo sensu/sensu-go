@@ -131,6 +131,12 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/go-resty/resty"
+  packages = ["."]
+  revision = "cf81ed0a604d373be63b4c036c6b05c06520615f"
+  version = "v0.13"
+
+[[projects]]
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
   revision = "100ba4e885062801d56799d78530b73b178a78f3"
@@ -448,12 +454,6 @@
   version = "v1.0.3"
 
 [[projects]]
-  name = "gopkg.in/resty.v0"
-  packages = ["."]
-  revision = "cf81ed0a604d373be63b4c036c6b05c06520615f"
-  version = "v0.13"
-
-[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -462,6 +462,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3975d834edf7dc88442c0ac3ed4e0a5803495f5ad4fd9e932dda4f3615dad257"
+  inputs-digest = "a518328b2bf0d1431d36716d607cc3f6ce87f1c16dffc67f75d0c8d1da25e90d"
   solver-name = "gps-cdcl"
   solver-version = 1

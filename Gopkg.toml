@@ -112,7 +112,7 @@
   version = "1.0.3"
 
 [[constraint]]
-  name = "gopkg.in/resty.v0"
+  name = "github.com/go-resty/resty"
   version = "0.13.0"
 
 [[override]]
