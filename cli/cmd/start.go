@@ -17,11 +17,7 @@ func main() {
 	sensuCli := cli.New(rootCmd.PersistentFlags())
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
-		if err := hooks.ConfigurationPresent(cmd, sensuCli); err != nil {
-			return err
-		}
-
-		return nil
+		return hooks.ConfigurationPresent(cmd, sensuCli)
 	}
 
 	commands.AddCommands(rootCmd, sensuCli)

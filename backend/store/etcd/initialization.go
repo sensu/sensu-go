@@ -40,11 +40,7 @@ func (store *etcdStore) NewInitializer() (store.Initializer, error) {
 
 // Lock mutex to avoid competing writes
 func (s *StoreInitializer) Lock() error {
-	if err := s.mutex.Lock(s.ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return s.mutex.Lock(s.ctx)
 }
 
 // IsInitialized checks the state of the .initialized key
