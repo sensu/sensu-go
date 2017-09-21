@@ -29,7 +29,11 @@ type ExecutorSuite struct {
 }
 
 func (suite *ExecutorSuite) SetupTest() {
-	suite.rootCmd = &cobra.Command{}
+	suite.rootCmd = &cobra.Command{
+		Use:          "sensuctl",
+		Short:        "sensuctl test test tests",
+		SilenceUsage: true,
+	}
 	suite.cmd = Command(suite.rootCmd)
 	suite.exec = &completionExecutor{rootCmd: suite.rootCmd}
 
@@ -63,7 +67,7 @@ func (suite *ExecutorSuite) TestRunWithArgBash() {
 
 	suite.NotEmpty(out)
 	suite.Contains(out, "_init_completion")
-	suite.Nil(err)
+	suite.NoError(err)
 }
 
 func (suite *ExecutorSuite) TestRunWithBadArg() {
@@ -126,5 +130,5 @@ func (w *exWriter) Clean() {
 
 func (w *exWriter) Write(p []byte) (int, error) {
 	w.result += string(p)
-	return 0, nil
+	return len(w.result), nil
 }

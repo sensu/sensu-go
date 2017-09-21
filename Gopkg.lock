@@ -15,8 +15,7 @@
 [[projects]]
   name = "github.com/Knetic/govaluate"
   packages = ["."]
-  revision = "d216395917cc49052c7c7094cf57f09657ca08a8"
-  version = "v3.0.0"
+  revision = "91facc4ae520fef82c9aee6b6ae720d9ae789131"
 
 [[projects]]
   name = "github.com/Sirupsen/logrus"
@@ -330,9 +329,15 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = ["host","internal/common","net","process"]
+  packages = ["cpu","host","internal/common","mem","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
   version = "v2.17.08"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   branch = "master"
@@ -462,6 +467,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a518328b2bf0d1431d36716d607cc3f6ce87f1c16dffc67f75d0c8d1da25e90d"
+  inputs-digest = "105b4f00f20603f77eec54e3f0e195b445cf2c650b93291109be3680f3bbc803"
   solver-name = "gps-cdcl"
   solver-version = 1

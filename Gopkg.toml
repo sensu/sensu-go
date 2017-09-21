@@ -7,9 +7,10 @@
   name = "github.com/AlecAivazis/survey"
   revision = "c10cbbc78a56bb1f5c62090f4c2813ffcb146a3a"
 
+# https://github.com/Knetic/govaluate/issues/61
 [[constraint]]
   name = "github.com/Knetic/govaluate"
-  version = "3.0.0"
+  revision = "91facc4ae520fef82c9aee6b6ae720d9ae789131"
 
 [[constraint]]
   name = "github.com/Sirupsen/logrus"
