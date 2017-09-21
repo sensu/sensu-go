@@ -130,3 +130,7 @@
 [[override]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
   revision = "fdcb7eab2d6ed4919e83ddcef4f199c161611e1f"
+
+[[override]]
+  name = "github.com/shirou/w32"
+  branch = "master"
