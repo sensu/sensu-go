@@ -38,6 +38,7 @@ install_deps () {
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
+    go get -u github.com/golang/dep/cmd/dep
     go get -u github.com/golang/lint/golint
     go get -u github.com/UnnoTed/fileb0x
     dep ensure
