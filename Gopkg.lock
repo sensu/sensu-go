@@ -125,8 +125,7 @@
 [[projects]]
   name = "github.com/go-ole/go-ole"
   packages = [".","oleutil"]
-  revision = "0e87ea779d9deb219633b828a023b32e1244dd57"
-  version = "v1.2.0"
+  revision = "de8695c8edbf8236f30d6e1376e20b198a028d42"
 
 [[projects]]
   name = "github.com/go-resty/resty"
@@ -452,6 +451,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb1fbc2717a326c3f7f240ab79553c3d442f1e432f32f32e49dfe0d7cda0641b"
+  inputs-digest = "a0b8deb144ef0fd93a8ff3d36a4696f861fe6d0866d05a1cbbe368739e3691cc"
   solver-name = "gps-cdcl"
   solver-version = 1
