@@ -23,6 +23,7 @@ type checkOpts struct {
 	RuntimeAssets string `survey:"assets"`
 	Env           string
 	Org           string
+	Publish       bool `survey:"publish"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -56,23 +57,26 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) {
 	if !editing {
 		qs = append(qs, []*survey.Question{
 			{
-				Name:     "name",
-				Prompt:   &survey.Input{"Check Name:", ""},
+				Name: "name",
+				Prompt: &survey.Input{
+					Message: "Check Name:",
+					Default: "",
+				},
 				Validate: survey.Required,
 			},
 			{
 				Name: "org",
 				Prompt: &survey.Input{
-					"Organization:",
-					opts.Org,
+					Message: "Organization:",
+					Default: opts.Org,
 				},
 				Validate: survey.Required,
 			},
 			{
 				Name: "env",
 				Prompt: &survey.Input{
-					"Environment:",
-					opts.Env,
+					Message: "Environment:",
+					Default: opts.Env,
 				},
 				Validate: survey.Required,
 			},
@@ -83,38 +87,45 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) {
 		{
 			Name: "command",
 			Prompt: &survey.Input{
-				"Command:",
-				opts.Command,
+				Message: "Command:",
+				Default: opts.Command,
 			},
 			Validate: survey.Required,
 		},
 		{
 			Name: "interval",
 			Prompt: &survey.Input{
-				"Interval:",
-				opts.Interval,
+				Message: "Interval:",
+				Default: opts.Interval,
 			},
 		},
 		{
 			Name: "subscriptions",
 			Prompt: &survey.Input{
-				"Subscriptions:",
-				opts.Subscriptions,
+				Message: "Subscriptions:",
+				Default: opts.Subscriptions,
 			},
 			Validate: survey.Required,
 		},
 		{
 			Name: "handlers",
 			Prompt: &survey.Input{
-				"Handlers:",
-				opts.Handlers,
+				Message: "Handlers:",
+				Default: opts.Handlers,
 			},
 		},
 		{
 			Name: "assets",
 			Prompt: &survey.Input{
-				"Runtime Assets:",
-				opts.RuntimeAssets,
+				Message: "Runtime Assets:",
+				Default: opts.RuntimeAssets,
+			},
+		},
+		{
+			Name: "publish",
+			Prompt: &survey.Confirm{
+				Message: "Publish check requests?",
+				Default: true,
 			},
 		},
 	}...)
@@ -133,4 +144,5 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
+	check.Publish = opts.Publish
 }
