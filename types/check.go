@@ -188,6 +188,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		RuntimeAssets: []string{"ruby-2-4-2"},
 		Environment:   "default",
 		Organization:  "default",
+		Publish:       true,
 	}
 }
 
