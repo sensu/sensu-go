@@ -288,11 +288,17 @@ func TestReceiveLoopPing(t *testing.T) {
 		assert.FailNow(t, "agent failed to run")
 	}
 
-	tcpClient := transport.PacketClient("tcp", ":3030")
-	tcpClient.Write([]byte(" ping "))
 	readData := make([]byte, 4)
-	numBytes, err := bufio.NewReader(tcpClient).Read(readData)
+	tcpClient := transport.PacketClient("tcp", ":3030")
+	defer tcpClient.Close()
+	bytesWritten, err := tcpClient.Write([]byte(" ping "))
 	if err != nil {
+		assert.FailNow(t, "Failed to write to tcp server %s", err)
+	}
+	assert.Equal(t, 6, bytesWritten)
+	numBytes, err := tcpClient.Read(readData)
+	if err != nil {
+		fmt.Println(err)
 		assert.FailNow(t, "failed to read tcpClient")
 	}
 	assert.Equal(t, "pong", string(readData[:numBytes]))
@@ -323,7 +329,6 @@ func TestReceiveLoopMultiWriteTCP(t *testing.T) {
 		assert.Equal(t, "event", msg.Type)
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
-		fmt.Println(event)
 		assert.Equal(t, int64(123), event.Timestamp)
 		assert.NotNil(t, event.Entity)
 		close(done)
@@ -350,6 +355,60 @@ func TestReceiveLoopMultiWriteTCP(t *testing.T) {
 	tcpClient := transport.PacketClient("tcp", ":3030")
 	tcpClient.Write(chunkData[:5])
 	tcpClient.Write(chunkData[5:])
+	tcpClient.Close()
+	<-done
+	ta.Stop()
+}
+
+func TestReceiveLoopMultiWriteTimeoutTCP(t *testing.T) {
+
+	done := make(chan struct{})
+	server := transport.NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		// throw away handshake
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
+		conn.Receive() // agent handshake
+		conn.Receive() // agent keepalive
+		close(done)
+	}))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+
+	cfg := NewConfig()
+	cfg.BackendURLs = []string{wsURL}
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
+
+	var checkString string
+	for i := 0; i < 1500; i++ {
+		checkString += "a"
+	}
+
+	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
+	tcpClient := transport.PacketClient("tcp", ":3030")
+
+	_, err = tcpClient.Write(chunkData[:5])
+	if err != nil {
+		assert.FailNow(t, "failed to write data to tcp socket")
+	}
+	readData := make([]byte, 7)
+
+	numBytes, err := bufio.NewReader(tcpClient).Read(readData)
+	if err != nil {
+		assert.FailNow(t, "Failed to read data from tcp socket")
+	}
+	assert.Equal(t, "invalid", string(readData[:numBytes]))
 	tcpClient.Close()
 	<-done
 	ta.Stop()

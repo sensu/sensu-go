@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -144,10 +143,7 @@ func (a *Agent) createListenSockets() error {
 	if err == nil {
 		go a.handleUDPMessages(udpListen)
 	}
-
 	// Setup TCP socket listener
-	// TODO: set a timeout value here with conn.SetReadDeadline (additional step
-	// after Accept())
 	TCPServerAddr, err := net.ResolveTCPAddr("tcp", ListenPort)
 	if err != nil {
 		return err
@@ -162,7 +158,6 @@ func (a *Agent) createListenSockets() error {
 	go func() {
 		for {
 			conn, err := tcpListen.Accept()
-			// conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 			select {
 			case <-a.stopping:
 				return
@@ -190,7 +185,7 @@ func (a *Agent) createListenSockets() error {
 // any headers, instead the socket tries to parse everything it has
 // been sent each time a chunk of data arrives. Once the JSON parses
 // successfully, the Sensu client publishes the result. After
-// +WATCHDOG_DELAY+ (default is 500 msec) since the most recent chunk
+// timeout (default is 500 msec) since the most recent chunk
 // of data was received, the agent will give up on the sender, and
 // instead respond +"invalid"+ and close the connection.
 func (a *Agent) handleTCPMessages(c net.Conn) {
@@ -198,54 +193,84 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 	var buf []byte
 	messageBuffer := bytes.NewBuffer(buf)
 	connReader := bufio.NewReader(c)
+	waitTime := 10 * time.Millisecond
 	// Read incoming tcp messages from client until we hit a valid JSON message.
-	// Don't send zero-length (empty) reads to the parser.
-	// If we don't get valid JSON after <n> amount of time, close the
-	// connection(timeout).
-	for {
-		bytesRead, err := connReader.WriteTo(messageBuffer)
-		if err == io.EOF {
-			return
-		} else if err != nil {
-			logger.Error(err)
-			return
-		} else if bytesRead == 0 {
-			return
-		}
-		// Check our received data for valid JSON
-		response, err := a.parseBuffer(messageBuffer.Bytes())
-		// If we get invalid JSON at this point, read again from client, add
-		// any new message to the buffer, and parse again.
+	// If we don't get valid JSON or a ping request after 500ms, close the
+	// connection (timeout).
+	for i := 0; i < 50; i++ {
+		// Read for up to 10ms on each loop iteration
+		err := c.SetReadDeadline(time.Now().Add(waitTime))
 		if err != nil {
-			logger.Debugf("Invalid event data: %s", err)
-			messageBuffer.Write(buf)
-		} else if string(response) == "pong" {
-			logger.Debug("TCP socket received ping")
-			_, err = c.Write(response)
+			logger.Debugf("Error setting readDeadline: %s", err)
+		}
+		_, err = connReader.WriteTo(messageBuffer)
+		// Check error condition. If it's a timeout error, continue so we can read
+		// any remaining partial packets. Any other error type returns.
+		if err != nil {
+			if opError, ok := err.(*net.OpError); ok && !opError.Timeout() {
+				logger.Debugf("error reading message from tcp socket %s", err.Error())
+				return
+			}
+		}
+
+		match, _ := regexp.MatchString("\\s+ping\\s+", string(messageBuffer.Bytes()))
+		if match {
+			logger.Debug("tcp socket received ping")
+			_, err = c.Write([]byte("pong"))
 			if err != nil {
 				logger.Errorf("could not write response to tcp socket %s", err)
 			}
-		} else {
-			// At this point, should receive valid JSON, so send it along to the
-			// message sender and clear the buffer.
-			logger.Debug("Sending event")
-			a.sendMessage(types.EventType, response)
-			messageBuffer.Reset()
+			return
 		}
+		// Check our received data for valid JSON. If we get invalid JSON at this point,
+		// read again from client, add any new message to the buffer, and parse
+		// again.
+		var event types.Event
+		if err = json.Unmarshal(messageBuffer.Bytes(), &event); err != nil {
+			logger.Debugf("invalid event data: %s", err)
+			c.Write([]byte("invalid"))
+			messageBuffer.Write(buf)
+			continue
+		}
+
+		if event.Entity == nil {
+			event.Entity = a.entity
+		}
+
+		// At this point, should receive valid JSON, so send it along to the
+		// message sender.
+		payload, err := json.Marshal(event)
+		if err != nil {
+			logger.Errorf("could not marshal json payload")
+			return
+		}
+
+		a.sendMessage(types.EventType, payload)
+		c.Write([]byte("ok"))
+		return
 	}
 }
 
+// If the socket receives a message containing whitespace and the
+// string +"ping"+, it will ignore it.
+//
+// The socket assumes all other messages will contain a single,
+// complete, JSON hash. The hash must be a valid JSON check result.
+// Deserialization failures will be logged at the ERROR level by the
+// Sensu client, but the sender of the invalid data will not be
+// notified.
+
 func (a *Agent) handleUDPMessages(c net.PacketConn) {
-	var buf []byte
+	var buf [1500]byte
 
 	go func() {
 		<-a.stopping
 		c.Close()
 	}()
-
+	// Read everything sent from the connection to the message buffer. Any error
+	// will return. If the buffer is zero bytes, close the connection and return.
 	for {
 		bytesRead, _, err := c.ReadFrom(buf[0:])
-		logger.Debugf("%d bytes read from UDP socket", bytesRead)
 		select {
 		case <-a.stopping:
 			logger.Debug("UDP listener stopped")
@@ -259,39 +284,31 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 				c.Close()
 				return
 			}
-
-			if response, err := a.parseBuffer(buf); err != nil {
-				logger.Errorf("UDP Invalid event data: %s", err)
-			} else if string(response) != "pong" {
-				a.sendMessage(types.EventType, response)
+			// If the message is a ping, return without notifying sender.
+			match, _ := regexp.MatchString("\\s+ping\\s+", string(buf[:bytesRead]))
+			if match {
+				return
 			}
+
+			// Check the message for valid JSON. Valid JSON payloads are passed to the
+			// message sender with the addition of the agent's entity if it is not
+			// included in the message. Any JSON errors are logged, and we return.
+			var event types.Event
+			if err = json.Unmarshal(buf[:bytesRead], &event); err != nil {
+				logger.Errorf("UDP Invalid event data: %s", err)
+			}
+
+			if event.Entity == nil {
+				event.Entity = a.entity
+			}
+			payload, err := json.Marshal(event)
+			if err != nil {
+				return
+			}
+			a.sendMessage(types.EventType, payload)
 		}
-	}
-}
 
-// Check the packet contents. If it's a ping request, respond with
-// "pong". If data is not valid JSON, respond with an invalid message.
-// Valid JSON events are returned as a byte array, with the addition
-// of the agent's entity if it doesn't exist in the JSON.
-func (a *Agent) parseBuffer(buffer []byte) (response []byte, err error) {
-	match, _ := regexp.MatchString("\\s+ping\\s+", string(buffer))
-	if match {
-		return []byte("pong"), nil
 	}
-
-	var event types.Event
-	if err = json.Unmarshal(buffer, &event); err != nil {
-		return []byte("Invalid event data"), err
-	}
-	if event.Entity == nil {
-		event.Entity = a.entity
-	}
-	logger.Debug(event)
-	response, err = json.Marshal(event)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
 }
 
 func (a *Agent) receiveMessages(out chan *transport.Message) {
