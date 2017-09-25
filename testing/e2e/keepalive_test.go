@@ -78,6 +78,7 @@ func TestAgentKeepalives(t *testing.T) {
 		Subscriptions: []string{"test"},
 		Environment:   "default",
 		Organization:  "default",
+		Publish:       true,
 	}
 	err = sensuClient.CreateCheck(check)
 	assert.NoError(t, err)
@@ -98,6 +99,7 @@ func TestAgentKeepalives(t *testing.T) {
 		Subscriptions: []string{"test"},
 		Environment:   "default",
 		Organization:  "default",
+		Publish:       true,
 	}
 	err = sensuClient.CreateCheck(check)
 	assert.NoError(t, err)

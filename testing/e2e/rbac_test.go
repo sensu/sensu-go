@@ -176,15 +176,15 @@ func TestRBAC(t *testing.T) {
 	// Make sure each of these clients only has access to objects within its role
 	checks, err := defaultClient.ListChecks("acme")
 	assert.NoError(t, err)
-	assert.Equal(t, &checks[0], defaultCheck)
+	assert.Equal(t, defaultCheck, &checks[0])
 
 	checks, err = devClient.ListChecks("acme")
 	assert.NoError(t, err)
-	assert.Equal(t, &checks[0], devCheck)
+	assert.Equal(t, devCheck, &checks[0])
 
 	checks, err = prodClient.ListChecks("acme")
 	assert.NoError(t, err)
-	assert.Equal(t, &checks[0], prodCheck)
+	assert.Equal(t, prodCheck, &checks[0])
 
 	// Make sure a client can't create objects outside of its role
 	if err := devClient.CreateCheck(defaultCheck); err == nil {
