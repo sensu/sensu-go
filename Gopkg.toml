@@ -117,7 +117,7 @@
 
 [[constraint]]
   name = "github.com/coreos/etcd"
-  revision = "76aa7f69357420f1802d4d959ade999e63269942"
+  version = "~ 3.2.7"
 
 [[override]]
   name = "github.com/ugorji/go"
@@ -125,11 +125,11 @@
 
 [[override]]
   name = "google.golang.org/grpc"
-  revision = "d50cf2db166eaff3f2429425758d12205085eb5b"
+  revision = "8050b9cbc271307e5a716a9d782803d09b0d6f2d"
 
 [[override]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
-  revision = "fdcb7eab2d6ed4919e83ddcef4f199c161611e1f"
+  revision = "18d159699f2e83fc5bb9ef2f79465ca3f3122676"
 
 #
 # Windows

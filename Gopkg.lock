@@ -65,8 +65,9 @@
 
 [[projects]]
   name = "github.com/coreos/etcd"
-  packages = ["alarm","auth","auth/authpb","client","clientv3","clientv3/concurrency","compactor","discovery","embed","error","etcdserver","etcdserver/api","etcdserver/api/v2http","etcdserver/api/v2http/httptypes","etcdserver/api/v3rpc","etcdserver/api/v3rpc/rpctypes","etcdserver/auth","etcdserver/etcdserverpb","etcdserver/membership","etcdserver/stats","lease","lease/leasehttp","lease/leasepb","mvcc","mvcc/backend","mvcc/mvccpb","pkg/adt","pkg/contention","pkg/cors","pkg/cpuutil","pkg/crc","pkg/fileutil","pkg/httputil","pkg/idutil","pkg/ioutil","pkg/logutil","pkg/monotime","pkg/netutil","pkg/pathutil","pkg/pbutil","pkg/runtime","pkg/schedule","pkg/tlsutil","pkg/transport","pkg/types","pkg/wait","raft","raft/raftpb","rafthttp","snap","snap/snappb","store","version","wal","wal/walpb"]
-  revision = "76aa7f69357420f1802d4d959ade999e63269942"
+  packages = ["alarm","auth","auth/authpb","client","clientv3","clientv3/concurrency","compactor","discovery","embed","error","etcdserver","etcdserver/api","etcdserver/api/etcdhttp","etcdserver/api/v2http","etcdserver/api/v2http/httptypes","etcdserver/api/v3client","etcdserver/api/v3election","etcdserver/api/v3election/v3electionpb","etcdserver/api/v3election/v3electionpb/gw","etcdserver/api/v3lock","etcdserver/api/v3lock/v3lockpb","etcdserver/api/v3lock/v3lockpb/gw","etcdserver/api/v3rpc","etcdserver/api/v3rpc/rpctypes","etcdserver/auth","etcdserver/etcdserverpb","etcdserver/etcdserverpb/gw","etcdserver/membership","etcdserver/stats","lease","lease/leasehttp","lease/leasepb","mvcc","mvcc/backend","mvcc/mvccpb","pkg/adt","pkg/contention","pkg/cors","pkg/cpuutil","pkg/crc","pkg/debugutil","pkg/fileutil","pkg/httputil","pkg/idutil","pkg/ioutil","pkg/logutil","pkg/monotime","pkg/netutil","pkg/pathutil","pkg/pbutil","pkg/runtime","pkg/schedule","pkg/srv","pkg/tlsutil","pkg/transport","pkg/types","pkg/wait","proxy/grpcproxy/adapter","raft","raft/raftpb","rafthttp","snap","snap/snappb","store","version","wal","wal/walpb"]
+  revision = "bb66589f8cf18960c7f3d56b1b83753caeed9c7a"
+  version = "v3.2.7"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -184,7 +185,7 @@
 [[projects]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = ["runtime","runtime/internal","utilities"]
-  revision = "fdcb7eab2d6ed4919e83ddcef4f199c161611e1f"
+  revision = "18d159699f2e83fc5bb9ef2f79465ca3f3122676"
 
 [[projects]]
   branch = "master"
@@ -326,15 +327,9 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = ["cpu","host","internal/common","mem","net","process"]
+  packages = ["host","internal/common","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
   version = "v2.17.08"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/shirou/w32"
-  packages = ["."]
-  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   branch = "master"
@@ -434,7 +429,7 @@
 [[projects]]
   name = "google.golang.org/grpc"
   packages = [".","codes","credentials","grpclog","internal","keepalive","metadata","naming","peer","stats","tap","transport"]
-  revision = "d50cf2db166eaff3f2429425758d12205085eb5b"
+  revision = "8050b9cbc271307e5a716a9d782803d09b0d6f2d"
 
 [[projects]]
   name = "gopkg.in/h2non/filetype.v1"
@@ -451,6 +446,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a0b8deb144ef0fd93a8ff3d36a4696f861fe6d0866d05a1cbbe368739e3691cc"
+  inputs-digest = "d936bda59621f6dcbe51b2b258e69dd08b971d4aab79071737fd9a6ecda7b845"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -25,7 +25,6 @@ install:
   - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
-  - go get -u github.com/golang/dep/cmd/dep
 
 platform:
   - x64
