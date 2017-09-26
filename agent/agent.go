@@ -187,15 +187,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
-	keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-
 	for {
-		select {
-		case <-keepaliveTicker.C:
-			a.sendKeepalive()
-		default:
-		}
-
 		select {
 		case msg := <-a.sendq:
 			err := conn.Send(msg)
@@ -210,11 +202,6 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
 			}
 		case <-a.stopping:
 			return
-		default:
-			if a.conn.Closed() {
-				return
-			}
-			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }
@@ -347,6 +334,19 @@ func (a *Agent) Run() error {
 	go func() {
 		wg.Wait()
 		close(pumpsReturned)
+	}()
+
+	go func() {
+		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+		for {
+			select {
+			case <-keepaliveTicker.C:
+				a.sendKeepalive()
+			case <-a.stopping:
+				return
+			}
+
+		}
 	}()
 
 	go func(wg *sync.WaitGroup) {
