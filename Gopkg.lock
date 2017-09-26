@@ -40,12 +40,6 @@
   revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
 
 [[projects]]
-  name = "github.com/boltdb/bolt"
-  packages = ["."]
-  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
-  version = "v1.3.1"
-
-[[projects]]
   name = "github.com/cenkalti/backoff"
   packages = ["."]
   revision = "61153c768f31ee5f130071d08fc82b85208528de"
@@ -58,16 +52,16 @@
   version = "v1.4"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/cockroachdb/cmux"
+  name = "github.com/coreos/bbolt"
   packages = ["."]
-  revision = "30d10be492927e2dcae0089c374c455d42414fcb"
+  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
+  version = "v1.3.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/coreos/etcd"
-  packages = ["alarm","auth","auth/authpb","client","clientv3","clientv3/concurrency","compactor","discovery","embed","error","etcdserver","etcdserver/api","etcdserver/api/etcdhttp","etcdserver/api/v2http","etcdserver/api/v2http/httptypes","etcdserver/api/v3client","etcdserver/api/v3election","etcdserver/api/v3election/v3electionpb","etcdserver/api/v3election/v3electionpb/gw","etcdserver/api/v3lock","etcdserver/api/v3lock/v3lockpb","etcdserver/api/v3lock/v3lockpb/gw","etcdserver/api/v3rpc","etcdserver/api/v3rpc/rpctypes","etcdserver/auth","etcdserver/etcdserverpb","etcdserver/etcdserverpb/gw","etcdserver/membership","etcdserver/stats","lease","lease/leasehttp","lease/leasepb","mvcc","mvcc/backend","mvcc/mvccpb","pkg/adt","pkg/contention","pkg/cors","pkg/cpuutil","pkg/crc","pkg/debugutil","pkg/fileutil","pkg/httputil","pkg/idutil","pkg/ioutil","pkg/logutil","pkg/monotime","pkg/netutil","pkg/pathutil","pkg/pbutil","pkg/runtime","pkg/schedule","pkg/srv","pkg/tlsutil","pkg/transport","pkg/types","pkg/wait","proxy/grpcproxy/adapter","raft","raft/raftpb","rafthttp","snap","snap/snappb","store","version","wal","wal/walpb"]
-  revision = "bb66589f8cf18960c7f3d56b1b83753caeed9c7a"
-  version = "v3.2.7"
+  packages = ["alarm","auth","auth/authpb","client","clientv3","clientv3/concurrency","compactor","discovery","embed","error","etcdserver","etcdserver/api","etcdserver/api/etcdhttp","etcdserver/api/v2http","etcdserver/api/v2http/httptypes","etcdserver/api/v2v3","etcdserver/api/v3client","etcdserver/api/v3election","etcdserver/api/v3election/v3electionpb","etcdserver/api/v3election/v3electionpb/gw","etcdserver/api/v3lock","etcdserver/api/v3lock/v3lockpb","etcdserver/api/v3lock/v3lockpb/gw","etcdserver/api/v3rpc","etcdserver/api/v3rpc/rpctypes","etcdserver/auth","etcdserver/etcdserverpb","etcdserver/etcdserverpb/gw","etcdserver/membership","etcdserver/stats","lease","lease/leasehttp","lease/leasepb","mvcc","mvcc/backend","mvcc/mvccpb","pkg/adt","pkg/contention","pkg/cors","pkg/cpuutil","pkg/crc","pkg/debugutil","pkg/fileutil","pkg/httputil","pkg/idutil","pkg/ioutil","pkg/logutil","pkg/netutil","pkg/pathutil","pkg/pbutil","pkg/runtime","pkg/schedule","pkg/srv","pkg/tlsutil","pkg/transport","pkg/types","pkg/wait","proxy/grpcproxy/adapter","raft","raft/raftpb","rafthttp","snap","snap/snappb","store","version","wal","wal/walpb"]
+  revision = "554298d429a17d69e7da3eb0c6adefcd1d6429cc"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -143,7 +137,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["jsonpb","proto","ptypes/struct"]
+  packages = ["jsonpb","proto","ptypes/any","ptypes/struct"]
   revision = "130e6b02ab059e7b717a096f397c5b60111cae74"
 
 [[projects]]
@@ -185,7 +179,7 @@
 [[projects]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = ["runtime","runtime/internal","utilities"]
-  revision = "18d159699f2e83fc5bb9ef2f79465ca3f3122676"
+  revision = "589b126116b5fc961939b3e156c29e4d9d58222f"
 
 [[projects]]
   branch = "master"
@@ -332,6 +326,12 @@
   version = "v2.17.08"
 
 [[projects]]
+  name = "github.com/soheilhy/cmux"
+  packages = ["."]
+  revision = "bb79a83465015a27a175925ebd155e660f55e9f1"
+  version = "v0.1.3"
+
+[[projects]]
   branch = "master"
   name = "github.com/spf13/afero"
   packages = [".","mem"]
@@ -427,9 +427,21 @@
   revision = "1cbadb444a806fd9430d14ad08967ed91da4fa0a"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/time"
+  packages = ["rate"]
+  revision = "8be79e1e0910c292df4e79c241bb7e8f7e725959"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/genproto"
+  packages = ["googleapis/rpc/status"]
+  revision = "1e559d0a00eef8a9a43151db4665280bd8dd5886"
+
+[[projects]]
   name = "google.golang.org/grpc"
-  packages = [".","codes","credentials","grpclog","internal","keepalive","metadata","naming","peer","stats","tap","transport"]
-  revision = "8050b9cbc271307e5a716a9d782803d09b0d6f2d"
+  packages = [".","codes","credentials","grpclb/grpc_lb_v1","grpclog","health","health/grpc_health_v1","internal","keepalive","metadata","naming","peer","stats","status","tap","transport"]
+  revision = "b8669c35455183da6d5c474ea6e72fbf55183274"
 
 [[projects]]
   name = "gopkg.in/h2non/filetype.v1"
@@ -446,6 +458,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d936bda59621f6dcbe51b2b258e69dd08b971d4aab79071737fd9a6ecda7b845"
+  inputs-digest = "6f7c29e3a4ea253d7b87f32370b2922ca1914c77b8f4ab6aad708b69953c41f7"
   solver-name = "gps-cdcl"
   solver-version = 1
