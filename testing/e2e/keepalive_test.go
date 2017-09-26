@@ -70,10 +70,15 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.NotEmpty(t, entities[0].System.Hostname)
 	assert.NotZero(t, entities[0].LastSeen)
 
+	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
+	falseAbsPath, err := filepath.Abs(falsePath)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, falseAbsPath)
+
 	// Create a check
 	check := &types.CheckConfig{
 		Name:          "testcheck",
-		Command:       "echo output",
+		Command:       falseAbsPath,
 		Interval:      1,
 		Subscriptions: []string{"test"},
 		Environment:   "default",
@@ -87,32 +92,15 @@ func TestAgentKeepalives(t *testing.T) {
 	_, err = sensuClient.FetchCheck(check.Name)
 	assert.NoError(t, err)
 
-	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
-	falseAbsPath, err := filepath.Abs(falsePath)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, falseAbsPath)
-
-	check = &types.CheckConfig{
-		Name:          "testcheck2",
-		Command:       falseAbsPath,
-		Interval:      1,
-		Subscriptions: []string{"test"},
-		Environment:   "default",
-		Organization:  "default",
-		Publish:       true,
-	}
-	err = sensuClient.CreateCheck(check)
-	assert.NoError(t, err)
-
 	time.Sleep(30 * time.Second)
 
-	// At this point, we should have 21 failing status codes for testcheck2
+	// At this point, we should have 21 failing status codes for testcheck
 	event, err := sensuClient.FetchEvent(ap.AgentID, check.Name)
 	assert.NoError(t, err)
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
-	assert.Equal(t, "testcheck2", event.Check.Config.Name)
+	assert.Equal(t, "testcheck", event.Check.Config.Name)
 	// TODO(greg): ensure results are as expected.
 }
