@@ -28,14 +28,7 @@ func TestRBAC(t *testing.T) {
 	assert.True(t, backendIsOnline)
 
 	// Create an authenticated client using the admin user
-	adminConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-	}
-	adminClient := client.New(adminConfig)
-	adminTokens, _ := adminClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
-	adminConfig.Cluster.Tokens = adminTokens
+	adminClient := newSensuClient(backendHTTPURL)
 
 	// Make sure we are properly authenticated
 	users, err := adminClient.ListUsers()

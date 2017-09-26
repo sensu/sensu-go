@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/client/config/basic"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +39,9 @@ func TestAgentKeepalives(t *testing.T) {
 	}
 
 	err = ap.Start()
-	assert.NoError(t, err)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	defer func() {
 		bep.Kill()
@@ -52,14 +52,7 @@ func TestAgentKeepalives(t *testing.T) {
 	time.Sleep(5 * time.Second)
 
 	// Create an authenticated HTTP Sensu client
-	clientConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-	}
-	sensuClient := client.New(clientConfig)
-	tokens, _ := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
-	clientConfig.Cluster.Tokens = tokens
+	sensuClient := newSensuClient(backendHTTPURL)
 
 	// Retrieve the entitites
 	entities, err := sensuClient.ListEntities("*")

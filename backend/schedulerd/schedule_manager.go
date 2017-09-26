@@ -72,11 +72,6 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 		return nil
 	}
 
-	// Ensure the check if configured to publish check requests
-	if !check.Publish {
-		return nil
-	}
-
 	// Create new scheduler & start it
 	scheduler := mngrPtr.newSchedulerFn(check)
 

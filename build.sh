@@ -211,6 +211,7 @@ elif [ "$cmd" == "unit" ]; then
 elif [ "$cmd" == "build_tools" ]; then
 	build_tools
 elif [ "$cmd" == "e2e" ]; then
+	# Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
 	build_commands
 	e2e_commands "${@:2}"
 elif [ "$cmd" == "build" ]; then

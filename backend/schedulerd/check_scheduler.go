@@ -94,6 +94,11 @@ type CheckExecutor struct {
 
 // Execute queues reqest on message bus
 func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
+	// Ensure the check if configured to publish check requests
+	if !check.Publish {
+		return nil
+	}
+
 	var err error
 	request := execPtr.BuildRequest(check)
 
