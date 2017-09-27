@@ -57,6 +57,14 @@ type Config struct {
 	Password string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
+	// HTTPSocket
+	HTTPSocket *HTTPSocket
+}
+
+// HTTPSocket contains the HTTP socket configuration
+type HTTPSocket struct {
+	Bind string
+	Port string
 }
 
 // NewConfig provides a new Config object initialized with defaults.
@@ -71,6 +79,10 @@ func NewConfig() *Config {
 		Organization:      "default",
 		User:              "agent",
 		Password:          "P@ssw0rd!",
+		HTTPSocket: &HTTPSocket{
+			Bind: "127.0.0.1",
+			Port: "3031",
+		},
 	}
 
 	hostname, err := os.Hostname()
