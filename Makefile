@@ -337,7 +337,8 @@ publish:
 	make publish-sysvinit-packages
 	make publish-systemd-packages
 
-PC_PUSH_CMD=package_cloud push --skip-errors
+PC_CONFIG_PATH=.packagecloud
+PC_PUSH_CMD=package_cloud push --skip-errors --config .packagecloud
 
 ##
 # publish packages without a service
