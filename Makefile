@@ -35,7 +35,7 @@ URL="https://sensuapp.org"
 BIN_SOURCE_DIR=target/$(GOOS)-$(GOARCH)
 
 FPM_FLAGS = \
-	--version $(VERSION)-$(PRERELEASE) \
+	--version $(VERSION)~$(subst .,,$(PRERELEASE)) \
 	--iteration $(ITERATION) \
 	--url $(URL) \
 	--license $(LICENSE) \
