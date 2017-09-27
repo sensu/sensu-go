@@ -55,11 +55,7 @@ func (p *Pipelined) Start() error {
 		return err
 	}
 
-	if err := p.createPipelines(PipelineCount, p.eventChan); err != nil {
-		return err
-	}
-
-	return nil
+	return p.createPipelines(PipelineCount, p.eventChan)
 }
 
 // Stop pipelined.

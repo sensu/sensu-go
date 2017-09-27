@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -195,11 +194,6 @@ func (s *Session) subPump() {
 			s.sendq <- msg
 		case <-s.stopping:
 			return
-		default:
-			if s.conn.Closed() {
-				return
-			}
-			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }
@@ -225,11 +219,6 @@ func (s *Session) sendPump() {
 			}
 		case <-s.stopping:
 			return
-		default:
-			if s.conn.Closed() {
-				return
-			}
-			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }
