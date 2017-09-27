@@ -36,8 +36,8 @@ const (
 	flagCacheDir              = "cache-dir"
 	flagKeepaliveTimeout      = "keepalive-timeout"
 	flagKeepaliveInterval     = "keepalive-interval"
-	flagHTTPSocketBind        = "http-socket-bind"
-	flagHTTPSocketPort        = "http-socket-port"
+	flagAPIHost               = "api-host"
+	flagAPIPort               = "api-port"
 )
 
 func init() {
@@ -91,8 +91,8 @@ func newStartCommand() *cobra.Command {
 			cfg.Organization = viper.GetString(flagOrganization)
 			cfg.User = viper.GetString(flagUser)
 			cfg.Password = viper.GetString(flagPassword)
-			cfg.HTTPSocket.Bind = viper.GetString(flagHTTPSocketBind)
-			cfg.HTTPSocket.Port = viper.GetString(flagHTTPSocketPort)
+			cfg.API.Host = viper.GetString(flagAPIHost)
+			cfg.API.Port = viper.GetInt(flagAPIPort)
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
@@ -163,8 +163,8 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagSubscriptions, "")
 	viper.SetDefault(flagKeepaliveTimeout, 120)
 	viper.SetDefault(flagKeepaliveInterval, 20)
-	viper.SetDefault(flagHTTPSocketBind, "127.0.0.1")
-	viper.SetDefault(flagHTTPSocketPort, "3031")
+	viper.SetDefault(flagAPIHost, "127.0.0.1")
+	viper.SetDefault(flagAPIPort, 3031)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -182,7 +182,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().Uint(flagKeepaliveTimeout, uint(viper.Get(flagKeepaliveTimeout).(int)), "number of seconds until agent is considered dead by backend")
 	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
-	cmd.Flags().String(flagHTTPSocketBind, viper.GetString(flagHTTPSocketBind), "address the HTTP client socket listens on")
-	cmd.Flags().String(flagHTTPSocketPort, viper.GetString(flagHTTPSocketPort), "port the HTTP client socket listens on")
+	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address the HTTP API listens on")
+	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the HTTP API listens on")
 	return cmd
 }

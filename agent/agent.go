@@ -5,6 +5,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -57,14 +58,8 @@ type Config struct {
 	Password string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
-	// HTTPSocket
-	HTTPSocket *HTTPSocket
-}
-
-// HTTPSocket contains the HTTP socket configuration
-type HTTPSocket struct {
-	Bind string
-	Port string
+	// API contains the HTTP API configuration
+	API *APIConfig
 }
 
 // NewConfig provides a new Config object initialized with defaults.
@@ -79,9 +74,9 @@ func NewConfig() *Config {
 		Organization:      "default",
 		User:              "agent",
 		Password:          "P@ssw0rd!",
-		HTTPSocket: &HTTPSocket{
-			Bind: "127.0.0.1",
-			Port: "3031",
+		API: &APIConfig{
+			Host: "127.0.0.1",
+			Port: 3031,
 		},
 	}
 
@@ -107,6 +102,7 @@ type Agent struct {
 	stopped         chan struct{}
 	entity          *types.Entity
 	assetManager    *assetmanager.Manager
+	api             *http.Server
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -405,6 +401,29 @@ func (a *Agent) Run() error {
 			}
 		}
 	}(wg)
+
+	// Start the API
+	go func() {
+		a.api = newServer(a)
+		logger.Info("starting api on address: ", a.api.Addr)
+
+		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
+			logger.Fatal(err)
+		}
+	}()
+
+	// Gracefully shutdown the API when the agent stops
+	go func() {
+		<-a.stopping
+		logger.Info("api shutting down")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		if err := a.api.Shutdown(ctx); err != nil {
+			logger.Fatal(err)
+		}
+	}()
 
 	return nil
 }
