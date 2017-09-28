@@ -139,7 +139,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	// No idea what the purpose of this is, needs to be questioned.
+	// Maintain check history.
 	if prevEvent != nil {
 		if prevEvent.Check == nil {
 			return errors.New("invalid previous event")
