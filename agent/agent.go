@@ -184,16 +184,17 @@ func (a *Agent) createListenSockets() error {
 // Streams can be of any length. The socket protocol does not require
 // any headers, instead the socket tries to parse everything it has
 // been sent each time a chunk of data arrives. Once the JSON parses
-// successfully, the Sensu client publishes the result. After
+// successfully, the Sensu agent publishes the result. After
 // timeout (default is 500 msec) since the most recent chunk
 // of data was received, the agent will give up on the sender, and
-// instead respond +"invalid"+ and close the connection.
+// instead respond "invalid" and close the connection.
 func (a *Agent) handleTCPMessages(c net.Conn) {
 	defer c.Close()
 	var buf []byte
 	messageBuffer := bytes.NewBuffer(buf)
 	connReader := bufio.NewReader(c)
 	waitTime := 10 * time.Millisecond
+
 	// Read incoming tcp messages from client until we hit a valid JSON message.
 	// If we don't get valid JSON or a ping request after 500ms, close the
 	// connection (timeout).
@@ -227,9 +228,6 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// again.
 		var event types.Event
 		if err = json.Unmarshal(messageBuffer.Bytes(), &event); err != nil {
-			logger.Debugf("invalid event data: %s", err)
-			c.Write([]byte("invalid"))
-			messageBuffer.Write(buf)
 			continue
 		}
 
@@ -249,15 +247,16 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		c.Write([]byte("ok"))
 		return
 	}
+	c.Write([]byte("invalid"))
 }
 
 // If the socket receives a message containing whitespace and the
-// string +"ping"+, it will ignore it.
+// string "ping", it will ignore it.
 //
 // The socket assumes all other messages will contain a single,
 // complete, JSON hash. The hash must be a valid JSON check result.
 // Deserialization failures will be logged at the ERROR level by the
-// Sensu client, but the sender of the invalid data will not be
+// Sensu agent, but the sender of the invalid data will not be
 // notified.
 
 func (a *Agent) handleUDPMessages(c net.PacketConn) {

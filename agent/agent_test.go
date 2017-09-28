@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -199,10 +200,68 @@ func TestReceiveLoopTCP(t *testing.T) {
 		assert.FailNow(t, "agent failed to run")
 	}
 
-	tcpClient := transport.PacketClient("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow(t, "failed to create TCP connection")
+	}
+
 	defer tcpClient.Close()
 
 	tcpClient.Write([]byte(`{"timestamp":123}`))
+	tcpClient.Close()
+	<-done
+	ta.Stop()
+}
+
+func TestReceiveLoopCheckTCP(t *testing.T) {
+
+	done := make(chan struct{})
+	server := transport.NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		// throw away handshake
+		bhsm := &transport.Message{
+			Type:    types.BackendHandshakeType,
+			Payload: []byte("{}"),
+		}
+		conn.Send(bhsm)
+		conn.Receive() // agent handshake
+		conn.Receive() // agent keepalive
+
+		msg, err := conn.Receive() // our message
+
+		assert.NoError(t, err)
+		assert.Equal(t, "event", msg.Type)
+		event := &types.Event{}
+		check := &types.Check{Status: 1}
+		assert.NoError(t, json.Unmarshal(msg.Payload, event))
+		assert.Equal(t, int64(123), event.Timestamp)
+		assert.Equal(t, check, event.Check)
+		assert.NotNil(t, event.Entity)
+		done <- struct{}{}
+	}))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+
+	cfg := NewConfig()
+	cfg.BackendURLs = []string{wsURL}
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
+
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow(t, "failed to create TCP connection")
+	}
+
+	defer tcpClient.Close()
+
+	tcpClient.Write([]byte(`{"timestamp":123, "check":{"status":1}}`))
 	tcpClient.Close()
 	<-done
 	ta.Stop()
@@ -248,7 +307,10 @@ func TestReceiveLoopUDP(t *testing.T) {
 		assert.FailNow(t, "agent failed to run")
 	}
 
-	udpClient := transport.PacketClient("udp", ":3030")
+	udpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow(t, "failed to create UDP connection")
+	}
 	defer udpClient.Close()
 
 	udpClient.Write([]byte(`{"timestamp":123}`))
@@ -289,7 +351,10 @@ func TestReceiveLoopPing(t *testing.T) {
 	}
 
 	readData := make([]byte, 4)
-	tcpClient := transport.PacketClient("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow(t, "failed to create TCP connection")
+	}
 	defer tcpClient.Close()
 	bytesWritten, err := tcpClient.Write([]byte(" ping "))
 	if err != nil {
@@ -352,7 +417,10 @@ func TestReceiveLoopMultiWriteTCP(t *testing.T) {
 	}
 
 	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
-	tcpClient := transport.PacketClient("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow(t, "failed to create TCP connection")
+	}
 	tcpClient.Write(chunkData[:5])
 	tcpClient.Write(chunkData[5:])
 	tcpClient.Close()
@@ -396,7 +464,10 @@ func TestReceiveLoopMultiWriteTimeoutTCP(t *testing.T) {
 	}
 
 	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
-	tcpClient := transport.PacketClient("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow(t, "failed to create TCP connection")
+	}
 
 	_, err = tcpClient.Write(chunkData[:5])
 	if err != nil {
