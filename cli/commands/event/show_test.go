@@ -44,7 +44,7 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 
 	assert.NotEmpty(t, out)
 	assert.Contains(t, out, "Usage")
-	assert.Nil(t, err)
+	assert.NotNil(t, err)
 }
 
 func TestShowCommandRunEClosureWithTable(t *testing.T) {

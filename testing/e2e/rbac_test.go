@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"testing"
@@ -37,9 +38,16 @@ func TestRBAC(t *testing.T) {
 	adminTokens, _ := adminClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
 	adminConfig.Cluster.Tokens = adminTokens
 
+	// Initializes sensuctl as admin
+	adminctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	defer cleanup()
+
 	// Make sure we are properly authenticated
-	users, err := adminClient.ListUsers()
+	output, err := adminctl.run("user", "list")
 	assert.NoError(t, err)
+
+	users := []types.User{}
+	json.Unmarshal(output, &users)
 	assert.NotZero(t, len(users))
 
 	// Create the following hierarchy for RBAC:
@@ -137,7 +145,15 @@ func TestRBAC(t *testing.T) {
 	}
 
 	// Create a Sensu client for every environment
-	// TODO: Simplify the client creation!
+	defaultctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "default", "P@ssw0rd!")
+	defer cleanup()
+
+	devctl, cleanup := newSensuCtl(backendHTTPURL, "acme", "dev", "dev", "P@ssw0rd!")
+	defer cleanup()
+
+	prodctl, cleanup := newSensuCtl(backendHTTPURL, "acme", "prod", "prod", "P@ssw0rd!")
+	defer cleanup()
+
 	defaultConfig := &basic.Config{
 		Cluster: basic.Cluster{
 			APIUrl: backendHTTPURL,
@@ -174,16 +190,22 @@ func TestRBAC(t *testing.T) {
 	prodConfig.Cluster.Tokens = prodTokens
 
 	// Make sure each of these clients only has access to objects within its role
-	checks, err := defaultClient.ListChecks("acme")
+	checks := []types.CheckConfig{}
+	output, err = defaultctl.run("check", "list")
 	assert.NoError(t, err)
+	json.Unmarshal(output, &checks)
 	assert.Equal(t, &checks[0], defaultCheck)
 
-	checks, err = devClient.ListChecks("acme")
+	checks = []types.CheckConfig{}
+	output, err = devctl.run("check", "list")
 	assert.NoError(t, err)
+	json.Unmarshal(output, &checks)
 	assert.Equal(t, &checks[0], devCheck)
 
-	checks, err = prodClient.ListChecks("acme")
+	checks = []types.CheckConfig{}
+	output, err = prodctl.run("check", "list")
 	assert.NoError(t, err)
+	json.Unmarshal(output, &checks)
 	assert.Equal(t, &checks[0], prodCheck)
 
 	// Make sure a client can't create objects outside of its role
@@ -201,10 +223,6 @@ func TestRBAC(t *testing.T) {
 	}
 
 	// Make sure a client can't read objects outside of its role
-	// TODO (Simon): We should be able to override the env without saving it
-	devConfig.SaveEnvironment("prod")
-	if _, err := devClient.FetchCheck(prodCheck.Name); err == nil {
-		assert.Fail(t, "devClient should not be able to read into the prod env")
-	}
-	devConfig.SaveEnvironment("dev")
+	_, err = devctl.run("check", "info", prodCheck.Name)
+	assert.Error(t, err)
 }

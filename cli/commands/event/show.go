@@ -24,7 +24,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 
 			if len(args) != 2 {
 				cmd.Help()
-				return nil
+				return fmt.Errorf("missing argument(s)")
 			}
 
 			// Fetch event from API
