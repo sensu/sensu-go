@@ -3,7 +3,9 @@ package importer
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/sensu/sensu-go/cli"
@@ -20,9 +22,10 @@ const (
 // ImportCommand adds command that allows user import resources
 func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := cobra.Command{
-		Use:          "import",
-		Short:        "import resources from STDIN",
-		SilenceUsage: true,
+		Use:           "import",
+		Short:         "import resources from STDIN",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			stat, _ := cli.InFile.Stat()
 			if stat.Mode()&os.ModeNamedPipe == 0 {
@@ -34,6 +37,10 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 			dec := json.NewDecoder(bufio.NewReader(cli.InFile))
 
 			if err := dec.Decode(&data); err != nil {
+				printErrorMsg(
+					cmd.OutOrStderr(),
+					err.Error(),
+				)
 				return err
 			}
 
@@ -45,11 +52,11 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 					cli.Client,
 				)
 			} else {
-				fmt.Fprintln(
+				printErrorMsg(
 					cmd.OutOrStderr(),
 					"Only importing of legacy settings are supported at this time.",
 				)
-				return nil
+				return errors.New("")
 			}
 
 			importer.AllowWarns, _ = cmd.Flags().GetBool(flagsForce)
@@ -60,13 +67,8 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), "\n==============================")
 
 			if err != nil {
-				fmt.Fprintf(
-					cmd.OutOrStderr(),
-					"%s %s\n",
-					globals.ErrorTextStyle("ERROR"),
-					err.Error(),
-				)
-				return nil
+				printErrorMsg(cmd.OutOrStderr(), err.Error())
+				return err
 			}
 
 			fmt.Fprintln(
@@ -83,4 +85,13 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().BoolP(flagsVerbose, "v", false, "include debug messages in output")
 
 	return &cmd
+}
+
+func printErrorMsg(wr io.Writer, msg string) {
+	fmt.Fprintf(
+		wr,
+		"%s %s\n",
+		globals.ErrorTextStyle("ERROR"),
+		msg,
+	)
 }

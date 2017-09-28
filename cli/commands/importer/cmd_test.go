@@ -43,7 +43,7 @@ func TestImportCommandRunWithBadJSON(t *testing.T) {
 
 	out, err := test.RunCmd(cmd, []string{"in"})
 	assert.Error(err)
-	assert.Empty(out)
+	assert.NotEmpty(out)
 }
 
 func TestImportCommandRunWithGoodJSON(t *testing.T) {
@@ -57,7 +57,7 @@ func TestImportCommandRunWithGoodJSON(t *testing.T) {
 	cmd := ImportCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
-	assert.NoError(err)
+	assert.Error(err)
 	assert.Contains(out, "Only importing of legacy settings are supported")
 }
 
@@ -98,5 +98,5 @@ func TestImportCommandRunWithLegacyImporterInvalidResources(t *testing.T) {
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "ERROR")
-	assert.NoError(err)
+	assert.Error(err)
 }
