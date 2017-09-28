@@ -139,6 +139,7 @@ func (b *backendProcess) Kill() error {
 type agentProcess struct {
 	BackendURLs []string
 	AgentID     string
+	APIPort     int
 
 	Stdout io.Reader
 	Stderr io.Reader
@@ -147,6 +148,13 @@ type agentProcess struct {
 }
 
 func (a *agentProcess) Start() error {
+	port := make([]int, 1)
+	err := testutil.RandomPorts(port)
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.APIPort = port[0]
+
 	exe := filepath.Join(binDir, "sensu-agent")
 	cmd := exec.Command(
 		exe, "start",
@@ -156,6 +164,7 @@ func (a *agentProcess) Start() error {
 		"--subscriptions", "test",
 		"--environment", "default",
 		"--organization", "default",
+		"--api-port", strconv.Itoa(port[0]),
 	)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
