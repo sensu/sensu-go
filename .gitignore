@@ -32,3 +32,4 @@ packaging/hooks/*/rpm/*
 !packaging/hooks/*/rpm/*.erb
 .kitchen/
 .kitchen.local.yml
+.packagecloud
