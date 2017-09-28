@@ -121,9 +121,11 @@ func (s *etcdStore) UpdateEvent(ctx context.Context, event *types.Event) error {
 		return errors.New("event has no check")
 	}
 
-	// TODO(Simon): We should also validate event.Entity since we also use
-	// some properties of Entity below, such as ID
 	if err := event.Check.Validate(); err != nil {
+		return err
+	}
+
+	if err := event.Entity.Validate(); err != nil {
 		return err
 	}
 
