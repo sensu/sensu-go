@@ -59,7 +59,7 @@ func TestEventHandler(t *testing.T) {
 	tokens, _ := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
 	clientConfig.Cluster.Tokens = tokens
 
-	handlerJSONFile := fmt.Sprintf("%sTestEventHandler%v", os.TempDir(), os.Getpid())
+	handlerJSONFile := fmt.Sprintf("%s/TestEventHandler%v", os.TempDir(), os.Getpid())
 
 	// Create a handler
 	handler := &types.Handler{
