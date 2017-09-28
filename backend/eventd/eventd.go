@@ -2,7 +2,6 @@ package eventd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"sync"
 
@@ -140,30 +139,21 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	if prevEvent == nil {
-		err = e.Store.UpdateEvent(ctx, event)
-		if err != nil {
-			return err
+	// No idea what the purpose of this is, needs to be questioned.
+	if prevEvent != nil {
+		if prevEvent.Check == nil {
+			return errors.New("invalid previous event")
 		}
-		return nil
-	}
 
-	if prevEvent.Check == nil {
-		return errors.New("invalid previous event")
+		event.Check.MergeWith(prevEvent.Check)
 	}
-
-	event.Check.MergeWith(prevEvent.Check)
 
 	err = e.Store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
 	}
 
-	eventBytes, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	return e.MessageBus.Publish(messaging.TopicEvent, eventBytes)
+	return e.MessageBus.Publish(messaging.TopicEvent, event)
 }
 
 // Stop eventd.
