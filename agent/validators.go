@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// validateEvent validates an event add, if possible, missing information
+// validateEvent validates an event and tries to add missing attributes
 func validateEvent(a *Agent, event *types.Event) error {
 	if event == nil {
 		return fmt.Errorf("an event must be provided")
@@ -20,8 +20,27 @@ func validateEvent(a *Agent, event *types.Event) error {
 	// Use the agent entity if none was passed
 	if event.Entity == nil {
 		event.Entity = a.getAgentEntity()
+	} else {
+		// Make sure the entity has all required attributes
+		if event.Entity.Class == "" {
+			event.Entity.Class = "proxy-client"
+		}
+
+		if event.Entity.Organization == "" {
+			event.Entity.Organization = a.config.Organization
+		}
+
+		if event.Entity.Environment == "" {
+			event.Entity.Environment = a.config.Environment
+		}
 	}
 
+	// The entity should pass validation at this point
+	if err := event.Entity.Validate(); err != nil {
+		return err
+	}
+
+	// Make sure the check has all required attributes
 	if event.Check.Config.Interval == 0 {
 		event.Check.Config.Interval = 1
 	}
@@ -34,5 +53,10 @@ func validateEvent(a *Agent, event *types.Event) error {
 		event.Check.Config.Environment = a.config.Environment
 	}
 
-	return nil
+	if event.Check.Executed == 0 {
+		event.Check.Executed = time.Now().Unix()
+	}
+
+	// The check should pass validation at this point
+	return event.Check.Validate()
 }
