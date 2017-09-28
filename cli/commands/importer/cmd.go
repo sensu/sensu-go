@@ -54,7 +54,7 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 
 			importer.AllowWarns, _ = cmd.Flags().GetBool(flagsForce)
 			importer.Debug, _ = cmd.Flags().GetBool(flagsVerbose)
-			importer.reporter.Out = cmd.OutOrStdout()
+			importer.report.Out = cmd.OutOrStdout()
 
 			err := importer.Run(data)
 			fmt.Fprintln(cmd.OutOrStdout(), "\n==============================")

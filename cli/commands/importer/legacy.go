@@ -2,6 +2,7 @@ package importer
 
 import (
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/elements/report"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -42,7 +43,7 @@ type LegacyMutatorImporter struct {
 	Env      string
 	SaveFunc func(*types.Mutator) error
 
-	reporter *Reporter
+	reporter *report.Writer
 	mutators []*types.Mutator
 }
 
@@ -52,8 +53,9 @@ func (i *LegacyMutatorImporter) Name() string {
 }
 
 // SetReporter ...
-func (i *LegacyMutatorImporter) SetReporter(r *Reporter) {
-	i.reporter = r
+func (i *LegacyMutatorImporter) SetReporter(r *report.Writer) {
+	reporter := r.WithValue("compontent", i.Name())
+	i.reporter = &reporter
 }
 
 // Import given data
@@ -159,7 +161,7 @@ type LegacyCheckImporter struct {
 	Env      string
 	SaveFunc func(*types.CheckConfig) error
 
-	reporter *Reporter
+	reporter *report.Writer
 	checks   []*types.CheckConfig
 }
 
@@ -169,8 +171,9 @@ func (i *LegacyCheckImporter) Name() string {
 }
 
 // SetReporter ...
-func (i *LegacyCheckImporter) SetReporter(r *Reporter) {
-	i.reporter = r
+func (i *LegacyCheckImporter) SetReporter(r *report.Writer) {
+	reporter := r.WithValue("compontent", i.Name())
+	i.reporter = &reporter
 }
 
 // Import given data
@@ -196,7 +199,11 @@ func (i *LegacyCheckImporter) Import(data map[string]interface{}) error {
 func (i *LegacyCheckImporter) Validate() error {
 	for _, check := range i.checks {
 		if err := check.Validate(); err != nil {
-			i.reporter.Error("check '" + check.Name + "' failed validation w/ '" + err.Error() + "'")
+			i.reporter.Errorf(
+				"check '%s' failed validation w/ '%s'",
+				check.Name,
+				err,
+			)
 		}
 	}
 
@@ -207,11 +214,14 @@ func (i *LegacyCheckImporter) Validate() error {
 func (i *LegacyCheckImporter) Save() (int, error) {
 	for _, check := range i.checks {
 		if err := i.SaveFunc(check); err != nil {
-			i.reporter.Fatalf(
-				"unable to persist check '%s' w/ error '%s'",
-				check.Name,
-				err,
-			)
+			i.reporter.
+				WithValue("name", check.Name).
+				WithValue("error", err).
+				Fatalf(
+					"unable to persist check '%s' w/ error '%s'",
+					check.Name,
+					err,
+				)
 		} else {
 			i.reporter.Debugf("check '%s' imported", check.Name)
 		}
@@ -295,72 +305,74 @@ func (i *LegacyCheckImporter) newCheck(name string) types.CheckConfig {
 //   - `handlers`
 //
 func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]interface{}) {
+	reporter := i.reporter.WithValue("name", check.Name)
+
 	//
 	// Capture critical unsupported attributes and fail
 
 	// "type": "metric"
 	if val, ok := cfg["type"].(string); ok && val == "metric" {
-		i.reporter.Error("metric checks have not been implemented at this time")
+		reporter.Error("metric checks have not been implemented at this time")
 	}
 
 	// "extension": true
 	if val, ok := cfg["extension"].(bool); ok && val {
-		i.reporter.Error("extension are not yet supported at this time")
+		reporter.Error("extension are not yet supported at this time")
 	}
 
 	// "standalone": true
 	if val, ok := cfg["standalone"].(bool); ok && val {
-		i.reporter.Error("standalone are not supported at this time")
+		reporter.Error("standalone are not supported at this time")
 	}
 
 	// "publish": false
 	if val, ok := cfg["publish"].(bool); ok && val {
-		i.reporter.Error("unpublished checks are not supported at this time")
+		reporter.Error("unpublished checks are not supported at this time")
 	}
 
 	// "cron": "0 0 0 X X X"
 	if _, ok := cfg["cron"]; ok {
-		i.reporter.Error(unsupportedAttr("checks", "cron"))
+		reporter.Error(unsupportedAttr("checks", "cron"))
 	}
 
 	// "auto_resolve": false
 	if val, ok := cfg["auto_resolve"].(bool); ok && !val {
-		i.reporter.Error(unsupportedAttr("checks", "auto_resolve"))
+		reporter.Error(unsupportedAttr("checks", "auto_resolve"))
 	}
 
 	// "force_resolve": true|false
 	if _, ok := cfg["force_resolve"]; ok {
-		i.reporter.Error(unsupportedAttr("checks", "force_resolve"))
+		reporter.Error(unsupportedAttr("checks", "force_resolve"))
 	}
 
 	// "handle": false
 	if val, ok := cfg["handle"].(bool); ok && !val {
-		i.reporter.Error("unhandled checks are not supported at this time")
+		reporter.Error("unhandled checks are not supported at this time")
 	}
 
 	// "source": string
 	if _, ok := cfg["source"]; ok {
-		i.reporter.Error(unsupportedAttr("checks", "source"))
+		reporter.Error(unsupportedAttr("checks", "source"))
 	}
 
 	// "subdue": map
 	if _, ok := cfg["subdue"]; ok {
-		i.reporter.Error(unsupportedAttr("checks", "subdue"))
+		reporter.Error(unsupportedAttr("checks", "subdue"))
 	}
 
 	// "contact": string
 	if _, ok := cfg["contact"]; ok {
-		i.reporter.Error(unsupportedAttr("checks", "contact"))
+		reporter.Error(unsupportedAttr("checks", "contact"))
 	}
 
 	// "contacts": []string
 	if _, ok := cfg["contacts"]; ok {
-		i.reporter.Error(unsupportedAttr("checks", "contacts"))
+		reporter.Error(unsupportedAttr("checks", "contacts"))
 	}
 
 	// "proxy_requests": map
 	if _, ok := cfg["proxy_requests"]; ok {
-		i.reporter.Error(unsupportedAttr("checks", "proxy_requests"))
+		reporter.Error(unsupportedAttr("checks", "proxy_requests"))
 	}
 
 	//
@@ -368,32 +380,32 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 
 	// "ttl": int
 	if _, ok := cfg["ttl"]; ok {
-		i.reporter.Warn(unsupportedAttr("checks", "ttl"))
+		reporter.Warn(unsupportedAttr("checks", "ttl"))
 	}
 
 	// "timeout": int
 	if _, ok := cfg["timeout"]; ok {
-		i.reporter.Warn(unsupportedAttr("checks", "timeout"))
+		reporter.Warn(unsupportedAttr("checks", "timeout"))
 	}
 
 	// "low_flap_threshold": float
 	if _, ok := cfg["low_flap_threshold"]; ok {
-		i.reporter.Warn(unsupportedAttr("checks", "low_flap_threshold"))
+		reporter.Warn(unsupportedAttr("checks", "low_flap_threshold"))
 	}
 
 	// "high_flap_threshold": float
 	if _, ok := cfg["high_flap_threshold"]; ok {
-		i.reporter.Warn(unsupportedAttr("checks", "high_flap_threshold"))
+		reporter.Warn(unsupportedAttr("checks", "high_flap_threshold"))
 	}
 
 	// "aggregate": string
 	if _, ok := cfg["aggregate"]; ok {
-		i.reporter.Warn(unsupportedAttr("checks", "aggregate"))
+		reporter.Warn(unsupportedAttr("checks", "aggregate"))
 	}
 
 	// "aggregates": []string
 	if _, ok := cfg["aggregate"]; ok {
-		i.reporter.Warn(unsupportedAttr("checks", "aggregate"))
+		reporter.Warn(unsupportedAttr("checks", "aggregate"))
 	}
 
 	//
@@ -429,7 +441,7 @@ type LegacyFilterImporter struct {
 	Org string
 	Env string
 
-	reporter *Reporter
+	reporter *report.Writer
 }
 
 // Name of the importer
@@ -438,8 +450,9 @@ func (i *LegacyFilterImporter) Name() string {
 }
 
 // SetReporter ...
-func (i *LegacyFilterImporter) SetReporter(r *Reporter) {
-	i.reporter = r
+func (i *LegacyFilterImporter) SetReporter(r *report.Writer) {
+	reporter := r.WithValue("compontent", i.Name())
+	i.reporter = &reporter
 }
 
 // Import given data
@@ -508,7 +521,7 @@ type LegacyHandlerImporter struct {
 	Env      string
 	SaveFunc func(*types.Handler) error
 
-	reporter *Reporter
+	reporter *report.Writer
 	handlers []*types.Handler
 }
 
@@ -518,8 +531,9 @@ func (i *LegacyHandlerImporter) Name() string {
 }
 
 // SetReporter ...
-func (i *LegacyHandlerImporter) SetReporter(r *Reporter) {
-	i.reporter = r
+func (i *LegacyHandlerImporter) SetReporter(r *report.Writer) {
+	reporter := r.WithValue("compontent", i.Name())
+	i.reporter = &reporter
 }
 
 // Import given data
@@ -556,11 +570,14 @@ func (i *LegacyHandlerImporter) Validate() error {
 func (i *LegacyHandlerImporter) Save() (int, error) {
 	for _, handler := range i.handlers {
 		if err := i.SaveFunc(handler); err != nil {
-			i.reporter.Fatalf(
-				"unable to persist handler '%s' w/ error '%s'",
-				handler.Name,
-				err,
-			)
+			i.reporter.
+				WithValue("name", handler.Name).
+				WithValue("error", err).
+				Fatalf(
+					"unable to persist handler '%s' w/ error '%s'",
+					handler.Name,
+					err,
+				)
 		} else {
 			i.reporter.Debugf("handler '%s' imported", handler.Name)
 		}
@@ -627,27 +644,29 @@ func (i *LegacyHandlerImporter) newHandler(name string) types.Handler {
 //   - `handlers`
 //
 func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]interface{}) {
+	reporter := i.reporter.WithValue("name", handler.Name)
+
 	//
 	// Capture critical unsupported attributes and fail
 
 	// "filter": "..."
 	if _, ok := cfg["filter"]; ok {
-		i.reporter.Error(unsupportedAttr("handlers", "filter"))
+		reporter.Error(unsupportedAttr("handlers", "filter"))
 	}
 
 	// "filters": ["...", "..."],
 	if _, ok := cfg["filters"]; ok {
-		i.reporter.Error(unsupportedAttr("handlers", "filters"))
+		reporter.Error(unsupportedAttr("handlers", "filters"))
 	}
 
 	// "severities": ["...", "..."],
 	if _, ok := cfg["severities"]; ok {
-		i.reporter.Error(unsupportedAttr("handlers", "severities"))
+		reporter.Error(unsupportedAttr("handlers", "severities"))
 	}
 
 	// "pipe": {}
 	if _, ok := cfg["pipe"]; ok {
-		i.reporter.Error(unsupportedAttr("handlers", "pipe"))
+		reporter.Error(unsupportedAttr("handlers", "pipe"))
 	}
 
 	//
@@ -655,21 +674,21 @@ func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]
 
 	// "type": string
 	if val, ok := cfg["type"].(string); ok && val == "set" {
-		i.reporter.Info("handler sets will not work at this time")
+		reporter.Info("handler sets will not work at this time")
 	} else if val, ok := cfg["type"].(string); ok && (val == "udp" || val == "tcp") {
-		i.reporter.Info("socket handlers will not work at this time")
+		reporter.Info("socket handlers will not work at this time")
 	} else if val, ok := cfg["type"].(string); ok && val == "transport" {
-		i.reporter.Info("transport handlers will not work at this time")
+		reporter.Info("transport handlers will not work at this time")
 	}
 
 	// "handle_silenced": bool
 	if _, ok := cfg["handle_silenced"]; ok {
-		i.reporter.Warn(unsupportedAttr("handlers", "handle_silenced"))
+		reporter.Warn(unsupportedAttr("handlers", "handle_silenced"))
 	}
 
 	// "handle_flapped": bool
 	if _, ok := cfg["handle_flapped"]; ok {
-		i.reporter.Warn(unsupportedAttr("handlers", "handle_flapped"))
+		reporter.Warn(unsupportedAttr("handlers", "handle_flapped"))
 	}
 
 	//
@@ -699,7 +718,7 @@ func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]
 			Port: int(val["port"].(float64)),
 		}
 	} else if _, ok := cfg["socket"]; ok {
-		i.reporter.Error("handler's 'socket' attribute does not appear to be a JSON object")
+		reporter.Error("handler's 'socket' attribute does not appear to be a JSON object")
 	}
 
 	if val, ok := cfg["handlers"].([]string); ok {
@@ -717,7 +736,7 @@ type LegacyEntityImporter struct {
 	Env      string
 	SaveFunc func(*types.Entity) error
 
-	reporter *Reporter
+	reporter *report.Writer
 	entities []*types.Entity
 }
 
@@ -727,8 +746,9 @@ func (i *LegacyEntityImporter) Name() string {
 }
 
 // SetReporter ...
-func (i *LegacyEntityImporter) SetReporter(r *Reporter) {
-	i.reporter = r
+func (i *LegacyEntityImporter) SetReporter(r *report.Writer) {
+	reporter := r.WithValue("compontent", i.Name())
+	i.reporter = &reporter
 }
 
 // Import given data
@@ -810,7 +830,7 @@ type LegacyExtensionImporter struct {
 	Org string
 	Env string
 
-	reporter *Reporter
+	reporter *report.Writer
 }
 
 // Name of the importer
@@ -819,8 +839,9 @@ func (i *LegacyExtensionImporter) Name() string {
 }
 
 // SetReporter ...
-func (i *LegacyExtensionImporter) SetReporter(r *Reporter) {
-	i.reporter = r
+func (i *LegacyExtensionImporter) SetReporter(r *report.Writer) {
+	reporter := r.WithValue("compontent", i.Name())
+	i.reporter = &reporter
 }
 
 // Import given data
@@ -914,7 +935,7 @@ type UnsupportedLegacyResource struct {
 	ResourceName string
 	Message      string
 
-	reporter *Reporter
+	reporter *report.Writer
 }
 
 // Name of the importer
@@ -923,8 +944,9 @@ func (i *UnsupportedLegacyResource) Name() string {
 }
 
 // SetReporter ...
-func (i *UnsupportedLegacyResource) SetReporter(r *Reporter) {
-	i.reporter = r
+func (i *UnsupportedLegacyResource) SetReporter(r *report.Writer) {
+	reporter := r.WithValue("compontent", i.Name())
+	i.reporter = &reporter
 }
 
 // Import given data

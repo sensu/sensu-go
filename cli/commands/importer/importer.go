@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/sensu/sensu-go/cli/elements/report"
 )
 
 type resourceImporter interface {
@@ -12,7 +13,7 @@ type resourceImporter interface {
 	Import(map[string]interface{}) error
 	Validate() error
 	Save() (int, error)
-	SetReporter(*Reporter)
+	SetReporter(*report.Writer)
 }
 
 // Importer takes collection of resource importers passes data up when run
@@ -21,55 +22,59 @@ type Importer struct {
 	Debug      bool
 
 	importers []resourceImporter
-	reporter  Reporter
+	report    report.Report
 }
 
 // NewImporter ...
 func NewImporter(s ...resourceImporter) *Importer {
-	importer := Importer{importers: s}
+	report := report.New()
+	report.Out = os.Stdout
+	report.LogLevel = logrus.InfoLevel
 
-	importer.reporter.LogLevel = logrus.InfoLevel
-	importer.reporter.Out = os.Stderr
-
+	importer := Importer{
+		importers: s,
+		report:    report,
+	}
 	return &importer
 }
 
 // Run ...
 func (i *Importer) Run(d map[string]interface{}) error {
-	defer i.reporter.Flush()
+	defer i.report.Flush()
 
 	if i.Debug {
-		i.reporter.LogLevel = logrus.DebugLevel
+		i.report.LogLevel = logrus.DebugLevel
 	}
 
+	reporter := report.NewWriter(&i.report)
 	for _, r := range i.importers {
-		r.SetReporter(&i.reporter)
+		r.SetReporter(&reporter)
 	}
 
-	// Instantiate resources for each given entry
+	reporter.Debug("instantiating resources for given entries")
 	for _, r := range i.importers {
 		r.Import(d)
 	}
 
-	// Validate all resources
+	reporter.Debug("validating given resources")
 	for _, r := range i.importers {
 		r.Validate()
 	}
 
 	// Guard against saving resources with errors
-	if i.reporter.hasErrors() {
+	if i.report.HasErrors() {
 		// TODO: Print how many errors / warnings?
 		return errors.New("unable to continue due errors")
 	}
 
-	if !i.AllowWarns && i.reporter.hasWarnings() {
+	if !i.AllowWarns && i.report.HasWarnings() {
 		return errors.New("please correct any warnings before continuing or use '--force' flag")
 	}
 
 	// Save all pending resources
 	for _, r := range i.importers {
 		if n, err := r.Save(); n > 0 && err == nil {
-			i.reporter.Infof("all '%s' imported", r.Name())
+			reporter.Infof("all '%s' resources imported", r.Name())
 		}
 	}
 
