@@ -23,7 +23,7 @@ func validateEvent(a *Agent, event *types.Event) error {
 	} else {
 		// Make sure the entity has all required attributes
 		if event.Entity.Class == "" {
-			event.Entity.Class = "proxy-client"
+			event.Entity.Class = "proxy"
 		}
 
 		if event.Entity.Organization == "" {
