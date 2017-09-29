@@ -1,0 +1,34 @@
+{
+  "checks": {
+    "meowmix": {
+      "type": "check",
+      "command": "...",
+      "interval": 30,
+      "ttl":300
+    },
+    "is-google-still-up": {
+      "command": "ping -c 25 google.com",
+      "interval": 30,
+      "handler": "slack"
+    }
+  },
+  "handlers": {
+    "slack": {
+      "type": "pipe",
+      "command": "tools/slack"
+    }
+  },
+  "mutators": {
+    "tag": {
+      "command": "./spec/mutators/tag.rb"
+    },
+    "explode": {
+      "command": "echo -n exploded && exit 2"
+    }
+  },
+  "transport": {},
+  "transport": {},
+  "sensu": {},
+  "api": {},
+  "client": { "name": "test" }
+}
