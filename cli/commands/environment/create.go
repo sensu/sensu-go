@@ -19,7 +19,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
 			opts := envOpts{}
-			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
 				opts.administerQuestionnaire(false)
@@ -32,6 +31,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			env := types.Environment{}
 			opts.Copy(&env)
+
+			if opts.Org == "" {
+				opts.Org = cli.Config.Organization()
+			}
 
 			if err := env.Validate(); err != nil {
 				if !isInteractive {
@@ -60,6 +63,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("description", "", "", "Description of environment")
 	cmd.Flags().StringP("name", "", "", "Name of environment")
+	// TODO (Simon): We should be able to use --organization instead but
+	// the environment middleware verifies that the env exists in the given org,
+	// even if we are actually create this env
+	cmd.Flags().StringP("org", "", "", "Name of organization")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("name")
