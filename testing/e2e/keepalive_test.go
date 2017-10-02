@@ -1,9 +1,11 @@
 package e2e
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"path/filepath"
 	"testing"
 	"time"
@@ -103,4 +105,23 @@ func TestAgentKeepalives(t *testing.T) {
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
 	assert.Equal(t, checkName, event.Check.Config.Name)
 	// TODO(greg): ensure results are as expected.
+
+	// Test the agent HTTP API
+	newEvent := types.FixtureEvent(ap.AgentID, "proxy-check")
+	encoded, _ := json.Marshal(newEvent)
+	url := fmt.Sprintf("http://127.0.0.1:%d/events", ap.APIPort)
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(encoded))
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	assert.NoError(t, err)
+	defer res.Body.Close()
+
+	// Give it a second to receive the new event
+	time.Sleep(5 * time.Second)
+
+	// Make sure the new event has been received
+	output, err = sensuctl.run("event", "info", ap.AgentID, "proxy-check")
+	assert.NoError(t, err, string(output))
+	assert.NotNil(t, output)
 }
