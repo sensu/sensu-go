@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/client/config/basic"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -54,72 +52,63 @@ func TestAgentKeepalives(t *testing.T) {
 	// Give it a second to make sure we've sent a keepalive.
 	time.Sleep(5 * time.Second)
 
-	// Create an authenticated HTTP Sensu client
-	clientConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-	}
-	sensuClient := client.New(clientConfig)
-	tokens, _ := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
-	clientConfig.Cluster.Tokens = tokens
+	// Initializes sensuctl
+	sensuctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	defer cleanup()
 
 	// Retrieve the entitites
-	entities, err := sensuClient.ListEntities("*")
+	output, err := sensuctl.run("entity", "list")
 	assert.NoError(t, err)
+
+	entities := []types.Entity{}
+	json.Unmarshal(output, &entities)
+
 	assert.Equal(t, 1, len(entities))
 	assert.Equal(t, "TestKeepalives", entities[0].ID)
 	assert.Equal(t, "agent", entities[0].Class)
 	assert.NotEmpty(t, entities[0].System.Hostname)
 	assert.NotZero(t, entities[0].LastSeen)
 
-	// Create a check
-	check := &types.CheckConfig{
-		Name:          "testcheck",
-		Command:       "echo output",
-		Interval:      1,
-		Subscriptions: []string{"test"},
-		Environment:   "default",
-		Organization:  "default",
-	}
-	err = sensuClient.CreateCheck(check)
-	assert.NoError(t, err)
-
-	// Retrieve the check
-	_, err = sensuClient.FetchCheck(check.Name)
-	assert.NoError(t, err)
-
 	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
 	falseAbsPath, err := filepath.Abs(falsePath)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, falseAbsPath)
 
-	check = &types.CheckConfig{
-		Name:          "testcheck2",
-		Command:       falseAbsPath,
-		Interval:      1,
-		Subscriptions: []string{"test"},
-		Environment:   "default",
-		Organization:  "default",
-	}
-	err = sensuClient.CreateCheck(check)
+	// Create a standard check
+	checkName := "test_check"
+	_, err = sensuctl.run("check", "create", checkName,
+		"--command", falseAbsPath,
+		"--interval", "1",
+		"--subscriptions", "test",
+	)
 	assert.NoError(t, err)
+
+	// Make sure the check has been properly created
+	output, err = sensuctl.run("check", "info", checkName)
+	assert.NoError(t, err)
+
+	result := types.CheckConfig{}
+	json.Unmarshal(output, &result)
+	assert.Equal(t, result.Name, checkName)
 
 	time.Sleep(30 * time.Second)
 
 	// At this point, we should have 21 failing status codes for testcheck2
-	event, err := sensuClient.FetchEvent(ap.AgentID, check.Name)
+	output, err = sensuctl.run("event", "info", ap.AgentID, checkName)
 	assert.NoError(t, err)
+
+	event := types.Event{}
+	json.Unmarshal(output, &event)
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
-	assert.Equal(t, "testcheck2", event.Check.Config.Name)
+	assert.Equal(t, checkName, event.Check.Config.Name)
 	// TODO(greg): ensure results are as expected.
 
 	// Test the agent HTTP API
-	event = types.FixtureEvent(ap.AgentID, "proxy-check")
-	encoded, _ := json.Marshal(event)
+	newEvent := types.FixtureEvent(ap.AgentID, "proxy-check")
+	encoded, _ := json.Marshal(newEvent)
 	url := fmt.Sprintf("http://127.0.0.1:%d/events", ap.APIPort)
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(encoded))
 
@@ -132,7 +121,7 @@ func TestAgentKeepalives(t *testing.T) {
 	time.Sleep(5 * time.Second)
 
 	// Make sure the new event has been received
-	result, err := sensuClient.FetchEvent(ap.AgentID, "proxy-check")
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
+	output, err = sensuctl.run("event", "info", ap.AgentID, "proxy-check")
+	assert.NoError(t, err, string(output))
+	assert.NotNil(t, output)
 }

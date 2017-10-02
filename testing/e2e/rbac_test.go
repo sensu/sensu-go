@@ -1,12 +1,13 @@
 package e2e
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/client/config/basic"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,19 +28,16 @@ func TestRBAC(t *testing.T) {
 	backendIsOnline := waitForBackend(backendHTTPURL)
 	assert.True(t, backendIsOnline)
 
-	// Create an authenticated client using the admin user
-	adminConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-	}
-	adminClient := client.New(adminConfig)
-	adminTokens, _ := adminClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
-	adminConfig.Cluster.Tokens = adminTokens
+	// Initializes sensuctl as admin
+	adminctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	defer cleanup()
 
 	// Make sure we are properly authenticated
-	users, err := adminClient.ListUsers()
+	output, err := adminctl.run("user", "list")
 	assert.NoError(t, err)
+
+	users := []types.User{}
+	json.Unmarshal(output, &users)
 	assert.NotZero(t, len(users))
 
 	// Create the following hierarchy for RBAC:
@@ -54,157 +52,230 @@ func TestRBAC(t *testing.T) {
 	//    -- prod (environment)
 	//        -- prod-check (check)
 	//        -- prod-handler (handler)
-	org := &types.Organization{Name: "acme"}
-	if err := adminClient.CreateOrganization(org); err != nil {
-		assert.Fail(t, err.Error())
-	}
-	env := &types.Environment{Name: "dev"}
-	if err := adminClient.CreateEnvironment("acme", env); err != nil {
-		assert.Fail(t, err.Error())
-	}
-	env = &types.Environment{Name: "prod"}
-	if err := adminClient.CreateEnvironment("acme", env); err != nil {
-		assert.Fail(t, err.Error())
-	}
+
+	output, err = adminctl.run("organization", "create", "acme")
+	assert.NoError(t, err, string(output))
+
+	output, err = adminctl.run("environment", "create", "dev",
+		"--org", "acme",
+	)
+	assert.NoError(t, err, string(output))
+
+	output, err = adminctl.run("environment", "create", "prod",
+		"--org", "acme",
+	)
+	assert.NoError(t, err, string(output))
 
 	defaultCheck := types.FixtureCheckConfig("default-check")
-	if err := adminClient.CreateCheck(defaultCheck); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("check", "create", defaultCheck.Name,
+		"--command", defaultCheck.Command,
+		"--interval", strconv.FormatUint(uint64(defaultCheck.Interval), 10),
+		"--runtime-assets", strings.Join(defaultCheck.RuntimeAssets, ","),
+		"--subscriptions", strings.Join(defaultCheck.Subscriptions, ","),
+		"--organization", defaultCheck.Organization,
+		"--environment", defaultCheck.Environment,
+	)
+	assert.NoError(t, err, string(output))
 
 	devCheck := types.FixtureCheckConfig("dev-check")
 	devCheck.Organization = "acme"
 	devCheck.Environment = "dev"
-	if err := adminClient.CreateCheck(devCheck); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("check", "create", devCheck.Name,
+		"--command", devCheck.Command,
+		"--interval", strconv.FormatUint(uint64(devCheck.Interval), 10),
+		"--runtime-assets", strings.Join(devCheck.RuntimeAssets, ","),
+		"--subscriptions", strings.Join(devCheck.Subscriptions, ","),
+		"--organization", devCheck.Organization,
+		"--environment", devCheck.Environment,
+	)
+	assert.NoError(t, err, string(output))
 
 	prodCheck := types.FixtureCheckConfig("prod-check")
 	prodCheck.Organization = "acme"
 	prodCheck.Environment = "prod"
-	if err := adminClient.CreateCheck(prodCheck); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("check", "create", prodCheck.Name,
+		"--command", prodCheck.Command,
+		"--interval", strconv.FormatUint(uint64(prodCheck.Interval), 10),
+		"--runtime-assets", strings.Join(prodCheck.RuntimeAssets, ","),
+		"--subscriptions", strings.Join(prodCheck.Subscriptions, ","),
+		"--organization", prodCheck.Organization,
+		"--environment", prodCheck.Environment,
+	)
+	assert.NoError(t, err, string(output))
 
 	defaultHandler := types.FixtureHandler("default-handler")
-	if err := adminClient.CreateHandler(defaultHandler); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("handler", "create", defaultHandler.Name,
+		"--type", defaultHandler.Type,
+		"--mutator", defaultHandler.Mutator,
+		"--command", defaultHandler.Command,
+		"--timeout", strconv.Itoa(defaultHandler.Timeout),
+		"--socket-host", defaultHandler.Socket.Host,
+		"--socket-port", strconv.Itoa(defaultHandler.Socket.Port),
+		"--handlers", strings.Join(defaultHandler.Handlers, ","),
+		"--organization", defaultHandler.Organization,
+		"--environment", defaultHandler.Environment,
+	)
+	assert.NoError(t, err, string(output))
 
 	devHandler := types.FixtureHandler("dev-handler")
 	devHandler.Organization = "acme"
 	devHandler.Environment = "dev"
-	if err := adminClient.CreateHandler(devHandler); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("handler", "create", devHandler.Name,
+		"--type", devHandler.Type,
+		"--mutator", devHandler.Mutator,
+		"--command", devHandler.Command,
+		"--timeout", strconv.Itoa(devHandler.Timeout),
+		"--socket-host", devHandler.Socket.Host,
+		"--socket-port", strconv.Itoa(devHandler.Socket.Port),
+		"--handlers", strings.Join(devHandler.Handlers, ","),
+		"--organization", devHandler.Organization,
+		"--environment", devHandler.Environment,
+	)
+	assert.NoError(t, err, string(output))
 
 	prodHandler := types.FixtureHandler("prod-handler")
 	prodHandler.Organization = "acme"
 	prodHandler.Environment = "prod"
-	if err := adminClient.CreateHandler(prodHandler); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	_, err = adminctl.run("handler", "create", prodHandler.Name,
+		"--type", prodHandler.Type,
+		"--mutator", prodHandler.Mutator,
+		"--command", prodHandler.Command,
+		"--timeout", strconv.Itoa(prodHandler.Timeout),
+		"--socket-host", prodHandler.Socket.Host,
+		"--socket-port", strconv.Itoa(prodHandler.Socket.Port),
+		"--handlers", strings.Join(prodHandler.Handlers, ","),
+		"--organization", prodHandler.Organization,
+		"--environment", prodHandler.Environment,
+	)
+	assert.NoError(t, err, string(output))
 
 	// Create roles for every environment
 	defaultRole := types.FixtureRole("default", "default", "default")
-	if err := adminClient.CreateRole(defaultRole); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("role", "create", defaultRole.Name)
+	assert.NoError(t, err, string(output))
+	output, err = adminctl.run("role", "add-rule", defaultRole.Name,
+		"--type", defaultRole.Rules[0].Type,
+		"--organization", defaultRole.Rules[0].Organization,
+		"--environment", defaultRole.Rules[0].Environment,
+		"-crud",
+	)
+	assert.NoError(t, err, string(output))
+
 	devRole := types.FixtureRole("dev", "acme", "dev")
-	if err := adminClient.CreateRole(devRole); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("role", "create", devRole.Name)
+	assert.NoError(t, err, string(output))
+	output, err = adminctl.run("role", "add-rule", devRole.Name,
+		"--type", devRole.Rules[0].Type,
+		"--organization", devRole.Rules[0].Organization,
+		"--environment", devRole.Rules[0].Environment,
+		"-crud",
+	)
+	assert.NoError(t, err, string(output))
+
 	prodRole := types.FixtureRole("prod", "acme", "prod")
-	if err := adminClient.CreateRole(prodRole); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("role", "create", prodRole.Name)
+	assert.NoError(t, err, string(output))
+	output, err = adminctl.run("role", "add-rule", prodRole.Name,
+		"--type", prodRole.Rules[0].Type,
+		"--organization", prodRole.Rules[0].Organization,
+		"--environment", prodRole.Rules[0].Environment,
+		"-crud",
+	)
+	assert.NoError(t, err, string(output))
 
 	// Create users for every environment
 	defaultUser := types.FixtureUser("default")
 	defaultUser.Roles = []string{defaultRole.Name}
-	if err := adminClient.CreateUser(defaultUser); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("user", "create", defaultUser.Username,
+		"--password", defaultUser.Password,
+		"--roles", strings.Join(defaultUser.Roles, ","),
+	)
+	assert.NoError(t, err, string(output))
+
 	devUser := types.FixtureUser("dev")
 	devUser.Roles = []string{devRole.Name}
-	if err := adminClient.CreateUser(devUser); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("user", "create", devUser.Username,
+		"--password", devUser.Password,
+		"--roles", strings.Join(devUser.Roles, ","),
+	)
+	assert.NoError(t, err, string(output))
+
 	prodUser := types.FixtureUser("prod")
 	prodUser.Roles = []string{prodRole.Name}
-	if err := adminClient.CreateUser(prodUser); err != nil {
-		assert.Fail(t, err.Error())
-	}
+	output, err = adminctl.run("user", "create", prodUser.Username,
+		"--password", prodUser.Password,
+		"--roles", strings.Join(prodUser.Roles, ","),
+	)
+	assert.NoError(t, err, string(output))
 
 	// Create a Sensu client for every environment
-	// TODO: Simplify the client creation!
-	defaultConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-	}
-	defaultClient := client.New(defaultConfig)
-	defaultTokens, _ := defaultClient.CreateAccessToken(backendHTTPURL, "default", "P@ssw0rd!")
-	defaultConfig.Cluster.Tokens = defaultTokens
+	defaultctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "default", "P@ssw0rd!")
+	defer cleanup()
 
-	devConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-		Profile: basic.Profile{
-			Environment:  "dev",
-			Organization: "acme",
-		},
-	}
-	devClient := client.New(devConfig)
-	devTokens, _ := devClient.CreateAccessToken(backendHTTPURL, "dev", "P@ssw0rd!")
-	devConfig.Cluster.Tokens = devTokens
+	devctl, cleanup := newSensuCtl(backendHTTPURL, "acme", "dev", "dev", "P@ssw0rd!")
+	defer cleanup()
 
-	prodConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-		Profile: basic.Profile{
-			Environment:  "prod",
-			Organization: "acme",
-		},
-	}
-	prodClient := client.New(prodConfig)
-	prodTokens, _ := prodClient.CreateAccessToken(backendHTTPURL, "prod", "P@ssw0rd!")
-	prodConfig.Cluster.Tokens = prodTokens
+	prodctl, cleanup := newSensuCtl(backendHTTPURL, "acme", "prod", "prod", "P@ssw0rd!")
+	defer cleanup()
 
 	// Make sure each of these clients only has access to objects within its role
-	checks, err := defaultClient.ListChecks("acme")
-	assert.NoError(t, err)
+	checks := []types.CheckConfig{}
+	output, err = defaultctl.run("check", "list")
+	assert.NoError(t, err, string(output))
+	json.Unmarshal(output, &checks)
 	assert.Equal(t, &checks[0], defaultCheck)
 
-	checks, err = devClient.ListChecks("acme")
-	assert.NoError(t, err)
+	checks = []types.CheckConfig{}
+	output, err = devctl.run("check", "list")
+	assert.NoError(t, err, string(output))
+	json.Unmarshal(output, &checks)
+	fmt.Printf("%+v\n", checks)
 	assert.Equal(t, &checks[0], devCheck)
 
-	checks, err = prodClient.ListChecks("acme")
-	assert.NoError(t, err)
+	checks = []types.CheckConfig{}
+	output, err = prodctl.run("check", "list")
+	assert.NoError(t, err, string(output))
+	json.Unmarshal(output, &checks)
 	assert.Equal(t, &checks[0], prodCheck)
 
 	// Make sure a client can't create objects outside of its role
-	if err := devClient.CreateCheck(defaultCheck); err == nil {
-		assert.Fail(t, "devClient should not be able to create into the default org")
-	}
+	output, err = devctl.run("check", "create", defaultCheck.Name,
+		"--command", defaultCheck.Command,
+		"--interval", strconv.FormatUint(uint64(defaultCheck.Interval), 10),
+		"--runtime-assets", strings.Join(defaultCheck.RuntimeAssets, ","),
+		"--subscriptions", strings.Join(defaultCheck.Subscriptions, ","),
+		"--organization", defaultCheck.Organization,
+		"--environment", defaultCheck.Environment,
+	)
+	assert.Error(t, err, string(output))
 
-	if err := devClient.CreateCheck(prodCheck); err == nil {
-		assert.Fail(t, "devClient should not be able to create into the prod env")
-	}
+	output, err = devctl.run("check", "create", prodCheck.Name,
+		"--command", prodCheck.Command,
+		"--interval", strconv.FormatUint(uint64(prodCheck.Interval), 10),
+		"--runtime-assets", strings.Join(prodCheck.RuntimeAssets, ","),
+		"--subscriptions", strings.Join(prodCheck.Subscriptions, ","),
+		"--organization", prodCheck.Organization,
+		"--environment", prodCheck.Environment,
+	)
+	assert.Error(t, err, string(output))
+
+	// Make sure a client can delete objects within its role
+	output, err = devctl.run("check", "delete", devCheck.Name,
+		"--organization", devCheck.Organization,
+		"--environment", devCheck.Environment,
+		"--skip-confirm",
+	)
+	assert.NoError(t, err, string(output))
 
 	// Make sure a client can't delete objects outside of its role
-	if err := devClient.DeleteCheck(prodCheck); err == nil {
-		assert.Fail(t, "devClient should not be able to delete into the prod env")
-	}
+	output, err = devctl.run("check", "delete", prodCheck.Name,
+		"--organization", prodCheck.Organization,
+		"--environment", prodCheck.Environment,
+		"--skip-confirm",
+	)
+	assert.Error(t, err, string(output))
 
 	// Make sure a client can't read objects outside of its role
-	// TODO (Simon): We should be able to override the env without saving it
-	devConfig.SaveEnvironment("prod")
-	if _, err := devClient.FetchCheck(prodCheck.Name); err == nil {
-		assert.Fail(t, "devClient should not be able to read into the prod env")
-	}
-	devConfig.SaveEnvironment("dev")
+	_, err = devctl.run("check", "info", prodCheck.Name)
+	assert.Error(t, err)
 }
