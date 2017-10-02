@@ -3,7 +3,6 @@ package schedulerd
 import (
 	"crypto/md5"
 	"encoding/binary"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -55,10 +54,7 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 
 				// The check has been deleted
 				if check == nil {
-					s.logger.Infof(
-						"check '%s' no longer in state",
-						fmt.Sprintf("%s/%s/%s", s.CheckOrg, s.CheckEnv, s.CheckName),
-					)
+					s.logger.Info("check is no longer in state")
 					return
 				}
 
