@@ -402,17 +402,18 @@ func (a *Agent) Run() error {
 		}
 	}(wg)
 
-	// Start the API
-	go func() {
-		a.api = newServer(a)
-		logger.Info("starting api on address: ", a.api.Addr)
+	// Prepare the HTTP API server
+	a.api = newServer(a)
+	logger.Info("starting api on address: ", a.api.Addr)
 
+	// Start the HTTP API server
+	go func() {
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
 			logger.Fatal(err)
 		}
 	}()
 
-	// Gracefully shutdown the API when the agent stops
+	// Gracefully shutdown the HTTP API server when the agent stops
 	go func() {
 		<-a.stopping
 		logger.Info("api shutting down")
