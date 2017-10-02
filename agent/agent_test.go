@@ -36,6 +36,7 @@ func TestSendLoop(t *testing.T) {
 		msg, err := conn.Receive()
 
 		assert.NoError(t, err)
+		assert.NotNil(t, msg)
 		assert.Equal(t, "keepalive", msg.Type)
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
@@ -180,6 +181,7 @@ func TestReceiveLoopTCP(t *testing.T) {
 		msg, err := conn.Receive() // our message
 
 		assert.NoError(t, err)
+		assert.NotNil(t, msg)
 		assert.Equal(t, "event", msg.Type)
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
@@ -232,6 +234,7 @@ func TestReceiveLoopCheckTCP(t *testing.T) {
 		msg, err := conn.Receive() // our message
 
 		assert.NoError(t, err)
+		assert.NotNil(t, msg)
 		assert.Equal(t, "event", msg.Type)
 		event := &types.Event{}
 		check := &types.Check{Status: 1}
@@ -286,6 +289,7 @@ func TestReceiveLoopUDP(t *testing.T) {
 		msg, err := conn.Receive() // our message
 
 		assert.NoError(t, err)
+		assert.NotNil(t, msg)
 		assert.Equal(t, "event", msg.Type)
 
 		event := &types.Event{}
@@ -392,9 +396,6 @@ func TestReceiveLoopMultiWriteTCP(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, msg)
-		if msg.Type == "" {
-			assert.Equal(t, "testing", msg)
-		}
 		assert.Equal(t, "event", msg.Type)
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
