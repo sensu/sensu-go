@@ -1,14 +1,15 @@
 package e2e
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/client/config/basic"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,15 +50,9 @@ func TestEventHandler(t *testing.T) {
 	// Give it a second to make sure we've sent a keepalive.
 	time.Sleep(5 * time.Second)
 
-	// Create an authenticated HTTP Sensu client
-	clientConfig := &basic.Config{
-		Cluster: basic.Cluster{
-			APIUrl: backendHTTPURL,
-		},
-	}
-	sensuClient := client.New(clientConfig)
-	tokens, _ := sensuClient.CreateAccessToken(backendHTTPURL, "admin", "P@ssw0rd!")
-	clientConfig.Cluster.Tokens = tokens
+	// Initializes sensuctl
+	sensuctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	defer cleanup()
 
 	handlerJSONFile := fmt.Sprintf("%s/TestEventHandler%v", os.TempDir(), os.Getpid())
 
@@ -69,8 +64,13 @@ func TestEventHandler(t *testing.T) {
 		Environment:  "default",
 		Organization: "default",
 	}
-	err = sensuClient.CreateHandler(handler)
-	assert.NoError(t, err)
+	output, err := sensuctl.run("handler", "create", handler.Name,
+		"--type", handler.Type,
+		"--command", handler.Command,
+		"--organization", handler.Organization,
+		"--environment", handler.Environment,
+	)
+	assert.NoError(t, err, string(output))
 
 	// Create a check
 	check := &types.CheckConfig{
@@ -82,14 +82,25 @@ func TestEventHandler(t *testing.T) {
 		Environment:   "default",
 		Organization:  "default",
 	}
-	err = sensuClient.CreateCheck(check)
-	assert.NoError(t, err)
+	output, err = sensuctl.run("check", "create", check.Name,
+		"--command", check.Command,
+		"--interval", strconv.FormatUint(uint64(check.Interval), 10),
+		"--subscriptions", strings.Join(check.Subscriptions, ","),
+		"--handlers", strings.Join(check.Handlers, ","),
+		"--organization", check.Organization,
+		"--environment", check.Environment,
+		"--publish",
+	)
+	assert.NoError(t, err, string(output))
 
 	time.Sleep(10 * time.Second)
 
 	// There should be a stored event
-	event, err := sensuClient.FetchEvent(ap.AgentID, check.Name)
-	assert.NoError(t, err)
+	output, err = sensuctl.run("event", "info", ap.AgentID, check.Name)
+	assert.NoError(t, err, string(output))
+
+	event := types.Event{}
+	json.Unmarshal(output, &event)
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)

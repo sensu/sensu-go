@@ -74,6 +74,7 @@ func TestRBAC(t *testing.T) {
 		"--subscriptions", strings.Join(defaultCheck.Subscriptions, ","),
 		"--organization", defaultCheck.Organization,
 		"--environment", defaultCheck.Environment,
+		"--publish",
 	)
 	assert.NoError(t, err, string(output))
 
@@ -87,6 +88,7 @@ func TestRBAC(t *testing.T) {
 		"--subscriptions", strings.Join(devCheck.Subscriptions, ","),
 		"--organization", devCheck.Organization,
 		"--environment", devCheck.Environment,
+		"--publish",
 	)
 	assert.NoError(t, err, string(output))
 
@@ -100,6 +102,7 @@ func TestRBAC(t *testing.T) {
 		"--subscriptions", strings.Join(prodCheck.Subscriptions, ","),
 		"--organization", prodCheck.Organization,
 		"--environment", prodCheck.Environment,
+		"--publish",
 	)
 	assert.NoError(t, err, string(output))
 
@@ -223,20 +226,20 @@ func TestRBAC(t *testing.T) {
 	output, err = defaultctl.run("check", "list")
 	assert.NoError(t, err, string(output))
 	json.Unmarshal(output, &checks)
-	assert.Equal(t, &checks[0], defaultCheck)
+	assert.Equal(t, defaultCheck, &checks[0])
 
 	checks = []types.CheckConfig{}
 	output, err = devctl.run("check", "list")
 	assert.NoError(t, err, string(output))
 	json.Unmarshal(output, &checks)
 	fmt.Printf("%+v\n", checks)
-	assert.Equal(t, &checks[0], devCheck)
+	assert.Equal(t, devCheck, &checks[0])
 
 	checks = []types.CheckConfig{}
 	output, err = prodctl.run("check", "list")
 	assert.NoError(t, err, string(output))
 	json.Unmarshal(output, &checks)
-	assert.Equal(t, &checks[0], prodCheck)
+	assert.Equal(t, prodCheck, &checks[0])
 
 	// Make sure a client can't create objects outside of its role
 	output, err = devctl.run("check", "create", defaultCheck.Name,

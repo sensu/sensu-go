@@ -74,6 +74,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
+	cmd.Flags().BoolP("publish", "p", true, "publish check requests")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("command")

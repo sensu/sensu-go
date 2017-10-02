@@ -70,6 +70,9 @@ type CheckConfig struct {
 
 	// Organization indicates to which org a check belongs to
 	Organization string `json:"organization"`
+
+	// Publish indicates if check requests are published for the check
+	Publish bool `json:"publish"`
 }
 
 // Validate returns an error if the check does not pass validation tests.
@@ -185,6 +188,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		RuntimeAssets: []string{"ruby-2-4-2"},
 		Environment:   "default",
 		Organization:  "default",
+		Publish:       true,
 	}
 }
 

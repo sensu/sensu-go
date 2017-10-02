@@ -42,7 +42,9 @@ func TestAgentKeepalives(t *testing.T) {
 	}
 
 	err = ap.Start()
-	assert.NoError(t, err)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	defer func() {
 		bep.Kill()
@@ -80,6 +82,7 @@ func TestAgentKeepalives(t *testing.T) {
 		"--command", falseAbsPath,
 		"--interval", "1",
 		"--subscriptions", "test",
+		"--publish",
 	)
 	assert.NoError(t, err)
 
