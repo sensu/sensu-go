@@ -30,9 +30,11 @@ func Connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 
 	conn, resp, err := dialer.Dial(u.String(), requestHeader)
 	if err != nil {
-		fmt.Printf("Error is %s %s", err, resp.StatusCode)
-		if err == websocket.ErrBadHandshake {
-			return nil, fmt.Errorf("handshake failed with status %d", resp.StatusCode)
+		if resp != nil {
+			if err == websocket.ErrBadHandshake {
+				return nil, fmt.Errorf("handshake failed with status %d", resp.StatusCode)
+			}
+			return nil, fmt.Errorf("connection failed with status %d", resp.StatusCode)
 		}
 		return nil, err
 	}

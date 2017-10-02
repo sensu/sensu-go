@@ -5,6 +5,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -57,6 +58,8 @@ type Config struct {
 	Password string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
+	// API contains the HTTP API configuration
+	API *APIConfig
 }
 
 // NewConfig provides a new Config object initialized with defaults.
@@ -71,6 +74,10 @@ func NewConfig() *Config {
 		Organization:      "default",
 		User:              "agent",
 		Password:          "P@ssw0rd!",
+		API: &APIConfig{
+			Host: "127.0.0.1",
+			Port: 3031,
+		},
 	}
 
 	hostname, err := os.Hostname()
@@ -95,6 +102,7 @@ type Agent struct {
 	stopped         chan struct{}
 	entity          *types.Entity
 	assetManager    *assetmanager.Manager
+	api             *http.Server
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -187,15 +195,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
-	keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-
 	for {
-		select {
-		case <-keepaliveTicker.C:
-			a.sendKeepalive()
-		default:
-		}
-
 		select {
 		case msg := <-a.sendq:
 			err := conn.Send(msg)
@@ -210,11 +210,6 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
 			}
 		case <-a.stopping:
 			return
-		default:
-			if a.conn.Closed() {
-				return
-			}
-			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }
@@ -349,6 +344,19 @@ func (a *Agent) Run() error {
 		close(pumpsReturned)
 	}()
 
+	go func() {
+		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+		for {
+			select {
+			case <-keepaliveTicker.C:
+				a.sendKeepalive()
+			case <-a.stopping:
+				return
+			}
+
+		}
+	}()
+
 	go func(wg *sync.WaitGroup) {
 		retries := 0
 		ticker := time.NewTicker(100 * time.Millisecond)
@@ -393,6 +401,29 @@ func (a *Agent) Run() error {
 			}
 		}
 	}(wg)
+
+	// Start the API
+	go func() {
+		a.api = newServer(a)
+		logger.Info("starting api on address: ", a.api.Addr)
+
+		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
+			logger.Fatal(err)
+		}
+	}()
+
+	// Gracefully shutdown the API when the agent stops
+	go func() {
+		<-a.stopping
+		logger.Info("api shutting down")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		if err := a.api.Shutdown(ctx); err != nil {
+			logger.Fatal(err)
+		}
+	}()
 
 	return nil
 }

@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -76,11 +75,8 @@ func newBackendProcess() (*backendProcess, func()) {
 // Start starts a backend process as configured. All exported variables in
 // backendProcess must be configured.
 func (b *backendProcess) Start() error {
-	// path := strings.Split(os.Getenv("PATH"), filepath.ListSeparator)
-	// append([]string{bin_dir}, path...)
-	exe := filepath.Join(binDir, "sensu-backend")
 	cmd := exec.Command(
-		exe, "start",
+		backendPath, "start",
 		"-d", b.StateDir,
 		"--agent-host", b.AgentHost,
 		"--agent-port", strconv.FormatInt(int64(b.AgentPort), 10),
@@ -139,6 +135,7 @@ func (b *backendProcess) Kill() error {
 type agentProcess struct {
 	BackendURLs []string
 	AgentID     string
+	APIPort     int
 
 	Stdout io.Reader
 	Stderr io.Reader
@@ -147,15 +144,22 @@ type agentProcess struct {
 }
 
 func (a *agentProcess) Start() error {
-	exe := filepath.Join(binDir, "sensu-agent")
+	port := make([]int, 1)
+	err := testutil.RandomPorts(port)
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.APIPort = port[0]
+
 	cmd := exec.Command(
-		exe, "start",
+		agentPath, "start",
 		"--backend-url", a.BackendURLs[0],
 		"--backend-url", a.BackendURLs[1],
 		"--id", a.AgentID,
 		"--subscriptions", "test",
 		"--environment", "default",
 		"--organization", "default",
+		"--api-port", strconv.Itoa(port[0]),
 	)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -195,4 +199,45 @@ func (a *agentProcess) Kill() error {
 		return err
 	}
 	return a.cmd.Process.Release()
+}
+
+type sensuCtl struct {
+	ConfigDir string
+}
+
+// newSensuCtl initializes a sensuctl
+func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensuctl")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	ctl := &sensuCtl{
+		ConfigDir: tmpDir,
+	}
+
+	// Authenticate sensuctl
+	ctl.run("configure",
+		"--url", apiURL,
+		"--username", user,
+		"--password", pass,
+		"--format", "json",
+		"--organization", org,
+		"--environment", env,
+	)
+
+	return ctl, func() { os.RemoveAll(tmpDir) }
+}
+
+// run executes the sensuctl binary with the provided arguments
+func (s *sensuCtl) run(args ...string) ([]byte, error) {
+	// Make sure we point to our temporary config directory
+	args = append([]string{"--config-dir", s.ConfigDir}, args...)
+
+	out, err := exec.Command(sensuctlPath, args...).CombinedOutput()
+	if err != nil {
+		return out, err
+	}
+
+	return out, nil
 }

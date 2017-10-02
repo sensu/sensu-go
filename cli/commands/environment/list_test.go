@@ -25,7 +25,7 @@ func TestListCommand(t *testing.T) {
 		{storeResponse{
 			[]types.Environment{*types.FixtureEnvironment("one"), *types.FixtureEnvironment("two")},
 			nil,
-		}, "", "Description", false},
+		}, "none", "Description", false},
 		{storeResponse{
 			[]types.Environment{*types.FixtureEnvironment("one"), *types.FixtureEnvironment("two")},
 			nil,
@@ -36,9 +36,7 @@ func TestListCommand(t *testing.T) {
 		testName := fmt.Sprintf("list environments, test case #%d", i+1)
 		t.Run(testName, func(t *testing.T) {
 			cli := test.NewMockCLI()
-
-			config := cli.Config.(*client.MockConfig)
-			config.On("Format").Return(tc.format)
+			cli.Config.(*client.MockConfig).On("Format").Return(tc.format)
 
 			client := cli.Client.(*client.MockClient)
 			client.On(

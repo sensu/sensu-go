@@ -19,8 +19,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := newCheckOpts()
-			opts.Env = cli.Config.Environment()
-			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
 				opts.administerQuestionnaire(false)
@@ -29,6 +27,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				if len(args) > 0 {
 					opts.Name = args[0]
 				}
+			}
+
+			if opts.Org == "" {
+				opts.Org = cli.Config.Organization()
+			}
+
+			if opts.Env == "" {
+				opts.Env = cli.Config.Environment()
 			}
 
 			// Apply given arguments to check

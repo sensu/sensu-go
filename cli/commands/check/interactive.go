@@ -48,7 +48,10 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Interval, _ = flags.GetString("interval")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")
+	opts.Publish, _ = flags.GetBool("publish")
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
+	opts.Org, _ = flags.GetString("organization")
+	opts.Env, _ = flags.GetString("environment")
 }
 
 func (opts *checkOpts) administerQuestionnaire(editing bool) {

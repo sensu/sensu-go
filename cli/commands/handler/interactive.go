@@ -54,6 +54,8 @@ func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.SocketHost, _ = flags.GetString("socket-host")
 	opts.SocketPort, _ = flags.GetString("socket-port")
 	opts.Handlers, _ = flags.GetString("handlers")
+	opts.Org, _ = flags.GetString("organization")
+	opts.Env, _ = flags.GetString("environment")
 }
 
 func (opts *handlerOpts) administerQuestionnaire(editing bool) {

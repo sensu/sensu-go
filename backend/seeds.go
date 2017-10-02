@@ -57,11 +57,7 @@ func seedInitialData(store store.Store) error {
 	}
 
 	// Set initialized flag
-	if err := initializer.FlagAsInitialized(); err != nil {
-		return err
-	}
-
-	return nil
+	return initializer.FlagAsInitialized()
 }
 
 func setupAdminRole(store store.Store) error {

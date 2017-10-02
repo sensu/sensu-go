@@ -131,9 +131,5 @@ func validateInput(inputs *passwordPromptInput) error {
 	}
 
 	user := types.User{Password: inputs.New}
-	if err := user.ValidatePassword(); err != nil {
-		return err
-	}
-
-	return nil
+	return user.ValidatePassword()
 }

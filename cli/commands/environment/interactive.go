@@ -9,7 +9,7 @@ import (
 type envOpts struct {
 	Description string `survey:"description"`
 	Name        string `survey:"name"`
-	Org         string
+	Org         string `survey:"organization"`
 }
 
 func (opts *envOpts) withEnv(env *types.Environment) {
@@ -20,6 +20,7 @@ func (opts *envOpts) withEnv(env *types.Environment) {
 func (opts *envOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Description, _ = flags.GetString("description")
 	opts.Name, _ = flags.GetString("name")
+	opts.Org, _ = flags.GetString("org")
 }
 
 func (opts *envOpts) administerQuestionnaire(editing bool) {
@@ -30,16 +31,16 @@ func (opts *envOpts) administerQuestionnaire(editing bool) {
 			{
 				Name: "name",
 				Prompt: &survey.Input{
-					"Name:",
-					opts.Name,
+					Message: "Name:",
+					Default: opts.Name,
 				},
 				Validate: survey.Required,
 			},
 			{
 				Name: "org",
 				Prompt: &survey.Input{
-					"Organization:",
-					opts.Org,
+					Message: "Organization:",
+					Default: opts.Org,
 				},
 				Validate: survey.Required,
 			},
@@ -50,8 +51,8 @@ func (opts *envOpts) administerQuestionnaire(editing bool) {
 		{
 			Name: "description",
 			Prompt: &survey.Input{
-				"Description:",
-				opts.Description,
+				Message: "Description:",
+				Default: opts.Description,
 			},
 		},
 	}...)
