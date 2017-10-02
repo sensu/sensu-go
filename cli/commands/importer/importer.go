@@ -64,7 +64,7 @@ func (i *Importer) Run(d map[string]interface{}) error {
 	// Guard against saving resources with errors
 	if i.report.HasErrors() {
 		// TODO: Print how many errors / warnings?
-		return errors.New("unable to continue due errors")
+		return errors.New("unable to continue due to errors")
 	}
 
 	if !i.AllowWarns && i.report.HasWarnings() {
