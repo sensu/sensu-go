@@ -10,7 +10,8 @@ import (
 )
 
 // KeepaliveMonitor is a managed timer that is reset whenever the monitor
-// observes a Keepalive event via the Update() function.
+// observes a Keepalive event via the Update() function. Once the timer has
+// been stopped, it cannot be started or used again.
 type KeepaliveMonitor struct {
 	Entity       *types.Entity
 	Deregisterer Deregisterer
@@ -24,7 +25,13 @@ type KeepaliveMonitor struct {
 }
 
 // Start initializes the monitor and starts its monitoring goroutine.
+// If the monitor has been previously stopped, this method has no
+// effect.
 func (monitorPtr *KeepaliveMonitor) Start() {
+	if monitorPtr.IsStopped() {
+		return
+	}
+
 	timerDuration := time.Duration(monitorPtr.Entity.KeepaliveTimeout) * time.Second
 	monitorPtr.timer = time.NewTimer(timerDuration)
 	monitorPtr.reset = make(chan interface{})
@@ -40,15 +47,15 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 		)
 
 		for {
+			// Access to the timer has to be constrained to a single goroutine.
+			// Otherwise, we have an unavoidable race between reading from timer.C
+			// and calling timer.Reset(), so we signal a clean reset of the
+			// timer using the reset channel.
 			select {
 			case <-monitorPtr.reset:
 				if !timer.Stop() {
 					<-timer.C
 				}
-				if monitorPtr.IsStopped() {
-					return
-				}
-
 			case <-timer.C:
 				// timed out keepalive
 
@@ -91,13 +98,25 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 
 				atomic.CompareAndSwapInt32(&monitorPtr.failing, 0, 1)
 			}
+
+			if monitorPtr.IsStopped() {
+				return
+			}
+
 			timer.Reset(timerDuration)
 		}
 	}()
 }
 
-// Update causes the KeepaliveMonitor to observe the event.
+// Update causes the KeepaliveMonitor to observe the event. If the monitor has
+// been stopped, this method has no effect.
 func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
+	// once the monitor is stopped, we can't continue, because the
+	// reset channel will be closed.
+	if monitorPtr.IsStopped() {
+		return nil
+	}
+
 	entity := event.Entity
 
 	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
@@ -117,7 +136,8 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 	return monitorPtr.EventCreator.Pass(entity)
 }
 
-// Stop the KeepaliveMonitor
+// Stop the KeepaliveMonitor. Once the monitor has been stopped it
+// cannot be used any longer.
 func (monitorPtr *KeepaliveMonitor) Stop() {
 	// atomically set stopped so that once Stop is called, all future
 	// reads of stopped are true.
@@ -134,7 +154,12 @@ func (monitorPtr *KeepaliveMonitor) IsStopped() bool {
 }
 
 // Reset the monitor's timer to emit an event at a given time.
+// Once the monitor has been stopped, this has no effect.
 func (monitorPtr *KeepaliveMonitor) Reset(t int64) {
+	if monitorPtr.IsStopped() {
+		return
+	}
+
 	if monitorPtr.timer == nil {
 		monitorPtr.Start()
 	}
