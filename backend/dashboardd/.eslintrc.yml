@@ -1,0 +1,22 @@
+extends:
+  - react-app
+  - plugin:jsx-a11y/recommended
+  - airbnb
+plugins:
+  - react
+  - jsx-a11y
+  - import
+env:
+  browser: true
+settings:
+  import/resolver:
+    webpack:
+      config: 'config/webpack.config.dev.js'
+rules:
+  # While I personally prefer stateless functional components, since not every
+  # component can be one, I'd rather be consistent and extend React.Component.
+  react/prefer-es6-class: 2
+  react/prefer-stateless-function: 0
+
+  # Little practical value in making the distinction
+  react/jsx-filename-extension: 0
