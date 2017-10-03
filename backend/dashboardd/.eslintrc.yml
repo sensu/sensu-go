@@ -2,10 +2,12 @@ extends:
   - react-app
   - plugin:jsx-a11y/recommended
   - airbnb
+  - prettier
 plugins:
-  - react
-  - jsx-a11y
   - import
+  - jsx-a11y
+  - prettier
+  - react
 env:
   browser: true
 settings:
@@ -20,3 +22,6 @@ rules:
 
   # Little practical value in making the distinction
   react/jsx-filename-extension: 0
+
+  # https://github.com/prettier/prettier#eslint
+  prettier/prettier: error
