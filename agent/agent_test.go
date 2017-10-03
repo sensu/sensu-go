@@ -374,7 +374,6 @@ func TestReceiveLoopMultiWriteTCP(t *testing.T) {
 		msg, err := conn.Receive() // our message
 
 		assert.NoError(t, err)
-		assert.Equal(t, "testing", msg)
 		assert.Equal(t, "event", msg.Type)
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
