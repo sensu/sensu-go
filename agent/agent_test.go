@@ -1,7 +1,10 @@
 package agent
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -47,6 +50,7 @@ func TestSendLoop(t *testing.T) {
 
 	cfg := NewConfig()
 	cfg.BackendURLs = []string{wsURL}
+	cfg.API.Port = 0
 	ta := NewAgent(cfg)
 	err := ta.Run()
 	assert.NoError(t, err)
@@ -88,6 +92,7 @@ func TestReceiveLoop(t *testing.T) {
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 	cfg := NewConfig()
 	cfg.BackendURLs = []string{wsURL}
+	cfg.API.Port = 0
 	ta := NewAgent(cfg)
 	ta.addHandler("testMessageType", func(payload []byte) error {
 		msg := &testMessageType{}
@@ -137,6 +142,7 @@ func TestReconnect(t *testing.T) {
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 	cfg := NewConfig()
 	cfg.BackendURLs = []string{wsURL}
+	cfg.API.Port = 0
 	ta := NewAgent(cfg)
 	err := ta.Run()
 	assert.NoError(t, err)
@@ -152,5 +158,217 @@ func TestReconnect(t *testing.T) {
 	mutex.Lock()
 	assert.Condition(t, func() bool { return connectionCount > 1 })
 	mutex.Unlock()
+	ta.Stop()
+}
+
+func TestReceiveTCP(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := NewConfig()
+	ta := NewAgent(cfg)
+
+	err := ta.createListenSockets()
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+
+	defer tcpClient.Close()
+
+	tcpClient.Write([]byte(`{"timestamp":123}`))
+	tcpClient.Close()
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotEmpty(event.Entity)
+	assert.Equal(int64(123), event.Timestamp)
+	ta.Stop()
+}
+
+func TestReceiveCheckTCP(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := NewConfig()
+	ta := NewAgent(cfg)
+
+	err := ta.createListenSockets()
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+
+	defer tcpClient.Close()
+
+	tcpClient.Write([]byte(`{"timestamp": 123, "check":{"config": {"name": "test"}, "status": 1}}`))
+	tcpClient.Close()
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	event := types.Event{}
+	check := &types.Check{Config: &types.CheckConfig{Name: "test"}, Status: 1}
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotEmpty(event.Entity)
+	assert.Equal(int64(123), event.Timestamp)
+	assert.Equal(check, event.Check)
+	ta.Stop()
+}
+
+func TestUDP(t *testing.T) {
+	assert := assert.New(t)
+	cfg := NewConfig()
+	ta := NewAgent(cfg)
+	err := ta.createListenSockets()
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	udpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow("failed to create UDP connection")
+	}
+	defer udpClient.Close()
+
+	udpClient.Write([]byte(`{"timestamp":123}`))
+	udpClient.Close()
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("Failed to unmarshal event json")
+	}
+
+	assert.NotEmpty(event.Entity)
+	assert.Equal(int64(123), event.Timestamp)
+	ta.Stop()
+}
+
+func TestReceivePingTCP(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := NewConfig()
+	ta := NewAgent(cfg)
+
+	err := ta.createListenSockets()
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+	defer tcpClient.Close()
+
+	bytesWritten, err := tcpClient.Write([]byte(" ping "))
+	if err != nil {
+		assert.FailNow("Failed to write to tcp server %s", err)
+	}
+	assert.Equal(6, bytesWritten)
+
+	readData := make([]byte, 4)
+	numBytes, err := tcpClient.Read(readData)
+	if err != nil {
+		fmt.Println(err)
+		assert.FailNow("failed to read tcpClient")
+	}
+	assert.Equal("pong", string(readData[:numBytes]))
+	tcpClient.Close()
+	ta.Stop()
+}
+
+func TestReceiveMultiWriteTCP(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := NewConfig()
+	ta := NewAgent(cfg)
+
+	err := ta.createListenSockets()
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	var checkString string
+	for i := 0; i < 1500; i++ {
+		checkString += "a"
+	}
+
+	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+	tcpClient.Write(chunkData[:5])
+	tcpClient.Write(chunkData[5:])
+	tcpClient.Close()
+
+	msg := <-ta.sendq
+	assert.Equal("event", msg.Type)
+	event := &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.Equal(int64(123), event.Timestamp)
+	assert.NotNil(event.Entity)
+	ta.Stop()
+}
+
+func TestMultiWriteTimeoutTCP(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := NewConfig()
+	ta := NewAgent(cfg)
+
+	err := ta.createListenSockets()
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	var checkString string
+	for i := 0; i < 1500; i++ {
+		checkString += "a"
+	}
+
+	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
+	tcpClient, err := net.Dial("tcp", ":3030")
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+
+	_, err = tcpClient.Write(chunkData[:5])
+	if err != nil {
+		assert.FailNow("failed to write data to tcp socket")
+	}
+	readData := make([]byte, 7)
+
+	numBytes, err := bufio.NewReader(tcpClient).Read(readData)
+	if err != nil {
+		assert.FailNow("Failed to read data from tcp socket")
+	}
+	assert.Equal("invalid", string(readData[:numBytes]))
+	tcpClient.Close()
 	ta.Stop()
 }

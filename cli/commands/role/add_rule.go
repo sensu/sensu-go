@@ -30,8 +30,6 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := &ruleOpts{}
-			opts.Env = cli.Config.Environment()
-			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
 				cmd.SilenceUsage = false
@@ -39,6 +37,14 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				opts.Role = args[0]
 				opts.withFlags(flags)
+			}
+
+			if opts.Org == "" {
+				opts.Org = cli.Config.Organization()
+			}
+
+			if opts.Env == "" {
+				opts.Env = cli.Config.Environment()
 			}
 
 			if opts.Role == "" {
@@ -77,6 +83,8 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 
 func (opts *ruleOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Type, _ = flags.GetString("type")
+	opts.Org, _ = flags.GetString("organization")
+	opts.Env, _ = flags.GetString("environment")
 
 	if create, _ := flags.GetBool("create"); create {
 		opts.Permissions = append(opts.Permissions, "create")

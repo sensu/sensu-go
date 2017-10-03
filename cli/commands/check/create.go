@@ -19,8 +19,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := newCheckOpts()
-			opts.Env = cli.Config.Environment()
-			opts.Org = cli.Config.Organization()
 
 			if isInteractive {
 				opts.administerQuestionnaire(false)
@@ -29,6 +27,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				if len(args) > 0 {
 					opts.Name = args[0]
 				}
+			}
+
+			if opts.Org == "" {
+				opts.Org = cli.Config.Organization()
+			}
+
+			if opts.Env == "" {
+				opts.Env = cli.Config.Environment()
 			}
 
 			// Apply given arguments to check
@@ -68,6 +74,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
+	cmd.Flags().BoolP("publish", "p", true, "publish check requests")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("command")

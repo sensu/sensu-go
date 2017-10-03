@@ -75,9 +75,9 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "Source")    // Heading
+	assert.Contains(out, "Entity")    // Heading
 	assert.Contains(out, "Check")     // Heading
-	assert.Contains(out, "Result")    // Heading
+	assert.Contains(out, "Output")    // Heading
 	assert.Contains(out, "Timestamp") // Heading
 	assert.Contains(out, "something")
 	assert.Contains(out, "funny")

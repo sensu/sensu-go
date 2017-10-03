@@ -54,7 +54,7 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 
 				// The check has been deleted
 				if check == nil {
-					s.logger.Infof("check no longer in state")
+					s.logger.Info("check is no longer in state")
 					return
 				}
 
@@ -90,6 +90,11 @@ type CheckExecutor struct {
 
 // Execute queues reqest on message bus
 func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
+	// Ensure the check if configured to publish check requests
+	if !check.Publish {
+		return nil
+	}
+
 	var err error
 	request := execPtr.BuildRequest(check)
 

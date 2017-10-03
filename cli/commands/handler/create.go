@@ -19,8 +19,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := newHandlerOpts()
-			opts.Env = cli.Config.Environment()
-			opts.Org = cli.Config.Organization()
 
 			if len(args) > 0 {
 				opts.Name = args[0]
@@ -30,6 +28,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.administerQuestionnaire(false)
 			} else {
 				opts.withFlags(flags)
+			}
+
+			if opts.Org == "" {
+				opts.Org = cli.Config.Organization()
+			}
+
+			if opts.Env == "" {
+				opts.Env = cli.Config.Environment()
 			}
 
 			handler := types.Handler{}

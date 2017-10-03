@@ -2,6 +2,7 @@ package event
 
 import (
 	"io"
+	"strconv"
 	"time"
 
 	"github.com/sensu/sensu-go/cli"
@@ -62,7 +63,7 @@ func printEventsToTable(queryResults []types.Event, io io.Writer) {
 
 	table := table.New([]*table.Column{
 		{
-			Title:       "Source",
+			Title:       "Entity",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
@@ -77,10 +78,17 @@ func printEventsToTable(queryResults []types.Event, io io.Writer) {
 			},
 		},
 		{
-			Title: "Result",
+			Title: "Output",
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
 				return event.Check.Output
+			},
+		},
+		{
+			Title: "Status",
+			CellTransformer: func(data interface{}) string {
+				event, _ := data.(types.Event)
+				return strconv.Itoa(event.Check.Status)
 			},
 		},
 		{

@@ -107,6 +107,13 @@ func printCheckConfigsToTable(queryResults []types.CheckConfig, io io.Writer) {
 				return strings.Join(check.RuntimeAssets, ",")
 			},
 		},
+		{
+			Title: "Publish?",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				return strconv.FormatBool(check.Publish)
+			},
+		},
 	})
 
 	table.Render(io, rows)
