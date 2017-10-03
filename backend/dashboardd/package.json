@@ -52,9 +52,12 @@
   },
   "scripts": {
     "precommit": "lint-staged",
+    "prettier": "./node_module/.bin/prettier --write src/**/*.js",
+    "lint": "./node_modules/.bin/eslint src",
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js --env=jsdom"
+    "test": "node scripts/test.js --env=jsdom",
+    "quality": "yarn lint && yarn test"
   },
   "jest": {
     "collectCoverageFrom": [
