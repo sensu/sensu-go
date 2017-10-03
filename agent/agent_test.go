@@ -175,57 +175,38 @@ func TestReconnect(t *testing.T) {
 }
 
 func TestReceiveLoopTCP(t *testing.T) {
-
-	done := make(chan struct{})
-	server := transport.NewServer()
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
-		assert.NoError(t, err)
-		// throw away handshake
-		bhsm := &transport.Message{
-			Type:    types.BackendHandshakeType,
-			Payload: []byte("{}"),
-		}
-		conn.Send(bhsm)
-		conn.Receive() // agent handshake
-		conn.Receive() // agent keepalive
-
-		msg, err := conn.Receive() // our message
-
-		assert.NoError(t, err)
-		assert.NotNil(t, msg)
-		fmt.Println(msg)
-		assert.Equal(t, "event", msg.Type)
-		event := &types.Event{}
-		assert.NoError(t, json.Unmarshal(msg.Payload, event))
-		assert.Equal(t, int64(123), event.Timestamp)
-		assert.NotNil(t, event.Entity)
-		done <- struct{}{}
-	}))
-	defer ts.Close()
-
-	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+	assert := assert.New(t)
 
 	cfg := NewConfig()
-	cfg.BackendURLs = []string{wsURL}
 	ta := NewAgent(cfg)
-	err := ta.Run()
-	assert.NoError(t, err)
+
+	err := ta.createListenSockets()
 	if err != nil {
-		assert.FailNow(t, "agent failed to run")
+		assert.FailNow("createListenSockets() failed to run")
 	}
 
 	tcpClient, err := net.Dial("tcp", ":3030")
 	if err != nil {
-		assert.FailNow(t, "failed to create TCP connection")
+		assert.FailNow("failed to create TCP connection")
 	}
 
 	defer tcpClient.Close()
 
 	tcpClient.Write([]byte(`{"timestamp":123}`))
 	tcpClient.Close()
-	<-done
-	ta.Stop()
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotEmpty(event.Entity)
+	assert.Equal(int64(123), event.Timestamp)
 }
 
 func TestReceiveLoopCheckTCP(t *testing.T) {
