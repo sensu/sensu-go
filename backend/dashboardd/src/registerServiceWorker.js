@@ -22,8 +22,8 @@ function registerValidSW(swUrl) {
   navigator.serviceWorker
     .register(swUrl)
     .then(registration => {
-      registration.onupdatefound = () => { // eslint-disable-line
-        // eslint-disable-line
+      // eslint-disable-next-line
+      registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         installingWorker.onstatechange = () => {
           if (installingWorker.state === "installed") {
