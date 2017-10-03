@@ -194,6 +194,7 @@ func TestReceiveTCP(t *testing.T) {
 
 	assert.NotEmpty(event.Entity)
 	assert.Equal(int64(123), event.Timestamp)
+	ta.Stop()
 }
 
 func TestReceiveCheckTCP(t *testing.T) {
@@ -231,6 +232,7 @@ func TestReceiveCheckTCP(t *testing.T) {
 	assert.NotEmpty(event.Entity)
 	assert.Equal(int64(123), event.Timestamp)
 	assert.Equal(check, event.Check)
+	ta.Stop()
 }
 
 func TestUDP(t *testing.T) {
@@ -263,6 +265,7 @@ func TestUDP(t *testing.T) {
 
 	assert.NotEmpty(event.Entity)
 	assert.Equal(int64(123), event.Timestamp)
+	ta.Stop()
 }
 
 func TestReceivePingTCP(t *testing.T) {
@@ -296,6 +299,7 @@ func TestReceivePingTCP(t *testing.T) {
 	}
 	assert.Equal("pong", string(readData[:numBytes]))
 	tcpClient.Close()
+	ta.Stop()
 }
 
 func TestReceiveMultiWriteTCP(t *testing.T) {
@@ -329,6 +333,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.Equal(int64(123), event.Timestamp)
 	assert.NotNil(event.Entity)
+	ta.Stop()
 }
 
 func TestMultiWriteTimeoutTCP(t *testing.T) {
@@ -365,4 +370,5 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	}
 	assert.Equal("invalid", string(readData[:numBytes]))
 	tcpClient.Close()
+	ta.Stop()
 }
