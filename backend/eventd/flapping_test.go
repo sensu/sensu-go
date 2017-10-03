@@ -8,11 +8,129 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func fictionalHistory() []types.CheckHistory {
+	return []types.CheckHistory{
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 1},
+		types.CheckHistory{Status: 3},
+		types.CheckHistory{Status: 2},
+		types.CheckHistory{Status: 2},
+		types.CheckHistory{Status: 2},
+		types.CheckHistory{Status: 2},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 1},
+		types.CheckHistory{Status: 1},
+		types.CheckHistory{Status: 1},
+		types.CheckHistory{Status: 1},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 0},
+		types.CheckHistory{Status: 2},
+		types.CheckHistory{Status: 2},
+	}
+}
+
+func TestIsFlapping(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		event            *types.Event
+		expectedFlapping bool
+	}{
+		{
+			"low_flap_threshold not configured",
+			&types.Event{
+				Check: &types.Check{
+					Config: &types.CheckConfig{},
+				},
+			},
+			false,
+		},
+		{
+			"high_flap_threshold not configured",
+			&types.Event{
+				Check: &types.Check{
+					Config: &types.CheckConfig{
+						LowFlapThreshold: 10,
+					},
+				},
+			},
+			false,
+		},
+		{
+			"check is still flapping",
+			&types.Event{
+				Check: &types.Check{
+					Action: types.EventFlappingAction,
+					Config: &types.CheckConfig{
+						LowFlapThreshold:  10,
+						HighFlapThreshold: 30,
+					},
+					TotalStateChange: 15,
+				},
+			},
+			true,
+		},
+		{
+			"check is no longer flapping",
+			&types.Event{
+				Check: &types.Check{
+					Action: types.EventFlappingAction,
+					Config: &types.CheckConfig{
+						LowFlapThreshold:  10,
+						HighFlapThreshold: 30,
+					},
+					TotalStateChange: 5,
+				},
+			},
+			false,
+		},
+		{
+			"check is now flapping",
+			&types.Event{
+				Check: &types.Check{
+					Action: types.EventCreateAction,
+					Config: &types.CheckConfig{
+						LowFlapThreshold:  10,
+						HighFlapThreshold: 30,
+					},
+					TotalStateChange: 35,
+				},
+			},
+			true,
+		},
+		{
+			"check is not flapping",
+			&types.Event{
+				Check: &types.Check{
+					Action: types.EventCreateAction,
+					Config: &types.CheckConfig{
+						LowFlapThreshold:  10,
+						HighFlapThreshold: 30,
+					},
+					TotalStateChange: 5,
+				},
+			},
+			false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			result := isFlapping(tc.event)
+			assert.Equal(t, tc.expectedFlapping, result)
+		})
+	}
+}
+
 func TestTotalStateChange(t *testing.T) {
 	testCases := []struct {
 		desc                     string
 		event                    *types.Event
-		expectedTotalStateChange int
+		expectedTotalStateChange uint
 	}{
 		{
 			"with less than 21 check result",
@@ -58,29 +176,7 @@ func TestTotalStateChange(t *testing.T) {
 			"and weights the last 21 check result",
 			&types.Event{
 				Check: &types.Check{
-					History: []types.CheckHistory{
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 1},
-						types.CheckHistory{Status: 3},
-						types.CheckHistory{Status: 2},
-						types.CheckHistory{Status: 2},
-						types.CheckHistory{Status: 2},
-						types.CheckHistory{Status: 2},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 1},
-						types.CheckHistory{Status: 1},
-						types.CheckHistory{Status: 1},
-						types.CheckHistory{Status: 1},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 0},
-						types.CheckHistory{Status: 2},
-						types.CheckHistory{Status: 2},
-					},
+					History: fictionalHistory(),
 				},
 			},
 			34,

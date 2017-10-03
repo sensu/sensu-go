@@ -2,9 +2,23 @@ package eventd
 
 import "github.com/sensu/sensu-go/types"
 
+func isFlapping(event *types.Event) bool {
+	if event.Check.Config.LowFlapThreshold == 0 || event.Check.Config.HighFlapThreshold == 0 {
+		return false
+	}
+
+	// Is the check already flapping?
+	if event.Check.Action == types.EventFlappingAction {
+		return event.Check.TotalStateChange > event.Check.Config.LowFlapThreshold
+	}
+
+	// The check was not flapping, now determine if it does now
+	return event.Check.TotalStateChange >= event.Check.Config.HighFlapThreshold
+}
+
 // totalStateChange calculates the total state change percentage for the
 // history, which is later used for check state flap detection.
-func totalStateChange(event *types.Event) int {
+func totalStateChange(event *types.Event) uint {
 	if len(event.Check.History) < 21 {
 		return 0
 	}
@@ -22,5 +36,5 @@ func totalStateChange(event *types.Event) int {
 		previousStatus = event.Check.History[i].Status
 	}
 
-	return int(float64(stateChanges) / 20 * 100)
+	return uint(float64(stateChanges) / 20 * 100)
 }

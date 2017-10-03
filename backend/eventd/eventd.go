@@ -148,6 +148,16 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		event.Check.MergeWith(prevEvent.Check)
 	}
 
+	// Calculate percent state change for this check's history
+	event.Check.TotalStateChange = totalStateChange(event)
+
+	// Determine if the check is flapping
+	if flapping := isFlapping(event); flapping {
+		event.Check.Action = types.EventFlappingAction
+	} else {
+		event.Check.Action = types.EventCreateAction
+	}
+
 	err = e.Store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err

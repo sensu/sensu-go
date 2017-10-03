@@ -22,6 +22,9 @@ type CheckRequest struct {
 // A Check is a check specification and optionally the results of the check's
 // execution.
 type Check struct {
+	// Action provides handlers with more information about the state change
+	Action string `json:"action,omitempty"`
+
 	// Config is the specification of a check.
 	Config *CheckConfig `json:"config,omitempty"`
 
@@ -42,6 +45,10 @@ type Check struct {
 
 	// Status is the exit status code produced by the check.
 	Status int `json:"status,omitempty"`
+
+	// TotalStateChange indicates the total state change percentage for the
+	// check's history
+	TotalStateChange uint `json:"total_state_change,omitempty"`
 }
 
 // CheckConfig is the specification of a check.
