@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -33,9 +32,6 @@ func TestSendLoop(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive()
 		msg, err := conn.Receive()
 
@@ -81,9 +77,6 @@ func TestReceiveLoop(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive()
 
 		msgBytes, err := json.Marshal(testMessage)
@@ -93,7 +86,6 @@ func TestReceiveLoop(t *testing.T) {
 			Payload: msgBytes,
 		}
 		err = conn.Send(tm)
-		time.Sleep(1 * time.Second)
 		assert.NoError(t, err)
 		done <- struct{}{}
 	}))
@@ -139,9 +131,6 @@ func TestReconnect(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive()
 		mutex.Lock()
 		connectionCount++
@@ -222,9 +211,6 @@ func TestReceiveLoopCheckTCP(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive() // agent handshake
 		conn.Receive() // agent keepalive
 
@@ -281,9 +267,6 @@ func TestReceiveLoopUDP(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive() // agent handshake
 		conn.Receive() // agent keepalive
 
@@ -338,9 +321,6 @@ func TestReceiveLoopPing(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive() // agent handshake
 		conn.Receive() // agent keepalive
 
@@ -394,9 +374,6 @@ func TestReceiveLoopMultiWriteTCP(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive() // agent handshake
 		conn.Receive() // agent keepalive
 
@@ -455,9 +432,6 @@ func TestReceiveLoopMultiWriteTimeoutTCP(t *testing.T) {
 			Payload: []byte("{}"),
 		}
 		conn.Send(bhsm)
-
-		time.Sleep(1 * time.Second)
-
 		conn.Receive() // agent handshake
 		conn.Receive() // agent keepalive
 		close(done)
