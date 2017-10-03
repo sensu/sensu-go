@@ -15,6 +15,15 @@ var (
 
 	// CTATextStyle can be used to format a string; important text
 	CTATextStyle = ansi.ColorFunc("red+b:white+h") // Call To Action
+
+	// ErrorTextStyle can be used to format a string; important text
+	ErrorTextStyle = ansi.ColorFunc("red+b")
+
+	// WarningStyle is used to format strings to indicate a warning
+	WarningStyle = ansi.ColorFunc("yellow+bh")
+
+	// SuccessStyle is used to format strings to indicate a successfull operation
+	SuccessStyle = ansi.ColorFunc("green+bh")
 )
 
 // BooleanStyle colors instances of 'true' & 'false' blue & red respectively

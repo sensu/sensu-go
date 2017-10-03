@@ -13,6 +13,7 @@ type APIClient interface {
 	EnvironmentAPIClient
 	EventAPIClient
 	HandlerAPIClient
+	MutatorAPIClient
 	OrganizationAPIClient
 	RoleAPIClient
 	UserAPIClient
@@ -67,6 +68,12 @@ type HandlerAPIClient interface {
 	DeleteHandler(*types.Handler) error
 	ListHandlers(string) ([]types.Handler, error)
 	FetchHandler(string) (*types.Handler, error)
+}
+
+// MutatorAPIClient client methods for mutators
+type MutatorAPIClient interface {
+	CreateMutator(*types.Mutator) error
+	ListMutators() ([]types.Mutator, error)
 }
 
 // OrganizationAPIClient client methods for organizations

@@ -5,6 +5,11 @@ import (
 	"regexp"
 )
 
+// ConstrainedResource defines a resources that has contraints on it's attributes
+type ConstrainedResource interface {
+	Validate() error
+}
+
 // NameRegex is used to validate the name of a resource
 var NameRegex = regexp.MustCompile(`\A[\w.-]+\z`)
 

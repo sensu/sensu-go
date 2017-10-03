@@ -1,0 +1,245 @@
+{
+  "api": {
+    "user": "foo",
+    "password": "bar"
+  },
+  "filters": {
+    "production": {
+      "attributes": {
+        "client": {
+          "environment": "production"
+        }
+      }
+    },
+    "development": {
+      "negate": true,
+      "attributes": {
+        "client": {
+          "environment": "production"
+        }
+      }
+    },
+    "offhours": {
+      "attributes": {
+        "client": {
+          "environment": "production"
+        }
+      },
+      "when": {
+        "days": {
+          "all": [
+            {
+              "begin": "5:00 PM",
+              "end": "8:00 AM"
+            }
+          ]
+        }
+      }
+    },
+    "time": {
+      "attributes": {
+        "action": "resolve"
+      }
+    }
+  },
+  "mutators": {
+    "tag": {
+      "command": "./spec/mutators/tag.rb"
+    },
+    "explode": {
+      "command": "echo -n exploded && exit 2"
+    }
+  },
+  "handlers": {
+    "default": {
+      "type": "set",
+      "handlers": [
+        "debug"
+      ]
+    },
+    "keepalive": {
+      "type": "set",
+      "handlers": [
+        "debug"
+      ]
+    },
+    "registration": {
+      "type": "pipe",
+      "command": "cat > /tmp/sensu_client_registration.json"
+    },
+    "file": {
+      "type": "pipe",
+      "command": "cat > /tmp/sensu_event"
+    },
+    "error": {
+      "type": "pipe",
+      "command": "cat && exit 2"
+    },
+    "filtered": {
+      "type": "pipe",
+      "command": "cat > /tmp/sensu_event",
+      "filter": "development"
+    },
+    "severities": {
+      "type": "pipe",
+      "command": "cat > /tmp/sensu_event",
+      "severities": [
+        "critical",
+        "unknown"
+      ]
+    },
+    "flapping": {
+      "type": "pipe",
+      "command": "cat > /tmp/sensu_event",
+      "handle_flapping": true
+    },
+    "tcp": {
+      "type": "tcp",
+      "socket": {
+        "host": "127.0.0.1",
+        "port": 1234
+      }
+    },
+    "udp": {
+      "type": "udp",
+      "socket": {
+        "host": "127.0.0.1",
+        "port": 1234
+      }
+    },
+    "transport": {
+      "type": "transport",
+      "pipe": {
+        "type": "direct",
+        "name": "events"
+      }
+    },
+    "nested_set_one": {
+        "type": "set",
+        "handlers": [
+            "nested_set_two"
+        ]
+    },
+    "nested_set_two": {
+        "type": "set",
+        "handlers": [
+            "debug",
+            "file",
+            "nested_set_three"
+        ]
+    },
+    "nested_set_three": {
+        "type": "set",
+        "handlers": [
+            "udp",
+            "tcp",
+            "transport"
+        ]
+    }
+  },
+  "checks": {
+    "tokens": {
+      "command": "echo :::name::: :::nested.attribute::: && exit 2",
+      "subscribers": [
+        "test"
+      ],
+      "interval": 1
+    },
+    "standalone": {
+      "command": "echo foobar && exit 1",
+      "standalone": true,
+      "interval": 1,
+      "ttl": 10,
+      "ttl_status": 2
+    },
+    "merger": {
+      "command": "this will be overwritten",
+      "interval": 60
+    },
+    "source": {
+      "source": "switch-y",
+      "command": "/bin/true",
+      "subscribers": [
+        "test"
+      ],
+      "interval": 1
+    },
+    "roundrobin": {
+      "command": "/bin/true",
+      "subscribers": [
+        "roundrobin:test"
+      ],
+      "interval": 1
+    },
+    "unpublished": {
+      "command": "/bin/true",
+      "publish": false,
+      "subscribers": [
+        "test"
+      ]
+    },
+    "unpublished_proxy": {
+      "command": "/bin/true",
+      "publish": false,
+      "subscribers": [
+        "test"
+      ],
+      "proxy_requests": {
+        "client_attributes": {
+          "name": "i-424242"
+        }
+      }
+    },
+    "cron": {
+      "command": "/bin/true",
+      "subscribers": [
+        "test"
+      ],
+      "cron": "* * * * *"
+    },
+    "hooked": {
+      "command": "echo FAIL && exit 1",
+      "subscribers": [
+        "test"
+      ],
+      "hooks": {
+          "warning": {
+              "command": "echo HOOKED",
+              "timeout": 5
+          }
+      },
+      "interval": 1
+    }
+  },
+  "client": {
+    "name": "i-424242",
+    "address": "127.0.0.1",
+    "subscriptions": [
+      "test",
+      "roundrobin:test",
+      "all"
+    ],
+    "keepalive": {
+      "thresholds": {
+        "warning": 10
+      }
+    },
+    "deregister": true,
+    "deregistration": {
+      "handler": "DEREGISTER_HANDLER"
+    },
+    "version": "TOBEREPLACED",
+    "nested": {
+      "attribute": true
+    },
+    "service": {
+      "password": "secret"
+    },
+    "empty": {},
+    "localhost": "fail",
+    "http_socket": {
+      "user": "foo",
+      "password": "bar"
+    }
+  }
+}
