@@ -404,10 +404,11 @@ func (a *Agent) Run() error {
 
 	// Prepare the HTTP API server
 	a.api = newServer(a)
-	logger.Info("starting api on address: ", a.api.Addr)
 
 	// Start the HTTP API server
 	go func() {
+		logger.Info("starting api on address: ", a.api.Addr)
+
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
 			logger.Fatal(err)
 		}
