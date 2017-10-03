@@ -184,11 +184,10 @@ func (k *Keepalived) processKeepalives() {
 			continue
 		}
 
-		// TODO(greg): This is a good candidate for a concurrent map
-		// when it's released.
 		k.mu.Lock()
 		monitor, ok = k.monitors[entity.ID]
-		if !ok {
+		// create if it doesn't exist
+		if !ok || monitor.IsStopped() {
 			monitor = k.MonitorFactory(entity)
 			monitor.Start()
 			k.monitors[entity.ID] = monitor
