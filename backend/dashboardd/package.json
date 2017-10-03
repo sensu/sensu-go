@@ -1,65 +1,63 @@
 {
-  "name": "ui",
+  "name": "dashboardd",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "lodash": "^4.17.4",
-    "material-ui": "^0.17.4",
-    "prop-types": "^15.5.8",
-    "react": "^15.5.4",
-    "react-dom": "^15.5.4",
-    "react-router-dom": "^4.1.1",
-    "react-tap-event-plugin": "^2.0.1",
-    "typeface-roboto": "^0.0.22"
+    "autoprefixer": "^7.1.2",
+    "babel-core": "^6.25.0",
+    "babel-eslint": "^7.2.3",
+    "babel-jest": "^21.2.0",
+    "babel-loader": "^7.1.1",
+    "babel-preset-react-app": "^3.0.3",
+    "babel-runtime": "^6.26.0",
+    "case-sensitive-paths-webpack-plugin": "^2.1.1",
+    "chalk": "^2.1.0",
+    "codecov": "^2.3.0",
+    "css-loader": "^0.28.4",
+    "dotenv": "^4.0.0",
+    "enzyme": "^3.1.0",
+    "eslint": "^4.4.1",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-config-prettier": "^2.6.0",
+    "eslint-config-react-app": "^2.0.1",
+    "eslint-loader": "^1.9.0",
+    "eslint-plugin-flowtype": "^2.35.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jsx-a11y": "^5.1.1",
+    "eslint-plugin-prettier": "^2.3.1",
+    "eslint-plugin-react": "^7.1.0",
+    "extract-text-webpack-plugin": "^3.0.0",
+    "file-loader": "^1.1.4",
+    "fs-extra": "^4.0.0",
+    "html-webpack-plugin": "^2.29.0",
+    "istanbul-reports": "^1.1.0",
+    "jest": "^21.2.1",
+    "jest-enzyme": "^4.0.0",
+    "lint-staged": "^4.2.3",
+    "object-assign": "^4.1.1",
+    "postcss-flexbugs-fixes": "^3.2.0",
+    "postcss-loader": "^2.0.6",
+    "prettier": "^1.7.3",
+    "promise": "^8.0.1",
+    "react": "^16.0.0",
+    "react-dev-utils": "^4.1.0",
+    "react-dom": "^16.0.0",
+    "style-loader": "^0.18.2",
+    "sw-precache-webpack-plugin": "^0.11.4",
+    "url-loader": "^0.5.9",
+    "webpack": "^3.5.1",
+    "webpack-dev-server": "^2.8.2",
+    "webpack-manifest-plugin": "^1.2.1",
+    "whatwg-fetch": "^2.0.3"
   },
-  "devDependencies": {
-    "autoprefixer": "6.7.2",
-    "babel-core": "6.22.1",
-    "babel-eslint": "7.1.1",
-    "babel-jest": "18.0.0",
-    "babel-loader": "6.2.10",
-    "babel-preset-react-app": "^2.2.0",
-    "babel-runtime": "^6.20.0",
-    "case-sensitive-paths-webpack-plugin": "1.1.4",
-    "chalk": "1.1.3",
-    "connect-history-api-fallback": "1.3.0",
-    "cross-spawn": "4.0.2",
-    "css-loader": "0.26.1",
-    "detect-port": "1.1.0",
-    "dotenv": "2.0.0",
-    "eslint": "^3.19.0",
-    "eslint-config-airbnb": "^14.1.0",
-    "eslint-config-react-app": "^0.6.2",
-    "eslint-import-resolver-webpack": "^0.8.1",
-    "eslint-loader": "1.6.0",
-    "eslint-plugin-flowtype": "2.21.0",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.10.3",
-    "extract-text-webpack-plugin": "1.0.1",
-    "file-loader": "0.10.0",
-    "fs-extra": "0.30.0",
-    "html-webpack-plugin": "2.24.0",
-    "http-proxy-middleware": "0.17.3",
-    "jest": "18.1.0",
-    "json-loader": "0.5.4",
-    "object-assign": "4.1.1",
-    "postcss-loader": "1.2.2",
-    "promise": "7.1.1",
-    "react-dev-utils": "^0.5.2",
-    "style-loader": "0.13.1",
-    "url-loader": "0.5.7",
-    "webpack": "1.14.0",
-    "webpack-dev-server": "1.16.2",
-    "webpack-manifest-plugin": "1.1.0",
-    "whatwg-fetch": "2.0.2"
-  },
-  "proxy": "http://localhost:3000",
   "scripts": {
-    "start": "PORT=3030 node scripts/start.js",
+    "precommit": "lint-staged",
+    "prettier": "./node_module/.bin/prettier --write src/**/*.js",
+    "lint": "./node_modules/.bin/eslint src",
+    "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "static-assets": "cd ../.. && ./build.sh static_assets",
-    "test": "node scripts/test.js --env=jsdom"
+    "test": "node scripts/test.js --env=jsdom",
+    "quality": "yarn lint && yarn test"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -68,8 +66,9 @@
     "setupFiles": [
       "<rootDir>/config/polyfills.js"
     ],
-    "testPathIgnorePatterns": [
-      "<rootDir>[/\\\\](build|docs|node_modules|scripts)[/\\\\]"
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.js?(x)",
+      "<rootDir>/src/**/?(*.)(spec|test).js?(x)"
     ],
     "testEnvironment": "node",
     "testURL": "http://localhost",
@@ -83,14 +82,19 @@
     ],
     "moduleNameMapper": {
       "^react-native$": "react-native-web"
-    }
+    },
+    "moduleFileExtensions": [
+      "web.js",
+      "js",
+      "json",
+      "web.jsx",
+      "jsx",
+      "node"
+    ]
   },
   "babel": {
     "presets": [
       "react-app"
     ]
-  },
-  "eslintConfig": {
-    "extends": "react-app"
   }
 }

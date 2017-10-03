@@ -199,7 +199,19 @@ docker_commands () {
 	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
 }
 
-static_assets () {
+build_dashboard() {
+  if hash yarn 2>/dev/null; then
+    cd backend/dashboardd
+    yarn
+    yarn build
+    cd $OLDPWD
+  else
+    echo "Please install yarn to build dashboard"
+    exit 1
+  fi
+}
+
+bundle_static_assets () {
 	fileb0x backend/dashboardd/b0x.yaml
 }
 
@@ -228,8 +240,9 @@ elif [ "$cmd" == "build_backend" ]; then
 	build_command backend
 elif [ "$cmd" == "build_cli" ]; then
 	build_command cli
-elif [ "$cmd" == "static_assets" ]; then
-	static_assets
+elif [ "$cmd" == "build_dashboard" ]; then
+	build_dashboard
+	bundle_static_assets
 else
 	install_deps
 	linter_commands
