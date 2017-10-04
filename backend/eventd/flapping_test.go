@@ -64,11 +64,11 @@ func TestIsFlapping(t *testing.T) {
 			"check is still flapping",
 			&types.Event{
 				Check: &types.Check{
-					Action: types.EventFlappingAction,
 					Config: &types.CheckConfig{
 						LowFlapThreshold:  10,
 						HighFlapThreshold: 30,
 					},
+					State:            types.EventFlappingState,
 					TotalStateChange: 15,
 				},
 			},
@@ -78,11 +78,11 @@ func TestIsFlapping(t *testing.T) {
 			"check is no longer flapping",
 			&types.Event{
 				Check: &types.Check{
-					Action: types.EventFlappingAction,
 					Config: &types.CheckConfig{
 						LowFlapThreshold:  10,
 						HighFlapThreshold: 30,
 					},
+					State:            types.EventFlappingState,
 					TotalStateChange: 5,
 				},
 			},
@@ -92,11 +92,11 @@ func TestIsFlapping(t *testing.T) {
 			"check is now flapping",
 			&types.Event{
 				Check: &types.Check{
-					Action: types.EventCreateAction,
 					Config: &types.CheckConfig{
 						LowFlapThreshold:  10,
 						HighFlapThreshold: 30,
 					},
+					State:            types.EventFailingState,
 					TotalStateChange: 35,
 				},
 			},
@@ -106,7 +106,7 @@ func TestIsFlapping(t *testing.T) {
 			"check is not flapping",
 			&types.Event{
 				Check: &types.Check{
-					Action: types.EventCreateAction,
+					State: types.EventPassingState,
 					Config: &types.CheckConfig{
 						LowFlapThreshold:  10,
 						HighFlapThreshold: 30,
