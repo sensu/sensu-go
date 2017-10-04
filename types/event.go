@@ -6,6 +6,15 @@ import "time"
 // event without a Check or Metrics section.
 const KeepaliveType = "keepalive"
 
+// EventFailingState indicates failing check result status
+const EventFailingState = "failing"
+
+// EventFlappingState indicates a rapid change in check result status
+const EventFlappingState = "flapping"
+
+// EventPassingState indicates successful check result status
+const EventPassingState = "passing"
+
 // EventType is the message type string for events.
 const EventType = "event"
 

@@ -53,4 +53,7 @@ func TestEventHandling(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockStore.AssertCalled(t, "UpdateEvent", mock.AnythingOfType("*types.Event"))
+
+	// Make sure the event has been marked with the proper state
+	assert.Equal(t, types.EventPassingState, event.Check.State)
 }

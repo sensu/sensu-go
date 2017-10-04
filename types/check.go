@@ -25,54 +25,69 @@ type Check struct {
 	// Config is the specification of a check.
 	Config *CheckConfig `json:"config,omitempty"`
 
-	// Output from the execution of Command.
-	Output string `json:"output,omitempty"`
-
-	// Status is the exit status code produced by the check.
-	Status int `json:"status,omitempty"`
-
-	// Time check request was issued.
-	Issued int64 `json:"issued,omitempty"`
+	// Duration of execution.
+	Duration float64 `json:"duration,omitempty"`
 
 	// Time check request was executed
 	Executed int64 `json:"executed,omitempty"`
 
-	// Duration of execution.
-	Duration float64 `json:"duration,omitempty"`
-
 	// History is the check state history.
 	History []CheckHistory `json:"history,omitempty"`
+
+	// Time check request was issued.
+	Issued int64 `json:"issued,omitempty"`
+
+	// Output from the execution of Command.
+	Output string `json:"output,omitempty"`
+
+	// State provides handlers with more information about the state change
+	State string `json:"state,omitempty"`
+
+	// Status is the exit status code produced by the check.
+	Status int `json:"status,omitempty"`
+
+	// TotalStateChange indicates the total state change percentage for the
+	// check's history
+	TotalStateChange uint `json:"total_state_change,omitempty"`
 }
 
 // CheckConfig is the specification of a check.
 type CheckConfig struct {
-	// Name is the unique identifier for a check.
-	Name string `json:"name"`
-
-	// Interval is the interval, in seconds, at which the check should be run.
-	Interval uint `json:"interval"`
-
-	// Subscriptions is the list of subscribers for the check.
-	Subscriptions []string `json:"subscriptions"`
-
 	// Command is the command to be executed.
 	Command string `json:"command"`
+
+	// Environment indicates to which env a check belongs to
+	Environment string `json:"environment"`
 
 	// Handlers are the event handler for the check (incidents
 	// and/or metrics).
 	Handlers []string `json:"handlers"`
 
-	// RuntimeAssets are a list of assets required to execute check.
-	RuntimeAssets []string `json:"runtime_assets"`
+	// HighFlapThreshold is the flap detection high threshold (% state change) for
+	// the check. Sensu uses the same flap detection algorithm as Nagios.
+	HighFlapThreshold uint `json:"high_flap_threshold"`
 
-	// Environment indicates to which env a check belongs to
-	Environment string `json:"environment"`
+	// Interval is the interval, in seconds, at which the check should be run.
+	Interval uint `json:"interval"`
+
+	// LowFlapThreshold is the flap detection low threshold (% state change) for
+	// the check. Sensu uses the same flap detection algorithm as Nagios.
+	LowFlapThreshold uint `json:"low_flap_threshold"`
+
+	// Name is the unique identifier for a check.
+	Name string `json:"name"`
 
 	// Organization indicates to which org a check belongs to
 	Organization string `json:"organization"`
 
 	// Publish indicates if check requests are published for the check
 	Publish bool `json:"publish"`
+
+	// RuntimeAssets are a list of assets required to execute check.
+	RuntimeAssets []string `json:"runtime_assets"`
+
+	// Subscriptions is the list of subscribers for the check.
+	Subscriptions []string `json:"subscriptions"`
 }
 
 // Validate returns an error if the check does not pass validation tests.

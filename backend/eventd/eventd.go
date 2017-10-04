@@ -148,6 +148,12 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		event.Check.MergeWith(prevEvent.Check)
 	}
 
+	// Calculate percent state change for this check's history
+	event.Check.TotalStateChange = totalStateChange(event)
+
+	// Determine the check's state
+	state(event)
+
 	err = e.Store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
