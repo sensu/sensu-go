@@ -2,6 +2,7 @@ package check
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/cli"
@@ -58,7 +59,6 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 	cmd.Flags().Set(flags.Format, "json")
 	cmd.Flags().Set(flags.AllOrgs, "t")
 	out, err := test.RunCmd(cmd, []string{})
-
 	assert.NotEmpty(out)
 	assert.Nil(err)
 }
@@ -87,6 +87,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Nil(err)
 }
 
+// Test to ensure check command list output does not escape alphanumeric chars
 func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
@@ -100,6 +101,26 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert.NotNil(err)
 	assert.Equal("my-err", err.Error())
 	assert.Empty(out)
+}
+
+func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := newCLI()
+	client := cli.Client.(*client.MockClient)
+	checkConfig := types.FixtureCheckConfig("name-one")
+	checkConfig.Command = "echo foo && exit 1"
+	client.On("ListChecks", "*").Return([]types.CheckConfig{
+		*checkConfig,
+	}, nil)
+
+	cmd := ListCommand(cli)
+	cmd.Flags().Set(flags.Format, "json")
+	cmd.Flags().Set(flags.AllOrgs, "t")
+	out, err := test.RunCmd(cmd, []string{})
+	assert.NotEmpty(out)
+	assert.Contains(out, "echo foo && exit 1")
+	assert.Nil(err)
 }
 
 func newCLI() *cli.SensuCli {
