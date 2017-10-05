@@ -1,33 +1,21 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { Resolver } from 'found-relay';
-import BrowserProtocol from 'farce/lib/BrowserProtocol';
-import queryMiddleware from 'farce/lib/queryMiddleware';
-import createFarceRouter from 'found/lib/createFarceRouter';
-import createRender from 'found/lib/createRender';
-import injectTapEventPlugin from 'react-tap-event-plugin';
+import React from "react";
+import ReactDOM from "react-dom";
+import { createBrowserRouter } from "found";
 
-import routes from './routes';
-import registerServiceWorker from './registerServiceWorker';
-import environment from './environment';
+import injectTapEventPlugin from "react-tap-event-plugin";
+import "typeface-roboto"; // eslint-disable-line import/extensions
 
-import './index.css';
+import routes from "./routes";
+import registerServiceWorker from "./registerServiceWorker";
 
-const Router = createFarceRouter({
-  historyProtocol: new BrowserProtocol(),
-  historyMiddlewares: [queryMiddleware],
-  routeConfig: routes,
-  render: createRender({}),
-});
+// Configure Router
+const Router = createBrowserRouter({ routeConfig: routes });
+
+// Renderer
+ReactDOM.render(<Router />, document.getElementById("root"));
 
 // Register React Tap event plugin
 injectTapEventPlugin();
-
-// Renderer
-ReactDOM.render(
-  <Router resolver={new Resolver(environment)} />,
-  document.getElementById('root'),
-);
 
 // Register service workers
 registerServiceWorker();
