@@ -13,12 +13,12 @@ var (
 	sep = []byte("\n")
 )
 
-// KeepaliveMessageType is the message type sent for keepalives--which are just an
+// MessageTypeKeepalive is the message type sent for keepalives--which are just an
 // event without a Check or Metrics section.
-const KeepaliveMessageType = "keepalive"
+const MessageTypeKeepalive = "keepalive"
 
-// EventMessageType is the message type string for events.
-const EventMessageType = "event"
+// MessageTypeEvent is the message type string for events.
+const MessageTypeEvent = "event"
 
 // A ClosedError is returned when Receive or Send is called on a closed
 // Transport.

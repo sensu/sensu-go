@@ -80,7 +80,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	a.sendMessage(transport.EventMessageType, msg)
+	a.sendMessage(transport.MessageTypeEvent, msg)
 }
 
 func (a *Agent) sendFailure(event *types.Event, err error) {
@@ -91,6 +91,6 @@ func (a *Agent) sendFailure(event *types.Event, err error) {
 	if msg, err := json.Marshal(event); err != nil {
 		logger.Error("error marshaling check failure: ", err.Error())
 	} else {
-		a.sendMessage(transport.EventMessageType, msg)
+		a.sendMessage(transport.MessageTypeEvent, msg)
 	}
 }
