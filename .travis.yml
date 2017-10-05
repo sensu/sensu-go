@@ -15,6 +15,10 @@ stages:
     # on:
     #   branch: master
     #   tags: true
+cache:
+  yarn: true
+  directories:
+    - backend/dashboardd/node_modules
 install:
   - "nvm install node"
   - "npm install --global yarn"
