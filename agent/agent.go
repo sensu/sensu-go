@@ -243,7 +243,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			return
 		}
 
-		a.sendMessage(types.EventType, payload)
+		a.sendMessage(transport.EventMessageType, payload)
 		c.Write([]byte("ok"))
 		return
 	}
@@ -304,7 +304,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			if err != nil {
 				return
 			}
-			a.sendMessage(types.EventType, payload)
+			a.sendMessage(transport.EventMessageType, payload)
 		}
 
 	}
@@ -405,7 +405,7 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
 func (a *Agent) sendKeepalive() error {
 	logger.Info("sending keepalive")
 	msg := &transport.Message{
-		Type: types.KeepaliveType,
+		Type: transport.KeepaliveMessageType,
 	}
 	keepalive := &types.Event{}
 	keepalive.Entity = a.getAgentEntity()

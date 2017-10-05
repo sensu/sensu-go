@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -67,7 +68,7 @@ func addEvent(a *Agent) http.HandlerFunc {
 			return
 		}
 
-		a.sendMessage(types.EventType, msg)
+		a.sendMessage(transport.EventMessageType, msg)
 
 		w.WriteHeader(http.StatusCreated)
 		return

@@ -158,7 +158,7 @@ func TestNoHandshake(t *testing.T) {
 	assert.NotNil(t, session)
 
 	conn.Send(&transport.Message{
-		Type:    types.EventType,
+		Type:    transport.EventMessageType,
 		Payload: []byte("..."),
 	})
 	assert.Error(t, session.Start())

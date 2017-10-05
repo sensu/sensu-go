@@ -36,8 +36,8 @@ type Session struct {
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
 	handler := handler.NewMessageHandler()
-	handler.AddHandler(types.KeepaliveType, s.handleKeepalive)
-	handler.AddHandler(types.EventType, s.handleEvent)
+	handler.AddHandler(transport.KeepaliveMessageType, s.handleKeepalive)
+	handler.AddHandler(transport.EventMessageType, s.handleEvent)
 
 	return handler
 }

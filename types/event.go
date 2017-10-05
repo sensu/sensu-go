@@ -2,10 +2,6 @@ package types
 
 import "time"
 
-// KeepaliveType is the message type sent for keepalives--which are just an
-// event without a Check or Metrics section.
-const KeepaliveType = "keepalive"
-
 // EventFailingState indicates failing check result status
 const EventFailingState = "failing"
 
@@ -14,9 +10,6 @@ const EventFlappingState = "flapping"
 
 // EventPassingState indicates successful check result status
 const EventPassingState = "passing"
-
-// EventType is the message type string for events.
-const EventType = "event"
 
 // An Event is the encapsulating type sent across the Sensu websocket transport.
 type Event struct {
