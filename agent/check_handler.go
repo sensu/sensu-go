@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -79,7 +80,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	a.sendMessage(types.EventType, msg)
+	a.sendMessage(transport.EventMessageType, msg)
 }
 
 func (a *Agent) sendFailure(event *types.Event, err error) {
@@ -90,6 +91,6 @@ func (a *Agent) sendFailure(event *types.Event, err error) {
 	if msg, err := json.Marshal(event); err != nil {
 		logger.Error("error marshaling check failure: ", err.Error())
 	} else {
-		a.sendMessage(types.EventType, msg)
+		a.sendMessage(transport.EventMessageType, msg)
 	}
 }
