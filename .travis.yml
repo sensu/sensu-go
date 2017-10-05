@@ -17,17 +17,16 @@ install:
   - "./build.sh build_tools"
 jobs:
   include:
-    - name: test
+    - stage: test
       script:
         - "./build.sh ci $TEST_SUITE"
       after_script:
         - "./build.sh coverage $TEST_SUITE"
       env:
-        matrix:
-          - GOARCH=386
-          - GOARCH=amd64
-          - TEST_SUITE=dashboard
-    - name: deploy
+        - GOARCH=386
+        - GOARCH=amd64
+        - TEST_SUITE=dashboard
+    - stage: deploy
       script:
         - "./build.sh docker"
         - if [ "$TRAVIS_BRANCH" == "master" ]; then
