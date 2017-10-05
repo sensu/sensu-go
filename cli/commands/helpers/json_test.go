@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"testing"
 

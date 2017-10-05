@@ -2,7 +2,6 @@ package check
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/cli"
