@@ -213,7 +213,8 @@ test_dashboard () {
   check_for_presence_of_yarn
   cd backend/dashboardd
   yarn install
-  yarn quality
+  yarn lint
+  yarn test --coverage
   cd $OLDPWD
 }
 
