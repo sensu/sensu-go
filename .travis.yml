@@ -10,9 +10,11 @@ branches:
 stages:
   - name: test
   - name: deploy
-    on:
-      branch: master
-      tags: true
+    if: master
+    # ???
+    # on:
+    #   branch: master
+    #   tags: true
 install:
   - "nvm install node"
   - "npm install --global yarn"
