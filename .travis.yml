@@ -8,8 +8,11 @@ branches:
   only:
   - master
 stages:
-  - test
-  - deploy
+  - name: test
+  - name: deploy
+    on:
+      branch: master
+      tags: true
 install:
   - "nvm install node"
   - "npm install --global yarn"
@@ -23,9 +26,10 @@ jobs:
       after_script:
         - "./build.sh coverage $TEST_SUITE"
       env:
-        - GOARCH=386
-        - GOARCH=amd64
-        - TEST_SUITE=dashboard
+        matrix:
+          - GOARCH=386
+          - GOARCH=amd64
+          - TEST_SUITE=dashboard
     - stage: deploy
       script:
         - "./build.sh docker"
