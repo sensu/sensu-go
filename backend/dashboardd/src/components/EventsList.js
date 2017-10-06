@@ -10,7 +10,9 @@ import Table, {
   TableRow,
 } from "material-ui/Table";
 import Checkbox from "material-ui/Checkbox";
+
 import EventRow from "./EventRow";
+import AppContent from "./AppContent";
 
 class EventsList extends React.Component {
   static propTypes = {
@@ -24,22 +26,24 @@ class EventsList extends React.Component {
     const events = get(viewer, "events.edges", []);
 
     return (
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell checkbox>
-              <Checkbox />
-            </TableCell>
-            <TableCell>Entity</TableCell>
-            <TableCell>Check</TableCell>
-            <TableCell>Command</TableCell>
-            <TableCell>Timestamp</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {map(events, (event, i) => <EventRow key={i} event={event} />)}
-        </TableBody>
-      </Table>
+      <AppContent>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell checkbox>
+                <Checkbox />
+              </TableCell>
+              <TableCell>Entity</TableCell>
+              <TableCell>Check</TableCell>
+              <TableCell>Command</TableCell>
+              <TableCell>Timestamp</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {map(events, (event, i) => <EventRow key={i} event={event} />)}
+          </TableBody>
+        </Table>
+      </AppContent>
     );
   }
 }

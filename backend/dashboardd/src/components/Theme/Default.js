@@ -1,8 +1,10 @@
 import { createMuiTheme } from "material-ui/styles";
+import colors from "../../colors";
 
 const DefaultTheme = createMuiTheme({
   palette: {
-    primary1Color: "#92C72E",
+    primary: colors.indigo,
+    secondary: colors.salmon,
   },
 });
 

@@ -52,6 +52,7 @@
     "react-jss": "^7.2.0",
     "react-redux": "^5.0.6",
     "react-tap-event-plugin": "^3.0.2",
+    "recompose": "^0.25.1",
     "redux": "^3.7.2",
     "style-loader": "^0.18.2",
     "sw-precache-webpack-plugin": "^0.11.4",

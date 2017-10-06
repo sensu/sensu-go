@@ -10,7 +10,7 @@ class CheckRow extends React.Component {
 
     return (
       <TableRow {...other}>
-        <TableCell checkbox>
+        <TableCell padding="checkbox">
           <Checkbox />
         </TableCell>
         <TableCell>{check.name}</TableCell>
