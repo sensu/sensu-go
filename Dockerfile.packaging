@@ -5,7 +5,13 @@ ENV GOROOT="/usr/local/go"
 ENV GOPATH="/go"
 
 RUN apt-get update && \
-  apt-get install -y ruby ruby-dev build-essential rpm rpmlint wget git && \
+  apt-get install -y ruby ruby-dev build-essential rpm rpmlint wget git curl && \
+  curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
+  apt-get install -y nodejs && \
+  curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+  echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+  apt-get update && \
+  apt-get install yarn && \
   gem install --no-ri --no-rdoc fpm && \
   gem install --no-ri --no-rdoc package_cloud && \
   wget https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz && \
