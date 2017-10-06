@@ -26,9 +26,9 @@ const styles = theme => ({
     flex: "1 1 auto",
   },
   logo: {
-    height: 17,
+    height: 15,
     marginRight: theme.spacing.unit * 1,
-    verticalAlign: "top",
+    verticalAlign: "baseline",
   },
   avatar: {
     height: 32,
