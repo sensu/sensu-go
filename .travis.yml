@@ -16,7 +16,6 @@ cache:
   directories:
     - backend/dashboardd/node_modules
 install:
-  - "nvm use v8"
   - "npm install --global yarn"
   - "./build.sh deps"
   - "./build.sh build_tools"
