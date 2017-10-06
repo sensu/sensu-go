@@ -195,20 +195,35 @@ docker_commands () {
 		echo "Building $cmd for linux-amd64"
 		local cmd_name=$(cmd_name_map $cmd)
 		build_binary linux amd64 $cmd $cmd_name static
-	done
+  done
+
 	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
 }
 
-build_dashboard() {
+check_for_presence_of_yarn() {
   if hash yarn 2>/dev/null; then
-    cd backend/dashboardd
-    yarn
-    yarn build
-    cd $OLDPWD
+    echo "Yarn is installed, continuing."
   else
-    echo "Please install yarn to build dashboard"
+    echo "Please install yarn to build dashboard."
     exit 1
   fi
+}
+
+test_dashboard () {
+  check_for_presence_of_yarn
+  cd backend/dashboardd
+  yarn install
+  yarn lint
+  yarn test --coverage
+  cd $OLDPWD
+}
+
+build_dashboard() {
+  check_for_presence_of_yarn
+  cd backend/dashboardd
+  yarn install
+  yarn build
+  cd $OLDPWD
 }
 
 bundle_static_assets () {
@@ -230,6 +245,21 @@ elif [ "$cmd" == "e2e" ]; then
 	# Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
 	build_commands
 	e2e_commands "${@:2}"
+elif [ "$cmd" == "ci" ]; then
+  if [ "${@:2}" == "dashboard" ]; then
+    test_dashboard
+  else
+    linter_commands
+    unit_test_commands
+    build_commands
+    e2e_commands
+  fi
+elif [ "$cmd" == "coverage" ]; then
+  if [ "${@:2}" == "dashboard" ]; then
+    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s backend/dashboardd
+  else
+    ./codecov.sh -t $CODECOV_TOKEN -cF go
+  fi
 elif [ "$cmd" == "build" ]; then
 	build_commands
 elif [ "$cmd" == "docker" ]; then
