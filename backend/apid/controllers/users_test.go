@@ -397,7 +397,15 @@ func TestValidateRolesError(t *testing.T) {
 		{Name: "roleOne"},
 	}
 
+	// Single role missing
 	store.On("GetRoles").Return(storedRoles, nil)
+	err := validateRoles(store, roles)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "given role")
 
-	assert.Error(t, validateRoles(store, roles))
+	// Multiple roles missing
+	roles = append(roles, "roleThree")
+	err = validateRoles(store, roles)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "given roles")
 }

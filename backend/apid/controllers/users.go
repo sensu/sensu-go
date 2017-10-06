@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -324,11 +325,26 @@ func validateRoles(store store.RBACStore, givenRoles []string) error {
 		return err
 	}
 
+	missingRoles := []string{}
+
 	for _, givenRole := range givenRoles {
-		logger.Info(givenRole)
 		if present := hasRole(storedRoles, givenRole); !present {
-			return fmt.Errorf("given role '%s' is not valid", givenRole)
+			missingRoles = append(missingRoles, givenRole)
 		}
+	}
+
+	if len(missingRoles) != 0 {
+		message := "not exist and should be created first"
+		if len(missingRoles) == 1 {
+			message = fmt.Sprintf("given role '%s' does %s", missingRoles[0], message)
+		} else {
+			message = fmt.Sprintf(
+				"given roles '%s' do %s",
+				strings.Join(missingRoles, ", "),
+				message,
+			)
+		}
+		return fmt.Errorf(message)
 	}
 
 	return nil
