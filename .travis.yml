@@ -31,6 +31,8 @@ jobs:
             - echo "Building docker image...";
               docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
               docker push sensuapp/sensu-go:testing
+          on:
+            all_branches: true
         - provider: script
           script: "./build-gcs-release.sh"
           on:
