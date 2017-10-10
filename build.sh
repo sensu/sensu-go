@@ -248,7 +248,7 @@ elif [ "$cmd" == "e2e" ]; then
 elif [ "$cmd" == "ci" ]; then
   if [ "${@:2}" == "dashboard" ]; then
     test_dashboard
-  elif [ "${@:2}" == "dashboard" ]; then
+  elif [ "${@:2}" == "none" ]; then
     echo "noop"
   else
     linter_commands
@@ -259,7 +259,7 @@ elif [ "$cmd" == "ci" ]; then
 elif [ "$cmd" == "coverage" ]; then
   if [ "${@:2}" == "dashboard" ]; then
     ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s backend/dashboardd
-  elif [ "${@:2}" == "dashboard" ]; then
+  elif [ "${@:2}" == "none" ]; then
     echo "noop"
   else
     ./codecov.sh -t $CODECOV_TOKEN -cF go
