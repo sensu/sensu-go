@@ -4,13 +4,13 @@ services:
 language: go
 go:
   - 1.9.x
-branches:
-  only:
-  - master
+# branches:
+#   only:
+#   - master
 stages:
   - name: test
   - name: deploy
-    if: branch = master OR tag IS present
+    if: branch = bugfix/travis-build-stages OR tag IS present
 cache:
   yarn: true
   directories:
@@ -31,11 +31,12 @@ jobs:
           skip_cleanup: true
           script:
             - "./build.sh docker"
-            - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-              docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master;
-              docker push sensuapp/sensu-go:master
-          on:
-            branch: master
+            - echo "Building docker image..."
+              docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+              # docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:testing;
+              docker push sensuapp/sensu-go:testing
+          # on:
+          #   branch: master
         - provider: script
           script: "./build-gcs-release.sh"
           on:

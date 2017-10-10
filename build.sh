@@ -197,7 +197,7 @@ docker_commands () {
 		build_binary linux amd64 $cmd $cmd_name static
   done
 
-	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
+	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:testing .
 }
 
 check_for_presence_of_yarn() {
