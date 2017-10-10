@@ -31,7 +31,7 @@ jobs:
           skip_cleanup: true
           script:
             - "./build.sh docker"
-            - echo "Building docker image..."
+            - echo "Building docker image...";
               docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
               # docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:testing;
               docker push sensuapp/sensu-go:testing
