@@ -16,13 +16,13 @@ install:
   - "npm install --global yarn"
   - "./build.sh deps"
   - "./build.sh build_tools"
+script: "./build.sh ci $TEST_SUITE"
+after_script: "./build.sh coverage $TEST_SUITE"
 jobs:
   include:
-    - stage: test
-      script: "./build.sh ci $TEST_SUITE"
-      after_script: "./build.sh coverage $TEST_SUITE"
     - stage: deploy
       env: GOARCH=amd64 TEST_SUITE=none
+      script: skip
       deploy:
         - provider: script
           skip_cleanup: true
