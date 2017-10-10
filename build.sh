@@ -242,7 +242,7 @@ build_dashboard() {
 }
 
 bundle_static_assets() {
-	fileb0x backend/dashboardd/b0x.yaml
+	fileb0x ./.b0x.yaml
 }
 
 if [ "$cmd" == "deps" ]; then
