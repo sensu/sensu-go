@@ -37,7 +37,6 @@ install_deps () {
 	go get github.com/gordonklaus/ineffassign
 	go get github.com/jgautheron/goconst/cmd/goconst
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/UnnoTed/fileb0x
 }
 
 cmd_name_map() {
@@ -191,11 +190,15 @@ docker_commands () {
 		build_tool_binary linux amd64 $cmd "handlers"
 	done
 
+	install_dashboard_deps
+	build_dashboard
+	bundle_static_assets
+
 	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
 		local cmd_name=$(cmd_name_map $cmd)
 		build_binary linux amd64 $cmd $cmd_name static
-  done
+	done
 
 	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
 }
@@ -209,24 +212,29 @@ check_for_presence_of_yarn() {
   fi
 }
 
-test_dashboard () {
+install_dashboard_deps() {
+  go get -u github.com/UnnoTed/fileb0x
   check_for_presence_of_yarn
   cd backend/dashboardd
   yarn install
+  cd $OLDPWD
+}
+
+test_dashboard() {
+  cd backend/dashboardd
   yarn lint
   yarn test --coverage
   cd $OLDPWD
 }
 
 build_dashboard() {
-  check_for_presence_of_yarn
   cd backend/dashboardd
   yarn install
   yarn build
   cd $OLDPWD
 }
 
-bundle_static_assets () {
+bundle_static_assets() {
 	fileb0x backend/dashboardd/b0x.yaml
 }
 
@@ -247,6 +255,7 @@ elif [ "$cmd" == "e2e" ]; then
 	e2e_commands "${@:2}"
 elif [ "$cmd" == "ci" ]; then
   if [ "${@:2}" == "dashboard" ]; then
+    install_dashboard_deps
     test_dashboard
   elif [ "${@:2}" == "none" ]; then
     echo "noop"
@@ -275,6 +284,7 @@ elif [ "$cmd" == "build_backend" ]; then
 elif [ "$cmd" == "build_cli" ]; then
 	build_command cli
 elif [ "$cmd" == "build_dashboard" ]; then
+	install_dashboard_deps
 	build_dashboard
 	bundle_static_assets
 else

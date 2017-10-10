@@ -1,8 +1,8 @@
 FROM ubuntu:16.04
 
-ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GOROOT="/usr/local/go"
 ENV GOPATH="/go"
+ENV PATH="${GOROOT}/bin:${GOPATH}/bin:${PATH}"
 
 RUN apt-get update && \
   apt-get install -y ruby ruby-dev build-essential rpm rpmlint wget git curl && \
