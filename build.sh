@@ -191,7 +191,7 @@ docker_commands () {
 		build_tool_binary linux amd64 $cmd "handlers"
 	done
 
-	for cmd in agent backend cli dashboard; do
+	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
 		local cmd_name=$(cmd_name_map $cmd)
 		build_binary linux amd64 $cmd $cmd_name static
