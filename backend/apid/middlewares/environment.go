@@ -37,9 +37,10 @@ func (m Environment) Then(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), types.OrganizationKey, org)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, types.OrganizationKey, org)
 		ctx = context.WithValue(ctx, types.EnvironmentKey, env)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
 	})
 }
