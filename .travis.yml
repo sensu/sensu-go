@@ -26,9 +26,7 @@ after_script:
 jobs:
   include:
     - stage: deploy
-      env: 
-        - GOARCH=amd64
-        - TEST_SUITE=none
+      env: GOARCH=amd64 TEST_SUITE=none
       deploy:
         - provider: script
           skip_cleanup: true
