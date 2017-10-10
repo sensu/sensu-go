@@ -18,6 +18,7 @@ install:
   - "./build.sh build_tools"
 # script: "./build.sh ci $TEST_SUITE"
 # after_script: "./build.sh coverage $TEST_SUITE"
+script: "echo 0"
 jobs:
   include:
     - stage: deploy
