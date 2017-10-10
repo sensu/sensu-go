@@ -26,9 +26,12 @@ after_script:
 jobs:
   include:
     - stage: deploy
-      env: GOARCH=amd64
+      env: 
+        - GOARCH=amd64
+        - TEST_SUITE=none
       deploy:
         - provider: script
+          skip_cleanup: true
           script:
             - "./build.sh docker"
             - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
