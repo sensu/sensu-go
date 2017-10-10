@@ -4,9 +4,6 @@ services:
 language: go
 go:
   - 1.9.x
-# branches:
-#   only:
-#   - master
 stages:
   - name: test
   - name: deploy
@@ -33,10 +30,7 @@ jobs:
             - "./build.sh docker"
             - echo "Building docker image...";
               docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-              # docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:testing;
               docker push sensuapp/sensu-go:testing
-          # on:
-          #   branch: master
         - provider: script
           script: "./build-gcs-release.sh"
           on:
