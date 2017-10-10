@@ -46,9 +46,8 @@ func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(checksBytes))
+	fmt.Fprint(w, string(checksBytes))
 }
 
 // single handles requests to /checks/:name
