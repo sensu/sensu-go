@@ -27,11 +27,7 @@ jobs:
       deploy:
         - provider: script
           skip_cleanup: true
-          script:
-            - echo "Building docker image..."
-            - "/bin/sh build.sh docker"
-            - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-              docker push sensuapp/sensu-go:testing
+          script: "/bin/sh build.sh docker"
           on:
             all_branches: true
         - provider: script
