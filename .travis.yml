@@ -10,7 +10,7 @@ branches:
 stages:
   - name: test
   - name: deploy
-    if: branch = skip-cleanup OR tag IS present
+    # if: branch = skip-cleanup OR tag IS present
 cache:
   yarn: true
   directories:
