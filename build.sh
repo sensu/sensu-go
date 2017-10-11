@@ -76,7 +76,6 @@ build_binary () {
 	local static=$5
 
 	local outfile="target/${goos}-${goarch}/${cmd_name}"
-	local additional_flags=""
 
 	local version=$(cat version/version.txt)
 	local prerelease=$(cat version/prerelease.txt)
@@ -89,12 +88,10 @@ build_binary () {
 	local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
 	local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 	if [ "$static" == "static" ]; then
-		# local ldflags+=" -extldflags \"-static\""
 		local ldflags=" -linkmode=external -extldflags=-static"
-		# local additional_flags+=" -tags netgo -installsuffix netgo"
 	fi
 
-	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $additional_flags -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
 	echo $outfile
 }
@@ -204,12 +201,12 @@ docker_commands () {
 		build_binary linux amd64 $cmd $cmd_name static
 	done
 
-	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:debug .
+	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
 
 	if [ "$push" == "push" ]; then
 		docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-		# docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
-		docker push sensuapp/sensu-go:debug
+		docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
+		docker push sensuapp/sensu-go:master
 	fi
 }
 
