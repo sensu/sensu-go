@@ -201,12 +201,12 @@ docker_commands () {
 		build_binary linux amd64 $cmd $cmd_name static
 	done
 
-	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
+	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:debug .
 
 	if [ "$push" == "push" ]; then
 		docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-		docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
-		docker push sensuapp/sensu-go:master
+		# docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
+		docker push sensuapp/sensu-go:debug
 	fi
 }
 
