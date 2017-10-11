@@ -27,7 +27,7 @@ jobs:
       deploy:
         - provider: script
           skip_cleanup: true
-          script: "./build.sh docker"
+          script: "./build.sh docker push"
           on:
             all_branches: true
         - provider: script

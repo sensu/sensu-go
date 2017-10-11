@@ -179,6 +179,7 @@ e2e_commands () {
 }
 
 docker_commands () {
+	local push=$1
 	local build_sha=$(git rev-parse HEAD)
 
 	for cmd in cat false sleep true; do
@@ -198,6 +199,13 @@ docker_commands () {
   done
 
 	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:testing .
+
+	if [ "$push" == "push" ]; then
+		echo $DOCKER_USERNAME
+		docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+		# docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
+		docker push sensuapp/sensu-go:testing
+	fi
 }
 
 check_for_presence_of_yarn() {
@@ -267,7 +275,7 @@ elif [ "$cmd" == "coverage" ]; then
 elif [ "$cmd" == "build" ]; then
 	build_commands
 elif [ "$cmd" == "docker" ]; then
-	docker_commands
+	docker_commands "${@:2}"
 elif [ "$cmd" == "build_agent" ]; then
 	build_command agent
 elif [ "$cmd" == "build_backend" ]; then
