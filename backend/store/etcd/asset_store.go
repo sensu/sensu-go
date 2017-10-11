@@ -23,7 +23,9 @@ func getAssetPath(asset *types.Asset) string {
 }
 
 func getAssetsPath(ctx context.Context, name string) string {
-	return assetKeyBuilder.withContext(ctx).build(name)
+	org := organization(ctx)
+
+	return assetKeyBuilder.withOrg(org).build(name)
 }
 
 // TODO Cleanup associated checks?
