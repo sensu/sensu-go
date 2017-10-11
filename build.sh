@@ -76,6 +76,7 @@ build_binary () {
 	local static=$5
 
 	local outfile="target/${goos}-${goarch}/${cmd_name}"
+	local additional_flags=""
 
 	local version=$(cat version/version.txt)
 	local prerelease=$(cat version/prerelease.txt)
@@ -88,10 +89,12 @@ build_binary () {
 	local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
 	local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 	if [ "$static" == "static" ]; then
-		local ldflags+=" -extldflags \"-static\""
+		# local ldflags+=" -extldflags \"-static\""
+		local ldflags=" -d"
+		local additional_flags+=" -tags netgo -installsuffix netgo"
 	fi
 
-	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $additional_flags -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
 	echo $outfile
 }
