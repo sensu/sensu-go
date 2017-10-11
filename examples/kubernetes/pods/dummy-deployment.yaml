@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: sensu-agent
-          image: us.gcr.io/monitorama-166316/sensu-agent
+          image: gcr.io/sensu-2-demo/sensu-go
           command: ["/opt/sensu/bin/sensu-agent", "start"]
           env:
             - name: SENSU_BACKEND_URL
