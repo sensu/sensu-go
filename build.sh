@@ -88,7 +88,7 @@ build_binary () {
 	local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
 	local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 	if [ "$static" == "static" ]; then
-		local ldflags=" -linkmode=external -extldflags=-static"
+		local ldflags+=" -linkmode=external -extldflags=-static"
 	fi
 
 	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
