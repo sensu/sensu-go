@@ -91,7 +91,7 @@ build_binary () {
 	if [ "$static" == "static" ]; then
 		# local ldflags+=" -extldflags \"-static\""
 		local ldflags=" -linkmode=external -extldflags=-static"
-		local additional_flags+=" -tags netgo -installsuffix netgo"
+		# local additional_flags+=" -tags netgo -installsuffix netgo"
 	fi
 
 	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $additional_flags -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
