@@ -40,6 +40,33 @@ func TestHttpApiChecksGet(t *testing.T) {
 	assert.EqualValues(t, checks, returnedChecks)
 }
 
+func TestHttpApiChecksGetPercent(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &ChecksController{
+		Store: store,
+	}
+
+	checkConfig := types.FixtureCheckConfig("check1")
+	checkConfig.Command = "/usr/lib/nagios/plugins/check_ping -H 192.168.250.123 -w 50,5% -c 100,10%"
+	checks := []*types.CheckConfig{
+		checkConfig,
+	}
+	store.On("GetCheckConfigs", mock.Anything).Return(checks, nil)
+	req := newRequest("GET", "/checks", nil)
+	res := processRequest(c, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	body := res.Body.Bytes()
+
+	returnedChecks := []*types.CheckConfig{}
+	err := json.Unmarshal(body, &returnedChecks)
+
+	assert.NoError(t, err)
+	assert.EqualValues(t, checks, returnedChecks)
+}
+
 func TestHttpApiChecksGetError(t *testing.T) {
 	store := &mockstore.MockStore{}
 

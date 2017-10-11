@@ -47,7 +47,7 @@ func (c *MutatorsController) many(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(mutatorsBytes))
+	fmt.Fprint(w, string(mutatorsBytes))
 }
 
 // single handles requests to /mutators/:name
@@ -94,7 +94,7 @@ func (c *MutatorsController) single(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, string(mutatorBytes))
+		fmt.Fprint(w, string(mutatorBytes))
 	case http.MethodPut, http.MethodPost:
 		newMutator := &types.Mutator{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)

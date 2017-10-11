@@ -46,9 +46,8 @@ func (c *ChecksController) many(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(checksBytes))
+	fmt.Fprint(w, string(checksBytes))
 }
 
 // single handles requests to /checks/:name
@@ -94,7 +93,7 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Fprintf(w, string(checkBytes))
+		fmt.Fprint(w, string(checkBytes))
 	case http.MethodPut, http.MethodPost:
 		newCheck := &types.CheckConfig{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)
