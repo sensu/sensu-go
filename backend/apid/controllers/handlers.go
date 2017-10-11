@@ -47,7 +47,7 @@ func (c *HandlersController) many(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(handlersBytes))
+	fmt.Fprint(w, string(handlersBytes))
 }
 
 // single handles requests to /handlers/:name
@@ -94,7 +94,7 @@ func (c *HandlersController) single(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, string(handlerBytes))
+		fmt.Fprint(w, string(handlerBytes))
 	case http.MethodPut, http.MethodPost:
 		newHandler := &types.Handler{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)

@@ -93,7 +93,7 @@ func (c *ChecksController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Fprintf(w, string(checkBytes))
+		fmt.Fprint(w, string(checkBytes))
 	case http.MethodPut, http.MethodPost:
 		newCheck := &types.CheckConfig{}
 		bodyBytes, err := ioutil.ReadAll(r.Body)

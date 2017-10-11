@@ -93,7 +93,7 @@ func (c *AssetsController) single(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Fprintf(w, string(assetBytes))
+		fmt.Fprint(w, string(assetBytes))
 	case http.MethodPut, http.MethodPost:
 		switch {
 		case asset == nil && !abilities.CanCreate():
