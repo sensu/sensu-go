@@ -191,9 +191,9 @@ docker_commands () {
 		build_tool_binary linux amd64 $cmd "handlers"
 	done
 
-	install_dashboard_deps
-	build_dashboard
-	bundle_static_assets
+	# install_dashboard_deps
+	# build_dashboard
+	# bundle_static_assets
 
 	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
