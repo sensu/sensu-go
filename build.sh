@@ -90,7 +90,7 @@ build_binary () {
 	local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 	if [ "$static" == "static" ]; then
 		# local ldflags+=" -extldflags \"-static\""
-		local ldflags=" -d"
+		local ldflags=" -linkmode=external -extldflags=-static"
 		local additional_flags+=" -tags netgo -installsuffix netgo"
 	fi
 
