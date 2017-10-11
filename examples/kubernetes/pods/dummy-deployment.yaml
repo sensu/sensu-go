@@ -20,4 +20,4 @@ spec:
             - name: SENSU_SUBSCRIPTIONS
               value: dummy
         - name: dummy-service
-          image: grepory/dummy
+          image: gcr.io/sensu-2-demo/dummy
