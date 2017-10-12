@@ -8,9 +8,9 @@ import (
 var eventType *graphql.Union
 
 func init() {
-	eventType := graphql.NewUnion(graphql.UnionConfig{
+	eventType = graphql.NewUnion(graphql.UnionConfig{
 		Name:        "Event",
-		Description: "???", // TODO: ???
+		Description: "Describes check result or metric collected.",
 		Types: []*graphql.Object{
 			checkEventType,
 			metricEventType,

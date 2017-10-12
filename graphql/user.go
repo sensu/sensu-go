@@ -2,8 +2,11 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/relay"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/graphql/globalid"
+	"github.com/sensu/sensu-go/graphql/relay"
 	"github.com/sensu/sensu-go/types"
+	"golang.org/x/net/context"
 )
 
 var userType *graphql.Object
@@ -12,10 +15,17 @@ func init() {
 	userType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "User",
 		Interfaces: []*graphql.Interface{
-			nodeDefinitions.NodeInterface,
+			nodeInterface,
 		},
 		Fields: graphql.Fields{
-			"id":       relay.GlobalIDField("User", nil),
+			"id": &graphql.Field{
+				Description: "The ID of an object",
+				Type:        graphql.NewNonNull(graphql.ID),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					idComponents := globalid.UserResource.Encode(p.Source)
+					return idComponents.String(), nil
+				},
+			},
 			"username": &graphql.Field{Type: graphql.String},
 			"disabled": &graphql.Field{Type: graphql.Boolean},
 			"hasPassword": &graphql.Field{
@@ -27,6 +37,19 @@ func init() {
 			},
 			// NOTE: Something where we'd probably want to restrict access
 			"roles": &graphql.Field{Type: graphql.NewList(graphql.String)},
+		},
+	})
+
+	nodeRegister.RegisterResolver(relay.NodeResolver{
+		Object:     userType,
+		Translator: globalid.UserResource,
+		Resolve: func(ctx context.Context, c globalid.Components) (interface{}, error) {
+			components := c.(globalid.NamedComponents)
+			store := ctx.Value(types.StoreKey).(store.UserStore)
+
+			// TODO: Filter out unauthorized results
+			record, err := store.GetUser(components.Name())
+			return record, err
 		},
 	})
 }

@@ -5,10 +5,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var multitenantResource *graphql.Interface
+var multitenantInterface *graphql.Interface
 
 func init() {
-	multitenantResource = graphql.NewInterface(graphql.InterfaceConfig{
+	multitenantInterface = graphql.NewInterface(graphql.InterfaceConfig{
 		Name:        "MultitenantResource",
 		Description: "A resource that belong to an organization and environment",
 		Fields: graphql.Fields{

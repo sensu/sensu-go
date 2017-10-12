@@ -6,7 +6,10 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-// AliasField TODO: ...
+// AliasField makes it quick and easy to create a field that reflects a
+// different field on given resource.
+//
+// TODO: This should be replaced be a generic resolver and not a field; more flexibility.
 func AliasField(T graphql.Output, fNames ...string) *graphql.Field {
 	return &graphql.Field{
 		Type: T,

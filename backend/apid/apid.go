@@ -192,10 +192,8 @@ func registerRestrictedResources(
 	usersController := &controllers.UsersController{
 		Store: store,
 	}
-	userscontroller.register(commonRouter)
+	usersController.Register(commonRouter)
 
-	graphqlController := &controllers.graphqlController{
-		store: store,
-	}
-	userscontroller.register(commonRouter)
+	graphqlController := &controllers.GraphController{Store: store}
+	graphqlController.Register(commonRouter)
 }

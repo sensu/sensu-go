@@ -1,56 +1,38 @@
 package graphqlschema
 
 import (
-	"errors"
-
 	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/relay"
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
+	"github.com/sensu/sensu-go/graphql/globalid"
+	"github.com/sensu/sensu-go/graphql/relay"
 )
 
-var nodeDefinitions *relay.NodeDefinitions
+var nodeInterface *graphql.Interface
+var nodeRegister = relay.NodeRegister{}
 
 func init() {
-	nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
-		IDFetcher: func(id string, info graphql.ResolveInfo, ctx context.Context) (interface{}, error) {
-			// resolve id from global id
-			gidComponents := relay.FromGlobalID(id)
-			store := ctx.Value(types.StoreKey).(store.Store)
-
-			// based on id and its type, return the object
-			switch gidComponents.Type {
-			case "CheckEvent":
-				// TODO
-				return types.FixtureEvent("a", "b"), nil
-			case "MetricEvent":
-				// TODO
-				return types.FixtureEvent("a", "b"), nil
-			case "Entity":
-				entity, err := store.GetEntityByID(ctx, gidComponents.ID)
-				return entity, err
-			case "Check":
-				check, err := store.GetCheckConfigByName(ctx, gidComponents.ID)
-				return check, err
-			case "User":
-				user, err := store.GetUser(gidComponents.ID)
-				return user, err
-			default:
-				return nil, errors.New("Unknown node type")
-			}
+	nodeInterface = graphql.NewInterface(graphql.InterfaceConfig{
+		Name:        "Node",
+		Description: "An object with an ID",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type:        graphql.NewNonNull(graphql.ID),
+				Description: "The id of the object",
+			},
 		},
-		TypeResolve: func(p graphql.ResolveTypeParams) *graphql.Object {
-			// based on the type of the value, return GraphQLObjectType
-			switch p.Value.(type) {
-			// TODO
-			// case *types.Event:
-			// 	return checkEventType
-			// case *types.Entity:
-			// 	return entityType
-			default:
-				return nil
+		//
+		// TODO:
+		//
+		// I believe calls to this closure are relatively frequent and this
+		// process is convoluted and a far cry from optimal. Likely place to focus
+		// for future optimizations.
+		//
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
+			if translator, err := globalid.ReverseLookup(p.Value); err != nil {
+				components := translator.Encode(p.Value)
+				resolver := nodeRegister.Lookup(components)
+				return resolver.Object
 			}
+			return nil
 		},
 	})
 }

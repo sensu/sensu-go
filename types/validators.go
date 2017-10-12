@@ -11,10 +11,10 @@ type ConstrainedResource interface {
 }
 
 // NameRegex is used to validate the name of a resource
-var NameRegex = regexp.MustCompile(`\A[\w.-]+\z`)
+var NameRegex = regexp.MustCompile(`\A[\w\.\-]+\z`)
 
 // StrictNameRegex is used to validate names of resources using a strict subset of charset.
-var StrictNameRegex = regexp.MustCompile(`^[a-z0-9\_\.\-]+$`)
+var StrictNameRegex = regexp.MustCompile(`\A[a-z0-9\_\.\-]+\z`)
 
 func validateHandlerType(t string) error {
 	if t == "" {
