@@ -23,7 +23,6 @@ func (opts *orgOpts) withOrg(org *types.Organization) {
 
 func (opts *orgOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Description, _ = flags.GetString("description")
-	opts.Name, _ = flags.GetString("name")
 }
 
 func (opts *orgOpts) administerQuestionnaire(editing bool) {

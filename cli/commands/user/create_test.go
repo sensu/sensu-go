@@ -30,10 +30,9 @@ func TestListCommandRunEClosureWithArgs(t *testing.T) {
 	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("username", "bob")
 	cmd.Flags().Set("password", "b0b")
 
-	out, err := test.RunCmd(cmd, []string{})
+	out, err := test.RunCmd(cmd, []string{"bob"})
 
 	assert.Contains(out, "Created")
 	assert.NoError(err)
@@ -64,12 +63,11 @@ func TestListCommandRunEClosureWithRoles(t *testing.T) {
 	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("username", "bob")
 	cmd.Flags().Set("password", "b0b")
 	cmd.Flags().Set("roles", "     meowmix , marxist   ")
 	cmd.Flags().Set("admin", "t")
 
-	out, err := test.RunCmd(cmd, []string{})
+	out, err := test.RunCmd(cmd, []string{"bob"})
 
 	assert.Contains(out, "Created")
 	assert.NoError(err)

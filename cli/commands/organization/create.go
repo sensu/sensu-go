@@ -55,10 +55,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("description", "", "", "Description of organization")
-	cmd.Flags().StringP("name", "", "", "Name of organization")
-
-	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("name")
 
 	return cmd
 }

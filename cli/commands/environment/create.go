@@ -63,7 +63,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("description", "", "", "Description of environment")
-	cmd.Flags().StringP("name", "", "", "Name of environment")
 	// TODO (Simon): We should be able to use --organization instead but
 	// the environment middleware verifies that the env exists in the given org,
 	// even if we are actually create this env

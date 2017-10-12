@@ -87,8 +87,10 @@ type ConfigureAsset struct {
 func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 	isInteractive := cfgPtr.Flags.NFlag() == 0
 
-	if len(cfgPtr.Args) > 0 {
+	if len(cfgPtr.Args) == 1 {
 		cfgPtr.cfg.Name = cfgPtr.Args[0]
+	} else if len(cfgPtr.Args) > 1 {
+		cfgPtr.addError(errors.New("too many arguments given"))
 	}
 
 	if isInteractive {

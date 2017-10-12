@@ -53,7 +53,9 @@ func TestRBAC(t *testing.T) {
 	//        -- prod-check (check)
 	//        -- prod-handler (handler)
 
-	output, err = adminctl.run("organization", "create", "acme")
+	output, err = adminctl.run("organization", "create", "acme",
+		"--description", "acme",
+	)
 	assert.NoError(t, err, string(output))
 
 	output, err = adminctl.run("environment", "create", "dev",
