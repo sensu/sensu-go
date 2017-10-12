@@ -30,13 +30,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 			opts := &createOpts{}
 
+			if len(args) > 0 {
+				opts.Username = args[0]
+			}
+
 			if isInteractive {
 				opts.administerQuestionnaire()
 			} else {
 				opts.withFlags(flags)
-				if len(args) > 0 {
-					opts.Username = args[0]
-				}
 			}
 
 			user := opts.toUser()
@@ -62,20 +63,17 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("username", "u", "", "Username")
 	cmd.Flags().StringP("password", "p", "", "Password")
 	cmd.Flags().Bool("admin", false, "Give user the administrator role")
 	cmd.Flags().StringP("roles", "r", "", "Comma separated list of roles to assign")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("username")
 	cmd.MarkFlagRequired("password")
 
 	return cmd
 }
 
 func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
-	opts.Username, _ = flags.GetString("username")
 	opts.Password, _ = flags.GetString("password")
 	opts.Roles, _ = flags.GetString("roles")
 
@@ -90,6 +88,7 @@ func (opts *createOpts) administerQuestionnaire() {
 			Name: "username",
 			Prompt: &survey.Input{
 				Message: "Username:",
+				Default: opts.Username,
 			},
 			Validate: survey.Required,
 		},

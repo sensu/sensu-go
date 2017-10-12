@@ -34,8 +34,8 @@ func (opts *orgOpts) administerQuestionnaire(editing bool) {
 			{
 				Name: "name",
 				Prompt: &survey.Input{
-					"Name:",
-					opts.Name,
+					Message: "Name:",
+					Default: opts.Name,
 				},
 				Validate: survey.Required,
 			},

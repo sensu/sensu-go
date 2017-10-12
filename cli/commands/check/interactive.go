@@ -63,7 +63,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) {
 				Name: "name",
 				Prompt: &survey.Input{
 					Message: "Check Name:",
-					Default: "",
+					Default: opts.Name,
 				},
 				Validate: survey.Required,
 			},

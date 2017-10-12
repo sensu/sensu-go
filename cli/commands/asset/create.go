@@ -85,11 +85,17 @@ type ConfigureAsset struct {
 
 // Configure returns a new asset or returns error if arguments are invalid
 func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
+	isInteractive := cfgPtr.Flags.NFlag() == 0
+
 	if len(cfgPtr.Args) > 0 {
-		cfgPtr.configureFromFlags()
-	} else {
+		cfgPtr.cfg.Name = cfgPtr.Args[0]
+	}
+
+	if isInteractive {
 		cfgPtr.setOrg()
 		cfgPtr.administerQuestionaire()
+	} else {
+		cfgPtr.configureFromFlags()
 	}
 
 	var asset types.Asset
@@ -101,8 +107,11 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 func (cfgPtr *ConfigureAsset) administerQuestionaire() {
 	var qs = []*survey.Question{
 		{
-			Name:     "name",
-			Prompt:   &survey.Input{Message: "Name:"},
+			Name: "name",
+			Prompt: &survey.Input{
+				Message: "Name:",
+				Default: cfgPtr.cfg.Name,
+			},
 			Validate: survey.Required,
 		},
 		{
