@@ -51,6 +51,7 @@ func TestSendLoop(t *testing.T) {
 	cfg := NewConfig()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 	err := ta.Run()
 	assert.NoError(t, err)
@@ -93,6 +94,7 @@ func TestReceiveLoop(t *testing.T) {
 	cfg := NewConfig()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 	ta.addHandler("testMessageType", func(payload []byte) error {
 		msg := &testMessageType{}
@@ -143,6 +145,7 @@ func TestReconnect(t *testing.T) {
 	cfg := NewConfig()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 	err := ta.Run()
 	assert.NoError(t, err)
@@ -172,7 +175,7 @@ func TestReceiveTCP(t *testing.T) {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	tcpClient, err := net.Dial("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
@@ -208,7 +211,7 @@ func TestReceiveCheckTCP(t *testing.T) {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	tcpClient, err := net.Dial("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
@@ -244,7 +247,7 @@ func TestUDP(t *testing.T) {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	udpClient, err := net.Dial("tcp", ":3030")
+	udpClient, err := net.Dial("tcp", "127.0.0.1:3030")
 	if err != nil {
 		assert.FailNow("failed to create UDP connection")
 	}
@@ -279,7 +282,7 @@ func TestReceivePingTCP(t *testing.T) {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	tcpClient, err := net.Dial("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
@@ -319,7 +322,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	}
 
 	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
-	tcpClient, err := net.Dial("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
@@ -353,7 +356,7 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	}
 
 	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
-	tcpClient, err := net.Dial("tcp", ":3030")
+	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
