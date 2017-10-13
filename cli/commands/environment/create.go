@@ -20,13 +20,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 			opts := envOpts{}
 
+			if len(args) > 0 {
+				opts.Name = args[0]
+			}
+
 			if isInteractive {
 				opts.administerQuestionnaire(false)
 			} else {
 				opts.withFlags(flags)
-				if len(args) > 0 {
-					opts.Name = args[0]
-				}
 			}
 
 			env := types.Environment{}
@@ -62,7 +63,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("description", "", "", "Description of environment")
-	cmd.Flags().StringP("name", "", "", "Name of environment")
 	// TODO (Simon): We should be able to use --organization instead but
 	// the environment middleware verifies that the env exists in the given org,
 	// even if we are actually create this env

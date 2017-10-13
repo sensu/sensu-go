@@ -80,8 +80,10 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) {
 	if !editing {
 		qs = append(qs, []*survey.Question{
 			{
-				Name:     "name",
-				Prompt:   &survey.Input{"Handler Name:", ""},
+				Name: "name",
+				Prompt: &survey.Input{
+					Message: "Handler Name:",
+					Default: opts.Name},
 				Validate: survey.Required,
 			},
 			{

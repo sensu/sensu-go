@@ -20,13 +20,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			opts := newCheckOpts()
 
+			if len(args) > 0 {
+				opts.Name = args[0]
+			}
+
 			if isInteractive {
 				opts.administerQuestionnaire(false)
 			} else {
 				opts.withFlags(flags)
-				if len(args) > 0 {
-					opts.Name = args[0]
-				}
 			}
 
 			if opts.Org == "" {

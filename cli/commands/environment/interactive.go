@@ -13,13 +13,12 @@ type envOpts struct {
 }
 
 func (opts *envOpts) withEnv(env *types.Environment) {
-	opts.Description = env.Description
 	opts.Name = env.Name
+	opts.Description = env.Description
 }
 
 func (opts *envOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Description, _ = flags.GetString("description")
-	opts.Name, _ = flags.GetString("name")
 	opts.Org, _ = flags.GetString("org")
 }
 

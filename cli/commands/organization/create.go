@@ -20,13 +20,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 			opts := newOrgOpts()
 
+			if len(args) > 0 {
+				opts.Name = args[0]
+			}
+
 			if isInteractive {
 				opts.administerQuestionnaire(false)
 			} else {
 				opts.withFlags(flags)
-				if len(args) > 0 {
-					opts.Name = args[0]
-				}
 			}
 
 			org := types.Organization{}
@@ -54,10 +55,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("description", "", "", "Description of organization")
-	cmd.Flags().StringP("name", "", "", "Name of organization")
-
-	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("name")
 
 	return cmd
 }
