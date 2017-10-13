@@ -38,6 +38,8 @@ const (
 	flagKeepaliveInterval     = "keepalive-interval"
 	flagAPIHost               = "api-host"
 	flagAPIPort               = "api-port"
+	flagSocketHost            = "socket-host"
+	flagSocketPort            = "socket-port"
 )
 
 func init() {
@@ -93,6 +95,8 @@ func newStartCommand() *cobra.Command {
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.API.Host = viper.GetString(flagAPIHost)
 			cfg.API.Port = viper.GetInt(flagAPIPort)
+			cfg.Socket.Host = viper.GetString(flagSocketHost)
+			cfg.Socket.Port = viper.GetInt(flagSocketPort)
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
@@ -165,6 +169,8 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagKeepaliveInterval, 20)
 	viper.SetDefault(flagAPIHost, "127.0.0.1")
 	viper.SetDefault(flagAPIPort, 3031)
+	viper.SetDefault(flagSocketHost, "127.0.0.1")
+	viper.SetDefault(flagSocketPort, 3030)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -182,7 +188,9 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().Uint(flagKeepaliveTimeout, uint(viper.Get(flagKeepaliveTimeout).(int)), "number of seconds until agent is considered dead by backend")
 	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
-	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address the HTTP API listens on")
-	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the HTTP API listens on")
+	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
+	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
+	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
+	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
 	return cmd
 }

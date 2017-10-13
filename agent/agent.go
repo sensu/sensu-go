@@ -30,8 +30,6 @@ const (
 	// MaxMessageBufferSize specifies the maximum number of messages of a given
 	// type that an agent will queue before rejecting messages.
 	MaxMessageBufferSize = 10
-	// ListenPort is used for TCP and UDP socket listeners on the agent.
-	ListenPort = ":3030"
 )
 
 // A Config specifies Agent configuration.
@@ -64,8 +62,16 @@ type Config struct {
 	Password string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
-	// API contains the HTTP API configuration
+	// API contains the Sensu client HTTP API configuration
 	API *APIConfig
+	// Socket contains the Sensu client socket configuration
+	Socket *SocketConfig
+}
+
+// SocketConfig contains the Socket configuration
+type SocketConfig struct {
+	Host string
+	Port int
 }
 
 // NewConfig provides a new Config object initialized with defaults.
@@ -83,6 +89,10 @@ func NewConfig() *Config {
 		API: &APIConfig{
 			Host: "127.0.0.1",
 			Port: 3031,
+		},
+		Socket: &SocketConfig{
+			Host: "127.0.0.1",
+			Port: 3030,
 		},
 	}
 
@@ -131,10 +141,11 @@ func NewAgent(config *Config) *Agent {
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
 func (a *Agent) createListenSockets() error {
+	addr := fmt.Sprintf("%s:%d", a.config.Socket.Host, a.config.Socket.Port)
 
 	// Setup UDP socket listener
-	logger.Infof("starting UDP listener on port %s", ListenPort)
-	UDPServerAddr, err := net.ResolveUDPAddr("udp", ListenPort)
+	logger.Infof("starting UDP listener on %s", addr)
+	UDPServerAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return err
 	}
@@ -143,13 +154,14 @@ func (a *Agent) createListenSockets() error {
 	if err == nil {
 		go a.handleUDPMessages(udpListen)
 	}
+
 	// Setup TCP socket listener
-	TCPServerAddr, err := net.ResolveTCPAddr("tcp", ListenPort)
+	TCPServerAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		return err
 	}
 
-	logger.Infof("starting TCP listener on port %s", ListenPort)
+	logger.Infof("starting TCP listener on %s", addr)
 	tcpListen, err := net.ListenTCP("tcp", TCPServerAddr)
 	if err != nil {
 		return err
