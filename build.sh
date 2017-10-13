@@ -261,10 +261,10 @@ elif [ "$cmd" == "e2e" ]; then
 	build_commands
 	e2e_commands "${@:2}"
 elif [ "$cmd" == "ci" ]; then
-  if [ "${@:2}" == "dashboard" ]; then
+  if [[ ${@:2} == "dashboard" ]]; then
     install_dashboard_deps
     test_dashboard
-  elif [ "${@:2}" == "none" ]; then
+  elif [[ ${@:2} == "none" ]]; then
     echo "noop"
   else
     linter_commands
