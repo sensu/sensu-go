@@ -1,13 +1,18 @@
 package graphqlschema
 
-import "github.com/graphql-go/graphql"
+import (
+	"github.com/graphql-go/graphql"
+)
 
-var Schema graphql.Schema
+var schemaMemo *graphql.Schema
 
-func init() {
-	var err error
+// Schema ...
+func Schema() graphql.Schema {
+	if schemaMemo != nil {
+		return *schemaMemo
+	}
 
-	Schema, err = graphql.NewSchema(graphql.SchemaConfig{
+	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query: queryType,
 		// Mutation: mutationType,
 		// Subscription: subscriptionType,
@@ -17,4 +22,7 @@ func init() {
 		logEntry := logger.WithError(err)
 		logEntry.Fatal("unable to configure GraphQL schema")
 	}
+
+	schemaMemo = &schema
+	return schema
 }

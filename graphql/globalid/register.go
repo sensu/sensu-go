@@ -51,7 +51,11 @@ type Register struct {
 // NewRegister instatiates new register.
 func NewRegister() Register {
 	logger := defaultLogger.WithField("subcomponent", "register")
-	return Register{Logger: logger}
+
+	return Register{
+		Logger:    logger,
+		resources: make(map[string]Resource),
+	}
 }
 
 // Lookup given ID components return applicable encoder

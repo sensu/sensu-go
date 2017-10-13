@@ -20,8 +20,8 @@ func (m SimpleLogger) Then(next http.Handler) http.Handler {
 		duration := float64(time.Now().Sub(start)) / float64(time.Millisecond)
 		logEntry := logger.WithFields(logrus.Fields{
 			"duration": fmt.Sprintf("%.3fms", duration),
-			"status":   r.Response.Status,
-			"path":     r.URL.Path,
+			// "status":   r.Response.Status,
+			"path": r.URL.Path,
 		})
 		logEntry.Info("request")
 	})

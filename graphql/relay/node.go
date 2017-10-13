@@ -37,12 +37,17 @@ func (register NodeRegister) RegisterResolver(resolver NodeResolver) {
 				"can properly route fetches.",
 		)
 	}
+
+	register[translatorName] = entry
 }
 
 // Lookup given parsed globalid return valid resolver.
 func (register NodeRegister) Lookup(components globalid.Components) *NodeResolver {
 	entries := register[components.Resource()]
 	entriesLen := len(entries)
+
+	logEntry := logger.WithField("registerContents", register)
+	logEntry.Info("lookup")
 
 	if entriesLen > 1 {
 		for _, entry := range entries {

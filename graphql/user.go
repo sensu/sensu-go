@@ -14,29 +14,37 @@ var userType *graphql.Object
 func init() {
 	userType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "User",
-		Interfaces: []*graphql.Interface{
-			nodeInterface,
-		},
-		Fields: graphql.Fields{
-			"id": &graphql.Field{
-				Description: "The ID of an object",
-				Type:        graphql.NewNonNull(graphql.ID),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					idComponents := globalid.UserResource.Encode(p.Source)
-					return idComponents.String(), nil
+		Interfaces: graphql.InterfacesThunk(func() []*graphql.Interface {
+			return []*graphql.Interface{
+				nodeInterface,
+			}
+		}),
+		Fields: graphql.FieldsThunk(func() graphql.Fields {
+			return graphql.Fields{
+				"id": &graphql.Field{
+					Description: "The ID of an object",
+					Type:        graphql.NewNonNull(graphql.ID),
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						idComponents := globalid.UserResource.Encode(p.Source)
+						return idComponents.String(), nil
+					},
 				},
-			},
-			"username": &graphql.Field{Type: graphql.String},
-			"disabled": &graphql.Field{Type: graphql.Boolean},
-			"hasPassword": &graphql.Field{
-				Type: graphql.Boolean,
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					user := p.Source.(*types.User)
-					return len(user.Password) > 0, nil
+				"username": &graphql.Field{Type: graphql.String},
+				"disabled": &graphql.Field{Type: graphql.Boolean},
+				"hasPassword": &graphql.Field{
+					Type: graphql.Boolean,
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						user := p.Source.(*types.User)
+						return len(user.Password) > 0, nil
+					},
 				},
-			},
-			// NOTE: Something where we'd probably want to restrict access
-			"roles": &graphql.Field{Type: graphql.NewList(graphql.String)},
+				// NOTE: Something where we'd probably want to restrict access
+				"roles": &graphql.Field{Type: graphql.NewList(graphql.String)},
+			}
+		}),
+		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
+			_, ok := p.Value.(*types.User)
+			return ok
 		},
 	})
 

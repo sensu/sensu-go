@@ -19,5 +19,5 @@ var UserResource = commonResource{
 	},
 }
 
-// Register entity encoder/decoder
+// Register user encoder/decoder
 func init() { registerResource(UserResource) }

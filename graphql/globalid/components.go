@@ -58,7 +58,7 @@ func (id StandardComponents) String() string {
 	var pathComponents []string
 	var nameComponents []string
 
-	uniqueComponents := strings.Join(id.uniqueComponents, ":")
+	uniqueComponents := strings.Join(id.uniqueComponents, "")
 	nameComponents = append([]string{id.resourceType}, uniqueComponents)
 	nameComponents = omitEmpty(nameComponents)
 	pathComponents = omitEmpty([]string{
@@ -67,8 +67,8 @@ func (id StandardComponents) String() string {
 		id.environment,
 	})
 
-	// {pathComponents}:{nameComponents}
-	return strings.Join(pathComponents, ":") +
+	// srn:{pathComponents}:{nameComponents}
+	return "srn:" + strings.Join(pathComponents, ":") +
 		":" + strings.Join(nameComponents, "/")
 }
 
@@ -102,7 +102,7 @@ func (id StandardComponents) UniqueComponents() []string {
 // Parse takes a global ID string, decodes it and returns it's components.
 func Parse(gid string) (StandardComponents, error) {
 	id := StandardComponents{}
-	pathComponents := strings.Split(gid, ",")
+	pathComponents := strings.Split(gid, ":")
 
 	// Should be at least srn:resource:name
 	if len(pathComponents) < 3 {
@@ -139,9 +139,9 @@ func Parse(gid string) (StandardComponents, error) {
 		nameComponents = nameComponents[1:]
 	}
 
-	// Pop the remaining elements from the name components, eg. type/my-great-check
-	//                                                               ^^^^^^^^^^^^^^
-	id.uniqueComponents = strings.Split(nameComponents[0], ":")
+	// Pop the remaining elements from the name components, eg. my-great-check
+	//                                                          ^^^^^^^^^^^^^^
+	id.uniqueComponents = nameComponents
 
 	return id, nil
 }

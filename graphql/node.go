@@ -10,6 +10,14 @@ var nodeInterface *graphql.Interface
 var nodeRegister = relay.NodeRegister{}
 
 func init() {
+	initNodeInterface()
+}
+
+func initNodeInterface() {
+	if nodeInterface != nil {
+		return
+	}
+
 	nodeInterface = graphql.NewInterface(graphql.InterfaceConfig{
 		Name:        "Node",
 		Description: "An object with an ID",

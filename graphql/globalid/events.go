@@ -10,7 +10,7 @@ import (
 // Events
 //
 
-const eventName = "entities"
+const eventName = "events"
 const eventCheckType = "check"
 const eventMetricType = "metric"
 

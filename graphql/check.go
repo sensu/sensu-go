@@ -1,8 +1,6 @@
 package graphqlschema
 
 import (
-	"errors"
-
 	"github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql/globalid"
@@ -12,36 +10,73 @@ import (
 )
 
 var checkConfigType *graphql.Object
-var checkEventType *graphql.Object
-var checkEventConnection *relay.ConnectionDefinitions
+var checkConfigConnection *relay.ConnectionDefinitions
 
 func init() {
+	initNodeInterface()
+	initCheckConfigType()
+	initCheckConfigConnection()
+}
+
+func initCheckConfigType() {
+	if checkConfigType != nil {
+		return
+	}
+
 	checkConfigType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "Check",
-		Description: "The `Check` object type represents  the specification of a check",
-		Interfaces: []*graphql.Interface{
-			nodeInterface,
-			multitenantInterface,
-		},
-		Fields: graphql.Fields{
-			"id": &graphql.Field{
-				Name:        "id",
-				Description: "The ID of an object",
-				Type:        graphql.NewNonNull(graphql.ID),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					idComponents := globalid.CheckResource.Encode(p.Source)
-					return idComponents.String(), nil
+		Name:        "CheckConfig",
+		Description: "Represents the specification of a check",
+		Interfaces: graphql.InterfacesThunk(func() []*graphql.Interface {
+			return []*graphql.Interface{
+				nodeInterface,
+				multitenantInterface,
+			}
+		}),
+		Fields: graphql.FieldsThunk(func() graphql.Fields {
+			return graphql.Fields{
+				"id": &graphql.Field{
+					Name:        "id",
+					Description: "The ID of an object",
+					Type:        graphql.NewNonNull(graphql.ID),
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						idComponents := globalid.CheckResource.Encode(p.Source)
+						return idComponents.String(), nil
+					},
 				},
-			},
-			"name":          &graphql.Field{Type: graphql.String},
-			"interval":      &graphql.Field{Type: graphql.Int},
-			"subscriptions": &graphql.Field{Type: graphql.NewList(graphql.String)},
-			"command":       &graphql.Field{Type: graphql.String},
-			"handlers":      &graphql.Field{Type: graphql.NewList(graphql.String)},
-			"runtimeAssets": &graphql.Field{Type: graphql.NewList(graphql.String)},
-			"environment":   &graphql.Field{Type: graphql.String},
-			"organization":  &graphql.Field{Type: graphql.String},
-		},
+				"name": &graphql.Field{
+					Description: "Name is the unique identifier for a check",
+					Type:        graphql.String,
+				},
+				"interval": &graphql.Field{
+					Description: "Interval is the interval, in seconds, at which the check should be run",
+					Type:        graphql.Int,
+				},
+				"subscriptions": &graphql.Field{
+					Description: "Subscriptions is the list of subscribers for the check",
+					Type:        graphql.NewList(graphql.String),
+				},
+				"command": &graphql.Field{
+					Description: "Command is the command to be executed",
+					Type:        graphql.String,
+				},
+				"handlers": &graphql.Field{
+					Description: "Handlers are the event handler for the check (incidents and/or metrics)",
+					Type:        graphql.NewList(graphql.String),
+				},
+				"runtimeAssets": &graphql.Field{
+					Description: "RuntimeAssets are a list of assets required to execute check",
+					Type:        graphql.NewList(graphql.String),
+				},
+				"environment": &graphql.Field{
+					Description: "Environment indicates to which env a check belongs to",
+					Type:        graphql.NewNonNull(graphql.String),
+				},
+				"organization": &graphql.Field{
+					Description: "Environment indicates to which env a check belongs to",
+					Type:        graphql.NewNonNull(graphql.String),
+				},
+			}
+		}),
 	})
 
 	nodeRegister.RegisterResolver(relay.NodeResolver{
@@ -56,66 +91,14 @@ func init() {
 			return record, err
 		},
 	})
+}
 
-	checkEventType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "CheckEvent",
-		Description: "A check result",
-		Interfaces: []*graphql.Interface{
-			nodeInterface,
-		},
-		Fields: graphql.Fields{
-			"id": &graphql.Field{
-				Name:        "id",
-				Description: "The ID of an object",
-				Type:        graphql.NewNonNull(graphql.ID),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					idComponents := globalid.EventResource.Encode(p.Source)
-					return idComponents.String(), nil
-				},
-			},
-			"timestamp": &graphql.Field{Type: timeScalar},
-			"entity":    &graphql.Field{Type: entityType},
-			"output":    AliasField(graphql.String, "Check", "Output"),
-			"status":    AliasField(graphql.Int, "Check", "Status"),
-			"issued":    AliasField(timeScalar, "Check", "Issued"),
-			"executed":  AliasField(timeScalar, "Check", "Executed"),
-			"config":    AliasField(checkConfigType, "Check", "Config"),
-		},
-		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
-			if e, ok := p.Value.(*types.Event); ok {
-				return e.Check != nil
-			}
-			return false
-		},
-	})
-
-	nodeRegister.RegisterResolver(relay.NodeResolver{
-		Object:     checkEventType,
-		Translator: globalid.EventResource,
-		Resolve: func(ctx context.Context, c globalid.Components) (interface{}, error) {
-			components := c.(globalid.EventComponents)
-			store := ctx.Value(types.StoreKey).(store.EventStore)
-
-			// TODO: Why does GetEventByEntityCheck only return a single event?!
-			events, err := store.GetEventsByEntity(ctx, components.EntityName())
-			if err != nil {
-				return nil, err
-			}
-
-			// TODO: Filter out unauthorized results
-			for _, event := range events {
-				if event.Timestamp == components.Timestamp() &&
-					event.Check.Config.Name == components.CheckName() {
-					return event, nil
-				}
-			}
-
-			return nil, errors.New("event not found")
-		},
-	})
-
-	checkEventConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
-		Name:     "Check",
+func initCheckConfigConnection() {
+	if checkConfigConnection != nil {
+		return
+	}
+	checkConfigConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
+		Name:     "CheckConfig",
 		NodeType: checkConfigType,
 	})
 }

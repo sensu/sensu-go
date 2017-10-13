@@ -48,7 +48,7 @@ func (e *Execution) Run() *graphql.Result {
 	params := graphql.Params{
 		Context:        e.Context,
 		RequestString:  e.Query,
-		Schema:         Schema,
+		Schema:         Schema(),
 		VariableValues: e.Variables,
 	}
 

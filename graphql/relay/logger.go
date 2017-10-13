@@ -2,4 +2,6 @@ package relay
 
 import "github.com/Sirupsen/logrus"
 
-var logger = logrus.WithField("component", "graphql/relay")
+var logger = logrus.WithFields(logrus.Fields{
+	"component": "graphql/relay",
+})
