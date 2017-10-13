@@ -4,6 +4,9 @@ services:
 language: go
 go:
   - 1.9.x
+branches:
+  only:
+  - master
 stages:
   - name: test
   - name: deploy
