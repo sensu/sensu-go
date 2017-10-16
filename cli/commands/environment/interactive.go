@@ -22,7 +22,7 @@ func (opts *envOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Org, _ = flags.GetString("org")
 }
 
-func (opts *envOpts) administerQuestionnaire(editing bool) {
+func (opts *envOpts) administerQuestionnaire(editing bool) error {
 	var qs []*survey.Question
 
 	if !editing {
@@ -56,7 +56,7 @@ func (opts *envOpts) administerQuestionnaire(editing bool) {
 		},
 	}...)
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
 func (opts *envOpts) Copy(env *types.Environment) {

@@ -53,7 +53,9 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Prompt user for new password
 			inputs := passwordPromptInput{}
-			administerQuestionnaire(&inputs)
+			if err := administerQuestionnaire(&inputs); err != nil {
+				return err
+			}
 
 			// Validate new password
 			if err := validateInput(&inputs); err != nil {
@@ -91,13 +93,15 @@ func verifyExistingPassword(username string, cli *cli.SensuCli) error {
 	qs := []*survey.Question{
 		{
 			Name:     "password",
-			Prompt:   &survey.Password{"Current Password:"},
+			Prompt:   &survey.Password{Message: "Current Password:"},
 			Validate: survey.Required,
 		},
 	}
 
 	// Get password
-	survey.Ask(qs, &inputs)
+	if err := survey.Ask(qs, &inputs); err != nil {
+		return err
+	}
 
 	// Attempt to authenticate
 	_, err := cli.Client.CreateAccessToken(cli.Config.APIUrl(), username, inputs.Password)
@@ -108,21 +112,21 @@ func verifyExistingPassword(username string, cli *cli.SensuCli) error {
 	return nil
 }
 
-func administerQuestionnaire(inputs *passwordPromptInput) {
+func administerQuestionnaire(inputs *passwordPromptInput) error {
 	qs := []*survey.Question{
 		{
 			Name:     "new-password",
-			Prompt:   &survey.Password{"Password:"},
+			Prompt:   &survey.Password{Message: "Password:"},
 			Validate: survey.Required,
 		},
 		{
 			Name:     "confirm-password",
-			Prompt:   &survey.Password{"Confirm:"},
+			Prompt:   &survey.Password{Message: "Confirm:"},
 			Validate: survey.Required,
 		},
 	}
 
-	survey.Ask(qs, inputs)
+	return survey.Ask(qs, inputs)
 }
 
 func validateInput(inputs *passwordPromptInput) error {

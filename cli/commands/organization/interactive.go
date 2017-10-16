@@ -25,7 +25,7 @@ func (opts *orgOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Description, _ = flags.GetString("description")
 }
 
-func (opts *orgOpts) administerQuestionnaire(editing bool) {
+func (opts *orgOpts) administerQuestionnaire(editing bool) error {
 	var qs []*survey.Question
 
 	if !editing {
@@ -45,13 +45,13 @@ func (opts *orgOpts) administerQuestionnaire(editing bool) {
 		{
 			Name: "description",
 			Prompt: &survey.Input{
-				"Description:",
-				opts.Description,
+				Message: "Description:",
+				Default: opts.Description,
 			},
 		},
 	}...)
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
 func (opts *orgOpts) Copy(org *types.Organization) {

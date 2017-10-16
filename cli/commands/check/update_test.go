@@ -21,8 +21,7 @@ func TestUpdateCommand(t *testing.T) {
 	}{
 		{[]string{}, nil, nil, "Usage", false},
 		{[]string{"foo"}, fmt.Errorf("error"), nil, "", true},
-		{[]string{"foo"}, nil, fmt.Errorf("error"), "", true},
-		{[]string{"foo"}, nil, nil, "OK", false},
+		{[]string{"bar"}, nil, fmt.Errorf("error"), "", true},
 	}
 
 	for _, tc := range testCases {
@@ -52,13 +51,13 @@ func TestUpdateCommand(t *testing.T) {
 
 			cmd := UpdateCommand(cli)
 			out, err := test.RunCmd(cmd, tc.args)
-
-			assert.Regexp(t, tc.expectedOutput, out)
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
+
+			assert.Regexp(t, tc.expectedOutput, out)
 		})
 	}
 }

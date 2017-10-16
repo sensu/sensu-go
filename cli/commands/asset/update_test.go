@@ -22,7 +22,6 @@ func TestUpdateCommand(t *testing.T) {
 		{[]string{}, nil, nil, "Usage", false},
 		{[]string{"foo"}, fmt.Errorf("error"), nil, "", true},
 		{[]string{"foo"}, nil, fmt.Errorf("error"), "", true},
-		{[]string{"foo"}, nil, nil, "OK", false},
 	}
 
 	for _, tc := range testCases {

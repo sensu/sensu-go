@@ -54,7 +54,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Env, _ = flags.GetString("environment")
 }
 
-func (opts *checkOpts) administerQuestionnaire(editing bool) {
+func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 	var qs = []*survey.Question{}
 
 	if !editing {
@@ -133,7 +133,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) {
 		},
 	}...)
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
 func (opts *checkOpts) Copy(check *types.CheckConfig) {

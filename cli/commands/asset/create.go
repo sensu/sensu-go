@@ -95,7 +95,9 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 
 	if isInteractive {
 		cfgPtr.setOrg()
-		cfgPtr.administerQuestionaire()
+		if err := cfgPtr.administerQuestionnaire(); err != nil {
+			cfgPtr.addError(err)
+		}
 	} else {
 		cfgPtr.configureFromFlags()
 	}
@@ -106,7 +108,7 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 	return &asset, cfgPtr.errors
 }
 
-func (cfgPtr *ConfigureAsset) administerQuestionaire() {
+func (cfgPtr *ConfigureAsset) administerQuestionnaire() error {
 	var qs = []*survey.Question{
 		{
 			Name: "name",
@@ -117,8 +119,11 @@ func (cfgPtr *ConfigureAsset) administerQuestionaire() {
 			Validate: survey.Required,
 		},
 		{
-			Name:     "org",
-			Prompt:   &survey.Input{"Org:", cfgPtr.Org},
+			Name: "org",
+			Prompt: &survey.Input{
+				Message: "Org:",
+				Default: cfgPtr.Org,
+			},
 			Validate: survey.Required,
 		},
 		{
@@ -137,7 +142,7 @@ func (cfgPtr *ConfigureAsset) administerQuestionaire() {
 		},
 	}
 
-	survey.Ask(qs, &cfgPtr.cfg)
+	return survey.Ask(qs, &cfgPtr.cfg)
 }
 
 func (cfgPtr *ConfigureAsset) configureFromFlags() {
