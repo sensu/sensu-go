@@ -14,6 +14,8 @@ func TestFixtureSilenced(t *testing.T) {
 	s.Creator = "creator@example.com"
 	s.Reason = "test reason"
 	s.Subscription = "test_subscription"
+	s.Organization = "default"
+	s.Environment = "default"
 	assert.NotNil(t, s)
 	assert.NotNil(t, s.ID)
 	assert.Equal(t, "test_subscription:test_check", s.ID)
@@ -24,6 +26,8 @@ func TestFixtureSilenced(t *testing.T) {
 	assert.NotNil(t, s.CheckName)
 	assert.NotNil(t, s.Reason)
 	assert.NotNil(t, s.Subscription)
+	assert.NotNil(t, s.Organization)
+	assert.NotNil(t, s.Environment)
 }
 
 // Validation should fail when we don't provide a CheckName or Subscription

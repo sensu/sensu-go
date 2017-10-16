@@ -51,6 +51,9 @@ const (
 	// RuleTypeRole access control for role objects
 	RuleTypeRole = "roles"
 
+	// RuleTypeSilenced access control for silenced objects
+	RuleTypeSilenced = "silenced"
+
 	// RuleTypeUser access control for user objects
 	RuleTypeUser = "users"
 )

@@ -3,6 +3,8 @@ package types
 import "errors"
 
 // Silenced returns a struct representing a silenced event.
+// add org and env attributes, check orgs/envs exist -
+// either in api or validation helpers (checks/events/etc for exmps)
 type Silenced struct {
 	ID              string
 	Expire          int    `json:"expire,omitempty"`
@@ -11,6 +13,8 @@ type Silenced struct {
 	CheckName       string `json:"check,omitempty"`
 	Reason          string `json:"reason,omitempty"`
 	Subscription    string `json:"subscription,omitempty"`
+	Organization    string `json:"organization"`
+	Environment     string `json:"environment"`
 }
 
 // Validate returns an error if the CheckName and Subscription fields are not
