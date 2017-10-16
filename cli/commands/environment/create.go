@@ -25,7 +25,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if isInteractive {
-				opts.administerQuestionnaire(false)
+				if err := opts.administerQuestionnaire(false); err != nil {
+					return err
+				}
 			} else {
 				opts.withFlags(flags)
 			}

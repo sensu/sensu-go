@@ -30,7 +30,9 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Administer questionnaire
 			opts := newCheckOpts()
 			opts.withCheck(check)
-			opts.administerQuestionnaire(true)
+			if err := opts.administerQuestionnaire(true); err != nil {
+				return err
+			}
 
 			// Apply given arguments to check
 			opts.Copy(check)

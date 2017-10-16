@@ -30,7 +30,9 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			opts := newOrgOpts()
 			opts.withOrg(org)
 
-			opts.administerQuestionnaire(true)
+			if err := opts.administerQuestionnaire(true); err != nil {
+				return err
+			}
 
 			opts.Copy(org)
 

@@ -58,23 +58,27 @@ func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Env, _ = flags.GetString("environment")
 }
 
-func (opts *handlerOpts) administerQuestionnaire(editing bool) {
+func (opts *handlerOpts) administerQuestionnaire(editing bool) error {
 
-	opts.queryForBaseParameters(editing)
+	if err := opts.queryForBaseParameters(editing); err != nil {
+		return err
+	}
 
 	switch opts.Type {
 	case "pipe":
-		opts.queryForCommand()
+		return opts.queryForCommand()
 	case "tcp":
 		fallthrough
 	case "udp":
-		opts.queryForSocket()
+		return opts.queryForSocket()
 	case "set":
-		opts.queryForHandlers()
+		return opts.queryForHandlers()
 	}
+
+	return nil
 }
 
-func (opts *handlerOpts) queryForBaseParameters(editing bool) {
+func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 	var qs []*survey.Question
 
 	if !editing {
@@ -89,16 +93,16 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) {
 			{
 				Name: "org",
 				Prompt: &survey.Input{
-					"Organization:",
-					opts.Org,
+					Message: "Organization:",
+					Default: opts.Org,
 				},
 				Validate: survey.Required,
 			},
 			{
 				Name: "env",
 				Prompt: &survey.Input{
-					"Environment:",
-					opts.Env,
+					Message: "Environment:",
+					Default: opts.Env,
 				},
 				Validate: survey.Required,
 			},
@@ -107,12 +111,18 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) {
 
 	qs = append(qs, []*survey.Question{
 		{
-			Name:   "mutator",
-			Prompt: &survey.Input{"Mutator:", opts.Mutator},
+			Name: "mutator",
+			Prompt: &survey.Input{
+				Message: "Mutator:",
+				Default: opts.Mutator,
+			},
 		},
 		{
-			Name:   "timeout",
-			Prompt: &survey.Input{"Timeout:", opts.Timeout},
+			Name: "timeout",
+			Prompt: &survey.Input{
+				Message: "Timeout:",
+				Default: opts.Timeout,
+			},
 		},
 		{
 			Name: "type",
@@ -125,48 +135,59 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) {
 		},
 	}...)
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
-func (opts *handlerOpts) queryForCommand() {
+func (opts *handlerOpts) queryForCommand() error {
 	var qs = []*survey.Question{
 		{
-			Name:     "command",
-			Prompt:   &survey.Input{"Command:", opts.Command},
+			Name: "command",
+			Prompt: &survey.Input{
+				Message: "Command:",
+				Default: opts.Command,
+			},
 			Validate: survey.Required,
 		},
 	}
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
-func (opts *handlerOpts) queryForSocket() {
+func (opts *handlerOpts) queryForSocket() error {
 	var qs = []*survey.Question{
 		{
-			Name:     "socketHost",
-			Prompt:   &survey.Input{"Socket Host:", opts.SocketHost},
+			Name: "socketHost",
+			Prompt: &survey.Input{
+				Message: "Socket Host:",
+				Default: opts.SocketHost,
+			},
 			Validate: survey.Required,
 		},
 		{
-			Name:     "socketPort",
-			Prompt:   &survey.Input{"Socket Port:", opts.SocketPort},
+			Name: "socketPort",
+			Prompt: &survey.Input{
+				Message: "Socket Port:",
+				Default: opts.SocketPort,
+			},
 			Validate: survey.Required,
 		},
 	}
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
-func (opts *handlerOpts) queryForHandlers() {
+func (opts *handlerOpts) queryForHandlers() error {
 	var qs = []*survey.Question{
 		{
-			Name:     "handlers",
-			Prompt:   &survey.Input{"Handlers:", opts.Handlers},
+			Name: "handlers",
+			Prompt: &survey.Input{
+				Message: "Handlers:", Default: opts.Handlers,
+			},
 			Validate: survey.Required,
 		},
 	}
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
 func (opts *handlerOpts) Copy(handler *types.Handler) {

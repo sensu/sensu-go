@@ -35,7 +35,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if isInteractive {
-				opts.administerQuestionnaire()
+				if err := opts.administerQuestionnaire(); err != nil {
+					return err
+				}
 			} else {
 				opts.withFlags(flags)
 			}
@@ -82,7 +84,7 @@ func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (opts *createOpts) administerQuestionnaire() {
+func (opts *createOpts) administerQuestionnaire() error {
 	var qs = []*survey.Question{
 		{
 			Name: "username",
@@ -107,7 +109,7 @@ func (opts *createOpts) administerQuestionnaire() {
 		},
 	}
 
-	survey.Ask(qs, opts)
+	return survey.Ask(qs, opts)
 }
 
 func (opts *createOpts) toUser() *types.User {

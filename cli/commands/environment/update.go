@@ -30,7 +30,11 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			opts := envOpts{}
 			opts.Org = cli.Config.Organization()
 			opts.withEnv(env)
-			opts.administerQuestionnaire(true)
+
+			if err := opts.administerQuestionnaire(true); err != nil {
+				return err
+			}
+
 			opts.Copy(env)
 
 			if err := env.Validate(); err != nil {

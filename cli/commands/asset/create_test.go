@@ -100,18 +100,13 @@ func TestConfigureAsset(t *testing.T) {
 	assert.NotEmpty(errs)
 	assert.Empty(asset.Organization)
 
-	// Given name
-	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
-	asset, errs = cfg.Configure()
-	assert.Empty(errs)
-	assert.Equal("ruby22", asset.Name)
-
 	// Valid Metadata
 	flags.Set("metadata", "One: Two")
 	flags.Set("metadata", "  Three : Four ")
 	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
 	asset, errs = cfg.Configure()
 	assert.Empty(errs)
+	assert.Equal("ruby22", asset.Name)
 	assert.NotEmpty(asset.Metadata)
 	assert.Equal("Two", asset.Metadata["One"])
 
