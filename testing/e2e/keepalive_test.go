@@ -12,18 +12,23 @@ import (
 
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-// TODO(greg): Yeah, this is really just one enormous test for all e2e stuff.
-// I'd love to see this organized better.
-func TestAgentKeepalives(t *testing.T) {
-	// Start the backend
-	bep, cleanup := newBackendProcess()
-	defer cleanup()
+type EventTestSuite struct {
+	suite.Suite
+	bep      *backendProcess
+	cleanup  func()
+	ap       *agentProcess
+	sensuctl *sensuCtl
+}
 
-	err := bep.Start()
-	if err != nil {
+func (suite *EventTestSuite) SetupSuite() {
+	bep, bepCleanup := newBackendProcess()
+	suite.bep = bep
+
+	if err := bep.Start(); err != nil {
+		bepCleanup()
 		log.Panic(err)
 	}
 
@@ -32,7 +37,10 @@ func TestAgentKeepalives(t *testing.T) {
 
 	// Make sure the backend is available
 	backendIsOnline := waitForBackend(backendHTTPURL)
-	assert.True(t, backendIsOnline)
+	if !backendIsOnline {
+		bepCleanup()
+		log.Panic("backend never came online")
+	}
 
 	// Configure the agent
 	ap := &agentProcess{
@@ -41,90 +49,133 @@ func TestAgentKeepalives(t *testing.T) {
 		AgentID:     "TestKeepalives",
 	}
 
-	err = ap.Start()
-	if err != nil {
+	if err := ap.Start(); err != nil {
+		bepCleanup()
 		log.Panic(err)
 	}
 
-	defer func() {
-		bep.Kill()
-		ap.Kill()
-	}()
-
-	// Give it a second to make sure we've sent a keepalive.
-	time.Sleep(5 * time.Second)
+	suite.ap = ap
 
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
-	defer cleanup()
+	sensuctl, sensuctlCleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+
+	suite.sensuctl = sensuctl
+	suite.cleanup = func() {
+		bepCleanup()
+		sensuctlCleanup()
+	}
+
+	// Allow time agent connection to be established, etcd to start,
+	// keepalive to be sent, etc.
+	time.Sleep(10 * time.Second)
+}
+
+func (suite *EventTestSuite) TearDownSuite() {
+	suite.cleanup()
+}
+
+func (suite *EventTestSuite) TestKeepaliveEvent() {
+	assert := suite.Assert()
+
+	output, err := suite.sensuctl.run("event", "list")
+	assert.NoError(err)
+
+	events := []types.Event{}
+	json.Unmarshal(output, &events)
+
+	assert.NotZero(len(events))
+
+	seen := false
+	for _, ev := range events {
+		if ev.Check.Config.Name == "keepalive" {
+			seen = true
+			assert.Equal("TestKeepalives", ev.Entity.ID)
+			assert.NotZero(ev.Timestamp)
+			assert.Equal("passing", ev.Check.State)
+		}
+	}
+	assert.True(seen)
+}
+
+func (suite *EventTestSuite) TestEntity() {
+	assert := suite.Assert()
 
 	// Retrieve the entitites
-	output, err := sensuctl.run("entity", "list")
-	assert.NoError(t, err)
+	output, err := suite.sensuctl.run("entity", "list")
+	assert.NoError(err)
 
 	entities := []types.Entity{}
 	json.Unmarshal(output, &entities)
 
-	assert.Equal(t, 1, len(entities))
-	assert.Equal(t, "TestKeepalives", entities[0].ID)
-	assert.Equal(t, "agent", entities[0].Class)
-	assert.NotEmpty(t, entities[0].System.Hostname)
-	assert.NotZero(t, entities[0].LastSeen)
+	assert.Equal(1, len(entities))
+	assert.Equal("TestKeepalives", entities[0].ID)
+	assert.Equal("agent", entities[0].Class)
+	assert.NotEmpty(entities[0].System.Hostname)
+	assert.NotZero(entities[0].LastSeen)
+}
+
+func (suite *EventTestSuite) TestCheck() {
+	assert := suite.Assert()
 
 	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
 	falseAbsPath, err := filepath.Abs(falsePath)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, falseAbsPath)
+	assert.NoError(err)
+	assert.NotEmpty(falseAbsPath)
 
 	// Create a standard check
 	checkName := "test_check"
-	_, err = sensuctl.run("check", "create", checkName,
+	_, err = suite.sensuctl.run("check", "create", checkName,
 		"--command", falseAbsPath,
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--publish",
 	)
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	// Make sure the check has been properly created
-	output, err = sensuctl.run("check", "info", checkName)
-	assert.NoError(t, err)
+	output, err := suite.sensuctl.run("check", "info", checkName)
+	assert.NoError(err)
 
 	result := types.CheckConfig{}
 	json.Unmarshal(output, &result)
-	assert.Equal(t, result.Name, checkName)
+	assert.Equal(result.Name, checkName)
 
-	time.Sleep(30 * time.Second)
-
-	// At this point, we should have 21 failing status codes for testcheck2
-	output, err = sensuctl.run("event", "info", ap.AgentID, checkName)
-	assert.NoError(t, err)
+	// Allow enough time for the check to run.
+	time.Sleep(20 * time.Second)
+	output, err = suite.sensuctl.run("event", "info", suite.ap.AgentID, checkName)
+	assert.NoError(err)
 
 	event := types.Event{}
 	json.Unmarshal(output, &event)
-	assert.NotNil(t, event)
-	assert.NotNil(t, event.Check)
-	assert.NotNil(t, event.Entity)
-	assert.Equal(t, "TestKeepalives", event.Entity.ID)
-	assert.Equal(t, checkName, event.Check.Config.Name)
-	// TODO(greg): ensure results are as expected.
+	assert.NotNil(event)
+	assert.NotNil(event.Check)
+	assert.NotNil(event.Entity)
+	assert.Equal("TestKeepalives", event.Entity.ID)
+	assert.Equal(checkName, event.Check.Config.Name)
+}
 
-	// Test the agent HTTP API
-	newEvent := types.FixtureEvent(ap.AgentID, "proxy-check")
+func (suite *EventTestSuite) TestHTTPAPI() {
+	assert := suite.Assert()
+
+	newEvent := types.FixtureEvent(suite.ap.AgentID, "proxy-check")
 	encoded, _ := json.Marshal(newEvent)
-	url := fmt.Sprintf("http://127.0.0.1:%d/events", ap.APIPort)
+	url := fmt.Sprintf("http://127.0.0.1:%d/events", suite.ap.APIPort)
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(encoded))
 
 	client := &http.Client{}
 	res, err := client.Do(req)
-	assert.NoError(t, err)
+	assert.NoError(err)
 	defer res.Body.Close()
 
 	// Give it a second to receive the new event
 	time.Sleep(5 * time.Second)
 
 	// Make sure the new event has been received
-	output, err = sensuctl.run("event", "info", ap.AgentID, "proxy-check")
-	assert.NoError(t, err, string(output))
-	assert.NotNil(t, output)
+	output, err := suite.sensuctl.run("event", "info", suite.ap.AgentID, "proxy-check")
+	assert.NoError(err, string(output))
+	assert.NotNil(output)
+}
+
+func TestEventTestSuite(t *testing.T) {
+	suite.Run(t, new(EventTestSuite))
 }
