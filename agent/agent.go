@@ -564,8 +564,6 @@ func (a *Agent) Run() error {
 
 	go func(wg *sync.WaitGroup) {
 		retries := 0
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
 		for {
 			select {
 			case <-a.stopping:
