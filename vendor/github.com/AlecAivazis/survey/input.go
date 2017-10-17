@@ -1,78 +1,98 @@
 package survey
 
 import (
-	"fmt"
+	"os"
 
-	"github.com/AlecAivazis/survey/core"
-	"github.com/AlecAivazis/survey/terminal"
-	"github.com/chzyer/readline"
+	"gopkg.in/AlecAivazis/survey.v1/core"
+	"gopkg.in/AlecAivazis/survey.v1/terminal"
 )
 
-// Input is a regular text input that prints each character the user types on the screen
-// and accepts the input with the enter key.
+/*
+Input is a regular text input that prints each character the user types on the screen
+and accepts the input with the enter key. Response type is a string.
+
+	name := ""
+	prompt := &survey.Input{ Message: "What is your name?" }
+	survey.AskOne(prompt, &name, nil)
+*/
 type Input struct {
+	core.Renderer
 	Message string
 	Default string
+	Help    string
 }
 
 // data available to the templates when processing
 type InputTemplateData struct {
 	Input
-	Answer string
+	Answer     string
+	ShowAnswer bool
+	ShowHelp   bool
 }
 
 // Templates with Color formatting. See Documentation: https://github.com/mgutz/ansi#style-format
 var InputQuestionTemplate = `
-{{- color "green+hb"}}? {{color "reset"}}
+{{- if .ShowHelp }}{{- color "cyan"}}{{ HelpIcon }} {{ .Help }}{{color "reset"}}{{"\n"}}{{end}}
+{{- color "green+hb"}}{{ QuestionIcon }} {{color "reset"}}
 {{- color "default+hb"}}{{ .Message }} {{color "reset"}}
-{{- if .Answer}}
-  {{- color "cyan"}}{{.Answer}}{{color "reset"}}
+{{- if .ShowAnswer}}
+  {{- color "cyan"}}{{.Answer}}{{color "reset"}}{{"\n"}}
 {{- else }}
+  {{- if and .Help (not .ShowHelp)}}{{color "cyan"}}[{{ HelpInputRune }} for help]{{color "reset"}} {{end}}
   {{- if .Default}}{{color "white"}}({{.Default}}) {{color "reset"}}{{end}}
 {{- end}}`
 
-func (i *Input) Prompt(rl *readline.Instance) (line interface{}, err error) {
+func (i *Input) Prompt() (interface{}, error) {
 	// render the template
-	out, err := core.RunTemplate(
+	err := i.Render(
 		InputQuestionTemplate,
 		InputTemplateData{Input: *i},
 	)
 	if err != nil {
 		return "", err
 	}
-	// make sure the prompt matches the expectation
-	rl.SetPrompt(fmt.Sprintf(out))
+
+	// start reading runes from the standard in
+	rr := terminal.NewRuneReader(os.Stdin)
+	rr.SetTermMode()
+	defer rr.RestoreTermMode()
+
+	line := []rune{}
 	// get the next line
-	line, err = rl.Readline()
+	for {
+		line, err = rr.ReadLine(0)
+		if err != nil {
+			return string(line), err
+		}
+		// terminal will echo the \n so we need to jump back up one row
+		terminal.CursorPreviousLine(1)
+
+		if string(line) == string(core.HelpInputRune) && i.Help != "" {
+			err = i.Render(
+				InputQuestionTemplate,
+				InputTemplateData{Input: *i, ShowHelp: true},
+			)
+			if err != nil {
+				return "", err
+			}
+			continue
+		}
+		break
+	}
 
 	// if the line is empty
-	if line == "" {
+	if line == nil || len(line) == 0 {
 		// use the default value
-		line = i.Default
+		return i.Default, err
 	}
 
 	// we're done
-	return line, err
+	return string(line), err
 }
 
-func (i *Input) Cleanup(rl *readline.Instance, val interface{}) error {
-	// go up one line
-	terminal.CursorPreviousLine(1)
-	// clear the line
-	terminal.EraseLine(terminal.ERASE_LINE_ALL)
-
-	// render the template
-	out, err := core.RunTemplate(
+func (i *Input) Cleanup(val interface{}) error {
+	return i.Render(
 		InputQuestionTemplate,
-		InputTemplateData{Input: *i, Answer: val.(string)},
+		InputTemplateData{Input: *i, Answer: val.(string), ShowAnswer: true},
 	)
-	if err != nil {
-		return err
-	}
-
-	// print the summary
-	terminal.Println(out)
-
-	// we're done
-	return err
 }

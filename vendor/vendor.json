@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "wrojWhp7uLZT2XxxLLiE9FieWrQ=",
+			"checksumSHA1": "WZFDw+VAkPRihEl+YNQI8E+i7X0=",
 			"path": "github.com/AlecAivazis/survey",
-			"revision": "c10cbbc78a56bb1f5c62090f4c2813ffcb146a3a",
-			"revisionTime": "2017-04-22T00:22:05Z"
+			"revision": "03db290780a056bb58969356c70b030de790c2b8",
+			"revisionTime": "2017-10-13T17:57:50Z"
 		},
 		{
 			"checksumSHA1": "gZpMqxyoh7RHwdLxnD2RbwmlzeQ=",
@@ -1164,6 +1164,18 @@
 			"path": "google.golang.org/grpc/transport",
 			"revision": "d50cf2db166eaff3f2429425758d12205085eb5b",
 			"revisionTime": "2017-03-10T19:14:43Z"
+		},
+		{
+			"checksumSHA1": "ckCqJwqB0DafDyU7tgv8KNr6qes=",
+			"path": "gopkg.in/AlecAivazis/survey.v1/core",
+			"revision": "18a4dbb1d9d05349aea1a2bf9c84028c36817c10",
+			"revisionTime": "2017-09-29T23:03:36Z"
+		},
+		{
+			"checksumSHA1": "f9Q8iDilq7X6Z/9rIxTUvNRZ33Y=",
+			"path": "gopkg.in/AlecAivazis/survey.v1/terminal",
+			"revision": "18a4dbb1d9d05349aea1a2bf9c84028c36817c10",
+			"revisionTime": "2017-09-29T23:03:36Z"
 		},
 		{
 			"checksumSHA1": "lTC24L5x1t1G8ZRBjcLcJ635Jwk=",
