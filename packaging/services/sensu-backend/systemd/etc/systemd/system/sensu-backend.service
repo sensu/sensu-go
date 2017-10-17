@@ -1,5 +1,5 @@
 [Unit]
-Description=no description given
+Description=The Sensu Backend service.
 
 [Service]
 Type=simple
