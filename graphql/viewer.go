@@ -40,7 +40,7 @@ func init() {
 					},
 				},
 				"checks": &graphql.Field{
-					Type:        checkEventConnection.ConnectionType,
+					Type:        checkConfigConnection.ConnectionType,
 					Description: "A list of checks the given viewer has read access to",
 					Args:        relay.ConnectionArgs,
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -71,6 +71,10 @@ func init() {
 						store := ctx.Value(types.StoreKey).(store.Store)
 
 						user, err := store.GetUser(actor.Name)
+						if err != nil {
+							return nil, err
+						}
+
 						return user, err
 					},
 				},

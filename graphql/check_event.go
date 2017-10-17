@@ -9,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/graphql/globalid"
 	"github.com/sensu/sensu-go/graphql/relay"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 var checkEventType *graphql.Object
@@ -35,14 +34,16 @@ func initCheckEventType() {
 					Description: "The ID of an object",
 					Type:        graphql.NewNonNull(graphql.ID),
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						idComponents := globalid.EventResource.Encode(p.Source)
+						idComponents := globalid.EventTranslator.Encode(p.Source)
 						return idComponents.String(), nil
 					},
 				},
+
 				"timestamp": &graphql.Field{
 					Type:        timeScalar,
 					Description: "The time at which the event occurred.",
 				},
+
 				"entity": &graphql.Field{
 					Type:        entityType,
 					Description: "The entity in-which the event occurred on.",
@@ -59,26 +60,31 @@ func initCheckEventType() {
 						return nil, nil
 					},
 				},
+
 				"output": &graphql.Field{
 					Type:        graphql.String,
 					Description: "The output that was returned after executing the check.",
 					Resolve:     AliasResolver("Check", "Output"),
 				},
+
 				"status": &graphql.Field{
 					Type:        graphql.Int,
-					Description: "The status code that was received after executing the check.",
+					Description: `The status code that was received after executing the check.`,
 					Resolve:     AliasResolver("Check", "Status"),
 				},
+
 				"issued": &graphql.Field{
 					Type:        timeScalar,
 					Description: "The time at which the check was scheduled.",
 					Resolve:     AliasResolver("Check", "Issued"),
 				},
+
 				"executed": &graphql.Field{
 					Type:        timeScalar,
 					Description: "The time at which the check was executed.",
 					Resolve:     AliasResolver("Check", "Executed"),
 				},
+
 				"config": &graphql.Field{
 					Type:        checkConfigType,
 					Description: "The configuration of the check that was executed.",
@@ -104,16 +110,29 @@ func initCheckEventType() {
 			return false
 		},
 	})
+}
 
-	nodeRegister.RegisterResolver(relay.NodeResolver{
+func initCheckEventConnection() {
+	if checkEventConnection != nil {
+		return
+	}
+
+	checkEventConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
+		Name:     "CheckEvent",
+		NodeType: checkEventType,
+	})
+}
+
+func newCheckEventNodeResolver() relay.NodeResolver {
+	return relay.NodeResolver{
 		Object:     checkEventType,
-		Translator: globalid.EventResource,
-		Resolve: func(ctx context.Context, c globalid.Components) (interface{}, error) {
-			components := c.(globalid.EventComponents)
-			store := ctx.Value(types.StoreKey).(store.EventStore)
+		Translator: globalid.EventTranslator,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			components := p.IDComponents.(globalid.EventComponents)
+			store := p.Context.Value(types.StoreKey).(store.EventStore)
 
 			// TODO: Why does GetEventByEntityCheck only return a single event?!
-			events, err := store.GetEventsByEntity(ctx, components.EntityName())
+			events, err := store.GetEventsByEntity(p.Context, components.EntityName())
 			if err != nil {
 				return nil, err
 			}
@@ -131,22 +150,14 @@ func initCheckEventType() {
 		IsKindOf: func(components globalid.Components) bool {
 			return components.ResourceType() == "check"
 		},
-	})
-}
-
-func initCheckEventConnection() {
-	if checkEventConnection != nil {
-		return
 	}
-
-	checkEventConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
-		Name:     "CheckEvent",
-		NodeType: checkEventType,
-	})
 }
 
 func init() {
 	initNodeInterface()
 	initCheckEventType()
 	initCheckEventConnection()
+
+	nodeResolver := newCheckEventNodeResolver()
+	nodeRegister.RegisterResolver(nodeResolver)
 }

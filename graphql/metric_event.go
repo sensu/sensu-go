@@ -5,7 +5,6 @@ import (
 	"github.com/sensu/sensu-go/graphql/globalid"
 	"github.com/sensu/sensu-go/graphql/relay"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 var metricEventType *graphql.Object
@@ -29,7 +28,7 @@ func initMetricEventType() {
 					Description: "The ID of an object",
 					Type:        graphql.NewNonNull(graphql.ID),
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						idComponents := globalid.EventResource.Encode(p.Source)
+						idComponents := globalid.EventTranslator.Encode(p.Source)
 						return idComponents.String(), nil
 					},
 				},
@@ -49,10 +48,10 @@ func initMetricEventType() {
 
 	nodeRegister.RegisterResolver(relay.NodeResolver{
 		Object:     checkEventType,
-		Translator: globalid.EventResource,
-		Resolve: func(ctx context.Context, c globalid.Components) (interface{}, error) {
-			// components := c.(globalid.EventComponents)
-			// store := ctx.Value(types.StoreKey).(store.EventStore)
+		Translator: globalid.EventTranslator,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			// components := p.IDComponents.(globalid.EventComponents)
+			// store := p.Context.Value(types.StoreKey).(store.EventStore)
 
 			// TODO: Implement along side metrics
 			return nil, nil

@@ -35,7 +35,7 @@ func initNodeInterface() {
 		// for future optimizations.
 		//
 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-			if translator, err := globalid.ReverseLookup(p.Value); err != nil {
+			if translator, err := globalid.ReverseLookup(p.Value); err == nil {
 				components := translator.Encode(p.Value)
 				resolver := nodeRegister.Lookup(components)
 				return resolver.Object

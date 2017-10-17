@@ -14,10 +14,12 @@ func init() {
 		Fields: graphql.FieldsThunk(func() graphql.Fields {
 			return graphql.Fields{
 				"environment": &graphql.Field{
+					// Type:        graphql.NewNonNull(environmentType),
 					Type:        graphql.NewNonNull(graphql.String),
 					Description: "The environment the resource belongs to.",
 				},
 				"organization": &graphql.Field{
+					// Type:        graphql.NewNonNull(organizationType),
 					Type:        graphql.NewNonNull(graphql.String),
 					Description: "The organization the resource belongs to.",
 				},

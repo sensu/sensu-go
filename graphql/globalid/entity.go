@@ -1,6 +1,8 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/types"
+)
 
 //
 // Entity
@@ -8,8 +10,8 @@ import "github.com/sensu/sensu-go/types"
 
 var entityName = "entities"
 
-// EntityResource global ID resource
-var EntityResource = commonResource{
+// EntityTranslator global ID resource
+var EntityTranslator = commonTranslator{
 	name:       entityName,
 	encodeFunc: standardEncoder(entityName, "ID"),
 	decodeFunc: standardDecoder,
@@ -20,4 +22,4 @@ var EntityResource = commonResource{
 }
 
 // Register entity encoder/decoder
-func init() { registerResource(EntityResource) }
+func init() { registerTranslator(EntityTranslator) }

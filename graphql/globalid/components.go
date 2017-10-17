@@ -12,7 +12,7 @@ import (
 // Components describes the components of a global identifier.
 //
 // When represented as a string the ID appears in the follwoing format, parens
-// represent optional components.
+// denote optional components.
 //
 //   srn:resource:(?org:)(?env:)(?resourceType/)uniqueComponents
 //
@@ -36,9 +36,9 @@ type Components interface {
 	// the resource.
 	ResourceType() string
 
-	// UniqueComponents are component(s) of a resource that when combined uniquely
-	// identify a resource.
-	UniqueComponents() []string
+	// UniqueComponent is a string that uniquely identify a resource; often times
+	// this is the resource's name.
+	UniqueComponent() string
 
 	// String return string representation of ID
 	String() string
@@ -46,11 +46,11 @@ type Components interface {
 
 // StandardComponents describes the standard components of a global identifier.
 type StandardComponents struct {
-	resource         string
-	organization     string
-	environment      string
-	resourceType     string
-	uniqueComponents []string
+	resource        string
+	organization    string
+	environment     string
+	resourceType    string
+	uniqueComponent string
 }
 
 // String returns the string representation of the global ID.
@@ -58,8 +58,7 @@ func (id StandardComponents) String() string {
 	var pathComponents []string
 	var nameComponents []string
 
-	uniqueComponents := strings.Join(id.uniqueComponents, "")
-	nameComponents = append([]string{id.resourceType}, uniqueComponents)
+	nameComponents = append([]string{id.resourceType}, id.uniqueComponent)
 	nameComponents = omitEmpty(nameComponents)
 	pathComponents = omitEmpty([]string{
 		id.resource,
@@ -93,10 +92,10 @@ func (id StandardComponents) ResourceType() string {
 	return id.resourceType
 }
 
-// UniqueComponents are component(s) of a resource that when combined uniquely
-// identify a resource.
-func (id StandardComponents) UniqueComponents() []string {
-	return id.uniqueComponents
+// UniqueComponent is a string that uniquely identify a resource; often times
+// this is the resource's name.
+func (id StandardComponents) UniqueComponent() string {
+	return id.uniqueComponent
 }
 
 // Parse takes a global ID string, decodes it and returns it's components.
@@ -109,6 +108,10 @@ func Parse(gid string) (StandardComponents, error) {
 		return id, errors.New("given global ID does not appear valid")
 	}
 
+	if pathComponents[0] != "srn" {
+		return id, errors.New("given string does not appear to be a Sensu global ID")
+	}
+
 	// Pop the resource from the path components, eg. srn:resource:org:env:type/name
 	//                                                    ^^^^^^^^
 	id.resource = pathComponents[1]
@@ -116,8 +119,8 @@ func Parse(gid string) (StandardComponents, error) {
 
 	// Pop the name components from the path components, eg. org:env:type/name
 	//                                                               ^^^^^^^^^
-	nameComponents := pathComponents[len(pathComponents)-2:]
-	pathComponents = pathComponents[0 : len(pathComponents)-2]
+	nameComponents := strings.Split(pathComponents[len(pathComponents)-1], "/")
+	pathComponents = pathComponents[0 : len(pathComponents)-1]
 
 	// If present pop the org from the path components, eg. org:env
 	//                                                      ^^^
@@ -139,9 +142,9 @@ func Parse(gid string) (StandardComponents, error) {
 		nameComponents = nameComponents[1:]
 	}
 
-	// Pop the remaining elements from the name components, eg. my-great-check
-	//                                                          ^^^^^^^^^^^^^^
-	id.uniqueComponents = nameComponents
+	// Pop the remaining element from the name components, eg. my-great-check
+	//                                                         ^^^^^^^^^^^^^^
+	id.uniqueComponent = nameComponents[0]
 
 	return id, nil
 }

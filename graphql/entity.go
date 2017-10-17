@@ -2,17 +2,21 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql/globalid"
 	"github.com/sensu/sensu-go/graphql/relay"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 var entityType *graphql.Object
 var entityConnection *relay.ConnectionDefinitions
 
-func init() {
+func initEntityType() {
+	if entityType != nil {
+		return
+	}
+
 	networkInterfaceType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "NetworkInterface",
 		Fields: graphql.FieldsThunk(func() graphql.Fields {
@@ -91,7 +95,7 @@ func init() {
 					Description: "The ID of an object",
 					Type:        graphql.NewNonNull(graphql.ID),
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						idComponents := globalid.EntityResource.Encode(p.Source)
+						idComponents := globalid.EntityTranslator.Encode(p.Source)
 						return idComponents.String(), nil
 					},
 				},
@@ -132,9 +136,20 @@ func init() {
 				},
 				// TODO: write description and resolve
 				"user": &graphql.Field{
-					Description: "",
+					Description: "???",
 					Type:        userType,
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						entity := p.Source.(*types.Entity)
+						store := p.Context.Value(types.StoreKey).(store.UserStore)
+						record, err := store.GetUser(entity.User)
+						if err != nil {
+							return nil, err
+						}
+
+						abilities := authorization.Users.WithContext(p.Context)
+						if abilities.CanRead(record) {
+							return record, err
+						}
 						return nil, nil
 					},
 				},
@@ -145,22 +160,45 @@ func init() {
 			return ok
 		},
 	})
+}
 
-	nodeRegister.RegisterResolver(relay.NodeResolver{
-		Object:     entityType,
-		Translator: globalid.EntityResource,
-		Resolve: func(ctx context.Context, c globalid.Components) (interface{}, error) {
-			components := c.(globalid.NamedComponents)
-			store := ctx.Value(types.StoreKey).(store.EntityStore)
-
-			// TODO: Filter out unauthorized results
-			record, err := store.GetEntityByID(ctx, components.Name())
-			return record, err
-		},
-	})
+func initEntityConnection() {
+	if entityConnection != nil {
+		return
+	}
 
 	entityConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
 		Name:     "Entity",
 		NodeType: entityType,
 	})
+}
+
+func newEntityNodeResolver() relay.NodeResolver {
+	return relay.NodeResolver{
+		Object:     entityType,
+		Translator: globalid.EntityTranslator,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			components := p.IDComponents.(globalid.NamedComponents)
+			store := p.Context.Value(types.StoreKey).(store.EntityStore)
+			record, err := store.GetEntityByID(p.Context, components.Name())
+			if err != nil {
+				return nil, err
+			}
+
+			abilities := authorization.Entities.WithContext(p.Context)
+			if abilities.CanRead(record) {
+				return record, nil
+			}
+			return nil, nil
+		},
+	}
+}
+
+func init() {
+	initNodeInterface()
+	initEntityType()
+	initEntityConnection()
+
+	nodeResolver := newEntityNodeResolver()
+	nodeRegister.RegisterResolver(nodeResolver)
 }

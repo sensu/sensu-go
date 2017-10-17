@@ -6,6 +6,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/graphql/globalid"
+	"github.com/sensu/sensu-go/graphql/relay"
 	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
 )
@@ -33,7 +34,7 @@ func init() {
 						}
 
 						// Parse given ID
-						idComponents, err := globalid.Parse(id)
+						idComponents, err := globalid.Decode(id)
 						if err != nil {
 							return nil, err
 						}
@@ -50,7 +51,12 @@ func init() {
 						ctx = context.WithValue(ctx, types.EnvironmentKey, idComponents.Environment())
 
 						// Fetch resource from store
-						record, err := resolver.Resolve(ctx, idComponents)
+						params := relay.NodeResolverParams{
+							Context:      ctx,
+							IDComponents: idComponents,
+							Info:         p.Info,
+						}
+						record, err := resolver.Resolve(params)
 						return record, err
 					},
 				},

@@ -8,8 +8,8 @@ import "github.com/sensu/sensu-go/types"
 
 var assetName = "assets"
 
-// AssetResource global ID resource
-var AssetResource = commonResource{
+// AssetTranslator global ID resource
+var AssetTranslator = commonTranslator{
 	name:       assetName,
 	encodeFunc: standardEncoder(assetName, "Name"),
 	decodeFunc: standardDecoder,
@@ -20,4 +20,4 @@ var AssetResource = commonResource{
 }
 
 // Register asset encoder/decoder
-func init() { registerResource(AssetResource) }
+func init() { registerTranslator(AssetTranslator) }

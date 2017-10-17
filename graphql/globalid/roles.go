@@ -8,8 +8,8 @@ import "github.com/sensu/sensu-go/types"
 
 var roleName = "roles"
 
-// RoleResource global ID resource
-var RoleResource = commonResource{
+// RoleTranslator global ID resource
+var RoleTranslator = commonTranslator{
 	name:       roleName,
 	encodeFunc: standardEncoder(roleName, "Name"),
 	decodeFunc: standardDecoder,
@@ -20,4 +20,4 @@ var RoleResource = commonResource{
 }
 
 // Register entity encoder/decoder
-func init() { registerResource(RoleResource) }
+func init() { registerTranslator(RoleTranslator) }

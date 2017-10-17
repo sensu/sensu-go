@@ -2,11 +2,11 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql/globalid"
 	"github.com/sensu/sensu-go/graphql/relay"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 var userType *graphql.Object
@@ -25,21 +25,25 @@ func init() {
 					Description: "The ID of an object",
 					Type:        graphql.NewNonNull(graphql.ID),
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						idComponents := globalid.UserResource.Encode(p.Source)
+						idComponents := globalid.UserTranslator.Encode(p.Source)
 						return idComponents.String(), nil
 					},
 				},
-				"username": &graphql.Field{Type: graphql.String},
-				"disabled": &graphql.Field{Type: graphql.Boolean},
-				"hasPassword": &graphql.Field{
-					Type: graphql.Boolean,
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						user := p.Source.(*types.User)
-						return len(user.Password) > 0, nil
-					},
+				"username": &graphql.Field{
+					Type:        graphql.String,
+					Description: "The unique identifier of the user",
 				},
-				// NOTE: Something where we'd probably want to restrict access
-				"roles": &graphql.Field{Type: graphql.NewList(graphql.String)},
+				"disabled": &graphql.Field{
+					Type:        graphql.Boolean,
+					Description: "Whether or not the user's is active",
+				},
+				// "roles": &graphql.Field{
+				// 	Type:        graphql.NewList(roleType),
+				// 	Description: "Roles the user holds in the system",
+				// 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// 		return nil, nil
+				// 	},
+				// },
 			}
 		}),
 		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
@@ -48,16 +52,27 @@ func init() {
 		},
 	})
 
-	nodeRegister.RegisterResolver(relay.NodeResolver{
-		Object:     userType,
-		Translator: globalid.UserResource,
-		Resolve: func(ctx context.Context, c globalid.Components) (interface{}, error) {
-			components := c.(globalid.NamedComponents)
-			store := ctx.Value(types.StoreKey).(store.UserStore)
+	nodeResolver := newUserNodeResolver()
+	nodeRegister.RegisterResolver(nodeResolver)
+}
 
-			// TODO: Filter out unauthorized results
+func newUserNodeResolver() relay.NodeResolver {
+	return relay.NodeResolver{
+		Object:     userType,
+		Translator: globalid.UserTranslator,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			components := p.IDComponents.(globalid.NamedComponents)
+			store := p.Context.Value(types.StoreKey).(store.UserStore)
 			record, err := store.GetUser(components.Name())
-			return record, err
+			if err != nil {
+				return nil, err
+			}
+
+			abilities := authorization.Users.WithContext(p.Context)
+			if abilities.CanRead(record) {
+				return record, err
+			}
+			return nil, nil
 		},
-	})
+	}
 }

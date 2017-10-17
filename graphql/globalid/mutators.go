@@ -8,8 +8,8 @@ import "github.com/sensu/sensu-go/types"
 
 var mutatorName = "mutators"
 
-// MutatorResource global ID resource
-var MutatorResource = commonResource{
+// MutatorTranslator global ID resource
+var MutatorTranslator = commonTranslator{
 	name:       mutatorName,
 	encodeFunc: standardEncoder(mutatorName, "Name"),
 	decodeFunc: standardDecoder,
@@ -20,4 +20,4 @@ var MutatorResource = commonResource{
 }
 
 // Register entity encoder/decoder
-func init() { registerResource(MutatorResource) }
+func init() { registerTranslator(MutatorTranslator) }

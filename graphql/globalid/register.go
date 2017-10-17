@@ -31,11 +31,11 @@ func NewRegistrar(register Register) Registrar {
 }
 
 // Add resource to global ID register
-func (registrar *Registrar) Add(resource Resource) {
-	name := resource.Name()
+func (registrar *Registrar) Add(translator Translator) {
+	name := translator.ForResourceNamed()
 
 	registrar.Logger.WithField("name", name).Debug("registering resource")
-	registrar.register.resources[name] = resource
+	registrar.register.translators[name] = translator
 }
 
 //
@@ -44,8 +44,8 @@ func (registrar *Registrar) Add(resource Resource) {
 
 // A Register holds resource definitions for easy lookup
 type Register struct {
-	Logger    logrus.FieldLogger
-	resources map[string]Resource
+	Logger      logrus.FieldLogger
+	translators map[string]Translator
 }
 
 // NewRegister instatiates new register.
@@ -53,8 +53,8 @@ func NewRegister() Register {
 	logger := defaultLogger.WithField("subcomponent", "register")
 
 	return Register{
-		Logger:    logger,
-		resources: make(map[string]Resource),
+		Logger:      logger,
+		translators: make(map[string]Translator),
 	}
 }
 
@@ -63,7 +63,7 @@ func (r Register) Lookup(components StandardComponents) (Decoder, error) {
 	entry := r.Logger.WithField("resource", components.Resource())
 	entry.Debug("looking up decoder")
 
-	if resource, ok := r.resources[components.Resource()]; ok {
+	if resource, ok := r.translators[components.Resource()]; ok {
 		return resource, nil
 	}
 
@@ -81,7 +81,7 @@ func (r Register) ReverseLookup(record interface{}) (Encoder, error) {
 
 	// iterate through our resources until we find one the one that can encode the
 	// given record.
-	for _, encoder := range r.resources {
+	for _, encoder := range r.translators {
 		if encoder.IsResponsible(record) {
 			return encoder, nil
 		}
@@ -95,7 +95,7 @@ func (r Register) ReverseLookup(record interface{}) (Encoder, error) {
 }
 
 //
-// Resources
+// Translators
 //
 
 // An Encoder can encode global IDs for a specific resource
@@ -110,9 +110,9 @@ type Decoder interface {
 	Decode(StandardComponents) Components
 }
 
-// A Resource represents something that is globally identifable
-type Resource interface {
-	Name() string
+// A Translator represents something that is globally identifable
+type Translator interface {
+	ForResourceNamed() string
 	Encoder
 	Decoder
 }

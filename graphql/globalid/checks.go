@@ -8,8 +8,8 @@ import "github.com/sensu/sensu-go/types"
 
 var checkName = "checks"
 
-// CheckResource global ID resource
-var CheckResource = commonResource{
+// CheckTranslator global ID resource
+var CheckTranslator = commonTranslator{
 	name:       checkName,
 	encodeFunc: standardEncoder(checkName, "Name"),
 	decodeFunc: standardDecoder,
@@ -20,4 +20,4 @@ var CheckResource = commonResource{
 }
 
 // Register entity encoder/decoder
-func init() { registerResource(CheckResource) }
+func init() { registerTranslator(CheckTranslator) }

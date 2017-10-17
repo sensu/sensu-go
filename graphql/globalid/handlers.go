@@ -8,8 +8,8 @@ import "github.com/sensu/sensu-go/types"
 
 var handlerName = "handlers"
 
-// HandlerResource global ID resource
-var HandlerResource = commonResource{
+// HandlerTranslator global ID resource
+var HandlerTranslator = commonTranslator{
 	name:       handlerName,
 	encodeFunc: standardEncoder(handlerName, "ID"),
 	decodeFunc: standardDecoder,
@@ -20,4 +20,4 @@ var HandlerResource = commonResource{
 }
 
 // Register handler encoder/decoder
-func init() { registerResource(HandlerResource) }
+func init() { registerTranslator(HandlerTranslator) }

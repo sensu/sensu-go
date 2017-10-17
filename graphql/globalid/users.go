@@ -8,8 +8,8 @@ import "github.com/sensu/sensu-go/types"
 
 var userName = "users"
 
-// UserResource global ID resource
-var UserResource = commonResource{
+// UserTranslator global ID resource
+var UserTranslator = commonTranslator{
 	name:       userName,
 	encodeFunc: standardEncoder(userName, "Username"),
 	decodeFunc: standardDecoder,
@@ -20,4 +20,4 @@ var UserResource = commonResource{
 }
 
 // Register user encoder/decoder
-func init() { registerResource(UserResource) }
+func init() { registerTranslator(UserTranslator) }

@@ -10,10 +10,20 @@ import (
 // A NodeResolver describes an object that contains a globally unique ID.
 type NodeResolver struct {
 	Object     *graphql.Object
-	Translator globalid.Resource
+	Translator globalid.Translator
 
-	Resolve  func(context.Context, globalid.Components) (interface{}, error)
+	Resolve  func(NodeResolverParams) (interface{}, error)
 	IsKindOf func(globalid.Components) bool
+}
+
+// NodeResolverParams parameters to given to resolve method
+type NodeResolverParams struct {
+	// Context ...
+	Context context.Context
+	// IDComponents is the individual components of the given global ID
+	IDComponents globalid.Components
+	// Info is a collection of information about the current execution state.
+	Info graphql.ResolveInfo
 }
 
 // NodeRegister stores list of node resolvers
@@ -21,7 +31,7 @@ type NodeRegister map[string][]NodeResolver
 
 // RegisterResolver registers a new node resolver and adds it to the register
 func (register NodeRegister) RegisterResolver(resolver NodeResolver) {
-	translatorName := resolver.Translator.Name()
+	translatorName := resolver.Translator.ForResourceNamed()
 	entry := register[translatorName]
 	entry = append(entry, resolver)
 
@@ -30,7 +40,7 @@ func (register NodeRegister) RegisterResolver(resolver NodeResolver) {
 			"resolver": resolver,
 			"globalid": translatorName,
 		})
-		logEntry.Fatal(
+		logEntry.Panic(
 			"Failed to register resolver because you already have one resolver " +
 				"registered to this globalid. If you do intend to register more than " +
 				"on resolver you must set the IsKindOf field, so that the Register " +
@@ -46,7 +56,10 @@ func (register NodeRegister) Lookup(components globalid.Components) *NodeResolve
 	entries := register[components.Resource()]
 	entriesLen := len(entries)
 
-	logEntry := logger.WithField("registerContents", register)
+	logEntry := logger.WithFields(logrus.Fields{
+		"entriesLen":   entries,
+		"idComponents": components,
+	})
 	logEntry.Info("lookup")
 
 	if entriesLen > 1 {
