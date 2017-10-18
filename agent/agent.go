@@ -28,6 +28,10 @@ const (
 	// MaxMessageBufferSize specifies the maximum number of messages of a given
 	// type that an agent will queue before rejecting messages.
 	MaxMessageBufferSize = 10
+
+	// TCPSocketReadDeadline specifies the maximum time the TCP socket will wait
+	// to receive data.
+	TCPSocketReadDeadline = 500 * time.Millisecond
 )
 
 // A Config specifies Agent configuration.
@@ -199,18 +203,23 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 	var buf []byte
 	messageBuffer := bytes.NewBuffer(buf)
 	connReader := bufio.NewReader(c)
-	waitTime := 10 * time.Millisecond
 
 	// Read incoming tcp messages from client until we hit a valid JSON message.
 	// If we don't get valid JSON or a ping request after 500ms, close the
 	// connection (timeout).
-	for i := 0; i < 50; i++ {
-		// Read for up to 10ms on each loop iteration
-		err := c.SetReadDeadline(time.Now().Add(waitTime))
-		if err != nil {
-			logger.Debugf("Error setting readDeadline: %s", err)
-		}
-		_, err = connReader.WriteTo(messageBuffer)
+	readDeadline := time.Now().Add(TCPSocketReadDeadline)
+
+	// Only allow 500ms of IO. After this time, all IO calls on the connection
+	// will fail.
+	if err := c.SetReadDeadline(readDeadline); err != nil {
+		logger.Errorf("Error setting readDeadline: %v", err)
+		return
+	}
+
+	// It is possible that our buffered readers/writers will cause us
+	// to iterate.
+	for time.Now().Before(readDeadline) {
+		_, err := connReader.WriteTo(messageBuffer)
 		// Check error condition. If it's a timeout error, continue so we can read
 		// any remaining partial packets. Any other error type returns.
 		if err != nil {
@@ -264,7 +273,6 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 // Deserialization failures will be logged at the ERROR level by the
 // Sensu agent, but the sender of the invalid data will not be
 // notified.
-
 func (a *Agent) handleUDPMessages(c net.PacketConn) {
 	var buf [1500]byte
 
