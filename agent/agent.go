@@ -102,7 +102,7 @@ func NewConfig() *Config {
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		logger.Error("error getting hostname: ", err.Error())
+		logger.WithError(err).Error("error getting hostname")
 		// TODO(greg): wat do?
 		c.AgentID = "unidentified-sensu-agent"
 	}
@@ -224,7 +224,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 	// Only allow 500ms of IO. After this time, all IO calls on the connection
 	// will fail.
 	if err := c.SetReadDeadline(readDeadline); err != nil {
-		logger.Errorf("Error setting readDeadline: %v", err)
+		logger.WithError(err).Error("error setting read deadline")
 		return
 	}
 
@@ -246,7 +246,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			logger.Debug("tcp socket received ping")
 			_, err = c.Write([]byte("pong"))
 			if err != nil {
-				logger.Errorf("could not write response to tcp socket %s", err)
+				logger.WithError(err).Error("could not write response to tcp socket")
 			}
 			return
 		}
@@ -266,7 +266,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// message sender.
 		payload, err := json.Marshal(event)
 		if err != nil {
-			logger.Errorf("could not marshal json payload")
+			logger.WithError(err).Error("could not marshal json payload")
 			return
 		}
 
@@ -303,7 +303,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			return
 		default:
 			if err != nil {
-				logger.Error(err)
+				logger.WithError(err).Error("Error reading from UDP socket")
 				c.Close()
 				return
 			} else if bytesRead == 0 {
@@ -321,7 +321,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			// included in the message. Any JSON errors are logged, and we return.
 			var event types.Event
 			if err = json.Unmarshal(buf[:bytesRead], &event); err != nil {
-				logger.Errorf("UDP Invalid event data: %s", err)
+				logger.WithError(err).Error("UDP Invalid event data")
 			}
 
 			if event.Entity == nil {
@@ -344,10 +344,10 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
-				logger.Error("recv error: ", err.Error())
+				logger.WithError(err).Error("transport receive error")
 				return
 			default:
-				logger.Error("recv error: ", err.Error())
+				logger.WithError(err).Error("transport receive error")
 				continue
 			}
 		}
@@ -373,7 +373,7 @@ func (a *Agent) receivePump(conn transport.Transport) {
 			logger.Info("message received - type: ", msg.Type, " message: ", string(msg.Payload))
 			err := a.handler.Handle(msg.Type, msg.Payload)
 			if err != nil {
-				logger.Error("error handling message:", err.Error())
+				logger.WithError(err).Error("error handling message")
 			}
 		}
 	}
@@ -407,10 +407,10 @@ func (a *Agent) sendPump(conn transport.Transport) {
 			if err != nil {
 				switch err := err.(type) {
 				case transport.ConnectionError, transport.ClosedError:
-					logger.Error("send error: ", err.Error())
+					logger.WithError(err).Error("transport send error")
 					return
 				default:
-					logger.Error("send error:", err.Error())
+					logger.WithError(err).Error("transport send error")
 				}
 			}
 		case <-a.stopping:
