@@ -1,6 +1,7 @@
 package check
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -23,7 +24,7 @@ type checkOpts struct {
 	RuntimeAssets string `survey:"assets"`
 	Env           string
 	Org           string
-	Publish       bool `survey:"publish"`
+	Publish       string `survey:"publish"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -48,10 +49,11 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Interval, _ = flags.GetString("interval")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")
-	opts.Publish, _ = flags.GetBool("publish")
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 	opts.Org, _ = flags.GetString("organization")
 	opts.Env, _ = flags.GetString("environment")
+	publishBool, _ := flags.GetBool("publish")
+	opts.Publish = strconv.FormatBool(publishBool)
 }
 
 func (opts *checkOpts) administerQuestionnaire(editing bool) error {
@@ -126,9 +128,16 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 		},
 		{
 			Name: "publish",
-			Prompt: &survey.Confirm{
-				Message: "Publish check requests?",
-				Default: true,
+			Prompt: &survey.Input{
+				Message: "Publish:",
+				Help:    "If check requests are published for the check. Value must be true or false.",
+				Default: "true",
+			},
+			Validate: func(val interface{}) error {
+				if str := val.(string); str != "false" && str != "true" {
+					return fmt.Errorf("Please enter either true or false")
+				}
+				return nil
 			},
 		},
 	}...)
@@ -147,5 +156,5 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
-	check.Publish = opts.Publish
+	check.Publish = opts.Publish == "true"
 }
