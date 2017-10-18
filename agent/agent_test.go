@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/sensu/sensu-go/transport"
@@ -116,54 +115,6 @@ func TestReceiveLoop(t *testing.T) {
 	ta.Stop()
 }
 
-func TestReconnect(t *testing.T) {
-	control := make(chan struct{})
-	connectionCount := 0
-	server := transport.NewServer()
-	mutex := &sync.Mutex{}
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
-		assert.NoError(t, err)
-		// throw away handshake
-		bhsm := &transport.Message{
-			Type:    types.BackendHandshakeType,
-			Payload: []byte("{}"),
-		}
-		conn.Send(bhsm)
-		conn.Receive()
-		mutex.Lock()
-		connectionCount++
-		mutex.Unlock()
-		<-control
-		conn.Close()
-	}))
-	defer ts.Close()
-
-	// connect with an agent
-	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	cfg := NewConfig()
-	cfg.BackendURLs = []string{wsURL}
-	cfg.API.Port = 0
-	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
-	err := ta.Run()
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "agent failed to run")
-	}
-	control <- struct{}{}
-	mutex.Lock()
-	assert.Equal(t, 1, connectionCount)
-	mutex.Unlock()
-
-	control <- struct{}{}
-	mutex.Lock()
-	assert.Condition(t, func() bool { return connectionCount > 1 })
-	mutex.Unlock()
-	ta.Stop()
-}
-
 func TestReceiveTCP(t *testing.T) {
 	assert := assert.New(t)
 
@@ -171,6 +122,7 @@ func TestReceiveTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -207,6 +159,7 @@ func TestReceiveCheckTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -243,6 +196,7 @@ func TestUDP(t *testing.T) {
 	cfg := NewConfig()
 	ta := NewAgent(cfg)
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -278,6 +232,7 @@ func TestReceivePingTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -312,6 +267,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -346,6 +302,7 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}

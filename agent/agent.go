@@ -30,6 +30,10 @@ const (
 	// MaxMessageBufferSize specifies the maximum number of messages of a given
 	// type that an agent will queue before rejecting messages.
 	MaxMessageBufferSize = 10
+
+	// TCPSocketReadDeadline specifies the maximum time the TCP socket will wait
+	// to receive data.
+	TCPSocketReadDeadline = 500 * time.Millisecond
 )
 
 // A Config specifies Agent configuration.
@@ -98,7 +102,7 @@ func NewConfig() *Config {
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		logger.Error("error getting hostname: ", err.Error())
+		logger.WithError(err).Error("error getting hostname")
 		// TODO(greg): wat do?
 		c.AgentID = "unidentified-sensu-agent"
 	}
@@ -119,6 +123,7 @@ type Agent struct {
 	entity          *types.Entity
 	assetManager    *assetmanager.Manager
 	api             *http.Server
+	wg              *sync.WaitGroup
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -130,6 +135,7 @@ func NewAgent(config *Config) *Agent {
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
+		wg:              &sync.WaitGroup{},
 	}
 
 	agent.handler.AddHandler(types.CheckRequestType, agent.handleCheck)
@@ -141,19 +147,23 @@ func NewAgent(config *Config) *Agent {
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
 func (a *Agent) createListenSockets() error {
+	// we have two listeners that we want to shut down before agent.Stop() returns.
+	a.wg.Add(2)
+
 	addr := fmt.Sprintf("%s:%d", a.config.Socket.Host, a.config.Socket.Port)
 
 	// Setup UDP socket listener
-	logger.Infof("starting UDP listener on %s", addr)
 	UDPServerAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return err
 	}
 
 	udpListen, err := net.ListenUDP("udp", UDPServerAddr)
-	if err == nil {
-		go a.handleUDPMessages(udpListen)
+	if err != nil {
+		return err
 	}
+	logger.Infof("starting UDP listener on %s", addr)
+	go a.handleUDPMessages(udpListen)
 
 	// Setup TCP socket listener
 	TCPServerAddr, err := net.ResolveTCPAddr("tcp", addr)
@@ -167,27 +177,27 @@ func (a *Agent) createListenSockets() error {
 		return err
 	}
 
+	// we have to monitor the stopping channel out of band, otherwise
+	// the tcpListen.Accept() loop will never return.
 	go func() {
-		for {
-			conn, err := tcpListen.Accept()
-			select {
-			case <-a.stopping:
-				return
-			default:
-				if err != nil {
-					logger.Error(err)
-					tcpListen.Close()
-					return
-				}
-				go a.handleTCPMessages(conn)
-			}
-		}
+		<-a.stopping
+		tcpListen.Close()
 	}()
 
 	go func() {
-		<-a.stopping
-		logger.Debug("TCP listener stopped")
-		tcpListen.Close()
+		// Actually block the waitgroup until the last call to Accept()
+		// returns.
+		defer a.wg.Done()
+
+		for {
+			conn, err := tcpListen.Accept()
+			if err != nil {
+				logger.WithError(err).Error("error accepting TCP connection")
+				tcpListen.Close()
+				return
+			}
+			go a.handleTCPMessages(conn)
+		}
 	}()
 
 	return err
@@ -205,18 +215,23 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 	var buf []byte
 	messageBuffer := bytes.NewBuffer(buf)
 	connReader := bufio.NewReader(c)
-	waitTime := 10 * time.Millisecond
 
 	// Read incoming tcp messages from client until we hit a valid JSON message.
 	// If we don't get valid JSON or a ping request after 500ms, close the
 	// connection (timeout).
-	for i := 0; i < 50; i++ {
-		// Read for up to 10ms on each loop iteration
-		err := c.SetReadDeadline(time.Now().Add(waitTime))
-		if err != nil {
-			logger.Debugf("Error setting readDeadline: %s", err)
-		}
-		_, err = connReader.WriteTo(messageBuffer)
+	readDeadline := time.Now().Add(TCPSocketReadDeadline)
+
+	// Only allow 500ms of IO. After this time, all IO calls on the connection
+	// will fail.
+	if err := c.SetReadDeadline(readDeadline); err != nil {
+		logger.WithError(err).Error("error setting read deadline")
+		return
+	}
+
+	// It is possible that our buffered readers/writers will cause us
+	// to iterate.
+	for time.Now().Before(readDeadline) {
+		_, err := connReader.WriteTo(messageBuffer)
 		// Check error condition. If it's a timeout error, continue so we can read
 		// any remaining partial packets. Any other error type returns.
 		if err != nil {
@@ -231,7 +246,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			logger.Debug("tcp socket received ping")
 			_, err = c.Write([]byte("pong"))
 			if err != nil {
-				logger.Errorf("could not write response to tcp socket %s", err)
+				logger.WithError(err).Error("could not write response to tcp socket")
 			}
 			return
 		}
@@ -251,7 +266,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// message sender.
 		payload, err := json.Marshal(event)
 		if err != nil {
-			logger.Errorf("could not marshal json payload")
+			logger.WithError(err).Error("could not marshal json payload")
 			return
 		}
 
@@ -270,13 +285,13 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 // Deserialization failures will be logged at the ERROR level by the
 // Sensu agent, but the sender of the invalid data will not be
 // notified.
-
 func (a *Agent) handleUDPMessages(c net.PacketConn) {
 	var buf [1500]byte
 
 	go func() {
 		<-a.stopping
 		c.Close()
+		a.wg.Done()
 	}()
 	// Read everything sent from the connection to the message buffer. Any error
 	// will return. If the buffer is zero bytes, close the connection and return.
@@ -288,7 +303,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			return
 		default:
 			if err != nil {
-				logger.Error(err)
+				logger.WithError(err).Error("Error reading from UDP socket")
 				c.Close()
 				return
 			} else if bytesRead == 0 {
@@ -306,7 +321,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			// included in the message. Any JSON errors are logged, and we return.
 			var event types.Event
 			if err = json.Unmarshal(buf[:bytesRead], &event); err != nil {
-				logger.Errorf("UDP Invalid event data: %s", err)
+				logger.WithError(err).Error("UDP Invalid event data")
 			}
 
 			if event.Entity == nil {
@@ -329,10 +344,10 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
-				logger.Error("recv error: ", err.Error())
+				logger.WithError(err).Error("transport receive error")
 				return
 			default:
-				logger.Error("recv error: ", err.Error())
+				logger.WithError(err).Error("transport receive error")
 				continue
 			}
 		}
@@ -340,12 +355,7 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 	}
 }
 
-func (a *Agent) receivePump(wg *sync.WaitGroup, conn transport.Transport) {
-	defer func() {
-		wg.Done()
-		logger.Info("recv pump shutting down")
-	}()
-
+func (a *Agent) receivePump(conn transport.Transport) {
 	logger.Info("connected - starting receivePump")
 
 	recvChan := make(chan *transport.Message)
@@ -363,7 +373,7 @@ func (a *Agent) receivePump(wg *sync.WaitGroup, conn transport.Transport) {
 			logger.Info("message received - type: ", msg.Type, " message: ", string(msg.Payload))
 			err := a.handler.Handle(msg.Type, msg.Payload)
 			if err != nil {
-				logger.Error("error handling message:", err.Error())
+				logger.WithError(err).Error("error handling message")
 			}
 		}
 	}
@@ -379,12 +389,7 @@ func (a *Agent) sendMessage(msgType string, payload []byte) {
 	a.sendq <- msg
 }
 
-func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
-	defer func() {
-		wg.Done()
-		logger.Info("sendpump shutting down")
-	}()
-
+func (a *Agent) sendPump(conn transport.Transport) {
 	// The sendPump is actually responsible for shutting down the transport
 	// to prevent a race condition between it and something else trying
 	// to close the transport (which actually causes a write to the websocket
@@ -402,10 +407,10 @@ func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
 			if err != nil {
 				switch err := err.(type) {
 				case transport.ConnectionError, transport.ClosedError:
-					logger.Error("send error: ", err.Error())
+					logger.WithError(err).Error("transport send error")
 					return
 				default:
-					logger.Error("send error:", err.Error())
+					logger.WithError(err).Error("transport send error")
 				}
 			}
 		case <-a.stopping:
@@ -509,17 +514,14 @@ func (a *Agent) handshake() error {
 	return nil
 }
 
-// Run starts the Agent's connection manager which handles connecting and
-// reconnecting to the Sensu Backend. It also handles coordination of the
-// agent's read and write pumps.
+// Run starts the Agent.
 //
-// If Run cannot establish an initial connection to the specified Backend
-// URL, Run will return an error. Run will also return an error if it fails to
-// create TCP or UDP socket listeners.
+// 1. Connect to the backend, return an error if unsuccessful.
+// 2. Start the socket listeners, return an error if unsuccessful.
+// 3. Start the send/receive pumps.
+// 4. Start sending keepalives.
+// 5. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
-	// TODO(greg): this whole thing reeks. i want to be able to return an error
-	// if we can't connect, but maybe we do the channel w/ terminal errors thing
-	// here as well. yeah. i think we should do that instead.
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	header := http.Header{"Authorization": {"Basic " + userCredentials}}
@@ -538,23 +540,19 @@ func (a *Agent) Run() error {
 		return err
 	}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-	go a.sendPump(wg, conn)
-	go a.receivePump(wg, conn)
-
-	pumpsReturned := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(pumpsReturned)
-	}()
+	// These are in separate goroutines so that they can, theoretically, be executing
+	// concurrently.
+	go a.sendPump(conn)
+	go a.receivePump(conn)
 
 	go func() {
 		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 		for {
 			select {
 			case <-keepaliveTicker.C:
-				a.sendKeepalive()
+				if err := a.sendKeepalive(); err != nil {
+					logger.WithError(err).Error("failed sending keepalive")
+				}
 			case <-a.stopping:
 				return
 			}
@@ -562,54 +560,14 @@ func (a *Agent) Run() error {
 		}
 	}()
 
-	go func(wg *sync.WaitGroup) {
-		retries := 0
-		for {
-			select {
-			case <-a.stopping:
-				logger.Debug("pumps received stopping")
-				wg.Wait()
-				close(a.sendq)
-				return
-
-			case <-pumpsReturned:
-				nextBackend := a.backendSelector.Select()
-				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
-				conn, err := transport.Connect(nextBackend, a.config.TLS, header)
-				if err != nil {
-					logger.Error("connection error:", err.Error())
-					// TODO(greg): exponential backoff
-					time.Sleep(1 * time.Second)
-					retries++
-					continue
-				}
-
-				a.conn = conn
-				logger.Info("reconnected: ", nextBackend)
-
-				err = a.handshake()
-				if err != nil {
-					logger.Error("handshake error: ", err.Error())
-					continue
-				}
-
-				wg.Add(2)
-				go a.sendPump(wg, conn)
-				go a.receivePump(wg, conn)
-				pumpsReturned = make(chan struct{})
-				go func() {
-					wg.Wait()
-					close(pumpsReturned)
-				}()
-			}
-		}
-	}(wg)
-
 	// Prepare the HTTP API server
 	a.api = newServer(a)
 
 	// Start the HTTP API server
+	// Allow Stop() to block until the HTTP server shuts down.
+	a.wg.Add(1)
 	go func() {
+		defer a.wg.Done()
 		logger.Info("starting api on address: ", a.api.Addr)
 
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
@@ -617,32 +575,28 @@ func (a *Agent) Run() error {
 		}
 	}()
 
-	// Gracefully shutdown the HTTP API server when the agent stops
 	go func() {
+		// NOTE: This does not guarantee a clean shutdown of the HTTP API.
+		// This is _only_ for the purpose of making Stop() a blocking call.
+		// The goroutine running the HTTP Server has to return before Stop()
+		// can return, so we use this to signal that goroutine to shutdown.
 		<-a.stopping
 		logger.Info("api shutting down")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
 
-		if err := a.api.Shutdown(ctx); err != nil {
-			logger.Fatal(err)
-		}
+		a.api.Shutdown(ctx)
 	}()
 
 	return nil
 }
 
-// Stop will cause the Agent to finish processing requests and then cleanly
-// shutdown.
+// Stop shuts down the agent. It will block until all listening goroutines
+// have returned.
 func (a *Agent) Stop() {
 	close(a.stopping)
-	select {
-	case <-a.stopped:
-		return
-	case <-time.After(1 * time.Second):
-		return
-	}
+	a.wg.Wait()
 }
 
 func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFunc) {
