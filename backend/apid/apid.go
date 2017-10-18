@@ -121,10 +121,10 @@ func registerRestrictedResources(
 	commonRouter := NewSubrouter(
 		router.NewRoute(),
 		middlewares.SimpleLogger{},
-		// middlewares.Environment{Store: store},
-		// middlewares.Authentication{},
-		// middlewares.AllowList{Store: store},
-		// middlewares.Authorization{Store: store},
+		middlewares.Environment{Store: store},
+		middlewares.Authentication{},
+		middlewares.AllowList{Store: store},
+		middlewares.Authorization{Store: store},
 	)
 
 	assetsController := &controllers.AssetsController{
