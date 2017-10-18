@@ -25,14 +25,17 @@ func (c *GraphController) Register(r *mux.Router) {
 	r.HandleFunc("/graphql", c.query).Methods(http.MethodPost)
 }
 
-// many handles requests to /info
-func (c *GraphController) query(w http.ResponseWriter, r *http.Request) {
+// query handles GraphQL queries
+func (c *GraphController) query(writer http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	// Lift Etcd store into context so that resolvers may query and reset org &
+	// env keys to empty state so that all resources are queryable.
 	ctx = context.WithValue(ctx, types.OrganizationKey, "")
 	ctx = context.WithValue(ctx, types.EnvironmentKey, "")
 	ctx = context.WithValue(ctx, types.StoreKey, c.Store)
 
-	// Fake being authenticated for demoing
+	// TODO: Kill after authentication has been implemented in the frontend.
 	actor := authorization.Actor{
 		Name: "admin",
 		Rules: []types.Rule{{
@@ -44,22 +47,35 @@ func (c *GraphController) query(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx = context.WithValue(ctx, types.AuthorizationActorKey, actor)
 
+	// Read request body
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(
+			writer,
+			"request body must be valid JSON",
+			http.StatusBadRequest,
+		)
 		return
 	}
 	defer r.Body.Close()
 
+	// Parse request body
 	rBody := map[string]interface{}{}
 	err = json.Unmarshal(bodyBytes, &rBody)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(
+			writer,
+			"request body must be valid JSON",
+			http.StatusBadRequest,
+		)
 		return
 	}
 
-	query, _ := rBody["query"].(string) // TODO: Safer way to do this?
+	// Extract query and variables
+	query, _ := rBody["query"].(string)
 	queryVars, _ := rBody["variables"].(map[string]interface{})
+
+	// Execute given query
 	result := graphql.Execute(ctx, query, &queryVars)
 	if len(result.Errors) > 0 {
 		logger.
@@ -67,12 +83,17 @@ func (c *GraphController) query(w http.ResponseWriter, r *http.Request) {
 			Errorf("error(s) occurred while executing GraphQL operation")
 	}
 
+	// Marshal result of query execution
 	rJSON, err := json.Marshal(result)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(
+			writer,
+			"unknown error occured while marshalling response",
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, "%s", rJSON)
+	writer.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(writer, "%s", rJSON)
 }
