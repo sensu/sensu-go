@@ -1,6 +1,8 @@
 package keepalived
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
 )
@@ -56,8 +58,9 @@ func createEvent(entity *types.Entity) *types.Event {
 		Status: 1,
 	}
 	keepaliveEvent := &types.Event{
-		Entity: entity,
-		Check:  keepaliveCheck,
+		Timestamp: time.Now().Unix(),
+		Entity:    entity,
+		Check:     keepaliveCheck,
 	}
 
 	return keepaliveEvent
