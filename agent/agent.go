@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/assetmanager"
@@ -340,12 +339,7 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 	}
 }
 
-func (a *Agent) receivePump(wg *sync.WaitGroup, conn transport.Transport) {
-	defer func() {
-		wg.Done()
-		logger.Info("recv pump shutting down")
-	}()
-
+func (a *Agent) receivePump(conn transport.Transport) {
 	logger.Info("connected - starting receivePump")
 
 	recvChan := make(chan *transport.Message)
@@ -379,12 +373,7 @@ func (a *Agent) sendMessage(msgType string, payload []byte) {
 	a.sendq <- msg
 }
 
-func (a *Agent) sendPump(wg *sync.WaitGroup, conn transport.Transport) {
-	defer func() {
-		wg.Done()
-		logger.Info("sendpump shutting down")
-	}()
-
+func (a *Agent) sendPump(conn transport.Transport) {
 	// The sendPump is actually responsible for shutting down the transport
 	// to prevent a race condition between it and something else trying
 	// to close the transport (which actually causes a write to the websocket
@@ -509,13 +498,13 @@ func (a *Agent) handshake() error {
 	return nil
 }
 
-// Run starts the Agent's connection manager which handles connecting and
-// reconnecting to the Sensu Backend. It also handles coordination of the
-// agent's read and write pumps.
+// Run starts the Agent.
 //
-// If Run cannot establish an initial connection to the specified Backend
-// URL, Run will return an error. Run will also return an error if it fails to
-// create TCP or UDP socket listeners.
+// 1. Connect to the backend, return an error if unsuccessful.
+// 2. Start the socket listeners, return an error if unsuccessful.
+// 3. Start the send/receive pumps.
+// 4. Start sending keepalives.
+// 5. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
 	// TODO(greg): this whole thing reeks. i want to be able to return an error
 	// if we can't connect, but maybe we do the channel w/ terminal errors thing
@@ -538,16 +527,10 @@ func (a *Agent) Run() error {
 		return err
 	}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-	go a.sendPump(wg, conn)
-	go a.receivePump(wg, conn)
-
-	pumpsReturned := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(pumpsReturned)
-	}()
+	// These are in separate goroutines so that they can, theoretically, be executing
+	// concurrently.
+	go a.sendPump(conn)
+	go a.receivePump(conn)
 
 	go func() {
 		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
@@ -561,49 +544,6 @@ func (a *Agent) Run() error {
 
 		}
 	}()
-
-	go func(wg *sync.WaitGroup) {
-		retries := 0
-		for {
-			select {
-			case <-a.stopping:
-				logger.Debug("pumps received stopping")
-				wg.Wait()
-				close(a.sendq)
-				return
-
-			case <-pumpsReturned:
-				nextBackend := a.backendSelector.Select()
-				logger.Info("disconnected - attempting to reconnect: ", nextBackend)
-				conn, err := transport.Connect(nextBackend, a.config.TLS, header)
-				if err != nil {
-					logger.Error("connection error:", err.Error())
-					// TODO(greg): exponential backoff
-					time.Sleep(1 * time.Second)
-					retries++
-					continue
-				}
-
-				a.conn = conn
-				logger.Info("reconnected: ", nextBackend)
-
-				err = a.handshake()
-				if err != nil {
-					logger.Error("handshake error: ", err.Error())
-					continue
-				}
-
-				wg.Add(2)
-				go a.sendPump(wg, conn)
-				go a.receivePump(wg, conn)
-				pumpsReturned = make(chan struct{})
-				go func() {
-					wg.Wait()
-					close(pumpsReturned)
-				}()
-			}
-		}
-	}(wg)
 
 	// Prepare the HTTP API server
 	a.api = newServer(a)
