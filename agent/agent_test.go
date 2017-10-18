@@ -122,6 +122,7 @@ func TestReceiveTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -158,6 +159,7 @@ func TestReceiveCheckTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -194,6 +196,7 @@ func TestUDP(t *testing.T) {
 	cfg := NewConfig()
 	ta := NewAgent(cfg)
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -229,6 +232,7 @@ func TestReceivePingTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -263,6 +267,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
@@ -297,6 +302,7 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	ta := NewAgent(cfg)
 
 	err := ta.createListenSockets()
+	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
