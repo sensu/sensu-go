@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: sensu-backend
-          image: gcr.io/sensu-2-demo/sensu-go
+          image: gcr.io/engineering-182923/sensu-go
           command: ["/opt/sensu/bin/sensu-backend", "start"]
           ports:
             - protocol: TCP
