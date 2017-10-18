@@ -533,7 +533,9 @@ func (a *Agent) Run() error {
 		for {
 			select {
 			case <-keepaliveTicker.C:
-				a.sendKeepalive()
+				if err := a.sendKeepalive(); err != nil {
+					logger.WithError(err).Error("failed sending keepalive")
+				}
 			case <-a.stopping:
 				return
 			}
