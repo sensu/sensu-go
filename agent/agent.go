@@ -167,6 +167,8 @@ func (a *Agent) createListenSockets() error {
 	}
 
 	go func() {
+		defer tcpListen.Close()
+
 		for {
 			conn, err := tcpListen.Accept()
 			select {
@@ -175,18 +177,11 @@ func (a *Agent) createListenSockets() error {
 			default:
 				if err != nil {
 					logger.Error(err)
-					tcpListen.Close()
 					return
 				}
 				go a.handleTCPMessages(conn)
 			}
 		}
-	}()
-
-	go func() {
-		<-a.stopping
-		logger.Debug("TCP listener stopped")
-		tcpListen.Close()
 	}()
 
 	return err
