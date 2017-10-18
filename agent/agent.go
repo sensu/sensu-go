@@ -142,16 +142,17 @@ func (a *Agent) createListenSockets() error {
 	addr := fmt.Sprintf("%s:%d", a.config.Socket.Host, a.config.Socket.Port)
 
 	// Setup UDP socket listener
-	logger.Infof("starting UDP listener on %s", addr)
 	UDPServerAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return err
 	}
 
 	udpListen, err := net.ListenUDP("udp", UDPServerAddr)
-	if err == nil {
-		go a.handleUDPMessages(udpListen)
+	if err != nil {
+		return err
 	}
+	logger.Infof("starting UDP listener on %s", addr)
+	go a.handleUDPMessages(udpListen)
 
 	// Setup TCP socket listener
 	TCPServerAddr, err := net.ResolveTCPAddr("tcp", addr)
