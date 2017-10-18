@@ -7,7 +7,6 @@ package agent
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -550,19 +549,6 @@ func (a *Agent) Run() error {
 		logger.Info("starting api on address: ", a.api.Addr)
 
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
-			logger.Fatal(err)
-		}
-	}()
-
-	// Gracefully shutdown the HTTP API server when the agent stops
-	go func() {
-		<-a.stopping
-		logger.Info("api shutting down")
-
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-
-		if err := a.api.Shutdown(ctx); err != nil {
 			logger.Fatal(err)
 		}
 	}()
