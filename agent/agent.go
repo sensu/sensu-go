@@ -506,9 +506,6 @@ func (a *Agent) handshake() error {
 // 4. Start sending keepalives.
 // 5. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
-	// TODO(greg): this whole thing reeks. i want to be able to return an error
-	// if we can't connect, but maybe we do the channel w/ terminal errors thing
-	// here as well. yeah. i think we should do that instead.
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	header := http.Header{"Authorization": {"Basic " + userCredentials}}
