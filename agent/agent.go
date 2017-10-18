@@ -592,8 +592,8 @@ func (a *Agent) Run() error {
 	return nil
 }
 
-// Stop will cause the Agent to finish processing requests and then cleanly
-// shutdown.
+// Stop shuts down the agent. It will block until all listening goroutines
+// have returned.
 func (a *Agent) Stop() {
 	close(a.stopping)
 	a.wg.Wait()
