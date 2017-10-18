@@ -7,6 +7,7 @@ package agent
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/assetmanager"
@@ -121,6 +123,7 @@ type Agent struct {
 	entity          *types.Entity
 	assetManager    *assetmanager.Manager
 	api             *http.Server
+	wg              *sync.WaitGroup
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -132,6 +135,7 @@ func NewAgent(config *Config) *Agent {
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
+		wg:              &sync.WaitGroup{},
 	}
 
 	agent.handler.AddHandler(types.CheckRequestType, agent.handleCheck)
@@ -143,6 +147,9 @@ func NewAgent(config *Config) *Agent {
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
 func (a *Agent) createListenSockets() error {
+	// we have two listeners that we want to shut down before agent.Stop() returns.
+	a.wg.Add(2)
+
 	addr := fmt.Sprintf("%s:%d", a.config.Socket.Host, a.config.Socket.Port)
 
 	// Setup UDP socket listener
@@ -171,20 +178,21 @@ func (a *Agent) createListenSockets() error {
 	}
 
 	go func() {
-		defer tcpListen.Close()
+		<-a.stopping
+		tcpListen.Close()
+	}()
+
+	go func() {
+		defer a.wg.Done()
 
 		for {
 			conn, err := tcpListen.Accept()
-			select {
-			case <-a.stopping:
+			if err != nil {
+				logger.Error(err)
+				tcpListen.Close()
 				return
-			default:
-				if err != nil {
-					logger.Error(err)
-					return
-				}
-				go a.handleTCPMessages(conn)
 			}
+			go a.handleTCPMessages(conn)
 		}
 	}()
 
@@ -279,6 +287,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 	go func() {
 		<-a.stopping
 		c.Close()
+		a.wg.Done()
 	}()
 	// Read everything sent from the connection to the message buffer. Any error
 	// will return. If the buffer is zero bytes, close the connection and return.
@@ -551,12 +560,25 @@ func (a *Agent) Run() error {
 	a.api = newServer(a)
 
 	// Start the HTTP API server
+	// Allow Stop() to block until the HTTP server shuts down.
+	a.wg.Add(1)
 	go func() {
+		defer a.wg.Done()
 		logger.Info("starting api on address: ", a.api.Addr)
 
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
 			logger.Fatal(err)
 		}
+	}()
+
+	go func() {
+		<-a.stopping
+		logger.Info("api shutting down")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		a.api.Shutdown(ctx)
 	}()
 
 	return nil
@@ -566,12 +588,7 @@ func (a *Agent) Run() error {
 // shutdown.
 func (a *Agent) Stop() {
 	close(a.stopping)
-	select {
-	case <-a.stopped:
-		return
-	case <-time.After(1 * time.Second):
-		return
-	}
+	a.wg.Wait()
 }
 
 func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFunc) {
