@@ -177,18 +177,22 @@ func (a *Agent) createListenSockets() error {
 		return err
 	}
 
+	// we have to monitor the stopping channel out of band, otherwise
+	// the tcpListen.Accept() loop will never return.
 	go func() {
 		<-a.stopping
 		tcpListen.Close()
 	}()
 
 	go func() {
+		// Actually block the waitgroup until the last call to Accept()
+		// returns.
 		defer a.wg.Done()
 
 		for {
 			conn, err := tcpListen.Accept()
 			if err != nil {
-				logger.Error(err)
+				logger.WithError(err).Error("error accepting TCP connection")
 				tcpListen.Close()
 				return
 			}
@@ -572,6 +576,10 @@ func (a *Agent) Run() error {
 	}()
 
 	go func() {
+		// NOTE: This does not guarantee a clean shutdown of the HTTP API.
+		// This is _only_ for the purpose of making Stop() a blocking call.
+		// The goroutine running the HTTP Server has to return before Stop()
+		// can return, so we use this to signal that goroutine to shutdown.
 		<-a.stopping
 		logger.Info("api shutting down")
 
