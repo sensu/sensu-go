@@ -14,6 +14,15 @@ import (
 var checkEventType *graphql.Object
 var checkEventConnection *relay.ConnectionDefinitions
 
+func init() {
+	initNodeInterface()
+	initCheckEventType()
+	initCheckEventConnection()
+
+	nodeResolver := newCheckEventNodeResolver()
+	nodeRegister.RegisterResolver(nodeResolver)
+}
+
 func initCheckEventType() {
 	if checkEventType != nil {
 		return
@@ -151,13 +160,4 @@ func newCheckEventNodeResolver() relay.NodeResolver {
 			return components.ResourceType() == "check"
 		},
 	}
-}
-
-func init() {
-	initNodeInterface()
-	initCheckEventType()
-	initCheckEventConnection()
-
-	nodeResolver := newCheckEventNodeResolver()
-	nodeRegister.RegisterResolver(nodeResolver)
 }

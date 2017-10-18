@@ -12,6 +12,14 @@ import (
 var userType *graphql.Object
 
 func init() {
+	initNodeInterface()
+	initUserType()
+
+	nodeResolver := newUserNodeResolver()
+	nodeRegister.RegisterResolver(nodeResolver)
+}
+
+func initUserType() {
 	userType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "User",
 		Interfaces: graphql.InterfacesThunk(func() []*graphql.Interface {
@@ -51,9 +59,6 @@ func init() {
 			return ok
 		},
 	})
-
-	nodeResolver := newUserNodeResolver()
-	nodeRegister.RegisterResolver(nodeResolver)
 }
 
 func newUserNodeResolver() relay.NodeResolver {

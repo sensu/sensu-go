@@ -60,7 +60,7 @@ func (register NodeRegister) Lookup(components globalid.Components) *NodeResolve
 		"entriesLen":   entries,
 		"idComponents": components,
 	})
-	logEntry.Info("lookup")
+	logEntry.Debug("lookup")
 
 	if entriesLen > 1 {
 		for _, entry := range entries {

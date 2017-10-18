@@ -26,8 +26,13 @@ func init() {
 			}
 		}),
 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-			if _, ok := p.Value.(types.Entity); ok {
+			switch p.Value.(type) {
+			case *types.Entity:
 				return entityType
+			case *types.CheckConfig:
+				return checkConfigType
+			case *types.User:
+				return userType
 			}
 			return nil
 		},

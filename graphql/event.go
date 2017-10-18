@@ -7,10 +7,20 @@ import (
 
 var eventType *graphql.Union
 
+//
+// NOTE:
+//
+//   Since (at this time) a union's types cannot be wrapped in a thunk, we
+//   need to make sure that the checkEventType & metricEventType have been
+//   instantiated before the EventType is.
+//
 func init() {
 	initCheckEventType()
 	initMetricEventType()
+	initEventType()
+}
 
+func initEventType() {
 	eventType = graphql.NewUnion(graphql.UnionConfig{
 		Name:        "Event",
 		Description: "Describes check result or metric collected.",
@@ -19,7 +29,6 @@ func init() {
 			metricEventType,
 		},
 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-			// TODO
 			if event, ok := p.Value.(*types.Event); ok {
 				if event.Check != nil {
 					return checkEventType
@@ -27,7 +36,6 @@ func init() {
 					return metricEventType
 				}
 			}
-
 			return nil
 		},
 	})

@@ -6,9 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-var (
-	defaultLogger = logrus.WithField("component", "globalid")
-)
+var defaultLogger = logrus.WithField("component", "graphql/globalid")
 
 //
 // Registrar
@@ -92,27 +90,4 @@ func (r Register) ReverseLookup(record interface{}) (Encoder, error) {
 		"global ID encoder could not be found for '%s'",
 		recordType,
 	)
-}
-
-//
-// Translators
-//
-
-// An Encoder can encode global IDs for a specific resource
-type Encoder interface {
-	IsResponsible(interface{}) bool
-	Encode(interface{}) Components
-	EncodeToString(interface{}) string
-}
-
-// A Decoder can decode global IDs for a specific resource
-type Decoder interface {
-	Decode(StandardComponents) Components
-}
-
-// A Translator represents something that is globally identifable
-type Translator interface {
-	ForResourceNamed() string
-	Encoder
-	Decoder
 }

@@ -1,7 +1,6 @@
 package graphqlschema
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -58,7 +57,7 @@ func (t *CheckNodeResolver) TestWithStoreError() {
 	record := types.FixtureCheckConfig("bob")
 	t.store().
 		On("GetCheckConfigByName", mock.Anything, record.Name).
-		Return(record, errors.New("poopy")).Once()
+		Return(record, errMock).Once()
 
 	res, err := t.runResolver(record)
 	t.Nil(res)

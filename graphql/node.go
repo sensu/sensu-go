@@ -21,12 +21,14 @@ func initNodeInterface() {
 	nodeInterface = graphql.NewInterface(graphql.InterfaceConfig{
 		Name:        "Node",
 		Description: "An object with an ID",
-		Fields: graphql.Fields{
-			"id": &graphql.Field{
-				Type:        graphql.NewNonNull(graphql.ID),
-				Description: "The id of the object",
-			},
-		},
+		Fields: graphql.FieldsThunk(func() graphql.Fields {
+			return graphql.Fields{
+				"id": &graphql.Field{
+					Type:        graphql.NewNonNull(graphql.ID),
+					Description: "The id of the object",
+				},
+			}
+		}),
 		//
 		// TODO:
 		//

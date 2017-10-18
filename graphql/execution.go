@@ -56,7 +56,9 @@ func (e *Execution) Run() *graphql.Result {
 		formattedQuery := e.Query
 		formattedQuery = strings.Replace(formattedQuery, "\n", " ", -1)
 		formattedQuery = matchWhitespaceRegex.ReplaceAllLiteralString(formattedQuery, " ")
-		logger.WithField("query", formattedQuery).Debug("executing GraphQL query")
+
+		logEntry := logger.WithField("query", formattedQuery)
+		logEntry.Debug("executing GraphQL query")
 	}
 
 	return graphql.Do(params)

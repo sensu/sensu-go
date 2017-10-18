@@ -12,6 +12,15 @@ import (
 var entityType *graphql.Object
 var entityConnection *relay.ConnectionDefinitions
 
+func init() {
+	initNodeInterface()
+	initEntityType()
+	initEntityConnection()
+
+	nodeResolver := newEntityNodeResolver()
+	nodeRegister.RegisterResolver(nodeResolver)
+}
+
 func initEntityType() {
 	if entityType != nil {
 		return
@@ -99,8 +108,11 @@ func initEntityType() {
 						return idComponents.String(), nil
 					},
 				},
-				// TODO: replce with alias resolve
-				// "entityID":         AliasField(graphql.String, "ID"),
+				"entityId": &graphql.Field{
+					Description: "The given ID of an object; not globally unique",
+					Type:        graphql.NewNonNull(graphql.ID),
+					Resolve:     AliasResolver("ID"),
+				},
 				"class": &graphql.Field{
 					Description: "The type of entity",
 					Type:        graphql.String,
@@ -134,9 +146,8 @@ func initEntityType() {
 					Description: "The organization the entity belongs to",
 					Type:        graphql.NewNonNull(graphql.String),
 				},
-				// TODO: write description and resolve
 				"user": &graphql.Field{
-					Description: "???",
+					Description: "???", // TODO: Describe this... somehow.
 					Type:        userType,
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						entity := p.Source.(*types.Entity)
@@ -192,13 +203,4 @@ func newEntityNodeResolver() relay.NodeResolver {
 			return nil, nil
 		},
 	}
-}
-
-func init() {
-	initNodeInterface()
-	initEntityType()
-	initEntityConnection()
-
-	nodeResolver := newEntityNodeResolver()
-	nodeRegister.RegisterResolver(nodeResolver)
 }

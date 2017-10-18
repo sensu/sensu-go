@@ -18,7 +18,8 @@ import (
 //
 // Example global IDs
 //
-//   srn:entities:default:default:agent/selene.local
+//   srn:entities:default:default:selene.local
+//   srn:events:sales:prod:check/aG93ZHkgYnVkCg==
 //   srn:checks:auto:staging:disk-full
 //   srn:users:deanlearner
 //

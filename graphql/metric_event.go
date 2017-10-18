@@ -8,6 +8,16 @@ import (
 )
 
 var metricEventType *graphql.Object
+var metricEventConnection *relay.ConnectionDefinitions
+
+func init() {
+	initNodeInterface()
+	initMetricEventType()
+	initMetricEventConnection()
+
+	nodeResolver := newMetricEventNodeResolver()
+	nodeRegister.RegisterResolver(nodeResolver)
+}
 
 func initMetricEventType() {
 	if metricEventType != nil {
@@ -45,9 +55,22 @@ func initMetricEventType() {
 			return false
 		},
 	})
+}
 
-	nodeRegister.RegisterResolver(relay.NodeResolver{
-		Object:     checkEventType,
+func initMetricEventConnection() {
+	if metricEventConnection != nil {
+		return
+	}
+
+	metricEventConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
+		Name:     "MetricEvent",
+		NodeType: metricEventType,
+	})
+}
+
+func newMetricEventNodeResolver() relay.NodeResolver {
+	return relay.NodeResolver{
+		Object:     metricEventType,
 		Translator: globalid.EventTranslator,
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			// components := p.IDComponents.(globalid.EventComponents)
@@ -59,5 +82,5 @@ func initMetricEventType() {
 		IsKindOf: func(components globalid.Components) bool {
 			return components.ResourceType() == "check"
 		},
-	})
+	}
 }
