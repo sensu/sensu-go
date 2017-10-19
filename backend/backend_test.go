@@ -107,19 +107,16 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 			userCredentials := base64.StdEncoding.EncodeToString([]byte("agent:P@ssw0rd!"))
 
-			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls, http.Header{"Authorization": {"Basic " + userCredentials}})
+			hdr := http.Header{
+				"Authorization":                  {"Basic " + userCredentials},
+				transport.HeaderKeyEnvironment:   {"default"},
+				transport.HeaderKeyOrganization:  {"default"},
+				transport.HeaderKeyAgentID:       {"agent"},
+				transport.HeaderKeySubscriptions: {},
+			}
+			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls, hdr)
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
-
-			msg := &transport.Message{
-				Type:    types.AgentHandshakeType,
-				Payload: []byte("{}"),
-			}
-			err = client.Send(msg)
-			assert.NoError(t, err)
-			resp, err := client.Receive()
-			assert.NoError(t, err)
-			assert.Equal(t, types.BackendHandshakeType, resp.Type)
 
 			assert.NoError(t, client.Close())
 			b.Stop()

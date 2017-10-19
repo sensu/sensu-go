@@ -1,8 +1,6 @@
 package agentd
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -45,7 +43,7 @@ func (t testTransport) Receive() (*transport.Message, error) {
 	return <-t.sendCh, nil
 }
 
-func TestGoodHandshake(t *testing.T) {
+func TestGoodSessionConfig(t *testing.T) {
 	conn := testTransport{
 		sendCh: make(chan *transport.Message, 10),
 	}
@@ -54,60 +52,25 @@ func TestGoodHandshake(t *testing.T) {
 	bus.Start()
 
 	st := &mockstore.MockStore{}
-	st.On(
-		"UpdateEntity",
-		mock.Anything,
-		mock.AnythingOfType("*types.Entity"),
-	).Return(nil)
 	st.On(
 		"GetEnvironment",
 		mock.Anything,
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		"org",
+		"env",
 	).Return(&types.Environment{}, nil)
 
-	session, err := NewSession(conn, bus, st)
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "unable to create session")
-	}
-	assert.NotNil(t, session)
-
-	hsBytes, _ := json.Marshal(&types.AgentHandshake{
+	cfg := SessionConfig{
+		AgentID:       "testing",
+		Organization:  "org",
+		Environment:   "env",
 		Subscriptions: []string{"testing"},
-	})
-	conn.Send(&transport.Message{
-		Type:    types.AgentHandshakeType,
-		Payload: hsBytes,
-	})
-	assert.NoError(t, session.Start())
-}
-
-func TestBadHandshake(t *testing.T) {
-	conn := testTransport{
-		sendCh: make(chan *transport.Message, 10),
 	}
-
-	bus := &messaging.WizardBus{}
-	bus.Start()
-
-	st := &mockstore.MockStore{}
-
-	session, err := NewSession(conn, bus, st)
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "unable to create session")
-	}
+	session, err := NewSession(cfg, conn, bus, st)
 	assert.NotNil(t, session)
-
-	conn.Send(&transport.Message{
-		Type:    types.AgentHandshakeType,
-		Payload: []byte("..."),
-	})
-	assert.Error(t, session.Start())
+	assert.NoError(t, err)
 }
 
-func TestBadOrganizationHandshake(t *testing.T) {
+func TestBadSessionConfig(t *testing.T) {
 	conn := testTransport{
 		sendCh: make(chan *transport.Message, 10),
 	}
@@ -128,80 +91,10 @@ func TestBadOrganizationHandshake(t *testing.T) {
 		mock.AnythingOfType("string"),
 	).Return(&types.Environment{}, fmt.Errorf("error"))
 
-	session, _ := NewSession(conn, bus, st)
-	hsBytes, _ := json.Marshal(&types.AgentHandshake{
+	cfg := SessionConfig{
 		Subscriptions: []string{"testing"},
-	})
-	conn.Send(&transport.Message{
-		Type:    types.AgentHandshakeType,
-		Payload: hsBytes,
-	})
-
-	assert.Error(t, session.Start())
-}
-
-func TestNoHandshake(t *testing.T) {
-	conn := testTransport{
-		sendCh: make(chan *transport.Message, 10),
 	}
-
-	bus := &messaging.WizardBus{}
-	bus.Start()
-
-	st := &mockstore.MockStore{}
-
-	session, err := NewSession(conn, bus, st)
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "unable to create session")
-	}
-	assert.NotNil(t, session)
-
-	conn.Send(&transport.Message{
-		Type:    transport.MessageTypeEvent,
-		Payload: []byte("..."),
-	})
-	assert.Error(t, session.Start())
-}
-
-func TestSendError(t *testing.T) {
-	conn := testTransport{
-		sendCh: make(chan *transport.Message, 10),
-	}
-
-	bus := &messaging.WizardBus{}
-	bus.Start()
-
-	st := &mockstore.MockStore{}
-
-	session, err := NewSession(conn, bus, st)
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "unable to create session")
-	}
-	assert.NotNil(t, session)
-
-	conn.sendErr = errors.New("error")
-	assert.Error(t, session.Start())
-}
-
-func TestReceiveError(t *testing.T) {
-	conn := testTransport{
-		sendCh: make(chan *transport.Message, 10),
-	}
-
-	bus := &messaging.WizardBus{}
-	bus.Start()
-
-	st := &mockstore.MockStore{}
-
-	session, err := NewSession(conn, bus, st)
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "unable to create session")
-	}
-	assert.NotNil(t, session)
-
-	conn.recvErr = errors.New("error")
-	assert.Error(t, session.Start())
+	session, err := NewSession(cfg, conn, bus, st)
+	assert.Nil(t, session)
+	assert.Error(t, err)
 }

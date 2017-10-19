@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -115,7 +116,15 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := NewSession(transport.NewTransport(conn), a.MessageBus, a.Store)
+	cfg := SessionConfig{
+		AgentID:       r.Header.Get(transport.HeaderKeyAgentID),
+		Environment:   r.Header.Get(transport.HeaderKeyEnvironment),
+		Organization:  r.Header.Get(transport.HeaderKeyOrganization),
+		User:          r.Header.Get(transport.HeaderKeyUser),
+		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+	}
+
+	session, err := NewSession(cfg, transport.NewTransport(conn), a.MessageBus, a.Store)
 	if err != nil {
 		logger.Error("failed to create session: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

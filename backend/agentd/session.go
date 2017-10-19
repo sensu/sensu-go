@@ -23,15 +23,15 @@ import (
 type Session struct {
 	ID string
 
-	conn          transport.Transport
-	store         store.Store
-	handler       *handler.MessageHandler
-	stopping      chan struct{}
-	wg            *sync.WaitGroup
-	sendq         chan *transport.Message
-	subscriptions []string
-	checkChannel  chan interface{}
-	bus           messaging.MessageBus
+	cfg          SessionConfig
+	conn         transport.Transport
+	store        store.Store
+	handler      *handler.MessageHandler
+	stopping     chan struct{}
+	wg           *sync.WaitGroup
+	sendq        chan *transport.Message
+	checkChannel chan interface{}
+	bus          messaging.MessageBus
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -42,17 +42,36 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 	return handler
 }
 
+// A SessionConfig contains all of the ncessary information to intiialize
+// an agent session.
+type SessionConfig struct {
+	Organization  string
+	Environment   string
+	AgentID       string
+	User          string
+	Subscriptions []string
+}
+
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
-func NewSession(conn transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
+func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 
+	// Validate the agent organization and environment
+	ctx := context.TODO()
+	if _, err := store.GetEnvironment(ctx, cfg.Organization, cfg.Environment); err != nil {
+		return nil, fmt.Errorf("the environment '%s:%s' is invalid", cfg.Organization, cfg.Environment)
+	}
+
+	logger.Infof("agent connected: id=%s subscriptions=%s", cfg.AgentID, cfg.Subscriptions)
+
 	s := &Session{
 		ID:           id.String(),
 		conn:         conn,
+		cfg:          cfg,
 		stopping:     make(chan struct{}, 1),
 		wg:           &sync.WaitGroup{},
 		sendq:        make(chan *transport.Message, 10),
@@ -63,64 +82,6 @@ func NewSession(conn transport.Transport, bus messaging.MessageBus, store store.
 	}
 	s.handler = newSessionHandler(s)
 	return s, nil
-}
-
-// the handshake is asynchronous, but the Transport Receive() method is blocking,
-// so we send our backend handshake before waiting on the agent handshake.
-// Once we have the agent handshake, which is just an Entity object, we
-// subscribe to the corresponding channels on the message bus that match the
-// agent's subscriptions.
-func (s *Session) handshake() error {
-	handshake := &types.BackendHandshake{}
-	hsBytes, err := json.Marshal(handshake)
-	if err != nil {
-		return fmt.Errorf("error marshaling handshake: %s", err.Error())
-	}
-
-	// shoot first, ask questions later, because Receive() is blocking and
-	// Send() is not.
-	msg := &transport.Message{
-		Type:    types.BackendHandshakeType,
-		Payload: hsBytes,
-	}
-
-	// TODO(grep): This will block indefinitely. We need to start managing
-	// timeouts in transport.WebsocketTransport.
-	err = s.conn.Send(msg)
-	if err != nil {
-		return fmt.Errorf("error sending backend handshake: %s", err.Error())
-	}
-
-	resp, err := s.conn.Receive()
-	if err != nil {
-		return fmt.Errorf("error receiving agent handshake: %s", err.Error())
-	}
-	if resp.Type != types.AgentHandshakeType {
-		return errors.New("no handshake from agent")
-	}
-	agentHandshake := types.AgentHandshake{}
-	if err := json.Unmarshal(resp.Payload, &agentHandshake); err != nil {
-		return fmt.Errorf("error unmarshaling agent handshake: %s", err.Error())
-	}
-
-	// Validate the agent organization and environment
-	ctx := context.TODO()
-	if _, err = s.store.GetEnvironment(ctx, agentHandshake.Organization, agentHandshake.Environment); err != nil {
-		return fmt.Errorf("the environment '%s:%s' is invalid", agentHandshake.Organization, agentHandshake.Environment)
-	}
-
-	s.subscriptions = agentHandshake.Subscriptions
-	for _, sub := range s.subscriptions {
-		topic := messaging.SubscriptionTopic(agentHandshake.Organization, agentHandshake.Environment, sub)
-		logger.Debugf("Subscribing to topic %s", topic)
-		if err := s.bus.Subscribe(topic, s.ID, s.checkChannel); err != nil {
-			return err
-		}
-	}
-
-	logger.Infof("agent connected: id=%s subscriptions=%s", agentHandshake.ID, agentHandshake.Subscriptions)
-
-	return nil
 }
 
 func (s *Session) receiveMessages(out chan *transport.Message) {
@@ -224,22 +185,25 @@ func (s *Session) sendPump() {
 }
 
 // Start a Session.
-// 1. Perform the handshake (this blocks)
-// 2. Start send pump
-// 3. Start receive pump
-// 4. Start subscription pump
+// 1. Start send pump
+// 2. Start receive pump
+// 3. Start subscription pump
 // 5. Ensure bus unsubscribe when the session shuts down.
 func (s *Session) Start() error {
-	err := s.handshake()
-	if err != nil {
-		return err
-	}
-
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(3)
 	go s.sendPump()
 	go s.recvPump()
 	go s.subPump()
+
+	for _, sub := range s.cfg.Subscriptions {
+		topic := messaging.SubscriptionTopic(s.cfg.Organization, s.cfg.Environment, sub)
+		logger.Debugf("Subscribing to topic %s", topic)
+		if err := s.bus.Subscribe(topic, s.cfg.AgentID, s.checkChannel); err != nil {
+			logger.WithError(err).Error("error starting subscription")
+			return err
+		}
+	}
 
 	return nil
 }
@@ -249,7 +213,7 @@ func (s *Session) Start() error {
 func (s *Session) Stop() {
 	close(s.stopping)
 	s.wg.Wait()
-	for _, sub := range s.subscriptions {
+	for _, sub := range s.cfg.Subscriptions {
 		s.bus.Unsubscribe(sub, s.ID)
 	}
 	close(s.checkChannel)
