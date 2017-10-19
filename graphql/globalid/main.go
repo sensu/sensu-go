@@ -15,7 +15,7 @@ var Lookup = register.Lookup
 // ReverseLookup finds Encoder capable of encoding record as global ID
 var ReverseLookup = register.ReverseLookup
 
-// Decoder parse, look up decoder & decode.
+// Decode parses, looks up decoder & decodes given ID.
 func Decode(gid string) (Components, error) {
 	standardComponents, err := Parse(gid)
 	if err != nil {
