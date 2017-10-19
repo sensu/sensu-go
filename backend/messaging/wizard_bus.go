@@ -123,10 +123,12 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 		return errors.New("bus no longer running")
 	}
 
+	b.mutex.RLock()
 	wTopic, ok := b.topics[topic]
 	if !ok {
 		return errors.New("topic not found")
 	}
+	b.mutex.RUnlock()
 
 	wTopic.Unsubscribe(consumer)
 	return nil
