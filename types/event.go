@@ -19,7 +19,7 @@ type Event struct {
 	Entity   *Entity  `json:"entity,omitempty"`
 	Check    *Check   `json:"check,omitempty"`
 	Metrics  *Metrics `json:"metrics,omitempty"`
-	Silenced bool     `json:"silenced,omitempty"`
+	Silenced []string `json:"silenced,omitempty"`
 }
 
 // FixtureEvent returns a testing fixutre for an Event object.
@@ -28,6 +28,5 @@ func FixtureEvent(entityID, checkID string) *Event {
 		Timestamp: time.Now().Unix(),
 		Entity:    FixtureEntity(entityID),
 		Check:     FixtureCheck(checkID),
-		Silenced:  false,
 	}
 }

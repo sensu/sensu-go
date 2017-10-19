@@ -18,15 +18,21 @@ func (s *MockStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, 
 	return args.Get(0).([]*types.Silenced), args.Error(1)
 }
 
-// GetSilencedEntry ...
-func (s *MockStore) GetSilencedEntry(ctx context.Context, silencedID string) (*types.Silenced, error) {
+// GetSilencedEntryByID ...
+func (s *MockStore) GetSilencedEntryByID(ctx context.Context, silencedID string) ([]*types.Silenced, error) {
 	args := s.Called(ctx, silencedID)
-	return args.Get(0).(*types.Silenced), args.Error(1)
+	return args.Get(0).([]*types.Silenced), args.Error(1)
 }
 
-// GetSilencedEntryBySubscription ...
-func (s *MockStore) GetSilencedEntryBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error) {
-	args := s.Called(ctx, subscription)
+// GetSilencedEntriesBySubscription ...
+func (s *MockStore) GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error) {
+	args := s.Called(ctx)
+	return args.Get(0).([]*types.Silenced), args.Error(1)
+}
+
+// GetSilencedEntriesByCheckName ...
+func (s *MockStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*types.Silenced, error) {
+	args := s.Called(ctx)
 	return args.Get(0).([]*types.Silenced), args.Error(1)
 }
 

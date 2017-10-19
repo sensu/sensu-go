@@ -83,8 +83,6 @@ func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName
 
 	// iterate through response entries
 	// add anything with checkName == entry.CheckName to an array and return
-	fmt.Printf("Silenced entries by checkName: %s\n", resp)
-
 	silencedArray := make([]*types.Silenced, len(resp.Kvs))
 	for i, kv := range resp.Kvs {
 		silencedEntry := &types.Silenced{}
@@ -121,6 +119,7 @@ func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) ([]*typ
 // Create new silenced event
 func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Silenced) error {
 	if err := silenced.Validate(); err != nil {
+		fmt.Println(err)
 		return err
 	}
 
@@ -148,6 +147,8 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	return nil
 }
 
+// arrayEntries is a helper function to unmarshal entries from json and return
+// them as an array
 func arrayEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
 	if len(resp.Kvs) == 0 {
 		return []*types.Silenced{}, nil

@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -19,7 +20,7 @@ type SilencedController struct {
 // Register should define an association between HTTP routes and their
 // respective handlers defined within this Controller.
 func (c *SilencedController) Register(r *mux.Router) {
-	r.HandleFunc("/silenced", c.many).Methods(http.MethodGet)
+	r.HandleFunc("/silenced", c.getAll).Methods(http.MethodGet)
 	r.HandleFunc("/silenced", c.update).Methods(http.MethodPost)
 	r.HandleFunc("/silenced/ids/{id}", c.getByID).Methods(http.MethodGet)
 	r.HandleFunc("/silenced/clear", c.clear).Methods(http.MethodPost)
@@ -27,8 +28,8 @@ func (c *SilencedController) Register(r *mux.Router) {
 	r.HandleFunc("/silenced/checks/{check}", c.getByCheck).Methods(http.MethodGet)
 }
 
-// many handles requests to /silenced
-func (c *SilencedController) many(w http.ResponseWriter, r *http.Request) {
+// many handles GET requests to /silenced
+func (c *SilencedController) getAll(w http.ResponseWriter, r *http.Request) {
 	abilities := authorization.Silenced.WithContext(r.Context())
 	if r.Method == http.MethodGet && !abilities.CanList() {
 		authorization.UnauthorizedAccessToResource(w)
@@ -54,6 +55,35 @@ func (c *SilencedController) many(w http.ResponseWriter, r *http.Request) {
 
 // update handles POST resquests to /silenced
 func (c *SilencedController) update(w http.ResponseWriter, r *http.Request) {
+	silencedEntry := &types.Silenced{}
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(bodyBytes, silencedEntry)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	// Populate silencedEntry.ID with the subscription and checkName. Substitute a
+	// splat if one of the values does not exist. If both values are empty, the
+	// validator will return an error when attempting to update it in the store.
+	if silencedEntry.Subscription != "" && silencedEntry.CheckName != "" {
+		silencedEntry.ID = silencedEntry.Subscription + ":" + silencedEntry.CheckName
+	} else if silencedEntry.CheckName == "" && silencedEntry.Subscription != "" {
+		silencedEntry.ID = silencedEntry.Subscription + ":" + "*"
+	} else if silencedEntry.Subscription == "" && silencedEntry.CheckName != "" {
+		silencedEntry.ID = "*" + ":" + silencedEntry.CheckName
+	}
+
+	err = c.Store.UpdateSilencedEntry(r.Context(), silencedEntry)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
 
 // getByID handles requests to /silenced/ids/:id
@@ -90,8 +120,35 @@ func (c *SilencedController) getByID(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(silencedBytes))
 }
 
-//
+// clear takes the complete silenced id (subscription and check name) and
+// removes that key from etcd.
 func (c *SilencedController) clear(w http.ResponseWriter, r *http.Request) {
+	silencedEntry := &types.Silenced{}
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(bodyBytes, silencedEntry)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	abilities := authorization.Silenced.WithContext(r.Context())
+	if !abilities.CanDelete() {
+		authorization.UnauthorizedAccessToResource(w)
+		return
+	}
+
+	err = c.Store.DeleteSilencedEntry(r.Context(), silencedEntry.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	return
 }
 
 func (c *SilencedController) getBySubscription(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +181,7 @@ func (c *SilencedController) getBySubscription(w http.ResponseWriter, r *http.Re
 
 func (c *SilencedController) getByCheck(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	check, _ := vars["check"]
+	checkName, _ := vars["check"]
 
 	abilities := authorization.Silenced.WithContext(r.Context())
 	if !abilities.CanList() {
@@ -136,8 +193,10 @@ func (c *SilencedController) getByCheck(w http.ResponseWriter, r *http.Request) 
 		silencedEntries []*types.Silenced
 		err             error
 	)
-	silencedEntries, err = c.Store.GetSilencedEntriesByCheckName(r.Context(), check)
-
+	silencedEntries, err = c.Store.GetSilencedEntriesByCheckName(r.Context(), checkName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	// Reject those resources the viewer is unauthorized to view
 	rejectSilencedEntries(&silencedEntries, abilities.CanRead)
 

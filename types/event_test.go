@@ -11,5 +11,4 @@ func TestFixtureEventIsValid(t *testing.T) {
 	assert.NotNil(t, e)
 	assert.NotNil(t, e.Entity)
 	assert.NotNil(t, e.Check)
-	assert.False(t, e.Silenced)
 }
