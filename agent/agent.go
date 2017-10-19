@@ -564,10 +564,7 @@ func (a *Agent) Run() error {
 	a.api = newServer(a)
 
 	// Start the HTTP API server
-	// Allow Stop() to block until the HTTP server shuts down.
-	a.wg.Add(1)
 	go func() {
-		defer a.wg.Done()
 		logger.Info("starting api on address: ", a.api.Addr)
 
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
@@ -575,6 +572,8 @@ func (a *Agent) Run() error {
 		}
 	}()
 
+	// Allow Stop() to block until the HTTP server shuts down.
+	a.wg.Add(1)
 	go func() {
 		// NOTE: This does not guarantee a clean shutdown of the HTTP API.
 		// This is _only_ for the purpose of making Stop() a blocking call.
@@ -587,6 +586,7 @@ func (a *Agent) Run() error {
 		defer cancel()
 
 		a.api.Shutdown(ctx)
+		a.wg.Done()
 	}()
 
 	return nil
