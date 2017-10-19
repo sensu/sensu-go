@@ -25,13 +25,6 @@ func TestSendLoop(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		// throw away handshake
-		bhsm := &transport.Message{
-			Type:    types.BackendHandshakeType,
-			Payload: []byte("{}"),
-		}
-		conn.Send(bhsm)
-		conn.Receive()
 		msg, err := conn.Receive()
 
 		assert.NoError(t, err)
@@ -69,13 +62,6 @@ func TestReceiveLoop(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		// throw away handshake
-		bhsm := &transport.Message{
-			Type:    types.BackendHandshakeType,
-			Payload: []byte("{}"),
-		}
-		conn.Send(bhsm)
-		conn.Receive()
 
 		msgBytes, err := json.Marshal(testMessage)
 		assert.NoError(t, err)

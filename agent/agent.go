@@ -10,7 +10,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -468,50 +467,18 @@ func (a *Agent) getAgentEntity() *types.Entity {
 	return a.entity
 }
 
-func (a *Agent) handshake() error {
-	handshake := &types.AgentHandshake{
-		ID:            a.config.AgentID,
-		Subscriptions: a.config.Subscriptions,
-		Environment:   a.config.Environment,
-		Organization:  a.config.Organization,
-		User:          a.config.User,
-	}
-	msgBytes, err := json.Marshal(handshake)
-	if err != nil {
-		return err
+func (a *Agent) buildTransportHeaderMap() http.Header {
+	header := http.Header{}
+	header.Set(transport.HeaderKeyAgentID, a.config.AgentID)
+	header.Set(transport.HeaderKeyEnvironment, a.config.Environment)
+	header.Set(transport.HeaderKeyOrganization, a.config.Organization)
+	header.Set(transport.HeaderKeyUser, a.config.User)
+
+	for _, sub := range a.config.Subscriptions {
+		header.Add(transport.HeaderKeySubscriptions, sub)
 	}
 
-	// shoot first, ask questions later.
-	agentHandshakeMsg := &transport.Message{
-		Type:    types.AgentHandshakeType,
-		Payload: msgBytes,
-	}
-	err = a.conn.Send(agentHandshakeMsg)
-	if err != nil {
-		return err
-	}
-
-	m, err := a.conn.Receive()
-	if err != nil {
-		return err
-	}
-
-	if m.Type != types.BackendHandshakeType {
-		return errors.New("backend did not send handshake")
-	}
-
-	response := types.BackendHandshake{}
-	err = json.Unmarshal(m.Payload, &response)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling backend handshake: %s", err.Error())
-	}
-
-	err = a.sendKeepalive()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return header
 }
 
 // Run starts the Agent.
@@ -524,17 +491,14 @@ func (a *Agent) handshake() error {
 func (a *Agent) Run() error {
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
-	header := http.Header{"Authorization": {"Basic " + userCredentials}}
+	header := a.buildTransportHeaderMap()
+	header.Set("Authorization", "Basic "+userCredentials)
 
 	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, header)
 	if err != nil {
 		return err
 	}
 	a.conn = conn
-	err = a.handshake()
-	if err != nil {
-		return err
-	}
 
 	if err := a.createListenSockets(); err != nil {
 		return err
@@ -544,6 +508,9 @@ func (a *Agent) Run() error {
 	// concurrently.
 	go a.sendPump(conn)
 	go a.receivePump(conn)
+
+	// Send an immediate keepalive once we've connected.
+	a.sendKeepalive()
 
 	go func() {
 		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)

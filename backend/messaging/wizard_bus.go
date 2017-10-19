@@ -44,9 +44,11 @@ func (b *WizardBus) Start() error {
 func (b *WizardBus) Stop() error {
 	b.running.Store(false)
 	close(b.errchan)
+	b.mutex.Lock()
 	for _, wTopic := range b.topics {
 		wTopic.Close()
 	}
+	b.mutex.Unlock()
 	return nil
 }
 

@@ -13,12 +13,29 @@ var (
 	sep = []byte("\n")
 )
 
-// MessageTypeKeepalive is the message type sent for keepalives--which are just an
-// event without a Check or Metrics section.
-const MessageTypeKeepalive = "keepalive"
+const (
+	// MessageTypeKeepalive is the message type sent for keepalives--which are just an
+	// event without a Check or Metrics section.
+	MessageTypeKeepalive = "keepalive"
 
-// MessageTypeEvent is the message type string for events.
-const MessageTypeEvent = "event"
+	// MessageTypeEvent is the message type string for events.
+	MessageTypeEvent = "event"
+
+	// HeaderKeyAgentID is the HTTP request header specifying the Agent ID
+	HeaderKeyAgentID = "Sensu-AgentID"
+
+	// HeaderKeyEnvironment is the HTTP request header specifying the Agent Environment
+	HeaderKeyEnvironment = "Sensu-Environment"
+
+	// HeaderKeyOrganization is the HTTP request header specifying the Agent Organization
+	HeaderKeyOrganization = "Sensu-Organization"
+
+	// HeaderKeyUser is the HTTP request header specifying the Agent User
+	HeaderKeyUser = "Sensu-User"
+
+	// HeaderKeySubscriptions is the HTTP request header specifying the Agent Subscriptions
+	HeaderKeySubscriptions = "Sensu-Subscriptions"
+)
 
 // A ClosedError is returned when Receive or Send is called on a closed
 // Transport.

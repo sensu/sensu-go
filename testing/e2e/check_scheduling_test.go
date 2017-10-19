@@ -70,7 +70,7 @@ func TestCheckScheduling(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Give it few seconds to make sure we are not publishing check requests
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	// Retrieve the number of check results sent
 	event, err := sensuClient.FetchEvent(ap.AgentID, check.Name)
