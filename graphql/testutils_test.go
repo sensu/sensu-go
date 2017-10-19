@@ -119,7 +119,8 @@ type resolverSuite struct {
 //   }
 //
 func (t *resolverSuite) newParams(source interface{}, fns ...setContextFn) graphql.ResolveParams {
-	params := newParams(source, contextWithStore(t.store()))
+	fns = append([]setContextFn{contextWithStore(t.store())}, fns...)
+	params := newParams(source, fns...)
 	return params
 }
 

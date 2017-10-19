@@ -139,17 +139,16 @@ func newCheckEventNodeResolver() relay.NodeResolver {
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			components := p.IDComponents.(globalid.EventComponents)
 			store := p.Context.Value(types.StoreKey).(store.EventStore)
-
-			// TODO: Why does GetEventByEntityCheck only return a single event?!
 			events, err := store.GetEventsByEntity(p.Context, components.EntityName())
 			if err != nil {
 				return nil, err
 			}
 
-			// TODO: Filter out unauthorized results
+			abilities := authorization.Events.WithContext(p.Context)
 			for _, event := range events {
 				if event.Timestamp == components.Timestamp() &&
-					event.Check.Config.Name == components.CheckName() {
+					event.Check.Config.Name == components.CheckName() &&
+					abilities.CanRead(event) {
 					return event, nil
 				}
 			}
