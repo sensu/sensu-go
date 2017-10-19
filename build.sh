@@ -222,20 +222,20 @@ check_for_presence_of_yarn() {
 install_dashboard_deps() {
   go get -u github.com/UnnoTed/fileb0x
   check_for_presence_of_yarn
-  cd backend/dashboardd
+  cd dashboard
   yarn install
   cd $OLDPWD
 }
 
 test_dashboard() {
-  cd backend/dashboardd
+  cd dashboard
   yarn lint
   yarn test --coverage
   cd $OLDPWD
 }
 
 build_dashboard() {
-  cd backend/dashboardd
+  cd dashboard
   yarn install
   yarn build
   cd $OLDPWD
@@ -261,10 +261,11 @@ elif [ "$cmd" == "e2e" ]; then
 	build_commands
 	e2e_commands "${@:2}"
 elif [ "$cmd" == "ci" ]; then
-  if [[ ${@:2} == "dashboard" ]]; then
+  subcmd=${2:-"go"}
+  if [[ "$subcmd" == "dashboard" ]]; then
     install_dashboard_deps
     test_dashboard
-  elif [[ ${@:2} == "none" ]]; then
+  elif [[ "$subcmd" == "none" ]]; then
     echo "noop"
   else
     linter_commands
@@ -273,9 +274,10 @@ elif [ "$cmd" == "ci" ]; then
     e2e_commands
   fi
 elif [ "$cmd" == "coverage" ]; then
-  if [ "${@:2}" == "dashboard" ]; then
-    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s backend/dashboardd
-  elif [ "${@:2}" == "none" ]; then
+  subcmd=${2:-"go"}
+  if [ "$subcmd" == "dashboard" ]; then
+    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+  elif [ "$subcmd" == "none" ]; then
     echo "noop"
   else
     ./codecov.sh -t $CODECOV_TOKEN -cF go
