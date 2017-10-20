@@ -64,12 +64,12 @@ func (h *Handler) Validate() error {
 	return nil
 }
 
-// GetOrg refers to the organization the check belongs to
+// GetOrg refers to the organization the handler belongs to
 func (h *Handler) GetOrg() string {
 	return h.Organization
 }
 
-// GetEnv refers to the organization the check belongs to
+// GetEnv refers to the organization the handler belongs to
 func (h *Handler) GetEnv() string {
 	return h.Environment
 }
