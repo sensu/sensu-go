@@ -6,32 +6,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFixtureFilter(t *testing.T) {
-	filter := FixtureFilter("filter")
+func TestFixtureEventFilter(t *testing.T) {
+	filter := FixtureEventFilter("filter")
 	assert.Equal(t, "filter", filter.Name)
-	assert.Equal(t, FilterActionAllow, filter.Action)
-	assert.Equal(t, map[string]interface{}{
-		"check": map[string]interface{}{
-			"team": "ops",
-		},
-	}, filter.Attributes)
+	assert.Equal(t, EventFilterActionAllow, filter.Action)
+	assert.Equal(t, []string{"event.Check.Team == 'ops'"}, filter.Statements)
 	assert.NoError(t, filter.Validate())
 }
 
-func TestFixtureDenyFilter(t *testing.T) {
-	filter := FixtureDenyFilter("filter")
+func TestFixtureDenyEventFilter(t *testing.T) {
+	filter := FixtureDenyEventFilter("filter")
 	assert.Equal(t, "filter", filter.Name)
-	assert.Equal(t, FilterActionDeny, filter.Action)
-	assert.Equal(t, map[string]interface{}{
-		"check": map[string]interface{}{
-			"team": "ops",
-		},
-	}, filter.Attributes)
+	assert.Equal(t, EventFilterActionDeny, filter.Action)
+	assert.Equal(t, []string{"event.Check.Team == 'ops'"}, filter.Statements)
 	assert.NoError(t, filter.Validate())
 }
 
-func TestFilterValidate(t *testing.T) {
-	var f Filter
+func TestEventFilterValidate(t *testing.T) {
+	var f EventFilter
 
 	// Invalid name
 	assert.Error(t, f.Validate())
@@ -43,11 +35,7 @@ func TestFilterValidate(t *testing.T) {
 
 	// Invalid attributes
 	assert.Error(t, f.Validate())
-	f.Attributes = map[string]interface{}{
-		"check": map[string]interface{}{
-			"team": "ops",
-		},
-	}
+	f.Statements = []string{"event.Check.Team = 'ops'"}
 
 	// Invalid organization
 	assert.Error(t, f.Validate())

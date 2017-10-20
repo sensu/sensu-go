@@ -5,34 +5,35 @@ import (
 )
 
 const (
-	// FilterActionAllow is an action to allow events to pass through to the pipeline
-	FilterActionAllow = "allow"
+	// EventFilterActionAllow is an action to allow events to pass through to the pipeline
+	EventFilterActionAllow = "allow"
 
-	// FilterActionDeny is an action to deny events from passing through to the pipeline
-	FilterActionDeny = "deny"
+	// EventFilterActionDeny is an action to deny events from passing through to the pipeline
+	EventFilterActionDeny = "deny"
 
-	// DefaultFilterAction is the default action for filters
-	DefaultFilterAction = FilterActionAllow
+	// DefaultEventFilterAction is the default action for filters
+	DefaultEventFilterAction = EventFilterActionAllow
 )
 
 var (
-	// FilterAllActions is a list of actions that can be used by filters
-	FilterAllActions = []string{
-		FilterActionAllow,
-		FilterActionDeny,
+	// EventFilterAllActions is a list of actions that can be used by filters
+	EventFilterAllActions = []string{
+		EventFilterActionAllow,
+		EventFilterActionDeny,
 	}
 )
 
-// Filter is a filter specification.
-type Filter struct {
+// EventFilter is a filter specification.
+type EventFilter struct {
 	// Name is the unique identifier for a filter
 	Name string `json:"name"`
 
 	// Action specifies to allow/deny events to continue through the pipeline
 	Action string `json:"action"`
 
-	// Attributes is a map of event attributes to match against
-	Attributes map[string]interface{} `json:"attributes"`
+	// Statements is an array of boolean expressions that are &&'d together
+	// to determine if the event matches this filter.
+	Statements []string `json:"statements"`
 
 	// Environment indicates to which env a filter belongs to
 	Environment string `json:"environment"`
@@ -41,27 +42,27 @@ type Filter struct {
 	Organization string `json:"organization"`
 }
 
-// TODO: FilterWhen* for later use :)
+// TODO: EventFilterWhen* for later use :)
 
-// FilterWhenAttributes is the specification for "when" attributes in a filter.
-type FilterWhenAttributes struct {
-	// Days is an array of FilterWhenDaysAttributes
-	Days []FilterWhenDays `json:"days"`
+// EventFilterWhenAttributes is the specification for "when" attributes in a filter.
+type EventFilterWhenAttributes struct {
+	// Days is an array of EventFilterWhenDaysAttributes
+	Days []EventFilterWhenDays `json:"days"`
 }
 
-// FilterWhenDays is the specification for which days to use in a "when" filter.
-type FilterWhenDays struct {
-	All       []FilterWhenTimeRange `json:"all"`
-	Sunday    []FilterWhenTimeRange `json:"sunday"`
-	Monday    []FilterWhenTimeRange `json:"monday"`
-	Tuesday   []FilterWhenTimeRange `json:"tuesday"`
-	Wednesday []FilterWhenTimeRange `json:"wednesday"`
-	Thursday  []FilterWhenTimeRange `json:"thursday"`
-	Saturday  []FilterWhenTimeRange `json:"saturday"`
+// EventFilterWhenDays is the specification for which days to use in a "when" filter.
+type EventFilterWhenDays struct {
+	All       []EventFilterWhenTimeRange `json:"all"`
+	Sunday    []EventFilterWhenTimeRange `json:"sunday"`
+	Monday    []EventFilterWhenTimeRange `json:"monday"`
+	Tuesday   []EventFilterWhenTimeRange `json:"tuesday"`
+	Wednesday []EventFilterWhenTimeRange `json:"wednesday"`
+	Thursday  []EventFilterWhenTimeRange `json:"thursday"`
+	Saturday  []EventFilterWhenTimeRange `json:"saturday"`
 }
 
-// FilterWhenTimeRange is the specification for time ranges in a "when" filter.
-type FilterWhenTimeRange struct {
+// EventFilterWhenTimeRange is the specification for time ranges in a "when" filter.
+type EventFilterWhenTimeRange struct {
 	// Begin is the time which the filter should begin
 	Begin string `json:"begin"`
 
@@ -70,13 +71,13 @@ type FilterWhenTimeRange struct {
 }
 
 // Validate returns an error if the filter does not pass validation tests.
-func (f *Filter) Validate() error {
+func (f *EventFilter) Validate() error {
 	if err := ValidateName(f.Name); err != nil {
 		return errors.New("filter name " + err.Error())
 	}
 
-	if len(f.Attributes) == 0 {
-		return errors.New("filter attributes must be set")
+	if len(f.Statements) == 0 {
+		return errors.New("filter must have one or more statements")
 	}
 
 	if f.Environment == "" {
@@ -91,40 +92,32 @@ func (f *Filter) Validate() error {
 }
 
 // GetOrg refers to the organization the filter belongs to
-func (f *Filter) GetOrg() string {
+func (f *EventFilter) GetOrg() string {
 	return f.Organization
 }
 
 // GetEnv refers to the organization the filter belongs to
-func (f *Filter) GetEnv() string {
+func (f *EventFilter) GetEnv() string {
 	return f.Environment
 }
 
-// FixtureFilter returns a Filter fixture for testing.
-func FixtureFilter(name string) *Filter {
-	return &Filter{
-		Name:   name,
-		Action: FilterActionAllow,
-		Attributes: map[string]interface{}{
-			"check": map[string]interface{}{
-				"team": "ops",
-			},
-		},
+// FixtureEventFilter returns a Filter fixture for testing.
+func FixtureEventFilter(name string) *EventFilter {
+	return &EventFilter{
+		Name:         name,
+		Action:       EventFilterActionAllow,
+		Statements:   []string{"event.Check.Team == 'ops'"},
 		Environment:  "default",
 		Organization: "default",
 	}
 }
 
-// FixtureDenyFilter returns a Filter fixture for testing.
-func FixtureDenyFilter(name string) *Filter {
-	return &Filter{
-		Name:   name,
-		Action: FilterActionDeny,
-		Attributes: map[string]interface{}{
-			"check": map[string]interface{}{
-				"team": "ops",
-			},
-		},
+// FixtureDenyEventFilter returns a Filter fixture for testing.
+func FixtureDenyEventFilter(name string) *EventFilter {
+	return &EventFilter{
+		Name:         name,
+		Action:       EventFilterActionDeny,
+		Statements:   []string{"event.Check.Team == 'ops'"},
 		Environment:  "default",
 		Organization: "default",
 	}

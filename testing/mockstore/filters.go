@@ -6,26 +6,26 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// DeleteFilterByName ...
-func (s *MockStore) DeleteFilterByName(ctx context.Context, name string) error {
+// DeleteEventFilterByName ...
+func (s *MockStore) DeleteEventFilterByName(ctx context.Context, name string) error {
 	args := s.Called(ctx, name)
 	return args.Error(0)
 }
 
-// GetFilters ...
-func (s *MockStore) GetFilters(ctx context.Context) ([]*types.Filter, error) {
+// GetEventFilters ...
+func (s *MockStore) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
 	args := s.Called(ctx)
-	return args.Get(0).([]*types.Filter), args.Error(1)
+	return args.Get(0).([]*types.EventFilter), args.Error(1)
 }
 
-// GetFilterByName ...
-func (s *MockStore) GetFilterByName(ctx context.Context, name string) (*types.Filter, error) {
+// GetEventFilterByName ...
+func (s *MockStore) GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error) {
 	args := s.Called(ctx, name)
-	return args.Get(0).(*types.Filter), args.Error(1)
+	return args.Get(0).(*types.EventFilter), args.Error(1)
 }
 
-// UpdateFilter ...
-func (s *MockStore) UpdateFilter(ctx context.Context, filter *types.Filter) error {
+// UpdateEventFilter ...
+func (s *MockStore) UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error {
 	args := s.Called(filter)
 	return args.Error(0)
 }

@@ -11,41 +11,41 @@ import (
 )
 
 var (
-	filtersPathPrefix = "filters"
-	filterKeyBuilder  = newKeyBuilder(filtersPathPrefix)
+	eventFiltersPathPrefix = "event-filters"
+	eventFilterKeyBuilder  = newKeyBuilder(eventFiltersPathPrefix)
 )
 
-func getFilterPath(filter *types.Filter) string {
-	return filterKeyBuilder.withResource(filter).build(filter.Name)
+func getEventFilterPath(filter *types.EventFilter) string {
+	return eventFilterKeyBuilder.withResource(filter).build(filter.Name)
 }
 
-func getFiltersPath(ctx context.Context, name string) string {
-	return filterKeyBuilder.withContext(ctx).build(name)
+func getEventFiltersPath(ctx context.Context, name string) string {
+	return eventFilterKeyBuilder.withContext(ctx).build(name)
 }
 
-func (s *etcdStore) DeleteFilterByName(ctx context.Context, name string) error {
+func (s *etcdStore) DeleteEventFilterByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name of filter")
 	}
 
-	_, err := s.kvc.Delete(ctx, getFiltersPath(ctx, name))
+	_, err := s.kvc.Delete(ctx, getEventFiltersPath(ctx, name))
 	return err
 }
 
-// GetFilters gets the list of filters for an (optional) organization. Passing
+// GetEventFilters gets the list of filters for an (optional) organization. Passing
 // the empty string as the org will return all filters.
-func (s *etcdStore) GetFilters(ctx context.Context) ([]*types.Filter, error) {
-	resp, err := s.kvc.Get(ctx, getFiltersPath(ctx, ""), clientv3.WithPrefix())
+func (s *etcdStore) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
+	resp, err := s.kvc.Get(ctx, getEventFiltersPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
 	if len(resp.Kvs) == 0 {
-		return []*types.Filter{}, nil
+		return []*types.EventFilter{}, nil
 	}
 
-	filtersArray := make([]*types.Filter, len(resp.Kvs))
+	filtersArray := make([]*types.EventFilter, len(resp.Kvs))
 	for i, kv := range resp.Kvs {
-		filter := &types.Filter{}
+		filter := &types.EventFilter{}
 		err = json.Unmarshal(kv.Value, filter)
 		if err != nil {
 			return nil, err
@@ -56,12 +56,12 @@ func (s *etcdStore) GetFilters(ctx context.Context) ([]*types.Filter, error) {
 	return filtersArray, nil
 }
 
-func (s *etcdStore) GetFilterByName(ctx context.Context, name string) (*types.Filter, error) {
+func (s *etcdStore) GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error) {
 	if name == "" {
 		return nil, errors.New("must specify name of filter")
 	}
 
-	resp, err := s.kvc.Get(ctx, getFiltersPath(ctx, name))
+	resp, err := s.kvc.Get(ctx, getEventFiltersPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (s *etcdStore) GetFilterByName(ctx context.Context, name string) (*types.Fi
 	}
 
 	filterBytes := resp.Kvs[0].Value
-	filter := &types.Filter{}
+	filter := &types.EventFilter{}
 	if err := json.Unmarshal(filterBytes, filter); err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *etcdStore) GetFilterByName(ctx context.Context, name string) (*types.Fi
 	return filter, nil
 }
 
-func (s *etcdStore) UpdateFilter(ctx context.Context, filter *types.Filter) error {
+func (s *etcdStore) UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error {
 	if err := filter.Validate(); err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (s *etcdStore) UpdateFilter(ctx context.Context, filter *types.Filter) erro
 	}
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(filter.Organization, filter.Environment)), ">", 0)
-	req := clientv3.OpPut(getFilterPath(filter), string(filterBytes))
+	req := clientv3.OpPut(getEventFilterPath(filter), string(filterBytes))
 	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
