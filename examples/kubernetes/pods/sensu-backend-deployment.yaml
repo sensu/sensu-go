@@ -12,8 +12,8 @@ spec:
     spec:
       containers:
         - name: sensu-backend
-          image: us.gcr.io/monitorama-166316/sensu
-          command: ["/sensu-backend", "start"]
+          image: gcr.io/engineering-182923/sensu-go
+          command: ["/opt/sensu/bin/sensu-backend", "start"]
           ports:
             - protocol: TCP
               containerPort: 8080

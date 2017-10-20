@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: sensu-agent
-          image: us.gcr.io/monitorama-166316/sensu-agent
+          image: gcr.io/engineering-182923/sensu-go
           command: ["/opt/sensu/bin/sensu-agent", "start"]
           env:
             - name: SENSU_BACKEND_URL
@@ -20,4 +20,4 @@ spec:
             - name: SENSU_SUBSCRIPTIONS
               value: dummy
         - name: dummy-service
-          image: grepory/dummy
+          image: gcr.io/engineering-182923/dummy
