@@ -84,11 +84,11 @@ custom:
   - files:
     # everything inside the folder
     # type: array of strings
-    - "./backend/dashboardd/build"
+    - "./dashboard/build"
 
     # base is the path that will be removed from all files' path
     # type: string
-    base: "backend/dashboardd/build"
+    base: "./dashboard/build"
 
     # prefix is the path that will be added to all files' path
     # type: string

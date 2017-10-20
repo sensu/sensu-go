@@ -22,4 +22,6 @@ const (
 	RefreshTokenClaims
 	// RefreshTokenString contains the key name to retrieve the refresh token string
 	RefreshTokenString
+	// StoreKey contains the key name to retrieve the etcd store from within a context
+	StoreKey
 )

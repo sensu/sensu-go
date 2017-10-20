@@ -103,7 +103,11 @@ func (a *APId) Err() <-chan error {
 }
 
 func registerAuthenticationResources(router *mux.Router, store store.Store) {
-	authRouter := NewSubrouter(router.NewRoute(), middlewares.RefreshToken{})
+	authRouter := NewSubrouter(
+		router.NewRoute(),
+		middlewares.SimpleLogger{},
+		middlewares.RefreshToken{},
+	)
 
 	authenticationController := controllers.AuthenticationController{Store: store}
 	authenticationController.Register(authRouter)
@@ -116,6 +120,7 @@ func registerRestrictedResources(
 ) {
 	commonRouter := NewSubrouter(
 		router.NewRoute(),
+		middlewares.SimpleLogger{},
 		middlewares.Environment{Store: store},
 		middlewares.Authentication{},
 		middlewares.AllowList{Store: store},
@@ -188,4 +193,7 @@ func registerRestrictedResources(
 		Store: store,
 	}
 	usersController.Register(commonRouter)
+
+	graphqlController := &controllers.GraphController{Store: store}
+	graphqlController.Register(commonRouter)
 }
