@@ -19,7 +19,10 @@ func (opts *envOpts) withEnv(env *types.Environment) {
 
 func (opts *envOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Description, _ = flags.GetString("description")
-	opts.Org, _ = flags.GetString("org")
+
+	if org, _ := flags.GetString("organization"); org != "" {
+		opts.Org = org
+	}
 }
 
 func (opts *envOpts) administerQuestionnaire(editing bool) error {

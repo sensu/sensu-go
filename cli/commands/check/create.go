@@ -24,20 +24,15 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.Name = args[0]
 			}
 
+			opts.Org = cli.Config.Organization()
+			opts.Env = cli.Config.Environment()
+
 			if isInteractive {
 				if err := opts.administerQuestionnaire(false); err != nil {
 					return err
 				}
 			} else {
 				opts.withFlags(flags)
-			}
-
-			if opts.Org == "" {
-				opts.Org = cli.Config.Organization()
-			}
-
-			if opts.Env == "" {
-				opts.Env = cli.Config.Environment()
 			}
 
 			// Apply given arguments to check
@@ -50,11 +45,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 				return err
 			}
-
-			// Ensure that the client is configured to create the check within the
-			// corrent context.
-			cli.Config.SetOrganization(check.Organization)
-			cli.Config.SetEnvironment(check.Environment)
 
 			//
 			// TODO:
