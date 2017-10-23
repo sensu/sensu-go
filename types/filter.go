@@ -58,6 +58,7 @@ type EventFilterWhenDays struct {
 	Tuesday   []EventFilterWhenTimeRange `json:"tuesday"`
 	Wednesday []EventFilterWhenTimeRange `json:"wednesday"`
 	Thursday  []EventFilterWhenTimeRange `json:"thursday"`
+	Friday    []EventFilterWhenTimeRange `json:"friday"`
 	Saturday  []EventFilterWhenTimeRange `json:"saturday"`
 }
 
