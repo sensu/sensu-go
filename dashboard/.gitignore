@@ -22,3 +22,7 @@ yarn-error.log*
 
 # b0x
 ab0x.go
+
+# relay
+/**/__generated__/*graph*
+/data/schema.json

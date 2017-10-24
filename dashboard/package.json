@@ -8,6 +8,7 @@
     "babel-eslint": "^7.2.3",
     "babel-jest": "^21.2.0",
     "babel-loader": "^7.1.1",
+    "babel-plugin-relay": "^1.4.1",
     "babel-preset-react-app": "^3.0.0",
     "babel-runtime": "^6.26.0",
     "case-sensitive-paths-webpack-plugin": "^2.1.1",
@@ -30,6 +31,7 @@
     "farce": "^0.2.1",
     "file-loader": "^1.1.4",
     "found": "^0.3.4",
+    "found-relay": "^0.3.0-alpha.9",
     "fs-extra": "^4.0.0",
     "html-webpack-plugin": "^2.29.0",
     "istanbul-reports": "^1.1.0",
@@ -52,9 +54,11 @@
     "react-dom": "^16.0.0",
     "react-jss": "^7.2.0",
     "react-redux": "^5.0.6",
+    "react-relay": "^1.4.1",
     "react-tap-event-plugin": "^3.0.2",
     "recompose": "^0.25.1",
-    "redux": "^3.7.2",
+    "redux": "^3.0.0",
+    "relay-compiler": "^1.4.1",
     "style-loader": "^0.18.2",
     "sw-precache-webpack-plugin": "^0.11.4",
     "typeface-roboto": "^0.0.35",
@@ -71,7 +75,9 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom",
-    "quality": "yarn lint && yarn test"
+    "quality": "yarn lint && yarn test",
+    "relay": "./node_modules/.bin/relay-compiler --src ./src --schema ./data/schema.json",
+    "update-schema": "go run scripts/updateSchema.go"
   },
   "jest": {
     "collectCoverageFrom": [
