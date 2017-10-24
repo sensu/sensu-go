@@ -1,5 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
+import compose from "lodash/fp/compose";
+import { withRouter, routerShape } from "found";
 
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
@@ -7,6 +9,10 @@ import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
 import DefaultThemeProvider, { ExteriorTheme } from "./Theme";
 import { authenticate } from "../utils/authentication";
+
+// defaultRoute describe the location where the user will land after a
+// successful login.
+const defaultRoute = "/checks";
 
 // Temp.
 const styles = theme => ({
@@ -46,6 +52,7 @@ class Login extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    router: routerShape.isRequired,
   };
 
   constructor(props) {
@@ -57,9 +64,9 @@ class Login extends React.Component {
 
   handleSubmit(ev) {
     const { username, password } = this.state;
+    const { router } = this.props;
 
-    // TODO: Redirect to dashboard.
-    const handleSuccess = () => this.setState({ disabled: false });
+    const handleSuccess = () => router.replace(defaultRoute);
     const handleFailure = () => {
       this.setState({
         disabled: false,
@@ -135,4 +142,4 @@ class Login extends React.Component {
   }
 }
 
-export default withStyles(styles)(Login);
+export default compose(withStyles(styles), withRouter)(Login);

@@ -1,7 +1,7 @@
 import moment from "moment";
 
 // Single instance of authentication info.
-let authTokens;
+let authTokens = null;
 
 // Instantiate new tokens object with defaults.
 export function newTokens(args = {}) {

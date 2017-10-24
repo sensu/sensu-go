@@ -10,7 +10,7 @@ import Table, {
   TableRow,
 } from "material-ui/Table";
 import Checkbox from "material-ui/Checkbox";
-
+import Paper from "material-ui/Paper";
 import Row from "./CheckRow";
 import AppContent from "./AppContent";
 
@@ -59,22 +59,24 @@ class CheckList extends React.Component {
 
     return (
       <AppContent>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox />
-              </TableCell>
-              <TableCell>Check</TableCell>
-              <TableCell>Command</TableCell>
-              <TableCell>Subscribers</TableCell>
-              <TableCell>Interval</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {map(checks, edge => <Row key={edge.cursor} check={edge.node} />)}
-          </TableBody>
-        </Table>
+        <Paper>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox />
+                </TableCell>
+                <TableCell>Check</TableCell>
+                <TableCell>Command</TableCell>
+                <TableCell>Subscribers</TableCell>
+                <TableCell>Interval</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {map(checks, edge => <Row key={edge.cursor} check={edge.node} />)}
+            </TableBody>
+          </Table>
+        </Paper>
       </AppContent>
     );
   }

@@ -17,8 +17,9 @@ export function persist(args) {
 
 // persist auth tokens in localStorage
 export function retrieve() {
-  const tokens = localStorage.getItem(authTokensKey);
-  if (!isEmpty(tokens)) {
+  const json = localStorage.getItem(authTokensKey);
+  if (!isEmpty(json)) {
+    const tokens = JSON.parse(json);
     return newTokens(tokens);
   }
 
