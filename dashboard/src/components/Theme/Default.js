@@ -9,9 +9,8 @@ import colors from "../../colors";
 
 const DefaultTheme = createMuiTheme({
   palette: {
-    // primary: colors.salmon,
-    primary: colors.appleGreen,
-    secondary: colors.grey,
+    primary: colors.slateBlue,
+    secondary: colors.red,
 
     // HACK: Reduce threshold white text while testing green theme
     getContrastText: color => {

@@ -8,7 +8,7 @@
     "babel-eslint": "^7.2.3",
     "babel-jest": "^21.2.0",
     "babel-loader": "^7.1.1",
-    "babel-preset-react-app": "^3.0.3",
+    "babel-preset-react-app": "^3.0.0",
     "babel-runtime": "^6.26.0",
     "case-sensitive-paths-webpack-plugin": "^2.1.1",
     "chalk": "^2.1.0",
@@ -40,6 +40,7 @@
     "lodash": "^4.17.4",
     "material-ui": "^1.0.0-beta.13",
     "material-ui-icons": "^1.0.0-beta.15",
+    "moment": "^2.19.1",
     "object-assign": "^4.1.1",
     "postcss-flexbugs-fixes": "^3.2.0",
     "postcss-loader": "^2.0.6",
@@ -109,5 +110,13 @@
     "presets": [
       "react-app"
     ]
+  },
+  "proxy": {
+    "/auth": {
+      "target": "http://localhost:8080"
+    },
+    "/graphql": {
+      "target": "http://localhost:8080"
+    }
   }
 }
