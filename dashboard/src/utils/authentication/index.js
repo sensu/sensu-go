@@ -32,8 +32,8 @@ export function getAccessToken() {
   // If the status is null then attempt to pull token from localStorage
   if (authTokens.authenticated === null) {
     const storedTokens = storage.retrieve();
-    if (storedTokens) {
-      tokens.swap(storage.retrieve());
+    if (storedTokens && storedTokens.authenticated) {
+      tokens.swap(storedTokens);
       return getAccessToken();
     }
   }
