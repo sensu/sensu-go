@@ -31,6 +31,9 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 
 			opts := &ruleOpts{}
 
+			opts.Org = cli.Config.Organization()
+			opts.Env = cli.Config.Environment()
+
 			if isInteractive {
 				cmd.SilenceUsage = false
 				if err := opts.administerQuestionnaire(); err != nil {
@@ -39,14 +42,6 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				opts.Role = args[0]
 				opts.withFlags(flags)
-			}
-
-			if opts.Org == "" {
-				opts.Org = cli.Config.Organization()
-			}
-
-			if opts.Env == "" {
-				opts.Env = cli.Config.Environment()
 			}
 
 			if opts.Role == "" {
@@ -85,8 +80,6 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 
 func (opts *ruleOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Type, _ = flags.GetString("type")
-	opts.Org, _ = flags.GetString("organization")
-	opts.Env, _ = flags.GetString("environment")
 
 	if create, _ := flags.GetBool("create"); create {
 		opts.Permissions = append(opts.Permissions, "create")
@@ -99,6 +92,13 @@ func (opts *ruleOpts) withFlags(flags *pflag.FlagSet) {
 	}
 	if delete, _ := flags.GetBool("delete"); delete {
 		opts.Permissions = append(opts.Permissions, "delete")
+	}
+
+	if org, _ := flags.GetString("organization"); org != "" {
+		opts.Org = org
+	}
+	if env, _ := flags.GetString("environment"); env != "" {
+		opts.Env = env
 	}
 }
 

@@ -24,6 +24,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.Name = args[0]
 			}
 
+			opts.Org = cli.Config.Organization()
+
 			if isInteractive {
 				if err := opts.administerQuestionnaire(false); err != nil {
 					return err
@@ -34,10 +36,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			env := types.Environment{}
 			opts.Copy(&env)
-
-			if opts.Org == "" {
-				opts.Org = cli.Config.Organization()
-			}
 
 			if err := env.Validate(); err != nil {
 				if !isInteractive {

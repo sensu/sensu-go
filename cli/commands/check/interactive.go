@@ -50,10 +50,15 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
-	opts.Org, _ = flags.GetString("organization")
-	opts.Env, _ = flags.GetString("environment")
 	publishBool, _ := flags.GetBool("publish")
 	opts.Publish = strconv.FormatBool(publishBool)
+
+	if org, _ := flags.GetString("organization"); org != "" {
+		opts.Org = org
+	}
+	if env, _ := flags.GetString("environment"); env != "" {
+		opts.Env = env
+	}
 }
 
 func (opts *checkOpts) administerQuestionnaire(editing bool) error {
