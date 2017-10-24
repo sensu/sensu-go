@@ -302,10 +302,10 @@ func planFunction(stream *tokenStream) (*evaluationStage, error) {
 
 	if token.Kind != FUNCTION {
 		stream.rewind()
-		return planAccessor(stream)
+		return planValue(stream)
 	}
 
-	rightStage, err = planAccessor(stream)
+	rightStage, err = planValue(stream)
 	if err != nil {
 		return nil, err
 	}
@@ -316,51 +316,6 @@ func planFunction(stream *tokenStream) (*evaluationStage, error) {
 		rightStage:      rightStage,
 		operator:        makeFunctionStage(token.Value.(ExpressionFunction)),
 		typeErrorFormat: "Unable to run function '%v': %v",
-	}, nil
-}
-
-func planAccessor(stream *tokenStream) (*evaluationStage, error) {
-
-	var token, otherToken ExpressionToken
-	var rightStage *evaluationStage
-	var err error
-
-	if !stream.hasNext() {
-		return nil, nil
-	}
-
-	token = stream.next()
-
-	if token.Kind != ACCESSOR {
-		stream.rewind()
-		return planValue(stream)
-	}
-
-	// check if this is meant to be a function or a field.
-	// fields have a clause next to them, functions do not.
-	// if it's a function, parse the arguments. Otherwise leave the right stage null.
-	if stream.hasNext() {
-
-		otherToken = stream.next()
-		if otherToken.Kind == CLAUSE {
-
-			stream.rewind()
-
-			rightStage, err = planTokens(stream)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			stream.rewind()
-		}
-	}
-
-	return &evaluationStage{
-
-		symbol:          ACCESS,
-		rightStage:      rightStage,
-		operator:        makeAccessorStage(token.Value.([]string)),
-		typeErrorFormat: "Unable to access parameter field or method '%v': %v",
 	}, nil
 }
 
@@ -375,10 +330,6 @@ func planValue(stream *tokenStream) (*evaluationStage, error) {
 	var ret *evaluationStage
 	var operator evaluationOperator
 	var err error
-
-	if !stream.hasNext() {
-		return nil, nil
-	}
 
 	token = stream.next()
 

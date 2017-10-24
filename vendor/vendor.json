@@ -33,10 +33,12 @@
 			"revisionTime": "2016-06-22T17:32:16Z"
 		},
 		{
-			"checksumSHA1": "vpSdUHNbSiJiHYfVt8Y/iBN7B4o=",
+			"checksumSHA1": "uJOp8topHA4MKdLAf2D4X9Nwwyo=",
 			"path": "github.com/Knetic/govaluate",
-			"revision": "91facc4ae520fef82c9aee6b6ae720d9ae789131",
-			"revisionTime": "2017-06-21T16:20:16Z"
+			"revision": "d216395917cc49052c7c7094cf57f09657ca08a8",
+			"revisionTime": "2017-05-01T02:28:28Z",
+			"version": "v3.0.0",
+			"versionExact": "v3.0.0"
 		},
 		{
 			"checksumSHA1": "ZKxETlJdB2XubMrZnXB0FQimVA8=",
