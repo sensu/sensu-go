@@ -4228,6 +4228,12 @@ jest-enzyme@^4.0.0:
     enzyme-matchers "^4.0.0"
     enzyme-to-json "^3.0.0"
 
+jest-fetch-mock@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/jest-fetch-mock/-/jest-fetch-mock-1.2.1.tgz#5fcf54583a53cf987b10c626f0d684fe353725f2"
+  dependencies:
+    whatwg-fetch "1.0.0"
+
 jest-get-type@^21.2.0:
   version "21.2.0"
   resolved "https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-21.2.0.tgz#f6376ab9db4b60d81e39f30749c6c466f40d4a23"
@@ -4255,6 +4261,10 @@ jest-jasmine2@^21.2.1:
     jest-message-util "^21.2.1"
     jest-snapshot "^21.2.1"
     p-cancelable "^0.3.0"
+
+jest-localstorage-mock@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/jest-localstorage-mock/-/jest-localstorage-mock-2.0.1.tgz#6bea41d1d7b70c1725a3d34f8cc261ef6cdb12fa"
 
 jest-matcher-utils@^21.2.1:
   version "21.2.1"
@@ -7904,6 +7914,10 @@ whatwg-encoding@^1.0.1:
   resolved "https://registry.yarnpkg.com/whatwg-encoding/-/whatwg-encoding-1.0.1.tgz#3c6c451a198ee7aec55b1ec61d0920c67801a5f4"
   dependencies:
     iconv-lite "0.4.13"
+
+whatwg-fetch@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz#01c2ac4df40e236aaa18480e3be74bd5c8eb798e"
 
 whatwg-fetch@2.0.3, whatwg-fetch@>=0.10.0, whatwg-fetch@^2.0.3:
   version "2.0.3"

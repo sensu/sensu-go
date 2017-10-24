@@ -9,7 +9,7 @@ class RestrictUnauthenticated extends React.Component {
     router: routerShape.isRequired,
   };
 
-  // TODO: Have something emit updates when access token is updated / revoked?
+  // TODO: Have something emit tokens when access token is updated / revoked?
   componentWillMount() {
     getAccessToken().then(token => {
       if (!token) {

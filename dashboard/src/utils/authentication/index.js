@@ -1,4 +1,3 @@
-import defer from "lodash/defer";
 import identity from "lodash/fp/identity";
 import moment from "moment";
 
@@ -8,8 +7,9 @@ import * as storage from "./storage";
 
 // Swap global instance and update localStorage
 function updateState(newTokens) {
+  // defer(() => storage.persist(newTokens));
   storage.persist(newTokens);
-  defer(() => tokens.swap(newTokens));
+  tokens.swap(newTokens);
 }
 
 // Returns a promise that resolves to instance's access token; transparently
@@ -20,7 +20,7 @@ export function getAccessToken() {
 
   if (authTokens.authenticated) {
     // Return access token if it is present and has not expired
-    if (now.isAfter(authTokens.expiresAt)) {
+    if (now.isBefore(authTokens.expiresAt)) {
       return Promise.resolve(authTokens.accessToken);
     }
 
