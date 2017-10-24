@@ -26,6 +26,9 @@ type Store interface {
 	// Events
 	EventStore
 
+	// Event Filters
+	EventFilterStore
+
 	// Handlers
 	HandlerStore
 
@@ -98,6 +101,14 @@ type EventStore interface {
 	GetEventsByEntity(context.Context, string) ([]*types.Event, error)
 	GetEventByEntityCheck(context.Context, string, string) (*types.Event, error)
 	UpdateEvent(context.Context, *types.Event) error
+}
+
+// EventFilterStore provides an interface for interacting & persisting event filters
+type EventFilterStore interface {
+	DeleteEventFilterByName(context.Context, string) error
+	GetEventFilters(context.Context) ([]*types.EventFilter, error)
+	GetEventFilterByName(context.Context, string) (*types.EventFilter, error)
+	UpdateEventFilter(context.Context, *types.EventFilter) error
 }
 
 // HandlerStore provides an interface for interacting & persisting handlers
