@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// TODO: add some authorization testing
-
 func TestHttpApiSilencedGet(t *testing.T) {
 	store := &mockstore.MockStore{}
 
@@ -39,6 +37,34 @@ func TestHttpApiSilencedGet(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.EqualValues(t, silenced, returnedSilencedEntries)
+}
+
+func TestHttpApiSilencedGetError(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &SilencedController{
+		Store: store,
+	}
+
+	var nilSilenced []*types.Silenced
+	store.On("GetSilencedEntries", mock.Anything).Return(nilSilenced, errors.New("error"))
+	req := newRequest("GET", "/silenced", nil)
+	res := processRequest(c, req)
+
+	body := res.Body.Bytes()
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, "error\n", string(body))
+}
+
+func TestHttpApiSilencedGetUnauthorized(t *testing.T) {
+	controller := SilencedController{}
+
+	req := newRequest("GET", "/silenced", nil)
+	req = requestWithNoAccess(req)
+
+	res := processRequest(&controller, req)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestHttpApiSilencedPost(t *testing.T) {
@@ -106,6 +132,22 @@ func TestHttpApiSilencedClear(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, res.Code)
 
+}
+
+func TestHttpApiSilencedDeleteUnauthorized(t *testing.T) {
+	controller := SilencedController{}
+
+	silenced := types.FixtureSilenced("check1")
+	silenced.ID = "test-subcription:test-check"
+	silenced.Subscription = "test-subscription"
+	silenced.CheckName = "test-check"
+
+	encoded, _ := json.Marshal(silenced)
+	req := newRequest("POST", "/silenced/clear", bytes.NewBuffer(encoded))
+	req = requestWithNoAccess(req)
+
+	res := processRequest(&controller, req)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestHttpApiSilencedGetByCheckName(t *testing.T) {
