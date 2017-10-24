@@ -19,18 +19,18 @@ state-dir: "/var/lib/sensu"
 ##
 # ssl configuration
 ##
-#cert-file "/path/to/ssl/cert.pem"
-#key-file "/path/to/ssl/key.pem"
-#trusted-ca-file "/path/to/trusted-certificate-authorities.pem"
-#insecure-skip-tls-verify false
+#cert-file: "/path/to/ssl/cert.pem"
+#key-file: "/path/to/ssl/key.pem"
+#trusted-ca-file: "/path/to/trusted-certificate-authorities.pem"
+#insecure-skip-tls-verify: false
 
 ##
 # store configuration
 ##
-#store-client-url ""
-#store-peer-url ""
-#store-initial-cluster ""
-#store-initial-advertise-peer-url ""
-#store-initial-cluster-state ""
-#store-initial-cluster-token ""
-#store-node-name ""
+#store-client-url: ""
+#store-peer-url: ""
+#store-initial-cluster: ""
+#store-initial-advertise-peer-url: ""
+#store-initial-cluster-state: ""
+#store-initial-cluster-token: ""
+#store-node-name: ""
