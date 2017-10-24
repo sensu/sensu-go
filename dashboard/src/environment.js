@@ -7,21 +7,24 @@ function fetchQuery(
   // cacheConfig,
   // uploadables,
 ) {
-  const accessToken = getAccessToken();
-  const request = fetch("/graphql", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      query: operation.text,
-      variables,
-    }),
-  });
+  const parseJson = response => response.json();
+  const makeRequest = accessToken =>
+    fetch("/graphql", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        query: operation.text,
+        variables,
+      }),
+    });
 
-  return request.then(res => res.json());
+  return getAccessToken()
+    .then(makeRequest)
+    .then(parseJson);
 }
 
 // Create a record source & instantiate store

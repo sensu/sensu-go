@@ -19,7 +19,12 @@ const Router = createFarceRouter({
   historyProtocol: new BrowserProtocol(),
   historyMiddlewares: [queryMiddleware],
   routeConfig: routes,
-  render: createRender({}),
+  render: createRender({
+    // eslint-disable-next-line react/prop-types
+    renderError: ({ error }) => (
+      <div>{error.status === 404 ? "Not found" : "Error"}</div>
+    ),
+  }),
 });
 
 // Renderer

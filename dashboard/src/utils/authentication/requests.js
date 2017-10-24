@@ -2,7 +2,7 @@ import moment from "moment";
 import { newTokens } from "./tokens";
 
 const authPath = "/auth";
-const refreshPath = "/auth/tokens";
+const refreshPath = "/auth/token";
 const invalidatePath = "/auth/logout";
 
 function checkStatus(response) {

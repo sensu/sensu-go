@@ -62,6 +62,29 @@ func init() {
 						return relay.ConnectionFromArray(resources, args), nil
 					},
 				},
+				"checkEvents": &graphql.Field{
+					Type:        checkEventConnection.ConnectionType,
+					Description: "A list of events the given viewer has read access to",
+					Args:        relay.ConnectionArgs,
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						abilities := authorization.Events.WithContext(p.Context)
+						store := p.Context.Value(types.StoreKey).(store.EventStore)
+						records, err := store.GetEvents(p.Context)
+						if err != nil {
+							return nil, err
+						}
+
+						resources := []interface{}{}
+						for _, record := range records {
+							if abilities.CanRead(record) {
+								resources = append(resources, record)
+							}
+						}
+
+						args := relay.NewConnectionArguments(p.Args)
+						return relay.ConnectionFromArray(resources, args), nil
+					},
+				},
 				"user": &graphql.Field{
 					Type:        userType,
 					Description: "User account associated with the viewer.",

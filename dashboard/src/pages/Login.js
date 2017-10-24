@@ -2,51 +2,17 @@ import React from "react";
 import PropTypes from "prop-types";
 import compose from "lodash/fp/compose";
 import { withRouter, routerShape } from "found";
-
 import { withStyles } from "material-ui/styles";
+
 import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
-import DefaultThemeProvider, { ExteriorTheme } from "./Theme";
+import ExteriorWrapper from "../components/ExteriorWrapper";
 import { authenticate } from "../utils/authentication";
 
 // defaultRoute describe the location where the user will land after a
 // successful login.
 const defaultRoute = "/checks";
-
-// Temp.
-const styles = theme => ({
-  "@global": {
-    html: {
-      background: theme.palette.primary["400"],
-      WebkitFontSmoothing: "antialiased", // Antialiasing.
-      MozOsxFontSmoothing: "grayscale", // Antialiasing.
-      boxSizing: "border-box",
-    },
-    "*, *:before, *:after": {
-      boxSizing: "inherit",
-    },
-    body: {
-      margin: 0,
-    },
-  },
-  container: {
-    display: "flex",
-    flexWrap: "wrap",
-  },
-  loginCard: {
-    margin: "150px auto",
-    padding: "40px 28px",
-    width: 300,
-    textAlign: "right",
-  },
-  textField: {
-    marginBottom: theme.spacing.unit,
-  },
-  button: {
-    textTransform: "uppercase",
-  },
-});
 
 class Login extends React.Component {
   static propTypes = {
@@ -55,14 +21,29 @@ class Login extends React.Component {
     router: routerShape.isRequired,
   };
 
-  constructor(props) {
-    super(props);
+  // Temp.
+  static styles = theme => ({
+    loginCard: {
+      margin: "0 auto",
+      padding: "40px 28px",
+      width: 300,
+      textAlign: "right",
+      alignSelf: "center",
+    },
+    textField: {
+      marginBottom: theme.spacing.unit,
+    },
+    button: {
+      textTransform: "uppercase",
+    },
+  });
 
-    this.state = {};
-    this.handleSubmit = this.handleSubmit.bind(this);
-  }
+  state = {
+    username: null,
+    password: null,
+  };
 
-  handleSubmit(ev) {
+  handleSubmit = ev => {
     const { username, password } = this.state;
     const { router } = this.props;
 
@@ -83,7 +64,7 @@ class Login extends React.Component {
     // Authenticate user
     const authPromise = authenticate(username, password);
     authPromise.then(handleSuccess).catch(handleFailure);
-  }
+  };
 
   render() {
     const { classes } = this.props;
@@ -98,7 +79,7 @@ class Login extends React.Component {
     const handlePassword = ev => this.setState({ password: ev.target.value });
 
     return (
-      <DefaultThemeProvider theme={ExteriorTheme}>
+      <ExteriorWrapper>
         <Paper className={classes.loginCard}>
           <form onSubmit={this.handleSubmit}>
             <TextField
@@ -137,9 +118,9 @@ class Login extends React.Component {
             </Button>
           </form>
         </Paper>
-      </DefaultThemeProvider>
+      </ExteriorWrapper>
     );
   }
 }
 
-export default compose(withStyles(styles), withRouter)(Login);
+export default compose(withStyles(Login.styles), withRouter)(Login);

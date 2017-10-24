@@ -11,10 +11,11 @@ class AppWrapper extends React.Component {
   };
 
   render() {
+    const { children } = this.props;
     return (
       <RestrictUnauthenticated>
         <DefaultThemeProvider>
-          <AppFrame>{this.props.children}</AppFrame>
+          <AppFrame>{children}</AppFrame>
         </DefaultThemeProvider>
       </RestrictUnauthenticated>
     );

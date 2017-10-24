@@ -11,20 +11,16 @@ import Table, {
   TableRow,
 } from "material-ui/Table";
 import Checkbox from "material-ui/Checkbox";
-import Row from "./CheckRow";
+import EventRow from "./EventRow";
 
-class CheckList extends React.Component {
+class EventsList extends React.Component {
   static propTypes = {
-    viewer: PropTypes.shape({
-      checks: PropTypes.shape({
-        edges: PropTypes.array.isRequired,
-      }),
-    }).isRequired,
+    viewer: PropTypes.shape({ checkEvents: PropTypes.object }).isRequired,
   };
 
   render() {
     const { viewer } = this.props;
-    const checks = get(viewer, "checks.edges", []);
+    const events = get(viewer, "checkEvents.edges", []);
 
     return (
       <Table>
@@ -33,14 +29,14 @@ class CheckList extends React.Component {
             <TableCell padding="checkbox">
               <Checkbox />
             </TableCell>
+            <TableCell>Entity</TableCell>
             <TableCell>Check</TableCell>
             <TableCell>Command</TableCell>
-            <TableCell>Subscribers</TableCell>
-            <TableCell>Interval</TableCell>
+            <TableCell>Occurred At</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {map(checks, edge => <Row key={edge.cursor} check={edge.node} />)}
+          {map(events, (event, i) => <EventRow key={i} event={event.node} />)}
         </TableBody>
       </Table>
     );
@@ -48,15 +44,14 @@ class CheckList extends React.Component {
 }
 
 export default createFragmentContainer(
-  CheckList,
+  EventsList,
   graphql`
-    fragment CheckList_viewer on Viewer {
-      checks(first: 1500) {
+    fragment EventList_viewer on Viewer {
+      checkEvents {
         edges {
           node {
-            ...CheckRow_check
+            ...EventRow_event
           }
-          cursor
         }
         pageInfo {
           hasNextPage

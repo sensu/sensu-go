@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { createFragmentContainer, graphql } from "react-relay";
 
 import { TableRow, TableCell } from "material-ui/Table";
 import Checkbox from "material-ui/Checkbox";
@@ -31,4 +32,16 @@ CheckRow.propTypes = {
   }).isRequired,
 };
 
-export default CheckRow;
+export default createFragmentContainer(
+  CheckRow,
+  graphql`
+    fragment CheckRow_check on CheckConfig {
+      name
+      command
+      subscriptions
+      interval
+      organization
+      environment
+    }
+  `,
+);

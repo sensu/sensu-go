@@ -10,7 +10,7 @@ import colors from "../../colors";
 const DefaultTheme = createMuiTheme({
   palette: {
     primary: colors.slateBlue,
-    secondary: colors.red,
+    secondary: colors.magenta,
 
     // HACK: Reduce threshold white text while testing green theme
     getContrastText: color => {

@@ -3,7 +3,7 @@ import colors from "../../colors";
 
 const Theme = createMuiTheme({
   palette: {
-    primary: colors.red,
+    primary: colors.magenta,
     secondary: colors.slateBlue,
   },
 });

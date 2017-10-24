@@ -1,17 +1,18 @@
 import React from "react";
-import { makeRouteConfig, Route } from "found";
+import { makeRouteConfig, Redirect, Route } from "found";
 
 import AppWrapper from "./components/AppWrapper";
-import LoginPage from "./components/Login";
-import EventsList from "./components/EventsList";
-import ChecksList from "./components/CheckList";
+import LoginPage from "./pages/Login";
+import EventsPage from "./pages/EventsPage";
+import ChecksPage from "./pages/ChecksPage";
 
 export default makeRouteConfig(
   <Route>
     <Route path="/login" Component={LoginPage} />
     <Route path="/" Component={AppWrapper}>
-      <Route path="events" Component={EventsList} />
-      <Route path="checks" Component={ChecksList} />
+      <Route path="events" Component={EventsPage} query={EventsPage.query} />
+      <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
+      <Redirect from="dashboard" to="checks" />
     </Route>
   </Route>,
 );

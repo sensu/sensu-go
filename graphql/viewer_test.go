@@ -63,6 +63,33 @@ func (t *ViewerChecksResolver) TestWithStoreErrors() {
 	t.Error(err)
 }
 
+type ViewerCheckEventsResolver struct {
+	suite.Suite
+	resolverSuite
+}
+
+func (t *ViewerCheckEventsResolver) TestNoErrors() {
+	t.store().
+		On("GetEvents", mock.Anything).
+		Return([]*types.Event{types.FixtureEvent("one", "two")}, nil).
+		Once()
+
+	res, err := t.runResolver("Viewer.checkEvents", nil)
+	t.NotEmpty(res)
+	t.NoError(err)
+}
+
+func (t *ViewerCheckEventsResolver) TestWithStoreErrors() {
+	t.store().
+		On("GetEvents", mock.Anything).
+		Return([]*types.Event{}, errors.New("oh fudge")).
+		Once()
+
+	res, err := t.runResolver("Viewer.checkEvents", nil)
+	t.Empty(res)
+	t.Error(err)
+}
+
 type ViewerUserResolver struct {
 	suite.Suite
 	resolverSuite
@@ -95,6 +122,7 @@ func TestViewerType(testRunner *testing.T) {
 		testRunner,
 		new(ViewerEntitiesResolver),
 		new(ViewerChecksResolver),
+		new(ViewerCheckEventsResolver),
 		new(ViewerUserResolver),
 	)
 }
