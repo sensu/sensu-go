@@ -43,7 +43,7 @@
     "jss": "^8.1.0",
     "lint-staged": "^4.2.3",
     "lodash": "^4.17.4",
-    "material-ui": "^1.0.0-beta.13",
+    "material-ui": "^1.0.0-beta.18",
     "material-ui-icons": "^1.0.0-beta.15",
     "moment": "^2.19.1",
     "object-assign": "^4.1.1",

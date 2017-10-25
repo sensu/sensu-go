@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import MaterialDrawer from "material-ui/Drawer";
-import List, { ListItem, ListItemIcon, ListItemText } from "material-ui/List";
+import List, { ListItem } from "material-ui/List";
 import { styles as listItemIconStyles } from "material-ui/List/ListItemIcon";
 import IconButton from "material-ui/IconButton";
 import Divider from "material-ui/Divider";
@@ -15,6 +15,8 @@ import EventIcon from "material-ui-icons/Announcement";
 import DashboardIcon from "material-ui-icons/Dashboard";
 import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
+
+import DrawerButton from "./DrawerButton";
 
 const logo = require("../assets/logo.png");
 
@@ -65,45 +67,19 @@ class Drawer extends React.Component {
           </List>
           <Divider />
           <List>
-            <ListItem button>
-              <ListItemIcon>
-                <DashboardIcon />
-              </ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItem>
-            <ListItem button selected>
-              <ListItemIcon>
-                <EventIcon />
-              </ListItemIcon>
-              <ListItemText primary="Events" />
-            </ListItem>
-            <ListItem button>
-              <ListItemIcon>
-                <EntityIcon />
-              </ListItemIcon>
-              <ListItemText primary="Entities" />
-            </ListItem>
-            <ListItem button>
-              <ListItemIcon>
-                <CheckIcon />
-              </ListItemIcon>
-              <ListItemText primary="Checks" />
-            </ListItem>
+            <DrawerButton Icon={DashboardIcon} primary="Dashboard" />
+            <DrawerButton Icon={EventIcon} primary="Events" href="/events" />
+            <DrawerButton Icon={EntityIcon} primary="Entities" />
+            <DrawerButton Icon={CheckIcon} primary="Checks" href="/checks" />
           </List>
           <Divider />
           <List>
-            <ListItem button>
-              <ListItemIcon>
-                <SettingsIcon />
-              </ListItemIcon>
-              <ListItemText primary="Settings" />
-            </ListItem>
-            <ListItem button>
-              <ListItemIcon>
-                <FeedbackIcon />
-              </ListItemIcon>
-              <ListItemText primary="Feedback" />
-            </ListItem>
+            <DrawerButton Icon={SettingsIcon} primary="Settings" />
+            <DrawerButton
+              Icon={FeedbackIcon}
+              primary="Feedback"
+              href="https://www.sensuapp.org"
+            />
           </List>
         </div>
       </MaterialDrawer>
