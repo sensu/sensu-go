@@ -71,7 +71,7 @@ func (o *OrganizationsController) many(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(bytes))
+	fmt.Fprint(w, string(bytes))
 }
 
 // single returns a specific organization
@@ -104,8 +104,7 @@ func (o *OrganizationsController) single(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(bytes))
-
+	fmt.Fprint(w, string(bytes))
 }
 
 // update handles the update of a specific organization

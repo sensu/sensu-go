@@ -36,6 +36,9 @@ const (
 	// RuleTypeEvent access control for event objects
 	RuleTypeEvent = "events"
 
+	// RuleTypeFilter access control for filter objects
+	RuleTypeFilter = "filters"
+
 	// RuleTypeHandler access control for handler objects
 	RuleTypeHandler = "handlers"
 
