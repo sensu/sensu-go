@@ -27,27 +27,57 @@ func getSilencedPath(ctx context.Context, name string) string {
 	return silencedKeyBuilder.withContext(ctx).build(name)
 }
 
-// Clear a silenced entry (delete)
-// A silence entry can be cleared by specifying the id, or the intersection of
-// subscription and or handler to which the entry applies
-// check, subscription, or id required
-func (s *etcdStore) DeleteSilencedEntry(ctx context.Context, silencedID string) error {
+// Delete a silenced entry by its id (subscription + checkname)
+func (s *etcdStore) DeleteSilencedEntryByID(ctx context.Context, silencedID string) error {
 	if silencedID == "" {
 		return errors.New("must specify id")
 	}
 
-	_, err := s.kvc.Delete(ctx, getCheckConfigsPath(ctx, silencedID))
+	_, err := s.kvc.Delete(ctx, getSilencedPath(ctx, silencedID))
 	return err
 }
 
-// Get all silenced events
+// Delete a silenced entry by its subscription
+func (s *etcdStore) DeleteSilencedEntryBySubscription(ctx context.Context, subscription string) error {
+	if subscription == "" {
+		return errors.New("must specify subscription")
+	}
+
+	_, err := s.kvc.Delete(ctx, getSilencedPath(ctx, subscription))
+	return err
+}
+
+// Delete a silenced entry by its check name. Since we don't have the full
+// prefix, we need to get all keys and filter by checkname, then delete them.
+func (s *etcdStore) DeleteSilencedEntryByCheckName(ctx context.Context, checkName string) error {
+	if checkName == "" {
+		return errors.New("must specify check name")
+	}
+	resp, err := s.kvc.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
+	if err != nil {
+		return err
+	}
+
+	// iterate through response entries
+	// add anything with checkName == entry.CheckName to an array and return
+	for _, kv := range resp.Kvs {
+		fmt.Println(string(kv.Key))
+		_, err = s.kvc.Delete(ctx, getSilencedPath(ctx, string(kv.Key)))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Get all silenced entries
 func (s *etcdStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
 	resp, err := s.kvc.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
 
-	silencedArray, err := arrayEntries(resp)
+	silencedArray, err := arraySilencedEntries(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +94,7 @@ func (s *etcdStore) GetSilencedEntriesBySubscription(ctx context.Context, subscr
 		return nil, err
 	}
 
-	silencedArray, err := arrayEntries(resp)
+	silencedArray, err := arraySilencedEntries(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +138,7 @@ func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) ([]*typ
 	if err != nil {
 		return nil, err
 	}
-	silencedArray, err := arrayEntries(resp)
+	silencedArray, err := arraySilencedEntries(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -147,9 +177,9 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	return nil
 }
 
-// arrayEntries is a helper function to unmarshal entries from json and return
+// arraySilencedEntries is a helper function to unmarshal entries from json and return
 // them as an array
-func arrayEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
+func arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
 	if len(resp.Kvs) == 0 {
 		return []*types.Silenced{}, nil
 	}

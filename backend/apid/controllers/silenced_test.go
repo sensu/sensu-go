@@ -69,24 +69,56 @@ func TestHttpApiSilencedGetUnauthorized(t *testing.T) {
 
 func TestHttpApiSilencedPost(t *testing.T) {
 	store := &mockstore.MockStore{}
-
 	c := &SilencedController{
 		Store: store,
 	}
 
-	silenced := types.FixtureSilenced("check1")
-	silenced.Subscription = "test-subscription"
-	silenced.CheckName = "test-check"
-	silenced.ID = silenced.Subscription + ":" + silenced.CheckName
+	testCases := []struct {
+		description        string
+		silencedEntry      *types.Silenced
+		expectedStatusCode int
+	}{
+		{
+			"post silenced entry with checkname and subscription",
+			&types.Silenced{
+				Subscription: "test-subscription",
+				CheckName:    "test-check",
+				ID:           "test-subscription:test-check",
+			},
+			http.StatusCreated,
+		},
+		{
+			"post silenced entry with no checkname",
+			&types.Silenced{
+				Subscription: "test-subscription",
+				CheckName:    "",
+				ID:           "test-subscription:*",
+			},
+			http.StatusCreated,
+		},
+		{
+			"post silenced entry with no subscription",
+			&types.Silenced{
+				Subscription: "",
+				CheckName:    "test-check",
+				ID:           "*:test-check",
+			},
+			http.StatusCreated,
+		},
+	}
 
-	store.On("UpdateSilencedEntry", mock.Anything, silenced).Return(nil)
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			store.On("UpdateSilencedEntry", mock.Anything, tc.silencedEntry).Return(nil)
 
-	encoded, _ := json.Marshal(silenced)
+			encoded, _ := json.Marshal(tc.silencedEntry)
 
-	req := newRequest("POST", "/silenced", bytes.NewBuffer(encoded))
-	res := processRequest(c, req)
+			req := newRequest("POST", "/silenced", bytes.NewBuffer(encoded))
+			res := processRequest(c, req)
 
-	assert.Equal(t, http.StatusCreated, res.Code)
+			assert.Equal(t, tc.expectedStatusCode, res.Code)
+		})
+	}
 }
 
 // Expect an error to be returned
@@ -111,43 +143,92 @@ func TestHttpApiSilencedPostMissingCheckNameSubscription(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, res.Code)
 }
 
-func TestHttpApiSilencedClear(t *testing.T) {
+func TestHttpApiSilencedDelete(t *testing.T) {
 	store := &mockstore.MockStore{}
 
 	c := &SilencedController{
 		Store: store,
 	}
 
-	silenced := types.FixtureSilenced("check1")
-	silenced.ID = "test-subcription:test-check"
-	silenced.Subscription = "test-subscription"
-	silenced.CheckName = "test-check"
+	testCases := []struct {
+		description        string
+		route              string
+		storeMethod        string
+		id                 string
+		expectedStatusCode int
+	}{
+		{
+			"delete silenced entry with checkname and subscription",
+			"/silenced/test-subscription:test-check",
+			"DeleteSilencedEntryByID",
+			"test-subscription:test-check",
+			http.StatusNoContent,
+		},
+		{
+			"delete silenced entry with no checkname",
+			"/silenced/subscriptions/test-subscription",
+			"DeleteSilencedEntryBySubscription",
+			"test-subscription",
+			http.StatusNoContent,
+		},
+		{
+			"delete silenced entry with no subscription",
+			"/silenced/checks/test-check",
+			"DeleteSilencedEntryByCheckName",
+			"test-check",
+			http.StatusNoContent,
+		},
+	}
 
-	encoded, _ := json.Marshal(silenced)
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			store.On(tc.storeMethod, mock.Anything, tc.id).Return(nil)
 
-	store.On("DeleteSilencedEntry", mock.Anything, silenced.ID).Return(nil)
+			req := newRequest("DELETE", tc.route, nil)
+			res := processRequest(c, req)
 
-	req := newRequest("POST", "/silenced/clear", bytes.NewBuffer(encoded))
-	res := processRequest(c, req)
-
-	assert.Equal(t, http.StatusNoContent, res.Code)
-
+			assert.Equal(t, tc.expectedStatusCode, res.Code)
+		})
+	}
 }
 
 func TestHttpApiSilencedDeleteUnauthorized(t *testing.T) {
 	controller := SilencedController{}
 
-	silenced := types.FixtureSilenced("check1")
-	silenced.ID = "test-subcription:test-check"
-	silenced.Subscription = "test-subscription"
-	silenced.CheckName = "test-check"
-
-	encoded, _ := json.Marshal(silenced)
-	req := newRequest("POST", "/silenced/clear", bytes.NewBuffer(encoded))
+	req := newRequest("DELETE", "/silenced/test-subscription:test-check", nil)
 	req = requestWithNoAccess(req)
 
 	res := processRequest(&controller, req)
 	assert.Equal(t, http.StatusUnauthorized, res.Code)
+}
+
+func TestHttpApiSilencedGetByID(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	c := &SilencedController{
+		Store: store,
+	}
+	silenced := []*types.Silenced{
+		&types.Silenced{
+			CheckName:    "check1",
+			Subscription: "subscription1",
+			ID:           "subscription1:check1",
+		},
+	}
+
+	store.On("GetSilencedEntryByID", mock.Anything, "subscription1:check1").Return(silenced, nil)
+	req := newRequest("GET", "/silenced/subscription1:check1", nil)
+	res := processRequest(c, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	body := res.Body.Bytes()
+
+	returnedSilencedEntries := []*types.Silenced{}
+	err := json.Unmarshal(body, &returnedSilencedEntries)
+
+	assert.NoError(t, err)
+	assert.EqualValues(t, silenced, returnedSilencedEntries)
 }
 
 func TestHttpApiSilencedGetByCheckName(t *testing.T) {
