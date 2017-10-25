@@ -4,7 +4,7 @@
 # temporary until we can use Github releases when repo is public.
 
 # GCS bucket where we'll deploy builds
-BUCKET="sensu-release"
+BUCKET="sensu-binaries"
 CMD=${1:-"all"}
 TAG=""
 
