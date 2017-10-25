@@ -75,14 +75,14 @@
   "scripts": {
     "precommit": "lint-staged",
     "postinstall": "yarn update-schema",
-    "prestart": "yarn update-schema",
+    "prestart": "yarn update-schema && yarn compile-queries",
     "prettier": "./node_module/.bin/prettier --write src/**/*.js",
     "lint": "./node_modules/.bin/eslint src",
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom",
     "quality": "yarn lint && yarn test",
-    "relay": "./node_modules/.bin/relay-compiler --src ./src --schema ./data/schema.json",
+    "compile-queries": "./node_modules/.bin/relay-compiler --src ./src --schema ./data/schema.json",
     "update-schema": "go run scripts/updateSchema.go"
   },
   "jest": {
