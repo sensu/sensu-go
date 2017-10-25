@@ -94,10 +94,27 @@ describe("authenticate", () => {
   });
 });
 
-describe("authenticate", () => {
+describe("logout", () => {
   beforeEach(() => {
     fetch.resetMocks();
     localStorage.clear();
     tokens.swap(tokens.newTokens({ authenticated: null }));
+  });
+
+  it("should authenticates user", async () => {
+    fetch.mockResponse(JSON.stringify({}));
+
+    await authenticate("test", "pass");
+    await logout();
+    await expect(getAccessToken()).resolves.toBeNull();
+  });
+
+  it("should clear localStore & local state", async () => {
+    fetch.mockResponse(JSON.stringify({}));
+
+    await authenticate("test", "pass");
+    await logout();
+    await expect(tokens.get().authenticated).toBeFalsy();
+    await expect(storage.retrieve()).toBeNull();
   });
 });

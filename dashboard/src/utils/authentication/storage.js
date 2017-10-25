@@ -29,3 +29,7 @@ export function retrieve() {
 
   return null;
 }
+
+export function clear() {
+  localStorage.removeItem(authTokensKey);
+}

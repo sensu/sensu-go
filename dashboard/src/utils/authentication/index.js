@@ -61,7 +61,7 @@ export function logout() {
 
   const newTokens = tokens.newTokens({ authenticated: false });
   tokens.swap(newTokens);
-  storage.persist(newTokens);
+  storage.clear();
 
   return invalidatePromise;
 }
