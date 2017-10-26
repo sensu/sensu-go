@@ -15,29 +15,6 @@ var AssetNameRegexStr = `[a-z0-9\/\_\.\-]+`
 // AssetNameRegex used to validate name of asset
 var AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
 
-// Asset defines an asset agents install as a dependency for a check.
-type Asset struct {
-	// Name is the unique identifier for an asset.
-	Name string `json:"name"`
-
-	// Url is the location of the asset.
-	URL string `json:"url"`
-
-	// Sha512 is the SHA-512 checksum of the asset
-	Sha512 string `json:"sha512"`
-
-	// Metadata is a set of key value pair associated with the asset.
-	Metadata map[string]string `json:"metadata"`
-
-	// Filters is a collection of sensu queries, used by the system to determine
-	// if the asset should be installed. If more than one filter is present the
-	// queries are joined by the "AND" operator.
-	Filters []string `json:"filters"`
-
-	// Organization indicates to which org an asset belongs to
-	Organization string `json:"organization"`
-}
-
 // Validate returns an error if the asset contains invalid values.
 func (a *Asset) Validate() error {
 	if err := ValidateAssetName(a.Name); err != nil {
