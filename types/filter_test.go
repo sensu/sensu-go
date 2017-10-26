@@ -35,7 +35,7 @@ func TestEventFilterValidate(t *testing.T) {
 
 	// Invalid attributes
 	assert.Error(t, f.Validate())
-	f.Statements = []string{"event.Check.Team = 'ops'"}
+	f.Statements = []string{"event.Check.Team == 'ops'"}
 
 	// Invalid organization
 	assert.Error(t, f.Validate())
@@ -47,4 +47,19 @@ func TestEventFilterValidate(t *testing.T) {
 
 	// Valid filter
 	assert.NoError(t, f.Validate())
+}
+
+func TestValidateStatements(t *testing.T) {
+	// Valid statement
+	statements := []string{"10 > 0"}
+	assert.NoError(t, validateStatements(statements))
+
+	// Invalid statement
+	statements = []string{"10. 0"}
+	assert.Error(t, validateStatements(statements))
+
+	// Forbidden modifier token
+	statements = []string{"10 + 2 > 0"}
+	assert.Error(t, validateStatements(statements))
+
 }

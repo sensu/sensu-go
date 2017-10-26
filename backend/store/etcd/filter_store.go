@@ -28,8 +28,16 @@ func (s *etcdStore) DeleteEventFilterByName(ctx context.Context, name string) er
 		return errors.New("must specify name of filter")
 	}
 
-	_, err := s.kvc.Delete(ctx, getEventFiltersPath(ctx, name))
-	return err
+	resp, err := s.kvc.Delete(ctx, getEventFiltersPath(ctx, name))
+	if err != nil {
+		return err
+	}
+
+	if resp.Deleted != 1 {
+		return fmt.Errorf("filter %s does not exist", name)
+	}
+
+	return nil
 }
 
 // GetEventFilters gets the list of filters for an (optional) organization. Passing
