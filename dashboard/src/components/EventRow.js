@@ -1,20 +1,25 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { createFragmentContainer, graphql } from "react-relay";
+import moment from "moment";
+
 import { TableRow, TableCell } from "material-ui/Table";
 import Checkbox from "material-ui/Checkbox";
 
 class EventRow extends React.Component {
   render() {
     const { event: { entity, config, timestamp }, ...other } = this.props;
+    const time = moment(timestamp).fromNow();
+
     return (
       <TableRow {...other}>
-        <TableCell checkbox>
+        <TableCell padding="checkbox">
           <Checkbox />
         </TableCell>
-        <TableCell>{entity.entityID}</TableCell>
+        <TableCell>{entity.uid}</TableCell>
         <TableCell>{config.name}</TableCell>
         <TableCell>{config.command}</TableCell>
-        <TableCell>{timestamp}</TableCell>
+        <TableCell>{time}</TableCell>
       </TableRow>
     );
   }
@@ -28,4 +33,20 @@ EventRow.propTypes = {
   }).isRequired,
 };
 
-export default EventRow;
+export default createFragmentContainer(
+  EventRow,
+  graphql`
+    fragment EventRow_event on CheckEvent {
+      ... on CheckEvent {
+        timestamp
+        config {
+          name
+          command
+        }
+        entity {
+          uid: entityId
+        }
+      }
+    }
+  `,
+);

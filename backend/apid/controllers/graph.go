@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	graphql "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
@@ -34,18 +33,6 @@ func (c *GraphController) query(writer http.ResponseWriter, r *http.Request) {
 	ctx = context.WithValue(ctx, types.OrganizationKey, "")
 	ctx = context.WithValue(ctx, types.EnvironmentKey, "")
 	ctx = context.WithValue(ctx, types.StoreKey, c.Store)
-
-	// TODO: Kill after authentication has been implemented in the frontend.
-	actor := authorization.Actor{
-		Name: "admin",
-		Rules: []types.Rule{{
-			Type:         "*",
-			Environment:  "*",
-			Organization: "*",
-			Permissions:  types.RuleAllPerms,
-		}},
-	}
-	ctx = context.WithValue(ctx, types.AuthorizationActorKey, actor)
 
 	// Read request body
 	bodyBytes, err := ioutil.ReadAll(r.Body)

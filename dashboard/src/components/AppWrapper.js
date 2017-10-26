@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import DefaultThemeProvider from "./Theme/Provider";
+import RestrictUnauthenticated from "./RestrictUnauthenticated";
 import AppFrame from "./AppFrame";
 
 class AppWrapper extends React.Component {
@@ -10,10 +11,13 @@ class AppWrapper extends React.Component {
   };
 
   render() {
+    const { children } = this.props;
     return (
-      <DefaultThemeProvider>
-        <AppFrame>{this.props.children}</AppFrame>
-      </DefaultThemeProvider>
+      <RestrictUnauthenticated>
+        <DefaultThemeProvider>
+          <AppFrame>{children}</AppFrame>
+        </DefaultThemeProvider>
+      </RestrictUnauthenticated>
     );
   }
 }
