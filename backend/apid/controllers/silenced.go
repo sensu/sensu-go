@@ -172,7 +172,7 @@ func (c *SilencedController) bySubscription(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		err := c.Store.DeleteSilencedEntryBySubscription(r.Context(), subscription)
+		err := c.Store.DeleteSilencedEntriesBySubscription(r.Context(), subscription)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -219,7 +219,7 @@ func (c *SilencedController) byCheck(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err := c.Store.DeleteSilencedEntryByCheckName(r.Context(), checkName)
+		err := c.Store.DeleteSilencedEntriesByCheckName(r.Context(), checkName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -230,8 +230,13 @@ func (c *SilencedController) byCheck(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// takes list of structs and a func that takes those individual structs and
+// returns true/false
 func rejectSilencedEntries(records *[]*types.Silenced, predicate func(*types.Silenced) bool) {
+	// loop over structs
 	for i := 0; i < len(*records); i++ {
+		// pass record into predicate func (canRead or whatever it is)
+		// if it
 		if !predicate((*records)[i]) {
 			*records = append((*records)[:i], (*records)[i+1:]...)
 			i--

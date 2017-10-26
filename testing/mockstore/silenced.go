@@ -2,26 +2,24 @@ package mockstore
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
 
 // DeleteSilencedEntryByID ...
 func (s *MockStore) DeleteSilencedEntryByID(ctx context.Context, silencedID string) error {
-	fmt.Println(silencedID)
 	args := s.Called(ctx, silencedID)
 	return args.Error(0)
 }
 
-// DeleteSilencedEntryBySubscription ...
-func (s *MockStore) DeleteSilencedEntryBySubscription(ctx context.Context, subscription string) error {
+// DeleteSilencedEntriesBySubscription ...
+func (s *MockStore) DeleteSilencedEntriesBySubscription(ctx context.Context, subscription string) error {
 	args := s.Called(ctx, subscription)
 	return args.Error(0)
 }
 
-// DeleteSilencedEntryByCheckName ...
-func (s *MockStore) DeleteSilencedEntryByCheckName(ctx context.Context, checkName string) error {
+// DeleteSilencedEntriesByCheckName ...
+func (s *MockStore) DeleteSilencedEntriesByCheckName(ctx context.Context, checkName string) error {
 	args := s.Called(ctx, checkName)
 	return args.Error(0)
 }

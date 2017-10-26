@@ -159,15 +159,15 @@ type RBACStore interface {
 }
 
 // SilencedStore provides an interface for interacting and persisting silenced
-// event entries
+// event entries.
 type SilencedStore interface {
 	GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error)
 	GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*types.Silenced, error)
 	GetSilencedEntryByID(ctx context.Context, silencedID string) ([]*types.Silenced, error)
 	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
 	DeleteSilencedEntryByID(ctx context.Context, silencedID string) error
-	DeleteSilencedEntryBySubscription(ctx context.Context, subscription string) error
-	DeleteSilencedEntryByCheckName(ctx context.Context, checkName string) error
+	DeleteSilencedEntriesBySubscription(ctx context.Context, subscription string) error
+	DeleteSilencedEntriesByCheckName(ctx context.Context, checkName string) error
 	UpdateSilencedEntry(ctx context.Context, silenced *types.Silenced) error
 }
 

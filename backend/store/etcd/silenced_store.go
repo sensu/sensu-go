@@ -37,8 +37,8 @@ func (s *etcdStore) DeleteSilencedEntryByID(ctx context.Context, silencedID stri
 	return err
 }
 
-// Delete a silenced entry by its subscription
-func (s *etcdStore) DeleteSilencedEntryBySubscription(ctx context.Context, subscription string) error {
+// Delete silenced entries by subscription
+func (s *etcdStore) DeleteSilencedEntriesBySubscription(ctx context.Context, subscription string) error {
 	if subscription == "" {
 		return errors.New("must specify subscription")
 	}
@@ -47,9 +47,10 @@ func (s *etcdStore) DeleteSilencedEntryBySubscription(ctx context.Context, subsc
 	return err
 }
 
-// Delete a silenced entry by its check name. Since we don't have the full
-// prefix, we need to get all keys and filter by checkname, then delete them.
-func (s *etcdStore) DeleteSilencedEntryByCheckName(ctx context.Context, checkName string) error {
+// Delete silenced entries by a check name. This will remove any silenced key
+// containing the requested check name. Since we don't have the full prefix we
+// need to get all keys and filter by checkname, then delete them.
+func (s *etcdStore) DeleteSilencedEntriesByCheckName(ctx context.Context, checkName string) error {
 	if checkName == "" {
 		return errors.New("must specify check name")
 	}
@@ -61,7 +62,6 @@ func (s *etcdStore) DeleteSilencedEntryByCheckName(ctx context.Context, checkNam
 	// iterate through response entries
 	// add anything with checkName == entry.CheckName to an array and return
 	for _, kv := range resp.Kvs {
-		fmt.Println(string(kv.Key))
 		_, err = s.kvc.Delete(ctx, getSilencedPath(ctx, string(kv.Key)))
 		if err != nil {
 			return err
@@ -84,7 +84,7 @@ func (s *etcdStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, 
 	return silencedArray, nil
 }
 
-// Get silenced events by subscription
+// Get silenced entries by subscription
 func (s *etcdStore) GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error) {
 	if subscription == "" {
 		return nil, errors.New("must specify subscription")
@@ -101,7 +101,7 @@ func (s *etcdStore) GetSilencedEntriesBySubscription(ctx context.Context, subscr
 	return silencedArray, nil
 }
 
-// Get silenced events by checkname
+// Get silenced entries by checkname
 func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*types.Silenced, error) {
 	if checkName == "" {
 		return nil, errors.New("must specify check name")
@@ -128,7 +128,7 @@ func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName
 	return silencedArray, nil
 }
 
-// Get silenced event by id
+// Get silenced entry by id
 func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) ([]*types.Silenced, error) {
 	if id == "" {
 		return nil, errors.New("must specify id")
@@ -149,7 +149,6 @@ func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) ([]*typ
 // Create new silenced event
 func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Silenced) error {
 	if err := silenced.Validate(); err != nil {
-		fmt.Println(err)
 		return err
 	}
 

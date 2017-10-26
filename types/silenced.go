@@ -2,11 +2,9 @@ package types
 
 import "errors"
 
-// Silenced returns a struct representing a silenced event.
-// add org and env attributes, check orgs/envs exist -
-// either in api or validation helpers (checks/events/etc for exmps)
+// Silenced returns a struct representing a silenced entry.
 type Silenced struct {
-	ID              string
+	ID              string `json:"id"`
 	Expire          int    `json:"expire,omitempty"`
 	ExpireOnResolve bool   `json:"expire_on_resolve,omitempty"`
 	Creator         string `json:"creator,omitempty"`

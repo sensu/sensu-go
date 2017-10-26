@@ -16,9 +16,11 @@ type Event struct {
 	// Timestamp is the time in seconds since the Epoch.
 	Timestamp int64 `json:"timestamp"`
 
-	Entity   *Entity  `json:"entity,omitempty"`
-	Check    *Check   `json:"check,omitempty"`
-	Metrics  *Metrics `json:"metrics,omitempty"`
+	Entity  *Entity  `json:"entity,omitempty"`
+	Check   *Check   `json:"check,omitempty"`
+	Metrics *Metrics `json:"metrics,omitempty"`
+	// Silenced is a list of silenced subscriptions for marking an event as
+	// silenced.
 	Silenced []string `json:"silenced,omitempty"`
 }
 
