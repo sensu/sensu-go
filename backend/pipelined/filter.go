@@ -54,7 +54,8 @@ func evaluateEventFilter(event *types.Event, filter types.EventFilter) bool {
 	}
 
 	// Something weird happened, let's not filter the event and log a warning message
-	logger.Warn("pipelined not filtering event due to unhandled case")
+	logger.WithField("filter", filter).Warn("pipelined not filtering event due to unhandled case")
+
 	return false
 }
 
@@ -79,8 +80,8 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 		return false
 	}
 
-	// Loop through all of the handler's event filters, if any filter evaluates to false then
-	// do not filter the event
+	// Iterate through all event filters, evaluating each statement against given event. The
+	// event is rejected if the product of all statements is true.
 	for _, filter := range handler.Filters {
 		filtered := evaluateEventFilter(event, filter)
 		if !filtered {
