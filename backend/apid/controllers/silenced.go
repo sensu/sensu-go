@@ -88,13 +88,13 @@ func (c *SilencedController) all(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// byID handles requests to /silenced/ids/:id
+// byID handles requests to /silenced/:id
 func (c *SilencedController) byID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	silencedID, _ := vars["id"]
+	abilities := authorization.Silenced.WithContext(r.Context())
 	switch r.Method {
 	case http.MethodGet:
-		abilities := authorization.Silenced.WithContext(r.Context())
 		if !abilities.CanList() {
 			authorization.UnauthorizedAccessToResource(w)
 			return
@@ -122,8 +122,6 @@ func (c *SilencedController) byID(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprint(w, string(silencedBytes))
 	case http.MethodDelete:
-
-		abilities := authorization.Silenced.WithContext(r.Context())
 		if !abilities.CanDelete() {
 			authorization.UnauthorizedAccessToResource(w)
 			return
@@ -143,9 +141,9 @@ func (c *SilencedController) byID(w http.ResponseWriter, r *http.Request) {
 func (c *SilencedController) bySubscription(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	subscription, _ := vars["subscription"]
+	abilities := authorization.Silenced.WithContext(r.Context())
 	switch r.Method {
 	case http.MethodGet:
-		abilities := authorization.Silenced.WithContext(r.Context())
 		if !abilities.CanList() {
 			authorization.UnauthorizedAccessToResource(w)
 			return
@@ -169,8 +167,6 @@ func (c *SilencedController) bySubscription(w http.ResponseWriter, r *http.Reque
 		fmt.Fprint(w, string(silencedBytes))
 
 	case http.MethodDelete:
-
-		abilities := authorization.Silenced.WithContext(r.Context())
 		if !abilities.CanDelete() {
 			authorization.UnauthorizedAccessToResource(w)
 			return
@@ -190,10 +186,10 @@ func (c *SilencedController) bySubscription(w http.ResponseWriter, r *http.Reque
 func (c *SilencedController) byCheck(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	checkName, _ := vars["check"]
+	abilities := authorization.Silenced.WithContext(r.Context())
 
 	switch r.Method {
 	case http.MethodGet:
-		abilities := authorization.Silenced.WithContext(r.Context())
 		if !abilities.CanList() {
 			authorization.UnauthorizedAccessToResource(w)
 			return
@@ -218,7 +214,6 @@ func (c *SilencedController) byCheck(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprint(w, string(silencedBytes))
 	case http.MethodDelete:
-		abilities := authorization.Silenced.WithContext(r.Context())
 		if !abilities.CanDelete() {
 			authorization.UnauthorizedAccessToResource(w)
 			return
