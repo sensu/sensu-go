@@ -2,6 +2,8 @@ package types
 
 import (
 	"errors"
+
+	"github.com/Knetic/govaluate"
 )
 
 const (
@@ -81,12 +83,26 @@ func (f *EventFilter) Validate() error {
 		return errors.New("filter must have one or more statements")
 	}
 
+	if err := validateStatements(f.Statements); err != nil {
+		return err
+	}
+
 	if f.Environment == "" {
 		return errors.New("environment must be set")
 	}
 
 	if f.Organization == "" {
 		return errors.New("organization must be set")
+	}
+
+	return nil
+}
+
+func validateStatements(statements []string) error {
+	for _, statement := range statements {
+		if _, err := govaluate.NewEvaluableExpression(statement); err != nil {
+			return err
+		}
 	}
 
 	return nil
