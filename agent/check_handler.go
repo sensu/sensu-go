@@ -29,7 +29,7 @@ func (a *Agent) handleCheck(payload []byte) error {
 
 func (a *Agent) executeCheck(request *types.CheckRequest) {
 	checkConfig := request.Config
-	checkAssets := request.ExpandedAssets
+	checkAssets := request.Assets
 
 	// Instantiate Event
 	event := &types.Event{
@@ -69,7 +69,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	}
 
 	event.Check.Duration = ex.Duration
-	event.Check.Status = ex.Status
+	event.Check.Status = int32(ex.Status)
 
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()

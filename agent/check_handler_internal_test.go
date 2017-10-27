@@ -35,7 +35,7 @@ func TestExecuteCheck(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.Equal(0, event.Check.Status)
+	assert.Equal(int32(0), event.Check.Status)
 
 	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
 	checkConfig.Command = falsePath
@@ -47,7 +47,7 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.Equal(1, event.Check.Status)
+	assert.Equal(int32(1), event.Check.Status)
 
 	checkConfig.Interval = 0
 	agent.executeCheck(request)
@@ -57,6 +57,6 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.Equal(event.Check.Status, 3, "Unknown status code is returned")
+	assert.Equal(event.Check.Status, int32(3), "Unknown status code is returned")
 	assert.Contains(event.Check.Output, "check is invalid")
 }

@@ -16,7 +16,7 @@ func TestWarnEvent(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 	mockBus.On("Publish", messaging.TopicEventRaw, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)
-		assert.Equal(1, event.Check.Status)
+		assert.EqualValues(1, event.Check.Status)
 	})
 	creator := &MessageBusEventCreator{
 		MessageBus: mockBus,
@@ -31,7 +31,7 @@ func TestCriticalEvent(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 	mockBus.On("Publish", messaging.TopicEventRaw, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)
-		assert.Equal(2, event.Check.Status)
+		assert.EqualValues(2, event.Check.Status)
 	})
 	creator := &MessageBusEventCreator{
 		MessageBus: mockBus,
@@ -46,7 +46,7 @@ func TestResolveEvent(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 	mockBus.On("Publish", messaging.TopicEventRaw, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)
-		assert.Equal(0, event.Check.Status)
+		assert.EqualValues(0, event.Check.Status)
 	})
 	creator := &MessageBusEventCreator{
 		MessageBus: mockBus,

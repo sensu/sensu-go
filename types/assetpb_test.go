@@ -7,10 +7,15 @@ Package types is a generated protocol buffer package.
 It is generated from these files:
 	asset.proto
 	authentication.proto
+	check.proto
 
 It has these top-level messages:
 	Asset
 	Tokens
+	CheckRequest
+	CheckConfig
+	Check
+	CheckHistory
 */
 package types
 

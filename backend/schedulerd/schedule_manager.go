@@ -76,7 +76,7 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 	scheduler := mngrPtr.newSchedulerFn(check)
 
 	// Start scheduling check
-	if err := scheduler.Start(check.Interval); err != nil {
+	if err := scheduler.Start(uint(check.Interval)); err != nil {
 		return err
 	}
 

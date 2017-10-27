@@ -156,7 +156,7 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Name = opts.Name
 	check.Environment = opts.Env
 	check.Organization = opts.Org
-	check.Interval = uint(interval)
+	check.Interval = uint32(interval)
 	check.Command = opts.Command
 	check.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)

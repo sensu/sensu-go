@@ -420,7 +420,7 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 	}
 
 	if val, ok := cfg["interval"].(float64); ok {
-		check.Interval = uint(val)
+		check.Interval = uint32(val)
 	}
 
 	if val, ok := cfg["handler"].(string); ok {

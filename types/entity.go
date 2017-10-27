@@ -14,7 +14,7 @@ type Entity struct {
 	LastSeen         int64          `json:"last_seen,omitempty"`
 	Deregister       bool           `json:"deregister"`
 	Deregistration   Deregistration `json:"deregistration"`
-	KeepaliveTimeout uint           `json:"keepalive_timeout"`
+	KeepaliveTimeout uint32         `json:"keepalive_timeout"`
 	Environment      string         `json:"environment"`
 	Organization     string         `json:"organization"`
 	User             string         `json:"user"`

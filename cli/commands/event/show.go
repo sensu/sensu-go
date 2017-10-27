@@ -70,7 +70,7 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 			},
 			{
 				Label: "Status",
-				Value: strconv.Itoa(event.Check.Status),
+				Value: strconv.Itoa(int(event.Check.Status)),
 			},
 			{
 				Label: "Timestamp",
