@@ -37,7 +37,7 @@ message Handler {
 	repeated string handlers = 7 [(gogoproto.jsontag) = "handlers"];
 
   // Filters is a list of filters to evaluate before executing this handler
-	repeated EventFilter fitlers = 8 [(gogoproto.jsontag) = "filters"];
+	repeated EventFilter filters = 8 [(gogoproto.jsontag) = "filters"];
 
 	// EnvVars is a list of environment variables to use with command execution
 	repeated string env_vars = 9 [(gogoproto.jsontag) = "env_vars"];
