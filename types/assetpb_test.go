@@ -8,6 +8,7 @@ It is generated from these files:
 	asset.proto
 	authentication.proto
 	check.proto
+	entity.proto
 
 It has these top-level messages:
 	Asset
@@ -16,6 +17,11 @@ It has these top-level messages:
 	CheckConfig
 	Check
 	CheckHistory
+	Entity
+	System
+	Network
+	NetworkInterface
+	Deregistration
 */
 package types
 

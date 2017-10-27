@@ -4,53 +4,6 @@ import (
 	"errors"
 )
 
-// Entity is the Entity supplying the event. The default Entity for any
-// Event is the running Agent process--if the Event is sent by an Agent.
-type Entity struct {
-	ID               string         `json:"id"`
-	Class            string         `json:"class"`
-	System           System         `json:"system,omitempty"`
-	Subscriptions    []string       `json:"subscriptions,omitempty"`
-	LastSeen         int64          `json:"last_seen,omitempty"`
-	Deregister       bool           `json:"deregister"`
-	Deregistration   Deregistration `json:"deregistration"`
-	KeepaliveTimeout uint32         `json:"keepalive_timeout"`
-	Environment      string         `json:"environment"`
-	Organization     string         `json:"organization"`
-	User             string         `json:"user"`
-}
-
-// System contains information about the system that the Agent process
-// is running on, used for additional Entity context.
-type System struct {
-	Hostname        string  `json:"hostname"`
-	OS              string  `json:"os"`
-	Platform        string  `json:"platform"`
-	PlatformFamily  string  `json:"platform_family"`
-	PlatformVersion string  `json:"platform_version"`
-	Network         Network `json:"network"`
-}
-
-// Network contains information about the system network interfaces
-// that the Agent process is running on, used for additional Entity
-// context.
-type Network struct {
-	Interfaces []NetworkInterface `json:"interfaces"`
-}
-
-// NetworkInterface contains information about a system network
-// interface.
-type NetworkInterface struct {
-	Name      string   `json:"name"`
-	MAC       string   `json:"mac,omitempty"`
-	Addresses []string `json:"addresses"`
-}
-
-// Deregistration contains configuration for Sensu entity de-registration.
-type Deregistration struct {
-	Handler string `json:"handler"`
-}
-
 // Validate returns an error if the entity is invalid.
 func (e *Entity) Validate() error {
 	if err := ValidateName(e.ID); err != nil {

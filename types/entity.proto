@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Entity is the Entity supplying the event. The default Entity for any
+// Event is the running Agent process--if the Event is sent by an Agent.
+message Entity {
+	string id = 1 [(gogoproto.customname) = "ID"];
+	string class = 2;
+	System system = 3 [(gogoproto.nullable) = false];
+	repeated string subscriptions = 4 [(gogoproto.jsontag) = "subscriptions"];
+	int64 last_seen = 5;
+  bool deregister = 6;
+	Deregistration deregistration = 7 [(gogoproto.nullable) = false];
+	uint32 keepalive_timeout = 8;
+	string environment = 9;
+	string organization = 10;
+	string user = 11;
+}
+
+// System contains information about the system that the Agent process
+// is running on, used for additional Entity context.
+message System {
+	string hostname = 1;
+	string os = 2 [(gogoproto.customname) = "OS"];
+	string platform = 3;
+	string  platform_family = 4;
+	string  platform_version = 5;
+	Network network = 6 [(gogoproto.nullable) = false];
+}
+
+// Network contains information about the system network interfaces
+// that the Agent process is running on, used for additional Entity
+// context.
+message Network {
+	repeated NetworkInterface interfaces = 1 [(gogoproto.jsontag) = "interfaces", (gogoproto.nullable) = false];
+}
+
+// NetworkInterface contains information about a system network
+// interface.
+message NetworkInterface {
+	string name = 1;
+	string mac = 2 [(gogoproto.customname) = "MAC"];
+  repeated string addresses = 3 [(gogoproto.jsontag) = "addresses"];
+}
+
+// Deregistration contains configuration for Sensu entity de-registration.
+message Deregistration {
+	string handler = 1;
+}

@@ -8,6 +8,7 @@
 		asset.proto
 		authentication.proto
 		check.proto
+		entity.proto
 
 	It has these top-level messages:
 		Asset
@@ -16,6 +17,11 @@
 		CheckConfig
 		Check
 		CheckHistory
+		Entity
+		System
+		Network
+		NetworkInterface
+		Deregistration
 */
 package types
 
