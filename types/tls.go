@@ -7,15 +7,6 @@ import (
 	"io/ioutil"
 )
 
-// TLSOptions holds TLS options that are used across the varying Sensu
-// components
-type TLSOptions struct {
-	CertFile           string
-	KeyFile            string
-	TrustedCAFile      string
-	InsecureSkipVerify bool
-}
-
 // ToTLSConfig outputs a tls.Config from TLSOptions
 func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
 	tlsConfig := tls.Config{}

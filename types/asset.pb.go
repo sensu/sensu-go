@@ -17,6 +17,7 @@
 		metrics.proto
 		mutator.proto
 		rbac.proto
+		tls.proto
 
 	It has these top-level messages:
 		Asset
@@ -43,6 +44,7 @@
 		Mutator
 		Rule
 		Role
+		TLSOptions
 */
 package types
 
