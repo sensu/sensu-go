@@ -3,20 +3,91 @@ package pipelined
 
 import (
 	"github.com/sensu/sensu-go/types"
+
+	"github.com/Knetic/govaluate"
 )
+
+func evaluateEventFilterStatement(event *types.Event, statement string) bool {
+	expr, err := govaluate.NewEvaluableExpression(statement)
+	if err != nil {
+		logger.Warn("failed to create evaluable expression")
+		return false
+	}
+
+	result, err := expr.Evaluate(map[string]interface{}{"event": event})
+	if err != nil {
+		logger.Warn("failed to evaluate filter")
+		return false
+	}
+
+	match, ok := result.(bool)
+	if !ok {
+		logger.Warn("filters must evaluate to boolean values")
+	}
+
+	return match
+}
+
+func evaluateEventFilter(event *types.Event, filter types.EventFilter) bool {
+	for _, statement := range filter.Statements {
+		match := evaluateEventFilterStatement(event, statement)
+
+		// Allow - One of the statements did not match, filter the event
+		if filter.Action == types.EventFilterActionAllow && !match {
+			return true
+		}
+
+		// Deny - One of the statements did not match, do not filter the event
+		if filter.Action == types.EventFilterActionDeny && !match {
+			return false
+		}
+	}
+
+	// Allow - All of the statements matched, do not filter the event
+	if filter.Action == types.EventFilterActionAllow {
+		return false
+	}
+
+	// Deny - All of the statements matched, filter the event
+	if filter.Action == types.EventFilterActionDeny {
+		return true
+	}
+
+	// Something weird happened, let's not filter the event and log a warning message
+	logger.WithField("filter", filter).Warn("pipelined not filtering event due to unhandled case")
+
+	return false
+}
 
 // filterEvent filters a Sensu event, determining if it will continue
 // through the Sensu pipeline.
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
 	incident := p.isIncident(event)
-
 	metrics := p.hasMetrics(event)
 
-	if incident || metrics {
+	// Do not filter the event if the event has metrics
+	if metrics {
 		return false
 	}
 
-	logger.Debug("pipelined filtered an event")
+	// Filter the event if it is not an incident
+	if !incident {
+		return true
+	}
+
+	// Do not filter the event if the handler has no event filters
+	if len(handler.Filters) == 0 {
+		return false
+	}
+
+	// Iterate through all event filters, evaluating each statement against given event. The
+	// event is rejected if the product of all statements is true.
+	for _, filter := range handler.Filters {
+		filtered := evaluateEventFilter(event, filter)
+		if !filtered {
+			return false
+		}
+	}
 
 	return true
 }

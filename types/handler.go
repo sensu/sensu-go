@@ -24,6 +24,9 @@ type Handler struct {
 	// Handlers is a list of handlers for a handler set.
 	Handlers []string `json:"handlers,omitempty"`
 
+	// Filters is a list of filters to evaluate before executing this handler
+	Filters []EventFilter `json:"filters,omitempty"`
+
 	// Env is a list of environment variables to use with command execution
 	Env []string `json:"env,omitempty"`
 
