@@ -9,6 +9,7 @@
 		authentication.proto
 		check.proto
 		entity.proto
+		environment.proto
 
 	It has these top-level messages:
 		Asset
@@ -22,6 +23,7 @@
 		Network
 		NetworkInterface
 		Deregistration
+		Environment
 */
 package types
 
