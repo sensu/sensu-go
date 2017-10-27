@@ -2,15 +2,6 @@ package types
 
 import "errors"
 
-// User describes an authenticated user
-type User struct {
-	Username string `json:"username"`
-	Password string `json:"password,omitempty"`
-
-	Roles    []string `json:"roles"`
-	Disabled bool     `json:"disabled"`
-}
-
 // FixtureUser returns a testing fixture for an Entity object.
 func FixtureUser(username string) *User {
 	return &User{

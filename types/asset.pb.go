@@ -18,6 +18,7 @@
 		mutator.proto
 		rbac.proto
 		tls.proto
+		user.proto
 
 	It has these top-level messages:
 		Asset
@@ -45,6 +46,7 @@
 		Rule
 		Role
 		TLSOptions
+		User
 */
 package types
 
