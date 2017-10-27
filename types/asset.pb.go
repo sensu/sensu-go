@@ -10,6 +10,7 @@
 		check.proto
 		entity.proto
 		environment.proto
+		event.proto
 		metrics.proto
 
 	It has these top-level messages:
@@ -25,6 +26,7 @@
 		NetworkInterface
 		Deregistration
 		Environment
+		Event
 		Metrics
 */
 package types
