@@ -13,6 +13,7 @@
 		event.proto
 		filter.proto
 		handler.proto
+		keepalive.proto
 		metrics.proto
 
 	It has these top-level messages:
@@ -35,6 +36,7 @@
 		EventFilterWhenTimeRange
 		Handler
 		HandlerSocket
+		KeepaliveRecord
 		Metrics
 */
 package types
