@@ -15,6 +15,7 @@
 		handler.proto
 		keepalive.proto
 		metrics.proto
+		mutator.proto
 
 	It has these top-level messages:
 		Asset
@@ -38,6 +39,7 @@
 		HandlerSocket
 		KeepaliveRecord
 		Metrics
+		Mutator
 */
 package types
 

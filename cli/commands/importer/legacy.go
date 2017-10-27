@@ -147,7 +147,7 @@ func (i *LegacyMutatorImporter) applyCfg(mutator *types.Mutator, cfg map[string]
 	}
 
 	if val, ok := cfg["timeout"].(float64); ok {
-		mutator.Timeout = int(val)
+		mutator.Timeout = uint32(val)
 	}
 }
 

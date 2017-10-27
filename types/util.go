@@ -35,7 +35,7 @@ func FakeMutatorCommand(command string, args ...string) *Mutator {
 
 	mutator := &Mutator{
 		Command: trimmedCmd,
-		Env:     env,
+		EnvVars: env,
 	}
 
 	return mutator
