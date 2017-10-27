@@ -40,10 +40,13 @@ func (opts *handlerOpts) withHandler(handler *types.Handler) {
 	opts.Org = handler.Organization
 	opts.Env = handler.Environment
 	opts.Command = handler.Command
-	opts.Timeout = strconv.Itoa(handler.Timeout)
+	opts.Timeout = strconv.FormatUint(uint64(handler.Timeout), 10)
 	opts.Handlers = strings.Join(handler.Handlers, ",")
-	opts.SocketHost = handler.Socket.Host
-	opts.SocketPort = strconv.Itoa(handler.Socket.Port)
+
+	if handler.Socket != nil {
+		opts.SocketHost = handler.Socket.Host
+		opts.SocketPort = strconv.FormatUint(uint64(handler.Socket.Port), 10)
+	}
 }
 
 func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
@@ -204,17 +207,17 @@ func (opts *handlerOpts) Copy(handler *types.Handler) {
 	handler.Command = opts.Command
 
 	if len(opts.Timeout) > 0 {
-		t, _ := strconv.Atoi(opts.Timeout)
-		handler.Timeout = t
+		t, _ := strconv.ParseUint(opts.Timeout, 10, 32)
+		handler.Timeout = uint32(t)
 	} else {
 		handler.Timeout = 0
 	}
 
 	if len(opts.SocketHost) > 0 && len(opts.SocketPort) > 0 {
-		p, _ := strconv.Atoi(opts.SocketPort)
-		handler.Socket = types.HandlerSocket{
+		p, _ := strconv.ParseUint(opts.SocketPort, 10, 32)
+		handler.Socket = &types.HandlerSocket{
 			Host: opts.SocketHost,
-			Port: p,
+			Port: uint32(p),
 		}
 	}
 

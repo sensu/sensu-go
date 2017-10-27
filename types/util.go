@@ -17,7 +17,7 @@ func FakeHandlerCommand(command string, args ...string) *Handler {
 
 	handler := &Handler{
 		Command: trimmedCmd,
-		Env:     env,
+		EnvVars: env,
 	}
 
 	return handler

@@ -703,7 +703,7 @@ func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]
 	}
 
 	if val, ok := cfg["timeout"].(float64); ok {
-		handler.Timeout = int(val)
+		handler.Timeout = uint32(val)
 	} else {
 		handler.Timeout = 10
 	}
@@ -713,9 +713,9 @@ func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]
 	}
 
 	if val, ok := cfg["socket"].(map[string]interface{}); ok {
-		handler.Socket = types.HandlerSocket{
+		handler.Socket = &types.HandlerSocket{
 			Host: val["host"].(string),
-			Port: int(val["port"].(float64)),
+			Port: uint32(val["port"].(float64)),
 		}
 	} else if _, ok := cfg["socket"]; ok {
 		reporter.Error("handler's 'socket' attribute does not appear to be a JSON object")

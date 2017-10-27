@@ -15,7 +15,7 @@ import (
 const (
 	// DefaultSocketTimeout specifies the default socket dial
 	// timeout in seconds for TCP and UDP handlers.
-	DefaultSocketTimeout int = 60
+	DefaultSocketTimeout uint32 = 60
 )
 
 // handleEvent takes a Sensu event through a Sensu pipeline, filters
@@ -110,8 +110,8 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 	handlerExec := &command.Execution{}
 
 	handlerExec.Command = handler.Command
-	handlerExec.Timeout = handler.Timeout
-	handlerExec.Env = handler.Env
+	handlerExec.Timeout = int(handler.Timeout)
+	handlerExec.Env = handler.EnvVars
 
 	handlerExec.Input = string(eventData[:])
 

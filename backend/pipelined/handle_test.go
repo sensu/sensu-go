@@ -42,7 +42,7 @@ func TestPipelinedHandleEvent(t *testing.T) {
 	check := types.FixtureCheck("check1")
 	handler := types.FixtureHandler("handler1")
 	handler.Type = "udp"
-	handler.Socket = types.HandlerSocket{
+	handler.Socket = &types.HandlerSocket{
 		Host: "127.0.0.1",
 		Port: 6789,
 	}
@@ -135,7 +135,7 @@ func TestPipelinedTcpHandler(t *testing.T) {
 
 	handler := &types.Handler{
 		Type:   "tcp",
-		Socket: *handlerSocket,
+		Socket: handlerSocket,
 	}
 
 	event := &types.Event{}
@@ -187,7 +187,7 @@ func TestPipelinedUdpHandler(t *testing.T) {
 
 	handler := &types.Handler{
 		Type:   "udp",
-		Socket: *handlerSocket,
+		Socket: handlerSocket,
 	}
 
 	event := &types.Event{}

@@ -12,6 +12,7 @@ It is generated from these files:
 	environment.proto
 	event.proto
 	filter.proto
+	handler.proto
 	metrics.proto
 
 It has these top-level messages:
@@ -32,6 +33,8 @@ It has these top-level messages:
 	EventFilterWhenAttributes
 	EventFilterWhenDays
 	EventFilterWhenTimeRange
+	Handler
+	HandlerSocket
 	Metrics
 */
 package types
