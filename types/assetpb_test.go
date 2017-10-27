@@ -16,6 +16,7 @@ It is generated from these files:
 	keepalive.proto
 	metrics.proto
 	mutator.proto
+	rbac.proto
 
 It has these top-level messages:
 	Asset
@@ -40,6 +41,8 @@ It has these top-level messages:
 	KeepaliveRecord
 	Metrics
 	Mutator
+	Rule
+	Role
 */
 package types
 

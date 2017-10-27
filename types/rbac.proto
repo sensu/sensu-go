@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Rule maps permissions to a given type
+message Rule {
+	string type = 1;
+	string environment = 2;
+	string organization = 3;
+	repeated string permissions = 4 [(gogoproto.jsontag) = "permissions"];
+}
+
+// Role describes set of rules
+message Role {
+	string name = 1;
+	repeated Rule rules = 2 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+}
