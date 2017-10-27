@@ -6,9 +6,11 @@
 
 	It is generated from these files:
 		asset.proto
+		authentication.proto
 
 	It has these top-level messages:
 		Asset
+		Tokens
 */
 package types
 
@@ -32,19 +34,19 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Asset defines an asset agents install as a dependency for a check.
 type Asset struct {
-	// name is the unique identifier for an asset
+	// Name is the unique identifier for an asset
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// url is the location of the asset
+	// URL is the location of the asset
 	URL string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	// sha512 is the SHA-512 checksum of the asset
+	// Sha512 is the SHA-512 checksum of the asset
 	Sha512 string `protobuf:"bytes,3,opt,name=sha512,proto3" json:"sha512,omitempty"`
-	// metadata is a set of key value pair associated with the asset
+	// Metadata is a set of key value pair associated with the asset
 	Metadata map[string]string `protobuf:"bytes,4,rep,name=metadata" json:"metadata" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// filters are a collection of sensu queries, used by the system to determine
+	// Filters are a collection of sensu queries, used by the system to determine
 	// if the asset should be installed. If more than one filter is present the
 	// queries are joined by the "AND" operator.
 	Filters []string `protobuf:"bytes,5,rep,name=filters" json:"filters,omitempty"`
-	// organization indicates to which org an asset belongs to
+	// Organization indicates to which org an asset belongs to
 	Organization string `protobuf:"bytes,6,opt,name=organization,proto3" json:"organization,omitempty"`
 }
 
