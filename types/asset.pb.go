@@ -10,6 +10,7 @@
 		check.proto
 		entity.proto
 		environment.proto
+		metrics.proto
 
 	It has these top-level messages:
 		Asset
@@ -24,6 +25,7 @@
 		NetworkInterface
 		Deregistration
 		Environment
+		Metrics
 */
 package types
 
