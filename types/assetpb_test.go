@@ -11,6 +11,7 @@ It is generated from these files:
 	entity.proto
 	environment.proto
 	event.proto
+	filter.proto
 	metrics.proto
 
 It has these top-level messages:
@@ -27,6 +28,10 @@ It has these top-level messages:
 	Deregistration
 	Environment
 	Event
+	EventFilter
+	EventFilterWhenAttributes
+	EventFilterWhenDays
+	EventFilterWhenTimeRange
 	Metrics
 */
 package types
