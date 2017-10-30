@@ -715,7 +715,8 @@ func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]
 	if val, ok := cfg["socket"].(map[string]interface{}); ok {
 		handler.Socket = &types.HandlerSocket{
 			Host: val["host"].(string),
-			Port: uint32(val["port"].(float64)),
+			// https://github.com/sensu/sensu-go/pull/494#discussion_r147844977
+			Port: uint32(float32(val["port"].(float64))),
 		}
 	} else if _, ok := cfg["socket"]; ok {
 		reporter.Error("handler's 'socket' attribute does not appear to be a JSON object")
