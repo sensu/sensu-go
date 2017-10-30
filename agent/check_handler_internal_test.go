@@ -35,7 +35,7 @@ func TestExecuteCheck(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.Equal(int32(0), event.Check.Status)
+	assert.EqualValues(0, event.Check.Status)
 
 	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
 	checkConfig.Command = falsePath

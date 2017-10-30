@@ -50,5 +50,5 @@ func totalStateChange(event *types.Event) uint32 {
 		previousStatus = event.Check.History[i].Status
 	}
 
-	return uint32(float64(stateChanges) / 20 * 100)
+	return uint32(float32(stateChanges) / 20 * 100)
 }
