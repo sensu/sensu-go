@@ -2,7 +2,6 @@ package eventd
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -12,12 +11,13 @@ import (
 )
 
 // test cases:
-//		not silenced with subscriptions
+// 	silenced check
 func TestIsSilenced(t *testing.T) {
 	testCases := []struct {
 		description             string
 		event                   *types.Event
 		silencedSubscriptions   []*types.Silenced
+		silencedChecks          []*types.Silenced
 		expectedSilencedEntries []string
 	}{
 		{
@@ -38,7 +38,8 @@ func TestIsSilenced(t *testing.T) {
 					CheckName:    "check1",
 				},
 			},
-			[]string{"subscription1"},
+			[]*types.Silenced{},
+			[]string{"subscription1:check1"},
 		},
 		{
 			"silenced with multiple subscriptions",
@@ -63,7 +64,8 @@ func TestIsSilenced(t *testing.T) {
 					CheckName:    "check2",
 				},
 			},
-			[]string{"subscription1", "subscription2"},
+			[]*types.Silenced{},
+			[]string{"subscription1:check1", "subscription2:check2"},
 		},
 		{
 			"silenced with no silenced events",
@@ -77,9 +79,74 @@ func TestIsSilenced(t *testing.T) {
 				},
 			},
 			[]*types.Silenced{},
+			[]*types.Silenced{},
 			nil,
 		},
+		{
+			"silenced with check and subscription",
+			&types.Event{
+				Entity: &types.Entity{
+					Subscriptions: []string{"subscription1"},
+				},
+				Check: &types.Check{
+					Config: &types.CheckConfig{
+						Name: "check2",
+					},
+					Status: 1,
+				},
+			},
+			[]*types.Silenced{
+				&types.Silenced{
+					ID:           "subscription1:check1",
+					Subscription: "subscription1",
+					CheckName:    "check1",
+				},
+			},
+			[]*types.Silenced{
+				&types.Silenced{
+					ID:           "subscription2:check2",
+					Subscription: "subscription2",
+					CheckName:    "check2",
+				},
+			},
+			[]string{"subscription1:check1", "subscription2:check2"},
+		},
+		{
+			"silenced with duplicate check and subscription",
+			&types.Event{
+				Entity: &types.Entity{
+					Subscriptions: []string{"subscription1", "subscription2"},
+				},
+				Check: &types.Check{
+					Config: &types.CheckConfig{
+						Name: "check1",
+					},
+					Status: 1,
+				},
+			},
+			[]*types.Silenced{
+				&types.Silenced{
+					ID:           "subscription1:check1",
+					Subscription: "subscription1",
+					CheckName:    "check1",
+				},
+				&types.Silenced{
+					ID:           "subscription2:check2",
+					Subscription: "subscription2",
+					CheckName:    "check2",
+				},
+			},
+			[]*types.Silenced{
+				&types.Silenced{
+					ID:           "subscription2:check2",
+					Subscription: "subscription2",
+					CheckName:    "check2",
+				},
+			},
+			[]string{"subscription1:check1", "subscription2:check2"},
+		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
@@ -91,7 +158,11 @@ func TestIsSilenced(t *testing.T) {
 				mock.Anything,
 			).Return(tc.silencedSubscriptions, nil)
 
-			fmt.Println(tc.event)
+			mockStore.On(
+				"GetSilencedEntriesByCheckName",
+				mock.Anything,
+			).Return(tc.silencedChecks, nil)
+
 			result := getSilenced(ctx, tc.event, mockStore)
 			assert.Nil(t, result)
 			assert.Equal(t, tc.expectedSilencedEntries, tc.event.Silenced)

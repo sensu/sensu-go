@@ -146,7 +146,7 @@ func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) ([]*typ
 	return silencedArray, nil
 }
 
-// Create new silenced event
+// Create new silenced entry
 func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Silenced) error {
 	if err := silenced.Validate(); err != nil {
 		return err

@@ -167,14 +167,14 @@ func TestHttpApiSilencedDelete(t *testing.T) {
 		{
 			"delete silenced entry with no checkname",
 			"/silenced/subscriptions/test-subscription",
-			"DeleteSilencedEntryBySubscription",
+			"DeleteSilencedEntriesBySubscription",
 			"test-subscription",
 			http.StatusNoContent,
 		},
 		{
 			"delete silenced entry with no subscription",
 			"/silenced/checks/test-check",
-			"DeleteSilencedEntryByCheckName",
+			"DeleteSilencedEntriesByCheckName",
 			"test-check",
 			http.StatusNoContent,
 		},

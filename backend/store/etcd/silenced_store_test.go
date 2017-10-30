@@ -75,12 +75,12 @@ func TestSilencedStorage(t *testing.T) {
 
 		// Delete Silenced entry by subscription
 		_ = store.UpdateSilencedEntry(ctx, silenced)
-		err = store.DeleteSilencedEntryBySubscription(ctx, silenced.Subscription)
+		err = store.DeleteSilencedEntriesBySubscription(ctx, silenced.Subscription)
 		assert.NoError(t, err)
 
 		// Delete silenced entry by checkName
 		_ = store.UpdateSilencedEntry(ctx, silenced)
-		err = store.DeleteSilencedEntryByCheckName(ctx, silenced.CheckName)
+		err = store.DeleteSilencedEntriesByCheckName(ctx, silenced.CheckName)
 		assert.NoError(t, err)
 
 		// Updating a check in a nonexistent org and env should not work

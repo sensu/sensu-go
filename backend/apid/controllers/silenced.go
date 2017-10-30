@@ -231,15 +231,11 @@ func (c *SilencedController) byCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // takes list of structs and a func that takes those individual structs and
-// returns true/false
+// returns true/false depending on authorization permissions
 func rejectSilencedEntries(records *[]*types.Silenced, predicate func(*types.Silenced) bool) {
-	// loop over structs
-	for i := 0; i < len(*records); i++ {
-		// pass record into predicate func (canRead or whatever it is)
-		// if it
-		if !predicate((*records)[i]) {
-			*records = append((*records)[:i], (*records)[i+1:]...)
-			i--
+	for _, record := range *records {
+		if !predicate(record) {
+			*records = append(*records, record)
 		}
 	}
 }
