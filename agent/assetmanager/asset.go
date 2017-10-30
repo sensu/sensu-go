@@ -143,7 +143,7 @@ func (d *RuntimeAsset) install() error {
 	}
 
 	// logger.WithFields(logrus.Fields{
-	// 	"asset_name": d.asset.Name,
+	//	"asset_name": d.asset.Name,
 	// }).Info("new dependency encountered; downloading")
 
 	// Download the asset
@@ -177,7 +177,7 @@ func (d *RuntimeAsset) install() error {
 	responseBodySum := hex.EncodeToString(h.Sum(nil))
 	if d.asset.Sha512 != responseBodySum {
 		return fmt.Errorf(
-			"fetched asset did not match '%s' '%s'",
+			"fetched asset checksum did not match '%s' '%s'",
 			d.asset.Sha512,
 			responseBodySum,
 		)
