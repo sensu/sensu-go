@@ -35,13 +35,8 @@ func (c *AssetsController) many(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch assets from store
 	assets, err := c.Store.GetAssets(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	assetBytes, err := json.Marshal(assets)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -50,8 +45,15 @@ func (c *AssetsController) many(w http.ResponseWriter, r *http.Request) {
 	// Reject those resources the viewer is unauthorized to view
 	rejectAssets(&assets, abilities.CanRead)
 
+	// Marshal assets
+	assetBytes, err := json.Marshal(assets)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, "%s", assetBytes)
+	fmt.Fprintf(w, string(assetBytes))
 }
 
 // signle handles requests to /assets/{name}
