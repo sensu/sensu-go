@@ -58,7 +58,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 
 	// Ensure that all the dependencies are installed.
 	if err := assets.InstallAll(); err != nil {
-		a.sendFailure(event, fmt.Errorf("error install dependencies: %s", err))
+		a.sendFailure(event, fmt.Errorf("error installing dependencies: %s", err))
 		return
 	}
 
@@ -86,6 +86,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 func (a *Agent) sendFailure(event *types.Event, err error) {
 	event.Check.Output = err.Error()
 	event.Check.Status = 3
+	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
 
 	if msg, err := json.Marshal(event); err != nil {
