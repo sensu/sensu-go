@@ -82,8 +82,8 @@ func TestHttpApiSilencedPost(t *testing.T) {
 			"post silenced entry with checkname and subscription",
 			&types.Silenced{
 				Subscription: "test-subscription",
-				CheckName:    "test-check",
-				ID:           "test-subscription:test-check",
+				Check:        "test-check",
+				Id:           "test-subscription:test-check",
 			},
 			http.StatusCreated,
 		},
@@ -91,8 +91,8 @@ func TestHttpApiSilencedPost(t *testing.T) {
 			"post silenced entry with no checkname",
 			&types.Silenced{
 				Subscription: "test-subscription",
-				CheckName:    "",
-				ID:           "test-subscription:*",
+				Check:        "",
+				Id:           "test-subscription:*",
 			},
 			http.StatusCreated,
 		},
@@ -100,8 +100,8 @@ func TestHttpApiSilencedPost(t *testing.T) {
 			"post silenced entry with no subscription",
 			&types.Silenced{
 				Subscription: "",
-				CheckName:    "test-check",
-				ID:           "*:test-check",
+				Check:        "test-check",
+				Id:           "*:test-check",
 			},
 			http.StatusCreated,
 		},
@@ -131,7 +131,7 @@ func TestHttpApiSilencedPostMissingCheckNameSubscription(t *testing.T) {
 
 	silenced := types.FixtureSilenced("check1")
 	silenced.Subscription = ""
-	silenced.CheckName = ""
+	silenced.Check = ""
 
 	store.On("UpdateSilencedEntry", mock.Anything, silenced).Return(errors.New("must provide a subscription or check name"))
 
@@ -210,9 +210,9 @@ func TestHttpApiSilencedGetByID(t *testing.T) {
 	}
 	silenced := []*types.Silenced{
 		&types.Silenced{
-			CheckName:    "check1",
+			Check:        "check1",
 			Subscription: "subscription1",
-			ID:           "subscription1:check1",
+			Id:           "subscription1:check1",
 		},
 	}
 

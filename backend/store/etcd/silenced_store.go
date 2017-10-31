@@ -60,7 +60,7 @@ func (s *etcdStore) DeleteSilencedEntriesByCheckName(ctx context.Context, checkN
 	}
 
 	// iterate through response entries
-	// add anything with checkName == entry.CheckName to an array and return
+	// add anything with checkName == entry.Check to an array and return
 	for _, kv := range resp.Kvs {
 		_, err = s.kvc.Delete(ctx, getSilencedPath(ctx, string(kv.Key)))
 		if err != nil {
@@ -112,7 +112,7 @@ func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName
 	}
 
 	// iterate through response entries
-	// add anything with checkName == entry.CheckName to an array and return
+	// add anything with checkName == entry.Check to an array and return
 	silencedArray := make([]*types.Silenced, len(resp.Kvs))
 	for i, kv := range resp.Kvs {
 		silencedEntry := &types.Silenced{}
@@ -120,7 +120,7 @@ func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName
 		if err != nil {
 			return nil, err
 		}
-		if silencedEntry.CheckName == checkName {
+		if silencedEntry.Check == checkName {
 			silencedArray[i] = silencedEntry
 		}
 	}
@@ -158,7 +158,7 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	}
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(silenced.Organization, silenced.Environment)), ">", 0)
-	req := clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(checkBytes))
+	req := clientv3.OpPut(getSilencedPath(ctx, silenced.Id), string(checkBytes))
 	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 
 	if err != nil {
@@ -167,7 +167,7 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the silenced entry %s in environment %s/%s",
-			silenced.ID,
+			silenced.Id,
 			silenced.Organization,
 			silenced.Environment,
 		)

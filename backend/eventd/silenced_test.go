@@ -33,9 +33,9 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					ID:           "subscription1:check1",
+					Id:           "subscription1:check1",
 					Subscription: "subscription1",
-					CheckName:    "check1",
+					Check:        "check1",
 				},
 			},
 			[]*types.Silenced{},
@@ -54,14 +54,14 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					ID:           "subscription1:check1",
+					Id:           "subscription1:check1",
 					Subscription: "subscription1",
-					CheckName:    "check1",
+					Check:        "check1",
 				},
 				&types.Silenced{
-					ID:           "subscription2:check2",
+					Id:           "subscription2:check2",
 					Subscription: "subscription2",
-					CheckName:    "check2",
+					Check:        "check2",
 				},
 			},
 			[]*types.Silenced{},
@@ -97,16 +97,16 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					ID:           "subscription1:check1",
+					Id:           "subscription1:check1",
 					Subscription: "subscription1",
-					CheckName:    "check1",
+					Check:        "check1",
 				},
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					ID:           "subscription2:check2",
+					Id:           "subscription2:check2",
 					Subscription: "subscription2",
-					CheckName:    "check2",
+					Check:        "check2",
 				},
 			},
 			[]string{"subscription1:check1", "subscription2:check2"},
@@ -126,21 +126,21 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					ID:           "subscription1:check1",
+					Id:           "subscription1:check1",
 					Subscription: "subscription1",
-					CheckName:    "check1",
+					Check:        "check1",
 				},
 				&types.Silenced{
-					ID:           "subscription2:check2",
+					Id:           "subscription2:check2",
 					Subscription: "subscription2",
-					CheckName:    "check2",
+					Check:        "check2",
 				},
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					ID:           "subscription2:check2",
+					Id:           "subscription2:check2",
 					Subscription: "subscription2",
-					CheckName:    "check2",
+					Check:        "check2",
 				},
 			},
 			[]string{"subscription1:check1", "subscription2:check2"},

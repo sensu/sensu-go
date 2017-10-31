@@ -45,9 +45,9 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 // the event minus any duplicates.
 func appendEntries(event *types.Event, silenced []*types.Silenced, silencedEntries map[string]bool) {
 	for _, entry := range silenced {
-		if _, value := silencedEntries[entry.ID]; !value {
-			silencedEntries[entry.ID] = true
-			event.Silenced = append(event.Silenced, entry.ID)
+		if _, value := silencedEntries[entry.Id]; !value {
+			silencedEntries[entry.Id] = true
+			event.Silenced = append(event.Silenced, entry.Id)
 		}
 	}
 }
