@@ -44,6 +44,9 @@ type Store interface {
 	// RBAC
 	RBACStore
 
+	// Silenced Entries
+	SilencedStore
+
 	// Tokens
 	TokenStore
 
@@ -153,6 +156,19 @@ type RBACStore interface {
 	GetRoleByName(name string) (*types.Role, error)
 	UpdateRole(role *types.Role) error
 	DeleteRoleByName(name string) error
+}
+
+// SilencedStore provides an interface for interacting and persisting silenced
+// event entries.
+type SilencedStore interface {
+	GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error)
+	GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*types.Silenced, error)
+	GetSilencedEntryByID(ctx context.Context, silencedID string) ([]*types.Silenced, error)
+	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
+	DeleteSilencedEntryByID(ctx context.Context, silencedID string) error
+	DeleteSilencedEntriesBySubscription(ctx context.Context, subscription string) error
+	DeleteSilencedEntriesByCheckName(ctx context.Context, checkName string) error
+	UpdateSilencedEntry(ctx context.Context, silenced *types.Silenced) error
 }
 
 // TokenStore provides an interface for interacting with the JWT access list

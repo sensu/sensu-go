@@ -154,6 +154,12 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// Determine the check's state
 	state(event)
 
+	// Add any silenced subscriptions to the event
+	err = getSilenced(ctx, event, e.Store)
+	if err != nil {
+		return err
+	}
+
 	err = e.Store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err

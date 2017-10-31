@@ -18,6 +18,7 @@
 		metrics.proto
 		mutator.proto
 		rbac.proto
+		silenced.proto
 		tls.proto
 		user.proto
 
@@ -47,6 +48,7 @@
 		Mutator
 		Rule
 		Role
+		Silenced
 		TLSOptions
 		User
 */

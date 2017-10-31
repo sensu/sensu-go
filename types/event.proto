@@ -28,4 +28,7 @@ message Event {
 
   // Metrics ...
 	Metrics metrics = 4 [(gogoproto.nullable) = true];
-}
+	
+  // Silenced is a list of silenced entry ids (subscription and check name) 
+  repeated string silenced = 5 [(gogoproto.nullable) = true];
+  }
