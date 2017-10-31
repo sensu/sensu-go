@@ -86,5 +86,5 @@ func TestMergeWith(t *testing.T) {
 
 	assert.NotEmpty(t, newCheck.History)
 	// History has a length of 21, so just index it directly. jfc.
-	assert.Equal(t, 1, newCheck.History[20].Status)
+	assert.Equal(t, int32(1), newCheck.History[20].Status)
 }

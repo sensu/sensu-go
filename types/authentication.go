@@ -5,13 +5,6 @@ import (
 	"time"
 )
 
-// Tokens contains the structure for exchanging tokens with the API
-type Tokens struct {
-	Access    string `json:"access_token"`
-	ExpiresAt int64  `json:"expires_at"`
-	Refresh   string `json:"refresh_token"`
-}
-
 // Validate returns an error if the tokens contain invalid values.
 func (t *Tokens) Validate() error {
 	if t.Access == "" {

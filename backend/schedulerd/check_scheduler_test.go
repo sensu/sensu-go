@@ -122,7 +122,7 @@ func (suite *CheckExecSuite) SetupTest() {
 	suite.msgBus.Start()
 
 	request := types.FixtureCheckRequest("check1")
-	asset := request.ExpandedAssets[0]
+	asset := request.Assets[0]
 	suite.check = request.Config
 
 	state := &SchedulerState{}
@@ -144,15 +144,15 @@ func (suite *CheckExecSuite) TestBuild() {
 	request := suite.exec.BuildRequest(check)
 	suite.NotNil(request)
 	suite.NotNil(request.Config)
-	suite.NotNil(request.ExpandedAssets)
-	suite.NotEmpty(request.ExpandedAssets)
-	suite.Len(request.ExpandedAssets, 1)
+	suite.NotNil(request.Assets)
+	suite.NotEmpty(request.Assets)
+	suite.Len(request.Assets, 1)
 
 	check.RuntimeAssets = []string{}
 	request = suite.exec.BuildRequest(check)
 	suite.NotNil(request)
 	suite.NotNil(request.Config)
-	suite.Empty(request.ExpandedAssets)
+	suite.Empty(request.Assets)
 }
 
 func TestRunExecSuite(t *testing.T) {

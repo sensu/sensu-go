@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// EventFilter is a filter specification.
+message EventFilter {
+	// Name is the unique identifier for a filter
+	string name = 1;
+
+	// Action specifies to allow/deny events to continue through the pipeline
+	string action = 2;
+
+	// Statements is an array of boolean expressions that are &&'d together
+	// to determine if the event matches this filter.
+	repeated string statements = 3 [(gogoproto.jsontag) = "statements"];
+
+	// Environment indicates to which env a filter belongs to
+	string environment = 4;
+
+	// Organization indicates to which org a filter belongs to
+	string organization = 5;
+}
+
+// EventFilterWhenAttributes is the specification for "when" attributes in a filter.
+message EventFilterWhenAttributes {
+	// Days is an array of EventFilterWhenDaysAttributes
+	repeated EventFilterWhenDays days = 1 [(gogoproto.jsontag) = "days", (gogoproto.nullable) = false];
+}
+
+// EventFilterWhenDays is the specification for which days to use in a "when" filter.
+message EventFilterWhenDays {
+	repeated EventFilterWhenTimeRange all = 1 [(gogoproto.nullable) = true];
+	repeated EventFilterWhenTimeRange sunday = 2 [(gogoproto.nullable) = true];
+	repeated EventFilterWhenTimeRange monday = 3 [(gogoproto.nullable) = true];
+	repeated EventFilterWhenTimeRange tuesday = 4 [(gogoproto.nullable) = true];
+	repeated EventFilterWhenTimeRange wednesday = 5 [(gogoproto.nullable) = true];
+	repeated EventFilterWhenTimeRange thursday = 6 [(gogoproto.nullable) = true];
+	repeated EventFilterWhenTimeRange friday = 7 [(gogoproto.nullable) = true];
+	repeated EventFilterWhenTimeRange saturday = 8 [(gogoproto.nullable) = true];
+}
+
+// EventFilterWhenTimeRange is the specification for time ranges in a "when" filter.
+message EventFilterWhenTimeRange {
+	// Begin is the time which the filter should begin
+	string begin = 1 [(gogoproto.jsontag) = "begin"];
+
+	// End is the time which the filter should end
+	string end = 2 [(gogoproto.jsontag) = "end"];
+}

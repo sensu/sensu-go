@@ -112,8 +112,9 @@ func (mngrPtr *StateManager) updateSyncInterval() {
 	// Find min interval
 	minInterval := SynchronizeMinInterval
 	for _, check := range state.checks {
-		if check.Interval < minInterval {
-			minInterval = check.Interval
+		checkInterval := uint(check.Interval)
+		if checkInterval < minInterval {
+			minInterval = checkInterval
 		}
 	}
 

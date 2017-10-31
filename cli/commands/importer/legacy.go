@@ -147,7 +147,7 @@ func (i *LegacyMutatorImporter) applyCfg(mutator *types.Mutator, cfg map[string]
 	}
 
 	if val, ok := cfg["timeout"].(float64); ok {
-		mutator.Timeout = int(val)
+		mutator.Timeout = uint32(val)
 	}
 }
 
@@ -420,7 +420,7 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 	}
 
 	if val, ok := cfg["interval"].(float64); ok {
-		check.Interval = uint(val)
+		check.Interval = uint32(val)
 	}
 
 	if val, ok := cfg["handler"].(string); ok {
@@ -703,7 +703,7 @@ func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]
 	}
 
 	if val, ok := cfg["timeout"].(float64); ok {
-		handler.Timeout = int(val)
+		handler.Timeout = uint32(val)
 	} else {
 		handler.Timeout = 10
 	}
@@ -713,9 +713,10 @@ func (i *LegacyHandlerImporter) applyCfg(handler *types.Handler, cfg map[string]
 	}
 
 	if val, ok := cfg["socket"].(map[string]interface{}); ok {
-		handler.Socket = types.HandlerSocket{
+		handler.Socket = &types.HandlerSocket{
 			Host: val["host"].(string),
-			Port: int(val["port"].(float64)),
+			// https://github.com/sensu/sensu-go/pull/494#discussion_r147844977
+			Port: uint32(float32(val["port"].(float64))),
 		}
 	} else if _, ok := cfg["socket"]; ok {
 		reporter.Error("handler's 'socket' attribute does not appear to be a JSON object")

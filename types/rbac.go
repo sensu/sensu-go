@@ -65,13 +65,8 @@ var (
 	}
 )
 
-// Rule maps permissions to a given type
-type Rule struct {
-	Type         string   `json:"type"`
-	Environment  string   `json:"environment"`
-	Organization string   `json:"organization"`
-	Permissions  []string `json:"permissions"`
-}
+//
+// Getters
 
 // GetOrg refers to the organization the check belongs to
 func (r *Rule) GetOrg() string {
@@ -81,12 +76,6 @@ func (r *Rule) GetOrg() string {
 // GetEnv refers to the organization the check belongs to
 func (r *Rule) GetEnv() string {
 	return r.Environment
-}
-
-// Role describes set of rules
-type Role struct {
-	Name  string `json:"name"`
-	Rules []Rule `json:"rules"`
 }
 
 //

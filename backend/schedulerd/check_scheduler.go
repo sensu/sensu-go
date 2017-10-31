@@ -59,7 +59,7 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 				}
 
 				// Reset timer
-				timer.SetInterval(check.Interval)
+				timer.SetInterval(uint(check.Interval))
 				timer.Next()
 
 				// Point executor to lastest copy of the scheduler state
@@ -126,7 +126,7 @@ func (execPtr *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.Chec
 	allAssets := execPtr.State.GetAssetsInOrg(check.Organization)
 	for _, asset := range allAssets {
 		if assetIsRelevant(asset, check) {
-			request.ExpandedAssets = append(request.ExpandedAssets, *asset)
+			request.Assets = append(request.Assets, *asset)
 		}
 	}
 

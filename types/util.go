@@ -17,7 +17,7 @@ func FakeHandlerCommand(command string, args ...string) *Handler {
 
 	handler := &Handler{
 		Command: trimmedCmd,
-		Env:     env,
+		EnvVars: env,
 	}
 
 	return handler
@@ -35,7 +35,7 @@ func FakeMutatorCommand(command string, args ...string) *Mutator {
 
 	mutator := &Mutator{
 		Command: trimmedCmd,
-		Env:     env,
+		EnvVars: env,
 	}
 
 	return mutator

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Tokens contains the structure for exchanging tokens with the API
+message Tokens {
+  // Access token is used by client to make request
+  string access = 1 [(gogoproto.jsontag) = "access_token"];
+
+  // ExpiresAt unix timestamp describing when the access token is no longer valid
+  int64 expires_at = 2 [(gogoproto.jsontag) = "expires_at"];
+
+  // Refresh token is used by client to request a new access token
+  string refresh = 3 [(gogoproto.jsontag) = "refresh_token"];
+}

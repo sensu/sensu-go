@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "asset.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// A CheckRequest represents a request to execute a check
+message CheckRequest {
+	// Config is the specification of a check.
+	CheckConfig config = 1 [(gogoproto.nullable) = true];
+
+	// Assets are a list of assets required to execute check.
+	repeated Asset assets = 2 [(gogoproto.nullable) = false];
+}
+
+// CheckConfig is the specification of a check.
+message CheckConfig {
+	// Command is the command to be executed.
+	string command = 1;
+
+	// Environment indicates to which env a check belongs to
+	string Environment = 2;
+
+	// Handlers are the event handler for the check (incidents and/or metrics).
+	repeated string Handlers = 3 [(gogoproto.jsontag) = "handlers"];
+
+	// HighFlapThreshold is the flap detection high threshold (% state change) for
+	// the check. Sensu uses the same flap detection algorithm as Nagios.
+	uint32 high_flap_threshold = 4;
+
+	// Interval is the interval, in seconds, at which the check should be run.
+	uint32 interval = 5;
+
+	// LowFlapThreshold is the flap detection low threshold (% state change) for
+	// the check. Sensu uses the same flap detection algorithm as Nagios.
+	uint32 low_flap_threshold = 6;
+
+	// Name is the unique identifier for a check.
+	string name = 7;
+
+	// Organization indicates to which org a check belongs to
+	string organization = 8;
+
+	// Publish indicates if check requests are published for the check
+	bool publish = 9;
+
+	// RuntimeAssets are a list of assets required to execute check.
+	repeated string runtime_assets = 10 [(gogoproto.jsontag) = "runtime_assets"];
+
+	// Subscriptions is the list of subscribers for the check.
+	repeated string subscriptions = 11 [(gogoproto.jsontag) = "subscriptions"];
+}
+
+// A Check is a check specification and optionally the results of the check's
+// execution.
+message Check {
+	// Config is the specification of a check
+	CheckConfig config = 1 [(gogoproto.nullable) = true];
+
+	// Duration of execution
+	double duration = 2;
+
+	// Executed describes the time in which the check request was executed
+	int64 executed = 3;
+
+	// History is the check state history.
+	repeated CheckHistory history = 4 [(gogoproto.jsontag) = "history", (gogoproto.nullable) = false];
+
+	// Issued describes the time in which the check request was issued
+	int64 issued = 5;
+
+	// Output from the execution of Command
+	string output = 6;
+
+	// State provides handlers with more information about the state change
+	string state = 7;
+
+	// Status is the exit status code produced by the check
+	int32 status = 8;
+
+	// TotalStateChange indicates the total state change percentage for the
+	// check's history
+	uint32 total_state_change = 9;
+}
+
+// CheckHistory is a record of a check execution and its status
+message CheckHistory {
+  // Status is the exit status code produced by the check.
+	int32 status = 1;
+
+	// Executed describes the time in which the check request was executed
+	int64 executed = 2;
+}

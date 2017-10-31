@@ -36,6 +36,8 @@ func TestHttpApiChecksGet(t *testing.T) {
 	returnedChecks := []*types.CheckConfig{}
 	err := json.Unmarshal(body, &returnedChecks)
 
+	fmt.Printf("%#v\n%#v", checks[0], returnedChecks[0])
+
 	assert.NoError(t, err)
 	assert.EqualValues(t, checks, returnedChecks)
 }

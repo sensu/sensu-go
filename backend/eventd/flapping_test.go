@@ -130,7 +130,7 @@ func TestTotalStateChange(t *testing.T) {
 	testCases := []struct {
 		desc                     string
 		event                    *types.Event
-		expectedTotalStateChange uint
+		expectedTotalStateChange uint32
 	}{
 		{
 			"with less than 21 check result",

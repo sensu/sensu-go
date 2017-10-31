@@ -82,7 +82,7 @@ func printHandlersToTable(queryResults []types.Handler, writer io.Writer) {
 			Title: "Timeout",
 			CellTransformer: func(data interface{}) string {
 				handler, _ := data.(types.Handler)
-				return strconv.Itoa(handler.Timeout)
+				return strconv.FormatUint(uint64(handler.Timeout), 10)
 			},
 		},
 		{

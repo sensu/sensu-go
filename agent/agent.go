@@ -48,7 +48,7 @@ type Config struct {
 	KeepaliveInterval int
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
 	// back the backend.
-	KeepaliveTimeout uint
+	KeepaliveTimeout uint32
 	// Deregister indicates whether the entity is ephemeral
 	Deregister bool
 	// DeregistrationHandler specifies a single deregistration handler

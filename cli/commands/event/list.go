@@ -88,7 +88,7 @@ func printEventsToTable(queryResults []types.Event, io io.Writer) {
 			Title: "Status",
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
-				return strconv.Itoa(event.Check.Status)
+				return strconv.Itoa(int(event.Check.Status))
 			},
 		},
 		{

@@ -13,7 +13,7 @@ func TestPipelinedFilter(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		status   int
+		status   int32
 		metrics  *types.Metrics
 		filters  []types.EventFilter
 		expected bool
@@ -126,7 +126,7 @@ func TestPipelinedIsIncident(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		status   int
+		status   int32
 		expected bool
 	}{
 		{
