@@ -15,7 +15,7 @@ option (gogoproto.testgen_all) = true;
 // Silenced is the representation of a silence entry.
 message Silenced {
   // ID is the combination of subscription and check name (subscription:checkname)
-  string id = 1;
+  string id = 1 [(gogoproto.customname) = "ID"];
 
   // Expire is the number of seconds the entry will live
   int64 expire = 2 [(gogoproto.nullable) = true];

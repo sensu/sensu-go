@@ -16,7 +16,7 @@ func TestSilencedStorage(t *testing.T) {
 		silenced.Organization = "default"
 		silenced.Environment = "default"
 		silenced.Subscription = "subscription"
-		silenced.Id = silenced.Subscription + ":" + silenced.Check
+		silenced.ID = silenced.Subscription + ":" + silenced.Check
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
 		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
 
@@ -38,7 +38,7 @@ func TestSilencedStorage(t *testing.T) {
 		assert.Equal(t, 1, len(entries))
 
 		// Get silenced entry by id
-		entries, err = store.GetSilencedEntryByID(ctx, silenced.Id)
+		entries, err = store.GetSilencedEntryByID(ctx, silenced.ID)
 		assert.NoError(t, err)
 		entry := entries[0]
 		assert.NotNil(t, entry)
@@ -58,19 +58,19 @@ func TestSilencedStorage(t *testing.T) {
 
 		// Update silenced entry to "wildcard"
 		silenced.Check = "*"
-		silenced.Id = silenced.Subscription + ":" + silenced.Check
+		silenced.ID = silenced.Subscription + ":" + silenced.Check
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.NoError(t, err)
 
 		// Get silenced entry by id with "wildcard"
-		entries, err = store.GetSilencedEntryByID(ctx, silenced.Id)
+		entries, err = store.GetSilencedEntryByID(ctx, silenced.ID)
 		assert.NoError(t, err)
 		entry = entries[0]
 		assert.NotNil(t, entry)
-		assert.Equal(t, "subscription:*", entry.Id)
+		assert.Equal(t, "subscription:*", entry.ID)
 
 		// Delete silenced entry by id
-		err = store.DeleteSilencedEntryByID(ctx, silenced.Id)
+		err = store.DeleteSilencedEntryByID(ctx, silenced.ID)
 		assert.NoError(t, err)
 
 		// Delete Silenced entry by subscription

@@ -8,7 +8,7 @@ import (
 
 func TestFixtureSilenced(t *testing.T) {
 	s := FixtureSilenced("test_check")
-	s.Id = "test_subscription:test_check"
+	s.ID = "test_subscription:test_check"
 	s.Expire = 60
 	s.ExpireOnResolve = true
 	s.Creator = "creator@example.com"
@@ -17,8 +17,8 @@ func TestFixtureSilenced(t *testing.T) {
 	s.Organization = "default"
 	s.Environment = "default"
 	assert.NotNil(t, s)
-	assert.NotNil(t, s.Id)
-	assert.Equal(t, "test_subscription:test_check", s.Id)
+	assert.NotNil(t, s.ID)
+	assert.Equal(t, "test_subscription:test_check", s.ID)
 	assert.NotNil(t, s.Expire)
 	assert.NotNil(t, s.ExpireOnResolve)
 	assert.NotNil(t, s.Expire)

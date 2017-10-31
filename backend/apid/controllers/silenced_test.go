@@ -83,7 +83,7 @@ func TestHttpApiSilencedPost(t *testing.T) {
 			&types.Silenced{
 				Subscription: "test-subscription",
 				Check:        "test-check",
-				Id:           "test-subscription:test-check",
+				ID:           "test-subscription:test-check",
 			},
 			http.StatusCreated,
 		},
@@ -92,7 +92,7 @@ func TestHttpApiSilencedPost(t *testing.T) {
 			&types.Silenced{
 				Subscription: "test-subscription",
 				Check:        "",
-				Id:           "test-subscription:*",
+				ID:           "test-subscription:*",
 			},
 			http.StatusCreated,
 		},
@@ -101,7 +101,7 @@ func TestHttpApiSilencedPost(t *testing.T) {
 			&types.Silenced{
 				Subscription: "",
 				Check:        "test-check",
-				Id:           "*:test-check",
+				ID:           "*:test-check",
 			},
 			http.StatusCreated,
 		},
@@ -212,7 +212,7 @@ func TestHttpApiSilencedGetByID(t *testing.T) {
 		&types.Silenced{
 			Check:        "check1",
 			Subscription: "subscription1",
-			Id:           "subscription1:check1",
+			ID:           "subscription1:check1",
 		},
 	}
 

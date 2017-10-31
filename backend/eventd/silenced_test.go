@@ -33,7 +33,7 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					Id:           "subscription1:check1",
+					ID:           "subscription1:check1",
 					Subscription: "subscription1",
 					Check:        "check1",
 				},
@@ -54,12 +54,12 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					Id:           "subscription1:check1",
+					ID:           "subscription1:check1",
 					Subscription: "subscription1",
 					Check:        "check1",
 				},
 				&types.Silenced{
-					Id:           "subscription2:check2",
+					ID:           "subscription2:check2",
 					Subscription: "subscription2",
 					Check:        "check2",
 				},
@@ -97,14 +97,14 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					Id:           "subscription1:check1",
+					ID:           "subscription1:check1",
 					Subscription: "subscription1",
 					Check:        "check1",
 				},
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					Id:           "subscription2:check2",
+					ID:           "subscription2:check2",
 					Subscription: "subscription2",
 					Check:        "check2",
 				},
@@ -126,19 +126,19 @@ func TestIsSilenced(t *testing.T) {
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					Id:           "subscription1:check1",
+					ID:           "subscription1:check1",
 					Subscription: "subscription1",
 					Check:        "check1",
 				},
 				&types.Silenced{
-					Id:           "subscription2:check2",
+					ID:           "subscription2:check2",
 					Subscription: "subscription2",
 					Check:        "check2",
 				},
 			},
 			[]*types.Silenced{
 				&types.Silenced{
-					Id:           "subscription2:check2",
+					ID:           "subscription2:check2",
 					Subscription: "subscription2",
 					Check:        "check2",
 				},

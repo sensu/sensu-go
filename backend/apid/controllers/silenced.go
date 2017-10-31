@@ -72,11 +72,11 @@ func (c *SilencedController) all(w http.ResponseWriter, r *http.Request) {
 		// splat if one of the values does not exist. If both values are empty, the
 		// validator will return an error when attempting to update it in the store.
 		if silencedEntry.Subscription != "" && silencedEntry.Check != "" {
-			silencedEntry.Id = silencedEntry.Subscription + ":" + silencedEntry.Check
+			silencedEntry.ID = silencedEntry.Subscription + ":" + silencedEntry.Check
 		} else if silencedEntry.Check == "" && silencedEntry.Subscription != "" {
-			silencedEntry.Id = silencedEntry.Subscription + ":" + "*"
+			silencedEntry.ID = silencedEntry.Subscription + ":" + "*"
 		} else if silencedEntry.Subscription == "" && silencedEntry.Check != "" {
-			silencedEntry.Id = "*" + ":" + silencedEntry.Check
+			silencedEntry.ID = "*" + ":" + silencedEntry.Check
 		}
 
 		err = c.Store.UpdateSilencedEntry(r.Context(), silencedEntry)
