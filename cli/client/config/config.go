@@ -2,17 +2,19 @@ package config
 
 import "github.com/sensu/sensu-go/types"
 
+const (
+	// DefaultEnvironment represents the default environment
+	DefaultEnvironment = "default"
+	// DefaultFormat represents the default format output when displaying objects
+	DefaultFormat = "tabular"
+	// DefaultOrganization represents the default organization
+	DefaultOrganization = "default"
+)
+
 // Config represents an abstracted configuration
 type Config interface {
 	Read
 	Write
-	Mutate
-}
-
-// Mutate mutates the current config but does not explicitly persist changes
-type Mutate interface {
-	SetOrganization(string)
-	SetEnvironment(string)
 }
 
 // Read contains all methods related to reading configuration

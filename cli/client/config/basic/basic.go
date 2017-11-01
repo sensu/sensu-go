@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
@@ -19,12 +20,6 @@ const (
 var logger = logrus.WithFields(logrus.Fields{
 	"component": "cli-config",
 })
-
-// OrganizationDefault default value to use for organization
-const OrganizationDefault = "default"
-
-// EnvironmentDefault default value to use for organization
-const EnvironmentDefault = "default"
 
 // Config contains the CLI configuration
 type Config struct {
@@ -48,7 +43,7 @@ type Profile struct {
 
 // Load imports the CLI configuration and returns an initialized Config struct
 func Load(flags *pflag.FlagSet) *Config {
-	config := &Config{}
+	conf := &Config{}
 
 	// Retrieve the path of the configuration directory
 	if flags != nil {
@@ -61,52 +56,40 @@ func Load(flags *pflag.FlagSet) *Config {
 		flags.Parse(os.Args[1:])
 
 		if value, err := flags.GetString("config-dir"); err == nil && value != "" {
-			config.path = value
+			conf.path = value
 		}
 	}
 
 	// Load the profile config file
-	if err := config.open(profileFilename); err != nil {
+	if err := conf.open(profileFilename); err != nil {
 		logger.Debug(err)
 	}
 
 	// Load the cluster config file
-	if err := config.open(clusterFilename); err != nil {
+	if err := conf.open(clusterFilename); err != nil {
 		logger.Debug(err)
 	}
 
 	// Override environment
 	if flags != nil {
 		if value, err := flags.GetString("environment"); err == nil {
-			if value != "" {
-				config.Profile.Environment = value
-			} else if config.Profile.Environment == "" {
-				config.Profile.Environment = defaultEnvironment
-			}
-
-			if flag := flags.Lookup("environment"); flag != nil {
-				flag.DefValue = config.Profile.Environment
+			if value != "" && helpers.FlagHasChanged("environment", flags) {
+				conf.Profile.Environment = value
 			}
 		}
 
 		// Override organization
 		if value, err := flags.GetString("organization"); err == nil {
-			if value != "" {
-				config.Profile.Organization = value
-			} else if config.Profile.Organization == "" {
-				config.Profile.Organization = defaultOrganization
-			}
-
-			if flag := flags.Lookup("organization"); flag != nil {
-				flag.DefValue = config.Profile.Organization
+			if value != "" && helpers.FlagHasChanged("organization", flags) {
+				conf.Profile.Organization = value
 			}
 		}
 	}
 
 	// Load the flags config
-	config.flags(flags)
+	conf.flags(flags)
 
-	return config
+	return conf
 }
 
 func (c *Config) flags(flags *pflag.FlagSet) {

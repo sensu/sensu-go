@@ -3,47 +3,48 @@ package basic
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAPIUrl(t *testing.T) {
-	config := &Config{Cluster: Cluster{APIUrl: "localhost"}}
-	assert.Equal(t, config.Cluster.APIUrl, config.APIUrl())
+	conf := &Config{Cluster: Cluster{APIUrl: "localhost"}}
+	assert.Equal(t, conf.Cluster.APIUrl, conf.APIUrl())
 }
 
 func TestEnvironment(t *testing.T) {
-	config := &Config{Profile: Profile{Environment: "dev"}}
-	assert.Equal(t, config.Profile.Environment, config.Environment())
+	conf := &Config{Profile: Profile{Environment: "dev"}}
+	assert.Equal(t, conf.Profile.Environment, conf.Environment())
 }
 
 func TestEnvironmentDefault(t *testing.T) {
-	config := &Config{}
-	assert.Equal(t, defaultEnvironment, config.Environment())
+	conf := &Config{}
+	assert.Equal(t, config.DefaultEnvironment, conf.Environment())
 }
 
 func TestFormat(t *testing.T) {
-	config := &Config{Profile: Profile{Format: "json"}}
-	assert.Equal(t, config.Profile.Format, config.Format())
+	conf := &Config{Profile: Profile{Format: "json"}}
+	assert.Equal(t, conf.Profile.Format, conf.Format())
 }
 
 func TestFormatDefault(t *testing.T) {
-	config := &Config{}
-	assert.Equal(t, defaultFormat, config.Format())
+	conf := &Config{}
+	assert.Equal(t, config.DefaultFormat, conf.Format())
 }
 
 func TestOrganization(t *testing.T) {
-	config := &Config{Profile: Profile{Organization: "dev"}}
-	assert.Equal(t, config.Profile.Organization, config.Organization())
+	conf := &Config{Profile: Profile{Organization: "dev"}}
+	assert.Equal(t, conf.Profile.Organization, conf.Organization())
 }
 
 func TestOrganizationDefault(t *testing.T) {
-	config := &Config{}
-	assert.Equal(t, defaultOrganization, config.Organization())
+	conf := &Config{}
+	assert.Equal(t, config.DefaultOrganization, conf.Organization())
 }
 
 func TestTokens(t *testing.T) {
 	tokens := &types.Tokens{Access: "foobar"}
-	config := &Config{Cluster: Cluster{Tokens: tokens}}
-	assert.Equal(t, tokens.Access, config.Tokens().Access)
+	conf := &Config{Cluster: Cluster{Tokens: tokens}}
+	assert.Equal(t, tokens.Access, conf.Tokens().Access)
 }
