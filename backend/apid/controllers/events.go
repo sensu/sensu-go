@@ -50,14 +50,7 @@ func (c *EventsController) entityEvents(w http.ResponseWriter, r *http.Request) 
 	// Reject those resources the viewer is unauthorized to view
 	rejectEvents(&events, abilities.CanRead)
 
-	jsonStr, err := json.Marshal(events)
-	if err != nil {
-		http.Error(w, "error marshalling response", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(w, string(jsonStr))
+	respondWith(w, events)
 }
 
 func (c *EventsController) entityCheckEvents(w http.ResponseWriter, r *http.Request) {
