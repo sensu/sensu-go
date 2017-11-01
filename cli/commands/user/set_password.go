@@ -8,7 +8,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -70,11 +69,6 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), "Updated")
 			return nil
-		},
-		Annotations: map[string]string{
-			// We want to be able to run this command regardless of whether the CLI
-			// has been configured.
-			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
 		},
 	}
 
