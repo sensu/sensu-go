@@ -17,13 +17,17 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 		tokenString := jwt.ExtractBearerToken(r)
 		if tokenString != "" {
 			token, err := jwt.ValidateToken(tokenString)
-			if err == nil {
-				// Set the claims into the request context
-				ctx := jwt.SetClaimsIntoContext(r, token.Claims.(*types.Claims))
-
-				next.ServeHTTP(w, r.WithContext(ctx))
+			if err != nil {
+				logger.Warn("invalid token: " + err.Error())
+				http.Error(w, "Invalid token given", http.StatusUnauthorized)
 				return
 			}
+
+			// Set the claims into the request context
+			ctx := jwt.SetClaimsIntoContext(r, token.Claims.(*types.Claims))
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
 		}
 
 		// The user is not authenticated
