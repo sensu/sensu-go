@@ -4,8 +4,8 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/graphql/globalid"
-	"github.com/sensu/sensu-go/graphql/relay"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/types"
 )
 

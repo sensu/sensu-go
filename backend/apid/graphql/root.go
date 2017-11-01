@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/graphql/globalid"
-	"github.com/sensu/sensu-go/graphql/relay"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
 )

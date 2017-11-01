@@ -2,8 +2,8 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/graphql/globalid"
-	"github.com/sensu/sensu-go/graphql/relay"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 )
 
 var nodeInterface *graphql.Interface

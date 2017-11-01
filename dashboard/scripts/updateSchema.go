@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/testutil"
-	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"io/ioutil"
 	"log"
 	"os"
