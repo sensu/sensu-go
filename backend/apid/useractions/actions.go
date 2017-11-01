@@ -3,7 +3,7 @@ package useractions
 // QueryActions define standard actions for exposing ability for viewer to query
 // resources.
 type QueryActions interface {
-	Find(identifier string) (interface{}, error)
+	Find(params QueryParams) (interface{}, error)
 	Query(params QueryParams) ([]interface{}, error)
 }
 

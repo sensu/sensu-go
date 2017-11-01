@@ -93,3 +93,17 @@ func HTTPStatusFromCode(code useractions.ErrCode) int {
 	logger.WithField("code", code).Errorf("unknown error code")
 	return http.StatusInternalServerError
 }
+
+type actionHandlerFunc func(r *http.Request) (interface{}, error)
+
+func actionHandler(action actionHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		records, err := action(r)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		respondWith(w, records)
+	}
+}
