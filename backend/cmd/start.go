@@ -103,7 +103,12 @@ func newStartCommand() *cobra.Command {
 			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
 
 			if certFile != "" && keyFile != "" && trustedCAFile != "" {
-				cfg.TLS = &types.TLSOptions{certFile, keyFile, trustedCAFile, insecureSkipTLSVerify}
+				cfg.TLS = &types.TLSOptions{
+					CertFile:           certFile,
+					KeyFile:            keyFile,
+					TrustedCAFile:      trustedCAFile,
+					InsecureSkipVerify: insecureSkipTLSVerify,
+				}
 			} else if certFile != "" || keyFile != "" || trustedCAFile != "" {
 				emptyFlags := []string{}
 				if certFile == "" {
@@ -156,11 +161,6 @@ func newStartCommand() *cobra.Command {
 	viper.SetConfigType("yaml")
 	viper.SetConfigFile(configFilePath)
 
-	// Only error out if flagConfigFile is used
-	if err := viper.ReadInConfig(); err != nil && configFile != "" {
-		setupErr = err
-	}
-
 	// Flag defaults
 	viper.SetDefault(flagAgentHost, "[::]")
 	viper.SetDefault(flagAgentPort, 8081)
@@ -211,6 +211,11 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagStoreInitialClusterState, viper.GetString(flagStoreInitialClusterState), "store initial cluster state")
 	cmd.Flags().String(flagStoreInitialClusterToken, viper.GetString(flagStoreInitialClusterToken), "store initial cluster token")
 	cmd.Flags().String(flagStoreNodeName, viper.GetString(flagStoreNodeName), "store cluster member node name")
+
+	// Load the configuration file but only error out if flagConfigFile is used
+	if err := viper.ReadInConfig(); err != nil && configFile != "" {
+		setupErr = err
+	}
 
 	return cmd
 }

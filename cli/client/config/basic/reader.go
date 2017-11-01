@@ -1,13 +1,8 @@
 package basic
 
 import (
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
-)
-
-const (
-	defaultEnvironment  = "default"
-	defaultFormat       = "none"
-	defaultOrganization = "default"
 )
 
 // APIUrl returns the active cluster API URL
@@ -18,7 +13,7 @@ func (c *Config) APIUrl() string {
 // Environment returns the user's active environment
 func (c *Config) Environment() string {
 	if c.Profile.Environment == "" {
-		return defaultEnvironment
+		return config.DefaultEnvironment
 	}
 	return c.Profile.Environment
 }
@@ -26,7 +21,7 @@ func (c *Config) Environment() string {
 // Format returns the user's preferred format
 func (c *Config) Format() string {
 	if c.Profile.Format == "" {
-		return defaultFormat
+		return config.DefaultFormat
 	}
 	return c.Profile.Format
 }
@@ -34,7 +29,7 @@ func (c *Config) Format() string {
 // Organization returns the user's active organization
 func (c *Config) Organization() string {
 	if c.Profile.Organization == "" {
-		return defaultOrganization
+		return config.DefaultOrganization
 	}
 	return c.Profile.Organization
 }

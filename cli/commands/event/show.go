@@ -20,8 +20,6 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "show detailed event information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format, _ := cmd.Flags().GetString("format")
-
 			if len(args) != 2 {
 				cmd.Help()
 				return fmt.Errorf("missing argument(s)")
@@ -33,6 +31,12 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 			event, err := cli.Client.FetchEvent(entity, check)
 			if err != nil {
 				return err
+			}
+
+			// Determine the format to use to output the data
+			var format string
+			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
+				format = cli.Config.Format()
 			}
 
 			if format == "json" {
@@ -47,7 +51,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+	helpers.AddFormatFlag(cmd.Flags())
 
 	return cmd
 }

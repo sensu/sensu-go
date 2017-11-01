@@ -19,8 +19,6 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "show detailed check information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format, _ := cmd.Flags().GetString("format")
-
 			if len(args) != 1 {
 				cmd.Help()
 				return nil
@@ -31,6 +29,12 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 			r, err := cli.Client.FetchCheck(checkID)
 			if err != nil {
 				return err
+			}
+
+			// Determine the format to use to output the data
+			var format string
+			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
+				format = cli.Config.Format()
 			}
 
 			if format == "json" {
@@ -45,7 +49,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+	helpers.AddFormatFlag(cmd.Flags())
 
 	return cmd
 }

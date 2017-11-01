@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/util/path"
@@ -44,11 +45,11 @@ func configureRootCmd() *cobra.Command {
 	cmd.AddCommand(newVersionCommand())
 
 	// Global flags
-	cmd.PersistentFlags().StringP("api-url", "", "", "host URL of Sensu installation")
-	cmd.PersistentFlags().StringP("config-dir", "", path.UserConfigDir("sensuctl"), "path to directory containing configuration files")
-	cmd.PersistentFlags().StringP("cache-dir", "", path.UserCacheDir("sensuctl"), "path to directory containing cache & temporary files")
-	cmd.PersistentFlags().String("organization", "", "organization in which we perform actions")
-	cmd.PersistentFlags().String("environment", "", "environment in which we perform actions")
+	cmd.PersistentFlags().String("api-url", "", "host URL of Sensu installation")
+	cmd.PersistentFlags().String("config-dir", path.UserConfigDir("sensuctl"), "path to directory containing configuration files")
+	cmd.PersistentFlags().String("cache-dir", path.UserCacheDir("sensuctl"), "path to directory containing cache & temporary files")
+	cmd.PersistentFlags().String("organization", config.DefaultOrganization, "organization in which we perform actions")
+	cmd.PersistentFlags().String("environment", config.DefaultEnvironment, "environment in which we perform actions")
 
 	return cmd
 }

@@ -4,9 +4,35 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/spf13/pflag"
 )
 
 var commaWhitespaceRegex *regexp.Regexp
+
+// FlagHasChanged determines if the user has set the value of a flag,
+// or left it to default
+func FlagHasChanged(name string, flagset *pflag.FlagSet) bool {
+	flag := flagset.Lookup(name)
+	if flag == nil {
+		return false
+	}
+	return flag.Changed
+}
+
+// GetChangedStringValueFlag returns the value of a flag that has been explicitely
+// changed by the user, and not left to default
+func GetChangedStringValueFlag(name string, flagset *pflag.FlagSet) string {
+	if !FlagHasChanged(name, flagset) {
+		return ""
+	}
+
+	if value, err := flagset.GetString(name); err == nil {
+		return value
+	}
+
+	return ""
+}
 
 // SafeSplitCSV splits given string and trims and extraneous whitespace
 func SafeSplitCSV(i string) []string {

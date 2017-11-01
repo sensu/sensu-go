@@ -34,7 +34,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Determine the format to use to output the data
 			var format string
-			if format, _ = cmd.Flags().GetString(flags.Format); format == "" {
+			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
 				format = cli.Config.Format()
 			}
 
@@ -50,7 +50,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+	helpers.AddFormatFlag(cmd.Flags())
 	cmd.Flags().Bool(flags.AllOrgs, false, "Include records from all organizations")
 
 	return cmd
