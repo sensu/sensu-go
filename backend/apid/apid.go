@@ -152,7 +152,7 @@ func registerRestrictedResources(
 	}
 	environmentsConroller.Register(commonRouter)
 
-	eventsController := controllers.NewEventsController(store)
+	eventsController := controllers.EventsController{Store: store}
 	eventsController.Register(commonRouter)
 
 	handlersController := &controllers.HandlersController{
