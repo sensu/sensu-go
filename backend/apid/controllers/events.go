@@ -10,48 +10,33 @@ import (
 
 // EventsController handles requests for /events
 type EventsController struct {
-	Fetcher useractions.QueryActions
-}
-
-// NewEventsController returns new EventsController
-func NewEventsController(store store.EventStore) *EventsController {
-	return &EventsController{
-		Fetcher: &useractions.EventActions{Store: store},
-	}
+	Store store.EventStore
 }
 
 // Register the EventsController with a mux.Router.
-func (c *EventsController) Register(r *mux.Router) {
-	r.HandleFunc(
-		"/events",
-		actionHandler(c.list),
-	).Methods(http.MethodGet)
-	r.HandleFunc(
-		"/events/{entity}",
-		actionHandler(c.listByEntities),
-	).Methods(http.MethodGet)
-	r.HandleFunc(
-		"/events/{entity}/{check}",
-		actionHandler(c.find),
-	).Methods(http.MethodGet)
+func (c *EventsController) Register(r *mux.Router) { // TODO: Rename to 'Mount'?
+	routes := resourceRoute{router: r, pathPrefix: "/events"}
+	routes.index(c.list)
+	routes.path("{entity}", c.listByEntity).Methods(http.MethodGet)
+	routes.path("{entity}/{check}", c.find).Methods(http.MethodGet)
 }
 
 func (c *EventsController) find(r *http.Request) (interface{}, error) {
+	fetcher := useractions.NewEventActions(r.Context(), c.Store)
 	params := useractions.QueryParams(mux.Vars(r))
-	fetcher := c.Fetcher.WithContext(r.Context())
 	record, err := fetcher.Find(params)
 	return record, err
 }
 
 func (c *EventsController) list(r *http.Request) (interface{}, error) {
-	fetcher := c.Fetcher.WithContext(r.Context())
+	fetcher := useractions.NewEventActions(r.Context(), c.Store)
 	records, err := fetcher.Query(useractions.QueryParams{})
 	return records, err
 }
 
-func (c *EventsController) listByEntities(r *http.Request) (interface{}, error) {
+func (c *EventsController) listByEntity(r *http.Request) (interface{}, error) {
+	fetcher := useractions.NewEventActions(r.Context(), c.Store)
 	params := useractions.QueryParams(mux.Vars(r))
-	fetcher := c.Fetcher.WithContext(r.Context())
 	records, err := fetcher.Query(params)
 	return records, err
 }

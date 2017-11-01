@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/useractions"
 )
 
@@ -106,4 +107,48 @@ func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 
 		respondWith(w, records)
 	}
+}
+
+//
+// resourceRoute mounts resources in a convetional RESTful manner.
+//
+//   routes := resourceRoute{pathPrefix: "checks", router: ...}
+//   routes.index(myIndexAction)    // given action is mounted at GET /checks
+//   routes.show(myShowAction)      // given action is mounted at GET /checks/:id
+//   routes.update(myUpdateAction)  // given action is mounted at {PUT,PATCH} /checks/:id
+//   routes.create(myCreateAction)  // given action is mounted at POST /checks
+//   routes.destroy(myCreateAction) // given action is mounted at DELETE /checks/:id
+//   routes.path("{id}/publish", publishAction).Methods(http.MethodDelete) // when you need something customer
+//
+type resourceRoute struct {
+	router     *mux.Router
+	pathPrefix string
+}
+
+func (r *resourceRoute) index(fn actionHandlerFunc) *mux.Route {
+	return r.path("", fn).Methods(http.MethodGet)
+}
+
+func (r *resourceRoute) show(fn actionHandlerFunc) *mux.Route {
+	return r.path("{id}", fn).Methods(http.MethodGet)
+}
+
+func (r *resourceRoute) create(fn actionHandlerFunc) *mux.Route {
+	return r.path("", fn).Methods(http.MethodPost)
+}
+
+func (r *resourceRoute) update(fn actionHandlerFunc) *mux.Route {
+	return r.path("{id}", fn).Methods(http.MethodPut, http.MethodPatch)
+}
+
+func (r *resourceRoute) destroy(fn actionHandlerFunc) *mux.Route {
+	return r.path("{id}", fn).Methods(http.MethodDelete)
+}
+
+func (r *resourceRoute) path(path string, fn actionHandlerFunc) *mux.Route {
+	return handleAction(r.router, fmt.Sprintf("%s/%s", r.pathPrefix, path), fn)
+}
+
+func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Route {
+	return router.HandleFunc(path, actionHandler(fn))
 }

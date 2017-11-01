@@ -1,8 +1,8 @@
 package useractions
 
-// QueryActions define standard actions for exposing ability for viewer to query
+// Fetcher define standard actions for exposing ability for viewer to query
 // resources.
-type QueryActions interface {
+type Fetcher interface {
 	Find(params QueryParams) (interface{}, error)
 	Query(params QueryParams) ([]interface{}, error)
 }

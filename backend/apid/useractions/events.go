@@ -14,6 +14,15 @@ type EventActions struct {
 	Context context.Context
 }
 
+// NewEventActions returns new EventActions
+func NewEventActions(ctx context.Context, store store.EventStore) EventActions {
+	return EventActions{
+		Store:   store,
+		Policy:  authorization.Events.WithContext(ctx),
+		Context: ctx,
+	}
+}
+
 // Query returns resources available to the viewer filter by given params.
 func (a *EventActions) Query(params QueryParams) ([]interface{}, error) {
 	var results []*types.Event
@@ -48,7 +57,7 @@ func (a *EventActions) Query(params QueryParams) ([]interface{}, error) {
 	return resources, nil
 }
 
-// Find returns resource associated with given parameterse if available to the
+// Find returns resource associated with given parameters if available to the
 // viewer.
 func (a *EventActions) Find(params QueryParams) (interface{}, error) {
 	results, err := a.Query(params)
@@ -58,13 +67,4 @@ func (a *EventActions) Find(params QueryParams) (interface{}, error) {
 		result = results[0]
 	}
 	return result, err
-}
-
-// WithContext returns new actions populated with context & updated policy.
-func (a EventActions) WithContext(ctx context.Context) EventActions { // nolint
-	return EventActions{
-		Store:   a.Store,
-		Policy:  a.Policy.WithContext(ctx),
-		Context: ctx,
-	}
 }
