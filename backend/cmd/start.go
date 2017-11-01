@@ -157,6 +157,10 @@ func newStartCommand() *cobra.Command {
 		configFilePath = filepath.Join(path.SystemConfigDir(), "backend.yml")
 	}
 
+	// Configure location of backend configuration
+	viper.SetConfigType("yaml")
+	viper.SetConfigFile(configFilePath)
+
 	// Flag defaults
 	viper.SetDefault(flagAgentHost, "[::]")
 	viper.SetDefault(flagAgentPort, 8081)
@@ -208,11 +212,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagStoreInitialClusterToken, viper.GetString(flagStoreInitialClusterToken), "store initial cluster token")
 	cmd.Flags().String(flagStoreNodeName, viper.GetString(flagStoreNodeName), "store cluster member node name")
 
-	// Configure location of backend configuration
-	viper.SetConfigType("yaml")
-	viper.SetConfigFile(configFilePath)
-
-	// Only error out if flagConfigFile is used
+	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err
 	}

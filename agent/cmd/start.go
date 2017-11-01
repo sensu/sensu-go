@@ -149,11 +149,6 @@ func newStartCommand() *cobra.Command {
 	viper.SetConfigType("yaml")
 	viper.SetConfigFile(configFilePath)
 
-	// Only error out if flagConfigFile is used
-	if err := viper.ReadInConfig(); err != nil && configFile != "" {
-		setupErr = err
-	}
-
 	// Flag defaults
 	viper.SetDefault(flagEnvironment, "default")
 	viper.SetDefault(flagOrganization, "default")
@@ -192,5 +187,11 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
 	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
+
+	// Load the configuration file but only error out if flagConfigFile is used
+	if err := viper.ReadInConfig(); err != nil && configFile != "" {
+		setupErr = err
+	}
+
 	return cmd
 }
