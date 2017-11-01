@@ -72,17 +72,13 @@ func Load(flags *pflag.FlagSet) *Config {
 
 	// Override environment
 	if flags != nil {
-		if value, err := flags.GetString("environment"); err == nil {
-			if value != "" && helpers.FlagHasChanged("environment", flags) {
-				conf.Profile.Environment = value
-			}
+		if value := helpers.GetChangedStringValueFlag("environment", flags); value != "" {
+			conf.Profile.Environment = value
 		}
 
 		// Override organization
-		if value, err := flags.GetString("organization"); err == nil {
-			if value != "" && helpers.FlagHasChanged("organization", flags) {
-				conf.Profile.Organization = value
-			}
+		if value := helpers.GetChangedStringValueFlag("organization", flags); value != "" {
+			conf.Profile.Organization = value
 		}
 	}
 
