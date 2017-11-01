@@ -288,4 +288,21 @@ func TestRBAC(t *testing.T) {
 	// Make sure a client can't read objects outside of its role
 	_, err = devctl.run("check", "info", prodCheck.Name)
 	assert.Error(t, err)
+
+	// Now we want to restart the backend to make sure the JWT will continue
+	// to work and prevent an issue like https://github.com/sensu/sensu-go/issues/502
+	bep.Kill()
+	err = bep.Start()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// Make sure the backend is available
+	backendIsOnline = waitForBackend(backendHTTPURL)
+	assert.True(t, backendIsOnline)
+
+	// Make sure we are properly authenticated
+	output, err = adminctl.run("user", "list")
+	assert.NoError(t, err, output)
+
 }
