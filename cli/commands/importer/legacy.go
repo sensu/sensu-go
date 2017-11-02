@@ -1,6 +1,10 @@
 package importer
 
 import (
+	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/elements/report"
 	"github.com/sensu/sensu-go/types"
@@ -24,6 +28,11 @@ func NewSensuV1SettingsImporter(org, env string, client client.APIClient) *Impor
 			Org:      org,
 			Env:      env,
 			SaveFunc: client.CreateMutator,
+		},
+		&LegacyFilterImporter{
+			Org:      org,
+			Env:      env,
+			SaveFunc: client.CreateFilter,
 		},
 		&LegacyExtensionImporter{Org: org, Env: env},
 		&LegacyEntityImporter{Org: org, Env: env},
@@ -54,7 +63,7 @@ func (i *LegacyMutatorImporter) Name() string {
 
 // SetReporter ...
 func (i *LegacyMutatorImporter) SetReporter(r *report.Writer) {
-	reporter := r.WithValue("compontent", i.Name())
+	reporter := r.WithValue("component", i.Name())
 	i.reporter = &reporter
 }
 
@@ -65,9 +74,6 @@ func (i *LegacyMutatorImporter) Import(data map[string]interface{}) error {
 			mutator := i.newMutator(name)
 			i.applyCfg(&mutator, cfg.(map[string]interface{}))
 
-			mutator.Name = name
-			mutator.Organization = i.Org
-			mutator.Environment = i.Env
 			i.mutators = append(i.mutators, &mutator)
 		}
 	} else if _, ok = data["mutators"]; ok {
@@ -172,7 +178,7 @@ func (i *LegacyCheckImporter) Name() string {
 
 // SetReporter ...
 func (i *LegacyCheckImporter) SetReporter(r *report.Writer) {
-	reporter := r.WithValue("compontent", i.Name())
+	reporter := r.WithValue("component", i.Name())
 	i.reporter = &reporter
 }
 
@@ -438,9 +444,11 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 
 // LegacyFilterImporter provides utility to import Sensu v1 filter definitiions
 type LegacyFilterImporter struct {
-	Org string
-	Env string
+	Org      string
+	Env      string
+	SaveFunc func(*types.EventFilter) error
 
+	filters  []*types.EventFilter
 	reporter *report.Writer
 }
 
@@ -451,14 +459,21 @@ func (i *LegacyFilterImporter) Name() string {
 
 // SetReporter ...
 func (i *LegacyFilterImporter) SetReporter(r *report.Writer) {
-	reporter := r.WithValue("compontent", i.Name())
+	reporter := r.WithValue("component", i.Name())
 	i.reporter = &reporter
 }
 
 // Import given data
 func (i *LegacyFilterImporter) Import(data map[string]interface{}) error {
-	if _, ok := data["filters"]; ok {
-		i.reporter.Warn("Sensu v1 filters do not have an analog in Sensu v2 at this time.")
+	if vals, ok := data["filters"].(map[string]interface{}); ok {
+		for name, cfg := range vals {
+			filter := i.newFilter(name)
+			i.applyCfg(&filter, cfg.(map[string]interface{}))
+
+			i.filters = append(i.filters, &filter)
+		}
+	} else if _, ok = data["filters"]; ok {
+		i.reporter.Warn("filters present but do not appear to be a hash; please properly format the filters")
 	}
 
 	return nil
@@ -466,12 +481,42 @@ func (i *LegacyFilterImporter) Import(data map[string]interface{}) error {
 
 // Validate the given filters
 func (i *LegacyFilterImporter) Validate() error {
+	for _, filter := range i.filters {
+		if err := filter.Validate(); err != nil {
+			i.reporter.Errorf(
+				"filter '%s' failed validation w/ '%s'",
+				filter.Name,
+				err,
+			)
+		}
+	}
+
 	return nil
 }
 
 // Save calls API with filters
 func (i *LegacyFilterImporter) Save() (int, error) {
-	return 0, nil
+	for _, filter := range i.filters {
+		if err := i.SaveFunc(filter); err != nil {
+			i.reporter.Fatalf(
+				"unable to persist filter '%s' w/ error '%s'",
+				filter.Name,
+				err,
+			)
+		} else {
+			i.reporter.Debugf("filter '%s' imported", filter.Name)
+		}
+	}
+
+	return len(i.filters), nil
+}
+
+func (i *LegacyFilterImporter) newFilter(name string) types.EventFilter {
+	return types.EventFilter{
+		Name:         name,
+		Organization: i.Org,
+		Environment:  i.Env,
+	}
 }
 
 //
@@ -507,8 +552,46 @@ func (i *LegacyFilterImporter) Save() (int, error) {
 //
 // NOTE: Valid keys
 //
-func (i *LegacyFilterImporter) applyCfg(_ *types.Entity, cfg map[string]interface{}) {
-	// ...
+func (i *LegacyFilterImporter) applyCfg(filter *types.EventFilter, cfg map[string]interface{}) {
+	// Determine the action
+	filter.Action = types.EventFilterActionAllow
+	if negate, ok := cfg["negate"].(bool); ok && negate {
+		filter.Action = types.EventFilterActionDeny
+	}
+
+	// Determine the statements
+	i.getStatements(filter, cfg["attributes"], "event")
+}
+
+func (i *LegacyFilterImporter) getStatements(filter *types.EventFilter, attributes interface{}, keyPrefix string) {
+	// reporter := i.reporter.WithValue("name", filter.Name)
+
+	if attributes, ok := attributes.(map[string]interface{}); ok {
+		for key, value := range attributes {
+			if key == "check" {
+				i.getStatements(filter, value, "event.Check")
+			} else if key == "client" {
+				i.getStatements(filter, value, "event.Entity")
+			} else {
+				// If we have a string, we should put it within single quotes
+				if reflect.TypeOf(value).Kind() == reflect.String {
+					// Does the filters contains attribute evaluation using Ruby expressions?
+					if strings.Contains(value.(string), "eval:") {
+						i.reporter.Error("attribute evaluation in filters is not supported at this time")
+						continue
+					}
+
+					value = fmt.Sprintf("'%s'", value)
+				}
+
+				// Add this statement to the list of statements
+				filter.Statements = append(
+					filter.Statements,
+					fmt.Sprintf("%s.%s == %v", keyPrefix, strings.Title(key), value),
+				)
+			}
+		}
+	}
 }
 
 //
@@ -532,7 +615,7 @@ func (i *LegacyHandlerImporter) Name() string {
 
 // SetReporter ...
 func (i *LegacyHandlerImporter) SetReporter(r *report.Writer) {
-	reporter := r.WithValue("compontent", i.Name())
+	reporter := r.WithValue("component", i.Name())
 	i.reporter = &reporter
 }
 
@@ -748,7 +831,7 @@ func (i *LegacyEntityImporter) Name() string {
 
 // SetReporter ...
 func (i *LegacyEntityImporter) SetReporter(r *report.Writer) {
-	reporter := r.WithValue("compontent", i.Name())
+	reporter := r.WithValue("component", i.Name())
 	i.reporter = &reporter
 }
 
@@ -841,7 +924,7 @@ func (i *LegacyExtensionImporter) Name() string {
 
 // SetReporter ...
 func (i *LegacyExtensionImporter) SetReporter(r *report.Writer) {
-	reporter := r.WithValue("compontent", i.Name())
+	reporter := r.WithValue("component", i.Name())
 	i.reporter = &reporter
 }
 
@@ -946,7 +1029,7 @@ func (i *UnsupportedLegacyResource) Name() string {
 
 // SetReporter ...
 func (i *UnsupportedLegacyResource) SetReporter(r *report.Writer) {
-	reporter := r.WithValue("compontent", i.Name())
+	reporter := r.WithValue("component", i.Name())
 	i.reporter = &reporter
 }
 

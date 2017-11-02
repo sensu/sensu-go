@@ -157,6 +157,11 @@ func registerRestrictedResources(
 	}
 	eventsController.Register(commonRouter)
 
+	filtersController := &controllers.FiltersController{
+		Store: store,
+	}
+	filtersController.Register(commonRouter)
+
 	handlersController := &controllers.HandlersController{
 		Store: store,
 	}

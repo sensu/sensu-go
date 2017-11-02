@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Knetic/govaluate"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
 const (
@@ -30,6 +31,10 @@ var (
 func (f *EventFilter) Validate() error {
 	if err := ValidateName(f.Name); err != nil {
 		return errors.New("filter name " + err.Error())
+	}
+
+	if found := utilstrings.InArray(f.Action, EventFilterAllActions); !found {
+		return fmt.Errorf("action '%s' is not valid", f.Action)
 	}
 
 	if len(f.Statements) == 0 {

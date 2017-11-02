@@ -1,4 +1,4 @@
-package check
+package filter
 
 import (
 	"fmt"
@@ -9,11 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DeleteCommand adds a command that allows user to delete checks
+// DeleteCommand defines the 'filter delete' subcommand
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "delete [NAME]",
-		Short:        "delete checks given name",
+		Short:        "delete filter given name",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
@@ -31,17 +31,17 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			check := &types.CheckConfig{Name: name}
+			filter := &types.EventFilter{Name: name}
 
 			if org, _ := cmd.Flags().GetString("organization"); org != "" {
-				check.Organization = org
+				filter.Organization = org
 			}
 
 			if env, _ := cmd.Flags().GetString("environment"); env != "" {
-				check.Environment = env
+				filter.Environment = env
 			}
 
-			err := cli.Client.DeleteCheck(check)
+			err := cli.Client.DeleteFilter(filter)
 			if err != nil {
 				return err
 			}

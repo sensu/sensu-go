@@ -1,4 +1,4 @@
-package handler
+package filter
 
 import (
 	"github.com/sensu/sensu-go/cli"
@@ -8,15 +8,16 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "handler",
-		Short: "Manage handlers",
+		Use:   "filter",
+		Short: "Manage filters",
 	}
 
 	// Add sub-commands
 	cmd.AddCommand(
-		ListCommand(cli),
 		CreateCommand(cli),
 		DeleteCommand(cli),
+		InfoCommand(cli),
+		ListCommand(cli),
 		UpdateCommand(cli),
 	)
 
