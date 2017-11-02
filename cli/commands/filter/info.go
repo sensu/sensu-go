@@ -44,7 +44,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	helpers.AddFormatFlag(cmd.Flags(), cli.Config)
+	helpers.AddFormatFlag(cmd.Flags())
 
 	return cmd
 }
