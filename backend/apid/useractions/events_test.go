@@ -127,7 +127,103 @@ func TestQuery(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	assert := assert.New(t)
+	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
+		types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
+	))
 
-	assert.Equal(true, true)
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		event           *types.Event
+		params          QueryParams
+		expected        bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:            "No Params",
+			ctx:             defaultCtx,
+			params:          QueryParams{},
+			expected:        false,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name: "Only Entity Param",
+			ctx:  defaultCtx,
+			params: QueryParams{
+				"entity": "entity1",
+			},
+			expected:        false,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name: "Only Check Param",
+			ctx:  defaultCtx,
+			params: QueryParams{
+				"check": "check1",
+			},
+			expected:        false,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:  "Found",
+			ctx:   defaultCtx,
+			event: types.FixtureEvent("entity1", "check1"),
+			params: QueryParams{
+				"entity": "entity1",
+				"check":  "check1",
+			},
+			expected:        true,
+			expectedErrCode: 0,
+		},
+		{
+			name:  "Not Found",
+			ctx:   defaultCtx,
+			event: nil,
+			params: QueryParams{
+				"entity": "entity1",
+				"check":  "check1",
+			},
+			expected:        false,
+			expectedErrCode: NotFound,
+		},
+		{
+			name: "No Read Permission",
+			ctx: testutil.NewContext(testutil.ContextWithRules(
+				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
+			)),
+			event: types.FixtureEvent("entity1", "check1"),
+			params: QueryParams{
+				"entity": "entity1",
+				"check":  "check1",
+			},
+			expected:        false,
+			expectedErrCode: NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		eventActions := NewEventActions(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetEventByEntityCheck", tc.ctx, mock.Anything, mock.Anything).
+				Return(tc.event, nil)
+
+			// Exec Query
+			fetcher := eventActions.WithContext(tc.ctx)
+			result, err := fetcher.Find(tc.params)
+
+			inferErr, ok := err.(Error)
+			if ok {
+				assert.Equal(tc.expectedErrCode, inferErr.Code)
+			} else {
+				assert.NoError(err)
+			}
+			assert.Equal(tc.expected, result != nil, "expects Find() to return an event")
+		})
+	}
 }

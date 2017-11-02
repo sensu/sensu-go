@@ -43,7 +43,9 @@ func (a EventActions) Query(params QueryParams) ([]interface{}, error) {
 	if entityID != "" && checkName != "" {
 		var result *types.Event
 		result, serr = a.Store.GetEventByEntityCheck(a.Context, entityID, checkName)
-		results = append(results, result)
+		if result != nil {
+			results = append(results, result)
+		}
 	} else if entityID != "" {
 		results, serr = a.Store.GetEventsByEntity(a.Context, entityID)
 	} else {
@@ -68,11 +70,22 @@ func (a EventActions) Query(params QueryParams) ([]interface{}, error) {
 // Find returns resource associated with given parameters if available to the
 // viewer.
 func (a EventActions) Find(params QueryParams) (interface{}, error) {
-	results, err := a.Query(params)
+	entityID := params["entity"]
+	checkName := params["check"]
 
-	var result interface{}
-	if len(results) > 0 {
-		result = results[0]
+	// Find (for events) requires both an entity and check
+	if entityID == "" || checkName == "" {
+		return nil, NewErrorf(InvalidArgument, "Find() requires both an entity and a check")
 	}
-	return result, err
+
+	results, err := a.Query(params)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(results) == 0 {
+		return nil, NewErrorf(NotFound, "no event found")
+	}
+
+	return results[0], err
 }
