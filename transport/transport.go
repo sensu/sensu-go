@@ -134,7 +134,7 @@ func (t *WebSocketTransport) Send(m *Message) error {
 	t.mutex.RLock()
 	if t.closed {
 		t.mutex.RUnlock()
-		return ClosedError{"connection closed"}
+		return ClosedError{"the websocket connection is no longer open"}
 	}
 	t.mutex.RUnlock()
 
@@ -164,7 +164,7 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 	t.mutex.RLock()
 	if t.closed {
 		t.mutex.RUnlock()
-		return nil, ClosedError{"connection closed"}
+		return nil, ClosedError{"the websocket connection is no longer open"}
 	}
 	t.mutex.RUnlock()
 

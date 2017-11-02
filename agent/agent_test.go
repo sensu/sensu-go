@@ -25,10 +25,11 @@ func TestSendLoop(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		msg, err := conn.Receive()
 
+		msg, err := conn.Receive()
 		assert.NoError(t, err)
 		assert.Equal(t, "keepalive", msg.Type)
+
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
 		assert.NotNil(t, event.Entity)
@@ -65,6 +66,7 @@ func TestReceiveLoop(t *testing.T) {
 
 		msgBytes, err := json.Marshal(testMessage)
 		assert.NoError(t, err)
+
 		tm := &transport.Message{
 			Type:    "testMessageType",
 			Payload: msgBytes,
