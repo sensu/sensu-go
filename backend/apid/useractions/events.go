@@ -22,6 +22,7 @@ func NewEventActions(store store.EventStore) EventActions {
 	}
 }
 
+// WithContext returns new EventActions w/ context & policy configured.
 func (a EventActions) WithContext(ctx context.Context) EventActions {
 	return EventActions{
 		Store:   a.Store,

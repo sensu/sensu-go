@@ -6,6 +6,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
+//
 // AliasResolver makes it quick and easy to create a resolver that reflects a
 // different field on a given resource.
 //
