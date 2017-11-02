@@ -18,7 +18,7 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 		if tokenString != "" {
 			token, err := jwt.ValidateToken(tokenString)
 			if err != nil {
-				logger.Warn("invalid token: " + err.Error())
+				logger.WithError(err).Warn("invalid token")
 				http.Error(w, "Invalid token given", http.StatusUnauthorized)
 				return
 			}
@@ -39,7 +39,6 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 // BasicAuthentication is HTTP middleware for basic authentication
 func BasicAuthentication(next http.Handler, store store.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		username, password, ok := r.BasicAuth()
 		if !ok {
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
@@ -51,7 +50,7 @@ func BasicAuthentication(next http.Handler, store store.Store) http.Handler {
 		if err != nil {
 			logger.WithField(
 				"user", username,
-			).Errorf("invalid username and/or password: %s", err.Error())
+			).WithError(err).Errorf("invalid username and/or password")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
