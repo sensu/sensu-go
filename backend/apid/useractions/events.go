@@ -15,16 +15,23 @@ type EventActions struct {
 }
 
 // NewEventActions returns new EventActions
-func NewEventActions(ctx context.Context, store store.EventStore) EventActions {
+func NewEventActions(store store.EventStore) EventActions {
 	return EventActions{
-		Store:   store,
-		Policy:  authorization.Events.WithContext(ctx),
+		Store:  store,
+		Policy: authorization.Events,
+	}
+}
+
+func (a EventActions) WithContext(ctx context.Context) EventActions {
+	return EventActions{
+		Store:   a.Store,
+		Policy:  a.Policy.WithContext(ctx),
 		Context: ctx,
 	}
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a *EventActions) Query(params QueryParams) ([]interface{}, error) {
+func (a EventActions) Query(params QueryParams) ([]interface{}, error) {
 	var results []*types.Event
 
 	entityID := params["entity"]
@@ -59,7 +66,7 @@ func (a *EventActions) Query(params QueryParams) ([]interface{}, error) {
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a *EventActions) Find(params QueryParams) (interface{}, error) {
+func (a EventActions) Find(params QueryParams) (interface{}, error) {
 	results, err := a.Query(params)
 
 	var result interface{}
