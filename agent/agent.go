@@ -178,8 +178,11 @@ func (a *Agent) createListenSockets() error {
 
 	// we have to monitor the stopping channel out of band, otherwise
 	// the tcpListen.Accept() loop will never return.
+	var isListenerClosed bool
 	go func() {
 		<-a.stopping
+		logger.Debug("TCP listener stopped")
+		isListenerClosed = true
 		tcpListen.Close()
 	}()
 
@@ -191,7 +194,10 @@ func (a *Agent) createListenSockets() error {
 		for {
 			conn, err := tcpListen.Accept()
 			if err != nil {
-				logger.WithError(err).Error("error accepting TCP connection")
+				// Only log the error if the listener was not properly stopped by us
+				if !isListenerClosed {
+					logger.WithError(err).Error("error accepting TCP connection")
+				}
 				tcpListen.Close()
 				return
 			}
@@ -341,14 +347,7 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 	for {
 		m, err := a.conn.Receive()
 		if err != nil {
-			switch err := err.(type) {
-			case transport.ConnectionError, transport.ClosedError:
-				logger.WithError(err).Error("transport receive error")
-				return
-			default:
-				logger.WithError(err).Error("transport receive error")
-				continue
-			}
+			logger.WithError(err).Error("transport receive error")
 		}
 		out <- m
 	}
@@ -404,13 +403,7 @@ func (a *Agent) sendPump(conn transport.Transport) {
 		case msg := <-a.sendq:
 			err := conn.Send(msg)
 			if err != nil {
-				switch err := err.(type) {
-				case transport.ConnectionError, transport.ClosedError:
-					logger.WithError(err).Error("transport send error")
-					return
-				default:
-					logger.WithError(err).Error("transport send error")
-				}
+				logger.WithError(err).Fatal("transport send error")
 			}
 		case <-a.stopping:
 			return
