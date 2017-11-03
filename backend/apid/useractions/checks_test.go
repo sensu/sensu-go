@@ -114,10 +114,12 @@ func TestCheckQuery(t *testing.T) {
 }
 
 func TestCheckFind(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
+	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),
-		types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
-	))
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
+		),
+	)
 
 	testCases := []struct {
 		name            string
@@ -185,6 +187,326 @@ func TestCheckFind(t *testing.T) {
 				assert.NoError(err)
 			}
 			assert.Equal(tc.expected, result != nil, "expects Find() to return a record")
+		})
+	}
+}
+
+func TestCheckCreate(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
+		),
+	)
+
+	badCheck := types.FixtureCheckConfig("check1")
+	badCheck.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.CheckConfig
+		fetchResult     *types.CheckConfig
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureCheckConfig("check1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Already Exists",
+			ctx:             defaultCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			expectedErr:     true,
+			expectedErrCode: AlreadyExistsErr,
+		},
+		{
+			name:            "Store Err on Create",
+			ctx:             defaultCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			createErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badCheck,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewCheckActions(nil, store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetCheckConfigByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateCheckConfig", mock.Anything, mock.Anything).
+				Return(tc.createErr)
+
+			// Exec Query
+			mutator := actions.WithContext(tc.ctx)
+			err := mutator.Create(*tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestCheckUpdate(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermUpdate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
+		),
+	)
+
+	badCheck := types.FixtureCheckConfig("check1")
+	badCheck.Interval = 0
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.CheckConfig
+		fetchResult     *types.CheckConfig
+		fetchErr        error
+		updateErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Updated",
+			ctx:         defaultCtx,
+			argument:    types.FixtureCheckConfig("check1"),
+			fetchResult: types.FixtureCheckConfig("check1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Does Not Exist",
+			ctx:             defaultCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store Err on Update",
+			ctx:             defaultCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			updateErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badCheck,
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewCheckActions(nil, store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetCheckConfigByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateCheckConfig", mock.Anything, mock.Anything).
+				Return(tc.updateErr)
+
+			// Exec Query
+			mutator := actions.WithContext(tc.ctx)
+			err := mutator.Update(*tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestCheckDestroy(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermDelete),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
+		),
+	)
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		arguments       QueryParams
+		fetchResult     *types.CheckConfig
+		fetchErr        error
+		deleteErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Deleted",
+			ctx:         defaultCtx,
+			arguments:   QueryParams{"id": "check1"},
+			fetchResult: types.FixtureCheckConfig("check1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Does Not Exist",
+			ctx:             defaultCtx,
+			arguments:       QueryParams{"id": "check1"},
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store Err on Delete",
+			ctx:             defaultCtx,
+			arguments:       QueryParams{"id": "check1"},
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			deleteErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			arguments:       QueryParams{"id": "check1"},
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			arguments:       QueryParams{"id": "check1"},
+			fetchResult:     types.FixtureCheckConfig("check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewCheckActions(nil, store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetCheckConfigByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("DeleteCheckConfigByName", mock.Anything, "check1").
+				Return(tc.deleteErr)
+
+			// Exec Query
+			destroyer := actions.WithContext(tc.ctx)
+			err := destroyer.Destroy(tc.arguments)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
 		})
 	}
 }

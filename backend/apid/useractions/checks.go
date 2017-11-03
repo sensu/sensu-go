@@ -104,7 +104,7 @@ func (a CheckActions) Create(newCheck types.CheckConfig) error {
 	}
 
 	// Verify viewer can make change
-	if a.Policy.CanCreate(&newCheck) {
+	if yes := a.Policy.CanCreate(&newCheck); !yes {
 		return NewErrorf(PermissionDenied, "denied")
 	}
 
@@ -135,7 +135,7 @@ func (a CheckActions) Update(given types.CheckConfig) error {
 	}
 
 	// Verify viewer can make change
-	if a.Policy.CanUpdate(check) {
+	if yes := a.Policy.CanUpdate(check); !yes {
 		return NewErrorf(PermissionDenied, "denied")
 	}
 
@@ -158,7 +158,7 @@ func (a CheckActions) Update(given types.CheckConfig) error {
 // Destroy removes a resource if viewer has access.
 func (a CheckActions) Destroy(params QueryParams) error {
 	// Verify user has permission
-	if a.Policy.CanDelete() {
+	if yes := a.Policy.CanDelete(); !yes {
 		return NewErrorf(PermissionDenied, "denied")
 	}
 
@@ -172,7 +172,7 @@ func (a CheckActions) Destroy(params QueryParams) error {
 
 	// Remove from store
 	if err := a.Store.DeleteCheckConfigByName(a.Context, result.Name); err != nil {
-		return NewError(InternalErr, serr)
+		return NewError(InternalErr, err)
 	}
 
 	return nil

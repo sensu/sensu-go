@@ -18,6 +18,6 @@ func copyFields(target interface{}, source interface{}, fields ...string) {
 	s := reflect.Indirect(reflect.ValueOf(source))
 
 	for _, f := range fields {
-		reflect.Copy(t.FieldByName(f), s.FieldByName(f))
+		t.FieldByName(f).Set(s.FieldByName(f))
 	}
 }
