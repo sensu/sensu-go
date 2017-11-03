@@ -1,10 +1,11 @@
-package controllers
+package routers
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/useractions"
@@ -145,10 +146,12 @@ func (r *resourceRoute) destroy(fn actionHandlerFunc) *mux.Route {
 	return r.path("{id}", fn).Methods(http.MethodDelete)
 }
 
-func (r *resourceRoute) path(path string, fn actionHandlerFunc) *mux.Route {
-	return handleAction(r.router, fmt.Sprintf("%s/%s", r.pathPrefix, path), fn)
+func (r *resourceRoute) path(p string, fn actionHandlerFunc) *mux.Route {
+	fullPath := path.Join(r.pathPrefix, p)
+	return handleAction(r.router, fullPath, fn)
 }
 
 func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Route {
+	logger.Errorf("HandleFunc %s", path)
 	return router.HandleFunc(path, actionHandler(fn))
 }

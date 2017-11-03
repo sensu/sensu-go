@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/controllers"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
+	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -113,6 +114,12 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	authenticationController.Register(authRouter)
 }
 
+func mountRouters(parent *mux.Router, subRouters ...routers.Router) {
+	for _, subRouter := range subRouters {
+		subRouter.Mount(parent)
+	}
+}
+
 func registerRestrictedResources(
 	router *mux.Router,
 	store store.Store,
@@ -125,6 +132,10 @@ func registerRestrictedResources(
 		middlewares.Authentication{},
 		middlewares.AllowList{Store: store},
 		middlewares.Authorization{Store: store},
+	)
+
+	mountRouters(commonRouter,
+		routers.NewEventsRouter(store),
 	)
 
 	assetsController := &controllers.AssetsController{
@@ -147,13 +158,10 @@ func registerRestrictedResources(
 	}
 	entitiesController.Register(commonRouter)
 
-	environmentsConroller := &controllers.EnvironmentsController{
+	environmentsController := &controllers.EnvironmentsController{
 		Store: store,
 	}
-	environmentsConroller.Register(commonRouter)
-
-	eventsController := controllers.EventsController{Store: store}
-	eventsController.Register(commonRouter)
+	environmentsController.Register(commonRouter)
 
 	handlersController := &controllers.HandlersController{
 		Store: store,
