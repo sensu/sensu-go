@@ -15,20 +15,17 @@ type EventActions struct {
 }
 
 // NewEventActions returns new EventActions
-func NewEventActions(store store.EventStore) EventActions {
-	return EventActions{
-		Store:  store,
-		Policy: authorization.Events,
-	}
+func NewEventActions(ctx context.Context, store store.EventStore) EventActions {
+	return EventActions{Store: store}.WithContext(ctx)
 }
 
 // WithContext returns new EventActions w/ context & policy configured.
 func (a EventActions) WithContext(ctx context.Context) EventActions {
-	return EventActions{
-		Store:   a.Store,
-		Policy:  a.Policy.WithContext(ctx),
-		Context: ctx,
+	if ctx != nil {
+		a.Policy = a.Policy.WithContext(ctx)
+		a.Context = ctx
 	}
+	return a
 }
 
 // Query returns resources available to the viewer filter by given params.
@@ -70,11 +67,8 @@ func (a EventActions) Query(params QueryParams) ([]interface{}, error) {
 // Find returns resource associated with given parameters if available to the
 // viewer.
 func (a EventActions) Find(params QueryParams) (interface{}, error) {
-	entityID := params["entity"]
-	checkName := params["check"]
-
 	// Find (for events) requires both an entity and check
-	if entityID == "" || checkName == "" {
+	if params["entity"] == "" || params["check"] == "" {
 		return nil, NewErrorf(InvalidArgument, "Find() requires both an entity and a check")
 	}
 

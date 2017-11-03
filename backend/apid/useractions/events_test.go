@@ -16,7 +16,7 @@ func TestNewEventActions(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	eventActions := NewEventActions(store)
+	eventActions := NewEventActions(nil, store)
 
 	assert.NotNil(eventActions)
 	assert.Equal(store, eventActions.Store)
@@ -106,7 +106,7 @@ func TestQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		eventActions := NewEventActions(store)
+		eventActions := NewEventActions(nil, store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -203,7 +203,7 @@ func TestFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		eventActions := NewEventActions(store)
+		eventActions := NewEventActions(nil, store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)

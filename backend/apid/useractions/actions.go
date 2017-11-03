@@ -7,5 +7,10 @@ type Fetcher interface {
 	Query(params QueryParams) ([]interface{}, error)
 }
 
+// Destroyer exposes actions for viewer to delete resources.
+type Destroyer interface {
+	Destroy(params QueryParams) error
+}
+
 // QueryParams keys inwhich to filter results of query.
 type QueryParams map[string]string

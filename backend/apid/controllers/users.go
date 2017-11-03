@@ -29,7 +29,9 @@ func (c *UsersController) Register(r *mux.Router) {
 	r.HandleFunc("/rbac/users/{username}", c.single).Methods(http.MethodGet)
 	r.HandleFunc("/rbac/users/{username}", c.deleteUser).Methods(http.MethodDelete)
 
-	// TODO (JP): Lot of duplication between single, password & reinstate. Could probably be combined.
+	// TODO (JP):
+	// Lot of duplication between single, password & reinstate. Could probably
+	// be combined.
 	r.HandleFunc("/rbac/users/{username}/password", c.password).Methods(http.MethodPut)
 	r.HandleFunc("/rbac/users/{username}/reinstate", c.reinstate).Methods(http.MethodPut)
 
