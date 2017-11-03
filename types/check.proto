@@ -28,10 +28,10 @@ message CheckConfig {
 	string command = 1;
 
 	// Environment indicates to which env a check belongs to
-	string Environment = 2;
+	string environment = 2;
 
 	// Handlers are the event handler for the check (incidents and/or metrics).
-	repeated string Handlers = 3 [(gogoproto.jsontag) = "handlers"];
+	repeated string handlers = 3 [(gogoproto.jsontag) = "handlers"];
 
 	// HighFlapThreshold is the flap detection high threshold (% state change) for
 	// the check. Sensu uses the same flap detection algorithm as Nagios.
