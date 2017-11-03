@@ -115,6 +115,7 @@ func TestCheckQuery(t *testing.T) {
 
 func TestCheckFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
+		testutil.ContextWithOrgEnv("default", "default"),
 		types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
 	))
 

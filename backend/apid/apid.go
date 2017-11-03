@@ -134,8 +134,10 @@ func registerRestrictedResources(
 		middlewares.Authorization{Store: store},
 	)
 
-	mountRouters(commonRouter,
+	mountRouters(
+		commonRouter,
 		routers.NewEventsRouter(store),
+		routers.NewChecksRouter(store),
 	)
 
 	assetsController := &controllers.AssetsController{
@@ -147,11 +149,6 @@ func registerRestrictedResources(
 		Store: store,
 	}
 	authenticationController.Register(commonRouter)
-
-	checksController := &controllers.ChecksController{
-		Store: store,
-	}
-	checksController.Register(commonRouter)
 
 	entitiesController := &controllers.EntitiesController{
 		Store: store,

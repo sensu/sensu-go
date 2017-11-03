@@ -155,3 +155,19 @@ func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Ro
 	logger.Errorf("HandleFunc %s", path)
 	return router.HandleFunc(path, actionHandler(fn))
 }
+
+func unmarshalBody(req *http.Request, record interface{}) error {
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.WithError(err).Error("unable to read request body")
+		return err
+	}
+	defer r.Body.Close()
+
+	// TODO: Support other types of requests other than JSON?
+	err = json.Unmarshal(bodyBytes, newCheck)
+	if err != nil {
+		logger.WithError(err).Error("unable to unmarshal request")
+		return err
+	}
+}
