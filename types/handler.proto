@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
-import "filter.proto";
 
 package sensu.types;
 
@@ -36,8 +35,8 @@ message Handler {
 	// Handlers is a list of handlers for a handler set.
 	repeated string handlers = 7 [(gogoproto.jsontag) = "handlers"];
 
-  // Filters is a list of filters to evaluate before executing this handler
-	repeated EventFilter filters = 8 [(gogoproto.jsontag) = "filters", (gogoproto.nullable) = false];
+  // Filters is a list of filters name to evaluate before executing this handler
+	repeated string filters = 8 [(gogoproto.jsontag) = "filters"];
 
 	// EnvVars is a list of environment variables to use with command execution
 	repeated string env_vars = 9 [(gogoproto.jsontag) = "env_vars"];

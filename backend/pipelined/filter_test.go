@@ -4,18 +4,44 @@ package pipelined
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestPipelinedFilter(t *testing.T) {
 	p := &Pipelined{}
+	store := &mockstore.MockStore{}
+	p.Store = store
+
+	// Mock the store responses
+	allowFilterBar := &types.EventFilter{
+		Action:     types.EventFilterActionAllow,
+		Statements: []string{`event.Check.Output == "bar"`},
+	}
+	allowFilterFoo := &types.EventFilter{
+		Action:     types.EventFilterActionAllow,
+		Statements: []string{`event.Check.Output == "foo"`},
+	}
+	denyFilterBar := &types.EventFilter{
+		Action:     types.EventFilterActionDeny,
+		Statements: []string{`event.Check.Output == "bar"`},
+	}
+	denyFilterFoo := &types.EventFilter{
+		Action:     types.EventFilterActionDeny,
+		Statements: []string{`event.Check.Output == "foo"`},
+	}
+	store.On("GetEventFilterByName", mock.Anything, "allowFilterBar").Return(allowFilterBar, nil)
+	store.On("GetEventFilterByName", mock.Anything, "allowFilterFoo").Return(allowFilterFoo, nil)
+	store.On("GetEventFilterByName", mock.Anything, "denyFilterBar").Return(denyFilterBar, nil)
+	store.On("GetEventFilterByName", mock.Anything, "denyFilterFoo").Return(denyFilterFoo, nil)
 
 	testCases := []struct {
 		name     string
 		status   int32
 		metrics  *types.Metrics
-		filters  []types.EventFilter
+		filters  []string
 		expected bool
 	}{
 		{
@@ -47,55 +73,31 @@ func TestPipelinedFilter(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:    "Allow Filter With No Match",
-			status:  1,
-			metrics: nil,
-			filters: []types.EventFilter{
-				{
-					Name:       "filter",
-					Action:     types.EventFilterActionAllow,
-					Statements: []string{`event.Check.Output == "bar"`},
-				},
-			},
+			name:     "Allow Filter With No Match",
+			status:   1,
+			metrics:  nil,
+			filters:  []string{"allowFilterBar"},
 			expected: true,
 		},
 		{
-			name:    "Allow Filter With Match",
-			status:  1,
-			metrics: nil,
-			filters: []types.EventFilter{
-				{
-					Name:       "filter",
-					Action:     types.EventFilterActionAllow,
-					Statements: []string{`event.Check.Output == "foo"`},
-				},
-			},
+			name:     "Allow Filter With Match",
+			status:   1,
+			metrics:  nil,
+			filters:  []string{"allowFilterFoo"},
 			expected: false,
 		},
 		{
-			name:    "Deny Filter With No Match",
-			status:  1,
-			metrics: nil,
-			filters: []types.EventFilter{
-				{
-					Name:       "filter",
-					Action:     types.EventFilterActionDeny,
-					Statements: []string{`event.Check.Output == "bar"`},
-				},
-			},
+			name:     "Deny Filter With No Match",
+			status:   1,
+			metrics:  nil,
+			filters:  []string{"denyFilterBar"},
 			expected: false,
 		},
 		{
-			name:    "Deny Filter With Match",
-			status:  1,
-			metrics: nil,
-			filters: []types.EventFilter{
-				{
-					Name:       "filter",
-					Action:     types.EventFilterActionDeny,
-					Statements: []string{`event.Check.Output == "foo"`},
-				},
-			},
+			name:     "Deny Filter With Match",
+			status:   1,
+			metrics:  nil,
+			filters:  []string{"denyFilterFoo"},
 			expected: true,
 		},
 	}
@@ -113,8 +115,13 @@ func TestPipelinedFilter(t *testing.T) {
 					Status: tc.status,
 					Output: "foo",
 				},
+				Entity: &types.Entity{
+					Environment:  "default",
+					Organization: "default",
+				},
 				Metrics: tc.metrics,
 			}
+
 			filtered := p.filterEvent(handler, event)
 			assert.Equal(t, tc.expected, filtered)
 		})
