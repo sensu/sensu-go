@@ -10,13 +10,13 @@ import (
 
 // EventsRouter handles requests for /events
 type EventsRouter struct {
-	controller useractions.EventActions
+	controller useractions.EventController
 }
 
 // NewEventsRouter instantiates new events controller
 func NewEventsRouter(store store.EventStore) *EventsRouter {
 	return &EventsRouter{
-		controller: useractions.NewEventActions(nil, store),
+		controller: useractions.NewEventController(store),
 	}
 }
 
@@ -29,21 +29,18 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 }
 
 func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
-	fetcher := r.controller.WithContext(req.Context())
 	params := useractions.QueryParams(mux.Vars(req))
-	record, err := fetcher.Find(params)
+	record, err := r.controller.Find(req.Context(), params)
 	return record, err
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
-	fetcher := r.controller.WithContext(req.Context())
-	records, err := fetcher.Query(useractions.QueryParams{})
+	records, err := r.controller.Query(req.Context(), useractions.QueryParams{})
 	return records, err
 }
 
 func (r *EventsRouter) listByEntity(req *http.Request) (interface{}, error) {
-	fetcher := r.controller.WithContext(req.Context())
 	params := useractions.QueryParams(mux.Vars(req))
-	records, err := fetcher.Query(params)
+	records, err := r.controller.Query(req.Context(), params)
 	return records, err
 }

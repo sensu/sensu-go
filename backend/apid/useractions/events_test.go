@@ -12,21 +12,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestNewEventActions(t *testing.T) {
+func TestNewEventController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	eventActions := NewEventActions(nil, store)
+	eventController := NewEventController(store)
 
-	assert.NotNil(eventActions)
-	assert.Equal(store, eventActions.Store)
-	assert.NotNil(eventActions.Policy)
-	assert.Nil(eventActions.Context)
-
-	ctx := context.TODO()
-	eventActions = eventActions.WithContext(ctx)
-
-	assert.Equal(ctx, eventActions.Context)
+	assert.NotNil(eventController)
+	assert.Equal(store, eventController.Store)
+	assert.NotNil(eventController.Policy)
 }
 
 func TestQuery(t *testing.T) {
@@ -106,7 +100,7 @@ func TestQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		eventActions := NewEventActions(nil, store)
+		eventController := NewEventController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -116,8 +110,7 @@ func TestQuery(t *testing.T) {
 			store.On("GetEventsByEntity", tc.ctx, mock.Anything).Return(tc.events, tc.storeErr)
 
 			// Exec Query
-			fetcher := eventActions.WithContext(tc.ctx)
-			results, err := fetcher.Query(tc.params)
+			results, err := fetcher.Query(tc.ctx, tc.params)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
@@ -203,7 +196,7 @@ func TestFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		eventActions := NewEventActions(nil, store)
+		eventController := NewEventController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -214,8 +207,7 @@ func TestFind(t *testing.T) {
 				Return(tc.event, nil)
 
 			// Exec Query
-			fetcher := eventActions.WithContext(tc.ctx)
-			result, err := fetcher.Find(tc.params)
+			result, err := eventController.Find(tc.ctx, tc.params)
 
 			inferErr, ok := err.(Error)
 			if ok {
