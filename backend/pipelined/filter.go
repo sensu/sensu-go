@@ -2,6 +2,7 @@
 package pipelined
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/types"
 
 	"github.com/Knetic/govaluate"
@@ -10,24 +11,25 @@ import (
 func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	expr, err := govaluate.NewEvaluableExpression(statement)
 	if err != nil {
-		logger.Warn("failed to create evaluable expression")
+		logger.WithError(err).Error("failed to parse filter statement: ", statement)
 		return false
 	}
 
 	result, err := expr.Evaluate(map[string]interface{}{"event": event})
 	if err != nil {
-		logger.Warn("failed to evaluate filter")
+		logger.WithError(err).Error("failed to evaluate statement: ", statement)
 		return false
 	}
 
 	match, ok := result.(bool)
 	if !ok {
-		logger.Warn("filters must evaluate to boolean values")
+		logger.WithField("filter", statement).Error("filters must evaluate to boolean values")
 	}
 
 	return match
 }
 
+// Returns true if the event should be filtered.
 func evaluateEventFilter(event *types.Event, filter types.EventFilter) bool {
 	for _, statement := range filter.Statements {
 		match := evaluateEventFilterStatement(event, statement)
@@ -54,7 +56,11 @@ func evaluateEventFilter(event *types.Event, filter types.EventFilter) bool {
 	}
 
 	// Something weird happened, let's not filter the event and log a warning message
-	logger.WithField("filter", filter).Warn("pipelined not filtering event due to unhandled case")
+	logger.WithFields(logrus.Fields{
+		"filter":       filter.GetName(),
+		"organization": filter.GetOrg(),
+		"environment":  filter.GetEnvironment(),
+	}).Warn("pipelined not filtering event due to unhandled case")
 
 	return false
 }
