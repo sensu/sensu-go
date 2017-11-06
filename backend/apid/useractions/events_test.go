@@ -110,7 +110,7 @@ func TestQuery(t *testing.T) {
 			store.On("GetEventsByEntity", tc.ctx, mock.Anything).Return(tc.events, tc.storeErr)
 
 			// Exec Query
-			results, err := fetcher.Query(tc.ctx, tc.params)
+			results, err := eventController.Query(tc.ctx, tc.params)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
