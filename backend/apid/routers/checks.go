@@ -21,7 +21,7 @@ type ChecksRouter struct {
 // NewChecksRouter instantiates new checks controller
 func NewChecksRouter(store store.CheckConfigStore) *ChecksRouter {
 	return &ChecksRouter{
-		controller: useractions.NewCheckActions(nil, store),
+		controller: useractions.NewCheckController(store),
 	}
 }
 
