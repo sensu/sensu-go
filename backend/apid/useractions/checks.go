@@ -9,8 +9,8 @@ import (
 
 // CheckMutator exposes actions in which a viewer can perform.
 type CheckMutator interface {
-	Create(types.CheckConfig) error
-	Update(types.CheckConfig) error
+	Create(context.Context, types.CheckConfig) error
+	Update(context.Context, types.CheckConfig) error
 }
 
 // updateFields refers to fields a viewer may update
@@ -25,22 +25,22 @@ var updateFields = []string{
 	"Subscriptions",
 }
 
-// CheckActions exposes actions in which a viewer can perform.
-type CheckActions struct {
+// CheckController exposes actions in which a viewer can perform.
+type CheckController struct {
 	Store  store.CheckConfigStore
 	Policy authorization.CheckPolicy
 }
 
-// NewCheckActions returns new CheckActions
-func NewCheckActions(store store.CheckConfigStore) CheckActions {
-	return CheckActions{
+// NewCheckController returns new CheckController
+func NewCheckController(store store.CheckConfigStore) CheckController {
+	return CheckController{
 		Store:  store,
 		Policy: authorization.Checks,
 	}
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a CheckActions) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
+func (a CheckController) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
 	abilities := a.Policy.WithContext(ctx)
 	if yes := abilities.CanList(); !yes {
 		return nil, NewErrorf(PermissionDenied, "cannot list resources")
@@ -55,7 +55,7 @@ func (a CheckActions) Query(ctx context.Context, params QueryParams) ([]interfac
 	// Filter out those resources the viewer does not have access to view.
 	resources := []interface{}{}
 	for _, result := range results {
-		if yes := a.Policy.CanRead(result); yes {
+		if yes := abilities.CanRead(result); yes {
 			resources = append(resources, result)
 		}
 	}
@@ -65,20 +65,21 @@ func (a CheckActions) Query(ctx context.Context, params QueryParams) ([]interfac
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a CheckActions) Find(params QueryParams) (interface{}, error) {
+func (a CheckController) Find(ctx context.Context, params QueryParams) (interface{}, error) {
 	// Validate params
 	if id := params["id"]; id == "" {
 		return nil, NewErrorf(InternalErr, "'id' param missing")
 	}
 
 	// Fetch from store
-	result, serr := a.Store.GetCheckConfigByName(a.Context, params["id"])
+	result, serr := a.Store.GetCheckConfigByName(ctx, params["id"])
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
 
 	// Verify user has permission to view
-	if result != nil && a.Policy.CanRead(result) {
+	abilities := a.Policy.WithContext(ctx)
+	if result != nil && abilities.CanRead(result) {
 		return result, nil
 	}
 
@@ -86,9 +87,10 @@ func (a CheckActions) Find(params QueryParams) (interface{}, error) {
 }
 
 // Create instatiates, validates and persists new resource if viewer has access.
-func (a CheckActions) Create(newCheck types.CheckConfig) error {
+func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig) error {
 	// Adjust context
-	ctx := addOrgEnvToContext(a.Context, &newCheck)
+	ctx = addOrgEnvToContext(ctx, &newCheck)
+	abilities := a.Policy.WithContext(ctx)
 
 	// Check for existing
 	if e, err := a.Store.GetCheckConfigByName(ctx, newCheck.Name); err != nil {
@@ -98,7 +100,7 @@ func (a CheckActions) Create(newCheck types.CheckConfig) error {
 	}
 
 	// Verify viewer can make change
-	if yes := a.Policy.CanCreate(&newCheck); !yes {
+	if yes := abilities.CanCreate(&newCheck); !yes {
 		return NewErrorf(PermissionDenied, "denied")
 	}
 
@@ -116,9 +118,10 @@ func (a CheckActions) Create(newCheck types.CheckConfig) error {
 }
 
 // Update validates and persists changes to a resource if viewer has access.
-func (a CheckActions) Update(given types.CheckConfig) error {
+func (a CheckController) Update(ctx context.Context, given types.CheckConfig) error {
 	// Adjust context
-	ctx := addOrgEnvToContext(a.Context, &given)
+	ctx = addOrgEnvToContext(ctx, &given)
+	abilities := a.Policy.WithContext(ctx)
 
 	// Find existing check
 	check, err := a.Store.GetCheckConfigByName(ctx, given.Name)
@@ -129,7 +132,7 @@ func (a CheckActions) Update(given types.CheckConfig) error {
 	}
 
 	// Verify viewer can make change
-	if yes := a.Policy.CanUpdate(check); !yes {
+	if yes := abilities.CanUpdate(check); !yes {
 		return NewErrorf(PermissionDenied, "denied")
 	}
 
@@ -150,14 +153,16 @@ func (a CheckActions) Update(given types.CheckConfig) error {
 }
 
 // Destroy removes a resource if viewer has access.
-func (a CheckActions) Destroy(params QueryParams) error {
+func (a CheckController) Destroy(ctx context.Context, params QueryParams) error {
+	abilities := a.Policy.WithContext(ctx)
+
 	// Verify user has permission
-	if yes := a.Policy.CanDelete(); !yes {
+	if yes := abilities.CanDelete(); !yes {
 		return NewErrorf(PermissionDenied, "denied")
 	}
 
 	// Fetch from store
-	result, serr := a.Store.GetCheckConfigByName(a.Context, params["id"])
+	result, serr := a.Store.GetCheckConfigByName(ctx, params["id"])
 	if serr != nil {
 		return NewError(InternalErr, serr)
 	} else if result == nil {
@@ -165,7 +170,7 @@ func (a CheckActions) Destroy(params QueryParams) error {
 	}
 
 	// Remove from store
-	if err := a.Store.DeleteCheckConfigByName(a.Context, result.Name); err != nil {
+	if err := a.Store.DeleteCheckConfigByName(ctx, result.Name); err != nil {
 		return NewError(InternalErr, err)
 	}
 

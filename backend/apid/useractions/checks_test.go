@@ -12,21 +12,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestNewCheckActions(t *testing.T) {
+func TestNewCheckController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	actions := NewCheckActions(nil, store)
+	actions := NewCheckController(store)
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
 	assert.NotNil(actions.Policy)
-	assert.Nil(actions.Context)
-
-	ctx := context.TODO()
-	actions = actions.WithContext(ctx)
-
-	assert.Equal(ctx, actions.Context)
 }
 
 func TestCheckQuery(t *testing.T) {
@@ -94,7 +88,7 @@ func TestCheckQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewCheckActions(nil, store)
+		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -103,8 +97,7 @@ func TestCheckQuery(t *testing.T) {
 			store.On("GetCheckConfigs", tc.ctx).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			fetcher := actions.WithContext(tc.ctx)
-			results, err := fetcher.Query(tc.params)
+			results, err := actions.Query(tc.ctx, tc.params)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
@@ -166,7 +159,7 @@ func TestCheckFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewCheckActions(nil, store)
+		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -177,8 +170,7 @@ func TestCheckFind(t *testing.T) {
 				Return(tc.record, nil)
 
 			// Exec Query
-			fetcher := actions.WithContext(tc.ctx)
-			result, err := fetcher.Find(tc.params)
+			result, err := actions.Find(tc.ctx, tc.params)
 
 			inferErr, ok := err.(Error)
 			if ok {
@@ -266,7 +258,7 @@ func TestCheckCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewCheckActions(nil, store)
+		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -280,8 +272,7 @@ func TestCheckCreate(t *testing.T) {
 				Return(tc.createErr)
 
 			// Exec Query
-			mutator := actions.WithContext(tc.ctx)
-			err := mutator.Create(*tc.argument)
+			err := actions.Create(tc.ctx, *tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
@@ -378,7 +369,7 @@ func TestCheckUpdate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewCheckActions(nil, store)
+		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -392,8 +383,7 @@ func TestCheckUpdate(t *testing.T) {
 				Return(tc.updateErr)
 
 			// Exec Query
-			mutator := actions.WithContext(tc.ctx)
-			err := mutator.Update(*tc.argument)
+			err := actions.Update(tc.ctx, *tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
@@ -479,7 +469,7 @@ func TestCheckDestroy(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewCheckActions(nil, store)
+		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -493,8 +483,7 @@ func TestCheckDestroy(t *testing.T) {
 				Return(tc.deleteErr)
 
 			// Exec Query
-			destroyer := actions.WithContext(tc.ctx)
-			err := destroyer.Destroy(tc.arguments)
+			err := actions.Destroy(tc.ctx, tc.arguments)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
