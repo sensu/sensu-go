@@ -2,6 +2,6 @@ package routers
 
 import "testing"
 
-func TestHttpApiEventsGet(t *testing.T) {
+func TestHttpApiChecksGet(t *testing.T) {
 
 }

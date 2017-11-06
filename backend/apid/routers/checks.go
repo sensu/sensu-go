@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/useractions"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 // ChecksRouter handles requests for /checks
