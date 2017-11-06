@@ -27,33 +27,27 @@ var updateFields = []string{
 
 // CheckActions exposes actions in which a viewer can perform.
 type CheckActions struct {
-	Store   store.CheckConfigStore
-	Policy  authorization.CheckPolicy
-	Context context.Context
+	Store  store.CheckConfigStore
+	Policy authorization.CheckPolicy
 }
 
 // NewCheckActions returns new CheckActions
-func NewCheckActions(ctx context.Context, store store.CheckConfigStore) CheckActions {
-	return CheckActions{Store: store}.WithContext(ctx)
-}
-
-// WithContext returns new CheckActions w/ context & policy configured.
-func (a CheckActions) WithContext(ctx context.Context) CheckActions {
-	if ctx != nil {
-		a.Policy = a.Policy.WithContext(ctx)
-		a.Context = ctx
+func NewCheckActions(store store.CheckConfigStore) CheckActions {
+	return CheckActions{
+		Store:  store,
+		Policy: authorization.Checks,
 	}
-	return a
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a CheckActions) Query(params QueryParams) ([]interface{}, error) {
-	if yes := a.Policy.CanList(); !yes {
+func (a CheckActions) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
+	abilities := a.Policy.WithContext(ctx)
+	if yes := abilities.CanList(); !yes {
 		return nil, NewErrorf(PermissionDenied, "cannot list resources")
 	}
 
 	// Fetch from store
-	results, serr := a.Store.GetCheckConfigs(a.Context)
+	results, serr := a.Store.GetCheckConfigs(ctx)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
