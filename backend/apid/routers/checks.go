@@ -11,7 +11,11 @@ import (
 
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
-	controller useractions.CheckActions
+	controller interface {
+		useractions.Fetcher
+		useractions.CheckMutator
+		useractions.Destroyer
+	}
 }
 
 // NewChecksRouter instantiates new checks controller
@@ -32,15 +36,14 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
-	fetcher := r.controller.WithContext(req.Context())
-	records, err := fetcher.Query(useractions.QueryParams{})
+	params := useractions.QueryParams(mux.Vars(req))
+	records, err := r.controller.Query(req.Context(), params)
 	return records, err
 }
 
 func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
-	fetcher := r.controller.WithContext(req.Context())
 	params := useractions.QueryParams(mux.Vars(req))
-	record, err := fetcher.Find(params)
+	record, err := r.controller.Find(req.Context(), params)
 	return record, err
 }
 
@@ -50,9 +53,7 @@ func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	mutator := r.controller.WithContext(req.Context())
-	err := mutator.Create(cfg)
-
+	err := r.controller.Create(req.Context(), cfg)
 	return cfg, err
 }
 
@@ -62,14 +63,12 @@ func (r *ChecksRouter) update(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	mutator := r.controller.WithContext(req.Context())
-	err := mutator.Update(cfg)
-
+	err := r.controller.Update(req.Context(), cfg)
 	return cfg, err
 }
 
 func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
-	destoyer := r.controller.WithContext(req.Context())
 	params := useractions.QueryParams(mux.Vars(req))
-	return nil, destoyer.Destroy(params)
+	err := r.controller.Destroy(req.Context(), params)
+	return nil, err
 }
