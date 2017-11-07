@@ -17,28 +17,32 @@ type errorBody struct {
 	Code  uint32 `json:"code"`
 }
 
+// respondWith given writer and resource, marshal to JSON and write response.
 func respondWith(w http.ResponseWriter, resources interface{}) {
 	// Set content-type to JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	// If not resource(s) are present return a 204 response code
+	// If no resource(s) are present return a 204 response code
 	if resources == nil {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
+	// Marshal
 	bytes, err := json.Marshal(resources)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
+	// Write response
 	if _, err := w.Write(bytes); err != nil {
 		logger.WithError(err).Error("failed to write response")
 		writeError(w, err)
 	}
 }
 
+// writeError writes error response in JSON format.
 func writeError(w http.ResponseWriter, err error) {
 	const fallback = `{"error": "failed to marshal error message"}`
 
@@ -97,8 +101,25 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 	return http.StatusInternalServerError
 }
 
-type actionHandlerFunc func(r *http.Request) (interface{}, error)
-
+//
+// actionHandler takes a action handler closure and returns a new handler that
+// exexutes the closure and writes the response.
+//
+// Ex.
+//
+//   handler := actionHandler(func(r *http.Request) (interface{}, error) {
+//     msg := r.Vars("message")
+//     if msg == "i-am-a-jerk" {
+//       return nil, errors.New("fatal err")
+//     }
+//     return strings.Split(msg, "-"), nil
+//   })
+//   router.handleFunc("/echo/{message}", handler).Methods(http.MethodGet)
+//
+//    GET /echo/hey         --> 200 OK ["hey"]
+//    GET /echo/hey-there   --> 200 OK ["howdy", "there"]
+//    GET /echo/i-am-a-jerk --> 500    {code: 500, message: "fatal err"}
+//
 func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		records, err := action(r)
@@ -110,6 +131,8 @@ func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 		respondWith(w, records)
 	}
 }
+
+type actionHandlerFunc func(r *http.Request) (interface{}, error)
 
 //
 // resourceRoute mounts resources in a convetional RESTful manner.
