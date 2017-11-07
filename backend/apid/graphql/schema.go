@@ -13,8 +13,8 @@ func Schema() graphql.Schema {
 	}
 
 	schema, err := graphql.NewSchema(graphql.SchemaConfig{
-		Query: queryType,
-		// Mutation: mutationType,
+		Query:    queryType,
+		Mutation: mutationType,
 		// Subscription: subscriptionType,
 	})
 
