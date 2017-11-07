@@ -71,11 +71,12 @@ func NewError(code ErrCode, err error) Error {
 
 // NewErrorf returns a new Error given message and code.
 func NewErrorf(code ErrCode, s ...interface{}) Error {
+	var f string
 	if len(s) == 0 {
-		s = []string{standardErrorMessages[code]}
+		f = standardErrorMessages[code]
+	} else {
+		f, s = s[0].(string), s[1:]
 	}
-
-	f, s := s[0], s[1:]
 	return Error{Code: code, Message: fmt.Sprintf(f, s...)}
 }
 

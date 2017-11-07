@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/useractions"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -12,16 +12,16 @@ import (
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
 	controller interface {
-		useractions.Fetcher
-		useractions.CheckMutator
-		useractions.Destroyer
+		actions.Fetcher
+		actions.CheckMutator
+		actions.Destroyer
 	}
 }
 
-// NewChecksRouter instantiates new checks controller
+// NewChecksRouter instantiates new router for controlling check resources
 func NewChecksRouter(store store.CheckConfigStore) *ChecksRouter {
 	return &ChecksRouter{
-		controller: useractions.NewCheckController(store),
+		controller: actions.NewCheckController(store),
 	}
 }
 
@@ -36,13 +36,13 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
-	params := useractions.QueryParams(mux.Vars(req))
+	params := actions.QueryParams(mux.Vars(req))
 	records, err := r.controller.Query(req.Context(), params)
 	return records, err
 }
 
 func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
-	params := useractions.QueryParams(mux.Vars(req))
+	params := actions.QueryParams(mux.Vars(req))
 	record, err := r.controller.Find(req.Context(), params)
 	return record, err
 }
@@ -68,7 +68,7 @@ func (r *ChecksRouter) update(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
-	params := useractions.QueryParams(mux.Vars(req))
+	params := actions.QueryParams(mux.Vars(req))
 	err := r.controller.Destroy(req.Context(), params)
 	return nil, err
 }

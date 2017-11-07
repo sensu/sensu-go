@@ -4,7 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
 	"github.com/mitchellh/mapstructure"
-	"github.com/sensu/sensu-go/backend/apid/useractions"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
@@ -46,7 +46,7 @@ func initCreateCheckMutation() {
 			}
 
 			store := ctx.Value(types.StoreKey).(store.Store)
-			controller := useractions.NewCheckController(store)
+			controller := actions.NewCheckController(store)
 
 			if err := controller.Create(ctx, check); err != nil {
 				logger.WithField("inputs", inputs).WithError(err).Debug("unable to create check")

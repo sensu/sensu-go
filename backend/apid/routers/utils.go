@@ -9,7 +9,7 @@ import (
 	"path"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/useractions"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 )
 
 type errorBody struct {
@@ -46,7 +46,7 @@ func writeError(w http.ResponseWriter, err error) {
 	st := http.StatusInternalServerError
 
 	// Wrap message in standard errorBody
-	actionErr, ok := err.(useractions.Error)
+	actionErr, ok := err.(actions.Error)
 	if ok {
 		errBody.Error = actionErr.Message
 		errBody.Code = uint32(actionErr.Code)
@@ -77,19 +77,19 @@ func writeError(w http.ResponseWriter, err error) {
 }
 
 // HTTPStatusFromCode returns http status code for given user action err code
-func HTTPStatusFromCode(code useractions.ErrCode) int {
+func HTTPStatusFromCode(code actions.ErrCode) int {
 	switch code {
-	case useractions.InternalErr:
+	case actions.InternalErr:
 		return http.StatusInternalServerError
-	case useractions.InvalidArgument:
+	case actions.InvalidArgument:
 		return http.StatusBadRequest
-	case useractions.NotFound:
+	case actions.NotFound:
 		return http.StatusNotFound
-	case useractions.AlreadyExistsErr:
+	case actions.AlreadyExistsErr:
 		return http.StatusConflict
-	case useractions.PermissionDenied:
+	case actions.PermissionDenied:
 		return http.StatusUnauthorized
-	case useractions.Unauthenticated:
+	case actions.Unauthenticated:
 		return http.StatusUnauthorized
 	}
 

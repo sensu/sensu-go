@@ -1,4 +1,4 @@
-package useractions
+package actions
 
 import "golang.org/x/net/context"
 

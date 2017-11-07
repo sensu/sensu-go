@@ -3,7 +3,7 @@ package graphqlschema
 import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
-	"github.com/sensu/sensu-go/backend/apid/useractions"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -47,9 +47,9 @@ func init() {
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						store := p.Context.Value(types.StoreKey).(store.Store)
 
-						controller := useractions.NewCheckController(store)
+						controller := actions.NewCheckController(store)
 
-						checks, err := controller.Query(p.Context, useractions.QueryParams{})
+						checks, err := controller.Query(p.Context, actions.QueryParams{})
 						if err != nil {
 							return nil, err
 						}

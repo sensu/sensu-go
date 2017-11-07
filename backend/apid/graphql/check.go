@@ -2,9 +2,9 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
-	"github.com/sensu/sensu-go/backend/apid/useractions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -156,16 +156,16 @@ func newCheckConfigNodeResolver() relay.NodeResolver {
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			components := p.IDComponents.(globalid.NamedComponents)
 			store := p.Context.Value(types.StoreKey).(store.CheckConfigStore)
-			controller := useractions.NewCheckController(store)
+			controller := actions.NewCheckController(store)
 
-			params := useractions.QueryParams{"id": components.Name()}
+			params := actions.QueryParams{"id": components.Name()}
 			record, err := controller.Find(p.Context, params)
 			if err == nil {
 				return record, nil
 			}
 
-			s, ok := useractions.StatusFromError(err)
-			if ok && s == useractions.NotFound {
+			s, ok := actions.StatusFromError(err)
+			if ok && s == actions.NotFound {
 				return nil, nil
 			}
 			return nil, err

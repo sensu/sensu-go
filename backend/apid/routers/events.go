@@ -4,19 +4,19 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/useractions"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
 // EventsRouter handles requests for /events
 type EventsRouter struct {
-	controller useractions.EventController
+	controller actions.EventController
 }
 
 // NewEventsRouter instantiates new events controller
 func NewEventsRouter(store store.EventStore) *EventsRouter {
 	return &EventsRouter{
-		controller: useractions.NewEventController(store),
+		controller: actions.NewEventController(store),
 	}
 }
 
@@ -29,18 +29,18 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 }
 
 func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
-	params := useractions.QueryParams(mux.Vars(req))
+	params := actions.QueryParams(mux.Vars(req))
 	record, err := r.controller.Find(req.Context(), params)
 	return record, err
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
-	records, err := r.controller.Query(req.Context(), useractions.QueryParams{})
+	records, err := r.controller.Query(req.Context(), actions.QueryParams{})
 	return records, err
 }
 
 func (r *EventsRouter) listByEntity(req *http.Request) (interface{}, error) {
-	params := useractions.QueryParams(mux.Vars(req))
+	params := actions.QueryParams(mux.Vars(req))
 	records, err := r.controller.Query(req.Context(), params)
 	return records, err
 }
