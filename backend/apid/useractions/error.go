@@ -63,3 +63,13 @@ func NewError(code ErrCode, err error) error {
 func NewErrorf(code ErrCode, f string, s ...interface{}) error {
 	return Error{Code: code, Message: fmt.Sprintf(f, s...)}
 }
+
+// StatusFromError ...
+func StatusFromError(err error) (ErrCode, bool) {
+	erro, ok := err.(Error)
+	if !ok {
+		return 0, false
+	}
+
+	return erro.Code, true
+}

@@ -2,10 +2,10 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
+	"github.com/sensu/sensu-go/backend/apid/useractions"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -62,45 +62,62 @@ func initCheckConfigType() {
 					Description: "Command is the command to be executed",
 					Type:        graphql.String,
 				},
+				"highFlapThreshold": &graphql.Field{
+					Description: "the flap detection high threshold (% state change) for the check. Sensu uses the same flap detection algorithm as Nagios.",
+					Type:        graphql.Int,
+				},
+				"lowFlapThreshold": &graphql.Field{
+					Description: "the flap detection low threshold (% state change) for the check. Sensu uses the same flap detection algorithm as Nagios.",
+					Type:        graphql.Int,
+				},
+				"publish": &graphql.Field{
+					Description: "indicates if check requests are published for the check",
+					Type:        graphql.Boolean,
+				},
 				"handlerNames": &graphql.Field{
 					Description: "Handlers are the event handler for the check (incidents and/or metrics)",
 					Type:        graphql.NewList(graphql.String),
 					Resolve:     AliasResolver("handlers"),
 				},
+				"runtimeAssetNames": &graphql.Field{
+					Description: "a list of assets required to execute check.",
+					Type:        graphql.NewList(graphql.String),
+					Resolve:     AliasResolver("runtimeAssets"),
+				},
 				// "handlers": &graphql.Field{
-				// 	Description: "Handlers are the event handler for the check (incidents and/or metrics)",
-				// 	Type:        graphql.NewList(handlerType),
-				// 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				// 		abilities := authorization.Handlers.WithContext(p.Context)
-				// 		check, ok := p.Source.(*types.CheckConfig)
-				// 		if !ok {
-				// 			return nil, errors.New("source object is not an Event")
-				// 		}
+				//	Description: "Handlers are the event handler for the check (incidents and/or metrics)",
+				//	Type:        graphql.NewList(handlerType),
+				//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				//		abilities := authorization.Handlers.WithContext(p.Context)
+				//		check, ok := p.Source.(*types.CheckConfig)
+				//		if !ok {
+				//			return nil, errors.New("source object is not an Event")
+				//		}
 				//
-				// 		store := p.Context.Value(types.StoreKey).(store.HandlerStore)
-				// 		handlers, err := store.GetHandlers(p.Context)
-				// 		if err != nil {
-				// 			return nil, err
-				// 		}
+				//		store := p.Context.Value(types.StoreKey).(store.HandlerStore)
+				//		handlers, err := store.GetHandlers(p.Context)
+				//		if err != nil {
+				//			return nil, err
+				//		}
 				//
-				// 		results := []interface{}{}
-				// 		for _, handler := range handlers {
-				// 			for _, hName := range check.Handlers {
-				// 				// Reject any handlers that are not assoicated with the check or
-				// 				// handlers where the user does not have access to read.
-				// 				if handler.Name == hName && abilities.CanRead(handler) {
-				// 					results = append(results, handler)
-				// 				}
-				// 			}
-				// 		}
+				//		results := []interface{}{}
+				//		for _, handler := range handlers {
+				//			for _, hName := range check.Handlers {
+				//				// Reject any handlers that are not assoicated with the check or
+				//				// handlers where the user does not have access to read.
+				//				if handler.Name == hName && abilities.CanRead(handler) {
+				//					results = append(results, handler)
+				//				}
+				//			}
+				//		}
 				//
-				// 		return results, nil
-				// 	},
+				//		return results, nil
+				//	},
 				// },
 				// TODO: Implement w/ associated types
 				// "runtimeAssets": &graphql.Field{
-				// 	Description: "RuntimeAssets are a list of assets required to execute check",
-				// 	Type:        graphql.NewList(assetType),
+				//	Description: "RuntimeAssets are a list of assets required to execute check",
+				//	Type:        graphql.NewList(assetType),
 				// },
 				// TODO: Should use type and not string
 				"environment": &graphql.Field{
@@ -139,14 +156,17 @@ func newCheckConfigNodeResolver() relay.NodeResolver {
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			components := p.IDComponents.(globalid.NamedComponents)
 			store := p.Context.Value(types.StoreKey).(store.CheckConfigStore)
-			record, err := store.GetCheckConfigByName(p.Context, components.Name())
-			if err != nil {
-				return nil, err
+			controller := useractions.NewCheckController(store)
+
+			params := useractions.QueryParams{"id": components.Name()}
+			record, err := controller.Find(p.Context, params)
+			if err == nil {
+				return record, nil
 			}
 
-			abilities := authorization.Checks.WithContext(p.Context)
-			if abilities.CanRead(record) {
-				return record, err
+			s, ok := useractions.StatusFromError(err)
+			if ok && s == useractions.NotFound {
+				return nil, nil
 			}
 			return nil, err
 		},
