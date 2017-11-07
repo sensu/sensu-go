@@ -13,6 +13,7 @@ func init() {
 		Fields: graphql.FieldsThunk(func() graphql.Fields {
 			return graphql.Fields{
 				"createCheck": createCheckMutation,
+				"updateCheck": updateCheckMutation,
 			}
 		}),
 	})

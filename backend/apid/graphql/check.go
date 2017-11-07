@@ -48,11 +48,11 @@ func initCheckConfigType() {
 				},
 				"name": &graphql.Field{
 					Description: "Name is the unique identifier for a check",
-					Type:        graphql.String,
+					Type:        graphql.NewNonNull(graphql.String),
 				},
 				"interval": &graphql.Field{
 					Description: "Interval is the interval, in seconds, at which the check should be run",
-					Type:        graphql.Int,
+					Type:        graphql.NewNonNull(graphql.Int),
 				},
 				"subscriptions": &graphql.Field{
 					Description: "Subscriptions is the list of subscribers for the check",
@@ -77,13 +77,16 @@ func initCheckConfigType() {
 				"handlerNames": &graphql.Field{
 					Description: "Handlers are the event handler for the check (incidents and/or metrics)",
 					Type:        graphql.NewList(graphql.String),
-					Resolve:     AliasResolver("handlers"),
+					Resolve:     AliasResolver("Handlers"),
 				},
 				"runtimeAssetNames": &graphql.Field{
 					Description: "a list of assets required to execute check.",
 					Type:        graphql.NewList(graphql.String),
-					Resolve:     AliasResolver("runtimeAssets"),
+					Resolve:     AliasResolver("RuntimeAssets"),
 				},
+				//
+				// TODO: Uncomment when types have been implemented.
+				//
 				// "handlers": &graphql.Field{
 				//	Description: "Handlers are the event handler for the check (incidents and/or metrics)",
 				//	Type:        graphql.NewList(handlerType),

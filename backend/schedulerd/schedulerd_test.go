@@ -2,43 +2,28 @@ package schedulerd
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSchedulerd(t *testing.T) {
-	tmpDir, remove := testutil.TempDir(t)
-	defer remove()
-
-	p := make([]int, 2)
-	err := testutil.RandomPorts(p)
-	if err != nil {
-		assert.FailNow(t, "failed to get ports for testing: ", err.Error())
+	// Setup wizard bus
+	bus := &messaging.WizardBus{}
+	if berr := bus.Start(); berr != nil {
+		assert.FailNow(t, berr.Error())
 	}
 
-	cfg := etcd.NewConfig()
-	cfg.DataDir = tmpDir
-
-	peerURL := fmt.Sprintf("http://127.0.0.1:%d", p[1])
-
-	cfg.ListenClientURL = fmt.Sprintf("http://127.0.0.1:%d", p[0])
-	cfg.ListenPeerURL = peerURL
-	cfg.InitialCluster = fmt.Sprintf("default=http://127.0.0.1:%d", p[1])
-	cfg.InitialAdvertisePeerURL = peerURL
-	e, err := etcd.NewEtcd(cfg)
-	assert.NoError(t, err)
-	defer e.Shutdown()
-
-	st, err := e.NewStore()
-	bus := &messaging.WizardBus{}
-	assert.NoError(t, bus.Start())
+	// Setup store
+	st, serr := testutil.NewStoreInstance()
+	if serr != nil {
+		assert.FailNow(t, serr.Error())
+	}
+	defer st.Teardown()
 
 	// Mock a default organization
 	st.UpdateOrganization(
@@ -73,7 +58,7 @@ func TestSchedulerd(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	err = st.DeleteCheckConfigByName(ctx, check.Name)
+	err := st.DeleteCheckConfigByName(ctx, check.Name)
 	assert.NoError(t, err)
 
 	time.Sleep(1 * time.Second)

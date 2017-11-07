@@ -11,9 +11,11 @@ import (
 )
 
 var createCheckMutation *graphql.Field
+var updateCheckMutation *graphql.Field
 
 func init() {
 	initCheckConfigType()
+	initUpdateCheckMutation()
 	initCreateCheckMutation()
 }
 
@@ -22,6 +24,8 @@ func initCreateCheckMutation() {
 		Name: "CreateCheck",
 		InputFields: graphql.InputObjectConfigFieldMap{
 			"name":              NewInputFromObjectField(checkConfigType, "name", nil),
+			"organization":      NewInputFromObjectField(checkConfigType, "organization", "default"),
+			"environment":       NewInputFromObjectField(checkConfigType, "environment", "default"),
 			"interval":          NewInputFromObjectField(checkConfigType, "interval", nil),
 			"subscriptions":     NewInputFromObjectField(checkConfigType, "subscriptions", nil),
 			"command":           NewInputFromObjectField(checkConfigType, "command", nil),
@@ -30,8 +34,6 @@ func initCreateCheckMutation() {
 			"lowFlapThreshold":  NewInputFromObjectField(checkConfigType, "lowFlapThreshold", nil),
 			"publish":           NewInputFromObjectField(checkConfigType, "publish", true),
 			"runtimeAssets":     NewInputFromObjectField(checkConfigType, "runtimeAssetNames", nil),
-			"organization":      NewInputFromObjectField(checkConfigType, "organization", "default"),
-			"environment":       NewInputFromObjectField(checkConfigType, "environment", "default"),
 		},
 		OutputFields: graphql.Fields{
 			"check": &graphql.Field{Type: checkConfigType},
@@ -50,6 +52,48 @@ func initCreateCheckMutation() {
 
 			if err := controller.Create(ctx, check); err != nil {
 				logger.WithField("inputs", inputs).WithError(err).Debug("unable to create check")
+				return results, err
+			}
+
+			results["check"] = &check
+			return results, nil
+		},
+	})
+}
+
+func initUpdateCheckMutation() {
+	updateCheckMutation = relay.MutationWithClientMutationID(relay.MutationConfig{
+		Name: "UpdateCheck",
+		InputFields: graphql.InputObjectConfigFieldMap{
+			"name":              NewInputFromObjectField(checkConfigType, "name", nil),
+			"organization":      NewInputFromObjectField(checkConfigType, "organization", "default"),
+			"environment":       NewInputFromObjectField(checkConfigType, "environment", "default"),
+			"interval":          NewInputFromObjectField(checkConfigType, "interval", nil),
+			"subscriptions":     NewInputFromObjectField(checkConfigType, "subscriptions", nil),
+			"command":           NewInputFromObjectField(checkConfigType, "command", nil),
+			"handlers":          NewInputFromObjectField(checkConfigType, "handlerNames", nil),
+			"highFlapThreshold": NewInputFromObjectField(checkConfigType, "highFlapThreshold", nil),
+			"lowFlapThreshold":  NewInputFromObjectField(checkConfigType, "lowFlapThreshold", nil),
+			"publish":           NewInputFromObjectField(checkConfigType, "publish", true),
+			"runtimeAssets":     NewInputFromObjectField(checkConfigType, "runtimeAssetNames", nil),
+		},
+		OutputFields: graphql.Fields{
+			"check": &graphql.Field{Type: checkConfigType},
+		},
+		MutateAndGetPayload: func(inputs map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+			var check = types.CheckConfig{}
+			var results = map[string]interface{}{}
+
+			if err := mapstructure.Decode(inputs, &check); err != nil {
+				logger.WithField("inputs", inputs).WithError(err).Error("unable to decode input")
+				return results, err
+			}
+
+			store := ctx.Value(types.StoreKey).(store.Store)
+			controller := actions.NewCheckController(store)
+
+			if err := controller.Update(ctx, check); err != nil {
+				logger.WithField("inputs", inputs).WithError(err).Debug("unable to update check")
 				return results, err
 			}
 
