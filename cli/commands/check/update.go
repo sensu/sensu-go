@@ -47,7 +47,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Current validation is a bit too laissez faire. For usability we should
 			// determine whether there are assets / handlers / mutators associated w/
 			// the check and warn the user if they do not exist yet.
-			if err := cli.Client.CreateCheck(check); err != nil {
+			if err := cli.Client.UpdateCheck(check); err != nil {
 				return err
 			}
 

@@ -153,7 +153,6 @@ func (r *resourceRoute) path(p string, fn actionHandlerFunc) *mux.Route {
 }
 
 func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Route {
-	logger.Errorf("HandleFunc %s", path)
 	return router.HandleFunc(path, actionHandler(fn))
 }
 

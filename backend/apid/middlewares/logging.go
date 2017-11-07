@@ -30,6 +30,7 @@ func (m SimpleLogger) Then(next http.Handler) http.Handler {
 			"status":   writerWithCapture.Status(),
 			"size":     writerWithCapture.Size(),
 			"path":     r.URL.Path,
+			"method":   r.Method,
 		})
 		logEntry.Info("request completed")
 	})

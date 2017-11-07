@@ -63,7 +63,7 @@ func TestCheckScheduling(t *testing.T) {
 
 	// Stop publishing check requests
 	check.Publish = false
-	err = sensuClient.CreateCheck(check)
+	err = sensuClient.UpdateCheck(check)
 	assert.NoError(t, err)
 
 	_, err = sensuClient.FetchCheck(check.Name)
@@ -76,6 +76,10 @@ func TestCheckScheduling(t *testing.T) {
 	event, err := sensuClient.FetchEvent(ap.AgentID, check.Name)
 	assert.NoError(t, err)
 	assert.NotNil(t, event)
+
+	if event == nil {
+		assert.FailNow(t, "no event was returned from the client.")
+	}
 	count1 := len(event.Check.History)
 
 	// Give it few seconds to make sure we did not published additional chekc requests
@@ -92,7 +96,7 @@ func TestCheckScheduling(t *testing.T) {
 
 	// Start publishing check requests again
 	check.Publish = true
-	err = sensuClient.CreateCheck(check)
+	err = sensuClient.UpdateCheck(check)
 	assert.NoError(t, err)
 
 	// Give it few seconds to make sure it picks up the change

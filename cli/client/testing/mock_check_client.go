@@ -8,6 +8,12 @@ func (c *MockClient) CreateCheck(check *types.CheckConfig) error {
 	return args.Error(0)
 }
 
+// UpdateCheck for use with mock lib
+func (c *MockClient) UpdateCheck(check *types.CheckConfig) error {
+	args := c.Called(check)
+	return args.Error(0)
+}
+
 // DeleteCheck for use with mock lib
 func (c *MockClient) DeleteCheck(check *types.CheckConfig) error {
 	args := c.Called(check)

@@ -45,7 +45,7 @@ func TestUpdateCommand(t *testing.T) {
 			).Return(check, tc.fetchResponse)
 
 			client.On(
-				"CreateCheck",
+				"UpdateCheck",
 				mock.Anything,
 			).Return(tc.updateResponse)
 
