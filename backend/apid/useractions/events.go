@@ -1,4 +1,4 @@
-package useractions
+package actions
 
 import (
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -73,7 +73,7 @@ func (a EventController) Find(ctx context.Context, params QueryParams) (interfac
 	}
 
 	if len(results) == 0 {
-		return nil, NewErrorf(NotFound, "no event found")
+		return nil, NewErrorf(NotFound)
 	}
 
 	return results[0], err

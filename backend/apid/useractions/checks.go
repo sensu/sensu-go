@@ -1,4 +1,4 @@
-package useractions
+package actions
 
 import (
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -83,7 +83,7 @@ func (a CheckController) Find(ctx context.Context, params QueryParams) (interfac
 		return result, nil
 	}
 
-	return nil, NewErrorf(NotFound, "not found")
+	return nil, NewErrorf(NotFound)
 }
 
 // Create instatiates, validates and persists new resource if viewer has access.
@@ -96,12 +96,12 @@ func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig)
 	if e, err := a.Store.GetCheckConfigByName(ctx, newCheck.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr, "already exists")
+		return NewErrorf(AlreadyExistsErr)
 	}
 
 	// Verify viewer can make change
 	if yes := abilities.CanCreate(&newCheck); !yes {
-		return NewErrorf(PermissionDenied, "denied")
+		return NewErrorf(PermissionDenied)
 	}
 
 	// Validate
@@ -128,12 +128,12 @@ func (a CheckController) Update(ctx context.Context, given types.CheckConfig) er
 	if err != nil {
 		return NewError(InternalErr, err)
 	} else if check == nil {
-		return NewErrorf(NotFound, "not found")
+		return NewErrorf(NotFound)
 	}
 
 	// Verify viewer can make change
 	if yes := abilities.CanUpdate(check); !yes {
-		return NewErrorf(PermissionDenied, "denied")
+		return NewErrorf(PermissionDenied)
 	}
 
 	// Copy
@@ -158,7 +158,7 @@ func (a CheckController) Destroy(ctx context.Context, params QueryParams) error 
 
 	// Verify user has permission
 	if yes := abilities.CanDelete(); !yes {
-		return NewErrorf(PermissionDenied, "denied")
+		return NewErrorf(PermissionDenied)
 	}
 
 	// Fetch from store
@@ -166,7 +166,7 @@ func (a CheckController) Destroy(ctx context.Context, params QueryParams) error 
 	if serr != nil {
 		return NewError(InternalErr, serr)
 	} else if result == nil {
-		return NewErrorf(NotFound, "not found")
+		return NewErrorf(NotFound)
 	}
 
 	// Remove from store

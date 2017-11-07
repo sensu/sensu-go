@@ -1,4 +1,4 @@
-package useractions
+package actions
 
 import "fmt"
 
@@ -14,31 +14,41 @@ type ErrCode uint32
 const (
 	// InternalErr refers to an issue that occured in the underlying system. Eg.
 	// if etcd was unreachable or something was implemented incorrectly.
-	InternalErr ErrCode = 1
+	InternalErr ErrCode = iota
 
 	// InvalidArgument refers to an issue with the arguments the user provided.
 	// Eg. if arguments were of the wrong type or if the purposed changes cause
 	// the record's validation to fail.
-	InvalidArgument ErrCode = 2
+	InvalidArgument
 
 	// NotFound means that the requested resource is unreachable or does not
 	// exist.
-	NotFound ErrCode = 3
+	NotFound
 
 	// AlreadyExistsErr means that a create operation failed because the given
 	// resource already exists in the system.
-	AlreadyExistsErr ErrCode = 4
+	AlreadyExistsErr
 
 	// PermissionDenied means that the viewer does not have permission to perform
 	// the action they are attempting. Is not used when user is unauthenticated.
 	// Eg. if the viewer is trying to list all events but doesn't not have the
 	// approriate roles for the operation.
-	PermissionDenied ErrCode = 5
+	PermissionDenied
 
 	// Unauthenticated used when viewer is not authenticated but action requires
 	// viewer to be authenticated.
-	Unauthenticated ErrCode = 6
+	Unauthenticated
 )
+
+// Default error messages if not message is provided.
+var standardErrorMessages = map[ErrCode]string{
+	InternalErr:      "internal error occurred",
+	InvalidArgument:  "invalid argument(s) received",
+	NotFound:         "not found",
+	AlreadyExistsErr: "resource already exists",
+	PermissionDenied: "unauthorized to perform action",
+	Unauthenticated:  "unauthenticated",
+}
 
 // Error describes an issue that ocurred while performing the action.
 type Error struct {
@@ -55,16 +65,21 @@ func (err Error) Error() string {
 }
 
 // NewError returns a new Error given existing error and code.
-func NewError(code ErrCode, err error) error {
+func NewError(code ErrCode, err error) Error {
 	return Error{Code: code, Message: err.Error()}
 }
 
 // NewErrorf returns a new Error given message and code.
-func NewErrorf(code ErrCode, f string, s ...interface{}) error {
+func NewErrorf(code ErrCode, s ...interface{}) Error {
+	if len(s) == 0 {
+		s = []string{standardErrorMessages[code]}
+	}
+
+	f, s := s[0], s[1:]
 	return Error{Code: code, Message: fmt.Sprintf(f, s...)}
 }
 
-// StatusFromError ...
+// StatusFromError extracts code from the given error.
 func StatusFromError(err error) (ErrCode, bool) {
 	erro, ok := err.(Error)
 	if !ok {

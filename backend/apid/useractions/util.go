@@ -1,4 +1,4 @@
-package useractions
+package actions
 
 import (
 	"reflect"
