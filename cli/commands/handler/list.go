@@ -86,6 +86,13 @@ func printHandlersToTable(queryResults []types.Handler, writer io.Writer) {
 			},
 		},
 		{
+			Title: "Filters",
+			CellTransformer: func(data interface{}) string {
+				handler, _ := data.(types.Handler)
+				return strings.Join(handler.Filters, ",")
+			},
+		},
+		{
 			Title: "Mutator",
 			CellTransformer: func(data interface{}) string {
 				handler, _ := data.(types.Handler)

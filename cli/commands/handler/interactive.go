@@ -16,7 +16,8 @@ type handlerOpts struct {
 	Mutator    string `survey:"mutator"`
 	Command    string `survey:"command"`
 	Timeout    string `survey:"timeout"`
-	Handlers   string `survey:"handler"`
+	Filters    string `survey:"filters"`
+	Handlers   string `survey:"handlers"`
 	SocketHost string `survey:"socketHost"`
 	SocketPort string `survey:"socketPort"`
 	Env        string
@@ -35,13 +36,15 @@ func newHandlerOpts() *handlerOpts {
 
 func (opts *handlerOpts) withHandler(handler *types.Handler) {
 	opts.Name = handler.Name
-	opts.Type = handler.Type
-	opts.Mutator = handler.Mutator
-	opts.Org = handler.Organization
 	opts.Env = handler.Environment
+	opts.Org = handler.Organization
+
 	opts.Command = handler.Command
-	opts.Timeout = strconv.FormatUint(uint64(handler.Timeout), 10)
+	opts.Filters = strings.Join(handler.Filters, ",")
 	opts.Handlers = strings.Join(handler.Handlers, ",")
+	opts.Mutator = handler.Mutator
+	opts.Timeout = strconv.FormatUint(uint64(handler.Timeout), 10)
+	opts.Type = handler.Type
 
 	if handler.Socket != nil {
 		opts.SocketHost = handler.Socket.Host
@@ -50,13 +53,14 @@ func (opts *handlerOpts) withHandler(handler *types.Handler) {
 }
 
 func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
-	opts.Type, _ = flags.GetString("type")
-	opts.Mutator, _ = flags.GetString("mutator")
 	opts.Command, _ = flags.GetString("command")
-	opts.Timeout, _ = flags.GetString("timeout")
+	opts.Filters, _ = flags.GetString("handlers")
+	opts.Handlers, _ = flags.GetString("handlers")
+	opts.Mutator, _ = flags.GetString("mutator")
 	opts.SocketHost, _ = flags.GetString("socket-host")
 	opts.SocketPort, _ = flags.GetString("socket-port")
-	opts.Handlers, _ = flags.GetString("handlers")
+	opts.Timeout, _ = flags.GetString("timeout")
+	opts.Type, _ = flags.GetString("type")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -119,6 +123,14 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 
 	qs = append(qs, []*survey.Question{
 		{
+			Name: "filters",
+			Prompt: &survey.Input{
+				Message: "Filters:",
+				Default: opts.Filters,
+				Help:    "comma separated list of filters to use when filtering events for the handler",
+			},
+		},
+		{
 			Name: "mutator",
 			Prompt: &survey.Input{
 				Message: "Mutator:",
@@ -161,6 +173,22 @@ func (opts *handlerOpts) queryForCommand() error {
 	return survey.Ask(qs, opts)
 }
 
+func (opts *handlerOpts) queryForHandlers() error {
+	var qs = []*survey.Question{
+		{
+			Name: "handlers",
+			Prompt: &survey.Input{
+				Message: "Handlers:",
+				Default: opts.Handlers,
+				Help:    "comma separated list of handlers to call using the handler set",
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	return survey.Ask(qs, opts)
+}
+
 func (opts *handlerOpts) queryForSocket() error {
 	var qs = []*survey.Question{
 		{
@@ -184,27 +212,14 @@ func (opts *handlerOpts) queryForSocket() error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *handlerOpts) queryForHandlers() error {
-	var qs = []*survey.Question{
-		{
-			Name: "handlers",
-			Prompt: &survey.Input{
-				Message: "Handlers:", Default: opts.Handlers,
-			},
-			Validate: survey.Required,
-		},
-	}
-
-	return survey.Ask(qs, opts)
-}
-
 func (opts *handlerOpts) Copy(handler *types.Handler) {
 	handler.Name = opts.Name
 	handler.Environment = opts.Env
 	handler.Organization = opts.Org
-	handler.Type = strings.ToLower(opts.Type)
-	handler.Mutator = opts.Mutator
+
 	handler.Command = opts.Command
+	handler.Mutator = opts.Mutator
+	handler.Type = strings.ToLower(opts.Type)
 
 	if len(opts.Timeout) > 0 {
 		t, _ := strconv.ParseUint(opts.Timeout, 10, 32)
@@ -219,6 +234,12 @@ func (opts *handlerOpts) Copy(handler *types.Handler) {
 			Host: opts.SocketHost,
 			Port: uint32(p),
 		}
+	}
+
+	filters := helpers.SafeSplitCSV(opts.Filters)
+	handler.Filters = make([]string, len(filters))
+	for i, f := range filters {
+		handler.Filters[i] = strings.TrimSpace(f)
 	}
 
 	handlers := helpers.SafeSplitCSV(opts.Handlers)
