@@ -23,7 +23,7 @@ func TestNewEventController(t *testing.T) {
 	assert.NotNil(eventController.Policy)
 }
 
-func TestQuery(t *testing.T) {
+func TestEventQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
 		types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
 	))
@@ -119,7 +119,7 @@ func TestQuery(t *testing.T) {
 	}
 }
 
-func TestFind(t *testing.T) {
+func TestEventFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
 		types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
 	))
