@@ -56,3 +56,16 @@ func TestListCommand(t *testing.T) {
 		})
 	}
 }
+
+func TestListFlags(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	cmd := ListCommand(cli)
+
+	flag := cmd.Flag("all-organizations")
+	assert.NotNil(flag)
+
+	flag = cmd.Flag("format")
+	assert.NotNil(flag)
+}

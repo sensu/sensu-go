@@ -51,7 +51,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
-	cmd.Flags().Bool(flags.AllOrgs, false, "Include records from all organizations")
+	helpers.AddAllOrganization(cmd.Flags())
 
 	return cmd
 }
