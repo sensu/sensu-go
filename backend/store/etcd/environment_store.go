@@ -96,11 +96,8 @@ func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types
 
 // GetOrganizations returns all organizations
 func (s *etcdStore) GetEnvironments(ctx context.Context, org string) ([]*types.Environment, error) {
-	resp, err := s.kvc.Get(
-		ctx,
-		getEnvironmentsPath(org, "/"),
-		v3.WithPrefix(),
-	)
+	// TODO (SP): We should use the query function here but getEnvironmentsPath signature is wrong
+	resp, err := s.kvc.Get(ctx, getEnvironmentsPath(org, "/"), v3.WithPrefix())
 
 	if err != nil {
 		return []*types.Environment{}, err

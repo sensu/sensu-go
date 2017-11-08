@@ -80,7 +80,7 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 // ListChecks fetches all checks from configured Sensu instance
 func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
 	var checks []types.CheckConfig
-	res, err := client.R().Get("/checks?org=" + org)
+	res, err := client.R().SetQueryParam("org", org).Get("/checks")
 	if err != nil {
 		return checks, err
 	}

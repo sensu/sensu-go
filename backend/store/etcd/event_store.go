@@ -45,6 +45,7 @@ func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, chec
 // GetEvents returns the events for an (optional) organization. If org is the
 // empty string, GetEvents returns all events for all orgs.
 func (s *etcdStore) GetEvents(ctx context.Context) ([]*types.Event, error) {
+	// TODO (SP): We should use the query function here but getEnvironmentsPath signature is wrong
 	resp, err := s.kvc.Get(context.Background(), getEventsPath(ctx, "", ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err

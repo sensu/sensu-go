@@ -38,7 +38,7 @@ func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) er
 // GetCheckConfigs returns check configurations for an (optional) organization.
 // If org is the empty string, it returns all check configs.
 func (s *etcdStore) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
-	resp, err := s.kvc.Get(ctx, getCheckConfigsPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getCheckConfigsPath)
 	if err != nil {
 		return nil, err
 	}

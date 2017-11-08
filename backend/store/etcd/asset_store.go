@@ -40,7 +40,7 @@ func (s *etcdStore) DeleteAssetByName(ctx context.Context, name string) error {
 
 // GetAssets fetches all assets from the store
 func (s *etcdStore) GetAssets(ctx context.Context) ([]*types.Asset, error) {
-	resp, err := s.kvc.Get(ctx, getAssetsPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getAssetsPath)
 	if err != nil {
 		return nil, err
 	}

@@ -66,7 +66,7 @@ func (s *etcdStore) GetEntityByID(ctx context.Context, id string) (*types.Entity
 // GetEntities takes an optional org argument, an empty string will return
 // all entities.
 func (s *etcdStore) GetEntities(ctx context.Context) ([]*types.Entity, error) {
-	resp, err := s.kvc.Get(ctx, getEntitiesPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getEntitiesPath)
 	if err != nil {
 		return nil, err
 	}
