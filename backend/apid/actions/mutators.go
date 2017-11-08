@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -68,6 +67,5 @@ func (c MutatorController) Find(ctx context.Context, params QueryParams) (interf
 		return nil, NewErrorf(NotFound)
 	}
 
-	fmt.Println("hi")
 	return result, nil
 }
