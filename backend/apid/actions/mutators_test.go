@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestNewMutatorController(t *testing.T) {
