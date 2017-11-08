@@ -6,6 +6,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
 )
 
@@ -73,17 +74,23 @@ func NewInputFromObjectField(obj *graphql.Object, fieldName string, defaultValue
 	return nil
 }
 
-func DecodeIDFromInputs(inputs map[string]interface{}, fieldName string) globalid.Components {
+// DecodeIDFromInputs takes inputs and a field name and will return the global id components for the
+// input matching the field name
+func DecodeIDFromInputs(inputs map[string]interface{}, fieldName string) (globalid.Components, error) {
 	id, _ := inputs[fieldName].(string)
 	return globalid.Decode(id)
 }
 
+// SetContextFromComponents takes a context and global id components, adds the environment and
+// organization to the context, and returns the updated context
 func SetContextFromComponents(ctx context.Context, c globalid.Components) context.Context {
-	ctx = context.WithValue(ctx, EnvironmentKey, c.Environment)
-	ctx = context.WithValue(ctx, OrganizationKey, c.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, c.Environment)
+	ctx = context.WithValue(ctx, types.OrganizationKey, c.Organization)
 	return ctx
 }
 
+// IDQueryParamsFromComponents takes a global id components and returns QueryParams with the id key
+// set to the components' primary id
 func IDQueryParamsFromComponents(components globalid.Components) actions.QueryParams {
 	return actions.QueryParams{
 		"id": components.UniqueComponent(),

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/testutil"
+	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )

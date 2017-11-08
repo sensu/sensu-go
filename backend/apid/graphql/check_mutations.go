@@ -12,6 +12,7 @@ import (
 
 var createCheckMutation *graphql.Field
 var updateCheckMutation *graphql.Field
+var destroyCheckMutation *graphql.Field
 
 func init() {
 	initCheckConfigType()
@@ -105,7 +106,7 @@ func initUpdateCheckMutation() {
 }
 
 func initDestroyCheckMutation() {
-	updateCheckMutation = relay.MutationWithClientMutationID(relay.MutationConfig{
+	destroyCheckMutation = relay.MutationWithClientMutationID(relay.MutationConfig{
 		Name: "DestroyCheck",
 		InputFields: graphql.InputObjectConfigFieldMap{
 			"id": NewInputFromObjectField(checkConfigType, "id", nil),
@@ -117,7 +118,10 @@ func initDestroyCheckMutation() {
 			},
 		},
 		MutateAndGetPayload: func(inputs map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
-			components := DecodeIDFromInputs(inputs, "id")
+			var results = map[string]interface{}{}
+
+			// TODO (JK): handle the error from DecodeIDFromInputs()
+			components, _ := DecodeIDFromInputs(inputs, "id")
 			ctx = SetContextFromComponents(ctx, components)
 			params := IDQueryParamsFromComponents(components)
 
@@ -129,7 +133,7 @@ func initDestroyCheckMutation() {
 				return results, err
 			}
 
-			results["id"] = id
+			results["id"] = components.String()
 			return results, nil
 		},
 	})

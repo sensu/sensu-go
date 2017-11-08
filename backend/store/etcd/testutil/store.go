@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/testing/testutil"
 )
 
 // IntegrationTestStore wrapper for etcd & store
@@ -38,7 +39,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 	removeTmp := func() { os.RemoveAll(tmpDir) }
 
 	p := make([]int, 2)
-	perr := RandomPorts(p)
+	perr := testutil.RandomPorts(p)
 	if perr != nil {
 		removeTmp()
 		return nil, perr
