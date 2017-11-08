@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// MutatorController defines the fields required by MutatorController.
+// MutatorController allows querying mutators in bulk or by name.
 type MutatorController struct {
 	Store  store.MutatorStore
 	Policy authorization.MutatorPolicy
