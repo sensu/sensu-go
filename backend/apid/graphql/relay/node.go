@@ -3,7 +3,7 @@ package relay
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/graphql/globalid"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"golang.org/x/net/context"
 )
 

@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/store"
-	graphql "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
 )

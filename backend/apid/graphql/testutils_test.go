@@ -2,17 +2,21 @@ package graphqlschema
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/graphql/gqlerrors"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/graphql/globalid"
-	"github.com/sensu/sensu-go/graphql/relay"
+	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/context"
 )
@@ -20,6 +24,30 @@ import (
 var errMock = errors.New("v spoopy error message")
 
 type setContextFn func(context.Context) context.Context
+type setStore func(context.Context, store.Store)
+
+type queryResultsWrapper struct {
+	runner *testing.T
+	data   interface{}
+}
+
+func (r *queryResultsWrapper) Get(keys ...string) interface{} {
+	_, ok := r.data.(map[string]interface{})
+	if !ok { // unless something really bad happen, results should always be a map
+		assert.FailNow(r.runner, "query results are not a map")
+	}
+
+	var result interface{} = r.data
+	for _, key := range keys {
+		d, ok := result.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		result = d[key]
+	}
+
+	return result
+}
 
 func newParams(source interface{}, fns ...setContextFn) graphql.ResolveParams {
 	params := graphql.ResolveParams{
@@ -289,6 +317,87 @@ func (t *nodeSuite) setNodeResolver(r *relay.NodeResolver) {
 	t._nodeResolver = r
 }
 
+//
+// mutationSuite is used for defining integration tests suites against the
+// GraphQL schema.
+//
+// Ex.
+//
+//  type myMutationSuite struct {
+//    suite.Suite
+//    mutationSuite
+//  }
+//
+//  func (t *myMutationSuite) SetupTest() {
+//    t.populateContext(testutil.contextWithFullAccess)
+//    t.populateStore(func (st store.Store) {
+//      st.CreateMyPet(Pet{Name: "Fred", Kind: "donkey"})
+//    })
+//  }
+//
+//  func (t *myMutationSuite) TestSuccess() {
+//    res := t.RunQuery(`mutation { updatePet(name: "Frank") { id } }`)
+//    t.Empty(res.Errors)
+//    t.NotEmpty(res.Body)
+//  }
+//
+//  func (t *myMutationSuite) TestBadArgs() {
+//    res := t.RunQuery(`mutation { updatePet(name: "") { id } }`)
+//    t.NotEmpty(res.Errors)
+//    t.Empty(res.Body)
+//  }
+//
+type mutationSuite struct {
+	store      *testutil.IntegrationTestStore
+	contextFns []setContextFn
+	storeFns   []setStore
+}
+
+// populateContext takes funcs that will update context before query is run.
+func (t *mutationSuite) populateContext(fns ...setContextFn) {
+	t.contextFns = append(t.contextFns, fns...)
+}
+
+// populateStore takes funcs that will update store before query is run.
+func (t *mutationSuite) populateStore(fns ...setStore) {
+	t.storeFns = append(t.storeFns, fns...)
+}
+
+// runQuery runs given graphql query
+func (t *mutationSuite) runQuery(runner *testing.T, query string, args map[string]interface{}) (queryResultsWrapper, []gqlerrors.FormattedError) {
+	// Start the store
+	st, serr := testutil.NewStoreInstance()
+	if serr != nil {
+		assert.FailNow(
+			runner,
+			fmt.Sprintf("unable to start store instance w/ err: %s", serr.Error()),
+		)
+	}
+	defer st.Teardown()
+
+	// Instantiate context and fill it using the fns in contextFns
+	ctx := context.TODO()
+	contextFns := append(t.contextFns, contextWithStore(st))
+	for _, fn := range contextFns {
+		ctx = fn(ctx)
+	}
+
+	// Populate the store using the fns in storeFns
+	for _, fn := range t.storeFns {
+		fn(ctx, st)
+	}
+
+	// run the query using the Execute function (execute.go)
+	results := Execute(ctx, query, &args)
+
+	// wrap results & return
+	return queryResultsWrapper{
+		runner: runner,
+		data:   results.Data,
+	}, results.Errors
+}
+
+// runSuites runs array of given suites as subtests.
 func runSuites(t *testing.T, suites ...suite.TestingSuite) {
 	for _, s := range suites {
 		t.Run(reflect.TypeOf(s).Elem().Name(), func(t *testing.T) {

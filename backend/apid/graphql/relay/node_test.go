@@ -3,7 +3,7 @@ package relay
 import (
 	"testing"
 
-	"github.com/sensu/sensu-go/graphql/globalid"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/stretchr/testify/assert"
 )
 

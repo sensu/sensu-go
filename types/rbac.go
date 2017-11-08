@@ -159,6 +159,14 @@ func FixtureRule(org, env string) *Rule {
 	}
 }
 
+// FixtureRuleWithPerms returns a partial rule with perms applied
+func FixtureRuleWithPerms(T string, perms ...string) Rule {
+	rule := *FixtureRule("*", "*")
+	rule.Type = T
+	rule.Permissions = perms
+	return rule
+}
+
 // FixtureRole returns a partial role
 func FixtureRole(name, org, env string) *Role {
 	return &Role{

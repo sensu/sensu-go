@@ -3,6 +3,7 @@ package graphqlschema
 import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/relay"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -44,22 +45,17 @@ func init() {
 					Description: "A list of checks the given viewer has read access to",
 					Args:        relay.ConnectionArgs,
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						abilities := authorization.Checks.WithContext(p.Context)
 						store := p.Context.Value(types.StoreKey).(store.Store)
-						checks, err := store.GetCheckConfigs(p.Context)
+
+						controller := actions.NewCheckController(store)
+
+						checks, err := controller.Query(p.Context, actions.QueryParams{})
 						if err != nil {
 							return nil, err
 						}
 
-						resources := []interface{}{}
-						for _, check := range checks {
-							if abilities.CanRead(check) {
-								resources = append(resources, check)
-							}
-						}
-
 						args := relay.NewConnectionArguments(p.Args)
-						return relay.ConnectionFromArray(resources, args), nil
+						return relay.ConnectionFromArray(checks, args), nil
 					},
 				},
 				"checkEvents": &graphql.Field{
