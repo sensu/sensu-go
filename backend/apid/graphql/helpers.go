@@ -4,6 +4,9 @@ import (
 	"reflect"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	"golang.org/x/net/context"
 )
 
 //
@@ -68,4 +71,21 @@ func NewInputFromObjectField(obj *graphql.Object, fieldName string, defaultValue
 		Panic("given field did not match any fields on type")
 
 	return nil
+}
+
+func DecodeIDFromInputs(inputs map[string]interface{}, fieldName string) globalid.Components {
+	id, _ := inputs[fieldName].(string)
+	return globalid.Decode(id)
+}
+
+func SetContextFromComponents(ctx context.Context, c globalid.Components) context.Context {
+	ctx = context.WithValue(ctx, EnvironmentKey, c.Environment)
+	ctx = context.WithValue(ctx, OrganizationKey, c.Organization)
+	return ctx
+}
+
+func IDQueryParamsFromComponents(components globalid.Components) actions.QueryParams {
+	return actions.QueryParams{
+		"id": components.UniqueComponent(),
+	}
 }

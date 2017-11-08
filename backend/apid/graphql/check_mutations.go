@@ -15,6 +15,7 @@ var updateCheckMutation *graphql.Field
 
 func init() {
 	initCheckConfigType()
+	initDestroyCheckMutation()
 	initUpdateCheckMutation()
 	initCreateCheckMutation()
 }
@@ -98,6 +99,37 @@ func initUpdateCheckMutation() {
 			}
 
 			results["check"] = &check
+			return results, nil
+		},
+	})
+}
+
+func initDestroyCheckMutation() {
+	updateCheckMutation = relay.MutationWithClientMutationID(relay.MutationConfig{
+		Name: "DestroyCheck",
+		InputFields: graphql.InputObjectConfigFieldMap{
+			"id": NewInputFromObjectField(checkConfigType, "id", nil),
+		},
+		OutputFields: graphql.Fields{
+			"id": &graphql.Field{
+				Description: "The ID of the deleted check",
+				Type:        graphql.NewNonNull(graphql.ID),
+			},
+		},
+		MutateAndGetPayload: func(inputs map[string]interface{}, info graphql.ResolveInfo, ctx context.Context) (map[string]interface{}, error) {
+			components := DecodeIDFromInputs(inputs, "id")
+			ctx = SetContextFromComponents(ctx, components)
+			params := IDQueryParamsFromComponents(components)
+
+			store := ctx.Value(types.StoreKey).(store.Store)
+			controller := actions.NewCheckController(store)
+
+			if err := controller.Destroy(ctx, params); err != nil {
+				logger.WithField("inputs", inputs).WithError(err).Debug("unable to delete check")
+				return results, err
+			}
+
+			results["id"] = id
 			return results, nil
 		},
 	})

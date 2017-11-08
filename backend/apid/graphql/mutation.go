@@ -12,8 +12,9 @@ func init() {
 		Description: "The root query for implementing GraphQL mutations.",
 		Fields: graphql.FieldsThunk(func() graphql.Fields {
 			return graphql.Fields{
-				"createCheck": createCheckMutation,
-				"updateCheck": updateCheckMutation,
+				"createCheck":  createCheckMutation,
+				"updateCheck":  updateCheckMutation,
+				"destroyCheck": destroyCheckMutation,
 			}
 		}),
 	})

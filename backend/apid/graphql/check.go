@@ -11,14 +11,15 @@ import (
 
 var checkConfigType *graphql.Object
 var checkConfigConnection *relay.ConnectionDefinitions
+var checkNodeResolver *relay.NodeResolver
 
 func init() {
 	initNodeInterface()
 	initCheckConfigType()
 	initCheckConfigConnection()
 
-	nodeResolver := newCheckConfigNodeResolver()
-	nodeRegister.RegisterResolver(nodeResolver)
+	checkNodeResolver = newCheckConfigNodeResolver()
+	nodeRegister.RegisterResolver(checkNodeResolver)
 }
 
 func initCheckConfigType() {
