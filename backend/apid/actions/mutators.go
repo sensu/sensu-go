@@ -5,6 +5,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 // MutatorController allows querying mutators in bulk or by name.
@@ -19,6 +20,36 @@ func NewMutatorController(store store.MutatorStore) MutatorController {
 		Store:  store,
 		Policy: authorization.Mutators,
 	}
+}
+
+// Create creates a new Mutator resource.
+func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error {
+	ctx = addOrgEnvToContext(ctx, &mut)
+	policy := c.Policy.WithContext(ctx)
+
+	// Check for existing
+	if m, err := c.Store.GetMutatorByName(ctx, mut.Name); err != nil {
+		return NewError(InternalErr, err)
+	} else if m != nil {
+		return NewErrorf(AlreadyExistsErr)
+	}
+
+	// Verify permissions
+	if ok := policy.CanCreate(&mut); !ok {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := mut.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := c.Store.UpdateMutator(ctx, &mut); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
 }
 
 // Query returns resources available to the viewer filter by given params.
