@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
@@ -18,6 +19,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			org := cli.Config.Organization()
+			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
+				org = "*"
+			}
 
 			// Fetch orgs from API
 			r, err := cli.Client.ListEnvironments(org)
@@ -44,6 +48,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
+	helpers.AddAllOrganization(cmd.Flags())
 
 	return cmd
 }

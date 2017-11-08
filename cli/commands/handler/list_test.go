@@ -93,6 +93,19 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert.Equal("fire", err.Error())
 }
 
+func TestListFlags(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := newCLI()
+	cmd := ListCommand(cli)
+
+	flag := cmd.Flag("all-organizations")
+	assert.NotNil(flag)
+
+	flag = cmd.Flag("format")
+	assert.NotNil(flag)
+}
+
 func newCLI() *cli.SensuCli {
 	cli := test.NewMockCLI()
 	config := cli.Config.(*client.MockConfig)
