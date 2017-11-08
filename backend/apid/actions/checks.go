@@ -41,11 +41,6 @@ func NewCheckController(store store.CheckConfigStore) CheckController {
 
 // Query returns resources available to the viewer filter by given params.
 func (a CheckController) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
-	abilities := a.Policy.WithContext(ctx)
-	if yes := abilities.CanList(); !yes {
-		return nil, NewErrorf(PermissionDenied, "cannot list resources")
-	}
-
 	// Fetch from store
 	results, serr := a.Store.GetCheckConfigs(ctx)
 	if serr != nil {
@@ -53,6 +48,7 @@ func (a CheckController) Query(ctx context.Context, params QueryParams) ([]inter
 	}
 
 	// Filter out those resources the viewer does not have access to view.
+	abilities := a.Policy.WithContext(ctx)
 	resources := []interface{}{}
 	for _, result := range results {
 		if yes := abilities.CanRead(result); yes {
