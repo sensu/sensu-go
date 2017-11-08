@@ -3,6 +3,7 @@ package graphqlschema
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/suite"
@@ -82,6 +83,35 @@ func (t *CheckMutationSuite) TestUpdateSuccess() {
 
 	t.Empty(errs)
 	t.Equal(30, result.Get("updateCheck", "check", "interval"))
+}
+
+func (t *CheckMutationSuite) TestDestroySuccess() {
+	check := types.FixtureCheckConfig("my-check")
+	gid := globalid.CheckTranslator.EncodeToString(check)
+
+	t.populateStore(func(ctx context.Context, st store.Store) {
+		st.UpdateCheckConfig(ctx, check)
+	})
+
+	result, errs := t.runQuery(
+		t.T(),
+		`
+			mutation myMutation($inputs: DestroyCheckInput!) {
+				destroyCheck(input: $inputs) {
+					destroyedCheckId
+				}
+			}
+		`,
+		map[string]interface{}{
+			"inputs": map[string]interface{}{
+				"clientMutationId": "1",
+				"id":               gid,
+			},
+		},
+	)
+
+	t.Empty(errs)
+	t.Equal(gid, result.Get("destroyCheck", "destroyedCheckId"))
 }
 
 func (t *CheckMutationSuite) TestCreateInvalidInputs() {

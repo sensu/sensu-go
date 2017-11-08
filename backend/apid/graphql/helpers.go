@@ -84,8 +84,8 @@ func DecodeIDFromInputs(inputs map[string]interface{}, fieldName string) (global
 // SetContextFromComponents takes a context and global id components, adds the environment and
 // organization to the context, and returns the updated context
 func SetContextFromComponents(ctx context.Context, c globalid.Components) context.Context {
-	ctx = context.WithValue(ctx, types.EnvironmentKey, c.Environment)
-	ctx = context.WithValue(ctx, types.OrganizationKey, c.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, c.Environment())
+	ctx = context.WithValue(ctx, types.OrganizationKey, c.Organization())
 	return ctx
 }
 

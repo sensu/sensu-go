@@ -112,7 +112,7 @@ func initDestroyCheckMutation() {
 			"id": NewInputFromObjectField(checkConfigType, "id", nil),
 		},
 		OutputFields: graphql.Fields{
-			"id": &graphql.Field{
+			"destroyedCheckId": &graphql.Field{
 				Description: "The ID of the deleted check",
 				Type:        graphql.NewNonNull(graphql.ID),
 			},
@@ -133,7 +133,7 @@ func initDestroyCheckMutation() {
 				return results, err
 			}
 
-			results["id"] = components.String()
+			results["destroyedCheckId"] = components.String()
 			return results, nil
 		},
 	})
