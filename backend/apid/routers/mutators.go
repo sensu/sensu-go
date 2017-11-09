@@ -13,8 +13,8 @@ type MutatorsRouter struct {
 	controller actions.MutatorController
 }
 
-func NewMutatorsRouter(store store.MutatorStore) MutatorsRouter {
-	return MutatorsRouter{
+func NewMutatorsRouter(store store.MutatorStore) *MutatorsRouter {
+	return &MutatorsRouter{
 		controller: actions.NewMutatorController(store),
 	}
 }
