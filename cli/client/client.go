@@ -33,6 +33,9 @@ func New(config config.Config) *RestClient {
 	restyInst := resty.New()
 	client := &RestClient{resty: restyInst, config: config}
 
+	// Standardize redirect policy
+	restyInst.SetRedirectPolicy(resty.FlexibleRedirectPolicy(10))
+
 	// JSON
 	restyInst.SetHeader("Accept", "application/json")
 	restyInst.SetHeader("Content-Type", "application/json")
