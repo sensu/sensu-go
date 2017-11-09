@@ -13,8 +13,8 @@ type CheckMutator interface {
 	Update(context.Context, types.CheckConfig) error
 }
 
-// updateFields refers to fields a viewer may update
-var updateFields = []string{
+// checkConfigUpdateFields whitelists fields allowed to be updated for CheckConfigs
+var checkConfigUpdateFields = []string{
 	"Command",
 	"Handlers",
 	"HighFlapThreshold",
@@ -137,7 +137,7 @@ func (a CheckController) Update(ctx context.Context, given types.CheckConfig) er
 	}
 
 	// Copy
-	copyFields(check, &given, updateFields...)
+	copyFields(check, &given, checkConfigUpdateFields...)
 
 	// Validate
 	if err := check.Validate(); err != nil {
