@@ -12,4 +12,4 @@ RUN apk add --no-cache ca-certificates dumb-init && \
 COPY target/linux-amd64/ /opt/sensu/bin/
 COPY docker-scripts/ /opt/sensu/bin/
 
-CMD ["sensu-backend"]
+CMD ["sensu-backend", "start"]
