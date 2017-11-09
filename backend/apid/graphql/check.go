@@ -161,8 +161,7 @@ func newCheckConfigNodeResolver() relay.NodeResolver {
 			store := p.Context.Value(types.StoreKey).(store.CheckConfigStore)
 			controller := actions.NewCheckController(store)
 
-			params := actions.QueryParams{"id": components.Name()}
-			record, err := controller.Find(p.Context, params)
+			record, err := controller.Find(p.Context, components.Name())
 			if err == nil {
 				return record, nil
 			}

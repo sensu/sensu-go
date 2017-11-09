@@ -123,12 +123,11 @@ func initDestroyCheckMutation() {
 			// TODO (JK): handle the error from DecodeIDFromInputs()
 			components, _ := DecodeIDFromInputs(inputs, "id")
 			ctx = SetContextFromComponents(ctx, components)
-			params := IDQueryParamsFromComponents(components)
 
 			store := ctx.Value(types.StoreKey).(store.Store)
 			controller := actions.NewCheckController(store)
 
-			if err := controller.Destroy(ctx, params); err != nil {
+			if err := controller.Destroy(ctx, components.UniqueComponent()); err != nil {
 				logger.WithField("inputs", inputs).WithError(err).Debug("unable to delete check")
 				return results, err
 			}

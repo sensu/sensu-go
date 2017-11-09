@@ -28,12 +28,6 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.path("{entity}/{check}", r.find).Methods(http.MethodGet)
 }
 
-func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	record, err := r.controller.Find(req.Context(), params)
-	return record, err
-}
-
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context(), actions.QueryParams{})
 	return records, err
@@ -43,4 +37,10 @@ func (r *EventsRouter) listByEntity(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	records, err := r.controller.Query(req.Context(), params)
 	return records, err
+}
+
+func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
+	params := actions.QueryParams(mux.Vars(req))
+	record, err := r.controller.Find(req.Context(), params["id"])
+	return record, err
 }
