@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 )
@@ -35,6 +36,12 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		filtered := p.filterEvent(handler, event)
 
 		if filtered {
+			logger.WithFields(logrus.Fields{
+				"check":        event.Check.Config.GetName(),
+				"entity":       event.Entity.ID,
+				"organization": event.Entity.Organization,
+				"environment":  event.Entity.Environment,
+			}).Debug("event filtered")
 			continue
 		}
 

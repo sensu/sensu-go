@@ -12,6 +12,7 @@ type APIClient interface {
 	EntityAPIClient
 	EnvironmentAPIClient
 	EventAPIClient
+	FilterAPIClient
 	HandlerAPIClient
 	MutatorAPIClient
 	OrganizationAPIClient
@@ -47,6 +48,14 @@ type EntityAPIClient interface {
 	DeleteEntity(entity *types.Entity) error
 	FetchEntity(ID string) (*types.Entity, error)
 	ListEntities(string) ([]types.Entity, error)
+}
+
+// FilterAPIClient client methods for filters
+type FilterAPIClient interface {
+	CreateFilter(*types.EventFilter) error
+	DeleteFilter(*types.EventFilter) error
+	FetchFilter(string) (*types.EventFilter, error)
+	ListFilters(string) ([]types.EventFilter, error)
 }
 
 // EnvironmentAPIClient client methods for environments

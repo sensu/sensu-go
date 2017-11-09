@@ -73,7 +73,6 @@ build_binary () {
 	local goarch=$2
 	local cmd=$3
 	local cmd_name=$4
-	local static=$5
 
 	local outfile="target/${goos}-${goarch}/${cmd_name}"
 
@@ -87,11 +86,8 @@ build_binary () {
 	local ldflags+=" -X $version_pkg.PreReleaseIdentifier=${prerelease}"
 	local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
 	local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
-	if [ "$static" == "static" ]; then
-		local ldflags+=" -linkmode=external -extldflags=-static"
-	fi
 
-	GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+	CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
 	echo $outfile
 }
@@ -178,7 +174,9 @@ e2e_commands () {
 }
 
 docker_commands () {
+  # make this one var (push or release - master or versioned)
 	local push=$1
+	local release=$2
 	local build_sha=$(git rev-parse HEAD)
 
 	for cmd in cat false sleep true; do
@@ -198,15 +196,26 @@ docker_commands () {
 	for cmd in agent backend cli; do
 		echo "Building $cmd for linux-amd64"
 		local cmd_name=$(cmd_name_map $cmd)
-		build_binary linux amd64 $cmd $cmd_name static
+		build_binary linux amd64 $cmd $cmd_name
 	done
 
 	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
-
-	if [ "$push" == "push" ]; then
+	
+	# push master - tags and pushes latest master docker build only
+	if [ "$push" == "push" ] && [ "$release" == "master" ]; then
 		docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 		docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
 		docker push sensuapp/sensu-go:master
+	# push versioned - tags and pushes with version pulled from 
+	# version/prerelease/iteration files
+	elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
+		docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+		local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
+		local version_alpha_iteration=$(echo sensuapp/sensu-go:$(cat version/version.txt)-$(cat version/prerelease.txt).$(cat version/iteration.txt))
+		docker tag sensuapp/sensu-go:latest $version_alpha_iteration
+		docker push $version_alpha_iteration
+		docker tag $version_alpha_iteration $version_alpha
+		docker push $version_alpha
 	fi
 }
 

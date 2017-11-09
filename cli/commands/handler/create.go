@@ -55,13 +55,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("type", "t", typeDefault, "type of handler (pipe, tcp, udp, or set)")
+	cmd.Flags().String("command", "", "command to be executed. The event data is passed to the process via STDIN")
+	cmd.Flags().String("filters", "", "comma separated list of filters to use when filtering events for the handler")
+	cmd.Flags().String("handlers", "", "comma separated list of handlers to call using the handler set")
 	cmd.Flags().StringP("mutator", "m", "", "Sensu event mutator (name) to use to mutate event data for the handler")
-	cmd.Flags().StringP("command", "c", "", "command to be executed. The event data is passed to the process via STDIN")
-	cmd.Flags().StringP("timeout", "i", "", "execution duration timeout in seconds (hard stop)")
 	cmd.Flags().String("socket-host", "", "host of handler socket")
 	cmd.Flags().String("socket-port", "", "port of handler socket")
-	cmd.Flags().StringP("handlers", "", "", "comma separated list of handlers to call")
+	cmd.Flags().StringP("timeout", "i", "", "execution duration timeout in seconds (hard stop)")
+	cmd.Flags().StringP("type", "t", typeDefault, "type of handler (pipe, tcp, udp, or set)")
 
 	return cmd
 }

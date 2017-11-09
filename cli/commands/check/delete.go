@@ -5,7 +5,6 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -39,7 +38,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if env, _ := cmd.Flags().GetString("environment"); env != "" {
-				check.Organization = env
+				check.Environment = env
 			}
 
 			err := cli.Client.DeleteCheck(check)
@@ -49,11 +48,6 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 
 			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
-		},
-		Annotations: map[string]string{
-			// We want to be able to run this command regardless of whether the CLI
-			// has been configured.
-			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
 		},
 	}
 

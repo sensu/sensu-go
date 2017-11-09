@@ -66,7 +66,7 @@ func TestImportRunner(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(
-			fmt.Sprintf("Run importer that %s", tc.importer.Name(), tc.allowWarns),
+			fmt.Sprintf("Run importer %s with allowWarns=%t", tc.importer.Name(), tc.allowWarns),
 			func(t *testing.T) {
 				assert := assert.New(t)
 				runner := NewImporter(tc.importer)

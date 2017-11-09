@@ -40,12 +40,7 @@ func NewCheckController(store store.CheckConfigStore) CheckController {
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a CheckController) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
-	abilities := a.Policy.WithContext(ctx)
-	if yes := abilities.CanList(); !yes {
-		return nil, NewErrorf(PermissionDenied, "cannot list resources")
-	}
-
+func (a CheckController) Query(ctx context.Context, params QueryParams) ([]*types.CheckConfig, error) {
 	// Fetch from store
 	results, serr := a.Store.GetCheckConfigs(ctx)
 	if serr != nil {
@@ -53,26 +48,22 @@ func (a CheckController) Query(ctx context.Context, params QueryParams) ([]inter
 	}
 
 	// Filter out those resources the viewer does not have access to view.
-	resources := []interface{}{}
-	for _, result := range results {
-		if yes := abilities.CanRead(result); yes {
-			resources = append(resources, result)
+	abilities := a.Policy.WithContext(ctx)
+	for i := 0; i < len(results); i++ {
+		if !abilities.CanRead(results[i]) {
+			results = append(results[:i], results[i+1:]...)
+			i--
 		}
 	}
 
-	return resources, nil
+	return results, nil
 }
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a CheckController) Find(ctx context.Context, params QueryParams) (interface{}, error) {
-	// Validate params
-	if id := params["id"]; id == "" {
-		return nil, NewErrorf(InternalErr, "'id' param missing")
-	}
-
+func (a CheckController) Find(ctx context.Context, name string) (*types.CheckConfig, error) {
 	// Fetch from store
-	result, serr := a.Store.GetCheckConfigByName(ctx, params["id"])
+	result, serr := a.Store.GetCheckConfigByName(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -153,7 +144,7 @@ func (a CheckController) Update(ctx context.Context, given types.CheckConfig) er
 }
 
 // Destroy removes a resource if viewer has access.
-func (a CheckController) Destroy(ctx context.Context, params QueryParams) error {
+func (a CheckController) Destroy(ctx context.Context, name string) error {
 	abilities := a.Policy.WithContext(ctx)
 
 	// Verify user has permission
@@ -162,7 +153,7 @@ func (a CheckController) Destroy(ctx context.Context, params QueryParams) error 
 	}
 
 	// Fetch from store
-	result, serr := a.Store.GetCheckConfigByName(ctx, params["id"])
+	result, serr := a.Store.GetCheckConfigByName(ctx, name)
 	if serr != nil {
 		return NewError(InternalErr, serr)
 	} else if result == nil {

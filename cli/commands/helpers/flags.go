@@ -5,10 +5,24 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/spf13/pflag"
 )
 
 var commaWhitespaceRegex *regexp.Regexp
+
+// AddFormatFlag adds the format flag to the given command. When given client
+// configuration the user's configured default format is used as the flag's
+// default value.
+func AddFormatFlag(flagSet *pflag.FlagSet) {
+	flagSet.String("format", config.DefaultFormat, `format of data returned ("json"|"tabular")`)
+}
+
+// AddAllOrganization adds the '--all-organizations' flag to the given command
+func AddAllOrganization(flagSet *pflag.FlagSet) {
+	flagSet.Bool(flags.AllOrgs, false, "Include records from all organizations")
+}
 
 // FlagHasChanged determines if the user has set the value of a flag,
 // or left it to default

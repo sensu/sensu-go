@@ -19,6 +19,12 @@ func seedInitialData(store store.Store) error {
 	}
 	defer initializer.Close()
 
+	// Initialize the JWT secret. This method is idempotent and needs to be ran
+	// at every startup so the JWT signatures remain valid
+	if err := jwt.InitSecret(store); err != nil {
+		return err
+	}
+
 	// Check that the store hasn't already been seeded
 	if initialized, err := initializer.IsInitialized(); err != nil {
 		return err
@@ -32,9 +38,6 @@ func seedInitialData(store store.Store) error {
 	if err := setupAdminRole(store); err != nil {
 		return err
 	}
-
-	// Initializes the JWT secret
-	jwt.InitSecret(store)
 
 	// Default user
 	if err := setupDefaultUser(store); err != nil {

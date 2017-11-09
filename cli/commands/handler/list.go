@@ -51,7 +51,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
-	cmd.Flags().Bool(flags.AllOrgs, false, "Include records from all organizations")
+	helpers.AddAllOrganization(cmd.Flags())
 
 	return cmd
 }
@@ -83,6 +83,13 @@ func printHandlersToTable(queryResults []types.Handler, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, _ := data.(types.Handler)
 				return strconv.FormatUint(uint64(handler.Timeout), 10)
+			},
+		},
+		{
+			Title: "Filters",
+			CellTransformer: func(data interface{}) string {
+				handler, _ := data.(types.Handler)
+				return strings.Join(handler.Filters, ",")
 			},
 		},
 		{

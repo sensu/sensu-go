@@ -2,6 +2,10 @@
 package pipelined
 
 import (
+	"context"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 
 	"github.com/Knetic/govaluate"
@@ -10,25 +14,35 @@ import (
 func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	expr, err := govaluate.NewEvaluableExpression(statement)
 	if err != nil {
-		logger.Warn("failed to create evaluable expression")
+		logger.WithError(err).Error("failed to parse filter statement: ", statement)
 		return false
 	}
 
 	result, err := expr.Evaluate(map[string]interface{}{"event": event})
 	if err != nil {
-		logger.Warn("failed to evaluate filter")
+		logger.WithError(err).Error("failed to evaluate statement: ", statement)
 		return false
 	}
 
 	match, ok := result.(bool)
 	if !ok {
-		logger.Warn("filters must evaluate to boolean values")
+		logger.WithField("filter", statement).Error("filters must evaluate to boolean values")
 	}
 
 	return match
 }
 
-func evaluateEventFilter(event *types.Event, filter types.EventFilter) bool {
+// Returns true if the event should be filtered.
+func evaluateEventFilter(store store.Store, event *types.Event, filterName string) bool {
+	// Retrieve the filter from the store with its name
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+	filter, err := store.GetEventFilterByName(ctx, filterName)
+	if err != nil {
+		logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
+		return false
+	}
+
 	for _, statement := range filter.Statements {
 		match := evaluateEventFilterStatement(event, statement)
 
@@ -54,7 +68,11 @@ func evaluateEventFilter(event *types.Event, filter types.EventFilter) bool {
 	}
 
 	// Something weird happened, let's not filter the event and log a warning message
-	logger.WithField("filter", filter).Warn("pipelined not filtering event due to unhandled case")
+	logger.WithFields(logrus.Fields{
+		"filter":       filter.GetName(),
+		"organization": filter.GetOrg(),
+		"environment":  filter.GetEnvironment(),
+	}).Warn("pipelined not filtering event due to unhandled case")
 
 	return false
 }
@@ -83,7 +101,7 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 	// Iterate through all event filters, evaluating each statement against given event. The
 	// event is rejected if the product of all statements is true.
 	for _, filter := range handler.Filters {
-		filtered := evaluateEventFilter(event, filter)
+		filtered := evaluateEventFilter(p.Store, event, filter)
 		if !filtered {
 			return false
 		}
