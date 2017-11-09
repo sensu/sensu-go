@@ -1,0 +1,11 @@
+FROM ubuntu:16.04
+
+ENV SENSU_REPO_TOKEN 9fe24235abf92dce7ae39873639d9f80f405a5a8a402e7ff
+
+RUN apt-get update
+RUN apt-get install -y curl
+RUN curl -s https://$SENSU_REPO_TOKEN:@packagecloud.io/install/repositories/sensu/prerelease/script.deb.sh | bash
+
+RUN apt-get install sensu-agent
+
+CMD ["sensu-agent", "start"]
