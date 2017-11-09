@@ -53,7 +53,7 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
+func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]*types.Mutator, error) {
 	policy := c.Policy.WithContext(ctx)
 
 	// Fetch from store
@@ -62,7 +62,7 @@ func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]int
 		return nil, NewError(InternalErr, err)
 	}
 
-	result := make([]interface{}, 0, len(mutators))
+	result := make([]*types.Mutator, 0, len(mutators))
 
 	// Filter out those resources the viewer does not have access to view.
 	for _, m := range mutators {
@@ -76,7 +76,7 @@ func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]int
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (c MutatorController) Find(ctx context.Context, params QueryParams) (interface{}, error) {
+func (c MutatorController) Find(ctx context.Context, params QueryParams) (*types.Mutator, error) {
 	// Find (for mutators) requires a name
 	name := params["name"]
 	if name == "" {
