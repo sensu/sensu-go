@@ -64,11 +64,10 @@ func TestQuery(t *testing.T) {
 		// Mock a context to query across every single organization
 		ctx = context.WithValue(ctx, types.OrganizationKey, "*")
 
-		// We now have three result given our "wildcard" org; the check 'check3'
-		// will be filtered later when we unmarshal the results
+		// We now have two result given our "wildcard" org
 		resp, err = query(ctx, etcd, getCheckConfigsPath)
 		assert.NoError(t, err)
-		assert.Len(t, resp.Kvs, 3)
+		assert.Len(t, resp.Kvs, 2)
 
 		// Mock a context to query across every single environment of the acme org
 		ctx = context.WithValue(ctx, types.OrganizationKey, "acme")
