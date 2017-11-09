@@ -43,7 +43,7 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 
 	// Verify permissions
 	if ok := policy.CanCreate(&mut); !ok {
-		return NewErrorf(PermissionDenied)
+		return NewErrorf(PermissionDenied, "create")
 	}
 
 	// Validate
@@ -74,7 +74,7 @@ func (c MutatorController) Update(ctx context.Context, delta types.Mutator) erro
 
 	// Verify viewer can make change
 	if ok := policy.CanUpdate(mut); !ok {
-		return NewErrorf(PermissionDenied)
+		return NewErrorf(PermissionDenied, "update")
 	}
 
 	// Update
@@ -115,6 +115,37 @@ func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]*ty
 	}
 
 	return result, nil
+}
+
+func (c MutatorController) Destroy(ctx context.Context, params QueryParams) error {
+	policy := c.Policy.WithContext(ctx)
+
+	// Verify permissions
+	if ok := policy.CanDelete(); !ok {
+		return NewErrorf(PermissionDenied, "delete")
+	}
+
+	// Validate parameters
+	name := params["name"]
+	if name == "" {
+		return NewErrorf(InvalidArgument, "name is undefined")
+	}
+
+	// Fetch from store
+	mut, err := c.Store.GetMutatorByName(ctx, name)
+	if err != nil {
+		return NewError(InternalErr, err)
+	}
+	if mut == nil {
+		return NewErrorf(NotFound, name)
+	}
+
+	// Remove from store
+	if err := c.Store.DeleteMutatorByName(ctx, mut.Name); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
 }
 
 // Find returns resource associated with given parameters if available to the

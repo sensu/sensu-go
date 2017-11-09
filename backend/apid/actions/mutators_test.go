@@ -115,6 +115,106 @@ func TestMutatorCreate(t *testing.T) {
 	}
 }
 
+func TestMutatorDestroy(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermDelete),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
+		),
+	)
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		arguments       QueryParams
+		fetchResult     *types.Mutator
+		fetchErr        error
+		deleteErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Deleted",
+			ctx:         defaultCtx,
+			arguments:   QueryParams{"name": "mutator1"},
+			fetchResult: types.FixtureMutator("mutator1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Does Not Exist",
+			ctx:             defaultCtx,
+			arguments:       QueryParams{"name": "mutator1"},
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store Err on Delete",
+			ctx:             defaultCtx,
+			arguments:       QueryParams{"name": "mutator1"},
+			fetchResult:     types.FixtureMutator("mutator1"),
+			deleteErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			arguments:       QueryParams{"name": "mutator1"},
+			fetchResult:     types.FixtureMutator("mutator1"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			arguments:       QueryParams{"name": "mutator1"},
+			fetchResult:     types.FixtureMutator("mutator1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewMutatorController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetMutatorByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("DeleteMutatorByName", mock.Anything, "mutator1").
+				Return(tc.deleteErr)
+
+			// Exec Query
+			err := actions.Destroy(tc.ctx, tc.arguments)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestMutatorUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),
@@ -145,14 +245,14 @@ func TestMutatorUpdate(t *testing.T) {
 		{
 			name:        "Updated",
 			ctx:         defaultCtx,
-			argument:    types.FixtureMutator("check1"),
-			fetchResult: types.FixtureMutator("check1"),
+			argument:    types.FixtureMutator("mutator1"),
+			fetchResult: types.FixtureMutator("mutator1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Does Not Exist",
 			ctx:             defaultCtx,
-			argument:        types.FixtureMutator("check1"),
+			argument:        types.FixtureMutator("mutator1"),
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
@@ -160,8 +260,8 @@ func TestMutatorUpdate(t *testing.T) {
 		{
 			name:            "Store Err on Update",
 			ctx:             defaultCtx,
-			argument:        types.FixtureMutator("check1"),
-			fetchResult:     types.FixtureMutator("check1"),
+			argument:        types.FixtureMutator("mutator1"),
+			fetchResult:     types.FixtureMutator("mutator1"),
 			updateErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -169,8 +269,8 @@ func TestMutatorUpdate(t *testing.T) {
 		{
 			name:            "Store Err on Fetch",
 			ctx:             defaultCtx,
-			argument:        types.FixtureMutator("check1"),
-			fetchResult:     types.FixtureMutator("check1"),
+			argument:        types.FixtureMutator("mutator1"),
+			fetchResult:     types.FixtureMutator("mutator1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -178,8 +278,8 @@ func TestMutatorUpdate(t *testing.T) {
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
-			argument:        types.FixtureMutator("check1"),
-			fetchResult:     types.FixtureMutator("check1"),
+			argument:        types.FixtureMutator("mutator1"),
+			fetchResult:     types.FixtureMutator("mutator1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
 		},
@@ -187,7 +287,7 @@ func TestMutatorUpdate(t *testing.T) {
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badMutator,
-			fetchResult:     types.FixtureMutator("check1"),
+			fetchResult:     types.FixtureMutator("mutator1"),
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
 		},
