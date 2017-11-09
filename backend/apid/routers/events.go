@@ -41,6 +41,6 @@ func (r *EventsRouter) listByEntity(req *http.Request) (interface{}, error) {
 
 func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	record, err := r.controller.Find(req.Context(), params["id"])
+	record, err := r.controller.Find(req.Context(), params)
 	return record, err
 }
