@@ -8,6 +8,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var mutatorUpdateFields = []string{
+	"Command",
+	"Timeout",
+	"EnvVars",
+}
+
 // MutatorController allows querying mutators in bulk or by name.
 type MutatorController struct {
 	Store  store.MutatorStore
@@ -24,6 +30,7 @@ func NewMutatorController(store store.MutatorStore) MutatorController {
 
 // Create creates a new Mutator resource.
 func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error {
+	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &mut)
 	policy := c.Policy.WithContext(ctx)
 
@@ -31,7 +38,7 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 	if m, err := c.Store.GetMutatorByName(ctx, mut.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if m != nil {
-		return NewErrorf(AlreadyExistsErr)
+		return NewErrorf(AlreadyExistsErr, mut.Name)
 	}
 
 	// Verify permissions
@@ -46,6 +53,42 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 
 	// Persist
 	if err := c.Store.UpdateMutator(ctx, &mut); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+func (c MutatorController) Update(ctx context.Context, delta types.Mutator) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &delta)
+	policy := c.Policy.WithContext(ctx)
+
+	// Check for existing
+	mut, err := c.Store.GetMutatorByName(ctx, delta.Name)
+	if err != nil {
+		return NewError(InternalErr, err)
+	} else if mut == nil {
+		return NewErrorf(NotFound, delta.Name)
+	}
+
+	// Verify viewer can make change
+	if ok := policy.CanUpdate(mut); !ok {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Update
+	if err := mut.Update(&delta, mutatorUpdateFields...); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	// Validate
+	if err := mut.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := c.Store.UpdateMutator(ctx, mut); err != nil {
 		return NewError(InternalErr, err)
 	}
 

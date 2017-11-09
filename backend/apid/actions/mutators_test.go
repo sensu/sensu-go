@@ -113,7 +113,117 @@ func TestMutatorCreate(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestMutatorUpdate(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermUpdate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermRead),
+		),
+	)
+
+	badMutator := types.FixtureMutator("mutator1")
+	badMutator.Command = ""
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Mutator
+		fetchResult     *types.Mutator
+		fetchErr        error
+		updateErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Updated",
+			ctx:         defaultCtx,
+			argument:    types.FixtureMutator("check1"),
+			fetchResult: types.FixtureMutator("check1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Does Not Exist",
+			ctx:             defaultCtx,
+			argument:        types.FixtureMutator("check1"),
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store Err on Update",
+			ctx:             defaultCtx,
+			argument:        types.FixtureMutator("check1"),
+			fetchResult:     types.FixtureMutator("check1"),
+			updateErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			argument:        types.FixtureMutator("check1"),
+			fetchResult:     types.FixtureMutator("check1"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureMutator("check1"),
+			fetchResult:     types.FixtureMutator("check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badMutator,
+			fetchResult:     types.FixtureMutator("check1"),
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewMutatorController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetMutatorByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateMutator", mock.Anything, mock.Anything).
+				Return(tc.updateErr)
+
+			// Exec Query
+			err := actions.Update(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
 }
 
 func TestMutatorQuery(t *testing.T) {
