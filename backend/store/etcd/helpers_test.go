@@ -77,5 +77,14 @@ func TestQuery(t *testing.T) {
 		resp, err = query(ctx, etcd, getCheckConfigsPath)
 		assert.NoError(t, err)
 		assert.Len(t, resp.Kvs, 2)
+
+		// Mock a context to query across every single organization and environment
+		ctx = context.WithValue(ctx, types.OrganizationKey, "*")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
+
+		// We now have two result given our "wildcard" org
+		resp, err = query(ctx, etcd, getCheckConfigsPath)
+		assert.NoError(t, err)
+		assert.Len(t, resp.Kvs, 3)
 	})
 }

@@ -18,14 +18,20 @@ type getObjectsPath func(context.Context, string) string
 // values returned based on their environment afterwards since objects from all
 // environments and organizations will be returned
 func query(ctx context.Context, store *etcdStore, fn getObjectsPath) (*clientv3.GetResponse, error) {
-	org := organization(ctx)
-	env := environment(ctx)
+	// Support "*" as a wildcard
+	var org, env string
+	if org = organization(ctx); org == "*" {
+		org = ""
+	}
+	if env = environment(ctx); env == "*" {
+		env = ""
+	}
 
 	// Determine if we need to query across multiple organizations or environments
-	if org == "" || org == "*" {
+	if org == "" {
 		ctx = context.WithValue(ctx, types.OrganizationKey, "")
 		ctx = context.WithValue(ctx, types.EnvironmentKey, "")
-	} else if env == "" || env == "*" {
+	} else if env == "" {
 		ctx = context.WithValue(ctx, types.EnvironmentKey, "")
 	}
 
@@ -35,7 +41,7 @@ func query(ctx context.Context, store *etcdStore, fn getObjectsPath) (*clientv3.
 	}
 
 	// Return all elements if all environments were requested
-	if env == "" || env == "*" {
+	if env == "" {
 		return resp, nil
 	}
 

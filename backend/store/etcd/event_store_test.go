@@ -32,6 +32,30 @@ func TestEventStorage(t *testing.T) {
 		assert.Equal(t, 1, len(events))
 		assert.EqualValues(t, event, events[0])
 
+		// Get all events with wildcards
+		ctx = context.WithValue(ctx, types.OrganizationKey, "*")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
+		events, err = store.GetEvents(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(events))
+
+		// Get all events from an unexisting env
+		ctx = context.WithValue(ctx, types.EnvironmentKey, "dev")
+		events, err = store.GetEvents(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(events))
+
+		// Get all events from an unexisting org
+		ctx = context.WithValue(ctx, types.OrganizationKey, "acme")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
+		events, err = store.GetEvents(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(events))
+
+		// Set back the context
+		ctx = context.WithValue(ctx, types.OrganizationKey, event.Entity.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+
 		newEv, err = store.GetEventByEntityCheck(ctx, "", "foo")
 		assert.Nil(t, newEv)
 		assert.Error(t, err)

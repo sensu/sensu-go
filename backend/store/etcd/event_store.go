@@ -15,6 +15,10 @@ const (
 	eventsPathPrefix = "events"
 )
 
+var (
+	eventKeyBuilder = newKeyBuilder(eventsPathPrefix)
+)
+
 func getEventPath(event *types.Event) string {
 	return path.Join(
 		etcdRoot,
@@ -26,11 +30,15 @@ func getEventPath(event *types.Event) string {
 	)
 }
 
-func getEventsPath(ctx context.Context, entity, check string) string {
+func getEventWithCheckPath(ctx context.Context, entity, check string) string {
 	env := environment(ctx)
 	org := organization(ctx)
 
 	return path.Join(etcdRoot, eventsPathPrefix, org, env, entity, check)
+}
+
+func getEventsPath(ctx context.Context, entity string) string {
+	return eventKeyBuilder.withContext(ctx).build(entity)
 }
 
 func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID string) error {
@@ -38,15 +46,14 @@ func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, chec
 		return errors.New("must specify entity and check id")
 	}
 
-	_, err := s.kvc.Delete(ctx, getEventsPath(ctx, entityID, checkID))
+	_, err := s.kvc.Delete(ctx, getEventWithCheckPath(ctx, entityID, checkID))
 	return err
 }
 
 // GetEvents returns the events for an (optional) organization. If org is the
 // empty string, GetEvents returns all events for all orgs.
 func (s *etcdStore) GetEvents(ctx context.Context) ([]*types.Event, error) {
-	// TODO (SP): We should use the query function here but getEnvironmentsPath signature is wrong
-	resp, err := s.kvc.Get(context.Background(), getEventsPath(ctx, "", ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getEventsPath)
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +62,27 @@ func (s *etcdStore) GetEvents(ctx context.Context) ([]*types.Event, error) {
 		return []*types.Event{}, nil
 	}
 
-	eventsArray := make([]*types.Event, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	// Support "*" as a wildcard for filtering environments
+	var env string
+	if env = environment(ctx); env == "*" {
+		env = ""
+	}
+
+	var eventsArray []*types.Event
+	for _, kv := range resp.Kvs {
 		event := &types.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
 			return nil, err
 		}
-		eventsArray[i] = event
+
+		// We need to manually filters the events since the events don't have
+		// their environment at the top level of the struct
+		if env != "" && event.Entity.Environment != env {
+			continue
+		}
+
+		eventsArray = append(eventsArray, event)
 	}
 
 	return eventsArray, nil
@@ -73,7 +93,7 @@ func (s *etcdStore) GetEventsByEntity(ctx context.Context, entityID string) ([]*
 		return nil, errors.New("must specify entity id")
 	}
 
-	resp, err := s.kvc.Get(context.Background(), getEventsPath(ctx, entityID, ""), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(context.Background(), getEventsPath(ctx, entityID), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +120,7 @@ func (s *etcdStore) GetEventByEntityCheck(ctx context.Context, entityID, checkID
 		return nil, errors.New("must specify entity and check id")
 	}
 
-	resp, err := s.kvc.Get(context.Background(), getEventsPath(ctx, entityID, checkID), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(context.Background(), getEventWithCheckPath(ctx, entityID, checkID), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
