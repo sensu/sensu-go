@@ -54,8 +54,13 @@ func init() {
 							return nil, err
 						}
 
+						results := make([]interface{}, len(checks))
+						for _, check := range checks {
+							results = append(results, check)
+						}
+
 						args := relay.NewConnectionArguments(p.Args)
-						return relay.ConnectionFromArray(checks, args), nil
+						return relay.ConnectionFromArray(results, args), nil
 					},
 				},
 				"checkEvents": &graphql.Field{

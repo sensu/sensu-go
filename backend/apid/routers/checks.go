@@ -11,11 +11,7 @@ import (
 
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
-	controller interface {
-		actions.Fetcher
-		actions.CheckMutator
-		actions.Destroyer
-	}
+	controller actions.CheckController
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
@@ -42,8 +38,8 @@ func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	record, err := r.controller.Find(req.Context(), params)
+	params := mux.Vars(req)
+	record, err := r.controller.Find(req.Context(), params["id"])
 	return record, err
 }
 
@@ -68,7 +64,7 @@ func (r *ChecksRouter) update(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	err := r.controller.Destroy(req.Context(), params)
+	params := mux.Vars(req)
+	err := r.controller.Destroy(req.Context(), params["id"])
 	return nil, err
 }
