@@ -18,7 +18,8 @@ type Authorization struct {
 // Then middleware
 func (a Authorization) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims := jwt.GetClaimsFromContext(r.Context())
+		ctx := r.Context()
+		claims := jwt.GetClaimsFromContext(ctx)
 		if claims == nil {
 			http.Error(w, "No claims found for JWT", http.StatusInternalServerError)
 			return
@@ -27,11 +28,16 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 		roles, err := a.Store.GetRoles()
 		if err != nil {
 			http.Error(w, "Error fetching roles from store", http.StatusInternalServerError)
+			return
 		}
 
-		user, err := a.Store.GetUser(claims.StandardClaims.Subject)
+		user, err := a.Store.GetUser(ctx, claims.StandardClaims.Subject)
 		if err != nil {
 			http.Error(w, "Error fetching user from store", http.StatusInternalServerError)
+			return
+		} else if user == nil {
+			http.Error(w, "Unabled to find user() associated with access token", http.StatusInternalServerError)
+			return
 		}
 
 		userRules := []types.Rule{}
@@ -51,7 +57,7 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 			Rules: userRules,
 		}
 
-		ctx := context.WithValue(r.Context(), types.AuthorizationActorKey, actor)
+		ctx = context.WithValue(ctx, types.AuthorizationActorKey, actor)
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})

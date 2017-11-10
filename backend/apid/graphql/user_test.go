@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -33,7 +34,9 @@ func (t *UserNodeSuite) SetupTest() {
 
 func (t *UserNodeSuite) TestNoErrors() {
 	record := types.FixtureUser("bob")
-	t.store().On("GetUser", record.Username).Return(record, nil).Once()
+	t.store().
+		On("GetUser", mock.Anything, record.Username).
+		Return(record, nil).Once()
 
 	res, err := t.runResolver(record)
 	t.Equal(record, res)
@@ -43,7 +46,9 @@ func (t *UserNodeSuite) TestNoErrors() {
 func (t *UserNodeSuite) TestWithUnauthorizedUser() {
 	record := types.FixtureUser("bob")
 	params := t.newParams(record, contextWithNoAccess)
-	t.store().On("GetUser", record.Username).Return(record, nil).Once()
+	t.store().
+		On("GetUser", mock.Anything, record.Username).
+		Return(record, nil).Once()
 
 	res, err := t.runResolver(params)
 	t.Nil(res)
@@ -53,9 +58,8 @@ func (t *UserNodeSuite) TestWithUnauthorizedUser() {
 func (t *UserNodeSuite) TestWithStoreError() {
 	record := types.FixtureUser("bob")
 	t.store().
-		On("GetUser", record.Username).
-		Return(record, errors.New("poopy")).
-		Once()
+		On("GetUser", mock.Anything, record.Username).
+		Return(record, errors.New("poopy")).Once()
 
 	res, err := t.runResolver(record)
 	t.Nil(res)

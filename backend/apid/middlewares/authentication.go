@@ -46,7 +46,7 @@ func BasicAuthentication(next http.Handler, store store.Store) http.Handler {
 		}
 
 		// Authenticate against the provider
-		_, err := store.AuthenticateUser(username, password)
+		_, err := store.AuthenticateUser(r.Context(), username, password)
 		if err != nil {
 			logger.WithField(
 				"user", username,

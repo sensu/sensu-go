@@ -15,10 +15,12 @@ func getUserPath(id string) string {
 	return fmt.Sprintf("%s/users/%s", etcdRoot, id)
 }
 
-func (s *etcdStore) AuthenticateUser(username, password string) (*types.User, error) {
-	user, err := s.GetUser(username)
-	if err != nil {
+func (s *etcdStore) AuthenticateUser(ctx context.Context, username, password string) (*types.User, error) {
+	user, err := s.GetUser(ctx, username)
+	if user == nil {
 		return nil, fmt.Errorf("User %s does not exist", username)
+	} else if err != nil {
+		return nil, err
 	}
 
 	if user.Disabled {
@@ -63,13 +65,10 @@ func (s *etcdStore) CreateUser(u *types.User) error {
 	return nil
 }
 
-func (s *etcdStore) DeleteUserByName(username string) error {
-	// Retrieve the user
-	user, err := s.GetUser(username)
-	if err != nil {
-		return err
-	}
-
+// NOTE:
+// Store probably shouldn't be responsible for deleting the token;
+// business logic.
+func (s *etcdStore) DeleteUser(ctx context.Context, user *types.User) error {
 	// Mark it as disabled
 	user.Disabled = true
 
@@ -80,28 +79,40 @@ func (s *etcdStore) DeleteUserByName(username string) error {
 	}
 
 	// Construct the list of operations to make in the transaction
-	ops := make([]clientv3.Op, 2)
-	ops[0] = clientv3.OpPut(getUserPath(username), string(userBytes))
-	ops[1] = clientv3.OpDelete(getTokenPath(username, ""), clientv3.WithPrefix())
+	userKey := getUserPath(user.Username)
+	txn := s.kvc.Txn(ctx).
+		// Ensure that the key exists
+		If(clientv3.Compare(clientv3.CreateRevision(userKey), ">", 0)).
+		// If key exists, delete user & any access token from allow list
+		Then(
+			clientv3.OpPut(userKey, string(userBytes)),
+			clientv3.OpDelete(
+				getTokenPath(user.Username, ""),
+				clientv3.WithPrefix(),
+			),
+		)
 
-	res, err := s.kvc.Txn(context.TODO()).Then(ops...).Commit()
-	if err != nil {
+	res, serr := txn.Commit()
+	if serr != nil {
 		return err
 	}
+
 	if !res.Succeeded {
-		return fmt.Errorf("could not properly delete the user")
+		logger.
+			WithField("username", user.Username).
+			Info("given user was not already persisted")
 	}
 
 	return nil
 }
 
-func (s *etcdStore) GetUser(username string) (*types.User, error) {
-	resp, err := s.kvc.Get(context.TODO(), getUserPath(username), clientv3.WithLimit(1))
+func (s *etcdStore) GetUser(ctx context.Context, username string) (*types.User, error) {
+	resp, err := s.kvc.Get(ctx, getUserPath(username), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
 	if len(resp.Kvs) != 1 {
-		return nil, fmt.Errorf("user %s does not exist", username)
+		return nil, nil
 	}
 
 	user := &types.User{}

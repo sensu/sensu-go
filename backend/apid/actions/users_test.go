@@ -169,7 +169,9 @@ func TestUserFind(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetUser", tc.argument).Return(tc.storedRecord, tc.storeErr)
+			store.
+				On("GetUser", mock.Anything, tc.argument).
+				Return(tc.storedRecord, tc.storeErr)
 
 			// Exec Query
 			result, err := actions.Find(tc.ctx, tc.argument)
@@ -266,11 +268,13 @@ func TestUserCreate(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetUser", mock.Anything).Return(tc.fetchResult, tc.fetchErr)
 			store.On("UpdateUser", mock.Anything).Return(tc.createErr)
 			store.On("GetRoles", mock.Anything).Return([]*types.Role{
 				types.FixtureRole("default", "default", "default"),
 			}, nil)
+			store.
+				On("GetUser", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
 			err := actions.Create(tc.ctx, *tc.argument)
@@ -383,11 +387,13 @@ func TestUserUpdate(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetUser", mock.Anything).Return(tc.fetchResult, tc.fetchErr)
 			store.On("UpdateUser", mock.Anything).Return(tc.updateErr)
 			store.On("GetRoles", mock.Anything).Return([]*types.Role{
 				types.FixtureRole("default", "default", "default"),
 			}, nil)
+			store.
+				On("GetUser", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
 			err := actions.Update(tc.ctx, *tc.argument)
@@ -427,7 +433,7 @@ func TestUserDisable(t *testing.T) {
 		argument        string
 		fetchResult     *types.User
 		fetchErr        error
-		updateErr       error
+		deleteErr       error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
@@ -451,7 +457,7 @@ func TestUserDisable(t *testing.T) {
 			ctx:             defaultCtx,
 			argument:        "user1",
 			fetchResult:     types.FixtureUser("user1"),
-			updateErr:       errors.New("dunno"),
+			deleteErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
@@ -482,8 +488,12 @@ func TestUserDisable(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetUser", mock.Anything).Return(tc.fetchResult, tc.fetchErr)
-			store.On("UpdateUser", mock.Anything).Return(tc.updateErr)
+			store.
+				On("DeleteUser", mock.Anything, tc.fetchResult).
+				Return(tc.deleteErr)
+			store.
+				On("GetUser", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
 			err := actions.Disable(tc.ctx, tc.argument)
@@ -578,8 +588,10 @@ func TestUserEnable(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			// Mock store methods
-			store.On("GetUser", mock.Anything).Return(tc.fetchResult, tc.fetchErr)
 			store.On("UpdateUser", mock.Anything).Return(tc.updateErr).Once()
+			store.
+				On("GetUser", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
 			err := actions.Enable(tc.ctx, tc.argument)
@@ -682,12 +694,14 @@ func TestUserAddRole(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			// Mock store methods
-			store.On("GetUser", mock.Anything).Return(tc.fetchResult, tc.fetchErr)
 			store.On("UpdateUser", mock.Anything).Return(tc.updateErr).Once()
 			store.On("GetRoles", mock.Anything).Return([]*types.Role{
 				types.FixtureRole("default", "default", "default"),
 				types.FixtureRole("admin", "default", "default"),
 			}, nil)
+			store.
+				On("GetUser", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
 			err := actions.AddRole(tc.ctx, tc.nameArg, tc.roleArg)
@@ -781,8 +795,10 @@ func TestUserRemoveRole(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			// Mock store methods
-			store.On("GetUser", mock.Anything).Return(tc.fetchResult, tc.fetchErr)
 			store.On("UpdateUser", mock.Anything).Return(tc.updateErr).Once()
+			store.
+				On("GetUser", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
 			err := actions.RemoveRole(tc.ctx, tc.nameArg, tc.roleArg)

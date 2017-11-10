@@ -180,10 +180,10 @@ type TokenStore interface {
 
 // UserStore provides an interface for interacting & persisting users
 type UserStore interface {
-	AuthenticateUser(username, password string) (*types.User, error)
+	AuthenticateUser(ctx context.Context, username, password string) (*types.User, error)
 	CreateUser(user *types.User) error
-	DeleteUserByName(username string) error
-	GetUser(username string) (*types.User, error)
+	DeleteUser(context.Context, *types.User) error
+	GetUser(context.Context, string) (*types.User, error)
 	GetUsers() ([]*types.User, error)
 	GetAllUsers() ([]*types.User, error)
 	UpdateUser(user *types.User) error

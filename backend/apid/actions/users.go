@@ -57,9 +57,9 @@ func (a UserController) Query(ctx context.Context, params QueryParams) ([]*types
 // viewer.
 func (a UserController) Find(ctx context.Context, name string) (*types.User, error) {
 	// Fetch from store
-	result, serr := a.Store.GetUser(name)
+	result, serr := a.findUser(ctx, name)
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, serr
 	}
 
 	// Verify user has permission to view
@@ -74,7 +74,7 @@ func (a UserController) Find(ctx context.Context, name string) (*types.User, err
 // Create instantiates, validates and persists new resource if viewer has access.
 func (a UserController) Create(ctx context.Context, newUser types.User) error {
 	// User for existing
-	if e, err := a.Store.GetUser(newUser.Username); err != nil {
+	if e, err := a.Store.GetUser(ctx, newUser.Username); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -162,12 +162,13 @@ func (a UserController) Disable(ctx context.Context, name string) error {
 	}
 
 	// Disable
-	var err error
 	if !result.Disabled {
-		result.Disabled = true
-		err = a.updateUser(ctx, result)
+		if serr := a.Store.DeleteUser(ctx, result); serr != nil {
+			return NewError(InternalErr, serr)
+		}
 	}
-	return err
+
+	return nil
 }
 
 // Enable disables user identified by given name if viewer has access.
@@ -238,16 +239,10 @@ func (a UserController) RemoveRole(ctx context.Context, username string, role st
 }
 
 func (a UserController) findUser(ctx context.Context, name string) (*types.User, error) {
-	result, serr := a.Store.GetUser(name)
-	// TODO: UserStore currently returns err when user not found
-	// if serr != nil {
-	// 	return nil, NewError(InternalErr, serr)
-	// } else if result == nil {
-	// 	return nil, NewErrorf(NotFound)
-	// }
-
-	// HACK: To workaround above
-	if result == nil || serr != nil {
+	result, serr := a.Store.GetUser(ctx, name)
+	if serr != nil {
+		return nil, NewError(InternalErr, serr)
+	} else if result == nil {
 		return nil, NewErrorf(NotFound)
 	}
 

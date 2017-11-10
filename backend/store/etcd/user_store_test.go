@@ -1,7 +1,9 @@
 package etcd
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
@@ -12,6 +14,11 @@ import (
 func TestUserStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		password := "P@ssw0rd!"
+		ctx, cancel := context.WithDeadline(
+			context.Background(),
+			time.Now().Add(10*time.Second),
+		)
+		defer cancel()
 
 		// We should receive an empty array if no users exist
 		users, err := store.GetUsers()
@@ -24,16 +31,16 @@ func TestUserStorage(t *testing.T) {
 		assert.NoError(t, err)
 
 		// The password should be hashed
-		result, err := store.GetUser("foo")
+		result, err := store.GetUser(ctx, "foo")
 		assert.NoError(t, err)
 		assert.NotEqual(t, password, result.Password)
 
 		// Successful authentication
-		_, err = store.AuthenticateUser("foo", password)
+		_, err = store.AuthenticateUser(ctx, "foo", password)
 		assert.NoError(t, err)
 
 		// Unsuccessful authentication with wrong password
-		_, err = store.AuthenticateUser("foo", "foo")
+		_, err = store.AuthenticateUser(ctx, "foo", "foo")
 		assert.Error(t, err)
 
 		// User already exist
@@ -45,13 +52,14 @@ func TestUserStorage(t *testing.T) {
 		err = store.UpdateUser(mockedUser)
 		assert.NoError(t, err)
 
-		result, err = store.GetUser(mockedUser.Username)
+		result, err = store.GetUser(ctx, mockedUser.Username)
 		assert.NoError(t, err)
 		assert.Equal(t, mockedUser.Username, result.Username)
 
 		// Missing user
-		_, err = store.GetUser("missingUser")
-		assert.Error(t, err)
+		missingUser, err := store.GetUser(ctx, "missingUser")
+		assert.NoError(t, err)
+		assert.Nil(t, missingUser)
 
 		// Get all users
 		users, err = store.GetUsers()
@@ -65,25 +73,29 @@ func TestUserStorage(t *testing.T) {
 		err = store.CreateToken(claims)
 		assert.NoError(t, err)
 
-		// Disable a user, which also removes all issued tokens
-		err = store.DeleteUserByName("bar")
+		// Disable a user a user that does not exist
+		err = store.DeleteUser(ctx, &types.User{Username: "Frankieie"})
 		assert.NoError(t, err)
 
-		// Make sure the user is disabled
-		result, err = store.GetUser("bar")
+		// Ensure that a user with that name wasn't created
+		baduser, err := store.GetUser(ctx, "Frankieie")
 		assert.NoError(t, err)
-		assert.True(t, result.Disabled)
+		assert.Nil(t, baduser)
+
+		// Disable a user, which also removes all issued tokens
+		err = store.DeleteUser(ctx, mockedUser)
+		assert.NoError(t, err)
+
+		// Make sure the user is now disabled
+		disabledUser, _ := store.GetUser(ctx, mockedUser.Username)
+		assert.True(t, disabledUser.Disabled)
 
 		// Make sure the token was revoked
 		_, err = store.GetToken(claims.Subject, claims.Id)
 		assert.Error(t, err)
 
 		// Authentication should be unsuccessful with a disabled user
-		_, err = store.AuthenticateUser("bar", password)
-		assert.Error(t, err)
-
-		// Disable a missing user
-		err = store.DeleteUserByName("missingUser")
+		_, err = store.AuthenticateUser(ctx, mockedUser.Username, password)
 		assert.Error(t, err)
 
 		// The deleted (disabled) user should not be returned
@@ -91,6 +103,11 @@ func TestUserStorage(t *testing.T) {
 		users, err = store.GetUsers()
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(users))
+
+		// Disabled user should appear when fetching all users
+		users, err = store.GetAllUsers()
+		assert.NoError(t, err)
+		assert.Equal(t, 2, len(users))
 	})
 }
 
