@@ -22,15 +22,7 @@ func (client *RestClient) AddRoleToUser(username, role string) error {
 
 // CreateUser creates new check on configured Sensu instance
 func (client *RestClient) CreateUser(user *types.User) error {
-	bytes, err := json.Marshal(user)
-	if err != nil {
-		return err
-	}
-
-	res, err := client.R().
-		SetBody(bytes).
-		Put("/rbac/users")
-
+	res, err := client.R().SetBody(user).Post("/rbac/users")
 	if err != nil {
 		return err
 	}
