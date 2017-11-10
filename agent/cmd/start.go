@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
@@ -72,6 +73,14 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
+func splitAndTrim(s string) []string {
+	r := strings.Split(s, ",")
+	for i := range r {
+		r[i] = strings.TrimSpace(r[i])
+	}
+	return r
+}
+
 func newStartCommand() *cobra.Command {
 	var setupErr error
 
@@ -105,8 +114,9 @@ func newStartCommand() *cobra.Command {
 
 			subscriptions := viper.GetString(flagSubscriptions)
 			if subscriptions != "" {
-				// TODO(greg): we prooobably want someeee sort of input validation.
-				cfg.Subscriptions = strings.Split(subscriptions, ",")
+				cfg.Subscriptions = splitAndTrim(subscriptions)
+			} else {
+				cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
 			}
 
 			sensuAgent := agent.NewAgent(cfg)
@@ -115,17 +125,19 @@ func newStartCommand() *cobra.Command {
 			}
 
 			sigs := make(chan os.Signal, 1)
-			done := make(chan struct{}, 1)
-
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+
 			go func() {
+				defer wg.Done()
 				sig := <-sigs
 				logger.Info("signal received: ", sig)
 				sensuAgent.Stop()
-				done <- struct{}{}
 			}()
 
-			<-done
+			wg.Wait()
 			return nil
 		},
 	}
@@ -159,7 +171,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagBackendURL, []string{"ws://127.0.0.1:8081"})
 	viper.SetDefault(flagAgentID, "")
-	viper.SetDefault(flagSubscriptions, "")
+	viper.SetDefault(flagSubscriptions, []string{})
 	viper.SetDefault(flagKeepaliveTimeout, 120)
 	viper.SetDefault(flagKeepaliveInterval, 20)
 	viper.SetDefault(flagAPIHost, "127.0.0.1")
