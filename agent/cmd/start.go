@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
@@ -115,17 +116,19 @@ func newStartCommand() *cobra.Command {
 			}
 
 			sigs := make(chan os.Signal, 1)
-			done := make(chan struct{}, 1)
-
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+
 			go func() {
+				defer wg.Done()
 				sig := <-sigs
 				logger.Info("signal received: ", sig)
 				sensuAgent.Stop()
-				done <- struct{}{}
 			}()
 
-			<-done
+			wg.Wait()
 			return nil
 		},
 	}
