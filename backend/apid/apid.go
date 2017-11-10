@@ -138,6 +138,7 @@ func registerRestrictedResources(
 		commonRouter,
 		routers.NewEventsRouter(store),
 		routers.NewChecksRouter(store),
+		routers.NewMutatorsRouter(store),
 	)
 
 	assetsController := &controllers.AssetsController{
@@ -181,11 +182,6 @@ func registerRestrictedResources(
 		Status: bStatus,
 	}
 	infoController.Register(commonRouter)
-
-	mutatorsController := &controllers.MutatorsController{
-		Store: store,
-	}
-	mutatorsController.Register(commonRouter)
 
 	organizationsController := &controllers.OrganizationsController{
 		Store: store,

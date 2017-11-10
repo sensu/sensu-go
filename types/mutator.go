@@ -1,6 +1,9 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	fmt "fmt"
+)
 
 // Validate returns an error if the mutator does not pass validation tests.
 func (m *Mutator) Validate() error {
@@ -20,6 +23,24 @@ func (m *Mutator) Validate() error {
 		return errors.New("mutator organization must be set")
 	}
 
+	return nil
+}
+
+// Update updates m with selected fields. Returns non-nil error if any of the
+// selected fields are unsupported.
+func (m *Mutator) Update(from *Mutator, fields ...string) error {
+	for _, f := range fields {
+		switch f {
+		case "Command":
+			m.Command = from.Command
+		case "Timeout":
+			m.Timeout = from.Timeout
+		case "EnvVars":
+			m.EnvVars = append(m.EnvVars[0:0], from.EnvVars...)
+		default:
+			return fmt.Errorf("unsupported field: %q", f)
+		}
+	}
 	return nil
 }
 

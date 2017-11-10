@@ -7,8 +7,14 @@ import (
 	"golang.org/x/net/context"
 )
 
-// updateFields refers to fields a viewer may update
-var updateFields = []string{
+// CheckMutator exposes actions in which a viewer can perform.
+type CheckMutator interface {
+	Create(context.Context, types.CheckConfig) error
+	Update(context.Context, types.CheckConfig) error
+}
+
+// checkConfigUpdateFields whitelists fields allowed to be updated for CheckConfigs
+var checkConfigUpdateFields = []string{
 	"Command",
 	"Handlers",
 	"HighFlapThreshold",
@@ -122,7 +128,7 @@ func (a CheckController) Update(ctx context.Context, given types.CheckConfig) er
 	}
 
 	// Copy
-	copyFields(check, &given, updateFields...)
+	copyFields(check, &given, checkConfigUpdateFields...)
 
 	// Validate
 	if err := check.Validate(); err != nil {
