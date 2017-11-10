@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -20,7 +19,7 @@ func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -39,7 +38,7 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -54,7 +53,7 @@ func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -70,7 +69,7 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, fmt.Errorf("%v", res.String())
+		return nil, unmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &check)
@@ -86,7 +85,7 @@ func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return checks, fmt.Errorf("%v", res.String())
+		return checks, unmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &checks)

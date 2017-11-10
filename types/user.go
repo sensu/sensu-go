@@ -1,6 +1,9 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	fmt "fmt"
+)
 
 // FixtureUser returns a testing fixture for an Entity object.
 func FixtureUser(username string) *User {
@@ -13,8 +16,8 @@ func FixtureUser(username string) *User {
 
 // Validate returns an error if the entity is invalid.
 func (u *User) Validate() error {
-	if u.Username == "" {
-		return errors.New("username can't be empty")
+	if err := ValidateNameStrict(u.Username); err != nil {
+		return fmt.Errorf("username %s", err)
 	}
 
 	return nil

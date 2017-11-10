@@ -57,6 +57,16 @@ func (p *UserPolicy) CanUpdate(_ *types.User) bool {
 	return canPerform(p, types.RulePermUpdate)
 }
 
+// CanChangePassword returns true if actor has access to update.
+func (p *UserPolicy) CanChangePassword(user *types.User) bool {
+	// Allow users to change their password
+	if p.context.Actor.Name == user.Username {
+		return true
+	}
+
+	return canPerform(p, types.RulePermUpdate)
+}
+
 // CanDelete returns true if actor has access to delete.
 func (p *UserPolicy) CanDelete(user *types.User) bool {
 	// Allow users to delete their own account
