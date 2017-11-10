@@ -2,18 +2,25 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 
 	resty "gopkg.in/resty.v0"
 )
 
+type apiError struct {
+	Message string `json:"error"`
+	Code    uint32 `json:"code"`
+}
+
+func (a apiError) Error() string {
+	return a.Message
+}
+
 // TODO: Export err type from routers package.
 func unmarshalError(res *resty.Response) error {
-	err := map[string]interface{}{}
-	json.Unmarshal(res.Body(), &err)
-
-	if msg, ok := err["error"].(string); ok {
-		return errors.New(msg)
+	var apiErr apiError
+	if err := json.Unmarshal(res.Body(), &apiErr); err != nil {
+		return fmt.Errorf("unable to read error response")
 	}
-	return errors.New("unable to read error response")
+	return apiErr
 }
