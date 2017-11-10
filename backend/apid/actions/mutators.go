@@ -29,6 +29,9 @@ func NewMutatorController(store store.MutatorStore) MutatorController {
 }
 
 // Create creates a new Mutator resource.
+// It returns non-nil error if the new mutator is invalid, update permissions
+// do not exist, or an internal error occurs while updating the underlying
+// Store.
 func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &mut)
@@ -59,6 +62,10 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 	return nil
 }
 
+// Update updates a mutator.
+// It returns non-nil error if the new mutator is invalid, create permissions
+// do not exist, or an internal error occurs while updating the underlying
+// Store.
 func (c MutatorController) Update(ctx context.Context, delta types.Mutator) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &delta)
@@ -96,6 +103,9 @@ func (c MutatorController) Update(ctx context.Context, delta types.Mutator) erro
 }
 
 // Query returns resources available to the viewer filter by given params.
+// It returns non-nil error if the params are invalid, read permissions
+// do not exist, or an internal error occurs while reading the underlying
+// Store.
 func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]*types.Mutator, error) {
 	policy := c.Policy.WithContext(ctx)
 
@@ -117,6 +127,10 @@ func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]*ty
 	return result, nil
 }
 
+// Destroy destroys the named Mutator.
+// It returns non-nil error if the params are invalid, delete permissions
+// do not exist, or an internal error occurs while updating the underlying
+// Store.
 func (c MutatorController) Destroy(ctx context.Context, params QueryParams) error {
 	policy := c.Policy.WithContext(ctx)
 
@@ -150,6 +164,9 @@ func (c MutatorController) Destroy(ctx context.Context, params QueryParams) erro
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
+// It returns non-nil error if the params are invalid, read permissions
+// do not exist, or an internal error occurs while reading the underlying
+// Store.
 func (c MutatorController) Find(ctx context.Context, params QueryParams) (*types.Mutator, error) {
 	// Find (for mutators) requires a name
 	name := params["name"]

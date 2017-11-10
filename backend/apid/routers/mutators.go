@@ -9,10 +9,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// MutatorsRouter handles /mutators requests.
 type MutatorsRouter struct {
 	controller actions.MutatorController
 }
 
+// NewMutatorsRouter creates a new MutatorsRouter.
 func NewMutatorsRouter(store store.MutatorStore) *MutatorsRouter {
 	return &MutatorsRouter{
 		controller: actions.NewMutatorController(store),
