@@ -9,11 +9,8 @@ import (
 
 // assetUpdateFields whitelists fields allowed to be updated for Assets
 var assetUpdateFields = []string{
-	"Org",
 	"Sha512",
 	"URL",
-	"Meta",
-	"Filters",
 }
 
 // AssetController expose actions in which a viewer can perform.
