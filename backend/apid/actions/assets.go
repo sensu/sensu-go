@@ -40,3 +40,26 @@ func (a AssetController) Query(ctx context.Context, params QueryParams) ([]inter
 
 	return resources, nil
 }
+
+// Find returns resource associated with given parameters if available to the
+// viewer.
+func (a AssetController) Find(ctx context.Context, params QueryParams) (interface{}, error) {
+	// Validate params
+	if id := params["id"]; id == "" {
+		return nil, NewErrorf(InternalErr, "'id' param missing")
+	}
+
+	// Fetch from store
+	result, serr := a.Store.GetAssetByName(ctx, params["id"])
+	if serr != nil {
+		return nil, NewError(InternalErr, serr)
+	}
+
+	// Verify user has permission to view
+	abilities := a.Policy.WithContext(ctx)
+	if result != nil && abilities.CanRead(result) {
+		return result, nil
+	}
+
+	return nil, NewErrorf(NotFound)
+}
