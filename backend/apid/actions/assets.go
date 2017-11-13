@@ -3,6 +3,7 @@ package actions
 import (
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
 )
 
@@ -62,4 +63,35 @@ func (a AssetController) Find(ctx context.Context, params QueryParams) (interfac
 	}
 
 	return nil, NewErrorf(NotFound)
+}
+
+// Create instatiates, validates and persists new resource if viewer has access.
+func (a AssetController) Create(ctx context.Context, newAsset types.Asset) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &newAsset)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Check for existing
+	if e, err := a.Store.GetAssetByName(ctx, newAsset.Name); err != nil {
+		return NewError(InternalErr, err)
+	} else if e != nil {
+		return NewErrorf(AlreadyExistsErr)
+	}
+
+	// Verify viewer can make change
+	if yes := abilities.CanCreate(); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newAsset.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateAsset(ctx, &newAsset); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
 }
