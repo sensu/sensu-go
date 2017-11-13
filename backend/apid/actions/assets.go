@@ -7,6 +7,15 @@ import (
 	"golang.org/x/net/context"
 )
 
+// assetUpdateFields whitelists fields allowed to be updated for Assets
+var assetUpdateFields = []string{
+	"Org",
+	"Sha512",
+	"URL",
+	"Meta",
+	"Filters",
+}
+
 // AssetController expose actions in which a viewer can perform.
 type AssetController struct {
 	Store  store.AssetStore
@@ -91,6 +100,41 @@ func (a AssetController) Create(ctx context.Context, newAsset types.Asset) error
 	// Persist
 	if err := a.Store.UpdateAsset(ctx, &newAsset); err != nil {
 		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// Update validates and persists changes to a resource if viewer has access.
+func (a AssetController) Update(ctx context.Context, given types.Asset) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &given)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Find existing asset
+	asset, err := a.Store.GetAssetByName(ctx, given.Name)
+	if err != nil {
+		return NewError(InternalErr, err)
+	} else if asset == nil {
+		return NewErrorf(NotFound)
+	}
+
+	// Verify viewer can make change
+	if yes := abilities.CanUpdate(); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Copy
+	copyFields(asset, &given, assetUpdateFields...)
+
+	// Validate
+	if err := asset.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist Changes
+	if serr := a.Store.UpdateAsset(ctx, asset); serr != nil {
+		return NewError(InternalErr, serr)
 	}
 
 	return nil
