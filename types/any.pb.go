@@ -17,6 +17,7 @@
 		keepalive.proto
 		metrics.proto
 		mutator.proto
+		organization.proto
 		rbac.proto
 		silenced.proto
 		tls.proto
@@ -46,6 +47,7 @@
 		KeepaliveRecord
 		Metrics
 		Mutator
+		Organization
 		Rule
 		Role
 		Silenced
