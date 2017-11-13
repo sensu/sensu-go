@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -466,10 +467,7 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 	header.Set(transport.HeaderKeyEnvironment, a.config.Environment)
 	header.Set(transport.HeaderKeyOrganization, a.config.Organization)
 	header.Set(transport.HeaderKeyUser, a.config.User)
-
-	for _, sub := range a.config.Subscriptions {
-		header.Add(transport.HeaderKeySubscriptions, sub)
-	}
+	header.Set(transport.HeaderKeySubscriptions, strings.Join(a.config.Subscriptions, ","))
 
 	return header
 }
