@@ -139,7 +139,7 @@ func registerRestrictedResources(
 		routers.NewEventsRouter(store),
 		routers.NewChecksRouter(store),
 		routers.NewMutatorsRouter(store),
-		routers.NewAssetsRouter(store)
+		routers.NewAssetRouter(store),
 	)
 
 	authenticationController := &controllers.AuthenticationController{
