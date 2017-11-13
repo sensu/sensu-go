@@ -9,7 +9,7 @@ import (
 
 // OrganizationsController defines the fields required for this controller.
 type OrganizationsController struct {
-	Store  store.Store
+	Store  store.OrganizationStore
 	Policy authorization.OrganizationPolicy
 }
 
@@ -61,12 +61,10 @@ func (a OrganizationsController) Find(ctx context.Context, name string) (*types.
 
 // Create instatiates, validates and persists new resource if viewer has access.
 func (a OrganizationsController) Create(ctx context.Context, newOrg types.Organization) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &newOrg)
 	abilities := a.Policy.WithContext(ctx)
 
 	// Check for existing
-	if e, err := a.Store.GetCheckConfigByName(ctx, newOrg.Name); err != nil {
+	if e, err := a.Store.GetOrganizationByName(ctx, newOrg.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -90,8 +88,6 @@ func (a OrganizationsController) Create(ctx context.Context, newOrg types.Organi
 	return nil
 }
 
-// Note - removed addition of org to context and call to copyFields, make sure
-// we don't need those
 // Update validates and persists changes to a resource if viewer has access.
 func (a OrganizationsController) Update(ctx context.Context, given types.Organization) error {
 	abilities := a.Policy.WithContext(ctx)
