@@ -144,6 +144,7 @@ func registerRestrictedResources(
 		routers.NewUsersRouter(store),
 		routers.NewAssetRouter(store),
 		routers.NewEventFiltersRouter(store),
+		routers.NewOrganizationsRouter(store),
 	)
 
 	authenticationController := &controllers.AuthenticationController{
@@ -172,11 +173,6 @@ func registerRestrictedResources(
 		Status: bStatus,
 	}
 	infoController.Register(commonRouter)
-
-	organizationsController := &controllers.OrganizationsController{
-		Store: store,
-	}
-	organizationsController.Register(commonRouter)
 
 	rolesController := &controllers.RolesController{
 		Store: store,
