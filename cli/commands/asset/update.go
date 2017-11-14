@@ -22,7 +22,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return nil
 			}
 
-			// Fetch asset from API
+			// Fetch assets from API
 			name := args[0]
 			asset, err := cli.Client.FetchAsset(name)
 			if err != nil {
@@ -30,7 +30,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Administer questionnaire
-			opts := assetOptions{}
+			opts := newAssetOptions()
 			opts.copyFrom(asset)
 			if err := opts.administerQuestionnaire(); err != nil {
 				return err
@@ -60,6 +60,11 @@ type assetOptions struct {
 	Sha512 string
 }
 
+func newAssetOptions() *assetOptions {
+	opts := assetOptions{}
+	return &opts
+}
+
 func (opts *assetOptions) copyFrom(a *types.Asset) {
 	opts.URL = a.URL
 	opts.Sha512 = a.Sha512
@@ -74,12 +79,12 @@ func (opts *assetOptions) administerQuestionnaire() error {
 	var qs = []*survey.Question{
 		{
 			Name:     "url",
-			Prompt:   &survey.Input{Message: "URL:"},
+			Prompt:   &survey.Input{Message: "URL:", Default: opts.URL},
 			Validate: survey.Required,
 		},
 		{
 			Name:     "sha512",
-			Prompt:   &survey.Input{Message: "SHA-512 Checksum:"},
+			Prompt:   &survey.Input{Message: "SHA-512 Checksum:", Default: opts.Sha512},
 			Validate: survey.Required,
 		},
 	}
