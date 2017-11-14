@@ -61,7 +61,13 @@ func (a CheckController) Query(ctx context.Context) ([]*types.CheckConfig, error
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a CheckController) Find(ctx context.Context, name string) (*types.CheckConfig, error) {
+func (a CheckController) Find(ctx context.Context, params QueryParams) (*types.CheckConfig, error) {
+	// We requires an ID
+	name := params["id"]
+	if name == "" {
+		return nil, NewErrorf(InvalidArgument, "an ID is required to find a check")
+	}
+
 	// Fetch from store
 	result, serr := a.Store.GetCheckConfigByName(ctx, name)
 	if serr != nil {

@@ -49,7 +49,7 @@ func init() {
 
 						controller := actions.NewCheckController(store)
 
-						checks, err := controller.Query(p.Context, actions.QueryParams{})
+						checks, err := controller.Query(p.Context)
 						if err != nil {
 							return nil, err
 						}
