@@ -57,6 +57,7 @@ type FilterAPIClient interface {
 	DeleteFilter(*types.EventFilter) error
 	FetchFilter(string) (*types.EventFilter, error)
 	ListFilters(string) ([]types.EventFilter, error)
+	UpdateFilter(*types.EventFilter) error
 }
 
 // EnvironmentAPIClient client methods for environments

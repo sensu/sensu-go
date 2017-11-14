@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/types"
@@ -75,4 +76,22 @@ func (client *RestClient) ListFilters(org string) ([]types.EventFilter, error) {
 
 	err = json.Unmarshal(res.Body(), &filters)
 	return filters, err
+}
+
+// UpdateFilter updates an existing filter with fields from a new one.
+func (c *RestClient) UpdateFilter(f *types.EventFilter) error {
+	b, err := json.Marshal(f)
+	if err != nil {
+		return err
+	}
+	resp, err := c.R().SetBody(b).Patch(fmt.Sprintf("/filters/%s", f.Name))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 400 {
+		err = errors.New(resp.String())
+	}
+
+	return err
 }
