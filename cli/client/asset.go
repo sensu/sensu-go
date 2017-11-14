@@ -41,7 +41,7 @@ func (client *RestClient) FetchAsset(name string) (*types.Asset, error) {
 	return &asset, err
 }
 
-// CreateAsset fetches an asset resource from the backend
+// CreateAsset creates an asset resource from the backend
 func (client *RestClient) CreateAsset(asset *types.Asset) error {
 	bytes, err := json.Marshal(asset)
 	if err != nil {
@@ -53,6 +53,25 @@ func (client *RestClient) CreateAsset(asset *types.Asset) error {
 		return err
 	}
 
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
+// UpdateAsset updates an asset resource from the backend
+func (client *RestClient) UpdateAsset(asset *types.Asset) (err error) {
+	bytes, err := json.Marshal(asset)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Patch("/assets/" + asset.Name)
 	if err != nil {
 		return err
 	}

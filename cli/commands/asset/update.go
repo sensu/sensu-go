@@ -43,7 +43,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateAsset(asset); err != nil {
+			if err := cli.Client.UpdateAsset(asset); err != nil {
 				return err
 			}
 
