@@ -117,47 +117,49 @@ func TestAssetFind(t *testing.T) {
 		name            string
 		ctx             context.Context
 		record          *types.Asset
+		params          QueryParams
 		argument        string
 		expected        bool
 		expectedErrCode ErrCode
-		params          QueryParams
 	}{
 		{
 			name:            "No name given",
 			ctx:             defaultCtx,
-			argument:        "",
-			expected:        false,
-			expectedErrCode: NotFound,
 			params:          QueryParams{},
+			expected:        false,
+			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "Found",
-			ctx:             defaultCtx,
-			record:          types.FixtureAsset("asset1"),
-			argument:        "asset1",
+			name:   "Found",
+			ctx:    defaultCtx,
+			record: types.FixtureAsset("asset1"),
+			params: QueryParams{
+				"id": "asset1",
+			},
 			expected:        true,
 			expectedErrCode: 0,
-			params:          QueryParams{},
 		},
 		{
-			name:            "Not Found",
-			ctx:             defaultCtx,
-			record:          nil,
-			argument:        "asset1",
+			name:   "Not Found",
+			ctx:    defaultCtx,
+			record: nil,
+			params: QueryParams{
+				"id": "asset1",
+			},
 			expected:        false,
 			expectedErrCode: NotFound,
-			params:          QueryParams{},
 		},
 		{
 			name: "No Read Permission",
 			ctx: testutil.NewContext(testutil.ContextWithRules(
 				types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermCreate),
 			)),
-			record:          types.FixtureAsset("asset1"),
-			argument:        "asset1",
+			record: types.FixtureAsset("asset1"),
+			params: QueryParams{
+				"id": "asset1",
+			},
 			expected:        false,
 			expectedErrCode: NotFound,
-			params:          QueryParams{},
 		},
 	}
 
