@@ -411,7 +411,7 @@ func TestCheckDestroy(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        string
+		params          QueryParams
 		fetchResult     *types.CheckConfig
 		fetchErr        error
 		deleteErr       error
@@ -421,14 +421,14 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:        "Deleted",
 			ctx:         defaultCtx,
-			argument:    "check1",
+			params:      QueryParams{"id": "check1"},
 			fetchResult: types.FixtureCheckConfig("check1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Does Not Exist",
 			ctx:             defaultCtx,
-			argument:        "check1",
+			params:          QueryParams{"id": "check1"},
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
@@ -436,7 +436,7 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:            "Store Err on Delete",
 			ctx:             defaultCtx,
-			argument:        "check1",
+			params:          QueryParams{"id": "check1"},
 			fetchResult:     types.FixtureCheckConfig("check1"),
 			deleteErr:       errors.New("dunno"),
 			expectedErr:     true,
@@ -445,7 +445,7 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:            "Store Err on Fetch",
 			ctx:             defaultCtx,
-			argument:        "check1",
+			params:          QueryParams{"id": "check1"},
 			fetchResult:     types.FixtureCheckConfig("check1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
@@ -454,7 +454,7 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
-			argument:        "check1",
+			params:          QueryParams{"id": "check1"},
 			fetchResult:     types.FixtureCheckConfig("check1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
@@ -477,7 +477,7 @@ func TestCheckDestroy(t *testing.T) {
 				Return(tc.deleteErr)
 
 			// Exec Query
-			err := actions.Destroy(tc.ctx, tc.argument)
+			err := actions.Destroy(tc.ctx, tc.params)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

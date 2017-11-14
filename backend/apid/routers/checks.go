@@ -63,7 +63,7 @@ func (r *ChecksRouter) update(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	err := r.controller.Destroy(req.Context(), params["id"])
+	params := actions.QueryParams(mux.Vars(req))
+	err := r.controller.Destroy(req.Context(), params)
 	return nil, err
 }
