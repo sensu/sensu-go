@@ -32,7 +32,6 @@ func TestUserQuery(t *testing.T) {
 	testCases := []struct {
 		name          string
 		ctx           context.Context
-		params        QueryParams
 		storedRecords []*types.User
 		storeErr      error
 		expectedLen   int
@@ -52,7 +51,6 @@ func TestUserQuery(t *testing.T) {
 				types.FixtureUser("user1"),
 				types.FixtureUser("user2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -66,14 +64,12 @@ func TestUserQuery(t *testing.T) {
 				types.FixtureUser("user1"),
 				types.FixtureUser("user2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 		},
 		{
 			name:        "Store Failure",
 			ctx:         ctxWithAuthorizedViewer,
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
@@ -91,7 +87,7 @@ func TestUserQuery(t *testing.T) {
 			store.On("GetAllUsers").Return(tc.storedRecords, tc.storeErr)
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx, tc.params)
+			results, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)

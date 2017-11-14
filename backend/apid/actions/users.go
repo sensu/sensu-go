@@ -34,7 +34,7 @@ func NewUserController(store store.Store) UserController {
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a UserController) Query(ctx context.Context, params QueryParams) ([]*types.User, error) {
+func (a UserController) Query(ctx context.Context) ([]*types.User, error) {
 	// Fetch from store
 	results, serr := a.Store.GetAllUsers()
 	if serr != nil {

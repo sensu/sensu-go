@@ -40,8 +40,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 }
 
 func (r *UsersRouter) list(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	records, err := r.controller.Query(req.Context(), params)
+	records, err := r.controller.Query(req.Context())
 
 	// Obfustace users password
 	for i := range records {
