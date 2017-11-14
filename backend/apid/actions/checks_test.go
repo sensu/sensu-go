@@ -35,7 +35,6 @@ func TestCheckQuery(t *testing.T) {
 		name        string
 		ctx         context.Context
 		records     []*types.CheckConfig
-		params      QueryParams
 		expectedLen int
 		storeErr    error
 		expectedErr error
@@ -44,7 +43,6 @@ func TestCheckQuery(t *testing.T) {
 			name:        "No Checks",
 			ctx:         defaultCtx,
 			records:     []*types.CheckConfig{},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -56,7 +54,6 @@ func TestCheckQuery(t *testing.T) {
 				types.FixtureCheckConfig("check1"),
 				types.FixtureCheckConfig("check2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -70,7 +67,6 @@ func TestCheckQuery(t *testing.T) {
 				types.FixtureCheckConfig("check1"),
 				types.FixtureCheckConfig("check2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 		},
@@ -78,7 +74,6 @@ func TestCheckQuery(t *testing.T) {
 			name:        "Store Failure",
 			ctx:         defaultCtx,
 			records:     nil,
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
@@ -96,7 +91,7 @@ func TestCheckQuery(t *testing.T) {
 			store.On("GetCheckConfigs", tc.ctx).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx, tc.params)
+			results, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
