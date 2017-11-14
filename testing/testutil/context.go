@@ -49,6 +49,12 @@ func ContextWithRules(rules ...types.Rule) SetContextFn {
 	return ContextWithActor("fixture", rules...)
 }
 
+// ContextWithPerms instantiates new Actor with given rule and returns new
+// contextFn w/ actor value applied.
+func ContextWithPerms(rule string, perms ...string) SetContextFn {
+	return ContextWithRules(types.FixtureRuleWithPerms(rule, perms...))
+}
+
 // ContextWithFullAccess instantiates new Actor with full access to resources across
 // the system and returns new contextFn w/ actor value applied.
 func ContextWithFullAccess(ctx context.Context) context.Context {

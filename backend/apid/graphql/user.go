@@ -2,10 +2,10 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
+	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -68,7 +68,7 @@ func newUserNodeResolver() relay.NodeResolver {
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			components := p.IDComponents.(globalid.NamedComponents)
 			store := p.Context.Value(types.StoreKey).(store.UserStore)
-			record, err := store.GetUser(components.Name())
+			record, err := store.GetUser(p.Context, components.Name())
 			if err != nil {
 				return nil, err
 			}

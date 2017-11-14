@@ -13,8 +13,8 @@ import (
 )
 
 type errorBody struct {
-	Error string `json:"error"`
-	Code  uint32 `json:"code"`
+	Message string `json:"error"`
+	Code    uint32 `json:"code"`
 }
 
 // respondWith given writer and resource, marshal to JSON and write response.
@@ -52,11 +52,11 @@ func writeError(w http.ResponseWriter, err error) {
 	// Wrap message in standard errorBody
 	actionErr, ok := err.(actions.Error)
 	if ok {
-		errBody.Error = actionErr.Message
+		errBody.Message = actionErr.Message
 		errBody.Code = uint32(actionErr.Code)
 		st = HTTPStatusFromCode(actionErr.Code)
 	} else {
-		errBody.Error = err.Error()
+		errBody.Message = err.Error()
 	}
 
 	// Prevent browser from doing mime-sniffing
@@ -77,7 +77,7 @@ func writeError(w http.ResponseWriter, err error) {
 
 	// Write JSON
 	w.WriteHeader(st)
-	fmt.Println(w, errJSON)
+	fmt.Fprintf(w, "%s", errJSON)
 }
 
 // HTTPStatusFromCode returns http status code for given user action err code
