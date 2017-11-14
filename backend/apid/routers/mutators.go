@@ -32,8 +32,7 @@ func (r *MutatorsRouter) Mount(parent *mux.Router) {
 }
 
 func (r *MutatorsRouter) list(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	return r.controller.Query(req.Context(), params)
+	return r.controller.Query(req.Context())
 }
 
 func (r *MutatorsRouter) find(req *http.Request) (interface{}, error) {

@@ -106,7 +106,7 @@ func (c MutatorController) Update(ctx context.Context, delta types.Mutator) erro
 // It returns non-nil error if the params are invalid, read permissions
 // do not exist, or an internal error occurs while reading the underlying
 // Store.
-func (c MutatorController) Query(ctx context.Context, params QueryParams) ([]*types.Mutator, error) {
+func (c MutatorController) Query(ctx context.Context) ([]*types.Mutator, error) {
 	policy := c.Policy.WithContext(ctx)
 
 	// Fetch from store

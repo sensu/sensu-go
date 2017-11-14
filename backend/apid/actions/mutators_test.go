@@ -334,7 +334,6 @@ func TestMutatorQuery(t *testing.T) {
 		name        string
 		ctx         context.Context
 		mutators    []*types.Mutator
-		params      QueryParams
 		expectedLen int
 		storeErr    error
 		expectedErr error
@@ -343,7 +342,6 @@ func TestMutatorQuery(t *testing.T) {
 			name:        "No Params, No Mutators",
 			ctx:         readCtx,
 			mutators:    nil,
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -355,7 +353,6 @@ func TestMutatorQuery(t *testing.T) {
 				types.FixtureMutator("homer"),
 				types.FixtureMutator("bart"),
 			},
-			params:      QueryParams{},
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -369,7 +366,6 @@ func TestMutatorQuery(t *testing.T) {
 				types.FixtureMutator("lisa"),
 				types.FixtureMutator("maggie"),
 			},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -380,20 +376,14 @@ func TestMutatorQuery(t *testing.T) {
 			mutators: []*types.Mutator{
 				types.FixtureMutator("mr. burns"),
 			},
-			params: QueryParams{
-				"name": "mr. burns",
-			},
 			expectedLen: 1,
 			storeErr:    nil,
 			expectedErr: nil,
 		},
 		{
-			name:     "Store Failure",
-			ctx:      readCtx,
-			mutators: nil,
-			params: QueryParams{
-				"name": "ralph",
-			},
+			name:        "Store Failure",
+			ctx:         readCtx,
+			mutators:    nil,
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
@@ -410,7 +400,7 @@ func TestMutatorQuery(t *testing.T) {
 			// Mock store methods
 			store.On("GetMutators", test.ctx).Return(test.mutators, test.storeErr)
 
-			results, err := ctl.Query(test.ctx, test.params)
+			results, err := ctl.Query(test.ctx)
 
 			assert.EqualValues(test.expectedErr, err)
 			assert.Len(results, test.expectedLen)

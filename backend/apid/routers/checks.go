@@ -32,8 +32,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	records, err := r.controller.Query(req.Context(), params)
+	records, err := r.controller.Query(req.Context())
 	return records, err
 }
 
