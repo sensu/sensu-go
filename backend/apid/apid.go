@@ -136,8 +136,9 @@ func registerRestrictedResources(
 
 	mountRouters(
 		commonRouter,
-		routers.NewEventsRouter(store),
 		routers.NewChecksRouter(store),
+		routers.NewEventsRouter(store),
+		routers.NewHandlersRouter(store),
 		routers.NewMutatorsRouter(store),
 	)
 
@@ -165,11 +166,6 @@ func registerRestrictedResources(
 		Store: store,
 	}
 	filtersController.Register(commonRouter)
-
-	handlersController := &controllers.HandlersController{
-		Store: store,
-	}
-	handlersController.Register(commonRouter)
 
 	healthController := &controllers.HealthController{
 		Store:  store,
