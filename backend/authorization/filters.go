@@ -16,7 +16,7 @@ type FilterPolicy struct {
 
 // Resource this policy is associated with
 func (p *FilterPolicy) Resource() string {
-	return types.RuleTypeFilter
+	return types.RuleTypeEventFilter
 }
 
 // Context info this instance of the policy is associated with
