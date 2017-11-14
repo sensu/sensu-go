@@ -2,7 +2,6 @@ package routers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -75,9 +74,9 @@ func writeError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	// Write JSON
+	// Write error message in JSON encoded message
 	w.WriteHeader(st)
-	fmt.Println(w, errJSON)
+	w.Write(errJSON)
 }
 
 // HTTPStatusFromCode returns http status code for given user action err code
