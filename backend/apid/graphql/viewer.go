@@ -94,7 +94,7 @@ func init() {
 						actor := ctx.Value(types.AuthorizationActorKey).(authorization.Actor)
 						store := ctx.Value(types.StoreKey).(store.Store)
 
-						user, err := store.GetUser(actor.Name)
+						user, err := store.GetUser(ctx, actor.Name)
 						if err != nil {
 							return nil, err
 						}

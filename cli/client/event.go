@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -16,7 +15,7 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, fmt.Errorf("%v", res.String())
+		return nil, unmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &event)
@@ -33,7 +32,7 @@ func (client *RestClient) ListEvents(org string) ([]types.Event, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return events, fmt.Errorf("%v", res.String())
+		return nil, unmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &events)

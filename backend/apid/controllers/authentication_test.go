@@ -31,12 +31,12 @@ func TestLoginNoCredentials(t *testing.T) {
 
 func TestLoginInvalidCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationController{Store: store}
 
 	user := types.FixtureUser("foo")
-	store.On("AuthenticateUser", "foo", "P@ssw0rd!").Return(user, fmt.Errorf("error"))
+	store.
+		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
+		Return(user, fmt.Errorf("error"))
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 	req.SetBasicAuth("foo", "P@ssw0rd!")
@@ -47,13 +47,13 @@ func TestLoginInvalidCredentials(t *testing.T) {
 
 func TestLoginSuccessful(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationController{Store: store}
 
 	user := types.FixtureUser("foo")
-	store.On("AuthenticateUser", "foo", "P@ssw0rd!").Return(user, nil)
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
+	store.
+		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
+		Return(user, nil)
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 	req.SetBasicAuth("foo", "P@ssw0rd!")

@@ -97,7 +97,7 @@ type ViewerUserResolver struct {
 
 func (t *ViewerUserResolver) TestNoErrors() {
 	t.store().
-		On("GetUser", mock.Anything).
+		On("GetUser", mock.Anything, mock.Anything).
 		Return(&types.User{}, nil).
 		Once()
 
@@ -108,7 +108,7 @@ func (t *ViewerUserResolver) TestNoErrors() {
 
 func (t *ViewerUserResolver) TestWithStoreErrors() {
 	t.store().
-		On("GetUser", mock.Anything).
+		On("GetUser", mock.Anything, mock.Anything).
 		Return(&types.User{}, errors.New("poop")).
 		Once()
 

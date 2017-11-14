@@ -29,7 +29,7 @@ func (t *EntityUserResolver) TestStandard() {
 	user := types.FixtureUser("username")
 	record := types.FixtureEntity("name")
 	record.User = user.Username
-	t.store().On("GetUser", user.Username).Return(user, nil).Once()
+	t.store().On("GetUser", mock.Anything, user.Username).Return(user, nil).Once()
 
 	res, err := t.runResolver("Entity.user", record)
 	t.NotEmpty(res)
@@ -40,7 +40,7 @@ func (t *EntityUserResolver) TestStoreError() {
 	user := types.FixtureUser("username")
 	record := types.FixtureEntity("name")
 	record.User = user.Username
-	t.store().On("GetUser", user.Username).Return(user, errMock).Once()
+	t.store().On("GetUser", mock.Anything, user.Username).Return(user, errMock).Once()
 
 	res, err := t.runResolver("Entity.user", record)
 	t.Nil(res)

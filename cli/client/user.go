@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -15,7 +14,7 @@ func (client *RestClient) AddRoleToUser(username, role string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -23,21 +22,13 @@ func (client *RestClient) AddRoleToUser(username, role string) error {
 
 // CreateUser creates new check on configured Sensu instance
 func (client *RestClient) CreateUser(user *types.User) error {
-	bytes, err := json.Marshal(user)
-	if err != nil {
-		return err
-	}
-
-	res, err := client.R().
-		SetBody(bytes).
-		Put("/rbac/users")
-
+	res, err := client.R().SetBody(user).Post("/rbac/users")
 	if err != nil {
 		return err
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -52,7 +43,7 @@ func (client *RestClient) DisableUser(username string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -68,7 +59,7 @@ func (client *RestClient) ListUsers() ([]types.User, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return users, fmt.Errorf("%v", res.String())
+		return users, unmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &users)
@@ -84,7 +75,7 @@ func (client *RestClient) ReinstateUser(uname string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -98,7 +89,7 @@ func (client *RestClient) RemoveRoleFromUser(username, role string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
@@ -120,7 +111,7 @@ func (client *RestClient) UpdatePassword(username, pwd string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return unmarshalError(res)
 	}
 
 	return nil
