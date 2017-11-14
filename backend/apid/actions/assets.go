@@ -28,7 +28,7 @@ func NewAssetController(store store.AssetStore) AssetController {
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a AssetController) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
+func (a AssetController) Query(ctx context.Context) ([]*types.Asset, error) {
 	abilities := a.Policy.WithContext(ctx)
 
 	// Fetch from store
@@ -38,7 +38,7 @@ func (a AssetController) Query(ctx context.Context, params QueryParams) ([]inter
 	}
 
 	// Filter out those resources the viewer does not have access to view.
-	resources := []interface{}{}
+	resources := []*types.Asset{}
 	for _, result := range results {
 		if yes := abilities.CanRead(result); yes {
 			resources = append(resources, result)
@@ -50,7 +50,7 @@ func (a AssetController) Query(ctx context.Context, params QueryParams) ([]inter
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a AssetController) Find(ctx context.Context, params QueryParams) (interface{}, error) {
+func (a AssetController) Find(ctx context.Context, params QueryParams) (*types.Asset, error) {
 	// Validate params
 	if id := params["id"]; id == "" {
 		return nil, NewErrorf(InternalErr, "'id' param missing")
