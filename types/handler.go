@@ -2,6 +2,25 @@ package types
 
 import "errors"
 
+const (
+	// HandlerPipeType represents handlers that pipes event data // into arbitrary
+	// commands via STDIN
+	HandlerPipeType = "pipe"
+
+	// HandlerSetType represents handlers that groups event handlers, making it
+	// easy to manage groups of actions that should be executed for certain types
+	// of events.
+	HandlerSetType = "set"
+
+	// HandlerTCPType represents handlers that send event data to a remote TCP
+	// socket
+	HandlerTCPType = "tcp"
+
+	// HandlerUDPType represents handlers that send event data to a remote UDP
+	// socket
+	HandlerUDPType = "udp"
+)
+
 // Validate returns an error if the handler does not pass validation tests.
 func (h *Handler) Validate() error {
 	if err := ValidateName(h.Name); err != nil {

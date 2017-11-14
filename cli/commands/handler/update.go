@@ -40,7 +40,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateHandler(handler); err != nil {
+			if err := cli.Client.UpdateHandler(handler); err != nil {
 				return err
 			}
 

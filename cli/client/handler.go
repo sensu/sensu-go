@@ -27,25 +27,39 @@ func (client *RestClient) ListHandlers(org string) ([]types.Handler, error) {
 // CreateHandler creates new handler on configured Sensu instance
 func (client *RestClient) CreateHandler(handler *types.Handler) (err error) {
 	bytes, err := json.Marshal(handler)
-	if err == nil {
-		_, err = client.R().
-			SetBody(bytes).
-			Put("/handlers/" + handler.Name)
+	if err != nil {
+		return err
 	}
 
-	return
+	res, err := client.R().SetBody(bytes).Post("/handlers")
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
 }
 
 // DeleteHandler deletes given handler from the configured Sensu instance
 func (client *RestClient) DeleteHandler(handler *types.Handler) (err error) {
-	_, err = client.R().Delete("/handlers/" + handler.Name)
-	return err
+	res, err := client.R().Delete("/handlers/" + handler.Name)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
 }
 
 // FetchHandler fetches a specific handler
 func (client *RestClient) FetchHandler(name string) (*types.Handler, error) {
 	var handler *types.Handler
-
 	res, err := client.R().Get("/handlers/" + name)
 	if err != nil {
 		return nil, err
@@ -57,4 +71,23 @@ func (client *RestClient) FetchHandler(name string) (*types.Handler, error) {
 
 	err = json.Unmarshal(res.Body(), &handler)
 	return handler, err
+}
+
+// UpdateHandler updates given handler on configured Sensu instance
+func (client *RestClient) UpdateHandler(handler *types.Handler) (err error) {
+	bytes, err := json.Marshal(handler)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Patch("/handlers/" + handler.Name)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
 }

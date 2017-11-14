@@ -78,6 +78,7 @@ type HandlerAPIClient interface {
 	DeleteHandler(*types.Handler) error
 	ListHandlers(string) ([]types.Handler, error)
 	FetchHandler(string) (*types.Handler, error)
+	UpdateHandler(*types.Handler) error
 }
 
 // MutatorAPIClient client methods for mutators

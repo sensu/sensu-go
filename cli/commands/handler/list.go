@@ -105,9 +105,9 @@ func printHandlersToTable(queryResults []types.Handler, writer io.Writer) {
 				handler, _ := data.(types.Handler)
 
 				switch handler.Type {
-				case "tcp":
+				case types.HandlerTCPType:
 					fallthrough
-				case "udp":
+				case types.HandlerUDPType:
 					return fmt.Sprintf(
 						"%s %s://%s:%d",
 						table.TitleStyle("PUSH:"),
@@ -115,13 +115,13 @@ func printHandlersToTable(queryResults []types.Handler, writer io.Writer) {
 						handler.Socket.Host,
 						handler.Socket.Port,
 					)
-				case "pipe":
+				case types.HandlerPipeType:
 					return fmt.Sprintf(
 						"%s  %s",
 						table.TitleStyle("RUN:"),
 						handler.Command,
 					)
-				case "set":
+				case types.HandlerSetType:
 					return fmt.Sprintf(
 						"%s %s",
 						table.TitleStyle("CALL:"),

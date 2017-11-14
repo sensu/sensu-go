@@ -77,13 +77,13 @@ func (opts *handlerOpts) administerQuestionnaire(editing bool) error {
 	}
 
 	switch opts.Type {
-	case "pipe":
+	case types.HandlerPipeType:
 		return opts.queryForCommand()
-	case "tcp":
+	case types.HandlerTCPType:
 		fallthrough
-	case "udp":
+	case types.HandlerUDPType:
 		return opts.queryForSocket()
-	case "set":
+	case types.HandlerSetType:
 		return opts.queryForHandlers()
 	}
 

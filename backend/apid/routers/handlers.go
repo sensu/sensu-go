@@ -43,12 +43,12 @@ func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *HandlersRouter) destroy(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	return nil, r.controller.Destroy(req.Context(), params["name"])
+	return nil, r.controller.Destroy(req.Context(), params["id"])
 }
 
 func (r *HandlersRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	return r.controller.Find(req.Context(), params["name"])
+	return r.controller.Find(req.Context(), params["id"])
 }
 
 func (r *HandlersRouter) list(req *http.Request) (interface{}, error) {
