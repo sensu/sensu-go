@@ -17,7 +17,7 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 
 	res, err := client.R().
 		SetBody(bytes).
-		Put("/filters/" + filter.Name)
+		Post("/filters")
 
 	if err != nil {
 		return err
