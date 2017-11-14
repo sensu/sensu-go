@@ -112,6 +112,12 @@ func TestAssetFind(t *testing.T) {
 			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermRead),
 		),
 	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermCreate),
+		),
+	)
 
 	testCases := []struct {
 		name            string
@@ -150,10 +156,8 @@ func TestAssetFind(t *testing.T) {
 			expectedErrCode: NotFound,
 		},
 		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermCreate),
-			)),
+			name:   "No Read Permission",
+			ctx:    wrongPermsCtx,
 			record: types.FixtureAsset("asset1"),
 			params: QueryParams{
 				"id": "asset1",
@@ -310,6 +314,7 @@ func TestAssetUpdate(t *testing.T) {
 	)
 
 	badAsset := types.FixtureAsset("asset1")
+	badAsset.URL = ""
 
 	testCases := []struct {
 		name            string
