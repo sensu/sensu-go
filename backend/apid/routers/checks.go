@@ -37,8 +37,8 @@ func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	record, err := r.controller.Find(req.Context(), params["id"])
+	params := actions.QueryParams(mux.Vars(req))
+	record, err := r.controller.Find(req.Context(), params)
 	return record, err
 }
 

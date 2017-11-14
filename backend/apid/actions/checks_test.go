@@ -112,22 +112,22 @@ func TestCheckFind(t *testing.T) {
 		name            string
 		ctx             context.Context
 		record          *types.CheckConfig
-		argument        string
+		params          QueryParams
 		expected        bool
 		expectedErrCode ErrCode
 	}{
 		{
-			name:            "No name given",
+			name:            "No params given",
 			ctx:             defaultCtx,
-			argument:        "",
+			params:          QueryParams{},
 			expected:        false,
-			expectedErrCode: NotFound,
+			expectedErrCode: InvalidArgument,
 		},
 		{
 			name:            "Found",
 			ctx:             defaultCtx,
 			record:          types.FixtureCheckConfig("check1"),
-			argument:        "check1",
+			params:          QueryParams{"id": "check1"},
 			expected:        true,
 			expectedErrCode: 0,
 		},
@@ -135,7 +135,7 @@ func TestCheckFind(t *testing.T) {
 			name:            "Not Found",
 			ctx:             defaultCtx,
 			record:          nil,
-			argument:        "check1",
+			params:          QueryParams{"id": "check1"},
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -145,7 +145,7 @@ func TestCheckFind(t *testing.T) {
 				types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
 			)),
 			record:          types.FixtureCheckConfig("check1"),
-			argument:        "check1",
+			params:          QueryParams{"id": "check1"},
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -164,7 +164,7 @@ func TestCheckFind(t *testing.T) {
 				Return(tc.record, nil)
 
 			// Exec Query
-			result, err := actions.Find(tc.ctx, tc.argument)
+			result, err := actions.Find(tc.ctx, tc.params)
 
 			inferErr, ok := err.(Error)
 			if ok {
