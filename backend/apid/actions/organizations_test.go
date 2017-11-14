@@ -291,8 +291,6 @@ func TestOrganizationsUpdate(t *testing.T) {
 		),
 	)
 
-	badOrg := types.FixtureOrganization("badorg")
-
 	testCases := []struct {
 		name            string
 		ctx             context.Context
@@ -345,12 +343,11 @@ func TestOrganizationsUpdate(t *testing.T) {
 			expectedErrCode: PermissionDenied,
 		},
 
-		// TODO: figure out why this case fails
 		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
-			argument:        badOrg,
-			fetchResult:     types.FixtureOrganization("org1"),
+			argument:        types.FixtureOrganization("bad org"),
+			fetchResult:     types.FixtureOrganization("bad org"),
 			updateErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
