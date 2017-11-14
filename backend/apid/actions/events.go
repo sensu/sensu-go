@@ -22,7 +22,7 @@ func NewEventController(store store.EventStore) EventController {
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a EventController) Query(ctx context.Context, params QueryParams) ([]interface{}, error) {
+func (a EventController) Query(ctx context.Context, params QueryParams) ([]*types.Event, error) {
 	var results []*types.Event
 
 	entityID := params["entity"]
@@ -46,35 +46,36 @@ func (a EventController) Query(ctx context.Context, params QueryParams) ([]inter
 		return nil, NewError(InternalErr, serr)
 	}
 
-	abilities := a.Policy.WithContext(ctx)
-
 	// Filter out those resources the viewer does not have access to view.
-	resources := []interface{}{}
-	for _, event := range results {
-		if yes := abilities.CanRead(event); yes {
-			resources = append(resources, event)
+	abilities := a.Policy.WithContext(ctx)
+	for i := 0; i < len(results); i++ {
+		if !abilities.CanRead(results[i]) {
+			results = append(results[:i], results[i+1:]...)
+			i--
 		}
 	}
 
-	return resources, nil
+	return results, nil
 }
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a EventController) Find(ctx context.Context, params QueryParams) (interface{}, error) {
+func (a EventController) Find(ctx context.Context, params QueryParams) (*types.Event, error) {
 	// Find (for events) requires both an entity and check
 	if params["entity"] == "" || params["check"] == "" {
 		return nil, NewErrorf(InvalidArgument, "Find() requires both an entity and a check")
 	}
 
-	results, err := a.Query(ctx, params)
+	result, err := a.Store.GetEventByEntityCheck(ctx, params["entity"], params["check"])
 	if err != nil {
 		return nil, err
 	}
 
-	if len(results) == 0 {
-		return nil, NewErrorf(NotFound)
+	// Verify user has permission to view
+	abilities := a.Policy.WithContext(ctx)
+	if result != nil && abilities.CanRead(result) {
+		return result, nil
 	}
 
-	return results[0], err
+	return nil, NewErrorf(NotFound)
 }
