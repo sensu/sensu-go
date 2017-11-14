@@ -112,22 +112,22 @@ func TestCheckFind(t *testing.T) {
 		name            string
 		ctx             context.Context
 		record          *types.CheckConfig
-		params          QueryParams
+		argument        string
 		expected        bool
 		expectedErrCode ErrCode
 	}{
 		{
-			name:            "No params given",
+			name:            "No argument given",
 			ctx:             defaultCtx,
-			params:          QueryParams{},
+			argument:        "",
 			expected:        false,
-			expectedErrCode: InvalidArgument,
+			expectedErrCode: NotFound,
 		},
 		{
 			name:            "Found",
 			ctx:             defaultCtx,
 			record:          types.FixtureCheckConfig("check1"),
-			params:          QueryParams{"id": "check1"},
+			argument:        "check1",
 			expected:        true,
 			expectedErrCode: 0,
 		},
@@ -135,7 +135,7 @@ func TestCheckFind(t *testing.T) {
 			name:            "Not Found",
 			ctx:             defaultCtx,
 			record:          nil,
-			params:          QueryParams{"id": "check1"},
+			argument:        "missing",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -145,7 +145,7 @@ func TestCheckFind(t *testing.T) {
 				types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
 			)),
 			record:          types.FixtureCheckConfig("check1"),
-			params:          QueryParams{"id": "check1"},
+			argument:        "check1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -164,7 +164,7 @@ func TestCheckFind(t *testing.T) {
 				Return(tc.record, nil)
 
 			// Exec Query
-			result, err := actions.Find(tc.ctx, tc.params)
+			result, err := actions.Find(tc.ctx, tc.argument)
 
 			inferErr, ok := err.(Error)
 			if ok {
@@ -411,7 +411,7 @@ func TestCheckDestroy(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		params          QueryParams
+		argument        string
 		fetchResult     *types.CheckConfig
 		fetchErr        error
 		deleteErr       error
@@ -421,14 +421,14 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:        "Deleted",
 			ctx:         defaultCtx,
-			params:      QueryParams{"id": "check1"},
+			argument:    "check1",
 			fetchResult: types.FixtureCheckConfig("check1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Does Not Exist",
 			ctx:             defaultCtx,
-			params:          QueryParams{"id": "check1"},
+			argument:        "check1",
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
@@ -436,7 +436,7 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:            "Store Err on Delete",
 			ctx:             defaultCtx,
-			params:          QueryParams{"id": "check1"},
+			argument:        "check1",
 			fetchResult:     types.FixtureCheckConfig("check1"),
 			deleteErr:       errors.New("dunno"),
 			expectedErr:     true,
@@ -445,7 +445,7 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:            "Store Err on Fetch",
 			ctx:             defaultCtx,
-			params:          QueryParams{"id": "check1"},
+			argument:        "check1",
 			fetchResult:     types.FixtureCheckConfig("check1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
@@ -454,7 +454,7 @@ func TestCheckDestroy(t *testing.T) {
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
-			params:          QueryParams{"id": "check1"},
+			argument:        "check1",
 			fetchResult:     types.FixtureCheckConfig("check1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
@@ -473,11 +473,11 @@ func TestCheckDestroy(t *testing.T) {
 				On("GetCheckConfigByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
-				On("DeleteCheckConfigByName", mock.Anything, "check1").
+				On("DeleteCheckConfigByName", mock.Anything, tc.argument).
 				Return(tc.deleteErr)
 
 			// Exec Query
-			err := actions.Destroy(tc.ctx, tc.params)
+			err := actions.Destroy(tc.ctx, tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

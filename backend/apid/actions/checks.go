@@ -61,13 +61,7 @@ func (a CheckController) Query(ctx context.Context) ([]*types.CheckConfig, error
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a CheckController) Find(ctx context.Context, params QueryParams) (*types.CheckConfig, error) {
-	// We require an ID
-	name := params["id"]
-	if name == "" {
-		return nil, NewErrorf(InvalidArgument, "an ID is required to find a check")
-	}
-
+func (a CheckController) Find(ctx context.Context, name string) (*types.CheckConfig, error) {
 	// Fetch from store
 	result, serr := a.Store.GetCheckConfigByName(ctx, name)
 	if serr != nil {
@@ -150,13 +144,7 @@ func (a CheckController) Update(ctx context.Context, given types.CheckConfig) er
 }
 
 // Destroy removes a resource if viewer has access.
-func (a CheckController) Destroy(ctx context.Context, params QueryParams) error {
-	// We requires an ID
-	name := params["id"]
-	if name == "" {
-		return NewErrorf(InvalidArgument, "an ID is required to delete a check")
-	}
-
+func (a CheckController) Destroy(ctx context.Context, name string) error {
 	abilities := a.Policy.WithContext(ctx)
 
 	// Verify user has permission
