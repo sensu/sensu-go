@@ -26,7 +26,7 @@ func (c *MockClient) ListFilters(org string) ([]types.EventFilter, error) {
 	return args.Get(0).([]types.EventFilter), args.Error(1)
 }
 
-// UpdateFilters for use with mock lib
+// UpdateFilter for use with mock lib
 func (c *MockClient) UpdateFilter(filter *types.EventFilter) error {
 	args := c.Called(filter)
 	return args.Error(0)

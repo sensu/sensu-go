@@ -58,13 +58,13 @@ func (f *EventFilter) Validate() error {
 
 // Update updates e with selected fields. Returns non-nil error if any of the
 // selected fields are unsupported.
-func (e *EventFilter) Update(from *EventFilter, fields ...string) error {
-	for _, f := range fields {
-		switch f {
+func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
+	for _, field := range fields {
+		switch field {
 		case "Action":
-			e.Action = from.Action
+			f.Action = from.Action
 		case "Statements":
-			e.Statements = append(e.Statements[0:0], from.Statements...)
+			f.Statements = append(f.Statements[0:0], from.Statements...)
 		default:
 			return fmt.Errorf("unsupported field: %q", f)
 		}

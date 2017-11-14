@@ -79,12 +79,12 @@ func (client *RestClient) ListFilters(org string) ([]types.EventFilter, error) {
 }
 
 // UpdateFilter updates an existing filter with fields from a new one.
-func (c *RestClient) UpdateFilter(f *types.EventFilter) error {
+func (client *RestClient) UpdateFilter(f *types.EventFilter) error {
 	b, err := json.Marshal(f)
 	if err != nil {
 		return err
 	}
-	resp, err := c.R().SetBody(b).Patch(fmt.Sprintf("/filters/%s", f.Name))
+	resp, err := client.R().SetBody(b).Patch(fmt.Sprintf("/filters/%s", f.Name))
 	if err != nil {
 		return err
 	}
