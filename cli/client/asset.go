@@ -48,9 +48,10 @@ func (client *RestClient) CreateAsset(asset *types.Asset) error {
 		return err
 	}
 
-	res, err := client.R().
-		SetBody(bytes).
-		Put("/assets/" + asset.Name)
+	res, err := client.R().SetBody(bytes).Post("/assets")
+	if err != nil {
+		return err
+	}
 
 	if err != nil {
 		return err
