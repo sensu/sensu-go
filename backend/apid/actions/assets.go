@@ -50,14 +50,14 @@ func (a AssetController) Query(ctx context.Context) ([]*types.Asset, error) {
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a AssetController) Find(ctx context.Context, params QueryParams) (*types.Asset, error) {
+func (a AssetController) Find(ctx context.Context, name string) (*types.Asset, error) {
 	// Validate params
-	if id := params["id"]; id == "" {
+	if id := name; id == "" {
 		return nil, NewErrorf(InternalErr, "'id' param missing")
 	}
 
 	// Fetch from store
-	result, serr := a.Store.GetAssetByName(ctx, params["id"])
+	result, serr := a.Store.GetAssetByName(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}

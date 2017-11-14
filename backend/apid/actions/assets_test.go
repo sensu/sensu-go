@@ -35,7 +35,6 @@ func TestAssetQuery(t *testing.T) {
 		name        string
 		ctx         context.Context
 		records     []*types.Asset
-		params      QueryParams
 		expectedLen int
 		storeErr    error
 		expectedErr error
@@ -44,7 +43,6 @@ func TestAssetQuery(t *testing.T) {
 			name:        "No Assets",
 			ctx:         defaultCtx,
 			records:     []*types.Asset{},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -56,7 +54,6 @@ func TestAssetQuery(t *testing.T) {
 				types.FixtureAsset("asset1"),
 				types.FixtureAsset("asset2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -70,7 +67,6 @@ func TestAssetQuery(t *testing.T) {
 				types.FixtureAsset("asset1"),
 				types.FixtureAsset("asset2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 		},
@@ -78,7 +74,6 @@ func TestAssetQuery(t *testing.T) {
 			name:        "Store Failure",
 			ctx:         defaultCtx,
 			records:     nil,
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
@@ -96,7 +91,7 @@ func TestAssetQuery(t *testing.T) {
 			store.On("GetAssets", tc.ctx).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx, tc.params)
+			results, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
@@ -123,7 +118,6 @@ func TestAssetFind(t *testing.T) {
 		name            string
 		ctx             context.Context
 		record          *types.Asset
-		params          QueryParams
 		argument        string
 		expected        bool
 		expectedErrCode ErrCode
@@ -131,37 +125,30 @@ func TestAssetFind(t *testing.T) {
 		{
 			name:            "No name given",
 			ctx:             defaultCtx,
-			params:          QueryParams{},
 			expected:        false,
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:   "Found",
-			ctx:    defaultCtx,
-			record: types.FixtureAsset("asset1"),
-			params: QueryParams{
-				"id": "asset1",
-			},
+			name:            "Found",
+			ctx:             defaultCtx,
+			record:          types.FixtureAsset("asset1"),
+			argument:        "asset1",
 			expected:        true,
 			expectedErrCode: 0,
 		},
 		{
-			name:   "Not Found",
-			ctx:    defaultCtx,
-			record: nil,
-			params: QueryParams{
-				"id": "asset1",
-			},
+			name:            "Not Found",
+			ctx:             defaultCtx,
+			record:          nil,
+			argument:        "asset1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
 		{
-			name:   "No Read Permission",
-			ctx:    wrongPermsCtx,
-			record: types.FixtureAsset("asset1"),
-			params: QueryParams{
-				"id": "asset1",
-			},
+			name:            "No Read Permission",
+			ctx:             wrongPermsCtx,
+			record:          types.FixtureAsset("asset1"),
+			argument:        "asset1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -180,7 +167,7 @@ func TestAssetFind(t *testing.T) {
 				Return(tc.record, nil)
 
 			// Exec Query
-			result, err := actions.Find(tc.ctx, tc.params)
+			result, err := actions.Find(tc.ctx, tc.argument)
 
 			inferErr, ok := err.(Error)
 			if ok {

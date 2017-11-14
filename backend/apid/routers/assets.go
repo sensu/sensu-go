@@ -31,14 +31,13 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 }
 
 func (r *AssetsRouter) list(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	records, err := r.controller.Query(req.Context(), params)
+	records, err := r.controller.Query(req.Context())
 	return records, err
 }
 
 func (r *AssetsRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	record, err := r.controller.Find(req.Context(), params)
+	record, err := r.controller.Find(req.Context(), params["id"])
 	return record, err
 }
 
