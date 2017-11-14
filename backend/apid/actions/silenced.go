@@ -1,0 +1,184 @@
+package actions
+
+import (
+	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
+	"golang.org/x/net/context"
+)
+
+// SilencedMutator exposes actions in which a viewer can perform.
+type SilencedMutator interface {
+	Create(context.Context, types.Silenced) error
+	Update(context.Context, types.Silenced) error
+}
+
+// silencedUpdateFields whitelists fields allowed to be updated for Silences
+var silencedUpdateFields = []string{
+	"Expire",
+	"ExpireOnResolve",
+	"Reason",
+}
+
+// SilencedController exposes actions in which a viewer can perform.
+type SilencedController struct {
+	Store  store.SilencedStore
+	Policy authorization.SilencedPolicy
+}
+
+// NewSilencedController returns new SilencedController
+func NewSilencedController(store store.SilencedStore) SilencedController {
+	return SilencedController{
+		Store:  store,
+		Policy: authorization.Silenced,
+	}
+}
+
+// Query returns resources available to the viewer.
+func (a SilencedController) Query(ctx context.Context, params QueryParams) ([]*types.Silenced, error) {
+	var results []*types.Silenced
+	var serr error
+	if sub := params["subscription"]; sub != "" {
+		results, serr = a.Store.GetSilencedEntriesBySubscription(ctx, sub)
+	} else if check := params["check"]; check != "" {
+		results, serr = a.Store.GetSilencedEntriesByCheckName(ctx, check)
+	} else {
+		results, serr = a.Store.GetSilencedEntries(ctx)
+	}
+	if serr != nil {
+		return nil, NewError(InternalErr, serr)
+	}
+
+	// Filter out those resources the viewer does not have access to view.
+	abilities := a.Policy.WithContext(ctx)
+	for i := 0; i < len(results); i++ {
+		if !abilities.CanRead(results[i]) {
+			results = append(results[:i], results[i+1:]...)
+			i--
+		}
+	}
+
+	return results, nil
+}
+
+// Find returns resource associated with given parameters if available to the
+// viewer.
+func (a SilencedController) Find(ctx context.Context, id string) (*types.Silenced, error) {
+	// Fetch from store
+	result, err := a.findSilencedEntry(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify user has permission to view
+	abilities := a.Policy.WithContext(ctx)
+	if result != nil && abilities.CanRead(result) {
+		return result, nil
+	}
+
+	return nil, NewErrorf(NotFound)
+}
+
+// Create instatiates, validates and persists new resource if viewer has access.
+func (a SilencedController) Create(ctx context.Context, newSilence types.Silenced) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &newSilence)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Check for existing
+	if e, serr := a.Store.GetSilencedEntryByID(ctx, newSilence.ID); serr != nil {
+		return NewError(InternalErr, serr)
+	} else if e != nil {
+		return NewErrorf(AlreadyExistsErr)
+	}
+
+	// Verify viewer can make change
+	if yes := abilities.CanCreate(&newSilence); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newSilence.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateSilencedEntry(ctx, &newSilence); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// Update validates and persists changes to a resource if viewer has access.
+func (a SilencedController) Update(ctx context.Context, given types.Silenced) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &given)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Find existing silenced
+	// Fetch from store
+	silence, err := a.findSilencedEntry(ctx, given.ID)
+	if err != nil {
+		return err
+	}
+
+	// Verify viewer can make change
+	if yes := abilities.CanUpdate(silence); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Copy
+	copyFields(silence, &given, silencedUpdateFields...)
+
+	// Validate
+	if err := silence.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist Changes
+	if serr := a.Store.UpdateSilencedEntry(ctx, silence); serr != nil {
+		return NewError(InternalErr, serr)
+	}
+
+	return nil
+}
+
+// Destroy removes a resource if viewer has access.
+func (a SilencedController) Destroy(ctx context.Context, params QueryParams) error {
+	abilities := a.Policy.WithContext(ctx)
+
+	// Verify user has permission
+	if yes := abilities.CanDelete(); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Delete resource(s)
+	var serr error
+	if sub := params["subscription"]; sub != "" {
+		serr = a.Store.DeleteSilencedEntriesBySubscription(ctx, sub)
+	} else if check := params["check"]; check != "" {
+		serr = a.Store.DeleteSilencedEntriesByCheckName(ctx, check)
+	} else if id := params["id"]; id != "" {
+		serr = a.Store.DeleteSilencedEntryByID(ctx, id)
+	} else {
+		logger.Panic("Destroy() did not receive subscription, check or id param")
+	}
+	if serr != nil {
+		return NewError(InternalErr, serr)
+	}
+
+	return nil
+}
+
+func (a SilencedController) findSilencedEntry(ctx context.Context, id string) (*types.Silenced, error) {
+	result, serr := a.Store.GetSilencedEntryByID(ctx, id)
+	if serr != nil {
+		return nil, NewError(InternalErr, serr)
+	}
+	if result != nil {
+		return result, nil
+	}
+
+	return nil, NewErrorf(NotFound)
+}
