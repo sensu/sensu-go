@@ -19,3 +19,9 @@ func (c *MockClient) CreateAsset(asset *types.Asset) error {
 	args := c.Called(asset)
 	return args.Error(0)
 }
+
+// UpdateAsset for use with mock lib
+func (c *MockClient) UpdateAsset(asset *types.Asset) error {
+	args := c.Called(asset)
+	return args.Error(0)
+}

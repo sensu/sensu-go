@@ -101,4 +101,5 @@ func TestAssetStore(t *testing.T) {
 	assert.NotNil(t, event.Entity)
 	assert.Equal(t, "TestAssetStore", event.Entity.ID)
 	assert.Equal(t, "test", event.Check.Config.Name)
+	assert.Equal(t, "asset", strings.Join(event.Check.Config.RuntimeAssets, ","))
 }
