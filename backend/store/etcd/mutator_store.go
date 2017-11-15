@@ -35,7 +35,7 @@ func (s *etcdStore) DeleteMutatorByName(ctx context.Context, name string) error 
 // Mutators gets the list of mutators for an (optional) organization. If org is
 // the empty string, GetMutators returns all mutators for all orgs.
 func (s *etcdStore) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
-	resp, err := s.kvc.Get(ctx, getMutatorsPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getMutatorsPath)
 	if err != nil {
 		return nil, err
 	}

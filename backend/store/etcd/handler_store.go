@@ -35,7 +35,7 @@ func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error 
 // GetHandlers gets the list of handlers for an (optional) organization. Passing
 // the empty string as the org will return all handlers.
 func (s *etcdStore) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
-	resp, err := s.kvc.Get(ctx, getHandlersPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getHandlersPath)
 	if err != nil {
 		return nil, err
 	}

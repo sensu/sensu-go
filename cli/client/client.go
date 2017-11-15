@@ -46,10 +46,13 @@ func New(config config.Config) *RestClient {
 		// we are creating or updating an object, since we will use the object
 		// attributes to determine the org & env
 		if r.Method != http.MethodPost && r.Method != http.MethodPut {
-			r.SetQueryParams(map[string]string{
-				"env": config.Environment(),
-				"org": config.Organization(),
-			})
+			if param := r.QueryParam.Get("env"); param == "" {
+				r.SetQueryParam("env", config.Environment())
+			}
+
+			if param := r.QueryParam.Get("org"); param == "" {
+				r.SetQueryParam("org", config.Organization())
+			}
 		}
 
 		// Guard against requests that are not sending auth details

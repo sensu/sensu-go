@@ -239,7 +239,6 @@ func TestRBAC(t *testing.T) {
 	output, err = devctl.run("check", "list")
 	assert.NoError(t, err, string(output))
 	json.Unmarshal(output, &checks)
-	fmt.Printf("%+v\n", checks)
 	assert.Equal(t, devCheck, &checks[0])
 
 	checks = []types.CheckConfig{}
@@ -247,6 +246,29 @@ func TestRBAC(t *testing.T) {
 	assert.NoError(t, err, string(output))
 	json.Unmarshal(output, &checks)
 	assert.Equal(t, prodCheck, &checks[0])
+
+	// A user with all privileges should be able to query all checks
+	checks = []types.CheckConfig{}
+	output, err = adminctl.run("check", "list", "--environment", "*", "--all-organizations")
+	// output, err = adminctl.run("check", "list", "--organization", "*", "--environment", "*")
+	assert.NoError(t, err, string(output))
+	json.Unmarshal(output, &checks)
+	assert.Len(t, checks, 3)
+
+	// A user with all privileges should be able to query a specific organization
+	checks = []types.CheckConfig{}
+	output, err = adminctl.run("check", "list", "--environment", "*", "--organization", "acme")
+	assert.NoError(t, err, string(output))
+	json.Unmarshal(output, &checks)
+	assert.Len(t, checks, 2)
+
+	// A user with all privileges should be able to query a specific organization
+	// and a specific environment
+	checks = []types.CheckConfig{}
+	output, err = adminctl.run("check", "list", "--environment", "dev", "--organization", "acme")
+	assert.NoError(t, err, string(output))
+	json.Unmarshal(output, &checks)
+	assert.Len(t, checks, 1)
 
 	// Make sure a client can't create objects outside of its role
 	output, err = devctl.run("check", "create", defaultCheck.Name,

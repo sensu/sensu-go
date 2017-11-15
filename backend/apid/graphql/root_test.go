@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -15,7 +16,9 @@ type QueryNodeResolver struct {
 
 func (t *QueryNodeResolver) TestStandard() {
 	record := types.FixtureUser("bob")
-	t.store().On("GetUser", record.Username).Return(record, nil).Once()
+	t.store().
+		On("GetUser", mock.Anything, record.Username).
+		Return(record, nil).Once()
 
 	params := t.newParams(nil)
 	params.Args["id"] = fmt.Sprintf("srn:users:%s", record.Username)

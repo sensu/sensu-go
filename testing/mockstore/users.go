@@ -1,10 +1,17 @@
 package mockstore
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"context"
+
+	"github.com/sensu/sensu-go/types"
+)
 
 // AuthenticateUser ...
-func (s *MockStore) AuthenticateUser(username, password string) (*types.User, error) {
-	args := s.Called(username, password)
+func (s *MockStore) AuthenticateUser(
+	ctx context.Context,
+	username, password string,
+) (*types.User, error) {
+	args := s.Called(ctx, username, password)
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
@@ -14,15 +21,15 @@ func (s *MockStore) CreateUser(user *types.User) error {
 	return args.Error(0)
 }
 
-// DeleteUserByName ...
-func (s *MockStore) DeleteUserByName(username string) error {
-	args := s.Called(username)
+// DeleteUser ...
+func (s *MockStore) DeleteUser(ctx context.Context, user *types.User) error {
+	args := s.Called(ctx, user)
 	return args.Error(0)
 }
 
 // GetUser ...
-func (s *MockStore) GetUser(username string) (*types.User, error) {
-	args := s.Called(username)
+func (s *MockStore) GetUser(ctx context.Context, username string) (*types.User, error) {
+	args := s.Called(ctx, username)
 	return args.Get(0).(*types.User), args.Error(1)
 }
 

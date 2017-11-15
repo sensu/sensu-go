@@ -2,10 +2,10 @@ package graphqlschema
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
+	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -152,7 +152,7 @@ func initEntityType() {
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						entity := p.Source.(*types.Entity)
 						store := p.Context.Value(types.StoreKey).(store.UserStore)
-						record, err := store.GetUser(entity.User)
+						record, err := store.GetUser(p.Context, entity.User)
 						if err != nil {
 							return nil, err
 						}

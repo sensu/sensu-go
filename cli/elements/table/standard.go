@@ -2,6 +2,7 @@ package table
 
 import (
 	"io"
+	"reflect"
 
 	"github.com/mgutz/ansi"
 	"github.com/olekukonko/tablewriter"
@@ -58,15 +59,26 @@ func New(columns []*Column) *Table {
 }
 
 // Render renders table to STDOUT given row values
-func (t *Table) Render(io io.Writer, rows []*Row) {
+func (t *Table) Render(io io.Writer, results interface{}) {
 	// (Shallow) copy standard writer
 	t.writer = newWriter(io)
 	t.writeColumns()
-	t.writeRows(rows)
+	t.writeRows(results)
 	t.writer.Render()
 }
 
-func (t *Table) writeRows(rows []*Row) {
+func (t *Table) writeRows(results interface{}) {
+	if reflect.TypeOf(results).Kind() != reflect.Slice {
+		return
+	}
+
+	slice := reflect.ValueOf(results)
+
+	rows := make([]*Row, slice.Len())
+	for i := 0; i < slice.Len(); i++ {
+		rows[i] = &Row{Value: slice.Index(i).Interface()}
+	}
+
 	for _, row := range rows {
 		t.writeRow(row)
 	}

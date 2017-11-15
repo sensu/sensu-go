@@ -33,7 +33,7 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Authenticate against the provider
-	user, err := a.Store.AuthenticateUser(username, password)
+	user, err := a.Store.AuthenticateUser(r.Context(), username, password)
 	if err != nil {
 		logger.WithField(
 			"user", username,
