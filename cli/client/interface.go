@@ -30,6 +30,7 @@ type AuthenticationAPIClient interface {
 // AssetAPIClient client methods for assets
 type AssetAPIClient interface {
 	CreateAsset(*types.Asset) error
+	UpdateAsset(*types.Asset) error
 	FetchAsset(string) (*types.Asset, error)
 	ListAssets(string) ([]types.Asset, error)
 }

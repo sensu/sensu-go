@@ -141,12 +141,8 @@ func registerRestrictedResources(
 		routers.NewHandlersRouter(store),
 		routers.NewMutatorsRouter(store),
 		routers.NewUsersRouter(store),
+		routers.NewAssetRouter(store),
 	)
-
-	assetsController := &controllers.AssetsController{
-		Store: store,
-	}
-	assetsController.Register(commonRouter)
 
 	authenticationController := &controllers.AuthenticationController{
 		Store: store,
