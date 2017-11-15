@@ -4,49 +4,43 @@
 
 [Engineering Wiki](https://github.com/sensu/engineering/wiki)
 
-## Sensu Agent
+## Protobuf
 
-### Assets
+### Overview
 
-#### Archive Format Specification
+We are using the version **proto3** of the protocol buffers language. Here's some useful ressources:
 
-A valid asset archive may contain the following directories:
+[To learn more about protocol buffers](https://developers.google.com/protocol-buffers/docs/overview)
+
+[The proto3 language guide](https://developers.google.com/protocol-buffers/docs/proto3)
+
+
+### Installation
+
+Install the protobuf compiler since we don't use the one that golang uses.
+```
+brew install protobuf
+```
+Otherwise, see the **for non-C++ users** [instructions here.](https://github.com/google/protobuf#protocol-compiler-installation)
+
+### Quick Start
+
+Once you make a change to any `*.proto` file within the **types** package, you will need regenerate the associated `*.pb.go` file. To do so, simply run the [genproto.sh](https://github.com/sensu/sensu-go/blob/master/scripts/genproto.sh) script, which will install all required dependencies and launch the code generation.
+
+## Testing
+
+Run test suites:
 
 ```
-<path_to_asset>/bin # automatically prepended to the PATH environment variable
-<path_to_asset>/include # automatically prepended to the CPATH environment variable
-<path_to_asset>/lib # automatically prepended to the LD_LIBRARY_PATH environment variable
+./build.sh ci
 ```
 
-Files within these three directories will be available through the corresponding
-environment variable. Any other directory will be ignored.
-
-## Sensu Backend
-
-### API
-
-#### Checks
-
-##### Create a check
+Run end-to-end tests:
 
 ```
-curl -i -X POST -H 'Content-Type: application/json' -d '{"name": "check1", "interval": 60, "command": "echo 0", "subscriptions": "linux", "organization": "default"}' http://127.0.0.1:8080/checks
-```
+./build.sh e2e
 
-#### Events
+# To run a specific test:
 
-##### Update an event
-
-Also used to create events.
-
-```
-curl -i -X PUT -H 'Content-Type: application/json' -d '{"check": {"name": "check1", "interval": 60, "command": "echo 0"}, "entity": {"id": "scotch.local"}, "timestamp": 1493114080}' http://127.0.0.1:8080/events
-```
-
-#### Users
-
-##### Create a user
-
-```
-curl -i -X PUT -H 'Content-Type: application/json' -d '{"username": "foo", "password": "P@ssw0rd!"}' http://127.0.0.1:8080/users
+./build.sh e2e -run TestRBAC
 ```
