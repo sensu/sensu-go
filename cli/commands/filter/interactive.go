@@ -76,7 +76,7 @@ func (opts *filterOpts) administerQuestionnaire(editing bool) error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *filterOpts) copy(filter *types.EventFilter) {
+func (opts *filterOpts) Copy(filter *types.EventFilter) {
 	filter.Action = opts.Action
 	filter.Environment = opts.Env
 	filter.Name = opts.Name

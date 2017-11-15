@@ -38,7 +38,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Apply given arguments to check
 			filter := types.EventFilter{}
-			opts.copy(&filter)
+			opts.Copy(&filter)
 
 			if err := filter.Validate(); err != nil {
 				if !isInteractive {

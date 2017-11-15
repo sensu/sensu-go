@@ -35,13 +35,13 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Apply given arguments to check
-			opts.copy(filter)
+			opts.Copy(filter)
 
 			if err := filter.Validate(); err != nil {
 				return err
 			}
 
-			if err := cli.Client.CreateFilter(filter); err != nil {
+			if err := cli.Client.UpdateFilter(filter); err != nil {
 				return err
 			}
 

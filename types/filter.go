@@ -56,6 +56,22 @@ func (f *EventFilter) Validate() error {
 	return nil
 }
 
+// Update updates e with selected fields. Returns non-nil error if any of the
+// selected fields are unsupported.
+func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
+	for _, field := range fields {
+		switch field {
+		case "Action":
+			f.Action = from.Action
+		case "Statements":
+			f.Statements = append(f.Statements[0:0], from.Statements...)
+		default:
+			return fmt.Errorf("unsupported field: %q", f)
+		}
+	}
+	return nil
+}
+
 // validateStatements ensure that the given statements can be parsed
 // successfully and that it does not contain any modifier tokens.
 func validateStatements(statements []string) error {
