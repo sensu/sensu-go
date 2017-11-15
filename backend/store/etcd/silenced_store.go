@@ -72,7 +72,7 @@ func (s *etcdStore) DeleteSilencedEntriesByCheckName(ctx context.Context, checkN
 
 // Get all silenced entries
 func (s *etcdStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
-	resp, err := s.kvc.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getSilencedPath)
 	if err != nil {
 		return nil, err
 	}

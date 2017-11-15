@@ -24,17 +24,11 @@ type Environment struct {
 func (m Environment) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var env, org string
-		if env = r.URL.Query().Get("env"); env == "" || env == "*" {
+		if env = r.URL.Query().Get("env"); env == "" {
 			env = defaultEnvironment
 		}
-		if org = r.URL.Query().Get("org"); org == "" || org == "*" {
+		if org = r.URL.Query().Get("org"); org == "" {
 			org = defaultOrganization
-		}
-
-		// Verify that the environment exist
-		if _, err := m.Store.GetEnvironment(r.Context(), org, env); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
 		}
 
 		ctx := r.Context()

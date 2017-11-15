@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -79,32 +78,6 @@ func TestEnvironmentNoParameters(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
-func TestEnvironmentError(t *testing.T) {
-	store := &mockstore.MockStore{}
-	store.On(
-		"GetEnvironment",
-		mock.Anything,
-		"foo",
-		"bar",
-	).Return(&types.Environment{}, errors.New("error"))
-
-	mware := Environment{Store: store}
-	server := httptest.NewServer(mware.Then(testHandler()))
-	defer server.Close()
-
-	req, _ := http.NewRequest("GET", server.URL, nil)
-	// Add a query parameter for the organization
-	query := req.URL.Query()
-	query.Add("env", "bar")
-	query.Add("org", "foo")
-	req.URL.RawQuery = query.Encode()
-
-	res, err := http.DefaultClient.Do(req)
-
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestValidateWildcard(t *testing.T) {

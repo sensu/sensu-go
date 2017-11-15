@@ -25,25 +25,13 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch filters from the API
-			r, err := cli.Client.ListFilters(org)
+			results, err := cli.Client.ListFilters(org)
 			if err != nil {
 				return err
 			}
 
-			// Determine the format to use to output the data
-			var format string
-			if format, _ = cmd.Flags().GetString(flags.Format); format == "" {
-				format = cli.Config.Format()
-			}
-
-			// Print out events in requested format
-			if format == "json" {
-				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
-					return err
-				}
-			} else {
-				printToTable(r, cmd.OutOrStdout())
-			}
+			// Print the results based on the user preferences
+			helpers.Print(cmd, cli.Config.Format(), printToTable, results)
 
 			return nil
 		},
@@ -55,12 +43,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printToTable(queryResults []types.EventFilter, io io.Writer) {
-	rows := make([]*table.Row, len(queryResults))
-	for i, result := range queryResults {
-		rows[i] = &table.Row{Value: result}
-	}
-
+func printToTable(results interface{}, writer io.Writer) {
 	table := table.New([]*table.Column{
 		{
 			Title:       "Name",
@@ -86,5 +69,5 @@ func printToTable(queryResults []types.EventFilter, io io.Writer) {
 		},
 	})
 
-	table.Render(io, rows)
+	table.Render(writer, results)
 }

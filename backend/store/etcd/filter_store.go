@@ -43,7 +43,7 @@ func (s *etcdStore) DeleteEventFilterByName(ctx context.Context, name string) er
 // GetEventFilters gets the list of filters for an (optional) organization. Passing
 // the empty string as the org will return all filters.
 func (s *etcdStore) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
-	resp, err := s.kvc.Get(ctx, getEventFiltersPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := query(ctx, s, getEventFiltersPath)
 	if err != nil {
 		return nil, err
 	}
