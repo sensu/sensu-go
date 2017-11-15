@@ -38,9 +38,8 @@ func TestSilencedStorage(t *testing.T) {
 		assert.Equal(t, 1, len(entries))
 
 		// Get silenced entry by id
-		entries, err = store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
 		assert.NoError(t, err)
-		entry := entries[0]
 		assert.NotNil(t, entry)
 		assert.Equal(t, silenced.Check, entry.Check)
 
@@ -63,9 +62,8 @@ func TestSilencedStorage(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Get silenced entry by id with "wildcard"
-		entries, err = store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err = store.GetSilencedEntryByID(ctx, silenced.ID)
 		assert.NoError(t, err)
-		entry = entries[0]
 		assert.NotNil(t, entry)
 		assert.Equal(t, "subscription:*", entry.ID)
 
