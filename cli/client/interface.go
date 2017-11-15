@@ -92,6 +92,7 @@ type MutatorAPIClient interface {
 // OrganizationAPIClient client methods for organizations
 type OrganizationAPIClient interface {
 	CreateOrganization(*types.Organization) error
+	UpdateOrganization(*types.Organization) error
 	DeleteOrganization(string) error
 	ListOrganizations() ([]types.Organization, error)
 	FetchOrganization(string) (*types.Organization, error)
