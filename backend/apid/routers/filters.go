@@ -37,7 +37,7 @@ func (r *EventFiltersRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *EventFiltersRouter) find(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	return r.controller.Find(req.Context(), params["name"])
+	return r.controller.Find(req.Context(), params["id"])
 }
 
 func (r *EventFiltersRouter) create(req *http.Request) (interface{}, error) {
@@ -62,6 +62,6 @@ func (r *EventFiltersRouter) update(req *http.Request) (interface{}, error) {
 
 func (r *EventFiltersRouter) destroy(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	err := r.controller.Destroy(req.Context(), params["name"])
+	err := r.controller.Destroy(req.Context(), params["id"])
 	return nil, err
 }

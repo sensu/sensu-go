@@ -41,10 +41,6 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateFilter(filter); err != nil {
-				return err
-			}
-
 			if err := cli.Client.UpdateFilter(filter); err != nil {
 				return err
 			}
