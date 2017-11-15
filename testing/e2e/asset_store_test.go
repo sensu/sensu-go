@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -52,24 +51,18 @@ func TestAssetStore(t *testing.T) {
 	sensuctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
 	defer cleanup()
 
-	handlerJSONFile := fmt.Sprintf("%s/TestAssetStore%v", os.TempDir(), os.Getpid())
-
 	// Create an asset
 	asset := &types.Asset{
 		Name:         "asset1",
 		Organization: "default",
 		URL:          "http:127.0.0.1",
-		Sha512:       "1234",
+		Sha512:       "12345678",
 	}
 	output, err := sensuctl.run("asset", "create", asset.Name,
 		"--organization", asset.Organization,
 		"--url", asset.URL,
 		"--sha512", asset.Sha512,
 	)
-	fmt.Println("printing")
-	fmt.Println(t)
-	fmt.Println(err)
-	fmt.Println(string(output))
 	assert.NoError(t, err, string(output))
 
 	// Create a check
@@ -108,8 +101,4 @@ func TestAssetStore(t *testing.T) {
 	assert.NotNil(t, event.Entity)
 	assert.Equal(t, "TestAssetStore", event.Entity.ID)
 	assert.Equal(t, "test", event.Check.Config.Name)
-
-	// There should be a JSON event file in the OS temp directory
-	_, err = os.Stat(handlerJSONFile)
-	assert.NoError(t, err)
 }
