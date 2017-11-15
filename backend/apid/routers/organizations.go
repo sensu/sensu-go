@@ -11,7 +11,7 @@ import (
 
 // OrganizationsRouter handles requests for /organizations
 type OrganizationsRouter struct {
-	controler actions.OrganizationsController
+	controller actions.OrganizationsController
 }
 
 // NewOrganizationsRouter instantiates new router for controlling check resources
