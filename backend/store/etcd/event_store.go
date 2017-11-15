@@ -93,7 +93,7 @@ func (s *etcdStore) GetEventsByEntity(ctx context.Context, entityID string) ([]*
 		return nil, errors.New("must specify entity id")
 	}
 
-	resp, err := s.kvc.Get(context.Background(), getEventsPath(ctx, entityID), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(ctx, getEventsPath(ctx, entityID), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (s *etcdStore) GetEventByEntityCheck(ctx context.Context, entityID, checkID
 		return nil, errors.New("must specify entity and check id")
 	}
 
-	resp, err := s.kvc.Get(context.Background(), getEventWithCheckPath(ctx, entityID, checkID), clientv3.WithPrefix())
+	resp, err := s.kvc.Get(ctx, getEventWithCheckPath(ctx, entityID, checkID), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

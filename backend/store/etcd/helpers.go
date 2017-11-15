@@ -15,8 +15,8 @@ type getObjectsPath func(context.Context, string) string
 // query is a wrapper around etcd Get method, which provides additional support
 // for querying multiple elements accross organizations and environments.
 // N.B. Even if we only query across organizations, we still need to filter the
-// values returned based on their environment afterwards since objects from all
-// environments and organizations will be returned
+// values returned based on their environment afterwards if the objects type
+// doesn't contain the environment at the top level of the object
 func query(ctx context.Context, store *etcdStore, fn getObjectsPath) (*clientv3.GetResponse, error) {
 	// Support "*" as a wildcard
 	var org, env string
