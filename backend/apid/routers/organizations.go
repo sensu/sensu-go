@@ -23,7 +23,7 @@ func NewOrganizationsRouter(store store.OrganizationStore) *OrganizationsRouter 
 
 // Mount the OrganizationsRouter to a parent Router
 func (r *OrganizationsRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/organizations"}
+	routes := resourceRoute{router: parent, pathPrefix: "/rbac/organizations"}
 	routes.index(r.list)
 	routes.show(r.find)
 	routes.create(r.create)
