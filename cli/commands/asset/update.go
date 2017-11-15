@@ -89,5 +89,5 @@ func (opts *assetOptions) administerQuestionnaire() error {
 		},
 	}
 
-	return survey.Ask(qs, &opts)
+	return survey.Ask(qs, opts)
 }
