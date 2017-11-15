@@ -55,7 +55,7 @@ func TestAssetStore(t *testing.T) {
 	asset := &types.Asset{
 		Name:         "asset1",
 		Organization: "default",
-		URL:          "http:127.0.0.1",
+		URL:          "foo",
 		Sha512:       "12345678",
 	}
 	output, err := sensuctl.run("asset", "create", asset.Name,
