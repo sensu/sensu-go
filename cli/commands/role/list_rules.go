@@ -53,11 +53,6 @@ func ListRulesCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printRulesToTable(queryResults *types.Role, io io.Writer) {
-	rows := make([]*table.Row, len(queryResults.Rules))
-	for i, result := range queryResults.Rules {
-		rows[i] = &table.Row{Value: result}
-	}
-
 	table := table.New([]*table.Column{
 		{
 			Title:       "Type",
@@ -90,5 +85,5 @@ func printRulesToTable(queryResults *types.Role, io io.Writer) {
 		},
 	})
 
-	table.Render(io, rows)
+	table.Render(io, queryResults.Rules)
 }

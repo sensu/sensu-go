@@ -2,7 +2,6 @@ package role
 
 import (
 	"io"
-	"reflect"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -37,16 +36,6 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printRolesToTable(results interface{}, writer io.Writer) {
-	if reflect.TypeOf(results).Kind() != reflect.Slice {
-		return
-	}
-	slice := reflect.ValueOf(results)
-
-	rows := make([]*table.Row, slice.Len())
-	for i := 0; i < slice.Len(); i++ {
-		rows[i] = &table.Row{Value: slice.Index(i).Interface()}
-	}
-
 	table := table.New([]*table.Column{
 		{
 			Title:       "Name",
@@ -58,5 +47,5 @@ func printRolesToTable(results interface{}, writer io.Writer) {
 		},
 	})
 
-	table.Render(writer, rows)
+	table.Render(writer, results)
 }

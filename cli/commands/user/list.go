@@ -2,7 +2,6 @@ package user
 
 import (
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
@@ -39,16 +38,6 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToTable(results interface{}, writer io.Writer) {
-	if reflect.TypeOf(results).Kind() != reflect.Slice {
-		return
-	}
-	slice := reflect.ValueOf(results)
-
-	rows := make([]*table.Row, slice.Len())
-	for i := 0; i < slice.Len(); i++ {
-		rows[i] = &table.Row{Value: slice.Index(i).Interface()}
-	}
-
 	table := table.New([]*table.Column{
 		{
 			Title:       "Username",
@@ -74,5 +63,5 @@ func printToTable(results interface{}, writer io.Writer) {
 		},
 	})
 
-	table.Render(writer, rows)
+	table.Render(writer, results)
 }
