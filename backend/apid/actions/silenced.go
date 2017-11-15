@@ -97,6 +97,17 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 		return NewErrorf(PermissionDenied)
 	}
 
+	// Populate newSilence.ID with the subscription and checkName. Substitute a
+	// splat if one of the values does not exist. If both values are empty, the
+	// validator will return an error when attempting to update it in the store.
+	if newSilence.Subscription != "" && newSilence.Check != "" {
+		newSilence.ID = newSilence.Subscription + ":" + newSilence.Check
+	} else if newSilence.Check == "" && newSilence.Subscription != "" {
+		newSilence.ID = newSilence.Subscription + ":" + "*"
+	} else if newSilence.Subscription == "" && newSilence.Check != "" {
+		newSilence.ID = "*" + ":" + newSilence.Check
+	}
+
 	// Validate
 	if err := newSilence.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
