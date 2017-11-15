@@ -39,7 +39,7 @@ func NewHandlerController(store store.HandlerStore) HandlerController {
 func (c HandlerController) Create(ctx context.Context, handler types.Handler) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &handler)
-	policy := c.Policy.WithContext(ctx)
+	abilities := c.Policy.WithContext(ctx)
 
 	// Check for existing
 	if m, err := c.Store.GetHandlerByName(ctx, handler.Name); err != nil {
@@ -49,7 +49,7 @@ func (c HandlerController) Create(ctx context.Context, handler types.Handler) er
 	}
 
 	// Verify permissions
-	if ok := policy.CanCreate(&handler); !ok {
+	if ok := abilities.CanCreate(&handler); !ok {
 		return NewErrorf(PermissionDenied, "create")
 	}
 
