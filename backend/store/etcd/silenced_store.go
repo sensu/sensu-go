@@ -129,7 +129,7 @@ func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName
 }
 
 // Get silenced entry by id
-func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) ([]*types.Silenced, error) {
+func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error) {
 	if id == "" {
 		return nil, errors.New("must specify id")
 	}
@@ -142,8 +142,11 @@ func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) ([]*typ
 	if err != nil {
 		return nil, err
 	}
+	if len(silencedArray) < 1 {
+		return nil, nil
+	}
 
-	return silencedArray, nil
+	return silencedArray[0], nil
 }
 
 // Create new silenced entry

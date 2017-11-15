@@ -140,6 +140,7 @@ func registerRestrictedResources(
 		routers.NewEventsRouter(store),
 		routers.NewHandlersRouter(store),
 		routers.NewMutatorsRouter(store),
+		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
 		routers.NewAssetRouter(store),
 		routers.NewEventFiltersRouter(store),

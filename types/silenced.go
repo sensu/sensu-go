@@ -13,6 +13,16 @@ func (s *Silenced) Validate() error {
 	return nil
 }
 
+// GetOrg refers to the organization the check belongs to
+func (s *Silenced) GetOrg() string {
+	return s.Organization
+}
+
+// GetEnv refers to the organization the check belongs to
+func (s *Silenced) GetEnv() string {
+	return s.Environment
+}
+
 // FixtureSilenced returns a testing fixutre for a Silenced event struct.
 func FixtureSilenced(checkName string) *Silenced {
 	return &Silenced{
