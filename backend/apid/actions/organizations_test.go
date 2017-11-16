@@ -35,7 +35,6 @@ func TestOrganizationsQuery(t *testing.T) {
 		name        string
 		ctx         context.Context
 		records     []*types.Organization
-		params      QueryParams
 		expectedLen int
 		storeErr    error
 		expectedErr error
@@ -46,7 +45,6 @@ func TestOrganizationsQuery(t *testing.T) {
 			records: []*types.Organization{
 				types.FixtureOrganization("default"),
 			},
-			params:      QueryParams{},
 			expectedLen: 1,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -60,7 +58,6 @@ func TestOrganizationsQuery(t *testing.T) {
 				types.FixtureOrganization("org1"),
 				types.FixtureOrganization("org2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 		},
@@ -68,7 +65,6 @@ func TestOrganizationsQuery(t *testing.T) {
 			name:        "Store Failure",
 			ctx:         defaultCtx,
 			records:     nil,
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
@@ -85,7 +81,7 @@ func TestOrganizationsQuery(t *testing.T) {
 			store.On("GetOrganizations", tc.ctx).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx, tc.params)
+			results, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
