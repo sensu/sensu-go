@@ -29,6 +29,25 @@ func (client *RestClient) CreateOrganization(org *types.Organization) error {
 	return nil
 }
 
+// UpdateOrganization updates given organization on a configured Sensu instance
+func (client *RestClient) UpdateOrganization(org *types.Organization) error {
+	bytes, err := json.Marshal(org)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Patch("/rbac/organizations/" + org.Name)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return fmt.Errorf("%v", res.String())
+	}
+
+	return nil
+}
+
 // DeleteOrganization deletes an organization on configured Sensu instance
 func (client *RestClient) DeleteOrganization(org string) error {
 	res, err := client.R().Delete("/rbac/organizations/" + org)

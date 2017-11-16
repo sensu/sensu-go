@@ -40,7 +40,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateOrganization(org); err != nil {
+			if err := cli.Client.UpdateOrganization(org); err != nil {
 				return err
 			}
 

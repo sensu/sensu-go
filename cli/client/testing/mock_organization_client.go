@@ -8,6 +8,12 @@ func (c *MockClient) CreateOrganization(org *types.Organization) error {
 	return args.Error(0)
 }
 
+// UpdateOrganization for use with mock lib
+func (c *MockClient) UpdateOrganization(org *types.Organization) error {
+	args := c.Called(org)
+	return args.Error(0)
+}
+
 // DeleteOrganization for use with mock lib
 func (c *MockClient) DeleteOrganization(org string) error {
 	args := c.Called(org)
