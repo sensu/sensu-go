@@ -80,8 +80,9 @@ func setupDefaultEnvironment(store store.Store) error {
 		context.Background(),
 		"default",
 		&types.Environment{
-			Name:        "default",
-			Description: "Default environment",
+			Name:         "default",
+			Organization: "default",
+			Description:  "Default environment",
 		})
 }
 
