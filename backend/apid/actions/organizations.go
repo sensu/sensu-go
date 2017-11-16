@@ -22,7 +22,7 @@ func NewOrganizationsController(store store.OrganizationStore) OrganizationsCont
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a OrganizationsController) Query(ctx context.Context, params QueryParams) ([]*types.Organization, error) {
+func (a OrganizationsController) Query(ctx context.Context) ([]*types.Organization, error) {
 	// Fetch from store
 	results, serr := a.Store.GetOrganizations(ctx)
 	if serr != nil {

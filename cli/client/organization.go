@@ -36,7 +36,7 @@ func (client *RestClient) UpdateOrganization(org *types.Organization) error {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/organizations/" + org.Name)
+	res, err := client.R().SetBody(bytes).Patch("/rbac/organizations/" + org.Name)
 	if err != nil {
 		return err
 	}
