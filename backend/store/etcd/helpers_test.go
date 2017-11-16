@@ -17,16 +17,8 @@ func TestQuery(t *testing.T) {
 		store.UpdateOrganization(context.Background(), &types.Organization{
 			Name: "acme",
 		})
-		store.UpdateEnvironment(context.Background(),
-			"acme",
-			&types.Environment{
-				Name: "default",
-			})
-		store.UpdateEnvironment(context.Background(),
-			"acme",
-			&types.Environment{
-				Name: "dev",
-			})
+		store.UpdateEnvironment(context.Background(), "acme", types.FixtureEnvironment("default"))
+		store.UpdateEnvironment(context.Background(), "acme", types.FixtureEnvironment("dev"))
 
 		// Create /checks/default/default/check1
 		check1 := types.FixtureCheckConfig("check1")
