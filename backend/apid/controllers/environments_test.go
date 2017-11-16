@@ -34,7 +34,11 @@ func TestDeleteEnv(t *testing.T) {
 			store := &mockstore.MockStore{}
 			controller := &EnvironmentsController{Store: store}
 
-			store.On("DeleteEnvironment", mock.Anything, tc.org, tc.org).Return(tc.storeResponse)
+			env := &types.Environment{
+				Organization: tc.org,
+				Name:         tc.env,
+			}
+			store.On("DeleteEnvironment", mock.Anything, env).Return(tc.storeResponse)
 			req, _ := http.NewRequest(
 				http.MethodDelete,
 				fmt.Sprintf("/rbac/organizations/%s/environments/%s", tc.org, tc.env),
@@ -168,7 +172,6 @@ func TestUpdateEnv(t *testing.T) {
 			store.On(
 				"UpdateEnvironment",
 				mock.Anything,
-				mock.AnythingOfType("string"),
 				mock.AnythingOfType("*types.Environment"),
 			).Return(tc.storeResponse)
 

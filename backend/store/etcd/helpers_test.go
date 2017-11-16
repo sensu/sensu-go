@@ -14,11 +14,13 @@ func TestQuery(t *testing.T) {
 		etcd, _ := store.(*etcdStore)
 
 		// Create a new org "acme" and its environments "default" & "dev"
-		store.UpdateOrganization(context.Background(), &types.Organization{
-			Name: "acme",
-		})
-		store.UpdateEnvironment(context.Background(), "acme", types.FixtureEnvironment("default"))
-		store.UpdateEnvironment(context.Background(), "acme", types.FixtureEnvironment("dev"))
+		store.UpdateOrganization(context.Background(), types.FixtureOrganization("acme"))
+		defaultEnv := types.FixtureEnvironment("default")
+		defaultEnv.Organization = "acme"
+		devEnv := types.FixtureEnvironment("dev")
+		devEnv.Organization = "acme"
+		store.UpdateEnvironment(context.Background(), defaultEnv)
+		store.UpdateEnvironment(context.Background(), devEnv)
 
 		// Create /checks/default/default/check1
 		check1 := types.FixtureCheckConfig("check1")

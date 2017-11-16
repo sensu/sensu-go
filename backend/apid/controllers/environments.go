@@ -28,10 +28,17 @@ func (o *EnvironmentsController) Register(r *mux.Router) {
 // delete handles deletion of a specific environment
 func (o *EnvironmentsController) delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	org := vars["organization"]
-	env := vars["environment"]
+	env := &types.Environment{
+		Name:         vars["environment"],
+		Organization: vars["organization"],
+	}
 
-	err := o.Store.DeleteEnvironment(r.Context(), org, env)
+	if err := env.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := o.Store.DeleteEnvironment(r.Context(), env)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -95,7 +102,9 @@ func (o *EnvironmentsController) update(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	org := vars["organization"]
 
-	var env types.Environment
+	env := types.Environment{
+		Organization: org,
+	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -116,7 +125,7 @@ func (o *EnvironmentsController) update(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = o.Store.UpdateEnvironment(r.Context(), org, &env)
+	err = o.Store.UpdateEnvironment(r.Context(), &env)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

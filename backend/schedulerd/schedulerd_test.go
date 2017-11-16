@@ -29,7 +29,7 @@ func TestSchedulerd(t *testing.T) {
 	st.UpdateOrganization(context.Background(), types.FixtureOrganization("default"))
 
 	// Mock a default environment
-	st.UpdateEnvironment(context.Background(), "default", types.FixtureEnvironment("default"))
+	st.UpdateEnvironment(context.Background(), types.FixtureEnvironment("default"))
 
 	checker := &Schedulerd{
 		Store:      st,

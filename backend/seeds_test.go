@@ -20,7 +20,6 @@ func TestSeedDefaultRole(t *testing.T) {
 	store.On(
 		"UpdateEnvironment",
 		mock.Anything,
-		mock.AnythingOfType("string"),
 		mock.AnythingOfType("*types.Environment"),
 	).Return(nil)
 	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)

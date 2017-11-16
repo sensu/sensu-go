@@ -17,10 +17,10 @@ func TestEnvStorage(t *testing.T) {
 
 		org := "default"
 		env := types.FixtureEnvironment("foo")
-		err := store.UpdateEnvironment(ctx, org, env)
+		err := store.UpdateEnvironment(ctx, env)
 		assert.NoError(t, err)
 
-		result, err := store.GetEnvironment(ctx, org, env.Name)
+		result, err := store.GetEnvironment(ctx, env.Organization, env.Name)
 		assert.NoError(t, err)
 		assert.Equal(t, env.Name, result.Name)
 
@@ -39,26 +39,27 @@ func TestEnvStorage(t *testing.T) {
 		exCheck.Environment = env.Name
 		exCheck.Organization = org
 		store.UpdateCheckConfig(ctx, exCheck)
-		err = store.DeleteEnvironment(ctx, org, env.Name)
+		err = store.DeleteEnvironment(ctx, env)
 		assert.Error(t, err)
 
 		// Delete a non-empty environment w/ role
 		store.DeleteCheckConfigByName(ctx, exCheck.Name)
 		store.UpdateRole(types.FixtureRole("1", org, env.Name))
-		err = store.DeleteEnvironment(ctx, org, env.Name)
+		err = store.DeleteEnvironment(ctx, env)
 		assert.Error(t, err)
 
 		// Delete an environment
 		store.DeleteRoleByName("1")
-		err = store.DeleteEnvironment(ctx, org, env.Name)
+		err = store.DeleteEnvironment(ctx, env)
 		assert.NoError(t, err)
 
 		// Delete a missing org
-		err = store.DeleteEnvironment(ctx, org, "missing")
+		err = store.DeleteEnvironment(ctx, &types.Environment{Organization: org, Name: "missing"})
 		assert.Error(t, err)
 
 		// Create a environment within a missing org
-		err = store.UpdateEnvironment(ctx, "missing", env)
+		env.Organization = "missing"
+		err = store.UpdateEnvironment(ctx, env)
 		assert.Error(t, err)
 
 		// Retrieve all environments again. We should have the default one
