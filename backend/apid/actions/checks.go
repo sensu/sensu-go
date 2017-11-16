@@ -7,12 +7,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-// CheckMutator exposes actions in which a viewer can perform.
-type CheckMutator interface {
-	Create(context.Context, types.CheckConfig) error
-	Update(context.Context, types.CheckConfig) error
-}
-
 // checkConfigUpdateFields whitelists fields allowed to be updated for CheckConfigs
 var checkConfigUpdateFields = []string{
 	"Command",
