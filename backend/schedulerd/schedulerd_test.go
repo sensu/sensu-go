@@ -26,19 +26,10 @@ func TestSchedulerd(t *testing.T) {
 	defer st.Teardown()
 
 	// Mock a default organization
-	st.UpdateOrganization(
-		context.Background(),
-		&types.Organization{
-			Name: "default",
-		})
+	st.UpdateOrganization(context.Background(), types.FixtureOrganization("default"))
 
 	// Mock a default environment
-	st.UpdateEnvironment(
-		context.Background(),
-		"default",
-		&types.Environment{
-			Name: "default",
-		})
+	st.UpdateEnvironment(context.Background(), "default", types.FixtureEnvironment("default"))
 
 	checker := &Schedulerd{
 		Store:      st,
