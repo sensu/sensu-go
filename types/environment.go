@@ -1,6 +1,9 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	fmt "fmt"
+)
 
 // Validate returns an error if the environment does not pass validation tests.
 func (e *Environment) Validate() error {
@@ -31,4 +34,17 @@ func (e *Environment) GetOrg() string {
 // GetEnv gets the Evironment that e belongs to (itself).
 func (e *Environment) GetEnv() string {
 	return e.Name
+}
+
+// Update updates an Environment with selected fields.
+func (e *Environment) Update(from *Environment, fields ...string) error {
+	for _, f := range fields {
+		switch f {
+		case "Description":
+			e.Description = from.Description
+		default:
+			return fmt.Errorf("unsupported update field: %q", f)
+		}
+	}
+	return nil
 }
