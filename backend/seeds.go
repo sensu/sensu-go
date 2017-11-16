@@ -64,15 +64,18 @@ func seedInitialData(store store.Store) error {
 }
 
 func setupAdminRole(store store.Store) error {
-	return store.UpdateRole(&types.Role{
-		Name: "admin",
-		Rules: []types.Rule{{
-			Type:         "*",
-			Environment:  "*",
-			Organization: "*",
-			Permissions:  types.RuleAllPerms,
-		}},
-	})
+	return store.UpdateRole(
+		context.Background(),
+		&types.Role{
+			Name: "admin",
+			Rules: []types.Rule{{
+				Type:         "*",
+				Environment:  "*",
+				Organization: "*",
+				Permissions:  types.RuleAllPerms,
+			}},
+		},
+	)
 }
 
 func setupDefaultEnvironment(store store.Store) error {

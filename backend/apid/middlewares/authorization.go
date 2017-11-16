@@ -25,7 +25,7 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 			return
 		}
 
-		roles, err := a.Store.GetRoles()
+		roles, err := a.Store.GetRoles(ctx)
 		if err != nil {
 			http.Error(w, "Error fetching roles from store", http.StatusInternalServerError)
 			return

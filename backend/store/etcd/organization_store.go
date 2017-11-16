@@ -45,7 +45,7 @@ func (s *etcdStore) DeleteOrganizationByName(ctx context.Context, name string) e
 	}
 
 	// Validate that there are no roles referencing the organization
-	roles, err := s.GetRoles()
+	roles, err := s.GetRoles(ctx)
 	if err != nil {
 		return err
 	}

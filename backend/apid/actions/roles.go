@@ -1,9 +1,6 @@
 package actions
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -11,7 +8,7 @@ import (
 )
 
 // roleUpdateFields refers to fields a viewer may update
-var roleUpdateFields = []string{"rules"}
+var roleUpdateFields = []string{"Rules"}
 
 // RoleController exposes actions in which a viewer can perform.
 type RoleController struct {
@@ -20,7 +17,7 @@ type RoleController struct {
 }
 
 // NewRoleController returns new RoleController
-func NewRoleController(store store.Store) RoleController {
+func NewRoleController(store store.RBACStore) RoleController {
 	return RoleController{
 		Store:  store,
 		Policy: authorization.Roles,
@@ -30,7 +27,7 @@ func NewRoleController(store store.Store) RoleController {
 // Query returns resources available to the viewer filter by given params.
 func (a RoleController) Query(ctx context.Context) ([]*types.Role, error) {
 	// Fetch from store
-	results, serr := a.Store.GetRoles()
+	results, serr := a.Store.GetRoles(ctx)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -68,7 +65,7 @@ func (a RoleController) Find(ctx context.Context, name string) (*types.Role, err
 // Create instantiates, validates and persists new resource if viewer has access.
 func (a RoleController) Create(ctx context.Context, newRole types.Role) error {
 	// Role for existing
-	if e, err := a.Store.GetRole(ctx, newRole.Name); err != nil {
+	if e, err := a.Store.GetRoleByName(ctx, newRole.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -86,7 +83,7 @@ func (a RoleController) Create(ctx context.Context, newRole types.Role) error {
 	}
 
 	// Persist
-	if err := a.Store.UpdateRole(&newRole); err != nil {
+	if err := a.Store.UpdateRole(ctx, &newRole); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -103,20 +100,20 @@ func (a RoleController) Update(ctx context.Context, given types.Role) error {
 
 // Destroy removes given role from the store.
 func (a RoleController) Destroy(ctx context.Context, name string) error {
+	// Verify role has permission
+	abilities := a.Policy.WithContext(ctx)
+	if yes := abilities.CanDelete(); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
 	// Fetch from store
-	result, err := a.findRole(ctx, name)
+	_, err := a.findRole(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	// Verify role has permission
-	abilities := a.Policy.WithContext(ctx)
-	if yes := abilities.CanDelete(result); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Remove from store
-	if serr := a.Store.DeleteRoleByName(ctx, result.Name); serr != nil {
+	if serr := a.Store.DeleteRoleByName(ctx, name); serr != nil {
 		return NewError(InternalErr, serr)
 	}
 
@@ -124,11 +121,12 @@ func (a RoleController) Destroy(ctx context.Context, name string) error {
 }
 
 // AddRule adds a given rule to a role
-func (a RoleController) AddRule(ctx context.Context, role string, rule *types.Rule) error {
-	return a.findAndUpdateRole(ctx, rolename, func(role *types.Role) error {
+func (a RoleController) AddRule(ctx context.Context, role string, rule types.Rule) error {
+	return a.findAndUpdateRole(ctx, role, func(role *types.Role) error {
 		var exists bool
 		for i, r := range role.Rules {
 			if r.Type == rule.Type {
+				exists = true
 				role.Rules[i] = rule
 				break
 			}
@@ -143,7 +141,7 @@ func (a RoleController) AddRule(ctx context.Context, role string, rule *types.Ru
 
 // RemoveRule removes a given rule to a role
 func (a RoleController) RemoveRule(ctx context.Context, role string, rType string) error {
-	return a.findAndUpdateRole(ctx, rolename, func(role *types.Role) error {
+	return a.findAndUpdateRole(ctx, role, func(role *types.Role) error {
 		for i, r := range role.Rules {
 			if r.Type == rType {
 				role.Rules = append(role.Rules[:i], role.Rules[i+1:]...)
@@ -156,7 +154,7 @@ func (a RoleController) RemoveRule(ctx context.Context, role string, rType strin
 }
 
 func (a RoleController) findRole(ctx context.Context, name string) (*types.Role, error) {
-	result, serr := a.Store.GetRoleByName(name)
+	result, serr := a.Store.GetRoleByName(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	} else if result == nil {
@@ -167,7 +165,7 @@ func (a RoleController) findRole(ctx context.Context, name string) (*types.Role,
 }
 
 func (a RoleController) updateRole(ctx context.Context, role *types.Role) error {
-	if err := a.Store.UpdateRole(role); err != nil {
+	if err := a.Store.UpdateRole(ctx, role); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -187,7 +185,7 @@ func (a RoleController) findAndUpdateRole(
 
 	// Verify viewer can make change
 	abilities := a.Policy.WithContext(ctx)
-	if yes := abilities.CanUpdate(role); !yes {
+	if yes := abilities.CanUpdate(); !yes {
 		return NewErrorf(PermissionDenied)
 	}
 
@@ -198,7 +196,7 @@ func (a RoleController) findAndUpdateRole(
 
 	// Validate
 	if err := role.Validate(); err != nil {
-		return err
+		return NewError(InvalidArgument, err)
 	}
 
 	// Update
