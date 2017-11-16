@@ -81,8 +81,8 @@ func (s *etcdStore) GetOrganizationByName(ctx context.Context, name string) (*ty
 		return nil, err
 	}
 
-	if len(resp.Kvs) != 1 {
-		return nil, fmt.Errorf("organization %s does not exist", name)
+	if len(resp.Kvs) == 0 {
+		return nil, nil
 	}
 
 	orgs, err := unmarshalOrganizations(resp.Kvs)

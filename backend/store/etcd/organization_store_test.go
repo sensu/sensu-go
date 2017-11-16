@@ -27,8 +27,9 @@ func TestOrgStorage(t *testing.T) {
 		assert.Equal(t, org.Name, result.Name)
 
 		// Missing organization
-		_, err = store.GetOrganizationByName(ctx, "missing")
-		assert.Error(t, err)
+		result, err = store.GetOrganizationByName(ctx, "missing")
+		assert.NoError(t, err)
+		assert.Nil(t, result)
 
 		// Create an environment within this new organization
 		env := types.FixtureEnvironment("dev")
