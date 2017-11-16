@@ -103,8 +103,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
 		},
 	}
-	// fmt.Println()
-	cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu base url")
+	cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
 	cmd.Flags().StringP("username", "", "", "username")
 	cmd.Flags().StringP("password", "", "", "password")
 	cmd.Flags().StringP("environment", "", cli.Config.Environment(), "environment")
@@ -146,7 +145,7 @@ func askForURL(c config.Config) *survey.Question {
 	return &survey.Question{
 		Name: "url",
 		Prompt: &survey.Input{
-			Message: "Sensu Base URL:",
+			Message: "Sensu Backend URL:",
 			Default: url,
 		},
 	}
