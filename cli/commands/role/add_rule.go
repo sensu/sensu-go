@@ -30,11 +30,13 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive := flags.NFlag() == 0
 
 			opts := &ruleOpts{}
-			opts.Role = args[0]
 			opts.Org = cli.Config.Organization()
 			opts.Env = cli.Config.Environment()
 			opts.withFlags(flags)
 
+			if len(args) > 0 {
+				opts.Role = args[0]
+			}
 			if isInteractive {
 				cmd.SilenceUsage = false
 				if err := opts.administerQuestionnaire(); err != nil {
