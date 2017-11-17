@@ -126,8 +126,20 @@ build_commands () {
 	done
 }
 
+build_commands_with_race_detector () {
+	if [ "$GOARCH" != "amd64" ]; then
+		return build_commands
+	else
+		echo "Running build with race detector enabled..."
+		for cmd in agent backend cli; do
+			build_command $cmd -race
+		done
+	fi
+}
+
 build_command () {
 	local cmd=$1
+	local withrace=$2
 	local cmd_name=$(cmd_name_map $cmd)
 
 	if [ ! -d bin/ ]; then
@@ -135,7 +147,7 @@ build_command () {
 	fi
 
 	echo "Building $cmd for ${GOOS}-${GOARCH}"
-	out=$(build_binary $GOOS $GOARCH $cmd $cmd_name)
+	out=$(build_binary $withrace $GOOS $GOARCH $cmd $cmd_name)
 	rm -f bin/$(basename $out)
 	cp ${out} bin
 }
@@ -170,7 +182,7 @@ unit_test_commands () {
 
 e2e_commands () {
 	echo "Running e2e tests..."
-	go test -v ${REPO_PATH}/testing/e2e $@
+	go test -v $RACE ${REPO_PATH}/testing/e2e $@
 }
 
 docker_commands () {
@@ -267,7 +279,7 @@ elif [ "$cmd" == "build_tools" ]; then
 	build_tools
 elif [ "$cmd" == "e2e" ]; then
 	# Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
-	build_commands
+	build_commands_with_race_detector
 	e2e_commands "${@:2}"
 elif [ "$cmd" == "ci" ]; then
   subcmd=${2:-"go"}
@@ -279,7 +291,7 @@ elif [ "$cmd" == "ci" ]; then
   else
     linter_commands
     unit_test_commands
-    build_commands
+    build_commands_with_race_detector
     e2e_commands
   fi
 elif [ "$cmd" == "coverage" ]; then
