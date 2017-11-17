@@ -199,20 +199,21 @@ docker_commands () {
 		build_binary linux amd64 $cmd $cmd_name
 	done
 
-	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go .
-	
+	docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
+
 	# push master - tags and pushes latest master docker build only
 	if [ "$push" == "push" ] && [ "$release" == "master" ]; then
 		docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-		docker tag sensuapp/sensu-go:latest sensuapp/sensu-go:master
 		docker push sensuapp/sensu-go:master
-	# push versioned - tags and pushes with version pulled from 
+	# push versioned - tags and pushes with version pulled from
 	# version/prerelease/iteration files
 	elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
 		docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 		local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
 		local version_alpha_iteration=$(echo sensuapp/sensu-go:$(cat version/version.txt)-$(cat version/prerelease.txt).$(cat version/iteration.txt))
-		docker tag sensuapp/sensu-go:latest $version_alpha_iteration
+        docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
+        docker push sensuapp/sensu-go:latest
+		docker tag sensuapp/sensu-go:master $version_alpha_iteration
 		docker push $version_alpha_iteration
 		docker tag $version_alpha_iteration $version_alpha
 		docker push $version_alpha
