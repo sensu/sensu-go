@@ -85,7 +85,8 @@ func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types
 	}
 
 	if len(resp.Kvs) != 1 {
-		return nil, fmt.Errorf("environment %s/%s does not exist", org, env)
+		// DNE, but not an error
+		return nil, nil
 	}
 
 	envs, err := unmarshalEnvironments(resp.Kvs)

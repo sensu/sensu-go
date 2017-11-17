@@ -24,9 +24,9 @@ func TestEnvStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, env.Name, result.Name)
 
-		// Missing environment
+		// Missing environment returns nil
 		_, err = store.GetEnvironment(ctx, org, "missing")
-		assert.Error(t, err)
+		assert.NoError(t, err)
 
 		// Get all environments
 		envs, err := store.GetEnvironments(ctx, org)
