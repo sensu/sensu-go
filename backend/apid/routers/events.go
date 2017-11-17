@@ -26,6 +26,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.index(r.list)
 	routes.path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.find).Methods(http.MethodGet)
+	routes.path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
@@ -43,4 +44,9 @@ func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	record, err := r.controller.Find(req.Context(), params)
 	return record, err
+}
+
+func (r *EventsRouter) destroy(req *http.Request) (interface{}, error) {
+	params := actions.QueryParams(mux.Vars(req))
+	return nil, r.controller.Destroy(req.Context(), params)
 }

@@ -13,3 +13,9 @@ func (c *MockClient) ListEvents(org string) ([]types.Event, error) {
 	args := c.Called(org)
 	return args.Get(0).([]types.Event), args.Error(1)
 }
+
+// DeleteEvent for use with mock lib
+func (c *MockClient) DeleteEvent(entity, check string) error {
+	args := c.Called(entity, check)
+	return args.Error(0)
+}
