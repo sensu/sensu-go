@@ -136,17 +136,18 @@ func registerRestrictedResources(
 
 	mountRouters(
 		commonRouter,
+		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(store),
 		routers.NewEntitiesRouter(store),
+		routers.NewEnvironmentsRouter(store),
+		routers.NewEventFiltersRouter(store),
 		routers.NewEventsRouter(store),
 		routers.NewHandlersRouter(store),
 		routers.NewMutatorsRouter(store),
+		routers.NewOrganizationsRouter(store),
+		routers.NewRolesRouter(store),
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
-		routers.NewAssetRouter(store),
-		routers.NewEventFiltersRouter(store),
-		routers.NewOrganizationsRouter(store),
-		routers.NewEnvironmentsRouter(store),
 	)
 
 	authenticationController := &controllers.AuthenticationController{
@@ -165,11 +166,6 @@ func registerRestrictedResources(
 		Status: bStatus,
 	}
 	infoController.Register(commonRouter)
-
-	rolesController := &controllers.RolesController{
-		Store: store,
-	}
-	rolesController.Register(commonRouter)
 
 	graphqlController := &controllers.GraphController{Store: store}
 	graphqlController.Register(commonRouter)

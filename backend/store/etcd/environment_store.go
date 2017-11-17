@@ -49,7 +49,7 @@ func (s *etcdStore) DeleteEnvironment(ctx context.Context, env *types.Environmen
 	}
 
 	// Validate that there are no roles referencing the organization
-	roles, err := s.GetRoles()
+	roles, err := s.GetRoles(ctx)
 	if err != nil {
 		return err
 	}

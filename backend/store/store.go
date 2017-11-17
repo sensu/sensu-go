@@ -152,10 +152,17 @@ type OrganizationStore interface {
 
 // RBACStore provides an interface for interacting & persisting users
 type RBACStore interface {
-	GetRoles() ([]*types.Role, error)
-	GetRoleByName(name string) (*types.Role, error)
-	UpdateRole(role *types.Role) error
-	DeleteRoleByName(name string) error
+	// GetRoles returns all roles defined in the system.
+	GetRoles(context.Context) ([]*types.Role, error)
+
+	// GetRoleByName returns role associated with given name.
+	GetRoleByName(ctx context.Context, name string) (*types.Role, error)
+
+	// UpdateRole persists given role.
+	UpdateRole(ctx context.Context, role *types.Role) error
+
+	// DeleteRoleByName removes role associated with given name.
+	DeleteRoleByName(ctx context.Context, name string) error
 }
 
 // SilencedStore provides an interface for interacting and persisting silenced
