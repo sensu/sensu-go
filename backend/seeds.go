@@ -78,10 +78,10 @@ func setupAdminRole(store store.Store) error {
 func setupDefaultEnvironment(store store.Store) error {
 	return store.UpdateEnvironment(
 		context.Background(),
-		"default",
 		&types.Environment{
-			Name:        "default",
-			Description: "Default environment",
+			Name:         "default",
+			Organization: "default",
+			Description:  "Default environment",
 		})
 }
 

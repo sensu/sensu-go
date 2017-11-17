@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMutatorStorage(t *testing.T) {
@@ -24,8 +25,8 @@ func TestMutatorStorage(t *testing.T) {
 		assert.NoError(t, err)
 
 		retrieved, err := store.GetMutatorByName(ctx, "mutator1")
-		assert.NoError(t, err)
-		assert.NotNil(t, retrieved)
+		require.NoError(t, err)
+		require.NotNil(t, retrieved)
 
 		assert.Equal(t, mutator.Name, retrieved.Name)
 		assert.Equal(t, mutator.Command, retrieved.Command)

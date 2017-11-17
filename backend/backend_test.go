@@ -14,7 +14,24 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func retryConnect(t *testing.T, address string) {
+	var err error
+	var conn net.Conn
+	for i := 0; i < 5; i++ {
+		conn, err = net.Dial("tcp", address)
+		if err == nil {
+			conn.Close()
+			continue
+		}
+		time.Sleep(time.Duration(i) * time.Second)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestBackendHTTPListener(t *testing.T) {
 	// tt = Test Table
@@ -44,7 +61,6 @@ func TestBackendHTTPListener(t *testing.T) {
 			apiPort := ports[3]
 			dashboardPort := ports[4]
 			initCluster := fmt.Sprintf("default=%s", apURL)
-			fmt.Println(initCluster)
 
 			tlsOpts := tc.tls
 
@@ -73,38 +89,10 @@ func TestBackendHTTPListener(t *testing.T) {
 				assert.NoError(t, err)
 			}()
 
-			for i := 0; i < 5; i++ {
-				conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", agentPort))
-				if derr != nil {
-					fmt.Println("Waiting for agentd to start")
-					time.Sleep(time.Duration(i) * time.Second)
-				} else {
-					conn.Close()
-					continue
-				}
-			}
+			retryConnect(t, fmt.Sprintf("localhost:%d", agentPort))
+			retryConnect(t, fmt.Sprintf("localhost:%d", apiPort))
+			retryConnect(t, fmt.Sprintf("localhost:%d", dashboardPort))
 
-			for i := 0; i < 5; i++ {
-				conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", apiPort))
-				if derr != nil {
-					fmt.Println("Waiting for apid to start")
-					time.Sleep(time.Duration(i) * time.Second)
-				} else {
-					conn.Close()
-					continue
-				}
-			}
-
-			for i := 0; i < 5; i++ {
-				conn, derr := net.Dial("tcp", fmt.Sprintf("localhost:%d", dashboardPort))
-				if derr != nil {
-					fmt.Println("Waiting for dashboardd to start")
-					time.Sleep(time.Duration(i) * time.Second)
-				} else {
-					conn.Close()
-					continue
-				}
-			}
 			userCredentials := base64.StdEncoding.EncodeToString([]byte("agent:P@ssw0rd!"))
 
 			hdr := http.Header{
@@ -116,7 +104,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls, hdr)
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
+			require.NotNil(t, client)
 
 			assert.NoError(t, client.Close())
 			b.Stop()

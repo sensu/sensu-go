@@ -33,7 +33,8 @@ func TestOrgStorage(t *testing.T) {
 
 		// Create an environment within this new organization
 		env := types.FixtureEnvironment("dev")
-		err = store.UpdateEnvironment(ctx, org.Name, env)
+		env.Organization = org.Name
+		err = store.UpdateEnvironment(ctx, env)
 		assert.NoError(t, err)
 
 		// Get all organizations
@@ -47,7 +48,7 @@ func TestOrgStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		// Delete a non-empty org w/ roles
-		store.DeleteEnvironment(ctx, org.Name, env.Name)
+		store.DeleteEnvironment(ctx, env)
 		store.UpdateRole(types.FixtureRole("1", org.Name, env.Name))
 		store.UpdateRole(types.FixtureRole("2", "asdf", "asdf"))
 		err = store.DeleteOrganizationByName(ctx, org.Name)

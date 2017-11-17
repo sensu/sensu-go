@@ -66,6 +66,7 @@ type EnvironmentAPIClient interface {
 	DeleteEnvironment(string, string) error
 	ListEnvironments(string) ([]types.Environment, error)
 	FetchEnvironment(string) (*types.Environment, error)
+	UpdateEnvironment(*types.Environment) error
 }
 
 // EventAPIClient client methods for events

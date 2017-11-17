@@ -15,6 +15,7 @@ type envOpts struct {
 func (opts *envOpts) withEnv(env *types.Environment) {
 	opts.Name = env.Name
 	opts.Description = env.Description
+	opts.Org = env.Organization
 }
 
 func (opts *envOpts) withFlags(flags *pflag.FlagSet) {
@@ -65,4 +66,5 @@ func (opts *envOpts) administerQuestionnaire(editing bool) error {
 func (opts *envOpts) Copy(env *types.Environment) {
 	env.Description = opts.Description
 	env.Name = opts.Name
+	env.Organization = opts.Org
 }

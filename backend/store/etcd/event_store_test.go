@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEventStorage(t *testing.T) {
@@ -28,8 +29,8 @@ func TestEventStorage(t *testing.T) {
 		assert.EqualValues(t, event, newEv)
 
 		events, err = store.GetEvents(ctx)
-		assert.NoError(t, err)
-		assert.Equal(t, 1, len(events))
+		require.NoError(t, err)
+		require.Equal(t, 1, len(events))
 		assert.EqualValues(t, event, events[0])
 
 		// Get all events with wildcards
@@ -42,15 +43,15 @@ func TestEventStorage(t *testing.T) {
 		// Get all events from an unexisting env
 		ctx = context.WithValue(ctx, types.EnvironmentKey, "dev")
 		events, err = store.GetEvents(ctx)
-		assert.NoError(t, err)
-		assert.Equal(t, 0, len(events))
+		require.NoError(t, err)
+		require.Equal(t, 0, len(events))
 
 		// Get all events from an unexisting org
 		ctx = context.WithValue(ctx, types.OrganizationKey, "acme")
 		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
 		events, err = store.GetEvents(ctx)
-		assert.NoError(t, err)
-		assert.Equal(t, 0, len(events))
+		require.NoError(t, err)
+		require.Equal(t, 0, len(events))
 
 		// Set back the context
 		ctx = context.WithValue(ctx, types.OrganizationKey, event.Entity.Organization)

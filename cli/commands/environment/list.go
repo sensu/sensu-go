@@ -45,18 +45,26 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 func printToTable(results interface{}, writer io.Writer) {
 	table := table.New([]*table.Column{
 		{
+			Title:       "Organization",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				env, _ := data.(types.Environment)
+				return env.Organization
+			},
+		},
+		{
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				org, _ := data.(types.Environment)
-				return org.Name
+				env, _ := data.(types.Environment)
+				return env.Name
 			},
 		},
 		{
 			Title: "Description",
 			CellTransformer: func(data interface{}) string {
-				org, _ := data.(types.Environment)
-				return org.Description
+				env, _ := data.(types.Environment)
+				return env.Description
 			},
 		},
 	})

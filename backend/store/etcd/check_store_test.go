@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCheckConfigStorage(t *testing.T) {
@@ -21,11 +22,11 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.NotNil(t, checks)
 
 		err = store.UpdateCheckConfig(ctx, check)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		retrieved, err := store.GetCheckConfigByName(ctx, "check1")
 		assert.NoError(t, err)
-		assert.NotNil(t, retrieved)
+		require.NotNil(t, retrieved)
 
 		assert.Equal(t, check.Name, retrieved.Name)
 		assert.Equal(t, check.Interval, retrieved.Interval)

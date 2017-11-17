@@ -47,16 +47,10 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	}
 
 	// Mock a default organization
-	s.UpdateOrganization(context.Background(), &types.Organization{
-		Name: "default",
-	})
+	s.UpdateOrganization(context.Background(), types.FixtureOrganization("default"))
 
 	// Mock a default environment
-	s.UpdateEnvironment(context.Background(),
-		"default",
-		&types.Environment{
-			Name: "default",
-		})
+	s.UpdateEnvironment(context.Background(), types.FixtureEnvironment("default"))
 
 	f(s)
 }

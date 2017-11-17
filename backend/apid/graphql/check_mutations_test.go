@@ -21,8 +21,8 @@ func (t *CheckMutationSuite) SetupTest() {
 
 	// Ensure the store has default org / env
 	t.populateStore(func(ctx context.Context, st store.Store) {
-		st.UpdateOrganization(ctx, &types.Organization{Name: "default"})
-		st.UpdateEnvironment(ctx, "default", &types.Environment{Name: "default"})
+		st.UpdateOrganization(ctx, types.FixtureOrganization("default"))
+		st.UpdateEnvironment(ctx, types.FixtureEnvironment("default"))
 	})
 }
 

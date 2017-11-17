@@ -16,4 +16,5 @@ option (gogoproto.testgen_all) = true;
 message Environment {
 	string description = 1 [(gogoproto.jsontag) = "description"];
 	string name = 2;
+	string organization = 3;
 }

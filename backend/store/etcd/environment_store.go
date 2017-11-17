@@ -21,13 +21,15 @@ func getEnvironmentsPath(org, env string) string {
 }
 
 // DeleteEnvironment deletes an environment
-func (s *etcdStore) DeleteEnvironment(ctx context.Context, org, env string) error {
-	if org == "" || env == "" {
-		return errors.New("must specify organization and environment name")
+func (s *etcdStore) DeleteEnvironment(ctx context.Context, env *types.Environment) error {
+	if err := env.Validate(); err != nil {
+		return err
 	}
 
+	org := env.Organization
+
 	ctx = context.WithValue(ctx, types.OrganizationKey, org)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, env)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, env.Name)
 
 	// Validate whether there are any resources referencing the organization
 	getresp, err := s.kvc.Txn(ctx).Then(
@@ -53,19 +55,19 @@ func (s *etcdStore) DeleteEnvironment(ctx context.Context, org, env string) erro
 	}
 	for _, role := range roles {
 		for _, rule := range role.Rules {
-			if rule.Organization == org && rule.Environment == env {
+			if rule.Organization == org && rule.Environment == env.Name {
 				return fmt.Errorf("environment is not empty; role '%s' references it", role.Name)
 			}
 		}
 	}
 
-	resp, err := s.kvc.Delete(ctx, getEnvironmentsPath(org, env), v3.WithPrefix())
+	resp, err := s.kvc.Delete(ctx, getEnvironmentsPath(org, env.Name), v3.WithPrefix())
 	if err != nil {
 		return err
 	}
 
 	if resp.Deleted != 1 {
-		return fmt.Errorf("environment %s/%s does not exist", org, env)
+		return fmt.Errorf("environment %s/%s does not exist", org, env.Name)
 	}
 
 	return nil
@@ -83,7 +85,8 @@ func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types
 	}
 
 	if len(resp.Kvs) != 1 {
-		return nil, fmt.Errorf("environment %s/%s does not exist", org, env)
+		// DNE, but not an error
+		return nil, nil
 	}
 
 	envs, err := unmarshalEnvironments(resp.Kvs)
@@ -111,7 +114,7 @@ func (s *etcdStore) GetEnvironments(ctx context.Context, org string) ([]*types.E
 }
 
 // UpdateEnvironment updates an environment
-func (s *etcdStore) UpdateEnvironment(ctx context.Context, org string, env *types.Environment) error {
+func (s *etcdStore) UpdateEnvironment(ctx context.Context, env *types.Environment) error {
 	if err := env.Validate(); err != nil {
 		return err
 	}
@@ -120,6 +123,8 @@ func (s *etcdStore) UpdateEnvironment(ctx context.Context, org string, env *type
 	if err != nil {
 		return err
 	}
+
+	org := env.Organization
 
 	// We need to prepare a transaction to verify that the organization under
 	// which we are creating this environment exists
