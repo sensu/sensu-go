@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/types"
@@ -85,4 +86,25 @@ func (client *RestClient) FetchEnvironment(envName string) (*types.Environment, 
 
 	err = json.Unmarshal(res.Body(), &env)
 	return env, err
+}
+
+// UpdateEnvironment updates an existing environment.
+func (client *RestClient) UpdateEnvironment(env *types.Environment) error {
+	b, err := json.Marshal(env)
+	if err != nil {
+		return err
+	}
+
+	path := fmt.Sprintf("/rbac/organizations/%s/environments/%s",
+		env.Organization, env.Name)
+	res, err := client.R().SetBody(b).Patch(path)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return errors.New(res.String())
+	}
+
+	return nil
 }

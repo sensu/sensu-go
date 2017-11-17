@@ -41,7 +41,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateEnvironment(opts.Org, env); err != nil {
+			if err := cli.Client.UpdateEnvironment(env); err != nil {
 				return err
 			}
 

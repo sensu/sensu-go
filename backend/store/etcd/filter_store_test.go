@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEventFilterStorage(t *testing.T) {
@@ -24,16 +25,16 @@ func TestEventFilterStorage(t *testing.T) {
 		assert.NoError(t, err)
 
 		retrieved, err := store.GetEventFilterByName(ctx, "filter1")
-		assert.NoError(t, err)
-		assert.NotNil(t, retrieved)
+		require.NoError(t, err)
+		require.NotNil(t, retrieved)
 
 		assert.Equal(t, filter.Name, retrieved.Name)
 		assert.Equal(t, filter.Action, retrieved.Action)
 		assert.Equal(t, filter.Statements, retrieved.Statements)
 
 		filters, err = store.GetEventFilters(ctx)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, filters)
+		require.NoError(t, err)
+		require.NotEmpty(t, filters)
 		assert.Equal(t, 1, len(filters))
 
 		// Updating a filter in a nonexistent org and env should not work

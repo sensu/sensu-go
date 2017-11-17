@@ -33,6 +33,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.withFlags(flags)
 			}
 
+			if opts.Org == "" {
+				return fmt.Errorf("an organization must be provided")
+			}
+
 			env := types.Environment{}
 			opts.Copy(&env)
 
@@ -41,10 +45,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					cmd.SilenceUsage = false
 				}
 				return err
-			}
-
-			if opts.Org == "" {
-				return fmt.Errorf("an organization must be provided")
 			}
 
 			if err := cli.Client.CreateEnvironment(opts.Org, &env); err != nil {

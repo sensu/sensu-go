@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -27,8 +26,7 @@ func TestSilencedStorage(t *testing.T) {
 
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		if err != nil {
-			fmt.Printf("error is %s \n", err)
-			assert.FailNow(t, "failed to update entry due to error")
+			t.Fatalf("failed to update entry due to error: %s", err)
 		}
 
 		// Get all silenced entries

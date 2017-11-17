@@ -7,8 +7,8 @@ import (
 )
 
 // DeleteEnvironment ...
-func (s *MockStore) DeleteEnvironment(ctx context.Context, org, env string) error {
-	args := s.Called(ctx, org, env)
+func (s *MockStore) DeleteEnvironment(ctx context.Context, env *types.Environment) error {
+	args := s.Called(ctx, env)
 	return args.Error(0)
 }
 
@@ -25,7 +25,7 @@ func (s *MockStore) GetEnvironments(ctx context.Context, org string) ([]*types.E
 }
 
 // UpdateEnvironment ...
-func (s *MockStore) UpdateEnvironment(ctx context.Context, org string, env *types.Environment) error {
-	args := s.Called(ctx, org, env)
+func (s *MockStore) UpdateEnvironment(ctx context.Context, env *types.Environment) error {
+	args := s.Called(ctx, env)
 	return args.Error(0)
 }
