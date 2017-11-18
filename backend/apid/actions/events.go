@@ -93,7 +93,7 @@ func (a EventController) Destroy(ctx context.Context, params QueryParams) error 
 		return err
 	}
 
-	// Verify user has permission to view
+	// Verify user has permission to delete
 	abilities := a.Policy.WithContext(ctx)
 	if result != nil && abilities.CanDelete() {
 		return a.Store.DeleteEventByEntityCheck(ctx, entity, check)

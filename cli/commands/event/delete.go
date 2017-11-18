@@ -13,7 +13,7 @@ import (
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "delete [ENTITY] [CHECK]",
-		Short:        "delete event matching entity and check",
+		Short:        "delete events",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
