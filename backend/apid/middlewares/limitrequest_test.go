@@ -12,48 +12,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMiddleWareLimitRequest(t *testing.T) {
-	limit := LimitRequest{}
-	server := httptest.NewServer(limit.Then(testHandler()))
-	defer server.Close()
+func TestMiddlewareLimits(t *testing.T) {
+	assert := assert.New(t)
 
-	check := &types.CheckConfig{
+	goodCheck := &types.CheckConfig{
 		Command:       "true",
 		Environment:   "default",
 		Interval:      30,
-		Name:          "checktest",
+		Name:          "goodcheck",
 		Organization:  "default",
 		Publish:       true,
 		Subscriptions: []string{"system"},
 	}
-
-	payload, _ := json.Marshal(check)
-	req, _ := http.NewRequest(http.MethodPost, server.URL+"/checks", bytes.NewBuffer(payload))
-	res, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
-func TestMiddleWareInvalidLimitRequest(t *testing.T) {
-	limit := LimitRequest{}
-	server := httptest.NewServer(limit.Then(testHandler()))
-	defer server.Close()
 
 	maxCheck := make([]byte, 600000)
 	rand.Read(maxCheck)
-	check := &types.CheckConfig{
+	badCheck := &types.CheckConfig{
 		Command:       string(maxCheck),
 		Environment:   "default",
 		Interval:      30,
-		Name:          "checktest",
+		Name:          "badcheck",
 		Organization:  "default",
 		Publish:       true,
 		Subscriptions: []string{"system"},
 	}
 
-	payload, _ := json.Marshal(check)
-	req, _ := http.NewRequest(http.MethodPost, server.URL+"/checks", bytes.NewBuffer(payload))
-	res, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+	tests := []struct {
+		description  string
+		url          string
+		body         *types.CheckConfig
+		expectedCode int
+	}{
+		{
+			description:  "Request within threshold",
+			url:          "/checks",
+			body:         goodCheck,
+			expectedCode: http.StatusOK,
+		}, {
+			description:  "Request over threshold",
+			url:          "/checks",
+			body:         badCheck,
+			expectedCode: http.StatusInternalServerError,
+		},
+	}
+
+	mware := LimitRequest{}
+	server := httptest.NewServer(mware.Then(testHandler()))
+	defer server.Close()
+
+	for _, tc := range tests {
+		payload, _ := json.Marshal(tc.body)
+		req, _ := http.NewRequest(http.MethodPost, server.URL+tc.url, bytes.NewBuffer(payload))
+		res, err := http.DefaultClient.Do(req)
+		assert.NoError(err)
+		assert.Equal(tc.expectedCode, res.StatusCode, tc.description)
+	}
 }
