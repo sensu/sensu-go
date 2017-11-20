@@ -68,7 +68,7 @@ func (a EventController) Find(ctx context.Context, params QueryParams) (*types.E
 
 	result, err := a.Store.GetEventByEntityCheck(ctx, params["entity"], params["check"])
 	if err != nil {
-		return nil, err
+		return nil, NewError(InternalErr, err)
 	}
 
 	// Verify user has permission to view
@@ -90,13 +90,17 @@ func (a EventController) Destroy(ctx context.Context, params QueryParams) error 
 
 	result, err := a.Store.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
-		return err
+		return NewError(InternalErr, err)
 	}
 
 	// Verify user has permission to delete
 	abilities := a.Policy.WithContext(ctx)
 	if result != nil && abilities.CanDelete() {
-		return a.Store.DeleteEventByEntityCheck(ctx, entity, check)
+		err := a.Store.DeleteEventByEntityCheck(ctx, entity, check)
+		if err != nil {
+			err = NewError(InternalErr, err)
+		}
+		return err
 	}
 
 	return NewErrorf(NotFound)
