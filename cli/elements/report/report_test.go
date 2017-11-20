@@ -19,7 +19,7 @@ func TestReportHasWarnings(t *testing.T) {
 		{[]logrus.Level{logrus.ErrorLevel, logrus.WarnLevel}, true},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("[%v] entries should return %s", tc.entries, tc.want), func(t *testing.T) {
+		t.Run(fmt.Sprintf("[%v] entries should return %t", tc.entries, tc.want), func(t *testing.T) {
 			report := Report{}
 			for _, e := range tc.entries {
 				report.AddEntry(Entry{Level: e})
@@ -41,7 +41,7 @@ func TestReportHasErrors(t *testing.T) {
 		{[]logrus.Level{logrus.DebugLevel, logrus.WarnLevel}, false},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("[%v] entries should return %s", tc.entries, tc.want), func(t *testing.T) {
+		t.Run(fmt.Sprintf("[%v] entries should return %t", tc.entries, tc.want), func(t *testing.T) {
 			report := Report{}
 			for _, e := range tc.entries {
 				report.AddEntry(Entry{Level: e})
