@@ -177,7 +177,7 @@ type EventStore interface {
 
 // EventFilterStore provides methods for managing events filters
 type EventFilterStore interface {
-	// DeleteEventFilterByName deletes an entity using the given name and the
+	// DeleteEventFilterByName deletes an event filter using the given name and the
 	// organization and environment stored in ctx.
 	DeleteEventFilterByName(ctx context.Context, name string) error
 
@@ -221,7 +221,8 @@ type KeepaliveStore interface {
 	// GetFailingKeepalives returns a slice of failing keepalives.
 	GetFailingKeepalives(ctx context.Context) (records []*types.KeepaliveRecord, err error)
 
-	// UpdateKeepalive updates the given entity keepalive with the given expiration.
+	// UpdateFailingKeepalive updates the given entity keepalive with the given expiration
+	// in unix timestamp format
 	UpdateFailingKeepalive(ctx context.Context, entity *types.Entity, expiration int64) error
 }
 
