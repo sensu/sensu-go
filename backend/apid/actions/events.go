@@ -68,7 +68,7 @@ func (a EventController) Find(ctx context.Context, params QueryParams) (*types.E
 
 	result, err := a.Store.GetEventByEntityCheck(ctx, params["entity"], params["check"])
 	if err != nil {
-		return nil, err
+		return nil, NewError(InternalErr, err)
 	}
 
 	// Verify user has permission to view
@@ -78,4 +78,30 @@ func (a EventController) Find(ctx context.Context, params QueryParams) (*types.E
 	}
 
 	return nil, NewErrorf(NotFound)
+}
+
+// Destroy destroys the event indicated by the supplied entity and check.
+func (a EventController) Destroy(ctx context.Context, params QueryParams) error {
+	// Destroy (for events) requires both an entity and check
+	entity, check := params["entity"], params["check"]
+	if entity == "" || check == "" {
+		return NewErrorf(InvalidArgument, "Destroy() requires both an entity and a check")
+	}
+
+	result, err := a.Store.GetEventByEntityCheck(ctx, entity, check)
+	if err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	// Verify user has permission to delete
+	abilities := a.Policy.WithContext(ctx)
+	if result != nil && abilities.CanDelete() {
+		err := a.Store.DeleteEventByEntityCheck(ctx, entity, check)
+		if err != nil {
+			err = NewError(InternalErr, err)
+		}
+		return err
+	}
+
+	return NewErrorf(NotFound)
 }
