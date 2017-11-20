@@ -69,11 +69,11 @@ type AssetStore interface {
 
 	// GetAssets returns all assets in the given ctx's organization. A nil
 	// slice with no error is returned if none were found.
-	GetAssets(ctx context.Context) (assets []*types.Asset, err error)
+	GetAssets(ctx context.Context) ([]*types.Asset, error)
 
 	// GetAssetByName returns an asset using the given name and the organization
 	// stored in ctx. The resulting asset is nil if none was found.
-	GetAssetByName(ctx context.Context, name string) (asset *types.Asset, err error)
+	GetAssetByName(ctx context.Context, name string) (*types.Asset, error)
 
 	// UpdateAsset creates or updates a given asset.
 	UpdateAsset(ctx context.Context, asset *types.Asset) error
@@ -86,7 +86,7 @@ type AuthenticationStore interface {
 	CreateJWTSecret(secret []byte) error
 
 	// GetJWTSecret returns the JWT secret.
-	GetJWTSecret() (secret []byte, err error)
+	GetJWTSecret() ([]byte, error)
 
 	// UpdateJWTSecret updates the JWT secret with the given secret.
 	UpdateJWTSecret(secret []byte) error
@@ -101,7 +101,7 @@ type CheckConfigStore interface {
 	// GetCheckConfigs returns all checks configurations in the given ctx's
 	// organization and environment. A nil slice with no error is returned if none
 	// were found.
-	GetCheckConfigs(ctx context.Context) (checks []*types.CheckConfig, err error)
+	GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error)
 
 	// GetCheckConfigByName returns a check's configuration using the given name
 	// and the organization and environment stored in ctx. The resulting check is
@@ -123,12 +123,12 @@ type EntityStore interface {
 
 	// GetEntities returns all entities in the given ctx's organization and
 	// environment. A nil slice with no error is returned if none were found.
-	GetEntities(ctx context.Context) (entities []*types.Entity, err error)
+	GetEntities(ctx context.Context) ([]*types.Entity, error)
 
 	// GetEntityByID returns an entity using the given id and the organization
 	// and environment stored in ctx. The resulting entity is nil if none was
 	// found.
-	GetEntityByID(ctx context.Context, id string) (entity *types.Entity, err error)
+	GetEntityByID(ctx context.Context, id string) (*types.Entity, error)
 
 	// UpdateEntity creates or updates a given entity.
 	UpdateEntity(ctx context.Context, entity *types.Entity) error
@@ -141,11 +141,11 @@ type EnvironmentStore interface {
 
 	// GetEnvironment returns an environment using the given org and env. The
 	// result is nil if none was found.
-	GetEnvironment(ctx context.Context, org, env string) (result *types.Environment, err error)
+	GetEnvironment(ctx context.Context, org, env string) (*types.Environment, error)
 
 	// GetEnvironments returns all environments in the given ctx's organization. A
 	// nil slice with no error is returned if none were found.
-	GetEnvironments(ctx context.Context, org string) (envs []*types.Environment, err error)
+	GetEnvironments(ctx context.Context, org string) ([]*types.Environment, error)
 
 	// UpdateEnvironment creates or updates a given env.
 	UpdateEnvironment(ctx context.Context, env *types.Environment) error
@@ -159,17 +159,17 @@ type EventStore interface {
 
 	// GetEvents returns all events in the given ctx's organization and
 	// environment. A nil slice with no error is returned if none were found.
-	GetEvents(ctx context.Context) (events []*types.Event, err error)
+	GetEvents(ctx context.Context) ([]*types.Event, error)
 
 	// GetEventsByEntity returns all events for the given entity within the ctx's
 	// organization and environment. A nil slice with no error is returned if none
 	// were found.
-	GetEventsByEntity(ctx context.Context, entity string) (events []*types.Event, err error)
+	GetEventsByEntity(ctx context.Context, entity string) ([]*types.Event, error)
 
 	// GetEventByEntityCheck returns an event using the given entity and check,
 	// within the organization and environment stored in ctx. The resulting event
 	// is nil if none was found.
-	GetEventByEntityCheck(ctx context.Context, entity, check string) (event *types.Event, err error)
+	GetEventByEntityCheck(ctx context.Context, entity, check string) (*types.Event, error)
 
 	// UpdateEvent creates or updates a given event.
 	UpdateEvent(ctx context.Context, event *types.Event) error
@@ -183,12 +183,12 @@ type EventFilterStore interface {
 
 	// GetEventFilters returns all filters in the given ctx's organization and
 	// environment. A nil slice with no error is returned if none were found.
-	GetEventFilters(ctx context.Context) (filters []*types.EventFilter, err error)
+	GetEventFilters(ctx context.Context) ([]*types.EventFilter, error)
 
 	// GetEventFilterByName returns a filter using the given name and the
 	// organization and environment stored in ctx. The resulting filter is nil if
 	// none was found.
-	GetEventFilterByName(ctx context.Context, name string) (filter *types.EventFilter, err error)
+	GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error)
 
 	// UpdateEventFilter creates or updates a given filter.
 	UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error
@@ -202,12 +202,12 @@ type HandlerStore interface {
 
 	// GetHandlers returns all handlers in the given ctx's organization and
 	// environment. A nil slice with no error is returned if none were found.
-	GetHandlers(ctx context.Context) (handlers []*types.Handler, err error)
+	GetHandlers(ctx context.Context) ([]*types.Handler, error)
 
 	// GetHandlerByName returns a handler using the given name and the
 	// organization and environment stored in ctx. The resulting handler is nil if
 	// none was found.
-	GetHandlerByName(ctx context.Context, name string) (handler *types.Handler, err error)
+	GetHandlerByName(ctx context.Context, name string) (*types.Handler, error)
 
 	// UpdateHandler creates or updates a given handler.
 	UpdateHandler(ctx context.Context, handler *types.Handler) error
@@ -219,7 +219,7 @@ type KeepaliveStore interface {
 	DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error
 
 	// GetFailingKeepalives returns a slice of failing keepalives.
-	GetFailingKeepalives(ctx context.Context) (records []*types.KeepaliveRecord, err error)
+	GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error)
 
 	// UpdateFailingKeepalive updates the given entity keepalive with the given expiration
 	// in unix timestamp format
@@ -234,12 +234,12 @@ type MutatorStore interface {
 
 	// GetMutators returns all mutators in the given ctx's organization and
 	// environment. A nil slice with no error is returned if none were found.
-	GetMutators(ctx context.Context) (mutators []*types.Mutator, err error)
+	GetMutators(ctx context.Context) ([]*types.Mutator, error)
 
 	// GetMutatorByName returns a mutator using the given name and the
 	// organization and environment stored in ctx. The resulting mutator is nil if
 	// none was found.
-	GetMutatorByName(ctx context.Context, name string) (mutator *types.Mutator, err error)
+	GetMutatorByName(ctx context.Context, name string) (*types.Mutator, error)
 
 	// UpdateMutator creates or updates a given mutator.
 	UpdateMutator(ctx context.Context, mutator *types.Mutator) error
@@ -252,11 +252,11 @@ type OrganizationStore interface {
 
 	// GetOrganizations returns all organizations. A nil slice with no error is
 	// returned if none were found.
-	GetOrganizations(ctx context.Context) (orgs []*types.Organization, err error)
+	GetOrganizations(ctx context.Context) ([]*types.Organization, error)
 
 	// GetOrganizationByName returns an organization using the given name. The
 	// result is nil if none was found.
-	GetOrganizationByName(ctx context.Context, name string) (org *types.Organization, err error)
+	GetOrganizationByName(ctx context.Context, name string) (*types.Organization, error)
 
 	// UpdateOrganization creates or updates a given organization.
 	UpdateOrganization(ctx context.Context, org *types.Organization) error
@@ -293,22 +293,22 @@ type SilencedStore interface {
 
 	// GetSilencedEntries returns all entries. A nil slice with no error is
 	// returned if none were found.
-	GetSilencedEntries(ctx context.Context) (entries []*types.Silenced, err error)
+	GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error)
 
 	// GetSilencedEntriesByCheckName returns all entries for the given check
 	// within the ctx's organization and environment. A nil slice with no error is
 	// returned if none were found.
-	GetSilencedEntriesByCheckName(ctx context.Context, check string) (entries []*types.Silenced, err error)
+	GetSilencedEntriesByCheckName(ctx context.Context, check string) ([]*types.Silenced, error)
 
 	// GetSilencedEntriesByCheckName returns all entries for the given subscription
 	// within the ctx's organization and environment. A nil slice with no error is
 	// returned if none were found.
-	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) (entries []*types.Silenced, err error)
+	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
 
 	// GetSilencedEntryByID returns an entry using the given id and the
 	// organization and environment stored in ctx. The resulting entry is nil if
 	// none was found.
-	GetSilencedEntryByID(ctx context.Context, id string) (entry *types.Silenced, err error)
+	GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error)
 
 	// UpdateHandler creates or updates a given entry.
 	UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error
@@ -325,7 +325,7 @@ type TokenStore interface {
 
 	// GetToken returns the claims of a given token ID, belonging to the given
 	// subject. An error is returned if no claims were found.
-	GetToken(subject, id string) (claims *types.Claims, err error)
+	GetToken(subject, id string) (*types.Claims, error)
 }
 
 // UserStore provides methods for managing users
@@ -333,7 +333,7 @@ type UserStore interface {
 	// AuthenticateUser attempts to authenticate a user with the given username
 	// and hashed password. An error is returned if the user does not exist, is
 	// disabled or the given password does not match.
-	AuthenticateUser(ctx context.Context, username, password string) (user *types.User, err error)
+	AuthenticateUser(ctx context.Context, username, password string) (*types.User, error)
 
 	// CreateUsern creates a new user with the given user struct.
 	CreateUser(user *types.User) error
@@ -342,15 +342,15 @@ type UserStore interface {
 	DeleteUser(ctx context.Context, user *types.User) error
 
 	// GetUser returns a user using the given username.
-	GetUser(ctx context.Context, username string) (user *types.User, err error)
+	GetUser(ctx context.Context, username string) (*types.User, error)
 
 	// GetUsers returns all enabled users. A nil slice with no error is
 	// returned if none were found.
-	GetUsers() (users []*types.User, err error)
+	GetUsers() ([]*types.User, error)
 
 	// GetUsers returns all users, including the disabled ones. A nil slice with
 	// no error is  returned if none were found.
-	GetAllUsers() (users []*types.User, err error)
+	GetAllUsers() ([]*types.User, error)
 
 	// UpdateHandler updates a given user.
 	UpdateUser(user *types.User) error
