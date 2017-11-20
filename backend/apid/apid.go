@@ -132,6 +132,7 @@ func registerRestrictedResources(
 		middlewares.Authentication{},
 		middlewares.AllowList{Store: store},
 		middlewares.Authorization{Store: store},
+		middlewares.LimitRequest{},
 	)
 
 	mountRouters(
