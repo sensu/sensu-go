@@ -54,6 +54,6 @@ func TestMiddleWareInvalidLimitRequest(t *testing.T) {
 	payload, _ := json.Marshal(check)
 	req, _ := http.NewRequest(http.MethodPost, server.URL+"/checks", bytes.NewBuffer(payload))
 	res, err := http.DefaultClient.Do(req)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }
