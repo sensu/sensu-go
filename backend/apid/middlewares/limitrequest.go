@@ -12,5 +12,6 @@ func (l LimitRequest) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, 512000)
 		next.ServeHTTP(w, r)
+		r.Body.Close()
 	})
 }
