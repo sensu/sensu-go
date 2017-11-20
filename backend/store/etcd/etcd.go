@@ -59,7 +59,7 @@ type Config struct {
 // TLSConfig wraps Crypto TLSInfo
 type TLSConfig struct {
 	Info TLSInfo
-	TLS  tls.Config
+	TLS  *tls.Config
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -226,7 +226,7 @@ func (e *Etcd) Shutdown() error {
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	var tlsCfg *tls.Config
 	if e.cfg.TLSConfig != nil {
-		tlsCfg = &e.cfg.TLSConfig.TLS
+		tlsCfg = e.cfg.TLSConfig.TLS
 	}
 
 	listeners := e.etcd.Clients
