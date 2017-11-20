@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -41,7 +40,6 @@ func TestMiddleWareInvalidLimitRequest(t *testing.T) {
 	client := &http.Client{}
 	maxCheck := make([]byte, 600000)
 	rand.Read(maxCheck)
-	fmt.Println(len(string(maxCheck)))
 	checkBody := strings.NewReader(`{
 		"Command": 				` + string(maxCheck) + `,
 		"Environment": 		"default",
@@ -53,11 +51,7 @@ func TestMiddleWareInvalidLimitRequest(t *testing.T) {
 	}`)
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL+"/checks", checkBody)
-	fmt.Println(checkBody.Len())
-	fmt.Println(server.URL)
-	fmt.Println(req.URL)
 	res, err := client.Do(req)
-	fmt.Println(res)
 	assert.Error(t, err)
 	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }
