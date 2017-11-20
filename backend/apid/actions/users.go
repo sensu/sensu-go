@@ -97,7 +97,7 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 	}
 
 	// Validate roles
-	if err := validateRoles(a.Store, newUser.Roles); err != nil {
+	if err := validateRoles(ctx, a.Store, newUser.Roles); err != nil {
 		return NewError(InvalidArgument, err)
 	}
 
@@ -140,7 +140,7 @@ func (a UserController) Update(ctx context.Context, given types.User) error {
 
 	// Copy & validate new roles, if given
 	if given.Roles != nil {
-		configureRoles(a.Store, &abilities, given.Roles, user)
+		configureRoles(ctx, a.Store, &abilities, given.Roles, user)
 	}
 
 	// Persist Changes
@@ -210,7 +210,7 @@ func (a UserController) AddRole(ctx context.Context, username string, role strin
 		if !exists {
 			newRoles := append(user.Roles, role)
 			abilities := a.Policy.WithContext(ctx)
-			return configureRoles(a.Store, &abilities, newRoles, user)
+			return configureRoles(ctx, a.Store, &abilities, newRoles, user)
 		}
 
 		return nil
@@ -278,6 +278,7 @@ func (a UserController) findAndUpdateUser(
 }
 
 func configureRoles(
+	ctx context.Context,
 	store store.RBACStore,
 	abilities *authorization.UserPolicy,
 	newRoles []string,
@@ -291,15 +292,15 @@ func configureRoles(
 	}
 
 	// Validate roles
-	if err := validateRoles(store, user.Roles); err != nil {
+	if err := validateRoles(ctx, store, user.Roles); err != nil {
 		return NewError(InvalidArgument, err)
 	}
 
 	return nil
 }
 
-func validateRoles(store store.RBACStore, givenRoles []string) error {
-	storedRoles, err := store.GetRoles()
+func validateRoles(ctx context.Context, store store.RBACStore, givenRoles []string) error {
+	storedRoles, err := store.GetRoles(ctx)
 	if err != nil {
 		return err
 	}

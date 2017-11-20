@@ -75,7 +75,7 @@ func (e *completionExecutor) runHelp(cmd *cobra.Command, args []string) {
 	stdErr := cmd.OutOrStderr()
 
 	if shell, err := extractShell(args, 1); err != nil {
-		fmt.Fprintf(stdErr, "%s\n\n%s", err, shell, longUsage)
+		fmt.Fprintf(stdErr, "%s\n\n%s", err, longUsage)
 	} else if shell == zshShell {
 		fmt.Fprintln(stdErr, zshUsage)
 	} else if shell == bashShell {
@@ -91,7 +91,7 @@ func extractShell(args []string, i int) (string, error) {
 		if shell == zshShell || shell == bashShell {
 			return shell, nil
 		}
-		return shell, fmt.Errorf("unknown shell '%s'", shell)
+		return shell, fmt.Errorf("unknown shell: %q", shell)
 	}
 
 	return "", nil

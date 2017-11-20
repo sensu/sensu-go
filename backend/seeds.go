@@ -8,10 +8,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// seedInitialData seeds initial data into the store. Ideally this operation is
 // idempotent and can be safely run every time the backend starts.
 func seedInitialData(store store.Store) error {
 	initializer, _ := store.NewInitializer()
+	logger := logger.WithField("component", "backend.seeds")
 
 	// Lock initialization key to avoid competing installations
 	if err := initializer.Lock(); err != nil {
@@ -31,31 +31,35 @@ func seedInitialData(store store.Store) error {
 	} else if initialized {
 		return nil
 	}
-
-	logger.Debug("seeding etcd store w/ intial data")
+	logger.Info("seeding etcd store w/ intial data")
 
 	// Set default role
 	if err := setupAdminRole(store); err != nil {
+		logger.WithError(err).Error("unable to setup admin role")
 		return err
 	}
 
 	// Default user
 	if err := setupDefaultUser(store); err != nil {
+		logger.WithError(err).Error("unable to setup admin user")
 		return err
 	}
 
 	// Default Agent user
 	if err := setupDefaultAgentUser(store); err != nil {
+		logger.WithError(err).Error("unable to setup agent user")
 		return err
 	}
 
 	// Default organization
 	if err := setupDefaultOrganization(store); err != nil {
+		logger.WithError(err).Error("unable to setup 'default' organization")
 		return err
 	}
 
 	// Default environment
 	if err := setupDefaultEnvironment(store); err != nil {
+		logger.WithError(err).Error("unable to setup 'default' environment")
 		return err
 	}
 
@@ -64,15 +68,18 @@ func seedInitialData(store store.Store) error {
 }
 
 func setupAdminRole(store store.Store) error {
-	return store.UpdateRole(&types.Role{
-		Name: "admin",
-		Rules: []types.Rule{{
-			Type:         "*",
-			Environment:  "*",
-			Organization: "*",
-			Permissions:  types.RuleAllPerms,
-		}},
-	})
+	return store.UpdateRole(
+		context.Background(),
+		&types.Role{
+			Name: "admin",
+			Rules: []types.Rule{{
+				Type:         "*",
+				Environment:  "*",
+				Organization: "*",
+				Permissions:  types.RuleAllPerms,
+			}},
+		},
+	)
 }
 
 func setupDefaultEnvironment(store store.Store) error {

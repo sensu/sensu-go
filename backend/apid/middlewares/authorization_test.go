@@ -72,8 +72,8 @@ func TestAuthorization(t *testing.T) {
 
 	// store needs to return a user and roles
 	store := &mockstore.MockStore{}
-	store.On("GetUser", mock.Anything, mock.Anything).Return(user, nil)
-	store.On("GetRoles").Return(roles, nil)
+	store.On("GetUser", mock.Anything, mock.Anything).Return(user, nil).Once()
+	store.On("GetRoles", mock.Anything).Return(roles, nil).Once()
 
 	// create a mock http request w/user context
 	req, _ := http.NewRequest("GET", "/foo", nil)

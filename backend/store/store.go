@@ -264,18 +264,18 @@ type OrganizationStore interface {
 // RBACStore provides methods for managing RBAC roles and rules
 type RBACStore interface {
 	// DeleteRoleByName deletes a role using the given name.
-	DeleteRoleByName(name string) error
+	DeleteRoleByName(ctx context.Context, name string) error
 
 	// GetRoleByName returns a role using the given name. The result is nil if
 	// none was found.
-	GetRoleByName(name string) (*types.Role, error)
+	GetRoleByName(ctx context.Context, name string) (*types.Role, error)
 
 	// GetRoles returns all roles. A nil slice with no error is returned if none
 	// were found.
-	GetRoles() ([]*types.Role, error)
+	GetRoles(context.Context) ([]*types.Role, error)
 
 	// UpdateRole creates or updates a given role.
-	UpdateRole(role *types.Role) error
+	UpdateRole(ctx context.Context, role *types.Role) error
 }
 
 // SilencedStore provides methods for managing silenced entries,

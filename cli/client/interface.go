@@ -73,6 +73,9 @@ type EnvironmentAPIClient interface {
 type EventAPIClient interface {
 	FetchEvent(string, string) (*types.Event, error)
 	ListEvents(string) ([]types.Event, error)
+
+	// DeleteEvent deletes the event identified by entity, check.
+	DeleteEvent(entity, check string) error
 }
 
 // HandlerAPIClient client methods for handlers

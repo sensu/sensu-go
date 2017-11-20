@@ -163,7 +163,7 @@ func NewBackend(config *Config) (*Backend, error) {
 				KeyFile:       config.TLS.KeyFile,
 				TrustedCAFile: config.TLS.TrustedCAFile,
 			},
-			TLS: *tlsConfig,
+			TLS: tlsConfig,
 		}
 	}
 

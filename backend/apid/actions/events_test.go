@@ -219,3 +219,100 @@ func TestEventFind(t *testing.T) {
 		})
 	}
 }
+
+func TestEventDestroy(t *testing.T) {
+	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
+		types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermDelete),
+	))
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		event           *types.Event
+		params          QueryParams
+		expected        bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:            "No Params",
+			ctx:             defaultCtx,
+			params:          QueryParams{},
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name: "Only Entity Param",
+			ctx:  defaultCtx,
+			params: QueryParams{
+				"entity": "entity1",
+			},
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name: "Only Check Param",
+			ctx:  defaultCtx,
+			params: QueryParams{
+				"check": "check1",
+			},
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:  "Delete",
+			ctx:   defaultCtx,
+			event: types.FixtureEvent("entity1", "check1"),
+			params: QueryParams{
+				"entity": "entity1",
+				"check":  "check1",
+			},
+			expectedErrCode: 0,
+		},
+		{
+			name:  "Not Found",
+			ctx:   defaultCtx,
+			event: nil,
+			params: QueryParams{
+				"entity": "entity1",
+				"check":  "check1",
+			},
+			expectedErrCode: NotFound,
+		},
+		{
+			name: "No Delete Permission",
+			ctx: testutil.NewContext(testutil.ContextWithRules(
+				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
+			)),
+			event: types.FixtureEvent("entity1", "check1"),
+			params: QueryParams{
+				"entity": "entity1",
+				"check":  "check1",
+			},
+			expectedErrCode: NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		eventController := NewEventController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetEventByEntityCheck", tc.ctx, mock.Anything, mock.Anything).
+				Return(tc.event, nil)
+			store.
+				On("DeleteEventByEntityCheck", tc.ctx, mock.Anything, mock.Anything).
+				Return(nil)
+
+			// Exec Query
+			err := eventController.Destroy(tc.ctx, tc.params)
+
+			inferErr, ok := err.(Error)
+			if ok {
+				assert.Equal(tc.expectedErrCode, inferErr.Code)
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}

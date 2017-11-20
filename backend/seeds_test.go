@@ -1,37 +1,46 @@
 package backend
 
 import (
-	"errors"
+	"context"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestSeedDefaultRole(t *testing.T) {
-	store := &mockstore.MockStore{}
-	store.On("UpdateRole", mock.AnythingOfType("*types.Role")).Return(nil)
-	store.On(
-		"UpdateOrganization",
-		mock.Anything,
-		mock.AnythingOfType("*types.Organization"),
-	).Return(nil)
-	store.On(
-		"UpdateEnvironment",
-		mock.Anything,
-		mock.AnythingOfType("*types.Environment"),
-	).Return(nil)
-	store.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
+func TestSeedInitialData(t *testing.T) {
+	// Setup store
+	ctx := context.Background()
+	st, serr := testutil.NewStoreInstance()
+	if serr != nil {
+		assert.FailNow(t, serr.Error())
+	}
+	defer st.Teardown()
 
-	seedInitialData(store)
-	store.AssertCalled(t, "UpdateRole", mock.AnythingOfType("*types.Role"))
-}
+	err := seedInitialData(st)
+	require.NoError(t, err, "seeding process should not raise an error")
 
-func TestSeedDefaultRoleWithError(t *testing.T) {
-	assert := assert.New(t)
-	store := &mockstore.MockStore{}
-	store.On("UpdateRole", mock.AnythingOfType("*types.Role")).Return(errors.New(""))
+	err = seedInitialData(st)
+	require.NoError(t, err, "seeding process should be able to be run more than once without error")
 
-	assert.Error(seedInitialData(store))
+	admin, err := st.GetUser(ctx, "admin")
+	require.NoError(t, err)
+	assert.NotEmpty(t, admin, "admin user should be present after seed process")
+
+	adminRole, err := st.GetRoleByName(ctx, "admin")
+	require.NoError(t, err)
+	assert.NotEmpty(t, adminRole, "admin role should be present after seed process")
+
+	agent, err := st.GetUser(ctx, "agent")
+	require.NoError(t, err)
+	assert.NotEmpty(t, agent, "agent user should be present after seed process")
+
+	defaultOrg, err := st.GetOrganizationByName(ctx, "default")
+	require.NoError(t, err)
+	assert.NotEmpty(t, defaultOrg, "default organization should be present after seed process")
+
+	defaultEnv, err := st.GetEnvironment(ctx, "default", "default")
+	require.NoError(t, err)
+	assert.NotEmpty(t, defaultEnv, "default environment should be present after seed process")
 }

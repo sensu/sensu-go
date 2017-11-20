@@ -2,14 +2,13 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	resty "gopkg.in/resty.v0"
 )
 
 type apiError struct {
 	Message string `json:"error"`
-	Code    uint32 `json:"code"`
+	Code    uint32 `json:"code,omitempty"`
 }
 
 func (a apiError) Error() string {
@@ -20,7 +19,7 @@ func (a apiError) Error() string {
 func unmarshalError(res *resty.Response) error {
 	var apiErr apiError
 	if err := json.Unmarshal(res.Body(), &apiErr); err != nil {
-		return fmt.Errorf("unable to read error response")
+		apiErr.Message = string(res.Body())
 	}
 	return apiErr
 }

@@ -44,12 +44,12 @@ func TestEnvStorage(t *testing.T) {
 
 		// Delete a non-empty environment w/ role
 		store.DeleteCheckConfigByName(ctx, exCheck.Name)
-		store.UpdateRole(types.FixtureRole("1", org, env.Name))
+		store.UpdateRole(ctx, types.FixtureRole("1", org, env.Name))
 		err = store.DeleteEnvironment(ctx, env)
 		assert.Error(t, err)
 
 		// Delete an environment
-		store.DeleteRoleByName("1")
+		store.DeleteRoleByName(ctx, "1")
 		err = store.DeleteEnvironment(ctx, env)
 		assert.NoError(t, err)
 
