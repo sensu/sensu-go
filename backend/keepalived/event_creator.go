@@ -47,13 +47,11 @@ func (creatorPtr *MessageBusEventCreator) Pass(entity *types.Entity) error {
 func createKeepaliveEvent(entity *types.Entity) *types.Event {
 	keepaliveCheck := &types.Check{
 		Config: &types.CheckConfig{
-			Name:          "keepalive",
-			Interval:      entity.KeepaliveTimeout,
-			Subscriptions: []string{""},
-			Command:       "",
-			Handlers:      []string{"keepalive"},
-			Environment:   entity.Environment,
-			Organization:  entity.Organization,
+			Name:         keepaliveCheckName,
+			Interval:     entity.KeepaliveTimeout,
+			Handlers:     []string{keepaliveHandlerName},
+			Environment:  entity.Environment,
+			Organization: entity.Organization,
 		},
 		Status: 1,
 	}
@@ -69,13 +67,11 @@ func createKeepaliveEvent(entity *types.Entity) *types.Event {
 func createRegistrationEvent(entity *types.Entity) *types.Event {
 	registrationCheck := &types.Check{
 		Config: &types.CheckConfig{
-			Name:          "registration",
-			Interval:      entity.KeepaliveTimeout,
-			Subscriptions: []string{""},
-			Command:       "",
-			Handlers:      []string{"registration"},
-			Environment:   entity.Environment,
-			Organization:  entity.Organization,
+			Name:         registrationCheckName,
+			Interval:     entity.KeepaliveTimeout,
+			Handlers:     []string{registrationHandlerName},
+			Environment:  entity.Environment,
+			Organization: entity.Organization,
 		},
 		Status: 1,
 	}

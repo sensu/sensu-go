@@ -19,6 +19,22 @@ const (
 	// DefaultKeepaliveTimeout is the amount of time we consider a Keepalive
 	// valid for.
 	DefaultKeepaliveTimeout = 120 // seconds
+
+	// keepaliveCheckName is the name of the check that is created when a
+	// keepalive timeout occurs.
+	keepaliveCheckName = "keepalive"
+
+	// keepaliveHandlerName is the name of the handler that is executed when
+	// a keepalive timeout occurs.
+	keepaliveHandlerName = "keepalive"
+
+	// registrationCheckName is the name of the check that is created when an
+	// entity sends a keepalive and the entity does not yet exist in the store.
+	registrationCheckName = "registration"
+
+	// registrationHandlerName is the name of the handler that is executed when
+	// a registration event is passed to pipelined.
+	registrationHandlerName = "registration"
 )
 
 // MonitorFactoryFunc takes an entity and returns a Monitor. Keepalived can
