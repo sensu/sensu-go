@@ -79,7 +79,7 @@ func TestMonitorDeregistration(t *testing.T) {
 	dereg := &mockDeregisterer{}
 	dereg.On("Deregister", entity).Return(nil)
 
-	event := createEvent(entity)
+	event := createKeepaliveEvent(entity)
 
 	store := &mockstore.MockStore{}
 	store.On("GetEventByEntityCheck", mock.Anything, entity.ID, "keepalive").Return(event, nil)
@@ -103,7 +103,7 @@ func TestMonitorAlert(t *testing.T) {
 	creator := &mockCreator{}
 	creator.On("Warn", entity).Return(nil)
 
-	event := createEvent(entity)
+	event := createKeepaliveEvent(entity)
 
 	store := &mockstore.MockStore{}
 	store.On("GetEventByEntityCheck", mock.Anything, entity.ID, "keepalive").Return(event, nil)

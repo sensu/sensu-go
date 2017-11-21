@@ -64,7 +64,8 @@ func (k *Keepalived) Start() error {
 				EventCreator: &MessageBusEventCreator{
 					MessageBus: k.MessageBus,
 				},
-				Store: k.Store,
+				MessageBus: k.MessageBus,
+				Store:      k.Store,
 			}
 		}
 	}
@@ -184,6 +185,10 @@ func (k *Keepalived) processKeepalives() {
 			continue
 		}
 
+		if err := k.handleEntityRegistration(entity); err != nil {
+			logger.WithError(err).Error("error handling entity registration")
+		}
+
 		k.mu.Lock()
 		monitor, ok = k.monitors[entity.ID]
 		// create if it doesn't exist
@@ -198,6 +203,26 @@ func (k *Keepalived) processKeepalives() {
 			logger.WithError(err).Error("error monitoring entity")
 		}
 	}
+}
+
+func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
+	if entity.Class != "agent" {
+		return nil
+	}
+
+	ctx := types.SetContextFromResource(context.Background(), entity)
+	fetchedEntity, err := k.Store.GetEntityByID(ctx, entity.ID)
+
+	if err != nil {
+		return err
+	}
+
+	if fetchedEntity == nil {
+		event := createRegistrationEvent(entity)
+		k.MessageBus.Publish(messaging.TopicEvent, event)
+	}
+
+	return nil
 }
 
 // startMonitorSweeper spins off into oblivion if Keepalived is stopped until
