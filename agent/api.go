@@ -3,6 +3,7 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -42,15 +43,21 @@ func addEvent(a *Agent) http.HandlerFunc {
 		var event *types.Event
 
 		// Decode the provided event
-		err := json.NewDecoder(r.Body).Decode(&event)
+		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer r.Body.Close()
 
+		err = json.Unmarshal(bodyBytes, &event)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		// Make sure the event is valid
-		if err = validateEvent(a, event); err != nil {
+		if err := validateEvent(a, event); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
