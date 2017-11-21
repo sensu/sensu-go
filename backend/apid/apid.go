@@ -144,6 +144,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 		routers.NewEnvironmentsRouter(store),
 		routers.NewEventFiltersRouter(store),
 		routers.NewEventsRouter(store),
+		routers.NewGraphQLRouter(store),
 		routers.NewHandlersRouter(store),
 		routers.NewMutatorsRouter(store),
 		routers.NewOrganizationsRouter(store),
@@ -156,9 +157,6 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 		Store: store,
 	}
 	authenticationController.Register(commonRouter)
-
-	graphqlController := &controllers.GraphController{Store: store}
-	graphqlController.Register(commonRouter)
 }
 
 func mountRouters(parent *mux.Router, subRouters ...routers.Router) {
