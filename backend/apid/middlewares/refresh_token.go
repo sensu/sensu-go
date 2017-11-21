@@ -50,7 +50,6 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer r.Body.Close()
 
 		// Now we want to validate the refresh token
 		refreshToken, err := jwt.ValidateToken(payload.Refresh)

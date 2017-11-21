@@ -3,7 +3,6 @@ package routers
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"path"
 
@@ -179,19 +178,12 @@ func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Ro
 }
 
 func unmarshalBody(req *http.Request, record interface{}) error {
-	bodyBytes, err := ioutil.ReadAll(req.Body)
+	err := json.NewDecoder(req.Body).Decode(&record)
 	if err != nil {
 		logger.WithError(err).Error("unable to read request body")
 		return err
 	}
-	defer req.Body.Close()
-
 	// TODO: Support other types of requests other than JSON?
-	err = json.Unmarshal(bodyBytes, record)
-	if err != nil {
-		logger.WithError(err).Error("unable to unmarshal request")
-		return err
-	}
 
 	return nil
 }

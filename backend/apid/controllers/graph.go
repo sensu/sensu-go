@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -34,21 +33,9 @@ func (c *GraphController) query(writer http.ResponseWriter, r *http.Request) {
 	ctx = context.WithValue(ctx, types.EnvironmentKey, "")
 	ctx = context.WithValue(ctx, types.StoreKey, c.Store)
 
-	// Read request body
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(
-			writer,
-			"request body must be valid JSON",
-			http.StatusBadRequest,
-		)
-		return
-	}
-	defer r.Body.Close()
-
-	// Parse request body
+	// Read and parse request body
 	rBody := map[string]interface{}{}
-	err = json.Unmarshal(bodyBytes, &rBody)
+	err := json.NewDecoder(r.Body).Decode(&rBody)
 	if err != nil {
 		http.Error(
 			writer,
