@@ -44,8 +44,9 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := mux.NewRouter()
+	registerUnautenticatedResources(router, a.BackendStatus)
 	registerAuthenticationResources(router, a.Store)
-	registerRestrictedResources(router, a.Store, a.BackendStatus)
+	registerRestrictedResources(router, a.Store)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -103,6 +104,16 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
+func registerUnautenticatedResources(
+	router *mux.Router,
+	bStatus func() types.StatusMap,
+) {
+	mountRouters(
+		NewSubrouter(router.NewRoute(), middlewares.SimpleLogger{}),
+		routers.NewStatusRouter(bStatus),
+	)
+}
+
 func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	authRouter := NewSubrouter(
 		router.NewRoute(),
@@ -114,17 +125,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	authenticationController.Register(authRouter)
 }
 
-func mountRouters(parent *mux.Router, subRouters ...routers.Router) {
-	for _, subRouter := range subRouters {
-		subRouter.Mount(parent)
-	}
-}
-
-func registerRestrictedResources(
-	router *mux.Router,
-	store store.Store,
-	bStatus func() types.StatusMap,
-) {
+func registerRestrictedResources(router *mux.Router, store store.Store) {
 	commonRouter := NewSubrouter(
 		router.NewRoute(),
 		middlewares.SimpleLogger{},
@@ -156,18 +157,12 @@ func registerRestrictedResources(
 	}
 	authenticationController.Register(commonRouter)
 
-	healthController := &controllers.HealthController{
-		Store:  store,
-		Status: bStatus,
-	}
-	healthController.Register(commonRouter)
-
-	infoController := &controllers.InfoController{
-		Store:  store,
-		Status: bStatus,
-	}
-	infoController.Register(commonRouter)
-
 	graphqlController := &controllers.GraphController{Store: store}
 	graphqlController.Register(commonRouter)
+}
+
+func mountRouters(parent *mux.Router, subRouters ...routers.Router) {
+	for _, subRouter := range subRouters {
+		subRouter.Mount(parent)
+	}
 }
