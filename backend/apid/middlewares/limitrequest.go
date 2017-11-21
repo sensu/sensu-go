@@ -21,8 +21,10 @@ func (l LimitRequest) Then(next http.Handler) http.Handler {
 		err := r.ParseForm()
 		if err != nil && err != io.EOF {
 			http.Error(w, "Request exceeded max length", http.StatusInternalServerError)
+			return
 		}
 		next.ServeHTTP(w, r)
 		r.Body.Close()
+		return
 	})
 }
