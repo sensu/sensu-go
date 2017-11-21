@@ -47,7 +47,6 @@ func addEvent(a *Agent) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer r.Body.Close()
 
 		// Make sure the event is valid
 		if err = validateEvent(a, event); err != nil {

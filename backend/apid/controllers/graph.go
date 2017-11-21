@@ -44,7 +44,6 @@ func (c *GraphController) query(writer http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	defer r.Body.Close()
 
 	// Extract query and variables
 	query, _ := rBody["query"].(string)
