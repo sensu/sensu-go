@@ -222,7 +222,7 @@ func (k *Keepalived) processKeepalives() {
 }
 
 func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
-	if entity.Class != "agent" {
+	if entity.Class != types.EntityAgentClass {
 		return nil
 	}
 

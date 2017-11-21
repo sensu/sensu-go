@@ -4,6 +4,11 @@ import (
 	"errors"
 )
 
+const (
+	// EntityAgentClass is the name of the class given to agent entities.
+	EntityAgentClass = "agent"
+)
+
 // Validate returns an error if the entity is invalid.
 func (e *Entity) Validate() error {
 	if err := ValidateName(e.ID); err != nil {
