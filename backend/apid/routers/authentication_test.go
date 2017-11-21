@@ -1,4 +1,4 @@
-package controllers
+package routers
 
 import (
 	"bytes"
@@ -19,9 +19,7 @@ import (
 
 func TestLoginNoCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationRouter{store}
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 
@@ -31,7 +29,7 @@ func TestLoginNoCredentials(t *testing.T) {
 
 func TestLoginInvalidCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{Store: store}
+	a := &AuthenticationRouter{store}
 
 	user := types.FixtureUser("foo")
 	store.
@@ -47,7 +45,7 @@ func TestLoginInvalidCredentials(t *testing.T) {
 
 func TestLoginSuccessful(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{Store: store}
+	a := &AuthenticationRouter{store}
 
 	user := types.FixtureUser("foo")
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
@@ -74,9 +72,7 @@ func TestLoginSuccessful(t *testing.T) {
 
 func TestLogoutNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
 	store.On(
@@ -99,9 +95,7 @@ func TestLogoutNotWhitelisted(t *testing.T) {
 
 func TestLogoutSuccess(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
 	store.On(
@@ -124,9 +118,7 @@ func TestLogoutSuccess(t *testing.T) {
 
 func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
 	store.On(
@@ -149,9 +141,7 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 
 func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(fmt.Errorf("error"))
@@ -180,9 +170,7 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 
 func TestTokenSuccess(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationController{
-		Store: store,
-	}
+	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
@@ -220,13 +208,26 @@ func TestTokenSuccess(t *testing.T) {
 	assert.NotEmpty(t, response.Refresh)
 }
 
-func processRequestWithRefreshToken(c *AuthenticationController, req *http.Request) *httptest.ResponseRecorder {
-	router := mux.NewRouter()
+func processRequestWithRefreshToken(
+	router Router,
+	req *http.Request,
+) *httptest.ResponseRecorder {
+	parent := mux.NewRouter()
+	router.Mount(parent)
+
 	middleware := middlewares.RefreshToken{}
-	c.Register(router)
-	routerStack := middleware.Then(router)
+	routerStack := middleware.Then(parent)
+
 	res := httptest.NewRecorder()
 	routerStack.ServeHTTP(res, req)
+	return res
+}
 
+func processRequest(router Router, req *http.Request) *httptest.ResponseRecorder {
+	parent := mux.NewRouter()
+	router.Mount(parent)
+
+	res := httptest.NewRecorder()
+	parent.ServeHTTP(res, req)
 	return res
 }

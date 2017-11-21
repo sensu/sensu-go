@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/graphql-go/graphql"
+	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -18,7 +18,7 @@ type GraphQLRouter struct {
 
 // NewGraphQLRouter instantiates new events controller
 func NewGraphQLRouter(store store.Store) *GraphQLRouter {
-	return &GraphQLRouter{status: status}
+	return &GraphQLRouter{store: store}
 }
 
 // Mount the GraphQLRouter to a parent Router
@@ -33,7 +33,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	// env keys to empty state so that all resources are queryable.
 	ctx = context.WithValue(ctx, types.OrganizationKey, "")
 	ctx = context.WithValue(ctx, types.EnvironmentKey, "")
-	ctx = context.WithValue(ctx, types.StoreKey, c.Store)
+	ctx = context.WithValue(ctx, types.StoreKey, r.store)
 
 	// Parse request body
 	rBody := map[string]interface{}{}

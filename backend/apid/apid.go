@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/controllers"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/store"
@@ -109,35 +108,38 @@ func registerUnautenticatedResources(
 	bStatus func() types.StatusMap,
 ) {
 	mountRouters(
-		NewSubrouter(router.NewRoute(), middlewares.SimpleLogger{}),
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.LimitRequest{},
+		),
 		routers.NewStatusRouter(bStatus),
 	)
 }
 
 func registerAuthenticationResources(router *mux.Router, store store.Store) {
-	authRouter := NewSubrouter(
-		router.NewRoute(),
-		middlewares.SimpleLogger{},
-		middlewares.RefreshToken{},
+	mountRouters(
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.RefreshToken{},
+			middlewares.LimitRequest{},
+		),
+		routers.NewAuthenticationRouter(store),
 	)
-
-	authenticationController := controllers.AuthenticationController{Store: store}
-	authenticationController.Register(authRouter)
 }
 
 func registerRestrictedResources(router *mux.Router, store store.Store) {
-	commonRouter := NewSubrouter(
-		router.NewRoute(),
-		middlewares.SimpleLogger{},
-		middlewares.Environment{Store: store},
-		middlewares.Authentication{},
-		middlewares.AllowList{Store: store},
-		middlewares.Authorization{Store: store},
-		middlewares.LimitRequest{},
-	)
-
 	mountRouters(
-		commonRouter,
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.Environment{Store: store},
+			middlewares.Authentication{},
+			middlewares.AllowList{Store: store},
+			middlewares.Authorization{Store: store},
+			middlewares.LimitRequest{},
+		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(store),
 		routers.NewEntitiesRouter(store),
@@ -152,11 +154,6 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
 	)
-
-	authenticationController := &controllers.AuthenticationController{
-		Store: store,
-	}
-	authenticationController.Register(commonRouter)
 }
 
 func mountRouters(parent *mux.Router, subRouters ...routers.Router) {
