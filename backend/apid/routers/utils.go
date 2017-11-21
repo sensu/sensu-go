@@ -183,7 +183,6 @@ func unmarshalBody(req *http.Request, record interface{}) error {
 		logger.WithError(err).Error("unable to read request body")
 		return err
 	}
-	defer req.Body.Close()
 	// TODO: Support other types of requests other than JSON?
 
 	return nil
