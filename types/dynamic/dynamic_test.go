@@ -100,8 +100,8 @@ func (m MyType) MarshalJSON() ([]byte, error) {
 }
 
 func (m *MyType) UnmarshalJSON(p []byte) error {
-	type __ MyType
-	var x __
+	type temporary MyType
+	var x temporary
 	if err := json.Unmarshal(p, &x); err != nil {
 		return err
 	}
