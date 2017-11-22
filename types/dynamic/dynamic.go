@@ -15,8 +15,8 @@ type Attributes struct {
 	data []byte
 }
 
-// Implement Attributer to enable a type to work with the Marshal and Unmarshal
-// functions in this package.
+// Attributer can be implemented to enable a type to work with the Marshal
+// and Unmarshal functions in this package.
 type Attributer interface {
 	Attributes() Attributes
 	SetAttributes(Attributes)
