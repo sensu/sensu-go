@@ -8,6 +8,12 @@ followed when adding, updating or expanding new sub-commands to `sensuctl`.
 <details>
   <summary>Expand</summary>
 - [Format](#format)
+  - [Structured](#structured)
+  - [User Friendly](#user-friendly)
+- [Feedback](#feedback)
+  - [Activity Indicators](#activity-indicators)
+  - [Results](#results)
+  - [Errors](#errors)
 </details>
 
 ## Format
@@ -52,7 +58,7 @@ document will largely focus on this latter format.
   message is an error because you've used to the color red.
 - Following sections will detail usage in different different scenarios.
 
-## Loading
+## Feedback
 
 `sensuctl` should always **feel** kinetic; or put in other words, whenever an
 end user executes a command, no matter their system or circumstances they should
@@ -61,10 +67,11 @@ example, if you were playing Diablo and your nine-foot tall muscular Barbarian,
 giant cudgel in hand; swung at a poor unsuspecting demon and the game didn't
 immediately respond by flinging the enemy across the map? You would quickly
 decry the game's poor netcode. Of course this isn't the case. Accompanied by a
-satisfying thunk the demon goes flying, the swing even ruptures nearby barrels,
-and you feel godlike.
+satisfying thunk the demon goes flying, the swing kicks up dust, even ruptures nearby barrels, and you feel godlike.
 
 With this in mind...
+
+### Activity Indicators
 
 Not all end-users internet connections are made equally, nor can we assume all
 connections between our users and Sensu installations will always be low
@@ -85,12 +92,42 @@ is ideal that some information about the current process is exposed to the user.
 In this way the user is not confused as to whether anything is actually
 happening. As an example, the import command consists of many operations that
 occur in sequence; as the operations are taking place they are printed to the
-screen as they happen. This is not only so the user can see that the result but
-so that they know that the command is continuing to execute.
+screen as they happen. This is not only so the user can see the product of the
+operation but so that they know that the command is continuing to execute.
 
-One caveat is that you should be mindful of the messages you display, confusion or suspicion can easily arise from language that is too vague or too explicit.
+One caveat is that you should be mindful of the messages you display, confusion
+or suspicion can easily arise from language that is too vague or sometimes even
+if the language is too detailed.
 
-## Errors
+### Results
+
+Every command should return either a relevant affirmative message or a
+descriptive error. Without this feedback for most end-users it will be confusing
+as to whether anything actually occurred, whether they should attempt to run the
+command again, or if the correct action took place. No additional actions should
+be required by the user to be confident that their intended interaction was
+successful.
+
+Unless there is good reason to do otherwise the following should be true of any
+command:
+
+- Affirmative messages should generally one or two words, in the form of a title
+  and should use the colour green. For example a command that updates an entity
+  should result in a message that says "Updated."
+- For the sake of tooling that uses `sensuctl` ensure that the exit code is `0`
+  on success and `1` when failures occur.
+
+More specific conventions regarding typical commands (create, update, etc.) can
+be found below.
+
+### Errors
+
+- Should be brief, explicit and clear.
+- Where ever possible provide suggestions to solve issue.
+- Use red colour
+
+## Table Elements
+## List Elements
 
 ## Management Commands
 
@@ -119,10 +156,25 @@ consistent. The following is a list of standard names for common subcommands.
 
 ## Displaying Collections
 
-
+- Use a table element.
+- Highlight primary identifier by using the colour blue.
+- colspan is limited; limit columns to only the most important ones.
+- Future? Possibly adapt to available space.
 
 ## Displaying Expanded Details
+
+- Use a list element
+- 
+- Inspired by Heroku...?
+
 ## Creating Resources
+
+- Support creation through an interactive mode
+- Support creation through arguments and flags
+- Ideally validate input before firing POST request
+- As much as possible return good errors
+- "Created." message should be returned on success.
+
 ## Updating Resources
 ## Deleting Resources
 
