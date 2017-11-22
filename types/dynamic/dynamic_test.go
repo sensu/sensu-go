@@ -84,11 +84,11 @@ type MyType struct {
 	Foo string   `json:"foo"`
 	Bar []MyType `json:"bar"`
 
-	custom []byte
+	extended []byte
 }
 
-func (m MyType) CustomAttributes() []byte {
-	return m.custom
+func (m MyType) ExtendedAttributes() []byte {
+	return m.extended
 }
 
 func (m MyType) Get(name string) (interface{}, error) {
@@ -106,48 +106,48 @@ func (m *MyType) UnmarshalJSON(p []byte) error {
 		return err
 	}
 	*m = MyType(x)
-	custom, err := ExtractCustomAttributes(m, p)
+	extended, err := ExtractExtendedAttributes(m, p)
 	if err != nil {
 		return err
 	}
-	m.custom = custom
+	m.extended = extended
 	return nil
 }
 
-func TestExtractEmptyCustomAttributes(t *testing.T) {
+func TestExtractEmptyExtendedAttributes(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
 	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}]}`)
 	var m MyType
 
-	attrs, err := ExtractCustomAttributes(m, msg)
+	attrs, err := ExtractExtendedAttributes(m, msg)
 	require.Nil(err)
 	assert.Equal([]byte("{}"), attrs)
 }
 
-func TestExtractCustomAttributes(t *testing.T) {
+func TestExtractExtendedAttributes(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}], "customattr": "such custom"}`)
+	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}], "extendedattr": "such extended"}`)
 	var m MyType
 
-	attrs, err := ExtractCustomAttributes(m, msg)
+	attrs, err := ExtractExtendedAttributes(m, msg)
 	require.Nil(err)
-	assert.Equal([]byte(`{"customattr":"such custom"}`), attrs)
+	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs)
 }
 
 func TestMarshal(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
-	customBytes := []byte(`{"a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
+	extendedBytes := []byte(`{"a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
 	expBytes := []byte(`{"bar":null,"foo":"hello world!","a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
 
 	m := MyType{
-		Foo:    "hello world!",
-		Bar:    nil,
-		custom: customBytes,
+		Foo:      "hello world!",
+		Bar:      nil,
+		extended: extendedBytes,
 	}
 
 	b, err := Marshal(m)
@@ -157,9 +157,9 @@ func TestMarshal(t *testing.T) {
 
 func TestGetField(t *testing.T) {
 	m := MyType{
-		Foo:    "hello",
-		Bar:    []MyType{{Foo: "there"}},
-		custom: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
+		Foo:      "hello",
+		Bar:      []MyType{{Foo: "there"}},
+		extended: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
 	}
 
 	tests := []struct {
@@ -218,7 +218,7 @@ func TestGetField(t *testing.T) {
 
 func TestQueryGovaluateSimple(t *testing.T) {
 	m := MyType{
-		custom: []byte(`{"hello":5}`),
+		extended: []byte(`{"hello":5}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -240,7 +240,7 @@ func TestQueryGovaluateSimple(t *testing.T) {
 
 func TestQueryGovaluateComplex(t *testing.T) {
 	m := MyType{
-		custom: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+		extended: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.Foo == 5")
@@ -273,7 +273,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	var m MyType
 	err := json.Unmarshal(data, &m)
 	require.Nil(t, err)
-	assert.Equal(t, MyType{Foo: "hello", custom: []byte(`{"a":10,"b":"c"}`)}, m)
+	assert.Equal(t, MyType{Foo: "hello", extended: []byte(`{"a":10,"b":"c"}`)}, m)
 	b, err := json.Marshal(m)
 	require.Nil(t, err)
 	assert.Equal(t, data, b)

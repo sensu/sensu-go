@@ -9,19 +9,19 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-// CustomAttributer is for use with GetField. It allows GetField to access
-// serialized custom attributes.
-type CustomAttributer interface {
-	// CustomAttributes returns json-serialized custom attributes.
-	CustomAttributes() []byte
+// ExtendedAttributer is for use with GetField. It allows GetField to access
+// serialized extended attributes.
+type ExtendedAttributer interface {
+	// ExtendedAttributes returns json-serialized extended attributes.
+	ExtendedAttributes() []byte
 }
 
 // GetField gets a field from v according to its name.
 // If GetField doesn't find a struct field with the corresponding name, then
-// it will try to dynamically find the corresponding item in the 'Custom'
-// field. GetField is case-sensitive, but custom attribute names will be
+// it will try to dynamically find the corresponding item in the 'Extended'
+// field. GetField is case-sensitive, but extended attribute names will be
 // converted to CamelCaps.
-func GetField(v CustomAttributer, name string) (interface{}, error) {
+func GetField(v ExtendedAttributer, name string) (interface{}, error) {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
@@ -31,19 +31,19 @@ func GetField(v CustomAttributer, name string) (interface{}, error) {
 	if ok {
 		return field.Value.Interface(), nil
 	}
-	// If we get here, we are dealing with custom attributes.
-	return getCustomAttribute(v.CustomAttributes(), name)
+	// If we get here, we are dealing with extended attributes.
+	return getExtendedAttribute(v.ExtendedAttributes(), name)
 }
 
-// getCustomAttribute dynamically builds a concrete type. If the concrete
+// getExtendedAttribute dynamically builds a concrete type. If the concrete
 // type is a composite type, then it will either be a struct or a slice.
-func getCustomAttribute(msg []byte, name string) (interface{}, error) {
+func getExtendedAttribute(msg []byte, name string) (interface{}, error) {
 	any := jsoniter.Get(msg, name)
 	if err := any.LastError(); err != nil {
 		lowerName := fmt.Sprintf("%s%s", strings.ToLower(string(name[0])), name[1:])
 		if name != lowerName {
 			// fall back to lower-case name
-			return getCustomAttribute(msg, lowerName)
+			return getExtendedAttribute(msg, lowerName)
 		}
 		return nil, err
 	}
@@ -189,10 +189,10 @@ func getJSONFields(v reflect.Value) map[string]structField {
 	return result
 }
 
-// ExtractCustomAttributes selects only custom attributes from msg. It will
+// ExtractExtendedAttributes selects only extended attributes from msg. It will
 // ignore any fields in msg that correspond to fields in v. v must be of kind
 // reflect.Struct.
-func ExtractCustomAttributes(v interface{}, msg []byte) ([]byte, error) {
+func ExtractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
@@ -207,7 +207,7 @@ func ExtractCustomAttributes(v interface{}, msg []byte) ([]byte, error) {
 	for _, any := range sortAnys(anys) {
 		_, ok := fields[any.Name]
 		if ok {
-			// Not a custom attribute
+			// Not a extended attribute
 			continue
 		}
 		if !objectStarted {
@@ -227,10 +227,10 @@ func ExtractCustomAttributes(v interface{}, msg []byte) ([]byte, error) {
 }
 
 // Marshal encodes the struct fields in v that are valid to encode.
-// It also encodes any custom attributes that are defined. Marshal
+// It also encodes any extended attributes that are defined. Marshal
 // respects the encoding/json rules regarding exported fields, and tag
 // semantics. If v's kind is not reflect.Struct, an error will be returned.
-func Marshal(v CustomAttributer) ([]byte, error) {
+func Marshal(v ExtendedAttributer) ([]byte, error) {
 	s := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
 	s.WriteObjectStart()
 
@@ -238,9 +238,9 @@ func Marshal(v CustomAttributer) ([]byte, error) {
 		return nil, err
 	}
 
-	custom := v.CustomAttributes()
-	if len(custom) > 0 {
-		if err := encodeCustomFields(custom, s); err != nil {
+	extended := v.ExtendedAttributes()
+	if len(extended) > 0 {
+		if err := encodeExtendedFields(extended, s); err != nil {
 			return nil, err
 		}
 	}
@@ -292,9 +292,9 @@ func sortAnys(m map[string]jsoniter.Any) []anyT {
 	return anys
 }
 
-func encodeCustomFields(custom []byte, s *jsoniter.Stream) error {
+func encodeExtendedFields(extended []byte, s *jsoniter.Stream) error {
 	var anys map[string]jsoniter.Any
-	if err := jsoniter.Unmarshal(custom, &anys); err != nil {
+	if err := jsoniter.Unmarshal(extended, &anys); err != nil {
 		return err
 	}
 	for _, any := range sortAnys(anys) {
