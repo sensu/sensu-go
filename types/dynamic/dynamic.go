@@ -203,24 +203,20 @@ func ExtractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 	if err := jsoniter.Unmarshal(msg, &anys); err != nil {
 		return nil, err
 	}
-	objectStarted := false
+	stream.WriteObjectStart()
+	j := 0
 	for _, any := range sortAnys(anys) {
 		_, ok := fields[any.Name]
 		if ok {
 			// Not a extended attribute
 			continue
 		}
-		if !objectStarted {
-			objectStarted = true
-			stream.WriteObjectStart()
-		} else {
+		if j > 0 {
 			stream.WriteMore()
 		}
+		j++
 		stream.WriteObjectField(any.Name)
 		any.WriteTo(stream)
-	}
-	if !objectStarted {
-		stream.WriteObjectStart()
 	}
 	stream.WriteObjectEnd()
 	return stream.Buffer(), nil
@@ -263,11 +259,8 @@ func encodeStructFields(v interface{}, s *jsoniter.Stream) error {
 	sort.Slice(fields, func(i, j int) bool {
 		return fields[i].JSONName < fields[j].JSONName
 	})
-	objectStarted := false
-	for _, field := range fields {
-		if !objectStarted {
-			objectStarted = true
-		} else {
+	for i, field := range fields {
+		if i > 0 {
 			s.WriteMore()
 		}
 		s.WriteObjectField(field.JSONName)
