@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -16,6 +17,7 @@ type KeepaliveMonitor struct {
 	Entity       *types.Entity
 	Deregisterer Deregisterer
 	EventCreator EventCreator
+	MessageBus   messaging.MessageBus
 	Store        store.Store
 
 	reset   chan interface{}
@@ -37,8 +39,7 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 	monitorPtr.reset = make(chan interface{})
 	go func() {
 		timer := monitorPtr.timer
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, monitorPtr.Entity.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, monitorPtr.Entity.Environment)
+		ctx := types.SetContextFromResource(context.Background(), monitorPtr.Entity)
 
 		var (
 			event   *types.Event
@@ -126,8 +127,7 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 	monitorPtr.reset <- struct{}{}
 
 	entity.LastSeen = event.Timestamp
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, monitorPtr.Entity.Environment)
+	ctx := types.SetContextFromResource(context.Background(), entity)
 
 	if err := monitorPtr.Store.UpdateEntity(ctx, entity); err != nil {
 		logger.WithError(err).Error("error updating entity in store")

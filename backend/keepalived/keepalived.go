@@ -19,6 +19,22 @@ const (
 	// DefaultKeepaliveTimeout is the amount of time we consider a Keepalive
 	// valid for.
 	DefaultKeepaliveTimeout = 120 // seconds
+
+	// KeepaliveCheckName is the name of the check that is created when a
+	// keepalive timeout occurs.
+	KeepaliveCheckName = "keepalive"
+
+	// KeepaliveHandlerName is the name of the handler that is executed when
+	// a keepalive timeout occurs.
+	KeepaliveHandlerName = "keepalive"
+
+	// RegistrationCheckName is the name of the check that is created when an
+	// entity sends a keepalive and the entity does not yet exist in the store.
+	RegistrationCheckName = "registration"
+
+	// RegistrationHandlerName is the name of the handler that is executed when
+	// a registration event is passed to pipelined.
+	RegistrationHandlerName = "registration"
 )
 
 // MonitorFactoryFunc takes an entity and returns a Monitor. Keepalived can
@@ -64,7 +80,8 @@ func (k *Keepalived) Start() error {
 				EventCreator: &MessageBusEventCreator{
 					MessageBus: k.MessageBus,
 				},
-				Store: k.Store,
+				MessageBus: k.MessageBus,
+				Store:      k.Store,
 			}
 		}
 	}
@@ -184,6 +201,10 @@ func (k *Keepalived) processKeepalives() {
 			continue
 		}
 
+		if err := k.handleEntityRegistration(entity); err != nil {
+			logger.WithError(err).Error("error handling entity registration")
+		}
+
 		k.mu.Lock()
 		monitor, ok = k.monitors[entity.ID]
 		// create if it doesn't exist
@@ -198,6 +219,26 @@ func (k *Keepalived) processKeepalives() {
 			logger.WithError(err).Error("error monitoring entity")
 		}
 	}
+}
+
+func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
+	if entity.Class != types.EntityAgentClass {
+		return nil
+	}
+
+	ctx := types.SetContextFromResource(context.Background(), entity)
+	fetchedEntity, err := k.Store.GetEntityByID(ctx, entity.ID)
+
+	if err != nil {
+		return err
+	}
+
+	if fetchedEntity == nil {
+		event := createRegistrationEvent(entity)
+		k.MessageBus.Publish(messaging.TopicEvent, event)
+	}
+
+	return nil
 }
 
 // startMonitorSweeper spins off into oblivion if Keepalived is stopped until

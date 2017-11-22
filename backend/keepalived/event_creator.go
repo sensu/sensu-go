@@ -22,7 +22,7 @@ type MessageBusEventCreator struct {
 
 // Warn sends a check with status of warn for a keepalive.
 func (creatorPtr *MessageBusEventCreator) Warn(entity *types.Entity) error {
-	event := createEvent(entity)
+	event := createKeepaliveEvent(entity)
 	event.Check.Status = 1
 
 	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
@@ -30,7 +30,7 @@ func (creatorPtr *MessageBusEventCreator) Warn(entity *types.Entity) error {
 
 // Critical sends a check with status of critical for a keepalive.
 func (creatorPtr *MessageBusEventCreator) Critical(entity *types.Entity) error {
-	event := createEvent(entity)
+	event := createKeepaliveEvent(entity)
 	event.Check.Status = 2
 
 	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
@@ -38,22 +38,20 @@ func (creatorPtr *MessageBusEventCreator) Critical(entity *types.Entity) error {
 
 // Pass sends a check with a status of OK for a keepalive.
 func (creatorPtr *MessageBusEventCreator) Pass(entity *types.Entity) error {
-	event := createEvent(entity)
+	event := createKeepaliveEvent(entity)
 	event.Check.Status = 0
 
 	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
 }
 
-func createEvent(entity *types.Entity) *types.Event {
+func createKeepaliveEvent(entity *types.Entity) *types.Event {
 	keepaliveCheck := &types.Check{
 		Config: &types.CheckConfig{
-			Name:          "keepalive",
-			Interval:      entity.KeepaliveTimeout,
-			Subscriptions: []string{""},
-			Command:       "",
-			Handlers:      []string{"keepalive"},
-			Environment:   entity.Environment,
-			Organization:  entity.Organization,
+			Name:         KeepaliveCheckName,
+			Interval:     entity.KeepaliveTimeout,
+			Handlers:     []string{KeepaliveHandlerName},
+			Environment:  entity.Environment,
+			Organization: entity.Organization,
 		},
 		Status: 1,
 	}
@@ -64,4 +62,24 @@ func createEvent(entity *types.Entity) *types.Event {
 	}
 
 	return keepaliveEvent
+}
+
+func createRegistrationEvent(entity *types.Entity) *types.Event {
+	registrationCheck := &types.Check{
+		Config: &types.CheckConfig{
+			Name:         RegistrationCheckName,
+			Interval:     entity.KeepaliveTimeout,
+			Handlers:     []string{RegistrationHandlerName},
+			Environment:  entity.Environment,
+			Organization: entity.Organization,
+		},
+		Status: 1,
+	}
+	registrationEvent := &types.Event{
+		Timestamp: time.Now().Unix(),
+		Entity:    entity,
+		Check:     registrationCheck,
+	}
+
+	return registrationEvent
 }

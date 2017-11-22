@@ -7,7 +7,9 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -171,4 +173,62 @@ func (suite *KeepalivedTestSuite) TestEventProcessing() {
 
 func TestKeepalivedSuite(t *testing.T) {
 	suite.Run(t, new(KeepalivedTestSuite))
+}
+
+func TestProcessRegistration(t *testing.T) {
+	newEntityWithClass := func(class string) *types.Entity {
+		entity := types.FixtureEntity("agent1")
+		entity.Class = class
+		return entity
+	}
+
+	tt := []struct {
+		name        string
+		entity      *types.Entity
+		storeEntity *types.Entity
+		expectedLen int
+	}{
+		{
+			name:        "Registered Entity Without Agent Class",
+			entity:      newEntityWithClass("router"),
+			storeEntity: newEntityWithClass("router"),
+			expectedLen: 0,
+		},
+		{
+			name:        "Registered Entity With Agent Class",
+			entity:      newEntityWithClass("agent"),
+			storeEntity: newEntityWithClass("agent"),
+			expectedLen: 0,
+		},
+		{
+			name:        "Non-Registered Entity With Agent Class",
+			entity:      newEntityWithClass("agent"),
+			storeEntity: nil,
+			expectedLen: 1,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			messageBus := &messaging.WizardBus{}
+			messageBus.Start()
+
+			store := &mockstore.MockStore{}
+
+			testChan := make(chan interface{}, 1)
+			err := messageBus.Subscribe(messaging.TopicEvent, "test-subscriber", testChan)
+			require.NoError(t, err)
+
+			keepalived := &Keepalived{
+				Store:      store,
+				MessageBus: messageBus,
+			}
+
+			store.On("GetEntityByID", mock.Anything, "agent1").Return(tc.storeEntity, nil)
+			err = keepalived.handleEntityRegistration(tc.entity)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedLen, len(testChan))
+		})
+	}
 }
