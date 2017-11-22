@@ -58,6 +58,9 @@ message CheckConfig {
 
 	// Subscriptions is the list of subscribers for the check.
 	repeated string subscriptions = 11 [(gogoproto.jsontag) = "subscriptions"];
+
+	// Sources indicates the name of the entity representing an external resource
+  string source = 12;
 }
 
 // A Check is a check specification and optionally the results of the check's
