@@ -84,34 +84,27 @@ type MyType struct {
 	Foo string   `json:"foo"`
 	Bar []MyType `json:"bar"`
 
-	extended []byte
+	attrs Attributes
 }
 
-func (m MyType) ExtendedAttributes() []byte {
-	return m.extended
+func (m *MyType) Attributes() Attributes {
+	return m.attrs
 }
 
-func (m MyType) Get(name string) (interface{}, error) {
+func (m *MyType) SetAttributes(a Attributes) {
+	m.attrs = a
+}
+
+func (m *MyType) Get(name string) (interface{}, error) {
 	return GetField(m, name)
 }
 
-func (m MyType) MarshalJSON() ([]byte, error) {
+func (m *MyType) MarshalJSON() ([]byte, error) {
 	return Marshal(m)
 }
 
 func (m *MyType) UnmarshalJSON(p []byte) error {
-	type temporary MyType
-	var x temporary
-	if err := json.Unmarshal(p, &x); err != nil {
-		return err
-	}
-	*m = MyType(x)
-	extended, err := ExtractExtendedAttributes(m, p)
-	if err != nil {
-		return err
-	}
-	m.extended = extended
-	return nil
+	return Unmarshal(p, m)
 }
 
 func TestExtractEmptyExtendedAttributes(t *testing.T) {
@@ -121,9 +114,9 @@ func TestExtractEmptyExtendedAttributes(t *testing.T) {
 	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}]}`)
 	var m MyType
 
-	attrs, err := ExtractExtendedAttributes(m, msg)
+	attrs, err := extractExtendedAttributes(m, msg)
 	require.Nil(err)
-	assert.Equal([]byte("{}"), attrs)
+	assert.Equal([]byte("{}"), attrs.data)
 }
 
 func TestExtractExtendedAttributes(t *testing.T) {
@@ -133,9 +126,9 @@ func TestExtractExtendedAttributes(t *testing.T) {
 	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}], "extendedattr": "such extended"}`)
 	var m MyType
 
-	attrs, err := ExtractExtendedAttributes(m, msg)
+	attrs, err := extractExtendedAttributes(m, msg)
 	require.Nil(err)
-	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs)
+	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs.data)
 }
 
 func TestMarshal(t *testing.T) {
@@ -144,10 +137,10 @@ func TestMarshal(t *testing.T) {
 	extendedBytes := []byte(`{"a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
 	expBytes := []byte(`{"bar":null,"foo":"hello world!","a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
 
-	m := MyType{
-		Foo:      "hello world!",
-		Bar:      nil,
-		extended: extendedBytes,
+	m := &MyType{
+		Foo:   "hello world!",
+		Bar:   nil,
+		attrs: Attributes{data: extendedBytes},
 	}
 
 	b, err := Marshal(m)
@@ -156,10 +149,10 @@ func TestMarshal(t *testing.T) {
 }
 
 func TestGetField(t *testing.T) {
-	m := MyType{
-		Foo:      "hello",
-		Bar:      []MyType{{Foo: "there"}},
-		extended: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
+	m := &MyType{
+		Foo:   "hello",
+		Bar:   []MyType{{Foo: "there"}},
+		attrs: Attributes{data: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`)},
 	}
 
 	tests := []struct {
@@ -217,8 +210,8 @@ func TestGetField(t *testing.T) {
 }
 
 func TestQueryGovaluateSimple(t *testing.T) {
-	m := MyType{
-		extended: []byte(`{"hello":5}`),
+	m := &MyType{
+		attrs: Attributes{data: []byte(`{"hello":5}`)},
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -239,8 +232,8 @@ func TestQueryGovaluateSimple(t *testing.T) {
 }
 
 func BenchmarkQueryGovaluateSimple(b *testing.B) {
-	m := MyType{
-		extended: []byte(`{"hello":5}`),
+	m := &MyType{
+		attrs: Attributes{data: []byte(`{"hello":5}`)},
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -254,8 +247,8 @@ func BenchmarkQueryGovaluateSimple(b *testing.B) {
 }
 
 func TestQueryGovaluateComplex(t *testing.T) {
-	m := MyType{
-		extended: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+	m := &MyType{
+		attrs: Attributes{data: []byte(`{"hello":{"foo":5,"bar":6.0}}`)},
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.Foo == 5")
@@ -284,8 +277,8 @@ func TestQueryGovaluateComplex(t *testing.T) {
 }
 
 func BenchmarkQueryGovaluateComplex(b *testing.B) {
-	m := MyType{
-		extended: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+	m := &MyType{
+		attrs: Attributes{data: []byte(`{"hello":{"foo":5,"bar":6.0}}`)},
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.Foo == 5")
@@ -303,8 +296,8 @@ func TestMarshalUnmarshal(t *testing.T) {
 	var m MyType
 	err := json.Unmarshal(data, &m)
 	require.Nil(t, err)
-	assert.Equal(t, MyType{Foo: "hello", extended: []byte(`{"a":10,"b":"c"}`)}, m)
-	b, err := json.Marshal(m)
+	assert.Equal(t, MyType{Foo: "hello", attrs: Attributes{data: []byte(`{"a":10,"b":"c"}`)}}, m)
+	b, err := json.Marshal(&m)
 	require.Nil(t, err)
 	assert.Equal(t, data, b)
 }
@@ -323,6 +316,6 @@ func BenchmarkMarshal(b *testing.B) {
 	json.Unmarshal(data, &m)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		json.Marshal(m)
+		json.Marshal(&m)
 	}
 }

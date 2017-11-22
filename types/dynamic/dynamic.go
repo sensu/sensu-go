@@ -1,6 +1,7 @@
 package dynamic
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
@@ -9,11 +10,16 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-// ExtendedAttributer is for use with GetField. It allows GetField to access
-// serialized extended attributes.
-type ExtendedAttributer interface {
-	// ExtendedAttributes returns json-serialized extended attributes.
-	ExtendedAttributes() []byte
+// Attributes hold arbitrary JSON-encoded data.
+type Attributes struct {
+	data []byte
+}
+
+// Implement Attributer to enable a type to work with the Marshal and Unmarshal
+// functions in this package.
+type Attributer interface {
+	Attributes() Attributes
+	SetAttributes(Attributes)
 }
 
 // GetField gets a field from v according to its name.
@@ -21,7 +27,7 @@ type ExtendedAttributer interface {
 // it will try to dynamically find the corresponding item in the 'Extended'
 // field. GetField is case-sensitive, but extended attribute names will be
 // converted to CamelCaps.
-func GetField(v ExtendedAttributer, name string) (interface{}, error) {
+func GetField(v Attributer, name string) (interface{}, error) {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
@@ -32,7 +38,7 @@ func GetField(v ExtendedAttributer, name string) (interface{}, error) {
 		return field.Value.Interface(), nil
 	}
 	// If we get here, we are dealing with extended attributes.
-	return getExtendedAttribute(v.ExtendedAttributes(), name)
+	return getExtendedAttribute(v.Attributes().data, name)
 }
 
 // getExtendedAttribute dynamically builds a concrete type. If the concrete
@@ -189,19 +195,19 @@ func getJSONFields(v reflect.Value) map[string]structField {
 	return result
 }
 
-// ExtractExtendedAttributes selects only extended attributes from msg. It will
+// extractExtendedAttributes selects only extended attributes from msg. It will
 // ignore any fields in msg that correspond to fields in v. v must be of kind
 // reflect.Struct.
-func ExtractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
+func extractExtendedAttributes(v interface{}, msg []byte) (Attributes, error) {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
 	if kind := strukt.Kind(); kind != reflect.Struct {
-		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
+		return Attributes{}, fmt.Errorf("invalid type (want struct): %v", kind)
 	}
 	fields := getJSONFields(strukt)
 	stream := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
 	var anys map[string]jsoniter.Any
 	if err := jsoniter.Unmarshal(msg, &anys); err != nil {
-		return nil, err
+		return Attributes{}, err
 	}
 	stream.WriteObjectStart()
 	j := 0
@@ -219,14 +225,54 @@ func ExtractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 		any.WriteTo(stream)
 	}
 	stream.WriteObjectEnd()
-	return stream.Buffer(), nil
+	return Attributes{data: stream.Buffer()}, nil
+}
+
+// Unmarshal decodes msg into v, storing what fields it can into the basic
+// fields of the struct, and storing the rest into Attributes.
+func Unmarshal(msg []byte, v Attributer) error {
+	if _, ok := v.(json.Unmarshaler); ok {
+		// Can't safely call UnmarshalJSON here without potentially causing an
+		// infinite recursion. Copy the struct into a new type that doesn't
+		// implement the method.
+		oldVal := reflect.Indirect(reflect.ValueOf(v))
+		typ := oldVal.Type()
+		numField := typ.NumField()
+		fields := make([]reflect.StructField, 0, numField)
+		for i := 0; i < numField; i++ {
+			field := typ.Field(i)
+			if len(field.PkgPath) == 0 {
+				fields = append(fields, field)
+			}
+		}
+		newType := reflect.StructOf(fields)
+		newPtr := reflect.New(newType)
+		newVal := reflect.Indirect(newPtr)
+		if err := json.Unmarshal(msg, newPtr.Interface()); err != nil {
+			return err
+		}
+		for _, field := range fields {
+			oldVal.FieldByName(field.Name).Set(newVal.FieldByName(field.Name))
+		}
+	} else {
+		if err := json.Unmarshal(msg, v); err != nil {
+			return err
+		}
+	}
+
+	attrs, err := extractExtendedAttributes(v, msg)
+	if err != nil {
+		return err
+	}
+	v.SetAttributes(attrs)
+	return nil
 }
 
 // Marshal encodes the struct fields in v that are valid to encode.
 // It also encodes any extended attributes that are defined. Marshal
 // respects the encoding/json rules regarding exported fields, and tag
 // semantics. If v's kind is not reflect.Struct, an error will be returned.
-func Marshal(v ExtendedAttributer) ([]byte, error) {
+func Marshal(v Attributer) ([]byte, error) {
 	s := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
 	s.WriteObjectStart()
 
@@ -234,7 +280,7 @@ func Marshal(v ExtendedAttributer) ([]byte, error) {
 		return nil, err
 	}
 
-	extended := v.ExtendedAttributes()
+	extended := v.Attributes().data
 	if len(extended) > 0 {
 		if err := encodeExtendedFields(extended, s); err != nil {
 			return nil, err
