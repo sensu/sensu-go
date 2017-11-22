@@ -238,6 +238,21 @@ func TestQueryGovaluateSimple(t *testing.T) {
 	require.Equal(t, true, result)
 }
 
+func BenchmarkQueryGovaluateSimple(b *testing.B) {
+	m := MyType{
+		extended: []byte(`{"hello":5}`),
+	}
+
+	expr, err := govaluate.NewEvaluableExpression("hello == 5")
+	require.Nil(b, err)
+	require.NotNil(b, expr)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		expr.Eval(m)
+	}
+}
+
 func TestQueryGovaluateComplex(t *testing.T) {
 	m := MyType{
 		extended: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
@@ -268,6 +283,21 @@ func TestQueryGovaluateComplex(t *testing.T) {
 	require.Equal(t, true, result)
 }
 
+func BenchmarkQueryGovaluateComplex(b *testing.B) {
+	m := MyType{
+		extended: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+	}
+
+	expr, err := govaluate.NewEvaluableExpression("hello.Foo == 5")
+	require.Nil(b, err)
+	require.NotNil(b, expr)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = expr.Eval(m)
+	}
+}
+
 func TestMarshalUnmarshal(t *testing.T) {
 	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
 	var m MyType
@@ -277,4 +307,22 @@ func TestMarshalUnmarshal(t *testing.T) {
 	b, err := json.Marshal(m)
 	require.Nil(t, err)
 	assert.Equal(t, data, b)
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
+	var m MyType
+	for i := 0; i < b.N; i++ {
+		_ = json.Unmarshal(data, &m)
+	}
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
+	var m MyType
+	json.Unmarshal(data, &m)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		json.Marshal(m)
+	}
 }
