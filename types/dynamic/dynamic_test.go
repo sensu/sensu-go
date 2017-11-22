@@ -1,6 +1,7 @@
 package dynamic
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -92,6 +93,25 @@ func (m MyType) CustomAttributes() []byte {
 
 func (m MyType) Get(name string) (interface{}, error) {
 	return GetField(m, name)
+}
+
+func (m MyType) MarshalJSON() ([]byte, error) {
+	return Marshal(m)
+}
+
+func (m *MyType) UnmarshalJSON(p []byte) error {
+	type __ MyType
+	var x __
+	if err := json.Unmarshal(p, &x); err != nil {
+		return err
+	}
+	*m = MyType(x)
+	custom, err := ExtractCustomAttributes(m, p)
+	if err != nil {
+		return err
+	}
+	m.custom = custom
+	return nil
 }
 
 func TestExtractEmptyCustomAttributes(t *testing.T) {
@@ -246,4 +266,15 @@ func TestQueryGovaluateComplex(t *testing.T) {
 	result, err = expr.Eval(m)
 	require.Nil(t, err)
 	require.Equal(t, true, result)
+}
+
+func TestMarshalUnmarshal(t *testing.T) {
+	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
+	var m MyType
+	err := json.Unmarshal(data, &m)
+	require.Nil(t, err)
+	assert.Equal(t, MyType{Foo: "hello", custom: []byte(`{"a":10,"b":"c"}`)}, m)
+	b, err := json.Marshal(m)
+	require.Nil(t, err)
+	assert.Equal(t, data, b)
 }

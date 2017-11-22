@@ -204,8 +204,8 @@ func ExtractCustomAttributes(v interface{}, msg []byte) ([]byte, error) {
 		return nil, err
 	}
 	objectStarted := false
-	for field, value := range anys {
-		_, ok := fields[field]
+	for _, any := range sortAnys(anys) {
+		_, ok := fields[any.Name]
 		if ok {
 			// Not a custom attribute
 			continue
@@ -216,8 +216,8 @@ func ExtractCustomAttributes(v interface{}, msg []byte) ([]byte, error) {
 		} else {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField(field)
-		value.WriteTo(stream)
+		stream.WriteObjectField(any.Name)
+		any.WriteTo(stream)
 	}
 	if !objectStarted {
 		stream.WriteObjectStart()
