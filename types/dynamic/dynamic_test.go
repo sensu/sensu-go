@@ -14,7 +14,7 @@ func TestGetStructField(t *testing.T) {
 
 	test := struct {
 		Valid             int `json:"valid"`
-		invalidUnexported int `json:"invalid"`
+		invalidUnexported int
 		ValidEmpty        int `json:"validEmpty"`
 		InvalidEmpty      int `json:"invalidEmpty,omitempty"`
 		Invalid           int `json:"-"`
@@ -52,7 +52,7 @@ func TestGetJSONStructField(t *testing.T) {
 
 	test := struct {
 		Valid             int `json:"valid"`
-		invalidUnexported int `json:"invalid"`
+		invalidUnexported int
 		ValidEmpty        int `json:"validEmpty"`
 		InvalidEmpty      int `json:"invalidEmpty,omitempty"`
 		Invalid           int `json:"-"`
