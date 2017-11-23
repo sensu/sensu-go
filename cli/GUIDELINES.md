@@ -91,19 +91,19 @@ or not, it should be accompanied by some form of activity indicator.
 
 Types of activities and expected feedback:
 
-- When an activity is determinate (eg. uploading asset with known size) ideally
-  a loading indicator that displays the current progress is displayed.
-- When activity is duration indeterminate an spinner should be displayed.
+- When an activity is determinate (eg. uploading an asset with known size)
+  ideally a loading indicator that displays the current progress is displayed.
+- When an activity's duration is indeterminate a spinner should be displayed.
   It is important that the loading indicator should animate so that the end-user
   does not believe that the command has frozen.
 
-Especially with activities where progress is indeterminate, where possible, it
-is ideal that some information about the current process is exposed to the user.
-In this way the user is not confused as to whether anything is actually
-happening. As an example, the import command consists of many operations that
-occur in sequence; as the operations are taking place they are printed to the
-screen as they happen. This is not only so the user can see the product of the
-operation but so that they know that the command is continuing to execute.
+With activities where progress is indeterminate, where possible, it is ideal
+that some information about the current process is exposed to the user. In this
+way the user is not confused as to whether anything is actually happening. As an
+example, the import command consists of many operations that occur in sequence;
+as the operations are taking place they are printed to the screen as they
+happen. This is not only so the user can see the product of the operation, but
+so that they know that the command is continuing to execute.
 
 One caveat is that you should be mindful of the messages you display, confusion
 or suspicion can easily arise from language that is too vague or sometimes even
@@ -118,13 +118,13 @@ command again, or if the correct action took place. No additional actions should
 be required by the user to be confident that their intended interaction was
 successful.
 
-Unless there is good reason to do otherwise the following should be true of any
+Unless there is good reason to do otherwise, the following should be true of any
 command:
 
 - Affirmative messages should generally one or two words, in the form of a title
-  and should use the colour green. For example a command that updates an entity
+  and should use the colour green. For example, a command that updates an entity
   should result in a message that says "Updated."
-- For the sake of tooling that uses `sensuctl` ensure that the exit code is `0`
+- For the sake of tooling that uses `sensuctl`, ensure that the exit code is `0`
   on success and `1` when failures occur.
 
 More specific conventions regarding typical commands (create, update, etc.) can
@@ -137,19 +137,19 @@ be found below.
 - Where possible, any command where the result could lead to heartache should be
   recoverable. However, while noble this is not always plausible; in these
   cases of operations for which there is no recovery or could have far reaching
-  implications the command should always be guarded by a confirmation prompt.
-- For scripts a flag should be present on the command allow the confirmation
-  prompt to skipped so that the command could be used in tooling.
-- The colour red can and should be used in communication to drive home it's
+  implications, the command should always be guarded by a confirmation prompt.
+- For scripts, a flag should be present on the command to allow the confirmation
+  prompt to be skipped, in this way the command can easily be used in tooling.
+- The colour red can and should be used in communication to drive home its
   importance.
-- When applicable the prompt should ask them to write out the name of the
+- When applicable, the prompt should ask them to write out the name of the
   affected resource. In this it forces them to confirm that they are touching
   the correct resource.
 
 ### Errors
 
 - Should be brief, explicit and clear.
-- Where ever possible provide suggestions to solve issue.
+- Wherever possible provide suggestions to solve issue.
 - Use red colour
 
 ## Auto-completion
@@ -164,12 +164,12 @@ be found below.
 ## Management Commands
 
 Management commands are those that expose a number of subcommands that act upon
-a Sensu primitive. For example an 'asset' management command would expose
+a Sensu primitive. For example, an 'asset' management command would expose
 one subcommand for each action a user can perform on an asset or collection of
 assets.
 
-In the interest of keeping a simple identifiable standard for our the ease of
-our end users, we ask that developers keep the naming of the subcommands
+In the interest of keeping a simple and identifiable standard for our the ease
+of our end users, we ask that developers keep the naming of the subcommands
 consistent. The following is a list of standard names for common subcommands.
 
 - If you're intention is to add a command that adds a new resource to the system
