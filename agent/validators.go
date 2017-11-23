@@ -17,29 +17,6 @@ func validateEvent(a *Agent, event *types.Event) error {
 		event.Timestamp = time.Now().Unix()
 	}
 
-	// Use the agent entity if none was passed
-	if event.Entity == nil {
-		event.Entity = a.getAgentEntity()
-	} else {
-		// Make sure the entity has all required attributes
-		if event.Entity.Class == "" {
-			event.Entity.Class = "proxy"
-		}
-
-		if event.Entity.Organization == "" {
-			event.Entity.Organization = a.config.Organization
-		}
-
-		if event.Entity.Environment == "" {
-			event.Entity.Environment = a.config.Environment
-		}
-	}
-
-	// The entity should pass validation at this point
-	if err := event.Entity.Validate(); err != nil {
-		return err
-	}
-
 	// Make sure the check has all required attributes
 	if event.Check.Config.Interval == 0 {
 		event.Check.Config.Interval = 1
@@ -58,5 +35,16 @@ func validateEvent(a *Agent, event *types.Event) error {
 	}
 
 	// The check should pass validation at this point
-	return event.Check.Validate()
+	if err := event.Check.Validate(); err != nil {
+		return err
+	}
+
+	// Verify if an entity was provided and that it's not the agent's entity.
+	// If so, we have a proxy entity and we need to identify it as the source
+	// so it can be properly handled by the backend. Othewise we need to inject
+	// the agent's entity into this event
+	a.getEntities(event)
+
+	// The entity should pass validation at this point
+	return event.Entity.Validate()
 }

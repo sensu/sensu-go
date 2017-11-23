@@ -21,7 +21,6 @@ import (
 
 	"github.com/sensu/sensu-go/agent/assetmanager"
 	"github.com/sensu/sensu-go/handler"
-	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 )
@@ -146,7 +145,7 @@ func NewAgent(config *Config) *Agent {
 
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
-func (a *Agent) createListenSockets() error {
+func (a *Agent) createListenSockets() (string, string, error) {
 	// we have two listeners that we want to shut down before agent.Stop() returns.
 	a.wg.Add(2)
 
@@ -155,12 +154,12 @@ func (a *Agent) createListenSockets() error {
 	// Setup UDP socket listener
 	UDPServerAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
 	udpListen, err := net.ListenUDP("udp", UDPServerAddr)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	logger.Infof("starting UDP listener on %s", addr)
 	go a.handleUDPMessages(udpListen)
@@ -168,13 +167,13 @@ func (a *Agent) createListenSockets() error {
 	// Setup TCP socket listener
 	TCPServerAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
 	logger.Infof("starting TCP listener on %s", addr)
 	tcpListen, err := net.ListenTCP("tcp", TCPServerAddr)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
 	// we have to monitor the stopping channel out of band, otherwise
@@ -206,7 +205,7 @@ func (a *Agent) createListenSockets() error {
 		}
 	}()
 
-	return err
+	return tcpListen.Addr().String(), udpListen.LocalAddr().String(), err
 }
 
 // Streams can be of any length. The socket protocol does not require
@@ -264,8 +263,10 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			continue
 		}
 
-		if event.Entity == nil {
-			event.Entity = a.entity
+		// Make sure the event is valid
+		if err = validateEvent(a, &event); err != nil {
+			logger.WithError(err).Error("invalid event")
+			return
 		}
 
 		// At this point, should receive valid JSON, so send it along to the
@@ -328,11 +329,15 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			var event types.Event
 			if err = json.Unmarshal(buf[:bytesRead], &event); err != nil {
 				logger.WithError(err).Error("UDP Invalid event data")
+				return
 			}
 
-			if event.Entity == nil {
-				event.Entity = a.entity
+			// Make sure the event is valid
+			if err = validateEvent(a, &event); err != nil {
+				logger.WithError(err).Error("invalid event")
+				return
 			}
+
 			payload, err := json.Marshal(event)
 			if err != nil {
 				return
@@ -431,36 +436,6 @@ func (a *Agent) sendKeepalive() error {
 	return nil
 }
 
-func (a *Agent) getAgentEntity() *types.Entity {
-	if a.entity == nil {
-		e := &types.Entity{
-			ID:               a.config.AgentID,
-			Class:            "agent",
-			Subscriptions:    a.config.Subscriptions,
-			Deregister:       a.config.Deregister,
-			KeepaliveTimeout: a.config.KeepaliveTimeout,
-			Environment:      a.config.Environment,
-			Organization:     a.config.Organization,
-			User:             a.config.User,
-		}
-
-		if a.config.DeregistrationHandler != "" {
-			e.Deregistration = types.Deregistration{
-				Handler: a.config.DeregistrationHandler,
-			}
-		}
-
-		s, err := system.Info()
-		if err == nil {
-			e.System = s
-		}
-
-		a.entity = e
-	}
-
-	return a.entity
-}
-
 func (a *Agent) buildTransportHeaderMap() http.Header {
 	header := http.Header{}
 	header.Set(transport.HeaderKeyAgentID, a.config.AgentID)
@@ -491,7 +466,7 @@ func (a *Agent) Run() error {
 	}
 	a.conn = conn
 
-	if err := a.createListenSockets(); err != nil {
+	if _, _, err := a.createListenSockets(); err != nil {
 		return err
 	}
 
