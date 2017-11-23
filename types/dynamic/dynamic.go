@@ -28,41 +28,33 @@ type Attributer interface {
 // field. GetField is case-sensitive, but extended attribute names will be
 // converted to CamelCaps.
 func GetField(v Attributer, name string) (interface{}, error) {
-	strukt := reflect.Indirect(reflect.ValueOf(v))
-	if kind := strukt.Kind(); kind != reflect.Struct {
-		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
-	}
-	fields := getFields(strukt)
-	field, ok := fields[name]
-	if ok {
-		return field.Value.Interface(), nil
+	if s := string([]rune(name)[0]); strings.Title(s) == s {
+		// Exported fields are always upper-cased for the first rune
+		strukt := reflect.Indirect(reflect.ValueOf(v))
+		if kind := strukt.Kind(); kind != reflect.Struct {
+			return nil, fmt.Errorf("invalid type (want struct): %v", kind)
+		}
+		fields := getFields(strukt)
+		field, ok := fields[name]
+		if ok {
+			return field.Value.Interface(), nil
+		}
 	}
 	// If we get here, we are dealing with extended attributes.
-	return getExtendedAttribute(v.Attributes().data, name)
+	any := AnyParameters{any: jsoniter.Get(v.Attributes().data)}
+	return any.Get(name)
 }
 
-// getExtendedAttribute dynamically builds a concrete type. If the concrete
-// type is a composite type, then it will either be a struct or a slice.
-func getExtendedAttribute(msg []byte, name string) (interface{}, error) {
-	any := jsoniter.Get(msg, name)
+// Connect jsoniter.Any to govaluate.Parameters
+type AnyParameters struct {
+	any jsoniter.Any
+}
+
+func (p AnyParameters) Get(name string) (interface{}, error) {
+	any := p.any.Get(name)
 	if err := any.LastError(); err != nil {
-		lowerName := fmt.Sprintf("%s%s", strings.ToLower(string(name[0])), name[1:])
-		if name != lowerName {
-			// fall back to lower-case name
-			return getExtendedAttribute(msg, lowerName)
-		}
 		return nil, err
 	}
-	if any.GetInterface() == nil {
-		// Fall back to lower-case name
-		lowerName := fmt.Sprintf("%s%s", strings.ToLower(string(name[0])), name[1:])
-		any = jsoniter.Get(msg, lowerName)
-	}
-	value, err := anyToValue(any)
-	return value, err
-}
-
-func anyToValue(any jsoniter.Any) (interface{}, error) {
 	switch any.ValueType() {
 	case jsoniter.InvalidValue:
 		return nil, fmt.Errorf("dynamic: %s", any.LastError())
@@ -75,53 +67,13 @@ func anyToValue(any jsoniter.Any) (interface{}, error) {
 	case jsoniter.BoolValue:
 		return any.ToBool(), nil
 	case jsoniter.ArrayValue:
-		return buildSliceAny(any)
+		return any.GetInterface(), any.LastError()
 	case jsoniter.ObjectValue:
-		return buildStructAny(any)
+		return AnyParameters{any: any}, any.LastError()
 	default:
-		return nil, fmt.Errorf("dynamic: unrecognized value type! %d", any.ValueType())
-	}
-}
-
-// buildSliceAny dynamically builds a slice from a jsoniter.Any
-func buildSliceAny(any jsoniter.Any) (interface{}, error) {
-	n := any.Size()
-	result := make([]interface{}, 0, n)
-	for i := 0; i < n; i++ {
-		value, err := anyToValue(any.Get(i))
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, value)
-	}
-	return result, nil
-}
-
-// buildStructAny dynamically builds a struct from a jsoniter.Any
-func buildStructAny(any jsoniter.Any) (interface{}, error) {
-	keys := any.Keys()
-	fields := make([]reflect.StructField, 0, len(keys))
-	values := make([]interface{}, 0, len(keys))
-	for _, key := range keys {
-		value, err := anyToValue(any.Get(key))
-		if err != nil {
-			return nil, err
-		}
-		values = append(values, value)
-		fields = append(fields, reflect.StructField{
-			Name: strings.Title(key),
-			Type: reflect.TypeOf(value),
-		})
-	}
-	structType := reflect.StructOf(fields)
-	structPtr := reflect.New(structType)
-	structVal := reflect.Indirect(structPtr)
-	for i, value := range values {
-		field := structVal.Field(i)
-		field.Set(reflect.ValueOf(value))
+		return nil, fmt.Errorf("dynamic: unrecognized value type! %d", p.any.ValueType())
 	}
 
-	return structVal.Interface(), nil
 }
 
 // getFields gets a map of struct fields by name from a reflect.Value

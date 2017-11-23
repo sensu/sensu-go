@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Knetic/govaluate"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -115,7 +116,7 @@ func TestExtractEmptyExtendedAttributes(t *testing.T) {
 	var m MyType
 
 	attrs, err := extractExtendedAttributes(m, msg)
-	require.Nil(err)
+	require.NoError(err)
 	assert.Equal([]byte("{}"), attrs.data)
 }
 
@@ -127,7 +128,7 @@ func TestExtractExtendedAttributes(t *testing.T) {
 	var m MyType
 
 	attrs, err := extractExtendedAttributes(m, msg)
-	require.Nil(err)
+	require.NoError(err)
 	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs.data)
 }
 
@@ -144,7 +145,7 @@ func TestMarshal(t *testing.T) {
 	}
 
 	b, err := Marshal(m)
-	require.Nil(err)
+	require.NoError(err)
 	assert.Equal(expBytes, b)
 }
 
@@ -154,6 +155,9 @@ func TestGetField(t *testing.T) {
 		Bar:   []MyType{{Foo: "there"}},
 		attrs: Attributes{data: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`)},
 	}
+
+	fooAny := jsoniter.Get([]byte(`{"hello":5}`))
+	require.NoError(t, fooAny.LastError())
 
 	tests := []struct {
 		Field string
@@ -187,10 +191,8 @@ func TestGetField(t *testing.T) {
 		},
 		{
 			Field: "foo",
-			Exp: struct {
-				Hello float64
-			}{Hello: 5.0},
-			Kind: reflect.Struct,
+			Exp:   AnyParameters{any: fooAny},
+			Kind:  reflect.Struct,
 		},
 		{
 			Field: "bar",
@@ -202,7 +204,7 @@ func TestGetField(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Field, func(t *testing.T) {
 			field, err := GetField(m, test.Field)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, test.Exp, field)
 			assert.Equal(t, test.Kind, reflect.ValueOf(field).Kind())
 		})
@@ -215,19 +217,11 @@ func TestQueryGovaluateSimple(t *testing.T) {
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, expr)
 
 	result, err := expr.Eval(m)
-	require.Nil(t, err)
-	require.Equal(t, true, result)
-
-	expr, err = govaluate.NewEvaluableExpression("Hello == 5")
-	require.Nil(t, err)
-	require.NotNil(t, expr)
-
-	result, err = expr.Eval(m)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, true, result)
 }
 
@@ -237,7 +231,7 @@ func BenchmarkQueryGovaluateSimple(b *testing.B) {
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
-	require.Nil(b, err)
+	require.NoError(b, err)
 	require.NotNil(b, expr)
 	b.ResetTimer()
 
@@ -251,28 +245,20 @@ func TestQueryGovaluateComplex(t *testing.T) {
 		attrs: Attributes{data: []byte(`{"hello":{"foo":5,"bar":6.0}}`)},
 	}
 
-	expr, err := govaluate.NewEvaluableExpression("hello.Foo == 5")
-	require.Nil(t, err)
+	expr, err := govaluate.NewEvaluableExpression("hello.foo == 5")
+	require.NoError(t, err)
 	require.NotNil(t, expr)
 
 	result, err := expr.Eval(m)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, true, result)
 
-	expr, err = govaluate.NewEvaluableExpression("Hello.Foo == 5")
-	require.Nil(t, err)
+	expr, err = govaluate.NewEvaluableExpression("hello.foo < hello.bar")
+	require.NoError(t, err)
 	require.NotNil(t, expr)
 
 	result, err = expr.Eval(m)
-	require.Nil(t, err)
-	require.Equal(t, true, result)
-
-	expr, err = govaluate.NewEvaluableExpression("Hello.Foo < Hello.Bar")
-	require.Nil(t, err)
-	require.NotNil(t, expr)
-
-	result, err = expr.Eval(m)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, true, result)
 }
 
@@ -282,7 +268,7 @@ func BenchmarkQueryGovaluateComplex(b *testing.B) {
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.Foo == 5")
-	require.Nil(b, err)
+	require.NoError(b, err)
 	require.NotNil(b, expr)
 	b.ResetTimer()
 
@@ -295,10 +281,10 @@ func TestMarshalUnmarshal(t *testing.T) {
 	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
 	var m MyType
 	err := json.Unmarshal(data, &m)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, MyType{Foo: "hello", attrs: Attributes{data: []byte(`{"a":10,"b":"c"}`)}}, m)
 	b, err := json.Marshal(&m)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, data, b)
 }
 
