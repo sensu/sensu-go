@@ -43,7 +43,7 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := mux.NewRouter()
-	registerUnautenticatedResources(router, a.BackendStatus)
+	registerUnauthenticatedResources(router, a.BackendStatus)
 	registerAuthenticationResources(router, a.Store)
 	registerRestrictedResources(router, a.Store)
 
@@ -103,7 +103,7 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
-func registerUnautenticatedResources(
+func registerUnauthenticatedResources(
 	router *mux.Router,
 	bStatus func() types.StatusMap,
 ) {
