@@ -267,7 +267,7 @@ func BenchmarkQueryGovaluateComplex(b *testing.B) {
 		attrs: Attributes{data: []byte(`{"hello":{"foo":5,"bar":6.0}}`)},
 	}
 
-	expr, err := govaluate.NewEvaluableExpression("hello.Foo == 5")
+	expr, err := govaluate.NewEvaluableExpression("hello.foo < hello.bar")
 	require.NoError(b, err)
 	require.NotNil(b, expr)
 	b.ResetTimer()
