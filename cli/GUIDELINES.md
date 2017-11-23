@@ -64,7 +64,7 @@ The following are some simple rules to consider when formatting your content:
 No element should ever be designed so that colour is required to understand
 what it is trying to communicate. It is not a guarantee that the user's
 terminal will support colour. For instance it would not be okay to omit that a
-message is an error because you've used to the color red.
+message is an error because you've used to the colour red.
 
 Following sections will detail usage in different different scenarios.
 
@@ -131,11 +131,29 @@ command:
 More specific conventions regarding typical commands (create, update, etc.) can
 be found below.
 
+## Unrecoverable Operations
+
+- With a human-centric design in mind each command should be designed mindful
+  that users while likely awesome, fun, beautiful people are often fallible.
+- Where possible, any command where the result could lead to heartache should be
+  recoverable. However, while noble this is not always plausible; in these
+  cases of operations for which there is no recovery or could have far reaching
+  implications the command should always be guarded by a confirmation prompt.
+- For scripts a flag should be present on the command allow the confirmation
+  prompt to skipped so that the command could be used in tooling.
+- The colour red can and should be used in communication to drive home it's
+  importance.
+- When applicable the prompt should ask them to write out the name of the
+  affected resource. In this it forces them to confirm that they are touching
+  the correct resource.
+
 ### Errors
 
 - Should be brief, explicit and clear.
 - Where ever possible provide suggestions to solve issue.
 - Use red colour
+
+## Auto-completion
 
 ## Elements
 
@@ -193,12 +211,9 @@ consistent. The following is a list of standard names for common subcommands.
 ## Updating Resources
 ## Deleting Resources
 
-## Unrecoverable Actions
-
 
 ## Output
 ## Command Output
-## Auto-completion
 
 ## Inspiration / Previous Art
 
@@ -206,3 +221,6 @@ consistent. The following is a list of standard names for common subcommands.
 - `yarn`
 - `heroku`
 
+## TODO
+
+- [ ] Use 'operations' instead of actions
