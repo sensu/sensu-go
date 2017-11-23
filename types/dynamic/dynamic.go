@@ -34,10 +34,9 @@ func GetField(v Attributer, name string) (interface{}, error) {
 		if kind := strukt.Kind(); kind != reflect.Struct {
 			return nil, fmt.Errorf("invalid type (want struct): %v", kind)
 		}
-		fields := getFields(strukt)
-		field, ok := fields[name]
-		if ok {
-			return field.Value.Interface(), nil
+		field := strukt.FieldByName(name)
+		if field.IsValid() {
+			return field.Interface(), nil
 		}
 	}
 	// If we get here, we are dealing with extended attributes.
