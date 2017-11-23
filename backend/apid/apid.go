@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/controllers"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/store"
@@ -44,8 +43,9 @@ func (a *APId) Start() error {
 	a.errChan = make(chan error, 1)
 
 	router := mux.NewRouter()
+	registerUnauthenticatedResources(router, a.BackendStatus)
 	registerAuthenticationResources(router, a.Store)
-	registerRestrictedResources(router, a.Store, a.BackendStatus)
+	registerRestrictedResources(router, a.Store)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -103,46 +103,50 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
-func registerAuthenticationResources(router *mux.Router, store store.Store) {
-	authRouter := NewSubrouter(
-		router.NewRoute(),
-		middlewares.SimpleLogger{},
-		middlewares.RefreshToken{},
-	)
-
-	authenticationController := controllers.AuthenticationController{Store: store}
-	authenticationController.Register(authRouter)
-}
-
-func mountRouters(parent *mux.Router, subRouters ...routers.Router) {
-	for _, subRouter := range subRouters {
-		subRouter.Mount(parent)
-	}
-}
-
-func registerRestrictedResources(
+func registerUnauthenticatedResources(
 	router *mux.Router,
-	store store.Store,
 	bStatus func() types.StatusMap,
 ) {
-	commonRouter := NewSubrouter(
-		router.NewRoute(),
-		middlewares.SimpleLogger{},
-		middlewares.Environment{Store: store},
-		middlewares.Authentication{},
-		middlewares.AllowList{Store: store},
-		middlewares.Authorization{Store: store},
-		middlewares.LimitRequest{},
-	)
-
 	mountRouters(
-		commonRouter,
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.LimitRequest{},
+		),
+		routers.NewStatusRouter(bStatus),
+	)
+}
+
+func registerAuthenticationResources(router *mux.Router, store store.Store) {
+	mountRouters(
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.RefreshToken{},
+			middlewares.LimitRequest{},
+		),
+		routers.NewAuthenticationRouter(store),
+	)
+}
+
+func registerRestrictedResources(router *mux.Router, store store.Store) {
+	mountRouters(
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.Environment{Store: store},
+			middlewares.Authentication{},
+			middlewares.AllowList{Store: store},
+			middlewares.Authorization{Store: store},
+			middlewares.LimitRequest{},
+		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(store),
 		routers.NewEntitiesRouter(store),
 		routers.NewEnvironmentsRouter(store),
 		routers.NewEventFiltersRouter(store),
 		routers.NewEventsRouter(store),
+		routers.NewGraphQLRouter(store),
 		routers.NewHandlersRouter(store),
 		routers.NewMutatorsRouter(store),
 		routers.NewOrganizationsRouter(store),
@@ -150,24 +154,10 @@ func registerRestrictedResources(
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
 	)
+}
 
-	authenticationController := &controllers.AuthenticationController{
-		Store: store,
+func mountRouters(parent *mux.Router, subRouters ...routers.Router) {
+	for _, subRouter := range subRouters {
+		subRouter.Mount(parent)
 	}
-	authenticationController.Register(commonRouter)
-
-	healthController := &controllers.HealthController{
-		Store:  store,
-		Status: bStatus,
-	}
-	healthController.Register(commonRouter)
-
-	infoController := &controllers.InfoController{
-		Store:  store,
-		Status: bStatus,
-	}
-	infoController.Register(commonRouter)
-
-	graphqlController := &controllers.GraphController{Store: store}
-	graphqlController.Register(commonRouter)
 }

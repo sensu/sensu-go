@@ -1,4 +1,4 @@
-package controllers
+package routers
 
 import (
 	"encoding/json"
@@ -11,20 +11,25 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// AuthenticationController handles authentication related requests
-type AuthenticationController struct {
-	Store store.Store
+// AuthenticationRouter handles authentication related requests
+type AuthenticationRouter struct {
+	store store.Store
 }
 
-// Register the EventsController with a mux.Router.
-func (a *AuthenticationController) Register(r *mux.Router) {
+// NewAuthenticationRouter instantiates new router.
+func NewAuthenticationRouter(store store.Store) *AuthenticationRouter {
+	return &AuthenticationRouter{store: store}
+}
+
+// Mount the authentication routes on given mux.Router.
+func (a *AuthenticationRouter) Mount(r *mux.Router) {
 	r.HandleFunc("/auth", a.login).Methods(http.MethodGet)
 	r.HandleFunc("/auth/token", a.token).Methods(http.MethodPost)
 	r.HandleFunc("/auth/logout", a.logout).Methods(http.MethodPost)
 }
 
 // login handles the login flow
-func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request) {
+func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// Check for credentials provided in the Authorization header
 	username, password, ok := r.BasicAuth()
 	if !ok {
@@ -33,7 +38,7 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Authenticate against the provider
-	user, err := a.Store.AuthenticateUser(r.Context(), username, password)
+	user, err := a.store.AuthenticateUser(r.Context(), username, password)
 	if err != nil {
 		logger.WithField(
 			"user", username,
@@ -76,15 +81,15 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Store the access and refresh tokens in the access list
-	if err = a.Store.CreateToken(claims); err != nil {
+	// store the access and refresh tokens in the access list
+	if err = a.store.CreateToken(claims); err != nil {
 		err = fmt.Errorf("could not add the access token to the access list: %s", err.Error())
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err = a.Store.CreateToken(refreshClaims); err != nil {
+	if err = a.store.CreateToken(refreshClaims); err != nil {
 		err = fmt.Errorf("could not add the refresh token to the access list: %s", err.Error())
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -111,7 +116,7 @@ func (a *AuthenticationController) login(w http.ResponseWriter, r *http.Request)
 }
 
 // logout handles the logout flow
-func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request) {
+func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 	var accessClaims, refreshClaims *types.Claims
 
 	// Get the access token claims
@@ -132,7 +137,7 @@ func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request
 
 	// Remove the access & refresh tokens from the access list
 	tokensToRemove := []string{accessClaims.Id, refreshClaims.Id}
-	if err := a.Store.DeleteTokens(refreshClaims.Subject, tokensToRemove); err != nil {
+	if err := a.store.DeleteTokens(refreshClaims.Subject, tokensToRemove); err != nil {
 		err = fmt.Errorf("could not remove the access and refresh tokens from the access list: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -143,7 +148,7 @@ func (a *AuthenticationController) logout(w http.ResponseWriter, r *http.Request
 }
 
 // token handles logic for issuing new access tokens
-func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request) {
+func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	var accessClaims, refreshClaims *types.Claims
 
 	// Get the access token claims
@@ -172,7 +177,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Make sure the refresh token is authorized in the access list
-	if _, err := a.Store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
+	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
 		err = fmt.Errorf("the refresh token is not authorized: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -180,7 +185,7 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Remove the old access token from the access list
-	if err := a.Store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
+	if err := a.store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
 		err = fmt.Errorf("could not remove the access token from the access list: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -205,8 +210,8 @@ func (a *AuthenticationController) token(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Store the new access token in the access list
-	if err = a.Store.CreateToken(accessClaims); err != nil {
+	// store the new access token in the access list
+	if err = a.store.CreateToken(accessClaims); err != nil {
 		err = fmt.Errorf("could not add the new access token to the access list: %s", err.Error())
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
