@@ -59,20 +59,10 @@ func (p AnyParameters) Get(name string) (interface{}, error) {
 	switch any.ValueType() {
 	case jsoniter.InvalidValue:
 		return nil, fmt.Errorf("dynamic: %s", any.LastError())
-	case jsoniter.StringValue:
-		return any.ToString(), nil
-	case jsoniter.NumberValue:
-		return any.ToFloat64(), nil
-	case jsoniter.NilValue:
-		return nil, nil
-	case jsoniter.BoolValue:
-		return any.ToBool(), nil
-	case jsoniter.ArrayValue:
-		return any.GetInterface(), any.LastError()
 	case jsoniter.ObjectValue:
 		return AnyParameters{any: any}, any.LastError()
 	default:
-		return nil, fmt.Errorf("dynamic: unrecognized value type! %d", p.any.ValueType())
+		return any.GetInterface(), any.LastError()
 	}
 
 }
