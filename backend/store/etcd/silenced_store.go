@@ -157,25 +157,15 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 
 	var (
 		lease *clientv3.LeaseGrantResponse
+		err   error
 	)
 
-	// if we change the etcd port/url, this might not work - probably need to
-	// figure out how to pass down the store client url list and use that when
-	// creating the client
 	if silenced.Expire > 0 {
-		client, err := clientv3.New(clientv3.Config{
-			Endpoints: []string{"localhost:2379"},
-		})
-		if err != nil {
-			return err
-		}
-		defer client.Close()
 
-		lease, err = client.Grant(ctx, silenced.Expire)
+		lease, err = s.client.Grant(ctx, silenced.Expire)
 		if err != nil {
 			return err
 		}
-		client.Close()
 	}
 
 	silencedBytes, err := json.Marshal(silenced)
