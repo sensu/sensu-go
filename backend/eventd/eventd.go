@@ -132,6 +132,10 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
+	// Verify if we have a source in the incoming event and if so, use it as the
+	// entity by creating or retrieving it from the store
+	getProxyEntity(ctx, event, e.Store)
+
 	prevEvent, err := e.Store.GetEventByEntityCheck(
 		ctx, event.Entity.ID, event.Check.Config.Name,
 	)
