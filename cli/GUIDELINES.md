@@ -187,20 +187,23 @@ consistent. The following is a list of standard names for common subcommands.
 - When adding a new command that shows expanded details of a resource consider
   naming the command `info`.
 
-## Displaying Collections
+## Subcommands Conventions
+
+### Lists
 
 - Use a table element.
 - Highlight primary identifier by using the colour blue.
 - colspan is limited; limit columns to only the most important ones.
-- Future? Possibly adapt to available space.
+- The "at a glance" view.
 
-## Displaying Expanded Details
+### Info
 
-- Use a list element
-- 
-- Inspired by Heroku...?
+- Use a list element to display all values of resource.
+- Comma separate values when displaying slices with limited number of entries.
+- Use a list element when displaying slices with many entries or entries with
+  long names.
 
-## Creating Resources
+### Create
 
 - Support creation through an interactive mode
 - Support creation through arguments and flags
@@ -208,19 +211,33 @@ consistent. The following is a list of standard names for common subcommands.
 - As much as possible return good errors
 - "Created." message should be returned on success.
 
-## Updating Resources
-## Deleting Resources
+### Update
 
+TODO
 
-## Output
-## Command Output
+### Delete
+
+TODO
 
 ## Inspiration / Previous Art
 
 - `kubectl`
+
+    Probably the most comparable tool; very nice to work with.
+
 - `yarn`
+
+    Very friendly, great loading states and results.
+
 - `heroku`
+
+    Displays content is tables, lists, etc very well.
 
 ## TODO
 
+- [ ] Expand upon notes
+- [ ] Consistent use of `sensuctl`
 - [ ] Use 'operations' instead of actions
+- [ ] Proof read for consistent language
+- [ ] Glossary?
+- [ ] Loading elements? Other elements?
