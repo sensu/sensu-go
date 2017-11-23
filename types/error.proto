@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "event.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Error describes an error captured while processing an event in Sensu's
+// pipeline.
+message Error {
+  // Name is the unique identifier for an asset
+  string name = 1;
+
+  // Environment indicates to which env the error is associated with
+  string environment = 2;
+
+  // Organization indicates to which org the error is associated with
+  string organization = 3;
+
+  // Message is the details associated with the error
+  string message = 4;
+
+  // Component refers to the component in-which the error occurred.
+  string component = 5;
+
+  // Event refers to the event that was being processed when the error occurred.
+  Event event = 6 [(gogoproto.nullable) = false];
+}
