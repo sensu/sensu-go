@@ -17,18 +17,18 @@ option (gogoproto.testgen_all) = true;
 
 // An Event is the encapsulating type sent across the Sensu websocket transport.
 message Event {
-	// Timestamp is the time in seconds since the Epoch.
-	int64 timestamp = 1;
+  // Timestamp is the time in seconds since the Epoch.
+  int64 timestamp = 1;
 
   // Entity describes the entity in which the event occurred.
-	Entity entity = 2 [(gogoproto.nullable) = true];
+  Entity entity = 2 [(gogoproto.nullable) = true];
 
   // Check describes the result of a check; if event is associated to check execution.
-	Check check = 3 [(gogoproto.nullable) = true];
+  Check check = 3 [(gogoproto.nullable) = true];
 
   // Metrics ...
-	Metrics metrics = 4 [(gogoproto.nullable) = true];
-	
+  Metrics metrics = 4 [(gogoproto.nullable) = true];
+
   // Silenced is a list of silenced entry ids (subscription and check name) 
   repeated string silenced = 5 [(gogoproto.nullable) = true];
-  }
+}

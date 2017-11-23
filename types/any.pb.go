@@ -11,6 +11,7 @@
 		check.proto
 		entity.proto
 		environment.proto
+		error.proto
 		event.proto
 		filter.proto
 		handler.proto
@@ -37,6 +38,7 @@
 		NetworkInterface
 		Deregistration
 		Environment
+		Error
 		Event
 		EventFilter
 		EventFilterWhenAttributes
