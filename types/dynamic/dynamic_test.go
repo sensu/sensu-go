@@ -58,15 +58,17 @@ func TestGetJSONStructField(t *testing.T) {
 		ValidEmpty        int `json:"validEmpty"`
 		InvalidEmpty      int `json:"invalidEmpty,omitempty"`
 		Invalid           int `json:"-"`
+		Attributes        []byte
 	}{
 		Valid:             5,
 		invalidUnexported: 1,
 		ValidEmpty:        0,
 		InvalidEmpty:      0,
 		Invalid:           10,
+		Attributes:        []byte(`"hello!"`),
 	}
 
-	fields := getJSONFields(reflect.ValueOf(test))
+	fields := getJSONFields(reflect.ValueOf(test), &test.Attributes[0])
 	require.Equal(2, len(fields))
 
 	field, ok := fields["valid"]
@@ -85,15 +87,15 @@ type MyType struct {
 	Foo string   `json:"foo"`
 	Bar []MyType `json:"bar"`
 
-	attrs Attributes
+	Attrs []byte // note that this will not be marshalled directly, despite missing the `json"-"`!
 }
 
-func (m *MyType) Attributes() Attributes {
-	return m.attrs
+func (m *MyType) GetExtendedAttributes() []byte {
+	return m.Attrs
 }
 
-func (m *MyType) SetAttributes(a Attributes) {
-	m.attrs = a
+func (m *MyType) SetExtendedAttributes(a []byte) {
+	m.Attrs = a
 }
 
 func (m *MyType) Get(name string) (interface{}, error) {
@@ -117,7 +119,7 @@ func TestExtractEmptyExtendedAttributes(t *testing.T) {
 
 	attrs, err := extractExtendedAttributes(m, msg)
 	require.NoError(err)
-	assert.Equal([]byte("{}"), attrs.data)
+	assert.Equal([]byte("{}"), attrs)
 }
 
 func TestExtractExtendedAttributes(t *testing.T) {
@@ -129,7 +131,7 @@ func TestExtractExtendedAttributes(t *testing.T) {
 
 	attrs, err := extractExtendedAttributes(m, msg)
 	require.NoError(err)
-	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs.data)
+	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs)
 }
 
 func TestMarshal(t *testing.T) {
@@ -141,7 +143,7 @@ func TestMarshal(t *testing.T) {
 	m := &MyType{
 		Foo:   "hello world!",
 		Bar:   nil,
-		attrs: Attributes{data: extendedBytes},
+		Attrs: extendedBytes,
 	}
 
 	b, err := Marshal(m)
@@ -153,7 +155,7 @@ func TestGetField(t *testing.T) {
 	m := &MyType{
 		Foo:   "hello",
 		Bar:   []MyType{{Foo: "there"}},
-		attrs: Attributes{data: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`)},
+		Attrs: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
 	}
 
 	fooAny := jsoniter.Get([]byte(`{"hello":5}`))
@@ -213,7 +215,7 @@ func TestGetField(t *testing.T) {
 
 func TestQueryGovaluateSimple(t *testing.T) {
 	m := &MyType{
-		attrs: Attributes{data: []byte(`{"hello":5}`)},
+		Attrs: []byte(`{"hello":5}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -227,7 +229,7 @@ func TestQueryGovaluateSimple(t *testing.T) {
 
 func BenchmarkQueryGovaluateSimple(b *testing.B) {
 	m := &MyType{
-		attrs: Attributes{data: []byte(`{"hello":5}`)},
+		Attrs: []byte(`{"hello":5}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -242,7 +244,7 @@ func BenchmarkQueryGovaluateSimple(b *testing.B) {
 
 func TestQueryGovaluateComplex(t *testing.T) {
 	m := &MyType{
-		attrs: Attributes{data: []byte(`{"hello":{"foo":5,"bar":6.0}}`)},
+		Attrs: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.foo == 5")
@@ -264,7 +266,7 @@ func TestQueryGovaluateComplex(t *testing.T) {
 
 func BenchmarkQueryGovaluateComplex(b *testing.B) {
 	m := &MyType{
-		attrs: Attributes{data: []byte(`{"hello":{"foo":5,"bar":6.0}}`)},
+		Attrs: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.foo < hello.bar")
@@ -282,7 +284,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	var m MyType
 	err := json.Unmarshal(data, &m)
 	require.NoError(t, err)
-	assert.Equal(t, MyType{Foo: "hello", attrs: Attributes{data: []byte(`{"a":10,"b":"c"}`)}}, m)
+	assert.Equal(t, MyType{Foo: "hello", Attrs: []byte(`{"a":10,"b":"c"}`)}, m)
 	b, err := json.Marshal(&m)
 	require.NoError(t, err)
 	assert.Equal(t, data, b)
@@ -304,4 +306,13 @@ func BenchmarkMarshal(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		json.Marshal(&m)
 	}
+}
+
+func TestNoLookupAttrsDirectly(t *testing.T) {
+	m := MyType{
+		Attrs: []byte(`{}`),
+	}
+	_, err := m.Get("Attrs")
+	require.NotNil(t, err)
+	assert.Equal(t, err.Error(), "[Attrs] not found")
 }

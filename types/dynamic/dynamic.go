@@ -10,16 +10,16 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-// Attributes hold arbitrary JSON-encoded data.
-type Attributes struct {
-	data []byte
+// AttrGetter is required to be implemented by types that need to work with
+// GetField and Marshal.
+type AttrGetter interface {
+	GetExtendedAttributes() []byte
 }
 
-// Attributer can be implemented to enable a type to work with the Marshal
-// and Unmarshal functions in this package.
-type Attributer interface {
-	Attributes() Attributes
-	SetAttributes(Attributes)
+// AttrSetter is required to be implemented by types that need to work with
+// Unmarshal.
+type AttrSetter interface {
+	SetExtendedAttributes([]byte)
 }
 
 // GetField gets a field from v according to its name.
@@ -27,7 +27,9 @@ type Attributer interface {
 // it will try to dynamically find the corresponding item in the 'Extended'
 // field. GetField is case-sensitive, but extended attribute names will be
 // converted to CamelCaps.
-func GetField(v Attributer, name string) (interface{}, error) {
+func GetField(v AttrGetter, name string) (interface{}, error) {
+	extendedAttributes := v.GetExtendedAttributes()
+	extAttrPtr := &extendedAttributes[0]
 	if s := string([]rune(name)[0]); strings.Title(s) == s {
 		// Exported fields are always upper-cased for the first rune
 		strukt := reflect.Indirect(reflect.ValueOf(v))
@@ -36,11 +38,19 @@ func GetField(v Attributer, name string) (interface{}, error) {
 		}
 		field := strukt.FieldByName(name)
 		if field.IsValid() {
-			return field.Interface(), nil
+			rval := reflect.Indirect(field).Interface()
+			if b, ok := rval.([]byte); ok {
+				// Make sure this field isn't the extended attributes
+				if extAttrPtr == &b[0] {
+					goto EXTENDED
+				}
+			}
+			return rval, nil
 		}
 	}
+EXTENDED:
 	// If we get here, we are dealing with extended attributes.
-	any := AnyParameters{any: jsoniter.Get(v.Attributes().data)}
+	any := AnyParameters{any: jsoniter.Get(extendedAttributes)}
 	return any.Get(name)
 }
 
@@ -112,7 +122,7 @@ func (s structField) jsonFieldName() (string, bool) {
 	return fieldName, omitEmpty
 }
 
-func getJSONFields(v reflect.Value) map[string]structField {
+func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField {
 	typ := v.Type()
 	numField := v.NumField()
 	result := make(map[string]structField, numField)
@@ -131,6 +141,11 @@ func getJSONFields(v reflect.Value) map[string]structField {
 		if sf.OmitEmpty && sf.IsEmpty() {
 			continue
 		}
+		if b, ok := reflect.Indirect(value).Interface().([]byte); ok {
+			if len(b) > 0 && &b[0] == addressOfAttrs {
+				continue
+			}
+		}
 		// sf is a valid JSON field.
 		result[sf.JSONName] = sf
 	}
@@ -140,16 +155,16 @@ func getJSONFields(v reflect.Value) map[string]structField {
 // extractExtendedAttributes selects only extended attributes from msg. It will
 // ignore any fields in msg that correspond to fields in v. v must be of kind
 // reflect.Struct.
-func extractExtendedAttributes(v interface{}, msg []byte) (Attributes, error) {
+func extractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
 	if kind := strukt.Kind(); kind != reflect.Struct {
-		return Attributes{}, fmt.Errorf("invalid type (want struct): %v", kind)
+		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
 	}
-	fields := getJSONFields(strukt)
+	fields := getJSONFields(strukt, nil)
 	stream := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
 	var anys map[string]jsoniter.Any
 	if err := jsoniter.Unmarshal(msg, &anys); err != nil {
-		return Attributes{}, err
+		return nil, err
 	}
 	stream.WriteObjectStart()
 	j := 0
@@ -167,12 +182,12 @@ func extractExtendedAttributes(v interface{}, msg []byte) (Attributes, error) {
 		any.WriteTo(stream)
 	}
 	stream.WriteObjectEnd()
-	return Attributes{data: stream.Buffer()}, nil
+	return stream.Buffer(), nil
 }
 
 // Unmarshal decodes msg into v, storing what fields it can into the basic
-// fields of the struct, and storing the rest into Attributes.
-func Unmarshal(msg []byte, v Attributer) error {
+// fields of the struct, and storing the rest into its extended attributes.
+func Unmarshal(msg []byte, v AttrSetter) error {
 	if _, ok := v.(json.Unmarshaler); ok {
 		// Can't safely call UnmarshalJSON here without potentially causing an
 		// infinite recursion. Copy the struct into a new type that doesn't
@@ -206,7 +221,7 @@ func Unmarshal(msg []byte, v Attributer) error {
 	if err != nil {
 		return err
 	}
-	v.SetAttributes(attrs)
+	v.SetExtendedAttributes(attrs)
 	return nil
 }
 
@@ -214,7 +229,7 @@ func Unmarshal(msg []byte, v Attributer) error {
 // It also encodes any extended attributes that are defined. Marshal
 // respects the encoding/json rules regarding exported fields, and tag
 // semantics. If v's kind is not reflect.Struct, an error will be returned.
-func Marshal(v Attributer) ([]byte, error) {
+func Marshal(v AttrGetter) ([]byte, error) {
 	s := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
 	s.WriteObjectStart()
 
@@ -222,7 +237,7 @@ func Marshal(v Attributer) ([]byte, error) {
 		return nil, err
 	}
 
-	extended := v.Attributes().data
+	extended := v.GetExtendedAttributes()
 	if len(extended) > 0 {
 		if err := encodeExtendedFields(extended, s); err != nil {
 			return nil, err
@@ -234,12 +249,13 @@ func Marshal(v Attributer) ([]byte, error) {
 	return s.Buffer(), nil
 }
 
-func encodeStructFields(v interface{}, s *jsoniter.Stream) error {
+func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
-	m := getJSONFields(strukt)
+	addressOfAttrs := &v.GetExtendedAttributes()[0]
+	m := getJSONFields(strukt, addressOfAttrs)
 	fields := make([]structField, 0, len(m))
 	for _, s := range m {
 		fields = append(fields, s)
