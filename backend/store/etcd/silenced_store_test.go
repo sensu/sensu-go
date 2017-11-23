@@ -79,10 +79,16 @@ func TestSilencedStorage(t *testing.T) {
 		err = store.DeleteSilencedEntriesByCheckName(ctx, silenced.Check)
 		assert.NoError(t, err)
 
-		// Updating a check in a nonexistent org and env should not work
+		// Update a silenced entry's expire time
+		silenced.Expire = 30
+		err = store.UpdateSilencedEntry(ctx, silenced)
+		assert.NoError(t, err)
+
+		// Updating a silenced entry in a nonexistent org and env should not work
 		silenced.Organization = "missing"
 		silenced.Environment = "missing"
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.Error(t, err)
+
 	})
 }
