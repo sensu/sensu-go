@@ -1,7 +1,7 @@
 # UX Guidelines
 
 The following serves as a living document, describing the ideals that should be
-followed when adding, updating or expanding new sub-commands to `sensuctl`.
+followed when adding, updating, or expanding new sub-commands to `sensuctl`.
 
 ## Table of Contents
 
@@ -24,32 +24,31 @@ structured data format.
 
 #### Structured
 
-The intention of our structure data format (at this time only JSON is supported)
-is to provide the end user with consistent predictable results that can easily
-be integrated into an administrator's or engineer's tool-chain.
+The intention of our structured data format (at this time JSON) is to provide
+the end user with consistent and predictable results that can easily be
+integrated into an administrator's or engineer's tool-chain.
 
-While most of the following document will **not** cover this format, when
-developing a new command, try to mindful of how you would like the command to
-function if you were trying to implement it into your own tool-chain.
+Most of the following document will **not** cover this format.
 
-Try to imagine any edge cases that could occur and how you could communicate it
-to the end-user so that it could be handled appropriately. As such, ideally
-errors are also output in a predictable form so that any tooling could easily
-recover from and rectify any issue. For instance, an update command failing due
-to the given resource not being found; if output is predictable the
-administrator could easily have their tools recover by creating said resource
-instead.
+When developing a new command, try to mindful of how you would like the command
+to function, if you were trying to implement it into your own tool-chain. Try to
+imagine any edge cases that could occur and how you could communicate them to
+the end-user so that it can be handled appropriately. As such, errors are
+ideally also output in a predictable form so that any tooling could easily
+recover from and rectify the issue. For instance, an update command failing due
+to the given resource not being found; if output is predictable the end-user
+could easily have their tools recover by creating said resource instead.
 
 #### User Friendly
 
-The user-friendly out is the default provided to end-users and it's goal is to
-be friendly, conventional and easy to parse by the _human_ eye. The rest of this
-document will largely focus on this latter format.
+The user friendly output is the default provided to end-users and it's goal is
+to be friendly, conventional, and easy to parse by the _human_ eye. The rest of
+this document will largely focus on this latter format.
 
 ## Colour
 
 When used appropriately and in a consistent manner, colour is a powerful tool
-for accurately communicating and drawing a end-users eye to important details.
+for accurately communicating and drawing an end-user's eye to important details.
 The following are some simple rules to consider when formatting your content:
 
 - Use bold for emphasis. Examples of places where emphasis may help are:
@@ -58,15 +57,15 @@ The following are some simple rules to consider when formatting your content:
 - Use green and blue to draw users eye to primary details.
 - Use blue as an indicator that that the value is the resource's primary
   identifier.
-- Red should be used sparingly as it is the most eye catching colour; should
-  only be used for actions that are unrecoverable or things that are critical.
+- Use red sparingly as it is the most eye catching colour; it is reserved for
+  actions that are unrecoverable or things that are critical.
 
 No element should ever be designed so that colour is required to understand
 what it is trying to communicate. It is not a guarantee that the user's
-terminal will support colour. For instance it would not be okay to omit that a
+terminal will support colour. For instance, it would not be okay to omit that a
 message is an error because you've used to the colour red.
 
-Following sections will detail usage in different different scenarios.
+The following sections will expand upon their usage in specific scenarios.
 
 ## Feedback
 
