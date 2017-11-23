@@ -45,11 +45,12 @@ func GetField(v Attributer, name string) (interface{}, error) {
 	return any.Get(name)
 }
 
-// Connect jsoniter.Any to govaluate.Parameters
+// AnyParameters connects jsoniter.Any to govaluate.Parameters
 type AnyParameters struct {
 	any jsoniter.Any
 }
 
+// Get implements the govaluate.Parameters interface.
 func (p AnyParameters) Get(name string) (interface{}, error) {
 	any := p.any.Get(name)
 	if err := any.LastError(); err != nil {
