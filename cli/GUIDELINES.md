@@ -10,6 +10,7 @@ followed when adding, updating or expanding new sub-commands to `sensuctl`.
 - [Format](#format)
   - [Structured](#structured)
   - [User Friendly](#user-friendly)
+- [Colour](#colour)
 - [Feedback](#feedback)
   - [Activity Indicators](#activity-indicators)
   - [Results](#results)
@@ -47,16 +48,25 @@ document will largely focus on this latter format.
 
 ## Colour
 
-- Use colour to draw the end-users eye to important details
-- Use bold for emphasis; table headers, keys, etc.
-- Use blue and green to draw users eye to primary details.
+When used appropriately and in a consistent manner, colour is a powerful tool
+for accurately communicating and drawing a end-users eye to important details.
+The following are some simple rules to consider when formatting your content:
+
+- Use bold for emphasis. Examples of places where emphasis may help are:
+  important words or phrases that the user shouldn't miss, field names, table
+  headings.
+- Use green and blue to draw users eye to primary details.
+- Use blue as an indicator that that the value is the resource's primary
+  identifier.
 - Red should be used sparingly as it is the most eye catching colour; should
-  only be used for actions that are unrecoverable or things that critical.
-- No element should ever be designed so that colour is required to understand
-  what it is trying to communicate. It is not a guarantee that the user's
-  terminal will support colour. For instance it would not be okay to omit that a
-  message is an error because you've used to the color red.
-- Following sections will detail usage in different different scenarios.
+  only be used for actions that are unrecoverable or things that are critical.
+
+No element should ever be designed so that colour is required to understand
+what it is trying to communicate. It is not a guarantee that the user's
+terminal will support colour. For instance it would not be okay to omit that a
+message is an error because you've used to the color red.
+
+Following sections will detail usage in different different scenarios.
 
 ## Feedback
 
@@ -67,7 +77,8 @@ example, if you were playing Diablo and your nine-foot tall muscular Barbarian,
 giant cudgel in hand; swung at a poor unsuspecting demon and the game didn't
 immediately respond by flinging the enemy across the map? You would quickly
 decry the game's poor netcode. Of course this isn't the case. Accompanied by a
-satisfying thunk the demon goes flying, the swing kicks up dust, even ruptures nearby barrels, and you feel godlike.
+satisfying thunk the demon goes flying, the swing kicks up dust, even ruptures
+nearby barrels, and you feel godlike.
 
 With this in mind...
 
@@ -126,8 +137,12 @@ be found below.
 - Where ever possible provide suggestions to solve issue.
 - Use red colour
 
-## Table Elements
-## List Elements
+## Elements
+
+### Tables
+### Lists
+### Interactive Prompts
+### Colour
 
 ## Management Commands
 
@@ -180,8 +195,14 @@ consistent. The following is a list of standard names for common subcommands.
 
 ## Unrecoverable Actions
 
-## Loading
 
 ## Output
 ## Command Output
 ## Auto-completion
+
+## Inspiration / Previous Art
+
+- `kubectl`
+- `yarn`
+- `heroku`
+
