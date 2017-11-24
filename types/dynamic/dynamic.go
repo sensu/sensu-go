@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -28,6 +29,9 @@ type AttrSetter interface {
 // field. GetField is case-sensitive, but extended attribute names will be
 // converted to CamelCaps.
 func GetField(v AttrGetter, name string) (interface{}, error) {
+	if len(name) == 0 {
+		return nil, errors.New("dynamic: empty path specified")
+	}
 	extendedAttributes := v.GetExtendedAttributes()
 	extAttrPtr := &extendedAttributes[0]
 	if s := string([]rune(name)[0]); strings.Title(s) == s {
@@ -39,7 +43,7 @@ func GetField(v AttrGetter, name string) (interface{}, error) {
 		field := strukt.FieldByName(name)
 		if field.IsValid() {
 			rval := reflect.Indirect(field).Interface()
-			if b, ok := rval.([]byte); ok {
+			if b, ok := rval.([]byte); ok && len(b) > 0 {
 				// Make sure this field isn't the extended attributes
 				if extAttrPtr == &b[0] {
 					goto EXTENDED
@@ -254,7 +258,11 @@ func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
-	addressOfAttrs := &v.GetExtendedAttributes()[0]
+	attrs := v.GetExtendedAttributes()
+	if len(attrs) == 0 {
+		return nil
+	}
+	addressOfAttrs := &attrs[0]
 	m := getJSONFields(strukt, addressOfAttrs)
 	fields := make([]structField, 0, len(m))
 	for _, s := range m {
