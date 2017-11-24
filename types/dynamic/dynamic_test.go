@@ -151,6 +151,18 @@ func TestMarshal(t *testing.T) {
 	assert.Equal(expBytes, b)
 }
 
+func TestMarshalEmptyAttrs(t *testing.T) {
+	var m MyType
+	_, err := Marshal(&m)
+	require.NoError(t, err)
+}
+
+func TestUnmarshalEmptyAttrs(t *testing.T) {
+	var m MyType
+	err := Unmarshal([]byte("{}"), &m)
+	require.NoError(t, err)
+}
+
 func TestGetField(t *testing.T) {
 	m := &MyType{
 		Foo:   "hello",
