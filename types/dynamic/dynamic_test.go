@@ -119,7 +119,7 @@ func TestExtractEmptyExtendedAttributes(t *testing.T) {
 
 	attrs, err := extractExtendedAttributes(m, msg)
 	require.NoError(err)
-	assert.Equal([]byte("{}"), attrs)
+	assert.Nil(attrs)
 }
 
 func TestExtractExtendedAttributes(t *testing.T) {
