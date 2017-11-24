@@ -92,16 +92,6 @@ func validateStatements(statements []string) error {
 	return nil
 }
 
-// GetOrg refers to the organization the filter belongs to
-func (f *EventFilter) GetOrg() string {
-	return f.Organization
-}
-
-// GetEnv refers to the organization the filter belongs to
-func (f *EventFilter) GetEnv() string {
-	return f.Environment
-}
-
 // FixtureEventFilter returns a Filter fixture for testing.
 func FixtureEventFilter(name string) *EventFilter {
 	return &EventFilter{

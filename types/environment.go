@@ -26,13 +26,8 @@ func FixtureEnvironment(name string) *Environment {
 	}
 }
 
-// GetOrg gets the Organization that e belongs to.
-func (e *Environment) GetOrg() string {
-	return e.Organization
-}
-
-// GetEnv gets the Evironment that e belongs to (itself).
-func (e *Environment) GetEnv() string {
+// GetEnvironment gets the Evironment that e belongs to (itself).
+func (e *Environment) GetEnvironment() string {
 	return e.Name
 }
 

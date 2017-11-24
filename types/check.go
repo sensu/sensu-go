@@ -52,16 +52,6 @@ func (c *CheckConfig) Validate() error {
 	return nil
 }
 
-// GetOrg refers to the organization the check belongs to
-func (c *CheckConfig) GetOrg() string {
-	return c.Organization
-}
-
-// GetEnv refers to the organization the check belongs to
-func (c *CheckConfig) GetEnv() string {
-	return c.Environment
-}
-
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
 // Executed field.
 //

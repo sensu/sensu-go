@@ -7,10 +7,11 @@ import (
 	"golang.org/x/net/context"
 )
 
-func addOrgEnvToContext(ctx context.Context, record types.MultitenantResource) context.Context {
-	ctx = context.WithValue(ctx, types.OrganizationKey, record.GetOrg())
-	ctx = context.WithValue(ctx, types.EnvironmentKey, record.GetEnv())
-	return ctx
+func addOrgEnvToContext(
+	ctx context.Context,
+	record types.MultitenantResource,
+) context.Context {
+	return types.SetContextFromResource(ctx, record)
 }
 
 func copyFields(target interface{}, source interface{}, fields ...string) {

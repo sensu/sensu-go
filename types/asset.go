@@ -45,13 +45,8 @@ func (a *Asset) Validate() error {
 	return validateStatements(a.Filters)
 }
 
-// GetOrg refers to the organization the check belongs to
-func (a *Asset) GetOrg() string {
-	return a.Organization
-}
-
-// GetEnv refers to the organization the check belongs to
-func (a *Asset) GetEnv() string {
+// GetEnvironment refers to the organization the check belongs to
+func (a *Asset) GetEnvironment() string {
 	return ""
 }
 
