@@ -49,6 +49,7 @@ type EntityAPIClient interface {
 	DeleteEntity(entity *types.Entity) error
 	FetchEntity(ID string) (*types.Entity, error)
 	ListEntities(string) ([]types.Entity, error)
+	UpdateEntity(entity *types.Entity) error
 }
 
 // FilterAPIClient client methods for filters

@@ -19,3 +19,9 @@ func (c *MockClient) DeleteEntity(entity *types.Entity) error {
 	args := c.Called(entity)
 	return args.Error(0)
 }
+
+// UpdateEntity for use with mock lib
+func (c *MockClient) UpdateEntity(entity *types.Entity) error {
+	args := c.Called(entity)
+	return args.Error(0)
+}

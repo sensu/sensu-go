@@ -45,3 +45,22 @@ func (client *RestClient) ListEntities(org string) ([]types.Entity, error) {
 	err = json.Unmarshal(res.Body(), &entities)
 	return entities, err
 }
+
+// UpdateEntity updates given entity on configured Sensu instance
+func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
+	bytes, err := json.Marshal(entity)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Patch("/entities/" + entity.ID)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}

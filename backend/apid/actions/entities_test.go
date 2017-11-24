@@ -276,3 +276,114 @@ func TestEntityQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestEntityUpdate(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermUpdate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermRead),
+		),
+	)
+
+	badEntity := types.FixtureEntity("badentity")
+	badEntity.ID = ""
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Entity
+		fetchResult     *types.Entity
+		fetchErr        error
+		updateErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Updated",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEntity("foo"),
+			fetchResult: types.FixtureEntity("foo"),
+			expectedErr: false,
+		},
+		{
+			name:            "Does not exist",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEntity("foo"),
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store err on update",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEntity("foo"),
+			fetchResult:     types.FixtureEntity("foo"),
+			updateErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "Store err on fetch",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEntity("foo"),
+			fetchResult:     types.FixtureEntity("foo"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureEntity("foo"),
+			fetchResult:     types.FixtureEntity("foo"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation error",
+			ctx:             defaultCtx,
+			argument:        badEntity,
+			fetchResult:     badEntity,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewEntityController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetEntityByID", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateEntity", mock.Anything, mock.Anything).
+				Return(tc.updateErr)
+
+			// Exec Query
+			err := actions.Update(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
