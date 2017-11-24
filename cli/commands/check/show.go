@@ -87,6 +87,10 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 				Value: strconv.FormatBool(r.Publish),
 			},
 			{
+				Label: "Source",
+				Value: r.Source,
+			},
+			{
 				Label: "Organization",
 				Value: r.Organization,
 			},
