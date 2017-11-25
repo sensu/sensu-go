@@ -165,7 +165,7 @@ func extractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
 	}
 	fields := getJSONFields(strukt, nil)
-	stream := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
+	stream := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 4096)
 	var anys map[string]jsoniter.Any
 	if err := jsoniter.Unmarshal(msg, &anys); err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func Unmarshal(msg []byte, v AttrSetter) error {
 // respects the encoding/json rules regarding exported fields, and tag
 // semantics. If v's kind is not reflect.Struct, an error will be returned.
 func Marshal(v AttrGetter) ([]byte, error) {
-	s := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
+	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 4096)
 	s.WriteObjectStart()
 
 	if err := encodeStructFields(v, s); err != nil {
