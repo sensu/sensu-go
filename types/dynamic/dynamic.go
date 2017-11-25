@@ -108,7 +108,7 @@ type structField struct {
 }
 
 func (s structField) IsEmpty() bool {
-	zeroValue := reflect.Zero(s.Field.Type).Interface()
+	zeroValue := reflect.Zero(reflect.Indirect(s.Value).Type()).Interface()
 	return reflect.DeepEqual(zeroValue, s.Value.Interface())
 }
 
@@ -118,7 +118,9 @@ func (s structField) jsonFieldName() (string, bool) {
 	omitEmpty := false
 	if ok {
 		parts := strings.Split(tag, ",")
-		fieldName = parts[0]
+		if len(parts[0]) > 0 {
+			fieldName = parts[0]
+		}
 		if len(parts) > 1 && parts[1] == "omitempty" {
 			omitEmpty = true
 		}
