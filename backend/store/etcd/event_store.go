@@ -157,7 +157,7 @@ func (s *etcdStore) UpdateEvent(ctx context.Context, event *types.Event) error {
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(event.Entity.Organization, event.Entity.Environment)), ">", 0)
+	cmp := environmentExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
 	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {

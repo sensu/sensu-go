@@ -25,6 +25,9 @@ type Store interface {
 	// EnvironmentStore provides an interface for managing environments
 	EnvironmentStore
 
+	// ErrorStore provides an interface for managing pipeline errors
+	ErrorStore
+
 	// EventStore provides an interface for managing events
 	EventStore
 
@@ -149,6 +152,42 @@ type EnvironmentStore interface {
 
 	// UpdateEnvironment creates or updates a given env.
 	UpdateEnvironment(ctx context.Context, env *types.Environment) error
+}
+
+// ErrorStore provides methods for managing pipeline errors
+type ErrorStore interface {
+	// DeleteError deletes an error using the given entity, check and timestamp,
+	// within the organization and environment stored in ctx.
+	DeleteError(ctx context.Context, entity, check, timestamp string) error
+
+	// DeleteErrorsByEntity deletes all errors associated with the given entity,
+	// within the organization and environment stored in ctx.
+	DeleteErrorsByEntity(ctx context.Context, entity string) error
+
+	// DeleteErrorsByEntityCheck deletes all errors associated with the given
+	// entity and check within the organization and environment stored in ctx.
+	DeleteErrorsByEntityCheck(ctx context.Context, entity, check string) error
+
+	// GetError returns error associated with given entity, check and timestamp,
+	// in the given ctx's organization and environment.
+	GetError(ctx context.Context, entity, check, timestamp string) (*types.Error, error)
+
+	// GetErrors returns all errors in the given ctx's organization and
+	// environment.
+	GetErrors(ctx context.Context) ([]*types.Error, error)
+
+	// GetErrorsByEntity returns all errors for the given entity within the ctx's
+	// organization and environment. A nil slice with no error is returned if none
+	// were found.
+	GetErrorsByEntity(ctx context.Context, entity string) ([]*types.Error, error)
+
+	// GetErrorByEntityCheck returns an error using the given entity and check,
+	// within the organization and environment stored in ctx. The resulting error
+	// is nil if none was found.
+	GetErrorsByEntityCheck(ctx context.Context, entity, check string) ([]*types.Error, error)
+
+	// CreateError creates or updates a given error.
+	CreateError(ctx context.Context, error *types.Error) error
 }
 
 // EventStore provides methods for managing events
