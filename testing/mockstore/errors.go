@@ -23,15 +23,15 @@ func (s *MockStore) DeleteErrorsByEntity(ctx context.Context, e string) error {
 	return s.DeleteErrorsByEntityCheck(ctx, e, "")
 }
 
+// GetError ...
+func (s *MockStore) GetError(ctx context.Context, e, c, t string) (*types.Error, error) {
+	args := s.Called(ctx, e, c, t)
+	return args.Get(0).(*types.Error), args.Error(1)
+}
+
 // GetErrors ...
 func (s *MockStore) GetErrors(ctx context.Context) ([]*types.Error, error) {
 	args := s.Called(ctx)
-	return args.Get(0).([]*types.Error), args.Error(1)
-}
-
-// GetError ...
-func (s *MockStore) GetError(ctx context.Context, e, c, t string) ([]*types.Error, error) {
-	args := s.Called(ctx, e, c, t)
 	return args.Get(0).([]*types.Error), args.Error(1)
 }
 
@@ -41,10 +41,10 @@ func (s *MockStore) GetErrorsByEntity(ctx context.Context, entityID string) ([]*
 	return args.Get(0).([]*types.Error), args.Error(1)
 }
 
-// GetErrorByEntityCheck ...
-func (s *MockStore) GetErrorByEntityCheck(ctx context.Context, entityID, checkID string) (*types.Error, error) {
+// GetErrorsByEntityCheck ...
+func (s *MockStore) GetErrorsByEntityCheck(ctx context.Context, entityID, checkID string) ([]*types.Error, error) {
 	args := s.Called(ctx, entityID, checkID)
-	return args.Get(0).(*types.Error), args.Error(1)
+	return args.Get(0).([]*types.Error), args.Error(1)
 }
 
 // CreateError ...
