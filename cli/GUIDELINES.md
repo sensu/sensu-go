@@ -30,14 +30,15 @@ integrated into an administrator's or engineer's tool-chain.
 
 Most of the following document will **not** cover this format.
 
-When developing a new command, try to mindful of how you would like the command
-to function, if you were trying to implement it into your own tool-chain. Try to
-imagine any edge cases that could occur and how you could communicate them to
-the end-user so that it can be handled appropriately. As such, errors are
-ideally also output in a predictable form so that any tooling could easily
-recover from and rectify the issue. For instance, an update command failing due
-to the given resource not being found; if output is predictable the end-user
-could easily have their tools recover by creating said resource instead.
+When developing a new command, try to be mindful of how you would like the
+command to function if you were trying to implement it into your own
+tool-chain. Try to imagine any edge cases that could occur and how you could
+communicate them to the end-user so that it can be handled appropriately. As
+such, errors are ideally also output in a predictable form so that any tooling
+could easily recover from and rectify the issue. For instance, an update command
+failing due to the given resource not being found; if output is predictable the
+end-user could easily have their tools recover by creating said resource
+instead.
 
 #### User Friendly
 
@@ -62,8 +63,9 @@ The following are some simple rules to consider when formatting your content:
 
 No element should ever be designed so that colour is required to understand
 what it is trying to communicate. It is not a guarantee that the user's
-terminal will support colour. For instance, it would not be okay to omit that a
-message is an error because you've used to the colour red.
+terminal will support colour, nor that they are physically able to see or
+differentiate between your colours. For instance, it would not be okay to omit
+that a message is an error because you've used to the colour red.
 
 The following sections will expand upon their usage in specific scenarios.
 
@@ -72,18 +74,18 @@ The following sections will expand upon their usage in specific scenarios.
 `sensuctl` should always **feel** kinetic; or put in other words, whenever an
 end user executes a command, no matter their system or circumstances they should
 feel as if the command has responded to their requested action. To use an
-example, if you were playing Diablo and your nine-foot tall muscular Barbarian,
-giant cudgel in hand; swung at a poor unsuspecting demon and the game didn't
-immediately respond by flinging the enemy across the map? You would quickly
-decry the game's poor netcode. Of course this isn't the case. Accompanied by a
-satisfying thunk the demon goes flying, the swing kicks up dust, even ruptures
-nearby barrels, and you feel godlike.
+example, what if you were playing Diablo and your nine-foot tall muscular
+Barbarian, giant cudgel in hand, swung at a poor unsuspecting demon, and the
+game didn't immediately respond by flinging the enemy across the map? You would
+quickly decry the game's poor netcode. Of course this isn't the case.
+Accompanied by a satisfying _thunk_, the demon goes flying, the swing kicks up
+dust, even ruptures nearby barrels, and you feel godlike.
 
 With this in mind...
 
 ### Activity Indicators
 
-Not all end-users internet connections are made equally, nor can we assume all
+Not all end-user internet connections are made equal, nor can we assume all
 connections between our users and Sensu installations will always be low
 latency. More over some commands consist of _many_ operations that can take time
 to commit. As such, whenever some activity is taking place, whether determinate
@@ -132,34 +134,74 @@ be found below.
 
 ## Unrecoverable Operations
 
-- With a human-centric design in mind each command should be designed mindful
-  that users while likely awesome, fun, beautiful people are often fallible.
-- Where possible, any command where the result could lead to heartache should be
-  recoverable. However, while noble this is not always plausible; in these
-  cases of operations for which there is no recovery or could have far reaching
-  implications, the command should always be guarded by a confirmation prompt.
-- For scripts, a flag should be present on the command to allow the confirmation
-  prompt to be skipped, in this way the command can easily be used in tooling.
-- The colour red can and should be used in communication to drive home its
-  importance.
+While our end-users are likely awesome, fun, beautiful people, when designing
+for humans, we need to keep _our_ fallibilities in mind. As such, where
+possible any command where the result could lead to heartache should be
+recoverable. While noble, this is not always plausible; in these cases where
+there is no recovery or where there could be far reaching implications, the
+command should always be guarded by a confirmation prompt.
+
+Example unrecoverable operations:
+
+- Deleting an organization or environment that is not empty.
+- Operation that could result in an ops individual or team being paged at 2AM.
+- Updating resource where non-trivial side-effects may be present.
+
+The following are some base rules for handling confirmation:
+
 - When applicable, the prompt should ask them to write out the name of the
-  affected resource. In this it forces them to confirm that they are touching
-  the correct resource.
+  affected resource. In this way, it forces them to confirm that they are acting
+  on the correct resource.
+- Confirmation prompts can and should use the colour red in their communication,
+  this is to drive home their importance.
+- For scripts, a flag should be present on the command to allow the prompt to be
+  skipped, this way the command can easily be used in tooling.
+  - In the interest of making sure the action in is intentful however, the flag is ideally **not**
+    consistent across all commands. We do not want to be in the position where we
+    train the user to use `--force` at all times.
 
 ### Errors
 
-- Should be brief, explicit and clear.
-- Wherever possible provide suggestions to solve issue.
-- Use red colour
+Errors should be brief, explicit and clear.
 
-## Auto-completion
+Rules to consider:
+
+- Where possible, when they occur they should be accompanied by a suggestion on
+  how to rectify the issue.
+  - When applicable include link to the documentation "for further reading."
+- Use red colour to communicate their importance.
+- Error messages should be printed to STDERR.
+- If error results in the command stopping the exit code should be `1`.
 
 ## Elements
 
 ### Tables
 ### Lists
 ### Interactive Prompts
+
+
+
 ### Colour
+
+For ease of formatting text in a consistent and correct manner the
+`elements/globals` pacakage defines a number constants.
+
+### Auto-completion
+
+For ease of use `sensuctl` includes shell extensions, an end-user may add to
+their shell of choice, if they want command auto-completion.
+
+For the most part the implementation of the auto-completion is transparent,
+however, when implementing a new subcommand be mindful of which flags your
+command exposes that may be required. If there are some that are required you
+should use the `MarkFlagRequired` method to declare it's importance.
+
+```golang
+cmd := cobra.Command{Use: "create NAME", Short: "Create a new doggo"}
+cmd.Flags().Int("age", 1, "in months the amount of time the dog/puppy has been alive")
+cmd.Flags().Int("legs", 4, "number of legs the puppy has")
+cmd.MarkFlagRequired("age") // annotates 'age' flag for tooling
+```
 
 ## Management Commands
 
@@ -230,7 +272,7 @@ TODO
 
 - `heroku`
 
-    Displays content is tables, lists, etc very well.
+    Similar in that it has lots of data to display; does excellent job.
 
 ## TODO
 
