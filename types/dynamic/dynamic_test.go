@@ -87,7 +87,7 @@ type MyType struct {
 	Foo string   `json:"foo"`
 	Bar []MyType `json:"bar"`
 
-	Attrs []byte // note that this will not be marshalled directly, despite missing the `json"-"`!
+	Attrs []byte `json:",omitempty"` // note that this will not be marshalled directly, despite missing the `json"-"`!
 }
 
 func (m *MyType) GetExtendedAttributes() []byte {
@@ -119,7 +119,7 @@ func TestExtractEmptyExtendedAttributes(t *testing.T) {
 
 	attrs, err := extractExtendedAttributes(m, msg)
 	require.NoError(err)
-	assert.Equal([]byte("{}"), attrs)
+	assert.Nil(attrs)
 }
 
 func TestExtractExtendedAttributes(t *testing.T) {
@@ -153,8 +153,9 @@ func TestMarshal(t *testing.T) {
 
 func TestMarshalEmptyAttrs(t *testing.T) {
 	var m MyType
-	_, err := Marshal(&m)
+	b, err := Marshal(&m)
 	require.NoError(t, err)
+	assert.Equal(t, `{"bar":null,"foo":""}`, string(b))
 }
 
 func TestUnmarshalEmptyAttrs(t *testing.T) {

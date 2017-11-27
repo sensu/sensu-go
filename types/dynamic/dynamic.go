@@ -108,7 +108,7 @@ type structField struct {
 }
 
 func (s structField) IsEmpty() bool {
-	zeroValue := reflect.Zero(s.Field.Type).Interface()
+	zeroValue := reflect.Zero(reflect.Indirect(s.Value).Type()).Interface()
 	return reflect.DeepEqual(zeroValue, s.Value.Interface())
 }
 
@@ -118,7 +118,9 @@ func (s structField) jsonFieldName() (string, bool) {
 	omitEmpty := false
 	if ok {
 		parts := strings.Split(tag, ",")
-		fieldName = parts[0]
+		if len(parts[0]) > 0 {
+			fieldName = parts[0]
+		}
 		if len(parts) > 1 && parts[1] == "omitempty" {
 			omitEmpty = true
 		}
@@ -165,12 +167,11 @@ func extractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
 	}
 	fields := getJSONFields(strukt, nil)
-	stream := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
+	stream := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 4096)
 	var anys map[string]jsoniter.Any
 	if err := jsoniter.Unmarshal(msg, &anys); err != nil {
 		return nil, err
 	}
-	stream.WriteObjectStart()
 	j := 0
 	for _, any := range sortAnys(anys) {
 		_, ok := fields[any.Name]
@@ -180,13 +181,21 @@ func extractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 		}
 		if j > 0 {
 			stream.WriteMore()
+		} else {
+			stream.WriteObjectStart()
 		}
 		j++
 		stream.WriteObjectField(any.Name)
 		any.WriteTo(stream)
 	}
-	stream.WriteObjectEnd()
-	return stream.Buffer(), nil
+	if j > 0 {
+		stream.WriteObjectEnd()
+	}
+	buf := stream.Buffer()
+	if len(buf) == 0 {
+		buf = nil
+	}
+	return buf, nil
 }
 
 // Unmarshal decodes msg into v, storing what fields it can into the basic
@@ -225,7 +234,9 @@ func Unmarshal(msg []byte, v AttrSetter) error {
 	if err != nil {
 		return err
 	}
-	v.SetExtendedAttributes(attrs)
+	if len(attrs) > 0 {
+		v.SetExtendedAttributes(attrs)
+	}
 	return nil
 }
 
@@ -234,7 +245,7 @@ func Unmarshal(msg []byte, v AttrSetter) error {
 // respects the encoding/json rules regarding exported fields, and tag
 // semantics. If v's kind is not reflect.Struct, an error will be returned.
 func Marshal(v AttrGetter) ([]byte, error) {
-	s := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 4096)
+	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 4096)
 	s.WriteObjectStart()
 
 	if err := encodeStructFields(v, s); err != nil {
@@ -259,10 +270,12 @@ func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
 	attrs := v.GetExtendedAttributes()
+	var addressOfAttrs *byte
 	if len(attrs) == 0 {
-		return nil
+		addressOfAttrs = nil
+	} else {
+		addressOfAttrs = &attrs[0]
 	}
-	addressOfAttrs := &attrs[0]
 	m := getJSONFields(strukt, addressOfAttrs)
 	fields := make([]structField, 0, len(m))
 	for _, s := range m {
