@@ -155,19 +155,6 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 		return err
 	}
 
-	var (
-		lease *clientv3.LeaseGrantResponse
-		err   error
-	)
-
-	if silenced.Expire > 0 {
-
-		lease, err = s.client.Grant(ctx, silenced.Expire)
-		if err != nil {
-			return err
-		}
-	}
-
 	silencedBytes, err := json.Marshal(silenced)
 	if err != nil {
 		return err
@@ -176,6 +163,10 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	var req clientv3.Op
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(silenced.Organization, silenced.Environment)), ">", 0)
 	if silenced.Expire > 0 {
+		lease, err := s.client.Grant(ctx, silenced.Expire)
+		if err != nil {
+			return err
+		}
 		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes), clientv3.WithLease(lease.ID))
 	} else {
 		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes))
