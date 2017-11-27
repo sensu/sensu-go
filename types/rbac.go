@@ -69,19 +69,6 @@ var (
 )
 
 //
-// Getters
-
-// GetOrg refers to the organization the check belongs to
-func (r *Rule) GetOrg() string {
-	return r.Organization
-}
-
-// GetEnv refers to the organization the check belongs to
-func (r *Rule) GetEnv() string {
-	return r.Environment
-}
-
-//
 // Validators
 
 // Validate returns an error if the rule is invalid.

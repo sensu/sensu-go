@@ -70,7 +70,7 @@ func evaluateEventFilter(store store.Store, event *types.Event, filterName strin
 	// Something weird happened, let's not filter the event and log a warning message
 	logger.WithFields(logrus.Fields{
 		"filter":       filter.GetName(),
-		"organization": filter.GetOrg(),
+		"organization": filter.GetOrganization(),
 		"environment":  filter.GetEnvironment(),
 	}).Warn("pipelined not filtering event due to unhandled case")
 

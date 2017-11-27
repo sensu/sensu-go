@@ -25,8 +25,8 @@ func (b keyBuilder) withOrg(org string) keyBuilder {
 }
 
 func (b keyBuilder) withResource(r types.MultitenantResource) keyBuilder {
-	b.org = r.GetOrg()
-	b.env = r.GetEnv()
+	b.org = r.GetOrganization()
+	b.env = r.GetEnvironment()
 	return b
 }
 
