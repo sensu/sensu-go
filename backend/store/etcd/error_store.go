@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -22,11 +22,11 @@ var (
 
 func errPathFromAllUniqueFields(ns namespace, entity, check, ts string) string {
 	builder := errorsKeyBuilder.withNamespace(ns)
-	return builder.buildPrefix(entity, "check", check, ts)
+	return builder.build(entity, "check", check, ts)
 }
 
-func errPathFromCheck(ctx context.Context, entity, check string) string {
-	return errPathFromAllUniqueFields(ctx, entity, check, ts)
+func errPathFromCheck(ns namespace, entity, check string) string {
+	return errPathFromAllUniqueFields(ns, entity, check, "")
 }
 
 func errPathFromEntity(ns namespace, entity string) string {
@@ -101,14 +101,17 @@ func (s *etcdStore) GetError(
 	entity string,
 	check string,
 	timestamp string,
-) ([]*types.Error, error) {
-	if entity == "" || check == "" || timestamp == "" {
-		return nil, errors.New("must specify entity id, check name, and timestamp")
-	}
-
+) (*types.Error, error) {
 	// Build key
 	ns := newNamespaceFromContext(ctx)
 	key := errPathFromAllUniqueFields(ns, entity, check, timestamp)
+
+	// Validate arguments
+	if entity == "" || check == "" || timestamp == "" {
+		return nil, errors.New("must specify entity id, check name, and timestamp")
+	} else if ns.Wildcard() {
+		return nil, errors.New("may not use wildcard to search for record")
+	}
 
 	// Fetch
 	resp, err := s.kvc.Get(ctx, key)
@@ -141,7 +144,7 @@ func (s *etcdStore) GetErrors(ctx context.Context) ([]*types.Error, error) {
 
 	// Unmarshal
 	rejectFn := shouldRejectError(ns, "", "")
-	perrs, err := unmarshalError(resp.Kvs, rejectFn)
+	perrs, err := unmarshalErrorKVs(resp.Kvs, rejectFn)
 	return perrs, err
 }
 
@@ -149,7 +152,7 @@ func (s *etcdStore) GetErrors(ctx context.Context) ([]*types.Error, error) {
 // organization and environment. A nil slice with no error is returned if none
 // were found.
 func (s *etcdStore) GetErrorsByEntity(ctx context.Context, entity string) ([]*types.Error, error) {
-	return s.GetErrorsByEntityCheck(ctx, entityID, "")
+	return s.GetErrorsByEntityCheck(ctx, entity, "")
 }
 
 func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check string) ([]*types.Error, error) {
@@ -159,7 +162,7 @@ func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check st
 
 	// Build key
 	ns := newNamespaceFromContext(ctx)
-	key := getErrorWithCheckPath(ns, entity, check)
+	key := errPathFromCheck(ns, entity, check)
 
 	// Fetch
 	resp, err := s.kvc.Get(ctx, key, clientv3.WithPrefix())
@@ -169,14 +172,14 @@ func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check st
 
 	// Unmarshal
 	rejectFn := shouldRejectError(ns, entity, check)
-	return unmarshalError(resp.Kvs, rejectFn)
+	return unmarshalErrorKVs(resp.Kvs, rejectFn)
 }
 
 func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
 	// Obtain new lease
 	lease, err := s.client.Grant(ctx, errorsKeyTTL)
 	if err != nil {
-		return
+		return err
 	}
 
 	// Marshal
@@ -187,10 +190,10 @@ func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
 
 	// Build key
 	key := errorsKeyBuilder.withContext(ctx).build(
-		perr.Entity.ID,
+		perr.Event.Entity.ID,
 		"check", // Eventually will need a conditional when metrics are implemented
-		perr.Check.Config.Name,
-		perr.Timestamp,
+		perr.Event.Check.Config.Name,
+		string(perr.Timestamp),
 	)
 
 	// Store
@@ -204,10 +207,10 @@ func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the error %s/%s in environment %s/%s",
-			perr.Entity.ID,
-			perr.Check.Config.Name,
-			perr.Organization,
-			perr.Environment,
+			perr.Event.Entity.ID,
+			perr.Event.Check.Config.Name,
+			perr.GetOrganization(),
+			perr.GetEnvironment(),
 		)
 	}
 
@@ -218,23 +221,23 @@ func unmarshalErrorKVs(
 	kvs []*mvccpb.KeyValue,
 	rejectFn func(*types.Error) bool,
 ) ([]*types.Error, error) {
-	perrArray := make([]*types.Error, len(kvs))
-	for i, kv := range kvs {
+	perrs := make([]*types.Error, 0, len(kvs))
+	for _, kv := range kvs {
 		perr := &types.Error{}
 		if err := json.Unmarshal(kv.Value, perr); err != nil {
 			return nil, err
 		}
 
-		if reject := rejectFn(perr); !reject {
-			perrArray[i] = role
+		if shouldReject := rejectFn(perr); !shouldReject {
+			perrs = append(perrs, perr)
 		}
 	}
 
-	return perrArray, nil
+	return perrs, nil
 }
 
 func permitAllErrorRecords(_ *types.Error) bool {
-	return true
+	return false
 }
 
 func shouldRejectError(
@@ -242,23 +245,25 @@ func shouldRejectError(
 	entity string,
 	check string,
 ) func(*types.Error) bool {
-	rejectByEnvFn := rejectByEnvironment(ns)
+	rejectWhereEnvDoesNotMatch := rejectByEnvironment(ns)
+
 	rejectWhereEntityDoesNotMatch := permitAllErrorRecords
 	if entity != "" {
 		rejectWhereEntityDoesNotMatch = func(perr *types.Error) bool {
-			return err.Entity != entity
+			return perr.Event.Entity.ID != entity
 		}
 	}
+
 	rejectWhereCheckDoesNotMatch := permitAllErrorRecords
 	if check != "" {
 		rejectWhereCheckDoesNotMatch = func(perr *types.Error) bool {
-			errCheck := err.Event.Check
+			errCheck := perr.Event.Check
 			return errCheck != nil && errCheck.Config.Name != check
 		}
 	}
 
 	return func(perr *types.Error) bool {
-		if reject := rejectByEnvFn(perr); reject {
+		if rejectWhereEnvDoesNotMatch(perr) {
 			return true
 		}
 

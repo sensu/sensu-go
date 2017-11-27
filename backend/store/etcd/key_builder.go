@@ -40,7 +40,23 @@ func (b keyBuilder) withNamespace(ns namespace) keyBuilder {
 	return b
 }
 
-func (b keybuilder) buildPrefix(keys ...string) string {
+func (b keyBuilder) build(keys ...string) string {
+	items := append(
+		[]string{
+			etcdRoot,
+			b.resourceName,
+			b.namespace.org,
+			b.namespace.env,
+		},
+		keys...,
+	)
+	return path.Join(items...)
+}
+
+// Use when building a key that will be used to retrieve a collection of
+// records. Unlike standard build method it stops building the key when it first
+// encounters a wildcard value.
+func (b keyBuilder) buildPrefix(keys ...string) string {
 	out := etcdRoot + keySeparator + b.resourceName
 
 	keys = append([]string{b.namespace.org, b.namespace.env}, keys...)
@@ -57,9 +73,4 @@ func (b keybuilder) buildPrefix(keys ...string) string {
 	}
 
 	return out
-}
-
-func (b keybuilder) build(keys ...string) string {
-	items := append([]string{etcdRoot, b.resourceName, b.org, b.env}, keys...)
-	return path.Join(items...)
 }
