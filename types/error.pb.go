@@ -18,18 +18,16 @@ var _ = math.Inf
 // Error describes an error captured while processing an event in Sensu's
 // pipeline.
 type Error struct {
-	// Name is the unique identifier for an asset
+	// Name is the unique identifier for an asset.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Environment indicates to which env the error is associated with
-	Environment string `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
-	// Organization indicates to which org the error is associated with
-	Organization string `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
-	// Message is the details associated with the error
-	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	// Message is the details associated with the error.
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// Component refers to the component in-which the error occurred.
-	Component string `protobuf:"bytes,5,opt,name=component,proto3" json:"component,omitempty"`
+	Component string `protobuf:"bytes,3,opt,name=component,proto3" json:"component,omitempty"`
+	// Timestamp refers to the instant in-which the error occurred.
+	Timestamp int64 `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	// Event refers to the event that was being processed when the error occurred.
-	Event Event `protobuf:"bytes,6,opt,name=event" json:"event"`
+	Event Event `protobuf:"bytes,5,opt,name=event" json:"event"`
 }
 
 func (m *Error) Reset()                    { *m = Error{} }
@@ -40,20 +38,6 @@ func (*Error) Descriptor() ([]byte, []int) { return fileDescriptorError, []int{0
 func (m *Error) GetName() string {
 	if m != nil {
 		return m.Name
-	}
-	return ""
-}
-
-func (m *Error) GetEnvironment() string {
-	if m != nil {
-		return m.Environment
-	}
-	return ""
-}
-
-func (m *Error) GetOrganization() string {
-	if m != nil {
-		return m.Organization
 	}
 	return ""
 }
@@ -70,6 +54,13 @@ func (m *Error) GetComponent() string {
 		return m.Component
 	}
 	return ""
+}
+
+func (m *Error) GetTimestamp() int64 {
+	if m != nil {
+		return m.Timestamp
+	}
+	return 0
 }
 
 func (m *Error) GetEvent() Event {
@@ -110,16 +101,13 @@ func (this *Error) Equal(that interface{}) bool {
 	if this.Name != that1.Name {
 		return false
 	}
-	if this.Environment != that1.Environment {
-		return false
-	}
-	if this.Organization != that1.Organization {
-		return false
-	}
 	if this.Message != that1.Message {
 		return false
 	}
 	if this.Component != that1.Component {
+		return false
+	}
+	if this.Timestamp != that1.Timestamp {
 		return false
 	}
 	if !this.Event.Equal(&that1.Event) {
@@ -148,31 +136,24 @@ func (m *Error) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintError(dAtA, i, uint64(len(m.Name)))
 		i += copy(dAtA[i:], m.Name)
 	}
-	if len(m.Environment) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintError(dAtA, i, uint64(len(m.Environment)))
-		i += copy(dAtA[i:], m.Environment)
-	}
-	if len(m.Organization) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintError(dAtA, i, uint64(len(m.Organization)))
-		i += copy(dAtA[i:], m.Organization)
-	}
 	if len(m.Message) > 0 {
-		dAtA[i] = 0x22
+		dAtA[i] = 0x12
 		i++
 		i = encodeVarintError(dAtA, i, uint64(len(m.Message)))
 		i += copy(dAtA[i:], m.Message)
 	}
 	if len(m.Component) > 0 {
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintError(dAtA, i, uint64(len(m.Component)))
 		i += copy(dAtA[i:], m.Component)
 	}
-	dAtA[i] = 0x32
+	if m.Timestamp != 0 {
+		dAtA[i] = 0x20
+		i++
+		i = encodeVarintError(dAtA, i, uint64(m.Timestamp))
+	}
+	dAtA[i] = 0x2a
 	i++
 	i = encodeVarintError(dAtA, i, uint64(m.Event.Size()))
 	n1, err := m.Event.MarshalTo(dAtA[i:])
@@ -195,10 +176,12 @@ func encodeVarintError(dAtA []byte, offset int, v uint64) int {
 func NewPopulatedError(r randyError, easy bool) *Error {
 	this := &Error{}
 	this.Name = string(randStringError(r))
-	this.Environment = string(randStringError(r))
-	this.Organization = string(randStringError(r))
 	this.Message = string(randStringError(r))
 	this.Component = string(randStringError(r))
+	this.Timestamp = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Timestamp *= -1
+	}
 	v1 := NewPopulatedEvent(r, easy)
 	this.Event = *v1
 	if !easy && r.Intn(10) != 0 {
@@ -285,14 +268,6 @@ func (m *Error) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovError(uint64(l))
 	}
-	l = len(m.Environment)
-	if l > 0 {
-		n += 1 + l + sovError(uint64(l))
-	}
-	l = len(m.Organization)
-	if l > 0 {
-		n += 1 + l + sovError(uint64(l))
-	}
 	l = len(m.Message)
 	if l > 0 {
 		n += 1 + l + sovError(uint64(l))
@@ -300,6 +275,9 @@ func (m *Error) Size() (n int) {
 	l = len(m.Component)
 	if l > 0 {
 		n += 1 + l + sovError(uint64(l))
+	}
+	if m.Timestamp != 0 {
+		n += 1 + sovError(uint64(m.Timestamp))
 	}
 	l = m.Event.Size()
 	n += 1 + l + sovError(uint64(l))
@@ -379,64 +357,6 @@ func (m *Error) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Environment", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowError
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthError
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Environment = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Organization", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowError
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthError
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Organization = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Message", wireType)
 			}
 			var stringLen uint64
@@ -464,7 +384,7 @@ func (m *Error) Unmarshal(dAtA []byte) error {
 			}
 			m.Message = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Component", wireType)
 			}
@@ -493,7 +413,26 @@ func (m *Error) Unmarshal(dAtA []byte) error {
 			}
 			m.Component = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 6:
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
+			}
+			m.Timestamp = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowError
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Timestamp |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Event", wireType)
 			}
@@ -652,22 +591,20 @@ var (
 func init() { proto.RegisterFile("error.proto", fileDescriptorError) }
 
 var fileDescriptorError = []byte{
-	// 259 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x8f, 0x41, 0x4e, 0xf3, 0x30,
-	0x10, 0x85, 0x3b, 0xff, 0x9f, 0x14, 0xd5, 0x61, 0xe5, 0x95, 0x55, 0x21, 0x13, 0x95, 0x4d, 0x37,
-	0xb8, 0x12, 0xdc, 0xa0, 0x52, 0x2f, 0xd0, 0x25, 0xbb, 0xa4, 0x1a, 0x42, 0x16, 0xf6, 0x44, 0xb6,
-	0x53, 0x09, 0x4e, 0xc2, 0x11, 0x38, 0x02, 0x47, 0x28, 0x3b, 0x4e, 0x80, 0xc0, 0x5c, 0x82, 0x25,
-	0xca, 0x44, 0x88, 0xb2, 0x9b, 0xf7, 0xbe, 0x37, 0xa3, 0x79, 0xa2, 0x40, 0xef, 0xc9, 0x9b, 0xce,
-	0x53, 0x24, 0x59, 0x04, 0x74, 0xa1, 0x37, 0xf1, 0xbe, 0xc3, 0x30, 0xbf, 0x6c, 0xda, 0x78, 0xd7,
-	0xd7, 0x66, 0x47, 0x76, 0xd5, 0x50, 0x43, 0x2b, 0xce, 0xd4, 0xfd, 0x2d, 0x2b, 0x16, 0x3c, 0x8d,
-	0xbb, 0xf3, 0x02, 0xf7, 0xe8, 0xe2, 0x28, 0x16, 0x2f, 0x20, 0xf2, 0xcd, 0x70, 0x58, 0x4a, 0x91,
-	0xb9, 0xca, 0xa2, 0x82, 0x12, 0x96, 0xb3, 0x2d, 0xcf, 0xb2, 0x14, 0x05, 0xba, 0x7d, 0xeb, 0xc9,
-	0x59, 0x74, 0x51, 0xfd, 0x63, 0x74, 0x6c, 0xc9, 0x85, 0x38, 0x25, 0xdf, 0x54, 0xae, 0x7d, 0xa8,
-	0x62, 0x4b, 0x4e, 0xfd, 0xe7, 0xc8, 0x1f, 0x4f, 0x2a, 0x71, 0x62, 0x31, 0x84, 0xaa, 0x41, 0x95,
-	0x31, 0xfe, 0x91, 0xf2, 0x4c, 0xcc, 0x76, 0x64, 0x3b, 0x72, 0xc3, 0xf5, 0x9c, 0xd9, 0xaf, 0x21,
-	0x8d, 0xc8, 0xf9, 0x55, 0x35, 0x2d, 0x61, 0x59, 0x5c, 0x49, 0x73, 0x54, 0xda, 0x6c, 0x06, 0xb2,
-	0xce, 0x0e, 0x6f, 0xe7, 0x93, 0xed, 0x18, 0x5b, 0x5f, 0x7c, 0x7d, 0x68, 0x78, 0x4a, 0x1a, 0x9e,
-	0x93, 0x86, 0x43, 0xd2, 0xf0, 0x9a, 0x34, 0xbc, 0x27, 0x0d, 0x8f, 0x9f, 0x7a, 0x72, 0x93, 0xf3,
-	0x5e, 0x3d, 0xe5, 0xde, 0xd7, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x26, 0xe6, 0x99, 0xf8, 0x4f,
-	0x01, 0x00, 0x00,
+	// 240 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8f, 0x3f, 0x4e, 0xc3, 0x30,
+	0x14, 0xc6, 0xfb, 0x68, 0x02, 0xaa, 0xb3, 0x79, 0xb2, 0x2a, 0x64, 0x22, 0x58, 0xb2, 0xe0, 0x4a,
+	0x70, 0x83, 0x4a, 0xbd, 0x40, 0x46, 0xb6, 0xa4, 0x7a, 0x84, 0x0e, 0xf6, 0x8b, 0x6c, 0x07, 0x89,
+	0x9b, 0xb0, 0xb2, 0x71, 0x04, 0x8e, 0xd0, 0x91, 0x13, 0x20, 0x30, 0x97, 0x60, 0x44, 0x79, 0x11,
+	0x0a, 0xdb, 0xfb, 0x7d, 0x7f, 0x2c, 0x7f, 0xa2, 0x40, 0xef, 0xc9, 0x9b, 0xde, 0x53, 0x24, 0x59,
+	0x04, 0x74, 0x61, 0x30, 0xf1, 0xa9, 0xc7, 0xb0, 0xbe, 0xee, 0x0e, 0xf1, 0x61, 0x68, 0xcd, 0x9e,
+	0xec, 0xa6, 0xa3, 0x8e, 0x36, 0x9c, 0x69, 0x87, 0x7b, 0x26, 0x06, 0xbe, 0xa6, 0xee, 0xba, 0xc0,
+	0x47, 0x74, 0x71, 0x82, 0xcb, 0x17, 0x10, 0xf9, 0x6e, 0x7c, 0x58, 0x4a, 0x91, 0xb9, 0xc6, 0xa2,
+	0x82, 0x12, 0xaa, 0x55, 0xcd, 0xb7, 0x54, 0xe2, 0xcc, 0x62, 0x08, 0x4d, 0x87, 0xea, 0x84, 0xe5,
+	0x3f, 0x94, 0xe7, 0x62, 0xb5, 0x27, 0xdb, 0x93, 0x43, 0x17, 0xd5, 0x92, 0xbd, 0x59, 0x18, 0xdd,
+	0x78, 0xb0, 0x18, 0x62, 0x63, 0x7b, 0x95, 0x95, 0x50, 0x2d, 0xeb, 0x59, 0x90, 0x46, 0xe4, 0xfc,
+	0x05, 0x95, 0x97, 0x50, 0x15, 0x37, 0xd2, 0xfc, 0x1b, 0x63, 0x76, 0xa3, 0xb3, 0xcd, 0x8e, 0x1f,
+	0x17, 0x8b, 0x7a, 0x8a, 0x6d, 0xaf, 0x7e, 0xbe, 0x34, 0xbc, 0x26, 0x0d, 0x6f, 0x49, 0xc3, 0x31,
+	0x69, 0x78, 0x4f, 0x1a, 0x3e, 0x93, 0x86, 0xe7, 0x6f, 0xbd, 0xb8, 0xcb, 0xb9, 0xd7, 0x9e, 0xf2,
+	0x9e, 0xdb, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x34, 0x0b, 0x57, 0x6b, 0x27, 0x01, 0x00, 0x00,
 }
