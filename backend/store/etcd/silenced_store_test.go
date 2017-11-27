@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -79,10 +80,24 @@ func TestSilencedStorage(t *testing.T) {
 		err = store.DeleteSilencedEntriesByCheckName(ctx, silenced.Check)
 		assert.NoError(t, err)
 
-		// Updating a check in a nonexistent org and env should not work
+		// Update a silenced entry's expire time
+		silenced.Expire = 2
+		err = store.UpdateSilencedEntry(ctx, silenced)
+		assert.NoError(t, err)
+
+		// Wait for the entry to expire
+		time.Sleep(3 * time.Second)
+
+		// Check that the entry is deleted
+		entry, err = store.GetSilencedEntryByID(ctx, silenced.ID)
+		assert.NoError(t, err)
+		assert.Nil(t, entry)
+
+		// Updating a silenced entry in a nonexistent org and env should not work
 		silenced.Organization = "missing"
 		silenced.Environment = "missing"
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.Error(t, err)
+
 	})
 }
