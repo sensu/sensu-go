@@ -1,5 +1,11 @@
 package mockstore
 
+import (
+	"context"
+
+	"github.com/sensu/sensu-go/types"
+)
+
 // DeleteError ...
 func (s *MockStore) DeleteError(ctx context.Context, e, c, t string) error {
 	args := s.Called(ctx, e, c, t)
@@ -14,7 +20,7 @@ func (s *MockStore) DeleteErrorsByEntityCheck(ctx context.Context, e, c string) 
 
 // DeleteErrorsByEntity ...
 func (s *MockStore) DeleteErrorsByEntity(ctx context.Context, e string) error {
-	s.DeleteErrorsByEntityCheck(ctx, e, "")
+	return s.DeleteErrorsByEntityCheck(ctx, e, "")
 }
 
 // GetErrors ...
