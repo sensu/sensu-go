@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCheckValidate(t *testing.T) {
@@ -87,4 +88,17 @@ func TestMergeWith(t *testing.T) {
 	assert.NotEmpty(t, newCheck.History)
 	// History has a length of 21, so just index it directly. jfc.
 	assert.Equal(t, int32(1), newCheck.History[20].Status)
+}
+
+func TestExtendedAttributes(t *testing.T) {
+	type getter interface {
+		Get(string) (interface{}, error)
+	}
+	check := FixtureCheck("chekov")
+	check.Config.SetExtendedAttributes([]byte(`{"foo":{"bar":42,"baz":9001}}`))
+	g, err := check.Config.Get("foo")
+	require.NoError(t, err)
+	v, err := g.(getter).Get("bar")
+	require.NoError(t, err)
+	require.Equal(t, 42.0, v)
 }

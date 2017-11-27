@@ -58,6 +58,9 @@ message CheckConfig {
 
 	// Subscriptions is the list of subscribers for the check.
 	repeated string subscriptions = 11 [(gogoproto.jsontag) = "subscriptions"];
+
+	// ExtendedAttributes store serialized arbitrary JSON-encoded data
+	bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
 }
 
 // A Check is a check specification and optionally the results of the check's
