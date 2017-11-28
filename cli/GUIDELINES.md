@@ -179,7 +179,8 @@ Rules to consider:
 ### Lists
 ### Interactive Prompts
 
-
+Interactive prompts are used when information is required to be collected;
+most commonly when creating and updating resources.
 
 ### Colour
 
