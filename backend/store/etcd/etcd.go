@@ -263,3 +263,8 @@ func (e *Etcd) Healthy() bool {
 	}
 	return true
 }
+
+// LoopbackURL returns the lookback URL used by etcd
+func (e *Etcd) LoopbackURL() string {
+	return e.loopbackURL
+}
