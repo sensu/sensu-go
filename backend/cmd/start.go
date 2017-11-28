@@ -138,6 +138,10 @@ func newStartCommand() *cobra.Command {
 				sensuBackend.Stop()
 			}()
 
+			if len(args) == 1 && args[0] == "migration" {
+				return sensuBackend.Migration()
+			}
+
 			return sensuBackend.Run()
 		},
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/migration"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/store/etcd"
@@ -360,6 +361,18 @@ func (b *Backend) Run() error {
 	// goroutines writing errors to either after shutdown has been initiated.
 	close(b.done)
 
+	return nil
+}
+
+// Migration performs the migration of data inside the store
+func (b *Backend) Migration() error {
+	_, err := b.etcd.NewStore()
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("starting migration on the store with URL '%s'", b.etcd.LoopbackURL())
+	migration.Run(b.etcd.LoopbackURL())
 	return nil
 }
 
