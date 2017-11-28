@@ -34,10 +34,17 @@ func newServer(a *Agent) *http.Server {
 
 func registerRoutes(a *Agent, r *mux.Router) {
 	r.HandleFunc("/events", addEvent(a)).Methods(http.MethodPost)
+	r.HandleFunc("/healthz", healthz).Methods(http.MethodGet)
+}
+
+func healthz(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ok"))
 }
 
 // addEvent accepts an event and send it to the backend over the event channel
 func addEvent(a *Agent) http.HandlerFunc {
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		var event *types.Event
 

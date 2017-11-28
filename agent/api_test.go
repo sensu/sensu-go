@@ -62,3 +62,34 @@ func TestAddEvent(t *testing.T) {
 		})
 	}
 }
+
+// test success and failure
+func TestHealthz(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		expectedResponse int
+	}{
+		{
+			"healthz returns success",
+			http.StatusOK,
+		},
+	}
+
+	for _, tc := range testCases {
+		testName := fmt.Sprintf("test agent %s", tc.desc)
+		t.Run(testName, func(t *testing.T) {
+			config := NewConfig()
+			agent := NewAgent(config)
+
+			r, err := http.NewRequest("GET", "/healthz", nil)
+			assert.NoError(t, err)
+
+			router := mux.NewRouter()
+			registerRoutes(agent, router)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, r)
+
+			assert.Equal(t, tc.expectedResponse, w.Code)
+		})
+	}
+}
