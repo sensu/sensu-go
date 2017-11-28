@@ -2,7 +2,6 @@ package keepalived
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -121,8 +120,6 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 
 	entity := event.Entity
 
-	entity = addAgentSubscription(entity)
-
 	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
 		monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity)
 	}
@@ -137,14 +134,6 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 	}
 
 	return monitorPtr.EventCreator.Pass(entity)
-}
-
-func addAgentSubscription(entity *types.Entity) *types.Entity {
-	if entity.Class == types.EntityAgentClass {
-		agentKey := fmt.Sprintf("agent:%s", entity.ID)
-		entity.Subscriptions = append(entity.Subscriptions, agentKey)
-	}
-	return entity
 }
 
 // Stop the KeepaliveMonitor. Once the monitor has been stopped it

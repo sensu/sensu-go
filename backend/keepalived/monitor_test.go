@@ -155,35 +155,3 @@ func TestReset(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	assert.True(monitor.IsStopped())
 }
-
-func TestAddAgentSubscription(t *testing.T) {
-	newEntityWithClass := func(class string) *types.Entity {
-		entity := types.FixtureEntity("entity1")
-		entity.Class = class
-		return entity
-	}
-
-	tt := []struct {
-		name     string
-		entity   *types.Entity
-		expected []string
-	}{
-		{
-			name:     "Non-agent entity",
-			entity:   newEntityWithClass("router"),
-			expected: []string{"subscription"},
-		},
-		{
-			name:     "Agent entity",
-			entity:   newEntityWithClass("agent"),
-			expected: []string{"subscription", "agent:entity1"},
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			entity := addAgentSubscription(tc.entity)
-			assert.Equal(t, tc.expected, entity.Subscriptions)
-		})
-	}
-}
