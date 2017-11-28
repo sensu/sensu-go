@@ -15,6 +15,7 @@
 		event.proto
 		filter.proto
 		handler.proto
+		hook.proto
 		keepalive.proto
 		metrics.proto
 		mutator.proto
@@ -30,6 +31,7 @@
 		Tokens
 		CheckRequest
 		CheckConfig
+		CheckHook
 		Check
 		CheckHistory
 		Entity
@@ -46,6 +48,9 @@
 		EventFilterWhenTimeRange
 		Handler
 		HandlerSocket
+		HookRequest
+		HookConfig
+		Hook
 		KeepaliveRecord
 		Metrics
 		Mutator

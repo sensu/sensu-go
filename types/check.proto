@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "asset.proto";
+import "hook.proto";
 
 package sensu.types;
 
@@ -61,6 +62,17 @@ message CheckConfig {
 
 	// ExtendedAttributes store serialized arbitrary JSON-encoded data
 	bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
+
+	// CheckHooks is the list of check hooks for the check
+	repeated CheckHook check_hooks = 13 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
+}
+
+message CheckHook {
+	// Hooks is the list of hooks for the check hook
+	repeated Hook hooks = 1 [(gogoproto.jsontag) = "hooks", (gogoproto.nullable) = false];
+
+	// Type indicates the type or response code for the check hook
+	string type = 2;
 }
 
 // A Check is a check specification and optionally the results of the check's
