@@ -136,6 +136,7 @@ type agentProcess struct {
 	BackendURLs []string
 	AgentID     string
 	APIPort     int
+	SocketPort  int
 
 	Stdout io.Reader
 	Stderr io.Reader
@@ -144,12 +145,13 @@ type agentProcess struct {
 }
 
 func (a *agentProcess) Start() error {
-	port := make([]int, 1)
+	port := make([]int, 2)
 	err := testutil.RandomPorts(port)
 	if err != nil {
 		log.Fatal(err)
 	}
 	a.APIPort = port[0]
+	a.SocketPort = port[1]
 
 	cmd := exec.Command(
 		agentPath, "start",
@@ -160,6 +162,7 @@ func (a *agentProcess) Start() error {
 		"--environment", "default",
 		"--organization", "default",
 		"--api-port", strconv.Itoa(port[0]),
+		"--socket-port", strconv.Itoa(port[1]),
 	)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

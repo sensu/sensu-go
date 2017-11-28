@@ -61,6 +61,9 @@ message CheckConfig {
 
 	// ExtendedAttributes store serialized arbitrary JSON-encoded data
 	bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
+
+	// Sources indicates the name of the entity representing an external resource
+  string source = 13;
 }
 
 // A Check is a check specification and optionally the results of the check's

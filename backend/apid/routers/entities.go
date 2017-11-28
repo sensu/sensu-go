@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 // EntitiesRouter handles requests for /entities
@@ -26,6 +27,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.destroy(r.destroy)
 	routes.index(r.list)
 	routes.show(r.find)
+	routes.update(r.update)
 }
 
 func (r *EntitiesRouter) destroy(req *http.Request) (interface{}, error) {
@@ -43,4 +45,14 @@ func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
 func (r *EntitiesRouter) list(req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
+}
+
+func (r *EntitiesRouter) update(req *http.Request) (interface{}, error) {
+	entity := types.Entity{}
+	if err := unmarshalBody(req, &entity); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.Update(req.Context(), entity)
+	return entity, err
 }

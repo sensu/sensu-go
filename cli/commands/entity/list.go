@@ -55,6 +55,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "Class",
+			CellTransformer: func(data interface{}) string {
+				entity, _ := data.(types.Entity)
+				return entity.Class
+			},
+		},
+		{
 			Title: "OS",
 			CellTransformer: func(data interface{}) string {
 				entity, _ := data.(types.Entity)
