@@ -263,8 +263,8 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			continue
 		}
 
-		// Make sure the event is valid
-		if err = validateEvent(a, &event); err != nil {
+		// Prepare the event by mutating it as required so it passes validation
+		if err = prepareEvent(a, &event); err != nil {
 			logger.WithError(err).Error("invalid event")
 			return
 		}
@@ -332,8 +332,8 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 				return
 			}
 
-			// Make sure the event is valid
-			if err = validateEvent(a, &event); err != nil {
+			// Prepare the event by mutating it as required so it passes validation
+			if err = prepareEvent(a, &event); err != nil {
 				logger.WithError(err).Error("invalid event")
 				return
 			}

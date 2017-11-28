@@ -7,8 +7,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// validateEvent validates an event and tries to add missing attributes
-func validateEvent(a *Agent, event *types.Event) error {
+// prepareEvent accepts a partial or complete event and tries to add any missing
+// attributes so it can pass validation. An error is returned if it still can't
+// pass validation after all these changes
+func prepareEvent(a *Agent, event *types.Event) error {
 	if event == nil {
 		return fmt.Errorf("an event must be provided")
 	}
