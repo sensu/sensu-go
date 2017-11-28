@@ -41,6 +41,7 @@ func TestPipelinedFilter(t *testing.T) {
 		name     string
 		status   int32
 		metrics  *types.Metrics
+		silenced []string
 		filters  []string
 		expected bool
 	}{
@@ -48,6 +49,7 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Not Incident",
 			status:   0,
 			metrics:  nil,
+			silenced: []string{},
 			filters:  nil,
 			expected: true,
 		},
@@ -55,6 +57,7 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Incident",
 			status:   1,
 			metrics:  nil,
+			silenced: []string{},
 			filters:  nil,
 			expected: false,
 		},
@@ -62,6 +65,7 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Metrics OK Status",
 			status:   0,
 			metrics:  &types.Metrics{},
+			silenced: []string{},
 			filters:  nil,
 			expected: false,
 		},
@@ -69,6 +73,7 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Metrics Warning Status",
 			status:   1,
 			metrics:  &types.Metrics{},
+			silenced: []string{},
 			filters:  nil,
 			expected: false,
 		},
@@ -76,6 +81,7 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Allow Filter With No Match",
 			status:   1,
 			metrics:  nil,
+			silenced: []string{},
 			filters:  []string{"allowFilterBar"},
 			expected: true,
 		},
@@ -83,6 +89,7 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Allow Filter With Match",
 			status:   1,
 			metrics:  nil,
+			silenced: []string{},
 			filters:  []string{"allowFilterFoo"},
 			expected: false,
 		},
@@ -90,6 +97,7 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Deny Filter With No Match",
 			status:   1,
 			metrics:  nil,
+			silenced: []string{},
 			filters:  []string{"denyFilterBar"},
 			expected: false,
 		},
@@ -97,7 +105,24 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Deny Filter With Match",
 			status:   1,
 			metrics:  nil,
+			silenced: []string{},
 			filters:  []string{"denyFilterFoo"},
+			expected: true,
+		},
+		{
+			name:     "Silenced With Metrics",
+			status:   1,
+			metrics:  &types.Metrics{},
+			silenced: []string{"entity1"},
+			filters:  nil,
+			expected: false,
+		},
+		{
+			name:     "Silenced Without Metrics",
+			status:   1,
+			metrics:  nil,
+			silenced: []string{"entity1"},
+			filters:  nil,
 			expected: true,
 		},
 	}
@@ -119,7 +144,8 @@ func TestPipelinedFilter(t *testing.T) {
 					Environment:  "default",
 					Organization: "default",
 				},
-				Metrics: tc.metrics,
+				Metrics:  tc.metrics,
+				Silenced: tc.silenced,
 			}
 
 			filtered := p.filterEvent(handler, event)
@@ -193,6 +219,36 @@ func TestPipelinedHasMetrics(t *testing.T) {
 			}
 			metrics := p.hasMetrics(event)
 			assert.Equal(t, tc.expected, metrics)
+		})
+	}
+}
+
+func TestPipelinedIsSilenced(t *testing.T) {
+	p := &Pipelined{}
+
+	testCases := []struct {
+		name     string
+		silenced []string
+		expected bool
+	}{
+		{
+			name:     "No silenced entries",
+			silenced: []string{},
+			expected: false,
+		},
+		{
+			name:     "Silenced entry",
+			silenced: []string{"entity1"},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := types.FixtureEvent("entity1", "check1")
+			event.Silenced = tc.silenced
+			silenced := p.isSilenced(event)
+			assert.Equal(t, tc.expected, silenced)
 		})
 	}
 }
