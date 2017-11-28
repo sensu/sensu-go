@@ -3,6 +3,7 @@ set -o pipefail
 set -e
 
 REPO_PATH="github.com/sensu/sensu-go"
+DASHBOARD_PATH="dashboard"
 
 eval $(go env)
 
@@ -232,23 +233,25 @@ check_for_presence_of_yarn() {
 install_dashboard_deps() {
   go get -u github.com/UnnoTed/fileb0x
   check_for_presence_of_yarn
-  cd dashboard
+  pushd "${DASHBOARD_PATH}"
   yarn install
-  cd $OLDPWD
+  yarn precompile
+  popd
 }
 
 test_dashboard() {
-  cd dashboard
+  pushd "${DASHBOARD_PATH}"
   yarn lint
   yarn test --coverage
-  cd $OLDPWD
+  popd
 }
 
 build_dashboard() {
-  cd dashboard
+  pushd "${DASHBOARD_PATH}"
   yarn install
+  yarn precompile
   yarn build
-  cd $OLDPWD
+  popd
 }
 
 bundle_static_assets() {
