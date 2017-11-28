@@ -59,6 +59,15 @@ func (r *EnvironmentsRouter) update(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	// https://github.com/sensu/sensu-go/pull/574
+	// Introduced a breaking change to environments that caused them to fail
+	// updates because organization is required, but it wasn't previously.
+	// This allows users to update environments that were created before this
+	// requirement.
+	if env.Organization == "" {
+		env.Organization = mux.Vars(req)["organization"]
+	}
+
 	err := r.controller.Update(req.Context(), env)
 	return env, err
 }
