@@ -58,9 +58,7 @@ func TestGetEntities(t *testing.T) {
 				entity: types.FixtureEntity("foo"),
 			},
 			event: &types.Event{
-				Check: &types.Check{
-					Config: &types.CheckConfig{},
-				},
+				Check: types.FixtureCheck("check_cpu"),
 			},
 			expectedAgentID: "foo",
 			expectedSource:  "",
