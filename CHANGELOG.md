@@ -1,4 +1,7 @@
 ## Unreleased
+### Added
+- Proxy entities are now dynamically created through the "Source" attribute of a
+check configuration
 
 ## [2.0.0-alpha.8] - 2017-11-28
 ### Added
