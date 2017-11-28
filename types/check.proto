@@ -59,8 +59,11 @@ message CheckConfig {
 	// Subscriptions is the list of subscribers for the check.
 	repeated string subscriptions = 11 [(gogoproto.jsontag) = "subscriptions"];
 
+	// ExtendedAttributes store serialized arbitrary JSON-encoded data
+	bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
+
 	// Sources indicates the name of the entity representing an external resource
-  string source = 12;
+  string source = 13;
 }
 
 // A Check is a check specification and optionally the results of the check's

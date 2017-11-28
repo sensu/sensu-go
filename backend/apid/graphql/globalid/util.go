@@ -61,8 +61,8 @@ func (r commonTranslator) Decode(components StandardComponents) Components {
 //
 
 func addMultitenantFields(c *StandardComponents, r types.MultitenantResource) {
-	c.organization = r.GetOrg()
-	c.environment = r.GetEnv()
+	c.organization = r.GetOrganization()
+	c.environment = r.GetEnvironment()
 }
 
 // newComponentsWith returns new instance of StandardComponents w/ name and ids

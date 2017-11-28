@@ -155,18 +155,27 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 		return err
 	}
 
-	checkBytes, err := json.Marshal(silenced)
+	silencedBytes, err := json.Marshal(silenced)
 	if err != nil {
 		return err
 	}
 
+	var req clientv3.Op
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(silenced.Organization, silenced.Environment)), ">", 0)
-	req := clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(checkBytes))
+	if silenced.Expire > 0 {
+		lease, err := s.client.Grant(ctx, silenced.Expire)
+		if err != nil {
+			return err
+		}
+		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes), clientv3.WithLease(lease.ID))
+	} else {
+		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes))
+	}
 	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
-
 	if err != nil {
 		return err
 	}
+
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the silenced entry %s in environment %s/%s",

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 // CheckRequestType is the message type string for check request.
@@ -23,6 +25,26 @@ func (c *Check) Validate() error {
 	}
 
 	return nil
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (c *CheckConfig) UnmarshalJSON(b []byte) error {
+	return dynamic.Unmarshal(b, c)
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (c *CheckConfig) MarshalJSON() ([]byte, error) {
+	return dynamic.Marshal(c)
+}
+
+// SetExtendedAttributes sets the serialized ExtendedAttributes of c.
+func (c *CheckConfig) SetExtendedAttributes(e []byte) {
+	c.ExtendedAttributes = e
+}
+
+// Get implements govaluate.Parameters
+func (c *CheckConfig) Get(name string) (interface{}, error) {
+	return dynamic.GetField(c, name)
 }
 
 // Validate returns an error if the check does not pass validation tests.
@@ -58,16 +80,6 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	return nil
-}
-
-// GetOrg refers to the organization the check belongs to
-func (c *CheckConfig) GetOrg() string {
-	return c.Organization
-}
-
-// GetEnv refers to the organization the check belongs to
-func (c *CheckConfig) GetEnv() string {
-	return c.Environment
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the

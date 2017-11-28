@@ -13,6 +13,7 @@ import (
 func TestCheckConfigStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		check := types.FixtureCheckConfig("check1")
+		check.SetExtendedAttributes([]byte(`{"foo":"bar"}`))
 		ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
 		ctx = context.WithValue(ctx, types.EnvironmentKey, check.Environment)
 
@@ -32,6 +33,9 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.Equal(t, check.Interval, retrieved.Interval)
 		assert.Equal(t, check.Subscriptions, retrieved.Subscriptions)
 		assert.Equal(t, check.Command, retrieved.Command)
+		ext, err := retrieved.Get("foo")
+		require.NoError(t, err)
+		assert.Equal(t, "bar", ext)
 
 		checks, err = store.GetCheckConfigs(ctx)
 		assert.NoError(t, err)

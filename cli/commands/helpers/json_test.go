@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPrintJSON(t *testing.T) {
@@ -18,8 +19,6 @@ func TestPrintJSON(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	writer := io.Writer(buf)
-	if err := PrintJSON(testInput, writer); err != nil {
-		assert.FailNow("failed to parse JSON due to error %s", err)
-	}
+	require.NoError(t, PrintJSON(testInput, writer))
 	assert.Equal(string(buf.Bytes()), "{\n  \"commandAnd\": \"echo bar && exit 1\",\n  \"commandLessThan\": \"echo foo >> output.txt\"\n}\n\n")
 }
