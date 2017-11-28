@@ -155,6 +155,9 @@ func (s *etcdStore) GetErrorsByEntity(ctx context.Context, entity string) ([]*ty
 	return s.GetErrorsByEntityCheck(ctx, entity, "")
 }
 
+// GetErrorByEntityCheck returns an error using the given entity and check,
+// within the organization and environment stored in ctx. The resulting error
+// is nil if none was found.
 func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check string) ([]*types.Error, error) {
 	if entity == "" {
 		return nil, errors.New("must specify entity id")
@@ -175,6 +178,7 @@ func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check st
 	return unmarshalErrorKVs(resp.Kvs, rejectFn)
 }
 
+// CreateError creates or updates a given error.
 func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
 	// Obtain new lease
 	lease, err := s.client.Grant(ctx, errorsKeyTTL)
@@ -196,10 +200,12 @@ func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
 		string(perr.Timestamp),
 	)
 
-	// Store
+	// Configure transaction
 	txn := s.kvc.Txn(ctx).
 		If(environmentExistsForResource(perr.Event.Entity)).
 		Then(clientv3.OpPut(key, string(perrBytes), clientv3.WithLease(lease.ID)))
+
+	// Store
 	res, err := txn.Commit()
 	if err != nil {
 		return err
@@ -217,9 +223,11 @@ func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
 	return nil
 }
 
+type rejectErrorFn func(*types.Error) bool
+
 func unmarshalErrorKVs(
 	kvs []*mvccpb.KeyValue,
-	rejectFn func(*types.Error) bool,
+	rejectFn rejectErrorFn,
 ) ([]*types.Error, error) {
 	perrs := make([]*types.Error, 0, len(kvs))
 	for _, kv := range kvs {
@@ -240,21 +248,20 @@ func permitAllErrorRecords(_ *types.Error) bool {
 	return false
 }
 
-func shouldRejectError(
-	ns namespace,
-	entity string,
-	check string,
-) func(*types.Error) bool {
+// shouldRejectError configures a predicate to be used when rejecting error
+// entries. If entity argument is an empty string it will not reject based on
+// the error's entity; same rule applies for check argument.
+func shouldRejectError(ns namespace, entity string, check string) rejectErrorFn {
 	rejectWhereEnvDoesNotMatch := rejectByEnvironment(ns)
-
 	rejectWhereEntityDoesNotMatch := permitAllErrorRecords
+	rejectWhereCheckDoesNotMatch := permitAllErrorRecords
+
 	if entity != "" {
 		rejectWhereEntityDoesNotMatch = func(perr *types.Error) bool {
 			return perr.Event.Entity.ID != entity
 		}
 	}
 
-	rejectWhereCheckDoesNotMatch := permitAllErrorRecords
 	if check != "" {
 		rejectWhereCheckDoesNotMatch = func(perr *types.Error) bool {
 			errCheck := perr.Event.Check
