@@ -14,6 +14,7 @@ type APIClient interface {
 	EventAPIClient
 	FilterAPIClient
 	HandlerAPIClient
+	HookAPIClient
 	MutatorAPIClient
 	OrganizationAPIClient
 	RoleAPIClient
@@ -85,6 +86,15 @@ type HandlerAPIClient interface {
 	ListHandlers(string) ([]types.Handler, error)
 	FetchHandler(string) (*types.Handler, error)
 	UpdateHandler(*types.Handler) error
+}
+
+// HookAPIClient client methods for hooks
+type HookAPIClient interface {
+	CreateHook(*types.HookConfig) error
+	UpdateHook(*types.HookConfig) error
+	DeleteHook(*types.HookConfig) error
+	FetchHook(string) (*types.HookConfig, error)
+	ListHooks(string) ([]types.HookConfig, error)
 }
 
 // MutatorAPIClient client methods for mutators

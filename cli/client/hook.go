@@ -1,0 +1,93 @@
+package client
+
+import (
+	"encoding/json"
+
+	"github.com/sensu/sensu-go/types"
+)
+
+// CreateHook creates new hook on configured Sensu instance
+func (client *RestClient) CreateHook(hook *types.HookConfig) (err error) {
+	bytes, err := json.Marshal(hook)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Post("/hooks")
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
+
+// UpdateHook updates given hook on configured Sensu instance
+func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
+	bytes, err := json.Marshal(hook)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Patch("/hooks/" + hook.Name)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
+
+// DeleteHook deletes hook from configured Sensu instance
+func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
+	res, err := client.R().Delete("/hooks/" + hook.Name)
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
+
+// FetchHook fetches a specific hook
+func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
+	var hook *types.HookConfig
+
+	res, err := client.R().Get("/hooks/" + name)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return nil, unmarshalError(res)
+	}
+
+	err = json.Unmarshal(res.Body(), &hook)
+	return hook, err
+}
+
+// ListHooks fetches all hooks from configured Sensu instance
+func (client *RestClient) ListHooks(org string) ([]types.HookConfig, error) {
+	var hooks []types.HookConfig
+	res, err := client.R().SetQueryParam("org", org).Get("/hooks")
+	if err != nil {
+		return hooks, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return hooks, unmarshalError(res)
+	}
+
+	err = json.Unmarshal(res.Body(), &hooks)
+	return hooks, err
+}
