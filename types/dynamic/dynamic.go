@@ -23,6 +23,130 @@ type AttrSetter interface {
 	SetExtendedAttributes([]byte)
 }
 
+// Attributes is a combination of AttrGetter and AttrSetter.
+type Attributes interface {
+	AttrSetter
+	AttrGetter
+}
+
+// SetField inserts a value into v at path.
+//
+// For example, if the marshalled representation of v is
+// {"foo": "bar", "baz": { "value": 5 }},
+// Then SetField(v, "baz.value", 10) will result in
+// {"foo": "bar", "baz": { "value": 10 }}.
+//
+// v's reflect.Kind must be reflect.Struct, or a non-nil error will
+// be returned. If the path refers to a struct field, then v must
+// be addressable, or an error will be returned.
+func SetField(v Attributes, path string, value interface{}) error {
+	strukt := reflect.Indirect(reflect.ValueOf(v))
+	if kind := strukt.Kind(); kind != reflect.Struct {
+		return fmt.Errorf("invalid type (want struct): %v", kind)
+	}
+	attrs := v.GetExtendedAttributes()
+	var addressOfAttrs *byte
+	if len(attrs) > 0 {
+		addressOfAttrs = &attrs[0]
+	}
+	fields := getJSONFields(strukt, addressOfAttrs)
+	f, ok := fields[path]
+	if !ok {
+		return setExtendedAttribute(v, path, value)
+	}
+	field := f.Value
+	if !field.IsValid() {
+		return setExtendedAttribute(v, path, value)
+	}
+	if !field.CanSet() {
+		return fmt.Errorf("dynamic: can't set struct field %q", path)
+	}
+	field.Set(reflect.ValueOf(value))
+	return nil
+}
+
+func setExtendedAttribute(v Attributes, path string, value interface{}) error {
+	parts := strings.Split(strings.TrimSpace(path), ".")
+	attrs := v.GetExtendedAttributes()
+	any := jsoniter.Get(attrs)
+	stream := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 1024)
+	stream.WriteObjectStart()
+	i := 0
+	keys := any.Keys()
+	sort.Strings(keys)
+	for _, key := range keys {
+		if key == parts[0] {
+			continue
+		}
+		if i > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField(key)
+		any := any.Get(key)
+		any.WriteTo(stream)
+		i++
+	}
+	if i > 0 {
+		stream.WriteMore()
+	}
+	stream.WriteObjectField(parts[0])
+	if len(parts) == 1 {
+		stream.WriteVal(value)
+	} else {
+		envelope := makeEnvelope(any.Get(parts[0]), parts[1:], value)
+		stream.WriteVal(envelope)
+	}
+
+	stream.WriteObjectEnd()
+	if err := stream.Error; err != nil {
+		return err
+	}
+	v.SetExtendedAttributes(stream.Buffer())
+	return nil
+}
+
+func extractNonPathValues(any jsoniter.Any, parts []string) map[string]interface{} {
+	keys := any.Keys()
+	sort.Strings(keys)
+	result := make(map[string]interface{}, len(keys))
+	for _, key := range keys {
+		result[key] = any.Get(key).GetInterface()
+	}
+	return result
+}
+
+func makeEnvelope(any jsoniter.Any, parts []string, value interface{}) map[string]interface{} {
+	remainingParts := parts
+	result := extractNonPathValues(any, parts)
+	envelope := result
+	for len(remainingParts) > 1 {
+		part := remainingParts[0]
+		remainingParts = remainingParts[1:]
+		var newEnv map[string]interface{}
+		env, ok := envelope[part]
+		if !ok {
+			env = map[string]interface{}{}
+		}
+		if e, ok := env.(map[string]interface{}); !ok {
+			newEnv = map[string]interface{}{}
+		} else {
+			newEnv = e
+		}
+		envelope[part] = newEnv
+		envelope = newEnv
+	}
+	for i, part := range remainingParts {
+		if i == len(remainingParts)-1 {
+			envelope[part] = value
+			break
+		}
+		m := make(map[string]interface{})
+		envelope[part] = m
+		envelope = m
+	}
+	return result
+}
+
 // GetField gets a field from v according to its name.
 // If GetField doesn't find a struct field with the corresponding name, then
 // it will try to dynamically find the corresponding item in the 'Extended'

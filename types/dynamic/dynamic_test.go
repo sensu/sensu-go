@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -328,4 +329,56 @@ func TestNoLookupAttrsDirectly(t *testing.T) {
 	_, err := m.Get("Attrs")
 	require.NotNil(t, err)
 	assert.Equal(t, err.Error(), "[Attrs] not found")
+}
+
+func TestSetFieldOnStructField(t *testing.T) {
+	var m MyType
+	err := SetField(&m, "foo", "hello, world!")
+	require.NoError(t, err)
+	require.Equal(t, "hello, world!", m.Foo)
+	require.Equal(t, len(m.GetExtendedAttributes()), 0)
+}
+
+func TestSetFieldOnExtendedAttributes(t *testing.T) {
+	tests := []struct {
+		Attrs    []byte
+		Expected []byte
+		Path     string
+		Value    interface{}
+	}{
+		{
+			Attrs:    []byte(`{}`),
+			Expected: []byte(`{"extendedAttr":{"bar":42}}`),
+			Path:     "extendedAttr.bar",
+			Value:    42,
+		},
+		{
+			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4]}}}`),
+			Expected: []byte(`{"extendedAttr":{"a":"value","bar":5,"baz":{"a":[1,2,3,4]}}}`),
+			Path:     "extendedAttr.a",
+			Value:    "value",
+		},
+		{
+			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
+			Expected: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":"replaced","b":"b"}}}`),
+			Path:     "extendedAttr.baz.a",
+			Value:    "replaced",
+		},
+		{
+			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
+			Expected: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":{"b":"replaced"},"b":"b"}}}`),
+			Path:     "extendedAttr.baz.a.b",
+			Value:    "replaced",
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			var m MyType
+			m.SetExtendedAttributes(test.Attrs)
+			err := SetField(&m, test.Path, test.Value)
+			require.NoError(t, err)
+			require.Equal(t, string(test.Expected), string(m.GetExtendedAttributes()))
+		})
+	}
 }
