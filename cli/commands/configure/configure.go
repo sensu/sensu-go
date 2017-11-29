@@ -28,16 +28,20 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+
+			nonInteractive, err := flags.GetBool("non-interactive")
+			if err != nil {
+				return err
+			}
 
 			answers := &configureAnswers{}
 
-			if isInteractive {
+			if nonInteractive {
+				answers.withFlags(flags)
+			} else {
 				if err := answers.administerQuestionnaire(cli.Config); err != nil {
 					return err
 				}
-			} else {
-				answers.withFlags(flags)
 			}
 
 			// Write new API URL to disk
@@ -103,6 +107,8 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
 		},
 	}
+
+	cmd.Flags().BoolP("non-interactive", "n", false, "do not administer interactive questionnaire")
 	cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
 	cmd.Flags().StringP("username", "", "", "username")
 	cmd.Flags().StringP("password", "", "", "password")

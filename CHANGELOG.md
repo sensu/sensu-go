@@ -2,6 +2,8 @@
 ### Added
 - Proxy entities are now dynamically created through the "Source" attribute of a
 check configuration
+- Flag to sensuctl configure allowing it to be configured non-interactively (usage:
+--non-interactive or -n)
 
 ## [2.0.0-alpha.8] - 2017-11-28
 ### Added
