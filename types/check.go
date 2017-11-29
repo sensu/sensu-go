@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -52,18 +53,26 @@ func (c *CheckConfig) SetExtendedAttributes(e []byte) {
 	c.ExtendedAttributes = e
 }
 
-// // MarshalJSON implements the json.Marshaler interface.
-// func (h *CheckHook) MarshalJSON() ([]byte, error) {
-// 	result := make(map[string][]string)
-// 	result[h.Type] = append(result[h.Type], h.Hooks...)
-// 	return json.Marshal(result)
-// }
-//
-// // UnmarshalJSON implements the json.Marshaler interface.
-// func (h *CheckHook) UnmarshalJSON(b []byte) error {
-// 	result := make(map[string][]string)
-// 	return json.Unmarshal(b, &result)
-// }
+// MarshalJSON implements the json.Marshaler interface.
+func (h *CheckHook) MarshalJSON() ([]byte, error) {
+	result := make(map[string][]string)
+	result[h.Type] = append(result[h.Type], h.Hooks...)
+	return json.Marshal(result)
+}
+
+// UnmarshalJSON implements the json.Marshaler interface.
+func (h *CheckHook) UnmarshalJSON(b []byte) error {
+	result := map[string][]string{}
+	if err := json.Unmarshal(b, &result); err != nil {
+		return err
+	}
+	for key := range result {
+		h.Type = key
+		h.Hooks = result[key]
+	}
+
+	return nil
+}
 
 // Get implements govaluate.Parameters
 func (c *CheckConfig) Get(name string) (interface{}, error) {
