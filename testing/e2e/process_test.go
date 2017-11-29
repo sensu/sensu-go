@@ -221,6 +221,7 @@ func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
 
 	// Authenticate sensuctl
 	ctl.run("configure",
+		"-n",
 		"--url", apiURL,
 		"--username", user,
 		"--password", pass,
