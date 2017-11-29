@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"fmt"
+
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -17,6 +19,7 @@ var checkConfigUpdateFields = []string{
 	"Publish",
 	"RuntimeAssets",
 	"Subscriptions",
+	"CheckHooks",
 }
 
 // CheckController exposes actions in which a viewer can perform.
@@ -160,4 +163,112 @@ func (a CheckController) Destroy(ctx context.Context, name string) error {
 	}
 
 	return nil
+}
+
+// TODO are we importing a function that does this already?
+func existsIn(name string, list []string) bool {
+	for _, str := range list {
+		if str == name {
+			return true
+		}
+	}
+	return false
+}
+
+// AddCheckHook adds an association between a hook and a check
+func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHook types.CheckHook) error {
+	return a.findAndUpdateCheckConfig(ctx, check, func(check *types.CheckConfig) error {
+		var exists bool
+		for i, r := range check.CheckHooks {
+			if r.Type == checkHook.Type {
+				exists = true
+				hookList := check.CheckHooks[i].Hooks
+				// if the type already exists in the check's check hooks, only append the hook names provided
+				for _, h := range checkHook.Hooks {
+					if !existsIn(h, hookList) {
+						// only add hook names that don't already exist in list
+						hookList = append(hookList, h)
+					}
+				}
+				check.CheckHooks[i].Hooks = hookList
+				break
+			}
+		}
+
+		if !exists {
+			// if the type doesn't alrady exist, just add the bulk check hook
+			check.CheckHooks = append(check.CheckHooks, checkHook)
+		}
+		return nil
+	})
+}
+
+// RemoveCheckHook removes an association between a hook and a check
+func (a CheckController) RemoveCheckHook(ctx context.Context, checkName string, hookType string, hookName string) error {
+	return a.findAndUpdateCheckConfig(ctx, checkName, func(check *types.CheckConfig) error {
+		fmt.Println(checkName + hookType + hookName)
+		for i, r := range check.CheckHooks {
+			if r.Type == hookType {
+				hookList := check.CheckHooks[i].Hooks
+				for j, h := range hookList {
+					if h == hookName {
+						check.CheckHooks[i].Hooks = append(hookList[:j], hookList[j+1:]...)
+						return nil
+					}
+				}
+			}
+		}
+
+		return NewErrorf(NotFound)
+	})
+}
+
+func (a CheckController) findCheckConfig(ctx context.Context, name string) (*types.CheckConfig, error) {
+	result, serr := a.Store.GetCheckConfigByName(ctx, name)
+	if serr != nil {
+		return nil, NewError(InternalErr, serr)
+	} else if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
+
+	return result, nil
+}
+
+func (a CheckController) updateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
+	if err := a.Store.UpdateCheckConfig(ctx, check); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+func (a CheckController) findAndUpdateCheckConfig(
+	ctx context.Context,
+	name string,
+	configureFn func(*types.CheckConfig) error,
+) error {
+	// Find
+	check, serr := a.findCheckConfig(ctx, name)
+	if serr != nil {
+		return serr
+	}
+
+	// Verify viewer can make change
+	abilities := a.Policy.WithContext(ctx)
+	if yes := abilities.CanUpdate(check); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Configure
+	if err := configureFn(check); err != nil {
+		return err
+	}
+
+	// Validate
+	if err := check.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Update
+	return a.updateCheckConfig(ctx, check)
 }
