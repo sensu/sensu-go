@@ -52,19 +52,17 @@ func (c *CheckConfig) SetExtendedAttributes(e []byte) {
 	c.ExtendedAttributes = e
 }
 
-// MarshalJSON implements the json.Marshaler interface.
+// // MarshalJSON implements the json.Marshaler interface.
 // func (h *CheckHook) MarshalJSON() ([]byte, error) {
 // 	result := make(map[string][]string)
-// 	// for _, h := range hooks.CheckHooks {
 // 	result[h.Type] = append(result[h.Type], h.Hooks...)
-// 	// }
 // 	return json.Marshal(result)
 // }
-
-// UnmarshalJSON implements the json.Marshaler interface.
+//
+// // UnmarshalJSON implements the json.Marshaler interface.
 // func (h *CheckHook) UnmarshalJSON(b []byte) error {
 // 	result := make(map[string][]string)
-// 	return json.Unmarshal(b, &h)
+// 	return json.Unmarshal(b, &result)
 // }
 
 // Get implements govaluate.Parameters
