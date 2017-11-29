@@ -82,10 +82,16 @@ func evaluateEventFilter(store store.Store, event *types.Event, filterName strin
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
 	incident := p.isIncident(event)
 	metrics := p.hasMetrics(event)
+	silenced := p.isSilenced(event)
 
 	// Do not filter the event if the event has metrics
 	if metrics {
 		return false
+	}
+
+	// Filter if the event has any silenced entries
+	if silenced {
+		return true
 	}
 
 	// Filter the event if it is not an incident
@@ -122,6 +128,15 @@ func (p *Pipelined) isIncident(event *types.Event) bool {
 // hasMetrics determines if an event has metric data.
 func (p *Pipelined) hasMetrics(event *types.Event) bool {
 	if event.Metrics != nil {
+		return true
+	}
+
+	return false
+}
+
+// isSilenced determines if an event has any silenced entries
+func (p *Pipelined) isSilenced(event *types.Event) bool {
+	if len(event.Silenced) > 0 {
 		return true
 	}
 
