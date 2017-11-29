@@ -27,7 +27,6 @@ func (t BoolString) Bool() (bool, error) {
 			return false, nil
 		}
 	}
-	// Should never happen if the validator was run on the BoolString
 	return false, fmt.Errorf("invalid true/false value: %q", t)
 }
 
@@ -39,10 +38,6 @@ func ValidateTrueFalse(value interface{}) error {
 		return fmt.Errorf("invalid value: %v", value)
 	}
 	bs := BoolString(strings.ToLower(s))
-	for _, x := range acceptableTF {
-		if bs == x {
-			return nil
-		}
-	}
-	return fmt.Errorf("%q is neither true nor false", value)
+	_, err := bs.Bool()
+	return err
 }
