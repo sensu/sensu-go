@@ -45,7 +45,6 @@ func healthz(conn transport.Transport) http.HandlerFunc {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte("sensu backend unavailable"))
 		}
-		fmt.Println("connection OK")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	}
