@@ -79,7 +79,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "Name")     // heading
 	assert.Contains(out, "Command")  // heading
 	assert.Contains(out, "name-one") // hook name
-	assert.Contains(out, "60")       // timeout
+	assert.Contains(out, "10")       // timeout
 	assert.Nil(err)
 }
 
