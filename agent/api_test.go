@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/transport"
+	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -84,28 +83,16 @@ func TestHealthz(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		server := transport.NewServer()
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			conn, err := server.Serve(w, r)
-			assert.NoError(t, err)
-
-			msg, err := conn.Receive()
-			assert.NoError(t, err)
-			assert.Equal(t, "keepalive", msg.Type)
-		}))
-		defer ts.Close()
-
-		wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-
 		testName := fmt.Sprintf("test agent %s", tc.desc)
+		transport := &mocktransport.MockTransport{}
+
 		t.Run(testName, func(t *testing.T) {
+			// need to figure out how to pass the mock transport into the agent
 			config := NewConfig()
-			config.BackendURLs = []string{wsURL}
 			agent := NewAgent(config)
-			agent.Run()
-			if tc.closeConn {
-				agent.conn.Close()
-			}
+			agent.conn = transport
+			transport.On("Closed").Return(tc.closeConn)
+
 			r, err := http.NewRequest("GET", "/healthz", nil)
 			assert.NoError(t, err)
 
