@@ -67,6 +67,9 @@ message CheckConfig {
 
 	// CheckHooks is the list of check hooks for the check
 	repeated CheckHook check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
+
+  // STDIN indicates if the check command accepts JSON via stdin from the agent
+  bool stdin = 15;
 }
 
 message CheckHook {

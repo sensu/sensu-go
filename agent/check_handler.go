@@ -56,6 +56,16 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		Command: checkConfig.Command,
 	}
 
+	// If stdin is true, add JSON event data to command execution.
+	if checkConfig.Stdin {
+		input, err := json.Marshal(event)
+		if err != nil {
+			a.sendFailure(event, fmt.Errorf("error marshaling json from event: %s", err))
+			return
+		}
+		ex.Input = string(input)
+	}
+
 	// Ensure that all the dependencies are installed.
 	if err := assets.InstallAll(); err != nil {
 		a.sendFailure(event, fmt.Errorf("error installing dependencies: %s", err))

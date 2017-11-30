@@ -19,6 +19,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	checkConfig := types.FixtureCheckConfig("check")
 	request := &types.CheckRequest{Config: checkConfig}
+	checkConfig.Stdin = true
 
 	config := NewConfig()
 	agent := NewAgent(config)
