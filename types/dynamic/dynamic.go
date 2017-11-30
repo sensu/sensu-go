@@ -65,6 +65,21 @@ func SetField(v Attributes, path string, value interface{}) error {
 	return nil
 }
 
+// setExtendedAttributes inserts a value into v according to path. path is a
+// dot-separated path like "foo.bar.baz".
+//
+// If setExtendedAttributes finds a path that does not currently exist, it will
+// call makeEnvelope in order to create the necessary objects are value to
+// satisfy the path.
+//
+// The mechanism of how this works is basically:
+// 1) Lazy-unmarshal extended attributes (keys that reference []byte)
+// 2) Write the extended attributes to a stream
+//    a) If the key we are writing matches the first component of the path,
+//       then deserialize the value into map[string]interface{} and insert
+//       the value. Marshal the result and write it to the stream.
+//    b) Otherwise, write the key-value pair as-is to the stream.
+// 3) Set the extended attributes from the stream's buffer.
 func setExtendedAttribute(v Attributes, path string, value interface{}) error {
 	parts := strings.Split(strings.TrimSpace(path), ".")
 	attrs := v.GetExtendedAttributes()
@@ -105,6 +120,8 @@ func setExtendedAttribute(v Attributes, path string, value interface{}) error {
 	return nil
 }
 
+// extractNonPathValues finds all the values in any that do not correspond to
+// the path specified by parts.
 func extractNonPathValues(any jsoniter.Any, parts []string) map[string]interface{} {
 	keys := any.Keys()
 	sort.Strings(keys)
@@ -115,6 +132,8 @@ func extractNonPathValues(any jsoniter.Any, parts []string) map[string]interface
 	return result
 }
 
+// makeEnvelope makes an envelope of map[string]interface{} around any,
+// according to parts. The nesting depth will be equal to the length of parts.
 func makeEnvelope(any jsoniter.Any, parts []string, value interface{}) map[string]interface{} {
 	remainingParts := parts
 	result := extractNonPathValues(any, parts)
