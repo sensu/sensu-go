@@ -164,19 +164,23 @@ func (a SilencedController) Destroy(ctx context.Context, params QueryParams) err
 		return NewErrorf(PermissionDenied)
 	}
 
-	// Delete resource(s)
-	var serr error
-	if sub := params["subscription"]; sub != "" {
-		serr = a.Store.DeleteSilencedEntriesBySubscription(ctx, sub)
-	} else if check := params["check"]; check != "" {
-		serr = a.Store.DeleteSilencedEntriesByCheckName(ctx, check)
-	} else if id := params["id"]; id != "" {
-		serr = a.Store.DeleteSilencedEntryByID(ctx, id)
-	} else {
-		logger.Panic("Destroy() did not receive subscription, check or id param")
+	// Check for ID first
+	id := params["id"]
+
+	if id == "" {
+		// Form ID from subscription and check
+		var err error
+		sub := params["subscription"]
+		check := params["check"]
+
+		id, err = types.SilencedID(sub, check)
+		if err != nil {
+			return NewError(InvalidArgument, err)
+		}
 	}
-	if serr != nil {
-		return NewError(InternalErr, serr)
+
+	if err := a.Store.DeleteSilencedEntryByID(ctx, id); err != nil {
+		return NewError(InternalErr, err)
 	}
 
 	return nil

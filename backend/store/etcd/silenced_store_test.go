@@ -70,16 +70,6 @@ func TestSilencedStorage(t *testing.T) {
 		err = store.DeleteSilencedEntryByID(ctx, silenced.ID)
 		assert.NoError(t, err)
 
-		// Delete Silenced entry by subscription
-		_ = store.UpdateSilencedEntry(ctx, silenced)
-		err = store.DeleteSilencedEntriesBySubscription(ctx, silenced.Subscription)
-		assert.NoError(t, err)
-
-		// Delete silenced entry by checkName
-		_ = store.UpdateSilencedEntry(ctx, silenced)
-		err = store.DeleteSilencedEntriesByCheckName(ctx, silenced.Check)
-		assert.NoError(t, err)
-
 		// Update a silenced entry's expire time
 		silenced.Expire = 2
 		err = store.UpdateSilencedEntry(ctx, silenced)

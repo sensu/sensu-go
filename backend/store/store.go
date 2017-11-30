@@ -282,12 +282,6 @@ type RBACStore interface {
 // SilencedStore provides methods for managing silenced entries,
 // consisting of entities, subscriptions and/or checks
 type SilencedStore interface {
-	// DeleteSilencedEntriesByCheckName deletes an entry using the given check.
-	DeleteSilencedEntriesByCheckName(ctx context.Context, check string) error
-
-	// DeleteSilencedEntriesBySubscription deletes an entry using the given id.
-	DeleteSilencedEntriesBySubscription(ctx context.Context, subscription string) error
-
 	// DeleteSilencedEntryByID deletes an entry using the given id.
 	DeleteSilencedEntryByID(ctx context.Context, id string) error
 
