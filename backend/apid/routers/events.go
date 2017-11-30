@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 // EventsRouter handles requests for /events
@@ -27,6 +28,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
+	routes.create(r.update)
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
@@ -49,4 +51,14 @@ func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
 func (r *EventsRouter) destroy(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	return nil, r.controller.Destroy(req.Context(), params)
+}
+
+func (r *EventsRouter) update(req *http.Request) (interface{}, error) {
+	event := types.Event{}
+	if err := unmarshalBody(req, &event); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.Update(req.Context(), event)
+	return event, err
 }

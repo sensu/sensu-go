@@ -316,3 +316,94 @@ func TestEventDestroy(t *testing.T) {
 		})
 	}
 }
+
+func TestEventUpdate(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermUpdate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
+		),
+	)
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Event
+		fetchResult     *types.Event
+		fetchErr        error
+		updateErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Updated",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEvent("entity1", "check1"),
+			fetchResult: types.FixtureEvent("entity1", "check1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Does Not Exist",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store Err on Update",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			updateErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewEventController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetEventByEntityCheck", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateEvent", mock.Anything, mock.Anything).
+				Return(tc.updateErr)
+
+			// Exec Query
+			err := actions.Update(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}

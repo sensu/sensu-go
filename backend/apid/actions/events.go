@@ -7,6 +7,13 @@ import (
 	"golang.org/x/net/context"
 )
 
+// eventUpdateFields whitelists fields allowed to be updated for Events
+var eventUpdateFields = []string{
+	"Timestamp",
+	"Entity",
+	"Check",
+}
+
 // EventController expose actions in which a viewer can perform.
 type EventController struct {
 	Store  store.EventStore
@@ -104,4 +111,39 @@ func (a EventController) Destroy(ctx context.Context, params QueryParams) error 
 	}
 
 	return NewErrorf(NotFound)
+}
+
+// Update updates an event.
+// It returns non-nil error if the new event is invalid, create permissions
+// do not exist, or an internal error occurs while updating the underlying
+// Store.
+func (a EventController) Update(ctx context.Context, event types.Event) error {
+	check := event.Check.Config
+	entity := event.Entity
+
+	// Adjust context
+	policy := a.Policy.WithContext(ctx)
+
+	// Check for existing
+	ev, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
+	if err != nil {
+		return NewError(InternalErr, err)
+	} else if ev == nil {
+		return NewErrorf(NotFound, check, entity)
+	}
+
+	// Verify viewer can make change
+	if ok := policy.CanUpdate(ev); !ok {
+		return NewErrorf(PermissionDenied, "update")
+	}
+
+	// Copy
+	copyFields(ev, &event, eventUpdateFields...)
+
+	// Persist
+	if err := a.Store.UpdateEvent(ctx, ev); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
 }
