@@ -62,8 +62,11 @@ message CheckConfig {
 	// ExtendedAttributes store serialized arbitrary JSON-encoded data
 	bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
 
+	// Sources indicates the name of the entity representing an external resource
+  string source = 13;
+
 	// CheckHooks is the list of check hooks for the check
-	repeated CheckHook check_hooks = 13 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
+	repeated CheckHook check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
 }
 
 message CheckHook {
