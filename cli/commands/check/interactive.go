@@ -25,6 +25,7 @@ type checkOpts struct {
 	Env           string
 	Org           string
 	Publish       string `survey:"publish"`
+	Source        string `survey:"source"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -42,6 +43,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Subscriptions = strings.Join(check.Subscriptions, ",")
 	opts.Handlers = strings.Join(check.Handlers, ",")
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
+	opts.Source = check.Source
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -52,6 +54,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 	publishBool, _ := flags.GetBool("publish")
 	opts.Publish = strconv.FormatBool(publishBool)
+	opts.Source, _ = flags.GetString("source")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -145,6 +148,14 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				return nil
 			},
 		},
+		{
+			Name: "source",
+			Prompt: &survey.Input{
+				Message: "Check Source:",
+				Default: opts.Source,
+				Help:    "the check source, used to create a proxy entity for an external resource",
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -162,4 +173,5 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 	check.Publish = opts.Publish == "true"
+	check.Source = opts.Source
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/sensu/sensu-go/cli"
@@ -57,6 +58,11 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printEntityToList(event *types.Event, writer io.Writer) {
+	statusHistory := []string{}
+	for _, entry := range event.Check.History {
+		statusHistory = append(statusHistory, fmt.Sprint(entry.Status))
+	}
+
 	cfg := &list.Config{
 		Title: fmt.Sprintf("%s - %s", event.Entity.ID, event.Check.Config.Name),
 		Rows: []*list.Row{
@@ -70,11 +76,15 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 			},
 			{
 				Label: "Output",
-				Value: event.Check.Output,
+				Value: strings.TrimSuffix(event.Check.Output, "\n"),
 			},
 			{
 				Label: "Status",
 				Value: strconv.Itoa(int(event.Check.Status)),
+			},
+			{
+				Label: "History",
+				Value: strings.Join(statusHistory, ","),
 			},
 			{
 				Label: "Timestamp",

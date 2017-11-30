@@ -74,8 +74,9 @@
   },
   "scripts": {
     "precommit": "lint-staged",
-    "postinstall": "yarn update-schema",
-    "prestart": "yarn update-schema && yarn compile-queries",
+    "postinstall": "yarn run precompile",
+    "prestart": "yarn precompile",
+    "pretest": "yarn precompile",
     "prettier": "./node_module/.bin/prettier --write src/**/*.js",
     "lint": "./node_modules/.bin/eslint src",
     "start": "node scripts/start.js",
@@ -83,7 +84,8 @@
     "test": "node scripts/test.js --env=jsdom",
     "quality": "yarn lint && yarn test",
     "compile-queries": "./node_modules/.bin/relay-compiler --src ./src --schema ./data/schema.json",
-    "update-schema": "go run scripts/updateSchema.go"
+    "update-schema": "go run scripts/updateSchema.go",
+    "precompile": "npm run update-schema && npm run compile-queries"
   },
   "jest": {
     "collectCoverageFrom": [

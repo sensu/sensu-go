@@ -18,6 +18,7 @@ var checkConfigUpdateFields = []string{
 	"Interval",
 	"Publish",
 	"RuntimeAssets",
+	"Source",
 	"Subscriptions",
 	"CheckHooks",
 }

@@ -8,6 +8,11 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// checkConfigUpdateFields whitelists fields allowed to be updated for CheckConfigs
+var entityUpdateFields = []string{
+	"Subscriptions",
+}
+
 // EntityController exposes actions in which a viewer can perform.
 type EntityController struct {
 	Store  store.EntityStore
@@ -83,4 +88,39 @@ func (c EntityController) Query(ctx context.Context) ([]*types.Entity, error) {
 	}
 
 	return results, nil
+}
+
+// Update validates and persists changes to a resource if viewer has access.
+func (c EntityController) Update(ctx context.Context, given types.Entity) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &given)
+	abilities := c.Policy.WithContext(ctx)
+
+	// Find existing entity
+	entity, err := c.Store.GetEntityByID(ctx, given.ID)
+	if err != nil {
+		return NewError(InternalErr, err)
+	} else if entity == nil {
+		return NewErrorf(NotFound)
+	}
+
+	// Verify viewer can make change
+	if yes := abilities.CanUpdate(entity); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Copy
+	copyFields(entity, &given, entityUpdateFields...)
+
+	// Validate
+	if err := entity.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist Changes
+	if serr := c.Store.UpdateEntity(ctx, entity); serr != nil {
+		return NewError(InternalErr, serr)
+	}
+
+	return nil
 }

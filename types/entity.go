@@ -7,6 +7,9 @@ import (
 const (
 	// EntityAgentClass is the name of the class given to agent entities.
 	EntityAgentClass = "agent"
+
+	// EntityProxyClass is the name of the class given to proxy entities.
+	EntityProxyClass = "proxy"
 )
 
 // Validate returns an error if the entity is invalid.

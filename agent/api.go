@@ -48,8 +48,8 @@ func addEvent(a *Agent) http.HandlerFunc {
 			return
 		}
 
-		// Make sure the event is valid
-		if err = validateEvent(a, event); err != nil {
+		// Prepare the event by mutating it as required so it passes validation
+		if err = prepareEvent(a, event); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

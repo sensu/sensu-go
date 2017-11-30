@@ -103,26 +103,29 @@ func TestReceiveLoop(t *testing.T) {
 	ta.Stop()
 }
 
-func TestReceiveTCP(t *testing.T) {
+func TestHandleTCPMessages(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := NewConfig()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 
-	err := ta.createListenSockets()
+	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
+	tcpClient, err := net.Dial("tcp", addr)
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	defer tcpClient.Close()
+	submittedEvent := types.FixtureEvent("foo", "check_cpu")
+	bytes, _ := json.Marshal(submittedEvent)
 
-	tcpClient.Write([]byte(`{"timestamp":123}`))
+	tcpClient.Write(bytes)
 	tcpClient.Close()
 
 	msg := <-ta.sendq
@@ -135,67 +138,35 @@ func TestReceiveTCP(t *testing.T) {
 		assert.FailNow("failed to unmarshal event json")
 	}
 
-	assert.NotEmpty(event.Entity)
-	assert.Equal(int64(123), event.Timestamp)
+	assert.NotNil(event.Entity)
+	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
+	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
 	ta.Stop()
 }
 
-func TestReceiveCheckTCP(t *testing.T) {
+func TestHandleUDPMessages(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := NewConfig()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 
-	err := ta.createListenSockets()
+	_, addr, err := ta.createListenSockets()
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
-	if err != nil {
-		assert.FailNow("failed to create TCP connection")
-	}
-
-	defer tcpClient.Close()
-
-	tcpClient.Write([]byte(`{"timestamp": 123, "check":{"config": {"name": "test"}, "status": 1}}`))
-	tcpClient.Close()
-
-	msg := <-ta.sendq
-	assert.NotEmpty(msg)
-	assert.Equal("event", msg.Type)
-
-	event := types.Event{}
-	check := &types.Check{Config: &types.CheckConfig{Name: "test"}, Status: 1}
-	err = json.Unmarshal(msg.Payload, &event)
-	if err != nil {
-		assert.FailNow("failed to unmarshal event json")
-	}
-
-	assert.NotEmpty(event.Entity)
-	assert.Equal(int64(123), event.Timestamp)
-	assert.Equal(check, event.Check)
-	ta.Stop()
-}
-
-func TestUDP(t *testing.T) {
-	assert := assert.New(t)
-	cfg := NewConfig()
-	ta := NewAgent(cfg)
-	err := ta.createListenSockets()
-	assert.NoError(err)
-	if err != nil {
-		assert.FailNow("createListenSockets() failed to run")
-	}
-
-	udpClient, err := net.Dial("tcp", "127.0.0.1:3030")
+	udpClient, err := net.Dial("udp", addr)
 	if err != nil {
 		assert.FailNow("failed to create UDP connection")
 	}
-	defer udpClient.Close()
 
-	udpClient.Write([]byte(`{"timestamp":123}`))
+	submittedEvent := types.FixtureEvent("bar", "check_mem")
+	bytes, _ := json.Marshal(submittedEvent)
+
+	udpClient.Write(bytes)
 	udpClient.Close()
 
 	msg := <-ta.sendq
@@ -208,8 +179,9 @@ func TestUDP(t *testing.T) {
 		assert.FailNow("Failed to unmarshal event json")
 	}
 
-	assert.NotEmpty(event.Entity)
-	assert.Equal(int64(123), event.Timestamp)
+	assert.NotNil(event.Entity)
+	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
+	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
 	ta.Stop()
 }
 
@@ -217,15 +189,17 @@ func TestReceivePingTCP(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := NewConfig()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 
-	err := ta.createListenSockets()
+	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
+	tcpClient, err := net.Dial("tcp", addr)
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
@@ -252,34 +226,37 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := NewConfig()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 
-	err := ta.createListenSockets()
+	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
 	}
 
-	var checkString string
-	for i := 0; i < 1500; i++ {
-		checkString += "a"
-	}
-
-	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
-	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
+	tcpClient, err := net.Dial("tcp", addr)
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
-	tcpClient.Write(chunkData[:5])
-	tcpClient.Write(chunkData[5:])
+
+	submittedEvent := types.FixtureEvent("baz", "check_disk")
+	bytes, _ := json.Marshal(submittedEvent)
+
+	tcpClient.Write(bytes[:5])
+	tcpClient.Write(bytes[5:])
 	tcpClient.Close()
 
 	msg := <-ta.sendq
 	assert.Equal("event", msg.Type)
+
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
-	assert.Equal(int64(123), event.Timestamp)
 	assert.NotNil(event.Entity)
+	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
+	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+
 	ta.Stop()
 }
 
@@ -287,9 +264,11 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := NewConfig()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 
-	err := ta.createListenSockets()
+	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
@@ -301,7 +280,7 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	}
 
 	chunkData := []byte(`{"timestamp":123, "check":{"output": "` + checkString + `"}}`)
-	tcpClient, err := net.Dial("tcp", "127.0.0.1:3030")
+	tcpClient, err := net.Dial("tcp", addr)
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
