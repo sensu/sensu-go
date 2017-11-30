@@ -32,9 +32,7 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 
 	// Custom
 	routes.path("subscriptions/{subscription}", r.list).Methods(http.MethodGet)
-	routes.path("subscriptions/{subscription}", r.list).Methods(http.MethodDelete)
-	routes.path("checks/{check}", r.destroy).Methods(http.MethodGet)
-	routes.path("checks/{check}", r.destroy).Methods(http.MethodDelete)
+	routes.path("checks/{check}", r.list).Methods(http.MethodGet)
 }
 
 func (r *SilencedRouter) list(req *http.Request) (interface{}, error) {
