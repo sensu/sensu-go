@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 check configuration
 - Flag to sensuctl configure allowing it to be configured non-interactively (usage:
 --non-interactive or -n)
+- New function SetField in package dynamic, for setting fields on types
+supporting extended attributes.
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
