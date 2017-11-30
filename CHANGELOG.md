@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Proxy entities are now dynamically created through the "Source" attribute of a
 check configuration
+
+### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
 be deleted at a time, regardless of wildcard presence for subscription or check.
 
