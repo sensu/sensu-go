@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -51,6 +52,48 @@ func TestAddEvent(t *testing.T) {
 
 			encoded, _ := json.Marshal(tc.event)
 			r, err := http.NewRequest("POST", "/events", bytes.NewBuffer(encoded))
+			assert.NoError(t, err)
+
+			router := mux.NewRouter()
+			registerRoutes(agent, router)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, r)
+
+			assert.Equal(t, tc.expectedResponse, w.Code)
+		})
+	}
+}
+
+func TestHealthz(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		expectedResponse int
+		closeConn        bool
+	}{
+		{
+			"healthz returns success",
+			http.StatusOK,
+			false,
+		},
+		{
+			"healthz returns failure",
+			http.StatusServiceUnavailable,
+			true,
+		},
+	}
+
+	for _, tc := range testCases {
+		testName := fmt.Sprintf("test agent %s", tc.desc)
+		transport := &mocktransport.MockTransport{}
+
+		t.Run(testName, func(t *testing.T) {
+			// need to figure out how to pass the mock transport into the agent
+			config := NewConfig()
+			agent := NewAgent(config)
+			agent.conn = transport
+			transport.On("Closed").Return(tc.closeConn)
+
+			r, err := http.NewRequest("GET", "/healthz", nil)
 			assert.NoError(t, err)
 
 			router := mux.NewRouter()

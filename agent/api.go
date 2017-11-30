@@ -34,6 +34,20 @@ func newServer(a *Agent) *http.Server {
 
 func registerRoutes(a *Agent, r *mux.Router) {
 	r.HandleFunc("/events", addEvent(a)).Methods(http.MethodPost)
+	r.HandleFunc("/healthz", healthz(a.conn)).Methods(http.MethodGet)
+}
+
+// healthz returns an OK status if the agent is up and connected to a backend.
+// If the backend connection is closed, it returns service unavailable.
+func healthz(conn transport.Transport) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if conn.Closed() {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("sensu backend unavailable"))
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	}
 }
 
 // addEvent accepts an event and send it to the backend over the event channel
