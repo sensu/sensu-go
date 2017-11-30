@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey"
-	"github.com/sensu/sensu-go/cli/validators"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
@@ -15,7 +14,7 @@ type silencedOpts struct {
 	Check           string `survey:"check"`
 	Subscription    string `survey:"subscription"`
 	Expire          string `survey:"expire"`
-	ExpireOnResolve string `survey:"expire_on_resolve"`
+	ExpireOnResolve bool   `survey:"expire_on_resolve"`
 	Creator         string
 	Reason          string `survey:"reason"`
 	Env             string
@@ -29,33 +28,31 @@ func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
 	s.Reason = o.Reason
 	s.Environment = o.Env
 	s.Organization = o.Org
-	s.ExpireOnResolve, err = validators.BoolString(o.ExpireOnResolve).Bool()
-	if err != nil {
-		return err
-	}
+	s.ExpireOnResolve = o.ExpireOnResolve
 	s.Expire, err = strconv.ParseInt(o.Expire, 10, 64)
 	return err
 }
 
-func must(x interface{}, err error) string {
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("%v", x)
-}
-
 func (o *silencedOpts) withFlags(flags *pflag.FlagSet) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			err = fmt.Errorf("error parsing flags: %v", e)
-		}
-	}()
-	o.Expire = must(flags.GetInt64("expire"))
-	o.ExpireOnResolve = must(flags.GetBool("expire-on-resolve"))
-	o.Reason = must(flags.GetString("reason"))
-	o.Subscription = must(flags.GetString("subscription"))
-	o.Check = must(flags.GetString("check"))
-	return nil
+	exp, err := flags.GetInt64("expire")
+	if err != nil {
+		return err
+	}
+	o.Expire = fmt.Sprintf("%d", exp)
+	o.ExpireOnResolve, err = flags.GetBool("expire-on-resolve")
+	if err != nil {
+		return err
+	}
+	o.Reason, err = flags.GetString("reason")
+	if err != nil {
+		return err
+	}
+	o.Subscription, err = flags.GetString("subscription")
+	if err != nil {
+		return err
+	}
+	o.Check, err = flags.GetString("check")
+	return err
 }
 
 func (o *silencedOpts) administerQuestionnaire(editing bool) error {
@@ -108,12 +105,11 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 		},
 		{
 			Name: "expire_on_resolve",
-			Prompt: &survey.Input{
+			Prompt: &survey.Confirm{
 				Message: "Expire on Resolve:",
-				Default: "false",
+				Default: false,
 				Help:    "Clear the silenced entry on resolution if true.",
 			},
-			Validate: validators.ValidateTrueFalse,
 		},
 		{
 			Name: "reason",

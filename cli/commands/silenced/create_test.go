@@ -46,8 +46,9 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("expire", "5")
 	cmd.Flags().Set("expire-on-resolve", "false")
+	cmd.Flags().Set("subscription", "weeklyworldnews")
 
-	out, err := test.RunCmd(cmd, []string{"subscription", "check"})
+	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
 	assert.Regexp("OK", out)
 }
@@ -62,8 +63,9 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("expire", "5")
 	cmd.Flags().Set("expire-on-resolve", "false")
+	cmd.Flags().Set("subscription", "weeklyworldnews")
 
-	out, err := test.RunCmd(cmd, []string{"subscription", "check"})
+	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
 	assert.Regexp("OK", out)
 }
@@ -78,8 +80,9 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	cmd := CreateCommand(cli)
 	cmd.Flags().Set("expire", "5")
 	cmd.Flags().Set("expire-on-resolve", "false")
+	cmd.Flags().Set("subscription", "weeklyworldnews")
 
-	out, err := test.RunCmd(cmd, []string{"subscription", "check"})
+	out, err := test.RunCmd(cmd, []string{})
 	require.Error(t, err)
 	assert.Equal("whoops", err.Error())
 	assert.Empty(out)
