@@ -1,6 +1,9 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // Validate returns an error if the CheckName and Subscription fields are not
 // provided.
@@ -18,4 +21,19 @@ func FixtureSilenced(checkName string) *Silenced {
 	return &Silenced{
 		Check: checkName,
 	}
+}
+
+// SilencedID returns the canonical ID for a silenced entry. It returns non-nil
+// error if both subscription and check are empty strings.
+func SilencedID(subscription, check string) (string, error) {
+	if subscription == "" && check == "" {
+		return "", errors.New("no subscription or check specified")
+	}
+	if subscription == "" {
+		subscription = "*"
+	}
+	if check == "" {
+		check = "*"
+	}
+	return fmt.Sprintf("%s:%s", subscription, check), nil
 }

@@ -11,6 +11,10 @@ check configuration
 - Flag to sensuctl configure allowing it to be configured non-interactively (usage:
 --non-interactive or -n)
 
+### Changed
+- Fixed a bug in how silenced entries were deleted. Only one silenced entry will
+be deleted at a time, regardless of wildcard presence for subscription or check.
+
 ## [2.0.0-alpha.8] - 2017-11-28
 ### Added
 - New "event delete" subcommand in sensuctl

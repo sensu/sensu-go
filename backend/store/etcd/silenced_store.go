@@ -37,39 +37,6 @@ func (s *etcdStore) DeleteSilencedEntryByID(ctx context.Context, silencedID stri
 	return err
 }
 
-// Delete silenced entries by subscription
-func (s *etcdStore) DeleteSilencedEntriesBySubscription(ctx context.Context, subscription string) error {
-	if subscription == "" {
-		return errors.New("must specify subscription")
-	}
-
-	_, err := s.kvc.Delete(ctx, getSilencedPath(ctx, subscription))
-	return err
-}
-
-// Delete silenced entries by a check name. This will remove any silenced key
-// containing the requested check name. Since we don't have the full prefix we
-// need to get all keys and filter by checkname, then delete them.
-func (s *etcdStore) DeleteSilencedEntriesByCheckName(ctx context.Context, checkName string) error {
-	if checkName == "" {
-		return errors.New("must specify check name")
-	}
-	resp, err := s.kvc.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
-	if err != nil {
-		return err
-	}
-
-	// iterate through response entries
-	// add anything with checkName == entry.Check to an array and return
-	for _, kv := range resp.Kvs {
-		_, err = s.kvc.Delete(ctx, getSilencedPath(ctx, string(kv.Key)))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Get all silenced entries
 func (s *etcdStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
 	resp, err := query(ctx, s, getSilencedPath)
