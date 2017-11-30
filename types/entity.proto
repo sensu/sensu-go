@@ -26,6 +26,9 @@ message Entity {
 	string environment = 9;
 	string organization = 10;
 	string user = 11;
+
+  // ExtendedAttributes store serialized arbitrary JSON-encoded data
+  bytes extended_attributes = 12;
 }
 
 // System contains information about the system that the Agent process
