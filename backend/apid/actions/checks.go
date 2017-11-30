@@ -1,11 +1,10 @@
 package actions
 
 import (
-	"fmt"
-
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"golang.org/x/net/context"
 )
 
@@ -166,16 +165,6 @@ func (a CheckController) Destroy(ctx context.Context, name string) error {
 	return nil
 }
 
-// TODO are we importing a function that does this already?
-func existsIn(name string, list []string) bool {
-	for _, str := range list {
-		if str == name {
-			return true
-		}
-	}
-	return false
-}
-
 // AddCheckHook adds an association between a hook and a check
 func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHook types.CheckHook) error {
 	return a.findAndUpdateCheckConfig(ctx, check, func(check *types.CheckConfig) error {
@@ -186,7 +175,7 @@ func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHo
 				hookList := check.CheckHooks[i].Hooks
 				// if the type already exists in the check's check hooks, only append the hook names provided
 				for _, h := range checkHook.Hooks {
-					if !existsIn(h, hookList) {
+					if !utilstrings.InArray(h, hookList) {
 						// only add hook names that don't already exist in list
 						hookList = append(hookList, h)
 					}
@@ -207,7 +196,6 @@ func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHo
 // RemoveCheckHook removes an association between a hook and a check
 func (a CheckController) RemoveCheckHook(ctx context.Context, checkName string, hookType string, hookName string) error {
 	return a.findAndUpdateCheckConfig(ctx, checkName, func(check *types.CheckConfig) error {
-		fmt.Println(checkName + hookType + hookName)
 		for i, r := range check.CheckHooks {
 			if r.Type == hookType {
 				hookList := check.CheckHooks[i].Hooks

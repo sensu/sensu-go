@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -87,7 +86,6 @@ func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	fmt.Println(params)
 	err := r.controller.RemoveCheckHook(req.Context(), params["id"], params["type"], params["hook"])
 	return nil, err
 }

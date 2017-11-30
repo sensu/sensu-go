@@ -64,15 +64,18 @@ func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("type", "t", "", "type associated with the hook")
+	cmd.Flags().StringP("hooks", "k", "", "comma separated list of hooks associated with the check")
 
 	// Mark flags are required for bash-completions
 	cmd.MarkFlagRequired("type")
+	cmd.MarkFlagRequired("hooks")
 
 	return cmd
 }
 
 func (opts *checkHookOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Type, _ = flags.GetString("type")
+	opts.Hooks, _ = flags.GetString("hooks")
 }
 
 func (opts *checkHookOpts) administerQuestionnaire() error {
