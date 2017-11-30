@@ -43,6 +43,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			if err := opts.Apply(&silenced); err != nil {
 				return err
 			}
+			if err := silenced.Validate(); err != nil {
+				return err
+			}
 			if err := cli.Client.CreateSilenced(&silenced); err != nil {
 				return err
 			}

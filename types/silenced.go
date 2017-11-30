@@ -13,12 +13,12 @@ func (s *Silenced) Validate() error {
 	}
 	if s.Subscription != "" {
 		if err := ValidateName(s.Subscription); err != nil {
-			return err
+			return fmt.Errorf("Subscription %s", err)
 		}
 	}
 	if s.Check != "" {
 		if err := ValidateName(s.Check); err != nil {
-			return err
+			return fmt.Errorf("Check %s", err)
 		}
 	}
 	return nil
