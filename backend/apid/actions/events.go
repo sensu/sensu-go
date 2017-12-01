@@ -113,10 +113,7 @@ func (a EventController) Destroy(ctx context.Context, params QueryParams) error 
 	return NewErrorf(NotFound)
 }
 
-// Update updates an event.
-// It returns non-nil error if the new event is invalid, create permissions
-// do not exist, or an internal error occurs while updating the underlying
-// Store.
+// Update updates the event indicated by the supplied entity and check.
 func (a EventController) Update(ctx context.Context, event types.Event) error {
 	check := event.Check.Config
 	entity := event.Entity
@@ -125,23 +122,69 @@ func (a EventController) Update(ctx context.Context, event types.Event) error {
 	policy := a.Policy.WithContext(ctx)
 
 	// Check for existing
-	ev, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
+	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
 	if err != nil {
 		return NewError(InternalErr, err)
-	} else if ev == nil {
+	} else if e == nil {
 		return NewErrorf(NotFound)
 	}
 
 	// Verify viewer can make change
-	if ok := policy.CanUpdate(ev); !ok {
+	if ok := policy.CanUpdate(e); !ok {
 		return NewErrorf(PermissionDenied, "update")
 	}
 
 	// Copy
-	copyFields(ev, &event, eventUpdateFields...)
+	copyFields(e, &event, eventUpdateFields...)
+
+	// Validate
+	if err := entity.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+	if err := check.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
 
 	// Persist
-	if err := a.Store.UpdateEvent(ctx, ev); err != nil {
+	if err := a.Store.UpdateEvent(ctx, e); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// Create creates the event indicated by the supplied entity and check.
+// If an event already exists for the entity and check, it updates that event.
+func (a EventController) Create(ctx context.Context, event types.Event) error {
+	check := event.Check.Config
+	entity := event.Entity
+
+	// Adjust context
+	policy := a.Policy.WithContext(ctx)
+
+	// Check for existing
+	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
+	if err != nil {
+		return NewError(InternalErr, err)
+	} else if e != nil {
+		a.Update(ctx, event)
+	}
+
+	// Verify permissions
+	if ok := policy.CanCreate(&event); !ok {
+		return NewErrorf(PermissionDenied, "create")
+	}
+
+	// Validate
+	if err := entity.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+	if err := check.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateEvent(ctx, &event); err != nil {
 		return NewError(InternalErr, err)
 	}
 
