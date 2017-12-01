@@ -141,5 +141,9 @@ type RoleAPIClient interface {
 
 // SilencedAPIClient client methods for silenced
 type SilencedAPIClient interface {
+	// CreateSilenced creates a new silenced entry from its input.
 	CreateSilenced(*types.Silenced) error
+
+	// DeleteSilenced deletes an existing silenced entry given its ID.
+	DeleteSilenced(id string) error
 }
