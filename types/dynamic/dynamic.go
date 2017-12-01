@@ -176,7 +176,10 @@ func GetField(v AttrGetter, name string) (interface{}, error) {
 		return nil, errors.New("dynamic: empty path specified")
 	}
 	extendedAttributes := v.GetExtendedAttributes()
-	extAttrPtr := &extendedAttributes[0]
+	var extAttrPtr *byte
+	if len(extendedAttributes) > 0 {
+		extAttrPtr = &extendedAttributes[0]
+	}
 	if s := string([]rune(name)[0]); strings.Title(s) == s {
 		// Exported fields are always upper-cased for the first rune
 		strukt := reflect.Indirect(reflect.ValueOf(v))
