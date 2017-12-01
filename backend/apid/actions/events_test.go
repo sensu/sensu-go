@@ -319,13 +319,11 @@ func TestEventDestroy(t *testing.T) {
 
 func TestEventUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermUpdate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
 		),
@@ -384,11 +382,10 @@ func TestEventUpdate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetEventByEntityCheck", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
+				On("GetEventByEntityCheck", tc.ctx, mock.Anything, mock.Anything).
+				Return(tc.argument, nil)
 			store.
-				On("UpdateEvent", mock.Anything, mock.Anything).
-				Return(tc.updateErr)
+				On("UpdateEvent", mock.Anything, mock.Anything).Return(tc.updateErr)
 
 			// Exec Query
 			err := actions.Update(tc.ctx, *tc.argument)
