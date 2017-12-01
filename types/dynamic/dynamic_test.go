@@ -227,6 +227,40 @@ func TestGetField(t *testing.T) {
 	}
 }
 
+func TestGetFieldEmptyBytes(t *testing.T) {
+	m := MyType{
+		Foo:   "hello",
+		Attrs: []byte(``),
+	}
+
+	testCases := []struct {
+		field     string
+		expected  interface{}
+		expectErr bool
+	}{
+		{
+			field:     "Foo",
+			expected:  "hello",
+			expectErr: false,
+		},
+		{
+			field:     "bar",
+			expected:  nil,
+			expectErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.field, func(t *testing.T) {
+			field, err := GetField(&m, tc.field)
+			assert.Equal(t, tc.expected, field)
+			if tc.expectErr {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestQueryGovaluateSimple(t *testing.T) {
 	m := &MyType{
 		Attrs: []byte(`{"hello":5}`),
