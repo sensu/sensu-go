@@ -64,8 +64,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
-	cmd.Flags().String("subscription", "", "silenced subscription")
-	cmd.Flags().String("check", "", "silenced check")
+	cmd.Flags().StringP("subscription", "s", "", "silenced subscription")
+	cmd.Flags().StringP("check", "c", "", "silenced check")
 
 	return cmd
 }
