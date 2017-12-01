@@ -6,6 +6,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -71,7 +72,7 @@ func printHookToList(r *types.HookConfig, writer io.Writer) {
 			},
 			{
 				Label: "Stdin?",
-				Value: strconv.FormatBool(r.Stdin),
+				Value: globals.BooleanStyleP(r.Stdin),
 			},
 			{
 				Label: "Organization",
