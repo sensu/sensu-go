@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEntityValidate(t *testing.T) {
@@ -33,4 +34,15 @@ func TestFixtureEntityIsValid(t *testing.T) {
 	e := FixtureEntity("entity")
 	assert.Equal(t, "entity", e.ID)
 	assert.NoError(t, e.Validate())
+}
+
+func TestEntityGet(t *testing.T) {
+	e := FixtureEntity("entity")
+	e.ID = "Test"
+	e.ExtendedAttributes = []byte(`{}`)
+
+	// Simple value
+	val, err := e.Get("ID")
+	require.NoError(t, err)
+	assert.EqualValues(t, "Test", val)
 }

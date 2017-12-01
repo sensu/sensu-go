@@ -2,6 +2,8 @@ package types
 
 import (
 	"errors"
+
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 const (
