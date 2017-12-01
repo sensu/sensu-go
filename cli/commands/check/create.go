@@ -69,7 +69,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
 	cmd.Flags().String("source", "", "the check source, used to create a proxy entity for an external resource")
 	cmd.Flags().BoolP("publish", "p", true, "publish check requests")
-	//TODO: make sure this comment makes sense
 	cmd.Flags().BoolP("stdin", "", false, "accept event data via STDIN")
 
 	// Mark flags are required for bash-completions
