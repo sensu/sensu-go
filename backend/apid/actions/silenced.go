@@ -7,12 +7,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-// SilencedMutator exposes actions in which a viewer can perform.
-type SilencedMutator interface {
-	Create(context.Context, types.Silenced) error
-	Update(context.Context, types.Silenced) error
-}
-
 // silencedUpdateFields whitelists fields allowed to be updated for Silences
 var silencedUpdateFields = []string{
 	"Expire",
@@ -85,18 +79,6 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 	ctx = addOrgEnvToContext(ctx, &newSilence)
 	abilities := a.Policy.WithContext(ctx)
 
-	// Check for existing
-	if e, serr := a.Store.GetSilencedEntryByID(ctx, newSilence.ID); serr != nil {
-		return NewError(InternalErr, serr)
-	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanCreate(&newSilence); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Populate newSilence.ID with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the
 	// validator will return an error when attempting to update it in the store.
@@ -111,6 +93,18 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 	// Validate
 	if err := newSilence.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
+	}
+
+	// Check for existing
+	if e, serr := a.Store.GetSilencedEntryByID(ctx, newSilence.ID); serr != nil {
+		return NewError(InternalErr, serr)
+	} else if e != nil {
+		return NewErrorf(AlreadyExistsErr)
+	}
+
+	// Verify viewer can make change
+	if yes := abilities.CanCreate(&newSilence); !yes {
+		return NewErrorf(PermissionDenied)
 	}
 
 	// Persist

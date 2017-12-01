@@ -20,6 +20,7 @@ var qs = []*survey.Question{
         Name:     "name",
         Prompt:   &survey.Input{Message: "What is your name?"},
         Validate: survey.Required,
+        Transform: survey.Title,
     },
     {
         Name: "color",
@@ -188,7 +189,7 @@ q := &survey.Question{
     Prompt: &survey.Input{Message: "Hello world validation"},
     Validate: func (val interface{}) error {
         // since we are validating an Input, the assertion will always succeed
-        if str, ok := val.(string) ; ok && len(str) > 10 {
+        if str, ok := val.(string) ; !ok || len(str) > 10 {
             return errors.New("This response cannot be longer than 10 characters.")
         }
     }
@@ -288,8 +289,8 @@ in `survey/core`:
 
 ## Versioning
 
-This project tries to maintain semantic GitHub releases as closely as possible. And relies on [gopkg.in](http://labix.org/gopkg.in)
-to maintain those releasees. Importing v1 of survey could look something like
+This project tries to maintain semantic GitHub releases as closely as possible and relies on [gopkg.in](http://labix.org/gopkg.in)
+to maintain those releases. Importing version 1 of survey would look like:
 
 ```golang
 package main

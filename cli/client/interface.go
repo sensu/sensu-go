@@ -18,6 +18,7 @@ type APIClient interface {
 	OrganizationAPIClient
 	RoleAPIClient
 	UserAPIClient
+	SilencedAPIClient
 }
 
 // AuthenticationAPIClient client methods for authenticating
@@ -123,4 +124,9 @@ type RoleAPIClient interface {
 
 	AddRule(role string, rule *types.Rule) error
 	RemoveRule(role string, ruleType string) error
+}
+
+// SilencedAPIClient client methods for silenced
+type SilencedAPIClient interface {
+	CreateSilenced(*types.Silenced) error
 }

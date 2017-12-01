@@ -8,10 +8,18 @@ import (
 // Validate returns an error if the CheckName and Subscription fields are not
 // provided.
 func (s *Silenced) Validate() error {
-	checkNameErr := ValidateName(s.Check)
-	subscriptionErr := ValidateName(s.Subscription)
-	if checkNameErr != nil && subscriptionErr != nil {
+	if (s.Subscription == "" && s.Check == "") || (s.Subscription == "*" && s.Check == "*") {
 		return errors.New("must provide check or subscription")
+	}
+	if s.Subscription != "" && s.Subscription != "*" {
+		if err := ValidateName(s.Subscription); err != nil {
+			return fmt.Errorf("Subscription %s", err)
+		}
+	}
+	if s.Check != "" && s.Check != "*" {
+		if err := ValidateName(s.Check); err != nil {
+			return fmt.Errorf("Check %s", err)
+		}
 	}
 	return nil
 }
