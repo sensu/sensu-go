@@ -124,3 +124,32 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 	}
 	return nil
 }
+
+type silencedID struct {
+	Subscription string
+	Check        string
+}
+
+func askID() (string, error) {
+	questions := []*survey.Question{
+		{
+			Name: "Subscription",
+			Prompt: &survey.Input{
+				Message: "Subscription:",
+			},
+		},
+		{
+			Name: "Check",
+			Prompt: &survey.Input{
+				Message: "Check:",
+			},
+		},
+	}
+
+	var id silencedID
+
+	if err := survey.Ask(questions, &id); err != nil {
+		return "", err
+	}
+	return types.SilencedID(id.Subscription, id.Check)
+}

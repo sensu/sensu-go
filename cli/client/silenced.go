@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -22,5 +23,17 @@ func (client *RestClient) CreateSilenced(silenced *types.Silenced) error {
 		return unmarshalError(res)
 	}
 
+	return nil
+}
+
+// DeleteSilenced deletes a silenced entry.
+func (client *RestClient) DeleteSilenced(id string) error {
+	res, err := client.R().Delete(fmt.Sprintf("/silenced/%s", id))
+	if err != nil {
+		return err
+	}
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
 	return nil
 }
