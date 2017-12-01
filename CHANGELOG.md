@@ -12,6 +12,7 @@ check configuration
 --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
+- Automatically append agent:agentID subscription to agents
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
