@@ -33,6 +33,11 @@ func (e *Entity) Validate() error {
 	return nil
 }
 
+// SetExtendedAttributes sets the serialized ExtendedAttributes of the entity.
+func (e *Entity) SetExtendedAttributes(b []byte) {
+	e.ExtendedAttributes = b
+}
+
 // FixtureEntity returns a testing fixture for an Entity object.
 func FixtureEntity(id string) *Entity {
 	return &Entity{
