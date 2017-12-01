@@ -301,11 +301,10 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 }
 
 func TestAddAgentSubscription(t *testing.T) {
-	entity := types.FixtureEntity("entity1")
-	entity.Subscriptions = []string{"subscription"}
+	subscriptions := []string{"subscription"}
 
-	addAgentSubscription(entity)
+	subscriptions = addAgentSubscription("entity1", subscriptions)
 
 	expectedSubscriptions := []string{"subscription", "agent:entity1"}
-	assert.Equal(t, expectedSubscriptions, entity.Subscriptions)
+	assert.Equal(t, expectedSubscriptions, subscriptions)
 }
