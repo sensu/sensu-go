@@ -16,21 +16,18 @@ option (gogoproto.testgen_all) = true;
 // Error describes an error captured while processing an event in Sensu's
 // pipeline.
 message Error {
-  // Name is the unique identifier for an asset
+  // Name is the unique identifier for an asset.
   string name = 1;
 
-  // Environment indicates to which env the error is associated with
-  string environment = 2;
-
-  // Organization indicates to which org the error is associated with
-  string organization = 3;
-
-  // Message is the details associated with the error
-  string message = 4;
+  // Message is the details associated with the error.
+  string message = 2;
 
   // Component refers to the component in-which the error occurred.
-  string component = 5;
+  string component = 3;
+
+  // Timestamp refers to the instant in-which the error occurred.
+  int64 timestamp = 4;
 
   // Event refers to the event that was being processed when the error occurred.
-  Event event = 6 [(gogoproto.nullable) = false];
+  Event event = 5 [(gogoproto.nullable) = false];
 }
