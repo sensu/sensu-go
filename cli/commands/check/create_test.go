@@ -65,6 +65,23 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestCreateCommandRunEClosureWithDepsSTDIN(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
+
+	cmd := CreateCommand(cli)
+	cmd.Flags().Set("command", "echo 'heyhey'")
+	cmd.Flags().Set("runtime-assets", "ruby22")
+	cmd.Flags().Set("stdin", "true")
+	out, err := test.RunCmd(cmd, []string{"can-holla"})
+
+	assert.Regexp("OK", out)
+	assert.Nil(err)
+}
+
 func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	assert := assert.New(t)
 
