@@ -1,14 +1,12 @@
-package check
+package hook
 
 import (
 	"io"
 	"strconv"
-	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -18,7 +16,7 @@ import (
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
-		Short:        "list checks",
+		Short:        "list hooks",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			org := cli.Config.Organization()
@@ -26,8 +24,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				org = "*"
 			}
 
-			// Fetch checks from the API
-			results, err := cli.Client.ListChecks(org)
+			// Fetch hooks from the API
+			results, err := cli.Client.ListHooks(org)
 			if err != nil {
 				return err
 			}
@@ -51,51 +49,30 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
-				return check.Name
+				hook, _ := data.(types.HookConfig)
+				return hook.Name
 			},
 		},
 		{
 			Title: "Command",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
-				return check.Command
+				hook, _ := data.(types.HookConfig)
+				return hook.Command
 			},
 		},
 		{
-			Title: "Interval",
+			Title: "Timeout",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
-				interval := strconv.FormatUint(uint64(check.Interval), 10)
-				return interval
+				hook, _ := data.(types.HookConfig)
+				timeout := strconv.FormatUint(uint64(hook.Timeout), 10)
+				return timeout
 			},
 		},
 		{
-			Title: "Subscriptions",
+			Title: "Stdin?",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
-				return strings.Join(check.Subscriptions, ",")
-			},
-		},
-		{
-			Title: "Handlers",
-			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
-				return strings.Join(check.Handlers, ",")
-			},
-		},
-		{
-			Title: "Assets",
-			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
-				return strings.Join(check.RuntimeAssets, ",")
-			},
-		},
-		{
-			Title: "Publish?",
-			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
-				return globals.BooleanStyleP(check.Publish)
+				hook, _ := data.(types.HookConfig)
+				return strconv.FormatBool(hook.Stdin)
 			},
 		},
 	})

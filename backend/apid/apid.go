@@ -148,6 +148,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 		routers.NewEventsRouter(store),
 		routers.NewGraphQLRouter(store),
 		routers.NewHandlersRouter(store),
+		routers.NewHooksRouter(store),
 		routers.NewMutatorsRouter(store),
 		routers.NewOrganizationsRouter(store),
 		routers.NewRolesRouter(store),

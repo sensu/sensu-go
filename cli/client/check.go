@@ -2,9 +2,17 @@ package client
 
 import (
 	"encoding/json"
+	"path"
 
 	"github.com/sensu/sensu-go/types"
 )
+
+const checksBasePath = "/checks"
+
+func checksPath(ext ...string) string {
+	components := append([]string{checksBasePath}, ext...)
+	return path.Join(components...)
+}
 
 // CreateCheck creates new check on configured Sensu instance
 func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {
@@ -90,4 +98,34 @@ func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
 
 	err = json.Unmarshal(res.Body(), &checks)
 	return checks, err
+}
+
+// AddCheckHook associates an existing hook with an existing check
+func (client *RestClient) AddCheckHook(check string, checkHook *types.CheckHook) error {
+	key := checksPath(check, "hooks", checkHook.Type)
+	res, err := client.R().SetBody(checkHook).Put(key)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
+
+// RemoveCheckHook removes an association between an existing hook and an existing check
+func (client *RestClient) RemoveCheckHook(checkName string, checkHookType string, hookName string) error {
+	path := checksPath(checkName, "hooks", checkHookType, "hook", hookName)
+	res, err := client.R().Delete(path)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
 }

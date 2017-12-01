@@ -64,6 +64,17 @@ message CheckConfig {
 
 	// Sources indicates the name of the entity representing an external resource
   string source = 13;
+
+	// CheckHooks is the list of check hooks for the check
+	repeated CheckHook check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
+}
+
+message CheckHook {
+	// Hooks is the list of hooks for the check hook
+	repeated string hooks = 1 [(gogoproto.jsontag) = "hooks"];
+
+	// Type indicates the type or response code for the check hook
+	string type = 2;
 }
 
 // A Check is a check specification and optionally the results of the check's

@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// A HookRequest represents a request to execute a hook
+message HookRequest {
+	// Config is the specification of a hook.
+	HookConfig config = 1 [(gogoproto.nullable) = true];
+}
+
+// HookConfig is the specification of a hook
+message HookConfig {
+	// Name is the unique identifier for a hook
+	string name = 1;
+
+	// Command is the command to be executed
+	string command = 2;
+
+	// Timeout is the timeout, in seconds, at which the hook has to run
+	uint32 timeout = 3;
+
+	// Stdin indicates if hook requests have stdin enabled
+	bool stdin = 4;
+
+	// Environment indicates to which env a hook belongs to
+	string environment = 5;
+
+	// Organization indicates to which org a hook belongs to
+	string organization = 6;
+}
+
+// A Hook is a hook specification and optionally the results of the hook's
+// execution.
+message Hook {
+	// Config is the specification of a hook
+	HookConfig config = 1 [(gogoproto.nullable) = true];
+
+	// Duration of execution
+	double duration = 2;
+
+	// Executed describes the time in which the hook request was executed
+	int64 executed = 3;
+
+	// Issued describes the time in which the hook request was issued
+	int64 issued = 4;
+
+	// Output from the execution of Command
+	string output = 5;
+
+	// Status is the exit status code produced by the hook
+	int32 status = 6;
+}

@@ -15,6 +15,7 @@ It is generated from these files:
 	event.proto
 	filter.proto
 	handler.proto
+	hook.proto
 	keepalive.proto
 	metrics.proto
 	mutator.proto
@@ -30,6 +31,7 @@ It has these top-level messages:
 	Tokens
 	CheckRequest
 	CheckConfig
+	CheckHook
 	Check
 	CheckHistory
 	Entity
@@ -46,6 +48,9 @@ It has these top-level messages:
 	EventFilterWhenTimeRange
 	Handler
 	HandlerSocket
+	HookRequest
+	HookConfig
+	Hook
 	KeepaliveRecord
 	Metrics
 	Mutator

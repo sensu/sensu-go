@@ -42,6 +42,9 @@ const (
 	// RuleTypeHandler access control for handler objects
 	RuleTypeHandler = "handlers"
 
+	// RuleTypeHook access control for hook objects
+	RuleTypeHook = "hooks"
+
 	// RuleTypeMutator access control for mutator objects
 	RuleTypeMutator = "mutators"
 

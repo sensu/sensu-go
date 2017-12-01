@@ -34,6 +34,9 @@ type Store interface {
 	// HandlerStore provides an interface for managing events handlers
 	HandlerStore
 
+	// HookConfigStore provides an interface for managing hooks configuration
+	HookConfigStore
+
 	// KeepaliveStore provides an interface for managing entities keepalives
 	KeepaliveStore
 
@@ -110,6 +113,26 @@ type CheckConfigStore interface {
 
 	// UpdateCheckConfig creates or updates a given check's configuration.
 	UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error
+}
+
+// HookConfigStore provides methods for managing hooks configuration
+type HookConfigStore interface {
+	// DeleteHookConfigByName deletes a hook's configuration using the given name
+	// and the organization and environment stored in ctx.
+	DeleteHookConfigByName(ctx context.Context, name string) error
+
+	// GetHookConfigs returns all hooks configurations in the given ctx's
+	// organization and environment. A nil slice with no error is returned if none
+	// were found.
+	GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error)
+
+	// GetHookConfigByName returns a hook's configuration using the given name
+	// and the organization and environment stored in ctx. The resulting hook is
+	// nil if none was found.
+	GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error)
+
+	// UpdateHookConfig creates or updates a given hook's configuration.
+	UpdateHookConfig(ctx context.Context, check *types.HookConfig) error
 }
 
 // EntityStore provides methods for managing entities
