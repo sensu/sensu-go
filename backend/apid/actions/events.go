@@ -129,7 +129,7 @@ func (a EventController) Update(ctx context.Context, event types.Event) error {
 	if err != nil {
 		return NewError(InternalErr, err)
 	} else if ev == nil {
-		return NewErrorf(NotFound, check, entity)
+		return NewErrorf(NotFound)
 	}
 
 	// Verify viewer can make change
