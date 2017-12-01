@@ -33,6 +33,11 @@ func (e *Entity) Validate() error {
 	return nil
 }
 
+// Get implements govaluate.Parameters
+func (e *Entity) Get(name string) (interface{}, error) {
+	return dynamic.GetField(e, name)
+}
+
 // SetExtendedAttributes sets the serialized ExtendedAttributes of the entity.
 func (e *Entity) SetExtendedAttributes(b []byte) {
 	e.ExtendedAttributes = b
