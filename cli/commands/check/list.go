@@ -98,6 +98,13 @@ func printToTable(results interface{}, writer io.Writer) {
 				return globals.BooleanStyleP(check.Publish)
 			},
 		},
+		{
+			Title: "Stdin?",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				return strconv.FormatBool(check.Stdin)
+			},
+		},
 	})
 
 	table.Render(writer, results)

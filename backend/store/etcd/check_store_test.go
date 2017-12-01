@@ -33,6 +33,7 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.Equal(t, check.Interval, retrieved.Interval)
 		assert.Equal(t, check.Subscriptions, retrieved.Subscriptions)
 		assert.Equal(t, check.Command, retrieved.Command)
+		assert.Equal(t, check.Stdin, retrieved.Stdin)
 		ext, err := retrieved.Get("foo")
 		require.NoError(t, err)
 		assert.Equal(t, "bar", ext)
