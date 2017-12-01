@@ -13,6 +13,7 @@ import (
 
 const (
 	intervalDefault = "60"
+	stdinDefault    = "false"
 )
 
 type checkOpts struct {
@@ -26,6 +27,7 @@ type checkOpts struct {
 	Org           string
 	Publish       string `survey:"publish"`
 	Source        string `survey:"source"`
+	Stdin         string `survey:"stdin"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -44,6 +46,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Handlers = strings.Join(check.Handlers, ",")
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
 	opts.Source = check.Source
+	opts.Stdin = stdinDefault
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -55,6 +58,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	publishBool, _ := flags.GetBool("publish")
 	opts.Publish = strconv.FormatBool(publishBool)
 	opts.Source, _ = flags.GetString("source")
+	opts.Stdin, _ = flags.GetString("stdin")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -156,6 +160,14 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Help:    "the check source, used to create a proxy entity for an external resource",
 			},
 		},
+		{
+			Name: "stdin",
+			Prompt: &survey.Input{
+				Message: "Check STDIN:",
+				Default: opts.Stdin,
+				Help:    "If check accepts JSON event data to the check command's stdin. Defaults to false.",
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -163,6 +175,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 
 func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	interval, _ := strconv.ParseUint(opts.Interval, 10, 32)
+	stdin, _ := strconv.ParseBool(opts.Stdin)
 
 	check.Name = opts.Name
 	check.Environment = opts.Env
@@ -174,4 +187,5 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 	check.Publish = opts.Publish == "true"
 	check.Source = opts.Source
+	check.Stdin = stdin
 }
