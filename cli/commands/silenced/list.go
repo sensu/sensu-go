@@ -1,13 +1,13 @@
 package silenced
 
 import (
-	"fmt"
 	"io"
 	"time"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -68,24 +68,21 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title:       "Expire",
-			ColumnStyle: table.PrimaryTextStyle,
+			Title: "Expire",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
 				return (time.Duration(silenced.Expire) * time.Second).String()
 			},
 		},
 		{
-			Title:       "ExpireOnResolve",
-			ColumnStyle: table.PrimaryTextStyle,
+			Title: "ExpireOnResolve",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
-				return fmt.Sprintf("%t", silenced.ExpireOnResolve)
+				return globals.BooleanStyleP(silenced.ExpireOnResolve)
 			},
 		},
 		{
-			Title:       "Creator",
-			ColumnStyle: table.PrimaryTextStyle,
+			Title: "Creator",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
 				return silenced.Creator
@@ -100,8 +97,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title:       "Reason",
-			ColumnStyle: table.PrimaryTextStyle,
+			Title: "Reason",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
 				return silenced.Reason
