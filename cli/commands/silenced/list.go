@@ -17,7 +17,7 @@ import (
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
-		Short:        "list silenceds",
+		Short:        "list silenced entries",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			org := cli.Config.Organization()
@@ -32,11 +32,11 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			silenced, err := flg.GetString("silenced")
+			check, err := flg.GetString("check")
 			if err != nil {
 				return err
 			}
-			results, err := cli.Client.ListSilenceds(org, sub, silenced)
+			results, err := cli.Client.ListSilenceds(org, sub, check)
 			if err != nil {
 				return err
 			}
@@ -51,8 +51,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	flags := cmd.Flags()
 	helpers.AddFormatFlag(flags)
 	helpers.AddAllOrganization(flags)
-	flags.StringP("subscription", "s", "", "only list for this silenced subscription")
-	flags.StringP("silenced", "c", "", "only list for this silenced silenced")
+	flags.StringP("subscription", "s", "", "name of the silenced subscription")
+	flags.StringP("check", "c", "", "name of the silenced check")
 
 	return cmd
 }

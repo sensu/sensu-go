@@ -23,7 +23,7 @@ func TestListCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
-	assert.Regexp("silenceds", cmd.Short)
+	assert.Regexp("silenced entries", cmd.Short)
 }
 
 func TestListCommandRunEClosure(t *testing.T) {
