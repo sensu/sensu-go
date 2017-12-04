@@ -344,7 +344,7 @@ func TestEventUpdate(t *testing.T) {
 		argument        *types.Event
 		fetchResult     *types.Event
 		fetchErr        error
-		updateErr       error
+		busErr          error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
@@ -362,15 +362,6 @@ func TestEventUpdate(t *testing.T) {
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err on Update",
-			ctx:             defaultCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
-			fetchResult:     types.FixtureEvent("entity1", "check1"),
-			updateErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
 		},
 		{
 			name:            "Store Err on Fetch",
@@ -397,6 +388,15 @@ func TestEventUpdate(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
 		},
+		{
+			name:            "Message Bus Error",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			busErr:          errors.New("where's the wizard"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -411,8 +411,8 @@ func TestEventUpdate(t *testing.T) {
 			store.
 				On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateEvent", mock.Anything, mock.Anything).Return(tc.updateErr)
+
+			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
 
 			// Exec Query
 			err := actions.Update(tc.ctx, *tc.argument)
@@ -453,7 +453,6 @@ func TestEventCreate(t *testing.T) {
 		argument        *types.Event
 		fetchResult     *types.Event
 		fetchErr        error
-		createErr       error
 		busErr          error
 		expectedErr     bool
 		expectedErrCode ErrCode
@@ -470,14 +469,6 @@ func TestEventCreate(t *testing.T) {
 			argument:    types.FixtureEvent("entity1", "check1"),
 			fetchResult: types.FixtureEvent("entity1", "check1"),
 			expectedErr: false,
-		},
-		{
-			name:            "Store Err on Create",
-			ctx:             defaultCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
-			createErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
 		},
 		{
 			name:            "Store Err on Fetch",
@@ -523,8 +514,6 @@ func TestEventCreate(t *testing.T) {
 			store.
 				On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateEvent", mock.Anything, mock.Anything).Return(tc.createErr)
 
 			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
 

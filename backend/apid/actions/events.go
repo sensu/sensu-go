@@ -145,8 +145,8 @@ func (a EventController) Update(ctx context.Context, event types.Event) error {
 		return NewErrorf(PermissionDenied, "update")
 	}
 
-	// Persist
-	if err := a.Store.UpdateEvent(ctx, e); err != nil {
+	// Publish to event pipeline
+	if err := a.Bus.Publish(messaging.TopicEventRaw, &event); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -180,11 +180,7 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 		return NewErrorf(PermissionDenied, "create")
 	}
 
-	// Persist
-	if err := a.Store.UpdateEvent(ctx, &event); err != nil {
-		return NewError(InternalErr, err)
-	}
-
+	// Publish to event pipeline
 	if err := a.Bus.Publish(messaging.TopicEventRaw, &event); err != nil {
 		return NewError(InternalErr, err)
 	}
