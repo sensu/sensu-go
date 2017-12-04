@@ -27,7 +27,7 @@ func (c *MockClient) FetchSilenced(subscription, check string) (*types.Silenced,
 }
 
 // ListSilenceds for use with mock lib
-func (c *MockClient) ListSilenceds(org string) ([]types.Silenced, error) {
-	args := c.Called(org)
+func (c *MockClient) ListSilenceds(org, sub, check string) ([]types.Silenced, error) {
+	args := c.Called(org, sub, check)
 	return args.Get(0).([]types.Silenced), args.Error(1)
 }

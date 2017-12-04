@@ -12,7 +12,7 @@ import (
 
 func TestSilencedStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		silenced := types.FixtureSilenced("checkname")
+		silenced := types.FixtureSilenced("*:checkname")
 		silenced.Organization = "default"
 		silenced.Environment = "default"
 		silenced.Subscription = "subscription"

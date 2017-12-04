@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"path"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -36,4 +37,49 @@ func (client *RestClient) DeleteSilenced(id string) error {
 		return unmarshalError(res)
 	}
 	return nil
+}
+
+// ListSilenceds fetches all silenced entries from configured Sensu instance
+func (client *RestClient) ListSilenceds(org, sub, check string) ([]types.Silenced, error) {
+	if sub != "" && check != "" {
+		silenced, err := client.FetchSilenced(sub, check)
+		if err != nil {
+			return nil, err
+		}
+		return []types.Silenced{*silenced}, nil
+	}
+	endpoint := "/silenced"
+	if sub != "" {
+		endpoint = path.Join(endpoint, "subscriptions", sub)
+	} else if check != "" {
+		endpoint = path.Join(endpoint, "checks", check)
+	}
+	resp, err := client.R().SetQueryParam("org", org).Get(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() >= 400 {
+		return nil, unmarshalError(resp)
+	}
+
+	var result []types.Silenced
+	err = json.Unmarshal(resp.Body(), &result)
+	return result, err
+}
+
+// FetchSilenced fetches a silenced entry from configured Sensu instance
+func (client *RestClient) FetchSilenced(sub, check string) (*types.Silenced, error) {
+	id, err := types.SilencedID(sub, check)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.R().Get(path.Join("/silenced", id))
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() >= 400 {
+		return nil, unmarshalError(resp)
+	}
+	var result types.Silenced
+	return &result, json.Unmarshal(resp.Body(), &result)
 }
