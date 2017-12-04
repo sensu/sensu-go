@@ -147,4 +147,11 @@ type SilencedAPIClient interface {
 
 	// DeleteSilenced deletes an existing silenced entry given its ID.
 	DeleteSilenced(id string) error
+
+	// ListSilenceds lists all silenced entries, optionally constraining by
+	// subscription or check.
+	ListSilenceds(org, subscription, check string) ([]types.Silenced, error)
+
+	// FetchSilenced fetches the silenced entry by ID.
+	FetchSilenced(id string) (*types.Silenced, error)
 }

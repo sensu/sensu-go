@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -16,11 +17,13 @@ func TestNewEventController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	eventController := NewEventController(store)
+	bus := &mockbus.MockBus{}
+	eventController := NewEventController(store, bus)
 
 	assert.NotNil(eventController)
 	assert.Equal(store, eventController.Store)
 	assert.NotNil(eventController.Policy)
+	assert.Equal(bus, eventController.Bus)
 }
 
 func TestEventQuery(t *testing.T) {
@@ -100,7 +103,8 @@ func TestEventQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		eventController := NewEventController(store)
+		bus := &mockbus.MockBus{}
+		eventController := NewEventController(store, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -196,7 +200,8 @@ func TestEventFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		eventController := NewEventController(store)
+		bus := &mockbus.MockBus{}
+		eventController := NewEventController(store, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -291,7 +296,8 @@ func TestEventDestroy(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		eventController := NewEventController(store)
+		bus := &mockbus.MockBus{}
+		eventController := NewEventController(store, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -310,6 +316,217 @@ func TestEventDestroy(t *testing.T) {
 			inferErr, ok := err.(Error)
 			if ok {
 				assert.Equal(tc.expectedErrCode, inferErr.Code)
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestEventUpdate(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermUpdate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
+		),
+	)
+
+	badEvent := types.FixtureEvent("entity1", "check1")
+	badEvent.Check.Config.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Event
+		fetchResult     *types.Event
+		fetchErr        error
+		busErr          error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Updated",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEvent("entity1", "check1"),
+			fetchResult: types.FixtureEvent("entity1", "check1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Does Not Exist",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badEvent,
+			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:            "Message Bus Error",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			busErr:          errors.New("where's the wizard"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		bus := &mockbus.MockBus{}
+		actions := NewEventController(store, bus)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+
+			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
+
+			// Exec Query
+			err := actions.Update(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
+func TestEventCreate(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate, types.RulePermUpdate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
+		),
+	)
+
+	badEvent := types.FixtureEvent("entity1", "check1")
+	badEvent.Check.Config.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Event
+		fetchResult     *types.Event
+		fetchErr        error
+		busErr          error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEvent("entity1", "check1"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEvent("entity1", "check1"),
+			fetchResult: types.FixtureEvent("entity1", "check1"),
+			expectedErr: false,
+		},
+		{
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badEvent,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:            "Message Bus Error",
+			ctx:             defaultCtx,
+			argument:        types.FixtureEvent("entity1", "check1"),
+			busErr:          errors.New("where's the wizard"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		bus := &mockbus.MockBus{}
+		actions := NewEventController(store, bus)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+
+			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
+
+			// Exec Query
+			err := actions.Create(tc.ctx, *tc.argument)
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
 			} else {
 				assert.NoError(err)
 			}

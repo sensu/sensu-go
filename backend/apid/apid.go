@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -22,6 +23,7 @@ type APId struct {
 	wg         *sync.WaitGroup
 	errChan    chan error
 	httpServer *http.Server
+	MessageBus messaging.MessageBus
 
 	BackendStatus func() types.StatusMap
 	Host          string
@@ -36,6 +38,10 @@ func (a *APId) Start() error {
 		return errors.New("no store found")
 	}
 
+	if a.MessageBus == nil {
+		return errors.New("no message bus found")
+	}
+
 	a.stopping = make(chan struct{}, 1)
 	a.running = &atomic.Value{}
 	a.wg = &sync.WaitGroup{}
@@ -45,7 +51,7 @@ func (a *APId) Start() error {
 	router := mux.NewRouter()
 	registerUnauthenticatedResources(router, a.BackendStatus)
 	registerAuthenticationResources(router, a.Store)
-	registerRestrictedResources(router, a.Store)
+	registerRestrictedResources(router, a.Store, a.MessageBus)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -129,7 +135,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store) {
+func registerRestrictedResources(router *mux.Router, store store.Store, bus messaging.MessageBus) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
@@ -145,7 +151,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 		routers.NewEntitiesRouter(store),
 		routers.NewEnvironmentsRouter(store),
 		routers.NewEventFiltersRouter(store),
-		routers.NewEventsRouter(store),
+		routers.NewEventsRouter(store, bus),
 		routers.NewGraphQLRouter(store),
 		routers.NewHandlersRouter(store),
 		routers.NewHooksRouter(store),
