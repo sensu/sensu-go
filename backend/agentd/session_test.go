@@ -98,12 +98,3 @@ func TestBadSessionConfig(t *testing.T) {
 	assert.Nil(t, session)
 	assert.Error(t, err)
 }
-
-func TestAddEntitySubscription(t *testing.T) {
-	subscriptions := []string{"subscription"}
-
-	subscriptions = addEntitySubscription("entity1", subscriptions)
-
-	expectedSubscriptions := []string{"subscription", "entity:entity1"}
-	assert.Equal(t, expectedSubscriptions, subscriptions)
-}
