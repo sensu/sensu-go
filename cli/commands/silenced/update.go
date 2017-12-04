@@ -36,6 +36,10 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			if err := silenced.Validate(); err != nil {
+				return err
+			}
+
 			return cli.Client.UpdateSilenced(silenced)
 		},
 	}
