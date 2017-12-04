@@ -196,6 +196,8 @@ func (s *Session) Start() error {
 	go s.recvPump()
 	go s.subPump()
 
+	s.cfg.Subscriptions = addEntitySubscription(s.cfg.AgentID, s.cfg.Subscriptions)
+
 	for _, sub := range s.cfg.Subscriptions {
 		topic := messaging.SubscriptionTopic(s.cfg.Organization, s.cfg.Environment, sub)
 		logger.Debugf("Subscribing to topic %s", topic)
@@ -244,4 +246,9 @@ func (s *Session) handleEvent(payload []byte) error {
 		return err
 	}
 	return s.bus.Publish(messaging.TopicEventRaw, event)
+}
+
+func addEntitySubscription(entityID string, subscriptions []string) []string {
+	entityKey := fmt.Sprintf("entity:%s", entityID)
+	return append(subscriptions, entityKey)
 }

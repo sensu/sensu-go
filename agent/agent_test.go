@@ -299,12 +299,3 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	tcpClient.Close()
 	ta.Stop()
 }
-
-func TestAddAgentSubscription(t *testing.T) {
-	subscriptions := []string{"subscription"}
-
-	subscriptions = addAgentSubscription("entity1", subscriptions)
-
-	expectedSubscriptions := []string{"subscription", "agent:entity1"}
-	assert.Equal(t, expectedSubscriptions, subscriptions)
-}

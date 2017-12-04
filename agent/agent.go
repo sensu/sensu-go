@@ -127,8 +127,6 @@ type Agent struct {
 
 // NewAgent creates a new Agent and returns a pointer to it.
 func NewAgent(config *Config) *Agent {
-	config.Subscriptions = addAgentSubscription(config.AgentID, config.Subscriptions)
-
 	agent := &Agent{
 		config:          config,
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
@@ -143,11 +141,6 @@ func NewAgent(config *Config) *Agent {
 	agent.assetManager = assetmanager.New(config.CacheDir, agent.getAgentEntity())
 
 	return agent
-}
-
-func addAgentSubscription(agentID string, subscriptions []string) []string {
-	agentKey := fmt.Sprintf("agent:%s", agentID)
-	return append(subscriptions, agentKey)
 }
 
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
