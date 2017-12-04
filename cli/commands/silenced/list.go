@@ -89,8 +89,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title:       "Check",
-			ColumnStyle: table.PrimaryTextStyle,
+			Title: "Check",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
 				return silenced.Check
@@ -104,8 +103,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title:       "Subscription",
-			ColumnStyle: table.PrimaryTextStyle,
+			Title: "Subscription",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
 				return silenced.Subscription

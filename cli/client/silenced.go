@@ -83,3 +83,19 @@ func (client *RestClient) FetchSilenced(id string) (*types.Silenced, error) {
 	var result types.Silenced
 	return &result, json.Unmarshal(resp.Body(), &result)
 }
+
+// UpdateSilenced updates a silenced entry from configured Sensu instance
+func (client *RestClient) UpdateSilenced(s *types.Silenced) error {
+	b, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+	resp, err := client.R().SetBody(b).Patch(path.Join("/silenced", s.ID))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode() >= 400 {
+		return unmarshalError(resp)
+	}
+	return nil
+}

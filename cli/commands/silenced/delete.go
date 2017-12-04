@@ -5,7 +5,6 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -21,29 +20,9 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				cmd.Help()
 				return nil
 			}
-			var id string
-			if len(args) > 0 {
-				id = args[0]
-			}
-
-			if len(id) == 0 {
-				sub, err := cmd.Flags().GetString("subscription")
-				if err != nil {
-					return err
-				}
-
-				check, err := cmd.Flags().GetString("check")
-				if err != nil {
-					return err
-				}
-
-				id, err = types.SilencedID(sub, check)
-				if err != nil {
-					id, err = askID()
-					if err != nil {
-						return err
-					}
-				}
+			id, err := getID(cmd, args)
+			if err != nil {
+				return err
 			}
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
@@ -53,12 +32,11 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			err := cli.Client.DeleteSilenced(id)
-			if err != nil {
+			if err := cli.Client.DeleteSilenced(id); err != nil {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "OK")
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}
