@@ -94,8 +94,9 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 		return true
 	}
 
-	// Filter the event if it is not an incident
-	if !incident {
+	// Filter the event if it is not an incident and the event has not just
+	// transitioned from being an incident to a healthy state
+	if !incident && !p.isResolution(event) {
 		return true
 	}
 
@@ -116,6 +117,15 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 	return true
 }
 
+// hasMetrics determines if an event has metric data.
+func (p *Pipelined) hasMetrics(event *types.Event) bool {
+	if event.Metrics != nil {
+		return true
+	}
+
+	return false
+}
+
 // isIncident determines if an event indicates an incident.
 func (p *Pipelined) isIncident(event *types.Event) bool {
 	if event.Check.Status != 0 {
@@ -125,9 +135,11 @@ func (p *Pipelined) isIncident(event *types.Event) bool {
 	return false
 }
 
-// hasMetrics determines if an event has metric data.
-func (p *Pipelined) hasMetrics(event *types.Event) bool {
-	if event.Metrics != nil {
+// isResolution returns true if an event has just transitionned from an incident
+func (p *Pipelined) isResolution(event *types.Event) bool {
+	// Try to retrieve the previous status in the check history and verify if it
+	// was a non-zero status, therefore indicating a resolution
+	if len(event.Check.History) > 0 && event.Check.History[len(event.Check.History)-1].Status != 0 {
 		return true
 	}
 

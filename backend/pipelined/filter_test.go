@@ -40,6 +40,7 @@ func TestPipelinedFilter(t *testing.T) {
 	testCases := []struct {
 		name     string
 		status   int32
+		history  []types.CheckHistory
 		metrics  *types.Metrics
 		silenced []string
 		filters  []string
@@ -125,6 +126,28 @@ func TestPipelinedFilter(t *testing.T) {
 			filters:  nil,
 			expected: true,
 		},
+		{
+			name:   "Not Transitioned From Incident To Healthy",
+			status: 0,
+			history: []types.CheckHistory{
+				types.CheckHistory{Status: 0},
+			},
+			metrics:  nil,
+			silenced: []string{},
+			filters:  nil,
+			expected: true,
+		},
+		{
+			name:   "Transitioned From Incident To Healthy",
+			status: 0,
+			history: []types.CheckHistory{
+				types.CheckHistory{Status: 1},
+			},
+			metrics:  nil,
+			silenced: []string{},
+			filters:  nil,
+			expected: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -137,8 +160,9 @@ func TestPipelinedFilter(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			event := &types.Event{
 				Check: &types.Check{
-					Status: tc.status,
-					Output: "foo",
+					Status:  tc.status,
+					History: tc.history,
+					Output:  "foo",
 				},
 				Entity: &types.Entity{
 					Environment:  "default",
@@ -150,6 +174,37 @@ func TestPipelinedFilter(t *testing.T) {
 
 			filtered := p.filterEvent(handler, event)
 			assert.Equal(t, tc.expected, filtered)
+		})
+	}
+}
+
+func TestPipelinedHasMetrics(t *testing.T) {
+	p := &Pipelined{}
+
+	testCases := []struct {
+		name     string
+		metrics  *types.Metrics
+		expected bool
+	}{
+		{
+			name:     "Not Metrics",
+			metrics:  nil,
+			expected: false,
+		},
+		{
+			name:     "Metrics",
+			metrics:  &types.Metrics{},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := &types.Event{
+				Metrics: tc.metrics,
+			}
+			metrics := p.hasMetrics(event)
+			assert.Equal(t, tc.expected, metrics)
 		})
 	}
 }
@@ -192,22 +247,33 @@ func TestPipelinedIsIncident(t *testing.T) {
 	}
 }
 
-func TestPipelinedHasMetrics(t *testing.T) {
+func TestPipelinedIsResolution(t *testing.T) {
 	p := &Pipelined{}
 
 	testCases := []struct {
 		name     string
-		metrics  *types.Metrics
+		history  []types.CheckHistory
 		expected bool
 	}{
 		{
-			name:     "Not Metrics",
-			metrics:  nil,
+			name:     "check has no history",
+			history:  []types.CheckHistory{types.CheckHistory{}},
 			expected: false,
 		},
 		{
-			name:     "Metrics",
-			metrics:  &types.Metrics{},
+			name: "check has not transitioned",
+			history: []types.CheckHistory{
+				types.CheckHistory{Status: 1},
+				types.CheckHistory{Status: 0},
+			},
+			expected: false,
+		},
+		{
+			name: "check has just transitioned",
+			history: []types.CheckHistory{
+				types.CheckHistory{Status: 0},
+				types.CheckHistory{Status: 1},
+			},
 			expected: true,
 		},
 	}
@@ -215,10 +281,12 @@ func TestPipelinedHasMetrics(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			event := &types.Event{
-				Metrics: tc.metrics,
+				Check: &types.Check{
+					History: tc.history,
+				},
 			}
-			metrics := p.hasMetrics(event)
-			assert.Equal(t, tc.expected, metrics)
+			resolution := p.isResolution(event)
+			assert.Equal(t, tc.expected, resolution)
 		})
 	}
 }
