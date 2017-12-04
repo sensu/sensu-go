@@ -70,8 +70,8 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
-	cmd.Flags().StringP("subscription", "s", "*", "only list for this silenced subscription")
-	cmd.Flags().StringP("check", "c", "*", "only list for this silenced check")
+	cmd.Flags().StringP("subscription", "s", "*", "name of the silenced subscription")
+	cmd.Flags().StringP("check", "c", "*", "name of the silenced check")
 
 	return cmd
 
