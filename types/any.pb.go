@@ -22,6 +22,7 @@
 		organization.proto
 		rbac.proto
 		silenced.proto
+		time_window.proto
 		tls.proto
 		user.proto
 
@@ -43,9 +44,6 @@
 		Error
 		Event
 		EventFilter
-		EventFilterWhenAttributes
-		EventFilterWhenDays
-		EventFilterWhenTimeRange
 		Handler
 		HandlerSocket
 		HookRequest
@@ -58,6 +56,9 @@
 		Rule
 		Role
 		Silenced
+		TimeWindowWhen
+		TimeWindowDays
+		TimeWindowTimeRange
 		TLSOptions
 		User
 */
