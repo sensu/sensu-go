@@ -428,7 +428,7 @@ func TestEventUpdate(t *testing.T) {
 func TestEventCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
+			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate, types.RulePermUpdate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(

@@ -53,16 +53,6 @@ func (r *EventsRouter) destroy(req *http.Request) (interface{}, error) {
 	return nil, r.controller.Destroy(req.Context(), params)
 }
 
-func (r *EventsRouter) update(req *http.Request) (interface{}, error) {
-	event := types.Event{}
-	if err := unmarshalBody(req, &event); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Update(req.Context(), event)
-	return event, err
-}
-
 func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	event := types.Event{}
 	if err := unmarshalBody(req, &event); err != nil {

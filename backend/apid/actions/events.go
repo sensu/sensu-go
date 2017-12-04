@@ -121,6 +121,11 @@ func (a EventController) Update(ctx context.Context, event types.Event) error {
 	// Adjust context
 	policy := a.Policy.WithContext(ctx)
 
+	// Validate
+	if err := event.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
 	// Check for existing
 	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
 	if err != nil {
@@ -129,20 +134,12 @@ func (a EventController) Update(ctx context.Context, event types.Event) error {
 		return NewErrorf(NotFound)
 	}
 
-	// Verify viewer can make change
-	if ok := policy.CanUpdate(e); !ok {
-		return NewErrorf(PermissionDenied, "update")
-	}
-
 	// Copy
 	copyFields(e, &event, eventUpdateFields...)
 
-	// Validate
-	if err := entity.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-	if err := check.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
+	// Verify viewer can make change
+	if ok := policy.CanUpdate(e); !ok {
+		return NewErrorf(PermissionDenied, "update")
 	}
 
 	// Persist
@@ -162,25 +159,22 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 	// Adjust context
 	policy := a.Policy.WithContext(ctx)
 
+	// Validate
+	if err := event.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
 	// Check for existing
 	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
 	if err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
-		a.Update(ctx, event)
+		return a.Update(ctx, event)
 	}
 
 	// Verify permissions
 	if ok := policy.CanCreate(&event); !ok {
 		return NewErrorf(PermissionDenied, "create")
-	}
-
-	// Validate
-	if err := entity.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-	if err := check.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
 	}
 
 	// Persist
