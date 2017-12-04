@@ -45,6 +45,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				if err != nil {
 					id, err = askID()
 				}
+				if err != nil {
+					return err
+				}
 			}
 			r, err := cli.Client.FetchSilenced(id)
 			if err != nil {
