@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -15,9 +16,9 @@ type EventsRouter struct {
 }
 
 // NewEventsRouter instantiates new events controller
-func NewEventsRouter(store store.EventStore) *EventsRouter {
+func NewEventsRouter(store store.EventStore, bus messaging.MessageBus) *EventsRouter {
 	return &EventsRouter{
-		controller: actions.NewEventController(store),
+		controller: actions.NewEventController(store, bus),
 	}
 }
 

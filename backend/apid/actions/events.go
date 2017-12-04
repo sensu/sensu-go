@@ -2,6 +2,7 @@ package actions
 
 import (
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
@@ -18,13 +19,15 @@ var eventUpdateFields = []string{
 type EventController struct {
 	Store  store.EventStore
 	Policy authorization.EventPolicy
+	Bus    messaging.MessageBus
 }
 
 // NewEventController returns new EventController
-func NewEventController(store store.EventStore) EventController {
+func NewEventController(store store.EventStore, bus messaging.MessageBus) EventController {
 	return EventController{
 		Store:  store,
 		Policy: authorization.Events,
+		Bus:    bus,
 	}
 }
 
@@ -179,6 +182,10 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 
 	// Persist
 	if err := a.Store.UpdateEvent(ctx, &event); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	if err := a.Bus.Publish(messaging.TopicEventRaw, &event); err != nil {
 		return NewError(InternalErr, err)
 	}
 
