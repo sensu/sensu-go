@@ -12,6 +12,9 @@ check configuration
 --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
+- Add silenced command to sensuctl for silencing checks and subscriptions.
+- Add healthz endpoint to agent api for checking agent liveness.
+- Add ability to pass JSON event data to check command STDIN.
 - Add the time.InWindow & time.InWindows functions to support time windows, used
 in filters and check subdue
 

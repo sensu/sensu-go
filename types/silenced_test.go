@@ -7,13 +7,11 @@ import (
 )
 
 func TestFixtureSilenced(t *testing.T) {
-	s := FixtureSilenced("test_check")
-	s.ID = "test_subscription:test_check"
+	s := FixtureSilenced("test_subscription:test_check")
 	s.Expire = 60
 	s.ExpireOnResolve = true
 	s.Creator = "creator@example.com"
 	s.Reason = "test reason"
-	s.Subscription = "test_subscription"
 	s.Organization = "default"
 	s.Environment = "default"
 	assert.NotNil(t, s)
