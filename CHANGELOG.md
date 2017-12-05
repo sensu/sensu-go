@@ -13,6 +13,8 @@ check configuration
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
 - Add silenced command to sensuctl for silencing checks and subscriptions.
+- Add healthz endpoint to agent api for checking agent liveness.
+- Add ability to pass JSON event data to check command STDIN.
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
