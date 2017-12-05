@@ -12,6 +12,7 @@ check configuration
 --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
+- Add silenced command to sensuctl for silencing checks and subscriptions.
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
