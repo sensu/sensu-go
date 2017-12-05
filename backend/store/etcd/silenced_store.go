@@ -170,9 +170,7 @@ func (s *etcdStore) arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.S
 		if err != nil {
 			return nil, err
 		}
-		if ttl.TTL > 0 {
-			silencedEntry.Expire = ttl.TTL
-		}
+		silencedEntry.Expire = ttl.TTL
 		silencedArray[i] = silencedEntry
 	}
 	return silencedArray, nil

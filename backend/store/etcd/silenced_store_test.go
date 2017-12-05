@@ -65,8 +65,8 @@ func TestSilencedStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
 		assert.Equal(t, "subscription:*", entry.ID)
-		// Entries without expirations should return zero
-		assert.Zero(t, entry.Expire)
+		// Entries without expirations should return -1
+		assert.Equal(t, int64(-1), entry.Expire)
 
 		// Delete silenced entry by id
 		err = store.DeleteSilencedEntryByID(ctx, silenced.ID)
