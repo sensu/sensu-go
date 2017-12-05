@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -81,6 +82,10 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 			{
 				Label: "Runtime Assets",
 				Value: strings.Join(r.RuntimeAssets, ", "),
+			},
+			{
+				Label: "Hooks",
+				Value: globals.FormatCheckHooks(r.CheckHooks),
 			},
 			{
 				Label: "Publish?",
