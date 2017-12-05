@@ -175,3 +175,11 @@ required = ["github.com/shirou/w32"]
 [[constraint]]
   branch = "master"
   name = "github.com/shirou/w32"
+
+[[constraint]]
+  branch = "type-descriptions-hacks"
+  name = "github.com/jamesdphillips/graphql"
+
+[[constraint]]
+  name = "github.com/dave/jennifer"
+  version = "0.15.0"

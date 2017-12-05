@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
+	graphql "github.com/sensu/sensu-go/backend/apid/graphqlschema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
