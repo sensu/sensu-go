@@ -16,6 +16,8 @@ supporting extended attributes.
 - Add silenced command to sensuctl for silencing checks and subscriptions.
 - Add healthz endpoint to agent api for checking agent liveness.
 - Add ability to pass JSON event data to check command STDIN.
+- Add POST /events endpoint to manually create, update, and resolve events.
+- Add "event resolve" command to sensuctl to manually resolve events.
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
