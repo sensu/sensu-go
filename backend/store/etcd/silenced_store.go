@@ -43,8 +43,7 @@ func (s *etcdStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, 
 	if err != nil {
 		return nil, err
 	}
-
-	silencedArray, err := arraySilencedEntries(resp)
+	silencedArray, err := s.arraySilencedEntries(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +60,7 @@ func (s *etcdStore) GetSilencedEntriesBySubscription(ctx context.Context, subscr
 		return nil, err
 	}
 
-	silencedArray, err := arraySilencedEntries(resp)
+	silencedArray, err := s.arraySilencedEntries(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +104,7 @@ func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) (*types
 	if err != nil {
 		return nil, err
 	}
-	silencedArray, err := arraySilencedEntries(resp)
+	silencedArray, err := s.arraySilencedEntries(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +125,6 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	if err != nil {
 		return err
 	}
-
 	var req clientv3.Op
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(silenced.Organization, silenced.Environment)), ">", 0)
 	if silenced.Expire > 0 {
@@ -142,7 +140,6 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	if err != nil {
 		return err
 	}
-
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the silenced entry %s in environment %s/%s",
@@ -157,17 +154,24 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 
 // arraySilencedEntries is a helper function to unmarshal entries from json and return
 // them as an array
-func arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
+func (s *etcdStore) arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
 	if len(resp.Kvs) == 0 {
 		return []*types.Silenced{}, nil
 	}
-
 	silencedArray := make([]*types.Silenced, len(resp.Kvs))
 	for i, kv := range resp.Kvs {
-		silencedEntry := &types.Silenced{}
-		err := json.Unmarshal(kv.Value, silencedEntry)
+		leaseID := clientv3.LeaseID(kv.Lease)
+		ttl, err := s.client.TimeToLive(context.TODO(), leaseID)
 		if err != nil {
 			return nil, err
+		}
+		silencedEntry := &types.Silenced{}
+		err = json.Unmarshal(kv.Value, silencedEntry)
+		if err != nil {
+			return nil, err
+		}
+		if ttl.TTL > 0 {
+			silencedEntry.Expire = ttl.TTL
 		}
 		silencedArray[i] = silencedEntry
 	}
