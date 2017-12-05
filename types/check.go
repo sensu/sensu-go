@@ -177,6 +177,9 @@ func FixtureCheckRequest(id string) *CheckRequest {
 		Assets: []Asset{
 			*FixtureAsset("ruby-2-4-2"),
 		},
+		Hooks: []HookConfig{
+			*FixtureHookConfig("hook1"),
+		},
 	}
 }
 
@@ -191,6 +194,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Command:       "command",
 		Handlers:      []string{},
 		RuntimeAssets: []string{"ruby-2-4-2"},
+		CheckHooks:    []CheckHook{*FixtureCheckHook("checkhook")},
 		Environment:   "default",
 		Organization:  "default",
 		Publish:       true,
@@ -217,5 +221,13 @@ func FixtureCheck(id string) *Check {
 		Duration: 1.0,
 		History:  history,
 		Config:   config,
+	}
+}
+
+// FixtureCheckHook returns a fixture for a CheckHook object.
+func FixtureCheckHook(hookName string) *CheckHook {
+	return &CheckHook{
+		Hooks: []string{hookName},
+		Type:  "non-zero",
 	}
 }
