@@ -124,6 +124,8 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
 	}
 
+	cfg.Subscriptions = addEntitySubscription(cfg.AgentID, cfg.Subscriptions)
+
 	session, err := NewSession(cfg, transport.NewTransport(conn), a.MessageBus, a.Store)
 	if err != nil {
 		logger.Error("failed to create session: ", err.Error())
@@ -137,4 +139,9 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func addEntitySubscription(entityID string, subscriptions []string) []string {
+	entityKey := fmt.Sprintf("entity:%s", entityID)
+	return append(subscriptions, entityKey)
 }

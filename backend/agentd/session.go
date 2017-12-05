@@ -235,6 +235,8 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive contains invalid timestamp")
 	}
 
+	keepalive.Entity.Subscriptions = addEntitySubscription(keepalive.Entity.ID, keepalive.Entity.Subscriptions)
+
 	return s.bus.Publish(messaging.TopicKeepalive, keepalive)
 }
 
@@ -243,5 +245,6 @@ func (s *Session) handleEvent(payload []byte) error {
 	if err := json.Unmarshal(payload, event); err != nil {
 		return err
 	}
+	event.Entity.Subscriptions = addEntitySubscription(event.Entity.ID, event.Entity.Subscriptions)
 	return s.bus.Publish(messaging.TopicEventRaw, event)
 }
