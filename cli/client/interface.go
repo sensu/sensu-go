@@ -153,4 +153,7 @@ type SilencedAPIClient interface {
 
 	// FetchSilenced fetches the silenced entry by ID.
 	FetchSilenced(id string) (*types.Silenced, error)
+
+	// UpdateSilenced updates an existing silenced entry.
+	UpdateSilenced(*types.Silenced) error
 }

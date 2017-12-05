@@ -44,7 +44,7 @@ func TestInfoCommandRunMissingArgs(t *testing.T) {
 
 	cli := newCLI()
 	cmd := InfoCommand(cli)
-	out, err := test.RunCmd(cmd, []string{})
+	out, err := test.RunCmd(cmd, []string{"wrong", "stuff"})
 
 	require.NoError(t, err)
 	assert.NotEmpty(out)

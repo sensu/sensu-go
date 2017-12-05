@@ -24,30 +24,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				return nil
 			}
 
-			var id string
-			if len(args) > 0 {
-				// Fetch handlers from API
-				id = args[0]
-			} else {
-				sub, err := cmd.Flags().GetString("subscription")
-				if err != nil {
-					return err
-				}
-				check, err := cmd.Flags().GetString("check")
-				if err != nil {
-					return err
-				}
-				if sub == "*" && check == "*" {
-					cmd.Help()
-					return nil
-				}
-				id, err = types.SilencedID(sub, check)
-				if err != nil {
-					id, err = askID()
-				}
-				if err != nil {
-					return err
-				}
+			id, err := getID(cmd, args)
+			if err != nil {
+				return err
 			}
 			r, err := cli.Client.FetchSilenced(id)
 			if err != nil {
