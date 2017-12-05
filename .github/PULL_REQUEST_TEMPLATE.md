@@ -15,10 +15,15 @@ Is there anything the reviewer should specifically look at? Are you unsure of an
 
 ## Were there any complications while making this change?
 
-If anything went awry while working on this change or if you ran into systemic issues preventing progress, please leave feedback on those issues here. Examples might include: 
+If anything went awry while working on this change or if you ran into systemic issues preventing progress, please leave feedback on those issues here. Examples might include:
 
-- refactoring was required 
+- refactoring was required
 - interfaces were unclear
 - it was difficult to get the information you needed to complete the issue
 
 Feel free to edit this portion of the PR once the review is complete to add any comments about the review process itself.
+
+
+## Is this a new and complete feature?
+
+Did you update CHANGELOG.md, if applicable?
