@@ -92,10 +92,6 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 
 	// Retrieve the subject of the JWT, which represents the logged on user, in
 	// order to set it as the creator of the silenced entry
-	// claims := jwt.GetClaimsFromContext(ctx)
-	// if claims != nil && claims.Subject != "" {
-	// 	newSilence.Creator = claims.Subject
-	// }
 	if actor, ok := ctx.Value(types.AuthorizationActorKey).(authorization.Actor); ok {
 		newSilence.Creator = actor.Name
 	}
