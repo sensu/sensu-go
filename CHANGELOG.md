@@ -2,20 +2,23 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+and this project adheres to [Semantic
+Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
 - Proxy entities are now dynamically created through the "Source" attribute of a
 check configuration
-- Flag to sensuctl configure allowing it to be configured non-interactively (usage:
---non-interactive or -n)
+- Flag to sensuctl configure allowing it to be configured non-interactively
+(usage: --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
 be deleted at a time, regardless of wildcard presence for subscription or check.
+- Events that transitioned from incidents to a healthy state are no longer
+filtered by the pipeline
 
 ## [2.0.0-alpha.8] - 2017-11-28
 ### Added
