@@ -6,65 +6,60 @@ import (
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestResolveCommand(t *testing.T) {
-	cli := test.NewMockCLI()
-	cmd := ResolveCommand(cli)
+	testCases := []struct {
+		args           []string
+		fetchResponse  error
+		updateResponse error
+		expectedOutput string
+		expectError    bool
+	}{
+		{[]string{}, nil, nil, "Usage", true},
+		{[]string{"foo", "bar"}, nil, nil, "", false},
+		{[]string{"foo", "bar"}, fmt.Errorf("error"), nil, "", true},
+		{[]string{"foo", "bar"}, nil, fmt.Errorf("error"), "", true},
+	}
 
-	assert.NotNil(t, cmd, "cmd should be returned")
-	assert.NotNil(t, cmd.RunE, "cmd should be able to be executed")
-	assert.Regexp(t, "resolve", cmd.Use)
-	assert.Regexp(t, "event", cmd.Short)
-}
+	for _, tc := range testCases {
+		name := ""
+		if len(tc.args) > 0 {
+			name = tc.args[0]
+		}
 
-func TestResolveCommandRunEClosure(t *testing.T) {
-	cli := test.NewMockCLI()
-	cli.Client.(*client.MockClient).
-		On("ResolveEvent", "foo", "check_foo").
-		Return(nil)
+		testName := fmt.Sprintf(
+			"resolve the event %s",
+			name,
+		)
+		t.Run(testName, func(t *testing.T) {
+			event := types.FixtureEvent("entity", "check")
+			cli := test.NewMockCLI()
 
-	cmd := ResolveCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
+			client := cli.Client.(*client.MockClient)
+			client.On(
+				"FetchEvent",
+				"foo", "bar",
+			).Return(event, tc.fetchResponse)
 
-	assert.NotEmpty(t, out)
-	assert.Contains(t, out, "OK")
-	assert.Nil(t, err)
-}
+			client.On(
+				"ResolveEvent",
+				mock.Anything,
+			).Return(tc.updateResponse)
 
-func TestResolveCommandRunMissingArgs(t *testing.T) {
-	cli := test.NewMockCLI()
-	cmd := ResolveCommand(cli)
-	out, err := test.RunCmd(cmd, []string{})
+			cmd := ResolveCommand(cli)
+			out, err := test.RunCmd(cmd, tc.args)
 
-	assert.NotEmpty(t, out)
-	assert.Contains(t, out, "Usage")
-	assert.NotNil(t, err)
-}
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 
-func TestResolveCommandRunEClosureWithErr(t *testing.T) {
-	cli := test.NewMockCLI()
-	cli.Client.(*client.MockClient).
-		On("ResolveEvent", "foo", "check_foo").
-		Return(fmt.Errorf("error"))
-
-	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
-	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
-
-	assert.NotNil(t, err)
-	assert.Equal(t, "error", err.Error())
-	assert.Empty(t, out)
-}
-
-func TestResolveCommandRunEFailConfirm(t *testing.T) {
-	assert := assert.New(t)
-
-	cli := test.NewMockCLI()
-	cmd := ResolveCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
-
-	assert.Contains(out, "Canceled")
-	assert.NoError(err)
+			assert.Regexp(t, tc.expectedOutput, out)
+		})
+	}
 }
