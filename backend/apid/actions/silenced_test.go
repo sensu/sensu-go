@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -206,6 +207,9 @@ func TestSilencedCreate(t *testing.T) {
 	wrongPermsCtx := testutil.NewContext(
 		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermRead),
 	)
+	actorCtx := testutil.NewContext(
+		testutil.ContextWithActor("actorID", types.FixtureRuleWithPerms(types.RuleTypeSilenced, types.RulePermCreate)),
+	)
 
 	badSilence := types.FixtureSilenced("*:silence1")
 	badSilence.Check = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
@@ -219,6 +223,7 @@ func TestSilencedCreate(t *testing.T) {
 		createErr       error
 		expectedErr     bool
 		expectedErrCode ErrCode
+		expectedCreator string
 	}{
 		{
 			name:        "Created",
@@ -264,6 +269,13 @@ func TestSilencedCreate(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
 		},
+		{
+			name:            "Creator",
+			ctx:             actorCtx,
+			argument:        types.FixtureSilenced("*:silence1"),
+			expectedErr:     false,
+			expectedCreator: "actorID",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -279,7 +291,16 @@ func TestSilencedCreate(t *testing.T) {
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
-				Return(tc.createErr)
+				Return(tc.createErr).
+				Run(func(args mock.Arguments) {
+					if tc.expectedCreator != "" {
+						bytes, _ := json.Marshal(args[1])
+						entry := types.Silenced{}
+						_ = json.Unmarshal(bytes, &entry)
+
+						assert.Equal(tc.expectedCreator, entry.Creator)
+					}
+				})
 
 			// Exec Query
 			err := actions.Create(tc.ctx, *tc.argument)
