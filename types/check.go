@@ -194,7 +194,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Command:       "command",
 		Handlers:      []string{},
 		RuntimeAssets: []string{"ruby-2-4-2"},
-		CheckHooks:    []CheckHook{*FixtureCheckHook("checkhook")},
+		CheckHooks:    []CheckHook{*FixtureCheckHook("hook1")},
 		Environment:   "default",
 		Organization:  "default",
 		Publish:       true,
