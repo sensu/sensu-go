@@ -82,6 +82,7 @@ type EventAPIClient interface {
 
 	// DeleteEvent deletes the event identified by entity, check.
 	DeleteEvent(entity, check string) error
+	ResolveEvent(*types.Event) error
 }
 
 // HandlerAPIClient client methods for handlers
