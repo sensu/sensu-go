@@ -32,9 +32,11 @@ message TimeWindowDays {
 
 // TimeWindowTimeRange defines the time ranges of a time
 message TimeWindowTimeRange {
-	// Begin is the time which the time window should begin
+	// Begin is the time which the time window should begin, in the format
+	// '3:00PM', which satisfies the time.Kitchen format
 	string begin = 1 [(gogoproto.jsontag) = "begin"];
 
-	// End is the time which the filter should end
+	// End is the time which the filter should end, in the format '3:00PM', which
+	// satisfies the time.Kitchen format
 	string end = 2 [(gogoproto.jsontag) = "end"];
 }

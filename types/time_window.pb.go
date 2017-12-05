@@ -108,9 +108,11 @@ func (m *TimeWindowDays) GetSaturday() []*TimeWindowTimeRange {
 
 // TimeWindowTimeRange defines the time ranges of a time
 type TimeWindowTimeRange struct {
-	// Begin is the time which the time window should begin
+	// Begin is the time which the time window should begin, in the format
+	// '3:00PM', which satisfies the time.Kitchen format
 	Begin string `protobuf:"bytes,1,opt,name=begin,proto3" json:"begin"`
-	// End is the time which the filter should end
+	// End is the time which the filter should end, in the format '3:00PM', which
+	// satisfies the time.Kitchen format
 	End string `protobuf:"bytes,2,opt,name=end,proto3" json:"end"`
 }
 
