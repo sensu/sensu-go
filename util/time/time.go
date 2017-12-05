@@ -23,7 +23,6 @@ func InWindow(current time.Time, begin, end string) (bool, error) {
 	begin = strings.Replace(begin, " ", "", -1)
 	end = strings.Replace(end, " ", "", -1)
 
-	// fmt.Println(current.Weekday().String())
 	// Parse the beginning of the provided time window in order to retrieve the
 	// hour and minute and apply it to current year, month and day so we end up
 	// with a date that corresponds to today (e.g. 2006-01-02T15:00:00Z)
