@@ -12,6 +12,8 @@ check configuration
 --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
+- Add the time.InWindow & time.InWindows functions to support time windows, used
+in filters and check subdue
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
