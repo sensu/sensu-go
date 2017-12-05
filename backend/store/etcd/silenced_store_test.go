@@ -65,6 +65,8 @@ func TestSilencedStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
 		assert.Equal(t, "subscription:*", entry.ID)
+		// Entries without expirations should return -1
+		assert.Equal(t, int64(-1), entry.Expire)
 
 		// Delete silenced entry by id
 		err = store.DeleteSilencedEntryByID(ctx, silenced.ID)
@@ -89,5 +91,27 @@ func TestSilencedStorage(t *testing.T) {
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.Error(t, err)
 
+	})
+}
+
+func TestSilencedStorageWithExpire(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced.Organization = "default"
+		silenced.Environment = "default"
+		silenced.Expire = 15
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+
+		err := store.UpdateSilencedEntry(ctx, silenced)
+		if err != nil {
+			t.Fatalf("failed to update entry due to error: %s", err)
+		}
+
+		// Get silenced entry and check that expire time is not zero
+		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		assert.NoError(t, err)
+		assert.NotNil(t, entry)
+		assert.NotZero(t, entry.Expire)
 	})
 }
