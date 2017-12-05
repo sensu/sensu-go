@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -54,5 +55,28 @@ func (client *RestClient) DeleteEvent(entity, check string) error {
 	if res.StatusCode() >= 400 {
 		return unmarshalError(res)
 	}
+	return nil
+}
+
+// ResolveEvent resolves an event.
+func (client *RestClient) ResolveEvent(event *types.Event) error {
+	event.Check.Status = 0
+	event.Check.Output = "Resolved manually by sensuctl"
+	event.Timestamp = int64(time.Now().Unix())
+
+	bytes, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Post("/events")
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
 	return nil
 }

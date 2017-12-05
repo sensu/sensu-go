@@ -2,6 +2,8 @@ package types
 
 import (
 	"errors"
+
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 const (
@@ -31,6 +33,26 @@ func (e *Entity) Validate() error {
 	}
 
 	return nil
+}
+
+// Get implements govaluate.Parameters
+func (e *Entity) Get(name string) (interface{}, error) {
+	return dynamic.GetField(e, name)
+}
+
+// SetExtendedAttributes sets the serialized ExtendedAttributes of the entity.
+func (e *Entity) SetExtendedAttributes(b []byte) {
+	e.ExtendedAttributes = b
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (e *Entity) UnmarshalJSON(b []byte) error {
+	return dynamic.Unmarshal(b, e)
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (e *Entity) MarshalJSON() ([]byte, error) {
+	return dynamic.Marshal(e)
 }
 
 // FixtureEntity returns a testing fixture for an Entity object.

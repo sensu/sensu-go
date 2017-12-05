@@ -82,6 +82,7 @@ type EventAPIClient interface {
 
 	// DeleteEvent deletes the event identified by entity, check.
 	DeleteEvent(entity, check string) error
+	ResolveEvent(*types.Event) error
 }
 
 // HandlerAPIClient client methods for handlers
@@ -141,5 +142,19 @@ type RoleAPIClient interface {
 
 // SilencedAPIClient client methods for silenced
 type SilencedAPIClient interface {
+	// CreateSilenced creates a new silenced entry from its input.
 	CreateSilenced(*types.Silenced) error
+
+	// DeleteSilenced deletes an existing silenced entry given its ID.
+	DeleteSilenced(id string) error
+
+	// ListSilenceds lists all silenced entries, optionally constraining by
+	// subscription or check.
+	ListSilenceds(org, subscription, check string) ([]types.Silenced, error)
+
+	// FetchSilenced fetches the silenced entry by ID.
+	FetchSilenced(id string) (*types.Silenced, error)
+
+	// UpdateSilenced updates an existing silenced entry.
+	UpdateSilenced(*types.Silenced) error
 }

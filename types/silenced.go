@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // Validate returns an error if the CheckName and Subscription fields are not
@@ -25,9 +26,15 @@ func (s *Silenced) Validate() error {
 }
 
 // FixtureSilenced returns a testing fixutre for a Silenced event struct.
-func FixtureSilenced(checkName string) *Silenced {
+func FixtureSilenced(id string) *Silenced {
+	parts := strings.Split(id, ":")
+	if len(parts) != 2 {
+		panic("invalid silenced ID")
+	}
 	return &Silenced{
-		Check: checkName,
+		ID:           id,
+		Check:        parts[1],
+		Subscription: parts[0],
 	}
 }
 

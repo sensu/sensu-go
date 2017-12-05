@@ -49,8 +49,8 @@ func TestSilencedQuery(t *testing.T) {
 			name: "With Silenced Entries",
 			ctx:  defaultCtx,
 			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("silence1"),
-				types.FixtureSilenced("silence2"),
+				types.FixtureSilenced("*:silence1"),
+				types.FixtureSilenced("*:silence2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -61,8 +61,8 @@ func TestSilencedQuery(t *testing.T) {
 			ctx:    defaultCtx,
 			params: QueryParams{"subscription": "test"},
 			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("silence1"),
-				types.FixtureSilenced("silence2"),
+				types.FixtureSilenced("*:silence1"),
+				types.FixtureSilenced("*:silence2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -73,8 +73,8 @@ func TestSilencedQuery(t *testing.T) {
 			ctx:    defaultCtx,
 			params: QueryParams{"check": "test"},
 			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("silence1"),
-				types.FixtureSilenced("silence2"),
+				types.FixtureSilenced("*:silence1"),
+				types.FixtureSilenced("*:silence2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -86,8 +86,8 @@ func TestSilencedQuery(t *testing.T) {
 				types.FixtureRuleWithPerms(types.RuleTypeSilenced, types.RulePermCreate),
 			)),
 			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("silence1"),
-				types.FixtureSilenced("silence2"),
+				types.FixtureSilenced("*:silence1"),
+				types.FixtureSilenced("*:silence2"),
 			},
 			expectedLen: 0,
 			storeErr:    nil,
@@ -147,7 +147,7 @@ func TestSilencedFind(t *testing.T) {
 		{
 			name:            "Found",
 			ctx:             defaultCtx,
-			record:          types.FixtureSilenced("silence1"),
+			record:          types.FixtureSilenced("*:silence1"),
 			argument:        "silence1",
 			expected:        true,
 			expectedErrCode: 0,
@@ -166,7 +166,7 @@ func TestSilencedFind(t *testing.T) {
 				types.RuleTypeSilenced,
 				types.RulePermCreate,
 			)),
-			record:          types.FixtureSilenced("silence1"),
+			record:          types.FixtureSilenced("*:silence1"),
 			argument:        "silence1",
 			expected:        false,
 			expectedErrCode: NotFound,
@@ -207,7 +207,7 @@ func TestSilencedCreate(t *testing.T) {
 		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermRead),
 	)
 
-	badSilence := types.FixtureSilenced("silence1")
+	badSilence := types.FixtureSilenced("*:silence1")
 	badSilence.Check = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
@@ -223,21 +223,21 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureSilenced("silence1"),
+			argument:    types.FixtureSilenced("*:silence1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Already Exists",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("silence1"),
-			fetchResult:     types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
+			fetchResult:     types.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
 			name:            "Store Err on Create",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -245,7 +245,7 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:            "Store Err on Fetch",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -253,7 +253,7 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
-			argument:        types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
 		},
@@ -320,14 +320,14 @@ func TestSilencedUpdate(t *testing.T) {
 		{
 			name:        "Updated",
 			ctx:         defaultCtx,
-			argument:    types.FixtureSilenced("silence1"),
-			fetchResult: types.FixtureSilenced("silence1"),
+			argument:    types.FixtureSilenced("*:silence1"),
+			fetchResult: types.FixtureSilenced("*:silence1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Does Not Exist",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
@@ -335,8 +335,8 @@ func TestSilencedUpdate(t *testing.T) {
 		{
 			name:            "Store Err on Update",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("silence1"),
-			fetchResult:     types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
+			fetchResult:     types.FixtureSilenced("*:silence1"),
 			updateErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -344,8 +344,8 @@ func TestSilencedUpdate(t *testing.T) {
 		{
 			name:            "Store Err on Fetch",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("silence1"),
-			fetchResult:     types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
+			fetchResult:     types.FixtureSilenced("*:silence1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -353,8 +353,8 @@ func TestSilencedUpdate(t *testing.T) {
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
-			argument:        types.FixtureSilenced("silence1"),
-			fetchResult:     types.FixtureSilenced("silence1"),
+			argument:        types.FixtureSilenced("*:silence1"),
+			fetchResult:     types.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
 		},
@@ -415,28 +415,28 @@ func TestSilencedDestroy(t *testing.T) {
 			name:        "Deleted",
 			ctx:         defaultCtx,
 			params:      QueryParams{"id": "silence1"},
-			fetchResult: types.FixtureSilenced("silence1"),
+			fetchResult: types.FixtureSilenced("*:silence1"),
 			expectedErr: false,
 		},
 		{
 			name:        "Subscription Params",
 			ctx:         defaultCtx,
 			params:      QueryParams{"subscription": "test"},
-			fetchResult: types.FixtureSilenced("silence1"),
+			fetchResult: types.FixtureSilenced("*:silence1"),
 			expectedErr: false,
 		},
 		{
 			name:        "Check Param",
 			ctx:         defaultCtx,
 			params:      QueryParams{"check": "test"},
-			fetchResult: types.FixtureSilenced("silence1"),
+			fetchResult: types.FixtureSilenced("*:silence1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Store Err on Delete",
 			ctx:             defaultCtx,
 			params:          QueryParams{"id": "silence1"},
-			fetchResult:     types.FixtureSilenced("silence1"),
+			fetchResult:     types.FixtureSilenced("*:silence1"),
 			deleteErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -445,7 +445,7 @@ func TestSilencedDestroy(t *testing.T) {
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
 			params:          QueryParams{"id": "silence1"},
-			fetchResult:     types.FixtureSilenced("silence1"),
+			fetchResult:     types.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
 		},

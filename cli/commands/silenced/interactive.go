@@ -107,7 +107,7 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 			Name: "expire_on_resolve",
 			Prompt: &survey.Confirm{
 				Message: "Expire on Resolve:",
-				Default: false,
+				Default: o.ExpireOnResolve,
 				Help:    "Clear the silenced entry on resolution if true.",
 			},
 		},
@@ -123,4 +123,48 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 		return err
 	}
 	return nil
+}
+
+type silencedID struct {
+	Subscription string
+	Check        string
+}
+
+func askID(help string) (string, error) {
+	questions := []*survey.Question{
+		{
+			Name: "Subscription",
+			Prompt: &survey.Input{
+				Message: "Subscription:",
+				Help:    help,
+			},
+		},
+		{
+			Name: "Check",
+			Prompt: &survey.Input{
+				Message: "Check:",
+				Help:    help,
+			},
+		},
+	}
+
+	var id silencedID
+
+	if err := survey.Ask(questions, &id); err != nil {
+		return "", err
+	}
+	return types.SilencedID(id.Subscription, id.Check)
+}
+
+func toOpts(s *types.Silenced) *silencedOpts {
+	var o silencedOpts
+	o.Subscription = s.Subscription
+	o.Check = s.Check
+	o.Creator = s.Creator
+	o.Reason = s.Reason
+	o.Env = s.Environment
+	o.Org = s.Organization
+	o.ExpireOnResolve = s.ExpireOnResolve
+	o.Expire = fmt.Sprintf("%d", s.Expire)
+	return &o
 }

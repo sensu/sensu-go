@@ -225,6 +225,7 @@ func (b *Backend) Run() error {
 		Port:          b.Config.APIPort,
 		BackendStatus: b.Status,
 		TLS:           b.Config.TLS,
+		MessageBus:    b.messageBus,
 	}
 
 	if err := b.apid.Start(); err != nil {
