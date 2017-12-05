@@ -20,7 +20,6 @@ func ResolveCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("missing argument(s)")
 			}
 
-			// Delete event via API
 			entity := args[0]
 			check := args[1]
 
@@ -29,6 +28,7 @@ func ResolveCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			// Resolve event via api
 			if err := cli.Client.ResolveEvent(event); err != nil {
 				return err
 			}
@@ -37,8 +37,6 @@ func ResolveCommand(cli *cli.SensuCli) *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
 
 	return cmd
 }
