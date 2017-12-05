@@ -18,6 +18,8 @@ supporting extended attributes.
 - Add ability to pass JSON event data to check command STDIN.
 - Add POST /events endpoint to manually create, update, and resolve events.
 - Add "event resolve" command to sensuctl to manually resolve events.
+- Add the time.InWindow & time.InWindows functions to support time windows, used
+in filters and check subdue
 
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
