@@ -18,7 +18,7 @@ $RACE = ""
 function set_race_flag
 {
     If ($env:GOARCH -eq "amd64") {
-    $RACE = "-race"
+        $RACE = "-race"
     }
 }
 
@@ -49,8 +49,8 @@ function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string
     $env:GOARCH = $goarch
     go build -i -o $outfile "$REPO_PATH/$subdir/$bin/..."
     If ($LASTEXITCODE -ne 0) {
-    echo "Failed to build $outfile..."
-    exit 1
+        echo "Failed to build $outfile..."
+        exit 1
     }
 
     return $outfile
@@ -60,15 +60,15 @@ function cmd_name_map([string]$cmd)
 {
     switch ($cmd)
     {
-    "backend" {
-        return "sensu-backend"
-    }
-    "agent" {
-        return "sensu-agent"
-    }
-    "cli" {
-        return "sensuctl"
-    }
+        "backend" {
+            return "sensu-backend"
+        }
+        "agent" {
+            return "sensu-agent"
+        }
+        "cli" {
+            return "sensuctl"
+        }
     }
 }
 
@@ -91,8 +91,8 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
 
     go build -ldflags "$ldflags" -i -o $outfile "$REPO_PATH/$bin/cmd/..."
     If ($LASTEXITCODE -ne 0) {
-    echo "Failed to build $outfile..."
-    exit 1
+        echo "Failed to build $outfile..."
+        exit 1
     }
 
     return $outfile
@@ -103,18 +103,18 @@ function build_tools
     echo "Running tool & plugin builds..."
 
     ForEach ($bin in "cat","false","sleep","true") {
-    build_tool $bin "tools"
+        build_tool $bin "tools"
     }
 
     ForEach ($bin in "slack") {
-    build_tool $bin "handlers"
+        build_tool $bin "handlers"
     }
 }
 
 function build_tool([string]$bin, [string]$subdir)
 {
     If (!(Test-Path -Path "bin/$subdir")) {
-    New-Item -ItemType directory -Path "bin/$subdir" | out-null
+        New-Item -ItemType directory -Path "bin/$subdir" | out-null
     }
 
     echo "Building $subdir/$bin for $env:GOOS-$env:GOARCH"
@@ -128,7 +128,7 @@ function build_commands
     echo "Running build..."
 
     ForEach ($bin in "agent","backend","cli") {
-    build_command $bin
+        build_command $bin
     }
 }
 
@@ -137,7 +137,7 @@ function build_command([string]$bin)
     $cmd_name = cmd_name_map $bin
 
     If (!(Test-Path -Path "bin")) {
-    New-Item -ItemType directory -Path "bin" | out-null
+        New-Item -ItemType directory -Path "bin" | out-null
     }
 
     echo "Building $bin for $env:GOOS-$env:GOARCH"
@@ -152,8 +152,8 @@ function linter_commands
 
     gometalinter.v1.exe --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=golint --enable=ineffassign --enable=goconst --tests ./...
     If ($LASTEXITCODE -ne 0) {
-    echo "Linting failed..."
-    exit 1
+        echo "Linting failed..."
+        exit 1
     }
 }
 

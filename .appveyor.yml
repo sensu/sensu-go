@@ -26,6 +26,7 @@ install:
   - go version
   - go env
   - go get -u -v github.com/golang/dep/cmd/dep
+  - dir %GOPATH%\bin
 
 platform:
   - x64
