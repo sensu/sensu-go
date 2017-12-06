@@ -33,13 +33,13 @@ func (c *MockClient) ListChecks(org string) ([]types.CheckConfig, error) {
 }
 
 // AddCheckHook for use with mock lib
-func (c *MockClient) AddCheckHook(check string, checkHook *types.CheckHook) error {
+func (c *MockClient) AddCheckHook(check *types.CheckConfig, checkHook *types.CheckHook) error {
 	args := c.Called(check, checkHook)
 	return args.Error(0)
 }
 
 // RemoveCheckHook for use with mock lib
-func (c *MockClient) RemoveCheckHook(checkName string, hookType string, hookName string) error {
-	args := c.Called(checkName, hookType, hookName)
+func (c *MockClient) RemoveCheckHook(check *types.CheckConfig, hookType string, hookName string) error {
+	args := c.Called(check, hookType, hookName)
 	return args.Error(0)
 }

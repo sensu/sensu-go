@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "asset.proto";
+import "hook.proto";
 
 package sensu.types;
 
@@ -20,6 +21,9 @@ message CheckRequest {
 
 	// Assets are a list of assets required to execute check.
 	repeated Asset assets = 2 [(gogoproto.nullable) = false];
+
+	// Hooks are a list of hooks to be executed after a check.
+	repeated HookConfig hooks = 3 [(gogoproto.nullable) = false];
 }
 
 // CheckConfig is the specification of a check.
