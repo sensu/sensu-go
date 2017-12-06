@@ -30,3 +30,12 @@ func TestValidateNameStrict(t *testing.T) {
 	assert.Error(t, ValidateNameStrict("FOO-bar"))
 	assert.NoError(t, ValidateNameStrict("foo-bar_2"))
 }
+
+func TestValidateSubscriptionName(t *testing.T) {
+	assert.Error(t, ValidateSubscriptionName(""))
+	assert.Error(t, ValidateSubscriptionName("foo bar"))
+	assert.Error(t, ValidateSubscriptionName("foo@bar"))
+	assert.Error(t, ValidateSubscriptionName("entity:foo:bar"))
+	assert.NoError(t, ValidateSubscriptionName("entity:foo"))
+	assert.NoError(t, ValidateSubscriptionName("foo-bar_2"))
+}
