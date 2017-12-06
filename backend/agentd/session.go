@@ -241,10 +241,25 @@ func (s *Session) handleKeepalive(payload []byte) error {
 }
 
 func (s *Session) handleEvent(payload []byte) error {
+	// Decode the payload to an event
 	event := &types.Event{}
 	if err := json.Unmarshal(payload, event); err != nil {
 		return err
 	}
+
+	// Validate the received event
+	if err := event.Validate(); err != nil {
+		return err
+	}
+
+	// Verify if we have a source in the event and if so, use it as the entity by
+	// creating or retrieving it from the store
+	if err := getProxyEntity(event, s.store); err != nil {
+		return err
+	}
+
+	// Add the entity subscription to the subscriptions of this entity
 	event.Entity.Subscriptions = addEntitySubscription(event.Entity.ID, event.Entity.Subscriptions)
+
 	return s.bus.Publish(messaging.TopicEventRaw, event)
 }

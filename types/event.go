@@ -25,6 +25,10 @@ func FixtureEvent(entityID, checkID string) *Event {
 
 // Validate returns an error if the event does not pass validation tests.
 func (e *Event) Validate() error {
+	if e.Check == nil || e.Entity == nil {
+		return errors.New("malformed event")
+	}
+
 	if err := e.Entity.Validate(); err != nil {
 		return errors.New("entity " + err.Error())
 	}

@@ -140,8 +140,3 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
-func addEntitySubscription(entityID string, subscriptions []string) []string {
-	entityKey := fmt.Sprintf("entity:%s", entityID)
-	return append(subscriptions, entityKey)
-}
