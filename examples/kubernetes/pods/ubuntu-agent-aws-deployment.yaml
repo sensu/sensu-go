@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ubuntu-agent
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: ubuntu-agent
+      labels:
+        app: ubuntu-agent
+    spec:
+      containers:
+        - name: sensu-agent
+          image: gcr.io/engineering-182923/ubuntu-agent
+          command: ["/usr/bin/sensu-agent", "start"]
+          env:
+            - name: SENSU_BACKEND_URL
+              value: ws://sensu-backend.default.svc.cluster.local:8081
+            - name: SENSU_SUBSCRIPTIONS
+              value: ubuntu
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-ec2-readonly
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-ec2-readonly
+                  key: AWS_SECRET_ACCESS_KEY
