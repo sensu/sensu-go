@@ -22,26 +22,24 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 	// to true. As of this writing, what constitutes a check resolution is TBD,
 	// but will probably involve the check state (passing/failing).
 	// also add checkName to this entry list
-	if event.Check.Status != 0 {
-		silencedEntries = make(map[string]bool)
+	silencedEntries = make(map[string]bool)
 
-		// Get the silenced entries for the entity
-		for _, value := range event.Entity.Subscriptions {
-			silencedSubscriptions, err = s.GetSilencedEntriesBySubscription(ctx, value)
-			if err != nil {
-				return err
-			}
-		}
-		appendEntries(event, silencedSubscriptions, silencedEntries)
-
-		// Get the silenced entries for the check
-		silencedChecks, err = s.GetSilencedEntriesByCheckName(ctx, event.Check.Config.Name)
+	// Get the silenced entries for the entity
+	for _, value := range event.Entity.Subscriptions {
+		silencedSubscriptions, err = s.GetSilencedEntriesBySubscription(ctx, value)
 		if err != nil {
 			return err
 		}
-
-		appendEntries(event, silencedChecks, silencedEntries)
 	}
+	appendEntries(event, silencedSubscriptions, silencedEntries)
+
+	// Get the silenced entries for the check
+	silencedChecks, err = s.GetSilencedEntriesByCheckName(ctx, event.Check.Config.Name)
+	if err != nil {
+		return err
+	}
+	appendEntries(event, silencedChecks, silencedEntries)
+
 	return nil
 }
 
