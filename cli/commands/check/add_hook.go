@@ -54,7 +54,12 @@ func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.AddCheckHook(opts.Check, &checkHook); err != nil {
+			check, err := cli.Client.FetchCheck(opts.Check)
+			if err != nil {
+				return err
+			}
+
+			if err := cli.Client.AddCheckHook(check, &checkHook); err != nil {
 				return err
 			}
 
