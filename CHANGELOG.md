@@ -7,6 +7,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+
+### Changed
+- Events that transitioned from incidents to a healthy state are no longer
+filtered by the pipeline
+
+## [2.0.0-alpha.9] - 2017-12-5
+### Added
 - Proxy entities are now dynamically created through the "Source" attribute of a
 check configuration
 - Flag to sensuctl configure allowing it to be configured non-interactively
@@ -25,8 +32,6 @@ in filters and check subdue
 ### Changed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
 be deleted at a time, regardless of wildcard presence for subscription or check.
-- Events that transitioned from incidents to a healthy state are no longer
-filtered by the pipeline
 
 ## [2.0.0-alpha.8] - 2017-11-28
 ### Added
