@@ -16,7 +16,7 @@ func TestUserStorage(t *testing.T) {
 		password := "P@ssw0rd!"
 		ctx, cancel := context.WithDeadline(
 			context.Background(),
-			time.Now().Add(10*time.Second),
+			time.Now().Add(20*time.Second),
 		)
 		defer cancel()
 
