@@ -29,7 +29,7 @@ supporting extended attributes.
 - Add the time.InWindow & time.InWindows functions to support time windows, used
 in filters and check subdue
 
-### Changed
+### Fixed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
 be deleted at a time, regardless of wildcard presence for subscription or check.
 
