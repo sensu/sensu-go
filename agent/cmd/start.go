@@ -99,6 +99,8 @@ func newStartCommand() *cobra.Command {
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Environment = viper.GetString(flagEnvironment)
+			cfg.KeepaliveInterval = viper.GetInt(flagKeepaliveInterval)
+			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
 			cfg.Organization = viper.GetString(flagOrganization)
 			cfg.User = viper.GetString(flagUser)
 			cfg.Password = viper.GetString(flagPassword)
