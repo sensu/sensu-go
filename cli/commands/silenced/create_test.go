@@ -30,8 +30,9 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 	client.On("CreateSilenced", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
-
+	cmd.Flags().Set("expire", "aaaaaa")
 	out, err := test.RunCmd(cmd, []string{"foo"})
+
 	require.Error(t, err)
 	assert.Empty(out)
 }

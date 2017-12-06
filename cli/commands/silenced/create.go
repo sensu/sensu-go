@@ -18,7 +18,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			flags := cmd.Flags()
 			isInteractive := flags.NFlag() == 0
 
-			var opts silencedOpts
+			opts := newSilencedOpts()
 
 			if len(args) > 0 {
 				opts.Subscription = args[0]
@@ -62,7 +62,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("check", "c", "", "silence check")
 
 	cmd.MarkFlagRequired("reason")
-	cmd.MarkFlagRequired("expire")
 
 	return cmd
 }
