@@ -2,6 +2,7 @@ package silenced
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
@@ -27,11 +28,12 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateSilenced", mock.Anything).Return(nil)
+	client.On("CreateSilenced", mock.Anything).Return(fmt.Errorf("error"))
 
 	cmd := CreateCommand(cli)
-
+	cmd.Flags().Set("expire", "aaaaaa")
 	out, err := test.RunCmd(cmd, []string{"foo"})
+
 	require.Error(t, err)
 	assert.Empty(out)
 }
