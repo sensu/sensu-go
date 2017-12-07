@@ -16,16 +16,16 @@ func TestAssetStore(t *testing.T) {
 	t.Parallel()
 
 	// Start the backend
-	backend, backendCleanup := newBackend()
-	defer backendCleanup()
+	backend, cleanup := newBackend()
+	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
 		ID:          "TestAssetStore",
 		BackendURLs: []string{backend.WSURL},
 	}
-	agent, agentCleanup := newAgent(agentConfig)
-	defer agentCleanup()
+	agent, cleanup := newAgent(agentConfig)
+	defer cleanup()
 
 	// Initializes sensuctl
 	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
