@@ -23,7 +23,8 @@ func TestCheckScheduling(t *testing.T) {
 	agent, cleanup := newAgent(agentConfig)
 	defer cleanup()
 
-	// Create an authenticated HTTP Sensu client
+	// Create an authenticated HTTP Sensu client. newSensuClient is deprecated but
+	// sensuctl does not currently support objects updates with flag parameters
 	sensuClient := newSensuClient(backend.HTTPURL)
 
 	// Create a check that publish check requests

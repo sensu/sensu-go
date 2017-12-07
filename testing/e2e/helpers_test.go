@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/cli/client/config/basic"
 )
 
+// newSensuClient is deprecated, newSensuCtl should be used instead
 func newSensuClient(backendHTTPURL string) *client.RestClient {
 	config := &basic.Config{
 		Cluster: basic.Cluster{
