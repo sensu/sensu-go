@@ -126,7 +126,7 @@ func TestMain(t *testing.T) {
 	assert := assert.New(t)
 	file, _ := ioutil.TempFile(os.TempDir(), "sensu-handler-slack-")
 	defer func() {
-		require.NoError(t, os.Remove(file.Name()))
+		_ = os.Remove(file.Name())
 	}()
 
 	event := types.FixtureEvent("entity1", "check1")
