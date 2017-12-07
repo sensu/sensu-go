@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "v1check.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// A EventV1 is an event specification compatible with Sensu 1.x
+message EventV1 {
+  // Id is the unique ID for the event.
+  string id = 1;
+
+  // Timestamp is the time in seconds since the Epoch.
+  int64 timestamp = 2;
+
+  // Action is the Sensu event action (create, resolve, or flapping).
+  string action = 3;
+
+  // Occurrences is the occurrence count for the event.
+  int64 occurences = 4;
+
+  // Occurrences Watermark is the high water mark tracking number of occurrences.
+  int64 occurences_watermark = 5;
+
+  // Check is the check result check ExtendedAttributes
+  CheckV1 check = 6 [(gogoproto.nullable) = false];
+
+  // Client is the client attributes from the client.
+  Client client = 7 [(gogoproto.nullable) = true];
+
+  // Silenced is a list of silenced entry ids (subscription and check name)
+  repeated string silenced = 8 [(gogoproto.nullable) = true];
+}
+
+// A Client is a client specification compatible with Sensu 1.x (2.x entity)
+message Client {
+  // Name is the name of the Sensu client the event is associated with.
+  string name = 1;
+
+  // Address is the address of the Sensu client the event is associated with.
+  string address = 2;
+
+  // Subscriptions is the list of subscriptions that a client belongs.
+	repeated string subscriptions = 3 [(gogoproto.nullable) = true];
+
+  // Timestamp is the last keepalive timestamp in epoch time.
+  int64 timestamp = 4;
+}

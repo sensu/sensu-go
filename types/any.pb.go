@@ -25,6 +25,8 @@
 		time_window.proto
 		tls.proto
 		user.proto
+		v1check.proto
+		v1event.proto
 
 	It has these top-level messages:
 		Any
@@ -61,6 +63,9 @@
 		TimeWindowTimeRange
 		TLSOptions
 		User
+		CheckV1
+		EventV1
+		Client
 */
 package types
 
