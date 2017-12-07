@@ -56,6 +56,12 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printEntityToList(r *types.Entity, writer io.Writer) {
+	// Make sure we don't display the epoch time for proxy entities
+	lastSeen := "N/A"
+	if r.LastSeen != 0 {
+		lastSeen = time.Unix(r.LastSeen, 0).String()
+	}
+
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{
@@ -73,7 +79,7 @@ func printEntityToList(r *types.Entity, writer io.Writer) {
 			},
 			{
 				Label: "Last Seen",
-				Value: time.Unix(r.LastSeen, 0).String(),
+				Value: lastSeen,
 			},
 			{
 				Label: "Hostname",
