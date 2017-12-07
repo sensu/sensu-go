@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Knetic/govaluate"
+	"github.com/sensu/govaluate"
 	"github.com/cenkalti/backoff"
 	"github.com/mholt/archiver"
 	"github.com/nightlyone/lockfile"

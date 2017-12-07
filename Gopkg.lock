@@ -14,11 +14,6 @@
   revision = "04b7f292a41fcb5da32dda536c0807fc13e8351c"
 
 [[projects]]
-  name = "github.com/Knetic/govaluate"
-  packages = ["."]
-  revision = "9aa49832a739dcd78a5542ff189fb82c3e423116"
-
-[[projects]]
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
@@ -341,6 +336,12 @@
   revision = "76b2effde773575f0d08db48756473d624265377"
 
 [[projects]]
+  branch = "nested-parameters"
+  name = "github.com/sensu/govaluate"
+  packages = ["."]
+  revision = "8f7cba01497bd9fba915e5a310cbc3b1a98ff77a"
+
+[[projects]]
   name = "github.com/shirou/gopsutil"
   packages = ["host","internal/common","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
@@ -472,6 +473,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5ae0b0caef7bedf2c0249dd73aecfe15262635be3cf1f51e5d7134688c50836"
+  inputs-digest = "baa70681b6b0f12648778175492f997306b609e72c525a0f5f6b8d7e937e8762"
   solver-name = "gps-cdcl"
   solver-version = 1
