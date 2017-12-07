@@ -117,24 +117,13 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return errors.New("received non-Event on event channel")
 	}
 
-	if event.Check == nil || event.Entity == nil {
-		return errors.New("event invalid")
-	}
-
-	if err := event.Check.Validate(); err != nil {
-		return err
-	}
-
-	if err := event.Entity.Validate(); err != nil {
+	// Validate the received event
+	if err := event.Validate(); err != nil {
 		return err
 	}
 
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
-
-	// Verify if we have a source in the incoming event and if so, use it as the
-	// entity by creating or retrieving it from the store
-	getProxyEntity(ctx, event, e.Store)
 
 	prevEvent, err := e.Store.GetEventByEntityCheck(
 		ctx, event.Entity.ID, event.Check.Config.Name,

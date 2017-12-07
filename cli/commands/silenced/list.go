@@ -68,6 +68,20 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "Subscription",
+			CellTransformer: func(data interface{}) string {
+				silenced, _ := data.(types.Silenced)
+				return silenced.Subscription
+			},
+		},
+		{
+			Title: "Check",
+			CellTransformer: func(data interface{}) string {
+				silenced, _ := data.(types.Silenced)
+				return silenced.Check
+			},
+		},
+		{
 			Title: "Expire",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
@@ -89,24 +103,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Check",
-			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
-				return silenced.Check
-			},
-		},
-		{
 			Title: "Reason",
 			CellTransformer: func(data interface{}) string {
 				silenced, _ := data.(types.Silenced)
 				return silenced.Reason
-			},
-		},
-		{
-			Title: "Subscription",
-			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
-				return silenced.Subscription
 			},
 		},
 		{

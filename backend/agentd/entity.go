@@ -1,4 +1,4 @@
-package eventd
+package agentd
 
 import (
 	"context"
@@ -8,11 +8,21 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// addEntitySubscription appends the entity subscription (using the format
+// "entity:entityID") to the subscriptions of an entity
+func addEntitySubscription(entityID string, subscriptions []string) []string {
+	entityKey := fmt.Sprintf("entity:%s", entityID)
+	return append(subscriptions, entityKey)
+}
+
 // getProxyEntity verifies if a source was provided in the given event and if
 // so, retrieves the corresponding entity in the store in order to replace the
 // event's entity with it. In case no entity exists, we create an entity with
 // the proxy class
-func getProxyEntity(ctx context.Context, event *types.Event, s store.Store) error {
+func getProxyEntity(event *types.Event, s store.Store) error {
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+
 	// Verify if a source, representing a proxy entity, is defined in the check
 	if event.Check.Config.Source != "" {
 		// Query the store for an entity using the given source as the entity ID

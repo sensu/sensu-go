@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -73,6 +74,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
 				return strconv.Itoa(int(event.Check.Status))
+			},
+		},
+		{
+			Title: "Silenced",
+			CellTransformer: func(data interface{}) string {
+				event, _ := data.(types.Event)
+				return globals.BooleanStyleP(len(event.Silenced) > 0)
 			},
 		},
 		{

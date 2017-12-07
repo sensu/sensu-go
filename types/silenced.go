@@ -13,7 +13,7 @@ func (s *Silenced) Validate() error {
 		return errors.New("must provide check or subscription")
 	}
 	if s.Subscription != "" && s.Subscription != "*" {
-		if err := ValidateName(s.Subscription); err != nil {
+		if err := ValidateSubscriptionName(s.Subscription); err != nil {
 			return fmt.Errorf("Subscription %s", err)
 		}
 	}
