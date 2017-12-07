@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"path/filepath"
 	"testing"
@@ -24,44 +23,26 @@ type EventTestSuite struct {
 }
 
 func (suite *EventTestSuite) SetupSuite() {
-	bep, bepCleanup := newBackendProcess()
-	suite.bep = bep
+	// Start the backend
+	backend, backendCleanup := newBackend()
 
-	if err := bep.Start(); err != nil {
-		bepCleanup()
-		log.Panic(err)
+	// Start the agent
+	agentConfig := agentConfig{
+		ID:          "TestKeepalives",
+		BackendURLs: []string{backend.WSURL},
 	}
+	agent, agentCleanup := newAgent(agentConfig)
 
-	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", bep.AgentPort)
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
-
-	// Make sure the backend is available
-	backendIsOnline := waitForBackend(backendHTTPURL)
-	if !backendIsOnline {
-		bepCleanup()
-		log.Panic("backend never came online")
-	}
-
-	// Configure the agent
-	ap := &agentProcess{
-		// testing the StringSlice for backend-url and the backend selector.
-		BackendURLs: []string{backendWSURL, backendWSURL},
-		AgentID:     "TestKeepalives",
-	}
-
-	if err := ap.Start(); err != nil {
-		bepCleanup()
-		log.Panic(err)
-	}
-
-	suite.ap = ap
+	suite.bep = backend
+	suite.ap = agent
 
 	// Initializes sensuctl
-	sensuctl, sensuctlCleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, sensuctlCleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
 
 	suite.sensuctl = sensuctl
 	suite.cleanup = func() {
-		bepCleanup()
+		backendCleanup()
+		agentCleanup()
 		sensuctlCleanup()
 	}
 
@@ -142,7 +123,7 @@ func (suite *EventTestSuite) TestCheck() {
 
 	// Allow enough time for the check to run.
 	time.Sleep(20 * time.Second)
-	output, err = suite.sensuctl.run("event", "info", suite.ap.AgentID, checkName)
+	output, err = suite.sensuctl.run("event", "info", suite.ap.ID, checkName)
 	assert.NoError(err)
 
 	event := types.Event{}
@@ -157,7 +138,7 @@ func (suite *EventTestSuite) TestCheck() {
 func (suite *EventTestSuite) TestHTTPAPI() {
 	assert := suite.Assert()
 
-	newEvent := types.FixtureEvent(suite.ap.AgentID, "proxy-check")
+	newEvent := types.FixtureEvent(suite.ap.ID, "proxy-check")
 	encoded, _ := json.Marshal(newEvent)
 	url := fmt.Sprintf("http://127.0.0.1:%d/events", suite.ap.APIPort)
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(encoded))
@@ -171,7 +152,7 @@ func (suite *EventTestSuite) TestHTTPAPI() {
 	time.Sleep(5 * time.Second)
 
 	// Make sure the new event has been received
-	output, err := suite.sensuctl.run("event", "info", suite.ap.AgentID, "proxy-check")
+	output, err := suite.sensuctl.run("event", "info", suite.ap.ID, "proxy-check")
 	assert.NoError(err, string(output))
 	assert.NotNil(output)
 }

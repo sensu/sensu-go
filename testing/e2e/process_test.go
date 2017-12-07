@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/sensu/sensu-go/testing/testutil"
 )
@@ -28,10 +29,45 @@ type backendProcess struct {
 	EtcdName                string
 	EtcdInitialClusterToken string
 
+	HTTPURL string
+	WSURL   string
+
 	Stdout io.Reader
 	Stderr io.Reader
 
 	cmd *exec.Cmd
+}
+
+// newBackend abstracts the initialization of a backend process and returns a
+// ready-to-use backend or exit with a fatal error if an error occurred while
+// initializing it
+func newBackend() (*backendProcess, func()) {
+	backend, cleanup := newBackendProcess()
+
+	if err := backend.Start(); err != nil {
+		cleanup()
+		log.Fatal(err)
+	}
+
+	// Set the HTTP & WS URLs
+	backend.HTTPURL = fmt.Sprintf("http://127.0.0.1:%d", backend.APIPort)
+	backend.WSURL = fmt.Sprintf("ws://127.0.0.1:%d/", backend.AgentPort)
+
+	// Make sure the backend is ready
+	isOnline := waitForBackend(backend.HTTPURL)
+	if !isOnline {
+		cleanup()
+		log.Fatal("the backend never became ready in a timely fashion")
+	}
+
+	// Give it few seconds to make sure we've sent a keepalive. We should probably
+	// do something a bit more advanced here
+	time.Sleep(5 * time.Second)
+
+	return backend, func() {
+		cleanup()
+		backend.Kill()
+	}
 }
 
 // newBackendProcess initializes a backendProcess struct
@@ -133,15 +169,33 @@ func (b *backendProcess) Kill() error {
 }
 
 type agentProcess struct {
-	BackendURLs []string
-	AgentID     string
-	APIPort     int
-	SocketPort  int
+	agentConfig
 
 	Stdout io.Reader
 	Stderr io.Reader
 
 	cmd *exec.Cmd
+}
+
+type agentConfig struct {
+	ID          string
+	BackendURLs []string
+	APIPort     int
+	SocketPort  int
+}
+
+// newAgent abstracts the initialization of an agent process and returns a
+// ready-to-use agent or exit with a fatal error if an error occurred while
+// initializing it
+func newAgent(config agentConfig) (*agentProcess, func()) {
+	agent := &agentProcess{agentConfig: config}
+
+	// Start the agent
+	if err := agent.Start(); err != nil {
+		log.Fatal(err)
+	}
+
+	return agent, func() { agent.Kill() }
 }
 
 func (a *agentProcess) Start() error {
@@ -153,17 +207,24 @@ func (a *agentProcess) Start() error {
 	a.APIPort = port[0]
 	a.SocketPort = port[1]
 
-	cmd := exec.Command(
-		agentPath, "start",
-		"--backend-url", a.BackendURLs[0],
-		"--backend-url", a.BackendURLs[1],
-		"--id", a.AgentID,
+	args := []string{
+		"start",
+		"--id", a.ID,
 		"--subscriptions", "test",
 		"--environment", "default",
 		"--organization", "default",
 		"--api-port", strconv.Itoa(port[0]),
 		"--socket-port", strconv.Itoa(port[1]),
-	)
+	}
+
+	// Support a single or multiple backend URLs
+	// backendURLs := []string{}
+	for _, url := range a.BackendURLs {
+		args = append(args, "--backend-url")
+		args = append(args, url)
+	}
+
+	cmd := exec.Command(agentPath, args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err

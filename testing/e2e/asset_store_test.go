@@ -2,8 +2,6 @@ package e2e
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,39 +14,19 @@ import (
 // Test asset creation -> check creation with runtime_dependency
 func TestAssetStore(t *testing.T) {
 	// Start the backend
-	bep, cleanup := newBackendProcess()
-	defer cleanup()
-
-	err := bep.Start()
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Make sure the backend is available
-	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", bep.AgentPort)
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
-	backendIsOnline := waitForBackend(backendHTTPURL)
-	assert.True(t, backendIsOnline)
-
-	// Configure the agent
-	ap := &agentProcess{
-		// testing the StringSlice for backend-url and the backend selector.
-		BackendURLs: []string{backendWSURL, backendWSURL},
-		AgentID:     "TestAssetStore",
-	}
+	backend, backendCleanup := newBackend()
+	defer backendCleanup()
 
 	// Start the agent
-	err = ap.Start()
-	if err != nil {
-		log.Panic(err)
+	agentConfig := agentConfig{
+		ID:          "TestAssetStore",
+		BackendURLs: []string{backend.WSURL},
 	}
-	defer ap.Kill()
-
-	// Give it a second to make sure we've sent a keepalive.
-	time.Sleep(5 * time.Second)
+	agent, agentCleanup := newAgent(agentConfig)
+	defer agentCleanup()
 
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
 	defer cleanup()
 
 	// Create an asset
@@ -91,7 +69,7 @@ func TestAssetStore(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// There should be a stored event
-	output, err = sensuctl.run("event", "info", ap.AgentID, check.Name)
+	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
 	assert.NoError(t, err, string(output))
 
 	event := types.Event{}

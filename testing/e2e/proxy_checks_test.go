@@ -1,8 +1,6 @@
 package e2e
 
 import (
-	"fmt"
-	"log"
 	"testing"
 	"time"
 
@@ -15,40 +13,19 @@ import (
 // can monitor external resources
 func TestProxyChecks(t *testing.T) {
 	// Start the backend
-	bep, cleanup := newBackendProcess()
+	backend, cleanup := newBackend()
 	defer cleanup()
 
-	err := bep.Start()
-	if err != nil {
-		log.Panic(err)
-	}
-	defer bep.Kill()
-
-	// Make sure the backend is available
-	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", bep.AgentPort)
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
-	backendIsOnline := waitForBackend(backendHTTPURL)
-	assert.True(t, backendIsOnline)
-
-	// Configure the agent
-	ap := &agentProcess{
-		// testing the StringSlice for backend-url and the backend selector.
-		BackendURLs: []string{backendWSURL, backendWSURL},
-		AgentID:     "TestCheckScheduling",
-	}
-
 	// Start the agent
-	err = ap.Start()
-	if err != nil {
-		log.Panic(err)
+	agentConfig := agentConfig{
+		ID:          "TestProxyChecks",
+		BackendURLs: []string{backend.WSURL},
 	}
-	defer ap.Kill()
-
-	// Give it few seconds to make sure we've sent a keepalive.
-	time.Sleep(5 * time.Second)
+	_, cleanup = newAgent(agentConfig)
+	defer cleanup()
 
 	// Create an authenticated HTTP Sensu client
-	sensuClient := newSensuClient(backendHTTPURL)
+	sensuClient := newSensuClient(backend.HTTPURL)
 
 	// Create a check that specifies a source
 	check := types.FixtureCheckConfig("check_router")
@@ -56,7 +33,7 @@ func TestProxyChecks(t *testing.T) {
 	check.Subscriptions = []string{"test"}
 	check.Interval = 1
 
-	err = sensuClient.CreateCheck(check)
+	err := sensuClient.CreateCheck(check)
 	assert.NoError(t, err)
 	_, err = sensuClient.FetchCheck(check.Name)
 	assert.NoError(t, err)
