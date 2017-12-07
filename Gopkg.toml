@@ -112,21 +112,22 @@
   name = "github.com/go-resty/resty"
   version = "0.13.0"
 
-#
 # Lock etcd and some of it's dependencies
-
 [[constraint]]
   name = "github.com/sensu/etcd"
   branch = "release-3.2-fix-tls-close"
 
+# Lock etcd and some of it's dependencies
 [[override]]
   name = "github.com/ugorji/go"
   revision = "708a42d246822952f38190a8d8c4e6b16a0e600c"
 
+# Lock etcd and some of it's dependencies
 [[override]]
   name = "google.golang.org/grpc"
   revision = "9a2334748bab9638f1480ad4f0ac6ac0c6c3a486"
 
+# Lock etcd and some of it's dependencies
 [[override]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
   revision = "8cc3a55af3bcf171a1c23a90c4df9cf591706104"
@@ -161,3 +162,7 @@
 [[constraint]]
   name = "github.com/gogo/protobuf"
   revision = "117892bf1866fbaa2318c03e50e40564c8845457"
+
+[[override]]
+  name = "github.com/go-resty/resty"
+  version = "1.0"

@@ -126,8 +126,8 @@
 [[projects]]
   name = "github.com/go-resty/resty"
   packages = ["."]
-  revision = "cf81ed0a604d373be63b4c036c6b05c06520615f"
-  version = "v0.13"
+  revision = "9ac9c42358f7c3c69ac9f8610e8790d7c338e85d"
+  version = "v1.0"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -478,6 +478,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c7fb314625169bad6011ac6f4d7e4e33cf87c462329923a51f681bf9ac7f4bbd"
+  inputs-digest = "b42514f7bdbddba4d79c6eb9c7d373da5a54934233a1330ea0deb8647b4be3bb"
   solver-name = "gps-cdcl"
   solver-version = 1
