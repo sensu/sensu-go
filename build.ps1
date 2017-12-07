@@ -36,10 +36,12 @@ function install_deps
     go get gopkg.in/alecthomas/gometalinter.v1
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
-    go get -u -v github.com/golang/dep/cmd/dep
+    go get -u github.com/golang/dep/cmd/dep
     go get -u github.com/golang/lint/golint
     go get -u github.com/UnnoTed/fileb0x
-    dep ensure
+
+    #echo "Running dep ensure..."
+    #dep ensure
 }
 
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)

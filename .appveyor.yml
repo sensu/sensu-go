@@ -25,6 +25,11 @@ install:
   - set PATH=%GOPATH%\bin\windows_386;%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
+  - go get -u github.com/golang/dep/cmd/dep
+  - dep ensure
+  - dir c:\gopath\src\github.com\sensu\sensu-go\vendor\github.com
+  - dir c:\gopath\src\github.com\sensu\sensu-go\vendor\github.com\shirou
+  - dir c:\gopath\src\github.com\sensu\sensu-go\vendor\github.com\shirou\w32
 
 platform:
   - x64
