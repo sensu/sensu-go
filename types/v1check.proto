@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// A CheckV1 is a check specification compatible with Sensu 1.x
+message CheckV1 {
+	// Type is the check type (standard or metric).
+	string type = 1;
+
+	// Name is the name of the check.
+	string name = 2;
+
+	// Command is the command to be executed.
+	string command = 3;
+
+	// Subscribers is the list of client subscriptions that results will be sent to.
+	repeated string subscribers = 4 [(gogoproto.nullable) = true];
+
+	// Interval is the frequency in seconds a check is exectued.
+	int64 interval = 5;
+
+	// Handler is the event handler used for events.
+	string handler = 6;
+
+	// Handlers are the event handlers used for events.
+	repeated string handlers = 7 [(gogoproto.nullable) = true];
+
+	// Issued is the issued timestamp in epoch time.
+	int64 issued = 8;
+
+	// Output is the output produced by the check.
+	string output = 9;
+
+	// Status is the status exit code produced by the check.
+	int64 status = 10;
+
+	// History is history of last 21 exit status codes produced by the check.
+	repeated int64 history = 11 [(gogoproto.nullable) = true];
+
+	// Source is the check source.
+	string source = 12;
+
+	// Origin is the name of the client that executed the check (2.x entity)
+	string origin = 13;
+}
