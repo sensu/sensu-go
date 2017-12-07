@@ -133,7 +133,7 @@
   revision = "8cc3a55af3bcf171a1c23a90c4df9cf591706104"
 
 # Locked for Windows
-[[override]]
+[[constraint]]
   name = "github.com/shirou/w32"
   branch = "master"
 
