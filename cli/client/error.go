@@ -3,7 +3,7 @@ package client
 import (
 	"encoding/json"
 
-	resty "gopkg.in/resty.v0"
+	"github.com/go-resty/resty"
 )
 
 type apiError struct {

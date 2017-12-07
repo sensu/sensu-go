@@ -110,7 +110,7 @@
 
 [[constraint]]
   name = "github.com/go-resty/resty"
-  version = "0.13.0"
+  version = "1.0"
 
 # Lock etcd and some of it's dependencies
 [[constraint]]
@@ -162,7 +162,3 @@
 [[constraint]]
   name = "github.com/gogo/protobuf"
   revision = "117892bf1866fbaa2318c03e50e40564c8845457"
-
-[[override]]
-  name = "github.com/go-resty/resty"
-  version = "1.0"
