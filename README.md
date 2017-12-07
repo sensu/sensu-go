@@ -43,4 +43,8 @@ Run end-to-end tests:
 # To run a specific test:
 
 ./build.sh e2e -run TestRBAC
+
+# To prevent tests from running in parallel:
+
+./build.sh e2e -parallel 1
 ```

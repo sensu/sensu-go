@@ -12,6 +12,8 @@ import (
 )
 
 func TestRBAC(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
 	backend, cleanup := newBackend()
 	defer cleanup()

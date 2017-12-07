@@ -9,6 +9,8 @@ import (
 )
 
 func TestCheckScheduling(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
 	backend, cleanup := newBackend()
 	defer cleanup()

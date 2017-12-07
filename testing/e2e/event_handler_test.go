@@ -15,6 +15,8 @@ import (
 
 // Test check event creation -> event handler.
 func TestEventHandler(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
 	backend, cleanup := newBackend()
 	defer cleanup()

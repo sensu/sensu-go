@@ -13,6 +13,8 @@ import (
 
 // Test asset creation -> check creation with runtime_dependency
 func TestAssetStore(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
 	backend, backendCleanup := newBackend()
 	defer backendCleanup()

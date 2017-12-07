@@ -158,5 +158,7 @@ func (suite *EventTestSuite) TestHTTPAPI() {
 }
 
 func TestEventTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(EventTestSuite))
 }

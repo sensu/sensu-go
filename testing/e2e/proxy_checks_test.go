@@ -12,6 +12,8 @@ import (
 // As a user, I want to run checks on dynamically created entities, so that I
 // can monitor external resources
 func TestProxyChecks(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
 	backend, cleanup := newBackend()
 	defer cleanup()
