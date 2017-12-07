@@ -5,6 +5,7 @@ import (
 
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -26,7 +27,8 @@ func TestAddCheckHookCommandRunEClosureSucess(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("AddCheckHook", "name", mock.AnythingOfType("*types.CheckHook")).Return(nil)
+	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.CheckHook")).Return(nil)
+	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
 
 	cmd := AddCheckHookCommand(cli)
 	cmd.Flags().Set("type", "non-zero")
@@ -53,7 +55,7 @@ func TestAddCheckHookCommandRunEClosureServerErr(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("AddCheckHook", "name", mock.AnythingOfType("*types.checkHook")).Return(nil)
+	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.checkHook")).Return(nil)
 
 	cmd := AddCheckHookCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"name"})

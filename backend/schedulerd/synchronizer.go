@@ -47,6 +47,22 @@ func (syncPtr *SyncronizeAssets) Sync() error {
 	return err
 }
 
+// SyncronizeHooks fetches hooks from the store and bubbles up results
+type SyncronizeHooks struct {
+	Store    store.HookConfigStore
+	OnUpdate func([]*types.HookConfig)
+}
+
+// Sync fetches results from the store and passes them up w/ given handler
+func (syncPtr *SyncronizeHooks) Sync() error {
+	results, err := syncPtr.Store.GetHookConfigs(context.TODO())
+	if err == nil {
+		syncPtr.OnUpdate(results)
+	}
+
+	return err
+}
+
 // SynchronizeStateScheduler schedules synchronization handlers to be run at a
 // given interval.
 type SynchronizeStateScheduler struct {

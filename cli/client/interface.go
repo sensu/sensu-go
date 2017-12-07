@@ -45,8 +45,8 @@ type CheckAPIClient interface {
 	FetchCheck(string) (*types.CheckConfig, error)
 	ListChecks(string) ([]types.CheckConfig, error)
 
-	AddCheckHook(check string, checkHook *types.CheckHook) error
-	RemoveCheckHook(checkName string, checkHookType string, hookName string) error
+	AddCheckHook(check *types.CheckConfig, checkHook *types.CheckHook) error
+	RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error
 }
 
 // EntityAPIClient client methods for entities

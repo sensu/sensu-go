@@ -10,6 +10,10 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const (
+	expireDefault = "-1"
+)
+
 type silencedOpts struct {
 	Check           string `survey:"check"`
 	Subscription    string `survey:"subscription"`
@@ -19,6 +23,12 @@ type silencedOpts struct {
 	Reason          string `survey:"reason"`
 	Env             string
 	Org             string
+}
+
+func newSilencedOpts() *silencedOpts {
+	opts := silencedOpts{}
+	opts.Expire = expireDefault
+	return &opts
 }
 
 func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
@@ -101,7 +111,6 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 				Message: "Expiry in Seconds:",
 				Default: o.Expire,
 			},
-			Validate: survey.Required,
 		},
 		{
 			Name: "expire_on_resolve",
