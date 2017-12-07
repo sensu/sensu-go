@@ -47,6 +47,16 @@ func TestEventHandling(t *testing.T) {
 	).Return(nilEvent, nil)
 	mockStore.On("UpdateEvent", mock.AnythingOfType("*types.Event")).Return(nil)
 
+	// No silenced entries
+	mockStore.On(
+		"GetSilencedEntriesBySubscription",
+		mock.Anything,
+	).Return([]*types.Silenced{}, nil)
+	mockStore.On(
+		"GetSilencedEntriesByCheckName",
+		mock.Anything,
+	).Return([]*types.Silenced{}, nil)
+
 	bus.Publish(messaging.TopicEventRaw, event)
 
 	err = e.Stop()

@@ -1,7 +1,6 @@
-package eventd
+package agentd
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -13,9 +12,6 @@ import (
 
 func TestGetProxyEntity(t *testing.T) {
 	assert := assert.New(t)
-
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
-	ctx = context.WithValue(ctx, types.EnvironmentKey, "default")
 
 	store := &mockstore.MockStore{}
 	store.On("GetEntityByID", mock.Anything, "bar").Return(types.FixtureEntity("bar"), nil)
@@ -49,6 +45,7 @@ func TestGetProxyEntity(t *testing.T) {
 						Source: "bar",
 					},
 				},
+				Entity: types.FixtureEntity("foo"),
 			},
 			expectedError:  false,
 			expectedEntity: "bar",
@@ -94,7 +91,7 @@ func TestGetProxyEntity(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := getProxyEntity(ctx, tc.event, store)
+			err := getProxyEntity(tc.event, store)
 			if err != nil && !tc.expectedError {
 				assert.FailNow(err.Error())
 			}
