@@ -9,13 +9,14 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPipelined(t *testing.T) {
 	p := &Pipelined{}
 
 	bus := &messaging.WizardBus{}
-	bus.Start()
+	require.NoError(t, bus.Start())
 	p.MessageBus = bus
 
 	store := &mockstore.MockStore{}

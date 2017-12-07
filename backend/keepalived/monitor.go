@@ -72,8 +72,11 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 
 				// if the agent disconnected and reconnected elsewhere, stop the monitor
 				// and return.
+				// TODO(echlebek) should we handle the error here?
 				if event != nil && event.Check.Status == 0 {
-					monitorPtr.Store.DeleteFailingKeepalive(ctx, monitorPtr.Entity)
+					if err := monitorPtr.Store.DeleteFailingKeepalive(ctx, monitorPtr.Entity); err != nil {
+						logger.Debug(err)
+					}
 					monitorPtr.Stop()
 					return
 				}
@@ -121,7 +124,9 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 	entity := event.Entity
 
 	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
-		monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity)
+		if err := monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity); err != nil {
+			logger.Debug(err)
+		}
 	}
 
 	monitorPtr.reset <- struct{}{}

@@ -10,11 +10,15 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSaveAPIUrl(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -23,13 +27,16 @@ func TestSaveAPIUrl(t *testing.T) {
 	config := Load(flags)
 
 	url := "http://127.0.0.1:8080"
-	config.SaveAPIUrl(url)
+	require.NoError(t, config.SaveAPIUrl(url))
 	assert.Equal(t, url, config.APIUrl())
 }
 
 func TestSaveEnvironment(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -38,13 +45,16 @@ func TestSaveEnvironment(t *testing.T) {
 	config := Load(flags)
 
 	env := "json"
-	config.SaveEnvironment(env)
+	require.NoError(t, config.SaveEnvironment(env))
 	assert.Equal(t, env, config.Environment())
 }
 
 func TestSaveFormat(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -53,13 +63,16 @@ func TestSaveFormat(t *testing.T) {
 	config := Load(flags)
 
 	format := "json"
-	config.SaveFormat(format)
+	require.NoError(t, config.SaveFormat(format))
 	assert.Equal(t, format, config.Format())
 }
 
 func TestSaveOrganization(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -68,13 +81,16 @@ func TestSaveOrganization(t *testing.T) {
 	config := Load(flags)
 
 	org := "json"
-	config.SaveOrganization(org)
+	require.NoError(t, config.SaveOrganization(org))
 	assert.Equal(t, org, config.Organization())
 }
 
 func TestSaveTokens(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -83,14 +99,17 @@ func TestSaveTokens(t *testing.T) {
 	config := Load(flags)
 
 	tokens := &types.Tokens{Access: "foo"}
-	config.SaveTokens(tokens)
+	_ = config.SaveTokens(tokens)
 	assert.Equal(t, tokens, config.Tokens())
 }
 
 func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 	// In case the API URL is passed with a flag, we don't want to save it
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("api-url", pflag.ContinueOnError)
@@ -104,12 +123,12 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 	cluster := &Cluster{APIUrl: "setFromFile"}
 	clusterBytes, _ := json.Marshal(cluster)
 	clusterPath := filepath.Join(dir, clusterFilename)
-	_ = ioutil.WriteFile(clusterPath, clusterBytes, 0644)
+	require.NoError(t, ioutil.WriteFile(clusterPath, clusterBytes, 0644))
 
 	config := Load(flags)
 
 	tokens := &types.Tokens{Access: "foo"}
-	config.SaveTokens(tokens)
+	require.NoError(t, config.SaveTokens(tokens))
 	assert.Equal(t, tokens, config.Tokens())
 
 	// Make sure we didn't override the orginal API URL
@@ -118,8 +137,11 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -128,7 +150,7 @@ func TestWrite(t *testing.T) {
 	config := Load(flags)
 
 	url := "http://127.0.0.1:8080"
-	config.SaveAPIUrl(url)
+	require.NoError(t, config.SaveAPIUrl(url))
 	assert.Equal(t, url, config.APIUrl())
 
 	// Reload the config files to make sure the changes were saved

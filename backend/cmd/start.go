@@ -72,7 +72,7 @@ func newStartCommand() *cobra.Command {
 		Use:   "start",
 		Short: "start the sensu backend",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 			if setupErr != nil {
 				return setupErr
 			}
@@ -150,7 +150,7 @@ func newStartCommand() *cobra.Command {
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
 	configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-backend config file")
 	configFlagSet.SetOutput(ioutil.Discard)
-	configFlagSet.Parse(os.Args[1:])
+	_ = configFlagSet.Parse(os.Args[1:])
 
 	// Get the given config file path
 	configFile, _ := configFlagSet.GetString(flagConfigFile)

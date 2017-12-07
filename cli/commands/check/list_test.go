@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListCommand(t *testing.T) {
@@ -36,7 +37,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "json")
+	require.NoError(t, cmd.Flags().Set("format", "json"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -55,11 +56,11 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set(flags.Format, "json")
-	cmd.Flags().Set(flags.AllOrgs, "t")
+	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
+	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
 	out, err := test.RunCmd(cmd, []string{})
+	require.NoError(t, err)
 	assert.NotEmpty(out)
-	assert.Nil(err)
 }
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
@@ -73,8 +74,9 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	client.On("ListChecks", mock.Anything).Return([]types.CheckConfig{*check}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "none")
+	require.NoError(t, cmd.Flags().Set("format", "none"))
 	out, err := test.RunCmd(cmd, []string{})
+	require.NoError(t, err)
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "Name")      // heading
@@ -84,7 +86,6 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "asset-one") // asset name
 	assert.Contains(out, "60")        // interval
 	assert.Contains(out, "Hooks")     // heading
-	assert.Nil(err)
 }
 
 // Test to ensure check command list output does not escape alphanumeric chars
@@ -115,12 +116,12 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set(flags.Format, "json")
-	cmd.Flags().Set(flags.AllOrgs, "t")
+	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
+	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
 	out, err := test.RunCmd(cmd, []string{})
+	require.NoError(t, err)
 	assert.NotEmpty(out)
 	assert.Contains(out, "echo foo && exit 1")
-	assert.Nil(err)
 }
 
 func TestListFlags(t *testing.T) {

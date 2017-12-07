@@ -8,6 +8,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestProxyChecks ensures that the following user case is working:
@@ -22,7 +23,9 @@ func TestProxyChecks(t *testing.T) {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer bep.Kill()
+	defer func() {
+		require.NoError(t, bep.Kill())
+	}()
 
 	// Make sure the backend is available
 	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", bep.AgentPort)
@@ -42,7 +45,9 @@ func TestProxyChecks(t *testing.T) {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer ap.Kill()
+	defer func() {
+		require.NoError(t, ap.Kill())
+	}()
 
 	// Give it few seconds to make sure we've sent a keepalive.
 	time.Sleep(5 * time.Second)

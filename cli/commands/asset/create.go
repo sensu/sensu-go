@@ -26,14 +26,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE:  exec.Run,
 	}
 
-	cmd.Flags().StringP("sha512", "", "", "SHA-512 checksum of the asset's archive")
-	cmd.Flags().StringP("url", "u", "", "the URL of the asset")
-	cmd.Flags().StringSliceP("metadata", "m", []string{}, "metadata associated with asset")
-	cmd.Flags().StringSlice("filter", []string{}, "queries used by an entity to determine if it should include the asset")
+	_ = cmd.Flags().StringP("sha512", "", "", "SHA-512 checksum of the asset's archive")
+	_ = cmd.Flags().StringP("url", "u", "", "the URL of the asset")
+	_ = cmd.Flags().StringSliceP("metadata", "m", []string{}, "metadata associated with asset")
+	_ = cmd.Flags().StringSlice("filter", []string{}, "queries used by an entity to determine if it should include the asset")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("sha512")
-	cmd.MarkFlagRequired("url")
+	_ = cmd.MarkFlagRequired("sha512")
+	_ = cmd.MarkFlagRequired("url")
 
 	return cmd
 }

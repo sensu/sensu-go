@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -41,7 +42,7 @@ func TestCreateCommand(t *testing.T) {
 			).Return(tc.storeResponse)
 
 			cmd := CreateCommand(cli)
-			cmd.Flags().Set("description", tc.name)
+			require.NoError(t, cmd.Flags().Set("description", tc.name))
 			out, err := test.RunCmd(cmd, []string{tc.name})
 
 			assert.Regexp(t, tc.expectedOutput, out)

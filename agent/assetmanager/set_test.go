@@ -55,7 +55,7 @@ func (suite *AssetSetTestSuite) AfterTest() {
 	suite.assetServer.Close()
 
 	// Remove tmpdir
-	os.RemoveAll(suite.cacheDir)
+	suite.NoError(os.RemoveAll(suite.cacheDir))
 }
 
 func (suite *AssetSetTestSuite) TestNewSet() {

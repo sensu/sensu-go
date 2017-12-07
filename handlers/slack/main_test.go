@@ -10,6 +10,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormattedEventAction(t *testing.T) {
@@ -111,7 +112,8 @@ func TestSendMessage(t *testing.T) {
 		expectedBody := `{"channel":"#test","attachments":[{"color":"good","fallback":"RESOLVED - entity1/check1:","title":"Description","text":"","fields":[{"title":"Status","value":"Resolved","short":false},{"title":"Entity","value":"entity1","short":true},{"title":"Check","value":"check1","short":true}]}]}`
 		assert.Equal(expectedBody, string(body))
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok": true}`))
+		_, err := w.Write([]byte(`{"ok": true}`))
+		require.NoError(t, err)
 	}))
 
 	webhookURL = apiStub.URL
@@ -123,20 +125,25 @@ func TestSendMessage(t *testing.T) {
 func TestMain(t *testing.T) {
 	assert := assert.New(t)
 	file, _ := ioutil.TempFile(os.TempDir(), "sensu-handler-slack-")
-	defer os.Remove(file.Name())
+	defer func() {
+		require.NoError(t, os.Remove(file.Name()))
+	}()
 
 	event := types.FixtureEvent("entity1", "check1")
 	eventJSON, _ := json.Marshal(event)
-	file.WriteString(string(eventJSON))
-	file.Sync()
-	file.Seek(0, 0)
+	_, err := file.WriteString(string(eventJSON))
+	require.NoError(t, err)
+	require.NoError(t, file.Sync())
+	_, err = file.Seek(0, 0)
+	require.NoError(t, err)
 	stdin = file
 	requestReceived := false
 
 	var apiStub = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestReceived = true
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok": true}`))
+		_, err := w.Write([]byte(`{"ok": true}`))
+		require.NoError(t, err)
 	}))
 
 	oldArgs := os.Args

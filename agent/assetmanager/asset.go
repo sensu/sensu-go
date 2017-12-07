@@ -122,6 +122,7 @@ func (d *RuntimeAsset) fetch() (*http.Response, error) {
 
 // Downloads the given depdencies asset to the cache directory.
 // TODO(james): ugly; too many responsibilities
+// nolint
 func (d *RuntimeAsset) install() error {
 	// Ensure that cache directory exists before we attempt to write the contents
 	// of our asset to it.

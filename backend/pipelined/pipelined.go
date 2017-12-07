@@ -55,7 +55,9 @@ func (p *Pipelined) Start() error {
 		return err
 	}
 
-	return p.createPipelines(PipelineCount, p.eventChan)
+	p.createPipelines(PipelineCount, p.eventChan)
+
+	return nil
 }
 
 // Stop pipelined.
@@ -64,10 +66,10 @@ func (p *Pipelined) Stop() error {
 	close(p.stopping)
 	p.wg.Wait()
 	close(p.errChan)
-	p.MessageBus.Unsubscribe(messaging.TopicEvent, "pipelined")
+	err := p.MessageBus.Unsubscribe(messaging.TopicEvent, "pipelined")
 	close(p.eventChan)
 
-	return nil
+	return err
 }
 
 // Status returns an error if pipelined is unhealthy.
@@ -83,7 +85,7 @@ func (p *Pipelined) Err() <-chan error {
 // createPipelines creates several goroutines, responsible for pulling
 // Sensu events from a channel (bound to message bus "event" topic)
 // and for handling them.
-func (p *Pipelined) createPipelines(count int, channel chan interface{}) error {
+func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 	for i := 1; i <= count; i++ {
 		p.wg.Add(1)
 		go func() {
@@ -98,11 +100,11 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) error {
 						continue
 					}
 
-					p.handleEvent(event)
+					if err := p.handleEvent(event); err != nil {
+						logger.Error(err)
+					}
 				}
 			}
 		}()
 	}
-
-	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListCommand(t *testing.T) {
@@ -36,7 +37,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "json")
+	require.NoError(t, cmd.Flags().Set("format", "json"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -55,8 +56,8 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set(flags.Format, "json")
-	cmd.Flags().Set(flags.AllOrgs, "t")
+	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
+	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
 	assert.Nil(err)
@@ -72,7 +73,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	client.On("ListFilters", mock.Anything).Return([]types.EventFilter{*filter}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "none")
+	require.NoError(t, cmd.Flags().Set("format", "none"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -108,8 +109,8 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	client.On("ListFilters", "*").Return([]types.EventFilter{*filter}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set(flags.Format, "json")
-	cmd.Flags().Set(flags.AllOrgs, "t")
+	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
+	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
 	assert.Contains(out, "10 > 0")

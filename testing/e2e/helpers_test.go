@@ -31,7 +31,7 @@ func waitForBackend(url string) bool {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if resp.StatusCode != 200 && resp.StatusCode != 401 {
 			log.Printf("backend returned non-200/401 status code: %d\n", resp.StatusCode)

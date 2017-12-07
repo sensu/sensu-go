@@ -16,7 +16,7 @@ func ResolveCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				cmd.Help()
+				_ = cmd.Help()
 				return errors.New("missing argument(s)")
 			}
 

@@ -34,8 +34,7 @@ func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 	// If no ID was given print out usage
 	id, err := e.extractID(args)
 	if err != nil {
-		cmd.Help()
-		return nil
+		return cmd.Help()
 	}
 
 	if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {

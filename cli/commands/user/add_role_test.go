@@ -7,6 +7,7 @@ import (
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddRoleCommand(t *testing.T) {
@@ -26,11 +27,10 @@ func TestAddRoleCommandRunEClosureWithoutName(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := AddRoleCommand(cli)
-	cmd.Flags().Set("timeout", "15")
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
-	assert.Nil(err)
+	assert.Error(err)
 }
 
 func TestAddRoleCommandRunEClosureWithFlags(t *testing.T) {
@@ -58,6 +58,6 @@ func TestAddRoleCommandRunEClosureWithServerErr(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"bar", "foo"})
 
 	assert.Empty(out)
-	assert.NotNil(err)
+	require.Error(t, err)
 	assert.Equal("oh noes", err.Error())
 }

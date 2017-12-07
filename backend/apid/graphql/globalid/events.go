@@ -60,7 +60,7 @@ func (n *EventComponents) Timestamp() int64 {
 func (n *EventComponents) getUniqueComponents(i int) string {
 	if len(n.uniqueComponents) == 0 {
 		bytes, _ := base64.StdEncoding.DecodeString(n.uniqueComponent)
-		json.Unmarshal(bytes, &n.uniqueComponents)
+		_ = json.Unmarshal(bytes, &n.uniqueComponents)
 	}
 	return n.uniqueComponents[i]
 }

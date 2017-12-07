@@ -7,6 +7,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddRuleCommand(t *testing.T) {
@@ -29,8 +30,8 @@ func TestAddRuleCommandRunEClosureSucess(t *testing.T) {
 	client.On("AddRule", "name", mock.AnythingOfType("*types.Rule")).Return(nil)
 
 	cmd := AddRuleCommand(cli)
-	cmd.Flags().Set("type", "*")
-	cmd.Flags().Set("create", "t")
+	require.NoError(t, cmd.Flags().Set("type", "*"))
+	require.NoError(t, cmd.Flags().Set("create", "t"))
 
 	out, err := test.RunCmd(cmd, []string{"name"})
 

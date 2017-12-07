@@ -144,7 +144,7 @@ build_command () {
 linter_commands () {
 	echo "Running linter..."
 
-	gometalinter.v1 --vendor --disable-all --enable=vet --enable=golint --enable=ineffassign --enable=goconst --tests ./...
+	gometalinter.v1 --vendor --disable-all --enable=vet --enable=golint --enable=ineffassign --enable=goconst --enable=errcheck --skip=dashboardd --skip=importer -j 1 --deadline 1h --tests ./...
 	if [ $? -ne 0 ]; then
 		echo "Linting failed..."
 		exit 1

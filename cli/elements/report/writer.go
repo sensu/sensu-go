@@ -38,7 +38,7 @@ func (w Writer) Fatal(msg string) {
 	w.addEntry(logrus.FatalLevel, msg)
 
 	// Flush any remaining entries and exit
-	w.report.Flush()
+	_ = w.report.Flush()
 	os.Exit(1)
 }
 

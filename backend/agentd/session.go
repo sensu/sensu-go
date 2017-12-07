@@ -214,7 +214,12 @@ func (s *Session) Stop() {
 	close(s.stopping)
 	s.wg.Wait()
 	for _, sub := range s.cfg.Subscriptions {
-		s.bus.Unsubscribe(sub, s.ID)
+		if err := s.bus.Unsubscribe(sub, s.ID); err != nil {
+			// Bus has stopped running already, no need for further unsubscribe
+			// attempts.
+			logger.Debug(err)
+			break
+		}
 	}
 	close(s.checkChannel)
 }
