@@ -19,9 +19,7 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 	// Get all silenced entries by agent subscription and check name. This takes
 	// any wildcards into account (subscription:* or *checkName).
 	// TODO: implement deletion of silenced entries that have ExpireOnResolve set
-	// to true. As of this writing, what constitutes a check resolution is TBD,
-	// but will probably involve the check state (passing/failing).
-	// also add checkName to this entry list
+	// to true.
 	silencedEntries = make(map[string]bool)
 
 	// Get the silenced entries for the entity
