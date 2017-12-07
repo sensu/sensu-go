@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/sensu/etcd/clientv3"
+	"github.com/sensu/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/types"
 )
 

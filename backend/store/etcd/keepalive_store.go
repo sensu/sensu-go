@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 

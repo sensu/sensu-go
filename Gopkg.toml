@@ -116,8 +116,8 @@
 # Lock etcd and some of it's dependencies
 
 [[constraint]]
-  name = "github.com/coreos/etcd"
-  version = "3.2.11"
+  name = "github.com/sensu/etcd"
+  branch = "release-3.2-fix-tls-close"
 
 [[override]]
   name = "github.com/ugorji/go"

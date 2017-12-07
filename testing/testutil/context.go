@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"github.com/coreos/etcd/store"
+	"github.com/sensu/etcd/store"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"

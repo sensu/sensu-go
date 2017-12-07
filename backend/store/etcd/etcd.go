@@ -17,9 +17,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/embed"
-	"github.com/coreos/etcd/pkg/transport"
+	"github.com/sensu/etcd/clientv3"
+	"github.com/sensu/etcd/embed"
+	"github.com/sensu/etcd/pkg/transport"
 	"github.com/coreos/pkg/capnslog"
 )
 
