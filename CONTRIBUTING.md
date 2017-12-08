@@ -70,3 +70,10 @@ The following is an example DCO Signed-off-by statement.
 ```
 
 Git makes this easy with `git commit --signoff`!
+
+The DCO text can either be manually added to your commit body, or you
+can add either `-s` or `--signoff` to your usual git commit commands.
+If you forget to add the sign-off you can also amend a previous commit
+with the sign-off by running `git commit --amend -s`. If you've pushed
+your changes to Github already you'll need to force push your branch
+after this with `git push -f`. -- Thanks Chef!
