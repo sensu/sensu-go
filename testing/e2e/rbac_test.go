@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -14,25 +13,14 @@ import (
 )
 
 func TestRBAC(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
-	bep, cleanup := newBackendProcess()
+	backend, cleanup := newBackend(t)
 	defer cleanup()
 
-	err := bep.Start()
-	if err != nil {
-		log.Panic(err)
-	}
-	defer func() {
-		require.NoError(t, bep.Kill())
-	}()
-
-	// Make sure the backend is available
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
-	backendIsOnline := waitForBackend(backendHTTPURL)
-	assert.True(t, backendIsOnline)
-
 	// Initializes sensuctl as admin
-	adminctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	adminctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
 	defer cleanup()
 
 	// Make sure we are properly authenticated
@@ -247,13 +235,13 @@ func TestRBAC(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	// Create a Sensu client for every environment
-	defaultctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "default", "P@ssw0rd!")
+	defaultctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "default", "P@ssw0rd!")
 	defer cleanup()
 
-	devctl, cleanup := newSensuCtl(backendHTTPURL, "acme", "dev", "dev", "P@ssw0rd!")
+	devctl, cleanup := newSensuCtl(backend.HTTPURL, "acme", "dev", "dev", "P@ssw0rd!")
 	defer cleanup()
 
-	prodctl, cleanup := newSensuCtl(backendHTTPURL, "acme", "prod", "prod", "P@ssw0rd!")
+	prodctl, cleanup := newSensuCtl(backend.HTTPURL, "acme", "prod", "prod", "P@ssw0rd!")
 	defer cleanup()
 
 	// Make sure each of these clients only has access to objects within its role
@@ -341,14 +329,14 @@ func TestRBAC(t *testing.T) {
 
 	// Now we want to restart the backend to make sure the JWT will continue
 	// to work and prevent an issue like https://github.com/sensu/sensu-go/issues/502
-	require.NoError(t, bep.Kill())
-	err = bep.Start()
+	require.NoError(t, backend.Kill())
+	err = backend.Start()
 	if err != nil {
 		log.Panic(err)
 	}
 
 	// Make sure the backend is available
-	backendIsOnline = waitForBackend(backendHTTPURL)
+	backendIsOnline := waitForBackend(backend.HTTPURL)
 	assert.True(t, backendIsOnline)
 
 	// Make sure we are properly authenticated

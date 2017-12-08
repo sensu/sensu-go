@@ -1,56 +1,35 @@
 package e2e
 
 import (
-	"fmt"
-	"log"
 	"testing"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCheckScheduling(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
-	bep, cleanup := newBackendProcess()
+	backend, cleanup := newBackend(t)
 	defer cleanup()
 
-	err := bep.Start()
-	if err != nil {
-		log.Panic(err)
-	}
-	defer func() {
-		require.NoError(t, bep.Kill())
-	}()
-
-	// Make sure the backend is available
-	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", bep.AgentPort)
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
-	backendIsOnline := waitForBackend(backendHTTPURL)
-	assert.True(t, backendIsOnline)
-
-	// Configure the agent
-	ap := &agentProcess{
-		// testing the StringSlice for backend-url and the backend selector.
-		BackendURLs: []string{backendWSURL, backendWSURL},
-		AgentID:     "TestCheckScheduling",
-	}
+	// Initializes sensuctl
+	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	defer cleanup()
 
 	// Start the agent
-	err = ap.Start()
-	if err != nil {
-		log.Panic(err)
+	agentConfig := agentConfig{
+		ID:          "TestCheckScheduling",
+		BackendURLs: []string{backend.WSURL},
 	}
-	defer func() {
-		require.NoError(t, ap.Kill())
-	}()
+	agent, cleanup := newAgent(agentConfig, sensuctl, t)
+	defer cleanup()
 
-	// Give it few seconds to make sure we've sent a keepalive.
-	time.Sleep(5 * time.Second)
-
-	// Create an authenticated HTTP Sensu client
-	sensuClient := newSensuClient(backendHTTPURL)
+	// Create an authenticated HTTP Sensu client. newSensuClient is deprecated but
+	// sensuctl does not currently support objects updates with flag parameters
+	sensuClient := newSensuClient(backend.HTTPURL)
 
 	// Create a check that publish check requests
 	check := types.FixtureCheckConfig("TestCheckScheduling")
@@ -58,7 +37,7 @@ func TestCheckScheduling(t *testing.T) {
 	check.Interval = 1
 	check.Subscriptions = []string{"test"}
 
-	err = sensuClient.CreateCheck(check)
+	err := sensuClient.CreateCheck(check)
 	assert.NoError(t, err)
 	_, err = sensuClient.FetchCheck(check.Name)
 	assert.NoError(t, err)
@@ -78,7 +57,7 @@ func TestCheckScheduling(t *testing.T) {
 	time.Sleep(20 * time.Second)
 
 	// Retrieve the number of check results sent
-	event, err := sensuClient.FetchEvent(ap.AgentID, check.Name)
+	event, err := sensuClient.FetchEvent(agent.ID, check.Name)
 	assert.NoError(t, err)
 	assert.NotNil(t, event)
 
@@ -91,7 +70,7 @@ func TestCheckScheduling(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// Retrieve (again) the number of check results sent
-	event, err = sensuClient.FetchEvent(ap.AgentID, check.Name)
+	event, err = sensuClient.FetchEvent(agent.ID, check.Name)
 	assert.NoError(t, err)
 	assert.NotNil(t, event)
 	count2 := len(event.Check.History)
@@ -108,7 +87,7 @@ func TestCheckScheduling(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// Retrieve (again) the number of check results sent
-	event, err = sensuClient.FetchEvent(ap.AgentID, check.Name)
+	event, err = sensuClient.FetchEvent(agent.ID, check.Name)
 	assert.NoError(t, err)
 	assert.NotNil(t, event)
 	count3 := len(event.Check.History)
