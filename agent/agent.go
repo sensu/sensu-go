@@ -267,17 +267,8 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// read again from client, add any new message to the buffer, and parse
 		// again.
 		var event types.Event
-		var v1event types.EventV1
 		if err = json.Unmarshal(messageBuffer.Bytes(), &event); err != nil {
 			continue
-		}
-
-		if event.Check == nil {
-			if err = json.Unmarshal(messageBuffer.Bytes(), &v1event); err != nil {
-				logger.WithError(err).Error("1.x returns \"invalid\"")
-				return
-			}
-			fmt.Println(v1event)
 		}
 
 		// Prepare the event by mutating it as required so it passes validation
