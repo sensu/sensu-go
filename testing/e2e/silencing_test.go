@@ -13,6 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestSilencing ensures that the silencing functionality works as expected, by
+// testing a happy path scenario where we have a handler that produces files
+// into a temporary directory when handling events. So we simply make sure that
+// this handler does not run when the associated check and entity are silenced,
+// and therefore that the event is not passing through pipelined, by counting
+// the number of files created.
 func TestSilencing(t *testing.T) {
 	t.Parallel()
 
@@ -52,7 +58,7 @@ func TestSilencing(t *testing.T) {
 	// will later be silenced and attach it to our agent via the subscription and
 	// use our previously defined handler
 	output, err = sensuctl.run("check", "create", "check_silencing",
-		"--command", "return 2",
+		"--command", "false",
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--handlers", "touch",
@@ -81,12 +87,60 @@ func TestSilencing(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	// Retrieve the number of files created by our handler, representing the number
-	// of times our handler was ran
+	// Wait for new check results so the event gets updated with this new
+	// silenced entry
+	time.Sleep(2 * time.Second)
+
+	// Retrieve the number of files created by our handler, representing the
+	// number of times our handler was ran. Since the check is silenced, this
+	// number should not move from this point
 	files, err := ioutil.ReadDir(tmpDir)
 	if err != nil {
 		log.Fatal(err)
 	}
-	count := len(files)
-	fmt.Println(count)
+	count1 := len(files)
+
+	// Make sure the event is marked as silenced now
+	output, err = sensuctl.run("event", "info", agent.ID, "check_silencing")
+	assert.NoError(t, err, string(output))
+	event = types.Event{}
+	json.Unmarshal(output, &event)
+	assert.NotNil(t, event)
+	assert.NotEmpty(t, event.Silenced)
+
+	// The number of files created by the handler should not have increased since
+	// the silenced entry was created
+	files, err = ioutil.ReadDir(tmpDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	count2 := len(files)
+	assert.Equal(t, count1, count2)
+
+	// Delete the silenced entry so events are once again handled
+	output, err = sensuctl.run(
+		"silenced",
+		"delete",
+		fmt.Sprintf("entity:%s:check_silencing", agent.ID),
+		"--skip-confirm",
+	)
+	assert.NoError(t, err, string(output))
+
+	// Wait for new check results so the event gets updated
+	time.Sleep(2 * time.Second)
+
+	// The number of files created by the handler should have increased
+	files, err = ioutil.ReadDir(tmpDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	count3 := len(files)
+	assert.Condition(
+		t,
+		assert.Comparison(func() bool {
+			return count3 > count2
+		}),
+		"the 'touch' handler did not created new files as expected",
+	)
+
 }
