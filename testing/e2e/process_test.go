@@ -215,6 +215,7 @@ func (a *agentProcess) Start() error {
 		"--organization", "default",
 		"--api-port", strconv.Itoa(port[0]),
 		"--socket-port", strconv.Itoa(port[1]),
+		"--keepalive-interval", "1",
 	}
 
 	// Support a single or multiple backend URLs
