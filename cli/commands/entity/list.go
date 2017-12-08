@@ -3,7 +3,6 @@ package entity
 import (
 	"io"
 	"strings"
-	"time"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
@@ -79,14 +78,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Last Seen",
 			CellTransformer: func(data interface{}) string {
 				entity, _ := data.(types.Entity)
-
-				// Make sure we don't display the epoch time for proxy entities
-				if entity.LastSeen == 0 {
-					return "N/A"
-				}
-
-				time := time.Unix(entity.LastSeen, 0)
-				return time.String()
+				return helpers.HumanTimestamp(entity.LastSeen)
 			},
 		},
 	})
