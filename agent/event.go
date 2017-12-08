@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -49,4 +50,26 @@ func prepareEvent(a *Agent, event *types.Event) error {
 
 	// The entity should pass validation at this point
 	return event.Entity.Validate()
+}
+
+// translateToEvent accepts a 1.x compatible payload
+// and attempts to translate it to a 2.x event
+func translateToEvent(payload map[string]interface{}, event *types.Event) error {
+	var checkConfig types.CheckConfig
+	var check types.Check
+
+	if payload == nil {
+		return fmt.Errorf("a payload must be provided")
+	}
+	if err := mapstructure.Decode(payload, &checkConfig); err != nil {
+		return fmt.Errorf("error translating check config")
+	}
+	if err := mapstructure.Decode(payload, &check); err != nil {
+		return fmt.Errorf("error translating check")
+	}
+
+	check.Config = &checkConfig
+	event.Check = &check
+
+	return nil
 }

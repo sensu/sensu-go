@@ -29,27 +29,24 @@ message Check {
 	// Interval is the frequency in seconds a check is exectued.
 	int64 interval = 5;
 
-	// Handler is the event handler used for events.
-	string handler = 6;
-
 	// Handlers are the event handlers used for events.
-	repeated string handlers = 7 [(gogoproto.nullable) = true];
+	repeated string handlers = 6 [(gogoproto.nullable) = true];
 
 	// Issued is the issued timestamp in epoch time.
-	int64 issued = 8;
+	int64 issued = 7;
 
 	// Output is the output produced by the check.
-	string output = 9;
+	string output = 8;
 
 	// Status is the status exit code produced by the check.
-	int64 status = 10;
+	int64 status = 9;
 
 	// History is history of last 21 exit status codes produced by the check.
-	repeated int64 history = 11 [(gogoproto.nullable) = true];
+	repeated int64 history = 10 [(gogoproto.nullable) = true];
 
 	// Source is the check source.
-	string source = 12;
+	string source = 11;
 
 	// Origin is the name of the client that executed the check (2.x entity)
-	string origin = 13;
+	string origin = 12;
 }
