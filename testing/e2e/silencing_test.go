@@ -45,7 +45,12 @@ func TestSilencing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err = os.RemoveAll(tmpDir); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
 	output, err := sensuctl.run("handler", "create", "touch",
 		"--organization", "default",
 		"--environment", "default",
@@ -77,7 +82,7 @@ func TestSilencing(t *testing.T) {
 	output, err = sensuctl.run("event", "info", agent.ID, "check_silencing")
 	assert.NoError(t, err, string(output))
 	event := types.Event{}
-	json.Unmarshal(output, &event)
+	_ = json.Unmarshal(output, &event)
 	assert.NotNil(t, event)
 	assert.Empty(t, event.Silenced)
 
@@ -105,7 +110,7 @@ func TestSilencing(t *testing.T) {
 	output, err = sensuctl.run("event", "info", agent.ID, "check_silencing")
 	assert.NoError(t, err, string(output))
 	event = types.Event{}
-	json.Unmarshal(output, &event)
+	_ = json.Unmarshal(output, &event)
 	assert.NotNil(t, event)
 	assert.NotEmpty(t, event.Silenced)
 

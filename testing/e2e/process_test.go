@@ -62,7 +62,9 @@ func newBackend(t *testing.T) (*backendProcess, func()) {
 
 	return backend, func() {
 		cleanup()
-		backend.Kill()
+		if err := backend.Kill(); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
