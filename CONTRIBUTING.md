@@ -11,7 +11,7 @@ branch to base your changes on, and so on.
 1. Open an issue to describe your proposed improvement or feature
 2. Fork https://github.com/sensu/sensu-go and clone your fork to your workstation
 3. Create your feature branch (`git checkout -b my-new-feature`)
-4. Commit your changes with a [DCO Signed-off-by statement](#DCO) (`git commit -am 'Added a feature with tests' --signoff`)
+4. Commit your changes with a [DCO Signed-off-by statement](#dco) (`git commit -am 'Added a feature with tests' --signoff`)
 5. Push your feature branch (`git push origin my-new-feature`)
 6. Create a Pull Request as appropriate based on the issue discussion
 
