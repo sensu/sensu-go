@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddCheckHookCommand(t *testing.T) {
@@ -27,16 +28,16 @@ func TestAddCheckHookCommandRunEClosureSucess(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.CheckHook")).Return(nil)
+	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.HookList")).Return(nil)
 	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
 
 	cmd := AddCheckHookCommand(cli)
-	cmd.Flags().Set("type", "non-zero")
+	require.NoError(t, cmd.Flags().Set("type", "non-zero"))
 
 	out, err := test.RunCmd(cmd, []string{"name"})
+	require.NoError(t, err)
 
 	assert.Contains(out, "Added")
-	assert.NoError(err)
 }
 
 func TestAddCheckHookCommandRunEInvalid(t *testing.T) {

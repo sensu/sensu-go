@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testMessageType struct {
@@ -51,7 +52,7 @@ func TestClosedWebsocket(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		transport, err := server.Serve(w, r)
 		assert.NoError(t, err)
-		transport.Close()
+		require.NoError(t, transport.Close())
 		done <- struct{}{}
 	}))
 	defer ts.Close()

@@ -24,7 +24,7 @@ type KeepalivedTestSuite struct {
 
 func (suite *KeepalivedTestSuite) SetupTest() {
 	suite.MessageBus = &messaging.WizardBus{}
-	suite.MessageBus.Start()
+	suite.NoError(suite.MessageBus.Start())
 
 	mockStore := &mockstore.MockStore{}
 	dereg := &mockDeregisterer{}
@@ -51,8 +51,8 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 }
 
 func (suite *KeepalivedTestSuite) AfterTest() {
-	suite.MessageBus.Stop()
-	suite.Keepalived.Stop()
+	suite.NoError(suite.MessageBus.Stop())
+	suite.NoError(suite.Keepalived.Stop())
 }
 
 func (suite *KeepalivedTestSuite) TestStartStop() {
@@ -211,7 +211,7 @@ func TestProcessRegistration(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			messageBus := &messaging.WizardBus{}
-			messageBus.Start()
+			require.NoError(t, messageBus.Start())
 
 			store := &mockstore.MockStore{}
 

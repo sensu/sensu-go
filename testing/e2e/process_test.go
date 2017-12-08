@@ -101,7 +101,7 @@ func newBackendProcess(t *testing.T) (*backendProcess, func()) {
 		EtcdName:                "default",
 	}
 
-	return bep, func() { os.RemoveAll(tmpDir) }
+	return bep, func() { _ = os.RemoveAll(tmpDir) }
 }
 
 // Start starts a backend process as configured. All exported variables in
@@ -288,7 +288,7 @@ func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
 	}
 
 	// Authenticate sensuctl
-	ctl.run("configure",
+	_, err = ctl.run("configure",
 		"-n",
 		"--url", apiURL,
 		"--username", user,
@@ -297,8 +297,11 @@ func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
 		"--organization", org,
 		"--environment", env,
 	)
+	if err != nil {
+		log.Panic(err)
+	}
 
-	return ctl, func() { os.RemoveAll(tmpDir) }
+	return ctl, func() { _ = os.RemoveAll(tmpDir) }
 }
 
 // run executes the sensuctl binary with the provided arguments

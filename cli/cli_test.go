@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -12,7 +13,7 @@ func TestNew(t *testing.T) {
 
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	flags.String("api-url", "", "")
-	flags.Set("api-url", "http://localhost:8080")
+	require.NoError(t, flags.Set("api-url", "http://localhost:8080"))
 
 	c := New(flags)
 

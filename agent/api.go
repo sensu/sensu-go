@@ -43,10 +43,10 @@ func healthz(conn transport.Transport) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if conn.Closed() {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("sensu backend unavailable"))
+			_, _ = fmt.Fprint(w, "sensu backend unavailable")
+			return
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		_, _ = fmt.Fprint(w, "ok")
 	}
 }
 

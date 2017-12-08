@@ -73,7 +73,7 @@ func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
-	cfg := types.CheckHook{}
+	cfg := types.HookList{}
 	if err := unmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}

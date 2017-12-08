@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOrgStorage(t *testing.T) {
@@ -48,14 +49,14 @@ func TestOrgStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		// Delete a non-empty org w/ roles
-		store.DeleteEnvironment(ctx, env)
-		store.UpdateRole(ctx, types.FixtureRole("1", org.Name, env.Name))
-		store.UpdateRole(ctx, types.FixtureRole("2", "asdf", "asdf"))
+		require.NoError(t, store.DeleteEnvironment(ctx, env))
+		require.NoError(t, store.UpdateRole(ctx, types.FixtureRole("1", org.Name, env.Name)))
+		require.NoError(t, store.UpdateRole(ctx, types.FixtureRole("2", "asdf", "asdf")))
 		err = store.DeleteOrganizationByName(ctx, org.Name)
 		assert.Error(t, err)
 
 		// Delete an empty org
-		store.DeleteRoleByName(ctx, "1")
+		require.NoError(t, store.DeleteRoleByName(ctx, "1"))
 		err = store.DeleteOrganizationByName(ctx, org.Name)
 		assert.NoError(t, err)
 

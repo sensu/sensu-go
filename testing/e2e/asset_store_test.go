@@ -9,6 +9,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Test asset creation -> check creation with runtime_dependency
@@ -75,7 +76,7 @@ func TestAssetStore(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	event := types.Event{}
-	json.Unmarshal(output, &event)
+	require.NoError(t, json.Unmarshal(output, &event))
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)

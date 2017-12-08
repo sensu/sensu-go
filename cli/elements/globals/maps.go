@@ -7,12 +7,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// FormatCheckHooks formats the Check Hook struct into a string mapping
-func FormatCheckHooks(checkHooks []types.CheckHook) string {
+// FormatHookLists formats the Check Hook struct into a string mapping
+func FormatHookLists(hookLists []types.HookList) string {
 	hooksString := []string{}
-	for _, checkHook := range checkHooks {
-		hookString := fmt.Sprintf("%s: [", checkHook.Type)
-		hookString += fmt.Sprintf("%s]", strings.Join(checkHook.Hooks, ", "))
+	for _, hookList := range hookLists {
+		hookString := fmt.Sprintf("%s: [", hookList.Type)
+		hookString += fmt.Sprintf("%s]", strings.Join(hookList.Hooks, ", "))
 		hooksString = append(hooksString, hookString)
 	}
 	return strings.Join(hooksString, ", ")

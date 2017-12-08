@@ -61,7 +61,7 @@ func (suite *EventTestSuite) TestKeepaliveEvent() {
 	assert.NoError(err)
 
 	events := []types.Event{}
-	json.Unmarshal(output, &events)
+	suite.NoError(json.Unmarshal(output, &events))
 
 	assert.NotZero(len(events))
 
@@ -85,7 +85,7 @@ func (suite *EventTestSuite) TestEntity() {
 	assert.NoError(err)
 
 	entities := []types.Entity{}
-	json.Unmarshal(output, &entities)
+	suite.NoError(json.Unmarshal(output, &entities))
 
 	assert.Equal(1, len(entities))
 	assert.Equal("TestKeepalives", entities[0].ID)
@@ -117,7 +117,7 @@ func (suite *EventTestSuite) TestCheck() {
 	assert.NoError(err)
 
 	result := types.CheckConfig{}
-	json.Unmarshal(output, &result)
+	suite.NoError(json.Unmarshal(output, &result))
 	assert.Equal(result.Name, checkName)
 
 	// Allow enough time for the check to run.
@@ -126,7 +126,7 @@ func (suite *EventTestSuite) TestCheck() {
 	assert.NoError(err)
 
 	event := types.Event{}
-	json.Unmarshal(output, &event)
+	suite.NoError(json.Unmarshal(output, &event))
 	assert.NotNil(event)
 	assert.NotNil(event.Check)
 	assert.NotNil(event.Entity)
@@ -145,7 +145,9 @@ func (suite *EventTestSuite) TestHTTPAPI() {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	assert.NoError(err)
-	defer res.Body.Close()
+	defer func() {
+		suite.NoError(res.Body.Close())
+	}()
 
 	// Give it a second to receive the new event
 	time.Sleep(5 * time.Second)

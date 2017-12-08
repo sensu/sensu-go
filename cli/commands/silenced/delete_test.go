@@ -18,7 +18,7 @@ func TestDeleteCommand(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(nil)
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
@@ -33,9 +33,8 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(nil)
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("timeout", "15")
-	cmd.Flags().Set("skip-confirm", "t")
-	cmd.Flags().Set("subscription", "nytimes")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
+	require.NoError(t, cmd.Flags().Set("subscription", "nytimes"))
 	out, err := test.RunCmd(cmd, []string{"a", "b"})
 
 	require.NoError(t, err)
@@ -50,7 +49,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(nil)
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"foo:bar"})
 
 	require.NoError(t, err)
@@ -65,7 +64,7 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"foo:bar"})
 
 	require.Error(t, err)

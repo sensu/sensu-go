@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -16,8 +17,8 @@ func AddRoleCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 2 {
-				cmd.Help()
-				return nil
+				_ = cmd.Help()
+				return errors.New("bad arguments")
 			}
 
 			username := args[0]
@@ -26,8 +27,8 @@ func AddRoleCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Added")
-			return nil
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Added")
+			return err
 		},
 	}
 }

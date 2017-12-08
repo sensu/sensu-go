@@ -146,7 +146,9 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		if err != nil {
 			return nil, err
 		}
-		l.Close()
+		if err := l.Close(); err != nil {
+			logger.Error(err)
+		}
 
 		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
 		if err != nil {

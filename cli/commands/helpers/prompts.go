@@ -20,7 +20,9 @@ func ConfirmDelete(name string, stdout io.Writer) bool {
 
 	// NOTE: configured properly NewEx should never return an error
 	rl, _ := readline.NewEx(&readline.Config{Prompt: "> "})
-	defer rl.Close()
+	defer func() {
+		_ = rl.Close()
+	}()
 
 	line, _ := rl.Readline()
 	return confirmation == line

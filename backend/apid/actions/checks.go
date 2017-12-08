@@ -167,7 +167,7 @@ func (a CheckController) Destroy(ctx context.Context, name string) error {
 }
 
 // AddCheckHook adds an association between a hook and a check
-func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHook types.CheckHook) error {
+func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHook types.HookList) error {
 	return a.findAndUpdateCheckConfig(ctx, check, func(check *types.CheckConfig) error {
 		var exists bool
 		for i, r := range check.CheckHooks {

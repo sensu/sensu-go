@@ -32,7 +32,6 @@ It has these top-level messages:
 	Tokens
 	CheckRequest
 	CheckConfig
-	CheckHook
 	Check
 	CheckHistory
 	Entity
@@ -49,6 +48,7 @@ It has these top-level messages:
 	HookRequest
 	HookConfig
 	Hook
+	HookList
 	KeepaliveRecord
 	Metrics
 	Mutator

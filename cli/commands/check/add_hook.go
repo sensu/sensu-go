@@ -46,7 +46,7 @@ func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Instantiate check hook from input
-			checkHook := types.CheckHook{}
+			checkHook := types.HookList{}
 			opts.Copy(&checkHook)
 
 			// Ensure that the given checkHook is valid
@@ -72,8 +72,8 @@ func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("hooks", "k", "", "comma separated list of hooks associated with the check")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("type")
-	cmd.MarkFlagRequired("hooks")
+	_ = cmd.MarkFlagRequired("type")
+	_ = cmd.MarkFlagRequired("hooks")
 
 	return cmd
 }
@@ -113,7 +113,7 @@ func (opts *checkHookOpts) administerQuestionnaire() error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *checkHookOpts) Copy(checkHook *types.CheckHook) {
+func (opts *checkHookOpts) Copy(checkHook *types.HookList) {
 	checkHook.Type = opts.Type
 	checkHook.Hooks = helpers.SafeSplitCSV(opts.Hooks)
 }

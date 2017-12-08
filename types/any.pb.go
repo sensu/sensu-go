@@ -32,7 +32,6 @@
 		Tokens
 		CheckRequest
 		CheckConfig
-		CheckHook
 		Check
 		CheckHistory
 		Entity
@@ -49,6 +48,7 @@
 		HookRequest
 		HookConfig
 		Hook
+		HookList
 		KeepaliveRecord
 		Metrics
 		Mutator

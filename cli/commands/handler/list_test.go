@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListCommand(t *testing.T) {
@@ -52,7 +53,7 @@ func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set(flags.AllOrgs, "t")
+	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -71,7 +72,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	cmd.Flags().Set("format", "none")
+	require.NoError(t, cmd.Flags().Set("format", "none"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)

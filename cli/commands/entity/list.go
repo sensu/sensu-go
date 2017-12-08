@@ -3,7 +3,6 @@ package entity
 import (
 	"io"
 	"strings"
-	"time"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
@@ -32,9 +31,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			helpers.Print(cmd, cli.Config.Format(), printToTable, results)
-
-			return nil
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, results)
 		},
 	}
 
@@ -79,8 +76,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Last Seen",
 			CellTransformer: func(data interface{}) string {
 				entity, _ := data.(types.Entity)
-				time := time.Unix(entity.LastSeen, 0)
-				return time.String()
+				return helpers.HumanTimestamp(entity.LastSeen)
 			},
 		},
 	})

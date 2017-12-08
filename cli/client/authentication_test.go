@@ -18,7 +18,7 @@ func TestCreateAccessToken(t *testing.T) {
 		assert.NotEmpty(t, r.Header["Authorization"])
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
+		_, _ = w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
 	defer server.Close()
@@ -60,7 +60,7 @@ func TestRefreshAccessToken(t *testing.T) {
 		assert.NotEmpty(t, r.Header["Authorization"])
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
+		_, _ = w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
 	defer server.Close()
