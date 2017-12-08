@@ -11,6 +11,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Events that transitioned from incidents to a healthy state are no longer
 filtered by the pipeline
+- Errcheck was added to the build script, and the project was given a once-over
+to clean up existing errcheck lint.
 
 ### Fixed
 - Entities can now be silenced using their entity subscription
