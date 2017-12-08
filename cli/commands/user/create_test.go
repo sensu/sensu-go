@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -30,7 +31,7 @@ func TestListCommandRunEClosureWithArgs(t *testing.T) {
 	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("password", "b0b")
+	require.NoError(t, cmd.Flags().Set("password", "b0b"))
 
 	out, err := test.RunCmd(cmd, []string{"bob"})
 
@@ -46,8 +47,7 @@ func TestListCommandRunEClosureServerErr(t *testing.T) {
 	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(fmt.Errorf(""))
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("username", "bob")
-	cmd.Flags().Set("password", "b0b")
+	require.NoError(t, cmd.Flags().Set("password", "b0b"))
 
 	out, err := test.RunCmd(cmd, []string{})
 
@@ -63,9 +63,9 @@ func TestListCommandRunEClosureWithRoles(t *testing.T) {
 	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("password", "b0b")
-	cmd.Flags().Set("roles", "     meowmix , marxist   ")
-	cmd.Flags().Set("admin", "t")
+	require.NoError(t, cmd.Flags().Set("password", "b0b"))
+	require.NoError(t, cmd.Flags().Set("roles", "     meowmix , marxist   "))
+	require.NoError(t, cmd.Flags().Set("admin", "t"))
 
 	out, err := test.RunCmd(cmd, []string{"bob"})
 
@@ -78,8 +78,7 @@ func TestListCommandRunEClosureMissingArgs(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("username", "")
-	cmd.Flags().Set("password", "b0b")
+	require.NoError(t, cmd.Flags().Set("password", "b0b"))
 
 	out, err := test.RunCmd(cmd, []string{})
 

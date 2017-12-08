@@ -47,7 +47,9 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 	// Listen to state updates and add schedulers if necassarily
 	stateMngr.OnChecksChange = func(state *SchedulerState) {
 		for _, check := range state.checks {
-			manager.Run(check)
+			if err := manager.Run(check); err != nil {
+				logger.Error(err)
+			}
 		}
 	}
 
@@ -99,7 +101,9 @@ func (mngrPtr *ScheduleManager) Stop() {
 
 	for n, scheduler := range mngrPtr.items {
 		delete(mngrPtr.items, n)
-		scheduler.Stop()
+		if err := scheduler.Stop(); err != nil {
+			logger.Debug(err)
+		}
 	}
 
 	mngrPtr.wg.Wait()

@@ -9,7 +9,7 @@ import (
 )
 
 // idempotent and can be safely run every time the backend starts.
-func seedInitialData(store store.Store) error {
+func seedInitialData(store store.Store) (err error) {
 	initializer, _ := store.NewInitializer()
 	logger := logger.WithField("component", "backend.seeds")
 
@@ -17,7 +17,12 @@ func seedInitialData(store store.Store) error {
 	if err := initializer.Lock(); err != nil {
 		return err
 	}
-	defer initializer.Close()
+	defer func() {
+		e := initializer.Close()
+		if err == nil {
+			err = e
+		}
+	}()
 
 	// Initialize the JWT secret. This method is idempotent and needs to be ran
 	// at every startup so the JWT signatures remain valid

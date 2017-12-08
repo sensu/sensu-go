@@ -3,7 +3,6 @@ package agent
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testMessageType struct {
@@ -125,8 +125,9 @@ func TestHandleTCPMessages(t *testing.T) {
 	submittedEvent := types.FixtureEvent("foo", "check_cpu")
 	bytes, _ := json.Marshal(submittedEvent)
 
-	tcpClient.Write(bytes)
-	tcpClient.Close()
+	_, err = tcpClient.Write(bytes)
+	require.NoError(t, err)
+	require.NoError(t, tcpClient.Close())
 
 	msg := <-ta.sendq
 	assert.NotEmpty(msg)
@@ -166,8 +167,9 @@ func TestHandleUDPMessages(t *testing.T) {
 	submittedEvent := types.FixtureEvent("bar", "check_mem")
 	bytes, _ := json.Marshal(submittedEvent)
 
-	udpClient.Write(bytes)
-	udpClient.Close()
+	_, err = udpClient.Write(bytes)
+	require.NoError(t, err)
+	require.NoError(t, udpClient.Close())
 
 	msg := <-ta.sendq
 	assert.NotEmpty(msg)
@@ -203,7 +205,9 @@ func TestReceivePingTCP(t *testing.T) {
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
-	defer tcpClient.Close()
+	defer func() {
+		require.NoError(t, tcpClient.Close())
+	}()
 
 	bytesWritten, err := tcpClient.Write([]byte(" ping "))
 	if err != nil {
@@ -213,12 +217,8 @@ func TestReceivePingTCP(t *testing.T) {
 
 	readData := make([]byte, 4)
 	numBytes, err := tcpClient.Read(readData)
-	if err != nil {
-		fmt.Println(err)
-		assert.FailNow("failed to read tcpClient")
-	}
+	require.NoError(t, err)
 	assert.Equal("pong", string(readData[:numBytes]))
-	tcpClient.Close()
 	ta.Stop()
 }
 
@@ -244,9 +244,11 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	submittedEvent := types.FixtureEvent("baz", "check_disk")
 	bytes, _ := json.Marshal(submittedEvent)
 
-	tcpClient.Write(bytes[:5])
-	tcpClient.Write(bytes[5:])
-	tcpClient.Close()
+	_, err = tcpClient.Write(bytes[:5])
+	require.NoError(t, err)
+	_, err = tcpClient.Write(bytes[5:])
+	require.NoError(t, err)
+	require.NoError(t, tcpClient.Close())
 
 	msg := <-ta.sendq
 	assert.Equal("event", msg.Type)
@@ -296,6 +298,6 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 		assert.FailNow("Failed to read data from tcp socket")
 	}
 	assert.Equal("invalid", string(readData[:numBytes]))
-	tcpClient.Close()
+	require.NoError(t, tcpClient.Close())
 	ta.Stop()
 }

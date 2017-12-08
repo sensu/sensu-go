@@ -33,7 +33,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 
 func (suite *ManagerTestSuite) AfterTest() {
 	// Remove tmpdir
-	os.RemoveAll(suite.cacheDir)
+	suite.NoError(os.RemoveAll(suite.cacheDir))
 }
 
 func (suite *ManagerTestSuite) TestNewManager() {

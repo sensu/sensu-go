@@ -23,7 +23,7 @@ func retryConnect(t *testing.T, address string) {
 	for i := 0; i < 5; i++ {
 		conn, err = net.Dial("tcp", address)
 		if err == nil {
-			conn.Close()
+			_ = conn.Close()
 			continue
 		}
 		time.Sleep(time.Duration(i) * time.Second)

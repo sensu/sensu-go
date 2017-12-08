@@ -47,11 +47,11 @@ func (s *Schedulerd) Start() error {
 
 // Stop the scheduler daemon.
 func (s *Schedulerd) Stop() error {
-	s.stateManager.Stop()
+	err := s.stateManager.Stop()
 	s.schedulerManager.Stop()
 
 	close(s.errChan)
-	return nil
+	return err
 }
 
 // Status returns the health of the scheduler daemon.

@@ -10,6 +10,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRBAC(t *testing.T) {
@@ -21,7 +22,9 @@ func TestRBAC(t *testing.T) {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer bep.Kill()
+	defer func() {
+		require.NoError(t, bep.Kill())
+	}()
 
 	// Make sure the backend is available
 	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
@@ -37,7 +40,7 @@ func TestRBAC(t *testing.T) {
 	assert.NoError(t, err)
 
 	users := []types.User{}
-	json.Unmarshal(output, &users)
+	require.NoError(t, json.Unmarshal(output, &users))
 	assert.NotZero(t, len(users))
 
 	// Create the following hierarchy for RBAC:
@@ -257,19 +260,19 @@ func TestRBAC(t *testing.T) {
 	checks := []types.CheckConfig{}
 	output, err = defaultctl.run("check", "list")
 	assert.NoError(t, err, string(output))
-	json.Unmarshal(output, &checks)
+	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Equal(t, defaultCheck, &checks[0])
 
 	checks = []types.CheckConfig{}
 	output, err = devctl.run("check", "list")
 	assert.NoError(t, err, string(output))
-	json.Unmarshal(output, &checks)
+	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Equal(t, devCheck, &checks[0])
 
 	checks = []types.CheckConfig{}
 	output, err = prodctl.run("check", "list")
 	assert.NoError(t, err, string(output))
-	json.Unmarshal(output, &checks)
+	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Equal(t, prodCheck, &checks[0])
 
 	// A user with all privileges should be able to query all checks
@@ -277,14 +280,14 @@ func TestRBAC(t *testing.T) {
 	output, err = adminctl.run("check", "list", "--environment", "*", "--all-organizations")
 	// output, err = adminctl.run("check", "list", "--organization", "*", "--environment", "*")
 	assert.NoError(t, err, string(output))
-	json.Unmarshal(output, &checks)
+	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Len(t, checks, 3)
 
 	// A user with all privileges should be able to query a specific organization
 	checks = []types.CheckConfig{}
 	output, err = adminctl.run("check", "list", "--environment", "*", "--organization", "acme")
 	assert.NoError(t, err, string(output))
-	json.Unmarshal(output, &checks)
+	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Len(t, checks, 2)
 
 	// A user with all privileges should be able to query a specific organization
@@ -292,7 +295,7 @@ func TestRBAC(t *testing.T) {
 	checks = []types.CheckConfig{}
 	output, err = adminctl.run("check", "list", "--environment", "dev", "--organization", "acme")
 	assert.NoError(t, err, string(output))
-	json.Unmarshal(output, &checks)
+	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Len(t, checks, 1)
 
 	// Make sure a client can't create objects outside of its role
@@ -338,7 +341,7 @@ func TestRBAC(t *testing.T) {
 
 	// Now we want to restart the backend to make sure the JWT will continue
 	// to work and prevent an issue like https://github.com/sensu/sensu-go/issues/502
-	bep.Kill()
+	require.NoError(t, bep.Kill())
 	err = bep.Start()
 	if err != nil {
 		log.Panic(err)

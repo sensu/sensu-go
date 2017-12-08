@@ -66,7 +66,9 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 				executor.State = state
 
 				// Publish check request
-				executor.Execute(check)
+				if err := executor.Execute(check); err != nil {
+					logger.Error(err)
+				}
 			}
 		}
 	}()

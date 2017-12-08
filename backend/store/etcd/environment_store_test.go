@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEnvStorage(t *testing.T) {
@@ -38,18 +39,18 @@ func TestEnvStorage(t *testing.T) {
 		exCheck := types.FixtureCheckConfig("id")
 		exCheck.Environment = env.Name
 		exCheck.Organization = org
-		store.UpdateCheckConfig(ctx, exCheck)
+		require.NoError(t, store.UpdateCheckConfig(ctx, exCheck))
 		err = store.DeleteEnvironment(ctx, env)
 		assert.Error(t, err)
 
 		// Delete a non-empty environment w/ role
-		store.DeleteCheckConfigByName(ctx, exCheck.Name)
-		store.UpdateRole(ctx, types.FixtureRole("1", org, env.Name))
+		require.NoError(t, store.DeleteCheckConfigByName(ctx, exCheck.Name))
+		require.NoError(t, store.UpdateRole(ctx, types.FixtureRole("1", org, env.Name)))
 		err = store.DeleteEnvironment(ctx, env)
 		assert.Error(t, err)
 
 		// Delete an environment
-		store.DeleteRoleByName(ctx, "1")
+		require.NoError(t, store.DeleteRoleByName(ctx, "1"))
 		err = store.DeleteEnvironment(ctx, env)
 		assert.NoError(t, err)
 

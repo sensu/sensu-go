@@ -72,8 +72,8 @@ func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("hooks", "k", "", "comma separated list of hooks associated with the check")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("type")
-	cmd.MarkFlagRequired("hooks")
+	_ = cmd.MarkFlagRequired("type")
+	_ = cmd.MarkFlagRequired("hooks")
 
 	return cmd
 }

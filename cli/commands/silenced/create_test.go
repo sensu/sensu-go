@@ -31,7 +31,7 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 	client.On("CreateSilenced", mock.Anything).Return(fmt.Errorf("error"))
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("expire", "aaaaaa")
+	require.Error(t, cmd.Flags().Set("expire", "aaaaaa"))
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	require.Error(t, err)
@@ -46,9 +46,9 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	client.On("CreateSilenced", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("expire", "5")
-	cmd.Flags().Set("expire-on-resolve", "false")
-	cmd.Flags().Set("subscription", "weeklyworldnews")
+	require.NoError(t, cmd.Flags().Set("expire", "5"))
+	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
+	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
 
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
@@ -63,9 +63,9 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("expire", "5")
-	cmd.Flags().Set("expire-on-resolve", "false")
-	cmd.Flags().Set("subscription", "weeklyworldnews")
+	require.NoError(t, cmd.Flags().Set("expire", "5"))
+	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
+	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
 
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
@@ -80,9 +80,9 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("expire", "5")
-	cmd.Flags().Set("expire-on-resolve", "false")
-	cmd.Flags().Set("subscription", "weeklyworldnews")
+	require.NoError(t, cmd.Flags().Set("expire", "5"))
+	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
+	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
 
 	out, err := test.RunCmd(cmd, []string{})
 	require.Error(t, err)

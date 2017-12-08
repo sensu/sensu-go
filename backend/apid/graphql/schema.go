@@ -18,11 +18,14 @@ func Schema() graphql.Schema {
 		// Subscription: subscriptionType,
 	})
 
+	if err != nil {
+		logEntry := logger.WithError(err)
+		logEntry.Fatal("unable to configure GraphQL schema")
+	}
+
 	// NOTE:
 	// eventType is not exposed anywhere at the moment so we explicitly append it.
-	schema.AppendType(eventType)
-
-	if err != nil {
+	if err := schema.AppendType(eventType); err != nil {
 		logEntry := logger.WithError(err)
 		logEntry.Fatal("unable to configure GraphQL schema")
 	}

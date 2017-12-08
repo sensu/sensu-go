@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type testTransport struct {
@@ -49,7 +50,7 @@ func TestGoodSessionConfig(t *testing.T) {
 	}
 
 	bus := &messaging.WizardBus{}
-	bus.Start()
+	require.NoError(t, bus.Start())
 
 	st := &mockstore.MockStore{}
 	st.On(
@@ -76,7 +77,7 @@ func TestBadSessionConfig(t *testing.T) {
 	}
 
 	bus := &messaging.WizardBus{}
-	bus.Start()
+	require.NoError(t, bus.Start())
 
 	st := &mockstore.MockStore{}
 	st.On(

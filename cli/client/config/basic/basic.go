@@ -53,7 +53,7 @@ func Load(flags *pflag.FlagSet) *Config {
 		// the flags parsed to get the current config file, however, we need the
 		// values from the config file to properly set up the flags.
 		flags.SetOutput(ioutil.Discard)
-		flags.Parse(os.Args[1:])
+		_ = flags.Parse(os.Args[1:])
 
 		if value, err := flags.GetString("config-dir"); err == nil && value != "" {
 			conf.path = value

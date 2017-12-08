@@ -23,6 +23,6 @@ func BenchmarkHandleMessage(b *testing.B) {
 	})
 
 	for n := 0; n < b.N; n++ {
-		handler.Handle("MessageType", []byte{0})
+		_ = handler.Handle("MessageType", []byte{0})
 	}
 }
