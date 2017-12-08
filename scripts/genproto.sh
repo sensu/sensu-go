@@ -18,7 +18,7 @@ if [[ $(protoc --version | cut -f2 -d' ') != "3.4.0" ]]; then
 fi
 
 # directories containing protos to be built
-DIRS="./types"
+DIRS="./types ./types/v1"
 
 # exact version of packages to build
 # TODO: possibly grab from Gopkg.toml

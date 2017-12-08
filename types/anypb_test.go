@@ -25,8 +25,6 @@ It is generated from these files:
 	time_window.proto
 	tls.proto
 	user.proto
-	v1check.proto
-	v1event.proto
 
 It has these top-level messages:
 	Any
@@ -63,9 +61,6 @@ It has these top-level messages:
 	TimeWindowTimeRange
 	TLSOptions
 	User
-	CheckV1
-	EventV1
-	Client
 */
 package types
 
