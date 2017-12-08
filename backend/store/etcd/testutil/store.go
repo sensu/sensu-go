@@ -20,7 +20,7 @@ type IntegrationTestStore struct {
 
 // Teardown etcd and remove temp directory
 func (e *IntegrationTestStore) Teardown() {
-	e._etcd.Shutdown()
+	_ = e._etcd.Shutdown()
 	e._removeTmpFn()
 }
 
@@ -36,7 +36,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	removeTmp := func() { os.RemoveAll(tmpDir) }
+	removeTmp := func() { _ = os.RemoveAll(tmpDir) }
 
 	p := make([]int, 2)
 	perr := testutil.RandomPorts(p)
@@ -62,7 +62,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 
 	st, err := e.NewStore()
 	if err != nil {
-		e.Shutdown()
+		_ = e.Shutdown()
 		removeTmp()
 		return nil, err
 	}

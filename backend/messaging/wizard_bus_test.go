@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWizardBus(t *testing.T) {
 	b := &WizardBus{}
-	b.Start()
+	require.NoError(t, b.Start())
 
 	// Should be able to publish with no subscribers.
 	err := b.Publish("topic", "message1")
@@ -40,7 +41,7 @@ func TestWizardBus(t *testing.T) {
 
 	assert.NoError(t, b.Unsubscribe("topic", "consumer4"))
 
-	b.Stop()
+	require.NoError(t, b.Stop())
 	close(c1)
 	close(c2)
 	close(c3)
@@ -77,17 +78,17 @@ func BenchmarkSubscribe(b *testing.B) {
 
 	for _, tc := range testCases {
 		bus := &WizardBus{}
-		bus.Start()
+		_ = bus.Start()
 		b.Run(fmt.Sprintf("%d subscribers", tc), func(b *testing.B) {
 			b.SetParallelism(tc)
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
 					ch := make(chan interface{})
 					subID := string(rand.Int())
-					bus.Subscribe("topic", subID, ch)
+					_ = bus.Subscribe("topic", subID, ch)
 				}
 			})
 		})
-		bus.Stop()
+		_ = bus.Stop()
 	}
 }

@@ -286,7 +286,7 @@ func BenchmarkQueryGovaluateSimple(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		expr.Eval(m)
+		_, _ = expr.Eval(m)
 	}
 }
 
@@ -349,10 +349,12 @@ func BenchmarkUnmarshal(b *testing.B) {
 func BenchmarkMarshal(b *testing.B) {
 	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
 	var m MyType
-	json.Unmarshal(data, &m)
+	if err := json.Unmarshal(data, &m); err != nil {
+		b.Fatal(err)
+	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		json.Marshal(&m)
+		_, _ = json.Marshal(&m)
 	}
 }
 

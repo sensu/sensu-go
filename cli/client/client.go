@@ -111,7 +111,9 @@ func New(config config.Config) *RestClient {
 
 	// logging
 	w := logger.Writer()
-	defer w.Close()
+	defer func() {
+		_ = w.Close()
+	}()
 	restyInst.SetLogger(w)
 
 	return client

@@ -2,8 +2,6 @@
 
 [![Build Status](https://travis-ci.com/sensu/sensu-go.svg?token=bQ4K7jzHALx4myyBoqcu&branch=master)](https://travis-ci.com/sensu/sensu-go)
 
-[Engineering Wiki](https://github.com/sensu/engineering/wiki)
-
 ## Contributing/Development
 
 To make a good faith effort to ensure the criteria of the MIT License
@@ -52,4 +50,8 @@ Run end-to-end tests:
 # To run a specific test:
 
 ./build.sh e2e -run TestRBAC
+
+# To prevent tests from running in parallel:
+
+./build.sh e2e -parallel 1
 ```

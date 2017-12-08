@@ -24,7 +24,5 @@ func (l LimitRequest) Then(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r)
-		r.Body.Close()
-		return
 	})
 }

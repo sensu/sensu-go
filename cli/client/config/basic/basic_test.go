@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFlags(t *testing.T) {
@@ -24,7 +25,9 @@ func TestFlags(t *testing.T) {
 func TestLoad(t *testing.T) {
 	// Create a dummy directory for testing
 	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -59,8 +62,11 @@ func TestLoadMissingFiles(t *testing.T) {
 
 func TestOpen(t *testing.T) {
 	// Create a dummy directory for testing
-	dir, _ := ioutil.TempDir("", "sensu")
-	defer os.RemoveAll(dir)
+	dir, err := ioutil.TempDir("", "sensu")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
 	// Create a dummy cluster file
 	cluster := &Cluster{APIUrl: "localhost"}
@@ -69,8 +75,7 @@ func TestOpen(t *testing.T) {
 	_ = ioutil.WriteFile(clusterPath, clusterBytes, 0644)
 
 	config := &Config{}
-	err := config.open(clusterPath)
-	assert.NoError(t, err)
+	assert.NoError(t, config.open(clusterPath))
 	assert.NotEmpty(t, config.APIUrl)
 }
 

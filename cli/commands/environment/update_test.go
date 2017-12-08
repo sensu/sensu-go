@@ -45,7 +45,7 @@ func TestUpdateCommand(t *testing.T) {
 			).Return(env, tc.fetchResponse)
 
 			client.On(
-				"CreateEnvironment",
+				"UpdateEnvironment",
 				"default",
 				mock.Anything,
 			).Return(tc.updateResponse)
@@ -53,12 +53,12 @@ func TestUpdateCommand(t *testing.T) {
 			cmd := UpdateCommand(cli)
 			out, err := test.RunCmd(cmd, tc.args)
 
-			assert.Regexp(t, tc.expectedOutput, out)
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
+			assert.Regexp(t, tc.expectedOutput, out)
 		})
 	}
 }

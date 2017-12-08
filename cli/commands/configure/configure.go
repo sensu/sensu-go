@@ -108,17 +108,17 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolP("non-interactive", "n", false, "do not administer interactive questionnaire")
-	cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
-	cmd.Flags().StringP("username", "", "", "username")
-	cmd.Flags().StringP("password", "", "", "password")
-	cmd.Flags().StringP("environment", "", cli.Config.Environment(), "environment")
-	cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
-	cmd.Flags().StringP("organization", "", cli.Config.Organization(), "organization")
+	_ = cmd.Flags().BoolP("non-interactive", "n", false, "do not administer interactive questionnaire")
+	_ = cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
+	_ = cmd.Flags().StringP("username", "", "", "username")
+	_ = cmd.Flags().StringP("password", "", "", "password")
+	_ = cmd.Flags().StringP("environment", "", cli.Config.Environment(), "environment")
+	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
+	_ = cmd.Flags().StringP("organization", "", cli.Config.Organization(), "organization")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("username")
-	cmd.MarkFlagRequired("password")
+	_ = cmd.MarkFlagRequired("username")
+	_ = cmd.MarkFlagRequired("password")
 
 	return cmd
 }

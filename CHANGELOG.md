@@ -7,6 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- End-to-end test for the silencing functionality
 
 ### Changed
 - Events that transitioned from incidents to a healthy state are no longer
@@ -16,6 +17,7 @@ filtered by the pipeline
 - Entities can now be silenced using their entity subscription
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
   settings on start
+- Keepalives now alert when entities go away!
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added

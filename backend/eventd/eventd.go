@@ -164,11 +164,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 // Stop eventd.
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
-	e.MessageBus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
+	err := e.MessageBus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()
-	return nil
+	return err
 }
 
 // Status returns an error if eventd is unhealthy.

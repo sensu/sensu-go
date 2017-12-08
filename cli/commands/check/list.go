@@ -33,9 +33,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			helpers.Print(cmd, cli.Config.Format(), printToTable, results)
-
-			return nil
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, results)
 		},
 	}
 

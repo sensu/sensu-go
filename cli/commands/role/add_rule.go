@@ -61,19 +61,19 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Added")
-			return nil
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Added")
+			return err
 		},
 	}
 
-	cmd.Flags().StringP("type", "t", "", "type associated with the rule")
-	cmd.Flags().BoolP("create", "c", false, "create permission")
-	cmd.Flags().BoolP("read", "r", false, "read permission")
-	cmd.Flags().BoolP("update", "u", false, "update permission")
-	cmd.Flags().BoolP("delete", "d", false, "delete permission")
+	_ = cmd.Flags().StringP("type", "t", "", "type associated with the rule")
+	_ = cmd.Flags().BoolP("create", "c", false, "create permission")
+	_ = cmd.Flags().BoolP("read", "r", false, "read permission")
+	_ = cmd.Flags().BoolP("update", "u", false, "update permission")
+	_ = cmd.Flags().BoolP("delete", "d", false, "delete permission")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("type")
+	_ = cmd.MarkFlagRequired("type")
 
 	return cmd
 }

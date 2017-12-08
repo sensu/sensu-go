@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -42,12 +43,12 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	client.On("CreateAsset", mock.AnythingOfType("*types.Asset")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("url", "http://lol")
-	cmd.Flags().Set("sha512", "12345qwerty")
+	require.NoError(t, cmd.Flags().Set("url", "http://lol"))
+	require.NoError(t, cmd.Flags().Set("sha512", "12345qwerty"))
 	out, err := test.RunCmd(cmd, []string{"ruby22"})
+	require.NoError(t, err)
 
 	assert.Regexp("OK", out)
-	assert.Nil(err)
 }
 
 func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
@@ -58,8 +59,8 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateAsset", mock.AnythingOfType("*types.Asset")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("sha512", "12345qwerty")
-	cmd.Flags().Set("url", "http://lol")
+	require.NoError(t, cmd.Flags().Set("sha512", "12345qwerty"))
+	require.NoError(t, cmd.Flags().Set("url", "http://lol"))
 	out, err := test.RunCmd(cmd, []string{"ruby22"})
 
 	assert.Empty(out)
@@ -72,7 +73,7 @@ func TestCreateExectorBadURLGiven(t *testing.T) {
 	cli := test.NewMockCLI()
 	cmd := CreateCommand(cli)
 
-	cmd.Flags().Set("url", "my-bad-bad-url-boy")
+	require.NoError(t, cmd.Flags().Set("url", "my-bad-bad-url-boy"))
 	exec := &CreateExecutor{Client: cli.Client}
 
 	err := exec.Run(cmd, []string{"ruby22"})
@@ -101,8 +102,8 @@ func TestConfigureAsset(t *testing.T) {
 	assert.Empty(asset.Organization)
 
 	// Valid Metadata
-	flags.Set("metadata", "One: Two")
-	flags.Set("metadata", "  Three : Four ")
+	require.NoError(t, flags.Set("metadata", "One: Two"))
+	require.NoError(t, flags.Set("metadata", "  Three : Four "))
 	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
 	asset, errs = cfg.Configure()
 	assert.Empty(errs)
@@ -111,7 +112,7 @@ func TestConfigureAsset(t *testing.T) {
 	assert.Equal("Two", asset.Metadata["One"])
 
 	// Bad Metadata
-	flags.Set("metadata", "Five- Six")
+	require.NoError(t, flags.Set("metadata", "Five- Six"))
 	asset, errs = cfg.Configure()
 	assert.NotEmpty(errs)
 }

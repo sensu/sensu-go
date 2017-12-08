@@ -20,17 +20,22 @@ func TempDir(t *testing.T) (tmpDir string, remove func()) {
 		t.FailNow()
 	}
 
-	return tmpDir, func() { os.RemoveAll(tmpDir) }
+	return tmpDir, func() { _ = os.RemoveAll(tmpDir) }
 }
 
 // RandomPorts generates len(p) random ports and assigns them to elements of p.
-func RandomPorts(p []int) error {
+func RandomPorts(p []int) (err error) {
 	for i := range p {
 		l, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			return err
 		}
-		defer l.Close()
+		defer func() {
+			e := l.Close()
+			if err == nil {
+				err = e
+			}
+		}()
 
 		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
 		if err != nil {

@@ -179,9 +179,53 @@ func NewBackend(config *Config) (*Backend, error) {
 	return b, nil
 }
 
+type stopper interface {
+	Stop() error
+}
+
+type daemonStopper struct {
+	stopper
+	Name string
+}
+
+type stopGroup []daemonStopper
+
+func (s stopGroup) Stop() (err error) {
+	for _, stopper := range s {
+		logger.Info("shutting down %s", stopper.Name)
+		e := stopper.Stop()
+		if err == nil {
+			err = e
+		}
+	}
+	return err
+}
+
+type errorer interface {
+	Err() <-chan error
+}
+
+type errGroup struct {
+	out    chan error
+	errors []errorer
+}
+
+func (e errGroup) Go() {
+	for _, err := range e.errors {
+		err := err
+		go func() {
+			e.out <- <-err.Err()
+		}()
+	}
+}
+
+func (e errGroup) Err() <-chan error {
+	return e.out
+}
+
 // Run starts all of the Backend server's event loops and sets up the HTTP
 // server.
-func (b *Backend) Run() error {
+func (b *Backend) Run() (derr error) {
 	if err := b.messageBus.Start(); err != nil {
 		return err
 	}
@@ -273,46 +317,24 @@ func (b *Backend) Run() error {
 		return err
 	}
 
-	inErrChan := make(chan error)
-
-	go func() {
-		inErrChan <- <-b.apid.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.agentd.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.schedulerd.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.etcd.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.messageBus.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.pipelined.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.dashboardd.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.eventd.Err()
-	}()
-
-	go func() {
-		inErrChan <- <-b.keepalived.Err()
-	}()
+	eg := errGroup{
+		out: make(chan error),
+		errors: []errorer{
+			b.apid,
+			b.agentd,
+			b.schedulerd,
+			b.etcd,
+			b.messageBus,
+			b.pipelined,
+			b.dashboardd,
+			b.eventd,
+			b.keepalived,
+		},
+	}
+	eg.Go()
 
 	select {
-	case err := <-inErrChan:
+	case err := <-eg.Err():
 		logger.Error(err.Error())
 	case <-b.shutdownChan:
 		logger.Info("backend shutting down")
@@ -325,44 +347,42 @@ func (b *Backend) Run() error {
 			logger.Errorf("panic in %s", trace)
 			logger.Errorf("recovering from panic due to error %s, shutting down etcd", err)
 		}
-		b.etcd.Shutdown()
+		err := b.etcd.Shutdown()
+		if derr == nil {
+			derr = err
+		}
 	}()
 
-	// stop allowing API connections
-	logger.Info("shutting down apid")
-	b.apid.Stop()
+	sg := stopGroup{
+		// stop allowing API connections
+		{Name: "apid", stopper: b.apid},
+		// stop allowing dashboard connections
+		{Name: "dashboardd", stopper: b.dashboardd},
+		// disconnect all agents and don't allow any more to connect.
+		{Name: "agentd", stopper: b.agentd},
+		// stop scheduling checks.
+		{Name: "schedulerd", stopper: b.schedulerd},
+		// Shutting down eventd will cause it to drain events to the bus
+		{Name: "eventd", stopper: b.eventd},
+		// Once events have been drained from eventd, pipelined can finish
+		// processing events.
+		{Name: "pipelined", stopper: b.pipelined},
+		// finally shutdown the message bus once all other components have stopped
+		// using it.
+		{Name: "message bus", stopper: b.messageBus},
+	}
 
-	// stop allowing dashboard connections
-	logger.Info("shutting down dashboardd")
-	b.dashboardd.Stop()
-
-	// disconnect all agents and don't allow any more to connect.
-	logger.Info("shutting down agentd")
-	b.agentd.Stop()
-
-	// stop scheduling checks.
-	logger.Info("shutting down schedulerd")
-	b.schedulerd.Stop()
-
-	// Shutting down eventd will cause it to drain events to the bus
-	logger.Info("shutting down eventd")
-	b.eventd.Stop()
-
-	// Once events have been drained from eventd, pipelined can finish
-	// processing events.
-	logger.Info("shutting down pipelined")
-	b.pipelined.Stop()
-
-	// finally shutdown the message bus once all other components have stopped
-	// using it.
-	logger.Info("shutting down message bus")
-	b.messageBus.Stop()
+	if err := sg.Stop(); err != nil {
+		if derr == nil {
+			derr = err
+		}
+	}
 
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
 	close(b.done)
 
-	return nil
+	return derr
 }
 
 // Migration performs the migration of data inside the store

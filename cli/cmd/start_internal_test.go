@@ -26,7 +26,9 @@ func (sc *StdoutCapture) StopCapture() (string, error) {
 	if sc.oldStdout == nil || sc.readPipe == nil {
 		return "", errors.New("StartCapture not called before StopCapture")
 	}
-	os.Stdout.Close()
+	if err := os.Stdout.Close(); err != nil {
+		return "", err
+	}
 	os.Stdout = sc.oldStdout
 	bytes, err := ioutil.ReadAll(sc.readPipe)
 	if err != nil {

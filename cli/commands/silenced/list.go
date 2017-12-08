@@ -42,17 +42,15 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			helpers.Print(cmd, cli.Config.Format(), printToTable, results)
-
-			return nil
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, results)
 		},
 	}
 
 	flags := cmd.Flags()
 	helpers.AddFormatFlag(flags)
 	helpers.AddAllOrganization(flags)
-	flags.StringP("subscription", "s", "", "name of the silenced subscription")
-	flags.StringP("check", "c", "", "name of the silenced check")
+	_ = flags.StringP("subscription", "s", "", "name of the silenced subscription")
+	_ = flags.StringP("check", "c", "", "name of the silenced check")
 
 	return cmd
 }

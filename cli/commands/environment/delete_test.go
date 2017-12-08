@@ -7,6 +7,7 @@ import (
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteCommand(t *testing.T) {
@@ -40,7 +41,7 @@ func TestDeleteCommand(t *testing.T) {
 
 			cmd := DeleteCommand(cli)
 			if tc.skipConfirm {
-				cmd.Flags().Set("skip-confirm", "t")
+				require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 			}
 
 			out, err := test.RunCmd(cmd, []string{tc.name})

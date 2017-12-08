@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchedulerd(t *testing.T) {
@@ -26,16 +27,16 @@ func TestSchedulerd(t *testing.T) {
 	defer st.Teardown()
 
 	// Mock a default organization
-	st.UpdateOrganization(context.Background(), types.FixtureOrganization("default"))
+	require.NoError(t, st.UpdateOrganization(context.Background(), types.FixtureOrganization("default")))
 
 	// Mock a default environment
-	st.UpdateEnvironment(context.Background(), types.FixtureEnvironment("default"))
+	require.NoError(t, st.UpdateEnvironment(context.Background(), types.FixtureEnvironment("default")))
 
 	checker := &Schedulerd{
 		Store:      st,
 		MessageBus: bus,
 	}
-	checker.Start()
+	require.NoError(t, checker.Start())
 
 	ch := make(chan interface{}, 10)
 	assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
