@@ -1,10 +1,21 @@
-# Sensu 2.0
+## Contributing
 
-[![Build Status](https://travis-ci.com/sensu/sensu-go.svg?token=bQ4K7jzHALx4myyBoqcu&branch=master)](https://travis-ci.com/sensu/sensu-go)
+We the maintainers love pull requests from everyone, but often find we must say
+"no" despite how reasonable the proposal may seem.
 
-[Engineering Wiki](https://github.com/sensu/engineering/wiki)
+For this reason, we ask that you open an issue to discuss proposed changes
+ prior to submitting a pull request for the implementation. This helps us to
+ provide direction as to implementation details, which branch to base your
+ changes on, and so on.
 
-## Contributing/Development
+1. Open an issue to describe your proposed improvement or feature
+2. Fork https://github.com/sensu/sensu-go and clone your fork to your workstation
+3. Create your feature branch (`git checkout -b my-new-feature`)
+4. Commit your changes with a DCO Signed-off-by statement (`git commit -am 'Added a feature with tests' --signoff`)
+5. Push your feature branch (`git push origin my-new-feature`)
+6. Create a Pull Request as appropriate based on the issue discussion
+
+### DCO
 
 To make a good faith effort to ensure the criteria of the MIT License
 are met, Sensu Inc. requires the Developer Certificate of Origin (DCO)
@@ -59,53 +70,3 @@ The following is an example DCO Signed-off-by statement.
 ```
 
 Git makes this easy with `git commit --signoff`!
-
-The general development process is:
-
-1. Open an issue to describe your proposed improvement or feature
-2. Fork https://github.com/sensu/sensu-go and clone your fork to your workstation
-3. Create your feature branch (`git checkout -b my-new-feature`)
-4. Commit your changes with a DCO Signed-off-by statement (`git commit -am 'Added a feature with tests' --signoff`)
-5. Push your feature branch (`git push origin my-new-feature`)
-6. Create a Pull Request againsts master
-
-## Protobuf
-
-### Overview
-
-We are using the version **proto3** of the protocol buffers language. Here's some useful ressources:
-
-[To learn more about protocol buffers](https://developers.google.com/protocol-buffers/docs/overview)
-
-[The proto3 language guide](https://developers.google.com/protocol-buffers/docs/proto3)
-
-
-### Installation
-
-Install the protobuf compiler since we don't use the one that golang uses.
-```
-brew install protobuf
-```
-Otherwise, see the **for non-C++ users** [instructions here.](https://github.com/google/protobuf#protocol-compiler-installation)
-
-### Quick Start
-
-Once you make a change to any `*.proto` file within the **types** package, you will need regenerate the associated `*.pb.go` file. To do so, simply run the [genproto.sh](https://github.com/sensu/sensu-go/blob/master/scripts/genproto.sh) script, which will install all required dependencies and launch the code generation.
-
-## Testing
-
-Run test suites:
-
-```
-./build.sh ci
-```
-
-Run end-to-end tests:
-
-```
-./build.sh e2e
-
-# To run a specific test:
-
-./build.sh e2e -run TestRBAC
-```
