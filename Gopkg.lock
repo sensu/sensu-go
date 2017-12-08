@@ -343,9 +343,15 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = ["host","internal/common","net","process"]
+  packages = ["cpu","host","internal/common","mem","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
   version = "v2.17.08"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   branch = "master"
