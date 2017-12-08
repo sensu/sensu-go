@@ -6,9 +6,14 @@
 
 ## Contributing/Development
 
-To make a good faith effort to ensure the criteria of the MIT License are met, Sensu Inc requires the Developer Certificate of Origin (DCO) process to be followed.
+To make a good faith effort to ensure the criteria of the MIT License
+are met, Sensu Inc requires the Developer Certificate of Origin (DCO)
+process to be followed.
 
-The DCO is an attestation attached to every contribution made by every developer. In the commit message of the contribution, the developer simply adds a Signed-off-by statement and thereby agrees to the DCO, which you can find below or at http://developercertificate.org/.
+The DCO is an attestation attached to every contribution made by every
+developer. In the commit message of the contribution, the developer
+simply adds a Signed-off-by statement and thereby agrees to the DCO,
+which you can find below or at http://developercertificate.org/.
 
 ```
 Developer's Certificate of Origin 1.1
