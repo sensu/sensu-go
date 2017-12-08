@@ -1,3 +1,5 @@
+// +build !windows
+
 package e2e
 
 import (
