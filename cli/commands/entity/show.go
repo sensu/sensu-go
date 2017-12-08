@@ -3,7 +3,6 @@ package entity
 import (
 	"io"
 	"strings"
-	"time"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -73,7 +72,7 @@ func printEntityToList(r *types.Entity, writer io.Writer) {
 			},
 			{
 				Label: "Last Seen",
-				Value: time.Unix(r.LastSeen, 0).String(),
+				Value: helpers.HumanTimestamp(r.LastSeen),
 			},
 			{
 				Label: "Hostname",
