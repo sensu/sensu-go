@@ -203,6 +203,10 @@ func (a CheckController) RemoveCheckHook(ctx context.Context, checkName string, 
 				for j, h := range hookList {
 					if h == hookName {
 						check.CheckHooks[i].Hooks = append(hookList[:j], hookList[j+1:]...)
+						if len(check.CheckHooks[i].Hooks) == 0 {
+							// if the type contains no hook names, remove type
+							check.CheckHooks = append(check.CheckHooks[:i], check.CheckHooks[i+1:]...)
+						}
 						return nil
 					}
 				}

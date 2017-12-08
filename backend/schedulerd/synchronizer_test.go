@@ -43,6 +43,23 @@ func TestSyncronizeAssets(t *testing.T) {
 	sync.Sync()
 }
 
+func TestSyncronizeHooks(t *testing.T) {
+	assert := assert.New(t)
+
+	hook := types.FixtureHookConfig("hook1")
+	store := &mockstore.MockStore{}
+	store.On("GetHookConfigs", mock.AnythingOfType("*context.emptyCtx")).Return([]*types.HookConfig{hook}, nil)
+
+	sync := SyncronizeHooks{
+		Store: store,
+		OnUpdate: func(res []*types.HookConfig) {
+			assert.NotEmpty(res)
+			assert.Len(res, 1)
+		},
+	}
+	sync.Sync()
+}
+
 func TestSyncScheduler(t *testing.T) {
 	assert := assert.New(t)
 

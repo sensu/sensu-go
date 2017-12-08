@@ -87,10 +87,22 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 				Value: strings.Join(statusHistory, ","),
 			},
 			{
+				Label: "Silenced",
+				Value: strconv.FormatBool(len(event.Silenced) > 0),
+			},
+			{
 				Label: "Timestamp",
 				Value: time.Unix(event.Timestamp, 0).String(),
 			},
 		},
+	}
+
+	if len(event.Silenced) > 0 {
+		silencedBy := &list.Row{
+			Label: "Silenced By",
+			Value: strings.Join(event.Silenced, ", "),
+		}
+		cfg.Rows = append(cfg.Rows[:len(cfg.Rows)-1], silencedBy, cfg.Rows[len(cfg.Rows)-1])
 	}
 
 	list.Print(writer, cfg)

@@ -12,6 +12,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Events that transitioned from incidents to a healthy state are no longer
 filtered by the pipeline
 
+### Fixed
+- Entities can now be silenced using their entity subscription
+- Fixed a bug in the agent where it was ignoring keepalive interval and timeout
+  settings on start
+
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added
 - Proxy entities are now dynamically created through the "Source" attribute of a

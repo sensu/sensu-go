@@ -83,6 +83,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "name-one")  // check name
 	assert.Contains(out, "asset-one") // asset name
 	assert.Contains(out, "60")        // interval
+	assert.Contains(out, "Hooks")     // heading
 	assert.Nil(err)
 }
 

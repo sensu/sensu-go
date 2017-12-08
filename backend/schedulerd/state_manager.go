@@ -43,6 +43,10 @@ func NewStateManager(store store.Store) *StateManager {
 			Store:    store,
 			OnUpdate: manager.updateAssets,
 		},
+		&SyncronizeHooks{
+			Store:    store,
+			OnUpdate: manager.updateHooks,
+		},
 	)
 
 	return manager
@@ -91,6 +95,12 @@ func (mngrPtr *StateManager) updateAssets(assets []*types.Asset) {
 	})
 }
 
+func (mngrPtr *StateManager) updateHooks(hooks []*types.HookConfig) {
+	mngrPtr.updateState(func(state *SchedulerState) {
+		state.SetHooks(hooks)
+	})
+}
+
 func (mngrPtr *StateManager) updateState(updateFn func(newState *SchedulerState)) {
 	// Lock to avoid competing updates
 	mngrPtr.mutex.Lock()
@@ -126,6 +136,7 @@ func (mngrPtr *StateManager) updateSyncInterval() {
 type SchedulerState struct {
 	checks map[string]*types.CheckConfig
 	assets map[string]map[string]*types.Asset
+	hooks  map[string]map[string]*types.HookConfig
 }
 
 // GetCheck returns check given name and organization
@@ -138,6 +149,14 @@ func (statePtr *SchedulerState) GetCheck(name, org, env string) *types.CheckConf
 func (statePtr *SchedulerState) GetAssetsInOrg(org string) (res []*types.Asset) {
 	for _, asset := range statePtr.assets[org] {
 		res = append(res, asset)
+	}
+	return
+}
+
+// GetHooksInOrg returns all hooks associated given organization
+func (statePtr *SchedulerState) GetHooksInOrg(org string) (res []*types.HookConfig) {
+	for _, hook := range statePtr.hooks[org] {
+		res = append(res, hook)
 	}
 	return
 }
@@ -158,6 +177,14 @@ func (statePtr *SchedulerState) SetAssets(assets []*types.Asset) {
 	}
 }
 
+// SetHooks overwrites current set of hooks w/ given
+func (statePtr *SchedulerState) SetHooks(hooks []*types.HookConfig) {
+	statePtr.hooks = make(map[string]map[string]*types.HookConfig)
+	for _, hook := range hooks {
+		statePtr.addHook(hook)
+	}
+}
+
 func (statePtr *SchedulerState) addCheck(check *types.CheckConfig) {
 	key := concatUniqueKey(check.Name, check.Organization, check.Environment)
 	statePtr.checks[key] = check
@@ -171,6 +198,16 @@ func (statePtr *SchedulerState) addAsset(asset *types.Asset) {
 
 	key := concatUniqueKey(asset.Name, org)
 	statePtr.assets[org][key] = asset
+}
+
+func (statePtr *SchedulerState) addHook(hook *types.HookConfig) {
+	org := hook.Organization
+	if orgMap := statePtr.hooks[org]; orgMap == nil {
+		statePtr.hooks[org] = make(map[string]*types.HookConfig)
+	}
+
+	key := concatUniqueKey(hook.Name, org)
+	statePtr.hooks[org][key] = hook
 }
 
 func concatUniqueKey(args ...string) string {

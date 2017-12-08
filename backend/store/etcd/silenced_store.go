@@ -79,15 +79,15 @@ func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName
 
 	// iterate through response entries
 	// add anything with checkName == entry.Check to an array and return
-	silencedArray := make([]*types.Silenced, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	silencedArray := []*types.Silenced{}
+	for _, kv := range resp.Kvs {
 		silencedEntry := &types.Silenced{}
 		err := json.Unmarshal(kv.Value, silencedEntry)
 		if err != nil {
 			return nil, err
 		}
 		if silencedEntry.Check == checkName {
-			silencedArray[i] = silencedEntry
+			silencedArray = append(silencedArray, silencedEntry)
 		}
 	}
 

@@ -92,6 +92,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "Hooks",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				return globals.FormatCheckHooks(check.CheckHooks)
+			},
+		},
+		{
 			Title: "Publish?",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)

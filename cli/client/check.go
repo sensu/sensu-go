@@ -101,9 +101,9 @@ func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
 }
 
 // AddCheckHook associates an existing hook with an existing check
-func (client *RestClient) AddCheckHook(check string, checkHook *types.CheckHook) error {
-	key := checksPath(check, "hooks", checkHook.Type)
-	res, err := client.R().SetBody(checkHook).Put(key)
+func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *types.CheckHook) error {
+	key := checksPath(check.Name, "hooks", checkHook.Type)
+	res, err := client.R().SetQueryParam("org", check.Organization).SetQueryParam("env", check.Environment).SetBody(checkHook).Put(key)
 	if err != nil {
 		return err
 	}
@@ -116,9 +116,9 @@ func (client *RestClient) AddCheckHook(check string, checkHook *types.CheckHook)
 }
 
 // RemoveCheckHook removes an association between an existing hook and an existing check
-func (client *RestClient) RemoveCheckHook(checkName string, checkHookType string, hookName string) error {
-	path := checksPath(checkName, "hooks", checkHookType, "hook", hookName)
-	res, err := client.R().Delete(path)
+func (client *RestClient) RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error {
+	path := checksPath(check.Name, "hooks", checkHookType, "hook", hookName)
+	res, err := client.R().SetQueryParam("org", check.Organization).SetQueryParam("env", check.Environment).Delete(path)
 	if err != nil {
 		return err
 	}

@@ -24,7 +24,12 @@ func RemoveCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 			checkHookType := args[1]
 			hookName := args[2]
 
-			err := cli.Client.RemoveCheckHook(checkName, checkHookType, hookName)
+			check, err := cli.Client.FetchCheck(checkName)
+			if err != nil {
+				return err
+			}
+
+			err = cli.Client.RemoveCheckHook(check, checkHookType, hookName)
 			if err != nil {
 				return err
 			}

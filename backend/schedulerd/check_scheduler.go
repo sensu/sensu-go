@@ -118,15 +118,25 @@ func (execPtr *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.Chec
 
 	// Guard against iterating over assets if there are no assets associated with
 	// the check in the first place.
-	if len(check.RuntimeAssets) == 0 {
-		return request
+	if len(check.RuntimeAssets) != 0 {
+		// Explode assets; get assets & filter out those that are irrelevant
+		allAssets := execPtr.State.GetAssetsInOrg(check.Organization)
+		for _, asset := range allAssets {
+			if assetIsRelevant(asset, check) {
+				request.Assets = append(request.Assets, *asset)
+			}
+		}
 	}
 
-	// Explode assets; get assets & filter out those that are irrelevant
-	allAssets := execPtr.State.GetAssetsInOrg(check.Organization)
-	for _, asset := range allAssets {
-		if assetIsRelevant(asset, check) {
-			request.Assets = append(request.Assets, *asset)
+	// Guard against iterating over hooks if there are no hooks associated with
+	// the check in the first place.
+	if len(check.CheckHooks) != 0 {
+		// Explode hooks; get hooks & filter out those that are irrelevant
+		allHooks := execPtr.State.GetHooksInOrg(check.Organization)
+		for _, hook := range allHooks {
+			if hookIsRelevant(hook, check) {
+				request.Hooks = append(request.Hooks, *hook)
+			}
 		}
 	}
 
@@ -137,6 +147,18 @@ func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
 	for _, assetName := range check.RuntimeAssets {
 		if strings.HasPrefix(asset.Name, assetName) {
 			return true
+		}
+	}
+
+	return false
+}
+
+func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
+	for _, checkHook := range check.CheckHooks {
+		for _, hookName := range checkHook.Hooks {
+			if hookName == hook.Name {
+				return true
+			}
 		}
 	}
 

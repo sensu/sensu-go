@@ -123,11 +123,13 @@ func (suite *CheckExecSuite) SetupTest() {
 
 	request := types.FixtureCheckRequest("check1")
 	asset := request.Assets[0]
+	hook := request.Hooks[0]
 	suite.check = request.Config
 
 	state := &SchedulerState{}
 	state.SetChecks([]*types.CheckConfig{request.Config})
 	state.SetAssets([]*types.Asset{&asset})
+	state.SetHooks([]*types.HookConfig{&hook})
 
 	suite.exec = &CheckExecutor{
 		State: state,
@@ -147,12 +149,17 @@ func (suite *CheckExecSuite) TestBuild() {
 	suite.NotNil(request.Assets)
 	suite.NotEmpty(request.Assets)
 	suite.Len(request.Assets, 1)
+	suite.NotNil(request.Hooks)
+	suite.NotEmpty(request.Hooks)
+	suite.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
+	check.CheckHooks = []types.CheckHook{}
 	request = suite.exec.BuildRequest(check)
 	suite.NotNil(request)
 	suite.NotNil(request.Config)
 	suite.Empty(request.Assets)
+	suite.Empty(request.Hooks)
 }
 
 func TestRunExecSuite(t *testing.T) {
