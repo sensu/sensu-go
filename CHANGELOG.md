@@ -17,6 +17,7 @@ filtered by the pipeline
 - Entities can now be silenced using their entity subscription
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
   settings on start
+- Keepalives now alert when entities go away!
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added
