@@ -1,11 +1,11 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
-import "v1check.proto";
+import "check.proto";
 
 package sensu.types;
 
-option go_package = "types";
+option go_package = "v1";
 option (gogoproto.populate_all) = true;
 option (gogoproto.equal_all) = true;
 option (gogoproto.marshaler_all) = true;
@@ -14,7 +14,7 @@ option (gogoproto.sizer_all) = true;
 option (gogoproto.testgen_all) = true;
 
 // A EventV1 is an event specification compatible with Sensu 1.x
-message EventV1 {
+message Event {
   // Id is the unique ID for the event.
   string id = 1;
 
@@ -30,8 +30,8 @@ message EventV1 {
   // Occurrences Watermark is the high water mark tracking number of occurrences.
   int64 occurences_watermark = 5;
 
-  // Check is the check result check ExtendedAttributes
-  CheckV1 check = 6 [(gogoproto.nullable) = false];
+  // Check is the check result check.
+  Check check = 6 [(gogoproto.nullable) = true];
 
   // Client is the client attributes from the client.
   Client client = 7 [(gogoproto.nullable) = true];

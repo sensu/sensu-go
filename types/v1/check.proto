@@ -4,7 +4,7 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 package sensu.types;
 
-option go_package = "types";
+option go_package = "v1";
 option (gogoproto.populate_all) = true;
 option (gogoproto.equal_all) = true;
 option (gogoproto.marshaler_all) = true;
@@ -13,7 +13,7 @@ option (gogoproto.sizer_all) = true;
 option (gogoproto.testgen_all) = true;
 
 // A CheckV1 is a check specification compatible with Sensu 1.x
-message CheckV1 {
+message Check {
 	// Type is the check type (standard or metric).
 	string type = 1;
 
