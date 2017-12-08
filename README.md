@@ -2,6 +2,15 @@
 
 [![Build Status](https://travis-ci.com/sensu/sensu-go.svg?token=bQ4K7jzHALx4myyBoqcu&branch=master)](https://travis-ci.com/sensu/sensu-go)
 
+## Contributing/Development
+
+To make a good faith effort to ensure the criteria of the MIT License
+are met, Sensu Inc. requires the Developer Certificate of Origin (DCO)
+process to be followed.
+
+For guidelines on how to contribute to this project and more
+information on the DCO, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Protobuf
 
 ### Overview
