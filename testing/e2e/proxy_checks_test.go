@@ -16,7 +16,11 @@ func TestProxyChecks(t *testing.T) {
 	t.Parallel()
 
 	// Start the backend
-	backend, cleanup := newBackend()
+	backend, cleanup := newBackend(t)
+	defer cleanup()
+
+	// Initializes sensuctl
+	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
 	defer cleanup()
 
 	// Start the agent
@@ -24,11 +28,7 @@ func TestProxyChecks(t *testing.T) {
 		ID:          "TestProxyChecks",
 		BackendURLs: []string{backend.WSURL},
 	}
-	_, cleanup = newAgent(agentConfig)
-	defer cleanup()
-
-	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	_, cleanup = newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
 	// Create a check that specifies a source

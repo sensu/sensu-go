@@ -24,21 +24,20 @@ type EventTestSuite struct {
 
 func (suite *EventTestSuite) SetupSuite() {
 	// Start the backend
-	backend, backendCleanup := newBackend()
+	backend, backendCleanup := newBackend(suite.T())
+
+	// Initializes sensuctl
+	sensuctl, sensuctlCleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
 
 	// Start the agent
 	agentConfig := agentConfig{
 		ID:          "TestKeepalives",
 		BackendURLs: []string{backend.WSURL},
 	}
-	agent, agentCleanup := newAgent(agentConfig)
+	agent, agentCleanup := newAgent(agentConfig, sensuctl, suite.T())
 
-	suite.bep = backend
 	suite.ap = agent
-
-	// Initializes sensuctl
-	sensuctl, sensuctlCleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
-
+	suite.bep = backend
 	suite.sensuctl = sensuctl
 	suite.cleanup = func() {
 		backendCleanup()

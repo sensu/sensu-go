@@ -9,7 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"time"
+	"testing"
 
 	"github.com/sensu/sensu-go/testing/testutil"
 )
@@ -41,12 +41,12 @@ type backendProcess struct {
 // newBackend abstracts the initialization of a backend process and returns a
 // ready-to-use backend or exit with a fatal error if an error occurred while
 // initializing it
-func newBackend() (*backendProcess, func()) {
-	backend, cleanup := newBackendProcess()
+func newBackend(t *testing.T) (*backendProcess, func()) {
+	backend, cleanup := newBackendProcess(t)
 
 	if err := backend.Start(); err != nil {
 		cleanup()
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	// Set the HTTP & WS URLs
@@ -57,12 +57,8 @@ func newBackend() (*backendProcess, func()) {
 	isOnline := waitForBackend(backend.HTTPURL)
 	if !isOnline {
 		cleanup()
-		log.Fatal("the backend never became ready in a timely fashion")
+		t.Fatal("the backend never became ready in a timely fashion")
 	}
-
-	// Give it few seconds to make sure we've sent a keepalive. We should probably
-	// do something a bit more advanced here
-	time.Sleep(5 * time.Second)
 
 	return backend, func() {
 		cleanup()
@@ -71,16 +67,16 @@ func newBackend() (*backendProcess, func()) {
 }
 
 // newBackendProcess initializes a backendProcess struct
-func newBackendProcess() (*backendProcess, func()) {
+func newBackendProcess(t *testing.T) (*backendProcess, func()) {
 	ports := make([]int, 5)
 	err := testutil.RandomPorts(ports)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
 	if err != nil {
-		log.Panic(err)
+		t.Fatal(err)
 	}
 
 	etcdClientURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
@@ -187,22 +183,32 @@ type agentConfig struct {
 // newAgent abstracts the initialization of an agent process and returns a
 // ready-to-use agent or exit with a fatal error if an error occurred while
 // initializing it
-func newAgent(config agentConfig) (*agentProcess, func()) {
+func newAgent(config agentConfig, sensuctl *sensuCtl, t *testing.T) (*agentProcess, func()) {
 	agent := &agentProcess{agentConfig: config}
 
 	// Start the agent
-	if err := agent.Start(); err != nil {
-		log.Fatal(err)
+	if err := agent.Start(t); err != nil {
+		t.Fatal(err)
 	}
 
-	return agent, func() { agent.Kill() }
+	// Wait for the agent to send its first keepalive so we are sure it's
+	// connected to the backend
+	if ready := waitForAgent(agent.ID, sensuctl); !ready {
+		t.Fatal("the backend never received a keepalive from the agent")
+	}
+
+	return agent, func() {
+		if err := agent.Kill(); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
-func (a *agentProcess) Start() error {
+func (a *agentProcess) Start(t *testing.T) error {
 	port := make([]int, 2)
 	err := testutil.RandomPorts(port)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	a.APIPort = port[0]
 	a.SocketPort = port[1]

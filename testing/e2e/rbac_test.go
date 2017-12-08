@@ -15,7 +15,7 @@ func TestRBAC(t *testing.T) {
 	t.Parallel()
 
 	// Start the backend
-	backend, cleanup := newBackend()
+	backend, cleanup := newBackend(t)
 	defer cleanup()
 
 	// Initializes sensuctl as admin

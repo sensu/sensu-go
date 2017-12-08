@@ -12,7 +12,11 @@ func TestCheckScheduling(t *testing.T) {
 	t.Parallel()
 
 	// Start the backend
-	backend, cleanup := newBackend()
+	backend, cleanup := newBackend(t)
+	defer cleanup()
+
+	// Initializes sensuctl
+	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
 	defer cleanup()
 
 	// Start the agent
@@ -20,7 +24,7 @@ func TestCheckScheduling(t *testing.T) {
 		ID:          "TestCheckScheduling",
 		BackendURLs: []string{backend.WSURL},
 	}
-	agent, cleanup := newAgent(agentConfig)
+	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
 	// Create an authenticated HTTP Sensu client. newSensuClient is deprecated but

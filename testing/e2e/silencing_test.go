@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -23,7 +22,11 @@ func TestSilencing(t *testing.T) {
 	t.Parallel()
 
 	// Start the backend
-	backend, cleanup := newBackend()
+	backend, cleanup := newBackend(t)
+	defer cleanup()
+
+	// Initializes sensuctl
+	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
 	defer cleanup()
 
 	// Start the agent
@@ -31,18 +34,14 @@ func TestSilencing(t *testing.T) {
 		ID:          "TestSilencing",
 		BackendURLs: []string{backend.WSURL},
 	}
-	agent, cleanup := newAgent(agentConfig)
-	defer cleanup()
-
-	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
 	// Create a handler that creates files within a temporary directory so we can
 	// easily determine if a given event has been handled
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu-handler")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(tmpDir)
 	output, err := sensuctl.run("handler", "create", "touch",
@@ -96,7 +95,7 @@ func TestSilencing(t *testing.T) {
 	// number should not move from this point
 	files, err := ioutil.ReadDir(tmpDir)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	count1 := len(files)
 
@@ -122,7 +121,7 @@ func TestSilencing(t *testing.T) {
 	// the silenced entry was created
 	files, err = ioutil.ReadDir(tmpDir)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	count2 := len(files)
 	assert.Equal(t, count1, count2)
@@ -142,7 +141,7 @@ func TestSilencing(t *testing.T) {
 	// The number of files created by the handler should have increased
 	files, err = ioutil.ReadDir(tmpDir)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	count3 := len(files)
 	assert.Condition(
