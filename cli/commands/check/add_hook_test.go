@@ -27,7 +27,7 @@ func TestAddCheckHookCommandRunEClosureSucess(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.CheckHook")).Return(nil)
+	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.HookList")).Return(nil)
 	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
 
 	cmd := AddCheckHookCommand(cli)

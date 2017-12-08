@@ -154,7 +154,7 @@ func (suite *CheckExecSuite) TestBuild() {
 	suite.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
-	check.CheckHooks = []types.CheckHook{}
+	check.CheckHooks = []types.HookList{}
 	request = suite.exec.BuildRequest(check)
 	suite.NotNil(request)
 	suite.NotNil(request.Config)

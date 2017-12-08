@@ -113,7 +113,7 @@ func TestRBAC(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	checkHook := types.FixtureCheckHook("hook1")
+	checkHook := types.FixtureHookList("hook1")
 	output, err = adminctl.run("check", "add-hook", defaultCheck.Name,
 		"--organization", defaultCheck.Organization,
 		"--environment", defaultCheck.Environment,

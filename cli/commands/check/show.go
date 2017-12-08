@@ -85,7 +85,7 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 			},
 			{
 				Label: "Hooks",
-				Value: globals.FormatCheckHooks(r.CheckHooks),
+				Value: globals.FormatHookLists(r.CheckHooks),
 			},
 			{
 				Label: "Publish?",

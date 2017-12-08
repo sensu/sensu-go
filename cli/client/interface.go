@@ -45,7 +45,7 @@ type CheckAPIClient interface {
 	FetchCheck(string) (*types.CheckConfig, error)
 	ListChecks(string) ([]types.CheckConfig, error)
 
-	AddCheckHook(check *types.CheckConfig, checkHook *types.CheckHook) error
+	AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error
 	RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error
 }
 

@@ -101,7 +101,7 @@ func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
 }
 
 // AddCheckHook associates an existing hook with an existing check
-func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *types.CheckHook) error {
+func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error {
 	key := checksPath(check.Name, "hooks", checkHook.Type)
 	res, err := client.R().SetQueryParam("org", check.Organization).SetQueryParam("env", check.Environment).SetBody(checkHook).Put(key)
 	if err != nil {
