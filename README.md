@@ -43,13 +43,28 @@ By making a contribution to this project, I certify that:
     this project or the open source license(s) involved.
 ```
 
+The following is an example DCO Signed-off-by statement.
+
+```
+ Author: Sean Porter <sean@sensu.io>
+
+ Committer: Greg Poirier <greg@sensu.io>
+
+   Let's name it WizardFormat.
+
+   Calling it the Sensu Metric Format was a mistake.
+
+   Signed-off-by: Sean Porter <sean@sensu.io>
+   Signed-off-by: Grep Poirier <greg@sensu.io>
+```
+
 The general development process is:
 
 1. Fork this repo and clone it to your workstation.
 2. Create a feature branch for your change.
 3. Write code and tests.
-4. Push your feature branch to github and open a pull request against master.
-
+4. Commit your changes with a DCO Signed-off-by statement.
+5. Push your feature branch to github and open a pull request against master.
 
 ## Protobuf
 
