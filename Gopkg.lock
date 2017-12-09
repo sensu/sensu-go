@@ -50,8 +50,7 @@
 [[projects]]
   name = "github.com/coreos/bbolt"
   packages = ["."]
-  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
-  version = "v1.3.0"
+  revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
 
 [[projects]]
   branch = "master"
@@ -491,6 +490,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4ac661d8b4db338facc4b58c73c1e0eaf4109e67c5b6468704aa41360dd50b8b"
+  inputs-digest = "cb5973b730080e61a72ec23bcb114e2663d19d923c32fb9c6b66a28432c236a2"
   solver-name = "gps-cdcl"
   solver-version = 1

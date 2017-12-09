@@ -127,8 +127,13 @@
   name = "github.com/grpc-ecosystem/grpc-gateway"
   revision = "8cc3a55af3bcf171a1c23a90c4df9cf591706104"
 
+# Lock etcd and some of it's dependencies
+[[override]]
+  name = "github.com/coreos/bbolt"
+  revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
+
 # Locked for Windows
-[[constraint]]
+[[override]]
   name = "github.com/shirou/w32"
   branch = "master"
 
