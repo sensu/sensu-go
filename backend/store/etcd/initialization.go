@@ -3,8 +3,8 @@ package etcd
 import (
 	"context"
 
-	"github.com/sensu/etcd/clientv3"
-	"github.com/sensu/etcd/clientv3/concurrency"
+	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/sensu/sensu-go/backend/store"
 )
 

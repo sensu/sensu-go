@@ -8,7 +8,7 @@ import (
 	"runtime/pprof"
 	"testing"
 
-	"github.com/sensu/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

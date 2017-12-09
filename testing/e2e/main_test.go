@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sensu/etcd/pkg/fileutil"
+	"github.com/coreos/etcd/pkg/fileutil"
 	"github.com/sensu/sensu-go/testing/testutil"
 )
 

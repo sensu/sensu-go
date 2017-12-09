@@ -113,14 +113,9 @@
   version = "1.0"
 
 # Lock etcd and some of it's dependencies
-[[constraint]]
-  name = "github.com/sensu/etcd"
-  branch = "release-3.2-fix-tls-close"
-
-# Lock etcd and some of it's dependencies
 [[override]]
   name = "github.com/ugorji/go"
-  revision = "708a42d246822952f38190a8d8c4e6b16a0e600c"
+  branch = "master"
 
 # Lock etcd and some of it's dependencies
 [[override]]
@@ -166,3 +161,7 @@
 [[override]]
   name = "github.com/dsnet/compress"
   revision = "f41072d47fff1112fa37146dfc812a476cce2d7f"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/coreos/etcd"
