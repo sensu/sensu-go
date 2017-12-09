@@ -96,10 +96,9 @@
   version = "v1.13.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/dsnet/compress"
   packages = [".","bzip2","bzip2/internal/sais","internal","internal/errors","internal/prefix"]
-  revision = "c4dbed65594871659ea7347a85e1b8dcd97b9990"
+  revision = "f41072d47fff1112fa37146dfc812a476cce2d7f"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -479,6 +478,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "892d59cd3cc9769317e4a1c8a96ced5d4598c78bf7c7967b877b7e6ead3c0500"
+  inputs-digest = "a45b18cfca782ee0d17fcdd29ef02d445b53c14e9993f3365c38ac1eae886a65"
   solver-name = "gps-cdcl"
   solver-version = 1

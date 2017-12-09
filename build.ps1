@@ -32,16 +32,21 @@ switch ($env:GOOS)
 
 function install_deps
 {
+    echo "Installing deps..."
     go get github.com/axw/gocov/gocov
     go get gopkg.in/alecthomas/gometalinter.v1
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
-    go get -u github.com/golang/dep/cmd/dep
     go get -u github.com/golang/lint/golint
     go get -u github.com/UnnoTed/fileb0x
+    install_golang_dep
+}
 
-    #echo "Running dep ensure..."
-    #dep ensure
+function install_golang_dep
+{
+    go get -u github.com/golang/dep/cmd/dep
+    echo "Running dep ensure..."
+    dep ensure -v
 }
 
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)
@@ -123,6 +128,8 @@ function build_tool([string]$bin, [string]$subdir)
     $out = build_tool_binary $env:GOOS $env:GOARCH $bin $subdir
     Remove-Item -Path "bin/$(Split-Path -Leaf $out)" -EA SilentlyContinue
     cp $out bin/$subdir
+    dir bin
+    dir bin/$subdir
 }
 
 function build_commands
