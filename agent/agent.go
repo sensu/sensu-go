@@ -266,9 +266,15 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// Check our received data for valid JSON. If we get invalid JSON at this point,
 		// read again from client, add any new message to the buffer, and parse
 		// again.
+		var payload map[string]interface{}
 		var event types.Event
-		if err = json.Unmarshal(messageBuffer.Bytes(), &event); err != nil {
+		if err = json.Unmarshal(messageBuffer.Bytes(), &payload); err != nil {
 			continue
+		}
+
+		if err = translateToEvent(payload, &event); err != nil {
+			logger.WithError(err).Error("1.x returns \"invalid\"")
+			return
 		}
 
 		// Prepare the event by mutating it as required so it passes validation
@@ -279,13 +285,13 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 
 		// At this point, should receive valid JSON, so send it along to the
 		// message sender.
-		payload, err := json.Marshal(event)
+		message, err := json.Marshal(event)
 		if err != nil {
 			logger.WithError(err).Error("could not marshal json payload")
 			return
 		}
 
-		a.sendMessage(transport.MessageTypeEvent, payload)
+		a.sendMessage(transport.MessageTypeEvent, message)
 		_, _ = c.Write([]byte("ok"))
 		return
 	}
