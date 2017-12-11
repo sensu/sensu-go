@@ -2,10 +2,13 @@ package agent
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 // prepareEvent accepts a partial or complete event and tries to add any missing
@@ -61,15 +64,30 @@ func translateToEvent(payload map[string]interface{}, event *types.Event) error 
 	if payload == nil {
 		return fmt.Errorf("a payload must be provided")
 	}
+	// dump relevant payload values into 2.x config struct fields
 	if err := mapstructure.Decode(payload, &checkConfig); err != nil {
 		return fmt.Errorf("error translating check config")
 	}
+	// dump relevant payload values into 2.x check struct fields
 	if err := mapstructure.Decode(payload, &check); err != nil {
 		return fmt.Errorf("error translating check")
 	}
 
+	// add config and check values to the 2.x event
 	check.Config = &checkConfig
 	event.Check = &check
+
+	configVal := reflect.Indirect(reflect.ValueOf(check.Config))
+	checkVal := reflect.Indirect(reflect.ValueOf(event.Check))
+	for mapKey := range payload {
+		_, existsInConfig := configVal.Type().FieldByName(strings.Title(mapKey))
+		_, existsInCheck := checkVal.Type().FieldByName(strings.Title(mapKey))
+		// if the field does not exist in 2.x check or 2.x config structs,
+		// add the custom attribute to the config only
+		if !(existsInConfig || existsInCheck) {
+			dynamic.SetField(check.Config, mapKey, payload[mapKey])
+		}
+	}
 
 	return nil
 }
