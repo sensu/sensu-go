@@ -72,6 +72,79 @@ func (suite *CheckSchedulerSuite) TestStart() {
 	suite.Equal("check1", res.Config.Name)
 }
 
+type CheckSubdueSuite struct {
+	suite.Suite
+	check     *types.CheckConfig
+	scheduler *CheckScheduler
+	msgBus    *messaging.WizardBus
+}
+
+func (suite *CheckSubdueSuite) SetupTest() {
+	suite.check = types.FixtureCheckConfig("check1")
+	suite.msgBus = &messaging.WizardBus{}
+
+	manager := NewStateManager(&mockstore.MockStore{})
+	manager.Update(func(state *SchedulerState) {
+		state.SetChecks([]*types.CheckConfig{suite.check})
+	})
+
+	suite.scheduler = &CheckScheduler{
+		CheckName:    suite.check.Name,
+		CheckEnv:     suite.check.Environment,
+		CheckOrg:     suite.check.Organization,
+		StateManager: manager,
+		MessageBus:   suite.msgBus,
+		WaitGroup:    &sync.WaitGroup{},
+	}
+
+	suite.NoError(suite.msgBus.Start())
+}
+
+func (suite *CheckSubdueSuite) TestStart() {
+	// Set interval to smallest valid value
+	check := suite.check
+	check.Interval = 1
+	check.Subscriptions = []string{"subscription1"}
+	check.Subdue = &types.TimeWindowWhen{
+		Days: types.TimeWindowDays{
+			All: []*types.TimeWindowTimeRange{
+				{
+					Begin: "1:00 AM",
+					End:   "11:00 PM",
+				},
+				{
+					Begin: "10:00 PM",
+					End:   "12:30 AM",
+				},
+			},
+		},
+	}
+
+	c1 := make(chan interface{}, 10)
+	topic := fmt.Sprintf(
+		"%s:%s:%s:subscription1",
+		messaging.TopicSubscriptions,
+		check.Organization,
+		check.Environment,
+	)
+	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
+
+	suite.NoError(suite.scheduler.Start(1))
+	time.Sleep(1 * time.Second)
+	suite.NoError(suite.scheduler.Stop())
+	suite.NoError(suite.msgBus.Stop())
+	close(c1)
+
+	messages := []*types.CheckRequest{}
+	for msg := range c1 {
+		res, ok := msg.(*types.CheckRequest)
+		suite.True(ok)
+		messages = append(messages, res)
+	}
+	// Check should have been subdued at this time, so expect no messages
+	suite.Equal(0, len(messages))
+}
+
 type TimerSuite struct {
 	suite.Suite
 }
@@ -166,4 +239,5 @@ func TestRunExecSuite(t *testing.T) {
 	suite.Run(t, new(TimerSuite))
 	suite.Run(t, new(CheckSchedulerSuite))
 	suite.Run(t, new(CheckExecSuite))
+	suite.Run(t, new(CheckSubdueSuite))
 }

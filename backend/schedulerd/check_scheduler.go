@@ -10,6 +10,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
+	sensutime "github.com/sensu/sensu-go/util/time"
 )
 
 // A CheckScheduler schedules checks to be executed on a timer
@@ -51,6 +52,17 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 				// Fetch check from scheduler's state
 				state := s.StateManager.State()
 				check := state.GetCheck(s.CheckName, s.CheckOrg, s.CheckEnv)
+
+				if subdue := check.GetSubdue(); subdue != nil {
+					isSubdued, err := sensutime.InWindows(time.Now(), *subdue)
+					if err == nil && isSubdued {
+						// Check is subdued at this time
+						continue
+					}
+					if err != nil {
+						s.logger.WithError(err).Print("check scheduler: subdued time window")
+					}
+				}
 
 				// The check has been deleted
 				if check == nil {

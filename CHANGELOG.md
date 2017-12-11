@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Add check subdue mechanism. Checks can now be subdued for specified time
+windows.
+
 ### Changed
 - Avoid using reflection in time.InWindows function.
 
