@@ -17,7 +17,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 1 {
-				cmd.Help()
+				_ = cmd.Help()
 				return nil
 			}
 
@@ -34,12 +34,12 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Disabled")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Disabled")
+			return err
 		},
 	}
 
-	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+	_ = cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
 
 	return &cmd
 }

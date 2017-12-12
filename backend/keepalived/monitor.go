@@ -42,7 +42,6 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 		ctx := types.SetContextFromResource(context.Background(), monitorPtr.Entity)
 
 		var (
-			event   *types.Event
 			err     error
 			timeout int64
 		)
@@ -59,24 +58,6 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 				}
 			case <-timer.C:
 				// timed out keepalive
-
-				// test to see if the entity still exists (it may have been deleted)
-
-				event, err = monitorPtr.Store.GetEventByEntityCheck(ctx, monitorPtr.Entity.ID, "keepalive")
-				if err != nil {
-					// this should be a temporary error talking to the store. keep trying until
-					// the store starts responding again.
-					logger.WithError(err).Error("error getting keepalive event for client")
-					break
-				}
-
-				// if the agent disconnected and reconnected elsewhere, stop the monitor
-				// and return.
-				if event != nil && event.Check.Status == 0 {
-					monitorPtr.Store.DeleteFailingKeepalive(ctx, monitorPtr.Entity)
-					monitorPtr.Stop()
-					return
-				}
 
 				// if the entity is supposed to be deregistered, do so.
 				if monitorPtr.Entity.Deregister {
@@ -121,7 +102,9 @@ func (monitorPtr *KeepaliveMonitor) Update(event *types.Event) error {
 	entity := event.Entity
 
 	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
-		monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity)
+		if err := monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity); err != nil {
+			logger.Debug(err)
+		}
 	}
 
 	monitorPtr.reset <- struct{}{}

@@ -37,7 +37,7 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 		WaitGroup:    &sync.WaitGroup{},
 	}
 
-	suite.msgBus.Start()
+	suite.NoError(suite.msgBus.Start())
 }
 
 func (suite *CheckSchedulerSuite) TestStart() {
@@ -57,7 +57,7 @@ func (suite *CheckSchedulerSuite) TestStart() {
 
 	suite.NoError(suite.scheduler.Start(1))
 	time.Sleep(1 * time.Second)
-	suite.scheduler.Stop()
+	suite.NoError(suite.scheduler.Stop())
 	suite.NoError(suite.msgBus.Stop())
 	close(c1)
 
@@ -119,7 +119,7 @@ type CheckExecSuite struct {
 
 func (suite *CheckExecSuite) SetupTest() {
 	suite.msgBus = &messaging.WizardBus{}
-	suite.msgBus.Start()
+	suite.NoError(suite.msgBus.Start())
 
 	request := types.FixtureCheckRequest("check1")
 	asset := request.Assets[0]
@@ -138,7 +138,7 @@ func (suite *CheckExecSuite) SetupTest() {
 }
 
 func (suite *CheckExecSuite) AfterTest() {
-	suite.msgBus.Stop()
+	suite.NoError(suite.msgBus.Stop())
 }
 
 func (suite *CheckExecSuite) TestBuild() {
@@ -154,7 +154,7 @@ func (suite *CheckExecSuite) TestBuild() {
 	suite.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
-	check.CheckHooks = []types.CheckHook{}
+	check.CheckHooks = []types.HookList{}
 	request = suite.exec.BuildRequest(check)
 	suite.NotNil(request)
 	suite.NotNil(request.Config)

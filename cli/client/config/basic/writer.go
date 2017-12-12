@@ -45,7 +45,7 @@ func (c *Config) SaveTokens(tokens *types.Tokens) error {
 	// Load the configuration from the file so we don't save any configuration
 	// that was overrided with a configuration flag
 	savedConfig := &Config{}
-	savedConfig.open(filepath.Join(c.path, clusterFilename))
+	_ = savedConfig.open(filepath.Join(c.path, clusterFilename))
 	savedConfig.Cluster.Tokens = tokens
 
 	return write(savedConfig.Cluster, filepath.Join(c.path, clusterFilename))
@@ -54,8 +54,8 @@ func (c *Config) SaveTokens(tokens *types.Tokens) error {
 func write(data interface{}, path string) error {
 	// Make sure the directory exists
 	dir := filepath.Dir(path)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		os.MkdirAll(dir, os.ModePerm)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return err
 	}
 
 	bytes, err := json.MarshalIndent(data, "", "  ")

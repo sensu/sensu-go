@@ -57,7 +57,7 @@ func (suite *RuntimeAssetTestSuite) AfterTest() {
 	suite.assetServer.Close()
 
 	// Remove tmpdir
-	os.RemoveAll(suite.runtimeAsset.path)
+	suite.NoError(os.RemoveAll(suite.runtimeAsset.path))
 }
 
 func (suite *RuntimeAssetTestSuite) TestFetch() {
@@ -161,15 +161,15 @@ func (suite *RuntimeAssetTestSuite) TestIsInstalled() {
 	suite.False(cached)
 	suite.NoError(err)
 
-	os.MkdirAll(suite.runtimeAsset.path, 0755)
-	suite.runtimeAsset.markAsInstalled()
+	suite.NoError(os.MkdirAll(suite.runtimeAsset.path, 0755))
+	suite.NoError(suite.runtimeAsset.markAsInstalled())
 	cached, err = suite.runtimeAsset.isInstalled()
 	suite.True(cached)
 	suite.NoError(err)
 }
 
 func (suite *RuntimeAssetTestSuite) TestIsCachedDirIsDirectory() {
-	os.MkdirAll(filepath.Join(suite.runtimeAsset.path, ".installed"), 0755)
+	suite.NoError(os.MkdirAll(filepath.Join(suite.runtimeAsset.path, ".installed"), 0755))
 	cached, err := suite.runtimeAsset.isInstalled()
 
 	suite.True(cached)

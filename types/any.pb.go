@@ -25,8 +25,6 @@
 		time_window.proto
 		tls.proto
 		user.proto
-		v1check.proto
-		v1event.proto
 
 	It has these top-level messages:
 		Any
@@ -34,7 +32,6 @@
 		Tokens
 		CheckRequest
 		CheckConfig
-		CheckHook
 		Check
 		CheckHistory
 		Entity
@@ -51,6 +48,7 @@
 		HookRequest
 		HookConfig
 		Hook
+		HookList
 		KeepaliveRecord
 		Metrics
 		Mutator
@@ -63,9 +61,6 @@
 		TimeWindowTimeRange
 		TLSOptions
 		User
-		CheckV1
-		EventV1
-		Client
 */
 package types
 

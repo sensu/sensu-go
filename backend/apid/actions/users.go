@@ -140,7 +140,9 @@ func (a UserController) Update(ctx context.Context, given types.User) error {
 
 	// Copy & validate new roles, if given
 	if given.Roles != nil {
-		configureRoles(ctx, a.Store, &abilities, given.Roles, user)
+		if err := configureRoles(ctx, a.Store, &abilities, given.Roles, user); err != nil {
+			return err
+		}
 	}
 
 	// Persist Changes

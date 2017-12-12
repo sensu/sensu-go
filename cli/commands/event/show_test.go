@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShowCommand(t *testing.T) {
@@ -41,10 +42,9 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
 	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
-
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 	assert.Contains(t, out, "Usage")
-	assert.NotNil(t, err)
 }
 
 func TestShowCommandRunEClosureWithTable(t *testing.T) {
@@ -55,14 +55,13 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	cli.Config.(*client.MockConfig).On("Format").Return("tabular")
 
 	cmd := ShowCommand(cli)
-	cmd.Flags().Set("format", "tabular")
+	require.NoError(t, cmd.Flags().Set("format", "tabular"))
 
 	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
-
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 	assert.Contains(t, out, "Entity")
 	assert.Contains(t, out, "Check")
-	assert.Nil(t, err)
 }
 
 func TestShowCommandRunEClosureWithErr(t *testing.T) {

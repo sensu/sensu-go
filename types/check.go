@@ -1,24 +1,13 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"sort"
 	"time"
 
 	"github.com/sensu/sensu-go/types/dynamic"
 )
-
-// CheckHookRegexStr used to validate type of check hook
-var CheckHookRegexStr = `([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])`
-
-// CheckHookRegex used to validate type of check hook
-var CheckHookRegex = regexp.MustCompile("^" + CheckHookRegexStr + "$")
-
-// Severities used to validate type of check hook
-var Severities = []string{"ok", "warning", "critical", "unknown", "non-zero"}
 
 // CheckRequestType is the message type string for check request.
 const CheckRequestType = "check_request"
@@ -51,27 +40,6 @@ func (c *CheckConfig) MarshalJSON() ([]byte, error) {
 // SetExtendedAttributes sets the serialized ExtendedAttributes of c.
 func (c *CheckConfig) SetExtendedAttributes(e []byte) {
 	c.ExtendedAttributes = e
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (h *CheckHook) MarshalJSON() ([]byte, error) {
-	result := make(map[string][]string)
-	result[h.Type] = append(result[h.Type], h.Hooks...)
-	return json.Marshal(result)
-}
-
-// UnmarshalJSON implements the json.Marshaler interface.
-func (h *CheckHook) UnmarshalJSON(b []byte) error {
-	result := map[string][]string{}
-	if err := json.Unmarshal(b, &result); err != nil {
-		return err
-	}
-	for key := range result {
-		h.Type = key
-		h.Hooks = result[key]
-	}
-
-	return nil
 }
 
 // Get implements govaluate.Parameters
@@ -112,30 +80,6 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	return nil
-}
-
-// Validate returns an error if the check hook does not pass validation tests.
-func (h *CheckHook) Validate() error {
-	if h.Type == "" {
-		return errors.New("type cannot be empty")
-	}
-
-	if !(CheckHookRegex.MatchString(h.Type) || isSeverity(h.Type)) {
-		return errors.New(
-			"valid check hook types are \"1\"-\"255\", \"ok\", \"warning\", \"critical\", \"unknown\", and \"non-zero\"",
-		)
-	}
-
-	return nil
-}
-
-func isSeverity(name string) bool {
-	for _, sev := range Severities {
-		if sev == name {
-			return true
-		}
-	}
-	return false
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
@@ -194,7 +138,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Command:       "command",
 		Handlers:      []string{},
 		RuntimeAssets: []string{"ruby-2-4-2"},
-		CheckHooks:    []CheckHook{*FixtureCheckHook("hook1")},
+		CheckHooks:    []HookList{*FixtureHookList("hook1")},
 		Environment:   "default",
 		Organization:  "default",
 		Publish:       true,
@@ -221,13 +165,5 @@ func FixtureCheck(id string) *Check {
 		Duration: 1.0,
 		History:  history,
 		Config:   config,
-	}
-}
-
-// FixtureCheckHook returns a fixture for a CheckHook object.
-func FixtureCheckHook(hookName string) *CheckHook {
-	return &CheckHook{
-		Hooks: []string{hookName},
-		Type:  "non-zero",
 	}
 }

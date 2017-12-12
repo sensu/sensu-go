@@ -17,7 +17,7 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 		for i := 0; i < numClients; i++ {
 			ch := make(chan interface{}, 1000)
 			go func(ch chan interface{}) {
-				bus.Subscribe(topicName, string(i), ch)
+				_ = bus.Subscribe(topicName, string(i), ch)
 				for {
 					select {
 					case <-ch:
@@ -36,7 +36,7 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 	for _, tc := range tt {
 		b.Run(fmt.Sprintf("%d-clients", tc), func(b *testing.B) {
 			bus := &WizardBus{}
-			bus.Start()
+			_ = bus.Start()
 
 			wg := &sync.WaitGroup{}
 			wg.Add(tc)

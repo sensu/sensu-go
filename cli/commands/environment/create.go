@@ -51,19 +51,19 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Created")
-			return nil
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			return err
 		},
 	}
 
-	cmd.Flags().StringP("description", "", "", "Description of environment")
+	_ = cmd.Flags().StringP("description", "", "", "Description of environment")
 	// TODO (Simon): We should be able to use --organization instead but
 	// the environment middleware verifies that the env exists in the given org,
 	// even if we are actually create this env
-	cmd.Flags().StringP("org", "", "", "Name of organization")
+	_ = cmd.Flags().StringP("org", "", "", "Name of organization")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
 }

@@ -120,38 +120,26 @@ func TestMonitorAlert(t *testing.T) {
 	creator.AssertCalled(t, "Warn", entity)
 }
 
-func TestExternalResolution(t *testing.T) {
-	assert := assert.New(t)
-	event := types.FixtureEvent("entity", "keepalive")
-	store := &mockstore.MockStore{}
-	store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
-	store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
-
-	event.Entity.KeepaliveTimeout = 0
-
-	monitor := &KeepaliveMonitor{
-		Entity: event.Entity,
-		Store:  store,
-	}
-	monitor.Start()
-	time.Sleep(100 * time.Millisecond)
-	assert.True(monitor.IsStopped())
-}
-
 func TestReset(t *testing.T) {
 	assert := assert.New(t)
-	event := types.FixtureEvent("entity", "keepalive")
 	store := &mockstore.MockStore{}
-	store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
-	store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
+
+	entity := types.FixtureEntity("entity")
+	entity.KeepaliveTimeout = 0
+	entity.Deregister = false
+
+	event := types.FixtureEvent("entity", "keepalive")
 	event.Entity.KeepaliveTimeout = 120
 
+	creator := &mockCreator{}
+	creator.On("Warn", event.Entity).Return(nil)
+	store.On("UpdateFailingKeepalive", mock.Anything, event.Entity, mock.AnythingOfType("int64")).Return(nil)
 	monitor := &KeepaliveMonitor{
-		Entity: event.Entity,
-		Store:  store,
+		Entity:       event.Entity,
+		Store:        store,
+		EventCreator: creator,
 	}
-
 	monitor.Reset(time.Now().Unix())
 	time.Sleep(100 * time.Millisecond)
-	assert.True(monitor.IsStopped())
+	assert.False(monitor.IsStopped())
 }

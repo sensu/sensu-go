@@ -75,7 +75,7 @@ func writeError(w http.ResponseWriter, err error) {
 
 	// Write error message in JSON encoded message
 	w.WriteHeader(st)
-	w.Write(errJSON)
+	_, _ = w.Write(errJSON)
 }
 
 // HTTPStatusFromCode returns http status code for given user action err code

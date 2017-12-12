@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShowCommand(t *testing.T) {
@@ -31,10 +32,10 @@ func TestShowCommandRunEClosure(t *testing.T) {
 
 	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
+	require.NoError(t, err)
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "name-one")
-	assert.Nil(err)
 }
 
 func TestShowCommandRunMissingArgs(t *testing.T) {
@@ -43,10 +44,10 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 	cli := newCLI()
 	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
+	require.NoError(t, err)
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "Usage")
-	assert.Nil(err)
 }
 
 func TestShowCommandRunEClosureWithTable(t *testing.T) {
@@ -57,16 +58,16 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	client.On("FetchCheck", "in").Return(types.FixtureCheckConfig("name-one"), nil)
 
 	cmd := ShowCommand(cli)
-	cmd.Flags().Set("format", "tabular")
+	require.NoError(t, cmd.Flags().Set("format", "tabular"))
 
 	out, err := test.RunCmd(cmd, []string{"in"})
+	require.NoError(t, err)
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "Name")
 	assert.Contains(out, "Interval")
 	assert.Contains(out, "Command")
 	assert.Contains(out, "Hooks")
-	assert.Nil(err)
 }
 
 func TestShowCommandRunEClosureWithErr(t *testing.T) {

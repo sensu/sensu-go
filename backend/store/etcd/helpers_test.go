@@ -7,20 +7,21 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQuery(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		etcd, _ := store.(*etcdStore)
+		etcd := store.(*etcdStore)
 
 		// Create a new org "acme" and its environments "default" & "dev"
-		store.UpdateOrganization(context.Background(), types.FixtureOrganization("acme"))
+		require.NoError(t, store.UpdateOrganization(context.Background(), types.FixtureOrganization("acme")))
 		defaultEnv := types.FixtureEnvironment("default")
 		defaultEnv.Organization = "acme"
 		devEnv := types.FixtureEnvironment("dev")
 		devEnv.Organization = "acme"
-		store.UpdateEnvironment(context.Background(), defaultEnv)
-		store.UpdateEnvironment(context.Background(), devEnv)
+		require.NoError(t, store.UpdateEnvironment(context.Background(), defaultEnv))
+		require.NoError(t, store.UpdateEnvironment(context.Background(), devEnv))
 
 		// Create /checks/default/default/check1
 		check1 := types.FixtureCheckConfig("check1")

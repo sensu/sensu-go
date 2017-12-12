@@ -72,9 +72,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().BoolP("stdin", "", false, "accept event data via STDIN")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("command")
-	cmd.MarkFlagRequired("interval")
-	cmd.MarkFlagRequired("subscriptions")
+	_ = cmd.MarkFlagRequired("command")
+	_ = cmd.MarkFlagRequired("interval")
+	_ = cmd.MarkFlagRequired("subscriptions")
 
 	return cmd
 }

@@ -79,7 +79,7 @@ func (a *Asset) Filename() string {
 // FixtureAsset given a name returns a valid asset for use in tests
 func FixtureAsset(name string) *Asset {
 	bytes := make([]byte, 10)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	hash := hex.EncodeToString(bytes)
 
 	return &Asset{

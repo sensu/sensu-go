@@ -34,10 +34,11 @@ func getProxyEntity(event *types.Event, s store.Store) error {
 		// Check if an entity was found for this source. If not, we need to create it
 		if entity == nil {
 			entity = &types.Entity{
-				ID:           event.Check.Config.Source,
-				Class:        types.EntityProxyClass,
-				Environment:  event.Entity.Environment,
-				Organization: event.Entity.Organization,
+				ID:            event.Check.Config.Source,
+				Class:         types.EntityProxyClass,
+				Environment:   event.Entity.Environment,
+				Organization:  event.Entity.Organization,
+				Subscriptions: addEntitySubscription(event.Check.Config.Source, []string{}),
 			}
 
 			if err := s.UpdateEntity(ctx, entity); err != nil {

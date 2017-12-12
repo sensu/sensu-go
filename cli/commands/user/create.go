@@ -54,17 +54,17 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Created")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			return err
 		},
 	}
 
-	cmd.Flags().StringP("password", "p", "", "Password")
-	cmd.Flags().Bool("admin", false, "Give user the administrator role")
-	cmd.Flags().StringP("roles", "r", "", "Comma separated list of roles to assign")
+	_ = cmd.Flags().StringP("password", "p", "", "Password")
+	_ = cmd.Flags().Bool("admin", false, "Give user the administrator role")
+	_ = cmd.Flags().StringP("roles", "r", "", "Comma separated list of roles to assign")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("password")
+	_ = cmd.MarkFlagRequired("password")
 
 	return cmd
 }

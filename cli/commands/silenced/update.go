@@ -13,7 +13,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				cmd.Help()
+				_ = cmd.Help()
 				return nil
 			}
 			id, err := getID(cmd, args)
