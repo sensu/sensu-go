@@ -19,7 +19,7 @@ $RACE = ""
 function set_race_flag
 {
     If ($env:GOARCH -eq "amd64") {
-	$RACE = "-race"
+        $RACE = "-race"
     }
 }
 
@@ -57,8 +57,8 @@ function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string
     $env:GOARCH = $goarch
     go build -i -o $outfile "$REPO_PATH/$subdir/$bin/..."
     If ($LASTEXITCODE -ne 0) {
-	echo "Failed to build $outfile..."
-	exit 1
+        echo "Failed to build $outfile..."
+        exit 1
     }
 
     return $outfile
@@ -68,15 +68,15 @@ function cmd_name_map([string]$cmd)
 {
     switch ($cmd)
     {
-	"backend" {
-	    return "sensu-backend"
-	}
-	"agent" {
-	    return "sensu-agent"
-	}
-	"cli" {
-	    return "sensuctl"
-	}
+        "backend" {
+            return "sensu-backend"
+        }
+        "agent" {
+            return "sensu-agent"
+        }
+        "cli" {
+            return "sensuctl"
+        }
     }
 }
 
@@ -99,8 +99,8 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
 
     go build -ldflags "$ldflags" -i -o $outfile "$REPO_PATH/$bin/cmd/..."
     If ($LASTEXITCODE -ne 0) {
-	echo "Failed to build $outfile..."
-	exit 1
+        echo "Failed to build $outfile..."
+        exit 1
     }
 
     return $outfile
@@ -111,18 +111,18 @@ function build_tools
     echo "Running tool & plugin builds..."
 
     ForEach ($bin in "cat","false","sleep","true") {
-	build_tool $bin "tools"
+        build_tool $bin "tools"
     }
 
     ForEach ($bin in "slack") {
-	build_tool $bin "handlers"
+        build_tool $bin "handlers"
     }
 }
 
 function build_tool([string]$bin, [string]$subdir)
 {
     If (!(Test-Path -Path "bin/$subdir")) {
-	New-Item -ItemType directory -Path "bin/$subdir" | out-null
+        New-Item -ItemType directory -Path "bin/$subdir" | out-null
     }
 
     echo "Building $subdir/$bin for $env:GOOS-$env:GOARCH"
@@ -138,7 +138,7 @@ function build_commands
     echo "Running build..."
 
     ForEach ($bin in "agent","backend","cli") {
-	build_command $bin
+        build_command $bin
     }
 }
 
@@ -147,7 +147,7 @@ function build_command([string]$bin)
     $cmd_name = cmd_name_map $bin
 
     If (!(Test-Path -Path "bin")) {
-	New-Item -ItemType directory -Path "bin" | out-null
+        New-Item -ItemType directory -Path "bin" | out-null
     }
 
     echo "Building $bin for $env:GOOS-$env:GOARCH"
@@ -162,8 +162,8 @@ function linter_commands
 
     gometalinter.v1 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=golint --enable=ineffassign --enable=goconst --tests ./...
     If ($LASTEXITCODE -ne 0) {
-	echo "Linting failed..."
-	exit 1
+        echo "Linting failed..."
+        exit 1
     }
 }
 
@@ -175,15 +175,15 @@ function unit_test_commands
     echo "" > "coverage.txt"
     $packages = go list ./... | Select-String -pattern "testing", "vendor" -notMatch
     ForEach ($pkg in $packages) {
-	go test -timeout=60s -v -coverprofile="profile.out" -covermode=atomic $pkg
-	If ($LASTEXITCODE -ne 0) {
-	    echo "Testing failed..."
-	    exit 1
-	}
-	If (Test-Path "profile.out") {
-	    cat "profile.out" >> "coverage.txt"
-	    rm "profile.out"
-	}
+        go test -timeout=60s -v -coverprofile="profile.out" -covermode=atomic $pkg
+        If ($LASTEXITCODE -ne 0) {
+            echo "Testing failed..."
+            exit 1
+        }
+        If (Test-Path "profile.out") {
+            cat "profile.out" >> "coverage.txt"
+            rm "profile.out"
+        }
     }
 }
 
@@ -193,8 +193,8 @@ function e2e_commands
 
     go test -v $REPO_PATH/testing/e2e
     If ($LASTEXITCODE -ne 0) {
-	echo "e2e testing failed..."
-	exit 1
+        echo "e2e testing failed..."
+        exit 1
     }
 }
 
@@ -235,38 +235,38 @@ ElseIf ($cmd -eq "build_cli") {
 ElseIf ($cmd -eq "ci") {
     switch ($sub_cmd)
     {
-	"lint" {
-	    If ($env:LINT_SUITE -eq "yes") {
-		linter_commands
-	    }
-	    Else {
-		echo "LINT_SUITE not set. Skipping..."
-	    }
-	}
-	"unit" {
-	    If ($env:UNIT_SUITE -eq "yes") {
-		unit_test_commands
-	    }
-	    Else {
-		echo "UNIT_SUITE not set. Skipping..."
-	    }
-	}
-	"build" {
-	    If ($env:BUILD_SUITE -eq "yes") {
-		build_commands
-	    }
-	    Else {
-		echo "BUILD_SUITE not set. Skipping..."
-	    }
-	}
-	"e2e" {
-	    If ($env:E2E_SUITE -eq "yes") {
-		e2e_commands
-	    }
-	    Else {
-		echo "E2E_SUITE not set. Skipping..."
-	    }
-	}
+        "lint" {
+            If ($env:LINT_SUITE -eq "yes") {
+                linter_commands
+            }
+            Else {
+                echo "LINT_SUITE not set. Skipping..."
+            }
+        }
+        "unit" {
+            If ($env:UNIT_SUITE -eq "yes") {
+                unit_test_commands
+            }
+            Else {
+                echo "UNIT_SUITE not set. Skipping..."
+            }
+        }
+        "build" {
+            If ($env:BUILD_SUITE -eq "yes") {
+                build_commands
+            }
+            Else {
+                echo "BUILD_SUITE not set. Skipping..."
+            }
+        }
+        "e2e" {
+            If ($env:E2E_SUITE -eq "yes") {
+                e2e_commands
+            }
+            Else {
+                echo "E2E_SUITE not set. Skipping..."
+            }
+        }
     }
 }
 Else {
