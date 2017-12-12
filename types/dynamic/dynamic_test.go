@@ -418,3 +418,46 @@ func TestSetFieldOnExtendedAttributes(t *testing.T) {
 		})
 	}
 }
+
+type Problematic struct {
+	Foo   string
+	Bar   *string
+	Attrs []byte `json:"-"`
+}
+
+func (p *Problematic) GetExtendedAttributes() []byte {
+	return p.Attrs
+}
+
+func (p *Problematic) SetExtendedAttributes(b []byte) {
+	p.Attrs = b
+}
+
+func TestMarshalNilField(t *testing.T) {
+	p := &Problematic{
+		Foo: "yes",
+		Bar: nil,
+	}
+	b, err := Marshal(p)
+	require.NoError(t, err)
+	require.Equal(t, []byte(`{"Bar":null,"Foo":"yes"}`), b)
+}
+
+func TestUnmarshalNilField(t *testing.T) {
+	p := &Problematic{}
+	err := Unmarshal([]byte(`{"Bar":null,"Foo":"yes"}`), p)
+	require.NoError(t, err)
+}
+
+func TestMarshalNilProblematic(t *testing.T) {
+	var p *Problematic = nil //nolint
+	b, err := Marshal(p)
+	require.NoError(t, err)
+	require.Equal(t, []byte("null"), b)
+}
+
+func TestUnmarshalNilProblematic(t *testing.T) {
+	var p *Problematic = nil //nolint
+	err := Unmarshal([]byte("{}"), p)
+	require.Error(t, err)
+}

@@ -20,6 +20,8 @@ to clean up existing errcheck lint.
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
   settings on start
 - Keepalives now alert when entities go away!
+- Fixed a bug in package dynamic that could lead to an error in json.Marshal
+in certain cases.
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added

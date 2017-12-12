@@ -1,9 +1,11 @@
 package types
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFixtureEventIsValid(t *testing.T) {
@@ -25,4 +27,10 @@ func TestEventValidate(t *testing.T) {
 	event.Entity.ID = "entity"
 
 	assert.NoError(t, event.Validate())
+}
+
+func TestMarshalJSON(t *testing.T) {
+	event := FixtureEvent("entity", "check")
+	_, err := json.Marshal(event)
+	require.NoError(t, err)
 }
