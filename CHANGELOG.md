@@ -24,6 +24,8 @@ to clean up existing errcheck lint.
 - Keepalives now alert when entities go away!
 - Fixed a bug in package dynamic that could lead to an error in json.Marshal
 in certain cases.
+- Fixed an issue in keepalived to handle cases of nil entities in keepalive
+  messages
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added
