@@ -1,5 +1,5 @@
 param (
-    [string] $cmd = $null
+    [string] $cmd = $null,
     [string] $sub_cmd = $null
 )
 
