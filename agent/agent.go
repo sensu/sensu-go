@@ -346,9 +346,15 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			// Check the message for valid JSON. Valid JSON payloads are passed to the
 			// message sender with the addition of the agent's entity if it is not
 			// included in the message. Any JSON errors are logged, and we return.
+			var payload map[string]interface{}
 			var event types.Event
-			if err = json.Unmarshal(buf[:bytesRead], &event); err != nil {
-				logger.WithError(err).Error("UDP Invalid event data")
+			if err = json.Unmarshal(buf[:bytesRead], &payload); err != nil {
+				logger.WithError(err).Error("UDP invalid payload data")
+				return
+			}
+
+			if err = translateToEvent(payload, &event); err != nil {
+				logger.WithError(err).Error("1.x returns \"invalid\"")
 				return
 			}
 
@@ -358,11 +364,15 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 				return
 			}
 
-			payload, err := json.Marshal(event)
+			// At this point, should receive valid JSON, so send it along to the
+			// message sender.
+			message, err := json.Marshal(event)
 			if err != nil {
+				logger.WithError(err).Error("could not marshal json payload")
 				return
 			}
-			a.sendMessage(transport.MessageTypeEvent, payload)
+
+			a.sendMessage(transport.MessageTypeEvent, message)
 		}
 
 	}
