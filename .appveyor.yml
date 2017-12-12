@@ -4,7 +4,6 @@ branches:
   only:
     - master
     - dep
-    - breakout-steps
 
 image:
   - Visual Studio 2015

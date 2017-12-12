@@ -8,7 +8,6 @@ branches:
   only:
   - master
   - dep
-  - breakout-steps
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 stages:
 - name: test
