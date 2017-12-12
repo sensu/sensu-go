@@ -13,23 +13,23 @@ RACE=""
 
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then
-        RACE="-race"
+	RACE="-race"
     fi
 }
 
 case "$GOOS" in
     darwin)
-        set_race_flag
-        ;;
+	set_race_flag
+	;;
     freebsd)
-        set_race_flag
-        ;;
+	set_race_flag
+	;;
     linux)
-        set_race_flag
-        ;;
+	set_race_flag
+	;;
     windows)
-        set_race_flag
-        ;;
+	set_race_flag
+	;;
 esac
 
 install_deps () {
@@ -107,11 +107,11 @@ build_tools () {
     echo "Running tool & plugin builds..."
 
     for cmd in cat false sleep true; do
-        build_tool $cmd "tools"
+	build_tool $cmd "tools"
     done
 
     for cmd in slack; do
-        build_tool $cmd "handlers"
+	build_tool $cmd "handlers"
     done
 }
 
@@ -120,7 +120,7 @@ build_tool () {
     local subdir=$2
 
     if [ ! -d bin/${subdir} ]; then
-        mkdir -p bin/${subdir}
+	mkdir -p bin/${subdir}
     fi
 
     echo "Building $subdir/$cmd for ${GOOS}-${GOARCH}"
@@ -133,7 +133,7 @@ build_commands () {
     echo "Running build..."
 
     for cmd in agent backend cli; do
-        build_command $cmd
+	build_command $cmd
     done
 }
 
@@ -142,7 +142,7 @@ build_command () {
     local cmd_name=$(cmd_name_map $cmd)
 
     if [ ! -d bin/ ]; then
-        mkdir -p bin/
+	mkdir -p bin/
     fi
 
     echo "Building $cmd for ${GOOS}-${GOARCH}"
@@ -156,8 +156,8 @@ linter_commands () {
 
     gometalinter.v1 --vendor --disable-all --enable=vet --enable=golint --enable=ineffassign --enable=goconst --enable=errcheck --skip=dashboardd --skip=importer -j 1 --deadline 1h --tests ./...
     if [ $? -ne 0 ]; then
-        echo "Linting failed..."
-        exit 1
+	echo "Linting failed..."
+	exit 1
     fi
 }
 
@@ -166,16 +166,16 @@ unit_test_commands () {
 
     echo "" > coverage.txt
     for pkg in $(go list ./... | egrep -v '(testing|vendor)'); do
-        go test -timeout=60s -v $RACE -coverprofile=profile.out -covermode=atomic $pkg
-        if [ $? -ne 0 ]; then
-          echo "Tests failed..."
-          exit 1
-        fi
+	go test -timeout=60s -v $RACE -coverprofile=profile.out -covermode=atomic $pkg
+	if [ $? -ne 0 ]; then
+	  echo "Tests failed..."
+	  exit 1
+	fi
 
-        if [ -f profile.out ]; then
-            cat profile.out >> coverage.txt
-            rm profile.out
-        fi
+	if [ -f profile.out ]; then
+	    cat profile.out >> coverage.txt
+	    rm profile.out
+	fi
     done
 }
 
@@ -191,13 +191,13 @@ docker_commands () {
     local build_sha=$(git rev-parse HEAD)
 
     for cmd in cat false sleep true; do
-        echo "Building tools/$cmd for linux-amd64"
-        build_tool_binary linux amd64 $cmd "tools"
+	echo "Building tools/$cmd for linux-amd64"
+	build_tool_binary linux amd64 $cmd "tools"
     done
 
     for cmd in slack; do
-        echo "Building handlers/$cmd for linux-amd64"
-        build_tool_binary linux amd64 $cmd "handlers"
+	echo "Building handlers/$cmd for linux-amd64"
+	build_tool_binary linux amd64 $cmd "handlers"
     done
 
     # install_dashboard_deps
@@ -205,29 +205,29 @@ docker_commands () {
     # bundle_static_assets
 
     for cmd in agent backend cli; do
-        echo "Building $cmd for linux-amd64"
-        local cmd_name=$(cmd_name_map $cmd)
-        build_binary linux amd64 $cmd $cmd_name
+	echo "Building $cmd for linux-amd64"
+	local cmd_name=$(cmd_name_map $cmd)
+	build_binary linux amd64 $cmd $cmd_name
     done
 
     docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
 
     # push master - tags and pushes latest master docker build only
     if [ "$push" == "push" ] && [ "$release" == "master" ]; then
-        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        docker push sensuapp/sensu-go:master
+	docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+	docker push sensuapp/sensu-go:master
     # push versioned - tags and pushes with version pulled from
     # version/prerelease/iteration files
     elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
-        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
-        local version_alpha_iteration=$(echo sensuapp/sensu-go:$(cat version/version.txt)-$(cat version/prerelease.txt).$(cat version/iteration.txt))
-        docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
-        docker push sensuapp/sensu-go:latest
-        docker tag sensuapp/sensu-go:master $version_alpha_iteration
-        docker push $version_alpha_iteration
-        docker tag $version_alpha_iteration $version_alpha
-        docker push $version_alpha
+	docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+	local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
+	local version_alpha_iteration=$(echo sensuapp/sensu-go:$(cat version/version.txt)-$(cat version/prerelease.txt).$(cat version/iteration.txt))
+	docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
+	docker push sensuapp/sensu-go:latest
+	docker tag sensuapp/sensu-go:master $version_alpha_iteration
+	docker push $version_alpha_iteration
+	docker tag $version_alpha_iteration $version_alpha
+	docker push $version_alpha
     fi
 }
 
@@ -284,27 +284,55 @@ elif [ "$cmd" == "e2e" ]; then
     build_commands
     e2e_commands "${@:2}"
 elif [ "$cmd" == "ci" ]; then
-  subcmd=${2:-"go"}
-  if [[ "$subcmd" == "dashboard" ]]; then
-    install_dashboard_deps
-    test_dashboard
-  elif [[ "$subcmd" == "none" ]]; then
-    echo "noop"
-  else
-    linter_commands
-    unit_test_commands
-    build_commands
-    e2e_commands
-  fi
+    # Run linter tests if LINT_SUITE=yes
+    if [[ "x$LINT_SUITE" == "xyes" ]]; then
+	linter_commands
+    else
+	echo "LINT_SUITE not set. Skipping..."
+    fi
+
+    # Run unit tests if UNIT_SUITE=yes
+    if [[ "x$UNIT_SUITE" == "xyes" ]]; then
+	unit_test_commands
+    else
+	echo "UNIT_SUITE not set. Skipping..."
+    fi
+
+    # Run build commands if BUILD_SUITE=yes
+    if [[ "x$BUILD_SUITE" == "xyes" ]]; then
+	build_commands
+    else
+	echo "BUILD_SUITE not set. Skipping..."
+    fi
+
+    # Run e2e tests if E2E_SUITE=yes
+    if [[ "x$E2E_SUITE" == "xyes" ]]; then
+	e2e_commands
+    else
+	echo "E2E_SUITE not set. Skipping..."
+    fi
+
+    # Run dashboard builds & tests if DASHBOARD_SUITE=yes
+    if [[ "x$DASHBOARD_SUITE" == "xyes" ]]; then
+	install_dashboard_deps
+	test_dashboard
+    else
+	echo "DASHBOARD_SUITE not set. Skipping..."
+    fi
 elif [ "$cmd" == "coverage" ]; then
-  subcmd=${2:-"go"}
-  if [ "$subcmd" == "dashboard" ]; then
-    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
-  elif [ "$subcmd" == "none" ]; then
-    echo "noop"
-  else
-    ./codecov.sh -t $CODECOV_TOKEN -cF go
-  fi
+    # Run dashboard coverage if DASHBOARD_COVERAGE=yes
+    if [[ "x$DASHBOARD_COVERAGE" == "xyes" ]]; then
+	./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+    else
+	echo "DASHBOARD_COVERAGE not set. Skipping..."
+    fi
+
+    # Run unit coverage if UNIT_COVERAGE=yes
+    if [[ "x$UNIT_COVERAGE" == "xyes" ]]; then
+	./codecov.sh -t $CODECOV_TOKEN -cF go
+    else
+	echo "UNIT_COVERAGE not set. Skipping..."
+    fi
 elif [ "$cmd" == "build" ]; then
     build_commands
 elif [ "$cmd" == "docker" ]; then
