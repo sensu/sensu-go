@@ -64,6 +64,10 @@ func translateToEvent(payload map[string]interface{}, event *types.Event) error 
 	if payload == nil {
 		return fmt.Errorf("a payload must be provided")
 	}
+	// dump relevant payload values into 2.x event struct fields
+	if err := mapstructure.Decode(payload, &event); err != nil {
+		return fmt.Errorf("error translating event")
+	}
 	// dump relevant payload values into 2.x config struct fields
 	if err := mapstructure.Decode(payload, &checkConfig); err != nil {
 		return fmt.Errorf("error translating check config")

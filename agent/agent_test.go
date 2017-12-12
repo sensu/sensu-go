@@ -123,7 +123,7 @@ func TestHandleTCPMessages(t *testing.T) {
 	}
 
 	payload := map[string]interface{}{
-		"timestamp": 1513028652,
+		"timestamp": int64(1513028652),
 		"name":      "app_01",
 		"output":    "could not connect to something",
 		"status":    1,
@@ -147,7 +147,7 @@ func TestHandleTCPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal(int64(1513028652), event.Timestamp)
 	assert.Equal("app_01", event.Check.Config.Name)
 	ta.Stop()
 }
@@ -172,7 +172,7 @@ func TestHandleUDPMessages(t *testing.T) {
 	}
 
 	payload := map[string]interface{}{
-		"timestamp": 1513028652,
+		"timestamp": int64(1513028652),
 		"name":      "app_01",
 		"output":    "could not connect to something",
 		"status":    1,
@@ -196,7 +196,7 @@ func TestHandleUDPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal(int64(1513028652), event.Timestamp)
 	assert.Equal("app_01", event.Check.Config.Name)
 	ta.Stop()
 }
@@ -256,7 +256,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	}
 
 	payload := map[string]interface{}{
-		"timestamp": 1513028652,
+		"timestamp": int64(1513028652),
 		"name":      "app_01",
 		"output":    "could not connect to something",
 		"status":    1,
@@ -277,7 +277,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotNil(event.Entity)
-	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal(int64(1513028652), event.Timestamp)
 	assert.Equal("app_01", event.Check.Config.Name)
 
 	ta.Stop()
