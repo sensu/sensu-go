@@ -27,14 +27,24 @@ func (s *Silenced) Validate() error {
 
 // FixtureSilenced returns a testing fixutre for a Silenced event struct.
 func FixtureSilenced(id string) *Silenced {
+	var check, subscription string
+
 	parts := strings.Split(id, ":")
-	if len(parts) != 2 {
+
+	if len(parts) == 2 {
+		check = parts[1]
+		subscription = parts[0]
+	} else if len(parts) == 3 {
+		check = parts[2]
+		subscription = strings.Join(parts[0:2], ":")
+	} else {
 		panic("invalid silenced ID")
 	}
+
 	return &Silenced{
 		ID:           id,
-		Check:        parts[1],
-		Subscription: parts[0],
+		Check:        check,
+		Subscription: subscription,
 	}
 }
 

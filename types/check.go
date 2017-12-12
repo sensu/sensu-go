@@ -134,7 +134,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 	return &CheckConfig{
 		Name:          id,
 		Interval:      interval,
-		Subscriptions: []string{},
+		Subscriptions: []string{"linux"},
 		Command:       "command",
 		Handlers:      []string{},
 		RuntimeAssets: []string{"ruby-2-4-2"},
