@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 filtered by the pipeline
 - Errcheck was added to the build script, and the project was given a once-over
 to clean up existing errcheck lint.
+- Creating a silenced entry via sensuctl no longer requires an expiry value
 
 ### Fixed
 - Entities can now be silenced using their entity subscription
