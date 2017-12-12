@@ -41,6 +41,9 @@ type Attributes interface {
 // be addressable, or an error will be returned.
 func SetField(v Attributes, path string, value interface{}) error {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
+	if !strukt.IsValid() {
+		return errors.New("SetField on nil Attributes")
+	}
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
@@ -175,6 +178,9 @@ func GetField(v AttrGetter, name string) (interface{}, error) {
 	if len(name) == 0 {
 		return nil, errors.New("dynamic: empty path specified")
 	}
+	if v == nil {
+		return nil, errors.New("dynamic: GetField with nil AttrGetter")
+	}
 	extendedAttributes := v.GetExtendedAttributes()
 	var extAttrPtr *byte
 	if len(extendedAttributes) > 0 {
@@ -285,6 +291,7 @@ func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField
 			continue
 		}
 		value := v.Field(i)
+		elem := reflect.Indirect(value)
 		sf := structField{Field: field, Value: value}
 		sf.JSONName, sf.OmitEmpty = sf.jsonFieldName()
 		if sf.JSONName == "-" {
@@ -293,9 +300,11 @@ func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField
 		if sf.OmitEmpty && sf.IsEmpty() {
 			continue
 		}
-		if b, ok := reflect.Indirect(value).Interface().([]byte); ok {
-			if len(b) > 0 && &b[0] == addressOfAttrs {
-				continue
+		if elem.IsValid() {
+			if b, ok := elem.Interface().([]byte); ok {
+				if len(b) > 0 && &b[0] == addressOfAttrs {
+					continue
+				}
 			}
 		}
 		// sf is a valid JSON field.
@@ -309,6 +318,9 @@ func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField
 // reflect.Struct.
 func extractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
+	if !strukt.IsValid() {
+		return nil, errors.New("dynamic: nil attributes")
+	}
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
 	}
@@ -352,6 +364,9 @@ func Unmarshal(msg []byte, v AttrSetter) error {
 		// infinite recursion. Copy the struct into a new type that doesn't
 		// implement the method.
 		oldVal := reflect.Indirect(reflect.ValueOf(v))
+		if !oldVal.IsValid() {
+			return errors.New("Unmarshal called with nil AttrSetter")
+		}
 		typ := oldVal.Type()
 		numField := typ.NumField()
 		fields := make([]reflect.StructField, 0, numField)
@@ -391,6 +406,9 @@ func Unmarshal(msg []byte, v AttrSetter) error {
 // respects the encoding/json rules regarding exported fields, and tag
 // semantics. If v's kind is not reflect.Struct, an error will be returned.
 func Marshal(v AttrGetter) ([]byte, error) {
+	if v == nil || reflect.ValueOf(v).IsNil() {
+		return []byte("null"), nil
+	}
 	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 4096)
 	s.WriteObjectStart()
 
@@ -412,6 +430,10 @@ func Marshal(v AttrGetter) ([]byte, error) {
 
 func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
+	if !strukt.IsValid() {
+		// Zero value of a nil pointer, nothing to do.
+		return nil
+	}
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
