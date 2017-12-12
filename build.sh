@@ -284,54 +284,72 @@ elif [ "$cmd" == "e2e" ]; then
     build_commands
     e2e_commands "${@:2}"
 elif [ "$cmd" == "ci" ]; then
-    # Run linter tests if LINT_SUITE=yes
-    if [[ "x$LINT_SUITE" == "xyes" ]]; then
-	linter_commands
-    else
-	echo "LINT_SUITE not set. Skipping..."
+    subcmd=${2:-"go"}
+
+    if [[ "$subcmd" == "lint" ]]; then
+	# Run linter tests if LINT_SUITE=yes
+	if [[ "$LINT_SUITE" == "yes" ]]; then
+	    linter_commands
+	else
+	    echo "LINT_SUITE not set. Skipping..."
+	fi
     fi
 
-    # Run unit tests if UNIT_SUITE=yes
-    if [[ "x$UNIT_SUITE" == "xyes" ]]; then
-	unit_test_commands
-    else
-	echo "UNIT_SUITE not set. Skipping..."
+    if [[ "$subcmd" == "unit" ]]; then
+	# Run unit tests if UNIT_SUITE=yes
+	if [[ "$UNIT_SUITE" == "yes" ]]; then
+	    unit_test_commands
+	else
+	    echo "UNIT_SUITE not set. Skipping..."
+	fi
     fi
 
-    # Run build commands if BUILD_SUITE=yes
-    if [[ "x$BUILD_SUITE" == "xyes" ]]; then
-	build_commands
-    else
-	echo "BUILD_SUITE not set. Skipping..."
+    if [[ "$subcmd" == "build" ]]; then
+	# Run build commands if BUILD_SUITE=yes
+	if [[ "$BUILD_SUITE" == "yes" ]]; then
+	    build_commands
+	else
+	    echo "BUILD_SUITE not set. Skipping..."
+	fi
     fi
 
-    # Run e2e tests if E2E_SUITE=yes
-    if [[ "x$E2E_SUITE" == "xyes" ]]; then
-	e2e_commands
-    else
-	echo "E2E_SUITE not set. Skipping..."
+    if [[ "$subcmd" == "e2e" ]]; then
+	# Run e2e tests if E2E_SUITE=yes
+	if [[ "$E2E_SUITE" == "yes" ]]; then
+	    e2e_commands
+	else
+	    echo "E2E_SUITE not set. Skipping..."
+	fi
     fi
 
-    # Run dashboard builds & tests if DASHBOARD_SUITE=yes
-    if [[ "x$DASHBOARD_SUITE" == "xyes" ]]; then
-	install_dashboard_deps
-	test_dashboard
-    else
-	echo "DASHBOARD_SUITE not set. Skipping..."
+    if [[ "$subcmd" == "dashboard" ]]; then
+	# Run dashboard builds & tests if DASHBOARD_SUITE=yes
+	if [[ "$DASHBOARD_SUITE" == "yes" ]]; then
+	    install_dashboard_deps
+	    test_dashboard
+	else
+	    echo "DASHBOARD_SUITE not set. Skipping..."
+	fi
     fi
 elif [ "$cmd" == "coverage" ]; then
-    # Run dashboard coverage if DASHBOARD_COVERAGE=yes
-    if [[ "x$DASHBOARD_COVERAGE" == "xyes" ]]; then
-	./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
-    else
-	echo "DASHBOARD_COVERAGE not set. Skipping..."
+    subcmd=${2:-"go"}
+
+    if [[ "$subcmd" == "dashboard" ]]; then
+	# Run dashboard coverage if DASHBOARD_COVERAGE=yes
+	if [[ "$DASHBOARD_COVERAGE" == "yes" ]]; then
+	    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+	else
+	    echo "DASHBOARD_COVERAGE not set. Skipping..."
+	fi
     fi
 
-    # Run unit coverage if UNIT_COVERAGE=yes
-    if [[ "x$UNIT_COVERAGE" == "xyes" ]]; then
-	./codecov.sh -t $CODECOV_TOKEN -cF go
-    else
-	echo "UNIT_COVERAGE not set. Skipping..."
+    if [[ "$subcmd" == "unit" ]]; then
+	# Run unit coverage if UNIT_COVERAGE=yes
+	if [[ "$UNIT_COVERAGE" == "yes" ]]; then
+	    ./codecov.sh -t $CODECOV_TOKEN -cF go
+	else
+	    echo "UNIT_COVERAGE not set. Skipping..."
+	fi
     fi
 elif [ "$cmd" == "build" ]; then
     build_commands

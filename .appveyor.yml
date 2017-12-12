@@ -14,7 +14,16 @@ environment:
 
   matrix:
     - GOARCH: 386
+      LINT_SUITE: yes
+      UNIT_SUITE: yes
+      BUILD_SUITE: yes
+      E2E_SUITE: yes
+
     - GOARCH: amd64
+      LINT_SUITE: yes
+      UNIT_SUITE: yes
+      BUILD_SUITE: yes
+      E2E_SUITE: yes
 
 install:
   - rmdir c:\go /s /q
@@ -30,4 +39,7 @@ platform:
   - x64
 
 build_script:
-  - ps: .\build.ps1
+  - ps: .\build.ps1 ci lint
+  - ps: .\build.ps1 ci unit
+  - ps: .\build.ps1 ci build
+  - ps: .\build.ps1 ci e2e
