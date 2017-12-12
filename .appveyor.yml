@@ -3,6 +3,8 @@ clone_folder: c:\gopath\src\github.com\sensu\sensu-go
 branches:
   only:
     - master
+    - dep
+    - breakout-steps
 
 image:
   - Visual Studio 2015
