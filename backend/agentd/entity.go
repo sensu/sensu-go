@@ -11,7 +11,7 @@ import (
 // addEntitySubscription appends the entity subscription (using the format
 // "entity:entityID") to the subscriptions of an entity
 func addEntitySubscription(entityID string, subscriptions []string) []string {
-	entityKey := fmt.Sprintf("entity:%s", entityID)
+	entityKey := types.GetEntitySubscription(entityID)
 	return append(subscriptions, entityKey)
 }
 

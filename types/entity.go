@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	fmt "fmt"
 
 	"github.com/sensu/sensu-go/types/dynamic"
 )
@@ -53,6 +54,12 @@ func (e *Entity) UnmarshalJSON(b []byte) error {
 // MarshalJSON implements the json.Marshaler interface.
 func (e *Entity) MarshalJSON() ([]byte, error) {
 	return dynamic.Marshal(e)
+}
+
+// GetEntitySubscription returns the entity subscription, using the format
+// "entity:entityID"
+func GetEntitySubscription(entityID string) string {
+	return fmt.Sprintf("entity:%s", entityID)
 }
 
 // FixtureEntity returns a testing fixture for an Entity object.

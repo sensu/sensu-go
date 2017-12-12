@@ -26,6 +26,10 @@ func TestFixtureSilenced(t *testing.T) {
 	assert.NotNil(t, s.Subscription)
 	assert.NotNil(t, s.Organization)
 	assert.NotNil(t, s.Environment)
+
+	s = FixtureSilenced("entity:test_subscription:test_check")
+	assert.Equal(t, "entity:test_subscription", s.Subscription)
+	assert.Equal(t, "test_check", s.Check)
 }
 
 // Validation should fail when we don't provide a CheckName or Subscription
