@@ -1,4 +1,4 @@
-## Contributing
+# Contributing
 
 We, the maintainers, love pull requests from everyone, but often find
 we must say "no" despite how reasonable the proposal may seem.
@@ -9,13 +9,14 @@ This helps us to provide direction as to implementation details, which
 branch to base your changes on, and so on.
 
 1. Open an issue to describe your proposed improvement or feature
-2. Fork https://github.com/sensu/sensu-go and clone your fork to your workstation
-3. Create your feature branch (`git checkout -b my-new-feature`)
-4. Commit your changes with a [DCO Signed-off-by statement](#dco) (`git commit --signoff`)
-5. Push your feature branch (`git push origin my-new-feature`)
-6. Create a Pull Request as appropriate based on the issue discussion
+1. Fork https://github.com/sensu/sensu-go and clone your fork to your workstation
+1. Create your feature branch (`git checkout -b my-new-feature`)
+1. If applicable, add a [CHANGELOG.md entry](#changelog) describing your change.
+1. Commit your changes with a [DCO Signed-off-by statement](#dco) (`git commit --signoff`)
+1. Push your feature branch (`git push origin my-new-feature`)
+1. Create a Pull Request as appropriate based on the issue discussion
 
-### DCO
+## DCO
 
 To make a good faith effort to ensure the criteria of the MIT License
 are met, Sensu Inc. requires the Developer Certificate of Origin (DCO)
@@ -77,3 +78,73 @@ If you forget to add the sign-off you can also amend a previous commit
 with the sign-off by running `git commit --amend -s`. If you've pushed
 your changes to Github already you'll need to force push your branch
 after this with `git push -f`. -- Thanks Chef!
+
+## Changelog
+
+The Sensu [Changelog](CHANGELOG.md) is based on the Sensu Community 
+[Changelog guidelines](https://github.com/sensu-plugins/community/blob/master/HOW_WE_CHANGELOG.md).
+
+All new changes go underneath the _Unreleased_ heading at the top of the Changelog.
+Beyond that, here are some additional guidelines that should make it more clear where your
+change goes in the Changelog.
+
+### Added
+
+Any _new_ functionality goes here. This may be a new field on a data type or a new data
+type altogether; a new API endpoint; or possibly a whole new feature. In general, these
+are sentence that start with the word "added." Examples:
+
+- `begin` field to silences that initiates silencing at a given timestamp
+- /healthz endpoint that reports health of the sensu-agent process
+
+### Changed
+
+Changes to any existing component or functionality of the system that does not cause
+breaking changes to users or developers go here. _Changed_ is distinguishable from 
+_Fixed_ in that it is a change to intentional functionality. Examples:
+
+- `sensu-agent` exits gracefully instead of crashing upon disconnect
+- Refactored the API to use reusable controller logic
+
+### Fixed
+
+Fixed bugs go here. Examples:
+
+- `sensu-agent` no longer ignores keepalive configuration
+- Don't delete auth tokens at startup
+
+### Deprecated
+
+Deprecated should include any soon-to-be removed functionality. An entry here that
+is user facing will likely yield entries in _Removed_ or _Breaking_ eventually. Examples:
+
+- The /health API endpoint is being replaced by /healthz on the backend
+- The /stash API endpoint is being removed in a future release
+
+### Removed
+
+Removed is for the removal of functionality that does not directly impact users,
+these entries most likely only impact developers of Sensu.  If user facing
+functionality is removed, an entry should be added to the _Breaking Changes_
+section instead. Examples:
+
+- Removed references to `encoding/json` in favor of `json-iter`.
+- Removed unused `Store` interface for `BlobStore`.
+
+### Security
+
+Any fixes to address security exploits should be added to this section. If
+available, include an associated CVE entry.
+
+- Upgraded build to use Go 1.9.1 to address [CVE-2017-15041](https://www.cvedetails.com/cve/CVE-2017-15041/)
+- Fixed issue where users could view entities without permission
+
+### Breaking Changes
+
+Whenever you have to make a change that will cause users to be unable to
+upgrade versions of Sensu without intervention by an operator, your change
+goes here. Try to avoid these. If they're required, we should have documented
+justification in a GitHub issue and preferably a proposal. We should also bump
+minor versions at this time. Examples:
+
+- Refactored how Checks are stored in Etcd, `sensu-backend migrate` is required to upgrade
