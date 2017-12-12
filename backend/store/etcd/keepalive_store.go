@@ -35,7 +35,9 @@ func (s *etcdStore) GetFailingKeepalives(ctx context.Context) ([]*types.Keepaliv
 		if err := json.Unmarshal(kv.Value, keepalive); err != nil {
 			// if we have a problem deserializing a keepalive record, delete that record
 			// ignoring any errors we have along the way.
-			s.client.Delete(ctx, string(kv.Key))
+			if _, err := s.client.Delete(ctx, string(kv.Key)); err != nil {
+				logger.Debug(err)
+			}
 			continue
 		}
 		keepalives = append(keepalives, keepalive)

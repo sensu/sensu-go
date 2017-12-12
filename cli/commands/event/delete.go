@@ -1,7 +1,6 @@
 package event
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -17,8 +16,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				cmd.Help()
-				return errors.New("missing argument(s)")
+				_ = cmd.Help()
+				return nil
 			}
 
 			// Delete event via API
@@ -37,12 +36,12 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
+			return err
 		},
 	}
 
-	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+	_ = cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
 
 	return cmd
 }

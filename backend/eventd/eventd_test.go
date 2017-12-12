@@ -9,11 +9,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEventHandling(t *testing.T) {
 	bus := &messaging.WizardBus{}
-	bus.Start()
+	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
 
@@ -26,14 +27,14 @@ func TestEventHandling(t *testing.T) {
 	err := e.Start()
 	assert.NoError(t, err)
 
-	bus.Publish(messaging.TopicEventRaw, nil)
+	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
 	badEvent := &types.Event{}
 	badEvent.Check = &types.Check{}
 	badEvent.Entity = &types.Entity{}
 	badEvent.Timestamp = time.Now().Unix()
 
-	bus.Publish(messaging.TopicEventRaw, badEvent)
+	require.NoError(t, bus.Publish(messaging.TopicEventRaw, badEvent))
 
 	event := types.FixtureEvent("entity", "check")
 
@@ -57,7 +58,7 @@ func TestEventHandling(t *testing.T) {
 		mock.Anything,
 	).Return([]*types.Silenced{}, nil)
 
-	bus.Publish(messaging.TopicEventRaw, event)
+	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
 	err = e.Stop()
 	assert.NoError(t, err)

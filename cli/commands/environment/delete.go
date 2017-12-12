@@ -17,7 +17,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 1 || args[0] == "" {
-				cmd.Help()
+				_ = cmd.Help()
 				return nil
 			}
 
@@ -25,8 +25,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			env := args[0]
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(env, cmd.OutOrStdout()); !confirmed {
-					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
-					return nil
+					_, err := fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
+					return err
 				}
 			}
 
@@ -35,12 +35,12 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
+			return err
 		},
 	}
 
-	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+	_ = cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
 
 	return &cmd
 }

@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -27,11 +28,10 @@ func TestCreateCommandRunEClosureWithoutAllFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("type", "")
+	require.NoError(t, cmd.Flags().Set("type", ""))
 	out, err := test.RunCmd(cmd, []string{"my-handler"})
-
+	require.NoError(t, err)
 	assert.Regexp("Usage", out) // usage should print out
-	assert.NotNil(err)
 }
 
 func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
@@ -42,10 +42,10 @@ func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("CreateHandler", mock.AnythingOfType("*types.Handler")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("type", "pipe")
-	cmd.Flags().Set("timeout", "15")
-	cmd.Flags().Set("mutator", "")
-	cmd.Flags().Set("handlers", "slack,pagerduty")
+	require.NoError(t, cmd.Flags().Set("type", "pipe"))
+	require.NoError(t, cmd.Flags().Set("timeout", "15"))
+	require.NoError(t, cmd.Flags().Set("mutator", ""))
+	require.NoError(t, cmd.Flags().Set("handlers", "slack,pagerduty"))
 	out, err := test.RunCmd(cmd, []string{"test-handler"})
 
 	assert.Regexp("OK", out)
@@ -60,10 +60,10 @@ func TestCreateCommandRunEClosureWithAPIErr(t *testing.T) {
 	client.On("CreateHandler", mock.AnythingOfType("*types.Handler")).Return(errors.New("nope"))
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("type", "pipe")
-	cmd.Flags().Set("timeout", "15")
-	cmd.Flags().Set("mutator", "")
-	cmd.Flags().Set("handlers", "slack,pagerduty")
+	require.NoError(t, cmd.Flags().Set("type", "pipe"))
+	require.NoError(t, cmd.Flags().Set("timeout", "15"))
+	require.NoError(t, cmd.Flags().Set("mutator", ""))
+	require.NoError(t, cmd.Flags().Set("handlers", "slack,pagerduty"))
 	out, err := test.RunCmd(cmd, []string{"nope-jpeg"})
 
 	assert.Empty(out)

@@ -17,6 +17,6 @@ func readFixture(file string) string {
 
 func stringToSHA512(str string) string {
 	h := sha512.New()
-	h.Write([]byte(str))
+	_, _ = h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
 }

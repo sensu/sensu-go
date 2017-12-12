@@ -7,15 +7,20 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- End-to-end test for the silencing functionality
+- TCP/UDP sockets now accept 1.x backward compatible payloads
 
 ### Changed
 - Events that transitioned from incidents to a healthy state are no longer
 filtered by the pipeline
+- Errcheck was added to the build script, and the project was given a once-over
+to clean up existing errcheck lint.
 
 ### Fixed
 - Entities can now be silenced using their entity subscription
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
   settings on start
+- Keepalives now alert when entities go away!
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added

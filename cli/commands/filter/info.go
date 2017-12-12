@@ -21,7 +21,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			format, _ := cmd.Flags().GetString("format")
 
 			if len(args) != 1 {
-				cmd.Help()
+				_ = cmd.Help()
 				return nil
 			}
 

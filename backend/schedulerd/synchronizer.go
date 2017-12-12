@@ -117,7 +117,12 @@ func (recPtr *SynchronizeStateScheduler) Start() {
 // Sync executes all synchronizers
 func (recPtr *SynchronizeStateScheduler) Sync() {
 	for _, syncer := range recPtr.synchronizers {
-		go syncer.Sync()
+		syncer := syncer
+		go func() {
+			if err := syncer.Sync(); err != nil {
+				logger.Error(err)
+			}
+		}()
 	}
 }
 

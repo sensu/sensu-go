@@ -15,6 +15,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHelperHandlerProcess(t *testing.T) {
@@ -148,7 +149,9 @@ func TestPipelinedTcpHandler(t *testing.T) {
 			return
 		}
 
-		defer listener.Close()
+		defer func() {
+			require.NoError(t, listener.Close())
+		}()
 
 		ready <- struct{}{}
 
@@ -156,7 +159,9 @@ func TestPipelinedTcpHandler(t *testing.T) {
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() {
+			require.NoError(t, conn.Close())
+		}()
 
 		buffer, err := ioutil.ReadAll(conn)
 		if err != nil {
@@ -200,7 +205,9 @@ func TestPipelinedUdpHandler(t *testing.T) {
 			return
 		}
 
-		defer listener.Close()
+		defer func() {
+			require.NoError(t, listener.Close())
+		}()
 
 		ready <- struct{}{}
 

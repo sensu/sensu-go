@@ -33,9 +33,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			helpers.Print(cmd, cli.Config.Format(), printToTable, results)
-
-			return nil
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, results)
 		},
 	}
 
@@ -95,7 +93,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Hooks",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)
-				return globals.FormatCheckHooks(check.CheckHooks)
+				return globals.FormatHookLists(check.CheckHooks)
 			},
 		},
 		{

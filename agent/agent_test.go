@@ -3,7 +3,6 @@ package agent
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testMessageType struct {
@@ -122,11 +122,19 @@ func TestHandleTCPMessages(t *testing.T) {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("foo", "check_cpu")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := map[string]interface{}{
+		"timestamp": 1513028652,
+		"name":      "app_01",
+		"output":    "could not connect to something",
+		"status":    1,
+		"custom":    "attribute",
+		"source":    "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
-	tcpClient.Write(bytes)
-	tcpClient.Close()
+	_, err = tcpClient.Write(bytes)
+	require.NoError(t, err)
+	require.NoError(t, tcpClient.Close())
 
 	msg := <-ta.sendq
 	assert.NotEmpty(msg)
@@ -139,8 +147,8 @@ func TestHandleTCPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal("app_01", event.Check.Config.Name)
 	ta.Stop()
 }
 
@@ -163,11 +171,19 @@ func TestHandleUDPMessages(t *testing.T) {
 		assert.FailNow("failed to create UDP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("bar", "check_mem")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := map[string]interface{}{
+		"timestamp": 1513028652,
+		"name":      "app_01",
+		"output":    "could not connect to something",
+		"status":    1,
+		"custom":    "attribute",
+		"source":    "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
-	udpClient.Write(bytes)
-	udpClient.Close()
+	_, err = udpClient.Write(bytes)
+	require.NoError(t, err)
+	require.NoError(t, udpClient.Close())
 
 	msg := <-ta.sendq
 	assert.NotEmpty(msg)
@@ -180,8 +196,8 @@ func TestHandleUDPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal("app_01", event.Check.Config.Name)
 	ta.Stop()
 }
 
@@ -203,7 +219,9 @@ func TestReceivePingTCP(t *testing.T) {
 	if err != nil {
 		assert.FailNow("failed to create TCP connection")
 	}
-	defer tcpClient.Close()
+	defer func() {
+		require.NoError(t, tcpClient.Close())
+	}()
 
 	bytesWritten, err := tcpClient.Write([]byte(" ping "))
 	if err != nil {
@@ -213,12 +231,8 @@ func TestReceivePingTCP(t *testing.T) {
 
 	readData := make([]byte, 4)
 	numBytes, err := tcpClient.Read(readData)
-	if err != nil {
-		fmt.Println(err)
-		assert.FailNow("failed to read tcpClient")
-	}
+	require.NoError(t, err)
 	assert.Equal("pong", string(readData[:numBytes]))
-	tcpClient.Close()
 	ta.Stop()
 }
 
@@ -241,12 +255,21 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("baz", "check_disk")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := map[string]interface{}{
+		"timestamp": 1513028652,
+		"name":      "app_01",
+		"output":    "could not connect to something",
+		"status":    1,
+		"custom":    "attribute",
+		"source":    "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
-	tcpClient.Write(bytes[:5])
-	tcpClient.Write(bytes[5:])
-	tcpClient.Close()
+	_, err = tcpClient.Write(bytes[:5])
+	require.NoError(t, err)
+	_, err = tcpClient.Write(bytes[5:])
+	require.NoError(t, err)
+	require.NoError(t, tcpClient.Close())
 
 	msg := <-ta.sendq
 	assert.Equal("event", msg.Type)
@@ -254,8 +277,8 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal("app_01", event.Check.Config.Name)
 
 	ta.Stop()
 }
@@ -296,6 +319,6 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 		assert.FailNow("Failed to read data from tcp socket")
 	}
 	assert.Equal("invalid", string(readData[:numBytes]))
-	tcpClient.Close()
+	require.NoError(t, tcpClient.Close())
 	ta.Stop()
 }

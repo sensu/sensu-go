@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -27,7 +28,7 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("interval", "sdfsa")
+	require.NoError(t, cmd.Flags().Set("interval", "sdfsa"))
 	out, err := test.RunCmd(cmd, []string{"echo 'heyhey'"})
 
 	assert.Empty(out)
@@ -42,11 +43,11 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("command", "echo 'heyhey'")
+	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
+	require.NoError(t, err)
 
 	assert.Regexp("OK", out)
-	assert.Nil(err)
 }
 
 func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
@@ -57,12 +58,12 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("command", "echo 'heyhey'")
-	cmd.Flags().Set("runtime-assets", "ruby22")
+	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
+	require.NoError(t, cmd.Flags().Set("runtime-assets", "ruby22"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
+	require.NoError(t, err)
 
 	assert.Regexp("OK", out)
-	assert.Nil(err)
 }
 
 func TestCreateCommandRunEClosureWithDepsSTDIN(t *testing.T) {
@@ -73,13 +74,13 @@ func TestCreateCommandRunEClosureWithDepsSTDIN(t *testing.T) {
 	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("command", "echo 'heyhey'")
-	cmd.Flags().Set("runtime-assets", "ruby22")
-	cmd.Flags().Set("stdin", "true")
+	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
+	require.NoError(t, cmd.Flags().Set("runtime-assets", "ruby22"))
+	require.NoError(t, cmd.Flags().Set("stdin", "true"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
+	require.NoError(t, err)
 
 	assert.Regexp("OK", out)
-	assert.Nil(err)
 }
 
 func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
@@ -90,10 +91,10 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("command", "echo 'heyhey'")
+	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
 	assert.Empty(out)
-	assert.NotNil(err)
+	assert.Error(err)
 	assert.Equal("whoops", err.Error())
 }

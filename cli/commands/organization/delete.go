@@ -1,6 +1,7 @@
 package organization
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -17,8 +18,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 1 {
-				cmd.Help()
-				return nil
+				_ = cmd.Help()
+				return errors.New("missing arguments")
 			}
 
 			org := args[0]
@@ -35,12 +36,12 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
+			return err
 		},
 	}
 
-	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+	_ = cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
 
 	return cmd
 }

@@ -22,8 +22,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				cmd.Help()
-				return fmt.Errorf("missing argument(s)")
+				_ = cmd.Help()
+				return nil
 			}
 
 			// Fetch event from API

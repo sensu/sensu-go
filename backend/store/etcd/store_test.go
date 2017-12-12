@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
@@ -37,7 +38,9 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	e, err := NewEtcd(cfg)
 	assert.NoError(t, err)
 	if e != nil {
-		defer e.Shutdown()
+		defer func() {
+			require.NoError(t, e.Shutdown())
+		}()
 	}
 
 	s, err := e.NewStore()
@@ -47,10 +50,10 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	}
 
 	// Mock a default organization
-	s.UpdateOrganization(context.Background(), types.FixtureOrganization("default"))
+	require.NoError(t, s.UpdateOrganization(context.Background(), types.FixtureOrganization("default")))
 
 	// Mock a default environment
-	s.UpdateEnvironment(context.Background(), types.FixtureEnvironment("default"))
+	require.NoError(t, s.UpdateEnvironment(context.Background(), types.FixtureEnvironment("default")))
 
 	f(s)
 }

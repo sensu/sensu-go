@@ -197,7 +197,7 @@ func (t *WebSocketTransport) Close() error {
 	defer func() {
 		// WriteMessage can annoyingly panic, because the websocket conn isn't safe
 		// for concurrent use. Recover here, and unlock the mutex.
-		recover()
+		_ = recover()
 		t.mutex.Unlock()
 	}()
 	t.closed = true
