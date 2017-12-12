@@ -8,6 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - End-to-end test for the silencing functionality
+- Silenced events are now identified in sensuctl
 
 ### Changed
 - Events that transitioned from incidents to a healthy state are no longer
