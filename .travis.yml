@@ -58,3 +58,5 @@ notifications:
     on_failure: always
     on_pull_requests: false
     secure: iXhhz0drjrH6Z2weDkyhCN0vEYiKNjA9J46U6HL8V3kp4Eo//Fk55DnBiL/uW896lTYynZNML5wa0IZ3yMuEP67p8LXIzFQI7li7R007uBiqdYGK1+cyid7KTMX6kNSG8H4DchCK56XjL4V8nPhlplXBB2MklBKrRUpXWtXQAulq6wj+rL7/fvx7rsky8yEqb+/GkkrKXDMgmSnR8qvyrI5n1PrYzx1Or2hv5efFIvzf8n7uWViC+V+DctvVkVsmRWsoWuTqHD91stifHTFbH7M3hEiOVzYsn7rHkpX3DLIlW2yEwyk1uRM51tAT/+JwELPeJqyCsABelW8/U6RLebjiUdPDjJ2ausizHpbeyPXohSij2/hFhQqIltLaqGF1B7tJ5Uth3OEhhaQHM8IaUywg5oN8si9K38W61rQcitcf6WCMENj6mDsZPttw/qMqg6pEl62VXhwslddyUomoo+tvFxpfNVG/Ttbdc432l4zDE/Xl7s/txpCirwHI82sVZRrcyc8kNYYaRX/sZP7gOBf93s45byy3wbeFUKK6yREPgKf0o1NZ51/AplWxaUnjjFON8G6t9cOwYvZeF21Nqry4fYAG1u8ugAG2ltpKJw3ViEzRElbcD7p5la14Ukvj4o/Sux4048hbXEZGLZr7kVIWQE95XcPfo+k3NDwmKeM=
+    template:
+    - "Build <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) of %{repository}@%{branch} in PR <%{pull_request_url}|#%{pull_request_number}> by %{author} %{result} in %{elapsed_time}"
