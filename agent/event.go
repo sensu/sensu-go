@@ -85,7 +85,9 @@ func translateToEvent(payload map[string]interface{}, event *types.Event) error 
 		// if the field does not exist in 2.x check or 2.x config structs,
 		// add the custom attribute to the config only
 		if !(existsInConfig || existsInCheck) {
-			dynamic.SetField(check.Config, mapKey, payload[mapKey])
+			if err := dynamic.SetField(check.Config, mapKey, payload[mapKey]); err != nil {
+				return fmt.Errorf("error translating custom attributes")
+			}
 		}
 	}
 

@@ -122,8 +122,15 @@ func TestHandleTCPMessages(t *testing.T) {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("foo", "check_cpu")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := map[string]interface{}{
+		"timestamp": 1513028652,
+		"name":      "app_01",
+		"output":    "could not connect to something",
+		"status":    1,
+		"custom":    "attribute",
+		"source":    "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
 	_, err = tcpClient.Write(bytes)
 	require.NoError(t, err)
@@ -140,8 +147,8 @@ func TestHandleTCPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal("app_01", event.Check.Config.Name)
 	ta.Stop()
 }
 
@@ -164,8 +171,15 @@ func TestHandleUDPMessages(t *testing.T) {
 		assert.FailNow("failed to create UDP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("bar", "check_mem")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := map[string]interface{}{
+		"timestamp": 1513028652,
+		"name":      "app_01",
+		"output":    "could not connect to something",
+		"status":    1,
+		"custom":    "attribute",
+		"source":    "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
 	_, err = udpClient.Write(bytes)
 	require.NoError(t, err)
@@ -182,8 +196,8 @@ func TestHandleUDPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal(1513028652, event.Timestamp)
+	assert.Equal("app_01", event.Check.Config.Name)
 	ta.Stop()
 }
 
