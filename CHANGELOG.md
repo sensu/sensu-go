@@ -8,6 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - End-to-end test for the silencing functionality
+- TCP/UDP sockets now accept 1.x backward compatible payloads
 
 ### Changed
 - Events that transitioned from incidents to a healthy state are no longer

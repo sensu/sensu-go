@@ -2,9 +2,13 @@ package agent
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 // prepareEvent accepts a partial or complete event and tries to add any missing
@@ -49,4 +53,47 @@ func prepareEvent(a *Agent, event *types.Event) error {
 
 	// The entity should pass validation at this point
 	return event.Entity.Validate()
+}
+
+// translateToEvent accepts a 1.x compatible payload
+// and attempts to translate it to a 2.x event
+func translateToEvent(payload map[string]interface{}, event *types.Event) error {
+	var checkConfig types.CheckConfig
+	var check types.Check
+
+	if payload == nil {
+		return fmt.Errorf("a payload must be provided")
+	}
+	// dump relevant payload values into 2.x event struct fields
+	if err := mapstructure.Decode(payload, &event); err != nil {
+		return fmt.Errorf("error translating event")
+	}
+	// dump relevant payload values into 2.x config struct fields
+	if err := mapstructure.Decode(payload, &checkConfig); err != nil {
+		return fmt.Errorf("error translating check config")
+	}
+	// dump relevant payload values into 2.x check struct fields
+	if err := mapstructure.Decode(payload, &check); err != nil {
+		return fmt.Errorf("error translating check")
+	}
+
+	// add config and check values to the 2.x event
+	check.Config = &checkConfig
+	event.Check = &check
+
+	configVal := reflect.Indirect(reflect.ValueOf(check.Config))
+	checkVal := reflect.Indirect(reflect.ValueOf(event.Check))
+	for mapKey := range payload {
+		_, existsInConfig := configVal.Type().FieldByName(strings.Title(mapKey))
+		_, existsInCheck := checkVal.Type().FieldByName(strings.Title(mapKey))
+		// if the field does not exist in 2.x check or 2.x config structs,
+		// add the custom attribute to the config only
+		if !(existsInConfig || existsInCheck) {
+			if err := dynamic.SetField(check.Config, mapKey, payload[mapKey]); err != nil {
+				return fmt.Errorf("error translating custom attributes")
+			}
+		}
+	}
+
+	return nil
 }
