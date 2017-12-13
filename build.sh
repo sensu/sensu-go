@@ -280,7 +280,10 @@ elif [ "$cmd" == "build_tools" ]; then
 elif [ "$cmd" == "coverage" ]; then
     # Only report code coverage on unit test for amd64
     if [ "$GOARCH" == "amd64" ] && [ "$TEST_SUITE" == "unit" ]; then
+        echo $GOARCH
         ./codecov.sh -t $CODECOV_TOKEN -cF go
+    else
+        echo "noop"
     fi
 elif [ "$cmd" == "dashboard" ]; then
     install_dashboard_deps
