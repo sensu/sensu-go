@@ -103,3 +103,31 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 
 	return silencedBy
 }
+
+func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store store.Store) error {
+	if !event.IsResolution() {
+		return nil
+	}
+
+	nonExpireOnResolveEntries := []string{}
+
+	for _, silencedID := range event.Silenced {
+		silencedEntry, err := store.GetSilencedEntryByID(ctx, silencedID)
+		if err != nil {
+			return err
+		}
+
+		if silencedEntry.ExpireOnResolve {
+			err := store.DeleteSilencedEntryByID(ctx, silencedID)
+			if err != nil {
+				return err
+			}
+		} else {
+			nonExpireOnResolveEntries = append(nonExpireOnResolveEntries, silencedID)
+		}
+	}
+
+	event.Silenced = nonExpireOnResolveEntries
+
+	return nil
+}
