@@ -3,6 +3,7 @@ clone_folder: c:\gopath\src\github.com\sensu\sensu-go
 branches:
   only:
     - master
+    - dep
 
 image:
   - Visual Studio 2015
@@ -14,7 +15,16 @@ environment:
 
   matrix:
     - GOARCH: 386
+      LINT_SUITE: yes
+      UNIT_SUITE: yes
+      BUILD_SUITE: yes
+      E2E_SUITE: yes
+
     - GOARCH: amd64
+      LINT_SUITE: yes
+      UNIT_SUITE: yes
+      BUILD_SUITE: yes
+      E2E_SUITE: yes
 
 install:
   - rmdir c:\go /s /q
@@ -25,9 +35,14 @@ install:
   - set PATH=%GOPATH%\bin\windows_386;%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
+  - ps: .\build.ps1 deps
+  - ps: .\build.ps1 build_tools
 
 platform:
   - x64
 
 build_script:
-  - ps: .\build.ps1
+  - ps: .\build.ps1 ci lint
+  - ps: .\build.ps1 ci unit
+  - ps: .\build.ps1 ci build
+  - ps: .\build.ps1 ci e2e

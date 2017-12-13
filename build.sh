@@ -51,19 +51,19 @@ install_golang_dep() {
 }
 
 cmd_name_map() {
-  local cmd=$1
+    local cmd=$1
 
-  case "$cmd" in
-    backend)
-      echo "sensu-backend"
-      ;;
-    agent)
-      echo "sensu-agent"
-      ;;
-    cli)
-      echo "sensuctl"
-      ;;
-  esac
+    case "$cmd" in
+        backend)
+            echo "sensu-backend"
+            ;;
+        agent)
+            echo "sensu-agent"
+            ;;
+        cli)
+            echo "sensuctl"
+            ;;
+    esac
 }
 
 build_tool_binary () {
@@ -168,8 +168,8 @@ unit_test_commands () {
     for pkg in $(go list ./... | egrep -v '(testing|vendor)'); do
         go test -timeout=60s -v $RACE -coverprofile=profile.out -covermode=atomic $pkg
         if [ $? -ne 0 ]; then
-          echo "Tests failed..."
-          exit 1
+            echo "Tests failed..."
+            exit 1
         fi
 
         if [ -f profile.out ]; then
@@ -185,7 +185,7 @@ e2e_commands () {
 }
 
 docker_commands () {
-  # make this one var (push or release - master or versioned)
+    # make this one var (push or release - master or versioned)
     local push=$1
     local release=$2
     local build_sha=$(git rev-parse HEAD)
@@ -216,8 +216,8 @@ docker_commands () {
     if [ "$push" == "push" ] && [ "$release" == "master" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         docker push sensuapp/sensu-go:master
-    # push versioned - tags and pushes with version pulled from
-    # version/prerelease/iteration files
+        # push versioned - tags and pushes with version pulled from
+        # version/prerelease/iteration files
     elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
@@ -232,36 +232,36 @@ docker_commands () {
 }
 
 check_for_presence_of_yarn() {
-  if hash yarn 2>/dev/null; then
-    echo "Yarn is installed, continuing."
-  else
-    echo "Please install yarn to build dashboard."
-    exit 1
-  fi
+    if hash yarn 2>/dev/null; then
+        echo "Yarn is installed, continuing."
+    else
+        echo "Please install yarn to build dashboard."
+        exit 1
+    fi
 }
 
 install_dashboard_deps() {
-  go get -u github.com/UnnoTed/fileb0x
-  check_for_presence_of_yarn
-  pushd "${DASHBOARD_PATH}"
-  yarn install
-  yarn precompile
-  popd
+    go get -u github.com/UnnoTed/fileb0x
+    check_for_presence_of_yarn
+    pushd "${DASHBOARD_PATH}"
+    yarn install
+    yarn precompile
+    popd
 }
 
 test_dashboard() {
-  pushd "${DASHBOARD_PATH}"
-  yarn lint
-  yarn test --coverage
-  popd
+    pushd "${DASHBOARD_PATH}"
+    yarn lint
+    yarn test --coverage
+    popd
 }
 
 build_dashboard() {
-  pushd "${DASHBOARD_PATH}"
-  yarn install
-  yarn precompile
-  yarn build
-  popd
+    pushd "${DASHBOARD_PATH}"
+    yarn install
+    yarn precompile
+    yarn build
+    popd
 }
 
 bundle_static_assets() {
@@ -284,27 +284,73 @@ elif [ "$cmd" == "e2e" ]; then
     build_commands
     e2e_commands "${@:2}"
 elif [ "$cmd" == "ci" ]; then
-  subcmd=${2:-"go"}
-  if [[ "$subcmd" == "dashboard" ]]; then
-    install_dashboard_deps
-    test_dashboard
-  elif [[ "$subcmd" == "none" ]]; then
-    echo "noop"
-  else
-    linter_commands
-    unit_test_commands
-    build_commands
-    e2e_commands
-  fi
+    subcmd=${2:-"go"}
+
+    if [[ "$subcmd" == "lint" ]]; then
+        # Run linter tests if LINT_SUITE=yes
+        if [[ "$LINT_SUITE" == "yes" ]]; then
+            linter_commands
+        else
+            echo "LINT_SUITE not set. Skipping..."
+        fi
+    fi
+
+    if [[ "$subcmd" == "unit" ]]; then
+        # Run unit tests if UNIT_SUITE=yes
+        if [[ "$UNIT_SUITE" == "yes" ]]; then
+            unit_test_commands
+        else
+            echo "UNIT_SUITE not set. Skipping..."
+        fi
+    fi
+
+    if [[ "$subcmd" == "build" ]]; then
+        # Run build commands if BUILD_SUITE=yes
+        if [[ "$BUILD_SUITE" == "yes" ]]; then
+            build_commands
+        else
+            echo "BUILD_SUITE not set. Skipping..."
+        fi
+    fi
+
+    if [[ "$subcmd" == "e2e" ]]; then
+        # Run e2e tests if E2E_SUITE=yes
+        if [[ "$E2E_SUITE" == "yes" ]]; then
+            e2e_commands
+        else
+            echo "E2E_SUITE not set. Skipping..."
+        fi
+    fi
+
+    if [[ "$subcmd" == "dashboard" ]]; then
+        # Run dashboard builds & tests if DASHBOARD_SUITE=yes
+        if [[ "$DASHBOARD_SUITE" == "yes" ]]; then
+            install_dashboard_deps
+            test_dashboard
+        else
+            echo "DASHBOARD_SUITE not set. Skipping..."
+        fi
+    fi
 elif [ "$cmd" == "coverage" ]; then
-  subcmd=${2:-"go"}
-  if [ "$subcmd" == "dashboard" ]; then
-    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
-  elif [ "$subcmd" == "none" ]; then
-    echo "noop"
-  else
-    ./codecov.sh -t $CODECOV_TOKEN -cF go
-  fi
+    subcmd=${2:-"go"}
+
+    if [[ "$subcmd" == "dashboard" ]]; then
+        # Run dashboard coverage if DASHBOARD_COVERAGE=yes
+        if [[ "$DASHBOARD_COVERAGE" == "yes" ]]; then
+            ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+        else
+            echo "DASHBOARD_COVERAGE not set. Skipping..."
+        fi
+    fi
+
+    if [[ "$subcmd" == "unit" ]]; then
+        # Run unit coverage if UNIT_COVERAGE=yes
+        if [[ "$UNIT_COVERAGE" == "yes" ]]; then
+            ./codecov.sh -t $CODECOV_TOKEN -cF go
+        else
+            echo "UNIT_COVERAGE not set. Skipping..."
+        fi
+    fi
 elif [ "$cmd" == "build" ]; then
     build_commands
 elif [ "$cmd" == "docker" ]; then

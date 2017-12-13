@@ -1,5 +1,6 @@
 param (
-    [string] $cmd = $null
+    [string] $cmd = $null,
+    [string] $sub_cmd = $null
 )
 
 $REPO_PATH = "github.com/sensu/sensu-go"
@@ -166,7 +167,7 @@ function linter_commands
     }
 }
 
-function test_commands
+function unit_test_commands
 {
     echo "Running tests..."
 
@@ -174,15 +175,15 @@ function test_commands
     echo "" > "coverage.txt"
     $packages = go list ./... | Select-String -pattern "testing", "vendor" -notMatch
     ForEach ($pkg in $packages) {
-    go test -timeout=60s -v -coverprofile="profile.out" -covermode=atomic $pkg
-    If ($LASTEXITCODE -ne 0) {
-        echo "Testing failed..."
-        exit 1
-    }
-    If (Test-Path "profile.out") {
-        cat "profile.out" >> "coverage.txt"
-        rm "profile.out"
-    }
+        go test -timeout=60s -v -coverprofile="profile.out" -covermode=atomic $pkg
+        If ($LASTEXITCODE -ne 0) {
+            echo "Testing failed..."
+            exit 1
+        }
+        If (Test-Path "profile.out") {
+            cat "profile.out" >> "coverage.txt"
+            rm "profile.out"
+        }
     }
 }
 
@@ -192,8 +193,8 @@ function e2e_commands
 
     go test -v $REPO_PATH/testing/e2e
     If ($LASTEXITCODE -ne 0) {
-    echo "e2e testing failed..."
-    exit 1
+        echo "e2e testing failed..."
+        exit 1
     }
 }
 
@@ -202,13 +203,13 @@ If ($cmd -eq "deps") {
 }
 ElseIf ($cmd -eq "quality") {
     linter_commands
-    test_commands
+    unit_test_commands
 }
 ElseIf ($cmd -eq "lint") {
     linter_commands
 }
 ElseIf ($cmd -eq "unit") {
-    test_commands
+    unit_test_commands
 }
 ElseIf ($cmd -eq "build_tools") {
     build_tools
@@ -231,11 +232,48 @@ ElseIf ($cmd -eq "build_backend") {
 ElseIf ($cmd -eq "build_cli") {
     build_command "cli"
 }
+ElseIf ($cmd -eq "ci") {
+    switch ($sub_cmd)
+    {
+        "lint" {
+            If ($env:LINT_SUITE -eq "yes") {
+                linter_commands
+            }
+            Else {
+                echo "LINT_SUITE not set. Skipping..."
+            }
+        }
+        "unit" {
+            If ($env:UNIT_SUITE -eq "yes") {
+                unit_test_commands
+            }
+            Else {
+                echo "UNIT_SUITE not set. Skipping..."
+            }
+        }
+        "build" {
+            If ($env:BUILD_SUITE -eq "yes") {
+                build_commands
+            }
+            Else {
+                echo "BUILD_SUITE not set. Skipping..."
+            }
+        }
+        "e2e" {
+            If ($env:E2E_SUITE -eq "yes") {
+                e2e_commands
+            }
+            Else {
+                echo "E2E_SUITE not set. Skipping..."
+            }
+        }
+    }
+}
 Else {
     install_deps
     linter_commands
     build_tools
-    test_commands
+    unit_test_commands
     build_commands
     e2e_commands
 }
