@@ -207,6 +207,7 @@ ElseIf ($cmd -eq "docker") {
     # no-op for now
 }
 ElseIf ($cmd -eq "e2e") {
+    build_commands
     e2e_commands
 }
 ElseIf ($cmd -eq "lint") {
