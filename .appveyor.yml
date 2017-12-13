@@ -13,8 +13,16 @@ environment:
   GOVERSION: 1.9
 
   matrix:
-    - GOARCH: 386
     - GOARCH: amd64
+      TEST_SUITE: lint
+    - GOARCH: 386
+      TEST_SUITE: unit
+    - GOARCH: amd64
+      TEST_SUITE: unit
+    - GOARCH: 386
+      TEST_SUITE: e2e
+    - GOARCH: amd64
+      TEST_SUITE: e2e
 
 install:
   - rmdir c:\go /s /q
@@ -30,4 +38,4 @@ platform:
   - x64
 
 build_script:
-  - ps: .\build.ps1
+  - ps: .\build.ps1 $(TEST_SUITE)

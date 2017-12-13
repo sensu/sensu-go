@@ -185,30 +185,8 @@ function e2e_commands
     }
 }
 
-If ($cmd -eq "deps") {
-    install_deps
-}
-ElseIf ($cmd -eq "quality") {
-    linter_commands
-    test_commands
-}
-ElseIf ($cmd -eq "lint") {
-    linter_commands
-}
-ElseIf ($cmd -eq "unit") {
-    test_commands
-}
-ElseIf ($cmd -eq "build_tools") {
-    build_tools
-}
-ElseIf ($cmd -eq "e2e") {
-    e2e_commands
-}
-ElseIf ($cmd -eq "build") {
+If ($cmd -eq "build") {
     build_commands
-}
-ElseIf ($cmd -eq "docker") {
-    # no-op for now
 }
 ElseIf ($cmd -eq "build_agent") {
     build_command "agent"
@@ -218,6 +196,28 @@ ElseIf ($cmd -eq "build_backend") {
 }
 ElseIf ($cmd -eq "build_cli") {
     build_command "cli"
+}
+ElseIf ($cmd -eq "build_tools") {
+    build_tools
+}
+ElseIf ($cmd -eq "deps") {
+    install_deps
+}
+ElseIf ($cmd -eq "docker") {
+    # no-op for now
+}
+ElseIf ($cmd -eq "e2e") {
+    e2e_commands
+}
+ElseIf ($cmd -eq "lint") {
+    linter_commands
+}
+ElseIf ($cmd -eq "quality") {
+    linter_commands
+    test_commands
+}
+ElseIf ($cmd -eq "unit") {
+    test_commands
 }
 Else {
     install_deps
