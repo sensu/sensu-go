@@ -36,4 +36,4 @@ platform:
   - x64
 
 build_script:
-  - ps: .\build.ps1 %TEST_SUITE%
+  - ps: .\build.ps1 $env:TEST_SUITE
