@@ -14,7 +14,13 @@ environment:
 
   matrix:
     - GOARCH: 386
+      TEST_SUITE: unit
     - GOARCH: amd64
+      TEST_SUITE: unit
+    - GOARCH: 386
+      TEST_SUITE: e2e
+    - GOARCH: amd64
+      TEST_SUITE: e2e
 
 install:
   - rmdir c:\go /s /q
@@ -25,9 +31,11 @@ install:
   - set PATH=%GOPATH%\bin\windows_386;%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
+  - ps: .\build.ps1 deps
+  - ps: .\build.ps1 build_tools
 
 platform:
   - x64
 
 build_script:
-  - ps: .\build.ps1
+  - ps: .\build.ps1 $env:TEST_SUITE

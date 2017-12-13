@@ -5,7 +5,7 @@ param (
 $REPO_PATH = "github.com/sensu/sensu-go"
 
 # source in the environment variables from `go env`
-  $env_commands = go env
+$env_commands = go env
 ForEach ($env_cmd in $env_commands) {
     $env_str = $env_cmd -replace "set " -replace ""
     $env = $env_str.Split("=")
@@ -164,25 +164,23 @@ function linter_commands
         echo "Linting failed..."
         exit 1
     }
+
+    errcheck $(go list ./... | Select-String -pattern "dashboardd", "cli/commands/importer", "agent/assetmanager" -notMatch)
+    If ($LASTEXITCODE -ne 0) {
+        echo "Linting failed..."
+        exit 1
+    }
 }
 
 function test_commands
 {
     echo "Running tests..."
 
-    $failed = 0
-    echo "" > "coverage.txt"
-    $packages = go list ./... | Select-String -pattern "testing", "vendor" -notMatch
-    ForEach ($pkg in $packages) {
-    go test -timeout=60s -v -coverprofile="profile.out" -covermode=atomic $pkg
+
+    go test -timeout=60s -v $(go list ./... | Select-String -pattern "testing", "vendor" -notMatch)
     If ($LASTEXITCODE -ne 0) {
         echo "Testing failed..."
         exit 1
-    }
-    If (Test-Path "profile.out") {
-        cat "profile.out" >> "coverage.txt"
-        rm "profile.out"
-    }
     }
 }
 
@@ -192,35 +190,13 @@ function e2e_commands
 
     go test -v $REPO_PATH/testing/e2e
     If ($LASTEXITCODE -ne 0) {
-    echo "e2e testing failed..."
-    exit 1
+        echo "e2e testing failed..."
+        exit 1
     }
 }
 
-If ($cmd -eq "deps") {
-    install_deps
-}
-ElseIf ($cmd -eq "quality") {
-    linter_commands
-    test_commands
-}
-ElseIf ($cmd -eq "lint") {
-    linter_commands
-}
-ElseIf ($cmd -eq "unit") {
-    test_commands
-}
-ElseIf ($cmd -eq "build_tools") {
-    build_tools
-}
-ElseIf ($cmd -eq "e2e") {
-    e2e_commands
-}
-ElseIf ($cmd -eq "build") {
+If ($cmd -eq "build") {
     build_commands
-}
-ElseIf ($cmd -eq "docker") {
-    # no-op for now
 }
 ElseIf ($cmd -eq "build_agent") {
     build_command "agent"
@@ -230,6 +206,29 @@ ElseIf ($cmd -eq "build_backend") {
 }
 ElseIf ($cmd -eq "build_cli") {
     build_command "cli"
+}
+ElseIf ($cmd -eq "build_tools") {
+    build_tools
+}
+ElseIf ($cmd -eq "deps") {
+    install_deps
+}
+ElseIf ($cmd -eq "docker") {
+    # no-op for now
+}
+ElseIf ($cmd -eq "e2e") {
+    build_commands
+    e2e_commands
+}
+ElseIf ($cmd -eq "lint") {
+    linter_commands
+}
+ElseIf ($cmd -eq "quality") {
+    linter_commands
+    test_commands
+}
+ElseIf ($cmd -eq "unit") {
+    test_commands
 }
 Else {
     install_deps
