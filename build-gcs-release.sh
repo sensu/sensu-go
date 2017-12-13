@@ -3,6 +3,8 @@
 # Build release for multiple platforms & archs and upload to GCS. Likely
 # temporary until we can use Github releases when repo is public.
 
+set -e
+
 # GCS bucket where we'll deploy builds
 BUCKET="sensu-binaries"
 CMD=${1:-"all"}
@@ -30,7 +32,7 @@ checkout_release () {
 }
 
 clean_target_dir() {
-  rm -r ./target/*
+  rm -rf ./target/*
 }
 
 build_supported_binaries() {
