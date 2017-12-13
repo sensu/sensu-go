@@ -278,7 +278,10 @@ elif [ "$cmd" == "build_dashboard" ]; then
 elif [ "$cmd" == "build_tools" ]; then
 	build_tools
 elif [ "$cmd" == "coverage" ]; then
-    ./codecov.sh -t $CODECOV_TOKEN -cF go
+    # Only report code coverage on unit test for amd64
+    if [ "$GOARCH" == "amd64" ] && [ "$TEST_SUITE" == "unit" ]; then
+        ./codecov.sh -t $CODECOV_TOKEN -cF go
+    fi
 elif [ "$cmd" == "dashboard" ]; then
     install_dashboard_deps
     test_dashboard
