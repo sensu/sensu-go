@@ -16,6 +16,9 @@ cache:
   yarn: true
   directories:
   - backend/dashboardd/node_modules
+  - vendor
+  - $GOPATH/src
+  - $GOPATH/pkg
 install:
 - "./build.sh deps"
 - "./build.sh build_tools"
