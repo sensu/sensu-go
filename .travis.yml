@@ -20,7 +20,6 @@ install:
 - "./build.sh deps"
 - "./build.sh build_tools"
 script: "./build.sh $TEST_SUITE"
-after_script: "./build.sh coverage"
 jobs:
   include:
   - stage: deploy

@@ -161,19 +161,11 @@ linter_commands () {
 unit_test_commands () {
 	echo "Running tests..."
 
-	echo "" > coverage.txt
-	for pkg in $(go list ./... | egrep -v '(testing|vendor)'); do
-		go test -timeout=60s -v $RACE -coverprofile=profile.out -covermode=atomic $pkg
-		if [ $? -ne 0 ]; then
-		  echo "Tests failed..."
-		  exit 1
-		fi
-
-		if [ -f profile.out ]; then
-			cat profile.out >> coverage.txt
-			rm profile.out
-		fi
-	done
+    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
+    if [ $? -ne 0 ]; then
+      echo "Tests failed..."
+      exit 1
+    fi
 }
 
 e2e_commands () {
@@ -283,14 +275,6 @@ elif [ "$cmd" == "build_dashboard" ]; then
 	bundle_static_assets
 elif [ "$cmd" == "build_tools" ]; then
 	build_tools
-elif [ "$cmd" == "coverage" ]; then
-    # Only report code coverage on unit test for amd64
-    if [ "$GOARCH" == "amd64" ] && [ "$TEST_SUITE" == "unit" ]; then
-        echo $GOARCH
-        ./codecov.sh -t $CODECOV_TOKEN -cF go
-    else
-        echo "noop"
-    fi
 elif [ "$cmd" == "dashboard" ]; then
     install_dashboard_deps
     test_dashboard
