@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Avoid using reflection in time.InWindows function.
+- Use multiple parallel jobs in CI tools to speed up the tests
 
 ## [2.0.0-alpha.10] - 2017-12-12
 ### Added
