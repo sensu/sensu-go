@@ -24,6 +24,9 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			}
 		}
 
+		if a.config.ExtendedAttributes != "" {
+			e.SetExtendedAttributes([]byte(a.config.ExtendedAttributes))
+		}
 		s, err := system.Info()
 		if err == nil {
 			e.System = s
