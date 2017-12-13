@@ -231,6 +231,10 @@ check_for_presence_of_yarn() {
   fi
 }
 
+install_yarn() {
+  npm install --global yarn
+}
+
 install_dashboard_deps() {
   go get -u github.com/UnnoTed/fileb0x
   check_for_presence_of_yarn
@@ -259,47 +263,8 @@ bundle_static_assets() {
 	fileb0x ./.b0x.yaml
 }
 
-if [ "$cmd" == "deps" ]; then
-	install_deps
-elif [ "$cmd" == "quality" ]; then
-	linter_commands
-	unit_test_commands
-elif [ "$cmd" == "lint" ]; then
-	linter_commands
-elif [ "$cmd" == "unit" ]; then
-	unit_test_commands
-elif [ "$cmd" == "build_tools" ]; then
-	build_tools
-elif [ "$cmd" == "e2e" ]; then
-	# Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
+if [ "$cmd" == "build" ]; then
 	build_commands
-	e2e_commands "${@:2}"
-elif [ "$cmd" == "ci" ]; then
-  subcmd=${2:-"go"}
-  if [[ "$subcmd" == "dashboard" ]]; then
-    install_dashboard_deps
-    test_dashboard
-  elif [[ "$subcmd" == "none" ]]; then
-    echo "noop"
-  else
-    linter_commands
-    unit_test_commands
-    build_commands
-    e2e_commands
-  fi
-elif [ "$cmd" == "coverage" ]; then
-  subcmd=${2:-"go"}
-  if [ "$subcmd" == "dashboard" ]; then
-    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
-  elif [ "$subcmd" == "none" ]; then
-    echo "noop"
-  else
-    ./codecov.sh -t $CODECOV_TOKEN -cF go
-  fi
-elif [ "$cmd" == "build" ]; then
-	build_commands
-elif [ "$cmd" == "docker" ]; then
-	docker_commands "${@:2}"
 elif [ "$cmd" == "build_agent" ]; then
 	build_command agent
 elif [ "$cmd" == "build_backend" ]; then
@@ -310,6 +275,35 @@ elif [ "$cmd" == "build_dashboard" ]; then
 	install_dashboard_deps
 	build_dashboard
 	bundle_static_assets
+elif [ "$cmd" == "build_tools" ]; then
+	build_tools
+elif [ "$cmd" == "coverage" ]; then
+    ./codecov.sh -t $CODECOV_TOKEN -cF go
+elif [ "$cmd" == "dashboard" ]; then
+    install_dashboard_deps
+    test_dashboard
+elif [ "$cmd" == "dashboard-ci" ]; then
+    install_yarn
+    install_dashboard_deps
+    test_dashboard
+    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+elif [ "$cmd" == "deps" ]; then
+	install_deps
+elif [ "$cmd" == "docker" ]; then
+	docker_commands "${@:2}"
+elif [ "$cmd" == "e2e" ]; then
+    # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
+    build_commands
+    e2e_commands "${@:2}"
+elif [ "$cmd" == "lint" ]; then
+	linter_commands
+elif [ "$cmd" == "none" ]; then
+	echo "noop"
+elif [ "$cmd" == "quality" ]; then
+	linter_commands
+	unit_test_commands
+elif [ "$cmd" == "unit" ]; then
+	unit_test_commands
 else
 	install_deps
 	linter_commands
