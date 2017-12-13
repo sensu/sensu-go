@@ -37,6 +37,12 @@ func (e *Event) Validate() error {
 		return errors.New("check " + err.Error())
 	}
 
+	for _, hook := range e.Hooks {
+		if err := hook.Validate(); err != nil {
+			return errors.New("hook " + err.Error())
+		}
+	}
+
 	return nil
 }
 

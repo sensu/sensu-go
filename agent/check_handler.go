@@ -10,7 +10,11 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
+
+// tracks the check names that are still executing
+var inProgress []string
 
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(payload []byte) error {
@@ -21,15 +25,21 @@ func (a *Agent) handleCheck(payload []byte) error {
 		return errors.New("given check configuration appears invalid")
 	}
 
-	logger.Info("scheduling check execution: ", request.Config.Name)
-	go a.executeCheck(request)
+	// only schedule check execution if its not already in progress
+	// ** check hooks are part of a checks execution
+	if !utilstrings.InArray(request.Config.Name, inProgress) {
+		logger.Info("scheduling check execution: ", request.Config.Name)
+		go a.executeCheck(request)
+	}
 
 	return nil
 }
 
 func (a *Agent) executeCheck(request *types.CheckRequest) {
+	inProgress = append(inProgress, request.Config.Name)
 	checkConfig := request.Config
 	checkAssets := request.Assets
+	checkHooks := request.Hooks
 
 	// Instantiate Event
 	event := &types.Event{
@@ -84,6 +94,10 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
 
+	if len(checkHooks) != 0 {
+		event.Hooks = a.ExecuteHooks(request, ex.Status)
+	}
+
 	msg, err := json.Marshal(event)
 	if err != nil {
 		logger.Error("error marshaling check result: ", err.Error())
@@ -91,6 +105,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	}
 
 	a.sendMessage(transport.MessageTypeEvent, msg)
+	inProgress = utilstrings.Remove(checkConfig.Name, inProgress)
 }
 
 func (a *Agent) sendFailure(event *types.Event, err error) {
