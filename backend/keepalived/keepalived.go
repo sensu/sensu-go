@@ -196,6 +196,11 @@ func (k *Keepalived) processKeepalives() {
 		}
 
 		entity := event.Entity
+		if entity == nil {
+			logger.Error("received keepalive with nil entity")
+			continue
+		}
+
 		if err := entity.Validate(); err != nil {
 			logger.WithError(err).Error("invalid keepalive event")
 			continue

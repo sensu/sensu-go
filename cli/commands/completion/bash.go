@@ -1,6 +1,8 @@
 package completion
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 const (
 	bashUsage = `

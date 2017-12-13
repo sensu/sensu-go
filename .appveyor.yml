@@ -28,7 +28,7 @@ install:
   - msiexec /i go%GOVERSION%.windows-amd64.msi /q
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - set PATH=%GOPATH%\bin\windows_386;%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
   - ps: .\build.ps1 deps

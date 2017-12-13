@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [2.0.0-alpha.10] - 2017-12-12
 ### Added
 - End-to-end test for the silencing functionality
 - Silenced events are now identified in sensuctl
@@ -24,6 +26,8 @@ to clean up existing errcheck lint.
 - Keepalives now alert when entities go away!
 - Fixed a bug in package dynamic that could lead to an error in json.Marshal
 in certain cases.
+- Fixed an issue in keepalived to handle cases of nil entities in keepalive
+  messages
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added
