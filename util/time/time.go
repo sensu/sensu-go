@@ -1,7 +1,6 @@
 package time
 
 import (
-	"reflect"
 	"strings"
 	"time"
 
@@ -68,44 +67,36 @@ func InWindow(current time.Time, begin, end string) (bool, error) {
 // windows. Current should typically be time.Now() but to allow easier tests, it
 // must be provided as a parameter. The function returns a positive value as
 // soon the current time falls within a time window
-func InWindows(current time.Time, windows types.TimeWindowWhen) (bool, error) {
-	days := reflect.ValueOf(&windows.Days).Elem()
+func InWindows(current time.Time, timeWindow types.TimeWindowWhen) (bool, error) {
+	days := timeWindow.Days
+	windowsByDay := map[string][]*types.TimeWindowTimeRange{
+		"Sunday":    days.Sunday,
+		"Monday":    days.Monday,
+		"Tuesday":   days.Tuesday,
+		"Wednesday": days.Wednesday,
+		"Thursday":  days.Thursday,
+		"Friday":    days.Friday,
+		"Saturday":  days.Saturday,
+	}
 
-	// Iterate over the fields, which represent days, of the types.TimeWindowDays
-	// struct
-	for i := 0; i < days.NumField(); i++ {
-		// Verify that the weekday of the provided current time matches the weekday
-		// of this time window
-		if days.Type().Field(i).Name != "All" && days.Type().Field(i).Name != current.Weekday().String() {
-			// Ignore this day and continue with the next one
-			continue
+	var windows []*types.TimeWindowTimeRange
+	windows = append(windows, days.All...)
+	windows = append(windows, windowsByDay[current.Weekday().String()]...)
+
+	// Go through the set of matching windows and process all the individual
+	// time windows. If the current time is within a time window in the selection,
+	// then the loop returns early with true and nil error.
+	for _, window := range windows {
+		// Determine if the current time falls between this specific time window
+		isInWindow, err := InWindow(current, window.Begin, window.End)
+		if err != nil {
+			return false, err
 		}
 
-		// Make sure the field, representing a day, is a slice, which is should be
-		// of type []*types.TimeWindowTimeRange
-		if days.Field(i).Kind() == reflect.Slice {
-			// Cast the provided field (day) to an interface so we can iterate over it
-			// again
-			day := reflect.ValueOf(days.Field(i).Interface())
-
-			// Iterate over each time window within the specified day
-			for y := 0; y < day.Len(); y++ {
-				// Retrieve the begin and end values of the time window
-				begin := day.Index(y).Elem().FieldByName("Begin").String()
-				end := day.Index(y).Elem().FieldByName("End").String()
-
-				// Determine if the current time falls between this specific time window
-				isInWindow, err := InWindow(current, begin, end)
-				if err != nil {
-					return false, err
-				}
-
-				// Immediately return with a positive value if this time window conditions are
-				// met
-				if isInWindow {
-					return true, nil
-				}
-			}
+		// Immediately return with a positive value if this time window conditions are
+		// met
+		if isInWindow {
+			return true, nil
 		}
 	}
 
