@@ -4,6 +4,12 @@ branches:
   only:
     - master
 
+cache:
+  - backend\dashboardd\node_modules
+  - vendor
+  - '%GOPATH%\src'
+  - '%GOPATH%\pkg'
+
 image:
   - Visual Studio 2015
   - Visual Studio 2017
