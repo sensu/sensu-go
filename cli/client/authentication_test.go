@@ -5,11 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-resty/resty"
 	config "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-
-	resty "gopkg.in/resty.v0"
 )
 
 func TestCreateAccessToken(t *testing.T) {

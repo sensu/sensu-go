@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 
-	"github.com/Knetic/govaluate"
+	"github.com/sensu/govaluate"
 )
 
 func evaluateEventFilterStatement(event *types.Event, statement string) bool {
