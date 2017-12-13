@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Made some slight quality-of-life adjustments to build.sh and
+build-gcs-release.sh.
+
 ## [2.0.0-alpha.10] - 2017-12-12
 ### Added
 - End-to-end test for the silencing functionality
