@@ -35,6 +35,8 @@ install:
   - set PATH=%GOPATH%\bin\windows_386;%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
+  - ps: .\build.ps1 deps
+  - ps: .\build.ps1 build_tools
 
 platform:
   - x64
