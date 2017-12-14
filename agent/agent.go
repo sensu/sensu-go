@@ -72,7 +72,7 @@ type Config struct {
 	Socket *SocketConfig
 	// ExtendedAttributes contains any custom attributes passed to the agent on
 	// start
-	ExtendedAttributes string
+	ExtendedAttributes []byte
 }
 
 // SocketConfig contains the Socket configuration

@@ -111,7 +111,7 @@ func newStartCommand() *cobra.Command {
 			cfg.API.Port = viper.GetInt(flagAPIPort)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
 			cfg.Socket.Port = viper.GetInt(flagSocketPort)
-			cfg.ExtendedAttributes = viper.GetString(flagExtendedAttributes)
+			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {

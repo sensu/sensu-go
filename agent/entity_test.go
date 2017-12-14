@@ -38,7 +38,7 @@ func TestGetAgentEntity(t *testing.T) {
 			agent: &Agent{
 				config: &Config{
 					AgentID:            "baz",
-					ExtendedAttributes: `{"foo":"bar"}`,
+					ExtendedAttributes: []byte(`{"foo":"bar"}`),
 				},
 			},
 			expectedAgentID:    "baz",
