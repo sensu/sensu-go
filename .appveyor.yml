@@ -21,16 +21,16 @@ environment:
   matrix:
     - GOARCH: 386
       TEST_SUITE: unit
-      GOGC: 2000
+      GOGC: off
     - GOARCH: amd64
       TEST_SUITE: unit
-      GOGC: 2000
+      GOGC: off
     - GOARCH: 386
       TEST_SUITE: e2e
-      GOGC: 2000
+      GOGC: off
     - GOARCH: amd64
       TEST_SUITE: e2e
-      GOGC: 2000
+      GOGC: off
 
 install:
   - rmdir c:\go /s /q
