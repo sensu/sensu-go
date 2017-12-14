@@ -1,0 +1,55 @@
+package generator
+
+import (
+	"errors"
+	"io/ioutil"
+
+	"github.com/jamesdphillips/graphql/language/ast"
+	"github.com/jamesdphillips/graphql/language/parser"
+)
+
+// GraphQLFile encapsulates parsed document and filepath.
+type GraphQLFile struct {
+	path string
+	ast  *ast.Document
+}
+
+// ParseFile parses given path to GraphQL file returning parsed AST and error if
+// any occurred while parsing.
+func ParseFile(path string) (*GraphQLFile, error) {
+	bin, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	params := parser.ParseParams{Source: string(bin)}
+	ast, err := parser.Parse(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GraphQLFile{
+		path: path,
+		ast:  ast,
+	}, nil
+}
+
+// Definitions returns all definition nodes found in document root.
+func (file *GraphQLFile) Definitions() []ast.Node {
+	return file.ast.Definitions
+}
+
+// Validate returns an error if given file does not appear to be GraphQL Schema
+// Definition Language (SDL).
+func (file *GraphQLFile) Validate() error {
+	defs := file.Definitions()
+	for _, def := range defs { // TODO: Check more than top level?
+		switch def.(type) {
+		case *ast.OperationDefinition:
+			return errors.New("file should not define any operations")
+		case *ast.FragmentDefinition:
+			return errors.New("file should not define any fragments")
+		}
+	}
+	return nil
+}
