@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Silenced entries with ExpireOnResolve set to true will now be deleted when an
+event which has previously failing was resolved
+
 ### Changed
 - Avoid using reflection in time.InWindows function.
 - Use multiple parallel jobs in CI tools to speed up the tests
@@ -34,12 +38,12 @@ to clean up existing errcheck lint.
 ### Fixed
 - Entities can now be silenced using their entity subscription
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
-  settings on start
+settings on start
 - Keepalives now alert when entities go away!
 - Fixed a bug in package dynamic that could lead to an error in json.Marshal
 in certain cases.
 - Fixed an issue in keepalived to handle cases of nil entities in keepalive
-  messages
+messages
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added

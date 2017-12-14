@@ -142,3 +142,78 @@ func TestSilencedBy(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleExpireOnResolveEntries(t *testing.T) {
+	expireOnResolve := func(s *types.Silenced) *types.Silenced {
+		s.ExpireOnResolve = true
+		return s
+	}
+
+	resolution := func(e *types.Event) *types.Event {
+		e.Check.History = []types.CheckHistory{
+			types.CheckHistory{Status: 1},
+		}
+		e.Check.Status = 0
+		return e
+	}
+
+	testCases := []struct {
+		name                    string
+		event                   *types.Event
+		silencedEntry           *types.Silenced
+		expectedSilencedEntries []string
+	}{
+		{
+			name:                    "Non-resolution Non-expire-on-resolve Event",
+			event:                   types.FixtureEvent("entity1", "check1"),
+			silencedEntry:           types.FixtureSilenced("sub1:check1"),
+			expectedSilencedEntries: []string{"sub1:check1"},
+		},
+		{
+			name:                    "Non-Resolution Expire-on-resolve Event",
+			event:                   types.FixtureEvent("entity1", "check1"),
+			silencedEntry:           expireOnResolve(types.FixtureSilenced("sub1:check1")),
+			expectedSilencedEntries: []string{"sub1:check1"},
+		},
+		{
+			name:                    "Resolution Non-expire-on-resolve Event",
+			event:                   resolution(types.FixtureEvent("entity1", "check1")),
+			silencedEntry:           types.FixtureSilenced("sub1:check1"),
+			expectedSilencedEntries: []string{"sub1:check1"},
+		},
+		{
+			name:                    "Resolution Expire-on-resolve Event",
+			event:                   resolution(types.FixtureEvent("entity1", "check1")),
+			silencedEntry:           expireOnResolve(types.FixtureSilenced("sub1:check1")),
+			expectedSilencedEntries: []string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
+			ctx = context.WithValue(ctx, types.EnvironmentKey, "default")
+
+			mockStore := &mockstore.MockStore{}
+
+			mockStore.On(
+				"GetSilencedEntryByID",
+				mock.Anything,
+				mock.Anything,
+			).Return(tc.silencedEntry, nil)
+
+			mockStore.On(
+				"DeleteSilencedEntryByID",
+				mock.Anything,
+				mock.Anything,
+			).Return(nil)
+
+			tc.event.Silenced = []string{tc.silencedEntry.ID}
+
+			err := handleExpireOnResolveEntries(ctx, tc.event, mockStore)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedSilencedEntries, tc.event.Silenced)
+		})
+	}
+}
