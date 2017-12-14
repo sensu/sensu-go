@@ -10,9 +10,20 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
 windows.
+- Silenced entries with ExpireOnResolve set to true will now be deleted when an
+event which has previously failing was resolved
 
 ### Changed
 - Avoid using reflection in time.InWindows function.
+- Use multiple parallel jobs in CI tools to speed up the tests
+- Pulled in latest [github.com/coreos/etcd](https://github.com/coreos/etcd).
+  - Includes fix for panic that occurred on shutdown.
+  - Refer to their
+    [changelog](https://github.com/gyuho/etcd/blob/f444abaae344e562fc69323c75e1cf772c436543/CHANGELOG.md)
+    for more.
+- Switch to using [github.com/golang/dep](https://github.com/golang/dep) for
+  managing dependencies; `vendor/` directory has been removed.
+  - See [README](README.md) for usage.
 
 ## [2.0.0-alpha.10] - 2017-12-12
 ### Added
@@ -29,12 +40,12 @@ to clean up existing errcheck lint.
 ### Fixed
 - Entities can now be silenced using their entity subscription
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
-  settings on start
+settings on start
 - Keepalives now alert when entities go away!
 - Fixed a bug in package dynamic that could lead to an error in json.Marshal
 in certain cases.
 - Fixed an issue in keepalived to handle cases of nil entities in keepalive
-  messages
+messages
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added

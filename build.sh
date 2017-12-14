@@ -19,17 +19,17 @@ set_race_flag() {
 
 case "$GOOS" in
     darwin)
-        set_race_flag
-        ;;
+    set_race_flag
+    ;;
     freebsd)
-        set_race_flag
-        ;;
+    set_race_flag
+    ;;
     linux)
-        set_race_flag
-        ;;
+    set_race_flag
+    ;;
     windows)
-        set_race_flag
-        ;;
+    set_race_flag
+    ;;
 esac
 
 install_deps () {
@@ -51,19 +51,19 @@ install_golang_dep() {
 }
 
 cmd_name_map() {
-  local cmd=$1
+    local cmd=$1
 
-  case "$cmd" in
-    backend)
-      echo "sensu-backend"
-      ;;
-    agent)
-      echo "sensu-agent"
-      ;;
-    cli)
-      echo "sensuctl"
-      ;;
-  esac
+    case "$cmd" in
+        backend)
+        echo "sensu-backend"
+        ;;
+        agent)
+        echo "sensu-agent"
+        ;;
+        cli)
+        echo "sensuctl"
+        ;;
+    esac
 }
 
 build_tool_binary () {
@@ -154,7 +154,13 @@ build_command () {
 linter_commands () {
     echo "Running linter..."
 
-    gometalinter.v1 --vendor --disable-all --enable=vet --enable=golint --enable=ineffassign --enable=goconst --enable=errcheck --skip=dashboardd --skip=importer -j 1 --deadline 1h --tests ./...
+    gometalinter.v1 --vendor --disable-all --enable=vet --enable=golint --enable=ineffassign --enable=goconst --tests ./...
+    if [ $? -ne 0 ]; then
+        echo "Linting failed..."
+        exit 1
+    fi
+
+    errcheck $(go list ./... | grep -v dashboardd | grep -v cli/commands/importer | grep -v agent/assetmanager)
     if [ $? -ne 0 ]; then
         echo "Linting failed..."
         exit 1
@@ -164,19 +170,11 @@ linter_commands () {
 unit_test_commands () {
     echo "Running tests..."
 
-    echo "" > coverage.txt
-    for pkg in $(go list ./... | egrep -v '(testing|vendor)'); do
-        go test -timeout=60s -v $RACE -coverprofile=profile.out -covermode=atomic $pkg
-        if [ $? -ne 0 ]; then
-          echo "Tests failed..."
-          exit 1
-        fi
-
-        if [ -f profile.out ]; then
-            cat profile.out >> coverage.txt
-            rm profile.out
-        fi
-    done
+    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
+    if [ $? -ne 0 ]; then
+        echo "Tests failed..."
+        exit 1
+    fi
 }
 
 e2e_commands () {
@@ -185,7 +183,7 @@ e2e_commands () {
 }
 
 docker_commands () {
-  # make this one var (push or release - master or versioned)
+    # make this one var (push or release - master or versioned)
     local push=$1
     local release=$2
     local build_sha=$(git rev-parse HEAD)
@@ -216,8 +214,8 @@ docker_commands () {
     if [ "$push" == "push" ] && [ "$release" == "master" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         docker push sensuapp/sensu-go:master
-    # push versioned - tags and pushes with version pulled from
-    # version/prerelease/iteration files
+        # push versioned - tags and pushes with version pulled from
+        # version/prerelease/iteration files
     elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
@@ -232,83 +230,48 @@ docker_commands () {
 }
 
 check_for_presence_of_yarn() {
-  if hash yarn 2>/dev/null; then
-    echo "Yarn is installed, continuing."
-  else
-    echo "Please install yarn to build dashboard."
-    exit 1
-  fi
+    if hash yarn 2>/dev/null; then
+        echo "Yarn is installed, continuing."
+    else
+        echo "Please install yarn to build dashboard."
+        exit 1
+    fi
+}
+
+install_yarn() {
+    npm install --global yarn
 }
 
 install_dashboard_deps() {
-  go get -u github.com/UnnoTed/fileb0x
-  check_for_presence_of_yarn
-  pushd "${DASHBOARD_PATH}"
-  yarn install
-  yarn precompile
-  popd
+    go get -u github.com/UnnoTed/fileb0x
+    check_for_presence_of_yarn
+    pushd "${DASHBOARD_PATH}"
+    yarn install
+    yarn precompile
+    popd
 }
 
 test_dashboard() {
-  pushd "${DASHBOARD_PATH}"
-  yarn lint
-  yarn test --coverage
-  popd
+    pushd "${DASHBOARD_PATH}"
+    yarn lint
+    yarn test --coverage
+    popd
 }
 
 build_dashboard() {
-  pushd "${DASHBOARD_PATH}"
-  yarn install
-  yarn precompile
-  yarn build
-  popd
+    pushd "${DASHBOARD_PATH}"
+    yarn install
+    yarn precompile
+    yarn build
+    popd
 }
 
 bundle_static_assets() {
     fileb0x ./.b0x.yaml
 }
 
-if [ "$cmd" == "deps" ]; then
-    install_deps
-elif [ "$cmd" == "quality" ]; then
-    linter_commands
-    unit_test_commands
-elif [ "$cmd" == "lint" ]; then
-    linter_commands
-elif [ "$cmd" == "unit" ]; then
-    unit_test_commands
-elif [ "$cmd" == "build_tools" ]; then
-    build_tools
-elif [ "$cmd" == "e2e" ]; then
-    # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
+if [ "$cmd" == "build" ]; then
     build_commands
-    e2e_commands "${@:2}"
-elif [ "$cmd" == "ci" ]; then
-  subcmd=${2:-"go"}
-  if [[ "$subcmd" == "dashboard" ]]; then
-    install_dashboard_deps
-    test_dashboard
-  elif [[ "$subcmd" == "none" ]]; then
-    echo "noop"
-  else
-    linter_commands
-    unit_test_commands
-    build_commands
-    e2e_commands
-  fi
-elif [ "$cmd" == "coverage" ]; then
-  subcmd=${2:-"go"}
-  if [ "$subcmd" == "dashboard" ]; then
-    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
-  elif [ "$subcmd" == "none" ]; then
-    echo "noop"
-  else
-    ./codecov.sh -t $CODECOV_TOKEN -cF go
-  fi
-elif [ "$cmd" == "build" ]; then
-    build_commands
-elif [ "$cmd" == "docker" ]; then
-    docker_commands "${@:2}"
 elif [ "$cmd" == "build_agent" ]; then
     build_command agent
 elif [ "$cmd" == "build_backend" ]; then
@@ -319,6 +282,33 @@ elif [ "$cmd" == "build_dashboard" ]; then
     install_dashboard_deps
     build_dashboard
     bundle_static_assets
+elif [ "$cmd" == "build_tools" ]; then
+    build_tools
+elif [ "$cmd" == "dashboard" ]; then
+    install_dashboard_deps
+    test_dashboard
+elif [ "$cmd" == "dashboard-ci" ]; then
+    install_yarn
+    install_dashboard_deps
+    test_dashboard
+    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+elif [ "$cmd" == "deps" ]; then
+    install_deps
+elif [ "$cmd" == "docker" ]; then
+    docker_commands "${@:2}"
+elif [ "$cmd" == "e2e" ]; then
+    # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
+    build_commands
+    e2e_commands "${@:2}"
+elif [ "$cmd" == "lint" ]; then
+    linter_commands
+elif [ "$cmd" == "none" ]; then
+    echo "noop"
+elif [ "$cmd" == "quality" ]; then
+    linter_commands
+    unit_test_commands
+elif [ "$cmd" == "unit" ]; then
+    unit_test_commands
 else
     install_deps
     linter_commands
