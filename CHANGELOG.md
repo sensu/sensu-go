@@ -9,7 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Silenced entries with ExpireOnResolve set to true will now be deleted when an
-event which has previously failing has been resolved
+event which has previously failing was resolved
 
 ### Changed
 - Avoid using reflection in time.InWindows function.
