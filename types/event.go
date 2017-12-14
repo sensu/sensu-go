@@ -62,7 +62,8 @@ func (e *Event) IsIncident() bool {
 func (e *Event) IsResolution() bool {
 	// Try to retrieve the previous status in the check history and verify if it
 	// was a non-zero status, therefore indicating a resolution
-	if len(e.Check.History) > 0 && e.Check.History[len(e.Check.History)-1].Status != 0 {
+	if len(e.Check.History) > 0 && e.Check.History[len(e.Check.History)-1].Status != 0 &&
+		!e.IsIncident() {
 		return true
 	}
 

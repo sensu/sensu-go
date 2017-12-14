@@ -104,11 +104,13 @@ func TestEventIsResolution(t *testing.T) {
 	testCases := []struct {
 		name     string
 		history  []CheckHistory
+		status   int32
 		expected bool
 	}{
 		{
 			name:     "check has no history",
 			history:  []CheckHistory{CheckHistory{}},
+			status:   0,
 			expected: false,
 		},
 		{
@@ -117,6 +119,7 @@ func TestEventIsResolution(t *testing.T) {
 				CheckHistory{Status: 1},
 				CheckHistory{Status: 0},
 			},
+			status:   0,
 			expected: false,
 		},
 		{
@@ -125,7 +128,17 @@ func TestEventIsResolution(t *testing.T) {
 				CheckHistory{Status: 0},
 				CheckHistory{Status: 1},
 			},
+			status:   0,
 			expected: true,
+		},
+		{
+			name: "check has transitioned but still an incident",
+			history: []CheckHistory{
+				CheckHistory{Status: 0},
+				CheckHistory{Status: 2},
+			},
+			status:   1,
+			expected: false,
 		},
 	}
 
@@ -134,6 +147,7 @@ func TestEventIsResolution(t *testing.T) {
 			event := &Event{
 				Check: &Check{
 					History: tc.history,
+					Status:  tc.status,
 				},
 			}
 			resolution := event.IsResolution()
