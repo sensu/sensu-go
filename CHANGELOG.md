@@ -10,6 +10,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Avoid using reflection in time.InWindows function.
 - Use multiple parallel jobs in CI tools to speed up the tests
+- Pulled in latest [github.com/coreos/etcd](https://github.com/coreos/etcd).
+  - Includes fix for panic that occurred on shutdown.
+  - Refer to their
+    [changelog](https://github.com/gyuho/etcd/blob/f444abaae344e562fc69323c75e1cf772c436543/CHANGELOG.md)
+    for more.
+- Switch to using [github.com/golang/dep](https://github.com/golang/dep) for
+  managing dependencies; `vendor/` directory has been removed.
+  - See [README](README.md) for usage.
 
 ## [2.0.0-alpha.10] - 2017-12-12
 ### Added
