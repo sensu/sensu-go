@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Add check subdue mechanism. Checks can now be subdued for specified time
+windows.
 - Silenced entries with ExpireOnResolve set to true will now be deleted when an
 event which has previously failing was resolved
 

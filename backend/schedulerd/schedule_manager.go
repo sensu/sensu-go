@@ -19,7 +19,7 @@ type ScheduleManager struct {
 	newSchedulerFn func(check *types.CheckConfig) *CheckScheduler
 }
 
-// NewScheduleManager ...
+// NewScheduleManager creates a new ScheduleManager.
 func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *ScheduleManager {
 	wg := &sync.WaitGroup{}
 	stopped := &atomic.Value{}
