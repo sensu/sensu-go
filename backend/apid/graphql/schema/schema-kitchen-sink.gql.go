@@ -229,6 +229,40 @@ func AnnotatedObject() graphql.ObjectConfig {
 	}
 }
 
+// Feed includes all stuff and things.
+func Feed() graphql.UnionConfig {
+	return graphql.UnionConfig{
+		Description: "Feed includes all stuff and things.",
+		Name:        "Feed",
+		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see FeedResolver.")
+		},
+		Types: []*graphql.Object{"Named", "Named", "Named"},
+	}
+}
+
+// AnnotatedUnion i dont care
+func AnnotatedUnion() graphql.UnionConfig {
+	return graphql.UnionConfig{
+		Description: "AnnotatedUnion i dont care",
+		Name:        "AnnotatedUnion",
+		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see AnnotatedUnionResolver.")
+		},
+		Types: []*graphql.Object{"Named", "Named"},
+	}
+}
+
 //
 // CustomScalarResolver represents a collection of methods whose products represent the input and
 // response values of a scalar type.

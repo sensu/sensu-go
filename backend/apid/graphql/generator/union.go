@@ -10,7 +10,7 @@ import (
 
 func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 	name := node.GetName().Value
-	// resolverName := fmt.Sprintf("%sResolver", name)
+	resolverName := fmt.Sprintf("%sResolver", name)
 
 	//
 	// Generate resolver interface
@@ -78,10 +78,14 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
-			jen.Id("Types"):       jen.Lit(typeDesc),
+			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlPkg, "Object").ValuesFunc(func(g *jen.Group) {
+				for _, t := range node.Types {
+					g.Lit(t.Kind)
+				}
+			}),
 
 			// Resolver funcs
-			jen.Id("ResolveType"): jen.Func().Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).Op("*").Qual(graphqlPkg, "Object").Block(
+			jen.Id("ResolveType"): jen.Func().Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).Op("*").Qual(graphqlPkg, "Object").Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),
