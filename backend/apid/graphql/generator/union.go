@@ -8,9 +8,9 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genUnion(f *jen.File, node *ast.ScalarDefinition) error {
+func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 	name := node.GetName().Value
-	resolverName := fmt.Sprintf("%sResolver", name)
+	// resolverName := fmt.Sprintf("%sResolver", name)
 
 	//
 	// Generate resolver interface
@@ -73,7 +73,7 @@ func genUnion(f *jen.File, node *ast.ScalarDefinition) error {
 	//   // NameOfMyUnion [the description given in SDL document]
 	//   func NameOfMyUnion() *graphql.Scalar { ... } // implements TypeThunk
 	f.Comment(desc)
-	f.Func().Id(name).Params().Op("*").Qual(graphqlPkg, "Union").Block(
+	f.Func().Id(name).Params().Qual(graphqlPkg, "UnionConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "UnionConfig").Values(jen.Dict{
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
@@ -81,7 +81,7 @@ func genUnion(f *jen.File, node *ast.ScalarDefinition) error {
 			jen.Id("Types"):       jen.Lit(typeDesc),
 
 			// Resolver funcs
-			jen.Id("Serialize"): jen.Func().Params(jen.Id("_").Interface()).Block(
+			jen.Id("ResolveType"): jen.Func().Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).Op("*").Qual(graphqlPkg, "Object").Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),

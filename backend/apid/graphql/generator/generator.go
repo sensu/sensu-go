@@ -103,13 +103,12 @@ func genTypeDefinition(f *jen.File, node ast.Node) error {
 		err = genScalar(f, defNode)
 	case *ast.ObjectDefinition:
 		err = genObjectType(f, defNode)
+	case *ast.UnionDefinition:
+		err = genUnion(f, defNode)
 	default:
 		logger.WithField("type", node.GetKind()).Warn("unhandled type encountered")
 	}
-	// Handle scalar
-	// Handle object
 	// Handle interface
-	// Handle union
 	// Handle enum
 	// Handle input object
 	// Handle directive
