@@ -23,6 +23,7 @@ import (
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/v1"
 )
 
 const (
@@ -267,8 +268,14 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// read again from client, add any new message to the buffer, and parse
 		// again.
 		var event types.Event
-		if err = json.Unmarshal(messageBuffer.Bytes(), &event); err != nil {
+		var result v1.CheckResult
+		if err = json.Unmarshal(messageBuffer.Bytes(), &result); err != nil {
 			continue
+		}
+
+		if err = translateToEvent(a, result, &event); err != nil {
+			logger.WithError(err).Error("1.x returns \"invalid\"")
+			return
 		}
 
 		// Prepare the event by mutating it as required so it passes validation
@@ -341,8 +348,14 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			// message sender with the addition of the agent's entity if it is not
 			// included in the message. Any JSON errors are logged, and we return.
 			var event types.Event
-			if err = json.Unmarshal(buf[:bytesRead], &event); err != nil {
+			var result v1.CheckResult
+			if err = json.Unmarshal(buf[:bytesRead], &result); err != nil {
 				logger.WithError(err).Error("UDP Invalid event data")
+				return
+			}
+
+			if err = translateToEvent(a, result, &event); err != nil {
+				logger.WithError(err).Error("1.x returns \"invalid\"")
 				return
 			}
 
