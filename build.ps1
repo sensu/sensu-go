@@ -37,14 +37,14 @@ function install_deps
     go get gopkg.in/alecthomas/gometalinter.v1
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
-    go get -u github.com/golang/lint/golint
-    go get -u github.com/UnnoTed/fileb0x
+    go get github.com/golang/lint/golint
+    go get github.com/UnnoTed/fileb0x
     install_golang_dep
 }
 
 function install_golang_dep
 {
-    go get -u github.com/golang/dep/cmd/dep
+    go get github.com/golang/dep/cmd/dep
     echo "Running dep ensure..."
     dep ensure -v
 }

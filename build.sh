@@ -39,13 +39,13 @@ install_deps () {
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
-    go get -u github.com/golang/lint/golint
-    go get -u github.com/UnnoTed/fileb0x
+    go get github.com/golang/lint/golint
+    go get github.com/UnnoTed/fileb0x
     install_golang_dep
 }
 
 install_golang_dep() {
-    go get -u github.com/golang/dep/cmd/dep
+    go get github.com/golang/dep/cmd/dep
     echo "Running dep ensure..."
     dep ensure -v
 }
@@ -243,7 +243,7 @@ install_yarn() {
 }
 
 install_dashboard_deps() {
-    go get -u github.com/UnnoTed/fileb0x
+    go get github.com/UnnoTed/fileb0x
     check_for_presence_of_yarn
     pushd "${DASHBOARD_PATH}"
     yarn install
