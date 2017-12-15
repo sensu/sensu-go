@@ -49,6 +49,10 @@ func (file *GraphQLFile) Validate() error {
 			return errors.New("file should not define any operations")
 		case *ast.FragmentDefinition:
 			return errors.New("file should not define any fragments")
+		default:
+			// TODO: Validate names; eg. types should use upper CamelCase where as
+			//       fields should use lower camelCase.
+			continue
 		}
 	}
 	return nil
