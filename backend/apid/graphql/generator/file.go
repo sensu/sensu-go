@@ -52,7 +52,6 @@ func (file *GraphQLFile) Validate() error {
 		default:
 			// TODO: Validate names; eg. types should use upper CamelCase where as
 			//       fields should use lower camelCase.
-
 			// TODO: Validate that top level are unique.
 			continue
 		}
