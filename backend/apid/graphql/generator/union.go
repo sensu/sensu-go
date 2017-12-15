@@ -79,7 +79,9 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlPkg, "Object").ValuesFunc(func(g *jen.Group) {
 				for _, t := range node.Types {
-					g.Lit(t.Kind)
+					g.Line().Op("&").Qual(graphqlPkg, "Object").Values(jen.Dict{
+						jen.Id("PrivateName"): jen.Lit(t.Name.Value),
+					})
 				}
 			}),
 

@@ -270,7 +270,10 @@ func Feed() graphql.UnionConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see FeedResolver.")
 		},
-		Types: []*graphql.Object{"Named", "Named", "Named"},
+		Types: []*graphql.Object{
+			&graphql.Object{PrivateName: "Story"},
+			&graphql.Object{PrivateName: "Article"},
+			&graphql.Object{PrivateName: "Advert"}},
 	}
 }
 
@@ -315,7 +318,9 @@ func AnnotatedUnion() graphql.UnionConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see AnnotatedUnionResolver.")
 		},
-		Types: []*graphql.Object{"Named", "Named"},
+		Types: []*graphql.Object{
+			&graphql.Object{PrivateName: "A"},
+			&graphql.Object{PrivateName: "B"}},
 	}
 }
 

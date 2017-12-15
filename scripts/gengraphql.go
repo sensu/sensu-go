@@ -73,7 +73,8 @@ func main() {
 	for _, f := range graphqlFiles {
 		generator := generator.New(config.pkgName, f)
 		if err := generator.Run(); err != nil {
-			logger.WithError(err).Fatal("unable to generate file")
+			fmt.Fprintln(os.Stderr, err.Error())
+			logger.Fatal("unable to generate file")
 		}
 	}
 }
