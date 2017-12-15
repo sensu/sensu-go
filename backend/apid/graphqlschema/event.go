@@ -40,3 +40,27 @@ func initEventType() {
 		},
 	})
 }
+
+//
+// Intended OUTPUT:
+//
+// func Event() graphql.UnionConfig {
+// 	return graphql.UnionConfig{
+// 		Name:        "Event",
+// 		Description: "Describes check result or metric collected.",
+// 		Types: []*graphql.Object{
+// 			checkEventType,
+// 			metricEventType,
+// 		},
+// 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
+// 			if event, ok := p.Value.(*types.Event); ok {
+// 				if event.Check != nil {
+// 					return checkEventType
+// 				} else if event.Metrics != nil {
+// 					return metricEventType
+// 				}
+// 			}
+// 			return nil
+// 		},
+// 	}
+// }

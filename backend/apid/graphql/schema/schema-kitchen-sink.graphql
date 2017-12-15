@@ -38,8 +38,12 @@ interface AnnotatedInterface @onInterface {
   annotatedField(arg: Type @onArg): Type @onField
 }
 
+"""
+Feed includes all stuff and things.
+"""
 union Feed = Story | Article | Advert
 
+"AnnotatedUnion i dont care"
 union AnnotatedUnion @onUnion = A | B
 
 scalar CustomScalar
@@ -49,6 +53,28 @@ scalar AnnotatedScalar @onScalar
 enum Site {
   DESKTOP
   MOBILE
+}
+
+enum Locale {
+  """
+  Language I know
+  """
+  EN
+
+  """
+  Glorious nippon
+  """
+  JA
+
+  """
+  India
+  """
+  HI
+
+  """
+  Lanugage I don't know
+  """
+  LA @deprecated(reason: "dead language")
 }
 
 enum AnnotatedEnum @onEnum {
