@@ -229,6 +229,34 @@ func AnnotatedObject() graphql.ObjectConfig {
 	}
 }
 
+//
+// FeedResolver represents a collection of methods whose products represent the
+// response values of a union type.
+//
+//  == Example generated interface
+//
+//  // FeedResolver ...
+//  type FeedResolver interface {
+//    // ResolveType ... TODO
+//    ResolveType(graphql.ResolveTypeParams) *graphql.Object
+//  }
+//
+//  // Example implementation ...
+//
+//  // MyFeedResolver implements FeedResolver interface
+//  type MyFeedResolver struct {
+//    logger    logrus.LogEntry
+//  }
+//
+//  // ResolveType ... TODO
+//  func (r *MyFeedResolver) ResolveType(p graphql.ResolveTypeParams) *graphql.Object {
+//    // ... implementation details ...
+//  }
+type FeedResolver interface {
+	// ResolveType ...
+	ResolveType(graphql.ResolveTypeParams) *graphql.Object
+}
+
 // Feed includes all stuff and things.
 func Feed() graphql.UnionConfig {
 	return graphql.UnionConfig{
@@ -244,6 +272,34 @@ func Feed() graphql.UnionConfig {
 		},
 		Types: []*graphql.Object{"Named", "Named", "Named"},
 	}
+}
+
+//
+// AnnotatedUnionResolver represents a collection of methods whose products represent the
+// response values of a union type.
+//
+//  == Example generated interface
+//
+//  // FeedResolver ...
+//  type FeedResolver interface {
+//    // ResolveType ... TODO
+//    ResolveType(graphql.ResolveTypeParams) *graphql.Object
+//  }
+//
+//  // Example implementation ...
+//
+//  // MyFeedResolver implements FeedResolver interface
+//  type MyFeedResolver struct {
+//    logger    logrus.LogEntry
+//  }
+//
+//  // ResolveType ... TODO
+//  func (r *MyFeedResolver) ResolveType(p graphql.ResolveTypeParams) *graphql.Object {
+//    // ... implementation details ...
+//  }
+type AnnotatedUnionResolver interface {
+	// ResolveType ...
+	ResolveType(graphql.ResolveTypeParams) *graphql.Object
 }
 
 // AnnotatedUnion i dont care

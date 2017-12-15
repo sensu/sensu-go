@@ -19,38 +19,37 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 	// ... method:  ResolveType
 	//
 
-	// 	f.Commentf(`//
-	// // %s represents a collection of methods whose products represent the input and
-	// // response values of a scalar type.
-	// //
-	// //  == Example generated interface
-	// //
-	// //  // DateResolver ...
-	// //  type DateResolver interface {
-	// //    // ResolveType ... TODO
-	// //    ResolveType(graphql.ResolveTypeParams) *graphql.Object
-	// //  }
-	// //
-	// //  // Example implementation ...
-	// //
-	// //  // MyDateResolver implements DateResolver interface
-	// //  type MyDateResolver struct {
-	// //    defaultTZ *time.Location
-	// //    logger    logrus.LogEntry
-	// //  }
-	// //
-	// //  // ResolveType ... TODO
-	// //  func (r *MyDateResolver) ResolveType(p graphql.ResolveTypeParams) *graphql.Object {
-	// //    // ... implementation details ...
-	// //  }`,
-	// 		resolverName,
-	// 	)
-	// 	// Generate resolver interface.
-	// 	f.Type().Id(resolverName).Interface(
-	// 		// Serialize method.
-	// 		jen.Comment("Serialize an internal value to include in a response."),
-	// 		jen.Id("Serialize").Params(jen.Id("interface{}")).Interface(),
-	// 	)
+	f.Commentf(`//
+	// %s represents a collection of methods whose products represent the 
+	// response values of a union type.
+	//
+	//  == Example generated interface
+	//
+	//  // FeedResolver ...
+	//  type FeedResolver interface {
+	//    // ResolveType ... TODO
+	//    ResolveType(graphql.ResolveTypeParams) *graphql.Object
+	//  }
+	//
+	//  // Example implementation ...
+	//
+	//  // MyFeedResolver implements FeedResolver interface
+	//  type MyFeedResolver struct {
+	//    logger    logrus.LogEntry
+	//  }
+	//
+	//  // ResolveType ... TODO
+	//  func (r *MyFeedResolver) ResolveType(p graphql.ResolveTypeParams) *graphql.Object {
+	//    // ... implementation details ...
+	//  }`,
+		resolverName,
+	)
+	// Generate resolver interface.
+	f.Type().Id(resolverName).Interface(
+		// ResolveType method.
+		jen.Comment("ResolveType ..."),
+		jen.Id("ResolveType").Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).Op("*").Qual(graphqlPkg, "Object"),
+	)
 
 	//
 	// Generate type definition
