@@ -115,3 +115,29 @@ func TestSilencedStorageWithExpire(t *testing.T) {
 		assert.NotZero(t, entry.Expire)
 	})
 }
+
+func TestSilencedStorageWithBegin(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced.Organization = "default"
+		silenced.Environment = "default"
+		// set a begin time in the future
+		silenced.Begin = time.Date(1970, 01, 01, 01, 00, 00, 00, time.UTC).Unix()
+		// current time is before the start time
+		currentTime := time.Date(1970, 01, 01, 00, 00, 00, 00, time.UTC).Unix()
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+
+		err := store.UpdateSilencedEntry(ctx, silenced)
+		if err != nil {
+			t.Fatalf("failed to update entry due to error: %s", err)
+		}
+
+		// Get silenced entry and check that it is not yet ready to start
+		// silencing
+		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		assert.NoError(t, err)
+		assert.NotNil(t, entry)
+		assert.False(t, entry.StartSilence(currentTime))
+	})
+}
