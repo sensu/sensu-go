@@ -65,35 +65,70 @@ func genField(field *ast.FieldDefinition) *jen.Statement {
 	//      Args:              FieldConfigArgument{ ... },
 	//    }
 	//
-
-	// TODO: Match concrete types (Int, String, etc.)
-	// TODO: Match lists, nonnull, etc.
-	ttype := field.Type.String()
-
-	depReason := fetchDeprecationReason(field.Directives)
 	return jen.Qual(graphqlPkg, "Field").Values(jen.Dict{
 		jen.Id("Args"):              genArguments(field),
-		jen.Id("DeprecationReason"): jen.Lit(depReason),
+		jen.Id("DeprecationReason"): jen.Lit(fetchDeprecationReason(field.Directives)),
 		jen.Id("Description"):       jen.Lit(fetchDescription(field)),
 		jen.Id("Name"):              jen.Lit(field.Name.Value),
-		jen.Id("Type"):              jen.Qual(utilPkg, "OutputType").Call(jen.Lit(ttype)),
+		jen.Id("Type"):              genOutputTypeReference(field.Type),
 	})
 }
 
-// genField generates field config for given AST
-func genArguments(f *ast.FieldDefinition) *jen.Statement {
+// genArguments generates argument field config for given AST
+func genArguments(f []*ast.InputValueDefinition) *jen.Statement {
+	//
+	// Generate config for arguments
+	//
+	//  == Example input SDL
+	//
+	//    type Dog {
+	//      name(
+	//       "style is stylish"
+	//       style: NameComponentsStyle = SHORT,
+	//      ): String!
+	//    }
+	//
+	//  == Example output
+	//
+	//    FieldConfigArgument{
+	//      "style": &ArgumentConfig{ ... }
+	//    },
+	//
 	return jen.Qual(graphqlPkg, "FieldConfigArgument").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, arg := range f.Arguments {
-				// TODO: Match concrete types (Int, String, etc.)
-				// TODO: Match lists, nonnull, etc.
-				ttype := arg.Type.String()
-				def := jen.Op("*").Qual(graphqlPkg, "ArgumentConfig").Values(jen.Dict{
-					jen.Id("Type"): jen.Qual(utilPkg, "InputType").Call(jen.Lit(ttype)),
-				})
-
-				d[jen.Id(arg.Name.Value)] = def
+				d[jen.Id(arg.Name.Value)] = genArgument(arg)
 			}
 		}),
 	)
+}
+
+// genArgument generates argument config for given AST
+func genArgument(f *ast.InputValueDefinition) *jen.Statement {
+	//
+	// Generate config for argument
+	//
+	//  == Example input SDL
+	//
+	//    type Dog {
+	//      name(
+	//       "style is stylish"
+	//       style: NameComponentsStyle = SHORT,
+	//      ): String!
+	//    }
+	//
+	//  == Example output
+	//
+	//    &ArgumentConfig{
+	//      Type: graphql.NonNull(graphql.String),
+	//      DefaultValue: "SHORT", // TODO: ???
+	//      Description: "style is stylish",
+	//    }
+	//
+	return jen.Op("*").Qual(graphqlPkg, "ArgumentConfig").Values(jen.Dict{
+		jen.Id("Type"):       genInputTypeReference(arg.Type),
+		jen.Id("Descrition"): fetchDescription(arg),
+		// TODO: This is probably overly naive(?)
+		jen.Id("DefaultValue"): jen.Lit(arg.DefaultValue.GetValue()),
+	})
 }

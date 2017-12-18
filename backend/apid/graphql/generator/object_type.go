@@ -118,11 +118,13 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	}
 
 	// Generate interface references
-	ints := jen.Index().Op("*").Qual(graphqlPkg, "Interface").Values(jen.ValuesFunc(func(g *jen.Group) {
-		for _, in := range node.Interfaces {
-			g.Qual(utilPkg, "Interface").Call(jen.Id(in.Name.Value))
-		}
-	}))
+	ints := jen.Index().Op("*").Qual(graphqlPkg, "Interface").Values(
+		jen.ValuesFunc(func(g *jen.Group) {
+			for _, in := range node.Interfaces {
+				g.Qual(utilPkg, "Interface").Call(jen.Id(in.Name.Value))
+			}
+		}),
+	)
 
 	//
 	// Generates thunk that returns new instance of object type
