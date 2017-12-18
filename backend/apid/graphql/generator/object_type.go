@@ -121,7 +121,9 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	ints := jen.Index().Op("*").Qual(graphqlPkg, "Interface").Values(
 		jen.ValuesFunc(func(g *jen.Group) {
 			for _, in := range node.Interfaces {
-				g.Qual(utilPkg, "Interface").Call(jen.Id(in.Name.Value))
+				g.Line().Op("&").Qual(graphqlPkg, "Interface").Values(jen.Dict{
+					jen.Id("PrivateName"): jen.Lit(in.Name.Value),
+				})
 			}
 		}),
 	)

@@ -77,13 +77,15 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
-			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlPkg, "Object").ValuesFunc(func(g *jen.Group) {
-				for _, t := range node.Types {
-					g.Line().Op("&").Qual(graphqlPkg, "Object").Values(jen.Dict{
-						jen.Id("PrivateName"): jen.Lit(t.Name.Value),
-					})
-				}
-			}),
+			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlPkg, "Object").Values(
+				jen.ValuesFunc(func(g *jen.Group) {
+					for _, t := range node.Types {
+						g.Line().Op("&").Qual(graphqlPkg, "Object").Values(jen.Dict{
+							jen.Id("PrivateName"): jen.Lit(t.Name.Value),
+						})
+					}
+				}),
+			),
 
 			// Resolver funcs
 			jen.Id("ResolveType"): jen.Func().Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).Op("*").Qual(graphqlPkg, "Object").Block(
