@@ -70,6 +70,9 @@ type Config struct {
 	API *APIConfig
 	// Socket contains the Sensu client socket configuration
 	Socket *SocketConfig
+	// ExtendedAttributes contains any custom attributes passed to the agent on
+	// start
+	ExtendedAttributes []byte
 }
 
 // SocketConfig contains the Socket configuration
@@ -455,6 +458,7 @@ func (a *Agent) sendKeepalive() error {
 	}
 	keepalive := &types.Event{}
 	keepalive.Entity = a.getAgentEntity()
+
 	keepalive.Timestamp = time.Now().Unix()
 	msgBytes, err := json.Marshal(keepalive)
 	if err != nil {

@@ -1,8 +1,11 @@
 package agent
 
 import (
+	"encoding/json"
+
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 func (a *Agent) getAgentEntity() *types.Entity {
@@ -21,6 +24,19 @@ func (a *Agent) getAgentEntity() *types.Entity {
 		if a.config.DeregistrationHandler != "" {
 			e.Deregistration = types.Deregistration{
 				Handler: a.config.DeregistrationHandler,
+			}
+		}
+
+		// Set any extended attributes in the entity
+		var attrMap map[string]interface{}
+		err := json.Unmarshal(a.config.ExtendedAttributes, &attrMap)
+		if err != nil {
+			logger.WithError(err)
+		}
+		for k, v := range attrMap {
+			err = dynamic.SetField(e, k, v)
+			if err != nil {
+				logger.WithError(err)
 			}
 		}
 

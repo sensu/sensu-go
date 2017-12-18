@@ -13,6 +13,7 @@ windows.
 - Silenced entries with ExpireOnResolve set to true will now be deleted when an
 event which has previously failing was resolved
 - TCP/UDP sockets now accept 1.x backward compatible payloads. 1.x Check Result gets translated to a 2.x Event.
+- Custom attributes can be added to the agent at start.
 
 ### Changed
 - Avoid using reflection in time.InWindows function.
