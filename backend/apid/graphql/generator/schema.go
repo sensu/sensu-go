@@ -38,7 +38,7 @@ func genSchema(f *jen.File, node *ast.SchemaDefinition) error {
 			jen.DictFunc(func(d jen.Dict) {
 				for _, op := range node.OperationTypes {
 					opName := strings.Title(op.Operation)
-					d[jen.Id(opName)] = genMockObjTypeReference(op.Type)
+					d[jen.Id(opName)] = genMockObjectReference(op.Type)
 				}
 			}),
 		)),

@@ -65,7 +65,7 @@ func genField(field *ast.FieldDefinition) *jen.Statement {
 	//      Args:              FieldConfigArgument{ ... },
 	//    }
 	//
-	return jen.Qual(graphqlPkg, "Field").Values(jen.Dict{
+	return jen.Op("&").Qual(graphqlPkg, "Field").Values(jen.Dict{
 		jen.Id("Args"):              genArguments(field.Arguments),
 		jen.Id("DeprecationReason"): jen.Lit(fetchDeprecationReason(field.Directives)),
 		jen.Id("Description"):       jen.Lit(fetchDescription(field)),
@@ -97,7 +97,7 @@ func genArguments(args []*ast.InputValueDefinition) *jen.Statement {
 	return jen.Qual(graphqlPkg, "FieldConfigArgument").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, arg := range args {
-				d[jen.Id(arg.Name.Value)] = genArgument(arg)
+				d[jen.Lit(arg.Name.Value)] = genArgument(arg)
 			}
 		}),
 	)
@@ -125,7 +125,7 @@ func genArgument(arg *ast.InputValueDefinition) *jen.Statement {
 	//      Description: "style is stylish",
 	//    }
 	//
-	return jen.Op("*").Qual(graphqlPkg, "ArgumentConfig").Values(jen.Dict{
+	return jen.Op("&").Qual(graphqlPkg, "ArgumentConfig").Values(jen.Dict{
 		jen.Id("Type"):        genInputTypeReference(arg.Type),
 		jen.Id("Description"): jen.Lit(fetchDescription(arg)),
 		// TODO: This is probably overly naive(?)
@@ -138,7 +138,7 @@ func genValue(v ast.Value) jen.Code {
 	case nil:
 		return jen.Null()
 	case *ast.ListValue:
-		return jen.ValuesFunc(func(g *jen.Group) {
+		return jen.Index().ValuesFunc(func(g *jen.Group) {
 			for _, lval := range val.Values {
 				g.Add(genValue(lval))
 			}

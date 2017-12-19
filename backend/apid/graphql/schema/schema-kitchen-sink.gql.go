@@ -93,8 +93,8 @@ func Foo() graphql.ObjectConfig {
 	return graphql.ObjectConfig{
 		Description: "Foo is quite the type.",
 		Fields: graphql.Fields{
-			five: graphql.Field{
-				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+			"five": &graphql.Field{
+				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
 					DefaultValue: {"string", "string"},
 					Description:  "self descriptive",
 					Type:         graphql.List(graphql.String),
@@ -104,8 +104,8 @@ func Foo() graphql.ObjectConfig {
 				Name:              "five",
 				Type:              graphql.String,
 			},
-			four: graphql.Field{
-				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+			"four": &graphql.Field{
+				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
 					DefaultValue: "string",
 					Description:  "self descriptive",
 					Type:         graphql.String,
@@ -115,15 +115,15 @@ func Foo() graphql.ObjectConfig {
 				Name:              "four",
 				Type:              graphql.String,
 			},
-			one: graphql.Field{
+			"one": &graphql.Field{
 				Args:              graphql.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "one is a number.",
 				Name:              "one",
 				Type:              util.Output("Type"),
 			},
-			six: graphql.Field{
-				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+			"six": &graphql.Field{
+				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
 					DefaultValue: map[string]interface{}{"key": "value"},
 					Description:  "self descriptive",
 					Type:         util.Input("InputType"),
@@ -133,13 +133,13 @@ func Foo() graphql.ObjectConfig {
 				Name:              "six",
 				Type:              util.Output("Type"),
 			},
-			three: graphql.Field{
+			"three": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
-					argument: *graphql.ArgumentConfig{
+					"argument": &graphql.ArgumentConfig{
 						Description: "self descriptive",
 						Type:        util.Input("InputType"),
 					},
-					other: *graphql.ArgumentConfig{
+					"other": &graphql.ArgumentConfig{
 						Description: "self descriptive",
 						Type:        graphql.String,
 					},
@@ -149,8 +149,8 @@ func Foo() graphql.ObjectConfig {
 				Name:              "three",
 				Type:              graphql.Int,
 			},
-			two: graphql.Field{
-				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+			"two": &graphql.Field{
+				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
 					Description: "self descriptive",
 					Type:        graphql.NonNull(util.Input("InputType")),
 				}},
@@ -239,8 +239,8 @@ type AnnotatedObjectResolver interface {
 func AnnotatedObject() graphql.ObjectConfig {
 	return graphql.ObjectConfig{
 		Description: "self descriptive",
-		Fields: graphql.Fields{annotatedField: graphql.Field{
-			Args: graphql.FieldConfigArgument{arg: *graphql.ArgumentConfig{
+		Fields: graphql.Fields{"annotatedField": &graphql.Field{
+			Args: graphql.FieldConfigArgument{"arg": &graphql.ArgumentConfig{
 				DefaultValue: "default",
 				Description:  "self descriptive",
 				Type:         util.Input("Type"),
@@ -303,8 +303,8 @@ func Bar() graphql.InterfaceConfig {
 	return graphql.InterfaceConfig{
 		Description: "self descriptive",
 		Fields: graphql.Fields{
-			four: graphql.Field{
-				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+			"four": &graphql.Field{
+				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
 					DefaultValue: "string",
 					Description:  "self descriptive",
 					Type:         graphql.String,
@@ -314,7 +314,7 @@ func Bar() graphql.InterfaceConfig {
 				Name:              "four",
 				Type:              graphql.String,
 			},
-			one: graphql.Field{
+			"one": &graphql.Field{
 				Args:              graphql.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
@@ -373,8 +373,8 @@ type AnnotatedInterfaceResolver interface {
 func AnnotatedInterface() graphql.InterfaceConfig {
 	return graphql.InterfaceConfig{
 		Description: "AnnotatedInterface has stuff",
-		Fields: graphql.Fields{annotatedField: graphql.Field{
-			Args: graphql.FieldConfigArgument{arg: *graphql.ArgumentConfig{
+		Fields: graphql.Fields{"annotatedField": &graphql.Field{
+			Args: graphql.FieldConfigArgument{"arg": &graphql.ArgumentConfig{
 				Description: "self descriptive",
 				Type:        util.Input("Type"),
 			}},
@@ -494,47 +494,54 @@ func AnnotatedUnion() graphql.UnionConfig {
 // CustomScalarResolver represents a collection of methods whose products represent the input and
 // response values of a scalar type.
 //
+//  == Example input SDL
+//
+//    """
+//    Timestamps are great.
+//    """
+//    scalar Timestamp
+//
 //  == Example generated interface
 //
-//  // DateResolver ...
-//  type DateResolver interface {
-//    // Serialize an internal value to include in a response.
-//    Serialize(interface{}) interface{}
-//    // ParseValue parses an externally provided value to use as an input.
-//    ParseValue(interface{}) interface{}
-//    // ParseLiteral parses an externally provided literal value to use as an input.
-//    ParseLiteral(ast.Value) interface{}
-//  }
+//    // DateResolver ...
+//    type DateResolver interface {
+//      // Serialize an internal value to include in a response.
+//      Serialize(interface{}) interface{}
+//      // ParseValue parses an externally provided value to use as an input.
+//      ParseValue(interface{}) interface{}
+//      // ParseLiteral parses an externally provided literal value to use as an input.
+//      ParseLiteral(ast.Value) interface{}
+//    }
 //
-//  // Example implementation ...
+//  == Example implementation
 //
-//  // MyDateResolver implements DateResolver interface
-//  type MyDateResolver struct {
-//    defaultTZ *time.Location
-//    logger    logrus.LogEntry
-//  }
+//    // MyDateResolver implements DateResolver interface
+//    type MyDateResolver struct {
+//      defaultTZ *time.Location
+//      logger    logrus.LogEntry
+//    }
 //
-//  // Serialize serializes given date into RFC 943 compatible string.
-//  func (r *MyDateResolver) Serialize(val interface{}) interface{} {
-//    // ... implementation details ...
-//  }
+//    // Serialize serializes given date into RFC 943 compatible string.
+//    func (r *MyDateResolver) Serialize(val interface{}) interface{} {
+//      // ... implementation details ...
+//    }
 //
-//  // ParseValue takes given value and coerces it into an instance of Time.
-//  func (r *MyDateResolver) ParseValue(val interface{}) interface{} {
-//    // ... implementation details ...
-//    // eg. if val is an int use time.At(), if string time.Parse(), etc.
-//  }
+//    // ParseValue takes given value and coerces it into an instance of Time.
+//    func (r *MyDateResolver) ParseValue(val interface{}) interface{} {
+//      // ... implementation details ...
+//      // eg. if val is an int use time.At(), if string time.Parse(), etc.
+//    }
 //
-//  // ParseValue takes given value and coerces it into an instance of Time.
-//  func (r *MyDateResolver) ParseValue(val ast.Value) interface{} {
-//    // ... implementation details ...
-//    //
-//    // eg.
-//    //
-//    // if string value return value,
-//    // if IntValue Atoi and return value,
-//    // etc.
-//  }
+//    // ParseValue takes given value and coerces it into an instance of Time.
+//    func (r *MyDateResolver) ParseValue(val ast.Value) interface{} {
+//      // ... implementation details ...
+//      //
+//      // eg.
+//      //
+//      // if string value return value,
+//      // if IntValue Atoi and return value,
+//      // etc.
+//    }
 type CustomScalarResolver interface {
 	// Serialize an internal value to include in a response.
 	Serialize(interface{}) interface{}
@@ -545,8 +552,8 @@ type CustomScalarResolver interface {
 }
 
 // CustomScalar self descriptive
-func CustomScalar() *graphql.Scalar {
-	return graphql.NewScalar(graphql.ScalarConfig{
+func CustomScalar() graphql.ScalarConfig {
+	return graphql.ScalarConfig{
 		Description: "self descriptive",
 		Name:        "CustomScalar",
 		ParseLiteral: func(_ ast.Value) {
@@ -573,54 +580,61 @@ func CustomScalar() *graphql.Scalar {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see CustomScalarResolver.")
 		},
-	})
+	}
 }
 
 //
 // AnnotatedScalarResolver represents a collection of methods whose products represent the input and
 // response values of a scalar type.
 //
+//  == Example input SDL
+//
+//    """
+//    Timestamps are great.
+//    """
+//    scalar Timestamp
+//
 //  == Example generated interface
 //
-//  // DateResolver ...
-//  type DateResolver interface {
-//    // Serialize an internal value to include in a response.
-//    Serialize(interface{}) interface{}
-//    // ParseValue parses an externally provided value to use as an input.
-//    ParseValue(interface{}) interface{}
-//    // ParseLiteral parses an externally provided literal value to use as an input.
-//    ParseLiteral(ast.Value) interface{}
-//  }
+//    // DateResolver ...
+//    type DateResolver interface {
+//      // Serialize an internal value to include in a response.
+//      Serialize(interface{}) interface{}
+//      // ParseValue parses an externally provided value to use as an input.
+//      ParseValue(interface{}) interface{}
+//      // ParseLiteral parses an externally provided literal value to use as an input.
+//      ParseLiteral(ast.Value) interface{}
+//    }
 //
-//  // Example implementation ...
+//  == Example implementation
 //
-//  // MyDateResolver implements DateResolver interface
-//  type MyDateResolver struct {
-//    defaultTZ *time.Location
-//    logger    logrus.LogEntry
-//  }
+//    // MyDateResolver implements DateResolver interface
+//    type MyDateResolver struct {
+//      defaultTZ *time.Location
+//      logger    logrus.LogEntry
+//    }
 //
-//  // Serialize serializes given date into RFC 943 compatible string.
-//  func (r *MyDateResolver) Serialize(val interface{}) interface{} {
-//    // ... implementation details ...
-//  }
+//    // Serialize serializes given date into RFC 943 compatible string.
+//    func (r *MyDateResolver) Serialize(val interface{}) interface{} {
+//      // ... implementation details ...
+//    }
 //
-//  // ParseValue takes given value and coerces it into an instance of Time.
-//  func (r *MyDateResolver) ParseValue(val interface{}) interface{} {
-//    // ... implementation details ...
-//    // eg. if val is an int use time.At(), if string time.Parse(), etc.
-//  }
+//    // ParseValue takes given value and coerces it into an instance of Time.
+//    func (r *MyDateResolver) ParseValue(val interface{}) interface{} {
+//      // ... implementation details ...
+//      // eg. if val is an int use time.At(), if string time.Parse(), etc.
+//    }
 //
-//  // ParseValue takes given value and coerces it into an instance of Time.
-//  func (r *MyDateResolver) ParseValue(val ast.Value) interface{} {
-//    // ... implementation details ...
-//    //
-//    // eg.
-//    //
-//    // if string value return value,
-//    // if IntValue Atoi and return value,
-//    // etc.
-//  }
+//    // ParseValue takes given value and coerces it into an instance of Time.
+//    func (r *MyDateResolver) ParseValue(val ast.Value) interface{} {
+//      // ... implementation details ...
+//      //
+//      // eg.
+//      //
+//      // if string value return value,
+//      // if IntValue Atoi and return value,
+//      // etc.
+//    }
 type AnnotatedScalarResolver interface {
 	// Serialize an internal value to include in a response.
 	Serialize(interface{}) interface{}
@@ -631,8 +645,8 @@ type AnnotatedScalarResolver interface {
 }
 
 // AnnotatedScalar self descriptive
-func AnnotatedScalar() *graphql.Scalar {
-	return graphql.NewScalar(graphql.ScalarConfig{
+func AnnotatedScalar() graphql.ScalarConfig {
+	return graphql.ScalarConfig{
 		Description: "self descriptive",
 		Name:        "AnnotatedScalar",
 		ParseLiteral: func(_ ast.Value) {
@@ -659,7 +673,7 @@ func AnnotatedScalar() *graphql.Scalar {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see AnnotatedScalarResolver.")
 		},
-	})
+	}
 }
 
 // Site self descriptive

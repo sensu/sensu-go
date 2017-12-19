@@ -121,10 +121,8 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	// Generate interface references
 	ints := jen.Index().Op("*").Qual(graphqlPkg, "Interface").Values(
 		jen.ValuesFunc(func(g *jen.Group) {
-			for _, in := range node.Interfaces {
-				g.Line().Op("&").Qual(graphqlPkg, "Interface").Values(jen.Dict{
-					jen.Id("PrivateName"): jen.Lit(in.Name.Value),
-				})
+			for _, n := range node.Interfaces {
+				g.Line().Add(genMockInterfaceReference(n))
 			}
 		}),
 	)

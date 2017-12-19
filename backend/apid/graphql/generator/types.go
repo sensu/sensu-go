@@ -5,18 +5,20 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
+func genMockInterfaceReference(t *ast.Named) *jen.Statement {
+	return jen.Qual(utilPkg, "Interface").Call(t.Name.Value)
+}
+
+func genMockObjectReference(t *ast.Named) *jen.Statement {
+	return jen.Qual(utilPkg, "Object").Call(t.Name.Value)
+}
+
 func genInputTypeReference(t ast.Type) *jen.Statement {
-	return genTypeReference(t, "Input")
+	return genTypeReference(t, "InputType")
 }
 
 func genOutputTypeReference(t ast.Type) *jen.Statement {
-	return genTypeReference(t, "Output")
-}
-
-func genMockObjTypeReference(t *ast.Named) *jen.Statement {
-	return jen.Op("&").Qual(graphqlPkg, "Object").Values(jen.Dict{
-		jen.Id("PrivateName"): jen.Lit(t.Name.Value),
-	})
+	return genTypeReference(t, "OutputType")
 }
 
 func genTypeReference(t ast.Type, expectedType string) *jen.Statement {

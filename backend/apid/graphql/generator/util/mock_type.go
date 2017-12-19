@@ -45,3 +45,13 @@ func Interface(name string) *graphql.Interface {
 	// Feels a bit brittle but simplest solution at this time.
 	return &graphql.Interface{PrivateName: name}
 }
+
+// Object mocks an interface
+func Object(name string) *graphql.Object {
+	// Unlike fields which simply require that something that implements the
+	// Output interface is present, schema & union types require that references
+	// to object are given to config.
+	//
+	// Feels a bit brittle but simplest solution at this time.
+	return &graphql.Object{PrivateName: name}
+}

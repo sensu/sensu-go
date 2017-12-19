@@ -80,9 +80,7 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlPkg, "Object").Values(
 				jen.ValuesFunc(func(g *jen.Group) {
 					for _, t := range node.Types {
-						g.Line().Op("&").Qual(graphqlPkg, "Object").Values(jen.Dict{
-							jen.Id("PrivateName"): jen.Lit(t.Name.Value),
-						})
+						g.Line().Add(genMockObjectReference(t))
 					}
 				}),
 			),
