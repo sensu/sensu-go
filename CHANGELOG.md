@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Breaking Changes
+- The `Source` field on a check has been renamed to `ProxyEntityID`. Any checks
+  using the Source field will have to be recreated.
+
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
 windows.

@@ -26,7 +26,7 @@ type checkOpts struct {
 	Env           string
 	Org           string
 	Publish       string `survey:"publish"`
-	Source        string `survey:"source"`
+	ProxyEntityID string `survey:"proxy-entity-id"`
 	Stdin         string `survey:"stdin"`
 }
 
@@ -45,7 +45,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Subscriptions = strings.Join(check.Subscriptions, ",")
 	opts.Handlers = strings.Join(check.Handlers, ",")
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
-	opts.Source = check.Source
+	opts.ProxyEntityID = check.ProxyEntityID
 	opts.Stdin = stdinDefault
 }
 
@@ -57,7 +57,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 	publishBool, _ := flags.GetBool("publish")
 	opts.Publish = strconv.FormatBool(publishBool)
-	opts.Source, _ = flags.GetString("source")
+	opts.ProxyEntityID, _ = flags.GetString("proxy-entity-id")
 	opts.Stdin, _ = flags.GetString("stdin")
 
 	if org, _ := flags.GetString("organization"); org != "" {
@@ -153,11 +153,11 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
-			Name: "source",
+			Name: "proxy-entity-id",
 			Prompt: &survey.Input{
-				Message: "Check Source:",
-				Default: opts.Source,
-				Help:    "the check source, used to create a proxy entity for an external resource",
+				Message: "Check Proxy Entity ID:",
+				Default: opts.ProxyEntityID,
+				Help:    "the check's proxy entity id, used to create a proxy entity for an external resource",
 			},
 		},
 		{
@@ -186,6 +186,6 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 	check.Publish = opts.Publish == "true"
-	check.Source = opts.Source
+	check.ProxyEntityID = opts.ProxyEntityID
 	check.Stdin = stdin
 }

@@ -73,9 +73,9 @@ func (c *CheckConfig) Validate() error {
 
 	// The entity can be empty but can't contain invalid characters (only
 	// alphanumeric string)
-	if c.Source != "" {
-		if err := ValidateName(c.Source); err != nil {
-			return errors.New("source name " + err.Error())
+	if c.ProxyEntityID != "" {
+		if err := ValidateName(c.ProxyEntityID); err != nil {
+			return errors.New("proxy entity id " + err.Error())
 		}
 	}
 

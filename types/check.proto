@@ -68,7 +68,7 @@ message CheckConfig {
 	bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
 
 	// Sources indicates the name of the entity representing an external resource
-	string source = 13;
+	string proxy_entity_id = 13 [(gogoproto.jsontag) = "proxy_entity_id", (gogoproto.customname) = "ProxyEntityID"];
 
 	// CheckHooks is the list of check hooks for the check
 	repeated HookList check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
