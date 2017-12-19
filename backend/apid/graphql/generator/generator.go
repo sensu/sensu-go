@@ -105,11 +105,13 @@ func genTypeDefinition(f *jen.File, node ast.Node) error {
 		err = genObjectType(f, defNode)
 	case *ast.UnionDefinition:
 		err = genUnion(f, defNode)
+	case *ast.EnumDefinition:
+		err = genEnum(f, defNode)
 	default:
 		logger.WithField("type", node.GetKind()).Warn("unhandled type encountered")
 	}
+	// Handle schema
 	// Handle interface
-	// Handle enum
 	// Handle input object
 	// Handle directive
 

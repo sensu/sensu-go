@@ -50,9 +50,10 @@ func (file *GraphQLFile) Validate() error {
 		case *ast.FragmentDefinition:
 			return errors.New("file should not define any fragments")
 		default:
+			// TODO: Validate that top level are unique.
+			// TODO: Validate that unsupported directives are not given.
 			// TODO: Validate names; eg. types should use upper CamelCase where as
 			//       fields should use lower camelCase.
-			// TODO: Validate that top level are unique.
 			continue
 		}
 	}
