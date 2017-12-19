@@ -32,17 +32,17 @@ func TestGetProxyEntity(t *testing.T) {
 		expectedEntity string
 	}{
 		{
-			name:           "The event has no source",
+			name:           "The event has no proxy entity",
 			event:          types.FixtureEvent("foo", "check_cpu"),
 			expectedError:  false,
 			expectedEntity: "foo",
 		},
 		{
-			name: "The event has a source with a corresponding entity",
+			name: "The event has a proxy entity with a corresponding entity",
 			event: &types.Event{
 				Check: &types.Check{
 					Config: &types.CheckConfig{
-						Source: "bar",
+						ProxyEntityID: "bar",
 					},
 				},
 				Entity: types.FixtureEntity("foo"),
@@ -51,11 +51,11 @@ func TestGetProxyEntity(t *testing.T) {
 			expectedEntity: "bar",
 		},
 		{
-			name: "The event has a source with no corresponding entity",
+			name: "The event has a proxy entity with no corresponding entity",
 			event: &types.Event{
 				Check: &types.Check{
 					Config: &types.CheckConfig{
-						Source: "baz",
+						ProxyEntityID: "baz",
 					},
 				},
 				Entity: types.FixtureEntity("foo"),
@@ -68,7 +68,7 @@ func TestGetProxyEntity(t *testing.T) {
 			event: &types.Event{
 				Check: &types.Check{
 					Config: &types.CheckConfig{
-						Source: "quux",
+						ProxyEntityID: "quux",
 					},
 				},
 				Entity: types.FixtureEntity("foo"),
@@ -80,7 +80,7 @@ func TestGetProxyEntity(t *testing.T) {
 			event: &types.Event{
 				Check: &types.Check{
 					Config: &types.CheckConfig{
-						Source: "qux",
+						ProxyEntityID: "qux",
 					},
 				},
 				Entity: types.FixtureEntity("foo"),
