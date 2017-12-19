@@ -164,7 +164,7 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Interfaces"):  ints,
 			jen.Id("Fields"):      genFields(node.Fields),
-			jen.Id("IsKindOf"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Block(
+			jen.Id("IsTypeOf"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),

@@ -86,52 +86,74 @@ func Foo() graphql.ObjectConfig {
 		Description: "Foo is quite the type.",
 		Fields: graphql.Fields{
 			five: graphql.Field{
-				Args:              graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{Type: util.InputType("List")}},
+				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+					DefaultValue: {"string", "string"},
+					Description:  "self descriptive",
+					Type:         graphql.List(graphql.String),
+				}},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "five",
-				Type:              util.OutputType("Named"),
+				Type:              graphql.String,
 			},
 			four: graphql.Field{
-				Args:              graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{Type: util.InputType("Named")}},
+				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+					DefaultValue: "string",
+					Description:  "self descriptive",
+					Type:         graphql.String,
+				}},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "four",
-				Type:              util.OutputType("Named"),
+				Type:              graphql.String,
 			},
 			one: graphql.Field{
 				Args:              graphql.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "one is a number.",
 				Name:              "one",
-				Type:              util.OutputType("Named"),
+				Type:              util.Output("Type"),
 			},
 			six: graphql.Field{
-				Args:              graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{Type: util.InputType("Named")}},
+				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+					DefaultValue: map[string]interface{}{"key": "value"},
+					Description:  "self descriptive",
+					Type:         util.Input("InputType"),
+				}},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "six",
-				Type:              util.OutputType("Named"),
+				Type:              util.Output("Type"),
 			},
 			three: graphql.Field{
 				Args: graphql.FieldConfigArgument{
-					argument: *graphql.ArgumentConfig{Type: util.InputType("Named")},
-					other:    *graphql.ArgumentConfig{Type: util.InputType("Named")},
+					argument: *graphql.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        util.Input("InputType"),
+					},
+					other: *graphql.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql.String,
+					},
 				},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "three",
-				Type:              util.OutputType("Named"),
+				Type:              graphql.Int,
 			},
 			two: graphql.Field{
-				Args:              graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{Type: util.InputType("NonNull")}},
+				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql.NonNull(util.Input("InputType")),
+				}},
 				DeprecationReason: "",
 				Description:       "I am told that two is also a number",
 				Name:              "two",
-				Type:              util.OutputType("Named"),
+				Type:              util.Output("Type"),
 			},
 		},
-		Interfaces: []*graphql.Interface{{util.Interface(Bar)}},
+		Interfaces: []*graphql.Interface{{
+			&graphql.Interface{PrivateName: "Bar"}}},
 		IsKindOf: func(_ ast.Value) {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -210,11 +232,15 @@ func AnnotatedObject() graphql.ObjectConfig {
 	return graphql.ObjectConfig{
 		Description: "self descriptive",
 		Fields: graphql.Fields{annotatedField: graphql.Field{
-			Args:              graphql.FieldConfigArgument{arg: *graphql.ArgumentConfig{Type: util.InputType("Named")}},
+			Args: graphql.FieldConfigArgument{arg: *graphql.ArgumentConfig{
+				DefaultValue: "default",
+				Description:  "self descriptive",
+				Type:         util.Input("Type"),
+			}},
 			DeprecationReason: "",
 			Description:       "self descriptive",
 			Name:              "annotatedField",
-			Type:              util.OutputType("Named"),
+			Type:              util.Output("Type"),
 		}},
 		Interfaces: []*graphql.Interface{{}},
 		IsKindOf: func(_ ast.Value) {
@@ -270,10 +296,10 @@ func Feed() graphql.UnionConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see FeedResolver.")
 		},
-		Types: []*graphql.Object{
+		Types: []*graphql.Object{{
 			&graphql.Object{PrivateName: "Story"},
 			&graphql.Object{PrivateName: "Article"},
-			&graphql.Object{PrivateName: "Advert"}},
+			&graphql.Object{PrivateName: "Advert"}}},
 	}
 }
 
@@ -318,9 +344,9 @@ func AnnotatedUnion() graphql.UnionConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see AnnotatedUnionResolver.")
 		},
-		Types: []*graphql.Object{
+		Types: []*graphql.Object{{
 			&graphql.Object{PrivateName: "A"},
-			&graphql.Object{PrivateName: "B"}},
+			&graphql.Object{PrivateName: "B"}}},
 	}
 }
 

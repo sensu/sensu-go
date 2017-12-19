@@ -66,7 +66,7 @@ func genField(field *ast.FieldDefinition) *jen.Statement {
 	//    }
 	//
 	return jen.Qual(graphqlPkg, "Field").Values(jen.Dict{
-		jen.Id("Args"):              genArguments(field),
+		jen.Id("Args"):              genArguments(field.Arguments),
 		jen.Id("DeprecationReason"): jen.Lit(fetchDeprecationReason(field.Directives)),
 		jen.Id("Description"):       jen.Lit(fetchDescription(field)),
 		jen.Id("Name"):              jen.Lit(field.Name.Value),
@@ -75,7 +75,7 @@ func genField(field *ast.FieldDefinition) *jen.Statement {
 }
 
 // genArguments generates argument field config for given AST
-func genArguments(f []*ast.InputValueDefinition) *jen.Statement {
+func genArguments(args []*ast.InputValueDefinition) *jen.Statement {
 	//
 	// Generate config for arguments
 	//
@@ -96,7 +96,7 @@ func genArguments(f []*ast.InputValueDefinition) *jen.Statement {
 	//
 	return jen.Qual(graphqlPkg, "FieldConfigArgument").Values(
 		jen.DictFunc(func(d jen.Dict) {
-			for _, arg := range f.Arguments {
+			for _, arg := range args {
 				d[jen.Id(arg.Name.Value)] = genArgument(arg)
 			}
 		}),
@@ -104,7 +104,7 @@ func genArguments(f []*ast.InputValueDefinition) *jen.Statement {
 }
 
 // genArgument generates argument config for given AST
-func genArgument(f *ast.InputValueDefinition) *jen.Statement {
+func genArgument(arg *ast.InputValueDefinition) *jen.Statement {
 	//
 	// Generate config for argument
 	//
@@ -126,9 +126,31 @@ func genArgument(f *ast.InputValueDefinition) *jen.Statement {
 	//    }
 	//
 	return jen.Op("*").Qual(graphqlPkg, "ArgumentConfig").Values(jen.Dict{
-		jen.Id("Type"):       genInputTypeReference(arg.Type),
-		jen.Id("Descrition"): fetchDescription(arg),
+		jen.Id("Type"):        genInputTypeReference(arg.Type),
+		jen.Id("Description"): jen.Lit(fetchDescription(arg)),
 		// TODO: This is probably overly naive(?)
-		jen.Id("DefaultValue"): jen.Lit(arg.DefaultValue.GetValue()),
+		jen.Id("DefaultValue"): genValue(arg.DefaultValue),
 	})
+}
+
+func genValue(v ast.Value) jen.Code {
+	switch val := v.(type) {
+	case nil:
+		return jen.Null()
+	case *ast.ListValue:
+		return jen.ValuesFunc(func(g *jen.Group) {
+			for _, lval := range val.Values {
+				g.Add(genValue(lval))
+			}
+		})
+	case *ast.ObjectValue:
+		return jen.Map(jen.String()).Interface().Values(
+			jen.DictFunc(func(d jen.Dict) {
+				for _, f := range val.Fields {
+					d[jen.Lit(f.Name.Value)] = genValue(f.Value)
+				}
+			}),
+		)
+	}
+	return jen.Lit(v.GetValue())
 }

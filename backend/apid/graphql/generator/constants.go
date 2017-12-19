@@ -8,7 +8,7 @@ const (
 	graphqlPkg = "github.com/graphql-go/graphql"
 
 	// generator utils package
-	utilPkg = "github.com/sensu/backend/graphql/generator/util"
+	utilPkg = "github.com/sensu/sensu-go/backend/graphql/generator/util"
 
 	// used to describe resolverFns that panic when not implemented.
 	missingResolverNote = `// NOTE:
