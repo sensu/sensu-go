@@ -21,6 +21,7 @@ var checkConfigUpdateFields = []string{
 	"Stdin",
 	"Subscriptions",
 	"CheckHooks",
+	"Subdue",
 }
 
 // CheckController exposes actions in which a viewer can perform.
