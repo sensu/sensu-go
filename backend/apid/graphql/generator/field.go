@@ -26,7 +26,7 @@ func genFields(fs []*ast.FieldDefinition) *jen.Statement {
 	//
 	return jen.Qual(graphqlPkg, "Fields").Values(jen.DictFunc(func(d jen.Dict) {
 		for _, f := range fs {
-			d[jen.Id(f.Name.Value)] = genField(f)
+			d[jen.Lit(f.Name.Value)] = genField(f)
 		}
 	}))
 }

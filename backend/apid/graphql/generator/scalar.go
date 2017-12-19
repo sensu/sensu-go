@@ -25,47 +25,54 @@ func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
 // %s represents a collection of methods whose products represent the input and
 // response values of a scalar type.
 //
+//  == Example input SDL
+//
+//    """
+//    Timestamps are great.
+//    """
+//    scalar Timestamp
+//
 //  == Example generated interface
 //
-//  // DateResolver ...
-//  type DateResolver interface {
-//    // Serialize an internal value to include in a response.
-//    Serialize(interface{}) interface{}
-//    // ParseValue parses an externally provided value to use as an input.
-//    ParseValue(interface{}) interface{}
-//    // ParseLiteral parses an externally provided literal value to use as an input.
-//    ParseLiteral(ast.Value) interface{}
-//  }
+//    // DateResolver ...
+//    type DateResolver interface {
+//      // Serialize an internal value to include in a response.
+//      Serialize(interface{}) interface{}
+//      // ParseValue parses an externally provided value to use as an input.
+//      ParseValue(interface{}) interface{}
+//      // ParseLiteral parses an externally provided literal value to use as an input.
+//      ParseLiteral(ast.Value) interface{}
+//    }
 //
-//  // Example implementation ...
+//  == Example implementation
 //
-//  // MyDateResolver implements DateResolver interface
-//  type MyDateResolver struct {
-//    defaultTZ *time.Location
-//    logger    logrus.LogEntry
-//  }
+//    // MyDateResolver implements DateResolver interface
+//    type MyDateResolver struct {
+//      defaultTZ *time.Location
+//      logger    logrus.LogEntry
+//    }
 //
-//  // Serialize serializes given date into RFC 943 compatible string.
-//  func (r *MyDateResolver) Serialize(val interface{}) interface{} {
-//    // ... implementation details ...
-//  }
+//    // Serialize serializes given date into RFC 943 compatible string.
+//    func (r *MyDateResolver) Serialize(val interface{}) interface{} {
+//      // ... implementation details ...
+//    }
 //
-//  // ParseValue takes given value and coerces it into an instance of Time.
-//  func (r *MyDateResolver) ParseValue(val interface{}) interface{} {
-//    // ... implementation details ...
-//    // eg. if val is an int use time.At(), if string time.Parse(), etc.
-//  }
+//    // ParseValue takes given value and coerces it into an instance of Time.
+//    func (r *MyDateResolver) ParseValue(val interface{}) interface{} {
+//      // ... implementation details ...
+//      // eg. if val is an int use time.At(), if string time.Parse(), etc.
+//    }
 //
-//  // ParseValue takes given value and coerces it into an instance of Time.
-//  func (r *MyDateResolver) ParseValue(val ast.Value) interface{} {
-//    // ... implementation details ...
-//    //
-//    // eg.
-//    //
-//    // if string value return value,
-//    // if IntValue Atoi and return value,
-//    // etc.
-//  }`,
+//    // ParseValue takes given value and coerces it into an instance of Time.
+//    func (r *MyDateResolver) ParseValue(val ast.Value) interface{} {
+//      // ... implementation details ...
+//      //
+//      // eg.
+//      //
+//      // if string value return value,
+//      // if IntValue Atoi and return value,
+//      // etc.
+//    }`,
 		resolverName,
 	)
 	// Generate resolver interface.
@@ -100,34 +107,50 @@ func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
 		desc = name + " " + desc
 	}
 
-	// Ex.
-	//   // NameOfMyScalar [the description given in SDL document]
-	//   func NameOfMyScalar() *graphql.Scalar { ... } // implements TypeThunk
+	//
+	// Generates thunk that returns new instance of scalar config
+	//
+	//  == Example input SDL
+	//
+	//    """
+	//    Timestamps are great.
+	//    """
+	//    scalar Timestamp
+	//
+	//  == Example output
+	//
+	//   // Timestamps are great
+	//   func Timestamp() graphql.ScalarConfig {
+	//     return graphql.ScalarConfig{
+	//       Name:         "Timestamp",
+	//       Description:  "Timestamps are great.",
+	//       Serialize:    // ...
+	//       ParseValue:   // ...
+	//       ParseLiteral: // ...
+	//     }
+	//   }
+	//
 	f.Comment(desc)
-	f.Func().Id(name).Params().Op("*").Qual(graphqlPkg, "Scalar").Block(
-		jen.Return(
-			jen.Qual(graphqlPkg, "NewScalar").Call(
-				jen.Qual(graphqlPkg, "ScalarConfig").Values(jen.Dict{
-					// Name & description
-					jen.Id("Name"):        jen.Lit(name),
-					jen.Id("Description"): jen.Lit(typeDesc),
+	f.Func().Id(name).Params().Qual(graphqlPkg, "ScalarConfig").Block(
+		jen.Return(jen.Qual(graphqlPkg, "ScalarConfig").Values(jen.Dict{
+			// Name & description
+			jen.Id("Name"):        jen.Lit(name),
+			jen.Id("Description"): jen.Lit(typeDesc),
 
-					// Resolver funcs
-					jen.Id("Serialize"): jen.Func().Params(jen.Id("_").Interface()).Block(
-						jen.Comment(missingResolverNote),
-						jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
-					),
-					jen.Id("ParseValue"): jen.Func().Params(jen.Id("_").Interface()).Block(
-						jen.Comment(missingResolverNote),
-						jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
-					),
-					jen.Id("ParseLiteral"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Block(
-						jen.Comment(missingResolverNote),
-						jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
-					),
-				}),
+			// Resolver funcs
+			jen.Id("Serialize"): jen.Func().Params(jen.Id("_").Interface()).Block(
+				jen.Comment(missingResolverNote),
+				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),
-		),
+			jen.Id("ParseValue"): jen.Func().Params(jen.Id("_").Interface()).Block(
+				jen.Comment(missingResolverNote),
+				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
+			),
+			jen.Id("ParseLiteral"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Block(
+				jen.Comment(missingResolverNote),
+				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
+			),
+		})),
 	)
 
 	return nil
