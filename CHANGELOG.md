@@ -7,13 +7,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Add check subdue mechanism. Checks can now be subdued for specified time
+windows.
+
+## [2.0.0-alpha.11] - 2017-12-19
 ### Breaking Changes
 - The `Source` field on a check has been renamed to `ProxyEntityID`. Any checks
   using the Source field will have to be recreated.
 
 ### Added
-- Add check subdue mechanism. Checks can now be subdued for specified time
-windows.
 - Silenced entries with ExpireOnResolve set to true will now be deleted when an
 event which has previously failing was resolved
 - TCP/UDP sockets now accept 1.x backward compatible payloads. 1.x Check Result gets translated to a 2.x Event.
