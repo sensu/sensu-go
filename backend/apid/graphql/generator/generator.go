@@ -109,11 +109,12 @@ func genTypeDefinition(f *jen.File, node ast.Node) error {
 		err = genEnum(f, defNode)
 	case *ast.InterfaceDefinition:
 		err = genInterface(f, defNode)
+	case *ast.InputObjectDefinition:
+		err = genInputObject(f, defNode)
 	default:
 		logger.WithField("type", node.GetKind()).Warn("unhandled type encountered")
 	}
 	// Handle schema
-	// Handle input object
 	// Handle directive
 
 	return err

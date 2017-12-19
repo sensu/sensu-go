@@ -82,9 +82,13 @@ enum AnnotatedEnum @onEnum {
   OTHER_VALUE
 }
 
+"""
+InputType is neato
+"""
 input InputType {
   key: String!
   answer: Int = 42
+  answr: Int = 42 @deprecated
 }
 
 input AnnotatedInput @onInputObjectType {

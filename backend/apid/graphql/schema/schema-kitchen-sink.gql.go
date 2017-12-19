@@ -11,7 +11,7 @@ import (
 
 //
 // FooResolver represents a collection of methods whose products represent the
-// response values of an object type.
+// response values of the 'Foo' type.
 //
 //  == Example SDL
 //
@@ -28,41 +28,41 @@ import (
 //
 //  == Example generated interface
 //
-//  // DateResolver ...
-//  type DogResolver interface {
-//    // Name implements response to request for name field.
-//    Name(context.Context, interface{}, graphql.Params) interface{}
-//    // Breed implements response to request for breed field.
-//    Breed(context.Context, interface{}, graphql.Params) interface{}
-//    // IsTypeOf is used to determine if a given value is associated with the Dog type
-//    IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
-//  }
+//   // DogResolver ...
+//   type DogResolver interface {
+//     // Name implements response to request for name field.
+//     Name(context.Context, interface{}, graphql.Params) interface{}
+//     // Breed implements response to request for breed field.
+//     Breed(context.Context, interface{}, graphql.Params) interface{}
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//   }
 //
 //  == Example implementation ...
 //
-//  // MyDogResolver implements DateResolver interface
-//  type MyDogResolver struct {
-//    logger logrus.LogEntry
-//    store interface{
-//      store.BreedStore
-//      store.DogStore
-//    }
-//  }
+//   // MyDogResolver implements DogResolver interface
+//   type MyDogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
 //
-//  // Name implements response to request for name field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    return dog.GetName()
-//  }
+//   // Name implements response to request for name field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     return dog.GetName()
+//   }
 //
-//  // Breed implements response to request for breed field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    breed := r.store.GetBreed(dog.GetBreedName())
-//    return breed
-//  }
+//   // Breed implements response to request for breed field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
 type FooResolver interface {
 	// one implements response to request for 'One' field.
 	One(context.Context, interface{}, graphql.Params) interface{}
@@ -168,7 +168,7 @@ func Foo() graphql.ObjectConfig {
 
 //
 // AnnotatedObjectResolver represents a collection of methods whose products represent the
-// response values of an object type.
+// response values of the 'AnnotatedObject' type.
 //
 //  == Example SDL
 //
@@ -185,41 +185,41 @@ func Foo() graphql.ObjectConfig {
 //
 //  == Example generated interface
 //
-//  // DateResolver ...
-//  type DogResolver interface {
-//    // Name implements response to request for name field.
-//    Name(context.Context, interface{}, graphql.Params) interface{}
-//    // Breed implements response to request for breed field.
-//    Breed(context.Context, interface{}, graphql.Params) interface{}
-//    // IsTypeOf is used to determine if a given value is associated with the Dog type
-//    IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
-//  }
+//   // DogResolver ...
+//   type DogResolver interface {
+//     // Name implements response to request for name field.
+//     Name(context.Context, interface{}, graphql.Params) interface{}
+//     // Breed implements response to request for breed field.
+//     Breed(context.Context, interface{}, graphql.Params) interface{}
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//   }
 //
 //  == Example implementation ...
 //
-//  // MyDogResolver implements DateResolver interface
-//  type MyDogResolver struct {
-//    logger logrus.LogEntry
-//    store interface{
-//      store.BreedStore
-//      store.DogStore
-//    }
-//  }
+//   // MyDogResolver implements DogResolver interface
+//   type MyDogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
 //
-//  // Name implements response to request for name field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    return dog.GetName()
-//  }
+//   // Name implements response to request for name field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     return dog.GetName()
+//   }
 //
-//  // Breed implements response to request for breed field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    breed := r.store.GetBreed(dog.GetBreedName())
-//    return breed
-//  }
+//   // Breed implements response to request for breed field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
 type AnnotatedObjectResolver interface {
 	// annotatedField implements response to request for 'AnnotatedField' field.
 	AnnotatedField(context.Context, interface{}, graphql.Params) interface{}
@@ -724,9 +724,47 @@ func AnnotatedEnum() graphql.EnumConfig {
 	}
 }
 
+// InputType is neato
+func InputType() graphql.InputObjectConfig {
+	return graphql.InputObjectConfig{
+		Description: "InputType is neato",
+		Fields: graphql.InputObjectFieldMap{
+			"answer": &graphql.InputObjectFieldConfig{
+				"Description": "self descriptive",
+				"Name":        "answer",
+				"Type":        graphql.Int,
+			},
+			"answr": &graphql.InputObjectFieldConfig{
+				"Description": "self descriptive",
+				"Name":        "answr",
+				"Type":        graphql.Int,
+			},
+			"key": &graphql.InputObjectFieldConfig{
+				"Description": "self descriptive",
+				"Name":        "key",
+				"Type":        graphql.NonNull(graphql.String),
+			},
+		},
+		Name: "InputType",
+	}
+}
+
+// AnnotatedInput self descriptive
+func AnnotatedInput() graphql.InputObjectConfig {
+	return graphql.InputObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql.InputObjectFieldMap{"annotatedField": &graphql.InputObjectFieldConfig{
+			"Description": "self descriptive",
+			"Name":        "annotatedField",
+			"Type":        util.Input("Type"),
+		}},
+		Name: "AnnotatedInput",
+	}
+}
+
 //
 // NoFieldsResolver represents a collection of methods whose products represent the
-// response values of an object type.
+// response values of the 'NoFields' type.
 //
 //  == Example SDL
 //
@@ -743,41 +781,41 @@ func AnnotatedEnum() graphql.EnumConfig {
 //
 //  == Example generated interface
 //
-//  // DateResolver ...
-//  type DogResolver interface {
-//    // Name implements response to request for name field.
-//    Name(context.Context, interface{}, graphql.Params) interface{}
-//    // Breed implements response to request for breed field.
-//    Breed(context.Context, interface{}, graphql.Params) interface{}
-//    // IsTypeOf is used to determine if a given value is associated with the Dog type
-//    IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
-//  }
+//   // DogResolver ...
+//   type DogResolver interface {
+//     // Name implements response to request for name field.
+//     Name(context.Context, interface{}, graphql.Params) interface{}
+//     // Breed implements response to request for breed field.
+//     Breed(context.Context, interface{}, graphql.Params) interface{}
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//   }
 //
 //  == Example implementation ...
 //
-//  // MyDogResolver implements DateResolver interface
-//  type MyDogResolver struct {
-//    logger logrus.LogEntry
-//    store interface{
-//      store.BreedStore
-//      store.DogStore
-//    }
-//  }
+//   // MyDogResolver implements DogResolver interface
+//   type MyDogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
 //
-//  // Name implements response to request for name field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    return dog.GetName()
-//  }
+//   // Name implements response to request for name field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     return dog.GetName()
+//   }
 //
-//  // Breed implements response to request for breed field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    breed := r.store.GetBreed(dog.GetBreedName())
-//    return breed
-//  }
+//   // Breed implements response to request for breed field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
 type NoFieldsResolver interface {
 	// IsTypeOf is used to determine if a given value is associated with the NoFields type
 	IsTypeOf(context.Context, graphql.IsTypeOfParams) interface{}
