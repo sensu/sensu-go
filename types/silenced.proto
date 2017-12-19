@@ -43,6 +43,6 @@ message Silenced {
   string environment = 9;
 
   // Begin is a timestamp at which the silenced entry takes effect.
- int64 begin = 10;
+  int64 begin = 10;
 }
 
