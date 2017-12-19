@@ -37,6 +37,10 @@ func (a *Agent) handleCheck(payload []byte) error {
 
 func (a *Agent) executeCheck(request *types.CheckRequest) {
 	inProgress = append(inProgress, request.Config.Name)
+	defer func() {
+		inProgress = utilstrings.Remove(request.Config.Name, inProgress)
+	}()
+
 	checkConfig := request.Config
 	checkAssets := request.Assets
 	checkHooks := request.Hooks
@@ -105,7 +109,6 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	}
 
 	a.sendMessage(transport.MessageTypeEvent, msg)
-	inProgress = utilstrings.Remove(checkConfig.Name, inProgress)
 }
 
 func (a *Agent) sendFailure(event *types.Event, err error) {
