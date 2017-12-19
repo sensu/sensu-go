@@ -28,12 +28,12 @@ func (o *mockType) Error() error        { return nil }
 
 // OutputType mocks a type (Object, Scalar, Enum, etc.)
 func OutputType(name string) graphql.Output {
-	return mockType{name}
+	return &mockType{name}
 }
 
 // InputType mocks a type (InputObject, Scalar, Enum, etc.)
 func InputType(name string) graphql.Input {
-	return mockType{name}
+	return &mockType{name}
 }
 
 // Interface mocks an interface

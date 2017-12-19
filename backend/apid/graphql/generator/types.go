@@ -13,6 +13,12 @@ func genOutputTypeReference(t ast.Type) *jen.Statement {
 	return genTypeReference(t, "Output")
 }
 
+func genMockObjTypeReference(t *ast.Named) *jen.Statement {
+	return jen.Op("&").Qual(graphqlPkg, "Object").Values(jen.Dict{
+		jen.Id("PrivateName"): jen.Lit(t.Name.Value),
+	})
+}
+
 func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 	var wrapperType ast.Type
 	var namedType *ast.Named

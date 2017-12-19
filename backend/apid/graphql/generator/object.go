@@ -130,7 +130,7 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	)
 
 	//
-	// Generates thunk that returns new instance of object type
+	// Generates thunk that returns new instance of object config
 	//
 	//  == Example input SDL
 	//
