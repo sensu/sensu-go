@@ -256,6 +256,138 @@ func AnnotatedObject() graphql.ObjectConfig {
 }
 
 //
+// BarResolver represents a collection of methods whose products represent the input and
+// response values of a interface type.
+//
+//  == Example generated interface
+//
+//  // PetResolver ...
+//  type PetResolver interface {
+//    // ResolveType should return name of type given a value
+//    ResolveType(graphql.ResolveTypeParams) string
+//  }
+//
+//  // Example implementation ...
+//
+//  // MyPetResolver implements DateResolver interface
+//  type MyPetResolver struct {
+//    logger    logrus.LogEntry
+//  }
+//
+//  // ResolveType should return name of type given a value
+//  func (r *MyPetResolver) ResolveType(p graphql.ResolveTypeParams) string {
+//    // ... implementation details ...
+//    switch pet := p.Value.(type) {
+//    when *Dog:
+//      return "Dog" // Handled by type identified by 'Dog'
+//    when *Cat:
+//      return "Cat" // Handled by type identified by 'Cat'
+//    }
+//    panic("Unimplemented")
+//  }
+type BarResolver interface {
+	// ResolveType should return name of type given a value
+	ResolveType(graphql.ResolveTypeParams) *string
+}
+
+// Bar self descriptive
+func Bar() graphql.InterfaceConfig {
+	return graphql.InterfaceConfig{
+		Description: "self descriptive",
+		Fields: graphql.Fields{
+			four: graphql.Field{
+				Args: graphql.FieldConfigArgument{argument: *graphql.ArgumentConfig{
+					DefaultValue: "string",
+					Description:  "self descriptive",
+					Type:         graphql.String,
+				}},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "four",
+				Type:              graphql.String,
+			},
+			one: graphql.Field{
+				Args:              graphql.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "one",
+				Type:              util.Output("Type"),
+			},
+		},
+		Name: "Bar",
+		ResolveType: func(_ graphql.ResolveTypeParams) string {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see BarResolver.")
+		},
+	}
+}
+
+//
+// AnnotatedInterfaceResolver represents a collection of methods whose products represent the input and
+// response values of a interface type.
+//
+//  == Example generated interface
+//
+//  // PetResolver ...
+//  type PetResolver interface {
+//    // ResolveType should return name of type given a value
+//    ResolveType(graphql.ResolveTypeParams) string
+//  }
+//
+//  // Example implementation ...
+//
+//  // MyPetResolver implements DateResolver interface
+//  type MyPetResolver struct {
+//    logger    logrus.LogEntry
+//  }
+//
+//  // ResolveType should return name of type given a value
+//  func (r *MyPetResolver) ResolveType(p graphql.ResolveTypeParams) string {
+//    // ... implementation details ...
+//    switch pet := p.Value.(type) {
+//    when *Dog:
+//      return "Dog" // Handled by type identified by 'Dog'
+//    when *Cat:
+//      return "Cat" // Handled by type identified by 'Cat'
+//    }
+//    panic("Unimplemented")
+//  }
+type AnnotatedInterfaceResolver interface {
+	// ResolveType should return name of type given a value
+	ResolveType(graphql.ResolveTypeParams) *string
+}
+
+// AnnotatedInterface has stuff
+func AnnotatedInterface() graphql.InterfaceConfig {
+	return graphql.InterfaceConfig{
+		Description: "AnnotatedInterface has stuff",
+		Fields: graphql.Fields{annotatedField: graphql.Field{
+			Args: graphql.FieldConfigArgument{arg: *graphql.ArgumentConfig{
+				Description: "self descriptive",
+				Type:        util.Input("Type"),
+			}},
+			DeprecationReason: "",
+			Description:       "self descriptive",
+			Name:              "annotatedField",
+			Type:              util.Output("Type"),
+		}},
+		Name: "AnnotatedInterface",
+		ResolveType: func(_ graphql.ResolveTypeParams) string {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see AnnotatedInterfaceResolver.")
+		},
+	}
+}
+
+//
 // FeedResolver represents a collection of methods whose products represent the
 // response values of a union type.
 //
@@ -263,8 +395,8 @@ func AnnotatedObject() graphql.ObjectConfig {
 //
 //  // FeedResolver ...
 //  type FeedResolver interface {
-//    // ResolveType ... TODO
-//    ResolveType(graphql.ResolveTypeParams) *graphql.Object
+//    // ResolveType should return name of type given a value
+//    ResolveType(graphql.ResolveTypeParams) string
 //  }
 //
 //  // Example implementation ...
@@ -279,8 +411,8 @@ func AnnotatedObject() graphql.ObjectConfig {
 //    // ... implementation details ...
 //  }
 type FeedResolver interface {
-	// ResolveType ...
-	ResolveType(graphql.ResolveTypeParams) *graphql.Object
+	// ResolveType should return name of type given a value.
+	ResolveType(graphql.ResolveTypeParams) string
 }
 
 // Feed includes all stuff and things.
@@ -288,7 +420,7 @@ func Feed() graphql.UnionConfig {
 	return graphql.UnionConfig{
 		Description: "Feed includes all stuff and things.",
 		Name:        "Feed",
-		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
+		ResolveType: func(_ graphql.ResolveTypeParams) string {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -311,8 +443,8 @@ func Feed() graphql.UnionConfig {
 //
 //  // FeedResolver ...
 //  type FeedResolver interface {
-//    // ResolveType ... TODO
-//    ResolveType(graphql.ResolveTypeParams) *graphql.Object
+//    // ResolveType should return name of type given a value
+//    ResolveType(graphql.ResolveTypeParams) string
 //  }
 //
 //  // Example implementation ...
@@ -327,8 +459,8 @@ func Feed() graphql.UnionConfig {
 //    // ... implementation details ...
 //  }
 type AnnotatedUnionResolver interface {
-	// ResolveType ...
-	ResolveType(graphql.ResolveTypeParams) *graphql.Object
+	// ResolveType should return name of type given a value.
+	ResolveType(graphql.ResolveTypeParams) string
 }
 
 // AnnotatedUnion i dont care
@@ -336,7 +468,7 @@ func AnnotatedUnion() graphql.UnionConfig {
 	return graphql.UnionConfig{
 		Description: "AnnotatedUnion i dont care",
 		Name:        "AnnotatedUnion",
-		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
+		ResolveType: func(_ graphql.ResolveTypeParams) string {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these

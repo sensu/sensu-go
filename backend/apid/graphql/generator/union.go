@@ -20,35 +20,35 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 	//
 
 	f.Commentf(`//
-	// %s represents a collection of methods whose products represent the 
-	// response values of a union type.
-	//
-	//  == Example generated interface
-	//
-	//  // FeedResolver ...
-	//  type FeedResolver interface {
-	//    // ResolveType ... TODO
-	//    ResolveType(graphql.ResolveTypeParams) *graphql.Object
-	//  }
-	//
-	//  // Example implementation ...
-	//
-	//  // MyFeedResolver implements FeedResolver interface
-	//  type MyFeedResolver struct {
-	//    logger    logrus.LogEntry
-	//  }
-	//
-	//  // ResolveType ... TODO
-	//  func (r *MyFeedResolver) ResolveType(p graphql.ResolveTypeParams) *graphql.Object {
-	//    // ... implementation details ...
-	//  }`,
+// %s represents a collection of methods whose products represent the 
+// response values of a union type.
+//
+//  == Example generated interface
+//
+//  // FeedResolver ...
+//  type FeedResolver interface {
+//    // ResolveType should return name of type given a value
+//    ResolveType(graphql.ResolveTypeParams) string
+//  }
+//
+//  // Example implementation ...
+//
+//  // MyFeedResolver implements FeedResolver interface
+//  type MyFeedResolver struct {
+//    logger    logrus.LogEntry
+//  }
+//
+//  // ResolveType ... TODO
+//  func (r *MyFeedResolver) ResolveType(p graphql.ResolveTypeParams) *graphql.Object {
+//    // ... implementation details ...
+//  }`,
 		resolverName,
 	)
 	// Generate resolver interface.
 	f.Type().Id(resolverName).Interface(
 		// ResolveType method.
-		jen.Comment("ResolveType ..."),
-		jen.Id("ResolveType").Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).Op("*").Qual(graphqlPkg, "Object"),
+		jen.Comment("ResolveType should return name of type given a value."),
+		jen.Id("ResolveType").Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).String(),
 	)
 
 	//
@@ -88,7 +88,7 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 			),
 
 			// Resolver funcs
-			jen.Id("ResolveType"): jen.Func().Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).Op("*").Qual(graphqlPkg, "Object").Block(
+			jen.Id("ResolveType"): jen.Func().Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).String().Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),

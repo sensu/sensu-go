@@ -21,7 +21,7 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 
 	f.Commentf(`//
 // %s represents a collection of methods whose products represent the
-// response values of an object type.
+// response values of the '%s' type.
 //
 //  == Example SDL
 //
@@ -38,42 +38,43 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 //
 //  == Example generated interface
 //
-//  // DateResolver ...
-//  type DogResolver interface {
-//    // Name implements response to request for name field.
-//    Name(context.Context, interface{}, graphql.Params) interface{}
-//    // Breed implements response to request for breed field.
-//    Breed(context.Context, interface{}, graphql.Params) interface{}
-//    // IsTypeOf is used to determine if a given value is associated with the Dog type
-//    IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
-//  }
+//   // DogResolver ...
+//   type DogResolver interface {
+//     // Name implements response to request for name field.
+//     Name(context.Context, interface{}, graphql.Params) interface{}
+//     // Breed implements response to request for breed field.
+//     Breed(context.Context, interface{}, graphql.Params) interface{}
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//   }
 //
 //  == Example implementation ...
 //
-//  // MyDogResolver implements DateResolver interface
-//  type MyDogResolver struct {
-//    logger logrus.LogEntry
-//    store interface{
-//      store.BreedStore
-//      store.DogStore
-//    }
-//  }
+//   // MyDogResolver implements DogResolver interface
+//   type MyDogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
 //
-//  // Name implements response to request for name field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    return dog.GetName()
-//  }
+//   // Name implements response to request for name field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     return dog.GetName()
+//   }
 //
-//  // Breed implements response to request for breed field.
-//  func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
-//    // ... implementation details ...
-//    dog := r.(DogGetter)
-//    breed := r.store.GetBreed(dog.GetBreedName())
-//    return breed
-//  }`,
+//   // Breed implements response to request for breed field.
+//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//     // ... implementation details ...
+//     dog := r.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }`,
 		resolverName,
+		name,
 	)
 	// Generate resolver interface.
 	f.Type().Id(resolverName).InterfaceFunc(func(g *jen.Group) {
@@ -144,17 +145,17 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	//      breed: [Breed]
 	//    }
 	//
-	//   == Example output
+	//  == Example output
 	//
 	//   // Dogs are not hooman
-	//   func Dog() *graphql.Object { // implements TypeThunk
-	//     return graphql.NewObject(graphql.ObjectConfig{
+	//   func Dog() graphql.ObjectConfig { // implements TypeThunk
+	//     return graphql.ObjectConfig{
 	//       Name:        "Dog",
 	//       Description: "are not hooman",
 	//       Interfaces:  // ...
 	//       Fields:      // ...
 	//       IsKindOf:    // ...
-	//     })
+	//     }
 	//   }
 	//
 	f.Comment(desc)
