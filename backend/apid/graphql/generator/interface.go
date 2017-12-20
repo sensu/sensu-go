@@ -8,7 +8,8 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
+func genInterface(node *ast.InterfaceDefinition) jen.Code {
+	code := newGroup()
 	name := node.GetName().Value
 	resolverName := fmt.Sprintf("%sResolver", name)
 
@@ -19,7 +20,7 @@ func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
 	// ... method:  ResolveType
 	//
 
-	f.Commentf(`//
+	code.Commentf(`//
 // %s represents a collection of methods whose products represent the input and
 // response values of a interface type.
 //
@@ -52,7 +53,7 @@ func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
 		resolverName,
 	)
 	// Generate resolver interface.
-	f.Type().Id(resolverName).Interface(
+	code.Type().Id(resolverName).Interface(
 		jen.Comment("ResolveType should return name of type given a value"),
 		jen.Id("ResolveType").Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).Op("*").String(),
 	)
@@ -99,8 +100,8 @@ func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
 	//      }
 	//    }
 	//
-	f.Comment(desc)
-	f.Func().Id(name).Params().Qual(graphqlPkg, "InterfaceConfig").Block(
+	code.Comment(desc)
+	code.Func().Id(name).Params().Qual(graphqlPkg, "InterfaceConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "InterfaceConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
@@ -115,5 +116,5 @@ func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
 		})),
 	)
 
-	return nil
+	return code
 }

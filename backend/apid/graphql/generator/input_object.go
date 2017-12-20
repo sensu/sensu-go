@@ -7,7 +7,8 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genInputObject(f *jen.File, node *ast.InputObjectDefinition) error {
+func genInputObject(node *ast.InputObjectDefinition) jen.Code {
+	code := newGroup()
 	name := node.GetName().Value
 	typeDesc := fetchDescription(node)
 
@@ -44,8 +45,8 @@ func genInputObject(f *jen.File, node *ast.InputObjectDefinition) error {
 	//    }
 	//  }
 	//
-	f.Comment(desc)
-	f.Func().Id(name).Params().Qual(graphqlPkg, "InputObjectConfig").Block(
+	code.Comment(desc)
+	code.Func().Id(name).Params().Qual(graphqlPkg, "InputObjectConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "InputObjectConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
@@ -53,7 +54,7 @@ func genInputObject(f *jen.File, node *ast.InputObjectDefinition) error {
 		})),
 	)
 
-	return nil
+	return code
 }
 
 func genInputObjectFields(fields []*ast.InputValueDefinition) jen.Code {

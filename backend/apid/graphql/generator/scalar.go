@@ -8,7 +8,8 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
+func genScalar(node *ast.ScalarDefinition) jen.Code {
+	code := newGroup()
 	name := node.GetName().Value
 	resolverName := fmt.Sprintf("%sResolver", name)
 
@@ -21,7 +22,7 @@ func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
 	// ... method:  ParseLiteral
 	//
 
-	f.Commentf(`//
+	code.Commentf(`//
 // %s represents a collection of methods whose products represent the input and
 // response values of a scalar type.
 //
@@ -76,7 +77,7 @@ func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
 		resolverName,
 	)
 	// Generate resolver interface.
-	f.Type().Id(resolverName).Interface(
+	code.Type().Id(resolverName).Interface(
 		// Serialize method.
 		jen.Comment("Serialize an internal value to include in a response."),
 		jen.Id("Serialize").Params(jen.Id("interface{}")).Interface(),
@@ -130,8 +131,8 @@ func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
 	//     }
 	//   }
 	//
-	f.Comment(desc)
-	f.Func().Id(name).Params().Qual(graphqlPkg, "ScalarConfig").Block(
+	code.Comment(desc)
+	code.Func().Id(name).Params().Qual(graphqlPkg, "ScalarConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "ScalarConfig").Values(jen.Dict{
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
@@ -153,5 +154,5 @@ func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
 		})),
 	)
 
-	return nil
+	return code
 }

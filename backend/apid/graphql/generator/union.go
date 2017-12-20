@@ -8,7 +8,8 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genUnion(f *jen.File, node *ast.UnionDefinition) error {
+func genUnion(node *ast.UnionDefinition) jen.Code {
+	code := newGroup()
 	name := node.GetName().Value
 	resolverName := fmt.Sprintf("%sResolver", name)
 
@@ -19,7 +20,7 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 	// ... method:  ResolveType
 	//
 
-	f.Commentf(`//
+	code.Commentf(`//
 // %s represents a collection of methods whose products represent the 
 // response values of a union type.
 //
@@ -45,7 +46,7 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 		resolverName,
 	)
 	// Generate resolver interface.
-	f.Type().Id(resolverName).Interface(
+	code.Type().Id(resolverName).Interface(
 		// ResolveType method.
 		jen.Comment("ResolveType should return name of type given a value."),
 		jen.Id("ResolveType").Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).String(),
@@ -71,8 +72,8 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 	// Ex.
 	//   // NameOfMyUnion [the description given in SDL document]
 	//   func NameOfMyUnion() *graphql.Scalar { ... } // implements TypeThunk
-	f.Comment(desc)
-	f.Func().Id(name).Params().Qual(graphqlPkg, "UnionConfig").Block(
+	code.Comment(desc)
+	code.Func().Id(name).Params().Qual(graphqlPkg, "UnionConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "UnionConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
@@ -93,5 +94,5 @@ func genUnion(f *jen.File, node *ast.UnionDefinition) error {
 		})),
 	)
 
-	return nil
+	return code
 }

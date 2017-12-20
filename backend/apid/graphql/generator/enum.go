@@ -7,7 +7,8 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genEnum(f *jen.File, node *ast.EnumDefinition) error {
+func genEnum(node *ast.EnumDefinition) jen.Code {
+	code := newGroup()
 	name := node.GetName().Value
 
 	//
@@ -67,8 +68,8 @@ func genEnum(f *jen.File, node *ast.EnumDefinition) error {
 	//        },
 	//      }
 	//    }
-	f.Comment(desc)
-	f.Func().Id(name).Params().Qual(graphqlPkg, "EnumConfig").Block(
+	code.Comment(desc)
+	code.Func().Id(name).Params().Qual(graphqlPkg, "EnumConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "EnumConfig").Values(jen.Dict{
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
@@ -77,7 +78,7 @@ func genEnum(f *jen.File, node *ast.EnumDefinition) error {
 		})),
 	)
 
-	return nil
+	return code
 }
 
 func genEnumValues(values []*ast.EnumValueDefinition) jen.Code {

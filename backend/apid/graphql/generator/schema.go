@@ -7,7 +7,9 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genSchema(f *jen.File, node *ast.SchemaDefinition) error {
+func genSchema(node *ast.SchemaDefinition) jen.Code {
+	code := newGroup()
+
 	//
 	// Generates thunk that returns new instance of schema config
 	//
@@ -31,9 +33,8 @@ func genSchema(f *jen.File, node *ast.SchemaDefinition) error {
 	//      }
 	//    }
 	//
-
-	f.Comment("Schema exposes the root types for each operation.")
-	f.Func().Id("Schema").Params().Qual(graphqlPkg, "SchemaConfig").Block(
+	code.Comment("Schema exposes the root types for each operation.")
+	code.Func().Id("Schema").Params().Qual(graphqlPkg, "SchemaConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "SchemaConfig").Values(
 			jen.DictFunc(func(d jen.Dict) {
 				for _, op := range node.OperationTypes {
@@ -43,5 +44,6 @@ func genSchema(f *jen.File, node *ast.SchemaDefinition) error {
 			}),
 		)),
 	)
-	return nil
+
+	return code
 }

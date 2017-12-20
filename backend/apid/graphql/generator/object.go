@@ -8,7 +8,8 @@ import (
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
-func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
+func genObjectType(node *ast.ObjectDefinition) jen.Code {
+	code := newGroup()
 	name := node.GetName().Value
 	resolverName := fmt.Sprintf("%sResolver", name)
 
@@ -19,7 +20,7 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	// ... method:  [one method for each field]
 	//
 
-	f.Commentf(`//
+	code.Commentf(`//
 // %s represents a collection of methods whose products represent the
 // response values of the '%s' type.
 //
@@ -84,7 +85,7 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 		name,
 	)
 	// Generate resolver interface.
-	f.Type().Id(resolverName).InterfaceFunc(func(g *jen.Group) {
+	code.Type().Id(resolverName).InterfaceFunc(func(g *jen.Group) {
 		for _, field := range node.Fields {
 			// Define method for each field in object type
 			name := field.Name.Value
@@ -163,8 +164,8 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	//     }
 	//   }
 	//
-	f.Comment(desc)
-	f.Func().Id(name).Params().Qual(graphqlPkg, "ObjectConfig").Block(
+	code.Comment(desc)
+	code.Func().Id(name).Params().Qual(graphqlPkg, "ObjectConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "ObjectConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
@@ -176,5 +177,6 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 			),
 		})),
 	)
-	return nil
+
+	return code
 }
