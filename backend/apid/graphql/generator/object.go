@@ -106,7 +106,7 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 		g.Id("IsTypeOf").Params( // IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
 			jen.Qual("context", "Context"),
 			jen.Qual(graphqlPkg, "IsTypeOfParams"),
-		).Interface()
+		).Bool()
 	})
 
 	//
