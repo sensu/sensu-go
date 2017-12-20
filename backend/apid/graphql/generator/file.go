@@ -3,6 +3,7 @@ package generator
 import (
 	"errors"
 	"io/ioutil"
+	"path/filepath"
 
 	"github.com/jamesdphillips/graphql/language/ast"
 	"github.com/jamesdphillips/graphql/language/parser"
@@ -32,6 +33,11 @@ func ParseFile(path string) (*GraphQLFile, error) {
 		path: path,
 		ast:  ast,
 	}, nil
+}
+
+// Filename returns the file's name
+func (file *GraphQLFile) Filename() string {
+	return filepath.Base(file.path)
 }
 
 // Definitions returns all definition nodes found in document root.

@@ -76,7 +76,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, err.Error())
 			logger.Fatal("unable to generate file")
 		}
-		logger.Info("completed successfully")
+		logger.WithField("file", f.Filename()).Info("written successfully")
 	}
 }
 
