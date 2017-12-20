@@ -22,15 +22,14 @@ func genOutputTypeReference(t ast.Type) *jen.Statement {
 }
 
 func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
-	var wrapperType ast.Type
 	var namedType *ast.Named
 	switch ttype := t.(type) {
 	case *ast.List:
-		wrapperType = ttype
-		namedType = ttype.Type.(*ast.Named)
+		s := genTypeReference(ttype.Type, expectedType)
+		return jen.Qual(graphqlPkg, "NewList").Call(s)
 	case *ast.NonNull:
-		wrapperType = t
-		namedType = ttype.Type.(*ast.Named)
+		s := genTypeReference(ttype.Type, expectedType)
+		return jen.Qual(graphqlPkg, "NewNonNull").Call(s)
 	case *ast.Named:
 		namedType = ttype
 	default:
@@ -54,10 +53,5 @@ func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 		valueStatement = jen.Qual(utilPkg, expectedType).Call(jen.Lit(name))
 	}
 
-	if _, ok := wrapperType.(*ast.NonNull); ok {
-		return jen.Qual(graphqlPkg, "NewNonNull").Call(valueStatement)
-	} else if _, ok := wrapperType.(*ast.List); ok {
-		return jen.Qual(graphqlPkg, "NewList").Call(valueStatement)
-	}
 	return valueStatement
 }

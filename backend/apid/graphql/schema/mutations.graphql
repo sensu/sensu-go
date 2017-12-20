@@ -1,0 +1,30 @@
+"""
+The root query for implementing GraphQL mutations.
+"""
+type Mutation {
+  "Creates a new check."
+  createCheck(input: CreateCheckInput!): CreateCheckPayload
+}
+
+#
+# CreateCheckMutation
+#
+
+input CreateCheckInput {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "namespace the resulting resource will belong to"
+  ns: Namespace = {organization: "default", environment: "default"}
+
+  name: String!
+  command: String!
+}
+
+type CreateCheckPayload {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "The new check."
+  check: Check!
+}
