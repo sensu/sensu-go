@@ -138,7 +138,7 @@ func genValue(v ast.Value) jen.Code {
 	case nil:
 		return jen.Null()
 	case *ast.ListValue:
-		return jen.Index().ValuesFunc(func(g *jen.Group) {
+		return jen.Index().Interface().ValuesFunc(func(g *jen.Group) {
 			for _, lval := range val.Values {
 				g.Add(genValue(lval))
 			}

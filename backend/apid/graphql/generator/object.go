@@ -45,7 +45,7 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 //     // Breed implements response to request for breed field.
 //     Breed(context.Context, interface{}, graphql.Params) interface{}
 //     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 //   }
 //
 //  == Example implementation ...
@@ -72,6 +72,13 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 //     dog := r.(DogGetter)
 //     breed := r.store.GetBreed(dog.GetBreedName())
 //     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *MyDogResolver) IsTypeOf(r interface{}, p graphql.IsTypeOfParams) interface{} {
+//     // ... implementation details ...
+//     _, ok := r.(DogGetter)
+//     return ok
 //   }`,
 		resolverName,
 		name,
@@ -119,12 +126,12 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 	}
 
 	// Generate interface references
-	ints := jen.Index().Op("*").Qual(graphqlPkg, "Interface").Values(
-		jen.ValuesFunc(func(g *jen.Group) {
+	ints := jen.Index().Op("*").Qual(graphqlPkg, "Interface").ValuesFunc(
+		func(g *jen.Group) {
 			for _, n := range node.Interfaces {
 				g.Line().Add(genMockInterfaceReference(n))
 			}
-		}),
+		},
 	)
 
 	//
@@ -163,7 +170,7 @@ func genObjectType(f *jen.File, node *ast.ObjectDefinition) error {
 			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Interfaces"):  ints,
 			jen.Id("Fields"):      genFields(node.Fields),
-			jen.Id("IsTypeOf"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Block(
+			jen.Id("IsTypeOf"): jen.Func().Params(jen.Id("_").Qual(graphqlPkg, "IsTypeOfParams")).Bool().Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),

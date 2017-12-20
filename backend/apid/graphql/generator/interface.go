@@ -28,7 +28,7 @@ func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
 //  // PetResolver ...
 //  type PetResolver interface {
 //    // ResolveType should return name of type given a value
-//    ResolveType(graphql.ResolveTypeParams) string
+//    ResolveType(interface{}, graphql.ResolveTypeParams) string
 //  }
 //
 //  // Example implementation ...
@@ -39,9 +39,9 @@ func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
 //  }
 //
 //  // ResolveType should return name of type given a value
-//  func (r *MyPetResolver) ResolveType(p graphql.ResolveTypeParams) string {
+//  func (r *MyPetResolver) ResolveType(val interface {}, _ graphql.ResolveTypeParams) string {
 //    // ... implementation details ...
-//    switch pet := p.Value.(type) {
+//    switch pet := val.(type) {
 //    when *Dog:
 //      return "Dog" // Handled by type identified by 'Dog'
 //    when *Cat:
@@ -105,10 +105,13 @@ func genInterface(f *jen.File, node *ast.InterfaceDefinition) error {
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Fields"):      genFields(node.Fields),
-			jen.Id("ResolveType"): jen.Func().Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).String().Block(
-				jen.Comment(missingResolverNote),
-				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
-			),
+			jen.Id("ResolveType"): jen.Func().
+				Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).
+				Op("*").Qual(graphqlPkg, "Object").
+				Block(
+					jen.Comment(missingResolverNote),
+					jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
+				),
 		})),
 	)
 

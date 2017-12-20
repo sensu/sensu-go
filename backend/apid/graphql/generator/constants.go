@@ -2,7 +2,7 @@ package generator
 
 const (
 	// ast package
-	astPkg = "github.com/jamesdphillips/graphql/language/ast"
+	astPkg = "github.com/graphql-go/graphql/language/ast"
 
 	// graphql definition package
 	graphqlPkg = "github.com/graphql-go/graphql"

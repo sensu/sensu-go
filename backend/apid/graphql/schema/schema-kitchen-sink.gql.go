@@ -3,7 +3,7 @@ package schema
 import (
 	context "context"
 	graphql "github.com/graphql-go/graphql"
-	ast "github.com/jamesdphillips/graphql/language/ast"
+	ast "github.com/graphql-go/graphql/language/ast"
 	util "github.com/sensu/sensu-go/backend/apid/graphql/generator/util"
 )
 
@@ -12,8 +12,8 @@ import (
 // Schema exposes the root types for each operation.
 func Schema() graphql.SchemaConfig {
 	return graphql.SchemaConfig{
-		Mutation: &graphql.Object{PrivateName: "MutationType"},
-		Query:    &graphql.Object{PrivateName: "QueryType"},
+		Mutation: util.Object("MutationType"),
+		Query:    util.Object("QueryType"),
 	}
 }
 
@@ -43,7 +43,7 @@ func Schema() graphql.SchemaConfig {
 //     // Breed implements response to request for breed field.
 //     Breed(context.Context, interface{}, graphql.Params) interface{}
 //     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 //   }
 //
 //  == Example implementation ...
@@ -71,6 +71,13 @@ func Schema() graphql.SchemaConfig {
 //     breed := r.store.GetBreed(dog.GetBreedName())
 //     return breed
 //   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *MyDogResolver) IsTypeOf(r interface{}, p graphql.IsTypeOfParams) interface{} {
+//     // ... implementation details ...
+//     _, ok := r.(DogGetter)
+//     return ok
+//   }
 type FooResolver interface {
 	// one implements response to request for 'One' field.
 	One(context.Context, interface{}, graphql.Params) interface{}
@@ -95,9 +102,9 @@ func Foo() graphql.ObjectConfig {
 		Fields: graphql.Fields{
 			"five": &graphql.Field{
 				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
-					DefaultValue: {"string", "string"},
+					DefaultValue: []interface{}{"string", "string"},
 					Description:  "self descriptive",
-					Type:         graphql.List(graphql.String),
+					Type:         graphql.NewList(graphql.String),
 				}},
 				DeprecationReason: "",
 				Description:       "self descriptive",
@@ -120,24 +127,24 @@ func Foo() graphql.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "one is a number.",
 				Name:              "one",
-				Type:              util.Output("Type"),
+				Type:              util.OutputType("Type"),
 			},
 			"six": &graphql.Field{
 				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
 					DefaultValue: map[string]interface{}{"key": "value"},
 					Description:  "self descriptive",
-					Type:         util.Input("InputType"),
+					Type:         util.InputType("InputType"),
 				}},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "six",
-				Type:              util.Output("Type"),
+				Type:              util.OutputType("Type"),
 			},
 			"three": &graphql.Field{
 				Args: graphql.FieldConfigArgument{
 					"argument": &graphql.ArgumentConfig{
 						Description: "self descriptive",
-						Type:        util.Input("InputType"),
+						Type:        util.InputType("InputType"),
 					},
 					"other": &graphql.ArgumentConfig{
 						Description: "self descriptive",
@@ -152,17 +159,17 @@ func Foo() graphql.ObjectConfig {
 			"two": &graphql.Field{
 				Args: graphql.FieldConfigArgument{"argument": &graphql.ArgumentConfig{
 					Description: "self descriptive",
-					Type:        graphql.NonNull(util.Input("InputType")),
+					Type:        graphql.NewNonNull(util.InputType("InputType")),
 				}},
 				DeprecationReason: "",
 				Description:       "I am told that two is also a number",
 				Name:              "two",
-				Type:              util.Output("Type"),
+				Type:              util.OutputType("Type"),
 			},
 		},
-		Interfaces: []*graphql.Interface{{
-			&graphql.Interface{PrivateName: "Bar"}}},
-		IsTypeOf: func(_ ast.Value) {
+		Interfaces: []*graphql.Interface{
+			util.Interface("Bar")},
+		IsTypeOf: func(_ graphql.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -200,7 +207,7 @@ func Foo() graphql.ObjectConfig {
 //     // Breed implements response to request for breed field.
 //     Breed(context.Context, interface{}, graphql.Params) interface{}
 //     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 //   }
 //
 //  == Example implementation ...
@@ -228,6 +235,13 @@ func Foo() graphql.ObjectConfig {
 //     breed := r.store.GetBreed(dog.GetBreedName())
 //     return breed
 //   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *MyDogResolver) IsTypeOf(r interface{}, p graphql.IsTypeOfParams) interface{} {
+//     // ... implementation details ...
+//     _, ok := r.(DogGetter)
+//     return ok
+//   }
 type AnnotatedObjectResolver interface {
 	// annotatedField implements response to request for 'AnnotatedField' field.
 	AnnotatedField(context.Context, interface{}, graphql.Params) interface{}
@@ -243,15 +257,15 @@ func AnnotatedObject() graphql.ObjectConfig {
 			Args: graphql.FieldConfigArgument{"arg": &graphql.ArgumentConfig{
 				DefaultValue: "default",
 				Description:  "self descriptive",
-				Type:         util.Input("Type"),
+				Type:         util.InputType("Type"),
 			}},
 			DeprecationReason: "",
 			Description:       "self descriptive",
 			Name:              "annotatedField",
-			Type:              util.Output("Type"),
+			Type:              util.OutputType("Type"),
 		}},
-		Interfaces: []*graphql.Interface{{}},
-		IsTypeOf: func(_ ast.Value) {
+		Interfaces: []*graphql.Interface{},
+		IsTypeOf: func(_ graphql.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -272,7 +286,7 @@ func AnnotatedObject() graphql.ObjectConfig {
 //  // PetResolver ...
 //  type PetResolver interface {
 //    // ResolveType should return name of type given a value
-//    ResolveType(graphql.ResolveTypeParams) string
+//    ResolveType(interface{}, graphql.ResolveTypeParams) string
 //  }
 //
 //  // Example implementation ...
@@ -283,9 +297,9 @@ func AnnotatedObject() graphql.ObjectConfig {
 //  }
 //
 //  // ResolveType should return name of type given a value
-//  func (r *MyPetResolver) ResolveType(p graphql.ResolveTypeParams) string {
+//  func (r *MyPetResolver) ResolveType(val interface {}, _ graphql.ResolveTypeParams) string {
 //    // ... implementation details ...
-//    switch pet := p.Value.(type) {
+//    switch pet := val.(type) {
 //    when *Dog:
 //      return "Dog" // Handled by type identified by 'Dog'
 //    when *Cat:
@@ -319,11 +333,11 @@ func Bar() graphql.InterfaceConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "one",
-				Type:              util.Output("Type"),
+				Type:              util.OutputType("Type"),
 			},
 		},
 		Name: "Bar",
-		ResolveType: func(_ graphql.ResolveTypeParams) string {
+		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -343,7 +357,7 @@ func Bar() graphql.InterfaceConfig {
 //  // PetResolver ...
 //  type PetResolver interface {
 //    // ResolveType should return name of type given a value
-//    ResolveType(graphql.ResolveTypeParams) string
+//    ResolveType(interface{}, graphql.ResolveTypeParams) string
 //  }
 //
 //  // Example implementation ...
@@ -354,9 +368,9 @@ func Bar() graphql.InterfaceConfig {
 //  }
 //
 //  // ResolveType should return name of type given a value
-//  func (r *MyPetResolver) ResolveType(p graphql.ResolveTypeParams) string {
+//  func (r *MyPetResolver) ResolveType(val interface {}, _ graphql.ResolveTypeParams) string {
 //    // ... implementation details ...
-//    switch pet := p.Value.(type) {
+//    switch pet := val.(type) {
 //    when *Dog:
 //      return "Dog" // Handled by type identified by 'Dog'
 //    when *Cat:
@@ -376,15 +390,15 @@ func AnnotatedInterface() graphql.InterfaceConfig {
 		Fields: graphql.Fields{"annotatedField": &graphql.Field{
 			Args: graphql.FieldConfigArgument{"arg": &graphql.ArgumentConfig{
 				Description: "self descriptive",
-				Type:        util.Input("Type"),
+				Type:        util.InputType("Type"),
 			}},
 			DeprecationReason: "",
 			Description:       "self descriptive",
 			Name:              "annotatedField",
-			Type:              util.Output("Type"),
+			Type:              util.OutputType("Type"),
 		}},
 		Name: "AnnotatedInterface",
-		ResolveType: func(_ graphql.ResolveTypeParams) string {
+		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -428,7 +442,7 @@ func Feed() graphql.UnionConfig {
 	return graphql.UnionConfig{
 		Description: "Feed includes all stuff and things.",
 		Name:        "Feed",
-		ResolveType: func(_ graphql.ResolveTypeParams) string {
+		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -436,10 +450,10 @@ func Feed() graphql.UnionConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see FeedResolver.")
 		},
-		Types: []*graphql.Object{{
-			&graphql.Object{PrivateName: "Story"},
-			&graphql.Object{PrivateName: "Article"},
-			&graphql.Object{PrivateName: "Advert"}}},
+		Types: []*graphql.Object{
+			util.Object("Story"),
+			util.Object("Article"),
+			util.Object("Advert")},
 	}
 }
 
@@ -476,7 +490,7 @@ func AnnotatedUnion() graphql.UnionConfig {
 	return graphql.UnionConfig{
 		Description: "AnnotatedUnion i dont care",
 		Name:        "AnnotatedUnion",
-		ResolveType: func(_ graphql.ResolveTypeParams) string {
+		ResolveType: func(_ graphql.ResolveTypeParams) *graphql.Object {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -484,9 +498,9 @@ func AnnotatedUnion() graphql.UnionConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see AnnotatedUnionResolver.")
 		},
-		Types: []*graphql.Object{{
-			&graphql.Object{PrivateName: "A"},
-			&graphql.Object{PrivateName: "B"}}},
+		Types: []*graphql.Object{
+			util.Object("A"),
+			util.Object("B")},
 	}
 }
 
@@ -556,7 +570,7 @@ func CustomScalar() graphql.ScalarConfig {
 	return graphql.ScalarConfig{
 		Description: "self descriptive",
 		Name:        "CustomScalar",
-		ParseLiteral: func(_ ast.Value) {
+		ParseLiteral: func(_ ast.Value) interface{} {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -564,7 +578,7 @@ func CustomScalar() graphql.ScalarConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see CustomScalarResolver.")
 		},
-		ParseValue: func(_ interface{}) {
+		ParseValue: func(_ interface{}) interface{} {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -572,7 +586,7 @@ func CustomScalar() graphql.ScalarConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see CustomScalarResolver.")
 		},
-		Serialize: func(_ interface{}) {
+		Serialize: func(_ interface{}) interface{} {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -649,7 +663,7 @@ func AnnotatedScalar() graphql.ScalarConfig {
 	return graphql.ScalarConfig{
 		Description: "self descriptive",
 		Name:        "AnnotatedScalar",
-		ParseLiteral: func(_ ast.Value) {
+		ParseLiteral: func(_ ast.Value) interface{} {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -657,7 +671,7 @@ func AnnotatedScalar() graphql.ScalarConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see AnnotatedScalarResolver.")
 		},
-		ParseValue: func(_ interface{}) {
+		ParseValue: func(_ interface{}) interface{} {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -665,7 +679,7 @@ func AnnotatedScalar() graphql.ScalarConfig {
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
 			panic("Unimplemented; see AnnotatedScalarResolver.")
 		},
-		Serialize: func(_ interface{}) {
+		Serialize: func(_ interface{}) interface{} {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these
@@ -750,21 +764,20 @@ func AnnotatedEnum() graphql.EnumConfig {
 func InputType() graphql.InputObjectConfig {
 	return graphql.InputObjectConfig{
 		Description: "InputType is neato",
-		Fields: graphql.InputObjectFieldMap{
+		Fields: graphql.InputObjectConfigFieldMap{
 			"answer": &graphql.InputObjectFieldConfig{
-				"Description": "self descriptive",
-				"Name":        "answer",
-				"Type":        graphql.Int,
+				DefaultValue: "42",
+				Description:  "self descriptive",
+				Type:         graphql.Int,
 			},
 			"answr": &graphql.InputObjectFieldConfig{
-				"Description": "self descriptive",
-				"Name":        "answr",
-				"Type":        graphql.Int,
+				DefaultValue: "42",
+				Description:  "self descriptive",
+				Type:         graphql.Int,
 			},
 			"key": &graphql.InputObjectFieldConfig{
-				"Description": "self descriptive",
-				"Name":        "key",
-				"Type":        graphql.NonNull(graphql.String),
+				Description: "self descriptive",
+				Type:        graphql.NewNonNull(graphql.String),
 			},
 		},
 		Name: "InputType",
@@ -775,10 +788,9 @@ func InputType() graphql.InputObjectConfig {
 func AnnotatedInput() graphql.InputObjectConfig {
 	return graphql.InputObjectConfig{
 		Description: "self descriptive",
-		Fields: graphql.InputObjectFieldMap{"annotatedField": &graphql.InputObjectFieldConfig{
-			"Description": "self descriptive",
-			"Name":        "annotatedField",
-			"Type":        util.Input("Type"),
+		Fields: graphql.InputObjectConfigFieldMap{"annotatedField": &graphql.InputObjectFieldConfig{
+			Description: "self descriptive",
+			Type:        util.InputType("Type"),
 		}},
 		Name: "AnnotatedInput",
 	}
@@ -810,7 +822,7 @@ func AnnotatedInput() graphql.InputObjectConfig {
 //     // Breed implements response to request for breed field.
 //     Breed(context.Context, interface{}, graphql.Params) interface{}
 //     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 //   }
 //
 //  == Example implementation ...
@@ -838,6 +850,13 @@ func AnnotatedInput() graphql.InputObjectConfig {
 //     breed := r.store.GetBreed(dog.GetBreedName())
 //     return breed
 //   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *MyDogResolver) IsTypeOf(r interface{}, p graphql.IsTypeOfParams) interface{} {
+//     // ... implementation details ...
+//     _, ok := r.(DogGetter)
+//     return ok
+//   }
 type NoFieldsResolver interface {
 	// IsTypeOf is used to determine if a given value is associated with the NoFields type
 	IsTypeOf(context.Context, graphql.IsTypeOfParams) interface{}
@@ -848,8 +867,8 @@ func NoFields() graphql.ObjectConfig {
 	return graphql.ObjectConfig{
 		Description: "self descriptive",
 		Fields:      graphql.Fields{},
-		Interfaces:  []*graphql.Interface{{}},
-		IsTypeOf: func(_ ast.Value) {
+		Interfaces:  []*graphql.Interface{},
+		IsTypeOf: func(_ graphql.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
 			// these fields are updated with instantiated resolvers. If these

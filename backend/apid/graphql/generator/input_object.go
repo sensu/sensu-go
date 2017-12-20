@@ -75,13 +75,13 @@ func genInputObjectFields(fields []*ast.InputValueDefinition) jen.Code {
 	//
 	//  == Example output
 	//
-	//    graphql.InputObjectFieldMap{
+	//    graphql.InputObjectFieldConfigMap{
 	//      "name":        &graphql.InputObjectFieldConfig{ ... },
 	//      "newInterval": &graphql.InputObjectFieldConfig{ ... },
 	//    }
 	//
 
-	return jen.Qual(graphqlPkg, "InputObjectFieldMap").Values(
+	return jen.Qual(graphqlPkg, "InputObjectConfigFieldMap").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, field := range fields {
 				d[jen.Lit(field.Name.Value)] = genInputObjectField(field)
@@ -118,8 +118,8 @@ func genInputObjectField(field *ast.InputValueDefinition) jen.Code {
 
 	desc := fetchDescription(field)
 	return jen.Op("&").Qual(graphqlPkg, "InputObjectFieldConfig").Values(jen.Dict{
-		jen.Lit("Name"):        jen.Lit(field.Name.Value),
-		jen.Lit("Type"):        genInputTypeReference(field.Type),
-		jen.Lit("Description"): jen.Lit(desc),
+		jen.Id("Type"):         genInputTypeReference(field.Type),
+		jen.Id("Description"):  jen.Lit(desc),
+		jen.Id("DefaultValue"): genValue(field.DefaultValue),
 	})
 }

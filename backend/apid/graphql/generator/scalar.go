@@ -138,15 +138,15 @@ func genScalar(f *jen.File, node *ast.ScalarDefinition) error {
 			jen.Id("Description"): jen.Lit(typeDesc),
 
 			// Resolver funcs
-			jen.Id("Serialize"): jen.Func().Params(jen.Id("_").Interface()).Block(
+			jen.Id("Serialize"): jen.Func().Params(jen.Id("_").Interface()).Interface().Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),
-			jen.Id("ParseValue"): jen.Func().Params(jen.Id("_").Interface()).Block(
+			jen.Id("ParseValue"): jen.Func().Params(jen.Id("_").Interface()).Interface().Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),
-			jen.Id("ParseLiteral"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Block(
+			jen.Id("ParseLiteral"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Interface().Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),

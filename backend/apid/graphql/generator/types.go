@@ -6,11 +6,11 @@ import (
 )
 
 func genMockInterfaceReference(t *ast.Named) *jen.Statement {
-	return jen.Qual(utilPkg, "Interface").Call(t.Name.Value)
+	return jen.Qual(utilPkg, "Interface").Call(jen.Lit(t.Name.Value))
 }
 
 func genMockObjectReference(t *ast.Named) *jen.Statement {
-	return jen.Qual(utilPkg, "Object").Call(t.Name.Value)
+	return jen.Qual(utilPkg, "Object").Call(jen.Lit(t.Name.Value))
 }
 
 func genInputTypeReference(t ast.Type) *jen.Statement {
@@ -55,9 +55,9 @@ func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 	}
 
 	if _, ok := wrapperType.(*ast.NonNull); ok {
-		return jen.Qual(graphqlPkg, "NonNull").Call(valueStatement)
+		return jen.Qual(graphqlPkg, "NewNonNull").Call(valueStatement)
 	} else if _, ok := wrapperType.(*ast.List); ok {
-		return jen.Qual(graphqlPkg, "List").Call(valueStatement)
+		return jen.Qual(graphqlPkg, "NewList").Call(valueStatement)
 	}
 	return valueStatement
 }
