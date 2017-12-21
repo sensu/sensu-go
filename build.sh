@@ -19,17 +19,17 @@ set_race_flag() {
 
 case "$GOOS" in
     darwin)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
     freebsd)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
     linux)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
     windows)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
 esac
 
 install_deps () {
@@ -55,14 +55,14 @@ cmd_name_map() {
 
     case "$cmd" in
         backend)
-        echo "sensu-backend"
-        ;;
+            echo "sensu-backend"
+            ;;
         agent)
-        echo "sensu-agent"
-        ;;
+            echo "sensu-agent"
+            ;;
         cli)
-        echo "sensuctl"
-        ;;
+            echo "sensuctl"
+            ;;
     esac
 }
 
@@ -170,7 +170,7 @@ linter_commands () {
 unit_test_commands () {
     echo "Running tests..."
 
-    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
+    go test -timeout=60s $RACE $(go list ./... | egrep -v '(testing|vendor)')
     if [ $? -ne 0 ]; then
         echo "Tests failed..."
         exit 1
