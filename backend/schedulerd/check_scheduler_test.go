@@ -21,6 +21,7 @@ type CheckSchedulerSuite struct {
 
 func (suite *CheckSchedulerSuite) SetupTest() {
 	suite.check = types.FixtureCheckConfig("check1")
+	suite.check.Interval = 1
 	suite.msgBus = &messaging.WizardBus{}
 
 	manager := NewStateManager(&mockstore.MockStore{})
@@ -44,7 +45,6 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 func (suite *CheckSchedulerSuite) TestStart() {
 	// Set interval to smallest valid value
 	check := suite.check
-	check.Interval = 1
 	check.Subscriptions = []string{"subscription1"}
 
 	c1 := make(chan interface{}, 10)
@@ -82,6 +82,7 @@ type CheckSubdueSuite struct {
 
 func (suite *CheckSubdueSuite) SetupTest() {
 	suite.check = types.FixtureCheckConfig("check1")
+	suite.check.Interval = 1
 	suite.msgBus = &messaging.WizardBus{}
 
 	manager := NewStateManager(&mockstore.MockStore{})
@@ -105,7 +106,6 @@ func (suite *CheckSubdueSuite) SetupTest() {
 func (suite *CheckSubdueSuite) TestStart() {
 	// Set interval to smallest valid value
 	check := suite.check
-	check.Interval = 1
 	check.Subscriptions = []string{"subscription1"}
 	check.Subdue = &types.TimeWindowWhen{
 		Days: types.TimeWindowDays{
