@@ -15,9 +15,10 @@ import (
 
 // A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
-	CheckName string
-	CheckEnv  string
-	CheckOrg  string
+	CheckName     string
+	CheckEnv      string
+	CheckOrg      string
+	CheckInterval uint32
 
 	StateManager *StateManager
 	MessageBus   messaging.MessageBus
@@ -28,14 +29,14 @@ type CheckScheduler struct {
 }
 
 // Start scheduler, ...
-func (s *CheckScheduler) Start(initialInterval uint) error {
+func (s *CheckScheduler) Start() error {
 	s.stopping = make(chan struct{})
 	s.WaitGroup.Add(1)
 
 	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg, "env": s.CheckEnv})
 	s.logger.Infof("starting new scheduler")
 
-	timer := NewCheckTimer(s.CheckName, initialInterval)
+	timer := NewCheckTimer(s.CheckName, uint(s.CheckInterval))
 	executor := &CheckExecutor{Bus: s.MessageBus}
 
 	// TODO(greg): Refactor this part to make the code more easily tested.
@@ -53,6 +54,12 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 				state := s.StateManager.State()
 				check := state.GetCheck(s.CheckName, s.CheckOrg, s.CheckEnv)
 
+				// The check has been deleted
+				if check == nil {
+					s.logger.Info("check is no longer in state")
+					return
+				}
+
 				if subdue := check.GetSubdue(); subdue != nil {
 					isSubdued, err := sensutime.InWindows(time.Now(), *subdue)
 					if err == nil && isSubdued {
@@ -62,12 +69,6 @@ func (s *CheckScheduler) Start(initialInterval uint) error {
 					if err != nil {
 						s.logger.WithError(err).Print("check scheduler: subdued time window")
 					}
-				}
-
-				// The check has been deleted
-				if check == nil {
-					s.logger.Info("check is no longer in state")
-					return
 				}
 
 				// Reset timer

@@ -26,12 +26,13 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 
 	newSchedulerFn := func(check *types.CheckConfig) *CheckScheduler {
 		return &CheckScheduler{
-			CheckName:    check.Name,
-			CheckEnv:     check.Environment,
-			CheckOrg:     check.Organization,
-			MessageBus:   msgBus,
-			WaitGroup:    wg,
-			StateManager: stateMngr,
+			CheckName:     check.Name,
+			CheckEnv:      check.Environment,
+			CheckOrg:      check.Organization,
+			CheckInterval: check.Interval,
+			MessageBus:    msgBus,
+			WaitGroup:     wg,
+			StateManager:  stateMngr,
 		}
 	}
 
@@ -78,7 +79,7 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 	scheduler := mngrPtr.newSchedulerFn(check)
 
 	// Start scheduling check
-	if err := scheduler.Start(uint(check.Interval)); err != nil {
+	if err := scheduler.Start(); err != nil {
 		return err
 	}
 

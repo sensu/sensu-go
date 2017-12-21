@@ -29,12 +29,13 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 	})
 
 	suite.scheduler = &CheckScheduler{
-		CheckName:    suite.check.Name,
-		CheckEnv:     suite.check.Environment,
-		CheckOrg:     suite.check.Organization,
-		StateManager: manager,
-		MessageBus:   suite.msgBus,
-		WaitGroup:    &sync.WaitGroup{},
+		CheckName:     suite.check.Name,
+		CheckEnv:      suite.check.Environment,
+		CheckOrg:      suite.check.Organization,
+		CheckInterval: suite.check.Interval,
+		StateManager:  manager,
+		MessageBus:    suite.msgBus,
+		WaitGroup:     &sync.WaitGroup{},
 	}
 
 	suite.NoError(suite.msgBus.Start())
@@ -55,7 +56,7 @@ func (suite *CheckSchedulerSuite) TestStart() {
 	)
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start(1))
+	suite.NoError(suite.scheduler.Start())
 	time.Sleep(1 * time.Second)
 	suite.NoError(suite.scheduler.Stop())
 	suite.NoError(suite.msgBus.Stop())
@@ -89,12 +90,13 @@ func (suite *CheckSubdueSuite) SetupTest() {
 	})
 
 	suite.scheduler = &CheckScheduler{
-		CheckName:    suite.check.Name,
-		CheckEnv:     suite.check.Environment,
-		CheckOrg:     suite.check.Organization,
-		StateManager: manager,
-		MessageBus:   suite.msgBus,
-		WaitGroup:    &sync.WaitGroup{},
+		CheckName:     suite.check.Name,
+		CheckEnv:      suite.check.Environment,
+		CheckOrg:      suite.check.Organization,
+		CheckInterval: suite.check.Interval,
+		StateManager:  manager,
+		MessageBus:    suite.msgBus,
+		WaitGroup:     &sync.WaitGroup{},
 	}
 
 	suite.NoError(suite.msgBus.Start())
@@ -129,7 +131,7 @@ func (suite *CheckSubdueSuite) TestStart() {
 	)
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start(1))
+	suite.NoError(suite.scheduler.Start())
 	time.Sleep(1 * time.Second)
 	suite.NoError(suite.scheduler.Stop())
 	suite.NoError(suite.msgBus.Stop())
