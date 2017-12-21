@@ -21,6 +21,7 @@ type CheckSchedulerSuite struct {
 
 func (suite *CheckSchedulerSuite) SetupTest() {
 	suite.check = types.FixtureCheckConfig("check1")
+	suite.check.Interval = 1
 	suite.msgBus = &messaging.WizardBus{}
 
 	manager := NewStateManager(&mockstore.MockStore{})
@@ -29,12 +30,13 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 	})
 
 	suite.scheduler = &CheckScheduler{
-		CheckName:    suite.check.Name,
-		CheckEnv:     suite.check.Environment,
-		CheckOrg:     suite.check.Organization,
-		StateManager: manager,
-		MessageBus:   suite.msgBus,
-		WaitGroup:    &sync.WaitGroup{},
+		CheckName:     suite.check.Name,
+		CheckEnv:      suite.check.Environment,
+		CheckOrg:      suite.check.Organization,
+		CheckInterval: suite.check.Interval,
+		StateManager:  manager,
+		MessageBus:    suite.msgBus,
+		WaitGroup:     &sync.WaitGroup{},
 	}
 
 	suite.NoError(suite.msgBus.Start())
@@ -43,7 +45,6 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 func (suite *CheckSchedulerSuite) TestStart() {
 	// Set interval to smallest valid value
 	check := suite.check
-	check.Interval = 1
 	check.Subscriptions = []string{"subscription1"}
 
 	c1 := make(chan interface{}, 10)
@@ -55,7 +56,7 @@ func (suite *CheckSchedulerSuite) TestStart() {
 	)
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start(1))
+	suite.NoError(suite.scheduler.Start())
 	time.Sleep(1 * time.Second)
 	suite.NoError(suite.scheduler.Stop())
 	suite.NoError(suite.msgBus.Stop())
@@ -81,6 +82,7 @@ type CheckSubdueSuite struct {
 
 func (suite *CheckSubdueSuite) SetupTest() {
 	suite.check = types.FixtureCheckConfig("check1")
+	suite.check.Interval = 1
 	suite.msgBus = &messaging.WizardBus{}
 
 	manager := NewStateManager(&mockstore.MockStore{})
@@ -89,12 +91,13 @@ func (suite *CheckSubdueSuite) SetupTest() {
 	})
 
 	suite.scheduler = &CheckScheduler{
-		CheckName:    suite.check.Name,
-		CheckEnv:     suite.check.Environment,
-		CheckOrg:     suite.check.Organization,
-		StateManager: manager,
-		MessageBus:   suite.msgBus,
-		WaitGroup:    &sync.WaitGroup{},
+		CheckName:     suite.check.Name,
+		CheckEnv:      suite.check.Environment,
+		CheckOrg:      suite.check.Organization,
+		CheckInterval: suite.check.Interval,
+		StateManager:  manager,
+		MessageBus:    suite.msgBus,
+		WaitGroup:     &sync.WaitGroup{},
 	}
 
 	suite.NoError(suite.msgBus.Start())
@@ -103,7 +106,6 @@ func (suite *CheckSubdueSuite) SetupTest() {
 func (suite *CheckSubdueSuite) TestStart() {
 	// Set interval to smallest valid value
 	check := suite.check
-	check.Interval = 1
 	check.Subscriptions = []string{"subscription1"}
 	check.Subdue = &types.TimeWindowWhen{
 		Days: types.TimeWindowDays{
@@ -129,7 +131,7 @@ func (suite *CheckSubdueSuite) TestStart() {
 	)
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start(1))
+	suite.NoError(suite.scheduler.Start())
 	time.Sleep(1 * time.Second)
 	suite.NoError(suite.scheduler.Stop())
 	suite.NoError(suite.msgBus.Stop())
