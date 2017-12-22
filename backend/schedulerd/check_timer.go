@@ -96,7 +96,7 @@ func (timerPtr *CronTimer) SetDuration(i uint) {
 
 // Start sets up a new timer
 func (timerPtr *CronTimer) Start() {
-	timerPtr.timer = time.NewTimer(0)
+	timerPtr.timer = time.NewTimer(timerPtr.next)
 }
 
 // Next reset's timer using interval
