@@ -78,7 +78,7 @@ func (s *CheckScheduler) Start() error {
 				}
 
 				// Reset timer
-				timer.SetInterval(uint(check.Interval))
+				timer.SetDuration(uint(check.Interval))
 				timer.Next()
 
 				// Point executor to lastest copy of the scheduler state
