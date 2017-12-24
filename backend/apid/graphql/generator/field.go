@@ -1,9 +1,22 @@
 package generator
 
 import (
+	"strings"
+
 	"github.com/dave/jennifer/jen"
 	"github.com/jamesdphillips/graphql/language/ast"
 )
+
+// Titleizes given name to match
+func toFieldName(name string) string {
+	name = strings.Title(name)
+
+	// NOTE: golint prefers method names use "ID" instead of "Id".
+	if name == "Id" {
+		name = "ID"
+	}
+	return name
+}
 
 // genFields generates fields config for given AST
 func genFields(fs []*ast.FieldDefinition) *jen.Statement {

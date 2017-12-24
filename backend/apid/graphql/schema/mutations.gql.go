@@ -3,7 +3,6 @@
 package schema
 
 import (
-	context "context"
 	graphql "github.com/graphql-go/graphql"
 	util "github.com/sensu/sensu-go/backend/apid/graphql/generator/util"
 )
@@ -12,20 +11,20 @@ import (
 // MutationResolver represents a collection of methods whose products represent the
 // response values of the 'Mutation' type.
 //
-//  == Example SDL
+// == Example SDL
 //
-//    """
-//    Dog's are not hooman.
-//    """
-//    type Dog implements Pet {
-//      "name of this fine beast."
-//      name:  String!
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
 //
-//      "breed of this silly animal; probably shibe."
-//      breed: [Breed]
-//    }
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
 //
-//  == Example generated interface
+// == Example generated interface
 //
 //   // DogResolver ...
 //   type DogResolver interface {
@@ -37,7 +36,7 @@ import (
 //     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 //   }
 //
-//  == Example implementation ...
+// == Example implementation ...
 //
 //   // MyDogResolver implements DogResolver interface
 //   type MyDogResolver struct {
@@ -49,31 +48,83 @@ import (
 //   }
 //
 //   // Name implements response to request for name field.
-//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//   func (r *MyDogResolver) Name(p graphql.Params) (interface{}, error) {
 //     // ... implementation details ...
-//     dog := r.(DogGetter)
+//     dog := p.Source.(DogGetter)
 //     return dog.GetName()
 //   }
 //
 //   // Breed implements response to request for breed field.
-//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//   func (r *MyDogResolver) Name(p graphql.Params) (interface{}, error) {
 //     // ... implementation details ...
-//     dog := r.(DogGetter)
+//     dog := p.Source.(DogGetter)
 //     breed := r.store.GetBreed(dog.GetBreedName())
 //     return breed
 //   }
 //
 //   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *MyDogResolver) IsTypeOf(r interface{}, p graphql.IsTypeOfParams) interface{} {
+//   func (r *MyDogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
 //     // ... implementation details ...
-//     _, ok := r.(DogGetter)
+//     _, ok := p.Value.(DogGetter)
 //     return ok
 //   }
 type MutationResolver interface {
-	// createCheck implements response to request for 'CreateCheck' field.
-	CreateCheck(context.Context, interface{}, graphql.Params) interface{}
+	// CreateCheck implements response to request for 'createCheck' field.
+	CreateCheck(graphql.ResolveParams) (interface{}, error)
 	// IsTypeOf is used to determine if a given value is associated with the Mutation type
-	IsTypeOf(context.Context, graphql.IsTypeOfParams) interface{}
+	IsTypeOf(graphql.IsTypeOfParams) bool
+}
+
+// MutationAliases implements all methods on MutationResolver interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := p.Source.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type MutationAliases struct{}
+
+// CreateCheck implements response to request for 'createCheck' field.
+func (_ MutationAliases) CreateCheck(p graphql.ResolveParams) {
+	return util.DefaultResolver(p.Source, p.Info.FieldName)
 }
 
 // Mutation The root query for implementing GraphQL mutations.
@@ -174,33 +225,89 @@ func CreateCheckInput() graphql.InputObjectConfig {
 //   }
 //
 //   // Name implements response to request for name field.
-//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//   func (r *MyDogResolver) Name(p graphql.Params) (interface{}, error) {
 //     // ... implementation details ...
-//     dog := r.(DogGetter)
+//     dog := p.Source.(DogGetter)
 //     return dog.GetName()
 //   }
 //
 //   // Breed implements response to request for breed field.
-//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//   func (r *MyDogResolver) Name(p graphql.Params) (interface{}, error) {
 //     // ... implementation details ...
-//     dog := r.(DogGetter)
+//     dog := p.Source.(DogGetter)
 //     breed := r.store.GetBreed(dog.GetBreedName())
 //     return breed
 //   }
 //
 //   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *MyDogResolver) IsTypeOf(r interface{}, p graphql.IsTypeOfParams) interface{} {
+//   func (r *MyDogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
 //     // ... implementation details ...
-//     _, ok := r.(DogGetter)
+//     _, ok := p.Value.(DogGetter)
 //     return ok
 //   }
 type CreateCheckPayloadResolver interface {
-	// clientMutationId implements response to request for 'ClientMutationId' field.
-	ClientMutationId(context.Context, interface{}, graphql.Params) interface{}
-	// check implements response to request for 'Check' field.
-	Check(context.Context, interface{}, graphql.Params) interface{}
+	// ClientMutationId implements response to request for 'clientMutationId' field.
+	ClientMutationId(graphql.ResolveParams) (interface{}, error)
+	// Check implements response to request for 'check' field.
+	Check(graphql.ResolveParams) (interface{}, error)
 	// IsTypeOf is used to determine if a given value is associated with the CreateCheckPayload type
-	IsTypeOf(context.Context, graphql.IsTypeOfParams) interface{}
+	IsTypeOf(graphql.IsTypeOfParams) bool
+}
+
+// CreateCheckPayloadAliases implements all methods on CreateCheckPayloadResolver interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+type CreateCheckPayloadAliases struct{}
+
+// ClientMutationId implements response to request for 'clientMutationId' field.
+func (_ CreateCheckPayloadAliases) ClientMutationId(p graphql.ResolveParams) {
+	return util.DefaultResolver(p.Source, p.Info.FieldName)
+}
+
+// Check implements response to request for 'check' field.
+func (_ CreateCheckPayloadAliases) Check(p graphql.ResolveParams) {
+	return util.DefaultResolver(p.Source, p.Info.FieldName)
 }
 
 // CreateCheckPayload self descriptive

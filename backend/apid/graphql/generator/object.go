@@ -24,32 +24,32 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 // %s represents a collection of methods whose products represent the
 // response values of the '%s' type.
 //
-//  == Example SDL
+// == Example SDL
 //
-//    """
-//    Dog's are not hooman.
-//    """
-//    type Dog implements Pet {
-//      "name of this fine beast."
-//      name:  String!
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
 //
-//      "breed of this silly animal; probably shibe."
-//      breed: [Breed]
-//    }
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
 //
-//  == Example generated interface
+// == Example generated interface
 //
 //   // DogResolver ...
 //   type DogResolver interface {
 //     // Name implements response to request for name field.
-//     Name(context.Context, interface{}, graphql.Params) interface{}
+//     Name(graphql.Params) interface{}
 //     // Breed implements response to request for breed field.
-//     Breed(context.Context, interface{}, graphql.Params) interface{}
+//     Breed(graphql.Params) interface{}
 //     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//     IsTypeOf(graphql.IsTypeOfParams) bool
 //   }
 //
-//  == Example implementation ...
+// == Example implementation ...
 //
 //   // MyDogResolver implements DogResolver interface
 //   type MyDogResolver struct {
@@ -61,24 +61,24 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 //   }
 //
 //   // Name implements response to request for name field.
-//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//   func (r *MyDogResolver) Name(p graphql.Params) (interface{}, error) {
 //     // ... implementation details ...
-//     dog := r.(DogGetter)
+//     dog := p.Source.(DogGetter)
 //     return dog.GetName()
 //   }
 //
 //   // Breed implements response to request for breed field.
-//   func (r *MyDogResolver) Name(ctx context.Context, r interface{}, p graphql.Params) interface{} {
+//   func (r *MyDogResolver) Name(p graphql.Params) (interface{}, error) {
 //     // ... implementation details ...
-//     dog := r.(DogGetter)
+//     dog := p.Source.(DogGetter)
 //     breed := r.store.GetBreed(dog.GetBreedName())
 //     return breed
 //   }
 //
 //   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *MyDogResolver) IsTypeOf(r interface{}, p graphql.IsTypeOfParams) interface{} {
+//   func (r *MyDogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
 //     // ... implementation details ...
-//     _, ok := r.(DogGetter)
+//     _, ok := p.Value.(DogGetter)
 //     return ok
 //   }`,
 		resolverName,
@@ -89,25 +89,91 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 		for _, field := range node.Fields {
 			// Define method for each field in object type
 			name := field.Name.Value
-			titleizedName := strings.Title(field.Name.Value)
+			titleizedName := toFieldName(field.Name.Value)
 
-			// intended interface is (context.Context, record interface{}, params graphql.Params).
-			// while this differs from graphql packages I feel it is more conventional.
-			g.Commentf("%s implements response to request for '%s' field.", name, titleizedName)
+			// func FieldName(params graphql.Params) (interface{}, error)
+			g.Commentf("%s implements response to request for '%s' field.", titleizedName, name)
 			g.Id(titleizedName).Params(
-				jen.Qual("context", "Context"),
-				jen.Id("interface{}"),
-				jen.Qual(graphqlPkg, "Params"),
-			).Interface()
+				jen.Qual(graphqlPkg, "ResolveParams"),
+			).Parens(jen.List(jen.Interface(), jen.Error()))
 		}
 
 		// Satisfy IsTypeOf() callback
 		g.Commentf("IsTypeOf is used to determine if a given value is associated with the %s type", name)
-		g.Id("IsTypeOf").Params( // IsTypeOf(context.Context, graphql.IsTypeOfParams) bool
-			jen.Qual("context", "Context"),
+		g.Id("IsTypeOf").Params( // IsTypeOf(graphql.IsTypeOfParams) bool
 			jen.Qual(graphqlPkg, "IsTypeOfParams"),
 		).Bool()
 	})
+
+	//
+	// Generate alias implementation of resolver interface
+	//
+	// ... comment:   Include description of usage
+	// ... method(s): Implement all methods
+	//
+
+	aliasResolver := fmt.Sprintf("%sAliases", name)
+	code.Commentf(`// %s implements all methods on %s interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }`,
+		aliasResolver,
+		resolverName,
+	)
+	code.Type().Id(aliasResolver).Struct()
+	for _, field := range node.Fields {
+		// Define method for each field in object type
+		name := field.Name.Value
+		titleizedName := toFieldName(field.Name.Value)
+
+		code.Commentf("%s implements response to request for '%s' field.", titleizedName, name)
+		code.Func().Params(jen.Id("_").Id(aliasResolver)).Id(titleizedName).Params(
+			jen.Id("p").Qual(graphqlPkg, "ResolveParams"),
+		).Block(jen.Return(jen.Qual(utilPkg, "DefaultResolver").Call(
+			jen.Id("p").Dot("Source"),
+			jen.Id("p").Dot("Info").Dot("FieldName"),
+		)))
+	}
 
 	//
 	// Generate type definition
@@ -135,29 +201,63 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 		},
 	)
 
+	privateNamePrefix := "_ObjType_" + name
+
 	//
 	// Generates thunk that returns new instance of object config
 	//
-	//  == Example input SDL
+	// == Example input SDL
 	//
-	//    """
-	//    Dogs are not hooman.
-	//    """
-	//    type Dog implements Pet {
-	//      "name of this fine beast."
-	//      name:  String!
+	//   """
+	//   Dogs are not hooman.
+	//   """
+	//   type Dog implements Pet {
+	//     "name of this fine beast."
+	//     name(style: String = "full"):  String!
 	//
-	//      "breed of this silly animal; probably shibe."
-	//      breed: [Breed]
-	//    }
+	//     "breed of this silly animal; probably shibe."
+	//     breed: [Breed]
+	//   }
 	//
-	//  == Example output
+	// == Example output
 	//
 	//   // Dogs are not hooman
+	//   var Dog = graphql.NewType("Dog", graphql.ObjectKind)
+	//
+	//   // RegisterDog registers Dog type with given service
+	//   func RegisterDog(scv graphql.Service, impl DogResolver) {
+	//     return scv.RegisterObject(_ObjType_Dog_Desc, impl)
+	//   }
+	//
+	//   // DogNameResolverParams describes args and context given to field resolver.
+	//   type DogNameResolverParams struct {
+	//     graphql.ResolveParams
+	//     Args DogNameResolverArgs
+	//   }
+	//
+	//   // DogNameResolverArgs describes user arguments given when selecting field.
+	//   type DogNameResolverArgs struct {
+	//     Style string
+	//   }
+	//
+	//   func _ObjType_Dog_Name(impl interface{}, p desc.ResolveParams) (inteface{}, error) {
+	//     args := DogNameResolverArgs{}
+	//     err := mapstructure.Decode(p.Args, args)
+	//     if err != nil {
+	//       return err
+	//     }
+	//     params := DogNameResolverParams{ResolveParams: p, Args: args}
+	//     return impl.(DogResolver).Name(params)
+	//   }
+	//
+	//   func _ObjType_Dog_Breed(impl interface{}, p desc.ResolveParams) (inteface{}, error) {
+	//     return impl.(DogResolver).Breed(p)
+	//   }
+	//
 	//   func Dog() graphql.ObjectConfig { // implements TypeThunk
 	//     return graphql.ObjectConfig{
 	//       Name:        "Dog",
-	//       Description: "are not hooman",
+	//       Description: "Dogs are not hooman",
 	//       Interfaces:  // ...
 	//       Fields:      // ...
 	//       IsKindOf:    // ...
@@ -165,6 +265,8 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 	//   }
 	//
 	code.Comment(desc)
+	code.Id(name).Op("=").Id(privateNamePrefix)
+	code.Id(name).Struct()
 	code.Func().Id(name).Params().Qual(graphqlPkg, "ObjectConfig").Block(
 		jen.Return(jen.Qual(graphqlPkg, "ObjectConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),

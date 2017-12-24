@@ -32,7 +32,7 @@ type Check {
   command: String!
 
   "handlers are the event handler for the check (incidents and/or metrics)."
-  handlers: [String]!
+  handlers: [Handler]!
 
   """
   HighFlapThreshold is the flap detection high threshold (% state change) for
@@ -51,4 +51,18 @@ type Check {
 
   "Publish indicates if check requests are published for the check"
   publish: Boolean!
+}
+
+"""
+A Handler is a handler specification.
+"""
+type Handler {
+  id: ID!
+  namespace: Namespace!
+
+  "name is the unique identifier for a handler."
+  name: String!
+
+  "command is the command to be executed for a pipe handler."
+  command: String!
 }
