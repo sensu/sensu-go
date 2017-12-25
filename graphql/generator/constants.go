@@ -5,10 +5,10 @@ const (
 	astPkg = "github.com/graphql-go/graphql/language/ast"
 
 	// graphql definition package
-	graphqlPkg = "github.com/graphql-go/graphql"
+	graphqlGoPkg = "github.com/graphql-go/graphql"
 
-	// generator utils package
-	utilPkg = "github.com/sensu/sensu-go/backend/apid/graphql/generator/util"
+	// GraphQL service package
+	servicePkg = "github.com/sensu/sensu-go/graphql"
 
 	// used to describe resolverFns that panic when not implemented.
 	missingResolverNote = `// NOTE:

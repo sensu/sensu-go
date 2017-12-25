@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/sensu/sensu-go/backend/apid/graphql/generator"
+	"github.com/sensu/sensu-go/graphql/generator"
 )
 
 const (

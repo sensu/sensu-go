@@ -69,8 +69,8 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//      }
 	//    }
 	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlPkg, "EnumConfig").Block(
-		jen.Return(jen.Qual(graphqlPkg, "EnumConfig").Values(jen.Dict{
+	code.Func().Id(name).Params().Qual(graphqlGoPkg, "EnumConfig").Block(
+		jen.Return(jen.Qual(graphqlGoPkg, "EnumConfig").Values(jen.Dict{
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
@@ -117,7 +117,7 @@ func genEnumValues(values []*ast.EnumValueDefinition) jen.Code {
 	//    }
 	//
 
-	return jen.Qual(graphqlPkg, "EnumValueConfigMap").Values(
+	return jen.Qual(graphqlGoPkg, "EnumValueConfigMap").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, v := range values {
 				d[jen.Lit(v.Name.Value)] = genEnumValue(v)
@@ -157,7 +157,7 @@ func genEnumValue(val *ast.EnumValueDefinition) jen.Code {
 
 	desc := fetchDescription(val)
 	depReason := fetchDeprecationReason(val.Directives)
-	return jen.Op("&").Qual(graphqlPkg, "EnumValueConfig").Values(
+	return jen.Op("&").Qual(graphqlGoPkg, "EnumValueConfig").Values(
 		jen.Dict{
 			jen.Id("Value"):             jen.Lit(val.Name.Value),
 			jen.Id("Description"):       jen.Lit(desc),

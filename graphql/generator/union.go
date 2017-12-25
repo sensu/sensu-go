@@ -21,7 +21,7 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	//
 
 	code.Commentf(`//
-// %s represents a collection of methods whose products represent the 
+// %s represents a collection of methods whose products represent the
 // response values of a union type.
 //
 //  == Example generated interface
@@ -49,7 +49,7 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	code.Type().Id(resolverName).Interface(
 		// ResolveType method.
 		jen.Comment("ResolveType should return name of type given a value."),
-		jen.Id("ResolveType").Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).String(),
+		jen.Id("ResolveType").Params(jen.Qual(graphqlGoPkg, "ResolveTypeParams")).String(),
 	)
 
 	//
@@ -73,11 +73,11 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	//   // NameOfMyUnion [the description given in SDL document]
 	//   func NameOfMyUnion() *graphql.Scalar { ... } // implements TypeThunk
 	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlPkg, "UnionConfig").Block(
-		jen.Return(jen.Qual(graphqlPkg, "UnionConfig").Values(jen.Dict{
+	code.Func().Id(name).Params().Qual(graphqlGoPkg, "UnionConfig").Block(
+		jen.Return(jen.Qual(graphqlGoPkg, "UnionConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
-			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlPkg, "Object").ValuesFunc(
+			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlGoPkg, "Object").ValuesFunc(
 				func(g *jen.Group) {
 					for _, t := range node.Types {
 						g.Line().Add(genMockObjectReference(t))
@@ -85,8 +85,8 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 				},
 			),
 			jen.Id("ResolveType"): jen.Func().
-				Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).
-				Op("*").Qual(graphqlPkg, "Object").
+				Params(jen.Id("_").Qual(graphqlGoPkg, "ResolveTypeParams")).
+				Op("*").Qual(graphqlGoPkg, "Object").
 				Block(
 					jen.Comment(missingResolverNote),
 					jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),

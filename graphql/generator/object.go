@@ -94,14 +94,14 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 			// func FieldName(params graphql.Params) (interface{}, error)
 			g.Commentf("%s implements response to request for '%s' field.", titleizedName, name)
 			g.Id(titleizedName).Params(
-				jen.Qual(graphqlPkg, "ResolveParams"),
+				jen.Qual(graphqlGoPkg, "ResolveParams"),
 			).Parens(jen.List(jen.Interface(), jen.Error()))
 		}
 
 		// Satisfy IsTypeOf() callback
 		g.Commentf("IsTypeOf is used to determine if a given value is associated with the %s type", name)
 		g.Id("IsTypeOf").Params( // IsTypeOf(graphql.IsTypeOfParams) bool
-			jen.Qual(graphqlPkg, "IsTypeOfParams"),
+			jen.Qual(graphqlGoPkg, "IsTypeOfParams"),
 		).Bool()
 	})
 
@@ -168,8 +168,8 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 
 		code.Commentf("%s implements response to request for '%s' field.", titleizedName, name)
 		code.Func().Params(jen.Id("_").Id(aliasResolver)).Id(titleizedName).Params(
-			jen.Id("p").Qual(graphqlPkg, "ResolveParams"),
-		).Block(jen.Return(jen.Qual(utilPkg, "DefaultResolver").Call(
+			jen.Id("p").Qual(graphqlGoPkg, "ResolveParams"),
+		).Block(jen.Return(jen.Qual(servicePkg, "DefaultResolver").Call(
 			jen.Id("p").Dot("Source"),
 			jen.Id("p").Dot("Info").Dot("FieldName"),
 		)))
@@ -193,7 +193,7 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 	}
 
 	// Generate interface references
-	ints := jen.Index().Op("*").Qual(graphqlPkg, "Interface").ValuesFunc(
+	ints := jen.Index().Op("*").Qual(graphqlGoPkg, "Interface").ValuesFunc(
 		func(g *jen.Group) {
 			for _, n := range node.Interfaces {
 				g.Line().Add(genMockInterfaceReference(n))
@@ -267,13 +267,13 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 	code.Comment(desc)
 	code.Id(name).Op("=").Id(privateNamePrefix)
 	code.Id(name).Struct()
-	code.Func().Id(name).Params().Qual(graphqlPkg, "ObjectConfig").Block(
-		jen.Return(jen.Qual(graphqlPkg, "ObjectConfig").Values(jen.Dict{
+	code.Func().Id(name).Params().Qual(graphqlGoPkg, "ObjectConfig").Block(
+		jen.Return(jen.Qual(graphqlGoPkg, "ObjectConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Interfaces"):  ints,
 			jen.Id("Fields"):      genFields(node.Fields),
-			jen.Id("IsTypeOf"): jen.Func().Params(jen.Id("_").Qual(graphqlPkg, "IsTypeOfParams")).Bool().Block(
+			jen.Id("IsTypeOf"): jen.Func().Params(jen.Id("_").Qual(graphqlGoPkg, "IsTypeOfParams")).Bool().Block(
 				jen.Comment(missingResolverNote),
 				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
 			),

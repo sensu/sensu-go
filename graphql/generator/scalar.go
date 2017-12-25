@@ -132,8 +132,8 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 	//   }
 	//
 	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlPkg, "ScalarConfig").Block(
-		jen.Return(jen.Qual(graphqlPkg, "ScalarConfig").Values(jen.Dict{
+	code.Func().Id(name).Params().Qual(graphqlGoPkg, "ScalarConfig").Block(
+		jen.Return(jen.Qual(graphqlGoPkg, "ScalarConfig").Values(jen.Dict{
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),

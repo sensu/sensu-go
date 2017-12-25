@@ -46,8 +46,8 @@ func genInputObject(node *ast.InputObjectDefinition) jen.Code {
 	//  }
 	//
 	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlPkg, "InputObjectConfig").Block(
-		jen.Return(jen.Qual(graphqlPkg, "InputObjectConfig").Values(jen.Dict{
+	code.Func().Id(name).Params().Qual(graphqlGoPkg, "InputObjectConfig").Block(
+		jen.Return(jen.Qual(graphqlGoPkg, "InputObjectConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Fields"):      genInputObjectFields(node.Fields),
@@ -82,7 +82,7 @@ func genInputObjectFields(fields []*ast.InputValueDefinition) jen.Code {
 	//    }
 	//
 
-	return jen.Qual(graphqlPkg, "InputObjectConfigFieldMap").Values(
+	return jen.Qual(graphqlGoPkg, "InputObjectConfigFieldMap").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, field := range fields {
 				d[jen.Lit(field.Name.Value)] = genInputObjectField(field)
@@ -118,7 +118,7 @@ func genInputObjectField(field *ast.InputValueDefinition) jen.Code {
 	//
 
 	desc := fetchDescription(field)
-	return jen.Op("&").Qual(graphqlPkg, "InputObjectFieldConfig").Values(jen.Dict{
+	return jen.Op("&").Qual(graphqlGoPkg, "InputObjectFieldConfig").Values(jen.Dict{
 		jen.Id("Type"):         genInputTypeReference(field.Type),
 		jen.Id("Description"):  jen.Lit(desc),
 		jen.Id("DefaultValue"): genValue(field.DefaultValue),

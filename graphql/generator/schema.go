@@ -34,8 +34,8 @@ func genSchema(node *ast.SchemaDefinition) jen.Code {
 	//    }
 	//
 	code.Comment("Schema exposes the root types for each operation.")
-	code.Func().Id("Schema").Params().Qual(graphqlPkg, "SchemaConfig").Block(
-		jen.Return(jen.Qual(graphqlPkg, "SchemaConfig").Values(
+	code.Func().Id("Schema").Params().Qual(graphqlGoPkg, "SchemaConfig").Block(
+		jen.Return(jen.Qual(graphqlGoPkg, "SchemaConfig").Values(
 			jen.DictFunc(func(d jen.Dict) {
 				for _, op := range node.OperationTypes {
 					opName := strings.Title(op.Operation)

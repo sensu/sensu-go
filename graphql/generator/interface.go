@@ -55,7 +55,7 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	// Generate resolver interface.
 	code.Type().Id(resolverName).Interface(
 		jen.Comment("ResolveType should return name of type given a value"),
-		jen.Id("ResolveType").Params(jen.Qual(graphqlPkg, "ResolveTypeParams")).Op("*").String(),
+		jen.Id("ResolveType").Params(jen.Qual(graphqlGoPkg, "ResolveTypeParams")).Op("*").String(),
 	)
 
 	//
@@ -101,14 +101,14 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	//    }
 	//
 	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlPkg, "InterfaceConfig").Block(
-		jen.Return(jen.Qual(graphqlPkg, "InterfaceConfig").Values(jen.Dict{
+	code.Func().Id(name).Params().Qual(graphqlGoPkg, "InterfaceConfig").Block(
+		jen.Return(jen.Qual(graphqlGoPkg, "InterfaceConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
 			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Fields"):      genFields(node.Fields),
 			jen.Id("ResolveType"): jen.Func().
-				Params(jen.Id("_").Qual(graphqlPkg, "ResolveTypeParams")).
-				Op("*").Qual(graphqlPkg, "Object").
+				Params(jen.Id("_").Qual(graphqlGoPkg, "ResolveTypeParams")).
+				Op("*").Qual(graphqlGoPkg, "Object").
 				Block(
 					jen.Comment(missingResolverNote),
 					jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
