@@ -10,14 +10,10 @@ import (
 func genInputObject(node *ast.InputObjectDefinition) jen.Code {
 	code := newGroup()
 	name := node.GetName().Value
-	typeDesc := fetchDescription(node)
 
-	// To appease the linter ensure that the the description of the object begins
-	// with the name of the resulting method.
-	desc := typeDesc
-	if hasPrefix := strings.HasPrefix(typeDesc, name); !hasPrefix {
-		desc = name + " " + desc
-	}
+	// Type description
+	desc := getDescription(node)
+	comment := genTypeComment(name, desc)
 
 	//
 	// Generate input object config
@@ -45,11 +41,11 @@ func genInputObject(node *ast.InputObjectDefinition) jen.Code {
 	//    }
 	//  }
 	//
-	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlGoPkg, "InputObjectConfig").Block(
-		jen.Return(jen.Qual(graphqlGoPkg, "InputObjectConfig").Values(jen.Dict{
+	code.Comment(comment)
+	code.Func().Id(name).Params().Qual(defsPkg, "InputObjectConfig").Block(
+		jen.Return(jen.Qual(defsPkg, "InputObjectConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
-			jen.Id("Description"): jen.Lit(typeDesc),
+			jen.Id("Description"): jen.Lit(desc),
 			jen.Id("Fields"):      genInputObjectFields(node.Fields),
 		})),
 	)
@@ -82,7 +78,7 @@ func genInputObjectFields(fields []*ast.InputValueDefinition) jen.Code {
 	//    }
 	//
 
-	return jen.Qual(graphqlGoPkg, "InputObjectConfigFieldMap").Values(
+	return jen.Qual(defsPkg, "InputObjectConfigFieldMap").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, field := range fields {
 				d[jen.Lit(field.Name.Value)] = genInputObjectField(field)
@@ -117,10 +113,9 @@ func genInputObjectField(field *ast.InputValueDefinition) jen.Code {
 	//    },
 	//
 
-	desc := fetchDescription(field)
-	return jen.Op("&").Qual(graphqlGoPkg, "InputObjectFieldConfig").Values(jen.Dict{
+	return jen.Op("&").Qual(defsPkg, "InputObjectFieldConfig").Values(jen.Dict{
 		jen.Id("Type"):         genInputTypeReference(field.Type),
-		jen.Id("Description"):  jen.Lit(desc),
+		jen.Id("Description"):  genDescription(field),
 		jen.Id("DefaultValue"): genValue(field.DefaultValue),
 	})
 }

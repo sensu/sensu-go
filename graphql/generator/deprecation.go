@@ -4,7 +4,7 @@ import "github.com/jamesdphillips/graphql/language/ast"
 
 // Fetch deprecation reason given set of directives; default to empty string.
 // Specification: https://github.com/facebook/graphql/blob/398e443983724463b8474b12a260fba31c19c2a9/spec/Section%203%20--%20Type%20System.md#deprecated
-func fetchDeprecationReason(ds []*ast.Directive) string {
+func getDeprecationReason(ds []*ast.Directive) string {
 	// Determine if deprecated directive was given.
 	var directive *ast.Directive
 	for _, d := range ds {
@@ -34,4 +34,9 @@ func fetchDeprecationReason(ds []*ast.Directive) string {
 
 	// As per GraphQL spec fallback to 'No longer supported'.
 	return "No longer supported"
+}
+
+func genDeprecationReason(ds []*ast.Directive) jen.Code {
+	reason := getDeprecationReason(ds)
+	return jen.Lit(reason)
 }

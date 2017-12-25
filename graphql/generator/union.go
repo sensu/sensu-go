@@ -49,7 +49,7 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	code.Type().Id(resolverName).Interface(
 		// ResolveType method.
 		jen.Comment("ResolveType should return name of type given a value."),
-		jen.Id("ResolveType").Params(jen.Qual(graphqlGoPkg, "ResolveTypeParams")).String(),
+		jen.Id("ResolveType").Params(jen.Qual(defsPkg, "ResolveTypeParams")).String(),
 	)
 
 	//
@@ -59,25 +59,19 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	// ... panic callbacks panic if not configured
 	//
 
-	// Union description
-	typeDesc := fetchDescription(node)
-
-	// To appease the linter ensure that the the description of the scalar begins
-	// with the name of the resulting method.
-	desc := typeDesc
-	if hasPrefix := strings.HasPrefix(typeDesc, name); !hasPrefix {
-		desc = name + " " + desc
-	}
+	// Type description
+	desc := getDescription(node)
+	comment := genTypeComment(name, desc)
 
 	// Ex.
 	//   // NameOfMyUnion [the description given in SDL document]
 	//   func NameOfMyUnion() *graphql.Scalar { ... } // implements TypeThunk
-	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlGoPkg, "UnionConfig").Block(
-		jen.Return(jen.Qual(graphqlGoPkg, "UnionConfig").Values(jen.Dict{
+	code.Comment(comment)
+	code.Func().Id(name).Params().Qual(defsPkg, "UnionConfig").Block(
+		jen.Return(jen.Qual(defsPkg, "UnionConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
-			jen.Id("Description"): jen.Lit(typeDesc),
-			jen.Id("Types"): jen.Index().Op("*").Qual(graphqlGoPkg, "Object").ValuesFunc(
+			jen.Id("Description"): jen.Lit(desc),
+			jen.Id("Types"): jen.Index().Op("*").Qual(defsPkg, "Object").ValuesFunc(
 				func(g *jen.Group) {
 					for _, t := range node.Types {
 						g.Line().Add(genMockObjectReference(t))
@@ -85,8 +79,8 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 				},
 			),
 			jen.Id("ResolveType"): jen.Func().
-				Params(jen.Id("_").Qual(graphqlGoPkg, "ResolveTypeParams")).
-				Op("*").Qual(graphqlGoPkg, "Object").
+				Params(jen.Id("_").Qual(defsPkg, "ResolveTypeParams")).
+				Op("*").Qual(defsPkg, "Object").
 				Block(
 					jen.Comment(missingResolverNote),
 					jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),

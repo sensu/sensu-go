@@ -18,15 +18,9 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	// ... func:    returns enum configuration
 	//
 
-	// Enum description
-	typeDesc := fetchDescription(node)
-
-	// To appease the linter ensure that the the description of the enum begins
-	// with the name of the resulting method.
-	desc := typeDesc
-	if hasPrefix := strings.HasPrefix(typeDesc, name); !hasPrefix {
-		desc = name + " " + desc
-	}
+	// Type description
+	desc := getDescription(node)
+	comment := genTypeComment(name, desc)
 
 	//
 	// Generate config for enum
@@ -68,12 +62,11 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//        },
 	//      }
 	//    }
-	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlGoPkg, "EnumConfig").Block(
-		jen.Return(jen.Qual(graphqlGoPkg, "EnumConfig").Values(jen.Dict{
-			// Name & description
+	code.Comment(comment)
+	code.Func().Id(name).Params().Qual(defsPkg, "EnumConfig").Block(
+		jen.Return(jen.Qual(defsPkg, "EnumConfig").Values(jen.Dict{
+			jen.Id("Description"): jen.Lit(desc),
 			jen.Id("Name"):        jen.Lit(name),
-			jen.Id("Description"): jen.Lit(typeDesc),
 			jen.Id("Values"):      genEnumValues(node.Values),
 		})),
 	)
@@ -117,7 +110,7 @@ func genEnumValues(values []*ast.EnumValueDefinition) jen.Code {
 	//    }
 	//
 
-	return jen.Qual(graphqlGoPkg, "EnumValueConfigMap").Values(
+	return jen.Qual(defsPkg, "EnumValueConfigMap").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, v := range values {
 				d[jen.Lit(v.Name.Value)] = genEnumValue(v)
@@ -155,13 +148,11 @@ func genEnumValue(val *ast.EnumValueDefinition) jen.Code {
 	//    },
 	//
 
-	desc := fetchDescription(val)
-	depReason := fetchDeprecationReason(val.Directives)
-	return jen.Op("&").Qual(graphqlGoPkg, "EnumValueConfig").Values(
+	return jen.Op("&").Qual(defsPkg, "EnumValueConfig").Values(
 		jen.Dict{
+			jen.Id("DeprecationReason"): genDeprecationReason(val.Directives),
+			jen.Id("Description"):       genDescription(val),
 			jen.Id("Value"):             jen.Lit(val.Name.Value),
-			jen.Id("Description"):       jen.Lit(desc),
-			jen.Id("DeprecationReason"): jen.Lit(depReason),
 		},
 	)
 }

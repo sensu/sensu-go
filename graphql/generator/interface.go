@@ -55,7 +55,7 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	// Generate resolver interface.
 	code.Type().Id(resolverName).Interface(
 		jen.Comment("ResolveType should return name of type given a value"),
-		jen.Id("ResolveType").Params(jen.Qual(graphqlGoPkg, "ResolveTypeParams")).Op("*").String(),
+		jen.Id("ResolveType").Params(jen.Qual(defsPkg, "ResolveTypeParams")).Op("*").String(),
 	)
 
 	//
@@ -65,15 +65,9 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	// ... panic callbacks panic if not configured
 	//
 
-	// Interface description
-	typeDesc := fetchDescription(node)
-
-	// To appease the linter ensure that the the description of the scalar begins
-	// with the name of the resulting method.
-	desc := typeDesc
-	if hasPrefix := strings.HasPrefix(typeDesc, name); !hasPrefix {
-		desc = name + " " + desc
-	}
+	// Type description
+	desc := getDescription(node)
+	comment := genTypeComment(name, desc)
 
 	//
 	// Generates thunk that returns new instance of interface config
@@ -100,15 +94,15 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	//      }
 	//    }
 	//
-	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlGoPkg, "InterfaceConfig").Block(
-		jen.Return(jen.Qual(graphqlGoPkg, "InterfaceConfig").Values(jen.Dict{
+	code.Comment(comment)
+	code.Func().Id(name).Params().Qual(defsPkg, "InterfaceConfig").Block(
+		jen.Return(jen.Qual(defsPkg, "InterfaceConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
-			jen.Id("Description"): jen.Lit(typeDesc),
+			jen.Id("Description"): jen.Lit(desc),
 			jen.Id("Fields"):      genFields(node.Fields),
 			jen.Id("ResolveType"): jen.Func().
-				Params(jen.Id("_").Qual(graphqlGoPkg, "ResolveTypeParams")).
-				Op("*").Qual(graphqlGoPkg, "Object").
+				Params(jen.Id("_").Qual(defsPkg, "ResolveTypeParams")).
+				Op("*").Qual(defsPkg, "Object").
 				Block(
 					jen.Comment(missingResolverNote),
 					jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),

@@ -37,7 +37,7 @@ func genFields(fs []*ast.FieldDefinition) *jen.Statement {
 	//      "givenName": graphql.Field{ ... },
 	//    }
 	//
-	return jen.Qual(graphqlGoPkg, "Fields").Values(jen.DictFunc(func(d jen.Dict) {
+	return jen.Qual(defsPkg, "Fields").Values(jen.DictFunc(func(d jen.Dict) {
 		for _, f := range fs {
 			d[jen.Lit(f.Name.Value)] = genField(f)
 		}
@@ -78,10 +78,10 @@ func genField(field *ast.FieldDefinition) *jen.Statement {
 	//      Args:              FieldConfigArgument{ ... },
 	//    }
 	//
-	return jen.Op("&").Qual(graphqlGoPkg, "Field").Values(jen.Dict{
+	return jen.Op("&").Qual(defsPkg, "Field").Values(jen.Dict{
 		jen.Id("Args"):              genArguments(field.Arguments),
-		jen.Id("DeprecationReason"): jen.Lit(fetchDeprecationReason(field.Directives)),
-		jen.Id("Description"):       jen.Lit(fetchDescription(field)),
+		jen.Id("DeprecationReason"): genDeprecationReason(field.Directives),
+		jen.Id("Description"):       genDescription(field),
 		jen.Id("Name"):              jen.Lit(field.Name.Value),
 		jen.Id("Type"):              genOutputTypeReference(field.Type),
 	})
@@ -107,7 +107,7 @@ func genArguments(args []*ast.InputValueDefinition) *jen.Statement {
 	//      "style": &ArgumentConfig{ ... }
 	//    },
 	//
-	return jen.Qual(graphqlGoPkg, "FieldConfigArgument").Values(
+	return jen.Qual(defsPkg, "FieldConfigArgument").Values(
 		jen.DictFunc(func(d jen.Dict) {
 			for _, arg := range args {
 				d[jen.Lit(arg.Name.Value)] = genArgument(arg)
@@ -138,11 +138,10 @@ func genArgument(arg *ast.InputValueDefinition) *jen.Statement {
 	//      Description: "style is stylish",
 	//    }
 	//
-	return jen.Op("&").Qual(graphqlGoPkg, "ArgumentConfig").Values(jen.Dict{
-		jen.Id("Type"):        genInputTypeReference(arg.Type),
-		jen.Id("Description"): jen.Lit(fetchDescription(arg)),
-		// TODO: This is probably overly naive(?)
+	return jen.Op("&").Qual(defsPkg, "ArgumentConfig").Values(jen.Dict{
 		jen.Id("DefaultValue"): genValue(arg.DefaultValue),
+		jen.Id("Description"):  genDescription(arg),
+		jen.Id("Type"):         genInputTypeReference(arg.Type),
 	})
 }
 

@@ -1,4 +1,4 @@
-package service
+package graphql
 
 // KindCode us an unsigned 16-bit integer used for defining kinds.
 type KindCode uint16
@@ -23,7 +23,7 @@ const (
 // Type represents base description of GraphQL type
 type Type struct {
 	name string
-	kind int
+	kind KindCode
 }
 
 // NewType returns new instance of Type
@@ -36,10 +36,10 @@ func NewType(name string, kind KindCode) Type {
 
 // Name of GraphQL type represented
 func (t Type) Name() string {
-	t.name
+	return t.name
 }
 
 // Kind of GraphQL type represented
 func (t Type) Kind() KindCode {
-	t.kind
+	return t.kind
 }

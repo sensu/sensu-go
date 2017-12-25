@@ -26,10 +26,10 @@ func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 	switch ttype := t.(type) {
 	case *ast.List:
 		s := genTypeReference(ttype.Type, expectedType)
-		return jen.Qual(graphqlGoPkg, "NewList").Call(s)
+		return jen.Qual(defsPkg, "NewList").Call(s)
 	case *ast.NonNull:
 		s := genTypeReference(ttype.Type, expectedType)
-		return jen.Qual(graphqlGoPkg, "NewNonNull").Call(s)
+		return jen.Qual(defsPkg, "NewNonNull").Call(s)
 	case *ast.Named:
 		namedType = ttype
 	default:
@@ -39,15 +39,15 @@ func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 	var valueStatement *jen.Statement
 	switch namedType.Name.Value {
 	case "Int":
-		valueStatement = jen.Qual(graphqlGoPkg, "Int")
+		valueStatement = jen.Qual(defsPkg, "Int")
 	case "Float":
-		valueStatement = jen.Qual(graphqlGoPkg, "Float")
+		valueStatement = jen.Qual(defsPkg, "Float")
 	case "String":
-		valueStatement = jen.Qual(graphqlGoPkg, "String")
+		valueStatement = jen.Qual(defsPkg, "String")
 	case "Boolean":
-		valueStatement = jen.Qual(graphqlGoPkg, "Boolean")
+		valueStatement = jen.Qual(defsPkg, "Boolean")
 	case "DateTime":
-		valueStatement = jen.Qual(graphqlGoPkg, "DateTime")
+		valueStatement = jen.Qual(defsPkg, "DateTime")
 	default:
 		name := namedType.Name.Value
 		valueStatement = jen.Qual(servicePkg, expectedType).Call(jen.Lit(name))

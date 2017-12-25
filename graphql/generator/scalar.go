@@ -2,157 +2,156 @@ package generator
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
+const scalarResolverName = "ScalarResolver"
+
+//
+// Generates thunk that returns new instance of scalar config
+//
+// == Example input SDL
+//
+//   """
+//   Timestamps are great.
+//   """
+//   scalar Timestamp
+//
+// == Example output
+//
+//   // Timestamps are great
+//   var Timestamp = graphql.NewType("Timestamp", graphql.ScalarKind)
+//
+//   // RegisterTimestamp registers Timestamp scalar type with given service.
+//   func RegisterTimestamp(svc graphql.Service, impl graphql.ScalarResolver) {
+//     src.RegisterScalar(_ScalarType_Timestamp, impl)
+//   }
+//
+//   // describe timestamp's configuration; keep private to avoid
+//   // unintentional tampering at runtime.
+//   var _ScalarType_Timestamp = graphql.ScalarDesc{
+//     Config: func() definition.ScalarConfig {
+//       return definition.ScalarConfig{
+//         Name:         "Timestamp",
+//         Description:  "Timestamps are great.",
+//         Serialize:    // ...
+//         ParseValue:   // ...
+//         ParseLiteral: // ...
+//       }
+//     }
+//   }
+//
 func genScalar(node *ast.ScalarDefinition) jen.Code {
 	code := newGroup()
 	name := node.GetName().Value
-	resolverName := fmt.Sprintf("%sResolver", name)
-
-	//
-	// Generate resolver interface
-	//
-	// ... comment: Describe resolver interface and usage
-	// ... method:  Serialize
-	// ... method:  ParseValue
-	// ... method:  ParseLiteral
-	//
-
-	code.Commentf(`//
-// %s represents a collection of methods whose products represent the input and
-// response values of a scalar type.
-//
-//  == Example input SDL
-//
-//    """
-//    Timestamps are great.
-//    """
-//    scalar Timestamp
-//
-//  == Example generated interface
-//
-//    // DateResolver ...
-//    type DateResolver interface {
-//      // Serialize an internal value to include in a response.
-//      Serialize(interface{}) interface{}
-//      // ParseValue parses an externally provided value to use as an input.
-//      ParseValue(interface{}) interface{}
-//      // ParseLiteral parses an externally provided literal value to use as an input.
-//      ParseLiteral(ast.Value) interface{}
-//    }
-//
-//  == Example implementation
-//
-//    // MyDateResolver implements DateResolver interface
-//    type MyDateResolver struct {
-//      defaultTZ *time.Location
-//      logger    logrus.LogEntry
-//    }
-//
-//    // Serialize serializes given date into RFC 943 compatible string.
-//    func (r *MyDateResolver) Serialize(val interface{}) interface{} {
-//      // ... implementation details ...
-//    }
-//
-//    // ParseValue takes given value and coerces it into an instance of Time.
-//    func (r *MyDateResolver) ParseValue(val interface{}) interface{} {
-//      // ... implementation details ...
-//      // eg. if val is an int use time.At(), if string time.Parse(), etc.
-//    }
-//
-//    // ParseValue takes given value and coerces it into an instance of Time.
-//    func (r *MyDateResolver) ParseValue(val ast.Value) interface{} {
-//      // ... implementation details ...
-//      //
-//      // eg.
-//      //
-//      // if string value return value,
-//      // if IntValue Atoi and return value,
-//      // etc.
-//    }`,
-		resolverName,
-	)
-	// Generate resolver interface.
-	code.Type().Id(resolverName).Interface(
-		// Serialize method.
-		jen.Comment("Serialize an internal value to include in a response."),
-		jen.Id("Serialize").Params(jen.Id("interface{}")).Interface(),
-
-		// ParseValue method.
-		jen.Comment("ParseValue parses an externally provided value to use as an input."),
-		jen.Id("ParseValue").Params(jen.Id("interface{}")).Interface(),
-
-		// ParseLiteral method.
-		jen.Comment("ParseLiteral parses an externally provided literal value to use as an input."),
-		jen.Id("ParseLiteral").Params(jen.Qual(astPkg, "Value")).Interface(),
-	)
-
-	//
-	// Generate type definition
-	//
-	// ... comment: Include description in comment
-	// ... panic callbacks panic if not configured
-	//
+	privateName := "_ScalarType_" + name
 
 	// Scalar description
-	typeDesc := fetchDescription(node)
-
-	// To appease the linter ensure that the the description of the scalar begins
-	// with the name of the resulting method.
-	desc := typeDesc
-	if hasPrefix := strings.HasPrefix(typeDesc, name); !hasPrefix {
-		desc = name + " " + desc
-	}
+	desc := getDescription(node)
+	comment := genTypeComment(node)
 
 	//
-	// Generates thunk that returns new instance of scalar config
+	// Generate type config thunk
 	//
-	//  == Example input SDL
+	// == Example output
 	//
-	//    """
-	//    Timestamps are great.
-	//    """
-	//    scalar Timestamp
-	//
-	//  == Example output
-	//
-	//   // Timestamps are great
-	//   func Timestamp() graphql.ScalarConfig {
-	//     return graphql.ScalarConfig{
+	//   func() definition.ScalarConfig {
+	//     return definition.ScalarConfig{
 	//       Name:         "Timestamp",
 	//       Description:  "Timestamps are great.",
-	//       Serialize:    // ...
-	//       ParseValue:   // ...
-	//       ParseLiteral: // ...
+	//       Serialize:    // ... closure that panics ...
+	//       ParseValue:   // ... closure that panics ...
+	//       ParseLiteral: // ... closure that panics ...
 	//     }
 	//   }
 	//
-	code.Comment(desc)
-	code.Func().Id(name).Params().Qual(graphqlGoPkg, "ScalarConfig").Block(
-		jen.Return(jen.Qual(graphqlGoPkg, "ScalarConfig").Values(jen.Dict{
+	thunk := jen.Func().Id(name).Params().Qual(defsPkg, "ScalarConfig").Block(
+		jen.Return(jen.Qual(defsPkg, "ScalarConfig").Values(jen.Dict{
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
-			jen.Id("Description"): jen.Lit(typeDesc),
+			jen.Id("Description"): jen.Lit(desc),
 
 			// Resolver funcs
 			jen.Id("Serialize"): jen.Func().Params(jen.Id("_").Interface()).Interface().Block(
 				jen.Comment(missingResolverNote),
-				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
+				jen.Panic(jen.Lit("Unimplemented; see "+scalarResolverName+".")),
 			),
 			jen.Id("ParseValue"): jen.Func().Params(jen.Id("_").Interface()).Interface().Block(
 				jen.Comment(missingResolverNote),
-				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
+				jen.Panic(jen.Lit("Unimplemented; see "+scalarResolverName+".")),
 			),
 			jen.Id("ParseLiteral"): jen.Func().Params(jen.Id("_").Qual(astPkg, "Value")).Interface().Block(
 				jen.Comment(missingResolverNote),
-				jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
+				jen.Panic(jen.Lit("Unimplemented; see "+scalarResolverName+".")),
 			),
 		})),
 	)
+
+	//
+	// Generate public reference to type
+	//
+	// == Example output
+	//
+	//   // Timestamps are great
+	//   var Timestamp = graphql.NewType("Timestamp", graphql.ScalarKind)
+	//
+	code.Comment(comment)
+	code.
+		Var().Lit(name).Op("=").
+		Qual(servicePkg, "NewType").
+		Call(jen.Lit(name), jen.Qual(servicePkg, "ScalarKind"))
+
+	//
+	// Generate public func to register type with service
+	//
+	// == Example output
+	//
+	//   // RegisterTimestamp registers Timestamp scalar type with given service.
+	//   func RegisterTimestamp(svc graphql.Service, impl graphql.ScalarResolver) {
+	//     svc.RegisterScalar(_ScalarType_Timestamp, impl)
+	//   }
+	//
+	registerFnName := fmt.Sprintf("Register%s", name)
+	code.Commentf(
+		"Register%s registers %s scalar type with given service.",
+		registerFnName,
+		name,
+	)
+	code.
+		Func().Id(registerFnName).
+		Params(
+			jen.Id("svc").Qual(servicePkg, "Service"),
+			jen.Id("impl").Qual(servicePkg, "ScalarResolver"),
+		).
+		Block(
+			jen.Id("svc.RegisterScalar").Call(
+				jen.Id(privateName),
+				jen.Id("impl"),
+			),
+		)
+
+	//
+	// Generate type description
+	//
+	// == Example output
+	//
+	//   // describe timestamp's configuration; keep private to avoid
+	//   // unintentional tampering at runtime.
+	//   var _ScalarType_Timestamp = graphql.ScalarDesc{
+	//     Config: func() definition.ScalarConfig { ... }
+	//   }
+	//
+	code.Commentf(
+		`describe %s's configuration; keep private to avoid unintentional tampering of configuration at runtime.`,
+		registerFnName,
+		name,
+	)
+	code.
+		Var().Id(privateName).Op("=").
+		Qual(servicePkg, "ScalarDesc").
+		Values(jen.Dict{jen.Lit("Config"): thunk})
 
 	return code
 }

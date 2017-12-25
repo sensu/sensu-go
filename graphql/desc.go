@@ -1,6 +1,10 @@
-package service
+package graphql
 
-import "github.com/graphql-go/graphql"
+import (
+	"context"
+
+	"github.com/graphql-go/graphql"
+)
 
 // ResolveTypeParams used in ResolveType fn
 type ResolveTypeParams = graphql.ResolveTypeParams
@@ -56,7 +60,7 @@ type EnumDesc struct {
 // InputDesc describes input configuration and handlers for use by service.
 type InputDesc struct {
 	// Config thunk returns copy of config
-	Config func() graphql.InputConfig
+	Config func() graphql.InputObjectConfig
 }
 
 // InterfaceDesc describes interface configuration and handlers for use by service.

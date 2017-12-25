@@ -4,8 +4,8 @@ const (
 	// ast package
 	astPkg = "github.com/graphql-go/graphql/language/ast"
 
-	// graphql definition package
-	graphqlGoPkg = "github.com/graphql-go/graphql"
+	// graphql-go package; used in generated code for definition types
+	defsPkg = "github.com/graphql-go/graphql"
 
 	// GraphQL service package
 	servicePkg = "github.com/sensu/sensu-go/graphql"

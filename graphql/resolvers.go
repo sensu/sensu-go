@@ -1,9 +1,63 @@
-package util
+package graphql
 
 import (
 	"reflect"
 	"strings"
+
+	"github.com/graphql-go/graphql/language/ast"
 )
+
+//
+// ScalarResolver represents a collection of methods whose products represent
+// the input and response values of a scalar type.
+//
+// == Example input SDL
+//
+//   """
+//   Timestamps are great.
+//   """
+//   scalar Timestamp
+//
+// == Example implementation
+//
+//   // MyTimestampResolver implements ScalarResolver interface
+//   type MyTimestampResolver struct {
+//     defaultTZ *time.Location
+//     logger    logrus.LogEntry
+//   }
+//
+//   // Serialize serializes given date into RFC 943 compatible string.
+//   func (r *MyTimestampResolver) Serialize(val interface{}) interface{} {
+//     // ... implementation details ...
+//   }
+//
+//   // ParseValue takes given value and coerces it into an instance of Time.
+//   func (r *MyTimestampResolver) ParseValue(val interface{}) interface{} {
+//     // ... implementation details ...
+//     // eg. if val is an int use time.At(), if string time.Parse(), etc.
+//   }
+//
+//   // ParseValue takes given value and coerces it into an instance of Time.
+//   func (r *MyTimestampResolver) ParseValue(val ast.Value) interface{} {
+//     // ... implementation details ...
+//     //
+//     // eg.
+//     //
+//     // if string value return value,
+//     // if IntValue Atoi and return value,
+//     // etc.
+//   }`
+//
+type ScalarResolver interface {
+	// Serialize an internal value to include in a response.
+	Serialize(interface{}) interface{}
+
+	// ParseValue parses an externally provided value to use as an input.
+	ParseValue(interface{}) interface{}
+
+	// ParseLiteral parses an externally provided literal value to use as an input.
+	ParseLiteral(ast.Value) interface{}
+}
 
 // DefaultResolver uses reflection to attempt to resolve the result of a given
 // field.
