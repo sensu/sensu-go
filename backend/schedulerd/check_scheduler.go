@@ -64,10 +64,18 @@ func (s *CheckScheduler) Start() error {
 					isSubdued, err := sensutime.InWindows(time.Now(), *subdue)
 					if err == nil && isSubdued {
 						// Check is subdued at this time
-						continue
+						s.logger.Debug("check is not scheduled to be executed")
 					}
 					if err != nil {
-						s.logger.WithError(err).Print("check scheduler: subdued time window")
+						s.logger.WithError(err).Print("unexpected error with time windows")
+					}
+
+					if err != nil || isSubdued {
+						// Reset the timer so the check is scheduled again for the next
+						// interval, since it might no longer be subdued
+						timer.SetInterval(uint(check.Interval))
+						timer.Next()
+						continue
 					}
 				}
 
