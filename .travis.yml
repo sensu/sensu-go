@@ -11,10 +11,7 @@ branches:
 stages:
 - name: test
 - name: deploy
-  if: branch = master OR tag IS present
-before_cache:
-- rm -rf $GOPATH/src/github.com/sensu/sensu-go/*
-- rm -rf $GOPATH/pkg/**/github.com/sensu/sensu-go
+#  if: branch = master OR tag IS present
 cache:
   yarn: true
   directories:
@@ -26,6 +23,11 @@ install:
 - "./build.sh deps"
 - "./build.sh build_tools"
 script: "./build.sh $TEST_SUITE"
+before_cache:
+- rm -rf $GOPATH/src/github.com/sensu/sensu-go/*
+- rm -rf $GOPATH/pkg/**/github.com/sensu/sensu-go
+before_deploy:
+  script: install
 jobs:
   include:
   - stage: deploy
