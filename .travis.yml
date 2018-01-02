@@ -35,8 +35,8 @@ jobs:
     - provider: script
       skip_cleanup: true
       script: "./build.sh docker push master"
-      on:
-        branch: master
+      # on:
+      #   branch: master
     - provider: script
       skip_cleanup: true
       script: "./build.sh docker push versioned"
