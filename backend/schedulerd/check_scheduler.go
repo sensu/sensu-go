@@ -71,7 +71,7 @@ func (s *CheckScheduler) Start() error {
 					if err != nil || isSubdued {
 						// Reset the timer so the check is scheduled again for the next
 						// interval, since it might no longer be subdued
-						timer.SetInterval(uint(check.Interval))
+						timer.SetDuration(uint(check.Interval))
 						timer.Next()
 						continue
 					}
