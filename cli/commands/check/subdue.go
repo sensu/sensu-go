@@ -47,6 +47,13 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 			if err := json.NewDecoder(in).Decode(&timeWindows); err != nil {
 				return err
 			}
+			for _, windows := range timeWindows.MapTimeWindows() {
+				for _, window := range windows {
+					if err := convertToUTC(window); err != nil {
+						return err
+					}
+				}
+			}
 			check.Subdue = &timeWindows
 			if err := check.Validate(); err != nil {
 				return err
