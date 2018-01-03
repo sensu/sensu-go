@@ -6,6 +6,41 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const (
+	// WatchUnknown indicates that we received an unknown watch even tytpe
+	// from etcd.
+	WatchUnknown WatchActionType = iota
+	// WatchCreate indicates that an object was created.
+	WatchCreate
+	// WatchUpdate indicates that an object was updated.
+	WatchUpdate
+	// WatchDelete indicates that an object was deleted.
+	WatchDelete
+)
+
+// WatchActionType indicates what type of change was made to an object in the store.
+type WatchActionType int
+
+func (t WatchActionType) String() string {
+	var s string
+	switch t {
+	case WatchUnknown:
+		s = "Unknown"
+	case WatchCreate:
+		s = "Create"
+	case WatchDelete:
+		s = "Delete"
+	}
+	return s
+}
+
+// A WatchEventCheckConfig contains the modified store object and the action that occured
+// during the modification.
+type WatchEventCheckConfig struct {
+	CheckConfig *types.CheckConfig
+	Action      WatchActionType
+}
+
 // Store is used to abstract the durable storage used by the Sensu backend
 // processses. Each Sensu resources is represented by its own interface. A
 // MockStore is available in order to mock a store implementation
@@ -116,6 +151,12 @@ type CheckConfigStore interface {
 
 	// UpdateCheckConfig creates or updates a given check's configuration.
 	UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error
+
+	// GetCheckConfigWatcher returns a channel that emits CheckConfigWatchEvents notifying
+	// the caller that a CheckConfig was updated. If the watcher runs into a terminal error
+	// or the context passed is cancelled, then the channel will be closed. The caller must
+	// restart the watcher, if needed.
+	GetCheckConfigWatcher(ctx context.Context) <-chan WatchEventCheckConfig
 }
 
 // HookConfigStore provides methods for managing hooks configuration
