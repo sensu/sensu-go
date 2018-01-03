@@ -72,6 +72,7 @@ func (s *CheckScheduler) Start() error {
 				if (s.LastCronState != "" && check.Cron == "") ||
 					(s.LastCronState == "" && check.Cron != "") {
 					s.logger.Info("check schedule type has changed")
+					// Update the CheckScheduler with current check state and last cron state
 					s.LastCronState = check.Cron
 					s.CheckCron = check.Cron
 					s.CheckInterval = check.Interval
@@ -79,6 +80,7 @@ func (s *CheckScheduler) Start() error {
 					goto toggle
 				}
 
+				// Update the CheckScheduler with the last cron state
 				s.LastCronState = check.Cron
 
 				if subdue := check.GetSubdue(); subdue != nil {
