@@ -59,6 +59,18 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
+	checkBytes, err := tokenSubstitution(a.getAgentEntity(), checkConfig)
+	if err != nil {
+		a.sendFailure(event, err)
+		return
+	}
+
+	err = json.Unmarshal(checkBytes, checkConfig)
+	if err != nil {
+		a.sendFailure(event, fmt.Errorf("could not unmarshal the check: %s", err))
+		return
+	}
+
 	// Ensure that the asset manager is aware of all the assets required to
 	// execute the given check.
 	assets := a.assetManager.RegisterSet(checkAssets)
