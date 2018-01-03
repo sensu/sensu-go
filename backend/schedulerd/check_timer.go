@@ -10,7 +10,7 @@ import (
 
 // A CheckTimer handles starting and stopping timers for a given check
 type CheckTimer interface {
-	// C channel emits events when timer's duration has reaached 0
+	// C channel emits events when timer's duration has reached 0
 	C() <-chan time.Time
 	// SetDuration updates the interval in which timers are set
 	SetDuration(uint)
@@ -41,7 +41,7 @@ func NewIntervalTimer(name string, interval uint) *IntervalTimer {
 	return timer
 }
 
-// C channel emits events when timer's duration has reaached 0
+// C channel emits events when timer's duration has reached 0
 func (timerPtr *IntervalTimer) C() <-chan time.Time {
 	return timerPtr.timer.C
 }
@@ -89,7 +89,7 @@ func NewCronTimer(name string, schedule cron.Schedule) *CronTimer {
 	return timer
 }
 
-// C channel emits events when timer's duration has reaached 0
+// C channel emits events when timer's duration has reached 0
 func (timerPtr *CronTimer) C() <-chan time.Time {
 	return timerPtr.timer.C
 }
