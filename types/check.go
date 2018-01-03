@@ -79,7 +79,7 @@ func (c *CheckConfig) Validate() error {
 		}
 	}
 
-	return nil
+	return c.Subdue.Validate()
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
