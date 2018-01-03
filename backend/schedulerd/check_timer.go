@@ -10,10 +10,15 @@ import (
 
 // A CheckTimer handles starting and stopping timers for a given check
 type CheckTimer interface {
+	// C channel emits events when timer's duration has reaached 0
 	C() <-chan time.Time
+	// SetDuration updates the interval in which timers are set
 	SetDuration(uint)
+	// Start sets up a new timer
 	Start()
+	// Next reset's timer using interval
 	Next()
+	// Stop ends the timer
 	Stop() bool
 }
 
