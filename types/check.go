@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
@@ -51,6 +52,12 @@ func (c *CheckConfig) Get(name string) (interface{}, error) {
 func (c *CheckConfig) Validate() error {
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
+	}
+
+	if c.Cron != "" {
+		if _, err := cron.Parse(c.Cron); err != nil {
+			return errors.New("check cron string is invalid")
+		}
 	}
 
 	if c.Interval == 0 {
@@ -142,6 +149,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Environment:   "default",
 		Organization:  "default",
 		Publish:       true,
+		Cron:          "",
 	}
 }
 
