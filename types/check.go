@@ -72,6 +72,10 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("organization must be set")
 	}
 
+	if c.Ttl <= int64(c.Interval) && c.Ttl > -1 {
+		return errors.New("ttl must be greater than check interval")
+	}
+
 	for _, assetName := range c.RuntimeAssets {
 		if err := ValidateAssetName(assetName); err != nil {
 			return fmt.Errorf("asset's %s", err)
@@ -150,6 +154,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Organization:  "default",
 		Publish:       true,
 		Cron:          "",
+		Ttl:           -1,
 	}
 }
 
