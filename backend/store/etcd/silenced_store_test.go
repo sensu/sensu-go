@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSilencedStorage(t *testing.T) {
@@ -113,5 +114,65 @@ func TestSilencedStorageWithExpire(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
 		assert.NotZero(t, entry.Expire)
+	})
+}
+
+func TestSilencedStorageWithBegin(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced.Organization = "default"
+		silenced.Environment = "default"
+		// set a begin time in the future
+		silenced.Begin = time.Date(1970, 01, 01, 01, 00, 00, 00, time.UTC).Unix()
+		// current time is before the start time
+		currentTime := time.Date(1970, 01, 01, 00, 00, 00, 00, time.UTC).Unix()
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+
+		err := store.UpdateSilencedEntry(ctx, silenced)
+		if err != nil {
+			t.Fatalf("failed to update entry due to error: %s", err)
+		}
+
+		// Get silenced entry and check that it is not yet ready to start
+		// silencing
+		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		assert.NoError(t, err)
+		require.NotNil(t, entry)
+		assert.False(t, entry.StartSilence(currentTime))
+
+		// reset current time to be ahead of begin time
+		currentTime = time.Date(1970, 01, 01, 02, 00, 00, 00, time.UTC).Unix()
+		assert.True(t, entry.StartSilence(currentTime))
+	})
+}
+
+func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced.Organization = "default"
+		silenced.Environment = "default"
+		silenced.Expire = 15
+		currentTime := time.Now().UTC().Unix()
+		// set a begin time in the future
+		silenced.Begin = currentTime + 3600
+		// current time is before the start time
+		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+
+		err := store.UpdateSilencedEntry(ctx, silenced)
+		if err != nil {
+			t.Fatalf("failed to update entry due to error: %s", err)
+		}
+
+		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		assert.NoError(t, err)
+		assert.NotNil(t, entry)
+		assert.False(t, entry.StartSilence(currentTime))
+		// Check that the ttl includes the expire time and delta between current
+		// and begin time
+		assert.Condition(t, func() bool {
+			return entry.Expire > 3600
+		})
 	})
 }

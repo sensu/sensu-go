@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
 windows.
+- Silenced entries now include a `begin` timestamp for scheduled maintenance.
 
 ## [2.0.0-alpha.11] - 2017-12-19
 ### Breaking Changes

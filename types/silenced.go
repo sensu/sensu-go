@@ -25,6 +25,16 @@ func (s *Silenced) Validate() error {
 	return nil
 }
 
+// StartSilence returns true if the current unix timestamp is less than the begin
+// timestamp.
+func (s *Silenced) StartSilence(currentTime int64) bool {
+	// if begin time is zero, it has not been set, so silencing can start.
+	if s.Begin == 0 {
+		return true
+	}
+	return currentTime > s.Begin
+}
+
 // FixtureSilenced returns a testing fixutre for a Silenced event struct.
 func FixtureSilenced(id string) *Silenced {
 	var check, subscription string
