@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSilencedStorage(t *testing.T) {
@@ -137,7 +138,7 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 		// silencing
 		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
 		assert.NoError(t, err)
-		assert.NotNil(t, entry)
+		require.NotNil(t, entry)
 		assert.False(t, entry.StartSilence(currentTime))
 
 		// reset current time to be ahead of begin time
