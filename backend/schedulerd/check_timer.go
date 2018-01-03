@@ -81,7 +81,15 @@ type CronTimer struct {
 }
 
 // NewCronTimer establishes new check timer given a name & an initial interval
-func NewCronTimer(name string, schedule cron.Schedule) *CronTimer {
+func NewCronTimer(name string, cronStr string) *CronTimer {
+	schedule, err := cron.Parse(cronStr)
+	// we shouldn't hit this error because we've already validated the cron string
+	// but log and exit cleanly to revert to the interval timer
+	if err != nil {
+		logger.WithError(err).Error("invalid cron, reverting to interval")
+		return nil
+	}
+
 	nowTime := time.Now()
 	nextTime := schedule.Next(nowTime)
 	diff := nextTime.Sub(nowTime)

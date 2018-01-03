@@ -47,7 +47,6 @@ func TestCheckConfig(t *testing.T) {
 	c.Interval = 60
 
 	// Invalid cron
-	c.Cron = "invalid cron"
 	assert.Error(t, c.Validate())
 	c.Cron = "0 30 * * * *"
 
