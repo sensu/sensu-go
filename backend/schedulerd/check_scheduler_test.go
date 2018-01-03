@@ -152,11 +152,11 @@ type TimerSuite struct {
 }
 
 func (suite *TimerSuite) TestSplay() {
-	timer := NewCheckTimer("check1", 10)
+	timer := NewIntervalTimer("check1", 10)
 
 	suite.Condition(func() bool { return timer.splay > 0 })
 
-	timer2 := NewCheckTimer("check1", 10)
+	timer2 := NewIntervalTimer("check1", 10)
 	suite.Equal(timer.splay, timer2.splay)
 }
 
@@ -164,7 +164,7 @@ func (suite *TimerSuite) TestInitialOffset() {
 	inputs := []uint{1, 10, 60}
 	for _, intervalSeconds := range inputs {
 		now := time.Now()
-		timer := NewCheckTimer("check1", intervalSeconds)
+		timer := NewIntervalTimer("check1", intervalSeconds)
 		nextExecution := timer.calcInitialOffset()
 		executionTime := now.Add(nextExecution)
 
@@ -178,7 +178,7 @@ func (suite *TimerSuite) TestInitialOffset() {
 }
 
 func (suite *TimerSuite) TestStop() {
-	timer := NewCheckTimer("check1", 10)
+	timer := NewIntervalTimer("check1", 10)
 	timer.Start()
 
 	result := timer.Stop()
