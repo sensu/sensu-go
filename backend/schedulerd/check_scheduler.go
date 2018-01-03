@@ -17,6 +17,7 @@ type CheckScheduler struct {
 	CheckEnv      string
 	CheckOrg      string
 	CheckInterval uint32
+	CheckCron     string
 
 	StateManager *StateManager
 	MessageBus   messaging.MessageBus
@@ -32,9 +33,16 @@ func (s *CheckScheduler) Start() error {
 	s.WaitGroup.Add(1)
 
 	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg, "env": s.CheckEnv})
-	s.logger.Infof("starting new scheduler")
 
-	timer := NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
+	var timer CheckTimer
+	if s.CheckCron != "" {
+		s.logger.Infof("starting new cron scheduler")
+		timer = NewCronTimer(s.CheckName, s.CheckCron)
+	}
+	if timer == nil || s.CheckCron == "" {
+		s.logger.Infof("starting new interval scheduler")
+		timer = NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
+	}
 	executor := &CheckExecutor{Bus: s.MessageBus}
 
 	// TODO(greg): Refactor this part to make the code more easily tested.
