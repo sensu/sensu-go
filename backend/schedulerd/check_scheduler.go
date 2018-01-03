@@ -18,6 +18,7 @@ type CheckScheduler struct {
 	CheckOrg      string
 	CheckInterval uint32
 	CheckCron     string
+	LastCronState string
 
 	StateManager *StateManager
 	MessageBus   messaging.MessageBus
@@ -31,25 +32,26 @@ type CheckScheduler struct {
 func (s *CheckScheduler) Start() error {
 	s.stopping = make(chan struct{})
 	s.WaitGroup.Add(1)
+	defer s.WaitGroup.Done()
 
 	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg, "env": s.CheckEnv})
 
-	var timer CheckTimer
-	if s.CheckCron != "" {
-		s.logger.Infof("starting new cron scheduler")
-		timer = NewCronTimer(s.CheckName, s.CheckCron)
-	}
-	if timer == nil || s.CheckCron == "" {
-		s.logger.Infof("starting new interval scheduler")
-		timer = NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
-	}
-	executor := &CheckExecutor{Bus: s.MessageBus}
-
-	// TODO(greg): Refactor this part to make the code more easily tested.
 	go func() {
+	toggle:
+		var timer CheckTimer
+		if s.CheckCron != "" {
+			s.logger.Infof("starting new cron scheduler")
+			timer = NewCronTimer(s.CheckName, s.CheckCron)
+		}
+		if timer == nil || s.CheckCron == "" {
+			s.logger.Infof("starting new interval scheduler")
+			timer = NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
+		}
+		executor := &CheckExecutor{Bus: s.MessageBus}
+
+		// TODO(greg): Refactor this part to make the code more easily tested.
 		timer.Start()
 		defer timer.Stop()
-		defer s.WaitGroup.Done()
 
 		for {
 			select {
@@ -65,6 +67,19 @@ func (s *CheckScheduler) Start() error {
 					s.logger.Info("check is no longer in state")
 					return
 				}
+
+				// Indicates a state change from cron to interval or interval to cron
+				if (s.LastCronState != "" && check.Cron == "") ||
+					(s.LastCronState == "" && check.Cron != "") {
+					s.logger.Info("check schedule type has changed")
+					s.LastCronState = check.Cron
+					s.CheckCron = check.Cron
+					s.CheckInterval = check.Interval
+					timer.Stop()
+					goto toggle
+				}
+
+				s.LastCronState = check.Cron
 
 				if subdue := check.GetSubdue(); subdue != nil {
 					isSubdued, err := sensutime.InWindows(time.Now(), *subdue)
