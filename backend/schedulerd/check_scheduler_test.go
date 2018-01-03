@@ -35,6 +35,7 @@ func (suite *CheckSchedulerSuite) SetupTest() {
 		CheckOrg:      suite.check.Organization,
 		CheckInterval: suite.check.Interval,
 		CheckCron:     suite.check.Cron,
+		LastCronState: suite.check.Cron,
 		StateManager:  manager,
 		MessageBus:    suite.msgBus,
 		WaitGroup:     &sync.WaitGroup{},
