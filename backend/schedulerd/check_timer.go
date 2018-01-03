@@ -109,6 +109,7 @@ func (timerPtr *CronTimer) SetDuration(cronStr string, interval uint) {
 	// but log and exit cleanly to revert to the interval timer
 	if err != nil {
 		logger.WithError(err).Error("invalid cron, reverting to interval")
+		return
 	}
 	nowTime := time.Now()
 	nextTime := schedule.Next(nowTime)
