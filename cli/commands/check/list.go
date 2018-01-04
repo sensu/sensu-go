@@ -69,6 +69,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "Cron",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				return check.Cron
+			},
+		},
+		{
 			Title: "Subscriptions",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)
