@@ -12,31 +12,15 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd"
 )
 
-// Notes from chat about queues:
-// Queues such as Rabbit and Beanstalkd have message safety/durability
-// implemented as "ready" and "reserved" state. We may not need to add implement
-// that here due to the following:
-// 	- queue use will be limited to the backend
-// 	- the backend is responsible for sending check requests to the agent
-//  - if the backend fails (due to a partition or other failure) only its
-//  currently processed item would be lost
-//  - if the check fails to execute due to an agent failure, a keepalive event,
-//  check ttl failure, or both will be created.
-//  - the backend is only responsible for the message delivery to the agent, not
-//  that the agent handled the message.
-
-// Need to define functions for:
-// - add item to queue
-// - remove item from queue
-// - delete item from queue (either part of remove or a separate action if we
-// want durability)
-
 // Define configuration here
 const (
 	queuePrefix = "queue"
 )
 
-// Queue defines an etcd queue
+// Queue is a FIFO queue that is backed by etcd.
+// Queue is not durable. When an item is received by a client, it is deleted
+// from etcd. Clients are responsible for handling the item, and there is no
+// way to retrieve an item again once it has been Dequeued.
 type Queue struct {
 	client *clientv3.Client
 	// combination of constant and value passed in
