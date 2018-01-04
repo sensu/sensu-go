@@ -41,6 +41,13 @@ type WatchEventCheckConfig struct {
 	Action      WatchActionType
 }
 
+// A WatchEventAsset contains the modified asset object and the action that occurred
+// during the modification.
+type WatchEventAsset struct {
+	Asset  *types.Asset
+	Action WatchActionType
+}
+
 // Store is used to abstract the durable storage used by the Sensu backend
 // processses. Each Sensu resources is represented by its own interface. A
 // MockStore is available in order to mock a store implementation
@@ -118,6 +125,12 @@ type AssetStore interface {
 
 	// UpdateAsset creates or updates a given asset.
 	UpdateAsset(ctx context.Context, asset *types.Asset) error
+
+	// GetAssetWatcher returns a channel that emits WatchEventAsset structs notifying
+	// the caller that an Asset was updated. If the watcher runs into a terminal error
+	// or the context passed is cancelled, then the channel will be closed. The caller must
+	// restart the watcher, if needed.
+	GetAssetWatcher(ctx context.Context) <-chan WatchEventAsset
 }
 
 // AuthenticationStore provides methods for managing the JWT secret
