@@ -10,7 +10,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
 windows.
-<<<<<<< HEAD
 - Silenced entries now include a `begin` timestamp for scheduled maintenance.
 - Store clients can now use [watchers](https://github.com/sensu/sensu-go/pull/792) to be notified of changes to objects in the store.
 - Add check `Cron` field. Checks can now be scheduled according to the cron

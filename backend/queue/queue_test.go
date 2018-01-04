@@ -7,67 +7,34 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func newEtcd(t *testing.T) (*clientv3.Client, func()) {
-	tmpDir, remove := testutil.TempDir(t)
-
-	ports := make([]int, 2)
-	err := testutil.RandomPorts(ports)
-	if err != nil {
-		t.Fatal(err)
-	}
-	clURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
-	apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
-	initCluster := fmt.Sprintf("default=%s", apURL)
-
-	cfg := etcd.NewConfig()
-	cfg.DataDir = tmpDir
-	cfg.ListenClientURL = clURL
-	cfg.ListenPeerURL = apURL
-	cfg.InitialCluster = initCluster
-	cfg.InitialClusterState = etcd.ClusterStateNew
-	cfg.InitialAdvertisePeerURL = apURL
-	cfg.Name = "default"
-
-	e, err := etcd.NewEtcd(cfg)
-	assert.NoError(t, err)
-
-	client, err := clientv3.New(clientv3.Config{
-		Endpoints: []string{clURL},
-	})
-
-	assert.NoError(t, err)
-
-	return client, func() {
-		if e != nil {
-			assert.NoError(t, e.Shutdown())
-		}
-		remove()
-	}
-}
-
 func TestEnqueue(t *testing.T) {
 	t.Parallel()
-	client, cleanup := newEtcd(t)
+
+	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
+	client, err := e.NewClient()
+	require.NoError(t, err)
+
 	queue := New("testenq", client)
-	err := queue.Enqueue(context.Background(), "test value")
+	err = queue.Enqueue(context.Background(), "test value")
 	assert.NoError(t, err)
 }
 
 func TestDequeue(t *testing.T) {
 	t.Parallel()
-	client, cleanup := newEtcd(t)
+
+	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
+	client, err := e.NewClient()
+	require.NoError(t, err)
 
 	queue := New("testdeq", client)
-	err := queue.Enqueue(context.Background(), "test value")
+	err = queue.Enqueue(context.Background(), "test value")
 	require.NoError(t, err)
 
 	value, err := queue.Dequeue(context.Background())
@@ -82,8 +49,11 @@ func TestDequeue(t *testing.T) {
 
 func TestDequeueFIFO(t *testing.T) {
 	t.Parallel()
-	client, cleanup := newEtcd(t)
+
+	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
+	client, err := e.NewClient()
+	require.NoError(t, err)
 
 	queue := New("testfifo", client)
 	items := []string{"hello", "there", "world", "asdf", "fjdksl", "lalalal"}
@@ -105,8 +75,11 @@ func TestDequeueFIFO(t *testing.T) {
 
 func TestDequeueParallel(t *testing.T) {
 	t.Parallel()
-	client, cleanup := newEtcd(t)
+
+	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
+	client, err := e.NewClient()
+	require.NoError(t, err)
 
 	queue := New("testparallel", client)
 	items := map[string]struct{}{
