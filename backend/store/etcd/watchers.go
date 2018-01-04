@@ -25,7 +25,7 @@ func getWatcherAction(event *clientv3.Event) store.WatchActionType {
 	return store.WatchUnknown
 }
 
-// GetCheckConfigWatcher returns a channel that emits CheckConfigWatchEvents notifying
+// GetCheckConfigWatcher returns a channel that emits WatchEventCheckConfig structs notifying
 // the caller that a CheckConfig was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must
 // restart the watcher, if needed.
@@ -59,6 +59,50 @@ func (s *etcdStore) GetCheckConfigWatcher(ctx context.Context) <-chan store.Watc
 				watchEvent = store.WatchEventCheckConfig{
 					Action:      action,
 					CheckConfig: checkConfig,
+				}
+
+				ch <- watchEvent
+			}
+		}
+	}()
+
+	return ch
+}
+
+// GetAssetWatcher returns a channel that emits WatchEventAsset structs notifying
+// the caller that an Asset was updated. If the watcher runs into a terminal error
+// or the context passed is cancelled, then the channel will be closed. The caller must
+// restart the watcher, if needed.
+func (s *etcdStore) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsset {
+	ch := make(chan store.WatchEventAsset)
+
+	go func() {
+		watcher := clientv3.NewWatcher(s.client)
+		path := path.Join(etcdRoot, assetsPathPrefix)
+		watcherChan := watcher.Watch(ctx, path, clientv3.WithPrefix(), clientv3.WithCreatedNotify())
+		defer close(ch)
+
+		var (
+			watchEvent store.WatchEventAsset
+			action     store.WatchActionType
+			asset      *types.Asset
+		)
+
+		for watchResponse := range watcherChan {
+			for _, event := range watchResponse.Events {
+				action = getWatcherAction(event)
+				if action == store.WatchUnknown {
+					logger.Error("unknown etcd watch action: ", event.Type.String())
+				}
+
+				asset = &types.Asset{}
+				if err := json.Unmarshal(event.Kv.Value, asset); err != nil {
+					logger.WithError(err).Error("unable to unmarshal check config from key: ", event.Kv.Key)
+				}
+
+				watchEvent = store.WatchEventAsset{
+					Action: action,
+					Asset:  asset,
 				}
 
 				ch <- watchEvent

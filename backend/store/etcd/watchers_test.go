@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWatchers(t *testing.T) {
+func TestCheckConfigWatcher(t *testing.T) {
 	t.Parallel()
 
 	testWithEtcd(t, func(st store.Store) {
@@ -26,14 +26,46 @@ func TestWatchers(t *testing.T) {
 			require.NoError(t, err, "failed to create check config in store")
 		}
 
-		var ev store.WatchEventCheckConfig
-
 		select {
-		case ev = <-watchChan:
+		case ev := <-watchChan:
 			assert.Equal(t, store.WatchCreate, ev.Action)
 			assert.Equal(t, checkCfg.Organization, ev.CheckConfig.Organization)
 			assert.Equal(t, checkCfg.Environment, ev.CheckConfig.Environment)
 			assert.Equal(t, checkCfg.Name, ev.CheckConfig.Name)
+		case <-time.After(5 * time.Second):
+			assert.Fail(t, "failed to receive a watch event in 5 seconds")
+		}
+
+		cancel()
+
+		select {
+		case _, ok := <-watchChan:
+			assert.False(t, ok, "watch channel wasn't closed")
+		case <-time.After(5 * time.Second):
+			assert.Fail(t, "failed to close watch channel in 5 seconds")
+		}
+	})
+}
+func TestAssetWatcher(t *testing.T) {
+	t.Parallel()
+
+	testWithEtcd(t, func(st store.Store) {
+		asset := types.FixtureAsset("asset")
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		watchChan := st.GetAssetWatcher(ctx)
+		require.NotNil(t, watchChan)
+
+		if err := st.UpdateAsset(ctx, asset); err != nil {
+			require.NoError(t, err, "failed to create check config in store")
+		}
+
+		select {
+		case ev := <-watchChan:
+			assert.Equal(t, store.WatchCreate, ev.Action)
+			assert.Equal(t, asset.Organization, ev.Asset.Organization)
+			assert.Equal(t, asset.Name, ev.Asset.Name)
 		case <-time.After(5 * time.Second):
 			assert.Fail(t, "failed to receive a watch event in 5 seconds")
 		}
