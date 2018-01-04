@@ -40,7 +40,7 @@ import (
 //
 //   // RegisterLocale registers Locale enum type with given service.
 //   func RegisterLocale(svc graphql.Service) {
-//     src.RegisterEnum(_EnumTypeLocale)
+//     svc.RegisterEnum(_EnumTypeLocale)
 //   }
 //
 //   // define configuration thunk
@@ -85,6 +85,15 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	desc := getDescription(node)
 	comment := genTypeComment(name, desc)
 
+	// Ids
+	registerFnName := "Register" + name
+	publicValuesName := name + "s" // naive
+	publicRefName := name + "Type"
+	publicRefComment := genTypeComment(publicRefName, desc)
+	privateEnumValuesStruct := "_EnumType" + name + "Values"
+	privateConfigName := "_EnumType" + name + "Desc"
+	privateConfigThunkName := "_EnumType" + name + "ConfigFn"
+
 	//
 	// Generate type that will be used to represent enum
 	//
@@ -107,11 +116,9 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//     LA: "LA",
 	//   }
 	//
-	pluralizedName := name + "s" // naive
-	privateEnumValuesStruct := "_EnumType" + name + "Values"
-	code.Comment(pluralizedName + " holds enum values")
+	code.Comment(publicValuesName + " holds enum values")
 	code.
-		Var().Id(pluralizedName).Op("=").
+		Var().Id(publicValuesName).Op("=").
 		Id(privateEnumValuesStruct).
 		Values(jen.DictFunc(func(d jen.Dict) {
 			for _, v := range node.Values {
@@ -127,8 +134,6 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//   // Locale describes a place with a distinct (and supported) lanugage / dialect.
 	//   var LocaleType = graphql.NewType("Locale", graphql.EnumKind)
 	//
-	publicRefName := name + "Type"
-	publicRefComment := genTypeComment(publicRefName, desc)
 	code.Comment(publicRefComment)
 	code.
 		Var().Id(publicRefName).Op("=").
@@ -142,11 +147,9 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//
 	//   // RegisterLocale registers Locale enum type with given service.
 	//   func RegisterLocale(svc graphql.Service) {
-	//     src.RegisterEnum(_EnumTypeLocale)
+	//     svc.RegisterEnum(_EnumTypeLocaleDesc)
 	//   }
 	//
-	privateConfigName := "_EnumType" + name + "Values"
-	registerFnName := "Register" + name
 	code.Commentf(
 		"%s registers %s enum type with given service.",
 		registerFnName,
@@ -166,7 +169,7 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//
 	// == Example output
 	//
-	//   func _EnumTypeConfigureLocale() definition.EnumConfig {
+	//   func _EnumTypeLocaleConfigFn() definition.EnumConfig {
 	//     return definition.EnumConfig{
 	//       Name:        "Locale",
 	//       Description: "Locale describes a place with a distinct (and supported) lanugage / dialect.",
@@ -185,7 +188,6 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//     }
 	//   }
 	//
-	privateConfigThunkName := "_EnumTypeConfigure" + name
 	code.
 		Func().Id(privateConfigThunkName).
 		Params().Qual(defsPkg, "EnumConfig").
@@ -204,8 +206,8 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//
 	//   // describe timestamp's configuration; kept private to avoid
 	//   // unintentional tampering at runtime.
-	//   var _EnumTypeLocale = graphql.EnumConfig{
-	//     Config: _EnumTypeConfigureLocale,
+	//   var _EnumTypeLocaleDesc = graphql.EnumConfig{
+	//     Config: _EnumTypeLocaleConfigFn,
 	//   }
 	//
 	code.Commentf(

@@ -21,11 +21,25 @@ func genDescription(node ast.DescribableNode) jen.Code {
 	return jen.Lit(desc)
 }
 
-// To appease the linter ensure that the the description of the scalar begins
+// To appease the linter ensure that the the description of the type begins
 // with the name of the resulting method.
 func genTypeComment(name, desc string) string {
 	if hasPrefix := strings.HasPrefix(desc, name); !hasPrefix {
 		desc = name + " " + desc
+	}
+	return desc
+}
+
+// To appease the linter ensure that the the description of the field begins
+// with the name of the resulting method. Includes conventional deprecation
+// notice if applicable.
+func genFieldComment(name, desc, depr string) string {
+	fName := strings.Title(name)
+	if hasPrefix := strings.HasPrefix(desc, fName); !hasPrefix {
+		desc = fName + " - " + desc
+	}
+	if depr != "" {
+		desc = desc + "\n\nDeprecated: " + depr
 	}
 	return desc
 }

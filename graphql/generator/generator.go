@@ -66,7 +66,7 @@ func (s fileSaver) Save(fname string, f *jen.File) error {
 func makeOutputPath(dir, name, newExt string) string {
 	ext := filepath.Ext(name)
 	fpath := name[0 : len(name)-len(ext)]
-	return dir + fpath + newExt
+	return filepath.Join(dir, fpath+newExt)
 }
 
 // Generator generates Go code for type defnitions found in given source files.

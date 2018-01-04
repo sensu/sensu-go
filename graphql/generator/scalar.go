@@ -26,12 +26,12 @@ const scalarResolverName = "ScalarResolver"
 //
 //   // RegisterTimestamp registers Timestamp scalar type with given service.
 //   func RegisterTimestamp(svc graphql.Service, impl graphql.ScalarResolver) {
-//     svc.RegisterScalar(_ScalarType_Timestamp, impl)
+//     svc.RegisterScalar(_ScalarTypeTimestampDesc, impl)
 //   }
 //
 //   // describe timestamp's configuration; keep private to avoid
 //   // unintentional tampering at runtime.
-//   var _ScalarType_Timestamp = graphql.ScalarDesc{
+//   var _ScalarTypeTimestampDesc = graphql.ScalarDesc{
 //     Config: func() definition.ScalarConfig {
 //       return definition.ScalarConfig{
 //         Name:         "Timestamp",
@@ -46,7 +46,7 @@ const scalarResolverName = "ScalarResolver"
 func genScalar(node *ast.ScalarDefinition) jen.Code {
 	code := newGroup()
 	name := node.GetName().Value
-	privateName := "_ScalarType_" + name
+	privateName := "_ScalarType" + name + "Desc"
 
 	// Scalar description
 	desc := getDescription(node)
