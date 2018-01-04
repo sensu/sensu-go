@@ -14,6 +14,7 @@ windows.
 - Store clients can now use [watchers](https://github.com/sensu/sensu-go/pull/792) to be notified of changes to objects in the store.
 - Add check `Cron` field. Checks can now be scheduled according to the cron
 string stored in this field.
+- CLI functionality for check `Cron` field.
 
 ## [2.0.0-alpha.11] - 2017-12-19
 ### Breaking Changes
