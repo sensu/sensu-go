@@ -17,6 +17,8 @@ type CheckScheduler struct {
 	CheckEnv      string
 	CheckOrg      string
 	CheckInterval uint32
+	CheckCron     string
+	LastCronState string
 
 	StateManager *StateManager
 	MessageBus   messaging.MessageBus
@@ -30,18 +32,26 @@ type CheckScheduler struct {
 func (s *CheckScheduler) Start() error {
 	s.stopping = make(chan struct{})
 	s.WaitGroup.Add(1)
+	defer s.WaitGroup.Done()
 
 	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg, "env": s.CheckEnv})
-	s.logger.Infof("starting new scheduler")
 
-	timer := NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
-	executor := &CheckExecutor{Bus: s.MessageBus}
-
-	// TODO(greg): Refactor this part to make the code more easily tested.
 	go func() {
+	toggle:
+		var timer CheckTimer
+		if s.CheckCron != "" {
+			s.logger.Infof("starting new cron scheduler")
+			timer = NewCronTimer(s.CheckName, s.CheckCron)
+		}
+		if timer == nil || s.CheckCron == "" {
+			s.logger.Infof("starting new interval scheduler")
+			timer = NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
+		}
+		executor := &CheckExecutor{Bus: s.MessageBus}
+
+		// TODO(greg): Refactor this part to make the code more easily tested.
 		timer.Start()
 		defer timer.Stop()
-		defer s.WaitGroup.Done()
 
 		for {
 			select {
@@ -58,6 +68,21 @@ func (s *CheckScheduler) Start() error {
 					return
 				}
 
+				// Indicates a state change from cron to interval or interval to cron
+				if (s.LastCronState != "" && check.Cron == "") ||
+					(s.LastCronState == "" && check.Cron != "") {
+					s.logger.Info("check schedule type has changed")
+					// Update the CheckScheduler with current check state and last cron state
+					s.LastCronState = check.Cron
+					s.CheckCron = check.Cron
+					s.CheckInterval = check.Interval
+					timer.Stop()
+					goto toggle
+				}
+
+				// Update the CheckScheduler with the last cron state
+				s.LastCronState = check.Cron
+
 				if subdue := check.GetSubdue(); subdue != nil {
 					isSubdued, err := sensutime.InWindows(time.Now(), *subdue)
 					if err == nil && isSubdued {
@@ -71,14 +96,14 @@ func (s *CheckScheduler) Start() error {
 					if err != nil || isSubdued {
 						// Reset the timer so the check is scheduled again for the next
 						// interval, since it might no longer be subdued
-						timer.SetDuration(uint(check.Interval))
+						timer.SetDuration(check.Cron, uint(check.Interval))
 						timer.Next()
 						continue
 					}
 				}
 
 				// Reset timer
-				timer.SetDuration(uint(check.Interval))
+				timer.SetDuration(check.Cron, uint(check.Interval))
 				timer.Next()
 
 				// Point executor to lastest copy of the scheduler state

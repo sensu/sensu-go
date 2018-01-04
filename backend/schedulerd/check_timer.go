@@ -13,7 +13,7 @@ type CheckTimer interface {
 	// C channel emits events when timer's duration has reached 0
 	C() <-chan time.Time
 	// SetDuration updates the interval in which timers are set
-	SetDuration(uint)
+	SetDuration(string, uint)
 	// Start sets up a new timer
 	Start()
 	// Next reset's timer using interval
@@ -37,7 +37,7 @@ func NewIntervalTimer(name string, interval uint) *IntervalTimer {
 	splay := binary.LittleEndian.Uint64(sum[:])
 
 	timer := &IntervalTimer{splay: splay}
-	timer.SetDuration(interval)
+	timer.SetDuration("", interval)
 	return timer
 }
 
@@ -47,8 +47,8 @@ func (timerPtr *IntervalTimer) C() <-chan time.Time {
 }
 
 // SetDuration updates the interval in which timers are set
-func (timerPtr *IntervalTimer) SetDuration(i uint) {
-	timerPtr.interval = time.Duration(time.Second * time.Duration(i))
+func (timerPtr *IntervalTimer) SetDuration(cron string, interval uint) {
+	timerPtr.interval = time.Duration(time.Second * time.Duration(interval))
 }
 
 // Start sets up a new timer
@@ -81,7 +81,15 @@ type CronTimer struct {
 }
 
 // NewCronTimer establishes new check timer given a name & an initial interval
-func NewCronTimer(name string, schedule cron.Schedule) *CronTimer {
+func NewCronTimer(name string, cronStr string) *CronTimer {
+	schedule, err := cron.Parse(cronStr)
+	// we shouldn't hit this error because we've already validated the cron string
+	// but log and exit cleanly to revert to the interval timer
+	if err != nil {
+		logger.WithError(err).Error("invalid cron, reverting to interval")
+		return nil
+	}
+
 	nowTime := time.Now()
 	nextTime := schedule.Next(nowTime)
 	diff := nextTime.Sub(nowTime)
@@ -95,8 +103,18 @@ func (timerPtr *CronTimer) C() <-chan time.Time {
 }
 
 // SetDuration updates the interval in which timers are set
-func (timerPtr *CronTimer) SetDuration(i uint) {
-	timerPtr.next = time.Duration(time.Second * time.Duration(i))
+func (timerPtr *CronTimer) SetDuration(cronStr string, interval uint) {
+	schedule, err := cron.Parse(cronStr)
+	// we shouldn't hit this error because we've already validated the cron string
+	// but log and exit cleanly to revert to the interval timer
+	if err != nil {
+		logger.WithError(err).Error("invalid cron, reverting to interval")
+		return
+	}
+	nowTime := time.Now()
+	nextTime := schedule.Next(nowTime)
+	diff := nextTime.Sub(nowTime)
+	timerPtr.next = diff
 }
 
 // Start sets up a new timer
