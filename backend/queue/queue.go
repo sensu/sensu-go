@@ -69,7 +69,6 @@ func (q *Queue) tryPut(ctx context.Context, value string) error {
 			return err
 		}
 	}
-	return nil
 }
 
 // Dequeue gets a value from the queue. It returns an error if the context
