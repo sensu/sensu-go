@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sensu/govaluate"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/sensu/govaluate"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -88,15 +88,15 @@ type MyType struct {
 	Foo string   `json:"foo"`
 	Bar []MyType `json:"bar"`
 
-	Attrs []byte `json:",omitempty"` // note that this will not be marshalled directly, despite missing the `json"-"`!
+	ExtendedAttributes []byte `json:",omitempty"` // note that this will not be marshalled directly, despite missing the `json"-"`!
 }
 
 func (m *MyType) GetExtendedAttributes() []byte {
-	return m.Attrs
+	return m.ExtendedAttributes
 }
 
 func (m *MyType) SetExtendedAttributes(a []byte) {
-	m.Attrs = a
+	m.ExtendedAttributes = a
 }
 
 func (m *MyType) Get(name string) (interface{}, error) {
@@ -142,9 +142,9 @@ func TestMarshal(t *testing.T) {
 	expBytes := []byte(`{"bar":null,"foo":"hello world!","a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
 
 	m := &MyType{
-		Foo:   "hello world!",
-		Bar:   nil,
-		Attrs: extendedBytes,
+		Foo:                "hello world!",
+		Bar:                nil,
+		ExtendedAttributes: extendedBytes,
 	}
 
 	b, err := Marshal(m)
@@ -167,9 +167,9 @@ func TestUnmarshalEmptyAttrs(t *testing.T) {
 
 func TestGetField(t *testing.T) {
 	m := &MyType{
-		Foo:   "hello",
-		Bar:   []MyType{{Foo: "there"}},
-		Attrs: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
+		Foo:                "hello",
+		Bar:                []MyType{{Foo: "there"}},
+		ExtendedAttributes: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
 	}
 
 	fooAny := jsoniter.Get([]byte(`{"hello":5}`))
@@ -229,8 +229,8 @@ func TestGetField(t *testing.T) {
 
 func TestGetFieldEmptyBytes(t *testing.T) {
 	m := MyType{
-		Foo:   "hello",
-		Attrs: []byte(``),
+		Foo:                "hello",
+		ExtendedAttributes: []byte(``),
 	}
 
 	testCases := []struct {
@@ -263,7 +263,7 @@ func TestGetFieldEmptyBytes(t *testing.T) {
 
 func TestQueryGovaluateSimple(t *testing.T) {
 	m := &MyType{
-		Attrs: []byte(`{"hello":5}`),
+		ExtendedAttributes: []byte(`{"hello":5}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -277,7 +277,7 @@ func TestQueryGovaluateSimple(t *testing.T) {
 
 func BenchmarkQueryGovaluateSimple(b *testing.B) {
 	m := &MyType{
-		Attrs: []byte(`{"hello":5}`),
+		ExtendedAttributes: []byte(`{"hello":5}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -292,7 +292,7 @@ func BenchmarkQueryGovaluateSimple(b *testing.B) {
 
 func TestQueryGovaluateComplex(t *testing.T) {
 	m := &MyType{
-		Attrs: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+		ExtendedAttributes: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.foo == 5")
@@ -314,7 +314,7 @@ func TestQueryGovaluateComplex(t *testing.T) {
 
 func BenchmarkQueryGovaluateComplex(b *testing.B) {
 	m := &MyType{
-		Attrs: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+		ExtendedAttributes: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.foo < hello.bar")
@@ -332,7 +332,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	var m MyType
 	err := json.Unmarshal(data, &m)
 	require.NoError(t, err)
-	assert.Equal(t, MyType{Foo: "hello", Attrs: []byte(`{"a":10,"b":"c"}`)}, m)
+	assert.Equal(t, MyType{Foo: "hello", ExtendedAttributes: []byte(`{"a":10,"b":"c"}`)}, m)
 	b, err := json.Marshal(&m)
 	require.NoError(t, err)
 	assert.Equal(t, data, b)
@@ -360,11 +360,11 @@ func BenchmarkMarshal(b *testing.B) {
 
 func TestNoLookupAttrsDirectly(t *testing.T) {
 	m := MyType{
-		Attrs: []byte(`{}`),
+		ExtendedAttributes: []byte(`{}`),
 	}
-	_, err := m.Get("Attrs")
+	_, err := m.Get("ExtendedAttributes")
 	require.NotNil(t, err)
-	assert.Equal(t, err.Error(), "[Attrs] not found")
+	assert.Equal(t, err.Error(), "[ExtendedAttributes] not found")
 }
 
 func TestSetFieldOnStructField(t *testing.T) {
@@ -377,41 +377,41 @@ func TestSetFieldOnStructField(t *testing.T) {
 
 func TestSetFieldOnExtendedAttributes(t *testing.T) {
 	tests := []struct {
-		Attrs    []byte
-		Expected []byte
-		Path     string
-		Value    interface{}
+		ExtendedAttributes []byte
+		Expected           []byte
+		Path               string
+		Value              interface{}
 	}{
 		{
-			Attrs:    []byte(`{}`),
-			Expected: []byte(`{"extendedAttr":{"bar":42}}`),
-			Path:     "extendedAttr.bar",
-			Value:    42,
+			ExtendedAttributes: []byte(`{}`),
+			Expected:           []byte(`{"extendedAttr":{"bar":42}}`),
+			Path:               "extendedAttr.bar",
+			Value:              42,
 		},
 		{
-			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4]}}}`),
-			Expected: []byte(`{"extendedAttr":{"a":"value","bar":5,"baz":{"a":[1,2,3,4]}}}`),
-			Path:     "extendedAttr.a",
-			Value:    "value",
+			ExtendedAttributes: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4]}}}`),
+			Expected:           []byte(`{"extendedAttr":{"a":"value","bar":5,"baz":{"a":[1,2,3,4]}}}`),
+			Path:               "extendedAttr.a",
+			Value:              "value",
 		},
 		{
-			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
-			Expected: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":"replaced","b":"b"}}}`),
-			Path:     "extendedAttr.baz.a",
-			Value:    "replaced",
+			ExtendedAttributes: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
+			Expected:           []byte(`{"extendedAttr":{"bar":5,"baz":{"a":"replaced","b":"b"}}}`),
+			Path:               "extendedAttr.baz.a",
+			Value:              "replaced",
 		},
 		{
-			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
-			Expected: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":{"b":"replaced"},"b":"b"}}}`),
-			Path:     "extendedAttr.baz.a.b",
-			Value:    "replaced",
+			ExtendedAttributes: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
+			Expected:           []byte(`{"extendedAttr":{"bar":5,"baz":{"a":{"b":"replaced"},"b":"b"}}}`),
+			Path:               "extendedAttr.baz.a.b",
+			Value:              "replaced",
 		},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			var m MyType
-			m.SetExtendedAttributes(test.Attrs)
+			m.SetExtendedAttributes(test.ExtendedAttributes)
 			err := SetField(&m, test.Path, test.Value)
 			require.NoError(t, err)
 			require.Equal(t, string(test.Expected), string(m.GetExtendedAttributes()))
@@ -450,14 +450,96 @@ func TestUnmarshalNilField(t *testing.T) {
 }
 
 func TestMarshalNilProblematic(t *testing.T) {
-	var p *Problematic = nil //nolint
+	var p *Problematic
 	b, err := Marshal(p)
 	require.NoError(t, err)
 	require.Equal(t, []byte("null"), b)
 }
 
 func TestUnmarshalNilProblematic(t *testing.T) {
-	var p *Problematic = nil //nolint
+	var p *Problematic
 	err := Unmarshal([]byte("{}"), p)
 	require.Error(t, err)
+}
+
+func TestSynthesize(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    AttrGetter
+		expected map[string]interface{}
+	}{
+		{
+			name:     "empty input",
+			input:    &MyType{},
+			expected: map[string]interface{}{},
+		},
+		{
+			name:  "standard fields",
+			input: &MyType{Foo: "bar"},
+			expected: map[string]interface{}{
+				"Foo": "bar",
+			},
+		},
+		{
+			name: "extended fields",
+			input: &MyType{
+				Foo:                "bar",
+				ExtendedAttributes: []byte(`{"baz": "qux"}`),
+			},
+			expected: map[string]interface{}{
+				"Foo": "bar",
+				"Baz": "qux",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, _ := Synthesize(tc.input)
+			assert.Equal(t, tc.expected, reflect.ValueOf(result).Interface())
+		})
+	}
+}
+
+func TestMapOfExtendedAttributes(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    map[string]interface{}
+		expected map[string]interface{}
+	}{
+		{
+			name:     "empty input",
+			input:    map[string]interface{}{},
+			expected: map[string]interface{}{},
+		},
+		{
+			name: "simple structure",
+			input: map[string]interface{}{
+				"foo": "bar",
+			},
+			expected: map[string]interface{}{
+				"Foo": "bar",
+			},
+		},
+		{
+			name: "nested structure",
+			input: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"bar": "baz",
+				},
+			},
+			expected: map[string]interface{}{
+				"Foo": map[string]interface{}{
+					"Bar": "baz",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := mapOfExtendedAttributes(tc.input)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
 }

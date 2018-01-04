@@ -490,3 +490,55 @@ func encodeExtendedFields(extended []byte, s *jsoniter.Stream) error {
 	}
 	return nil
 }
+
+// Synthesize constructs a map[string]interface{} using the provided v in order
+// to provide all the extended attributes as well as any fields in the concrete
+// type of v
+func Synthesize(v AttrGetter) (map[string]interface{}, error) {
+	out := map[string]interface{}{}
+
+	value := reflect.Indirect(reflect.ValueOf(v))
+	t := value.Type()
+
+	for i := 0; i < value.NumField(); i++ {
+		// Don't add the field if it's empty
+		if value.Field(i).Len() == 0 {
+			continue
+		}
+
+		field := t.Field(i)
+		if field.Name == "ExtendedAttributes" {
+			var attrs interface{}
+			if err := json.Unmarshal(value.Field(i).Bytes(), &attrs); err != nil {
+				return nil, err
+			}
+
+			extendedAttributes := mapOfExtendedAttributes(attrs)
+			for k, v := range extendedAttributes {
+				out[k] = v
+			}
+
+			continue
+		}
+
+		out[field.Name] = value.Field(i).Interface()
+	}
+
+	return out, nil
+}
+
+// mapOfExtendedAttributes produces a map[string]interface{} of extended
+// attributes with capitalization of the key
+func mapOfExtendedAttributes(v interface{}) map[string]interface{} {
+	values := reflect.ValueOf(v)
+	attrs := make(map[string]interface{})
+	for _, value := range values.MapKeys() {
+		typeOfValue := reflect.TypeOf(values.MapIndex(value).Interface()).Kind()
+		if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
+			attrs[strings.Title(value.String())] = mapOfExtendedAttributes(values.MapIndex(value).Interface())
+		} else {
+			attrs[strings.Title(value.String())] = values.MapIndex(value).Interface()
+		}
+	}
+	return attrs
+}
