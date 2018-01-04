@@ -121,6 +121,8 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*mvccpb.Key
 }
 
 func (q *Queue) waitPutEvent(ctx context.Context) (*clientv3.Event, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	wc := q.client.Watch(ctx, q.Name, clientv3.WithPrefix())
 	if wc == nil {
 		return nil, ctx.Err()
