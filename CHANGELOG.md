@@ -15,7 +15,6 @@ windows.
 - Add check `Cron` field. Checks can now be scheduled according to the cron
 string stored in this field.
 
-
 ## [2.0.0-alpha.11] - 2017-12-19
 ### Breaking Changes
 - The `Source` field on a check has been renamed to `ProxyEntityID`. Any checks
