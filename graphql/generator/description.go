@@ -18,12 +18,12 @@ func getDescription(node ast.DescribableNode) string {
 
 func genDescription(node ast.DescribableNode) jen.Code {
 	desc := getDescription(node)
-	jen.Lit(desc)
+	return jen.Lit(desc)
 }
 
 // To appease the linter ensure that the the description of the scalar begins
 // with the name of the resulting method.
-func genTypeComment(name, desc string) jen.Code {
+func genTypeComment(name, desc string) string {
 	if hasPrefix := strings.HasPrefix(desc, name); !hasPrefix {
 		desc = name + " " + desc
 	}

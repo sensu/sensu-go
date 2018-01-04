@@ -2,7 +2,6 @@ package generator
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jamesdphillips/graphql/language/ast"

@@ -7,16 +7,16 @@ import (
 	"testing"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/sensu/sensu-go/backend/apid/graphql/generator"
+	"github.com/sensu/sensu-go/graphql/generator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type TestSaver struct {
+type testSaver struct {
 	out string
 }
 
-func (t *TestSaver) Save(f *jen.File) error {
+func (t *testSaver) Save(_ string, f *jen.File) error {
 	buf := &bytes.Buffer{}
 	if err := f.Render(buf); err != nil {
 		return err
@@ -25,16 +25,24 @@ func (t *TestSaver) Save(f *jen.File) error {
 	return nil
 }
 
+func TestLoadDir(t *testing.T) {
+	fs, err := generator.ParseDir("./")
+	require.NoError(t, err)
+	require.NotEmpty(t, fs)
+	require.NoError(t, fs.Validate())
+}
+
 func TestKitchenSinkExample(t *testing.T) {
 	file, err := generator.ParseFile("./schema-kitchen-sink.graphql")
 	require.NoError(t, err)
 	require.NotNil(t, file)
 	require.NoError(t, file.Validate())
 
-	generator := generator.New("mypackage", file)
+	files := generator.GraphQLFiles{file}
+	generator := generator.New(files)
 	require.NotNil(t, generator)
 
-	saver := TestSaver{}
+	saver := testSaver{}
 	generator.Saver = &saver
 
 	gerr := generator.Run()

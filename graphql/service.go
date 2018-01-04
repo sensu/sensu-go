@@ -25,6 +25,32 @@ func (service *Service) RegisterScalar(t ScalarDesc, impl ScalarResolver) {
 	service.addBuilder(builder)
 }
 
+// RegisterEnum registers a GraphQL type with the service.
+func (service *Service) RegisterEnum(t ScalarDesc) {
+	cfg := t.Config()
+	thunk := thunkifyType(graphql.NewEnum(cfg))
+	builder := newTypeBuilder(thunk)
+	service.addBuilder(builder)
+}
+
+// Regenerate generates new schema & executor given registered types.
+func (service *Service) Regenerate() error {
+	// TODO
+	// no-op if not dirty
+	// create instances of each scalar
+	// create instances of each enum
+
+	// create nil pointer for each object
+	// create nil pointer for each interface
+	// create nil pointer for each union
+	// create nil pointer for each input
+
+	// create instances of each interface
+	// create instances of each union
+	// create instances of each input
+	// create instances of each object
+}
+
 func (service *Service) addBuilder(b typeBuilder) {
 	service.builders = append(service.builders, b)
 }

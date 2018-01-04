@@ -22,11 +22,11 @@ const scalarResolverName = "ScalarResolver"
 // == Example output
 //
 //   // Timestamps are great
-//   var Timestamp = graphql.NewType("Timestamp", graphql.ScalarKind)
+//   var TimestampType = graphql.NewType("Timestamp", graphql.ScalarKind)
 //
 //   // RegisterTimestamp registers Timestamp scalar type with given service.
 //   func RegisterTimestamp(svc graphql.Service, impl graphql.ScalarResolver) {
-//     src.RegisterScalar(_ScalarType_Timestamp, impl)
+//     svc.RegisterScalar(_ScalarType_Timestamp, impl)
 //   }
 //
 //   // describe timestamp's configuration; keep private to avoid
@@ -50,7 +50,7 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 
 	// Scalar description
 	desc := getDescription(node)
-	comment := genTypeComment(node)
+	comment := genTypeComment(name, desc)
 
 	//
 	// Generate type config thunk
@@ -67,7 +67,7 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 	//     }
 	//   }
 	//
-	thunk := jen.Func().Id(name).Params().Qual(defsPkg, "ScalarConfig").Block(
+	thunk := jen.Func().Params().Qual(defsPkg, "ScalarConfig").Block(
 		jen.Return(jen.Qual(defsPkg, "ScalarConfig").Values(jen.Dict{
 			// Name & description
 			jen.Id("Name"):        jen.Lit(name),
@@ -95,11 +95,11 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 	// == Example output
 	//
 	//   // Timestamps are great
-	//   var Timestamp = graphql.NewType("Timestamp", graphql.ScalarKind)
+	//   var TimestampType = graphql.NewType("Timestamp", graphql.ScalarKind)
 	//
 	code.Comment(comment)
 	code.
-		Var().Lit(name).Op("=").
+		Var().Id(name+"Type").Op("=").
 		Qual(servicePkg, "NewType").
 		Call(jen.Lit(name), jen.Qual(servicePkg, "ScalarKind"))
 
@@ -115,7 +115,7 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 	//
 	registerFnName := fmt.Sprintf("Register%s", name)
 	code.Commentf(
-		"Register%s registers %s scalar type with given service.",
+		"%s registers %s scalar type with given service.",
 		registerFnName,
 		name,
 	)
@@ -137,15 +137,14 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 	//
 	// == Example output
 	//
-	//   // describe timestamp's configuration; keep private to avoid
+	//   // describe timestamp's configuration; kept private to avoid
 	//   // unintentional tampering at runtime.
 	//   var _ScalarType_Timestamp = graphql.ScalarDesc{
 	//     Config: func() definition.ScalarConfig { ... }
 	//   }
 	//
 	code.Commentf(
-		`describe %s's configuration; keep private to avoid unintentional tampering of configuration at runtime.`,
-		registerFnName,
+		`describe %s's configuration; kept private to avoid unintentional tampering of configuration at runtime.`,
 		name,
 	)
 	code.

@@ -1,75 +1,246 @@
 package generator
 
 import (
-	"strings"
-
 	"github.com/dave/jennifer/jen"
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
+//
+// Generate config for enum
+//
+// == Example input SDL
+//
+//   """
+//   Locale describes a place with a distinct (and supported) lanugage / dialect.
+//   """
+//   enum Locale {
+//     """
+//     Canada
+//     """
+//     CA
+//     """
+//     Latin
+//     """
+//     LA @deprecated
+//   }
+//
+// == Example output
+//
+//   // Locale describes a place with a distinct (and supported) lanugage / dialect.
+//   type Locale string
+//
+//   // Locales holds enum values
+//   var Locales = _EnumTypeLocaleValues{
+//     CA: "CA",
+//     LA: "LA",
+//   }
+//
+//   // LocaleType describes a place with a distinct (and supported) lanugage / dialect.
+//   var LocaleType = graphql.NewType("Locale", graphql.EnumKind)
+//
+//   // RegisterLocale registers Locale enum type with given service.
+//   func RegisterLocale(svc graphql.Service) {
+//     src.RegisterEnum(_EnumTypeLocale)
+//   }
+//
+//   // define configuration thunk
+//   func _EnumTypeConfigureLocale() definition.EnumConfig {
+//     return definition.EnumConfig{
+//       Name:        "Locale",
+//       Description: "Locale describes a place with a distinct (and supported) lanugage / dialect.",
+//       Values: graphql.EnumValueConfigMap{
+//         "CA": &graphql.EnumValueConfig{
+//           Value:             "CA",
+//           Description:       "Canada",
+//           DeprecationReason: "",
+//         },
+//         "LA": &graphql.EnumValueConfig{
+//           Value:             "LA",
+//           Description:       "Latin",
+//           DeprecationReason: "No longer supported,
+//         },
+//       },
+//     }
+//   }
+//
+//   // describe enums's configuration; kept private to avoid unintentional
+//   // tampering at runtime.
+//   var _EnumTypeLocale = graphql.EnumDesc{
+//     Config: _EnumTypeConfigureLocale,
+//   }
+//
+//   // In an attempt to avoid collisions enum values are defined within a
+//   // struct that has a single public instance. The obvious tradeoff is that
+//   // a developer could unintentionally mutate the values and cause heartache.
+//   type _EnumTypeLocaleValues struct {
+//     CA string // CA - Canada
+//     LA string // LA - Latin
+//   }
+//
 func genEnum(node *ast.EnumDefinition) jen.Code {
 	code := newGroup()
 	name := node.GetName().Value
-
-	//
-	// Generate type definition
-	//
-	// ... comment: Include description in comment
-	// ... func:    returns enum configuration
-	//
 
 	// Type description
 	desc := getDescription(node)
 	comment := genTypeComment(name, desc)
 
 	//
-	// Generate config for enum
+	// Generate type that will be used to represent enum
 	//
-	//  == Example input SDL
+	// == Example output
 	//
-	//    """
-	//    Locale describes a place with a distinct (and supported) lanugage / dialect.
-	//    """
-	//    enum Locale {
-	//      """
-	//      Canada
-	//      """
-	//      CA
-	//      """
-	//      Latin
-	//      """
-	//      LA @deprecated
-	//    }
+	//   // Locale describes a place with a distinct (and supported) lanugage / dialect.
+	//   type Locale string
 	//
-	//  == Example output
-	//
-	//    // Locale describes a place with a distinct (and supported) lanugage / dialect.
-	//    func Locale() graphql.EnumConfig {
-	//      return graphql.EnumConfig{
-	//        Name:        "Locale",
-	//        Description: "Locale describes a place with a distinct (and supported) lanugage / dialect.",
-	//        Values: graphql.EnumValueConfigMap{
-	//          "CA": &graphql.EnumValueConfig{
-	//            Value:             "CA",
-	//            Description:       "Canada",
-	//            DeprecationReason: "",
-	//          },
-	//          "LA": &graphql.EnumValueConfig{
-	//            Value:             "LA",
-	//            Description:       "Latin",
-	//            DeprecationReason: "No longer supported,
-	//          },
-	//        },
-	//      }
-	//    }
 	code.Comment(comment)
-	code.Func().Id(name).Params().Qual(defsPkg, "EnumConfig").Block(
-		jen.Return(jen.Qual(defsPkg, "EnumConfig").Values(jen.Dict{
-			jen.Id("Description"): jen.Lit(desc),
-			jen.Id("Name"):        jen.Lit(name),
-			jen.Id("Values"):      genEnumValues(node.Values),
-		})),
+	code.Type().Id(name).String()
+
+	//
+	// Generate enum values
+	//
+	// == Example output
+	//
+	//   // Locales holds enum values
+	//   var Locales = _EnumTypeLocaleValues{
+	//     CA: "CA",
+	//     LA: "LA",
+	//   }
+	//
+	pluralizedName := name + "s" // naive
+	privateEnumValuesStruct := "_EnumType" + name + "Values"
+	code.Comment(pluralizedName + " holds enum values")
+	code.
+		Var().Id(pluralizedName).Op("=").
+		Id(privateEnumValuesStruct).
+		Values(jen.DictFunc(func(d jen.Dict) {
+			for _, v := range node.Values {
+				d[jen.Id(v.Name.Value)] = jen.Lit(v.Name.Value)
+			}
+		}))
+
+	//
+	// Generate public reference to type
+	//
+	// == Example output
+	//
+	//   // Locale describes a place with a distinct (and supported) lanugage / dialect.
+	//   var LocaleType = graphql.NewType("Locale", graphql.EnumKind)
+	//
+	publicRefName := name + "Type"
+	publicRefComment := genTypeComment(publicRefName, desc)
+	code.Comment(publicRefComment)
+	code.
+		Var().Id(publicRefName).Op("=").
+		Qual(servicePkg, "NewType").
+		Call(jen.Lit(name), jen.Qual(servicePkg, "EnumKind"))
+
+	//
+	// Generate public func to register type with service
+	//
+	// == Example output
+	//
+	//   // RegisterLocale registers Locale enum type with given service.
+	//   func RegisterLocale(svc graphql.Service) {
+	//     src.RegisterEnum(_EnumTypeLocale)
+	//   }
+	//
+	privateConfigName := "_EnumType" + name + "Values"
+	registerFnName := "Register" + name
+	code.Commentf(
+		"%s registers %s enum type with given service.",
+		registerFnName,
+		name,
 	)
+	code.
+		Func().Id(registerFnName).
+		Params(jen.Id("svc").Qual(servicePkg, "Service")).
+		Block(
+			jen.Id("svc.RegisterEnum").Call(
+				jen.Id(privateConfigName),
+			),
+		)
+
+	//
+	// Generate type config thunk
+	//
+	// == Example output
+	//
+	//   func _EnumTypeConfigureLocale() definition.EnumConfig {
+	//     return definition.EnumConfig{
+	//       Name:        "Locale",
+	//       Description: "Locale describes a place with a distinct (and supported) lanugage / dialect.",
+	//       Values: graphql.EnumValueConfigMap{
+	//         "CA": &graphql.EnumValueConfig{
+	//           Value:             "CA",
+	//           Description:       "Canada",
+	//           DeprecationReason: "",
+	//         },
+	//         "LA": &graphql.EnumValueConfig{
+	//           Value:             "LA",
+	//           Description:       "Latin",
+	//           DeprecationReason: "No longer supported,
+	//         },
+	//       },
+	//     }
+	//   }
+	//
+	privateConfigThunkName := "_EnumTypeConfigure" + name
+	code.
+		Func().Id(privateConfigThunkName).
+		Params().Qual(defsPkg, "EnumConfig").
+		Block(
+			jen.Return(jen.Qual(defsPkg, "EnumConfig").Values(jen.Dict{
+				jen.Id("Description"): jen.Lit(desc),
+				jen.Id("Name"):        jen.Lit(name),
+				jen.Id("Values"):      genEnumValues(node.Values),
+			})),
+		)
+
+	//
+	// Generate type description
+	//
+	// == Example output
+	//
+	//   // describe timestamp's configuration; kept private to avoid
+	//   // unintentional tampering at runtime.
+	//   var _EnumTypeLocale = graphql.EnumConfig{
+	//     Config: _EnumTypeConfigureLocale,
+	//   }
+	//
+	code.Commentf(
+		`describe %s's configuration; kept private to avoid unintentional tampering of configuration at runtime.`,
+		name,
+	)
+	code.
+		Var().Id(privateConfigName).Op("=").
+		Qual(servicePkg, "EnumDesc").
+		Values(jen.Dict{
+			jen.Id("Config"): jen.Id(privateConfigThunkName),
+		})
+
+	//
+	// Generate struct used to hold enum values
+	//
+	// In an attempt to avoid collisions enum values are defined within a
+	// struct that has a single public instance. The obvious tradeoff is that
+	// a developer could unintentionally mutate the values and cause heartache.
+	//
+	// == Example output
+	//
+	//   type _EnumTypeLocaleValues struct {
+	//     CA string // CA - Canada
+	//     LA string // LA - Latin
+	//   }
+	//
+	code.
+		Type().Id(privateEnumValuesStruct).
+		StructFunc(func(g *jen.Group) {
+			for _, v := range node.Values {
+				g.Comment(v.Name.Value + " - " + getDescription(v))
+				g.Id(v.Name.Value).String()
+			}
+		})
 
 	return code
 }

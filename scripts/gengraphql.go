@@ -51,7 +51,7 @@ func main() {
 
 	// Parse
 	logger.Info("parsing .graphql files")
-	graphqlFiles := make([]*generator.GraphQLFile, len(files))
+	graphqlFiles := make(generator.GraphQLFiles, len(files))
 	for i, f := range files {
 		log := logger.WithField("file", f.Name())
 		filePath := filepath.Join(config.path, f.Name())
@@ -70,14 +70,15 @@ func main() {
 	}
 
 	// Generate
-	for _, f := range graphqlFiles {
-		generator := generator.New(config.pkgName, f)
-		if err := generator.Run(); err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			logger.Fatal("unable to generate file")
-		}
-		logger.WithField("file", f.Filename()).Info("written successfully")
+	generator := generator.New(graphqlFiles)
+	generator.PackageName = config.pkgName
+	generator.Invoker = ""
+
+	if err := generator.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		logger.Fatal("unable to generate file")
 	}
+	logger.Info("files written successfully")
 }
 
 type config struct {

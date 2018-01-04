@@ -1,6 +1,9 @@
 package generator
 
-import "github.com/jamesdphillips/graphql/language/ast"
+import (
+	"github.com/dave/jennifer/jen"
+	"github.com/jamesdphillips/graphql/language/ast"
+)
 
 // Fetch deprecation reason given set of directives; default to empty string.
 // Specification: https://github.com/facebook/graphql/blob/398e443983724463b8474b12a260fba31c19c2a9/spec/Section%203%20--%20Type%20System.md#deprecated

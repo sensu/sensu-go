@@ -2,7 +2,6 @@ package generator
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jamesdphillips/graphql/language/ast"
@@ -195,7 +194,7 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 		},
 	)
 
-	privateNamePrefix := "_ObjType_" + name
+	// privateNamePrefix := "_ObjType_" + name
 
 	//
 	// Generates thunk that returns new instance of object config
@@ -259,8 +258,8 @@ func genObjectType(node *ast.ObjectDefinition) jen.Code {
 	//   }
 	//
 	code.Comment(comment)
-	code.Id(name).Op("=").Id(privateNamePrefix)
-	code.Id(name).Struct()
+	// code.Var().Id(name).Op("=").Id(privateNamePrefix)
+	// code.Id(name).Struct()
 	code.Func().Id(name).Params().Qual(defsPkg, "ObjectConfig").Block(
 		jen.Return(jen.Qual(defsPkg, "ObjectConfig").Values(jen.Dict{
 			jen.Id("Name"):        jen.Lit(name),
