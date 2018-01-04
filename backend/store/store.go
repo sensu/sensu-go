@@ -30,6 +30,8 @@ func (t WatchActionType) String() string {
 		s = "Create"
 	case WatchDelete:
 		s = "Delete"
+	case WatchUpdate:
+		s = "Update"
 	}
 	return s
 }
@@ -51,8 +53,8 @@ type WatchEventAsset struct {
 // A WatchEventHookConfig contains the modified asset object and the action that occurred
 // during the modification.
 type WatchEventHookConfig struct {
-	HookConfig  *types.HookConfig
-	Action WatchActionType
+	HookConfig *types.HookConfig
+	Action     WatchActionType
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend
