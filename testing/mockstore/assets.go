@@ -31,6 +31,7 @@ func (s *MockStore) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 	return args.Error(0)
 }
 
+// GetAssetWatcher ...
 func (s *MockStore) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsset {
 	args := s.Called(ctx)
 	return args.Get(0).(<-chan store.WatchEventAsset)
