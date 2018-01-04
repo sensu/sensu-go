@@ -82,3 +82,39 @@ func TestAssetWatcher(t *testing.T) {
 		}
 	})
 }
+
+func TestHookConfigWatcher(t *testing.T) {
+	t.Parallel()
+
+	testWithEtcd(t, func(st store.Store) {
+		hookCfg := types.FixtureHookConfig("hook_config")
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		watchChan := st.GetHookConfigWatcher(ctx)
+		require.NotNil(t, watchChan)
+
+		if err := st.UpdateHookConfig(ctx, hookCfg); err != nil {
+			require.NoError(t, err, "failed to create check config in store")
+		}
+
+		select {
+		case ev := <-watchChan:
+			assert.Equal(t, store.WatchCreate, ev.Action)
+			assert.Equal(t, hookCfg.Organization, ev.HookConfig.Organization)
+			assert.Equal(t, hookCfg.Environment, ev.HookConfig.Environment)
+			assert.Equal(t, hookCfg.Name, ev.HookConfig.Name)
+		case <-time.After(5 * time.Second):
+			assert.Fail(t, "failed to receive a watch event in 5 seconds")
+		}
+
+		cancel()
+
+		select {
+		case _, ok := <-watchChan:
+			assert.False(t, ok, "watch channel wasn't closed")
+		case <-time.After(5 * time.Second):
+			assert.Fail(t, "failed to close watch channel in 5 seconds")
+		}
+	})
+}

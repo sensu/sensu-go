@@ -112,3 +112,47 @@ func (s *etcdStore) GetAssetWatcher(ctx context.Context) <-chan store.WatchEvent
 
 	return ch
 }
+
+// GetHookConfigWatcher returns a channel that emits WatchEventHookConfig structs notifying
+// the caller that a HookConfig was updated. If the watcher runs into a terminal error
+// or the context passed is cancelled, then the channel will be closed. The caller must
+// restart the watcher, if needed.
+func (s *etcdStore) GetHookConfigWatcher(ctx context.Context) <-chan store.WatchEventHookConfig {
+	ch := make(chan store.WatchEventHookConfig)
+
+	go func() {
+		watcher := clientv3.NewWatcher(s.client)
+		path := path.Join(etcdRoot, hooksPathPrefix)
+		watcherChan := watcher.Watch(ctx, path, clientv3.WithPrefix(), clientv3.WithCreatedNotify())
+		defer close(ch)
+
+		var (
+			watchEvent store.WatchEventHookConfig
+			action     store.WatchActionType
+			hookCfg    *types.HookConfig
+		)
+
+		for watchResponse := range watcherChan {
+			for _, event := range watchResponse.Events {
+				action = getWatcherAction(event)
+				if action == store.WatchUnknown {
+					logger.Error("unknown etcd watch action: ", event.Type.String())
+				}
+
+				hookCfg = &types.HookConfig{}
+				if err := json.Unmarshal(event.Kv.Value, hookCfg); err != nil {
+					logger.WithError(err).Error("unable to unmarshal check config from key: ", event.Kv.Key)
+				}
+
+				watchEvent = store.WatchEventHookConfig{
+					Action:     action,
+					HookConfig: hookCfg,
+				}
+
+				ch <- watchEvent
+			}
+		}
+	}()
+
+	return ch
+}

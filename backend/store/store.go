@@ -48,6 +48,13 @@ type WatchEventAsset struct {
 	Action WatchActionType
 }
 
+// A WatchEventHookConfig contains the modified asset object and the action that occurred
+// during the modification.
+type WatchEventHookConfig struct {
+	HookConfig  *types.HookConfig
+	Action WatchActionType
+}
+
 // Store is used to abstract the durable storage used by the Sensu backend
 // processses. Each Sensu resources is represented by its own interface. A
 // MockStore is available in order to mock a store implementation
@@ -190,6 +197,12 @@ type HookConfigStore interface {
 
 	// UpdateHookConfig creates or updates a given hook's configuration.
 	UpdateHookConfig(ctx context.Context, check *types.HookConfig) error
+
+	// GetHookConfigWatcher returns a channel that emits WatchEventHookConfig structs notifying
+	// the caller that a HookConfig was updated. If the watcher runs into a terminal error
+	// or the context passed is cancelled, then the channel will be closed. The caller must
+	// restart the watcher, if needed.
+	GetHookConfigWatcher(ctx context.Context) <-chan WatchEventHookConfig
 }
 
 // EntityStore provides methods for managing entities
