@@ -18,15 +18,15 @@ import (
 //
 // == Example output
 //
-//   // PetsType - Pets are the bestest family members
-//   var PetsType = graphql.NewType("Pets", graphql.InterfaceKind)
+//   // PetType - Pets are the bestest family members
+//   var PetType = graphql.NewType("Pet", graphql.InterfaceKind)
 //
 //   // RegisterPet registers Pet interface type with given service.
-//   func RegisterTimestamp(svc graphql.Service, impl graphql.InterfaceTypeResolver) {
-//     svc.RegisterScalar(_InterfaceTypePetDesc, impl)
+//   func RegisterPet(svc graphql.Service, impl graphql.InterfaceTypeResolver) {
+//     svc.RegisterInterface(_InterfaceTypePetDesc, impl)
 //   }
 //
-//   // Pets are the bestest family members
+//   // define configuration thunk
 //   func _InterfaceTypePetConfigFn() graphql.InterfaceConfig {
 //     return graphql.InterfaceConfig{
 //       Name:        "Pet",
@@ -38,8 +38,8 @@ import (
 //     }
 //   }
 //
-//   // describe timestamp's configuration; kept private to avoid
-//   // unintentional tampering at runtime.
+//   // describe pet's configuration; kept private to avoid unintentional
+//   // tampering at runtime.
 //   var _InterfaceTypePetDesc = graphql.InterfaceDesc{
 //     Config: _InterfaceTypePetConfigFn,
 //   }
@@ -50,7 +50,6 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 
 	// Type description
 	desc := getDescription(node)
-	comment := genTypeComment(name, desc)
 
 	// Ids
 	registerFnName := "Register" + name
@@ -64,8 +63,8 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	//
 	// == Example output
 	//
-	//   // PetsType - Pets are the bestest family members
-	//   var PetsType = graphql.NewType("Pets", graphql.InterfaceKind)
+	//   // PetType - Pets are the bestest family members
+	//   var PetType = graphql.NewType("Pet", graphql.InterfaceKind)
 	//
 	code.Comment(publicRefComment)
 	code.
@@ -77,6 +76,11 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	// Generate public func to register type with service
 	//
 	// == Example output
+	//
+	//   // RegisterPet registers Pet interface type with given service.
+	//   func RegisterPet(svc graphql.Service, impl graphql.InterfaceTypeResolver) {
+	//     svc.RegisterInterface(_InterfaceTypePetDesc, impl)
+	//   }
 	//
 	code.Commentf(
 		"%s registers %s interface type with given service.",
@@ -90,7 +94,7 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 			jen.Id("impl").Qual(servicePkg, "InterfaceTypeResolver"),
 		).
 		Block(
-			jen.Id("svc.RegisterInteface").Call(
+			jen.Id("svc.RegisterInterface").Call(
 				jen.Id(privateConfigName),
 				jen.Id("impl"),
 			),
@@ -101,7 +105,7 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	//
 	// == Example output
 	//
-	//   // Pets are the bestest family members
+	//   // define configuration thunk
 	//   func _InterfaceTypePetConfigFn() graphql.InterfaceConfig {
 	//     return graphql.InterfaceConfig{
 	//       Name:        "Pet",
@@ -113,7 +117,6 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	//     }
 	//   }
 	//
-	code.Comment(comment)
 	code.
 		Func().Id(privateConfigThunkName).
 		Params().Qual(defsPkg, "InterfaceConfig").
@@ -137,8 +140,7 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	//
 	// == Example output
 	//
-	//   // describe timestamp's configuration; kept private to avoid
-	//   // unintentional tampering at runtime.
+	//   // ...
 	//   var _InterfaceTypePetDesc = graphql.InterfaceDesc{
 	//     Config: _InterfaceTypePetConfigFn,
 	//   }
@@ -149,7 +151,7 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	)
 	code.
 		Var().Id(privateConfigName).Op("=").
-		Qual(servicePkg, "IntefaceDesc").
+		Qual(servicePkg, "InterfaceDesc").
 		Values(jen.Dict{
 			jen.Id("Config"): jen.Id(privateConfigThunkName),
 		})

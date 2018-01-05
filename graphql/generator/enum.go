@@ -44,7 +44,7 @@ import (
 //   }
 //
 //   // define configuration thunk
-//   func _EnumTypeConfigureLocale() definition.EnumConfig {
+//   func _EnumTypeLocaleConfigFn() definition.EnumConfig {
 //     return definition.EnumConfig{
 //       Name:        "Locale",
 //       Description: "Locale describes a place with a distinct (and supported) lanugage / dialect.",

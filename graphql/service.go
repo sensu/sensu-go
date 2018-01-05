@@ -25,7 +25,7 @@ func (service *Service) RegisterScalar(t ScalarDesc, impl ScalarResolver) {
 }
 
 // RegisterEnum registers a GraphQL type with the service.
-func (service *Service) RegisterEnum(t ScalarDesc) {
+func (service *Service) RegisterEnum(t EnumDesc) {
 	cfg := t.Config()
 	registrar := registerTypeWrapper(graphql.NewEnum(cfg))
 	service.descRegister[cfg.Name] = registrar
@@ -35,7 +35,8 @@ func (service *Service) RegisterEnum(t ScalarDesc) {
 func (service *Service) RegisterInput(t InputDesc) {
 	cfg := t.Config()
 	registrar := func(schema *graphql.Schema) graphql.Type {
-		cfg.Fields = inputFieldsThunk(schema, cfg.Fields)
+		fields := cfg.Fields.(graphql.InputObjectConfigFieldMap)
+		cfg.Fields = inputFieldsThunk(schema, fields)
 		return graphql.NewInputObject(cfg)
 	}
 	service.descRegister[cfg.Name] = registrar
@@ -45,20 +46,44 @@ func (service *Service) RegisterInput(t InputDesc) {
 func (service *Service) RegisterInterface(t InterfaceDesc, impl InterfaceTypeResolver) {
 	cfg := t.Config()
 	registrar := func(schema *graphql.Schema) graphql.Type {
-		cfg.Fields = fieldsThunk(schema, cfg.Fields)
+		cfg.Fields = fieldsThunk(schema, cfg.Fields.(graphql.Fields))
 		cfg.ResolveType = func(p graphql.ResolveTypeParams) *graphql.Object {
-			t := impl.ResolveType(p.Value, p)
-			return schema.Type(t.Name())
+			typeRef := impl.ResolveType(p.Value, p)
+			objType := schema.Type(typeRef.Name())
+			return objType.(*graphql.Object)
 		}
 		return graphql.NewInterface(cfg)
 	}
 	service.descRegister[cfg.Name] = registrar
 }
 
+// RegisterUnion registers a GraphQL type with the service.
+func (service *Service) RegisterUnion(t UnionDesc, impl UnionTypeResolver) {
+	cfg := t.Config()
+	registrar := func(schema *graphql.Schema) graphql.Type {
+		cfg.ResolveType = func(p graphql.ResolveTypeParams) *graphql.Object {
+			typeRef := impl.ResolveType(p.Value, p)
+			objType := schema.Type(typeRef.Name())
+			return objType.(*graphql.Object)
+		}
+
+		newTypes := make([]*graphql.Object, len(cfg.Types))
+		for _, t := range cfg.Types {
+			objType := schema.Type(t.PrivateName).(*graphql.Object)
+			newTypes = append(newTypes, objType)
+		}
+
+		cfg.Types = newTypes
+		return graphql.NewUnion(cfg)
+	}
+	service.descRegister[cfg.Name] = registrar
+}
+
 // Regenerate generates new schema & executor given registered types.
 func (service *Service) Regenerate() error {
-	// TODO
 	// no-op if not dirty
+
+	// create schema instance?
 	// create instances of each scalar
 	// create instances of each enum
 
@@ -68,9 +93,11 @@ func (service *Service) Regenerate() error {
 	// create nil pointer for each input
 
 	// create instances of each interface
-	// create instances of each union
 	// create instances of each input
 	// create instances of each object
+	// create instances of each union
+
+	return nil
 }
 
 type registerTypeFn func(schema *graphql.Schema) graphql.Type
@@ -79,65 +106,4 @@ func registerTypeWrapper(t graphql.Type) registerTypeFn {
 	return func(_ *graphql.Schema) graphql.Type {
 		return t
 	}
-}
-
-// Replace mocked types w/ instantiated counterparts
-func fieldsThunk(schema *graphql.Schema, fields graphql.Fields) interface{} {
-	mockedFields := make([]string, len(fields))
-	for _, f := range fields {
-		t := unwrapFieldType(f.Type)
-		if tt, ok := t.(InputType); ok {
-			mockedFields = append(mockedFields, tt.Name())
-		}
-	}
-
-	if len(fields) == 0 {
-		return fields
-	}
-
-	return graphql.FieldsThunk(
-		func() graphql.Field {
-			for _, name := range mockedFields {
-				fields[name].Type = schema.Type(name)
-			}
-			return fields
-		},
-	)
-}
-
-// Replace mocked types w/ instantiated counterparts
-func inputFieldsThunk(
-	schema *graphql.Schema,
-	fields graphql.InputObjectConfigFieldMap,
-) interface{} {
-	mockedFields := make([]string, len(fields))
-	for _, f := range fields {
-		t := unwrapFieldType(f.Type)
-		if tt, ok := t.(InputType); ok {
-			mockedFields = append(mockedFields, tt.Name())
-		}
-	}
-
-	if len(fields) == 0 {
-		return fields
-	}
-
-	return graphql.InputObjectConfigFieldMapThunk(
-		func() graphql.InputObjectConfigFieldMap {
-			for _, name := range mockedFields {
-				fields[name].Type = schema.Type(name)
-			}
-			return fields
-		},
-	)
-}
-
-func unwrapFieldType(t graphql.Type) graphql.Type {
-	t := f.Type
-	if tt, ok := f.Type.(graphql.NonNull); ok {
-		t = tt.OfType
-	} else if tt, ok := f.Type.(graphql.List); ok {
-		t = tt.OfType
-	}
-	return t
 }

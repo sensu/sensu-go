@@ -55,3 +55,63 @@ func Object(name string) *graphql.Object {
 	// Feels a bit brittle but simplest solution at this time.
 	return &graphql.Object{PrivateName: name}
 }
+
+// Replace mocked types w/ instantiated counterparts
+func fieldsThunk(schema *graphql.Schema, fields graphql.Fields) interface{} {
+	mockedFields := make([]string, len(fields))
+	for _, f := range fields {
+		t := unwrapFieldType(f.Type)
+		if tt, ok := t.(*mockType); ok {
+			mockedFields = append(mockedFields, tt.Name())
+		}
+	}
+
+	if len(fields) == 0 {
+		return fields
+	}
+
+	return graphql.FieldsThunk(
+		func() graphql.Fields {
+			for _, name := range mockedFields {
+				fields[name].Type = schema.Type(name)
+			}
+			return fields
+		},
+	)
+}
+
+// Replace mocked types w/ instantiated counterparts
+func inputFieldsThunk(
+	schema *graphql.Schema,
+	fields graphql.InputObjectConfigFieldMap,
+) interface{} {
+	mockedFields := make([]string, len(fields))
+	for _, f := range fields {
+		t := unwrapFieldType(f.Type)
+		if tt, ok := t.(*mockType); ok {
+			mockedFields = append(mockedFields, tt.Name())
+		}
+	}
+
+	if len(fields) == 0 {
+		return fields
+	}
+
+	return graphql.InputObjectConfigFieldMapThunk(
+		func() graphql.InputObjectConfigFieldMap {
+			for _, name := range mockedFields {
+				fields[name].Type = schema.Type(name)
+			}
+			return fields
+		},
+	)
+}
+
+func unwrapFieldType(t graphql.Type) graphql.Type {
+	if tt, ok := t.(*graphql.NonNull); ok {
+		t = tt.OfType
+	} else if tt, ok := t.(*graphql.List); ok {
+		t = tt.OfType
+	}
+	return t
+}

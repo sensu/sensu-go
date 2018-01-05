@@ -73,13 +73,13 @@ type ScalarResolver interface {
 //
 // == Example implementation
 //
-//   // MyPetResolver implements IntefaceResolver interface
-//   type MyPetResolver struct {
+//   // PetResolver implements InterfaceTypeResolver
+//   type PetResolver struct {
 //     logger    logrus.LogEntry
 //   }
 //
 //   // ResolveType should return type reference
-//   func (r *MyPetResolver) ResolveType(val interface {}, _ graphql.ResolveTypeParams) graphql.Type {
+//   func (r *PetResolver) ResolveType(val interface {}, _ graphql.ResolveTypeParams) graphql.Type {
 //     // ... implementation details ...
 //     switch pet := val.(type) {
 //     when *Dog:
@@ -91,6 +91,46 @@ type ScalarResolver interface {
 //   }`,
 //
 type InterfaceTypeResolver interface {
+	ResolveType(interface{}, ResolveTypeParams) Type
+}
+
+//
+// UnionTypeResolver represents a collection of methods whose products
+// represent the input and response values of a union type.
+//
+// == Example input SDL
+//
+//   """
+//   Feed includes all stuff and things.
+//   """
+//   union Feed = Story | Article | Advert
+//
+// == Example implementation
+//
+//   // FeedResolver implements UnionTypeResolver
+//   type FeedResolver struct {
+//     logger logrus.LogEntry
+//   }
+//
+//   // ResolveType should return type reference
+//   func (r *FeedResolver) ResolveType(val interface {}, _ graphql.ResolveTypeParams) graphql.Type {
+//     // ... implementation details ...
+//     switch entity := val.(type) {
+//     when *Article:
+//       return schema.ArticleType
+//     when *Story:
+//       return schema.StoreType
+//     when *Advert:
+//       return schema.AdvertType
+//     }
+//     panic("Unimplemented")
+//   }
+//
+type UnionTypeResolver interface {
+	ResolveType(interface{}, ResolveTypeParams) Type
+}
+
+type typeResolver interface {
 	ResolveType(interface{}, ResolveTypeParams) Type
 }
 

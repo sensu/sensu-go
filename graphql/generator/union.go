@@ -1,91 +1,165 @@
 package generator
 
 import (
-	"fmt"
-
 	"github.com/dave/jennifer/jen"
 	"github.com/jamesdphillips/graphql/language/ast"
 )
 
+//
+// Generates description for union type
+//
+// == Example input SDL
+//
+//   """
+//   Feed includes all stuff and things.
+//   """
+//   union Feed = Story | Article | Advert
+//
+// == Example implementation
+//
+//   // FeedType - Feed includes all the stuff and things.
+//   var FeedType = graphql.NewType("Feed", graphql.UnionKind)
+//
+//   // RegisterFeed registers Feed union type with given service.
+//   func RegisterFeed(svc graphql.Service, impl graphql.UnionTypeResolver) {
+//     svc.RegisterUnion(_UnionTypeFeedDesc, impl)
+//   }
+//
+//   // define configuration thunk
+//   func _UnionTypeFeedConfigFn() graphql.UnionConfig {
+//     return graphql.UnionConfig{
+//       Name:        "Feed",
+//       Description: "Feed includes all stuff and things.",
+//       Types:       // ...
+//       ResolveType: func (_ ResolveTypeParams) string {
+//         panic("Unimplemented; see UnionTypeResolver.")
+//       },
+//     }
+//   }
+//
+//   // describe feed's configuration; kept private to avoid unintentional
+//   // tampering at runtime.
+//   var _UnionTypeFeedDesc = graphql.UnionDesc{
+//     Config: _UnionTypeFeedConfigFn,
+//   }
+//
 func genUnion(node *ast.UnionDefinition) jen.Code {
 	code := newGroup()
 	name := node.GetName().Value
-	resolverName := fmt.Sprintf("%sResolver", name)
-
-	//
-	// Generate resolver interface
-	//
-	// ... comment: Describe resolver interface and usage
-	// ... method:  ResolveType
-	//
-
-	code.Commentf(`//
-// %s represents a collection of methods whose products represent the
-// response values of a union type.
-//
-//  == Example generated interface
-//
-//  // FeedResolver ...
-//  type FeedResolver interface {
-//    // ResolveType should return name of type given a value
-//    ResolveType(graphql.ResolveTypeParams) string
-//  }
-//
-//  // Example implementation ...
-//
-//  // MyFeedResolver implements FeedResolver interface
-//  type MyFeedResolver struct {
-//    logger    logrus.LogEntry
-//  }
-//
-//  // ResolveType ... TODO
-//  func (r *MyFeedResolver) ResolveType(p graphql.ResolveTypeParams) *graphql.Object {
-//    // ... implementation details ...
-//  }`,
-		resolverName,
-	)
-	// Generate resolver interface.
-	code.Type().Id(resolverName).Interface(
-		// ResolveType method.
-		jen.Comment("ResolveType should return name of type given a value."),
-		jen.Id("ResolveType").Params(jen.Qual(defsPkg, "ResolveTypeParams")).String(),
-	)
-
-	//
-	// Generate type definition
-	//
-	// ... comment: Include description in comment
-	// ... panic callbacks panic if not configured
-	//
 
 	// Type description
 	desc := getDescription(node)
-	comment := genTypeComment(name, desc)
 
-	// Ex.
-	//   // NameOfMyUnion [the description given in SDL document]
-	//   func NameOfMyUnion() *graphql.Scalar { ... } // implements TypeThunk
-	code.Comment(comment)
-	code.Func().Id(name).Params().Qual(defsPkg, "UnionConfig").Block(
-		jen.Return(jen.Qual(defsPkg, "UnionConfig").Values(jen.Dict{
-			jen.Id("Name"):        jen.Lit(name),
-			jen.Id("Description"): jen.Lit(desc),
-			jen.Id("Types"): jen.Index().Op("*").Qual(defsPkg, "Object").ValuesFunc(
-				func(g *jen.Group) {
-					for _, t := range node.Types {
-						g.Line().Add(genMockObjectReference(t))
-					}
-				},
-			),
-			jen.Id("ResolveType"): jen.Func().
-				Params(jen.Id("_").Qual(defsPkg, "ResolveTypeParams")).
-				Op("*").Qual(defsPkg, "Object").
-				Block(
-					jen.Comment(missingResolverNote),
-					jen.Panic(jen.Lit("Unimplemented; see "+resolverName+".")),
-				),
-		})),
+	// Ids
+	registerFnName := "Register" + name
+	publicRefName := name + "Type"
+	publicRefComment := genTypeComment(publicRefName, desc)
+	privateConfigName := "_UnionType" + name + "Desc"
+	privateConfigThunkName := "_UnionType" + name + "ConfigFn"
+
+	//
+	// Generate public reference to type
+	//
+	// == Example output
+	//
+	//   // FeedType - Feed includes all stuff and things.
+	//   var FeedType = graphql.NewType("Feed", graphql.UnionKind)
+	//
+	code.Comment(publicRefComment)
+	code.
+		Var().Id(publicRefName).Op("=").
+		Qual(servicePkg, "NewType").
+		Call(jen.Lit(name), jen.Qual(servicePkg, "UnionKind"))
+
+	//
+	// Generate public func to register type with service
+	//
+	// == Example output
+	//
+	//   // RegisterFeed registers Feed union type with given service.
+	//   func RegisterFeed(svc graphql.Service, impl graphql.UnionTypeResolver) {
+	//     svc.RegisterUnion(_UnionTypeFeedDesc, impl)
+	//   }
+	//
+	code.Commentf(
+		"%s registers %s interface type with given service.",
+		registerFnName,
+		name,
 	)
+	code.
+		Func().Id(registerFnName).
+		Params(
+			jen.Id("svc").Qual(servicePkg, "Service"),
+			jen.Id("impl").Qual(servicePkg, "UnionTypeResolver"),
+		).
+		Block(
+			jen.Id("svc.RegisterUnion").Call(
+				jen.Id(privateConfigName),
+				jen.Id("impl"),
+			),
+		)
+
+	//
+	// Generates type config thunk
+	//
+	// == Example output
+	//
+	//   // define configuration thunk
+	//   func _UnionTypeFeedConfigFn() graphql.UnionConfig {
+	//     return graphql.UnionConfig{
+	//       Name:        "Feed",
+	//       Description: "Feed includes all stuff and things.",
+	//       Types:       // ...
+	//       ResolveType: func (_ ResolveTypeParams) string {
+	//         panic("Unimplemented; see UnionTypeResolver.")
+	//       },
+	//     }
+	//   }
+	code.
+		Func().Id(privateConfigThunkName).
+		Params().Qual(defsPkg, "UnionConfig").
+		Block(
+			jen.Return(jen.Qual(defsPkg, "UnionConfig").Values(jen.Dict{
+				jen.Id("Name"):        jen.Lit(name),
+				jen.Id("Description"): jen.Lit(desc),
+				jen.Id("Types"): jen.Index().Op("*").Qual(defsPkg, "Object").ValuesFunc(
+					func(g *jen.Group) {
+						for _, t := range node.Types {
+							g.Line().Add(genMockObjectReference(t))
+						}
+					},
+				),
+				jen.Id("ResolveType"): jen.Func().
+					Params(jen.Id("_").Qual(defsPkg, "ResolveTypeParams")).
+					Op("*").Qual(defsPkg, "Object").
+					Block(
+						jen.Comment(missingResolverNote),
+						jen.Panic(jen.Lit("Unimplemented; see UnionTypeResolver.")),
+					),
+			})),
+		)
+
+	//
+	// Generate type description
+	//
+	// == Example output
+	//
+	//   // describe feed's configuration; kept private to avoid unintentional
+	//   // tampering at runtime.
+	//   var _UnionTypeFeedDesc = graphql.UnionDesc{
+	//     Config: _UnionTypeFeedConfigFn,
+	//   }
+	//
+	code.Commentf(
+		`describe %s's configuration; kept private to avoid unintentional tampering of configuration at runtime.`,
+		name,
+	)
+	code.
+		Var().Id(privateConfigName).Op("=").
+		Qual(servicePkg, "UnionDesc").
+		Values(jen.Dict{
+			jen.Id("Config"): jen.Id(privateConfigThunkName),
+		})
 
 	return code
 }
