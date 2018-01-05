@@ -59,10 +59,46 @@ type ScalarResolver interface {
 	ParseLiteral(ast.Value) interface{}
 }
 
+//
+// InterfaceTypeResolver represents a collection of methods whose products
+// represent the input and response values of a interface type.
+//
+// == Example input SDL
+//
+//   "Pets are the bestest family members"
+//   interface Pet {
+//     "name of this fine beast."
+//     name: String!
+//   }
+//
+// == Example implementation
+//
+//   // MyPetResolver implements IntefaceResolver interface
+//   type MyPetResolver struct {
+//     logger    logrus.LogEntry
+//   }
+//
+//   // ResolveType should return type reference
+//   func (r *MyPetResolver) ResolveType(val interface {}, _ graphql.ResolveTypeParams) graphql.Type {
+//     // ... implementation details ...
+//     switch pet := val.(type) {
+//     when *Dog:
+//       return schema.DogType // Handled by type identified by 'Dog'
+//     when *Cat:
+//       return schema.CatType // Handled by type identified by 'Cat'
+//     }
+//     panic("Unimplemented")
+//   }`,
+//
+type InterfaceTypeResolver interface {
+	ResolveType(interface{}, ResolveTypeParams) Type
+}
+
 // DefaultResolver uses reflection to attempt to resolve the result of a given
 // field.
+//
+// Heavily borrows from: https://github.com/graphql-go/graphql/blob/9b68c99d07d901738c15564ec1a0f57d07d884a7/executor.go#L823-L881
 func DefaultResolver(source interface{}, fieldName string) (interface{}, error) {
-	// Heavily borrows from: https://github.com/graphql-go/graphql/blob/9b68c99d07d901738c15564ec1a0f57d07d884a7/executor.go#L823-L881
 	sourceVal := reflect.ValueOf(source)
 	if sourceVal.IsValid() && sourceVal.Type().Kind() == reflect.Ptr {
 		sourceVal = sourceVal.Elem()

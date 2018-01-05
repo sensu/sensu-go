@@ -10,7 +10,7 @@ import (
 const scalarResolverName = "ScalarResolver"
 
 //
-// Generates thunk that returns new instance of scalar config
+// Generates description for scalar type
 //
 // == Example input SDL
 //
