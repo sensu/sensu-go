@@ -501,9 +501,16 @@ func Synthesize(v AttrGetter) (map[string]interface{}, error) {
 	t := value.Type()
 
 	for i := 0; i < value.NumField(); i++ {
-		// Don't add the field if it's empty
-		if value.Field(i).Len() == 0 {
-			continue
+		// Don't add empty/nil fields to the map
+		switch value.Field(i).Kind() {
+		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
+			if value.Field(i).Len() == 0 {
+				continue
+			}
+		case reflect.Interface, reflect.Ptr:
+			if value.Field(i).IsNil() {
+				continue
+			}
 		}
 
 		field := t.Field(i)
