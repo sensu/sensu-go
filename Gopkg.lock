@@ -334,6 +334,12 @@
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
+  name = "github.com/robfig/cron"
+  packages = ["."]
+  revision = "b024fc5ea0e34bc3f83d9941c8d60b0622bfaca4"
+  version = "v1"
+
+[[projects]]
   branch = "nested-parameters"
   name = "github.com/sensu/govaluate"
   packages = ["."]
@@ -490,6 +496,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "788a42a033a34ba599b5c89f8d2b17c41be373554bf7c4550b16e49a1d8083fc"
+  inputs-digest = "0005af1964f6aa7d629aa20820988322fe82b5466019ddf4c57cefe5fbd3f4e0"
   solver-name = "gps-cdcl"
   solver-version = 1
