@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	etcdRoot = "/sensu.io"
+	// EtcdRoot is the root of all sensu storage.
+	EtcdRoot = "/sensu.io"
 )
 
 // Store is an implementation of the sensu-go/backend/store.Store iface.
@@ -33,6 +34,6 @@ func (e *Etcd) NewStore() (store.Store, error) {
 		kvc:    clientv3.NewKV(c),
 	}
 
-	store.keepalivesPath = path.Join(etcdRoot, keepalivesPathPrefix, store.etcd.cfg.Name)
+	store.keepalivesPath = path.Join(EtcdRoot, keepalivesPathPrefix, store.etcd.cfg.Name)
 	return store, nil
 }

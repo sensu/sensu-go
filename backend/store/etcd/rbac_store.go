@@ -15,7 +15,7 @@ const (
 )
 
 func getRolePath(name string) string {
-	return path.Join(etcdRoot, rolePathPrefix, name)
+	return path.Join(EtcdRoot, rolePathPrefix, name)
 }
 
 // GetRoles ...
