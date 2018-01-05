@@ -34,7 +34,7 @@ func TestTokenSubstitution(t *testing.T) {
 	// Create a check that take advantage of token substitution
 	check := types.FixtureCheckConfig("check_testCheckScheduling")
 	output, err := sensuctl.run("check", "create", check.Name,
-		"--command", "echo {{ .ID }} {{ .Team }}",
+		"--command", `echo {{ .ID }} {{ .Team }} {{ .Missing | default "defaultValue" }}`,
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--handlers", strings.Join(check.Handlers, ","),
@@ -56,5 +56,5 @@ func TestTokenSubstitution(t *testing.T) {
 	assert.NotNil(t, event)
 	// {{ .ID }} should have been replaced by the entity ID and {{ .Team }} by the
 	// custom attribute of the same name on the entity
-	assert.Equal(t, "TestCheckScheduling devops\n", event.Check.Output)
+	assert.Equal(t, "TestCheckScheduling devops defaultValue\n", event.Check.Output)
 }
