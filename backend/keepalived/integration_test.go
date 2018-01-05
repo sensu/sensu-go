@@ -1,7 +1,8 @@
+// +build integration
+
 package keepalived
 
 import (
-	"flag"
 	"testing"
 	"time"
 
@@ -13,11 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-var integration = flag.Bool("integration", false, "run integration tests")
-
-// send keepalive, expect pass event, allow timer to expire, expect fail event
-// mock the message bus, use a store
 
 func TestKeepaliveMonitor(t *testing.T) {
 	bus := &mockbus.MockBus{}
