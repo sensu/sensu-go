@@ -18,6 +18,9 @@ func tokenSubstitution(data, input interface{}) ([]byte, error) {
 
 	tmpl := template.New("")
 	tmpl, err = tmpl.Parse(string(inputBytes))
+	if err != nil {
+		return nil, fmt.Errorf("could not parse the template: %s", err.Error())
+	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, data)
