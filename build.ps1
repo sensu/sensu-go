@@ -175,7 +175,7 @@ function unit_test_commands
 {
     echo "Running unit tests..."
 
-    go test -timeout=60s -tags=unit $(go list ./... | Select-String -pattern "testing", "vendor" -notMatch)
+    go test -timeout=60s $(go list ./... | Select-String -pattern "testing", "vendor" -notMatch)
     If ($LASTEXITCODE -ne 0) {
         echo "Unit testing failed..."
         exit 1
