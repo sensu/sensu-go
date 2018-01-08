@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -76,9 +75,6 @@ func TestCheckSubdue(t *testing.T) {
 	if len(event4.Check.History) <= len(event3.Check.History) {
 		t.Error("check did not start executing again")
 	}
-
-	fmt.Println(event3.Check.History)
-	fmt.Println(event4.Check.History)
 }
 
 func createCheck(t *testing.T, ctl *sensuCtl) {
