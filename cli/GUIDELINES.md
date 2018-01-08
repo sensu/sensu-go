@@ -5,8 +5,6 @@ followed when adding, updating, or expanding new sub-commands to `sensuctl`.
 
 ## Table of Contents
 
-<details>
-  <summary>Expand</summary>
 - [Format](#format)
   - [Structured](#structured)
   - [User Friendly](#user-friendly)
@@ -15,7 +13,20 @@ followed when adding, updating, or expanding new sub-commands to `sensuctl`.
   - [Activity Indicators](#activity-indicators)
   - [Results](#results)
   - [Errors](#errors)
-</details>
+- [Unrecoverable Operations](#unrecoverable-operations)
+- [Elements](#elements)
+  - [Tables](#tables)
+  - [Lists](#lists)
+  - [Interactive Prompts](#interactive-prompts)
+  - [Colour Elems](#colour-elems)
+  - [Auto-completion](#auto-completion)
+- [Management Commands](#management-commands)
+- [Subcommand Conventions](#subcommand-conventions)
+  - [List](#list)
+  - [Info](#info)
+  - [Create](#create)
+  - [Update](#update)
+  - [Delete](#delete)
 
 ## Format
 
@@ -25,20 +36,17 @@ structured data format.
 #### Structured
 
 The intention of our structured data format (at this time JSON) is to provide
-the end user with consistent and predictable results that can easily be
-integrated into an administrator's or engineer's tool-chain.
+the end user with consistent and predictable results in a well understood
+format. Ideally always formatted (pretty printing & colour) in a conventional
+manner.
+
+Try to imagine any edge cases that could occur and how you could communicate
+them to the end-user so that the user is not confused. For instance, if an
+update subcommand is failing due to the given resource not being found; output
+should be clear and predictable enough that they can quickly ascertain what type
+of error occurred, on what resource and what steps they can take to continue.
 
 Most of the following document will **not** cover this format.
-
-When developing a new command, try to be mindful of how you would like the
-command to function if you were trying to implement it into your own
-tool-chain. Try to imagine any edge cases that could occur and how you could
-communicate them to the end-user so that it can be handled appropriately. As
-such, errors are ideally also output in a predictable form so that any tooling
-could easily recover from and rectify the issue. For instance, an update command
-failing due to the given resource not being found; if output is predictable the
-end-user could easily have their tools recover by creating said resource
-instead.
 
 #### User Friendly
 
@@ -59,7 +67,7 @@ The following are some simple rules to consider when formatting your content:
 - Use blue as an indicator that that the value is the resource's primary
   identifier.
 - Use red sparingly as it is the most eye catching colour; it is reserved for
-  actions that are unrecoverable or things that are critical.
+  operations that are unrecoverable or things that are critical.
 
 No element should ever be designed so that colour is required to understand
 what it is trying to communicate. It is not a guarantee that the user's
@@ -116,9 +124,9 @@ if the language is too detailed.
 Every command should return either a relevant affirmative message or a
 descriptive error. Without this feedback for most end-users it will be confusing
 as to whether anything actually occurred, whether they should attempt to run the
-command again, or if the correct action took place. No additional actions should
-be required by the user to be confident that their intended interaction was
-successful.
+command again, or if the correct action took place. No additional operations
+should be required by the user to be confident that their intended interaction
+was successful.
 
 Unless there is good reason to do otherwise, the following should be true of any
 command:
@@ -131,6 +139,19 @@ command:
 
 More specific conventions regarding typical commands (create, update, etc.) can
 be found below.
+
+### Errors
+
+Errors should be brief, explicit and clear.
+
+Rules to consider:
+
+- Where possible, when they occur they should be accompanied by a suggestion on
+  how to rectify the issue.
+  - When applicable include link to the documentation "for further reading."
+- Use red colour to communicate their importance.
+- Error messages should be printed to STDERR.
+- If error results in the command stopping the exit code should be `1`.
 
 ## Unrecoverable Operations
 
@@ -156,33 +177,26 @@ The following are some base rules for handling confirmation:
   this is to drive home their importance.
 - For scripts, a flag should be present on the command to allow the prompt to be
   skipped, this way the command can easily be used in tooling.
-  - In the interest of making sure the action in is intentful however, the flag is ideally **not**
-    consistent across all commands. We do not want to be in the position where we
-    train the user to use `--force` at all times.
-
-### Errors
-
-Errors should be brief, explicit and clear.
-
-Rules to consider:
-
-- Where possible, when they occur they should be accompanied by a suggestion on
-  how to rectify the issue.
-  - When applicable include link to the documentation "for further reading."
-- Use red colour to communicate their importance.
-- Error messages should be printed to STDERR.
-- If error results in the command stopping the exit code should be `1`.
+  - In the interest of making sure the action in is intentful however, the flag
+    is ideally **not** consistent across all commands. We do not want to be in
+    the position where we train the user to use the same flag all the time.
 
 ## Elements
 
 ### Tables
+
+TODO
+
 ### Lists
+
+TODO
+
 ### Interactive Prompts
 
 Interactive prompts are used when information is required to be collected;
 most commonly when creating and updating resources.
 
-### Colour
+### Colour Elems
 
 For ease of formatting text in a consistent and correct manner the
 `elements/globals` pacakage defines a number constants.
@@ -229,28 +243,32 @@ consistent. The following is a list of standard names for common subcommands.
 - When adding a new command that shows expanded details of a resource consider
   naming the command `info`.
 
-## Subcommands Conventions
+## Subcommand Conventions
 
 ### Lists
 
-- Use a table element.
-- Highlight primary identifier by using the colour blue.
-- colspan is limited; limit columns to only the most important ones.
 - The "at a glance" view.
+- Use a table element. [details](#table).
+- Highlight primary identifier by using the colour blue. [details](#colour-elems).
+- Highlight any values important values with red. (eg. failing check status.) [details](#colour-elems).
+- colspan is limited; limit columns to only the most important ones.
 
 ### Info
 
-- Use a list element to display all values of resource.
+- List all fields of resource in a legible consistent manner.
+- Use a list element to display all values of resource. [details](#lists).
+- Highlight primary identifier by using the colour blue. [details](#colour-elems).
+- Highlight any values important values with red. (eg. failing check status.) [details](#colour-elems).
 - Comma separate values when displaying slices with limited number of entries.
 - Use a list element when displaying slices with many entries or entries with
   long names.
 
 ### Create
 
-- Support creation through an interactive mode
-- Support creation through arguments and flags
-- Ideally validate input before firing POST request
-- As much as possible return good errors
+- Support creation through an interactive mode. [details](#interactive-prompts).
+- Support creation through arguments and flags.
+- Validate input before firing POST request.
+- As much as possible return helpful error messages.
 - "Created." message should be returned on success.
 
 ### Update
@@ -274,12 +292,3 @@ TODO
 - `heroku`
 
     Similar in that it has lots of data to display; does excellent job.
-
-## TODO
-
-- [ ] Expand upon notes
-- [ ] Consistent use of `sensuctl`
-- [ ] Use 'operations' instead of actions
-- [ ] Proof read for consistent language
-- [ ] Glossary?
-- [ ] Loading elements? Other elements?
