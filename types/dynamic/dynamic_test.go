@@ -1,7 +1,6 @@
 package dynamic
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -11,6 +10,25 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// getFields gets a map of struct fields by name from a reflect.Value
+func getFields(v reflect.Value) map[string]structField {
+	typ := v.Type()
+	numField := v.NumField()
+	result := make(map[string]structField, numField)
+	for i := 0; i < numField; i++ {
+		field := typ.Field(i)
+		if len(field.PkgPath) != 0 {
+			// unexported
+			continue
+		}
+		value := v.Field(i)
+		sf := structField{Field: field, Value: value}
+		sf.JSONName, sf.OmitEmpty = sf.jsonFieldName()
+		result[field.Name] = sf
+	}
+	return result
+}
 
 func TestGetStructField(t *testing.T) {
 	assert := assert.New(t)
@@ -109,60 +127,6 @@ func (m *MyType) MarshalJSON() ([]byte, error) {
 
 func (m *MyType) UnmarshalJSON(p []byte) error {
 	return Unmarshal(p, m)
-}
-
-func TestExtractEmptyExtendedAttributes(t *testing.T) {
-	require := require.New(t)
-	assert := assert.New(t)
-
-	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}]}`)
-	var m MyType
-
-	attrs, err := extractExtendedAttributes(m, msg)
-	require.NoError(err)
-	assert.Nil(attrs)
-}
-
-func TestExtractExtendedAttributes(t *testing.T) {
-	require := require.New(t)
-	assert := assert.New(t)
-
-	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}], "extendedattr": "such extended"}`)
-	var m MyType
-
-	attrs, err := extractExtendedAttributes(m, msg)
-	require.NoError(err)
-	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs)
-}
-
-func TestMarshal(t *testing.T) {
-	require := require.New(t)
-	assert := assert.New(t)
-	extendedBytes := []byte(`{"a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
-	expBytes := []byte(`{"bar":null,"foo":"hello world!","a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
-
-	m := &MyType{
-		Foo:                "hello world!",
-		Bar:                nil,
-		ExtendedAttributes: extendedBytes,
-	}
-
-	b, err := Marshal(m)
-	require.NoError(err)
-	assert.Equal(expBytes, b)
-}
-
-func TestMarshalEmptyAttrs(t *testing.T) {
-	var m MyType
-	b, err := Marshal(&m)
-	require.NoError(t, err)
-	assert.Equal(t, `{"bar":null,"foo":""}`, string(b))
-}
-
-func TestUnmarshalEmptyAttrs(t *testing.T) {
-	var m MyType
-	err := Unmarshal([]byte("{}"), &m)
-	require.NoError(t, err)
 }
 
 func TestGetField(t *testing.T) {
@@ -327,37 +291,6 @@ func BenchmarkQueryGovaluateComplex(b *testing.B) {
 	}
 }
 
-func TestMarshalUnmarshal(t *testing.T) {
-	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
-	var m MyType
-	err := json.Unmarshal(data, &m)
-	require.NoError(t, err)
-	assert.Equal(t, MyType{Foo: "hello", ExtendedAttributes: []byte(`{"a":10,"b":"c"}`)}, m)
-	b, err := json.Marshal(&m)
-	require.NoError(t, err)
-	assert.Equal(t, data, b)
-}
-
-func BenchmarkUnmarshal(b *testing.B) {
-	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
-	var m MyType
-	for i := 0; i < b.N; i++ {
-		_ = json.Unmarshal(data, &m)
-	}
-}
-
-func BenchmarkMarshal(b *testing.B) {
-	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
-	var m MyType
-	if err := json.Unmarshal(data, &m); err != nil {
-		b.Fatal(err)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = json.Marshal(&m)
-	}
-}
-
 func TestNoLookupAttrsDirectly(t *testing.T) {
 	m := MyType{
 		ExtendedAttributes: []byte(`{}`),
@@ -419,49 +352,6 @@ func TestSetFieldOnExtendedAttributes(t *testing.T) {
 	}
 }
 
-type Problematic struct {
-	Foo   string
-	Bar   *string
-	Attrs []byte `json:"-"`
-}
-
-func (p *Problematic) GetExtendedAttributes() []byte {
-	return p.Attrs
-}
-
-func (p *Problematic) SetExtendedAttributes(b []byte) {
-	p.Attrs = b
-}
-
-func TestMarshalNilField(t *testing.T) {
-	p := &Problematic{
-		Foo: "yes",
-		Bar: nil,
-	}
-	b, err := Marshal(p)
-	require.NoError(t, err)
-	require.Equal(t, []byte(`{"Bar":null,"Foo":"yes"}`), b)
-}
-
-func TestUnmarshalNilField(t *testing.T) {
-	p := &Problematic{}
-	err := Unmarshal([]byte(`{"Bar":null,"Foo":"yes"}`), p)
-	require.NoError(t, err)
-}
-
-func TestMarshalNilProblematic(t *testing.T) {
-	var p *Problematic
-	b, err := Marshal(p)
-	require.NoError(t, err)
-	require.Equal(t, []byte("null"), b)
-}
-
-func TestUnmarshalNilProblematic(t *testing.T) {
-	var p *Problematic
-	err := Unmarshal([]byte("{}"), p)
-	require.Error(t, err)
-}
-
 func TestSynthesize(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -471,12 +361,13 @@ func TestSynthesize(t *testing.T) {
 		{
 			name:     "empty input",
 			input:    &MyType{},
-			expected: map[string]interface{}{},
+			expected: map[string]interface{}{"Bar": []MyType(nil), "Foo": ""},
 		},
 		{
 			name:  "standard fields",
 			input: &MyType{Foo: "bar"},
 			expected: map[string]interface{}{
+				"Bar": []MyType(nil),
 				"Foo": "bar",
 			},
 		},
@@ -487,8 +378,9 @@ func TestSynthesize(t *testing.T) {
 				ExtendedAttributes: []byte(`{"baz": "qux"}`),
 			},
 			expected: map[string]interface{}{
-				"Foo": "bar",
+				"Bar": []MyType(nil),
 				"Baz": "qux",
+				"Foo": "bar",
 			},
 		},
 	}
@@ -497,49 +389,6 @@ func TestSynthesize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			result, _ := Synthesize(tc.input)
 			assert.Equal(t, tc.expected, reflect.ValueOf(result).Interface())
-		})
-	}
-}
-
-func TestMapOfExtendedAttributes(t *testing.T) {
-	testCases := []struct {
-		name     string
-		input    map[string]interface{}
-		expected map[string]interface{}
-	}{
-		{
-			name:     "empty input",
-			input:    map[string]interface{}{},
-			expected: map[string]interface{}{},
-		},
-		{
-			name: "simple structure",
-			input: map[string]interface{}{
-				"foo": "bar",
-			},
-			expected: map[string]interface{}{
-				"Foo": "bar",
-			},
-		},
-		{
-			name: "nested structure",
-			input: map[string]interface{}{
-				"foo": map[string]interface{}{
-					"bar": "baz",
-				},
-			},
-			expected: map[string]interface{}{
-				"Foo": map[string]interface{}{
-					"Bar": "baz",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := mapOfExtendedAttributes(tc.input)
-			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
