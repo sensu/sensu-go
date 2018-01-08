@@ -10,6 +10,15 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+func addressOfExtendedAttributes(v AttrGetter) *byte {
+	attrs := v.GetExtendedAttributes()
+	if len(attrs) == 0 {
+		return nil
+	}
+
+	return &attrs[0]
+}
+
 // extractExtendedAttributes selects only extended attributes from msg. It will
 // ignore any fields in msg that correspond to fields in v. v must be of kind
 // reflect.Struct.
@@ -65,6 +74,38 @@ func extractNonPathValues(any jsoniter.Any, parts []string) map[string]interface
 	return result
 }
 
+// isExtendedAttributes determines if the provided value correspond to the
+// provided extended attributes address
+func isExtendedAttributes(address *byte, value reflect.Value) bool {
+	if value.Kind() != reflect.Slice {
+		return false
+	}
+
+	elem := reflect.Indirect(value)
+	if b, ok := elem.Interface().([]byte); ok {
+		if len(b) > 0 && &b[0] == address {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isEmpty(value reflect.Value) bool {
+	switch value.Kind() {
+	case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
+		if value.Len() == 0 {
+			return true
+		}
+	case reflect.Interface, reflect.Ptr:
+		if value.IsNil() {
+			return true
+		}
+	}
+
+	return false
+}
+
 // makeEnvelope makes an envelope of map[string]interface{} around any,
 // according to parts. The nesting depth will be equal to the length of parts.
 func makeEnvelope(any jsoniter.Any, parts []string, value interface{}) map[string]interface{} {
@@ -103,15 +144,24 @@ func makeEnvelope(any jsoniter.Any, parts []string, value interface{}) map[strin
 // attributes with capitalization of the key
 func mapOfExtendedAttributes(v interface{}) map[string]interface{} {
 	values := reflect.ValueOf(v)
+	if values.Kind() != reflect.Map {
+		return nil
+	}
+
 	attrs := make(map[string]interface{})
 	for _, value := range values.MapKeys() {
-		typeOfValue := reflect.TypeOf(values.MapIndex(value).Interface()).Kind()
-		if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
-			attrs[strings.Title(value.String())] = mapOfExtendedAttributes(values.MapIndex(value).Interface())
-		} else {
-			attrs[strings.Title(value.String())] = values.MapIndex(value).Interface()
+		if values.MapIndex(value).CanInterface() {
+			typeOfValue := reflect.TypeOf(values.MapIndex(value).Interface()).Kind()
+			if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
+				attrs[strings.Title(value.String())] = mapOfExtendedAttributes(values.MapIndex(value).Interface())
+			} else {
+				if values.MapIndex(value).CanInterface() {
+					attrs[strings.Title(value.String())] = values.MapIndex(value).Interface()
+				}
+			}
 		}
 	}
+
 	return attrs
 }
 

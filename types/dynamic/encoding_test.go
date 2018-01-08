@@ -35,9 +35,9 @@ func TestMarshal(t *testing.T) {
 	expBytes := []byte(`{"bar":null,"foo":"hello world!","a":1,"b":2.0,"c":true,"d":"false","e":[1,2,3],"f":{"foo":"bar"}}`)
 
 	m := &MyType{
-		Foo:                "hello world!",
-		Bar:                nil,
-		ExtendedAttributes: extendedBytes,
+		Foo:   "hello world!",
+		Bar:   nil,
+		Attrs: extendedBytes,
 	}
 
 	b, err := Marshal(m)
@@ -63,7 +63,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	var m MyType
 	err := json.Unmarshal(data, &m)
 	require.NoError(t, err)
-	assert.Equal(t, MyType{Foo: "hello", ExtendedAttributes: []byte(`{"a":10,"b":"c"}`)}, m)
+	assert.Equal(t, MyType{Foo: "hello", Attrs: []byte(`{"a":10,"b":"c"}`)}, m)
 	b, err := json.Marshal(&m)
 	require.NoError(t, err)
 	assert.Equal(t, data, b)

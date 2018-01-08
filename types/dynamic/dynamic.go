@@ -47,11 +47,7 @@ func SetField(v Attributes, path string, value interface{}) error {
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
-	attrs := v.GetExtendedAttributes()
-	var addressOfAttrs *byte
-	if len(attrs) > 0 {
-		addressOfAttrs = &attrs[0]
-	}
+	addressOfAttrs := addressOfExtendedAttributes(v)
 	fields := getJSONFields(strukt, addressOfAttrs)
 	f, ok := fields[path]
 	if !ok {
@@ -135,11 +131,9 @@ func GetField(v AttrGetter, name string) (interface{}, error) {
 	if v == nil {
 		return nil, errors.New("dynamic: GetField with nil AttrGetter")
 	}
-	extendedAttributes := v.GetExtendedAttributes()
-	var extAttrPtr *byte
-	if len(extendedAttributes) > 0 {
-		extAttrPtr = &extendedAttributes[0]
-	}
+
+	extendedAttributesAddress := addressOfExtendedAttributes(v)
+
 	if s := string([]rune(name)[0]); strings.Title(s) == s {
 		// Exported fields are always upper-cased for the first rune
 		strukt := reflect.Indirect(reflect.ValueOf(v))
@@ -151,7 +145,7 @@ func GetField(v AttrGetter, name string) (interface{}, error) {
 			rval := reflect.Indirect(field).Interface()
 			if b, ok := rval.([]byte); ok && len(b) > 0 {
 				// Make sure this field isn't the extended attributes
-				if extAttrPtr == &b[0] {
+				if extendedAttributesAddress == &b[0] {
 					goto EXTENDED
 				}
 			}
@@ -160,7 +154,7 @@ func GetField(v AttrGetter, name string) (interface{}, error) {
 	}
 EXTENDED:
 	// If we get here, we are dealing with extended attributes.
-	any := AnyParameters{any: jsoniter.Get(extendedAttributes)}
+	any := AnyParameters{any: jsoniter.Get(v.GetExtendedAttributes())}
 	return any.Get(name)
 }
 
@@ -195,21 +189,25 @@ func Synthesize(v AttrGetter) (map[string]interface{}, error) {
 	value := reflect.Indirect(reflect.ValueOf(v))
 	t := value.Type()
 
+	if t.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("expected a struct, received %s", t.Kind().String())
+	}
+
+	extendedAttributesAddress := addressOfExtendedAttributes(v)
+
 	for i := 0; i < value.NumField(); i++ {
-		// Don't add empty/nil fields to the map
-		switch value.Field(i).Kind() {
-		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
-			if value.Field(i).Len() == 0 {
-				continue
-			}
-		case reflect.Interface, reflect.Ptr:
-			if value.Field(i).IsNil() {
-				continue
-			}
+		field := t.Field(i)
+		s := structField{Field: field}
+		_, omitEmpty := s.jsonFieldName()
+
+		// Don't add empty/nil fields to the map if omitempty is specified
+		empty := isEmpty(value.Field(i))
+		if empty && omitEmpty {
+			continue
 		}
 
-		field := t.Field(i)
-		if field.Name == "ExtendedAttributes" {
+		// Determine if we are handling custom attributes
+		if !empty && isExtendedAttributes(extendedAttributesAddress, value.Field(i)) {
 			var attrs interface{}
 			if err := json.Unmarshal(value.Field(i).Bytes(), &attrs); err != nil {
 				return nil, err

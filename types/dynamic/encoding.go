@@ -104,14 +104,10 @@ func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 	if kind := strukt.Kind(); kind != reflect.Struct {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
-	attrs := v.GetExtendedAttributes()
-	var addressOfAttrs *byte
-	if len(attrs) == 0 {
-		addressOfAttrs = nil
-	} else {
-		addressOfAttrs = &attrs[0]
-	}
-	m := getJSONFields(strukt, addressOfAttrs)
+
+	extendedAttributesAddress := addressOfExtendedAttributes(v)
+
+	m := getJSONFields(strukt, extendedAttributesAddress)
 	fields := make([]structField, 0, len(m))
 	for _, s := range m {
 		fields = append(fields, s)
@@ -150,10 +146,8 @@ func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField
 			continue
 		}
 		if elem.IsValid() {
-			if b, ok := elem.Interface().([]byte); ok {
-				if len(b) > 0 && &b[0] == addressOfAttrs {
-					continue
-				}
+			if isExtendedAttributes(addressOfAttrs, value) {
+				continue
 			}
 		}
 		// sf is a valid JSON field.

@@ -106,15 +106,15 @@ type MyType struct {
 	Foo string   `json:"foo"`
 	Bar []MyType `json:"bar"`
 
-	ExtendedAttributes []byte `json:",omitempty"` // note that this will not be marshalled directly, despite missing the `json"-"`!
+	Attrs []byte `json:",omitempty"` // note that this will not be marshalled directly, despite missing the `json"-"`!
 }
 
 func (m *MyType) GetExtendedAttributes() []byte {
-	return m.ExtendedAttributes
+	return m.Attrs
 }
 
 func (m *MyType) SetExtendedAttributes(a []byte) {
-	m.ExtendedAttributes = a
+	m.Attrs = a
 }
 
 func (m *MyType) Get(name string) (interface{}, error) {
@@ -131,9 +131,9 @@ func (m *MyType) UnmarshalJSON(p []byte) error {
 
 func TestGetField(t *testing.T) {
 	m := &MyType{
-		Foo:                "hello",
-		Bar:                []MyType{{Foo: "there"}},
-		ExtendedAttributes: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
+		Foo:   "hello",
+		Bar:   []MyType{{Foo: "there"}},
+		Attrs: []byte(`{"a":"a","b":1,"c":2.0,"d":true,"e":null,"foo":{"hello":5},"bar":[true,10.5]}`),
 	}
 
 	fooAny := jsoniter.Get([]byte(`{"hello":5}`))
@@ -193,8 +193,8 @@ func TestGetField(t *testing.T) {
 
 func TestGetFieldEmptyBytes(t *testing.T) {
 	m := MyType{
-		Foo:                "hello",
-		ExtendedAttributes: []byte(``),
+		Foo:   "hello",
+		Attrs: []byte(``),
 	}
 
 	testCases := []struct {
@@ -227,7 +227,7 @@ func TestGetFieldEmptyBytes(t *testing.T) {
 
 func TestQueryGovaluateSimple(t *testing.T) {
 	m := &MyType{
-		ExtendedAttributes: []byte(`{"hello":5}`),
+		Attrs: []byte(`{"hello":5}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -241,7 +241,7 @@ func TestQueryGovaluateSimple(t *testing.T) {
 
 func BenchmarkQueryGovaluateSimple(b *testing.B) {
 	m := &MyType{
-		ExtendedAttributes: []byte(`{"hello":5}`),
+		Attrs: []byte(`{"hello":5}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello == 5")
@@ -256,7 +256,7 @@ func BenchmarkQueryGovaluateSimple(b *testing.B) {
 
 func TestQueryGovaluateComplex(t *testing.T) {
 	m := &MyType{
-		ExtendedAttributes: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+		Attrs: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.foo == 5")
@@ -278,7 +278,7 @@ func TestQueryGovaluateComplex(t *testing.T) {
 
 func BenchmarkQueryGovaluateComplex(b *testing.B) {
 	m := &MyType{
-		ExtendedAttributes: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
+		Attrs: []byte(`{"hello":{"foo":5,"bar":6.0}}`),
 	}
 
 	expr, err := govaluate.NewEvaluableExpression("hello.foo < hello.bar")
@@ -293,11 +293,11 @@ func BenchmarkQueryGovaluateComplex(b *testing.B) {
 
 func TestNoLookupAttrsDirectly(t *testing.T) {
 	m := MyType{
-		ExtendedAttributes: []byte(`{}`),
+		Attrs: []byte(`{}`),
 	}
-	_, err := m.Get("ExtendedAttributes")
+	_, err := m.Get("Attrs")
 	require.NotNil(t, err)
-	assert.Equal(t, err.Error(), "[ExtendedAttributes] not found")
+	assert.Equal(t, err.Error(), "[Attrs] not found")
 }
 
 func TestSetFieldOnStructField(t *testing.T) {
@@ -310,41 +310,41 @@ func TestSetFieldOnStructField(t *testing.T) {
 
 func TestSetFieldOnExtendedAttributes(t *testing.T) {
 	tests := []struct {
-		ExtendedAttributes []byte
-		Expected           []byte
-		Path               string
-		Value              interface{}
+		Attrs    []byte
+		Expected []byte
+		Path     string
+		Value    interface{}
 	}{
 		{
-			ExtendedAttributes: []byte(`{}`),
-			Expected:           []byte(`{"extendedAttr":{"bar":42}}`),
-			Path:               "extendedAttr.bar",
-			Value:              42,
+			Attrs:    []byte(`{}`),
+			Expected: []byte(`{"extendedAttr":{"bar":42}}`),
+			Path:     "extendedAttr.bar",
+			Value:    42,
 		},
 		{
-			ExtendedAttributes: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4]}}}`),
-			Expected:           []byte(`{"extendedAttr":{"a":"value","bar":5,"baz":{"a":[1,2,3,4]}}}`),
-			Path:               "extendedAttr.a",
-			Value:              "value",
+			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4]}}}`),
+			Expected: []byte(`{"extendedAttr":{"a":"value","bar":5,"baz":{"a":[1,2,3,4]}}}`),
+			Path:     "extendedAttr.a",
+			Value:    "value",
 		},
 		{
-			ExtendedAttributes: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
-			Expected:           []byte(`{"extendedAttr":{"bar":5,"baz":{"a":"replaced","b":"b"}}}`),
-			Path:               "extendedAttr.baz.a",
-			Value:              "replaced",
+			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
+			Expected: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":"replaced","b":"b"}}}`),
+			Path:     "extendedAttr.baz.a",
+			Value:    "replaced",
 		},
 		{
-			ExtendedAttributes: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
-			Expected:           []byte(`{"extendedAttr":{"bar":5,"baz":{"a":{"b":"replaced"},"b":"b"}}}`),
-			Path:               "extendedAttr.baz.a.b",
-			Value:              "replaced",
+			Attrs:    []byte(`{"extendedAttr":{"bar":5,"baz":{"a":[1,2,3,4],"b":"b"}}}`),
+			Expected: []byte(`{"extendedAttr":{"bar":5,"baz":{"a":{"b":"replaced"},"b":"b"}}}`),
+			Path:     "extendedAttr.baz.a.b",
+			Value:    "replaced",
 		},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			var m MyType
-			m.SetExtendedAttributes(test.ExtendedAttributes)
+			m.SetExtendedAttributes(test.Attrs)
 			err := SetField(&m, test.Path, test.Value)
 			require.NoError(t, err)
 			require.Equal(t, string(test.Expected), string(m.GetExtendedAttributes()))
@@ -374,8 +374,8 @@ func TestSynthesize(t *testing.T) {
 		{
 			name: "extended fields",
 			input: &MyType{
-				Foo:                "bar",
-				ExtendedAttributes: []byte(`{"baz": "qux"}`),
+				Foo:   "bar",
+				Attrs: []byte(`{"baz": "qux"}`),
 			},
 			expected: map[string]interface{}{
 				"Bar": []MyType(nil),
