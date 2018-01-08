@@ -66,7 +66,7 @@ func TestCheckScheduling(t *testing.T) {
 	}
 	count1 := len(event.Check.History)
 
-	// Give it few seconds to make sure we did not published additional chekc requests
+	// Give it few seconds to make sure we did not published additional check requests
 	time.Sleep(10 * time.Second)
 
 	// Retrieve (again) the number of check results sent
@@ -94,4 +94,21 @@ func TestCheckScheduling(t *testing.T) {
 
 	// Make sure new check results were sent
 	assert.NotEqual(t, count2, count3)
+
+	// Change the check schedule to cron
+	check.Cron = "* * * * * *"
+	err = sensuClient.UpdateCheck(check)
+	assert.NoError(t, err)
+
+	// Give it few seconds to make sure it picks up the change
+	time.Sleep(20 * time.Second)
+
+	// Retrieve (again) the number of check results sent
+	event, err = sensuClient.FetchEvent(agent.ID, check.Name)
+	assert.NoError(t, err)
+	assert.NotNil(t, event)
+	count4 := len(event.Check.History)
+
+	// Make sure new check results were sent
+	assert.NotEqual(t, count3, count4)
 }

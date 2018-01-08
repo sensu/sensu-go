@@ -14,7 +14,12 @@ windows.
 - Store clients can now use [watchers](https://github.com/sensu/sensu-go/pull/792) to be notified of changes to objects in the store.
 - Add check `Cron` field. Checks can now be scheduled according to the cron
 string stored in this field.
+- Add a distributed queue package for use in the backend.
 - Token substitution is now available for checks.
+
+### Testing
+- Add an e2e test for cron scheduling.
+- Add an e2e test for check hook execution.
 
 ## [2.0.0-alpha.11] - 2017-12-19
 ### Breaking Changes

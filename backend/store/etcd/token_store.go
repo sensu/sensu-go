@@ -11,7 +11,7 @@ import (
 )
 
 func getTokenPath(subject, id string) string {
-	return fmt.Sprintf("%s/tokens/%s/%s", etcdRoot, subject, id)
+	return fmt.Sprintf("%s/tokens/%s/%s", EtcdRoot, subject, id)
 }
 
 func (s *etcdStore) CreateToken(claims *types.Claims) error {

@@ -21,7 +21,7 @@ var (
 
 func getEventPath(event *types.Event) string {
 	return path.Join(
-		etcdRoot,
+		EtcdRoot,
 		eventsPathPrefix,
 		event.Entity.Organization,
 		event.Entity.Environment,
@@ -34,7 +34,7 @@ func getEventWithCheckPath(ctx context.Context, entity, check string) string {
 	env := environment(ctx)
 	org := organization(ctx)
 
-	return path.Join(etcdRoot, eventsPathPrefix, org, env, entity, check)
+	return path.Join(EtcdRoot, eventsPathPrefix, org, env, entity, check)
 }
 
 func getEventsPath(ctx context.Context, entity string) string {
