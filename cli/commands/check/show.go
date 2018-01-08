@@ -71,6 +71,10 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 				Value: r.Command,
 			},
 			{
+				Label: "Cron",
+				Value: r.Cron,
+			},
+			{
 				Label: "Subscriptions",
 				Value: strings.Join(r.Subscriptions, ", "),
 			},

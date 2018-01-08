@@ -30,6 +30,8 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 			CheckEnv:      check.Environment,
 			CheckOrg:      check.Organization,
 			CheckInterval: check.Interval,
+			CheckCron:     check.Cron,
+			LastCronState: check.Cron,
 			MessageBus:    msgBus,
 			WaitGroup:     wg,
 			StateManager:  stateMngr,

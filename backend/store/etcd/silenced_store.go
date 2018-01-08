@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
@@ -128,10 +129,24 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 	var req clientv3.Op
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(silenced.Organization, silenced.Environment)), ">", 0)
 	if silenced.Expire > 0 {
-		lease, err := s.client.Grant(ctx, silenced.Expire)
+		// add expire time to begin time, that is the ttl for the lease
+		var expireTime int64
+		// Check begin time against current time to get an offset for the ttl
+		currentTime := time.Now().Unix()
+		timeDelta := silenced.Begin - currentTime
+		// Add the delta to the expire time unless it is negative (begin time is
+		// in the past)
+		if timeDelta > 0 {
+			expireTime = silenced.Expire + timeDelta
+		} else {
+			expireTime = silenced.Expire
+		}
+
+		lease, err := s.client.Grant(ctx, expireTime)
 		if err != nil {
 			return err
 		}
+
 		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes), clientv3.WithLease(lease.ID))
 	} else {
 		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes))
