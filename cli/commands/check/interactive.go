@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
@@ -123,7 +124,16 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "cron",
 			Prompt: &survey.Input{
 				Message: "Cron:",
+				Help:    "Optional cron schedule which takes precedence over interval. Value must be a valid cron string.",
 				Default: opts.Cron,
+			},
+			Validate: func(val interface{}) error {
+				if val.(string) != "" {
+					if _, err := cron.Parse(val.(string)); err != nil {
+						return fmt.Errorf(err.Error())
+					}
+				}
+				return nil
 			},
 		},
 		{
