@@ -3,6 +3,7 @@ package agent
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -22,9 +23,6 @@ func tokenSubstitution(data, input interface{}) ([]byte, error) {
 	tmpl := template.New("")
 	tmpl.Funcs(funcMap())
 
-	// An error should be returned if a token can't be properly substituted
-	tmpl.Option("missingkey=error")
-
 	tmpl, err = tmpl.Parse(inputString)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse the template: %s", err.Error())
@@ -34,6 +32,22 @@ func tokenSubstitution(data, input interface{}) ([]byte, error) {
 	err = tmpl.Execute(&buf, data)
 	if err != nil {
 		return nil, fmt.Errorf("could not execute the template: %s", err.Error())
+	}
+
+	// Verify if the output contains the "<no value>" string, indicating that a
+	// token was not properly substituted. If so, re-execute the template but this
+	// time with "missingkey=error" option so we get the actual token that was
+	// unmatched. For reference, this option can't be added by default otherwise
+	// the default values (defaultFunc) couldn't work
+	if strings.Contains(buf.String(), "<no value>") {
+		tmpl.Option("missingkey=error")
+
+		if err = tmpl.Execute(&buf, data); err == nil {
+			fmt.Println("opps!")
+			return nil, errors.New("expected an error while executing the template, got none")
+		}
+
+		return nil, fmt.Errorf("unmatched token: %s", err.Error())
 	}
 
 	return buf.Bytes(), nil
