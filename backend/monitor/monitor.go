@@ -1,13 +1,9 @@
 package monitor
 
 import (
-	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -17,12 +13,8 @@ import (
 type Monitor struct {
 	Entity         *types.Entity
 	Timeout        time.Duration
-	FailureHandler MonitorFailureHandler
-	UpdateHandler  MonitorUpdateHandler
-	Deregisterer   Deregisterer
-	EventCreator   EventCreator
-	MessageBus     messaging.MessageBus
-	Store          store.Store
+	FailureHandler FailureHandler
+	UpdateHandler  UpdateHandler
 
 	reset   chan interface{}
 	timer   *time.Timer
@@ -30,25 +22,37 @@ type Monitor struct {
 	failing int32
 }
 
-/* this stuff should happen in the start function
-func foo() {
-	creator := &KeepaliveEventCreator(entity)
-	handler := &keepaliveUpdateHandler{}
-
-	monitor := &Monitor{
-		Timeout:        60 * time.Second,
-		FailureHandler: handler,
-		UpdateHandler:  handler,
-	}
-}
-*/
-
-type MonitorFailureHandler interface {
-	HandleFailure(t time.T) error
-}
-
-type MonitorUpdateHandler interface {
+// UpdateHandler provides a HandleUpdate function.
+type UpdateHandler interface {
 	HandleUpdate(e *types.Event) error
+}
+
+// FailureHandler provides a HandleFailure function.
+type FailureHandler interface {
+	HandleFailure(e *types.Event) error
+}
+
+// HandleUpdate causes the Monitor to observe the event. If the monitor has
+// been stopped, this method has no effect.
+func (monitorPtr *Monitor) HandleUpdate(event *types.Event) error {
+	// once the monitor is stopped, we can't continue, because the
+	// reset channel will be closed.
+	if monitorPtr.IsStopped() {
+		return nil
+	}
+
+	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
+		if err := monitorPtr.UpdateHandler.HandleUpdate(event); err != nil {
+			return err
+		}
+	}
+	monitorPtr.reset <- struct{}{}
+	return nil
+}
+
+// HandleFailure passes an event to the failure handler function and runs it.
+func (monitorPtr *Monitor) HandleFailure(event *types.Event) error {
+	return monitorPtr.FailureHandler.HandleFailure(event)
 }
 
 // Start initializes the monitor and starts its monitoring goroutine.
@@ -59,17 +63,11 @@ func (monitorPtr *Monitor) Start() {
 		return
 	}
 
-	// refactor this to take a timeout (keepalive or check ttl)
 	timerDuration := monitorPtr.Timeout * time.Second
 	monitorPtr.timer = time.NewTimer(timerDuration)
 	monitorPtr.reset = make(chan interface{})
 	go func() {
 		timer := monitorPtr.timer
-
-		var (
-			err     error
-			timeout int64
-		)
 
 		for {
 			// Access to the timer has to be constrained to a single goroutine.
@@ -94,25 +92,6 @@ func (monitorPtr *Monitor) Start() {
 			timer.Reset(timerDuration)
 		}
 	}()
-}
-
-// HandleUpdate causes the Monitor to observe the event. If the monitor has
-// been stopped, this method has no effect.
-func (monitorPtr *Monitor) HandleUpdate(event *types.Event) error {
-	// once the monitor is stopped, we can't continue, because the
-	// reset channel will be closed.
-	if monitorPtr.IsStopped() {
-		return nil
-	}
-
-	monitorPtr.UpdateHandler.HandleUpdate(event)
-	monitorPtr.reset <- struct{}{}
-	return nil
-}
-
-// HandleFailure
-func (monitorPtr *Monitor) HandleFailure(event *types.Event) error {
-	return monitorPtr.FailureHandler.HandleFailure(event)
 }
 
 // Stop the Monitor. Once the monitor has been stopped it

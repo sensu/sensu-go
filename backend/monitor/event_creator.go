@@ -1,8 +1,6 @@
 package monitor
 
 import (
-	"time"
-
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
 )
@@ -31,6 +29,7 @@ func (creatorPtr *MessageBusEventCreator) Warn(event *types.Event) error {
 	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
 }
 
+/*
 // Critical sends a check with status of critical for a keepalive.
 func (creatorPtr *MessageBusEventCreator) Critical(entity *types.Entity) error {
 	event := createKeepaliveEvent(entity)
@@ -91,3 +90,5 @@ func createRegistrationEvent(entity *types.Entity) *types.Event {
 
 	return registrationEvent
 }
+
+*/

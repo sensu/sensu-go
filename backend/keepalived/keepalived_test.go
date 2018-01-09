@@ -15,13 +15,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type mockDeregisterer struct {
+	mock.Mock
+}
+
 type KeepalivedTestSuite struct {
 	suite.Suite
 	Keepalived   *Keepalived
 	MessageBus   messaging.MessageBus
 	Store        *mockstore.MockStore
 	Deregisterer *mockDeregisterer
-	EventCreator *mockCreator
 }
 
 func (suite *KeepalivedTestSuite) SetupTest() {
@@ -33,7 +36,6 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 	creator := &mockCreator{}
 
 	suite.Deregisterer = dereg
-	suite.EventCreator = creator
 	suite.Store = mockStore
 
 	keepalived := &Keepalived{
@@ -41,10 +43,8 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 		MessageBus: suite.MessageBus,
 		MonitorFactory: func(e *types.Entity) *KeepaliveMonitor {
 			return &KeepaliveMonitor{
-				Entity:       e,
-				Deregisterer: dereg,
-				EventCreator: creator,
-				Store:        mockStore,
+				Entity: e,
+				Store:  mockStore,
 			}
 		},
 	}
