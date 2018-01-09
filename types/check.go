@@ -72,7 +72,7 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("organization must be set")
 	}
 
-	if c.Ttl <= int64(c.Interval) && c.Ttl > -1 {
+	if c.Ttl <= int64(c.Interval) && c.Ttl > 0 {
 		return errors.New("ttl must be greater than check interval")
 	}
 
@@ -154,7 +154,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Organization:  "default",
 		Publish:       true,
 		Cron:          "",
-		Ttl:           -1,
+		Ttl:           0,
 	}
 }
 

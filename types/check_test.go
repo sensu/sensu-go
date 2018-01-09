@@ -66,10 +66,11 @@ func TestCheckConfig(t *testing.T) {
 	c.Environment = "default"
 
 	// Invalid ttl
+	c.Ttl = 10
 	assert.Error(t, c.Validate())
-	c.Ttl = 90
 
 	// Valid check
+	c.Ttl = 90
 	assert.NoError(t, c.Validate())
 }
 
