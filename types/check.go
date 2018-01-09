@@ -72,7 +72,7 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("organization must be set")
 	}
 
-	if c.Ttl <= int64(c.Interval) && c.Ttl > 0 {
+	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
 		return errors.New("ttl must be greater than check interval")
 	}
 
