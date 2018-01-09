@@ -81,9 +81,6 @@ message CheckConfig {
 
 	// Cron is the cron string at which the check should be run.
 	string cron = 17;
-
-	// Timeout is the timeout, in seconds, at which the check has to run
-	uint32 timeout = 18;
 }
 
 // A Check is a check specification and optionally the results of the check's
