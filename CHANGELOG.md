@@ -15,6 +15,7 @@ windows.
 - Add check `Cron` field. Checks can now be scheduled according to the cron
 string stored in this field.
 - Add a distributed queue package for use in the backend.
+- Token substitution is now available for checks.
 
 ### Testing
 - Add an e2e test for cron scheduling.

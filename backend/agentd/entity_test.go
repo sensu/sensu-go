@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -92,9 +93,7 @@ func TestGetProxyEntity(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := getProxyEntity(tc.event, store)
-			if err != nil && !tc.expectedError {
-				assert.FailNow(err.Error())
-			}
+			testutil.CompareError(err, tc.expectedError, t)
 
 			if tc.expectedEntity != "" {
 				assert.Equal(tc.expectedEntity, tc.event.Entity.ID)

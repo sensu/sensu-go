@@ -176,10 +176,11 @@ type agentProcess struct {
 }
 
 type agentConfig struct {
-	ID          string
-	BackendURLs []string
-	APIPort     int
-	SocketPort  int
+	ID               string
+	BackendURLs      []string
+	APIPort          int
+	SocketPort       int
+	CustomAttributes string
 }
 
 // newAgent abstracts the initialization of an agent process and returns a
@@ -231,6 +232,12 @@ func (a *agentProcess) Start(t *testing.T) error {
 	for _, url := range a.BackendURLs {
 		args = append(args, "--backend-url")
 		args = append(args, url)
+	}
+
+	// Support custom attributes
+	if a.CustomAttributes != "" {
+		args = append(args, "--custom-attributes")
+		args = append(args, a.CustomAttributes)
 	}
 
 	cmd := exec.Command(agentPath, args...)
