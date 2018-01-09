@@ -28,6 +28,7 @@ type checkOpts struct {
 	Publish       string `survey:"publish"`
 	ProxyEntityID string `survey:"proxy-entity-id"`
 	Stdin         string `survey:"stdin"`
+	Timeout       string `survey:"timeout"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -47,6 +48,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
 	opts.ProxyEntityID = check.ProxyEntityID
 	opts.Stdin = stdinDefault
+	opts.Timeout = strconv.Itoa(int(check.Timeout))
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -59,6 +61,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Publish = strconv.FormatBool(publishBool)
 	opts.ProxyEntityID, _ = flags.GetString("proxy-entity-id")
 	opts.Stdin, _ = flags.GetString("stdin")
+	opts.Timeout, _ = flags.GetString("timeout")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -114,6 +117,13 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Prompt: &survey.Input{
 				Message: "Interval:",
 				Default: opts.Interval,
+			},
+		},
+		{
+			Name: "timeout",
+			Prompt: &survey.Input{
+				Message: "Timeout:",
+				Default: opts.Timeout,
 			},
 		},
 		{
@@ -176,6 +186,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	interval, _ := strconv.ParseUint(opts.Interval, 10, 32)
 	stdin, _ := strconv.ParseBool(opts.Stdin)
+	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)
 
 	check.Name = opts.Name
 	check.Environment = opts.Env
@@ -188,4 +199,5 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Publish = opts.Publish == "true"
 	check.ProxyEntityID = opts.ProxyEntityID
 	check.Stdin = stdin
+	check.Timeout = uint32(timeout)
 }

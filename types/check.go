@@ -137,6 +137,7 @@ func FixtureCheckRequest(id string) *CheckRequest {
 // FixtureCheckConfig returns a fixture for a CheckConfig object.
 func FixtureCheckConfig(id string) *CheckConfig {
 	interval := uint32(60)
+	timeout := uint32(0)
 
 	return &CheckConfig{
 		Name:          id,
@@ -150,6 +151,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Organization:  "default",
 		Publish:       true,
 		Cron:          "",
+		Timeout:       timeout,
 	}
 }
 

@@ -71,6 +71,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	ex := &command.Execution{
 		Env:     assets.Env(),
 		Command: checkConfig.Command,
+		Timeout: int(checkConfig.Timeout),
 	}
 
 	// If stdin is true, add JSON event data to command execution.
