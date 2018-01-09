@@ -44,6 +44,12 @@ func TestTokenSubstitution(t *testing.T) {
 			input:         &types.CheckConfig{Command: "{{ .ID }}"},
 			expectedError: false,
 		},
+		{
+			name:          "unmatched token",
+			data:          map[string]interface{}{"ID": "foo"},
+			input:         types.CheckConfig{Command: `{{ .System.Hostname }}`},
+			expectedError: true,
+		},
 	}
 
 	for _, tc := range testCases {
