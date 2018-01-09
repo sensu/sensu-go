@@ -22,6 +22,9 @@ func tokenSubstitution(data, input interface{}) ([]byte, error) {
 	tmpl := template.New("")
 	tmpl.Funcs(funcMap())
 
+	// An error should be returned if a token can't be properly substituted
+	tmpl.Option("missingkey=error")
+
 	tmpl, err = tmpl.Parse(inputString)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse the template: %s", err.Error())
