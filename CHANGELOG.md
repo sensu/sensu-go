@@ -16,6 +16,7 @@ windows.
 string stored in this field.
 - Add a distributed queue package for use in the backend.
 - Token substitution is now available for checks.
+- CLI functionality for check `Cron` field.
 
 ### Testing
 - Add an e2e test for cron scheduling.

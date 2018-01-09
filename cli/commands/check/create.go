@@ -64,6 +64,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("command", "c", "", "the command the check should run")
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
+	cmd.Flags().StringP("cron", "", "", "the cron schedule at which the check is run")
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
