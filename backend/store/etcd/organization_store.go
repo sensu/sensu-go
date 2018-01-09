@@ -17,7 +17,7 @@ const (
 )
 
 func getOrganizationsPath(name string) string {
-	return path.Join(etcdRoot, organizationsPathPrefix, name)
+	return path.Join(EtcdRoot, organizationsPathPrefix, name)
 }
 
 // DeleteOrganizationByName deletes the organization named *name*

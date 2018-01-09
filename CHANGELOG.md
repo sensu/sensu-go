@@ -7,6 +7,34 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Add check subdue mechanism. Checks can now be subdued for specified time
+windows.
+- Silenced entries now include a `begin` timestamp for scheduled maintenance.
+- Store clients can now use [watchers](https://github.com/sensu/sensu-go/pull/792) to be notified of changes to objects in the store.
+- Add check `Cron` field. Checks can now be scheduled according to the cron
+string stored in this field.
+- Add a distributed queue package for use in the backend.
+- Token substitution is now available for checks.
+- CLI functionality for check `Cron` field.
+
+### Testing
+- Add an e2e test for cron scheduling.
+- Add an e2e test for check hook execution.
+
+## [2.0.0-alpha.11] - 2017-12-19
+### Breaking Changes
+- The `Source` field on a check has been renamed to `ProxyEntityID`. Any checks
+  using the Source field will have to be recreated.
+
+### Added
+- Silenced entries with ExpireOnResolve set to true will now be deleted when an
+event which has previously failing was resolved
+- TCP/UDP sockets now accept 1.x backward compatible payloads. 1.x Check Result gets translated to a 2.x Event.
+- Custom attributes can be added to the agent at start.
+- New and improved Check Hooks are implemented (see whats new about hooks here: [Hooks](https://github.com/sensu/sensu-alpha-documentation/blob/master/08-hooks.md))
+- Add check subdue CLI support.
+
 ### Changed
 - Avoid using reflection in time.InWindows function.
 - Use multiple parallel jobs in CI tools to speed up the tests
@@ -34,12 +62,12 @@ to clean up existing errcheck lint.
 ### Fixed
 - Entities can now be silenced using their entity subscription
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
-  settings on start
+settings on start
 - Keepalives now alert when entities go away!
 - Fixed a bug in package dynamic that could lead to an error in json.Marshal
 in certain cases.
 - Fixed an issue in keepalived to handle cases of nil entities in keepalive
-  messages
+messages
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added

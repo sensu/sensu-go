@@ -57,10 +57,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	_ = cmd.Flags().StringP("reason", "r", "", "reason for the silenced entry")
 	_ = cmd.Flags().BoolP("expire-on-resolve", "x", false, "clear silenced entry on resolution")
-	_ = cmd.Flags().Int64P("expire", "e", 0, "expiry in seconds")
+	_ = cmd.Flags().StringP("expire", "e", expireDefault, "expiry in seconds")
 	_ = cmd.Flags().StringP("subscription", "s", "", "silence subscription")
 	_ = cmd.Flags().StringP("check", "c", "", "silence check")
-
+	_ = cmd.Flags().StringP("begin", "b", beginDefault, "silence begin in epoch time")
 	_ = cmd.MarkFlagRequired("reason")
 
 	return cmd

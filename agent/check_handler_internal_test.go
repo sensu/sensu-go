@@ -49,15 +49,20 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(1, event.Check.Status)
+}
 
-	checkConfig.Interval = 0
-	agent.executeCheck(request)
+func TestPrepareCheck(t *testing.T) {
+	assert := assert.New(t)
 
-	msg = <-ch
+	config := NewConfig()
+	agent := NewAgent(config)
 
-	event = &types.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
-	assert.NotZero(event.Timestamp)
-	assert.EqualValues(event.Check.Status, 3, "Unknown status code is returned")
-	assert.Contains(event.Check.Output, "check is invalid")
+	// Invalid check
+	check := types.FixtureCheckConfig("check")
+	check.Interval = 0
+	assert.False(agent.prepareCheck(check))
+
+	// Valid check
+	check.Interval = 60
+	assert.True(agent.prepareCheck(check))
 }

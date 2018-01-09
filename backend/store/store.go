@@ -6,6 +6,57 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const (
+	// WatchUnknown indicates that we received an unknown watch even tytpe
+	// from etcd.
+	WatchUnknown WatchActionType = iota
+	// WatchCreate indicates that an object was created.
+	WatchCreate
+	// WatchUpdate indicates that an object was updated.
+	WatchUpdate
+	// WatchDelete indicates that an object was deleted.
+	WatchDelete
+)
+
+// WatchActionType indicates what type of change was made to an object in the store.
+type WatchActionType int
+
+func (t WatchActionType) String() string {
+	var s string
+	switch t {
+	case WatchUnknown:
+		s = "Unknown"
+	case WatchCreate:
+		s = "Create"
+	case WatchDelete:
+		s = "Delete"
+	case WatchUpdate:
+		s = "Update"
+	}
+	return s
+}
+
+// A WatchEventCheckConfig contains the modified store object and the action that occured
+// during the modification.
+type WatchEventCheckConfig struct {
+	CheckConfig *types.CheckConfig
+	Action      WatchActionType
+}
+
+// A WatchEventAsset contains the modified asset object and the action that occurred
+// during the modification.
+type WatchEventAsset struct {
+	Asset  *types.Asset
+	Action WatchActionType
+}
+
+// A WatchEventHookConfig contains the modified asset object and the action that occurred
+// during the modification.
+type WatchEventHookConfig struct {
+	HookConfig *types.HookConfig
+	Action     WatchActionType
+}
+
 // Store is used to abstract the durable storage used by the Sensu backend
 // processses. Each Sensu resources is represented by its own interface. A
 // MockStore is available in order to mock a store implementation
@@ -83,6 +134,12 @@ type AssetStore interface {
 
 	// UpdateAsset creates or updates a given asset.
 	UpdateAsset(ctx context.Context, asset *types.Asset) error
+
+	// GetAssetWatcher returns a channel that emits WatchEventAsset structs notifying
+	// the caller that an Asset was updated. If the watcher runs into a terminal error
+	// or the context passed is cancelled, then the channel will be closed. The caller must
+	// restart the watcher, if needed.
+	GetAssetWatcher(ctx context.Context) <-chan WatchEventAsset
 }
 
 // AuthenticationStore provides methods for managing the JWT secret
@@ -116,6 +173,12 @@ type CheckConfigStore interface {
 
 	// UpdateCheckConfig creates or updates a given check's configuration.
 	UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error
+
+	// GetCheckConfigWatcher returns a channel that emits CheckConfigWatchEvents notifying
+	// the caller that a CheckConfig was updated. If the watcher runs into a terminal error
+	// or the context passed is cancelled, then the channel will be closed. The caller must
+	// restart the watcher, if needed.
+	GetCheckConfigWatcher(ctx context.Context) <-chan WatchEventCheckConfig
 }
 
 // HookConfigStore provides methods for managing hooks configuration
@@ -136,6 +199,12 @@ type HookConfigStore interface {
 
 	// UpdateHookConfig creates or updates a given hook's configuration.
 	UpdateHookConfig(ctx context.Context, check *types.HookConfig) error
+
+	// GetHookConfigWatcher returns a channel that emits WatchEventHookConfig structs notifying
+	// the caller that a HookConfig was updated. If the watcher runs into a terminal error
+	// or the context passed is cancelled, then the channel will be closed. The caller must
+	// restart the watcher, if needed.
+	GetHookConfigWatcher(ctx context.Context) <-chan WatchEventHookConfig
 }
 
 // EntityStore provides methods for managing entities

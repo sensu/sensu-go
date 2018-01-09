@@ -8,7 +8,7 @@ import (
 )
 
 func getAuthenticationPath(id string) string {
-	return fmt.Sprintf("%s/authentication/%s", etcdRoot, id)
+	return fmt.Sprintf("%s/authentication/%s", EtcdRoot, id)
 }
 
 // CreateJWTSecret creates a new JWT secret

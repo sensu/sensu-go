@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -28,4 +29,10 @@ func (s *MockStore) GetHookConfigByName(ctx context.Context, name string) (*type
 func (s *MockStore) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) error {
 	args := s.Called(ctx, hook)
 	return args.Error(0)
+}
+
+// GetHookConfigWatcher ...
+func (s *MockStore) GetHookConfigWatcher(ctx context.Context) <-chan store.WatchEventHookConfig {
+	args := s.Called(ctx)
+	return args.Get(0).(<-chan store.WatchEventHookConfig)
 }

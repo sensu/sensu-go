@@ -25,3 +25,15 @@ func TestInArray(t *testing.T) {
 	found = InArray(item, array)
 	assert.True(t, found, "it should return true if the item is found in the array")
 }
+
+func TestRemove(t *testing.T) {
+	var array []string
+
+	array = []string{"bar", "qux"}
+	array = Remove("bar", array)
+	assert.Equal(t, []string{"qux"}, array)
+
+	array = []string{}
+	array = Remove("bar", array)
+	assert.Equal(t, []string{}, array)
+}

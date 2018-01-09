@@ -12,6 +12,9 @@ stages:
 - name: test
 - name: deploy
   if: branch = master OR tag IS present
+before_cache:
+- rm -rf $GOPATH/src/github.com/sensu/sensu-go/*
+- rm -rf $GOPATH/pkg/**/github.com/sensu/sensu-go
 cache:
   yarn: true
   directories:

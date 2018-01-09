@@ -3,6 +3,7 @@ package eventd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -65,21 +66,22 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 	// Loop through every silenced entries in order to determine if it applies to
 	// the given event
 	for _, entry := range silencedEntries {
+
 		// Is this event silenced for all subscriptions? (e.g. *:check_cpu)
-		if entry.ID == fmt.Sprintf("*:%s", event.Check.Config.Name) {
+		if entry.ID == fmt.Sprintf("*:%s", event.Check.Config.Name) && entry.StartSilence(time.Now().Unix()) {
 			silencedBy = addToSilencedBy(entry.ID, silencedBy)
 			continue
 		}
 
 		// Is this event silenced by the entity subscription? (e.g. entity:id:*)
-		if entry.ID == fmt.Sprintf("%s:*", types.GetEntitySubscription(event.Entity.ID)) {
+		if entry.ID == fmt.Sprintf("%s:*", types.GetEntitySubscription(event.Entity.ID)) && entry.StartSilence(time.Now().Unix()) {
 			silencedBy = addToSilencedBy(entry.ID, silencedBy)
 			continue
 		}
 
 		// Is this event silenced for this particular entity? (e.g.
 		// entity:id:check_cpu)
-		if entry.ID == fmt.Sprintf("%s:%s", types.GetEntitySubscription(event.Entity.ID), event.Check.Config.Name) {
+		if entry.ID == fmt.Sprintf("%s:%s", types.GetEntitySubscription(event.Entity.ID), event.Check.Config.Name) && entry.StartSilence(time.Now().Unix()) {
 			silencedBy = addToSilencedBy(entry.ID, silencedBy)
 			continue
 		}
@@ -87,14 +89,14 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 		for _, subscription := range event.Check.Config.Subscriptions {
 			// Is this event silenced by one of the check subscription? (e.g.
 			// load-balancer:*)
-			if entry.ID == fmt.Sprintf("%s:*", subscription) {
+			if entry.ID == fmt.Sprintf("%s:*", subscription) && entry.StartSilence(time.Now().Unix()) {
 				silencedBy = addToSilencedBy(entry.ID, silencedBy)
 				continue
 			}
 
 			// Is this event silenced by one of the check subscription for this
 			// particular check? (e.g. load-balancer:check_cpu)
-			if entry.ID == fmt.Sprintf("%s:%s", subscription, event.Check.Config.Name) {
+			if entry.ID == fmt.Sprintf("%s:%s", subscription, event.Check.Config.Name) && entry.StartSilence(time.Now().Unix()) {
 				silencedBy = addToSilencedBy(entry.ID, silencedBy)
 				continue
 			}
@@ -102,4 +104,32 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 	}
 
 	return silencedBy
+}
+
+func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store store.Store) error {
+	if !event.IsResolution() {
+		return nil
+	}
+
+	nonExpireOnResolveEntries := []string{}
+
+	for _, silencedID := range event.Silenced {
+		silencedEntry, err := store.GetSilencedEntryByID(ctx, silencedID)
+		if err != nil {
+			return err
+		}
+
+		if silencedEntry.ExpireOnResolve {
+			err := store.DeleteSilencedEntryByID(ctx, silencedID)
+			if err != nil {
+				return err
+			}
+		} else {
+			nonExpireOnResolveEntries = append(nonExpireOnResolveEntries, silencedID)
+		}
+	}
+
+	event.Silenced = nonExpireOnResolveEntries
+
+	return nil
 }

@@ -3,6 +3,7 @@ syntax = "proto3";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "asset.proto";
 import "hook.proto";
+import "time_window.proto";
 
 package sensu.types;
 
@@ -67,13 +68,19 @@ message CheckConfig {
 	bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
 
 	// Sources indicates the name of the entity representing an external resource
-  string source = 13;
+	string proxy_entity_id = 13 [(gogoproto.jsontag) = "proxy_entity_id", (gogoproto.customname) = "ProxyEntityID"];
 
 	// CheckHooks is the list of check hooks for the check
 	repeated HookList check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
 
-  // STDIN indicates if the check command accepts JSON via stdin from the agent
-  bool stdin = 15;
+	// STDIN indicates if the check command accepts JSON via stdin from the agent
+	bool stdin = 15;
+
+	// Subdue represents one or more time windows when the check should be subdued.
+	TimeWindowWhen subdue = 16 [(gogoproto.jsontag) = "subdue"];
+
+	// Cron is the cron string at which the check should be run.
+	string cron = 17;
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -110,7 +117,7 @@ message Check {
 
 // CheckHistory is a record of a check execution and its status
 message CheckHistory {
-  // Status is the exit status code produced by the check.
+	// Status is the exit status code produced by the check.
 	int32 status = 1;
 
 	// Executed describes the time in which the check request was executed

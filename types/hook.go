@@ -104,15 +104,6 @@ func (h *HookList) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// FixtureHookRequest returns a fixture for a HookRequest object.
-func FixtureHookRequest(id string) *HookRequest {
-	config := FixtureHookConfig(id)
-
-	return &HookRequest{
-		Config: config,
-	}
-}
-
 // FixtureHookConfig returns a fixture for a HookConfig object.
 func FixtureHookConfig(id string) *HookConfig {
 	timeout := uint32(10)

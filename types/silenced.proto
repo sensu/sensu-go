@@ -41,5 +41,8 @@ message Silenced {
 
   // Environment indicates which env a silenced entry belongs to.
   string environment = 9;
+
+  // Begin is a timestamp at which the silenced entry takes effect.
+  int64 begin = 10;
 }
 

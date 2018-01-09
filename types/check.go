@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
@@ -53,6 +54,12 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("check name " + err.Error())
 	}
 
+	if c.Cron != "" {
+		if _, err := cron.Parse(c.Cron); err != nil {
+			return errors.New("check cron string is invalid")
+		}
+	}
+
 	if c.Interval == 0 {
 		return errors.New("check interval must be greater than 0")
 	}
@@ -73,13 +80,13 @@ func (c *CheckConfig) Validate() error {
 
 	// The entity can be empty but can't contain invalid characters (only
 	// alphanumeric string)
-	if c.Source != "" {
-		if err := ValidateName(c.Source); err != nil {
-			return errors.New("source name " + err.Error())
+	if c.ProxyEntityID != "" {
+		if err := ValidateName(c.ProxyEntityID); err != nil {
+			return errors.New("proxy entity id " + err.Error())
 		}
 	}
 
-	return nil
+	return c.Subdue.Validate()
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
@@ -142,6 +149,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Environment:   "default",
 		Organization:  "default",
 		Publish:       true,
+		Cron:          "",
 	}
 }
 
