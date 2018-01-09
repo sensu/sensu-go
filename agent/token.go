@@ -17,23 +17,6 @@ func tokenSubstitution(data, input interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("could not marshal the provided template: %s", err.Error())
 	}
 
-	// buf2 := new(bytes.Buffer)
-	// encoder := json.NewEncoder(buf2)
-	// encoder.SetEscapeHTML(false)
-	// if err := encoder.Encode(input); err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println("buf2.String: " + buf2.String())
-
-	// fmt.Printf("%s\n", string(inputBytes))
-	// s, err := strconv.Unquote(string(inputBytes))
-	// fmt.Println(err)
-	// fmt.Println(s)
-	// fmt.Println("rawMessage: " + string(json.RawMessage(string(inputBytes))))
-	// check := &types.CheckConfig{Command: `{{ defaultValue "foo" }}`}
-	// fmt.Println(*check)
-	// fmt.Println("inputByes: " + string(inputBytes))
-
 	inputString := strings.Replace(string(inputBytes), `\"`, `"`, -1)
 
 	tmpl := template.New("")
@@ -49,17 +32,22 @@ func tokenSubstitution(data, input interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not execute the template: %s", err.Error())
 	}
-	fmt.Println(buf.String())
+
 	return buf.Bytes(), nil
 }
 
-// funcMap ...
+// funcMap defines the available custom functions in templates
 func funcMap() template.FuncMap {
 	return template.FuncMap{
 		"default": defaultFunc,
 	}
 }
 
+// defaultFunc receives v, a slice of interfaces, which length range between one
+// and two arguments, depending on whether the token has a corresponding field.
+// The first argument always represents the default value, while the optional
+// second argument represent the value of the token if it was properly
+// substitued, in which case we should return that value instead of the default
 func defaultFunc(v ...interface{}) interface{} {
 	if len(v) == 1 {
 		return v[0]
@@ -67,15 +55,4 @@ func defaultFunc(v ...interface{}) interface{} {
 		return v[1]
 	}
 	return nil
-	// fmt.Println(arg)
-	// fmt.Println(value)
-	// fmt.Printf("%+v\n", v)
-
-	// s := reflect.ValueOf(v)
-	// kv := reflect.ValueOf(arg)
-	// // name := s.FieldByName(arg)
-	// // fmt.Println(name)
-	// fmt.Println(s.MapIndex(kv))
-
-	// return "foo"
 }

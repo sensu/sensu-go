@@ -66,6 +66,13 @@ func TestTokenSubstitution(t *testing.T) {
 			expectedCommand: "bar",
 			expectedError:   false,
 		},
+		{
+			name:            "default int value for missing field",
+			data:            map[string]interface{}{"ID": "foo", "Check": map[string]interface{}{"Name": "check_foo"}},
+			input:           types.CheckConfig{Command: `{{ .Check.Foo | default 1 }}`},
+			expectedCommand: "1",
+			expectedError:   false,
+		},
 	}
 
 	for _, tc := range testCases {
