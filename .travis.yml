@@ -13,7 +13,8 @@ stages:
 - name: deploy
   if: branch = master OR tag IS present
 before_cache:
-- rm -rf $GOPATH/src/github.com/sensu/sensu-go/*
+- mkdir /tmp/sensu-go
+- mv $GOPATH/src/github.com/sensu/sensu-go/* /tmp/sensu-go
 - rm -rf $GOPATH/pkg/**/github.com/sensu/sensu-go
 cache:
   yarn: true
@@ -22,6 +23,8 @@ cache:
   - vendor
   - $GOPATH/src
   - $GOPATH/pkg
+after_cache:
+  - mv /tmp/sensu-go/* $GOPATH/src/github.com/sensu/sensu-go
 install:
 - "./build.sh deps"
 - "./build.sh build_tools"
