@@ -5,8 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
+## [2.0.0-alpha.12] - 2018-01-09
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
 windows.
@@ -17,8 +16,6 @@ string stored in this field.
 - Add a distributed queue package for use in the backend.
 - Token substitution is now available for checks.
 - CLI functionality for check `Cron` field.
-
-### Testing
 - Add an e2e test for cron scheduling.
 - Add an e2e test for check hook execution.
 
