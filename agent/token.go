@@ -43,7 +43,6 @@ func tokenSubstitution(data, input interface{}) ([]byte, error) {
 		tmpl.Option("missingkey=error")
 
 		if err = tmpl.Execute(&buf, data); err == nil {
-			fmt.Println("opps!")
 			return nil, errors.New("expected an error while executing the template, got none")
 		}
 
