@@ -23,7 +23,7 @@ cache:
   - vendor
   - $GOPATH/src
   - $GOPATH/pkg
-after_cache:
+before_deploy:
   - mv /tmp/sensu-go/* $GOPATH/src/github.com/sensu/sensu-go
 install:
 - "./build.sh deps"
