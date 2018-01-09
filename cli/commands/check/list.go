@@ -76,6 +76,14 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "Timeout",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				timeout := strconv.FormatUint(uint64(check.Timeout), 10)
+				return timeout
+			},
+		},
+		{
 			Title: "Subscriptions",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)
