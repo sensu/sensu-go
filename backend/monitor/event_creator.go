@@ -1,4 +1,4 @@
-package keepalived
+package monitor
 
 import (
 	"time"
@@ -20,9 +20,12 @@ type MessageBusEventCreator struct {
 	MessageBus messaging.MessageBus
 }
 
+// Can we just pass the expected function type here (createEventType) and call
+// it? Or should we move the event type out and just refactor to createEvent and
+// pass in the event type (event or keepalive) we want? that might be cleaner.
+
 // Warn sends a check with status of warn for a keepalive.
-func (creatorPtr *MessageBusEventCreator) Warn(entity *types.Entity) error {
-	event := createKeepaliveEvent(entity)
+func (creatorPtr *MessageBusEventCreator) Warn(event *types.Event) error {
 	event.Check.Status = 1
 
 	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
@@ -44,6 +47,11 @@ func (creatorPtr *MessageBusEventCreator) Pass(entity *types.Entity) error {
 	return creatorPtr.MessageBus.Publish(messaging.TopicEventRaw, event)
 }
 
+func createEvent(entity *types.Entity) *types.Event {
+
+}
+
+// Move these two functions back into keepalived
 func createKeepaliveEvent(entity *types.Entity) *types.Event {
 	keepaliveCheck := &types.Check{
 		Config: &types.CheckConfig{

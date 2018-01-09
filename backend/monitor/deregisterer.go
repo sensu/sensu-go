@@ -1,4 +1,4 @@
-package keepalived
+package monitor
 
 import (
 	"context"

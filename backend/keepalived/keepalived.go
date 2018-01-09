@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -40,7 +42,7 @@ const (
 // MonitorFactoryFunc takes an entity and returns a Monitor. Keepalived can
 // take a MonitorFactoryFunc that stubs/mocks a Deregisterer and/or an
 // EventCreator to make it easier to test.
-type MonitorFactoryFunc func(e *types.Entity) *KeepaliveMonitor
+type MonitorFactoryFunc func(e *types.Entity) *Monitor
 
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
@@ -52,7 +54,7 @@ type Keepalived struct {
 	MonitorFactory        MonitorFactoryFunc
 
 	mu            *sync.Mutex
-	monitors      map[string]*KeepaliveMonitor
+	monitors      map[string]*Monitor
 	wg            *sync.WaitGroup
 	keepaliveChan chan interface{}
 	errChan       chan error
@@ -77,6 +79,9 @@ func (k *Keepalived) Start() error {
 					Store:      k.Store,
 					MessageBus: k.MessageBus,
 				},
+				// this should be the monitor struct with methods
+				EventCreator: &Monitor{},
+
 				EventCreator: &MessageBusEventCreator{
 					MessageBus: k.MessageBus,
 				},
@@ -262,4 +267,85 @@ func (k *Keepalived) startMonitorSweeper() {
 			}
 		}
 	}()
+}
+
+func createKeepaliveEvent(entity *types.Entity) *types.Event {
+	keepaliveCheck := &types.Check{
+		Config: &types.CheckConfig{
+			Name:         KeepaliveCheckName,
+			Interval:     entity.KeepaliveTimeout,
+			Handlers:     []string{KeepaliveHandlerName},
+			Environment:  entity.Environment,
+			Organization: entity.Organization,
+		},
+		Status: 1,
+	}
+	keepaliveEvent := &types.Event{
+		Timestamp: time.Now().Unix(),
+		Entity:    entity,
+		Check:     keepaliveCheck,
+	}
+
+	return keepaliveEvent
+}
+
+func createRegistrationEvent(entity *types.Entity) *types.Event {
+	registrationCheck := &types.Check{
+		Config: &types.CheckConfig{
+			Name:         RegistrationCheckName,
+			Interval:     entity.KeepaliveTimeout,
+			Handlers:     []string{RegistrationHandlerName},
+			Environment:  entity.Environment,
+			Organization: entity.Organization,
+		},
+		Status: 1,
+	}
+	registrationEvent := &types.Event{
+		Timestamp: time.Now().Unix(),
+		Entity:    entity,
+		Check:     registrationCheck,
+	}
+
+	return registrationEvent
+}
+
+type keepaliveUpdateHandler struct{}
+
+func (handler *keepaliveUpdateHandler) HandleUpdate(e *types.Event) error {
+	entity := event.Entity
+
+	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
+		if err := monitorPtr.Store.DeleteFailingKeepalive(context.Background(), entity); err != nil {
+			logger.Debug(err)
+		}
+	}
+
+	entity.LastSeen = event.Timestamp
+	ctx := types.SetContextFromResource(context.Background(), entity)
+
+	if err := monitorPtr.Store.UpdateEntity(ctx, entity); err != nil {
+		logger.WithError(err).Error("error updating entity in store")
+	}
+}
+
+func (handler *keepaliveUpdateHandler) HandleFailure(t time.T) error {
+	// timed out keepalive
+	ctx := types.SetContextFromResource(context.Background(), monitorPtr.Entity)
+	// if the entity is supposed to be deregistered, do so.
+	if monitorPtr.Entity.Deregister {
+		if err = monitorPtr.Deregisterer.Deregister(monitorPtr.Entity); err != nil {
+			logger.WithError(err).Error("error deregistering entity")
+		}
+		monitorPtr.Stop()
+		return nil
+	}
+
+	// this is a real keepalive event, emit it.
+	if err = monitorPtr.EventCreator.Warn(monitorPtr.Entity); err != nil {
+		logger.WithError(err).Error("error sending keepalive event")
+	}
+	timeout = time.Now().Unix() + int64(monitorPtr.Entity.KeepaliveTimeout)
+	if err = monitorPtr.Store.UpdateFailingKeepalive(ctx, monitorPtr.Entity, timeout); err != nil {
+		logger.WithError(err).Error("error updating failing keepalive in store")
+	}
 }

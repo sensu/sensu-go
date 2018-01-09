@@ -1,6 +1,6 @@
 // +build !integration
 
-package keepalived
+package monitor
 
 import (
 	"testing"
@@ -16,6 +16,7 @@ type mockCreator struct {
 	mock.Mock
 }
 
+// all this stuff gets factored out into keepalived
 func (m *mockCreator) Warn(e *types.Entity) error {
 	args := m.Called(e)
 	return args.Error(0)
@@ -51,7 +52,7 @@ func TestMonitorUpdate(t *testing.T) {
 	creator := &mockCreator{}
 	creator.On("Pass", entity).Return(nil)
 
-	monitor := &KeepaliveMonitor{
+	monitor := &Monitor{
 		Entity:       entity,
 		EventCreator: creator,
 		Store:        mockStore,
@@ -63,11 +64,11 @@ func TestMonitorUpdate(t *testing.T) {
 	failingEvent := types.FixtureEvent("entity", "keepalive")
 	mockStore.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(failingEvent, nil)
 
-	assert.NoError(monitor.Update(event))
+	assert.NoError(monitor.HandleUpdate(event))
 }
 
 func TestStop(t *testing.T) {
-	monitor := &KeepaliveMonitor{
+	monitor := &Monitor{
 		reset: make(chan interface{}),
 	}
 	monitor.Stop()
@@ -86,7 +87,7 @@ func TestMonitorDeregistration(t *testing.T) {
 	store := &mockstore.MockStore{}
 	store.On("GetEventByEntityCheck", mock.Anything, entity.ID, "keepalive").Return(event, nil)
 
-	monitor := &KeepaliveMonitor{
+	monitor := &Monitor{
 		Entity:       entity,
 		Deregisterer: dereg,
 		Store:        store,
