@@ -101,7 +101,7 @@ func TestCheckScheduling(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Give it few seconds to make sure it picks up the change
-	time.Sleep(20 * time.Second)
+	time.Sleep(60 * time.Second)
 
 	// Retrieve (again) the number of check results sent
 	event, err = sensuClient.FetchEvent(agent.ID, check.Name)
