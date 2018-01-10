@@ -51,7 +51,7 @@ func TestCheckConfig(t *testing.T) {
 
 	// Invalid cron
 	assert.Error(t, c.Validate())
-	c.Cron = "0 30 * * * *"
+	c.Cron = "* * * * *"
 
 	// Invalid command
 	assert.Error(t, c.Validate())
