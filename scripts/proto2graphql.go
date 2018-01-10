@@ -90,6 +90,10 @@ func main() {
 				t = field.Type
 			}
 
+			if field.Repeated {
+				t = fmt.Sprintf("[%s]", t)
+			}
+
 			out += genComment(field.Comment, false, 2)
 			out += fmt.Sprintf("  %s: %s\n", name, t)
 		}
