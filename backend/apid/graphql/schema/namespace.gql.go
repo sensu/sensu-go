@@ -7,33 +7,21 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// Schema supplies the root types of each type of operation, query,
-// mutation (optional), and subscription (optional).
-var Schema = graphql.NewType("Schema", graphql.SchemaKind)
-
-// RegisterSchema registers schema description with given service.
-func RegisterSchema(svc graphql.Service) {
-	svc.RegisterSchema(_SchemaDesc)
-}
-func _SchemaConfigFn() graphql1.SchemaConfig {
-	return graphql1.SchemaConfig{
-		Mutation: graphql.Object("Mutation"),
-		Query:    graphql.Object("Query"),
-	}
+// NamespaceEnvironmentFieldResolver implement to resolve requests for the Namespace's environment field.
+type NamespaceEnvironmentFieldResolver interface {
+	// Environment implements response to request for environment field.
+	Environment(p graphql.ResolveParams) (string, error)
 }
 
-// describe schema's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _SchemaDesc = graphql.SchemaDesc{Config: _SchemaConfigFn}
-
-// QueryChecksFieldResolver implement to resolve requests for the Query's checks field.
-type QueryChecksFieldResolver interface {
-	// Checks implements response to request for checks field.
-	Checks(p graphql.ResolveParams) (interface{}, error)
+// NamespaceOrganizationFieldResolver implement to resolve requests for the Namespace's organization field.
+type NamespaceOrganizationFieldResolver interface {
+	// Organization implements response to request for organization field.
+	Organization(p graphql.ResolveParams) (string, error)
 }
 
 //
-// QueryFieldResolvers represents a collection of methods whose products represent the
-// response values of the 'Query' type.
+// NamespaceFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'Namespace' type.
 //
 // == Example SDL
 //
@@ -92,14 +80,15 @@ type QueryChecksFieldResolver interface {
 //     return ok
 //   }
 //
-type QueryFieldResolvers interface {
-	QueryChecksFieldResolver
+type NamespaceFieldResolvers interface {
+	NamespaceEnvironmentFieldResolver
+	NamespaceOrganizationFieldResolver
 
-	// IsTypeOf is used to determine if a given value is associated with the Query type
+	// IsTypeOf is used to determine if a given value is associated with the Namespace type
 	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
-// QueryAliases implements all methods on QueryFieldResolvers interface by using reflection to
+// NamespaceAliases implements all methods on NamespaceFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
@@ -144,35 +133,54 @@ type QueryFieldResolvers interface {
 //     return r.BreedsById(dog.BreedIDs)
 //   }
 //
-type QueryAliases struct{}
+type NamespaceAliases struct{}
 
-// Checks implements response to request for 'checks' field.
-func (_ QueryAliases) Checks(p graphql.ResolveParams) (interface{}, error) {
+// Environment implements response to request for 'environment' field.
+func (_ NamespaceAliases) Environment(p graphql.ResolveParams) (string, error) {
 	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
 }
 
-// QueryType The query root of Sensu's GraphQL interface.
-var QueryType = graphql.NewType("Query", graphql.ObjectKind)
-
-// RegisterQuery registers Query object type with given service.
-func RegisterQuery(svc graphql.Service, impl QueryFieldResolvers) {
-	svc.RegisterObject(_ObjTypeQueryDesc, impl)
-}
-func _ObjTypeQueryChecksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryChecksFieldResolver)
-	return resolver.Checks
+// Organization implements response to request for 'organization' field.
+func (_ NamespaceAliases) Organization(p graphql.ResolveParams) (string, error) {
+	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
 }
 
-func _ObjTypeQueryConfigFn() graphql1.ObjectConfig {
+// NamespaceType Namespace represents the unique details describing where a resource is located.
+var NamespaceType = graphql.NewType("Namespace", graphql.ObjectKind)
+
+// RegisterNamespace registers Namespace object type with given service.
+func RegisterNamespace(svc graphql.Service, impl NamespaceFieldResolvers) {
+	svc.RegisterObject(_ObjTypeNamespaceDesc, impl)
+}
+func _ObjTypeNamespaceEnvironmentHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceEnvironmentFieldResolver)
+	return resolver.Environment
+}
+
+func _ObjTypeNamespaceOrganizationHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceOrganizationFieldResolver)
+	return resolver.Organization
+}
+
+func _ObjTypeNamespaceConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
-		Description: "The query root of Sensu's GraphQL interface.",
-		Fields: graphql1.Fields{"checks": &graphql1.Field{
-			Args:              graphql1.FieldConfigArgument{},
-			DeprecationReason: "",
-			Description:       "self descriptive",
-			Name:              "checks",
-			Type:              graphql1.NewList(graphql.OutputType("Check")),
-		}},
+		Description: "Namespace represents the unique details describing where a resource is located.",
+		Fields: graphql1.Fields{
+			"environment": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "environment indicates to which env a check belongs to.",
+				Name:              "environment",
+				Type:              graphql1.String,
+			},
+			"organization": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "organization indicates to which org a check belongs to.",
+				Name:              "organization",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
@@ -180,14 +188,17 @@ func _ObjTypeQueryConfigFn() graphql1.ObjectConfig {
 			// these fields are updated with instantiated resolvers. If these
 			// defaults are called it is most certainly programmer err.
 			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see QueryFieldResolvers.")
+			panic("Unimplemented; see NamespaceFieldResolvers.")
 		},
-		Name: "Query",
+		Name: "Namespace",
 	}
 }
 
-// describe Query's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeQueryDesc = graphql.ObjectDesc{
-	Config:        _ObjTypeQueryConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"Checks": _ObjTypeQueryChecksHandler},
+// describe Namespace's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjTypeNamespaceDesc = graphql.ObjectDesc{
+	Config: _ObjTypeNamespaceConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"Environment":  _ObjTypeNamespaceEnvironmentHandler,
+		"Organization": _ObjTypeNamespaceOrganizationHandler,
+	},
 }

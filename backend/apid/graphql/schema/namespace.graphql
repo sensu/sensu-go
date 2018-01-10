@@ -1,0 +1,10 @@
+"""
+Namespace represents the unique details describing where a resource is located.
+"""
+type Namespace {
+  "environment indicates to which env a check belongs to."
+  environment: String
+
+  "organization indicates to which org a check belongs to."
+  organization: String!
+}

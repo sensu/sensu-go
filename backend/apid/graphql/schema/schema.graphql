@@ -2,3 +2,11 @@ schema {
   query: Query
   mutation: Mutation
 }
+
+"""
+The query root of Sensu's GraphQL interface.
+"""
+type Query {
+  # TODO: Remove me.
+  checks: [Check]
+}

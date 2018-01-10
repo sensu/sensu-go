@@ -106,6 +106,12 @@
   revision = "f41072d47fff1112fa37146dfc812a476cce2d7f"
 
 [[projects]]
+  name = "github.com/emicklei/proto"
+  packages = ["."]
+  revision = "b4ebbecd83695353b1696903e91bd67382d21823"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   revision = "629574ca2a5df945712d3079857300b5e4da0236"
@@ -508,6 +514,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ff2a2d7de6cbfc853e9153f550ea25eeac4271c93d3c589ad26dfa9da544bb69"
+  inputs-digest = "6bc866e14ee3c18df9a796836e46c3fce6a50ccbebec49706a0c17afb9b57c01"
   solver-name = "gps-cdcl"
   solver-version = 1
