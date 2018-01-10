@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed e2e test for token substitution on Windows
+
 ## [2.0.0-alpha.12] - 2018-01-09
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
