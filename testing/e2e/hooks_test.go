@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -55,9 +54,6 @@ func TestCheckHooks(t *testing.T) {
 
 	// Give it few seconds to make sure we've published a check request
 	time.Sleep(20 * time.Second)
-
-	output, _ = sensuctl.run("event", "list")
-	fmt.Println(string(output))
 
 	// There should be a stored event
 	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
