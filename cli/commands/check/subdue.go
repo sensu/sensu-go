@@ -41,7 +41,7 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 				
-				defer in.Close()
+				defer func() { _ = in.Close() }()
 			} else {
 				in = os.Stdin
 			}
