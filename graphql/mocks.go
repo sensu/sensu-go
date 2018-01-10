@@ -57,7 +57,21 @@ func Object(name string) *graphql.Object {
 }
 
 // Replace mocked types w/ instantiated counterparts
-func fieldsThunk(schema *graphql.Schema, fields graphql.Fields) interface{} {
+func interfacesThunk(typeMap graphql.TypeMap, cfg interface{}) interface{} {
+	ints := cfg.([]*graphql.Interface)
+	return graphql.InterfacesThunk(func() []*graphql.Interface {
+		newInts := make([]*graphql.Interface, len(ints))
+		for _, mockedInt := range ints {
+			t := typeMap[mockedInt.PrivateName]
+			newInt := t.(*graphql.Interface)
+			newInts = append(newInts, newInt)
+		}
+		return newInts
+	})
+}
+
+// Replace mocked types w/ instantiated counterparts
+func fieldsThunk(typeMap graphql.TypeMap, fields graphql.Fields) interface{} {
 	mockedFields := make([]string, len(fields))
 	for _, f := range fields {
 		t := unwrapFieldType(f.Type)
@@ -73,7 +87,7 @@ func fieldsThunk(schema *graphql.Schema, fields graphql.Fields) interface{} {
 	return graphql.FieldsThunk(
 		func() graphql.Fields {
 			for _, name := range mockedFields {
-				fields[name].Type = schema.Type(name)
+				fields[name].Type = typeMap[name]
 			}
 			return fields
 		},
@@ -82,7 +96,7 @@ func fieldsThunk(schema *graphql.Schema, fields graphql.Fields) interface{} {
 
 // Replace mocked types w/ instantiated counterparts
 func inputFieldsThunk(
-	schema *graphql.Schema,
+	typeMap graphql.TypeMap,
 	fields graphql.InputObjectConfigFieldMap,
 ) interface{} {
 	mockedFields := make([]string, len(fields))
@@ -100,7 +114,7 @@ func inputFieldsThunk(
 	return graphql.InputObjectConfigFieldMapThunk(
 		func() graphql.InputObjectConfigFieldMap {
 			for _, name := range mockedFields {
-				fields[name].Type = schema.Type(name)
+				fields[name].Type = typeMap[name]
 			}
 			return fields
 		},

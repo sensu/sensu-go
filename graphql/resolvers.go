@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 )
 
@@ -130,10 +131,6 @@ type UnionTypeResolver interface {
 	ResolveType(interface{}, ResolveTypeParams) Type
 }
 
-type typeResolver interface {
-	ResolveType(interface{}, ResolveTypeParams) Type
-}
-
 // DefaultResolver uses reflection to attempt to resolve the result of a given
 // field.
 //
@@ -192,4 +189,28 @@ func DefaultResolver(source interface{}, fieldName string) (interface{}, error) 
 
 	// last resort, return nil
 	return nil, nil
+}
+
+type typeResolver interface {
+	ResolveType(interface{}, ResolveTypeParams) Type
+}
+
+func newResolveTypeFn(typeMap graphql.TypeMap, impl interface{}) graphql.ResolveTypeFn {
+	resolver := impl.(typeResolver)
+	return func(p graphql.ResolveTypeParams) *graphql.Object {
+		typeRef := resolver.ResolveType(p.Value, p)
+		objType := typeMap[typeRef.Name()]
+		return objType.(*graphql.Object)
+	}
+}
+
+type isTypeOfResolver interface {
+	IsTypeOf(interface{}, IsTypeOfParams) bool
+}
+
+func newIsTypeOfFn(impl interface{}) graphql.IsTypeOfFn {
+	resolver := impl.(isTypeOfResolver)
+	return func(p graphql.IsTypeOfParams) bool {
+		return resolver.IsTypeOf(p.Value, p)
+	}
 }

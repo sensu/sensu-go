@@ -1,11 +1,11 @@
 package graphql
 
-// KindCode us an unsigned 16-bit integer used for defining kinds.
-type KindCode uint16
+// Kind is an unsigned 16-bit integer used for defining kinds.
+type Kind uint16
 
 const (
 	// EnumKind identifies enum config
-	EnumKind KindCode = iota
+	EnumKind Kind = iota
 	// InputKind identifies input object config
 	InputKind
 	// InterfaceKind identifies interface config
@@ -23,11 +23,11 @@ const (
 // Type represents base description of GraphQL type
 type Type struct {
 	name string
-	kind KindCode
+	kind Kind
 }
 
 // NewType returns new instance of Type
-func NewType(name string, kind KindCode) Type {
+func NewType(name string, kind Kind) Type {
 	return Type{
 		name: name,
 		kind: kind,
@@ -40,6 +40,6 @@ func (t Type) Name() string {
 }
 
 // Kind of GraphQL type represented
-func (t Type) Kind() KindCode {
+func (t Type) Kind() Kind {
 	return t.kind
 }

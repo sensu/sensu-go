@@ -1,8 +1,6 @@
 package graphql
 
 import (
-	"context"
-
 	"github.com/graphql-go/graphql"
 )
 
@@ -12,31 +10,18 @@ type ResolveTypeParams = graphql.ResolveTypeParams
 // IsTypeOfParams used in IsTypeOf fn
 type IsTypeOfParams = graphql.IsTypeOfParams
 
-// ResolveContext describes contextual information about current query / field
-type ResolveContext struct {
-	// Info is a collection of information about the current execution state.
-	Info graphql.ResolveInfo
-
-	// Context argument is a context value that is provided to every resolve function within an execution.
-	// It is commonly
-	// used to represent an authenticated user, or request-specific caches.
-	Context context.Context
-}
-
 // ResolveParams params for field resolvers
-type ResolveParams struct {
-	ResolveContext
+type ResolveParams = graphql.ResolveParams
 
-	// Source is the source value
-	Source interface{}
-}
+// FieldHandler given implementation configures field resolver
+type FieldHandler func(impl interface{}) graphql.FieldResolveFn
 
 // ObjectDesc describes object configuration and handlers for use by service.
 type ObjectDesc struct {
 	// Config thunk returns copy of config
 	Config func() graphql.ObjectConfig
-	// Collection of handlers for each field
-	ResolverHandlers map[string]func(interface{}, graphql.ResolveParams)
+	// FieldHandlers handlers that wrap each field resolver.
+	FieldHandlers map[string]FieldHandler
 }
 
 // ScalarDesc describes scalar configuration and handlers for use by service.
