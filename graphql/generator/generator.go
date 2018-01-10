@@ -147,7 +147,7 @@ func genTypeDefinition(node ast.Node, i info) jen.Code {
 	case *ast.ScalarDefinition:
 		return genScalar(def)
 	case *ast.ObjectDefinition:
-		return genObjectType(def)
+		return genObjectType(def, i)
 	case *ast.UnionDefinition:
 		return genUnion(def)
 	case *ast.EnumDefinition:

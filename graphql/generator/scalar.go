@@ -97,7 +97,7 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 	//   // Timestamps are great
 	//   var TimestampType = graphql.NewType("Timestamp", graphql.ScalarKind)
 	//
-	code.Comment(comment)
+	code.Commentf("%s ... %s", name+"Type", comment)
 	code.
 		Var().Id(name+"Type").Op("=").
 		Qual(servicePkg, "NewType").

@@ -56,21 +56,28 @@ func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 	return valueStatement
 }
 
-func genConcreteTypeRefernce(t ast.Type) jen.Code {
+func genConcreteTypeReference(t ast.Type) jen.Code {
 	var namedType *ast.Named
 	switch ttype := t.(type) {
 	case *ast.List:
-		s := genConcreteTypeRefernce(ttype.Type)
+		s := genConcreteTypeReference(ttype.Type)
 		return jen.Index().Add(s)
 	case *ast.NonNull:
-		return genConcreteTypeRefernce(ttype.Type)
+		return genConcreteTypeReference(ttype.Type)
 	case *ast.Named:
 		namedType = ttype
 	default:
 		panic("unknown ast.Type given")
 	}
 
-	switch namedType.Name.Value {
+	if code := genBuiltinTypeReference(namedType); code != nil {
+		return code
+	}
+	return jen.Op("*").Id(namedType.Name.Value)
+}
+
+func genBuiltinTypeReference(t *ast.Named) jen.Code {
+	switch t.Name.Value {
 	case "Int":
 		return jen.Int()
 	case "Float":
@@ -81,8 +88,6 @@ func genConcreteTypeRefernce(t ast.Type) jen.Code {
 		return jen.Bool()
 	case "DateTime":
 		return jen.Op("*").Qual("time", "Time")
-	default:
-		name := namedType.Name.Value
-		return jen.Op("*").Id(name)
 	}
+	return nil
 }
