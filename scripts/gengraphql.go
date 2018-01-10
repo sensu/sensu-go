@@ -72,7 +72,7 @@ func main() {
 	// Generate
 	generator := generator.New(graphqlFiles)
 	generator.PackageName = config.pkgName
-	generator.Invoker = ""
+	generator.Invoker = "scripts/gengraphql.go"
 
 	if err := generator.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
