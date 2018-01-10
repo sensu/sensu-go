@@ -96,7 +96,7 @@ func TestCheckScheduling(t *testing.T) {
 	assert.NotEqual(t, count2, count3)
 
 	// Change the check schedule to cron
-	check.Cron = "* * * * * *"
+	check.Cron = "* * * * *"
 	err = sensuClient.UpdateCheck(check)
 	assert.NoError(t, err)
 
