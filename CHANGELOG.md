@@ -7,11 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Fixed
-- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
-
-### Fixed
 - Fixed e2e test for token substitution on Windows
 - Fixed check subdue unit test for token substitution on Windows
+- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
 ## [2.0.0-alpha.12] - 2018-01-09
 ### Added
