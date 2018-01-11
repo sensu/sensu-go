@@ -1,6 +1,8 @@
 package graphql
 
-import "github.com/graphql-go/graphql"
+import (
+	"github.com/graphql-go/graphql"
+)
 
 //
 // == Forward ==
@@ -61,10 +63,10 @@ func interfacesThunk(typeMap graphql.TypeMap, cfg interface{}) interface{} {
 	ints := cfg.([]*graphql.Interface)
 	return graphql.InterfacesThunk(func() []*graphql.Interface {
 		newInts := make([]*graphql.Interface, len(ints))
-		for _, mockedInt := range ints {
-			t := typeMap[mockedInt.PrivateName]
+		for i, mockedInt := range ints {
+			t := typeMap[mockedInt.Name()]
 			newInt := t.(*graphql.Interface)
-			newInts = append(newInts, newInt)
+			newInts[i] = newInt
 		}
 		return newInts
 	})
@@ -72,11 +74,11 @@ func interfacesThunk(typeMap graphql.TypeMap, cfg interface{}) interface{} {
 
 // Replace mocked types w/ instantiated counterparts
 func fieldsThunk(typeMap graphql.TypeMap, fields graphql.Fields) interface{} {
-	mockedFields := make([]string, len(fields))
+	mockedFields := map[string]string{}
 	for _, f := range fields {
 		t := unwrapFieldType(f.Type)
 		if tt, ok := t.(*mockType); ok {
-			mockedFields = append(mockedFields, tt.Name())
+			mockedFields[f.Name] = tt.Name()
 		}
 	}
 
@@ -86,8 +88,16 @@ func fieldsThunk(typeMap graphql.TypeMap, fields graphql.Fields) interface{} {
 
 	return graphql.FieldsThunk(
 		func() graphql.Fields {
-			for _, name := range mockedFields {
-				fields[name].Type = typeMap[name]
+			for fieldName, field := range fields {
+				// Replace mocked instance of type
+				if _, ok := mockedFields[fieldName]; ok {
+					field.Type = replaceMockedType(field.Type, typeMap)
+				}
+
+				// Replace mock instances of types in arguments
+				for _, arg := range field.Args {
+					arg.Type = replaceMockedType(arg.Type, typeMap)
+				}
 			}
 			return fields
 		},
@@ -99,7 +109,7 @@ func inputFieldsThunk(
 	typeMap graphql.TypeMap,
 	fields graphql.InputObjectConfigFieldMap,
 ) interface{} {
-	mockedFields := make([]string, len(fields))
+	mockedFields := []string{}
 	for _, f := range fields {
 		t := unwrapFieldType(f.Type)
 		if tt, ok := t.(*mockType); ok {
@@ -114,11 +124,27 @@ func inputFieldsThunk(
 	return graphql.InputObjectConfigFieldMapThunk(
 		func() graphql.InputObjectConfigFieldMap {
 			for _, name := range mockedFields {
-				fields[name].Type = typeMap[name]
+				field := fields[name]
+				field.Type = replaceMockedType(field.Type, typeMap)
 			}
 			return fields
 		},
 	)
+}
+
+func replaceMockedType(t graphql.Type, m graphql.TypeMap) graphql.Type {
+	switch tt := t.(type) {
+	case *graphql.NonNull:
+		tt.OfType = replaceMockedType(tt.OfType, m)
+		return tt
+	case *graphql.List:
+		tt.OfType = replaceMockedType(tt.OfType, m)
+		return tt
+	case *mockType:
+		return m[t.Name()]
+	default:
+		return t
+	}
 }
 
 func unwrapFieldType(t graphql.Type) graphql.Type {

@@ -137,20 +137,24 @@ type NamespaceAliases struct{}
 
 // Environment implements response to request for 'environment' field.
 func (_ NamespaceAliases) Environment(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Organization implements response to request for 'organization' field.
 func (_ NamespaceAliases) Organization(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // NamespaceType Namespace represents the unique details describing where a resource is located.
 var NamespaceType = graphql.NewType("Namespace", graphql.ObjectKind)
 
 // RegisterNamespace registers Namespace object type with given service.
-func RegisterNamespace(svc graphql.Service, impl NamespaceFieldResolvers) {
-	svc.RegisterObject(_ObjTypeNamespaceDesc, impl)
+func RegisterNamespace(svc *graphql.Service, impl NamespaceFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeNamespaceDesc, impl)
 }
 func _ObjTypeNamespaceEnvironmentHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NamespaceEnvironmentFieldResolver)
@@ -162,7 +166,7 @@ func _ObjTypeNamespaceOrganizationHandler(impl interface{}) graphql1.FieldResolv
 	return resolver.Organization
 }
 
-func _ObjTypeNamespaceConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Namespace represents the unique details describing where a resource is located.",
 		Fields: graphql1.Fields{
@@ -195,10 +199,10 @@ func _ObjTypeNamespaceConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Namespace's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeNamespaceDesc = graphql.ObjectDesc{
-	Config: _ObjTypeNamespaceConfigFn,
+var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeNamespaceConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Environment":  _ObjTypeNamespaceEnvironmentHandler,
-		"Organization": _ObjTypeNamespaceOrganizationHandler,
+		"environment":  _ObjTypeNamespaceEnvironmentHandler,
+		"organization": _ObjTypeNamespaceOrganizationHandler,
 	},
 }

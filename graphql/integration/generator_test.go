@@ -26,14 +26,14 @@ func (t *testSaver) Save(_ string, f *jen.File) error {
 }
 
 func TestLoadDir(t *testing.T) {
-	fs, err := generator.ParseDir("./")
+	fs, err := generator.ParseDir("./testdata")
 	require.NoError(t, err)
 	require.NotEmpty(t, fs)
 	require.NoError(t, fs.Validate())
 }
 
 func TestKitchenSinkExample(t *testing.T) {
-	file, err := generator.ParseFile("./schema-kitchen-sink.graphql")
+	file, err := generator.ParseFile("./testdata/schema-kitchen-sink.graphql")
 	require.NoError(t, err)
 	require.NotNil(t, file)
 	require.NoError(t, file.Validate())

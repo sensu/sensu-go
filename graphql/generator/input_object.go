@@ -53,7 +53,7 @@ import (
 //     Config: _InputTypeConfigureSetIntervalInput,
 //   }
 //
-func genInputObject(node *ast.InputObjectDefinition) jen.Code {
+func genInputObject(node *ast.InputObjectDefinition, i info) jen.Code {
 	code := newGroup()
 	name := node.GetName().Value
 
@@ -62,11 +62,10 @@ func genInputObject(node *ast.InputObjectDefinition) jen.Code {
 	comment := genTypeComment(name, desc)
 
 	// Ids
-	registerFnName := "Register" + name
 	publicRefName := name + "Type"
 	publicRefComment := genTypeComment(publicRefName, desc)
-	privateConfigName := "_InputType" + name + "Desc"
-	privateConfigThunkName := "_InputType" + name + "ConfigFn"
+	privateConfigName := mkPrivateID(node, "Desc")
+	privateConfigThunkName := mkPrivateID(node, "ConfigFn")
 
 	//
 	// Generate public type
@@ -84,9 +83,7 @@ func genInputObject(node *ast.InputObjectDefinition) jen.Code {
 	code.Comment(comment)
 	code.Type().Id(name).StructFunc(func(g *jen.Group) {
 		for _, f := range node.Fields {
-			g.Add(
-				genInputStructField(f),
-			)
+			g.Add(genInputStructField(f, i))
 		}
 	})
 
@@ -114,19 +111,10 @@ func genInputObject(node *ast.InputObjectDefinition) jen.Code {
 	//     svc.RegisterInput(_InputTypeSetIntervalInputDesc)
 	//   }
 	//
-	code.Commentf(
-		"%s registers %s input type with given service.",
-		registerFnName,
-		name,
+
+	code.Add(
+		genRegisterFn(node, nil),
 	)
-	code.
-		Func().Id(registerFnName).
-		Params(jen.Id("svc").Qual(servicePkg, "Service")).
-		Block(
-			jen.Id("svc.RegisterInput").Call(
-				jen.Id(privateConfigName),
-			),
-		)
 
 	//
 	// Generate type config thunk
@@ -268,11 +256,11 @@ func genInputObjectField(field *ast.InputValueDefinition) jen.Code {
 //     NewInterval int
 //   }
 //
-func genInputStructField(f *ast.InputValueDefinition) jen.Code {
+func genInputStructField(f *ast.InputValueDefinition, i info) jen.Code {
 	name := toFieldName(f.Name.Value)
 	desc := getDescription(f)
 	depr := getDeprecationReason(f.Directives)
-	tRef := genConcreteTypeReference(f.Type)
+	tRef := genConcreteTypeReference(f.Type, i)
 	comment := genFieldComment(name, desc, depr)
 
 	return jen.Comment(comment).Id(name).Add(tRef)

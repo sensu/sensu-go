@@ -172,45 +172,59 @@ type AssetAliases struct{}
 
 // ID implements response to request for 'id' field.
 func (_ AssetAliases) ID(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ AssetAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ AssetAliases) Name(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Url implements response to request for 'url' field.
 func (_ AssetAliases) Url(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Sha512 implements response to request for 'sha512' field.
 func (_ AssetAliases) Sha512(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Filters implements response to request for 'filters' field.
 func (_ AssetAliases) Filters(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Organization implements response to request for 'organization' field.
 func (_ AssetAliases) Organization(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // AssetType Asset defines an asset agents install as a dependency for a check.
 var AssetType = graphql.NewType("Asset", graphql.ObjectKind)
 
 // RegisterAsset registers Asset object type with given service.
-func RegisterAsset(svc graphql.Service, impl AssetFieldResolvers) {
-	svc.RegisterObject(_ObjTypeAssetDesc, impl)
+func RegisterAsset(svc *graphql.Service, impl AssetFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeAssetDesc, impl)
 }
 func _ObjTypeAssetIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetIDFieldResolver)
@@ -247,7 +261,7 @@ func _ObjTypeAssetOrganizationHandler(impl interface{}) graphql1.FieldResolveFn 
 	return resolver.Organization
 }
 
-func _ObjTypeAssetConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Asset defines an asset agents install as a dependency for a check.",
 		Fields: graphql1.Fields{
@@ -315,15 +329,15 @@ func _ObjTypeAssetConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Asset's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeAssetDesc = graphql.ObjectDesc{
-	Config: _ObjTypeAssetConfigFn,
+var _ObjectTypeAssetDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeAssetConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Filters":      _ObjTypeAssetFiltersHandler,
-		"ID":           _ObjTypeAssetIDHandler,
-		"Name":         _ObjTypeAssetNameHandler,
-		"Namespace":    _ObjTypeAssetNamespaceHandler,
-		"Organization": _ObjTypeAssetOrganizationHandler,
-		"Sha512":       _ObjTypeAssetSha512Handler,
-		"Url":          _ObjTypeAssetUrlHandler,
+		"filters":      _ObjTypeAssetFiltersHandler,
+		"id":           _ObjTypeAssetIDHandler,
+		"name":         _ObjTypeAssetNameHandler,
+		"namespace":    _ObjTypeAssetNamespaceHandler,
+		"organization": _ObjTypeAssetOrganizationHandler,
+		"sha512":       _ObjTypeAssetSha512Handler,
+		"url":          _ObjTypeAssetUrlHandler,
 	},
 }

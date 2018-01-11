@@ -25,7 +25,7 @@ import (
 //   var Schema = graphql.NewType("Schema", graphql.SchemaKind)
 //
 //   // RegisterSchema registers schema description with given service.
-//   func RegisterSchema(svc graphql.Service) {
+//   func RegisterSchema(svc *graphql.Service) {
 //     svc.RegisterSchema(_SchemaDesc)
 //   }
 //
@@ -74,7 +74,7 @@ func genSchema(node *ast.SchemaDefinition) jen.Code {
 	// == Example output
 	//
 	//   // RegisterSchema registers schema description with given service.
-	//   func RegisterSchema(svc graphql.Service) {
+	//   func RegisterSchema(svc *graphql.Service) {
 	//     svc.RegisterSchema(_SchemaDesc)
 	//   }
 	//
@@ -83,7 +83,7 @@ func genSchema(node *ast.SchemaDefinition) jen.Code {
 	)
 	code.
 		Func().Id(registerFnName).
-		Params(jen.Id("svc").Qual(servicePkg, "Service")).
+		Params(jen.Id("svc").Op("*").Qual(servicePkg, "Service")).
 		Block(
 			jen.Id("svc.RegisterSchema").Call(
 				jen.Id(privateConfigName),

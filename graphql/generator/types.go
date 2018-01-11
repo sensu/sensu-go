@@ -56,14 +56,14 @@ func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 	return valueStatement
 }
 
-func genConcreteTypeReference(t ast.Type) jen.Code {
+func genConcreteTypeReference(t ast.Type, i info) jen.Code {
 	var namedType *ast.Named
 	switch ttype := t.(type) {
 	case *ast.List:
-		s := genConcreteTypeReference(ttype.Type)
+		s := genConcreteTypeReference(ttype.Type, i)
 		return jen.Index().Add(s)
 	case *ast.NonNull:
-		return genConcreteTypeReference(ttype.Type)
+		return genConcreteTypeReference(ttype.Type, i)
 	case *ast.Named:
 		namedType = ttype
 	default:
@@ -73,7 +73,17 @@ func genConcreteTypeReference(t ast.Type) jen.Code {
 	if code := genBuiltinTypeReference(namedType); code != nil {
 		return code
 	}
-	return jen.Op("*").Id(namedType.Name.Value)
+
+	typeName := namedType.Name.Value
+	if matchedDef, ok := i.definitions[typeName]; ok {
+		// if name matches an input object or enum definition use it.
+		if _, ok := matchedDef.(*ast.InputObjectDefinition); ok {
+			return jen.Op("*").Id(typeName)
+		} else if _, ok := matchedDef.(*ast.EnumDefinition); ok {
+			return jen.Id(typeName)
+		}
+	}
+	return jen.Interface()
 }
 
 func genBuiltinTypeReference(t *ast.Named) jen.Code {

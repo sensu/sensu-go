@@ -144,20 +144,20 @@ func genTypeDefinition(node ast.Node, i info) jen.Code {
 	logger := logger.WithField("type", node.GetKind()).WithField("line", loc.Line)
 
 	switch def := node.(type) {
-	case *ast.ScalarDefinition:
-		return genScalar(def)
-	case *ast.ObjectDefinition:
-		return genObjectType(def, i)
-	case *ast.UnionDefinition:
-		return genUnion(def)
 	case *ast.EnumDefinition:
 		return genEnum(def)
+	case *ast.InputObjectDefinition:
+		return genInputObject(def, i)
 	case *ast.InterfaceDefinition:
 		return genInterface(def)
-	case *ast.InputObjectDefinition:
-		return genInputObject(def)
+	case *ast.ObjectDefinition:
+		return genObjectType(def, i)
+	case *ast.ScalarDefinition:
+		return genScalar(def)
 	case *ast.SchemaDefinition:
 		return genSchema(def)
+	case *ast.UnionDefinition:
+		return genUnion(def)
 	case *ast.DirectiveDefinition:
 		logger.Warn("unsupported at this time; skipping")
 	case *ast.TypeExtensionDefinition:

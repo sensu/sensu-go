@@ -165,40 +165,52 @@ type HookConfigAliases struct{}
 
 // ID implements response to request for 'id' field.
 func (_ HookConfigAliases) ID(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ HookConfigAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ HookConfigAliases) Name(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ HookConfigAliases) Command(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Timeout implements response to request for 'timeout' field.
 func (_ HookConfigAliases) Timeout(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Stdin implements response to request for 'stdin' field.
 func (_ HookConfigAliases) Stdin(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // HookConfigType HookConfig is the specification of a hook
 var HookConfigType = graphql.NewType("HookConfig", graphql.ObjectKind)
 
 // RegisterHookConfig registers HookConfig object type with given service.
-func RegisterHookConfig(svc graphql.Service, impl HookConfigFieldResolvers) {
-	svc.RegisterObject(_ObjTypeHookConfigDesc, impl)
+func RegisterHookConfig(svc *graphql.Service, impl HookConfigFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeHookConfigDesc, impl)
 }
 func _ObjTypeHookConfigIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigIDFieldResolver)
@@ -230,7 +242,7 @@ func _ObjTypeHookConfigStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	return resolver.Stdin
 }
 
-func _ObjTypeHookConfigConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "HookConfig is the specification of a hook",
 		Fields: graphql1.Fields{
@@ -291,15 +303,15 @@ func _ObjTypeHookConfigConfigFn() graphql1.ObjectConfig {
 }
 
 // describe HookConfig's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeHookConfigDesc = graphql.ObjectDesc{
-	Config: _ObjTypeHookConfigConfigFn,
+var _ObjectTypeHookConfigDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeHookConfigConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Command":   _ObjTypeHookConfigCommandHandler,
-		"ID":        _ObjTypeHookConfigIDHandler,
-		"Name":      _ObjTypeHookConfigNameHandler,
-		"Namespace": _ObjTypeHookConfigNamespaceHandler,
-		"Stdin":     _ObjTypeHookConfigStdinHandler,
-		"Timeout":   _ObjTypeHookConfigTimeoutHandler,
+		"command":   _ObjTypeHookConfigCommandHandler,
+		"id":        _ObjTypeHookConfigIDHandler,
+		"name":      _ObjTypeHookConfigNameHandler,
+		"namespace": _ObjTypeHookConfigNamespaceHandler,
+		"stdin":     _ObjTypeHookConfigStdinHandler,
+		"timeout":   _ObjTypeHookConfigTimeoutHandler,
 	},
 }
 
@@ -461,32 +473,44 @@ type HookAliases struct{}
 
 // Config implements response to request for 'config' field.
 func (_ HookAliases) Config(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Duration implements response to request for 'duration' field.
 func (_ HookAliases) Duration(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Executed implements response to request for 'executed' field.
 func (_ HookAliases) Executed(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Issued implements response to request for 'issued' field.
 func (_ HookAliases) Issued(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Output implements response to request for 'output' field.
 func (_ HookAliases) Output(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Status implements response to request for 'status' field.
 func (_ HookAliases) Status(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 /*
@@ -496,8 +520,8 @@ execution.
 var HookType = graphql.NewType("Hook", graphql.ObjectKind)
 
 // RegisterHook registers Hook object type with given service.
-func RegisterHook(svc graphql.Service, impl HookFieldResolvers) {
-	svc.RegisterObject(_ObjTypeHookDesc, impl)
+func RegisterHook(svc *graphql.Service, impl HookFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeHookDesc, impl)
 }
 func _ObjTypeHookConfigHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigFieldResolver)
@@ -529,7 +553,7 @@ func _ObjTypeHookStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	return resolver.Status
 }
 
-func _ObjTypeHookConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeHookConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Hook is a hook specification and optionally the results of the hook's\nexecution.",
 		Fields: graphql1.Fields{
@@ -590,15 +614,15 @@ func _ObjTypeHookConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Hook's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeHookDesc = graphql.ObjectDesc{
-	Config: _ObjTypeHookConfigFn,
+var _ObjectTypeHookDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeHookConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Config":   _ObjTypeHookConfigHandler,
-		"Duration": _ObjTypeHookDurationHandler,
-		"Executed": _ObjTypeHookExecutedHandler,
-		"Issued":   _ObjTypeHookIssuedHandler,
-		"Output":   _ObjTypeHookOutputHandler,
-		"Status":   _ObjTypeHookStatusHandler,
+		"config":   _ObjTypeHookConfigHandler,
+		"duration": _ObjTypeHookDurationHandler,
+		"executed": _ObjTypeHookExecutedHandler,
+		"issued":   _ObjTypeHookIssuedHandler,
+		"output":   _ObjTypeHookOutputHandler,
+		"status":   _ObjTypeHookStatusHandler,
 	},
 }
 
@@ -732,20 +756,24 @@ type HookListAliases struct{}
 
 // Hooks implements response to request for 'hooks' field.
 func (_ HookListAliases) Hooks(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Type implements response to request for 'type' field.
 func (_ HookListAliases) Type(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // HookListType self descriptive
 var HookListType = graphql.NewType("HookList", graphql.ObjectKind)
 
 // RegisterHookList registers HookList object type with given service.
-func RegisterHookList(svc graphql.Service, impl HookListFieldResolvers) {
-	svc.RegisterObject(_ObjTypeHookListDesc, impl)
+func RegisterHookList(svc *graphql.Service, impl HookListFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeHookListDesc, impl)
 }
 func _ObjTypeHookListHooksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookListHooksFieldResolver)
@@ -757,7 +785,7 @@ func _ObjTypeHookListTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 	return resolver.Type
 }
 
-func _ObjTypeHookListConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeHookListConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "self descriptive",
 		Fields: graphql1.Fields{
@@ -790,10 +818,10 @@ func _ObjTypeHookListConfigFn() graphql1.ObjectConfig {
 }
 
 // describe HookList's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeHookListDesc = graphql.ObjectDesc{
-	Config: _ObjTypeHookListConfigFn,
+var _ObjectTypeHookListDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeHookListConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Hooks": _ObjTypeHookListHooksHandler,
-		"Type":  _ObjTypeHookListTypeHandler,
+		"hooks": _ObjTypeHookListHooksHandler,
+		"type":  _ObjTypeHookListTypeHandler,
 	},
 }

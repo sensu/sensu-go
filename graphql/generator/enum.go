@@ -86,13 +86,12 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	comment := genTypeComment(name, desc)
 
 	// Ids
-	registerFnName := "Register" + name
 	publicValuesName := name + "s" // naive
 	publicRefName := name + "Type"
 	publicRefComment := genTypeComment(publicRefName, desc)
-	privateEnumValuesStruct := "_EnumType" + name + "Values"
-	privateConfigName := "_EnumType" + name + "Desc"
-	privateConfigThunkName := "_EnumType" + name + "ConfigFn"
+	privateEnumValuesStruct := mkPrivateID(node, "Values")
+	privateConfigName := mkPrivateID(node, "Desc")
+	privateConfigThunkName := mkPrivateID(node, "ConfigFn")
 
 	//
 	// Generate type that will be used to represent enum
@@ -150,19 +149,10 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 	//     svc.RegisterEnum(_EnumTypeLocaleDesc)
 	//   }
 	//
-	code.Commentf(
-		"%s registers %s enum type with given service.",
-		registerFnName,
-		name,
+
+	code.Add(
+		genRegisterFn(node, nil),
 	)
-	code.
-		Func().Id(registerFnName).
-		Params(jen.Id("svc").Qual(servicePkg, "Service")).
-		Block(
-			jen.Id("svc.RegisterEnum").Call(
-				jen.Id(privateConfigName),
-			),
-		)
 
 	//
 	// Generate type config thunk

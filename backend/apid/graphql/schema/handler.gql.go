@@ -200,65 +200,87 @@ type HandlerAliases struct{}
 
 // ID implements response to request for 'id' field.
 func (_ HandlerAliases) ID(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ HandlerAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ HandlerAliases) Name(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Type implements response to request for 'type' field.
 func (_ HandlerAliases) Type(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Mutator implements response to request for 'mutator' field.
 func (_ HandlerAliases) Mutator(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ HandlerAliases) Command(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Timeout implements response to request for 'timeout' field.
 func (_ HandlerAliases) Timeout(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Socket implements response to request for 'socket' field.
 func (_ HandlerAliases) Socket(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Handlers implements response to request for 'handlers' field.
 func (_ HandlerAliases) Handlers(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Filters implements response to request for 'filters' field.
 func (_ HandlerAliases) Filters(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // EnvVars implements response to request for 'envVars' field.
 func (_ HandlerAliases) EnvVars(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // HandlerType A Handler is a handler specification.
 var HandlerType = graphql.NewType("Handler", graphql.ObjectKind)
 
 // RegisterHandler registers Handler object type with given service.
-func RegisterHandler(svc graphql.Service, impl HandlerFieldResolvers) {
-	svc.RegisterObject(_ObjTypeHandlerDesc, impl)
+func RegisterHandler(svc *graphql.Service, impl HandlerFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeHandlerDesc, impl)
 }
 func _ObjTypeHandlerIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerIDFieldResolver)
@@ -315,7 +337,7 @@ func _ObjTypeHandlerEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
 	return resolver.EnvVars
 }
 
-func _ObjTypeHandlerConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Handler is a handler specification.",
 		Fields: graphql1.Fields{
@@ -411,20 +433,20 @@ func _ObjTypeHandlerConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Handler's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeHandlerDesc = graphql.ObjectDesc{
-	Config: _ObjTypeHandlerConfigFn,
+var _ObjectTypeHandlerDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeHandlerConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Command":   _ObjTypeHandlerCommandHandler,
-		"EnvVars":   _ObjTypeHandlerEnvVarsHandler,
-		"Filters":   _ObjTypeHandlerFiltersHandler,
-		"Handlers":  _ObjTypeHandlerHandlersHandler,
-		"ID":        _ObjTypeHandlerIDHandler,
-		"Mutator":   _ObjTypeHandlerMutatorHandler,
-		"Name":      _ObjTypeHandlerNameHandler,
-		"Namespace": _ObjTypeHandlerNamespaceHandler,
-		"Socket":    _ObjTypeHandlerSocketHandler,
-		"Timeout":   _ObjTypeHandlerTimeoutHandler,
-		"Type":      _ObjTypeHandlerTypeHandler,
+		"command":   _ObjTypeHandlerCommandHandler,
+		"envVars":   _ObjTypeHandlerEnvVarsHandler,
+		"filters":   _ObjTypeHandlerFiltersHandler,
+		"handlers":  _ObjTypeHandlerHandlersHandler,
+		"id":        _ObjTypeHandlerIDHandler,
+		"mutator":   _ObjTypeHandlerMutatorHandler,
+		"name":      _ObjTypeHandlerNameHandler,
+		"namespace": _ObjTypeHandlerNamespaceHandler,
+		"socket":    _ObjTypeHandlerSocketHandler,
+		"timeout":   _ObjTypeHandlerTimeoutHandler,
+		"type":      _ObjTypeHandlerTypeHandler,
 	},
 }
 
@@ -558,20 +580,24 @@ type HandlerSocketAliases struct{}
 
 // Host implements response to request for 'host' field.
 func (_ HandlerSocketAliases) Host(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Port implements response to request for 'port' field.
 func (_ HandlerSocketAliases) Port(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // HandlerSocketType HandlerSocket contains configuration for a TCP or UDP handler.
 var HandlerSocketType = graphql.NewType("HandlerSocket", graphql.ObjectKind)
 
 // RegisterHandlerSocket registers HandlerSocket object type with given service.
-func RegisterHandlerSocket(svc graphql.Service, impl HandlerSocketFieldResolvers) {
-	svc.RegisterObject(_ObjTypeHandlerSocketDesc, impl)
+func RegisterHandlerSocket(svc *graphql.Service, impl HandlerSocketFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeHandlerSocketDesc, impl)
 }
 func _ObjTypeHandlerSocketHostHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerSocketHostFieldResolver)
@@ -583,7 +609,7 @@ func _ObjTypeHandlerSocketPortHandler(impl interface{}) graphql1.FieldResolveFn 
 	return resolver.Port
 }
 
-func _ObjTypeHandlerSocketConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeHandlerSocketConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "HandlerSocket contains configuration for a TCP or UDP handler.",
 		Fields: graphql1.Fields{
@@ -616,10 +642,10 @@ func _ObjTypeHandlerSocketConfigFn() graphql1.ObjectConfig {
 }
 
 // describe HandlerSocket's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeHandlerSocketDesc = graphql.ObjectDesc{
-	Config: _ObjTypeHandlerSocketConfigFn,
+var _ObjectTypeHandlerSocketDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeHandlerSocketConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Host": _ObjTypeHandlerSocketHostHandler,
-		"Port": _ObjTypeHandlerSocketPortHandler,
+		"host": _ObjTypeHandlerSocketHostHandler,
+		"port": _ObjTypeHandlerSocketPortHandler,
 	},
 }

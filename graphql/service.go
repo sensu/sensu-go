@@ -8,14 +8,15 @@ import (
 
 // Service ...TODO...
 type Service struct {
-	types  typeRegister
+	types  *typeRegister
 	schema graphql.Schema
 }
 
 // NewService returns new instance of Service
 func NewService() *Service {
-	// TODO: opts? logger?
-	return &Service{}
+	return &Service{
+		types: newTypeRegister(),
+	}
 }
 
 // RegisterScalar registers a GraphQL type with the service.
@@ -100,7 +101,7 @@ func (service *Service) RegisterSchema(t SchemaDesc) {
 // Regenerate generates new schema given registered types.
 func (service *Service) Regenerate() error {
 	schema, err := newSchema(service.types)
-	if err != nil {
+	if err == nil {
 		service.schema = schema
 	}
 	return err
@@ -116,6 +117,7 @@ func (service *Service) Do(
 		Schema:         service.schema,
 		VariableValues: vars,
 		Context:        ctx,
+		RequestString:  q,
 	}
 	return graphql.Do(params)
 }
@@ -125,15 +127,32 @@ type typeRegister struct {
 	schema SchemaDesc
 }
 
-func (r typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
+func newTypeRegister() *typeRegister {
+	types := make(map[Kind]map[string]registerTypeFn, 6)
+	types[EnumKind] = map[string]registerTypeFn{}
+	types[ScalarKind] = map[string]registerTypeFn{}
+	types[ObjectKind] = map[string]registerTypeFn{}
+	types[InputKind] = map[string]registerTypeFn{}
+	types[InterfaceKind] = map[string]registerTypeFn{}
+	types[UnionKind] = map[string]registerTypeFn{}
+	return &typeRegister{types: types}
+}
+
+func (r *typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
+	if r.types == nil {
+		r.types = map[Kind]map[string]registerTypeFn{}
+	}
+	if _, ok := r.types[kind]; !ok {
+		r.types[kind] = map[string]registerTypeFn{}
+	}
 	r.types[kind][name] = fn
 }
 
-func (r typeRegister) setSchema(desc SchemaDesc) {
+func (r *typeRegister) setSchema(desc SchemaDesc) {
 	r.schema = desc
 }
 
-func newSchema(reg typeRegister) (graphql.Schema, error) {
+func newSchema(reg *typeRegister) (graphql.Schema, error) {
 	typeMap := make(graphql.TypeMap, len(reg.types))
 
 	registerTypes(

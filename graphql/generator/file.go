@@ -117,23 +117,6 @@ func (files GraphQLFiles) Validate() error {
 	return nil
 }
 
-func getNodeName(def ast.Node) string {
-	switch d := def.(type) {
-	case *ast.ScalarDefinition:
-		return d.Name.Value
-	case *ast.ObjectDefinition:
-		return d.Name.Value
-	case *ast.InputObjectDefinition:
-		return d.Name.Value
-	case *ast.InterfaceDefinition:
-		return d.Name.Value
-	case *ast.UnionDefinition:
-		return d.Name.Value
-	default:
-		return ""
-	}
-}
-
 // GraphQLFile encapsulates parsed document and filepath.
 type GraphQLFile struct {
 	path string

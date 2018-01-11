@@ -52,11 +52,10 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	desc := getDescription(node)
 
 	// Ids
-	registerFnName := "Register" + name
 	publicRefName := name + "Type"
 	publicRefComment := genTypeComment(publicRefName, desc)
-	privateConfigName := "_InterfaceType" + name + "Desc"
-	privateConfigThunkName := "_InterfaceType" + name + "ConfigFn"
+	privateConfigName := mkPrivateID(node, "Desc")
+	privateConfigThunkName := mkPrivateID(node, "ConfigFn")
 
 	//
 	// Generate public reference to type
@@ -82,23 +81,10 @@ func genInterface(node *ast.InterfaceDefinition) jen.Code {
 	//     svc.RegisterInterface(_InterfaceTypePetDesc, impl)
 	//   }
 	//
-	code.Commentf(
-		"%s registers %s interface type with given service.",
-		registerFnName,
-		name,
+
+	code.Add(
+		genRegisterFn(node, jen.Qual(servicePkg, "InterfaceTypeResolver")),
 	)
-	code.
-		Func().Id(registerFnName).
-		Params(
-			jen.Id("svc").Qual(servicePkg, "Service"),
-			jen.Id("impl").Qual(servicePkg, "InterfaceTypeResolver"),
-		).
-		Block(
-			jen.Id("svc.RegisterInterface").Call(
-				jen.Id(privateConfigName),
-				jen.Id("impl"),
-			),
-		)
 
 	//
 	// Generates type config thunk

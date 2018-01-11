@@ -7,17 +7,21 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// CheckResolver represents a collection of methods whose products represent the
-// response values of the 'Check' type.
-type CheckResolver struct {
+type checkImpl struct {
 	schema.CheckAliases
 	store interface {
 		store.HandlerStore
 	}
 }
 
+// ID implements response to request for 'id' field.
+func (r *checkImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+	// check := p.Source.(*types.CheckConfig)
+	return nil
+}
+
 // Handlers implements response to request for 'handlers' field.
-func (r *CheckResolver) Handlers(p graphql.ResolveParams) interface{} {
+func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)     // infer source
 	handlers := r.store.GetHandlers(p.Context) // fetch all handlers
 
@@ -34,7 +38,7 @@ func (r *CheckResolver) Handlers(p graphql.ResolveParams) interface{} {
 }
 
 // IsTypeOf is used to determine if a given value is associated with the Check type
-func (r *CheckResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+func (r *checkIml) IsTypeOf(p graphql.IsTypeOfParams) bool {
 	_, ok := p.Value.(*types.CheckConfig)
 	return ok
 }

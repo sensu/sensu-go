@@ -1,8 +1,6 @@
 package generator
 
 import (
-	"fmt"
-
 	"github.com/dave/jennifer/jen"
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -46,7 +44,10 @@ const scalarResolverName = "ScalarResolver"
 func genScalar(node *ast.ScalarDefinition) jen.Code {
 	code := newGroup()
 	name := node.GetName().Value
-	privateName := "_ScalarType" + name + "Desc"
+
+	// Ids
+	privateConfigName := mkPrivateID(node, "Desc")
+	//privateConfigThunkName := mkPrivateID(node, "ConfigFn")
 
 	// Scalar description
 	desc := getDescription(node)
@@ -113,24 +114,10 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 	//     svc.RegisterScalar(_ScalarType_Timestamp, impl)
 	//   }
 	//
-	registerFnName := fmt.Sprintf("Register%s", name)
-	code.Commentf(
-		"%s registers %s scalar type with given service.",
-		registerFnName,
-		name,
+
+	code.Add(
+		genRegisterFn(node, jen.Qual(servicePkg, "ScalarResolver")),
 	)
-	code.
-		Func().Id(registerFnName).
-		Params(
-			jen.Id("svc").Qual(servicePkg, "Service"),
-			jen.Id("impl").Qual(servicePkg, "ScalarResolver"),
-		).
-		Block(
-			jen.Id("svc.RegisterScalar").Call(
-				jen.Id(privateName),
-				jen.Id("impl"),
-			),
-		)
 
 	//
 	// Generate type description
@@ -148,9 +135,9 @@ func genScalar(node *ast.ScalarDefinition) jen.Code {
 		name,
 	)
 	code.
-		Var().Id(privateName).Op("=").
+		Var().Id(privateConfigName).Op("=").
 		Qual(servicePkg, "ScalarDesc").
-		Values(jen.Dict{jen.Lit("Config"): thunk})
+		Values(jen.Dict{jen.Id("Config"): thunk})
 
 	return code
 }

@@ -51,11 +51,10 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	desc := getDescription(node)
 
 	// Ids
-	registerFnName := "Register" + name
 	publicRefName := name + "Type"
 	publicRefComment := genTypeComment(publicRefName, desc)
-	privateConfigName := "_UnionType" + name + "Desc"
-	privateConfigThunkName := "_UnionType" + name + "ConfigFn"
+	privateConfigName := mkPrivateID(node, "Desc")
+	privateConfigThunkName := mkPrivateID(node, "ConfigFn")
 
 	//
 	// Generate public reference to type
@@ -81,23 +80,10 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	//     svc.RegisterUnion(_UnionTypeFeedDesc, impl)
 	//   }
 	//
-	code.Commentf(
-		"%s registers %s interface type with given service.",
-		registerFnName,
-		name,
+
+	code.Add(
+		genRegisterFn(node, jen.Qual(servicePkg, "UnionTypeResolver")),
 	)
-	code.
-		Func().Id(registerFnName).
-		Params(
-			jen.Id("svc").Qual(servicePkg, "Service"),
-			jen.Id("impl").Qual(servicePkg, "UnionTypeResolver"),
-		).
-		Block(
-			jen.Id("svc.RegisterUnion").Call(
-				jen.Id(privateConfigName),
-				jen.Id("impl"),
-			),
-		)
 
 	//
 	// Generates type config thunk
@@ -115,6 +101,8 @@ func genUnion(node *ast.UnionDefinition) jen.Code {
 	//       },
 	//     }
 	//   }
+	//
+
 	code.
 		Func().Id(privateConfigThunkName).
 		Params().Qual(defsPkg, "UnionConfig").

@@ -10,6 +10,9 @@ const (
 	// GraphQL service package
 	servicePkg = "github.com/sensu/sensu-go/graphql"
 
+	// package used for decoding parameters
+	mapstructurePkg = "github.com/mitchellh/mapstructure"
+
 	// used to describe resolverFns that panic when not implemented.
 	missingResolverNote = `// NOTE:
 // Panic by default. Intent is that when Service is invoked, values of

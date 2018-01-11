@@ -4,8 +4,8 @@ package schema
 
 import (
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
-	mapstructure "mapstructure"
 )
 
 // MutationCreateCheckFieldResolverArgs contains arguments provided to createCheck when selected
@@ -142,30 +142,32 @@ type MutationAliases struct{}
 
 // CreateCheck implements response to request for 'createCheck' field.
 func (_ MutationAliases) CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // MutationType The root query for implementing GraphQL mutations.
 var MutationType = graphql.NewType("Mutation", graphql.ObjectKind)
 
 // RegisterMutation registers Mutation object type with given service.
-func RegisterMutation(svc graphql.Service, impl MutationFieldResolvers) {
-	svc.RegisterObject(_ObjTypeMutationDesc, impl)
+func RegisterMutation(svc *graphql.Service, impl MutationFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeMutationDesc, impl)
 }
 func _ObjTypeMutationCreateCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutationCreateCheckFieldResolver)
-	func(p graphql1.ResolveParams) (interface{}, error) {
+	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationCreateCheckFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, frp.Args)
+		err := mapstructure.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
 
-		return "resolver.CreateCheck"("frp")
+		return resolver.CreateCheck(frp)
 	}
 }
 
-func _ObjTypeMutationConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The root query for implementing GraphQL mutations.",
 		Fields: graphql1.Fields{"createCheck": &graphql1.Field{
@@ -192,15 +194,15 @@ func _ObjTypeMutationConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Mutation's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeMutationDesc = graphql.ObjectDesc{
-	Config:        _ObjTypeMutationConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"CreateCheck": _ObjTypeMutationCreateCheckHandler},
+var _ObjectTypeMutationDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeMutationConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"createCheck": _ObjTypeMutationCreateCheckHandler},
 }
 
 // CreateCheckInput self descriptive
 type CreateCheckInput struct {
 	// ClientMutationId - A unique identifier for the client performing the mutation. ClientMutationId string
-	// Ns - namespace the resulting resource will belong to Ns * Namespace
+	// Ns - namespace the resulting resource will belong to Ns interface{}
 	// Name - self descriptive Name string
 	// Command - self descriptive Command string
 }
@@ -208,8 +210,8 @@ type CreateCheckInput struct {
 // CreateCheckInputType self descriptive
 var CreateCheckInputType = graphql.NewType("CreateCheckInput", graphql.InputKind)
 
-// RegisterCreateCheckInput registers CreateCheckInput input type with given service.
-func RegisterCreateCheckInput(svc graphql.Service) {
+// RegisterCreateCheckInput registers CreateCheckInput object type with given service.
+func RegisterCreateCheckInput(svc *graphql.Service) {
 	svc.RegisterInput(_InputTypeCreateCheckInputDesc)
 }
 func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
@@ -374,20 +376,24 @@ type CreateCheckPayloadAliases struct{}
 
 // ClientMutationId implements response to request for 'clientMutationId' field.
 func (_ CreateCheckPayloadAliases) ClientMutationId(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Check implements response to request for 'check' field.
 func (_ CreateCheckPayloadAliases) Check(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // CreateCheckPayloadType self descriptive
 var CreateCheckPayloadType = graphql.NewType("CreateCheckPayload", graphql.ObjectKind)
 
 // RegisterCreateCheckPayload registers CreateCheckPayload object type with given service.
-func RegisterCreateCheckPayload(svc graphql.Service, impl CreateCheckPayloadFieldResolvers) {
-	svc.RegisterObject(_ObjTypeCreateCheckPayloadDesc, impl)
+func RegisterCreateCheckPayload(svc *graphql.Service, impl CreateCheckPayloadFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCreateCheckPayloadDesc, impl)
 }
 func _ObjTypeCreateCheckPayloadClientMutationIdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CreateCheckPayloadClientMutationIdFieldResolver)
@@ -399,7 +405,7 @@ func _ObjTypeCreateCheckPayloadCheckHandler(impl interface{}) graphql1.FieldReso
 	return resolver.Check
 }
 
-func _ObjTypeCreateCheckPayloadConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeCreateCheckPayloadConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "self descriptive",
 		Fields: graphql1.Fields{
@@ -432,10 +438,10 @@ func _ObjTypeCreateCheckPayloadConfigFn() graphql1.ObjectConfig {
 }
 
 // describe CreateCheckPayload's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeCreateCheckPayloadDesc = graphql.ObjectDesc{
-	Config: _ObjTypeCreateCheckPayloadConfigFn,
+var _ObjectTypeCreateCheckPayloadDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCreateCheckPayloadConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Check":            _ObjTypeCreateCheckPayloadCheckHandler,
-		"ClientMutationId": _ObjTypeCreateCheckPayloadClientMutationIdHandler,
+		"check":            _ObjTypeCreateCheckPayloadCheckHandler,
+		"clientMutationId": _ObjTypeCreateCheckPayloadClientMutationIdHandler,
 	},
 }

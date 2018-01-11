@@ -12,7 +12,7 @@ import (
 var Schema = graphql.NewType("Schema", graphql.SchemaKind)
 
 // RegisterSchema registers schema description with given service.
-func RegisterSchema(svc graphql.Service) {
+func RegisterSchema(svc *graphql.Service) {
 	svc.RegisterSchema(_SchemaDesc)
 }
 func _SchemaConfigFn() graphql1.SchemaConfig {
@@ -148,22 +148,24 @@ type QueryAliases struct{}
 
 // Checks implements response to request for 'checks' field.
 func (_ QueryAliases) Checks(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // QueryType The query root of Sensu's GraphQL interface.
 var QueryType = graphql.NewType("Query", graphql.ObjectKind)
 
 // RegisterQuery registers Query object type with given service.
-func RegisterQuery(svc graphql.Service, impl QueryFieldResolvers) {
-	svc.RegisterObject(_ObjTypeQueryDesc, impl)
+func RegisterQuery(svc *graphql.Service, impl QueryFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeQueryDesc, impl)
 }
 func _ObjTypeQueryChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryChecksFieldResolver)
 	return resolver.Checks
 }
 
-func _ObjTypeQueryConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The query root of Sensu's GraphQL interface.",
 		Fields: graphql1.Fields{"checks": &graphql1.Field{
@@ -187,7 +189,7 @@ func _ObjTypeQueryConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Query's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeQueryDesc = graphql.ObjectDesc{
-	Config:        _ObjTypeQueryConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"Checks": _ObjTypeQueryChecksHandler},
+var _ObjectTypeQueryDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeQueryConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"checks": _ObjTypeQueryChecksHandler},
 }

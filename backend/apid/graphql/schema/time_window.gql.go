@@ -130,22 +130,24 @@ type TimeWindowWhenAliases struct{}
 
 // Days implements response to request for 'days' field.
 func (_ TimeWindowWhenAliases) Days(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // TimeWindowWhenType TimeWindowWhen defines the "when" attributes for time windows
 var TimeWindowWhenType = graphql.NewType("TimeWindowWhen", graphql.ObjectKind)
 
 // RegisterTimeWindowWhen registers TimeWindowWhen object type with given service.
-func RegisterTimeWindowWhen(svc graphql.Service, impl TimeWindowWhenFieldResolvers) {
-	svc.RegisterObject(_ObjTypeTimeWindowWhenDesc, impl)
+func RegisterTimeWindowWhen(svc *graphql.Service, impl TimeWindowWhenFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeTimeWindowWhenDesc, impl)
 }
 func _ObjTypeTimeWindowWhenDaysHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowWhenDaysFieldResolver)
 	return resolver.Days
 }
 
-func _ObjTypeTimeWindowWhenConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeTimeWindowWhenConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "TimeWindowWhen defines the \"when\" attributes for time windows",
 		Fields: graphql1.Fields{"days": &graphql1.Field{
@@ -169,9 +171,9 @@ func _ObjTypeTimeWindowWhenConfigFn() graphql1.ObjectConfig {
 }
 
 // describe TimeWindowWhen's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeTimeWindowWhenDesc = graphql.ObjectDesc{
-	Config:        _ObjTypeTimeWindowWhenConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"Days": _ObjTypeTimeWindowWhenDaysHandler},
+var _ObjectTypeTimeWindowWhenDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeTimeWindowWhenConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"days": _ObjTypeTimeWindowWhenDaysHandler},
 }
 
 // TimeWindowDaysAllFieldResolver implement to resolve requests for the TimeWindowDays's all field.
@@ -346,50 +348,66 @@ type TimeWindowDaysAliases struct{}
 
 // All implements response to request for 'all' field.
 func (_ TimeWindowDaysAliases) All(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Sunday implements response to request for 'sunday' field.
 func (_ TimeWindowDaysAliases) Sunday(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Monday implements response to request for 'monday' field.
 func (_ TimeWindowDaysAliases) Monday(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Tuesday implements response to request for 'tuesday' field.
 func (_ TimeWindowDaysAliases) Tuesday(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Wednesday implements response to request for 'wednesday' field.
 func (_ TimeWindowDaysAliases) Wednesday(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Thursday implements response to request for 'thursday' field.
 func (_ TimeWindowDaysAliases) Thursday(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Friday implements response to request for 'friday' field.
 func (_ TimeWindowDaysAliases) Friday(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Saturday implements response to request for 'saturday' field.
 func (_ TimeWindowDaysAliases) Saturday(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // TimeWindowDaysType TimeWindowDays defines the days of a time window
 var TimeWindowDaysType = graphql.NewType("TimeWindowDays", graphql.ObjectKind)
 
 // RegisterTimeWindowDays registers TimeWindowDays object type with given service.
-func RegisterTimeWindowDays(svc graphql.Service, impl TimeWindowDaysFieldResolvers) {
-	svc.RegisterObject(_ObjTypeTimeWindowDaysDesc, impl)
+func RegisterTimeWindowDays(svc *graphql.Service, impl TimeWindowDaysFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeTimeWindowDaysDesc, impl)
 }
 func _ObjTypeTimeWindowDaysAllHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysAllFieldResolver)
@@ -431,7 +449,7 @@ func _ObjTypeTimeWindowDaysSaturdayHandler(impl interface{}) graphql1.FieldResol
 	return resolver.Saturday
 }
 
-func _ObjTypeTimeWindowDaysConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeTimeWindowDaysConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "TimeWindowDays defines the days of a time window",
 		Fields: graphql1.Fields{
@@ -506,17 +524,17 @@ func _ObjTypeTimeWindowDaysConfigFn() graphql1.ObjectConfig {
 }
 
 // describe TimeWindowDays's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeTimeWindowDaysDesc = graphql.ObjectDesc{
-	Config: _ObjTypeTimeWindowDaysConfigFn,
+var _ObjectTypeTimeWindowDaysDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeTimeWindowDaysConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"All":       _ObjTypeTimeWindowDaysAllHandler,
-		"Friday":    _ObjTypeTimeWindowDaysFridayHandler,
-		"Monday":    _ObjTypeTimeWindowDaysMondayHandler,
-		"Saturday":  _ObjTypeTimeWindowDaysSaturdayHandler,
-		"Sunday":    _ObjTypeTimeWindowDaysSundayHandler,
-		"Thursday":  _ObjTypeTimeWindowDaysThursdayHandler,
-		"Tuesday":   _ObjTypeTimeWindowDaysTuesdayHandler,
-		"Wednesday": _ObjTypeTimeWindowDaysWednesdayHandler,
+		"all":       _ObjTypeTimeWindowDaysAllHandler,
+		"friday":    _ObjTypeTimeWindowDaysFridayHandler,
+		"monday":    _ObjTypeTimeWindowDaysMondayHandler,
+		"saturday":  _ObjTypeTimeWindowDaysSaturdayHandler,
+		"sunday":    _ObjTypeTimeWindowDaysSundayHandler,
+		"thursday":  _ObjTypeTimeWindowDaysThursdayHandler,
+		"tuesday":   _ObjTypeTimeWindowDaysTuesdayHandler,
+		"wednesday": _ObjTypeTimeWindowDaysWednesdayHandler,
 	},
 }
 
@@ -650,20 +668,24 @@ type TimeWindowTimeRangeAliases struct{}
 
 // Begin implements response to request for 'begin' field.
 func (_ TimeWindowTimeRangeAliases) Begin(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // End implements response to request for 'end' field.
 func (_ TimeWindowTimeRangeAliases) End(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // TimeWindowTimeRangeType TimeWindowTimeRange defines the time ranges of a time
 var TimeWindowTimeRangeType = graphql.NewType("TimeWindowTimeRange", graphql.ObjectKind)
 
 // RegisterTimeWindowTimeRange registers TimeWindowTimeRange object type with given service.
-func RegisterTimeWindowTimeRange(svc graphql.Service, impl TimeWindowTimeRangeFieldResolvers) {
-	svc.RegisterObject(_ObjTypeTimeWindowTimeRangeDesc, impl)
+func RegisterTimeWindowTimeRange(svc *graphql.Service, impl TimeWindowTimeRangeFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeTimeWindowTimeRangeDesc, impl)
 }
 func _ObjTypeTimeWindowTimeRangeBeginHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowTimeRangeBeginFieldResolver)
@@ -675,7 +697,7 @@ func _ObjTypeTimeWindowTimeRangeEndHandler(impl interface{}) graphql1.FieldResol
 	return resolver.End
 }
 
-func _ObjTypeTimeWindowTimeRangeConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeTimeWindowTimeRangeConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "TimeWindowTimeRange defines the time ranges of a time",
 		Fields: graphql1.Fields{
@@ -708,10 +730,10 @@ func _ObjTypeTimeWindowTimeRangeConfigFn() graphql1.ObjectConfig {
 }
 
 // describe TimeWindowTimeRange's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeTimeWindowTimeRangeDesc = graphql.ObjectDesc{
-	Config: _ObjTypeTimeWindowTimeRangeConfigFn,
+var _ObjectTypeTimeWindowTimeRangeDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeTimeWindowTimeRangeConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Begin": _ObjTypeTimeWindowTimeRangeBeginHandler,
-		"End":   _ObjTypeTimeWindowTimeRangeEndHandler,
+		"begin": _ObjTypeTimeWindowTimeRangeBeginHandler,
+		"end":   _ObjTypeTimeWindowTimeRangeEndHandler,
 	},
 }

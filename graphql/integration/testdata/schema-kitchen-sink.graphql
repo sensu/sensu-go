@@ -1,9 +1,21 @@
 # Filename: schema-kitchen-sink.graphql
 
 schema {
-  query: QueryType
-  mutation: MutationType
+  query: QueryRoot
 }
+
+"""
+QueryRoot is entry point for queries
+"""
+type QueryRoot {
+  foos: [Foo]
+  myBar: Bar
+}
+
+"""
+Url describes an address that points to a resource.
+"""
+scalar Url
 
 """
 Foo is quite the type.
@@ -12,22 +24,23 @@ type Foo implements Bar {
   """
   one is a number.
   """
-  one: Type
+  one: Url
 
   "I am told that two is also a number"
-  two(argument: InputType!): Type
+  two(argument: InputType!): Url
   three(argument: InputType, other: String): Int
   four(argument: String = "string"): String
   five(argument: [String] = ["string", "string"]): String
-  six(argument: InputType = {key: "value"}): Type
+  six(argument: InputType = {key: "value"}): Url
+  seven: [Bar]
 }
 
 type AnnotatedObject @onObject(arg: "value") {
-  annotatedField(arg: Type = "default" @onArg): Type @onField
+  annotatedField(arg: Url = "default" @onArg): Url @onField
 }
 
 interface Bar {
-  one: Type
+  one: Url
   four(argument: String = "string"): String
 }
 
@@ -35,13 +48,13 @@ interface Bar {
 AnnotatedInterface has stuff
 """
 interface AnnotatedInterface @onInterface {
-  annotatedField(arg: Type @onArg): Type @onField
+  annotatedField(arg: Url @onArg): Url @onField
 }
 
 """
 Feed includes all stuff and things.
 """
-union Feed = Story | Article | Advert
+union Feed = Foo | QueryRoot
 
 "AnnotatedUnion i dont care"
 union AnnotatedUnion @onUnion = A | B
@@ -92,11 +105,11 @@ input InputType {
 }
 
 input AnnotatedInput @onInputObjectType {
-  annotatedField: Type @onField
+  annotatedField: Url @onField
 }
 
 extend type Foo {
-  seven(argument: [String]): Type
+  seven(argument: [String]): Url
 }
 
 extend type Foo @onType {}

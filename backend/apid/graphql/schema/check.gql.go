@@ -221,80 +221,108 @@ type CheckConfigAliases struct{}
 
 // ID implements response to request for 'id' field.
 func (_ CheckConfigAliases) ID(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ CheckConfigAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ CheckConfigAliases) Name(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ CheckConfigAliases) Command(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Handlers implements response to request for 'handlers' field.
 func (_ CheckConfigAliases) Handlers(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // HighFlapThreshold implements response to request for 'highFlapThreshold' field.
 func (_ CheckConfigAliases) HighFlapThreshold(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Interval implements response to request for 'interval' field.
 func (_ CheckConfigAliases) Interval(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // LowFlapThreshold implements response to request for 'lowFlapThreshold' field.
 func (_ CheckConfigAliases) LowFlapThreshold(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Publish implements response to request for 'publish' field.
 func (_ CheckConfigAliases) Publish(p graphql.ResolveParams) (bool, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(bool)
+	return ret, err
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
 func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Source implements response to request for 'source' field.
 func (_ CheckConfigAliases) Source(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Stdin implements response to request for 'stdin' field.
 func (_ CheckConfigAliases) Stdin(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // CheckHooks implements response to request for 'checkHooks' field.
 func (_ CheckConfigAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Subdue implements response to request for 'subdue' field.
 func (_ CheckConfigAliases) Subdue(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // CheckConfigType CheckConfig is the specification of a check.
 var CheckConfigType = graphql.NewType("CheckConfig", graphql.ObjectKind)
 
 // RegisterCheckConfig registers CheckConfig object type with given service.
-func RegisterCheckConfig(svc graphql.Service, impl CheckConfigFieldResolvers) {
-	svc.RegisterObject(_ObjTypeCheckConfigDesc, impl)
+func RegisterCheckConfig(svc *graphql.Service, impl CheckConfigFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCheckConfigDesc, impl)
 }
 func _ObjTypeCheckConfigIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigIDFieldResolver)
@@ -366,7 +394,7 @@ func _ObjTypeCheckConfigSubdueHandler(impl interface{}) graphql1.FieldResolveFn 
 	return resolver.Subdue
 }
 
-func _ObjTypeCheckConfigConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "CheckConfig is the specification of a check.",
 		Fields: graphql1.Fields{
@@ -483,23 +511,23 @@ func _ObjTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 }
 
 // describe CheckConfig's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeCheckConfigDesc = graphql.ObjectDesc{
-	Config: _ObjTypeCheckConfigConfigFn,
+var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCheckConfigConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"CheckHooks":        _ObjTypeCheckConfigCheckHooksHandler,
-		"Command":           _ObjTypeCheckConfigCommandHandler,
-		"Handlers":          _ObjTypeCheckConfigHandlersHandler,
-		"HighFlapThreshold": _ObjTypeCheckConfigHighFlapThresholdHandler,
-		"ID":                _ObjTypeCheckConfigIDHandler,
-		"Interval":          _ObjTypeCheckConfigIntervalHandler,
-		"LowFlapThreshold":  _ObjTypeCheckConfigLowFlapThresholdHandler,
-		"Name":              _ObjTypeCheckConfigNameHandler,
-		"Namespace":         _ObjTypeCheckConfigNamespaceHandler,
-		"Publish":           _ObjTypeCheckConfigPublishHandler,
-		"Source":            _ObjTypeCheckConfigSourceHandler,
-		"Stdin":             _ObjTypeCheckConfigStdinHandler,
-		"Subdue":            _ObjTypeCheckConfigSubdueHandler,
-		"Subscriptions":     _ObjTypeCheckConfigSubscriptionsHandler,
+		"checkHooks":        _ObjTypeCheckConfigCheckHooksHandler,
+		"command":           _ObjTypeCheckConfigCommandHandler,
+		"handlers":          _ObjTypeCheckConfigHandlersHandler,
+		"highFlapThreshold": _ObjTypeCheckConfigHighFlapThresholdHandler,
+		"id":                _ObjTypeCheckConfigIDHandler,
+		"interval":          _ObjTypeCheckConfigIntervalHandler,
+		"lowFlapThreshold":  _ObjTypeCheckConfigLowFlapThresholdHandler,
+		"name":              _ObjTypeCheckConfigNameHandler,
+		"namespace":         _ObjTypeCheckConfigNamespaceHandler,
+		"publish":           _ObjTypeCheckConfigPublishHandler,
+		"source":            _ObjTypeCheckConfigSourceHandler,
+		"stdin":             _ObjTypeCheckConfigStdinHandler,
+		"subdue":            _ObjTypeCheckConfigSubdueHandler,
+		"subscriptions":     _ObjTypeCheckConfigSubscriptionsHandler,
 	},
 }
 
@@ -682,47 +710,65 @@ type CheckAliases struct{}
 
 // Config implements response to request for 'config' field.
 func (_ CheckAliases) Config(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Duration implements response to request for 'duration' field.
 func (_ CheckAliases) Duration(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Executed implements response to request for 'executed' field.
 func (_ CheckAliases) Executed(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // History implements response to request for 'history' field.
 func (_ CheckAliases) History(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Issued implements response to request for 'issued' field.
 func (_ CheckAliases) Issued(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Output implements response to request for 'output' field.
 func (_ CheckAliases) Output(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // State implements response to request for 'state' field.
 func (_ CheckAliases) State(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Status implements response to request for 'status' field.
 func (_ CheckAliases) Status(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // TotalStateChange implements response to request for 'totalStateChange' field.
 func (_ CheckAliases) TotalStateChange(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 /*
@@ -732,8 +778,8 @@ execution.
 var CheckType = graphql.NewType("Check", graphql.ObjectKind)
 
 // RegisterCheck registers Check object type with given service.
-func RegisterCheck(svc graphql.Service, impl CheckFieldResolvers) {
-	svc.RegisterObject(_ObjTypeCheckDesc, impl)
+func RegisterCheck(svc *graphql.Service, impl CheckFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCheckDesc, impl)
 }
 func _ObjTypeCheckConfigHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigFieldResolver)
@@ -780,7 +826,7 @@ func _ObjTypeCheckTotalStateChangeHandler(impl interface{}) graphql1.FieldResolv
 	return resolver.TotalStateChange
 }
 
-func _ObjTypeCheckConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
 		Fields: graphql1.Fields{
@@ -862,18 +908,18 @@ func _ObjTypeCheckConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Check's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeCheckDesc = graphql.ObjectDesc{
-	Config: _ObjTypeCheckConfigFn,
+var _ObjectTypeCheckDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCheckConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Config":           _ObjTypeCheckConfigHandler,
-		"Duration":         _ObjTypeCheckDurationHandler,
-		"Executed":         _ObjTypeCheckExecutedHandler,
-		"History":          _ObjTypeCheckHistoryHandler,
-		"Issued":           _ObjTypeCheckIssuedHandler,
-		"Output":           _ObjTypeCheckOutputHandler,
-		"State":            _ObjTypeCheckStateHandler,
-		"Status":           _ObjTypeCheckStatusHandler,
-		"TotalStateChange": _ObjTypeCheckTotalStateChangeHandler,
+		"config":           _ObjTypeCheckConfigHandler,
+		"duration":         _ObjTypeCheckDurationHandler,
+		"executed":         _ObjTypeCheckExecutedHandler,
+		"history":          _ObjTypeCheckHistoryHandler,
+		"issued":           _ObjTypeCheckIssuedHandler,
+		"output":           _ObjTypeCheckOutputHandler,
+		"state":            _ObjTypeCheckStateHandler,
+		"status":           _ObjTypeCheckStatusHandler,
+		"totalStateChange": _ObjTypeCheckTotalStateChangeHandler,
 	},
 }
 
@@ -1007,20 +1053,24 @@ type CheckHistoryAliases struct{}
 
 // Status implements response to request for 'status' field.
 func (_ CheckHistoryAliases) Status(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Executed implements response to request for 'executed' field.
 func (_ CheckHistoryAliases) Executed(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // CheckHistoryType CheckHistory is a record of a check execution and its status
 var CheckHistoryType = graphql.NewType("CheckHistory", graphql.ObjectKind)
 
 // RegisterCheckHistory registers CheckHistory object type with given service.
-func RegisterCheckHistory(svc graphql.Service, impl CheckHistoryFieldResolvers) {
-	svc.RegisterObject(_ObjTypeCheckHistoryDesc, impl)
+func RegisterCheckHistory(svc *graphql.Service, impl CheckHistoryFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCheckHistoryDesc, impl)
 }
 func _ObjTypeCheckHistoryStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryStatusFieldResolver)
@@ -1032,7 +1082,7 @@ func _ObjTypeCheckHistoryExecutedHandler(impl interface{}) graphql1.FieldResolve
 	return resolver.Executed
 }
 
-func _ObjTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "CheckHistory is a record of a check execution and its status",
 		Fields: graphql1.Fields{
@@ -1065,10 +1115,10 @@ func _ObjTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 }
 
 // describe CheckHistory's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeCheckHistoryDesc = graphql.ObjectDesc{
-	Config: _ObjTypeCheckHistoryConfigFn,
+var _ObjectTypeCheckHistoryDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCheckHistoryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Executed": _ObjTypeCheckHistoryExecutedHandler,
-		"Status":   _ObjTypeCheckHistoryStatusHandler,
+		"executed": _ObjTypeCheckHistoryExecutedHandler,
+		"status":   _ObjTypeCheckHistoryStatusHandler,
 	},
 }

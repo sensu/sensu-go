@@ -75,11 +75,10 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 
 	// Ids ...
 	fieldResolversName := name + "FieldResolvers"
-	registerFnName := "Register" + name
 	publicRefName := name + "Type"
 	publicRefComment := genTypeComment(publicRefName, desc)
-	privateConfigName := "_ObjType" + name + "Desc"
-	privateConfigThunkName := "_ObjType" + name + "ConfigFn"
+	privateConfigName := mkPrivateID(node, "Desc")
+	privateConfigThunkName := mkPrivateID(node, "ConfigFn")
 
 	//
 	// Generate field resolver interfaces
@@ -262,18 +261,22 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 		name := field.Name.Value
 		titleizedName := toFieldName(field.Name.Value)
 		resolverFnSignature := genFieldResolverSignature(field, i)
+		retType := genFieldResolverReturnType(field.Type, i)
 
 		code.Commentf("%s implements response to request for '%s' field.", titleizedName, name)
 		code.
 			Func().Params(jen.Id("_").Id(aliasResolver)).
-			Add(resolverFnSignature).Block(
-			jen.Return(
-				jen.Qual(servicePkg, "DefaultResolver").Call(
-					jen.Id("p").Dot("Source"),
-					jen.Id("p").Dot("Info").Dot("FieldName"),
-				),
-			),
-		)
+			Add(resolverFnSignature).
+			BlockFunc(func(g *jen.Group) {
+				g.List(jen.List(jen.Id("val"), jen.Id("err"))).Op(":=").
+					Qual(servicePkg, "DefaultResolver").
+					Call(
+						jen.Id("p").Dot("Source"),
+						jen.Id("p").Dot("Info").Dot("FieldName"),
+					)
+				g.Id("ret").Op(":=").Id("val").Assert(retType)
+				g.Return(jen.List(jen.Id("ret"), jen.Id("err")))
+			})
 	}
 
 	//
@@ -295,28 +298,15 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 	//
 	// == Example output
 	//
-	//   // RegisterDog registers Locale enum type with given service.
+	//   // RegisterDog registers Dog object type with given service.
 	//   func RegisterDog(svc graphql.Service, impl DogFieldResolvers) {
 	//     svc.RegisterObject(_ObjTypeDogDesc, impl)
 	//   }
 	//
-	code.Commentf(
-		"%s registers %s object type with given service.",
-		registerFnName,
-		name,
+
+	code.Add(
+		genRegisterFn(node, jen.Id(fieldResolversName)),
 	)
-	code.
-		Func().Id(registerFnName).
-		Params(
-			jen.Id("svc").Qual(servicePkg, "Service"),
-			jen.Id("impl").Id(fieldResolversName),
-		).
-		Block(
-			jen.Id("svc.RegisterObject").Call(
-				jen.Id(privateConfigName),
-				jen.Id("impl"),
-			),
-		)
 
 	//
 	// Generate field handlers
@@ -423,7 +413,7 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 			jen.Id("Config"): jen.Id(privateConfigThunkName),
 			jen.Id("FieldHandlers"): jen.Map(jen.String()).Qual(servicePkg, "FieldHandler").Values(jen.DictFunc(func(d jen.Dict) {
 				for _, f := range node.Fields {
-					key := toFieldName(f.Name.Value)
+					key := f.Name.Value
 					handlerName := genFieldHandlerName(f, i)
 					d[jen.Lit(key)] = jen.Id(handlerName)
 				}
@@ -551,7 +541,7 @@ func genFieldResolverInterface(field *ast.FieldDefinition, i info) jen.Code {
 		code.Commentf("%s contains arguments provided to %s when selected", argsName, fieldName)
 		code.Type().Id(argsName).StructFunc(func(g *jen.Group) {
 			for _, arg := range field.Arguments {
-				retType := genConcreteTypeReference(arg.Type)
+				retType := genConcreteTypeReference(arg.Type, i)
 				fieldName := toFieldName(arg.Name.Value)
 				comment := genFieldComment(fieldName, getDescription(arg), "")
 				g.Id(fieldName).Add(retType).Comment(comment)
@@ -766,23 +756,25 @@ func genFieldHandlerFn(field *ast.FieldDefinition, i info) jen.Code {
 			if len(field.Arguments) > 0 {
 				fieldResolverParamsName := genFieldResolverParamsName(field, i)
 
-				g.Func().
-					Params(jen.Id("p").Qual(defsPkg, "ResolveParams")).
-					Parens(jen.List(jen.Interface(), jen.Error())).
-					Block(
-						jen.Id("frp").Op(":=").Id(fieldResolverParamsName).Values(jen.Dict{
-							jen.Id("ResolveParams"): jen.Id("p"),
-						}),
-						jen.Id("err").Op(":=").Qual("mapstructure", "Decode").Call(
-							jen.Id("p.Args"),
-							jen.Id("frp.Args"),
+				g.Return(
+					jen.Func().
+						Params(jen.Id("p").Qual(defsPkg, "ResolveParams")).
+						Parens(jen.List(jen.Interface(), jen.Error())).
+						Block(
+							jen.Id("frp").Op(":=").Id(fieldResolverParamsName).Values(jen.Dict{
+								jen.Id("ResolveParams"): jen.Id("p"),
+							}),
+							jen.Id("err").Op(":=").Qual(mapstructurePkg, "Decode").Call(
+								jen.Id("p.Args"),
+								jen.Op("&").Id("frp.Args"),
+							),
+							jen.If(jen.Id("err").Op("!=").Nil()).Block(
+								jen.Return(jen.List(jen.Nil(), jen.Id("err"))),
+							),
+							jen.Line(),
+							jen.Return(jen.Id("resolver."+fieldName).Call(jen.Id("frp"))),
 						),
-						jen.If(jen.Id("err").Op("!=").Nil()).Block(
-							jen.Return(jen.List(jen.Nil(), jen.Id("err"))),
-						),
-						jen.Line(),
-						jen.Return(jen.Lit("resolver."+fieldName).Call(jen.Lit("frp"))),
-					)
+				)
 			} else {
 				g.Return(jen.Id("resolver." + fieldName))
 			}

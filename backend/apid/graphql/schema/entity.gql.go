@@ -186,47 +186,65 @@ type EntityAliases struct{}
 
 // ID implements response to request for 'id' field.
 func (_ EntityAliases) ID(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ EntityAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Class implements response to request for 'class' field.
 func (_ EntityAliases) Class(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // System implements response to request for 'system' field.
 func (_ EntityAliases) System(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
 func (_ EntityAliases) Subscriptions(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // LastSeen implements response to request for 'lastSeen' field.
 func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 // Deregister implements response to request for 'deregister' field.
 func (_ EntityAliases) Deregister(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // Deregistration implements response to request for 'deregistration' field.
 func (_ EntityAliases) Deregistration(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 // KeepaliveTimeout implements response to request for 'keepaliveTimeout' field.
 func (_ EntityAliases) KeepaliveTimeout(p graphql.ResolveParams) (int, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
 }
 
 /*
@@ -236,8 +254,8 @@ Event is the running Agent process--if the Event is sent by an Agent.
 var EntityType = graphql.NewType("Entity", graphql.ObjectKind)
 
 // RegisterEntity registers Entity object type with given service.
-func RegisterEntity(svc graphql.Service, impl EntityFieldResolvers) {
-	svc.RegisterObject(_ObjTypeEntityDesc, impl)
+func RegisterEntity(svc *graphql.Service, impl EntityFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeEntityDesc, impl)
 }
 func _ObjTypeEntityIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityIDFieldResolver)
@@ -284,7 +302,7 @@ func _ObjTypeEntityKeepaliveTimeoutHandler(impl interface{}) graphql1.FieldResol
 	return resolver.KeepaliveTimeout
 }
 
-func _ObjTypeEntityConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
 		Fields: graphql1.Fields{
@@ -366,18 +384,18 @@ func _ObjTypeEntityConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Entity's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeEntityDesc = graphql.ObjectDesc{
-	Config: _ObjTypeEntityConfigFn,
+var _ObjectTypeEntityDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Class":            _ObjTypeEntityClassHandler,
-		"Deregister":       _ObjTypeEntityDeregisterHandler,
-		"Deregistration":   _ObjTypeEntityDeregistrationHandler,
-		"ID":               _ObjTypeEntityIDHandler,
-		"KeepaliveTimeout": _ObjTypeEntityKeepaliveTimeoutHandler,
-		"LastSeen":         _ObjTypeEntityLastSeenHandler,
-		"Namespace":        _ObjTypeEntityNamespaceHandler,
-		"Subscriptions":    _ObjTypeEntitySubscriptionsHandler,
-		"System":           _ObjTypeEntitySystemHandler,
+		"class":            _ObjTypeEntityClassHandler,
+		"deregister":       _ObjTypeEntityDeregisterHandler,
+		"deregistration":   _ObjTypeEntityDeregistrationHandler,
+		"id":               _ObjTypeEntityIDHandler,
+		"keepaliveTimeout": _ObjTypeEntityKeepaliveTimeoutHandler,
+		"lastSeen":         _ObjTypeEntityLastSeenHandler,
+		"namespace":        _ObjTypeEntityNamespaceHandler,
+		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
+		"system":           _ObjTypeEntitySystemHandler,
 	},
 }
 
@@ -539,32 +557,44 @@ type SystemAliases struct{}
 
 // Hostname implements response to request for 'hostname' field.
 func (_ SystemAliases) Hostname(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Os implements response to request for 'os' field.
 func (_ SystemAliases) Os(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Platform implements response to request for 'platform' field.
 func (_ SystemAliases) Platform(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // PlatformFamily implements response to request for 'platformFamily' field.
 func (_ SystemAliases) PlatformFamily(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // PlatformVersion implements response to request for 'platformVersion' field.
 func (_ SystemAliases) PlatformVersion(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Network implements response to request for 'network' field.
 func (_ SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 /*
@@ -574,8 +604,8 @@ is running on, used for additional Entity context.
 var SystemType = graphql.NewType("System", graphql.ObjectKind)
 
 // RegisterSystem registers System object type with given service.
-func RegisterSystem(svc graphql.Service, impl SystemFieldResolvers) {
-	svc.RegisterObject(_ObjTypeSystemDesc, impl)
+func RegisterSystem(svc *graphql.Service, impl SystemFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeSystemDesc, impl)
 }
 func _ObjTypeSystemHostnameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemHostnameFieldResolver)
@@ -607,7 +637,7 @@ func _ObjTypeSystemNetworkHandler(impl interface{}) graphql1.FieldResolveFn {
 	return resolver.Network
 }
 
-func _ObjTypeSystemConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "System contains information about the system that the Agent process\nis running on, used for additional Entity context.",
 		Fields: graphql1.Fields{
@@ -668,15 +698,15 @@ func _ObjTypeSystemConfigFn() graphql1.ObjectConfig {
 }
 
 // describe System's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeSystemDesc = graphql.ObjectDesc{
-	Config: _ObjTypeSystemConfigFn,
+var _ObjectTypeSystemDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeSystemConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Hostname":        _ObjTypeSystemHostnameHandler,
-		"Network":         _ObjTypeSystemNetworkHandler,
-		"Os":              _ObjTypeSystemOsHandler,
-		"Platform":        _ObjTypeSystemPlatformHandler,
-		"PlatformFamily":  _ObjTypeSystemPlatformFamilyHandler,
-		"PlatformVersion": _ObjTypeSystemPlatformVersionHandler,
+		"hostname":        _ObjTypeSystemHostnameHandler,
+		"network":         _ObjTypeSystemNetworkHandler,
+		"os":              _ObjTypeSystemOsHandler,
+		"platform":        _ObjTypeSystemPlatformHandler,
+		"platformFamily":  _ObjTypeSystemPlatformFamilyHandler,
+		"platformVersion": _ObjTypeSystemPlatformVersionHandler,
 	},
 }
 
@@ -803,7 +833,9 @@ type NetworkAliases struct{}
 
 // Interfaces implements response to request for 'interfaces' field.
 func (_ NetworkAliases) Interfaces(p graphql.ResolveParams) (interface{}, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
 }
 
 /*
@@ -814,15 +846,15 @@ context.
 var NetworkType = graphql.NewType("Network", graphql.ObjectKind)
 
 // RegisterNetwork registers Network object type with given service.
-func RegisterNetwork(svc graphql.Service, impl NetworkFieldResolvers) {
-	svc.RegisterObject(_ObjTypeNetworkDesc, impl)
+func RegisterNetwork(svc *graphql.Service, impl NetworkFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeNetworkDesc, impl)
 }
 func _ObjTypeNetworkInterfacesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NetworkInterfacesFieldResolver)
 	return resolver.Interfaces
 }
 
-func _ObjTypeNetworkConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeNetworkConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Network contains information about the system network interfaces\nthat the Agent process is running on, used for additional Entity\ncontext.",
 		Fields: graphql1.Fields{"interfaces": &graphql1.Field{
@@ -846,9 +878,9 @@ func _ObjTypeNetworkConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Network's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeNetworkDesc = graphql.ObjectDesc{
-	Config:        _ObjTypeNetworkConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"Interfaces": _ObjTypeNetworkInterfacesHandler},
+var _ObjectTypeNetworkDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeNetworkConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"interfaces": _ObjTypeNetworkInterfacesHandler},
 }
 
 // NetworkInterfaceNameFieldResolver implement to resolve requests for the NetworkInterface's name field.
@@ -988,17 +1020,23 @@ type NetworkInterfaceAliases struct{}
 
 // Name implements response to request for 'name' field.
 func (_ NetworkInterfaceAliases) Name(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Mac implements response to request for 'mac' field.
 func (_ NetworkInterfaceAliases) Mac(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // Addresses implements response to request for 'addresses' field.
 func (_ NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 /*
@@ -1008,8 +1046,8 @@ interface.
 var NetworkInterfaceType = graphql.NewType("NetworkInterface", graphql.ObjectKind)
 
 // RegisterNetworkInterface registers NetworkInterface object type with given service.
-func RegisterNetworkInterface(svc graphql.Service, impl NetworkInterfaceFieldResolvers) {
-	svc.RegisterObject(_ObjTypeNetworkInterfaceDesc, impl)
+func RegisterNetworkInterface(svc *graphql.Service, impl NetworkInterfaceFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeNetworkInterfaceDesc, impl)
 }
 func _ObjTypeNetworkInterfaceNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NetworkInterfaceNameFieldResolver)
@@ -1026,7 +1064,7 @@ func _ObjTypeNetworkInterfaceAddressesHandler(impl interface{}) graphql1.FieldRe
 	return resolver.Addresses
 }
 
-func _ObjTypeNetworkInterfaceConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeNetworkInterfaceConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "NetworkInterface contains information about a system network\ninterface.",
 		Fields: graphql1.Fields{
@@ -1066,12 +1104,12 @@ func _ObjTypeNetworkInterfaceConfigFn() graphql1.ObjectConfig {
 }
 
 // describe NetworkInterface's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeNetworkInterfaceDesc = graphql.ObjectDesc{
-	Config: _ObjTypeNetworkInterfaceConfigFn,
+var _ObjectTypeNetworkInterfaceDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeNetworkInterfaceConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"Addresses": _ObjTypeNetworkInterfaceAddressesHandler,
-		"Mac":       _ObjTypeNetworkInterfaceMacHandler,
-		"Name":      _ObjTypeNetworkInterfaceNameHandler,
+		"addresses": _ObjTypeNetworkInterfaceAddressesHandler,
+		"mac":       _ObjTypeNetworkInterfaceMacHandler,
+		"name":      _ObjTypeNetworkInterfaceNameHandler,
 	},
 }
 
@@ -1198,22 +1236,24 @@ type DeregistrationAliases struct{}
 
 // Handler implements response to request for 'handler' field.
 func (_ DeregistrationAliases) Handler(p graphql.ResolveParams) (string, error) {
-	return graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
 }
 
 // DeregistrationType Deregistration contains configuration for Sensu entity de-registration.
 var DeregistrationType = graphql.NewType("Deregistration", graphql.ObjectKind)
 
 // RegisterDeregistration registers Deregistration object type with given service.
-func RegisterDeregistration(svc graphql.Service, impl DeregistrationFieldResolvers) {
-	svc.RegisterObject(_ObjTypeDeregistrationDesc, impl)
+func RegisterDeregistration(svc *graphql.Service, impl DeregistrationFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeDeregistrationDesc, impl)
 }
 func _ObjTypeDeregistrationHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(DeregistrationHandlerFieldResolver)
 	return resolver.Handler
 }
 
-func _ObjTypeDeregistrationConfigFn() graphql1.ObjectConfig {
+func _ObjectTypeDeregistrationConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Deregistration contains configuration for Sensu entity de-registration.",
 		Fields: graphql1.Fields{"handler": &graphql1.Field{
@@ -1237,7 +1277,7 @@ func _ObjTypeDeregistrationConfigFn() graphql1.ObjectConfig {
 }
 
 // describe Deregistration's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjTypeDeregistrationDesc = graphql.ObjectDesc{
-	Config:        _ObjTypeDeregistrationConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"Handler": _ObjTypeDeregistrationHandlerHandler},
+var _ObjectTypeDeregistrationDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeDeregistrationConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"handler": _ObjTypeDeregistrationHandlerHandler},
 }
