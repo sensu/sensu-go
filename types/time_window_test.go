@@ -156,8 +156,8 @@ func TestInWindows(t *testing.T) {
 				Days: TimeWindowDays{
 					All: []*TimeWindowTimeRange{
 						&TimeWindowTimeRange{
-							Begin: "12:00 AM",
-							End:   "11:59 PM",
+							Begin: "10:00AM",
+							End:   "11:00AM",
 						},
 						&TimeWindowTimeRange{
 							Begin: "11:00 PM",
