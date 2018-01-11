@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed check subdue unit test for token substitution on Windows
 - Consider the first and last seconds of a time window when comparing the
   current time
+- Fixed Travis deploy stage by removing caching for $GOPATH
 
 ## [2.0.0-alpha.12] - 2018-01-09
 ### Added
