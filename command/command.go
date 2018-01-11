@@ -110,11 +110,13 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 
 	// Kill process and all of its children when timeout has expired
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
-		if runtime.GOOS != "windows" {
-			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		}
-	})
+	if execution.Timeout != 0 {
+		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
+			if runtime.GOOS != "windows" {
+				syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			}
+		})
+	}
 	err := cmd.Run()
 
 	execution.Output = output.String()
