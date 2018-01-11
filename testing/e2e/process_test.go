@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"testing"
 
 	"github.com/sensu/sensu-go/testing/testutil"
 )
@@ -28,23 +29,56 @@ type backendProcess struct {
 	EtcdName                string
 	EtcdInitialClusterToken string
 
+	HTTPURL string
+	WSURL   string
+
 	Stdout io.Reader
 	Stderr io.Reader
 
 	cmd *exec.Cmd
 }
 
+// newBackend abstracts the initialization of a backend process and returns a
+// ready-to-use backend or exit with a fatal error if an error occurred while
+// initializing it
+func newBackend(t *testing.T) (*backendProcess, func()) {
+	backend, cleanup := newBackendProcess(t)
+
+	if err := backend.Start(); err != nil {
+		cleanup()
+		t.Fatal(err)
+	}
+
+	// Set the HTTP & WS URLs
+	backend.HTTPURL = fmt.Sprintf("http://127.0.0.1:%d", backend.APIPort)
+	backend.WSURL = fmt.Sprintf("ws://127.0.0.1:%d/", backend.AgentPort)
+
+	// Make sure the backend is ready
+	isOnline := waitForBackend(backend.HTTPURL)
+	if !isOnline {
+		cleanup()
+		t.Fatal("the backend never became ready in a timely fashion")
+	}
+
+	return backend, func() {
+		cleanup()
+		if err := backend.Kill(); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 // newBackendProcess initializes a backendProcess struct
-func newBackendProcess() (*backendProcess, func()) {
+func newBackendProcess(t *testing.T) (*backendProcess, func()) {
 	ports := make([]int, 5)
 	err := testutil.RandomPorts(ports)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
 	if err != nil {
-		log.Panic(err)
+		t.Fatal(err)
 	}
 
 	etcdClientURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
@@ -69,7 +103,7 @@ func newBackendProcess() (*backendProcess, func()) {
 		EtcdName:                "default",
 	}
 
-	return bep, func() { os.RemoveAll(tmpDir) }
+	return bep, func() { _ = os.RemoveAll(tmpDir) }
 }
 
 // Start starts a backend process as configured. All exported variables in
@@ -133,10 +167,7 @@ func (b *backendProcess) Kill() error {
 }
 
 type agentProcess struct {
-	BackendURLs []string
-	AgentID     string
-	APIPort     int
-	SocketPort  int
+	agentConfig
 
 	Stdout io.Reader
 	Stderr io.Reader
@@ -144,26 +175,72 @@ type agentProcess struct {
 	cmd *exec.Cmd
 }
 
-func (a *agentProcess) Start() error {
+type agentConfig struct {
+	ID               string
+	BackendURLs      []string
+	APIPort          int
+	SocketPort       int
+	CustomAttributes string
+}
+
+// newAgent abstracts the initialization of an agent process and returns a
+// ready-to-use agent or exit with a fatal error if an error occurred while
+// initializing it
+func newAgent(config agentConfig, sensuctl *sensuCtl, t *testing.T) (*agentProcess, func()) {
+	agent := &agentProcess{agentConfig: config}
+
+	// Start the agent
+	if err := agent.Start(t); err != nil {
+		t.Fatal(err)
+	}
+
+	// Wait for the agent to send its first keepalive so we are sure it's
+	// connected to the backend
+	if ready := waitForAgent(agent.ID, sensuctl); !ready {
+		t.Fatal("the backend never received a keepalive from the agent")
+	}
+
+	return agent, func() {
+		if err := agent.Kill(); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func (a *agentProcess) Start(t *testing.T) error {
 	port := make([]int, 2)
 	err := testutil.RandomPorts(port)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	a.APIPort = port[0]
 	a.SocketPort = port[1]
 
-	cmd := exec.Command(
-		agentPath, "start",
-		"--backend-url", a.BackendURLs[0],
-		"--backend-url", a.BackendURLs[1],
-		"--id", a.AgentID,
+	args := []string{
+		"start",
+		"--id", a.ID,
 		"--subscriptions", "test",
 		"--environment", "default",
 		"--organization", "default",
 		"--api-port", strconv.Itoa(port[0]),
 		"--socket-port", strconv.Itoa(port[1]),
-	)
+		"--keepalive-interval", "1",
+	}
+
+	// Support a single or multiple backend URLs
+	// backendURLs := []string{}
+	for _, url := range a.BackendURLs {
+		args = append(args, "--backend-url")
+		args = append(args, url)
+	}
+
+	// Support custom attributes
+	if a.CustomAttributes != "" {
+		args = append(args, "--custom-attributes")
+		args = append(args, a.CustomAttributes)
+	}
+
+	cmd := exec.Command(agentPath, args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -206,6 +283,7 @@ func (a *agentProcess) Kill() error {
 
 type sensuCtl struct {
 	ConfigDir string
+	stdin     io.Reader
 }
 
 // newSensuCtl initializes a sensuctl
@@ -217,10 +295,11 @@ func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
 
 	ctl := &sensuCtl{
 		ConfigDir: tmpDir,
+		stdin:     os.Stdin,
 	}
 
 	// Authenticate sensuctl
-	ctl.run("configure",
+	_, err = ctl.run("configure",
 		"-n",
 		"--url", apiURL,
 		"--username", user,
@@ -229,8 +308,11 @@ func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
 		"--organization", org,
 		"--environment", env,
 	)
+	if err != nil {
+		log.Panic(err)
+	}
 
-	return ctl, func() { os.RemoveAll(tmpDir) }
+	return ctl, func() { _ = os.RemoveAll(tmpDir) }
 }
 
 // run executes the sensuctl binary with the provided arguments
@@ -238,10 +320,16 @@ func (s *sensuCtl) run(args ...string) ([]byte, error) {
 	// Make sure we point to our temporary config directory
 	args = append([]string{"--config-dir", s.ConfigDir}, args...)
 
-	out, err := exec.Command(sensuctlPath, args...).CombinedOutput()
+	cmd := exec.Command(sensuctlPath, args...)
+	cmd.Stdin = s.stdin
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return out, err
 	}
 
 	return out, nil
+}
+
+func (s *sensuCtl) SetStdin(r io.Reader) {
+	s.stdin = r
 }

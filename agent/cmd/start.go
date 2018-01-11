@@ -41,6 +41,7 @@ const (
 	flagAPIPort               = "api-port"
 	flagSocketHost            = "socket-host"
 	flagSocketPort            = "socket-port"
+	flagExtendedAttributes    = "custom-attributes"
 )
 
 func init() {
@@ -88,7 +89,9 @@ func newStartCommand() *cobra.Command {
 		Use:   "start",
 		Short: "start the sensu agent",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			viper.BindPFlags(cmd.Flags())
+			if err := viper.BindPFlags(cmd.Flags()); err != nil {
+				return err
+			}
 			if setupErr != nil {
 				return setupErr
 			}
@@ -108,6 +111,7 @@ func newStartCommand() *cobra.Command {
 			cfg.API.Port = viper.GetInt(flagAPIPort)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
 			cfg.Socket.Port = viper.GetInt(flagSocketPort)
+			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
@@ -146,9 +150,9 @@ func newStartCommand() *cobra.Command {
 
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
-	configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-agent config file")
+	_ = configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-agent config file")
 	configFlagSet.SetOutput(ioutil.Discard)
-	configFlagSet.Parse(os.Args[1:])
+	_ = configFlagSet.Parse(os.Args[1:])
 
 	// Get the given config file path
 	configFile, _ := configFlagSet.GetString(flagConfigFile)
@@ -201,7 +205,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
 	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
-
+	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "custom attributes to include in the agent entity")
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err

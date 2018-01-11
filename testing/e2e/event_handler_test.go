@@ -3,7 +3,6 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -12,46 +11,27 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Test check event creation -> event handler.
 func TestEventHandler(t *testing.T) {
+	t.Parallel()
+
 	// Start the backend
-	bep, cleanup := newBackendProcess()
+	backend, cleanup := newBackend(t)
 	defer cleanup()
 
-	err := bep.Start()
-	if err != nil {
-		log.Panic(err)
-	}
-
-	backendWSURL := fmt.Sprintf("ws://127.0.0.1:%d/", bep.AgentPort)
-	backendHTTPURL := fmt.Sprintf("http://127.0.0.1:%d", bep.APIPort)
-
-	// Make sure the backend is available
-	backendIsOnline := waitForBackend(backendHTTPURL)
-	assert.True(t, backendIsOnline)
-
-	// Configure the agent
-	ap := &agentProcess{
-		// testing the StringSlice for backend-url and the backend selector.
-		BackendURLs: []string{backendWSURL, backendWSURL},
-		AgentID:     "TestEventHandler",
-	}
-
-	err = ap.Start()
-	assert.NoError(t, err)
-
-	defer func() {
-		bep.Kill()
-		ap.Kill()
-	}()
-
-	// Give it a second to make sure we've sent a keepalive.
-	time.Sleep(5 * time.Second)
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backendHTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	defer cleanup()
+
+	// Start the agent
+	agentConfig := agentConfig{
+		ID:          "TestEventHandler",
+		BackendURLs: []string{backend.WSURL},
+	}
+	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
 	handlerJSONFile := fmt.Sprintf("%s/TestEventHandler%v", os.TempDir(), os.Getpid())
@@ -96,11 +76,11 @@ func TestEventHandler(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// There should be a stored event
-	output, err = sensuctl.run("event", "info", ap.AgentID, check.Name)
+	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
 	assert.NoError(t, err, string(output))
 
 	event := types.Event{}
-	json.Unmarshal(output, &event)
+	require.NoError(t, json.Unmarshal(output, &event))
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)

@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSyncronizeChecks(t *testing.T) {
@@ -23,7 +24,7 @@ func TestSyncronizeChecks(t *testing.T) {
 			assert.Len(res, 1)
 		},
 	}
-	sync.Sync()
+	require.NoError(t, sync.Sync())
 }
 
 func TestSyncronizeAssets(t *testing.T) {
@@ -40,7 +41,7 @@ func TestSyncronizeAssets(t *testing.T) {
 			assert.Len(res, 1)
 		},
 	}
-	sync.Sync()
+	require.NoError(t, sync.Sync())
 }
 
 func TestSyncronizeHooks(t *testing.T) {
@@ -57,7 +58,7 @@ func TestSyncronizeHooks(t *testing.T) {
 			assert.Len(res, 1)
 		},
 	}
-	sync.Sync()
+	require.NoError(t, sync.Sync())
 }
 
 func TestSyncScheduler(t *testing.T) {

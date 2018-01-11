@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteCommand(t *testing.T) {
@@ -27,8 +28,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
-	cmd.Flags().Set("timeout", "15")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
@@ -43,7 +43,7 @@ func TestDeleteCommandRunEClosureMissingFlags(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotContains(out, "OK")
@@ -59,7 +59,7 @@ func TestDeleteCommandRunEClosureTooManyFlags(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 
 	out, err := test.RunCmd(cmd, []string{"one", "two"})
 
@@ -76,7 +76,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"my-ID"})
 
 	assert.Regexp("OK", out)
@@ -91,7 +91,7 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"test-handler"})
 
 	assert.Empty(out)

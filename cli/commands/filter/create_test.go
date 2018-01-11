@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -27,7 +28,7 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("action", "allow")
+	require.NoError(t, cmd.Flags().Set("action", "allow"))
 	out, err := test.RunCmd(cmd, []string{"echo 'heyhey'"})
 
 	assert.Empty(out)
@@ -42,8 +43,8 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	client.On("CreateFilter", mock.AnythingOfType("*types.EventFilter")).Return(nil)
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("action", "allow")
-	cmd.Flags().Set("statements", "10 > 0")
+	require.NoError(t, cmd.Flags().Set("action", "allow"))
+	require.NoError(t, cmd.Flags().Set("statements", "10 > 0"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
 	assert.Regexp("OK", out)
@@ -58,8 +59,8 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateFilter", mock.AnythingOfType("*types.EventFilter")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
-	cmd.Flags().Set("action", "allow")
-	cmd.Flags().Set("statements", "10 > 0")
+	require.NoError(t, cmd.Flags().Set("action", "allow"))
+	require.NoError(t, cmd.Flags().Set("statements", "10 > 0"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
 	assert.Empty(out)

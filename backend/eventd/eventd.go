@@ -153,6 +153,12 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
+	// Handle expire on resolve silenced entries
+	err = handleExpireOnResolveEntries(ctx, event, e.Store)
+	if err != nil {
+		return err
+	}
+
 	err = e.Store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
@@ -164,11 +170,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 // Stop eventd.
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
-	e.MessageBus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
+	err := e.MessageBus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()
-	return nil
+	return err
 }
 
 // Status returns an error if eventd is unhealthy.

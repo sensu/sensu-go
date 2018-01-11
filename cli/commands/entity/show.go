@@ -3,7 +3,6 @@ package entity
 import (
 	"io"
 	"strings"
-	"time"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -21,8 +20,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			// Fetch handlers from API
@@ -73,7 +71,7 @@ func printEntityToList(r *types.Entity, writer io.Writer) {
 			},
 			{
 				Label: "Last Seen",
-				Value: time.Unix(r.LastSeen, 0).String(),
+				Value: helpers.HumanTimestamp(r.LastSeen),
 			},
 			{
 				Label: "Hostname",

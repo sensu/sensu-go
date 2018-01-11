@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/go-resty/resty"
 	"github.com/sensu/sensu-go/cli/client/config"
-	resty "gopkg.in/resty.v0"
 )
 
 var logger *logrus.Entry
@@ -111,7 +111,9 @@ func New(config config.Config) *RestClient {
 
 	// logging
 	w := logger.Writer()
-	defer w.Close()
+	defer func() {
+		_ = w.Close()
+	}()
 	restyInst.SetLogger(w)
 
 	return client

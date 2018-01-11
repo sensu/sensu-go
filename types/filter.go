@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Knetic/govaluate"
+	"github.com/sensu/govaluate"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 

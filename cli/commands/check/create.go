@@ -64,17 +64,18 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("command", "c", "", "the command the check should run")
 	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
+	cmd.Flags().StringP("cron", "", "", "the cron schedule at which the check is run")
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
-	cmd.Flags().String("source", "", "the check source, used to create a proxy entity for an external resource")
+	cmd.Flags().String("proxy-entity-id", "", "the check proxy entity, used to create a proxy entity for an external resource")
 	cmd.Flags().BoolP("publish", "p", true, "publish check requests")
 	cmd.Flags().BoolP("stdin", "", false, "accept event data via STDIN")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("command")
-	cmd.MarkFlagRequired("interval")
-	cmd.MarkFlagRequired("subscriptions")
+	_ = cmd.MarkFlagRequired("command")
+	_ = cmd.MarkFlagRequired("interval")
+	_ = cmd.MarkFlagRequired("subscriptions")
 
 	return cmd
 }

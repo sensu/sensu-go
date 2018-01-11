@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -21,6 +22,7 @@ import (
 	"github.com/coreos/etcd/embed"
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/coreos/pkg/capnslog"
+	"google.golang.org/grpc/grpclog"
 )
 
 const (
@@ -42,6 +44,10 @@ const (
 	// ClusterStateExisting specifies ths is an existing etcd cluster
 	ClusterStateExisting = "existing"
 )
+
+func init() {
+	clientv3.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+}
 
 // Config is a configuration for the embedded etcd
 type Config struct {
@@ -146,7 +152,9 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		if err != nil {
 			return nil, err
 		}
-		l.Close()
+		if err := l.Close(); err != nil {
+			logger.Error(err)
+		}
 
 		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
 		if err != nil {

@@ -16,8 +16,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print ot usage if we do not receive one argument
 			if len(args) != 1 {
-				cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			// Fetch handlers from API

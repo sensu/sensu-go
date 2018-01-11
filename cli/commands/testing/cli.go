@@ -51,7 +51,7 @@ func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	}
 
 	defer func() {
-		os.Remove(tmpFile.Name())
+		_ = os.Remove(tmpFile.Name())
 	}()
 
 	cmd.SetOutput(tmpFile)
@@ -64,7 +64,7 @@ func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	}
 
 	// Close the file so that we can read from it
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	// Store the contents of the reader as a string
 	bytes, _ := ioutil.ReadFile(tmpFile.Name())

@@ -7,6 +7,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReportHasWarnings(t *testing.T) {
@@ -70,7 +71,7 @@ func TestReportFlush(t *testing.T) {
 	report := genReport(logrus.DebugLevel)
 	assert.Len(report.entries, 4, "All configured entries are present in report")
 
-	report.Flush()
+	require.NoError(t, report.Flush())
 	assert.Len(report.entries, 0, "All configured entries have been flushed from report")
 	assert.NotEmpty(out.result, "Flush should have written to configured io.Writer")
 	assert.Len(strings.Split(out.result, "\n"), 5, "All entries have been written to configured io.Writer")
@@ -79,7 +80,7 @@ func TestReportFlush(t *testing.T) {
 	assert.Len(report.entries, 4, "All configured entries are present in report")
 
 	out.Clean()
-	report.Flush()
+	require.NoError(t, report.Flush())
 	assert.Len(strings.Split(out.result, "\n"), 4, "All entries have been written to configured io.Writer except debug entry")
 }
 

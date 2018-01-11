@@ -59,7 +59,7 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	client.On("FetchSilenced", mock.Anything).Return(types.FixtureSilenced("foo:bar"), nil)
 
 	cmd := InfoCommand(cli)
-	cmd.Flags().Set("format", "tabular")
+	require.NoError(t, cmd.Flags().Set("format", "tabular"))
 
 	out, err := test.RunCmd(cmd, []string{"foo:bar"})
 	require.NoError(t, err)

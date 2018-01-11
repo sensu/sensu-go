@@ -66,8 +66,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	)
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("action")
-	cmd.MarkFlagRequired("statements")
+	_ = cmd.MarkFlagRequired("action")
+	_ = cmd.MarkFlagRequired("statements")
 
 	return cmd
 }

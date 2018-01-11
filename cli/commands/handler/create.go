@@ -40,7 +40,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			if err := handler.Validate(); err != nil {
 				if !isInteractive {
-					cmd.Help()
+					_ = cmd.Help()
+					return nil
 				}
 				return err
 			}

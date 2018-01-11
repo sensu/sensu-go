@@ -45,7 +45,6 @@
 		EventFilter
 		Handler
 		HandlerSocket
-		HookRequest
 		HookConfig
 		Hook
 		HookList

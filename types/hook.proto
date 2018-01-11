@@ -12,12 +12,6 @@ option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 option (gogoproto.testgen_all) = true;
 
-// A HookRequest represents a request to execute a hook
-message HookRequest {
-	// Config is the specification of a hook.
-	HookConfig config = 1 [(gogoproto.nullable) = true];
-}
-
 // HookConfig is the specification of a hook
 message HookConfig {
 	// Name is the unique identifier for a hook

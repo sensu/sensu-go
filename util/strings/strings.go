@@ -15,3 +15,15 @@ func InArray(item string, array []string) bool {
 
 	return false
 }
+
+// Remove searches 'array' for 'item' string
+// and removes the string if found
+func Remove(item string, array []string) []string {
+	for i, v := range array {
+		if v == item {
+			array = append(array[:i], array[i+1:]...)
+			break
+		}
+	}
+	return array
+}

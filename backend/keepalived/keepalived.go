@@ -119,9 +119,9 @@ func (k *Keepalived) Stop() error {
 	for _, monitor := range k.monitors {
 		go monitor.Stop()
 	}
-	k.MessageBus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
+	err := k.MessageBus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
 	close(k.errChan)
-	return nil
+	return err
 }
 
 // Status returns nil if the Daemon is healthy, otherwise it returns an error.
@@ -196,6 +196,11 @@ func (k *Keepalived) processKeepalives() {
 		}
 
 		entity := event.Entity
+		if entity == nil {
+			logger.Error("received keepalive with nil entity")
+			continue
+		}
+
 		if err := entity.Validate(); err != nil {
 			logger.WithError(err).Error("invalid keepalive event")
 			continue
@@ -235,10 +240,10 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 
 	if fetchedEntity == nil {
 		event := createRegistrationEvent(entity)
-		k.MessageBus.Publish(messaging.TopicEvent, event)
+		err = k.MessageBus.Publish(messaging.TopicEvent, event)
 	}
 
-	return nil
+	return err
 }
 
 // startMonitorSweeper spins off into oblivion if Keepalived is stopped until

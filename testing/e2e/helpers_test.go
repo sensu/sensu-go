@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/cli/client/config/basic"
 )
 
+// newSensuClient is deprecated, newSensuCtl should be used instead
 func newSensuClient(backendHTTPURL string) *client.RestClient {
 	config := &basic.Config{
 		Cluster: basic.Cluster{
@@ -23,6 +24,21 @@ func newSensuClient(backendHTTPURL string) *client.RestClient {
 	return client
 }
 
+func waitForAgent(id string, sensuctl *sensuCtl) bool {
+	for i := 0; i < 10; i++ {
+		_, err := sensuctl.run("event", "info", id, "keepalive")
+		if err != nil {
+			log.Println("keepalive not received, sleeping...")
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		log.Println("agent ready")
+		return true
+	}
+	return false
+}
+
 func waitForBackend(url string) bool {
 	for i := 0; i < 10; i++ {
 		resp, getErr := http.Get(fmt.Sprintf("%s/health", url))
@@ -31,7 +47,7 @@ func waitForBackend(url string) bool {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if resp.StatusCode != 200 && resp.StatusCode != 401 {
 			log.Printf("backend returned non-200/401 status code: %d\n", resp.StatusCode)

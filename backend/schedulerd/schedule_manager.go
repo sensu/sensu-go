@@ -19,19 +19,22 @@ type ScheduleManager struct {
 	newSchedulerFn func(check *types.CheckConfig) *CheckScheduler
 }
 
-// NewScheduleManager ...
+// NewScheduleManager creates a new ScheduleManager.
 func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *ScheduleManager {
 	wg := &sync.WaitGroup{}
 	stopped := &atomic.Value{}
 
 	newSchedulerFn := func(check *types.CheckConfig) *CheckScheduler {
 		return &CheckScheduler{
-			CheckName:    check.Name,
-			CheckEnv:     check.Environment,
-			CheckOrg:     check.Organization,
-			MessageBus:   msgBus,
-			WaitGroup:    wg,
-			StateManager: stateMngr,
+			CheckName:     check.Name,
+			CheckEnv:      check.Environment,
+			CheckOrg:      check.Organization,
+			CheckInterval: check.Interval,
+			CheckCron:     check.Cron,
+			LastCronState: check.Cron,
+			MessageBus:    msgBus,
+			WaitGroup:     wg,
+			StateManager:  stateMngr,
 		}
 	}
 
@@ -47,7 +50,9 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 	// Listen to state updates and add schedulers if necassarily
 	stateMngr.OnChecksChange = func(state *SchedulerState) {
 		for _, check := range state.checks {
-			manager.Run(check)
+			if err := manager.Run(check); err != nil {
+				logger.Error(err)
+			}
 		}
 	}
 
@@ -76,7 +81,7 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 	scheduler := mngrPtr.newSchedulerFn(check)
 
 	// Start scheduling check
-	if err := scheduler.Start(uint(check.Interval)); err != nil {
+	if err := scheduler.Start(); err != nil {
 		return err
 	}
 
@@ -99,7 +104,9 @@ func (mngrPtr *ScheduleManager) Stop() {
 
 	for n, scheduler := range mngrPtr.items {
 		delete(mngrPtr.items, n)
-		scheduler.Stop()
+		if err := scheduler.Stop(); err != nil {
+			logger.Debug(err)
+		}
 	}
 
 	mngrPtr.wg.Wait()

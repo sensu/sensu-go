@@ -45,7 +45,6 @@ It has these top-level messages:
 	EventFilter
 	Handler
 	HandlerSocket
-	HookRequest
 	HookConfig
 	Hook
 	HookList

@@ -33,9 +33,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			helpers.Print(cmd, cli.Config.Format(), printToTable, results)
-
-			return nil
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, results)
 		},
 	}
 
@@ -68,6 +66,13 @@ func printToTable(results interface{}, writer io.Writer) {
 				check, _ := data.(types.CheckConfig)
 				interval := strconv.FormatUint(uint64(check.Interval), 10)
 				return interval
+			},
+		},
+		{
+			Title: "Cron",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				return check.Cron
 			},
 		},
 		{

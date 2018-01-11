@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteCommand(t *testing.T) {
@@ -15,7 +16,7 @@ func TestDeleteCommand(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
@@ -42,7 +43,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("DeleteFilter", mock.AnythingOfType("*types.EventFilter")).Return(nil)
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	assert.Regexp("OK", out)
@@ -57,7 +58,7 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("DeleteFilter", mock.AnythingOfType("*types.EventFilter")).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
-	cmd.Flags().Set("skip-confirm", "t")
+	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	assert.Empty(out)

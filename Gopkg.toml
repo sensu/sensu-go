@@ -1,0 +1,173 @@
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+
+required = ["github.com/shirou/w32"]
+
+[[constraint]]
+  name = "github.com/AlecAivazis/survey"
+  version = "1.4.1"
+
+# https://github.com/Knetic/govaluate/issues/61
+[[constraint]]
+  name = "github.com/sensu/govaluate"
+  branch = "nested-parameters"
+
+[[constraint]]
+  name = "github.com/Sirupsen/logrus"
+  version = "1.0.3"
+
+[[constraint]]
+  name = "github.com/bluele/slack"
+  revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
+
+[[constraint]]
+  name = "github.com/cenkalti/backoff"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/chzyer/readline"
+  version = "1.4.0"
+
+[[constraint]]
+  name = "github.com/coreos/pkg"
+  version = "3.0.0"
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  version = "3.0.0"
+
+[[constraint]]
+  name = "github.com/docker/docker"
+  version = "1.13.1"
+
+[[constraint]]
+  name = "github.com/google/uuid"
+  version = "0.2.0"
+
+[[constraint]]
+  name = "github.com/gorilla/mux"
+  version = "1.5.0"
+
+[[constraint]]
+  name = "github.com/gorilla/websocket"
+  version = "1.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/mgutz/ansi"
+
+[[constraint]]
+  name = "github.com/mholt/archiver"
+  version = "2.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/mitchellh/go-homedir"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/nightlyone/lockfile"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/olekukonko/tablewriter"
+
+[[constraint]]
+  name = "github.com/shirou/gopsutil"
+  version = "2.17.8"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/spf13/cobra"
+
+[[constraint]]
+  name = "github.com/spf13/pflag"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/willf/pad"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[constraint]]
+  name = "gopkg.in/h2non/filetype.v1"
+  version = "1.0.3"
+
+[[constraint]]
+  name = "github.com/go-resty/resty"
+  version = "1.0"
+
+# Lock etcd and some of it's dependencies
+[[override]]
+  name = "github.com/ugorji/go"
+  branch = "master"
+
+# Lock etcd and some of it's dependencies
+[[override]]
+  name = "google.golang.org/grpc"
+  revision = "9a2334748bab9638f1480ad4f0ac6ac0c6c3a486"
+
+# Lock etcd and some of it's dependencies
+[[override]]
+  name = "github.com/grpc-ecosystem/grpc-gateway"
+  revision = "8cc3a55af3bcf171a1c23a90c4df9cf591706104"
+
+# Lock etcd and some of it's dependencies
+[[override]]
+  name = "github.com/coreos/bbolt"
+  revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
+
+# Locked for Windows
+[[override]]
+  name = "github.com/StackExchange/wmi"
+  revision = "9f32b5905fd6ce7384093f9d048437e79f7b4d85"
+
+# Locked for Windows
+[[override]]
+  name = "github.com/go-ole/go-ole"
+  revision = "de8695c8edbf8236f30d6e1376e20b198a028d42"
+
+[[constraint]]
+  name = "github.com/json-iterator/go"
+  revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
+
+[[constraint]]
+  name = "github.com/graphql-go/graphql"
+  revision = "7731016ba482d3741eea075d23dc6366b932f8f4"
+
+[[constraint]]
+  name = "github.com/graphql-go/relay"
+  revision = "9054c3f9e4f31c403e404f1292d6d12874d1fdc5"
+
+[[constraint]]
+  name = "github.com/gogo/protobuf"
+  revision = "117892bf1866fbaa2318c03e50e40564c8845457"
+
+[[override]]
+  name = "github.com/dsnet/compress"
+  revision = "f41072d47fff1112fa37146dfc812a476cce2d7f"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/coreos/etcd"
+
+[[constraint]]
+  name = "github.com/robfig/cron"
+  branch = "master"

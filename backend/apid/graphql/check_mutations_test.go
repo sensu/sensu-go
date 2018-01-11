@@ -21,8 +21,8 @@ func (t *CheckMutationSuite) SetupTest() {
 
 	// Ensure the store has default org / env
 	t.populateStore(func(ctx context.Context, st store.Store) {
-		st.UpdateOrganization(ctx, types.FixtureOrganization("default"))
-		st.UpdateEnvironment(ctx, types.FixtureEnvironment("default"))
+		t.NoError(st.UpdateOrganization(ctx, types.FixtureOrganization("default")))
+		t.NoError(st.UpdateEnvironment(ctx, types.FixtureEnvironment("default")))
 	})
 }
 
@@ -55,7 +55,7 @@ func (t *CheckMutationSuite) TestCreateSuccess() {
 
 func (t *CheckMutationSuite) TestUpdateSuccess() {
 	t.populateStore(func(ctx context.Context, st store.Store) {
-		st.UpdateCheckConfig(ctx, types.FixtureCheckConfig("my-check"))
+		t.NoError(st.UpdateCheckConfig(ctx, types.FixtureCheckConfig("my-check")))
 	})
 
 	result, errs := t.runQuery(
@@ -90,7 +90,7 @@ func (t *CheckMutationSuite) TestDestroySuccess() {
 	gid := globalid.CheckTranslator.EncodeToString(check)
 
 	t.populateStore(func(ctx context.Context, st store.Store) {
-		st.UpdateCheckConfig(ctx, check)
+		t.NoError(st.UpdateCheckConfig(ctx, check))
 	})
 
 	result, errs := t.runQuery(

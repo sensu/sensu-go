@@ -23,6 +23,7 @@ import (
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/v1"
 )
 
 const (
@@ -69,6 +70,9 @@ type Config struct {
 	API *APIConfig
 	// Socket contains the Sensu client socket configuration
 	Socket *SocketConfig
+	// ExtendedAttributes contains any custom attributes passed to the agent on
+	// start
+	ExtendedAttributes []byte
 }
 
 // SocketConfig contains the Socket configuration
@@ -183,7 +187,9 @@ func (a *Agent) createListenSockets() (string, string, error) {
 		<-a.stopping
 		logger.Debug("TCP listener stopped")
 		isListenerClosed = true
-		tcpListen.Close()
+		if err := tcpListen.Close(); err != nil {
+			logger.Debug(err)
+		}
 	}()
 
 	go func() {
@@ -198,7 +204,9 @@ func (a *Agent) createListenSockets() (string, string, error) {
 				if !isListenerClosed {
 					logger.WithError(err).Error("error accepting TCP connection")
 				}
-				tcpListen.Close()
+				if err := tcpListen.Close(); err != nil {
+					logger.Debug(err)
+				}
 				return
 			}
 			go a.handleTCPMessages(conn)
@@ -216,7 +224,11 @@ func (a *Agent) createListenSockets() (string, string, error) {
 // of data was received, the agent will give up on the sender, and
 // instead respond "invalid" and close the connection.
 func (a *Agent) handleTCPMessages(c net.Conn) {
-	defer c.Close()
+	defer func() {
+		if err := c.Close(); err != nil {
+			logger.Debug(err)
+		}
+	}()
 	var buf []byte
 	messageBuffer := bytes.NewBuffer(buf)
 	connReader := bufio.NewReader(c)
@@ -259,8 +271,14 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// read again from client, add any new message to the buffer, and parse
 		// again.
 		var event types.Event
-		if err = json.Unmarshal(messageBuffer.Bytes(), &event); err != nil {
+		var result v1.CheckResult
+		if err = json.Unmarshal(messageBuffer.Bytes(), &result); err != nil {
 			continue
+		}
+
+		if err = translateToEvent(a, result, &event); err != nil {
+			logger.WithError(err).Error("1.x returns \"invalid\"")
+			return
 		}
 
 		// Prepare the event by mutating it as required so it passes validation
@@ -278,10 +296,10 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		}
 
 		a.sendMessage(transport.MessageTypeEvent, payload)
-		c.Write([]byte("ok"))
+		_, _ = c.Write([]byte("ok"))
 		return
 	}
-	c.Write([]byte("invalid"))
+	_, _ = c.Write([]byte("invalid"))
 }
 
 // If the socket receives a message containing whitespace and the
@@ -297,7 +315,9 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 
 	go func() {
 		<-a.stopping
-		c.Close()
+		if err := c.Close(); err != nil {
+			logger.Debug(err)
+		}
 		a.wg.Done()
 	}()
 	// Read everything sent from the connection to the message buffer. Any error
@@ -311,10 +331,14 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 		default:
 			if err != nil {
 				logger.WithError(err).Error("Error reading from UDP socket")
-				c.Close()
+				if err := c.Close(); err != nil {
+					logger.Debug(err)
+				}
 				return
 			} else if bytesRead == 0 {
-				c.Close()
+				if err := c.Close(); err != nil {
+					logger.Debug(err)
+				}
 				return
 			}
 			// If the message is a ping, return without notifying sender.
@@ -327,8 +351,14 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			// message sender with the addition of the agent's entity if it is not
 			// included in the message. Any JSON errors are logged, and we return.
 			var event types.Event
-			if err = json.Unmarshal(buf[:bytesRead], &event); err != nil {
+			var result v1.CheckResult
+			if err = json.Unmarshal(buf[:bytesRead], &result); err != nil {
 				logger.WithError(err).Error("UDP Invalid event data")
+				return
+			}
+
+			if err = translateToEvent(a, result, &event); err != nil {
+				logger.WithError(err).Error("1.x returns \"invalid\"")
 				return
 			}
 
@@ -398,7 +428,11 @@ func (a *Agent) sendPump(conn transport.Transport) {
 	// to prevent a race condition between it and something else trying
 	// to close the transport (which actually causes a write to the websocket
 	// connection.)
-	defer a.conn.Close()
+	defer func() {
+		if err := a.conn.Close(); err != nil {
+			logger.Debug(err)
+		}
+	}()
 
 	logger.Info("connected - starting sendPump")
 	ticker := time.NewTicker(100 * time.Millisecond)
@@ -424,6 +458,7 @@ func (a *Agent) sendKeepalive() error {
 	}
 	keepalive := &types.Event{}
 	keepalive.Entity = a.getAgentEntity()
+
 	keepalive.Timestamp = time.Now().Unix()
 	msgBytes, err := json.Marshal(keepalive)
 	if err != nil {
@@ -476,7 +511,9 @@ func (a *Agent) Run() error {
 	go a.receivePump(conn)
 
 	// Send an immediate keepalive once we've connected.
-	a.sendKeepalive()
+	if err := a.sendKeepalive(); err != nil {
+		logger.Error(err)
+	}
 
 	go func() {
 		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
@@ -518,7 +555,9 @@ func (a *Agent) Run() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
 
-		a.api.Shutdown(ctx)
+		if err := a.api.Shutdown(ctx); err != nil {
+			logger.Error(err)
+		}
 		a.wg.Done()
 	}()
 

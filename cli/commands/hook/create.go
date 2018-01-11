@@ -62,12 +62,12 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("command", "c", "", "the command the hook should run")
-	cmd.Flags().StringP("timeout", "t", timeoutDefault, "timeout, in seconds, at which the hook has to run")
-	cmd.Flags().BoolP("stdin", "s", false, "stdin enabled on hook")
+	_ = cmd.Flags().StringP("command", "c", "", "the command the hook should run")
+	_ = cmd.Flags().StringP("timeout", "t", timeoutDefault, "timeout, in seconds, at which the hook has to run")
+	_ = cmd.Flags().BoolP("stdin", "s", false, "stdin enabled on hook")
 
 	// Mark flags are required for bash-completions
-	cmd.MarkFlagRequired("command")
+	_ = cmd.MarkFlagRequired("command")
 
 	return cmd
 }

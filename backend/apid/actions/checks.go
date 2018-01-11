@@ -17,10 +17,12 @@ var checkConfigUpdateFields = []string{
 	"Interval",
 	"Publish",
 	"RuntimeAssets",
-	"Source",
+	"ProxyEntityID",
 	"Stdin",
 	"Subscriptions",
 	"CheckHooks",
+	"Subdue",
+	"Cron",
 }
 
 // CheckController exposes actions in which a viewer can perform.

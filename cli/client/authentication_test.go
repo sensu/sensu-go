@@ -5,11 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-resty/resty"
 	config "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-
-	resty "gopkg.in/resty.v0"
 )
 
 func TestCreateAccessToken(t *testing.T) {
@@ -18,7 +17,7 @@ func TestCreateAccessToken(t *testing.T) {
 		assert.NotEmpty(t, r.Header["Authorization"])
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
+		_, _ = w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
 	defer server.Close()
@@ -60,7 +59,7 @@ func TestRefreshAccessToken(t *testing.T) {
 		assert.NotEmpty(t, r.Header["Authorization"])
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
+		_, _ = w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
 	defer server.Close()

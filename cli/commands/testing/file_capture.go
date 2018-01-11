@@ -48,7 +48,7 @@ func (fc *FileCapture) Stop() {
 	*fc.file = fc.originalValue
 
 	// close the writer file as it's no longer needed
-	writer.Close()
+	_ = writer.Close()
 
 	// store the contents of the reader as a string
 	// in fc.output

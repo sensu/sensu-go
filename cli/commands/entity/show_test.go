@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShowCommand(t *testing.T) {
@@ -57,7 +58,7 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	client.On("FetchEntity", "in").Return(types.FixtureEntity("name-one"), nil)
 
 	cmd := ShowCommand(cli)
-	cmd.Flags().Set("format", "tabular")
+	require.NoError(t, cmd.Flags().Set("format", "tabular"))
 
 	out, err := test.RunCmd(cmd, []string{"in"})
 

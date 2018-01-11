@@ -26,8 +26,8 @@ const (
 func (p *Pipelined) handleEvent(event *types.Event) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
-	handlers, err := p.expandHandlers(ctx, event.Check.Config.Handlers, 1)
 
+	handlers, err := p.expandHandlers(ctx, event.Check.Config.Handlers, 1)
 	if err != nil {
 		return err
 	}
@@ -55,9 +55,13 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 
 		switch handler.Type {
 		case "pipe":
-			p.pipeHandler(handler, eventData)
+			if _, err := p.pipeHandler(handler, eventData); err != nil {
+				logger.Error(err)
+			}
 		case "tcp", "udp":
-			p.socketHandler(handler, eventData)
+			if _, err := p.socketHandler(handler, eventData); err != nil {
+				logger.Error(err)
+			}
 		default:
 			return errors.New("unknown handler type")
 		}
@@ -135,7 +139,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 
 // socketHandler creates either a TCP or UDP client to write eventData
 // to a socket. The provided handler Type determines the protocol.
-func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (net.Conn, error) {
+func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (conn net.Conn, err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port
@@ -149,11 +153,16 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (net
 	address := fmt.Sprintf("%s:%d", host, port)
 	timeoutDuration := time.Duration(timeout) * time.Second
 
-	conn, err := net.DialTimeout(protocol, address, timeoutDuration)
+	conn, err = net.DialTimeout(protocol, address, timeoutDuration)
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() {
+		e := conn.Close()
+		if err == nil {
+			err = e
+		}
+	}()
 
 	bytes, err := conn.Write(eventData)
 
