@@ -1,8 +1,8 @@
 # Sensu CLI
 
-TODO
+`sensuctl` is the command line interface for managing your Sensu cluster.
 
-## Completion
+## Auto-Completion
 
 ### Installation (Bash Shell)
 
@@ -62,3 +62,7 @@ sensuctl:
 ```
 create  delete  import  list
 ```
+
+## Contributing
+
+[UX Guidelines](GUIDELINES.md)

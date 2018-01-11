@@ -176,10 +176,11 @@ type agentProcess struct {
 }
 
 type agentConfig struct {
-	ID          string
-	BackendURLs []string
-	APIPort     int
-	SocketPort  int
+	ID               string
+	BackendURLs      []string
+	APIPort          int
+	SocketPort       int
+	CustomAttributes string
 }
 
 // newAgent abstracts the initialization of an agent process and returns a
@@ -233,6 +234,12 @@ func (a *agentProcess) Start(t *testing.T) error {
 		args = append(args, url)
 	}
 
+	// Support custom attributes
+	if a.CustomAttributes != "" {
+		args = append(args, "--custom-attributes")
+		args = append(args, a.CustomAttributes)
+	}
+
 	cmd := exec.Command(agentPath, args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -276,6 +283,7 @@ func (a *agentProcess) Kill() error {
 
 type sensuCtl struct {
 	ConfigDir string
+	stdin     io.Reader
 }
 
 // newSensuCtl initializes a sensuctl
@@ -287,6 +295,7 @@ func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
 
 	ctl := &sensuCtl{
 		ConfigDir: tmpDir,
+		stdin:     os.Stdin,
 	}
 
 	// Authenticate sensuctl
@@ -311,10 +320,16 @@ func (s *sensuCtl) run(args ...string) ([]byte, error) {
 	// Make sure we point to our temporary config directory
 	args = append([]string{"--config-dir", s.ConfigDir}, args...)
 
-	out, err := exec.Command(sensuctlPath, args...).CombinedOutput()
+	cmd := exec.Command(sensuctlPath, args...)
+	cmd.Stdin = s.stdin
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return out, err
 	}
 
 	return out, nil
+}
+
+func (s *sensuCtl) SetStdin(r io.Reader) {
+	s.stdin = r
 }

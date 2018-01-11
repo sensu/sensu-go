@@ -12,7 +12,7 @@ import (
 )
 
 func getUserPath(id string) string {
-	return fmt.Sprintf("%s/users/%s", etcdRoot, id)
+	return fmt.Sprintf("%s/users/%s", EtcdRoot, id)
 }
 
 func (s *etcdStore) AuthenticateUser(ctx context.Context, username, password string) (*types.User, error) {
