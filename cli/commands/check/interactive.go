@@ -129,7 +129,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 			Validate: func(val interface{}) error {
 				if val.(string) != "" {
-					if _, err := cron.Parse(val.(string)); err != nil {
+					if _, err := cron.ParseStandard(val.(string)); err != nil {
 						return fmt.Errorf(err.Error())
 					}
 				}
