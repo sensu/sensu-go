@@ -170,7 +170,7 @@ required = ["github.com/shirou/w32"]
 
 [[constraint]]
   name = "github.com/robfig/cron"
-  version = "1.0.0"
+  branch = "master"
 
 [[constraint]]
   branch = "master"
