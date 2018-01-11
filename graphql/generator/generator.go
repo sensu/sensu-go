@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jamesdphillips/graphql/language/ast"
-	"github.com/jamesdphillips/graphql/language/location"
+	"github.com/graphql-go/graphql/language/ast"
+	"github.com/graphql-go/graphql/language/location"
 )
 
 // GeneratedFileExt describes the default extension used when the resulting Go

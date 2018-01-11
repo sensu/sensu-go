@@ -178,7 +178,8 @@
 [[projects]]
   name = "github.com/graphql-go/graphql"
   packages = [".","gqlerrors","language/ast","language/kinds","language/lexer","language/location","language/parser","language/printer","language/source","language/typeInfo","language/visitor","testutil"]
-  revision = "7731016ba482d3741eea075d23dc6366b932f8f4"
+  revision = "5e7dd4fc3e87341229fa03d8f79d2ab5455963fb"
+  version = "v0.7.4"
 
 [[projects]]
   name = "github.com/graphql-go/relay"
@@ -207,12 +208,6 @@
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
-
-[[projects]]
-  branch = "type-descriptions-hacks"
-  name = "github.com/jamesdphillips/graphql"
-  packages = ["gqlerrors","language/ast","language/kinds","language/lexer","language/location","language/parser","language/source"]
-  revision = "dbb74316d34f38adc1deb54f8b875efb7ae45180"
 
 [[projects]]
   name = "github.com/jonboulle/clockwork"
@@ -359,7 +354,7 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = ["host","internal/common","net","process"]
+  packages = ["cpu","host","internal/common","mem","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
   version = "v2.17.08"
 
@@ -514,6 +509,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6bc866e14ee3c18df9a796836e46c3fce6a50ccbebec49706a0c17afb9b57c01"
+  inputs-digest = "8bf0cef7ca9732807ff68abd2cd0c9ea1057b74958d469ef38851844ed575541"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jamesdphillips/graphql/language/ast"
+	"github.com/graphql-go/graphql/language/ast"
 )
 
 const scalarResolverName = "ScalarResolver"

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jamesdphillips/graphql/language/ast"
+	"github.com/graphql-go/graphql/language/ast"
 )
 
 //

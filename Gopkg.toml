@@ -150,7 +150,7 @@ required = ["github.com/shirou/w32"]
 
 [[constraint]]
   name = "github.com/graphql-go/graphql"
-  revision = "7731016ba482d3741eea075d23dc6366b932f8f4"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/graphql-go/relay"
@@ -175,10 +175,6 @@ required = ["github.com/shirou/w32"]
 [[constraint]]
   branch = "master"
   name = "github.com/shirou/w32"
-
-[[constraint]]
-  branch = "type-descriptions-hacks"
-  name = "github.com/jamesdphillips/graphql"
 
 [[constraint]]
   name = "github.com/dave/jennifer"
