@@ -12,6 +12,7 @@ import (
 
 const (
 	expireDefault = "-1"
+	beginDefault  = "0"
 )
 
 type silencedOpts struct {
@@ -23,11 +24,13 @@ type silencedOpts struct {
 	Reason          string `survey:"reason"`
 	Env             string
 	Org             string
+	Begin           string `survey:"begin"`
 }
 
 func newSilencedOpts() *silencedOpts {
 	opts := silencedOpts{}
 	opts.Expire = expireDefault
+	opts.Begin = beginDefault
 	return &opts
 }
 
@@ -40,15 +43,18 @@ func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
 	s.Organization = o.Org
 	s.ExpireOnResolve = o.ExpireOnResolve
 	s.Expire, err = strconv.ParseInt(o.Expire, 10, 64)
+	if err != nil {
+		return err
+	}
+	s.Begin, err = strconv.ParseInt(o.Begin, 10, 64)
 	return err
 }
 
 func (o *silencedOpts) withFlags(flags *pflag.FlagSet) (err error) {
-	exp, err := flags.GetInt64("expire")
+	o.Expire, err = flags.GetString("expire")
 	if err != nil {
 		return err
 	}
-	o.Expire = fmt.Sprintf("%d", exp)
 	o.ExpireOnResolve, err = flags.GetBool("expire-on-resolve")
 	if err != nil {
 		return err
@@ -62,6 +68,10 @@ func (o *silencedOpts) withFlags(flags *pflag.FlagSet) (err error) {
 		return err
 	}
 	o.Check, err = flags.GetString("check")
+	if err != nil {
+		return err
+	}
+	o.Begin, err = flags.GetString("begin")
 	return err
 }
 
@@ -105,6 +115,14 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 		}
 	}
 	qs = append(qs, []*survey.Question{
+		{
+			Name: "begin",
+			Prompt: &survey.Input{
+				Message: "Begin time:",
+				Default: o.Begin,
+				Help:    "Start silencing events at this time.",
+			},
+		},
 		{
 			Name: "expire",
 			Prompt: &survey.Input{
@@ -158,7 +176,6 @@ func askID(help string) (string, error) {
 	}
 
 	var id silencedID
-
 	if err := survey.Ask(questions, &id); err != nil {
 		return "", err
 	}
@@ -175,5 +192,6 @@ func toOpts(s *types.Silenced) *silencedOpts {
 	o.Org = s.Organization
 	o.ExpireOnResolve = s.ExpireOnResolve
 	o.Expire = fmt.Sprintf("%d", s.Expire)
+	o.Begin = fmt.Sprintf("%d", s.Begin)
 	return &o
 }

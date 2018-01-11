@@ -4,7 +4,6 @@ param (
 
 $REPO_PATH = "github.com/sensu/sensu-go"
 
-# source in the environment variables from `go env`
 $env_commands = go env
 ForEach ($env_cmd in $env_commands) {
     $env_str = $env_cmd -replace "set " -replace ""
@@ -37,14 +36,14 @@ function install_deps
     go get gopkg.in/alecthomas/gometalinter.v1
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
-    go get -u github.com/golang/lint/golint
-    go get -u github.com/UnnoTed/fileb0x
+    go get github.com/golang/lint/golint
+    go get github.com/UnnoTed/fileb0x
     install_golang_dep
 }
 
 function install_golang_dep
 {
-    go get -u github.com/golang/dep/cmd/dep
+    go get github.com/golang/dep/cmd/dep
     echo "Running dep ensure..."
     dep ensure -v
 }
@@ -176,8 +175,7 @@ function test_commands
 {
     echo "Running tests..."
 
-
-    go test -timeout=60s -v $(go list ./... | Select-String -pattern "testing", "vendor" -notMatch)
+    go test -timeout=60s $(go list ./... | Select-String -pattern "testing", "vendor" -notMatch)
     If ($LASTEXITCODE -ne 0) {
         echo "Testing failed..."
         exit 1

@@ -19,17 +19,17 @@ set_race_flag() {
 
 case "$GOOS" in
     darwin)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
     freebsd)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
     linux)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
     windows)
-    set_race_flag
-    ;;
+        set_race_flag
+        ;;
 esac
 
 install_deps () {
@@ -39,13 +39,13 @@ install_deps () {
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
-    go get -u github.com/golang/lint/golint
-    go get -u github.com/UnnoTed/fileb0x
+    go get github.com/golang/lint/golint
+    go get github.com/UnnoTed/fileb0x
     install_golang_dep
 }
 
 install_golang_dep() {
-    go get -u github.com/golang/dep/cmd/dep
+    go get github.com/golang/dep/cmd/dep
     echo "Running dep ensure..."
     dep ensure -v
 }
@@ -55,14 +55,14 @@ cmd_name_map() {
 
     case "$cmd" in
         backend)
-        echo "sensu-backend"
-        ;;
+            echo "sensu-backend"
+            ;;
         agent)
-        echo "sensu-agent"
-        ;;
+            echo "sensu-agent"
+            ;;
         cli)
-        echo "sensuctl"
-        ;;
+            echo "sensuctl"
+            ;;
     esac
 }
 
@@ -170,7 +170,7 @@ linter_commands () {
 unit_test_commands () {
     echo "Running tests..."
 
-    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
+    go test -timeout=60s $RACE $(go list ./... | egrep -v '(testing|vendor)')
     if [ $? -ne 0 ]; then
         echo "Tests failed..."
         exit 1
@@ -243,7 +243,7 @@ install_yarn() {
 }
 
 install_dashboard_deps() {
-    go get -u github.com/UnnoTed/fileb0x
+    go get github.com/UnnoTed/fileb0x
     check_for_presence_of_yarn
     pushd "${DASHBOARD_PATH}"
     yarn install

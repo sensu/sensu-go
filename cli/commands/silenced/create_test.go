@@ -31,7 +31,7 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 	client.On("CreateSilenced", mock.Anything).Return(fmt.Errorf("error"))
 
 	cmd := CreateCommand(cli)
-	require.Error(t, cmd.Flags().Set("expire", "aaaaaa"))
+	require.NoError(t, cmd.Flags().Set("expire", "aaaaaa"))
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	require.Error(t, err)
@@ -49,7 +49,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
-
+	require.NoError(t, cmd.Flags().Set("begin", "1257894000"))
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
 	assert.Regexp("OK", out)

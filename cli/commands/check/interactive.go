@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
@@ -20,13 +21,14 @@ type checkOpts struct {
 	Name          string `survey:"name"`
 	Command       string `survey:"command"`
 	Interval      string `survey:"interval"`
+	Cron          string `survey:"cron"`
 	Subscriptions string `survey:"subscriptions"`
 	Handlers      string `survey:"handlers"`
 	RuntimeAssets string `survey:"assets"`
 	Env           string
 	Org           string
 	Publish       string `survey:"publish"`
-	Source        string `survey:"source"`
+	ProxyEntityID string `survey:"proxy-entity-id"`
 	Stdin         string `survey:"stdin"`
 }
 
@@ -42,22 +44,24 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Env = check.Environment
 	opts.Command = check.Command
 	opts.Interval = strconv.Itoa(int(check.Interval))
+	opts.Cron = check.Cron
 	opts.Subscriptions = strings.Join(check.Subscriptions, ",")
 	opts.Handlers = strings.Join(check.Handlers, ",")
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
-	opts.Source = check.Source
+	opts.ProxyEntityID = check.ProxyEntityID
 	opts.Stdin = stdinDefault
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
 	opts.Interval, _ = flags.GetString("interval")
+	opts.Cron, _ = flags.GetString("cron")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 	publishBool, _ := flags.GetBool("publish")
 	opts.Publish = strconv.FormatBool(publishBool)
-	opts.Source, _ = flags.GetString("source")
+	opts.ProxyEntityID, _ = flags.GetString("proxy-entity-id")
 	opts.Stdin, _ = flags.GetString("stdin")
 
 	if org, _ := flags.GetString("organization"); org != "" {
@@ -117,6 +121,22 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
+			Name: "cron",
+			Prompt: &survey.Input{
+				Message: "Cron:",
+				Help:    "Optional cron schedule which takes precedence over interval. Value must be a valid cron string.",
+				Default: opts.Cron,
+			},
+			Validate: func(val interface{}) error {
+				if val.(string) != "" {
+					if _, err := cron.ParseStandard(val.(string)); err != nil {
+						return fmt.Errorf(err.Error())
+					}
+				}
+				return nil
+			},
+		},
+		{
 			Name: "subscriptions",
 			Prompt: &survey.Input{
 				Message: "Subscriptions:",
@@ -153,11 +173,11 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
-			Name: "source",
+			Name: "proxy-entity-id",
 			Prompt: &survey.Input{
-				Message: "Check Source:",
-				Default: opts.Source,
-				Help:    "the check source, used to create a proxy entity for an external resource",
+				Message: "Check Proxy Entity ID:",
+				Default: opts.ProxyEntityID,
+				Help:    "the check's proxy entity id, used to create a proxy entity for an external resource",
 			},
 		},
 		{
@@ -182,10 +202,11 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Organization = opts.Org
 	check.Interval = uint32(interval)
 	check.Command = opts.Command
+	check.Cron = opts.Cron
 	check.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 	check.Publish = opts.Publish == "true"
-	check.Source = opts.Source
+	check.ProxyEntityID = opts.ProxyEntityID
 	check.Stdin = stdin
 }

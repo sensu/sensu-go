@@ -4,12 +4,6 @@ branches:
   only:
     - master
 
-cache:
-  - backend\dashboardd\node_modules
-  - vendor
-  - '%GOPATH%\src'
-  - '%GOPATH%\pkg'
-
 image:
   - Visual Studio 2015
   - Visual Studio 2017
@@ -21,12 +15,16 @@ environment:
   matrix:
     - GOARCH: 386
       TEST_SUITE: unit
+      GOGC: off
     - GOARCH: amd64
       TEST_SUITE: unit
+      GOGC: off
     - GOARCH: 386
       TEST_SUITE: e2e
+      GOGC: off
     - GOARCH: amd64
       TEST_SUITE: e2e
+      GOGC: off
 
 install:
   - rmdir c:\go /s /q

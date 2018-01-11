@@ -42,7 +42,7 @@ func TestProxyChecks(t *testing.T) {
 		"--organization", check.Organization,
 		"--environment", check.Environment,
 		"--runtime-assets", strings.Join(check.RuntimeAssets, ","),
-		"--source", "router",
+		"--proxy-entity-id", "router",
 		"--publish",
 	)
 	assert.NoError(t, err, string(output))
