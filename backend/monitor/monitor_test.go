@@ -17,7 +17,7 @@ func (handler *testHandler) HandleUpdate(event *types.Event) error {
 	return nil
 }
 
-func (handler *testHandler) HandleFailure(event *types.Event) error {
+func (handler *testHandler) HandleFailure(event *types.Entity) error {
 	return nil
 }
 

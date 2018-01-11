@@ -29,7 +29,7 @@ type UpdateHandler interface {
 
 // FailureHandler provides a HandleFailure function.
 type FailureHandler interface {
-	HandleFailure(e *types.Event) error
+	HandleFailure(e *types.Entity) error
 }
 
 // HandleUpdate causes the Monitor to observe the event. If the monitor has
@@ -51,8 +51,8 @@ func (monitorPtr *Monitor) HandleUpdate(event *types.Event) error {
 }
 
 // HandleFailure passes an event to the failure handler function and runs it.
-func (monitorPtr *Monitor) HandleFailure(event *types.Event) error {
-	return monitorPtr.FailureHandler.HandleFailure(event)
+func (monitorPtr *Monitor) HandleFailure(entity *types.Entity) error {
+	return monitorPtr.FailureHandler.HandleFailure(entity)
 }
 
 // Start initializes the monitor and starts its monitoring goroutine.
@@ -81,6 +81,9 @@ func (monitorPtr *Monitor) Start() {
 				}
 
 			case <-timer.C:
+				// check the event deregistration; if so, delete and return
+				// otherwise - emit an event and then swap
+				monitorPtr.FailureHandler.HandleFailure(monitorPtr.Entity)
 
 				atomic.CompareAndSwapInt32(&monitorPtr.failing, 0, 1)
 			}

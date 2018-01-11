@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +34,6 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 
 	mockStore := &mockstore.MockStore{}
 	dereg := &mockDeregisterer{}
-	creator := &mockCreator{}
 
 	suite.Deregisterer = dereg
 	suite.Store = mockStore
@@ -41,14 +41,16 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 	keepalived := &Keepalived{
 		Store:      suite.Store,
 		MessageBus: suite.MessageBus,
-		MonitorFactory: func(e *types.Entity) *KeepaliveMonitor {
-			return &KeepaliveMonitor{
-				Entity: e,
-				Store:  mockStore,
-			}
-		},
 	}
 
+	keepalived.MonitorFactory = func(e *types.Entity) *monitor.Monitor {
+		return &monitor.Monitor{
+			Entity:         e,
+			Timeout:        time.Duration(e.KeepaliveTimeout),
+			FailureHandler: keepalived,
+			UpdateHandler:  keepalived,
+		}
+	}
 	suite.Keepalived = keepalived
 }
 

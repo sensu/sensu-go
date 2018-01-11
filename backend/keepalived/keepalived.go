@@ -71,14 +71,12 @@ func (k *Keepalived) Start() error {
 	}
 
 	if k.MonitorFactory == nil {
-		handler := &keepaliveUpdateHandler{}
-		var err error
 		k.MonitorFactory = func(e *types.Entity) *monitor.Monitor {
 			return &monitor.Monitor{
 				Entity:         e,
 				Timeout:        time.Duration(e.KeepaliveTimeout),
-				FailureHandler: handler,
-				UpdateHandler:  handler,
+				FailureHandler: k,
+				UpdateHandler:  k,
 			}
 		}
 	}
@@ -213,12 +211,6 @@ func (k *Keepalived) processKeepalives() {
 		if !ok || monitor.IsStopped() {
 			monitor = k.MonitorFactory(entity)
 			monitor.Start()
-			// deregister the entity if it is supposed to be deregistered
-			if monitor.Entity.Deregister {
-				if err := monitor.HandleFailure(event); err != nil {
-					logger.WithError(err)
-				}
-			}
 			k.monitors[entity.ID] = monitor
 		}
 		k.mu.Unlock()
@@ -307,51 +299,45 @@ func createRegistrationEvent(entity *types.Entity) *types.Event {
 	return registrationEvent
 }
 
-type keepaliveUpdateHandler struct{}
-
-// This needs to be updated to remove the monitor things and to have its own
-// store
-func (handler *keepaliveUpdateHandler) HandleUpdate(e *types.Event) error {
+// HandleUpdate sets the entity's last seen time and publishes an OK check event
+// to the message bus.
+func (k *Keepalived) HandleUpdate(e *types.Event) error {
 	entity := e.Entity
 
-	if err := &Keepalived.Store.DeleteFailingKeepalive(context.Background(), entity); err != nil {
+	ctx := types.SetContextFromResource(context.Background(), entity)
+	if err := k.Store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
 		return err
 	}
 
 	entity.LastSeen = e.Timestamp
-	ctx := types.SetContextFromResource(context.Background(), entity)
-	if err := Keepalived.Store.UpdateEntity(ctx, entity); err != nil {
+	if err := k.Store.UpdateEntity(ctx, entity); err != nil {
 		logger.WithError(err).Error("error updating entity in store")
 		return err
 	}
-	return nil
+	event := createKeepaliveEvent(entity)
+	event.Check.Status = 0
+	return k.MessageBus.Publish(messaging.TopicEventRaw, event)
 }
 
-func (handler *keepaliveUpdateHandler) HandleFailure(e *types.Event) error {
-	ctx := types.SetContextFromResource(context.Background(), e.Entity)
-	// if the entity is supposed to be deregistered, do so.
-	k := &Keepalived{}
+// HandleFailure checks if the entity should be deregistered, and emits a
+// keepalive event if the entity is still valid.
+func (k *Keepalived) HandleFailure(e *types.Entity) error {
+	ctx := types.SetContextFromResource(context.Background(), e)
 
 	deregisterer := &Deregistration{
 		Store:      k.Store,
 		MessageBus: k.MessageBus,
 	}
-	if e.Entity.Deregister {
-		if err := deregisterer.Deregister(e.Entity); err != nil {
-			logger.WithError(err).Error("error deregistering entity")
-		}
-		return nil
+	// if the entity is supposed to be deregistered, do so.
+	if e.Deregister {
+		return deregisterer.Deregister(e)
 	}
 
 	// this is a real keepalive event, emit it.
-	event := createKeepaliveEvent(e.Entity)
+	event := createKeepaliveEvent(e)
 	event.Check.Status = 1
 	k.MessageBus.Publish(messaging.TopicEventRaw, event)
 
-	timeout := time.Now().Unix() + int64(e.Entity.KeepaliveTimeout)
-	if err = keepalive.store.UpdateFailingKeepalive(ctx, e.Entity, e.Entity.KeepaliveTimeout); err != nil {
-		return err
-		//logger.WithError(err).Error("error updating failing keepalive in store")
-	}
-	return nil
+	timeout := time.Now().Unix() + int64(e.KeepaliveTimeout)
+	return k.Store.UpdateFailingKeepalive(ctx, e, timeout)
 }
