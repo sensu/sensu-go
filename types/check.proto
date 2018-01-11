@@ -81,6 +81,9 @@ message CheckConfig {
 
 	// Cron is the cron string at which the check should be run.
 	string cron = 17;
+
+  // TTL represents the length of time in seconds for which a check result is valid.
+  int64 ttl = 18;
 }
 
 // A Check is a check specification and optionally the results of the check's

@@ -3,6 +3,8 @@
 # for detailed Gopkg.toml documentation.
 #
 
+required = ["github.com/shirou/w32"]
+
 [[constraint]]
   name = "github.com/AlecAivazis/survey"
   version = "1.4.1"
@@ -134,11 +136,6 @@
 
 # Locked for Windows
 [[override]]
-  name = "github.com/shirou/w32"
-  branch = "master"
-
-# Locked for Windows
-[[override]]
   name = "github.com/StackExchange/wmi"
   revision = "9f32b5905fd6ce7384093f9d048437e79f7b4d85"
 
@@ -173,4 +170,4 @@
 
 [[constraint]]
   name = "github.com/robfig/cron"
-  version = "1.0.0"
+  branch = "master"

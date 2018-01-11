@@ -55,7 +55,7 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	if c.Cron != "" {
-		if _, err := cron.Parse(c.Cron); err != nil {
+		if _, err := cron.ParseStandard(c.Cron); err != nil {
 			return errors.New("check cron string is invalid")
 		}
 	}
@@ -70,6 +70,10 @@ func (c *CheckConfig) Validate() error {
 
 	if c.Organization == "" {
 		return errors.New("organization must be set")
+	}
+
+	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
+		return errors.New("ttl must be greater than check interval")
 	}
 
 	for _, assetName := range c.RuntimeAssets {
@@ -150,6 +154,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Organization:  "default",
 		Publish:       true,
 		Cron:          "",
+		Ttl:           0,
 	}
 }
 
