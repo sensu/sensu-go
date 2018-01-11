@@ -12,10 +12,6 @@ import (
 )
 
 const (
-	// DefaultTimeout specifies the default command execution
-	// timeout in seconds.
-	DefaultTimeout int = 60
-
 	// TimeoutOutput specifies the command execution output in the
 	// event of an execution timeout.
 	TimeoutOutput string = "Execution timed out\n"
@@ -65,11 +61,6 @@ type Execution struct {
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
 func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, error) {
-	// If Timeout is not specified, use the default.
-	if execution.Timeout == 0 {
-		execution.Timeout = DefaultTimeout
-	}
-
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
 	// known to have troubles, e.g. command not found. We still
@@ -80,7 +71,12 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	// Use the context deadline for command execution timeout.
 	// This will be effectively ignored if the context already has
 	// an earlier deadline, which is super rad.
-	ctx, timeout := context.WithTimeout(ctx, time.Duration(execution.Timeout)*time.Second)
+	var timeout context.CancelFunc
+	if execution.Timeout == 0 {
+		ctx, timeout = context.WithCancel(ctx)
+	} else {
+		ctx, timeout = context.WithTimeout(ctx, time.Duration(execution.Timeout)*time.Second)
+	}
 	defer timeout()
 
 	// Taken from Sensu-Spawn (Sensu 1.x.x).
@@ -112,13 +108,14 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		execution.Duration = time.Since(started).Seconds()
 	}()
 
-	if err := cmd.Start(); err != nil {
-		// Something unexpected happended when attepting to
-		// fork/exec, return immediately.
-		return execution, err
-	}
-
-	err := cmd.Wait()
+	// Kill process and all of its children when timeout has expired
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
+		if runtime.GOOS != "windows" {
+			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		}
+	})
+	err := cmd.Run()
 
 	execution.Output = output.String()
 
