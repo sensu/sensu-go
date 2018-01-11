@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
@@ -20,6 +21,7 @@ type checkOpts struct {
 	Name          string `survey:"name"`
 	Command       string `survey:"command"`
 	Interval      string `survey:"interval"`
+	Cron          string `survey:"cron"`
 	Subscriptions string `survey:"subscriptions"`
 	Handlers      string `survey:"handlers"`
 	RuntimeAssets string `survey:"assets"`
@@ -42,6 +44,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Env = check.Environment
 	opts.Command = check.Command
 	opts.Interval = strconv.Itoa(int(check.Interval))
+	opts.Cron = check.Cron
 	opts.Subscriptions = strings.Join(check.Subscriptions, ",")
 	opts.Handlers = strings.Join(check.Handlers, ",")
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
@@ -52,6 +55,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
 	opts.Interval, _ = flags.GetString("interval")
+	opts.Cron, _ = flags.GetString("cron")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 	opts.Handlers, _ = flags.GetString("handlers")
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
@@ -114,6 +118,22 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Prompt: &survey.Input{
 				Message: "Interval:",
 				Default: opts.Interval,
+			},
+		},
+		{
+			Name: "cron",
+			Prompt: &survey.Input{
+				Message: "Cron:",
+				Help:    "Optional cron schedule which takes precedence over interval. Value must be a valid cron string.",
+				Default: opts.Cron,
+			},
+			Validate: func(val interface{}) error {
+				if val.(string) != "" {
+					if _, err := cron.ParseStandard(val.(string)); err != nil {
+						return fmt.Errorf(err.Error())
+					}
+				}
+				return nil
 			},
 		},
 		{
@@ -182,6 +202,7 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Organization = opts.Org
 	check.Interval = uint32(interval)
 	check.Command = opts.Command
+	check.Cron = opts.Cron
 	check.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)

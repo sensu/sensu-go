@@ -6,7 +6,15 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Fixed
+- Fixed e2e test for token substitution on Windows
+- Fixed check subdue unit test for token substitution on Windows
+- Consider the first and last seconds of a time window when comparing the
+  current time
+- Fixed Travis deploy stage by removing caching for $GOPATH
+- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
+## [2.0.0-alpha.12] - 2018-01-09
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
 windows.
@@ -15,8 +23,8 @@ windows.
 - Add check `Cron` field. Checks can now be scheduled according to the cron
 string stored in this field.
 - Add a distributed queue package for use in the backend.
-
-### Testing
+- Token substitution is now available for checks.
+- CLI functionality for check `Cron` field.
 - Add an e2e test for cron scheduling.
 - Add an e2e test for check hook execution.
 

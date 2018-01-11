@@ -35,7 +35,7 @@ func TestCheckHooks(t *testing.T) {
 	check := types.FixtureCheckConfig("TestCheckHooks")
 	check.Command = "foo"
 	check.Publish = true
-	check.Interval = 1
+	check.Interval = 5
 	check.Subscriptions = []string{"test"}
 
 	output, err := sensuctl.run("check", "create", check.Name,
@@ -53,7 +53,7 @@ func TestCheckHooks(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	// There should be a stored event
 	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
@@ -90,7 +90,7 @@ func TestCheckHooks(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	// Give it a few seconds for the check to execute with the check hook
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	// There should be a stored event
 	output, err = sensuctl.run("event", "info", agent.ID, check.Name)

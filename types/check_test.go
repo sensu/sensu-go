@@ -17,18 +17,21 @@ func TestCheckValidate(t *testing.T) {
 
 	// Valid w/o config
 	assert.NoError(t, c.Validate())
+
 	c.Config = &CheckConfig{
 		Name: "test",
 	}
 
 	// Invalid w/ bad config
 	assert.Error(t, c.Validate())
+
 	c.Config = &CheckConfig{
 		Name:         "test",
 		Interval:     10,
 		Command:      "yes",
 		Environment:  "default",
 		Organization: "default",
+		Ttl:          30,
 	}
 
 	// Valid check
@@ -48,7 +51,7 @@ func TestCheckConfig(t *testing.T) {
 
 	// Invalid cron
 	assert.Error(t, c.Validate())
-	c.Cron = "0 30 * * * *"
+	c.Cron = "* * * * *"
 
 	// Invalid command
 	assert.Error(t, c.Validate())
@@ -62,7 +65,12 @@ func TestCheckConfig(t *testing.T) {
 	assert.Error(t, c.Validate())
 	c.Environment = "default"
 
+	// Invalid ttl
+	c.Ttl = 10
+	assert.Error(t, c.Validate())
+
 	// Valid check
+	c.Ttl = 90
 	assert.NoError(t, c.Validate())
 }
 
