@@ -180,7 +180,7 @@ unit_test_commands () {
 integration_test_commands () {
     echo "Running integration tests..."
 
-    go test -timeout=60s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor)')
+    go test -timeout=120s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor)')
     if [ $? -ne 0 ]; then
         echo "Integration testing failed..."
         exit 1

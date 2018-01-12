@@ -1,3 +1,5 @@
+// +build integration
+
 package schedulerd
 
 import (
@@ -255,7 +257,7 @@ type CheckSchedulerCronSuite struct {
 
 func (suite *CheckSchedulerCronSuite) SetupTest() {
 	suite.check = types.FixtureCheckConfig("check1")
-	suite.check.Cron = "* * * * * *"
+	suite.check.Cron = "* * * * *"
 	suite.msgBus = &messaging.WizardBus{}
 
 	manager := NewStateManager(&mockstore.MockStore{})
@@ -293,7 +295,7 @@ func (suite *CheckSchedulerCronSuite) TestStart() {
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
 	suite.NoError(suite.scheduler.Start())
-	time.Sleep(1 * time.Second)
+	time.Sleep(60 * time.Second)
 	suite.NoError(suite.scheduler.Stop())
 	suite.NoError(suite.msgBus.Stop())
 	close(c1)
@@ -318,7 +320,7 @@ type CheckSubdueCronSuite struct {
 
 func (suite *CheckSubdueCronSuite) SetupTest() {
 	suite.check = types.FixtureCheckConfig("check1")
-	suite.check.Cron = "* * * * * *"
+	suite.check.Cron = "* * * * *"
 	suite.msgBus = &messaging.WizardBus{}
 
 	manager := NewStateManager(&mockstore.MockStore{})
@@ -368,7 +370,7 @@ func (suite *CheckSubdueCronSuite) TestStart() {
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
 	suite.NoError(suite.scheduler.Start())
-	time.Sleep(1 * time.Second)
+	time.Sleep(60 * time.Second)
 	suite.NoError(suite.scheduler.Stop())
 	suite.NoError(suite.msgBus.Stop())
 	close(c1)
@@ -388,7 +390,7 @@ type TimerCronSuite struct {
 }
 
 func (suite *TimerCronSuite) TestStop() {
-	timer := NewCronTimer("check1", "* * * * * *")
+	timer := NewCronTimer("check1", "* * * * *")
 	timer.Start()
 
 	result := timer.Stop()
@@ -407,7 +409,7 @@ func (suite *CheckExecCronSuite) SetupTest() {
 	suite.NoError(suite.msgBus.Start())
 
 	request := types.FixtureCheckRequest("check1")
-	request.Config.Cron = "* * * * * *"
+	request.Config.Cron = "* * * * *"
 	asset := request.Assets[0]
 	hook := request.Hooks[0]
 	suite.check = request.Config

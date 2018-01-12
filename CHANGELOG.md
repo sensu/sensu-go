@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Consider the first and last seconds of a time window when comparing the
   current time
 - Fixed Travis deploy stage by removing caching for $GOPATH
+- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
 ## [2.0.0-alpha.12] - 2018-01-09
 ### Added

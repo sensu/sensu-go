@@ -82,7 +82,7 @@ type CronTimer struct {
 
 // NewCronTimer establishes new check timer given a name & an initial interval
 func NewCronTimer(name string, cronStr string) *CronTimer {
-	schedule, err := cron.Parse(cronStr)
+	schedule, err := cron.ParseStandard(cronStr)
 	// we shouldn't hit this error because we've already validated the cron string
 	// but log and exit cleanly to revert to the interval timer
 	if err != nil {
@@ -104,7 +104,7 @@ func (timerPtr *CronTimer) C() <-chan time.Time {
 
 // SetDuration updates the interval in which timers are set
 func (timerPtr *CronTimer) SetDuration(cronStr string, interval uint) {
-	schedule, err := cron.Parse(cronStr)
+	schedule, err := cron.ParseStandard(cronStr)
 	// we shouldn't hit this error because we've already validated the cron string
 	// but log and exit cleanly to revert to the interval timer
 	if err != nil {
