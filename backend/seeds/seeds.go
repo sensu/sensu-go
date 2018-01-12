@@ -1,4 +1,4 @@
-package backend
+package seeds
 
 import (
 	"context"
@@ -8,8 +8,9 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// SeedInitialData will seed a store with initial data. This method is
 // idempotent and can be safely run every time the backend starts.
-func seedInitialData(store store.Store) (err error) {
+func SeedInitialData(store store.Store) (err error) {
 	initializer, _ := store.NewInitializer()
 	logger := logger.WithField("component", "backend.seeds")
 

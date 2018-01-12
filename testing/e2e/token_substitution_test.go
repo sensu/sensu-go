@@ -55,12 +55,12 @@ func TestTokenSubstitution(t *testing.T) {
 	assert.NotNil(t, event)
 	// {{ .ID }} should have been replaced by the entity ID and {{ .Team }} by the
 	// custom attribute of the same name on the entity
-	assert.Equal(t, "TestCheckScheduling devops defaultValue\n", event.Check.Output)
+	assert.Contains(t, event.Check.Output, "TestCheckScheduling devops defaultValue")
 
 	// Create a check that take advantage of token substitution
 	checkUnmatchedToken := types.FixtureCheckConfig("check_unmatchedToken")
 	output, err = sensuctl.run("check", "create", checkUnmatchedToken.Name,
-		"--command", "echo {{ .Foo }}",
+		"--command", "{{ .Foo }}",
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--handlers", strings.Join(check.Handlers, ","),
@@ -82,4 +82,5 @@ func TestTokenSubstitution(t *testing.T) {
 	// {{ .Foo }} should not have been replaced and an error should have been
 	// immediated returned
 	assert.Contains(t, event.Check.Output, "has no entry for key")
+
 }

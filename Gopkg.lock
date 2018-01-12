@@ -346,6 +346,12 @@
   version = "v2.17.08"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
+
+[[projects]]
   name = "github.com/soheilhy/cmux"
   packages = ["."]
   revision = "bb79a83465015a27a175925ebd155e660f55e9f1"
@@ -472,8 +478,8 @@
 [[projects]]
   name = "gopkg.in/AlecAivazis/survey.v1"
   packages = ["core","terminal"]
-  revision = "0aa8b6a162b391fe2d95648b7677d1d6ac2090a6"
-  version = "v1.4.1"
+  revision = "344ec26ea976135df7508f1f513e5490a4686e11"
+  version = "v1.4.0"
 
 [[projects]]
   name = "gopkg.in/h2non/filetype.v1"
@@ -490,6 +496,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2dad590ecd5fb0150d3c7f9fdec0586ba228114e7280d5aecf13638b271d145c"
+  inputs-digest = "4e8bcad1af16f92682043c4dd11e2fb8a90c2efd9d5dd38f0a94ea071f00b0ce"
   solver-name = "gps-cdcl"
   solver-version = 1
