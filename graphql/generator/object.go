@@ -776,7 +776,16 @@ func genFieldHandlerFn(field *ast.FieldDefinition, i info) jen.Code {
 						),
 				)
 			} else {
-				g.Return(jen.Id("resolver." + fieldName))
+				g.Return(
+					jen.Func().
+						Params(jen.Id("p").Qual(defsPkg, "ResolveParams")).
+						Parens(jen.List(jen.Interface(), jen.Error())).
+						Block(
+							jen.Return(
+								jen.Id("resolver." + fieldName).Call(jen.Id("p")),
+							),
+						),
+				)
 			}
 		})
 }

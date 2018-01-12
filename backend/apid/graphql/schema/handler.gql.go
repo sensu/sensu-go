@@ -284,57 +284,79 @@ func RegisterHandler(svc *graphql.Service, impl HandlerFieldResolvers) {
 }
 func _ObjTypeHandlerIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerIDFieldResolver)
-	return resolver.ID
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(p)
+	}
 }
 
 func _ObjTypeHandlerNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerNamespaceFieldResolver)
-	return resolver.Namespace
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(p)
+	}
 }
 
 func _ObjTypeHandlerNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerNameFieldResolver)
-	return resolver.Name
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(p)
+	}
 }
 
 func _ObjTypeHandlerTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerTypeFieldResolver)
-	return resolver.Type
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Type(p)
+	}
 }
 
 func _ObjTypeHandlerMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerMutatorFieldResolver)
-	return resolver.Mutator
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Mutator(p)
+	}
 }
 
 func _ObjTypeHandlerCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerCommandFieldResolver)
-	return resolver.Command
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Command(p)
+	}
 }
 
 func _ObjTypeHandlerTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerTimeoutFieldResolver)
-	return resolver.Timeout
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Timeout(p)
+	}
 }
 
 func _ObjTypeHandlerSocketHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerSocketFieldResolver)
-	return resolver.Socket
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Socket(p)
+	}
 }
 
 func _ObjTypeHandlerHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerHandlersFieldResolver)
-	return resolver.Handlers
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handlers(p)
+	}
 }
 
 func _ObjTypeHandlerFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerFiltersFieldResolver)
-	return resolver.Filters
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Filters(p)
+	}
 }
 
 func _ObjTypeHandlerEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerEnvVarsFieldResolver)
-	return resolver.EnvVars
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.EnvVars(p)
+	}
 }
 
 func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
@@ -601,12 +623,16 @@ func RegisterHandlerSocket(svc *graphql.Service, impl HandlerSocketFieldResolver
 }
 func _ObjTypeHandlerSocketHostHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerSocketHostFieldResolver)
-	return resolver.Host
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Host(p)
+	}
 }
 
 func _ObjTypeHandlerSocketPortHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerSocketPortFieldResolver)
-	return resolver.Port
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Port(p)
+	}
 }
 
 func _ObjectTypeHandlerSocketConfigFn() graphql1.ObjectConfig {

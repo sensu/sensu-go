@@ -64,7 +64,7 @@ type CheckConfigPublishFieldResolver interface {
 // CheckConfigSubscriptionsFieldResolver implement to resolve requests for the CheckConfig's subscriptions field.
 type CheckConfigSubscriptionsFieldResolver interface {
 	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p graphql.ResolveParams) (string, error)
+	Subscriptions(p graphql.ResolveParams) ([]string, error)
 }
 
 // CheckConfigSourceFieldResolver implement to resolve requests for the CheckConfig's source field.
@@ -283,9 +283,9 @@ func (_ CheckConfigAliases) Publish(p graphql.ResolveParams) (bool, error) {
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
-func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) (string, error) {
+func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := val.([]string)
 	return ret, err
 }
 
@@ -326,72 +326,100 @@ func RegisterCheckConfig(svc *graphql.Service, impl CheckConfigFieldResolvers) {
 }
 func _ObjTypeCheckConfigIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigIDFieldResolver)
-	return resolver.ID
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(p)
+	}
 }
 
 func _ObjTypeCheckConfigNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigNamespaceFieldResolver)
-	return resolver.Namespace
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(p)
+	}
 }
 
 func _ObjTypeCheckConfigNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigNameFieldResolver)
-	return resolver.Name
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(p)
+	}
 }
 
 func _ObjTypeCheckConfigCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigCommandFieldResolver)
-	return resolver.Command
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Command(p)
+	}
 }
 
 func _ObjTypeCheckConfigHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigHandlersFieldResolver)
-	return resolver.Handlers
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handlers(p)
+	}
 }
 
 func _ObjTypeCheckConfigHighFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigHighFlapThresholdFieldResolver)
-	return resolver.HighFlapThreshold
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.HighFlapThreshold(p)
+	}
 }
 
 func _ObjTypeCheckConfigIntervalHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigIntervalFieldResolver)
-	return resolver.Interval
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Interval(p)
+	}
 }
 
 func _ObjTypeCheckConfigLowFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigLowFlapThresholdFieldResolver)
-	return resolver.LowFlapThreshold
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LowFlapThreshold(p)
+	}
 }
 
 func _ObjTypeCheckConfigPublishHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigPublishFieldResolver)
-	return resolver.Publish
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Publish(p)
+	}
 }
 
 func _ObjTypeCheckConfigSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigSubscriptionsFieldResolver)
-	return resolver.Subscriptions
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subscriptions(p)
+	}
 }
 
 func _ObjTypeCheckConfigSourceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigSourceFieldResolver)
-	return resolver.Source
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Source(p)
+	}
 }
 
 func _ObjTypeCheckConfigStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigStdinFieldResolver)
-	return resolver.Stdin
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Stdin(p)
+	}
 }
 
 func _ObjTypeCheckConfigCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigCheckHooksFieldResolver)
-	return resolver.CheckHooks
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CheckHooks(p)
+	}
 }
 
 func _ObjTypeCheckConfigSubdueHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigSubdueFieldResolver)
-	return resolver.Subdue
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subdue(p)
+	}
 }
 
 func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
@@ -429,7 +457,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "The globally unique identifier of the check.",
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql.OutputType("ID")),
 			},
@@ -457,7 +485,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "namespace in which this check resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
 			},
@@ -494,10 +522,11 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Subscriptions is the list of subscribers for the check.",
 				Name:              "subscriptions",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
 		},
-		Interfaces: []*graphql1.Interface{},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Node")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -540,13 +569,13 @@ type CheckConfigFieldResolver interface {
 // CheckDurationFieldResolver implement to resolve requests for the Check's duration field.
 type CheckDurationFieldResolver interface {
 	// Duration implements response to request for duration field.
-	Duration(p graphql.ResolveParams) (interface{}, error)
+	Duration(p graphql.ResolveParams) (float64, error)
 }
 
 // CheckExecutedFieldResolver implement to resolve requests for the Check's executed field.
 type CheckExecutedFieldResolver interface {
 	// Executed implements response to request for executed field.
-	Executed(p graphql.ResolveParams) (int, error)
+	Executed(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckHistoryFieldResolver implement to resolve requests for the Check's history field.
@@ -716,16 +745,16 @@ func (_ CheckAliases) Config(p graphql.ResolveParams) (interface{}, error) {
 }
 
 // Duration implements response to request for 'duration' field.
-func (_ CheckAliases) Duration(p graphql.ResolveParams) (interface{}, error) {
+func (_ CheckAliases) Duration(p graphql.ResolveParams) (float64, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
+	ret := val.(float64)
 	return ret, err
 }
 
 // Executed implements response to request for 'executed' field.
-func (_ CheckAliases) Executed(p graphql.ResolveParams) (int, error) {
+func (_ CheckAliases) Executed(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := val.(interface{})
 	return ret, err
 }
 
@@ -783,47 +812,65 @@ func RegisterCheck(svc *graphql.Service, impl CheckFieldResolvers) {
 }
 func _ObjTypeCheckConfigHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigFieldResolver)
-	return resolver.Config
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Config(p)
+	}
 }
 
 func _ObjTypeCheckDurationHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckDurationFieldResolver)
-	return resolver.Duration
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Duration(p)
+	}
 }
 
 func _ObjTypeCheckExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckExecutedFieldResolver)
-	return resolver.Executed
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Executed(p)
+	}
 }
 
 func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryFieldResolver)
-	return resolver.History
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.History(p)
+	}
 }
 
 func _ObjTypeCheckIssuedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckIssuedFieldResolver)
-	return resolver.Issued
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Issued(p)
+	}
 }
 
 func _ObjTypeCheckOutputHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckOutputFieldResolver)
-	return resolver.Output
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Output(p)
+	}
 }
 
 func _ObjTypeCheckStateHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckStateFieldResolver)
-	return resolver.State
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.State(p)
+	}
 }
 
 func _ObjTypeCheckStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckStatusFieldResolver)
-	return resolver.Status
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(p)
+	}
 }
 
 func _ObjTypeCheckTotalStateChangeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckTotalStateChangeFieldResolver)
-	return resolver.TotalStateChange
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.TotalStateChange(p)
+	}
 }
 
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
@@ -842,49 +889,49 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Duration of execution",
 				Name:              "duration",
-				Type:              graphql.OutputType("double"),
+				Type:              graphql1.Float,
 			},
 			"executed": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Executed describes the time in which the check request was executed",
 				Name:              "executed",
-				Type:              graphql1.Int,
+				Type:              graphql.OutputType("Time"),
 			},
 			"history": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "History is the check state history.",
 				Name:              "history",
-				Type:              graphql.OutputType("CheckHistory"),
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
 			},
 			"issued": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Issued describes the time in which the check request was issued",
 				Name:              "issued",
-				Type:              graphql1.Int,
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"output": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Output from the execution of Command",
 				Name:              "output",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"state": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "State provides handlers with more information about the state change",
 				Name:              "state",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"status": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Status is the exit status code produced by the check",
 				Name:              "status",
-				Type:              graphql1.Int,
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"totalStateChange": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1074,12 +1121,16 @@ func RegisterCheckHistory(svc *graphql.Service, impl CheckHistoryFieldResolvers)
 }
 func _ObjTypeCheckHistoryStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryStatusFieldResolver)
-	return resolver.Status
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(p)
+	}
 }
 
 func _ObjTypeCheckHistoryExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryExecutedFieldResolver)
-	return resolver.Executed
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Executed(p)
+	}
 }
 
 func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {

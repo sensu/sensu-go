@@ -4,6 +4,7 @@ package schema
 
 import (
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
@@ -29,6 +30,23 @@ var _SchemaDesc = graphql.SchemaDesc{Config: _SchemaConfigFn}
 type QueryChecksFieldResolver interface {
 	// Checks implements response to request for checks field.
 	Checks(p graphql.ResolveParams) (interface{}, error)
+}
+
+// QueryNodeFieldResolverArgs contains arguments provided to node when selected
+type QueryNodeFieldResolverArgs struct {
+	ID interface{} // ID - The ID of an object.
+}
+
+// QueryNodeFieldResolverParams contains contextual info to resolve node field
+type QueryNodeFieldResolverParams struct {
+	graphql.ResolveParams
+	QueryNodeFieldResolverArgs
+}
+
+// QueryNodeFieldResolver implement to resolve requests for the Query's node field.
+type QueryNodeFieldResolver interface {
+	// Node implements response to request for node field.
+	Node(p QueryNodeFieldResolverParams) (interface{}, error)
 }
 
 //
@@ -94,6 +112,7 @@ type QueryChecksFieldResolver interface {
 //
 type QueryFieldResolvers interface {
 	QueryChecksFieldResolver
+	QueryNodeFieldResolver
 
 	// IsTypeOf is used to determine if a given value is associated with the Query type
 	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
@@ -153,6 +172,13 @@ func (_ QueryAliases) Checks(p graphql.ResolveParams) (interface{}, error) {
 	return ret, err
 }
 
+// Node implements response to request for 'node' field.
+func (_ QueryAliases) Node(p QueryNodeFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
 // QueryType The query root of Sensu's GraphQL interface.
 var QueryType = graphql.NewType("Query", graphql.ObjectKind)
 
@@ -162,19 +188,46 @@ func RegisterQuery(svc *graphql.Service, impl QueryFieldResolvers) {
 }
 func _ObjTypeQueryChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryChecksFieldResolver)
-	return resolver.Checks
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Checks(p)
+	}
+}
+
+func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryNodeFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryNodeFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Node(frp)
+	}
 }
 
 func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The query root of Sensu's GraphQL interface.",
-		Fields: graphql1.Fields{"checks": &graphql1.Field{
-			Args:              graphql1.FieldConfigArgument{},
-			DeprecationReason: "",
-			Description:       "self descriptive",
-			Name:              "checks",
-			Type:              graphql1.NewList(graphql.OutputType("Check")),
-		}},
+		Fields: graphql1.Fields{
+			"checks": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "checks",
+				Type:              graphql1.NewList(graphql.OutputType("Check")),
+			},
+			"node": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"id": &graphql1.ArgumentConfig{
+					Description: "The ID of an object.",
+					Type:        graphql1.NewNonNull(graphql.InputType("ID")),
+				}},
+				DeprecationReason: "",
+				Description:       "Node fetches an object given its ID.",
+				Name:              "node",
+				Type:              graphql.OutputType("Node"),
+			},
+		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
@@ -190,6 +243,41 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 
 // describe Query's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _ObjectTypeQueryDesc = graphql.ObjectDesc{
-	Config:        _ObjectTypeQueryConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"checks": _ObjTypeQueryChecksHandler},
+	Config: _ObjectTypeQueryConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"checks": _ObjTypeQueryChecksHandler,
+		"node":   _ObjTypeQueryNodeHandler,
+	},
 }
+
+// NodeType Node describes an object with an ID.
+var NodeType = graphql.NewType("Node", graphql.InterfaceKind)
+
+// RegisterNode registers Node object type with given service.
+func RegisterNode(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
+	svc.RegisterInterface(_InterfaceTypeNodeDesc, impl)
+}
+func _InterfaceTypeNodeConfigFn() graphql1.InterfaceConfig {
+	return graphql1.InterfaceConfig{
+		Description: "Node describes an object with an ID.",
+		Fields: graphql1.Fields{"id": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "The ID of an object",
+			Name:              "id",
+			Type:              graphql1.NewNonNull(graphql.OutputType("ID")),
+		}},
+		Name: "Node",
+		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see InterfaceTypeResolver.")
+		},
+	}
+}
+
+// describe Node's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InterfaceTypeNodeDesc = graphql.InterfaceDesc{Config: _InterfaceTypeNodeConfigFn}

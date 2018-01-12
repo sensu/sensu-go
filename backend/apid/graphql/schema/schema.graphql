@@ -9,4 +9,20 @@ The query root of Sensu's GraphQL interface.
 type Query {
   # TODO: Remove me.
   checks: [Check]
+
+  """
+  Node fetches an object given its ID.
+  """
+  node(
+    "The ID of an object."
+    id: ID!
+  ): Node
+}
+
+"""
+Node describes an object with an ID.
+"""
+interface Node {
+  "The ID of an object"
+  id: ID!
 }

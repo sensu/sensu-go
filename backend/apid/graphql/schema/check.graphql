@@ -1,8 +1,11 @@
 """
 CheckConfig is the specification of a check.
 """
-type CheckConfig {
+type CheckConfig implements Node {
+  "The globally unique identifier of the check."
   id: ID!
+
+  "namespace in which this check resides"
   namespace: Namespace!
 
   "name is the unique identifier for a check"
@@ -33,7 +36,7 @@ type CheckConfig {
   publish: Boolean!
 
   "Subscriptions is the list of subscribers for the check."
-  subscriptions: String
+  subscriptions: [String]!
 
   "Source indicates the name of the entity representing an external resource"
   source: String
@@ -64,25 +67,25 @@ type Check {
   config: CheckConfig
 
   "Duration of execution"
-  duration: double
+  duration: Float
 
   "Executed describes the time in which the check request was executed"
-  executed: Int
+  executed: Time
 
   "History is the check state history."
-  history: CheckHistory
+  history: [CheckHistory]!
 
   "Issued describes the time in which the check request was issued"
-  issued: Int
+  issued: Int!
 
   "Output from the execution of Command"
-  output: String
+  output: String!
 
   "State provides handlers with more information about the state change"
-  state: String
+  state: String!
 
   "Status is the exit status code produced by the check"
-  status: Int
+  status: Int!
 
   """
   TotalStateChange indicates the total state change percentage for the
@@ -97,6 +100,7 @@ CheckHistory is a record of a check execution and its status
 type CheckHistory {
   "Status is the exit status code produced by the check."
   status: Int
+
   "Executed describes the time in which the check request was executed"
   executed: Int
 }

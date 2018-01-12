@@ -144,7 +144,9 @@ func RegisterTimeWindowWhen(svc *graphql.Service, impl TimeWindowWhenFieldResolv
 }
 func _ObjTypeTimeWindowWhenDaysHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowWhenDaysFieldResolver)
-	return resolver.Days
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Days(p)
+	}
 }
 
 func _ObjectTypeTimeWindowWhenConfigFn() graphql1.ObjectConfig {
@@ -411,42 +413,58 @@ func RegisterTimeWindowDays(svc *graphql.Service, impl TimeWindowDaysFieldResolv
 }
 func _ObjTypeTimeWindowDaysAllHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysAllFieldResolver)
-	return resolver.All
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.All(p)
+	}
 }
 
 func _ObjTypeTimeWindowDaysSundayHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysSundayFieldResolver)
-	return resolver.Sunday
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Sunday(p)
+	}
 }
 
 func _ObjTypeTimeWindowDaysMondayHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysMondayFieldResolver)
-	return resolver.Monday
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Monday(p)
+	}
 }
 
 func _ObjTypeTimeWindowDaysTuesdayHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysTuesdayFieldResolver)
-	return resolver.Tuesday
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Tuesday(p)
+	}
 }
 
 func _ObjTypeTimeWindowDaysWednesdayHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysWednesdayFieldResolver)
-	return resolver.Wednesday
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Wednesday(p)
+	}
 }
 
 func _ObjTypeTimeWindowDaysThursdayHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysThursdayFieldResolver)
-	return resolver.Thursday
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Thursday(p)
+	}
 }
 
 func _ObjTypeTimeWindowDaysFridayHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysFridayFieldResolver)
-	return resolver.Friday
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Friday(p)
+	}
 }
 
 func _ObjTypeTimeWindowDaysSaturdayHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowDaysSaturdayFieldResolver)
-	return resolver.Saturday
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Saturday(p)
+	}
 }
 
 func _ObjectTypeTimeWindowDaysConfigFn() graphql1.ObjectConfig {
@@ -689,12 +707,16 @@ func RegisterTimeWindowTimeRange(svc *graphql.Service, impl TimeWindowTimeRangeF
 }
 func _ObjTypeTimeWindowTimeRangeBeginHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowTimeRangeBeginFieldResolver)
-	return resolver.Begin
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Begin(p)
+	}
 }
 
 func _ObjTypeTimeWindowTimeRangeEndHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(TimeWindowTimeRangeEndFieldResolver)
-	return resolver.End
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.End(p)
+	}
 }
 
 func _ObjectTypeTimeWindowTimeRangeConfigFn() graphql1.ObjectConfig {

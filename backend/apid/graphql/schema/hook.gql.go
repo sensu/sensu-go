@@ -214,32 +214,44 @@ func RegisterHookConfig(svc *graphql.Service, impl HookConfigFieldResolvers) {
 }
 func _ObjTypeHookConfigIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigIDFieldResolver)
-	return resolver.ID
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(p)
+	}
 }
 
 func _ObjTypeHookConfigNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigNamespaceFieldResolver)
-	return resolver.Namespace
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(p)
+	}
 }
 
 func _ObjTypeHookConfigNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigNameFieldResolver)
-	return resolver.Name
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(p)
+	}
 }
 
 func _ObjTypeHookConfigCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigCommandFieldResolver)
-	return resolver.Command
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Command(p)
+	}
 }
 
 func _ObjTypeHookConfigTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigTimeoutFieldResolver)
-	return resolver.Timeout
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Timeout(p)
+	}
 }
 
 func _ObjTypeHookConfigStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigStdinFieldResolver)
-	return resolver.Stdin
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Stdin(p)
+	}
 }
 
 func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
@@ -525,32 +537,44 @@ func RegisterHook(svc *graphql.Service, impl HookFieldResolvers) {
 }
 func _ObjTypeHookConfigHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigFieldResolver)
-	return resolver.Config
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Config(p)
+	}
 }
 
 func _ObjTypeHookDurationHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookDurationFieldResolver)
-	return resolver.Duration
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Duration(p)
+	}
 }
 
 func _ObjTypeHookExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookExecutedFieldResolver)
-	return resolver.Executed
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Executed(p)
+	}
 }
 
 func _ObjTypeHookIssuedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookIssuedFieldResolver)
-	return resolver.Issued
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Issued(p)
+	}
 }
 
 func _ObjTypeHookOutputHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookOutputFieldResolver)
-	return resolver.Output
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Output(p)
+	}
 }
 
 func _ObjTypeHookStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookStatusFieldResolver)
-	return resolver.Status
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(p)
+	}
 }
 
 func _ObjectTypeHookConfigFn() graphql1.ObjectConfig {
@@ -777,12 +801,16 @@ func RegisterHookList(svc *graphql.Service, impl HookListFieldResolvers) {
 }
 func _ObjTypeHookListHooksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookListHooksFieldResolver)
-	return resolver.Hooks
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Hooks(p)
+	}
 }
 
 func _ObjTypeHookListTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookListTypeFieldResolver)
-	return resolver.Type
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Type(p)
+	}
 }
 
 func _ObjectTypeHookListConfigFn() graphql1.ObjectConfig {

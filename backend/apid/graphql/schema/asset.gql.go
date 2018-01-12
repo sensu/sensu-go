@@ -228,37 +228,51 @@ func RegisterAsset(svc *graphql.Service, impl AssetFieldResolvers) {
 }
 func _ObjTypeAssetIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetIDFieldResolver)
-	return resolver.ID
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(p)
+	}
 }
 
 func _ObjTypeAssetNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetNamespaceFieldResolver)
-	return resolver.Namespace
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(p)
+	}
 }
 
 func _ObjTypeAssetNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetNameFieldResolver)
-	return resolver.Name
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(p)
+	}
 }
 
 func _ObjTypeAssetUrlHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetUrlFieldResolver)
-	return resolver.Url
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Url(p)
+	}
 }
 
 func _ObjTypeAssetSha512Handler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetSha512FieldResolver)
-	return resolver.Sha512
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Sha512(p)
+	}
 }
 
 func _ObjTypeAssetFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetFiltersFieldResolver)
-	return resolver.Filters
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Filters(p)
+	}
 }
 
 func _ObjTypeAssetOrganizationHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetOrganizationFieldResolver)
-	return resolver.Organization
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Organization(p)
+	}
 }
 
 func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {

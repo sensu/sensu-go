@@ -397,12 +397,16 @@ func RegisterCreateCheckPayload(svc *graphql.Service, impl CreateCheckPayloadFie
 }
 func _ObjTypeCreateCheckPayloadClientMutationIdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CreateCheckPayloadClientMutationIdFieldResolver)
-	return resolver.ClientMutationId
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationId(p)
+	}
 }
 
 func _ObjTypeCreateCheckPayloadCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CreateCheckPayloadCheckFieldResolver)
-	return resolver.Check
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Check(p)
+	}
 }
 
 func _ObjectTypeCreateCheckPayloadConfigFn() graphql1.ObjectConfig {

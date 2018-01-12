@@ -259,47 +259,65 @@ func RegisterEntity(svc *graphql.Service, impl EntityFieldResolvers) {
 }
 func _ObjTypeEntityIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityIDFieldResolver)
-	return resolver.ID
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(p)
+	}
 }
 
 func _ObjTypeEntityNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityNamespaceFieldResolver)
-	return resolver.Namespace
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(p)
+	}
 }
 
 func _ObjTypeEntityClassHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityClassFieldResolver)
-	return resolver.Class
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Class(p)
+	}
 }
 
 func _ObjTypeEntitySystemHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntitySystemFieldResolver)
-	return resolver.System
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.System(p)
+	}
 }
 
 func _ObjTypeEntitySubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntitySubscriptionsFieldResolver)
-	return resolver.Subscriptions
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subscriptions(p)
+	}
 }
 
 func _ObjTypeEntityLastSeenHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityLastSeenFieldResolver)
-	return resolver.LastSeen
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LastSeen(p)
+	}
 }
 
 func _ObjTypeEntityDeregisterHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityDeregisterFieldResolver)
-	return resolver.Deregister
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Deregister(p)
+	}
 }
 
 func _ObjTypeEntityDeregistrationHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityDeregistrationFieldResolver)
-	return resolver.Deregistration
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Deregistration(p)
+	}
 }
 
 func _ObjTypeEntityKeepaliveTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityKeepaliveTimeoutFieldResolver)
-	return resolver.KeepaliveTimeout
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.KeepaliveTimeout(p)
+	}
 }
 
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
@@ -609,32 +627,44 @@ func RegisterSystem(svc *graphql.Service, impl SystemFieldResolvers) {
 }
 func _ObjTypeSystemHostnameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemHostnameFieldResolver)
-	return resolver.Hostname
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Hostname(p)
+	}
 }
 
 func _ObjTypeSystemOsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemOsFieldResolver)
-	return resolver.Os
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Os(p)
+	}
 }
 
 func _ObjTypeSystemPlatformHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemPlatformFieldResolver)
-	return resolver.Platform
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Platform(p)
+	}
 }
 
 func _ObjTypeSystemPlatformFamilyHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemPlatformFamilyFieldResolver)
-	return resolver.PlatformFamily
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PlatformFamily(p)
+	}
 }
 
 func _ObjTypeSystemPlatformVersionHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemPlatformVersionFieldResolver)
-	return resolver.PlatformVersion
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PlatformVersion(p)
+	}
 }
 
 func _ObjTypeSystemNetworkHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemNetworkFieldResolver)
-	return resolver.Network
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Network(p)
+	}
 }
 
 func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
@@ -851,7 +881,9 @@ func RegisterNetwork(svc *graphql.Service, impl NetworkFieldResolvers) {
 }
 func _ObjTypeNetworkInterfacesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NetworkInterfacesFieldResolver)
-	return resolver.Interfaces
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Interfaces(p)
+	}
 }
 
 func _ObjectTypeNetworkConfigFn() graphql1.ObjectConfig {
@@ -1051,17 +1083,23 @@ func RegisterNetworkInterface(svc *graphql.Service, impl NetworkInterfaceFieldRe
 }
 func _ObjTypeNetworkInterfaceNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NetworkInterfaceNameFieldResolver)
-	return resolver.Name
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(p)
+	}
 }
 
 func _ObjTypeNetworkInterfaceMacHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NetworkInterfaceMacFieldResolver)
-	return resolver.Mac
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Mac(p)
+	}
 }
 
 func _ObjTypeNetworkInterfaceAddressesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NetworkInterfaceAddressesFieldResolver)
-	return resolver.Addresses
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Addresses(p)
+	}
 }
 
 func _ObjectTypeNetworkInterfaceConfigFn() graphql1.ObjectConfig {
@@ -1250,7 +1288,9 @@ func RegisterDeregistration(svc *graphql.Service, impl DeregistrationFieldResolv
 }
 func _ObjTypeDeregistrationHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(DeregistrationHandlerFieldResolver)
-	return resolver.Handler
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handler(p)
+	}
 }
 
 func _ObjectTypeDeregistrationConfigFn() graphql1.ObjectConfig {
