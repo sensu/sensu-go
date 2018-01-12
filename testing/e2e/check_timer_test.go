@@ -25,12 +25,12 @@ func (suite *CheckSchedulerIntervalSuite) SetupTest() {
 	suite.check.Interval = 1
 	suite.msgBus = &messaging.WizardBus{}
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
+	manager := schedulerd.NewStateManager(&mockstore.MockStore{})
+	manager.Update(func(state *schedulerd.SchedulerState) {
 		state.SetChecks([]*types.CheckConfig{suite.check})
 	})
 
-	suite.scheduler = &CheckScheduler{
+	suite.scheduler = &schedulerd.CheckScheduler{
 		CheckName:     suite.check.Name,
 		CheckEnv:      suite.check.Environment,
 		CheckOrg:      suite.check.Organization,
@@ -88,12 +88,12 @@ func (suite *CheckSubdueIntervalSuite) SetupTest() {
 	suite.check.Interval = 1
 	suite.msgBus = &messaging.WizardBus{}
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
+	manager := schedulerd.NewStateManager(&mockstore.MockStore{})
+	manager.Update(func(state *schedulerd.SchedulerState) {
 		state.SetChecks([]*types.CheckConfig{suite.check})
 	})
 
-	suite.scheduler = &CheckScheduler{
+	suite.scheduler = &schedulerd.CheckScheduler{
 		CheckName:     suite.check.Name,
 		CheckEnv:      suite.check.Environment,
 		CheckOrg:      suite.check.Organization,
@@ -154,34 +154,8 @@ type TimerIntervalSuite struct {
 	suite.Suite
 }
 
-func (suite *TimerIntervalSuite) TestSplay() {
-	timer := NewIntervalTimer("check1", 10)
-
-	suite.Condition(func() bool { return timer.splay > 0 })
-
-	timer2 := NewIntervalTimer("check1", 10)
-	suite.Equal(timer.splay, timer2.splay)
-}
-
-func (suite *TimerIntervalSuite) TestInitialOffset() {
-	inputs := []uint{1, 10, 60}
-	for _, intervalSeconds := range inputs {
-		now := time.Now()
-		timer := NewIntervalTimer("check1", intervalSeconds)
-		nextExecution := timer.calcInitialOffset()
-		executionTime := now.Add(nextExecution)
-
-		// We've scheduled it in the future.
-		suite.Condition(func() bool { return executionTime.Sub(now) > 0 })
-		// The offset is less than the check interval.
-		suite.Condition(func() bool { return nextExecution < (time.Duration(intervalSeconds) * time.Second) })
-		// The next execution occurs _before_ now + interval.
-		suite.Condition(func() bool { return executionTime.Before(now.Add(time.Duration(intervalSeconds) * time.Second)) })
-	}
-}
-
 func (suite *TimerIntervalSuite) TestStop() {
-	timer := NewIntervalTimer("check1", 10)
+	timer := schedulerd.NewIntervalTimer("check1", 10)
 	timer.Start()
 
 	result := timer.Stop()
@@ -191,7 +165,7 @@ func (suite *TimerIntervalSuite) TestStop() {
 type CheckExecIntervalSuite struct {
 	suite.Suite
 	check  *types.CheckConfig
-	exec   *CheckExecutor
+	exec   *schedulerd.CheckExecutor
 	msgBus messaging.MessageBus
 }
 
@@ -204,12 +178,12 @@ func (suite *CheckExecIntervalSuite) SetupTest() {
 	hook := request.Hooks[0]
 	suite.check = request.Config
 
-	state := &SchedulerState{}
+	state := &schedulerd.SchedulerState{}
 	state.SetChecks([]*types.CheckConfig{request.Config})
 	state.SetAssets([]*types.Asset{&asset})
 	state.SetHooks([]*types.HookConfig{&hook})
 
-	suite.exec = &CheckExecutor{
+	suite.exec = &schedulerd.CheckExecutor{
 		State: state,
 		Bus:   suite.msgBus,
 	}
@@ -259,12 +233,12 @@ func (suite *CheckSchedulerCronSuite) SetupTest() {
 	suite.check.Cron = "* * * * *"
 	suite.msgBus = &messaging.WizardBus{}
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
+	manager := schedulerd.NewStateManager(&mockstore.MockStore{})
+	manager.Update(func(state *schedulerd.SchedulerState) {
 		state.SetChecks([]*types.CheckConfig{suite.check})
 	})
 
-	suite.scheduler = &CheckScheduler{
+	suite.scheduler = &schedulerd.CheckScheduler{
 		CheckName:     suite.check.Name,
 		CheckEnv:      suite.check.Environment,
 		CheckOrg:      suite.check.Organization,
@@ -322,12 +296,12 @@ func (suite *CheckSubdueCronSuite) SetupTest() {
 	suite.check.Cron = "* * * * *"
 	suite.msgBus = &messaging.WizardBus{}
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
+	manager := schedulerd.NewStateManager(&mockstore.MockStore{})
+	manager.Update(func(state *schedulerd.SchedulerState) {
 		state.SetChecks([]*types.CheckConfig{suite.check})
 	})
 
-	suite.scheduler = &CheckScheduler{
+	suite.scheduler = &schedulerd.CheckScheduler{
 		CheckName:     suite.check.Name,
 		CheckEnv:      suite.check.Environment,
 		CheckOrg:      suite.check.Organization,
@@ -389,7 +363,7 @@ type TimerCronSuite struct {
 }
 
 func (suite *TimerCronSuite) TestStop() {
-	timer := NewCronTimer("check1", "* * * * *")
+	timer := schedulerd.NewCronTimer("check1", "* * * * *")
 	timer.Start()
 
 	result := timer.Stop()
@@ -399,7 +373,7 @@ func (suite *TimerCronSuite) TestStop() {
 type CheckExecCronSuite struct {
 	suite.Suite
 	check  *types.CheckConfig
-	exec   *CheckExecutor
+	exec   *schedulerd.CheckExecutor
 	msgBus messaging.MessageBus
 }
 
@@ -413,12 +387,12 @@ func (suite *CheckExecCronSuite) SetupTest() {
 	hook := request.Hooks[0]
 	suite.check = request.Config
 
-	state := &SchedulerState{}
+	state := &schedulerd.SchedulerState{}
 	state.SetChecks([]*types.CheckConfig{request.Config})
 	state.SetAssets([]*types.Asset{&asset})
 	state.SetHooks([]*types.HookConfig{&hook})
 
-	suite.exec = &CheckExecutor{
+	suite.exec = &schedulerd.CheckExecutor{
 		State: state,
 		Bus:   suite.msgBus,
 	}
