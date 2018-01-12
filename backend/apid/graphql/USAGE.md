@@ -32,7 +32,7 @@ From the project root, run:
 go run ./scripts/gengraphql.go ./backend/apid/graphql/schema
 ```
 
-Next we need to tell our service how to the types themselves are implemented. To
+Next we need to tell our service how the types themselves are implemented. To
 give an example, when a user selects a dog's friends, the service needs to know
 _how_ to retrieve those details so that it can display them to the user.
 
@@ -61,7 +61,7 @@ func (fr *dogFieldResolvers) Friends(p graphql.ResolveParams) (interface{}, erro
 
 // IsTypeOf is used to determine if a given value is associated with the Dog type
 func (fr *dogFieldResolvers) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-  _, ok := p.(*types.Dog)
+  _, ok := s.(*types.Dog)
   return ok
 }
 ```
