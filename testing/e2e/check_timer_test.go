@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/suite"
@@ -15,7 +16,7 @@ import (
 type CheckSchedulerIntervalSuite struct {
 	suite.Suite
 	check     *types.CheckConfig
-	scheduler *CheckScheduler
+	scheduler *schedulerd.CheckScheduler
 	msgBus    *messaging.WizardBus
 }
 
@@ -78,7 +79,7 @@ func (suite *CheckSchedulerIntervalSuite) TestStart() {
 type CheckSubdueIntervalSuite struct {
 	suite.Suite
 	check     *types.CheckConfig
-	scheduler *CheckScheduler
+	scheduler *schedulerd.CheckScheduler
 	msgBus    *messaging.WizardBus
 }
 
@@ -249,7 +250,7 @@ func TestRunExecIntervalSuite(t *testing.T) {
 type CheckSchedulerCronSuite struct {
 	suite.Suite
 	check     *types.CheckConfig
-	scheduler *CheckScheduler
+	scheduler *schedulerd.CheckScheduler
 	msgBus    *messaging.WizardBus
 }
 
@@ -312,7 +313,7 @@ func (suite *CheckSchedulerCronSuite) TestStart() {
 type CheckSubdueCronSuite struct {
 	suite.Suite
 	check     *types.CheckConfig
-	scheduler *CheckScheduler
+	scheduler *schedulerd.CheckScheduler
 	msgBus    *messaging.WizardBus
 }
 
