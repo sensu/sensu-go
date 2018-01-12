@@ -330,8 +330,7 @@
 [[projects]]
   name = "github.com/robfig/cron"
   packages = ["."]
-  revision = "b024fc5ea0e34bc3f83d9941c8d60b0622bfaca4"
-  version = "v1"
+  revision = "2315d5715e36303a941d907f038da7f7c44c773b"
 
 [[projects]]
   branch = "nested-parameters"
@@ -344,6 +343,12 @@
   packages = ["host","internal/common","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
   version = "v2.17.08"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shirou/w32"
+  packages = ["."]
+  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   name = "github.com/soheilhy/cmux"
@@ -472,8 +477,8 @@
 [[projects]]
   name = "gopkg.in/AlecAivazis/survey.v1"
   packages = ["core","terminal"]
-  revision = "0aa8b6a162b391fe2d95648b7677d1d6ac2090a6"
-  version = "v1.4.1"
+  revision = "344ec26ea976135df7508f1f513e5490a4686e11"
+  version = "v1.4.0"
 
 [[projects]]
   name = "gopkg.in/h2non/filetype.v1"
@@ -490,6 +495,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2dad590ecd5fb0150d3c7f9fdec0586ba228114e7280d5aecf13638b271d145c"
+  inputs-digest = "dcf8af9e2d3a252ad0a7bea1afeaca3cb3d0d3d219f46a1794ce829b73cb74e4"
   solver-name = "gps-cdcl"
   solver-version = 1

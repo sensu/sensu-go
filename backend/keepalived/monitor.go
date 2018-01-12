@@ -58,6 +58,7 @@ func (monitorPtr *KeepaliveMonitor) Start() {
 				}
 			case <-timer.C:
 				// timed out keepalive
+				logger.Warn("timed out keepalive")
 
 				// if the entity is supposed to be deregistered, do so.
 				if monitorPtr.Entity.Deregister {

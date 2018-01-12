@@ -171,13 +171,24 @@ function linter_commands
     }
 }
 
-function test_commands
+function unit_test_commands
 {
-    echo "Running tests..."
+    echo "Running unit tests..."
 
     go test -timeout=60s $(go list ./... | Select-String -pattern "testing", "vendor" -notMatch)
     If ($LASTEXITCODE -ne 0) {
-        echo "Testing failed..."
+        echo "Unit testing failed..."
+        exit 1
+    }
+}
+
+function integration_test_commands
+{
+    echo "Running integration tests..."
+
+    go test -timeout=60s -tags=integration $(go list ./... | Select-String -pattern "testing", "vendor" -notMatch)
+    If ($LASTEXITCODE -ne 0) {
+        echo "Integration testing failed..."
         exit 1
     }
 }
@@ -223,16 +234,20 @@ ElseIf ($cmd -eq "lint") {
 }
 ElseIf ($cmd -eq "quality") {
     linter_commands
-    test_commands
+    unit_test_commands
 }
 ElseIf ($cmd -eq "unit") {
-    test_commands
+    unit_test_commands
+}
+ElseIf ($cmd -eq "integration") {
+    integration_test_commands
 }
 Else {
     install_deps
     linter_commands
     build_tools
-    test_commands
+    unit_test_commands
+    integration_test_commands
     build_commands
     e2e_commands
 }

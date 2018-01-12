@@ -17,6 +17,7 @@ import (
 	"github.com/sensu/sensu-go/backend/migration"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/schedulerd"
+	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 )
@@ -240,7 +241,7 @@ func (b *Backend) Run() (derr error) {
 	}
 
 	// Seed initial data
-	err = seedInitialData(st)
+	err = seeds.SeedInitialData(st)
 	if err != nil {
 		return err
 	}

@@ -4,12 +4,6 @@ branches:
   only:
     - master
 
-cache:
-  - backend\dashboardd\node_modules
-  - vendor
-  - '%GOPATH%\src'
-  - '%GOPATH%\pkg'
-
 image:
   - Visual Studio 2015
   - Visual Studio 2017
@@ -49,7 +43,3 @@ platform:
 
 build_script:
   - ps: .\build.ps1 $env:TEST_SUITE
-
-after_build:
-  - ps: rmdir -Recurse $env:GOPATH\src\github.com\sensu\sensu-go\*
-  - ps: rmdir -Recurse $env:GOPATH\pkg\**\github.com\sensu\sensu-go
