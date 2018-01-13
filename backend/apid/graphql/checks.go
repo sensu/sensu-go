@@ -31,24 +31,27 @@ func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
 
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.CheckConfig)     // infer source
-	handlers := r.store.GetHandlers(p.Context) // fetch all handlers
+	check := p.Source.(*types.CheckConfig)          // infer source
+	handlers, err := r.store.GetHandlers(p.Context) // fetch all handlers
+	if err != nil {
+		return nil, err
+	}
 
 	// Filter out irrevelant handlers
 	for i := 0; i < len(handlers); {
 		for _, h := range check.Handlers {
-			if h == handles[i].Name {
+			if h == handlers[i].Name {
 				continue
 			}
 		}
-		handlers = append(a[:i], a[i+1:]...)
+		handlers = append(handlers[:i], handlers[i+1:]...)
 	}
-	return handlers
+	return handlers, nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the Check type
-func (r *checkCfgImpl) IsTypeOf(p graphql.IsTypeOfParams) bool {
-	_, ok := p.Value.(*types.CheckConfig)
+func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*types.CheckConfig)
 	return ok
 }
 
@@ -61,8 +64,8 @@ type checkImpl struct {
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
-func (r *checkImpl) IsTypeOf(p graphql.IsTypeOfParams) bool {
-	_, ok := p.Value.(*types.Check)
+func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*types.Check)
 	return ok
 }
 
@@ -71,11 +74,11 @@ func (r *checkImpl) IsTypeOf(p graphql.IsTypeOfParams) bool {
 //
 
 type checkHistoryImpl struct {
-	schema.CheckAliases
+	schema.CheckHistoryAliases
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
-func (r *checkHistoryImpl) IsTypeOf(p graphql.IsTypeOfParams) bool {
-	_, ok := p.Value.(types.CheckHistory)
+func (r *checkHistoryImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(types.CheckHistory)
 	return ok
 }

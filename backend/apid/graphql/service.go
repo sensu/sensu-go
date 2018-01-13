@@ -21,8 +21,9 @@ func NewService(cfg ServiceConfig) *graphql.Service {
 	// RegisterTypes
 	schema.RegisterCheck(svc, &checkImpl{})
 	schema.RegisterCheckConfig(svc, &checkCfgImpl{store: store})
-	schema.RegisterCheckHistory(svc, &checkHistoryImpl{store: store})
+	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterQuery(svc, &queryImpl{store: store})
+	schema.RegisterNode(svc, &nodeImpl{})
 
 	return svc
 }

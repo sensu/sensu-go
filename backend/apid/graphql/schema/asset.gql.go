@@ -40,13 +40,7 @@ type AssetSha512FieldResolver interface {
 // AssetFiltersFieldResolver implement to resolve requests for the Asset's filters field.
 type AssetFiltersFieldResolver interface {
 	// Filters implements response to request for filters field.
-	Filters(p graphql.ResolveParams) (string, error)
-}
-
-// AssetOrganizationFieldResolver implement to resolve requests for the Asset's organization field.
-type AssetOrganizationFieldResolver interface {
-	// Organization implements response to request for organization field.
-	Organization(p graphql.ResolveParams) (string, error)
+	Filters(p graphql.ResolveParams) ([]string, error)
 }
 
 //
@@ -117,7 +111,6 @@ type AssetFieldResolvers interface {
 	AssetUrlFieldResolver
 	AssetSha512FieldResolver
 	AssetFiltersFieldResolver
-	AssetOrganizationFieldResolver
 
 	// IsTypeOf is used to determine if a given value is associated with the Asset type
 	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
@@ -206,20 +199,13 @@ func (_ AssetAliases) Sha512(p graphql.ResolveParams) (string, error) {
 }
 
 // Filters implements response to request for 'filters' field.
-func (_ AssetAliases) Filters(p graphql.ResolveParams) (string, error) {
+func (_ AssetAliases) Filters(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := val.([]string)
 	return ret, err
 }
 
-// Organization implements response to request for 'organization' field.
-func (_ AssetAliases) Organization(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
-	return ret, err
-}
-
-// AssetType Asset defines an asset agents install as a dependency for a check.
+// AssetType Asset defines an archive, an agent will install as a dependency for a check.
 var AssetType = graphql.NewType("Asset", graphql.ObjectKind)
 
 // RegisterAsset registers Asset object type with given service.
@@ -268,23 +254,16 @@ func _ObjTypeAssetFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeAssetOrganizationHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetOrganizationFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Organization(p)
-	}
-}
-
 func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
-		Description: "Asset defines an asset agents install as a dependency for a check.",
+		Description: "Asset defines an archive, an agent will install as a dependency for a check.",
 		Fields: graphql1.Fields{
 			"filters": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Filters are a collection of sensu queries, used by the system to determine\nif the asset should be installed. If more than one filter is present the\nqueries are joined by the \"AND\" operator.",
 				Name:              "filters",
-				Type:              graphql1.String,
+				Type:              graphql1.NewList(graphql1.String),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -306,13 +285,6 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 				Description:       "self descriptive",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
-			},
-			"organization": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Organization indicates to which org an asset belongs to",
-				Name:              "organization",
-				Type:              graphql1.String,
 			},
 			"sha512": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -346,12 +318,11 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeAssetDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeAssetConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"filters":      _ObjTypeAssetFiltersHandler,
-		"id":           _ObjTypeAssetIDHandler,
-		"name":         _ObjTypeAssetNameHandler,
-		"namespace":    _ObjTypeAssetNamespaceHandler,
-		"organization": _ObjTypeAssetOrganizationHandler,
-		"sha512":       _ObjTypeAssetSha512Handler,
-		"url":          _ObjTypeAssetUrlHandler,
+		"filters":   _ObjTypeAssetFiltersHandler,
+		"id":        _ObjTypeAssetIDHandler,
+		"name":      _ObjTypeAssetNameHandler,
+		"namespace": _ObjTypeAssetNamespaceHandler,
+		"sha512":    _ObjTypeAssetSha512Handler,
+		"url":       _ObjTypeAssetUrlHandler,
 	},
 }

@@ -12,7 +12,7 @@ import (
 
 // Quick and dirty script that cobbles together a GraphQL definition from given
 // protobuf file. Script is intented to only be run once for each message.
-func main() {
+func main() { // nolint
 	// script IN OUT
 	if len(os.Args) < 3 {
 		_, script := filepath.Split(os.Args[0])

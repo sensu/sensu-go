@@ -1,5 +1,5 @@
 """
-Asset defines an asset agents install as a dependency for a check.
+Asset defines an archive, an agent will install as a dependency for a check.
 """
 type Asset {
   id: ID!
@@ -19,9 +19,5 @@ type Asset {
   if the asset should be installed. If more than one filter is present the
   queries are joined by the "AND" operator.
   """
-  filters: String
-
-  "Organization indicates to which org an asset belongs to"
-  organization: String
+  filters: [String]
 }
-

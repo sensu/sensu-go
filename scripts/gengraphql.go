@@ -19,7 +19,7 @@ const (
 
 var logger = logrus.WithField("component", "scripts/gengraphql")
 
-func main() {
+func main() { // nolint
 	// Parse
 	config := parseArgs(os.Args)
 
