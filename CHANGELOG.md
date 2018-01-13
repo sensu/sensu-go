@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
+
 ### Fixed
 - Fixed e2e test for token substitution on Windows
 - Fixed check subdue unit test for token substitution on Windows
