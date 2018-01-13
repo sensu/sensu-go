@@ -8,6 +8,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
+	"github.com/sensu/sensu-go/testing/mockmonitor"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -43,14 +44,10 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 		MessageBus: suite.MessageBus,
 	}
 
-	keepalived.MonitorFactory = func(e *types.Entity) *monitor.Monitor {
-		return &monitor.Monitor{
-			Entity:         e,
-			Timeout:        time.Duration(e.KeepaliveTimeout),
-			FailureHandler: keepalived,
-			UpdateHandler:  keepalived,
-		}
+	keepalived.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+		return &mockmonitor.MockMonitor{}
 	}
+
 	suite.Keepalived = keepalived
 }
 
@@ -123,12 +120,15 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			k := &Keepalived{}
+			mon := &mockmonitor.MockMonitor{}
+			mon.On("HandleUpdate", mock.Anything).Return(nil)
+			k.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+				return mon
+			}
 			suite.Error(k.Start())
 
 			k.MessageBus = suite.MessageBus
 			suite.Error(k.Start())
-
-			k.MonitorFactory = nil
 
 			store := &mockstore.MockStore{}
 			store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
@@ -162,17 +162,20 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 
 func (suite *KeepalivedTestSuite) TestEventProcessing() {
 	suite.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
-	suite.Keepalived.MonitorFactory = nil
+	mon := &mockmonitor.MockMonitor{}
+	suite.Keepalived.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+		return mon
+	}
 	suite.NoError(suite.Keepalived.Start())
 	event := types.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
 	suite.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
+	suite.Store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
 
-	suite.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+	//suite.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
 	suite.Keepalived.keepaliveChan <- event
-	time.Sleep(100 * time.Millisecond)
-	suite.Store.AssertCalled(suite.T(), "UpdateEntity", mock.Anything, event.Entity)
+	mon.AssertCalled(suite.T(), "HandleUpdate", event)
 }
 
 func TestKeepalivedSuite(t *testing.T) {

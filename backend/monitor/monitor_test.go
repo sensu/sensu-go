@@ -3,6 +3,7 @@
 package monitor
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -14,33 +15,92 @@ type testHandler struct{}
 
 // create update and failure handlers for use with the monitor
 func (handler *testHandler) HandleUpdate(event *types.Event) error {
-	return nil
+	if event.Entity.ID == "entity" {
+		return nil
+	}
+	return errors.New("test update handler error")
 }
 
-func (handler *testHandler) HandleFailure(event *types.Entity) error {
-	return nil
+func (handler *testHandler) HandleFailure(entity *types.Entity) error {
+	if entity.ID == "entity" {
+		return nil
+	}
+	return errors.New("test failure handler error")
 }
 
-func TestMonitorUpdate(t *testing.T) {
-	assert := assert.New(t)
+func TestMonitorHandleUpdate(t *testing.T) {
 
-	entity := types.FixtureEntity("entity")
-	event := &types.Event{
-		Entity: entity,
+	passEntity := types.FixtureEntity("entity")
+	failEntity := types.FixtureEntity("fail")
+	testCases := []struct {
+		name        string
+		entity      *types.Entity
+		event       *types.Event
+		handler     *testHandler
+		expectedErr error
+	}{
+		{
+			name:   "test no error",
+			entity: passEntity,
+			event: &types.Event{
+				Entity: passEntity,
+			},
+			handler:     &testHandler{},
+			expectedErr: nil,
+		},
+		{
+			name:   "test with error",
+			entity: failEntity,
+			event: &types.Event{
+				Entity: failEntity,
+			},
+			handler:     &testHandler{},
+			expectedErr: errors.New("test update handler error"),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			monitor := New(tc.entity, (60 * time.Second), tc.handler, tc.handler)
+
+			assert.EqualValues(tc.expectedErr, monitor.HandleUpdate(tc.event))
+		})
 	}
 
-	handler := &testHandler{}
+}
 
-	monitor := &Monitor{
-		Entity:         entity,
-		Timeout:        60 * time.Second,
-		FailureHandler: handler,
-		UpdateHandler:  handler,
+func TestMonitorHandleFailure(t *testing.T) {
+
+	testCases := []struct {
+		name        string
+		entity      *types.Entity
+		handler     *testHandler
+		expectedErr error
+	}{
+		{
+			name:        "test no error",
+			entity:      types.FixtureEntity("entity"),
+			handler:     &testHandler{},
+			expectedErr: nil,
+		},
+		{
+			name:        "test with error",
+			entity:      types.FixtureEntity("fail"),
+			handler:     &testHandler{},
+			expectedErr: errors.New("test failure handler error"),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			monitor := New(tc.entity, (60 * time.Second), tc.handler, tc.handler)
+
+			assert.EqualValues(tc.expectedErr, monitor.HandleFailure(tc.entity))
+		})
 	}
 
-	monitor.Start()
-
-	assert.NoError(monitor.HandleUpdate(event))
 }
 
 func TestMonitorStop(t *testing.T) {
@@ -49,12 +109,7 @@ func TestMonitorStop(t *testing.T) {
 	entity := types.FixtureEntity("entity")
 
 	handler := &testHandler{}
-	monitor := &Monitor{Entity: entity,
-		Timeout:        60 * time.Second,
-		FailureHandler: handler,
-		UpdateHandler:  handler,
-	}
-	monitor.reset = make(chan interface{})
+	monitor := New(entity, (60 * time.Second), handler, handler)
 	monitor.Stop()
 	assert.True(monitor.IsStopped(), "IsStopped returns true if stopped")
 }
@@ -71,13 +126,8 @@ func TestMonitorReset(t *testing.T) {
 
 	handler := &testHandler{}
 
-	monitor := &Monitor{Entity: entity,
-		Timeout:        60 * time.Second,
-		FailureHandler: handler,
-		UpdateHandler:  handler,
-	}
-
-	monitor.Reset(time.Now().Unix())
+	monitor := New(entity, (60 * time.Second), handler, handler)
+	monitor.reset(0)
 	time.Sleep(100 * time.Millisecond)
 	assert.False(monitor.IsStopped())
 }

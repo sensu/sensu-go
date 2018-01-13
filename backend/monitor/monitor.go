@@ -1,11 +1,20 @@
 package monitor
 
 import (
+	"fmt"
 	"sync/atomic"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
 )
+
+// Interface ...
+type Interface interface {
+	Stop()
+	IsStopped() bool
+	HandleUpdate(e *types.Event) error
+	HandleFailure(e *types.Entity) error
+}
 
 // Monitor is a managed timer that is reset whenever the monitor observes a
 // Keepalive or Check Result Ttl event via the Update() function. Once the timer
@@ -16,10 +25,10 @@ type Monitor struct {
 	FailureHandler FailureHandler
 	UpdateHandler  UpdateHandler
 
-	reset   chan interface{}
-	timer   *time.Timer
-	stopped int32
-	failing int32
+	resetChan chan time.Duration
+	timer     *time.Timer
+	stopped   int32
+	failing   int32
 }
 
 // UpdateHandler provides a HandleUpdate function.
@@ -34,40 +43,41 @@ type FailureHandler interface {
 
 // HandleUpdate causes the Monitor to observe the event. If the monitor has
 // been stopped, this method has no effect.
-func (monitorPtr *Monitor) HandleUpdate(event *types.Event) error {
+func (m *Monitor) HandleUpdate(event *types.Event) error {
 	// once the monitor is stopped, we can't continue, because the
 	// reset channel will be closed.
-	if monitorPtr.IsStopped() {
+	if m.IsStopped() {
 		return nil
 	}
 
-	if atomic.CompareAndSwapInt32(&monitorPtr.failing, 1, 0) {
-		if err := monitorPtr.UpdateHandler.HandleUpdate(event); err != nil {
-			return err
-		}
-	}
-	monitorPtr.reset <- struct{}{}
-	return nil
+	// Update the event. If the monitor is failing, flip status back to zero
+	atomic.CompareAndSwapInt32(&m.failing, 1, 0)
+	m.reset(m.Timeout * time.Second)
+	return m.UpdateHandler.HandleUpdate(event)
 }
 
 // HandleFailure passes an event to the failure handler function and runs it.
-func (monitorPtr *Monitor) HandleFailure(entity *types.Entity) error {
-	return monitorPtr.FailureHandler.HandleFailure(entity)
+func (m *Monitor) HandleFailure(entity *types.Entity) error {
+	fmt.Printf("Entity: %v\n", entity)
+	fmt.Println("In monitor failure handler")
+	defer m.Stop()
+	atomic.CompareAndSwapInt32(&m.failing, 0, 1)
+	return m.FailureHandler.HandleFailure(entity)
 }
 
-// Start initializes the monitor and starts its monitoring goroutine.
+// start initializes the monitor and starts its monitoring goroutine.
 // If the monitor has been previously stopped, this method has no
 // effect.
-func (monitorPtr *Monitor) Start() {
-	if monitorPtr.IsStopped() {
+func (m *Monitor) start() {
+	if m.IsStopped() {
 		return
 	}
 
-	timerDuration := monitorPtr.Timeout * time.Second
-	monitorPtr.timer = time.NewTimer(timerDuration)
-	monitorPtr.reset = make(chan interface{})
+	timerDuration := m.Timeout * time.Second
+	m.timer = time.NewTimer(timerDuration)
+	m.resetChan = make(chan time.Duration)
 	go func() {
-		timer := monitorPtr.timer
+		timer := m.timer
 
 		for {
 			// Access to the timer has to be constrained to a single goroutine.
@@ -75,60 +85,64 @@ func (monitorPtr *Monitor) Start() {
 			// and calling timer.Reset(), so we signal a clean reset of the
 			// timer using the reset channel.
 			select {
-			case <-monitorPtr.reset:
-				if !timer.Stop() {
-					<-timer.C
+			case d := <-m.resetChan:
+				if d == 0 {
+					if !timer.Stop() {
+						<-timer.C
+					}
+					timer.Reset(timerDuration)
+				} else {
+					timer.Reset(d)
 				}
 
 			case <-timer.C:
-				// check the event deregistration; if so, delete and return
-				// otherwise - emit an event and then swap
-				monitorPtr.FailureHandler.HandleFailure(monitorPtr.Entity)
-
-				atomic.CompareAndSwapInt32(&monitorPtr.failing, 0, 1)
+				m.HandleFailure(m.Entity)
+				timer.Reset(timerDuration)
 			}
 
-			if monitorPtr.IsStopped() {
+			if m.IsStopped() {
 				return
 			}
 
-			timer.Reset(timerDuration)
 		}
 	}()
 }
 
 // Stop the Monitor. Once the monitor has been stopped it
 // can no longer be used.
-func (monitorPtr *Monitor) Stop() {
+func (m *Monitor) Stop() {
 	// atomically set stopped so that once Stop is called, all future
 	// reads of stopped are true.
-	if !atomic.CompareAndSwapInt32(&monitorPtr.stopped, 0, 1) {
+	if !atomic.CompareAndSwapInt32(&m.stopped, 0, 1) {
 		return
 	}
 
-	close(monitorPtr.reset)
+	close(m.resetChan)
 }
 
 // IsStopped returns true if the Monitor has been stopped.
-func (monitorPtr *Monitor) IsStopped() bool {
-	return atomic.LoadInt32(&monitorPtr.stopped) > 0
+func (m *Monitor) IsStopped() bool {
+	return atomic.LoadInt32(&m.stopped) > 0
 }
 
 // Reset the Monitor's timer to emit an event at a given time.
 // Once the Monitor has been stopped, this has no effect.
-func (monitorPtr *Monitor) Reset(t int64) {
-	if monitorPtr.IsStopped() {
+func (m *Monitor) reset(t time.Duration) {
+	if m.IsStopped() {
 		return
 	}
 
-	if monitorPtr.timer == nil {
-		monitorPtr.Start()
-	}
+	m.resetChan <- t
+}
 
-	d := time.Duration(t - time.Now().Unix())
-	if d < 0 {
-		d = 0
+// New creates a new monitor from an entity.
+func New(e *types.Entity, t time.Duration, updateHandler UpdateHandler, failureHandler FailureHandler) *Monitor {
+	monitor := &Monitor{
+		Entity:         e,
+		Timeout:        t,
+		FailureHandler: failureHandler,
+		UpdateHandler:  updateHandler,
 	}
-
-	monitorPtr.timer.Reset(d)
+	monitor.start()
+	return monitor
 }

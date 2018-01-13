@@ -38,10 +38,9 @@ const (
 	RegistrationHandlerName = "registration"
 )
 
-// MonitorFactoryFunc takes an entity and returns a Monitor. Keepalived can
-// take a MonitorFactoryFunc that stubs/mocks a Deregisterer and/or an
-// EventCreator to make it easier to test.
-type MonitorFactoryFunc func(e *types.Entity) *monitor.Monitor
+// MonitorFactoryFunc takes an entity and returns a Monitor interface so the
+// monitor can be mocked.
+type MonitorFactoryFunc func(*types.Entity, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface
 
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
@@ -53,7 +52,7 @@ type Keepalived struct {
 	MonitorFactory        MonitorFactoryFunc
 
 	mu            *sync.Mutex
-	monitors      map[string]*monitor.Monitor
+	monitors      map[string]monitor.Interface
 	wg            *sync.WaitGroup
 	keepaliveChan chan interface{}
 	errChan       chan error
@@ -71,13 +70,8 @@ func (k *Keepalived) Start() error {
 	}
 
 	if k.MonitorFactory == nil {
-		k.MonitorFactory = func(e *types.Entity) *monitor.Monitor {
-			return &monitor.Monitor{
-				Entity:         e,
-				Timeout:        time.Duration(e.KeepaliveTimeout),
-				FailureHandler: k,
-				UpdateHandler:  k,
-			}
+		k.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+			return monitor.New(e, t, updateHandler, failureHandler)
 		}
 	}
 
@@ -92,8 +86,7 @@ func (k *Keepalived) Start() error {
 	}
 
 	k.mu = &sync.Mutex{}
-	k.monitors = map[string]*monitor.Monitor{}
-
+	k.monitors = map[string]monitor.Interface{}
 	if err := k.initFromStore(); err != nil {
 		return err
 	}
@@ -157,8 +150,12 @@ func (k *Keepalived) initFromStore() error {
 
 		// Recreate the monitor and reset its timer to alert when it's going to
 		// timeout.
-		monitor := k.MonitorFactory(event.Entity)
-		monitor.Reset(keepalive.Time)
+		d := time.Duration(int64(keepalive.Time) - time.Now().Unix())
+
+		if d < 0 {
+			d = 0
+		}
+		monitor := k.MonitorFactory(event.Entity, d, k, k)
 		k.monitors[keepalive.EntityID] = monitor
 	}
 
@@ -178,9 +175,9 @@ func (k *Keepalived) processKeepalives() {
 	defer k.wg.Done()
 
 	var (
-		monitor *monitor.Monitor
-		event   *types.Event
-		ok      bool
+		kMonitor monitor.Interface
+		event    *types.Event
+		ok       bool
 	)
 
 	for msg := range k.keepaliveChan {
@@ -206,16 +203,16 @@ func (k *Keepalived) processKeepalives() {
 		}
 
 		k.mu.Lock()
-		monitor, ok = k.monitors[entity.ID]
+		kMonitor, ok = k.monitors[entity.ID]
 		// create if it doesn't exist
-		if !ok || monitor.IsStopped() {
-			monitor = k.MonitorFactory(entity)
-			monitor.Start()
-			k.monitors[entity.ID] = monitor
+		if !ok || kMonitor.IsStopped() {
+			timeout := time.Duration(entity.KeepaliveTimeout) * time.Second
+			kMonitor = k.MonitorFactory(entity, timeout, k, k)
+			k.monitors[entity.ID] = kMonitor
 		}
 		k.mu.Unlock()
 
-		if err := monitor.HandleUpdate(event); err != nil {
+		if err := kMonitor.HandleUpdate(event); err != nil {
 			logger.WithError(err).Error("error monitoring entity")
 		}
 	}
@@ -310,6 +307,7 @@ func (k *Keepalived) HandleUpdate(e *types.Event) error {
 	}
 
 	entity.LastSeen = e.Timestamp
+
 	if err := k.Store.UpdateEntity(ctx, entity); err != nil {
 		logger.WithError(err).Error("error updating entity in store")
 		return err
