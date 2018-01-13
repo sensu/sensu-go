@@ -343,8 +343,7 @@
 [[projects]]
   name = "github.com/robfig/cron"
   packages = ["."]
-  revision = "b024fc5ea0e34bc3f83d9941c8d60b0622bfaca4"
-  version = "v1"
+  revision = "2315d5715e36303a941d907f038da7f7c44c773b"
 
 [[projects]]
   branch = "nested-parameters"
@@ -354,7 +353,7 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = ["cpu","host","internal/common","mem","net","process"]
+  packages = ["host","internal/common","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
   version = "v2.17.08"
 
@@ -509,6 +508,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2a733f345fb26c65129f97f04e05242f432e9a94ff61be89868e95df7f82c967"
+  inputs-digest = "4849fa68b535a886415343e320cea137ec6b7e6f04d2475c744d6712a996229d"
   solver-name = "gps-cdcl"
   solver-version = 1

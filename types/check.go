@@ -55,7 +55,7 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	if c.Cron != "" {
-		if _, err := cron.Parse(c.Cron); err != nil {
+		if _, err := cron.ParseStandard(c.Cron); err != nil {
 			return errors.New("check cron string is invalid")
 		}
 	}
