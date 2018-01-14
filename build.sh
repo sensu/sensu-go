@@ -280,6 +280,18 @@ bundle_static_assets() {
     fileb0x ./.b0x.yaml
 }
 
+prompt_confirm() {
+    read -r -n 1 -p "${1} [y/N] " response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
+
 if [ "$cmd" == "build" ]; then
     build_commands
 elif [ "$cmd" == "build_agent" ]; then
@@ -302,6 +314,15 @@ elif [ "$cmd" == "dashboard-ci" ]; then
     install_dashboard_deps
     test_dashboard
     ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+elif [ "$cmd" == "deploy" ]; then
+    if [[ -z "${TRAVIS}" || "${TRAVIS}" != true ]]; then
+        prompt_confirm "You are trying to deploy outside of Travis. Are you sure?" || exit 0
+    fi
+
+    echo " Deploying..."
+    docker_commands push versioned
+    ./build-gcs-release.sh
+
 elif [ "$cmd" == "deps" ]; then
     install_deps
 elif [ "$cmd" == "docker" ]; then

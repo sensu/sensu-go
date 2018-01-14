@@ -6,12 +6,12 @@ go:
 - 1.9.x
 branches:
   only:
-  - master
+  - feature/automated-release
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 stages:
-- name: test
+#- name: test
 - name: deploy
-  if: branch = master OR tag IS present
+  if: branch = feature/automated-release OR tag IS present
 cache:
   yarn: true
   directories:
@@ -22,7 +22,7 @@ before_install:
 install:
 - "./build.sh deps"
 - "./build.sh build_tools"
-script: "./build.sh $TEST_SUITE"
+#script: "./build.sh $TEST_SUITE"
 jobs:
   include:
   - stage: deploy
@@ -36,11 +36,7 @@ jobs:
         branch: master
     - provider: script
       skip_cleanup: true
-      script: "./build.sh docker push versioned"
-      on:
-        tags: true
-    - provider: script
-      script: "./build-gcs-release.sh"
+      script: "./build.sh deploy"
       on:
         tags: true
 env:

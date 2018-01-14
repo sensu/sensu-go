@@ -73,8 +73,8 @@ upload_binary() {
 }
 
 update_latest_txt() {
-  echo $TAG > target/latest.txt
-  gsutil cp -a public-read target/latest.txt gs://${BUCKET}/latest.txt
+  #echo $TAG > target/latest.txt
+  #gsutil cp -a public-read target/latest.txt gs://${BUCKET}/latest.txt
 }
 
 if [ "$CMD" == "all" ]; then
