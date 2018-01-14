@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/go-resty/resty"
 	"github.com/sensu/sensu-go/cli/client/config"
-	resty "gopkg.in/resty.v0"
 )
 
 var logger *logrus.Entry

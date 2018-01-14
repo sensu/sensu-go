@@ -43,7 +43,7 @@ func (b keyBuilder) withNamespace(ns namespace) keyBuilder {
 func (b keyBuilder) build(keys ...string) string {
 	items := append(
 		[]string{
-			etcdRoot,
+			EtcdRoot,
 			b.resourceName,
 			b.namespace.org,
 			b.namespace.env,
@@ -57,7 +57,7 @@ func (b keyBuilder) build(keys ...string) string {
 // records. Unlike standard build method it stops building the key when it first
 // encounters a wildcard value.
 func (b keyBuilder) buildPrefix(keys ...string) string {
-	out := etcdRoot + keySeparator + b.resourceName
+	out := EtcdRoot + keySeparator + b.resourceName
 
 	keys = append([]string{b.namespace.org, b.namespace.env}, keys...)
 	for _, key := range keys {

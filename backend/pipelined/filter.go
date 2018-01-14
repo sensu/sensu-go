@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 
-	"github.com/Knetic/govaluate"
+	"github.com/sensu/govaluate"
 )
 
 func evaluateEventFilterStatement(event *types.Event, statement string) bool {
@@ -80,23 +80,19 @@ func evaluateEventFilter(store store.Store, event *types.Event, filterName strin
 // filterEvent filters a Sensu event, determining if it will continue
 // through the Sensu pipeline.
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
-	incident := p.isIncident(event)
-	metrics := p.hasMetrics(event)
-	silenced := p.isSilenced(event)
-
 	// Do not filter the event if the event has metrics
-	if metrics {
+	if event.HasMetrics() {
 		return false
 	}
 
 	// Filter if the event has any silenced entries
-	if silenced {
+	if event.IsSilenced() {
 		return true
 	}
 
 	// Filter the event if it is not an incident and the event has not just
 	// transitioned from being an incident to a healthy state
-	if !incident && !p.isResolution(event) {
+	if !event.IsIncident() && !event.IsResolution() {
 		return true
 	}
 
@@ -115,42 +111,4 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 	}
 
 	return true
-}
-
-// hasMetrics determines if an event has metric data.
-func (p *Pipelined) hasMetrics(event *types.Event) bool {
-	if event.Metrics != nil {
-		return true
-	}
-
-	return false
-}
-
-// isIncident determines if an event indicates an incident.
-func (p *Pipelined) isIncident(event *types.Event) bool {
-	if event.Check.Status != 0 {
-		return true
-	}
-
-	return false
-}
-
-// isResolution returns true if an event has just transitionned from an incident
-func (p *Pipelined) isResolution(event *types.Event) bool {
-	// Try to retrieve the previous status in the check history and verify if it
-	// was a non-zero status, therefore indicating a resolution
-	if len(event.Check.History) > 0 && event.Check.History[len(event.Check.History)-1].Status != 0 {
-		return true
-	}
-
-	return false
-}
-
-// isSilenced determines if an event has any silenced entries
-func (p *Pipelined) isSilenced(event *types.Event) bool {
-	if len(event.Silenced) > 0 {
-		return true
-	}
-
-	return false
 }

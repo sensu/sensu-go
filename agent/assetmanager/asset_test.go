@@ -77,8 +77,8 @@ func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
 		},
 	}
 	suite.asset.Filters = []string{
-		`entity.System.Hostname == "space.localdomain"`, // same
-		`entity.System.Platform == "darwin"`,            // same
+		`entity.System.Hostname == 'space.localdomain'`, // same
+		`entity.System.Platform == 'darwin'`,            // same
 	}
 
 	ok, err := suite.runtimeAsset.isRelevantTo(*entity)
@@ -87,8 +87,8 @@ func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
 
 	// Failing
 	suite.asset.Filters = []string{
-		`entity.System.Hostname == "space.localdomain"`, // same
-		`entity.System.Platform == "ubuntu"`,            // diff
+		`entity.System.Hostname == 'space.localdomain'`, // same
+		`entity.System.Platform == 'ubuntu'`,            // diff
 	}
 
 	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
@@ -97,8 +97,8 @@ func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
 
 	// With error
 	suite.asset.Filters = []string{
-		`entity.System.Hostname == "space.localdomain"`, // same
-		`entity.System.Platform =  "ubuntu"`,            // bad syntax
+		`entity.System.Hostname == 'space.localdomain'`, // same
+		`entity.System.Platform =  'ubuntu'`,            // bad syntax
 	}
 
 	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
@@ -107,7 +107,7 @@ func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
 
 	// Filter is not predicate
 	suite.asset.Filters = []string{
-		`entity.System.Hostname == "space.localdomain"`, // same
+		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.LastSeen + 10`,                          // returns int64
 	}
 

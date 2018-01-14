@@ -6,7 +6,7 @@ branches:
 
 image:
   - Visual Studio 2015
-  - Visual Studio 2017
+  # - Visual Studio 2017
 
 environment:
   GOPATH: c:\gopath
@@ -14,7 +14,17 @@ environment:
 
   matrix:
     - GOARCH: 386
+      TEST_SUITE: unit
+      GOGC: off
     - GOARCH: amd64
+      TEST_SUITE: unit
+      GOGC: off
+    - GOARCH: 386
+      TEST_SUITE: e2e
+      GOGC: off
+    - GOARCH: amd64
+      TEST_SUITE: e2e
+      GOGC: off
 
 install:
   - rmdir c:\go /s /q
@@ -22,12 +32,14 @@ install:
   - msiexec /i go%GOVERSION%.windows-amd64.msi /q
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - set PATH=%GOPATH%\bin\windows_386;%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
+  - ps: .\build.ps1 deps
+  - ps: .\build.ps1 build_tools
 
 platform:
   - x64
 
 build_script:
-  - ps: .\build.ps1
+  - ps: .\build.ps1 $env:TEST_SUITE

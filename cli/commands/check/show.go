@@ -71,6 +71,10 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 				Value: r.Command,
 			},
 			{
+				Label: "Cron",
+				Value: r.Cron,
+			},
+			{
 				Label: "Subscriptions",
 				Value: strings.Join(r.Subscriptions, ", "),
 			},
@@ -95,8 +99,8 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 				Value: strconv.FormatBool(r.Stdin),
 			},
 			{
-				Label: "Source",
-				Value: r.Source,
+				Label: "Proxy Entity ID",
+				Value: r.ProxyEntityID,
 			},
 			{
 				Label: "Organization",

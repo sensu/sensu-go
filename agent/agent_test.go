@@ -11,6 +11,7 @@ import (
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -122,8 +123,12 @@ func TestHandleTCPMessages(t *testing.T) {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("foo", "check_cpu")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := v1.CheckResult{
+		Name:   "app_01",
+		Output: "could not connect to something",
+		Client: "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
 	_, err = tcpClient.Write(bytes)
 	require.NoError(t, err)
@@ -140,8 +145,8 @@ func TestHandleTCPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal("app_01", event.Check.Config.Name)
+	assert.Equal(int32(0), event.Check.Status)
 	ta.Stop()
 }
 
@@ -164,8 +169,12 @@ func TestHandleUDPMessages(t *testing.T) {
 		assert.FailNow("failed to create UDP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("bar", "check_mem")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := v1.CheckResult{
+		Name:   "app_01",
+		Output: "could not connect to something",
+		Client: "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
 	_, err = udpClient.Write(bytes)
 	require.NoError(t, err)
@@ -182,8 +191,8 @@ func TestHandleUDPMessages(t *testing.T) {
 	}
 
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal("app_01", event.Check.Config.Name)
+	assert.Equal(int32(0), event.Check.Status)
 	ta.Stop()
 }
 
@@ -241,8 +250,12 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	submittedEvent := types.FixtureEvent("baz", "check_disk")
-	bytes, _ := json.Marshal(submittedEvent)
+	payload := v1.CheckResult{
+		Name:   "app_01",
+		Output: "could not connect to something",
+		Client: "proxEnt",
+	}
+	bytes, _ := json.Marshal(payload)
 
 	_, err = tcpClient.Write(bytes[:5])
 	require.NoError(t, err)
@@ -256,8 +269,8 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotNil(event.Entity)
-	assert.Equal(submittedEvent.Timestamp, event.Timestamp)
-	assert.Equal(submittedEvent.Check.Config.Name, event.Check.Config.Name)
+	assert.Equal("app_01", event.Check.Config.Name)
+	assert.Equal(int32(0), event.Check.Status)
 
 	ta.Stop()
 }

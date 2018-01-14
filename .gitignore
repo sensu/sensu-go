@@ -34,3 +34,4 @@ packaging/hooks/*/rpm/*
 .kitchen/
 .kitchen.local.yml
 .packagecloud
+vendor/
