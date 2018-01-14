@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
+- Made some slight quality-of-life adjustments to build-gcs-release.sh.
 
 ### Fixed
 - Fixed e2e test for token substitution on Windows
