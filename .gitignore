@@ -35,3 +35,4 @@ packaging/hooks/*/rpm/*
 .kitchen.local.yml
 .packagecloud
 vendor/
+gcs-service-account.json

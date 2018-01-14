@@ -320,7 +320,11 @@ elif [ "$cmd" == "deploy" ]; then
     fi
 
     echo " Deploying..."
+
+    # Authenticate to Google Cloud
+    gcloud auth activate-service-account --key-file=gcs-service-account.json
     ./build-gcs-release.sh
+
     docker_commands push versioned
 elif [ "$cmd" == "deps" ]; then
     install_deps
