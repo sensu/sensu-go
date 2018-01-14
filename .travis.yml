@@ -21,7 +21,7 @@ cache:
 before_install:
 - echo -e "machine github.com\n login $GITHUB_TOKEN" >> ~/.netrc
 # Authentication for Google Cloud
-openssl aes-256-cbc -K $encrypted_d9a31ecd7e9c_key -iv $encrypted_d9a31ecd7e9c_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
+- openssl aes-256-cbc -K $encrypted_d9a31ecd7e9c_key -iv $encrypted_d9a31ecd7e9c_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
 install:
 - "./build.sh deps"
 - "./build.sh build_tools"
