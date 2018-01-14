@@ -7,7 +7,7 @@ go:
 branches:
   only:
   - feature/automated-release
-  - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+  - /\d+\.\d+(\.\d+)?(-\S*)?$/
 stages:
 - name: test
   if: branch != feature/automated-release
