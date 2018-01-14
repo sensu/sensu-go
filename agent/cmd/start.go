@@ -24,24 +24,24 @@ var (
 )
 
 const (
-	flagConfigFile            = "config-file"
-	flagBackendURL            = "backend-url"
 	flagAgentID               = "id"
-	flagEnvironment           = "environment"
-	flagOrganization          = "organization"
-	flagUser                  = "user"
-	flagPassword              = "password"
-	flagSubscriptions         = "subscriptions"
-	flagDeregister            = "deregister"
-	flagDeregistrationHandler = "deregistration-handler"
-	flagCacheDir              = "cache-dir"
-	flagKeepaliveTimeout      = "keepalive-timeout"
-	flagKeepaliveInterval     = "keepalive-interval"
 	flagAPIHost               = "api-host"
 	flagAPIPort               = "api-port"
+	flagBackendURL            = "backend-url"
+	flagCacheDir              = "cache-dir"
+	flagConfigFile            = "config-file"
+	flagDeregister            = "deregister"
+	flagDeregistrationHandler = "deregistration-handler"
+	flagEnvironment           = "environment"
+	flagExtendedAttributes    = "custom-attributes"
+	flagKeepaliveInterval     = "keepalive-interval"
+	flagKeepaliveTimeout      = "keepalive-timeout"
+	flagOrganization          = "organization"
+	flagPassword              = "password"
 	flagSocketHost            = "socket-host"
 	flagSocketPort            = "socket-port"
-	flagExtendedAttributes    = "custom-attributes"
+	flagSubscriptions         = "subscriptions"
+	flagUser                  = "user"
 )
 
 func init() {
@@ -97,21 +97,21 @@ func newStartCommand() *cobra.Command {
 			}
 
 			cfg := agent.NewConfig()
+			cfg.API.Host = viper.GetString(flagAPIHost)
+			cfg.API.Port = viper.GetInt(flagAPIPort)
 			cfg.BackendURLs = viper.GetStringSlice(flagBackendURL)
+			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
-			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Environment = viper.GetString(flagEnvironment)
+			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
 			cfg.KeepaliveInterval = viper.GetInt(flagKeepaliveInterval)
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
 			cfg.Organization = viper.GetString(flagOrganization)
-			cfg.User = viper.GetString(flagUser)
 			cfg.Password = viper.GetString(flagPassword)
-			cfg.API.Host = viper.GetString(flagAPIHost)
-			cfg.API.Port = viper.GetInt(flagAPIPort)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
 			cfg.Socket.Port = viper.GetInt(flagSocketPort)
-			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
+			cfg.User = viper.GetString(flagUser)
 
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
@@ -168,45 +168,45 @@ func newStartCommand() *cobra.Command {
 	viper.SetConfigFile(configFilePath)
 
 	// Flag defaults
-	viper.SetDefault(flagEnvironment, "default")
-	viper.SetDefault(flagOrganization, "default")
-	viper.SetDefault(flagUser, "agent")
-	viper.SetDefault(flagPassword, "P@ssw0rd!")
+	viper.SetDefault(flagAgentID, "")
+	viper.SetDefault(flagAPIHost, "127.0.0.1")
+	viper.SetDefault(flagAPIPort, 3031)
+	viper.SetDefault(flagBackendURL, []string{"ws://127.0.0.1:8081"})
 	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-agent"))
 	viper.SetDefault(flagDeregister, false)
 	viper.SetDefault(flagDeregistrationHandler, "")
-	viper.SetDefault(flagBackendURL, []string{"ws://127.0.0.1:8081"})
-	viper.SetDefault(flagAgentID, "")
-	viper.SetDefault(flagSubscriptions, []string{})
-	viper.SetDefault(flagKeepaliveTimeout, 120)
+	viper.SetDefault(flagEnvironment, "default")
 	viper.SetDefault(flagKeepaliveInterval, 20)
-	viper.SetDefault(flagAPIHost, "127.0.0.1")
-	viper.SetDefault(flagAPIPort, 3031)
+	viper.SetDefault(flagKeepaliveTimeout, 120)
+	viper.SetDefault(flagOrganization, "default")
+	viper.SetDefault(flagPassword, "P@ssw0rd!")
 	viper.SetDefault(flagSocketHost, "127.0.0.1")
 	viper.SetDefault(flagSocketPort, 3030)
+	viper.SetDefault(flagSubscriptions, []string{})
+	viper.SetDefault(flagUser, "agent")
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
 
 	// Flags
-	cmd.Flags().String(flagEnvironment, viper.GetString(flagEnvironment), "agent environment")
-	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
-	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
-	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
-	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-	cmd.Flags().Bool(flagDeregister, viper.GetBool(flagDeregister), "ephemeral agent")
-	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
-	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
-	cmd.Flags().String(flagAgentID, viper.GetString(flagAgentID), "agent ID (defaults to hostname)")
-	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
-	cmd.Flags().Uint(flagKeepaliveTimeout, uint(viper.Get(flagKeepaliveTimeout).(int)), "number of seconds until agent is considered dead by backend")
-	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
-	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
-	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
-	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
-	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
-	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "custom attributes to include in the agent entity")
 	// Load the configuration file but only error out if flagConfigFile is used
+	cmd.Flags().Bool(flagDeregister, viper.GetBool(flagDeregister), "ephemeral agent")
+	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
+	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
+	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
+	cmd.Flags().String(flagAgentID, viper.GetString(flagAgentID), "agent ID (defaults to hostname)")
+	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
+	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
+	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
+	cmd.Flags().String(flagEnvironment, viper.GetString(flagEnvironment), "agent environment")
+	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "custom attributes to include in the agent entity")
+	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
+	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
+	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
+	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
+	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
+	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
+	cmd.Flags().Uint(flagKeepaliveTimeout, uint(viper.Get(flagKeepaliveTimeout).(int)), "number of seconds until agent is considered dead by backend")
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err
 	}

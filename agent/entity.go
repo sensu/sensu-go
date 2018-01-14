@@ -11,13 +11,13 @@ import (
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
-			ID:               a.config.AgentID,
 			Class:            "agent",
-			Subscriptions:    a.config.Subscriptions,
 			Deregister:       a.config.Deregister,
-			KeepaliveTimeout: a.config.KeepaliveTimeout,
 			Environment:      a.config.Environment,
+			ID:               a.config.AgentID,
+			KeepaliveTimeout: a.config.KeepaliveTimeout,
 			Organization:     a.config.Organization,
+			Subscriptions:    a.config.Subscriptions,
 			User:             a.config.User,
 		}
 
