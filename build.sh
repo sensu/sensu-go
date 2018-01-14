@@ -320,9 +320,8 @@ elif [ "$cmd" == "deploy" ]; then
     fi
 
     echo " Deploying..."
-    docker_commands push versioned
     ./build-gcs-release.sh
-
+    docker_commands push versioned
 elif [ "$cmd" == "deps" ]; then
     install_deps
 elif [ "$cmd" == "docker" ]; then

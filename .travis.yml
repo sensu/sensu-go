@@ -9,10 +9,10 @@ branches:
   - feature/automated-release
   - /\d+\.\d+(\.\d+)?(-\S*)?$/
 stages:
-- name: test
-  if: branch != feature/automated-release
 - name: deploy
   if: branch = feature/automated-release OR tag IS present
+- name: test
+  if: branch = master
 cache:
   yarn: true
   directories:
@@ -40,7 +40,6 @@ jobs:
       script: "./build.sh deploy"
       on:
         tags: true
-        all_branches: true
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint GOGC=off
