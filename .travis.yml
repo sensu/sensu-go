@@ -9,7 +9,8 @@ branches:
   - feature/automated-release
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 stages:
-#- name: test
+- name: test
+  if: branch != feature/automated-release
 - name: deploy
   if: branch = feature/automated-release OR tag IS present
 cache:
