@@ -73,8 +73,8 @@ upload_binary() {
 }
 
 update_latest_txt() {
-  #echo $TAG > target/latest.txt
-  #gsutil cp -a public-read target/latest.txt gs://${BUCKET}/latest.txt
+  echo $TAG > target/latest.txt
+  gsutil cp -a public-read target/latest.txt gs://${BUCKET}/latest.txt
 }
 
 if [ "$CMD" == "all" ]; then
@@ -82,7 +82,7 @@ if [ "$CMD" == "all" ]; then
   checkout_release
   build_supported_binaries
   upload_supported_binaries
-  update_latest_txt
+#   update_latest_txt
 
 # Build binaries for each platform & arch
 elif [ "$CMD" == "release" ]; then
@@ -93,5 +93,5 @@ elif [ "$CMD" == "release" ]; then
 # Upload the file pointing to the latest release
 elif [ "$CMD" == "set-latest"]; then
   checkout_release $1
-  update_latest_txt
+#   update_latest_txt
 fi
