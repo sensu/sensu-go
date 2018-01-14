@@ -11,7 +11,7 @@ CMD=${1:-"all"}
 TAG=""
 
 install_deps() {
-  pip install gsutil
+  pip install gsutil --user
 }
 
 # Checkout release tag
