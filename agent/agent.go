@@ -66,6 +66,8 @@ type Config struct {
 	Organization string
 	// Password sets Agent's password
 	Password string
+	// Redact contains the fields to redact when marshalling the agent's entity
+	Redact []string
 	// Socket contains the Sensu client socket configuration
 	Socket *SocketConfig
 	// Subscriptions is an array of subscription names. Default: empty array.
@@ -100,8 +102,7 @@ func NewConfig() *Config {
 			Host: "127.0.0.1",
 			Port: 3030,
 		},
-		Subscriptions: []string{},
-		User:          "agent",
+		User: "agent",
 	}
 
 	hostname, err := os.Hostname()

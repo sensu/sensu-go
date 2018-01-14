@@ -17,6 +17,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			ID:               a.config.AgentID,
 			KeepaliveTimeout: a.config.KeepaliveTimeout,
 			Organization:     a.config.Organization,
+			Redact:           a.config.Redact,
 			Subscriptions:    a.config.Subscriptions,
 			User:             a.config.User,
 		}

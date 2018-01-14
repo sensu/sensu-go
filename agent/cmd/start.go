@@ -12,6 +12,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
@@ -38,6 +39,7 @@ const (
 	flagKeepaliveTimeout      = "keepalive-timeout"
 	flagOrganization          = "organization"
 	flagPassword              = "password"
+	flagRedact                = "redact"
 	flagSocketHost            = "socket-host"
 	flagSocketPort            = "socket-port"
 	flagSubscriptions         = "subscriptions"
@@ -118,6 +120,15 @@ func newStartCommand() *cobra.Command {
 				cfg.AgentID = agentID
 			}
 
+			// Get a single or a list of redact fields
+			redact := viper.GetString(flagRedact)
+			if redact != "" {
+				cfg.Redact = splitAndTrim(redact)
+			} else {
+				cfg.Redact = viper.GetStringSlice(flagRedact)
+			}
+
+			// Get a single or a list of subscriptions
 			subscriptions := viper.GetString(flagSubscriptions)
 			if subscriptions != "" {
 				cfg.Subscriptions = splitAndTrim(subscriptions)
@@ -180,6 +191,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagKeepaliveTimeout, 120)
 	viper.SetDefault(flagOrganization, "default")
 	viper.SetDefault(flagPassword, "P@ssw0rd!")
+	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, "127.0.0.1")
 	viper.SetDefault(flagSocketPort, 3030)
 	viper.SetDefault(flagSubscriptions, []string{})
@@ -202,6 +214,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "custom attributes to include in the agent entity")
 	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
+	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
 	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
