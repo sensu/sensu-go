@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/graphql-go/graphql"
 )
@@ -175,15 +176,15 @@ func newSchema(reg *typeRegister) (graphql.Schema, error) {
 
 	schemaCfg := reg.schema.Config()
 	if schemaCfg.Query != nil {
-		queryType := typeMap[schemaCfg.Query.Name()]
+		queryType := findType(typeMap, schemaCfg.Query.Name())
 		schemaCfg.Query = queryType.(*graphql.Object)
 	}
 	if schemaCfg.Mutation != nil {
-		mutationType := typeMap[schemaCfg.Mutation.Name()]
+		mutationType := findType(typeMap, schemaCfg.Mutation.Name())
 		schemaCfg.Mutation = mutationType.(*graphql.Object)
 	}
 	if schemaCfg.Subscription != nil {
-		subscriptionType := typeMap[schemaCfg.Subscription.Name()]
+		subscriptionType := findType(typeMap, schemaCfg.Subscription.Name())
 		schemaCfg.Subscription = subscriptionType.(*graphql.Object)
 	}
 
@@ -204,4 +205,13 @@ func registerTypeWrapper(t graphql.Type) registerTypeFn {
 	return func(_ graphql.TypeMap) graphql.Type {
 		return t
 	}
+}
+
+func findType(m graphql.TypeMap, name string) graphql.Type {
+	if t, ok := m[name]; ok {
+		return t
+	}
+	panic(
+		fmt.Sprintf("required type '%s' not registered.", name),
+	)
 }

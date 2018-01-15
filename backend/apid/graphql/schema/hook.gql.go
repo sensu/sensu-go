@@ -277,7 +277,7 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Name is the unique identifier for a hook",
 				Name:              "name",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -653,7 +653,7 @@ var _ObjectTypeHookDesc = graphql.ObjectDesc{
 // HookListHooksFieldResolver implement to resolve requests for the HookList's hooks field.
 type HookListHooksFieldResolver interface {
 	// Hooks implements response to request for hooks field.
-	Hooks(p graphql.ResolveParams) (string, error)
+	Hooks(p graphql.ResolveParams) ([]string, error)
 }
 
 // HookListTypeFieldResolver implement to resolve requests for the HookList's type field.
@@ -779,9 +779,9 @@ type HookListFieldResolvers interface {
 type HookListAliases struct{}
 
 // Hooks implements response to request for 'hooks' field.
-func (_ HookListAliases) Hooks(p graphql.ResolveParams) (string, error) {
+func (_ HookListAliases) Hooks(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := val.([]string)
 	return ret, err
 }
 
@@ -822,14 +822,14 @@ func _ObjectTypeHookListConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Hooks is the list of hooks for the check hook",
 				Name:              "hooks",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 			"type": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Type indicates the type or response code for the check hook",
 				Name:              "type",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},

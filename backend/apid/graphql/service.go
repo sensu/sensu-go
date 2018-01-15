@@ -14,7 +14,7 @@ type ServiceConfig struct {
 }
 
 // NewService instantiates new GraphQL service
-func NewService(cfg ServiceConfig) *graphql.Service {
+func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	svc := graphql.NewService()
 	store := cfg.Store
 
@@ -27,10 +27,15 @@ func NewService(cfg ServiceConfig) *graphql.Service {
 	schema.RegisterEntity(svc, &entityImpl{})
 	schema.RegisterHandler(svc, newHandlerImpl(store))
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
+	schema.RegisterHook(svc, &hookImpl{})
+	schema.RegisterHookConfig(svc, &hookCfgImpl{})
+	schema.RegisterHookList(svc, &hookListImpl{})
 	schema.RegisterQuery(svc, &queryImpl{store: store})
 	schema.RegisterNetwork(svc, &networkImpl{})
 	schema.RegisterNetworkInterface(svc, &networkInterfaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{})
+	schema.RegisterSchema(svc)
 
-	return svc
+	err := svc.Regenerate()
+	return svc, err
 }
