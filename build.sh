@@ -329,6 +329,7 @@ elif [ "$cmd" == "deploy" ]; then
     # Deploy system packages to PackageCloud
     gem install package_cloud
     make clean
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
     docker pull sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build publish_travis
