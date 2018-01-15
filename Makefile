@@ -342,8 +342,8 @@ PC_PUSH_CMD=package_cloud push --skip-errors --config .packagecloud
 
 publish_travis:
 	make publish-noservice-packages
-	make publish-sysvinit-packages
-	make publish-systemd-packages
+	#make publish-sysvinit-packages
+	#make publish-systemd-packages
 
 PC_PUSH_CMD=package_cloud push --skip-errors
 
