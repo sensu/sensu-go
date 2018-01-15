@@ -78,7 +78,7 @@ update_latest_txt() {
 }
 
 if [ "$CMD" == "all" ]; then
-  install_deps
+  #install_deps
   checkout_release
   build_supported_binaries
   upload_supported_binaries
