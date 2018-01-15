@@ -201,7 +201,7 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 
 // CreateCheckInput self descriptive
 type CreateCheckInput struct {
-	// ClientMutationId - A unique identifier for the client performing the mutation. ClientMutationId string
+	// ClientMutationID - A unique identifier for the client performing the mutation. ClientMutationID string
 	// Ns - namespace the resulting resource will belong to Ns interface{}
 	// Name - self descriptive Name string
 	// Command - self descriptive Command string
@@ -246,10 +246,10 @@ func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe CreateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeCreateCheckInputDesc = graphql.InputDesc{Config: _InputTypeCreateCheckInputConfigFn}
 
-// CreateCheckPayloadClientMutationIdFieldResolver implement to resolve requests for the CreateCheckPayload's clientMutationId field.
-type CreateCheckPayloadClientMutationIdFieldResolver interface {
-	// ClientMutationId implements response to request for clientMutationId field.
-	ClientMutationId(p graphql.ResolveParams) (string, error)
+// CreateCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the CreateCheckPayload's clientMutationId field.
+type CreateCheckPayloadClientMutationIDFieldResolver interface {
+	// ClientMutationID implements response to request for clientMutationId field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
 }
 
 // CreateCheckPayloadCheckFieldResolver implement to resolve requests for the CreateCheckPayload's check field.
@@ -320,7 +320,7 @@ type CreateCheckPayloadCheckFieldResolver interface {
 //   }
 //
 type CreateCheckPayloadFieldResolvers interface {
-	CreateCheckPayloadClientMutationIdFieldResolver
+	CreateCheckPayloadClientMutationIDFieldResolver
 	CreateCheckPayloadCheckFieldResolver
 
 	// IsTypeOf is used to determine if a given value is associated with the CreateCheckPayload type
@@ -374,8 +374,8 @@ type CreateCheckPayloadFieldResolvers interface {
 //
 type CreateCheckPayloadAliases struct{}
 
-// ClientMutationId implements response to request for 'clientMutationId' field.
-func (_ CreateCheckPayloadAliases) ClientMutationId(p graphql.ResolveParams) (string, error) {
+// ClientMutationID implements response to request for 'clientMutationId' field.
+func (_ CreateCheckPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret := val.(string)
 	return ret, err
@@ -395,10 +395,10 @@ var CreateCheckPayloadType = graphql.NewType("CreateCheckPayload", graphql.Objec
 func RegisterCreateCheckPayload(svc *graphql.Service, impl CreateCheckPayloadFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeCreateCheckPayloadDesc, impl)
 }
-func _ObjTypeCreateCheckPayloadClientMutationIdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CreateCheckPayloadClientMutationIdFieldResolver)
+func _ObjTypeCreateCheckPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CreateCheckPayloadClientMutationIDFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ClientMutationId(p)
+		return resolver.ClientMutationID(p)
 	}
 }
 
@@ -446,6 +446,6 @@ var _ObjectTypeCreateCheckPayloadDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeCreateCheckPayloadConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"check":            _ObjTypeCreateCheckPayloadCheckHandler,
-		"clientMutationId": _ObjTypeCreateCheckPayloadClientMutationIdHandler,
+		"clientMutationId": _ObjTypeCreateCheckPayloadClientMutationIDHandler,
 	},
 }

@@ -653,6 +653,8 @@ func genFieldResolverSignature(field *ast.FieldDefinition, i info) jen.Code {
 //   String  => string
 //   [String]=> []string
 //   [Int]   => []int
+//   [Int!]  => []int
+//   [Int!]! => []int
 //   Int     => int
 //   Int!    => int
 //   Bool    => bool
@@ -664,7 +666,19 @@ func genFieldResolverReturnType(t ast.Type, i info) jen.Code {
 	var namedType *ast.Named
 	switch ttype := t.(type) {
 	case *ast.List:
-		namedType = ttype.Type.(*ast.Named)
+		// Super crufty.
+		var ok bool
+		namedType, ok = ttype.Type.(*ast.Named) // ok is true if type is [String]
+		if !ok {
+			nullType, ok := ttype.Type.(*ast.NonNull) // ok is true if type is [String!]
+			if !ok {
+				return jen.Interface()
+			}
+			namedType, ok = nullType.Type.(*ast.Named) // is is true if type isn't list
+			if !ok {
+				return jen.Interface()
+			}
+		}
 		statement := genBuiltinTypeReference(namedType)
 		if statement != nil {
 			return jen.Index().Add(statement)

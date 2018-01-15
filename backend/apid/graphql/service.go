@@ -19,10 +19,17 @@ func NewService(cfg ServiceConfig) *graphql.Service {
 	store := cfg.Store
 
 	// RegisterTypes
+	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterCheck(svc, &checkImpl{})
 	schema.RegisterCheckConfig(svc, &checkCfgImpl{store: store})
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
+	schema.RegisterDeregistration(svc, &deregistrationImpl{})
+	schema.RegisterEntity(svc, &entityImpl{})
+	schema.RegisterHandler(svc, newHandlerImpl(store))
+	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterQuery(svc, &queryImpl{store: store})
+	schema.RegisterNetwork(svc, &networkImpl{})
+	schema.RegisterNetworkInterface(svc, &networkInterfaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{})
 
 	return svc

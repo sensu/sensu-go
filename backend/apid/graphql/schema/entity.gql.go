@@ -19,6 +19,12 @@ type EntityNamespaceFieldResolver interface {
 	Namespace(p graphql.ResolveParams) (interface{}, error)
 }
 
+// EntityNameFieldResolver implement to resolve requests for the Entity's name field.
+type EntityNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
 // EntityClassFieldResolver implement to resolve requests for the Entity's class field.
 type EntityClassFieldResolver interface {
 	// Class implements response to request for class field.
@@ -34,7 +40,7 @@ type EntitySystemFieldResolver interface {
 // EntitySubscriptionsFieldResolver implement to resolve requests for the Entity's subscriptions field.
 type EntitySubscriptionsFieldResolver interface {
 	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p graphql.ResolveParams) (string, error)
+	Subscriptions(p graphql.ResolveParams) ([]string, error)
 }
 
 // EntityLastSeenFieldResolver implement to resolve requests for the Entity's lastSeen field.
@@ -59,6 +65,12 @@ type EntityDeregistrationFieldResolver interface {
 type EntityKeepaliveTimeoutFieldResolver interface {
 	// KeepaliveTimeout implements response to request for keepaliveTimeout field.
 	KeepaliveTimeout(p graphql.ResolveParams) (int, error)
+}
+
+// EntityAuthorIDFieldResolver implement to resolve requests for the Entity's authorId field.
+type EntityAuthorIDFieldResolver interface {
+	// AuthorID implements response to request for authorId field.
+	AuthorID(p graphql.ResolveParams) (string, error)
 }
 
 //
@@ -125,6 +137,7 @@ type EntityKeepaliveTimeoutFieldResolver interface {
 type EntityFieldResolvers interface {
 	EntityIDFieldResolver
 	EntityNamespaceFieldResolver
+	EntityNameFieldResolver
 	EntityClassFieldResolver
 	EntitySystemFieldResolver
 	EntitySubscriptionsFieldResolver
@@ -132,6 +145,7 @@ type EntityFieldResolvers interface {
 	EntityDeregisterFieldResolver
 	EntityDeregistrationFieldResolver
 	EntityKeepaliveTimeoutFieldResolver
+	EntityAuthorIDFieldResolver
 
 	// IsTypeOf is used to determine if a given value is associated with the Entity type
 	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
@@ -198,6 +212,13 @@ func (_ EntityAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	return ret, err
 }
 
+// Name implements response to request for 'name' field.
+func (_ EntityAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
+}
+
 // Class implements response to request for 'class' field.
 func (_ EntityAliases) Class(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -213,9 +234,9 @@ func (_ EntityAliases) System(p graphql.ResolveParams) (interface{}, error) {
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
-func (_ EntityAliases) Subscriptions(p graphql.ResolveParams) (string, error) {
+func (_ EntityAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := val.([]string)
 	return ret, err
 }
 
@@ -247,6 +268,13 @@ func (_ EntityAliases) KeepaliveTimeout(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
+// AuthorID implements response to request for 'authorId' field.
+func (_ EntityAliases) AuthorID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
+}
+
 /*
 EntityType Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
@@ -268,6 +296,13 @@ func _ObjTypeEntityNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityNamespaceFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(p)
+	}
+}
+
+func _ObjTypeEntityNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityNameFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(p)
 	}
 }
 
@@ -320,10 +355,24 @@ func _ObjTypeEntityKeepaliveTimeoutHandler(impl interface{}) graphql1.FieldResol
 	}
 }
 
+func _ObjTypeEntityAuthorIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityAuthorIDFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.AuthorID(p)
+	}
+}
+
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
 		Fields: graphql1.Fields{
+			"authorId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "authorId",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"class": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -366,6 +415,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "lastSeen",
 				Type:              graphql1.Int,
 			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -378,7 +434,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "subscriptions",
-				Type:              graphql1.String,
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 			},
 			"system": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -405,12 +461,14 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"authorId":         _ObjTypeEntityAuthorIDHandler,
 		"class":            _ObjTypeEntityClassHandler,
 		"deregister":       _ObjTypeEntityDeregisterHandler,
 		"deregistration":   _ObjTypeEntityDeregistrationHandler,
 		"id":               _ObjTypeEntityIDHandler,
 		"keepaliveTimeout": _ObjTypeEntityKeepaliveTimeoutHandler,
 		"lastSeen":         _ObjTypeEntityLastSeenHandler,
+		"name":             _ObjTypeEntityNameHandler,
 		"namespace":        _ObjTypeEntityNamespaceHandler,
 		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
 		"system":           _ObjTypeEntitySystemHandler,
@@ -894,7 +952,7 @@ func _ObjectTypeNetworkConfigFn() graphql1.ObjectConfig {
 			DeprecationReason: "",
 			Description:       "self descriptive",
 			Name:              "interfaces",
-			Type:              graphql.OutputType("NetworkInterface"),
+			Type:              graphql1.NewList(graphql.OutputType("NetworkInterface")),
 		}},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {

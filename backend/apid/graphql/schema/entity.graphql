@@ -6,16 +6,16 @@ type Entity {
   id: ID!
   namespace: Namespace!
 
+  name: String!
   class: String
   system: System
-  subscriptions: String
+  subscriptions: [String!]
   lastSeen: Int
   deregister: Bool
   deregistration: Deregistration
   keepaliveTimeout: Int
-
-  # implement User type
-  # user: String
+  authorId: String!
+  # author: User! # TODO: Implement w/ user type
 
   # TODO: Use scalar?
   # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
@@ -41,7 +41,7 @@ that the Agent process is running on, used for additional Entity
 context.
 """
 type Network {
-  interfaces: NetworkInterface
+  interfaces: [NetworkInterface]
 }
 
 """

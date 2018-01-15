@@ -46,7 +46,7 @@ func (h *Handler) Validate() error {
 func FixtureHandler(name string) *Handler {
 	return &Handler{
 		Name:         name,
-		Type:         "pipe",
+		Type:         HandlerPipeType,
 		Command:      "command",
 		Environment:  "default",
 		Organization: "default",

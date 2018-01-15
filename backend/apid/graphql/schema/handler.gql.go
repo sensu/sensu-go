@@ -31,12 +31,6 @@ type HandlerTypeFieldResolver interface {
 	Type(p graphql.ResolveParams) (string, error)
 }
 
-// HandlerMutatorFieldResolver implement to resolve requests for the Handler's mutator field.
-type HandlerMutatorFieldResolver interface {
-	// Mutator implements response to request for mutator field.
-	Mutator(p graphql.ResolveParams) (string, error)
-}
-
 // HandlerCommandFieldResolver implement to resolve requests for the Handler's command field.
 type HandlerCommandFieldResolver interface {
 	// Command implements response to request for command field.
@@ -55,22 +49,28 @@ type HandlerSocketFieldResolver interface {
 	Socket(p graphql.ResolveParams) (interface{}, error)
 }
 
+// HandlerMutatorFieldResolver implement to resolve requests for the Handler's mutator field.
+type HandlerMutatorFieldResolver interface {
+	// Mutator implements response to request for mutator field.
+	Mutator(p graphql.ResolveParams) (interface{}, error)
+}
+
 // HandlerHandlersFieldResolver implement to resolve requests for the Handler's handlers field.
 type HandlerHandlersFieldResolver interface {
 	// Handlers implements response to request for handlers field.
-	Handlers(p graphql.ResolveParams) (string, error)
+	Handlers(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HandlerFiltersFieldResolver implement to resolve requests for the Handler's filters field.
 type HandlerFiltersFieldResolver interface {
 	// Filters implements response to request for filters field.
-	Filters(p graphql.ResolveParams) (string, error)
+	Filters(p graphql.ResolveParams) ([]string, error)
 }
 
 // HandlerEnvVarsFieldResolver implement to resolve requests for the Handler's envVars field.
 type HandlerEnvVarsFieldResolver interface {
 	// EnvVars implements response to request for envVars field.
-	EnvVars(p graphql.ResolveParams) (string, error)
+	EnvVars(p graphql.ResolveParams) ([]string, error)
 }
 
 //
@@ -139,10 +139,10 @@ type HandlerFieldResolvers interface {
 	HandlerNamespaceFieldResolver
 	HandlerNameFieldResolver
 	HandlerTypeFieldResolver
-	HandlerMutatorFieldResolver
 	HandlerCommandFieldResolver
 	HandlerTimeoutFieldResolver
 	HandlerSocketFieldResolver
+	HandlerMutatorFieldResolver
 	HandlerHandlersFieldResolver
 	HandlerFiltersFieldResolver
 	HandlerEnvVarsFieldResolver
@@ -226,13 +226,6 @@ func (_ HandlerAliases) Type(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// Mutator implements response to request for 'mutator' field.
-func (_ HandlerAliases) Mutator(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
-	return ret, err
-}
-
 // Command implements response to request for 'command' field.
 func (_ HandlerAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -254,24 +247,31 @@ func (_ HandlerAliases) Socket(p graphql.ResolveParams) (interface{}, error) {
 	return ret, err
 }
 
-// Handlers implements response to request for 'handlers' field.
-func (_ HandlerAliases) Handlers(p graphql.ResolveParams) (string, error) {
+// Mutator implements response to request for 'mutator' field.
+func (_ HandlerAliases) Mutator(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// Handlers implements response to request for 'handlers' field.
+func (_ HandlerAliases) Handlers(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
 	return ret, err
 }
 
 // Filters implements response to request for 'filters' field.
-func (_ HandlerAliases) Filters(p graphql.ResolveParams) (string, error) {
+func (_ HandlerAliases) Filters(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := val.([]string)
 	return ret, err
 }
 
 // EnvVars implements response to request for 'envVars' field.
-func (_ HandlerAliases) EnvVars(p graphql.ResolveParams) (string, error) {
+func (_ HandlerAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := val.([]string)
 	return ret, err
 }
 
@@ -310,13 +310,6 @@ func _ObjTypeHandlerTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeHandlerMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerMutatorFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Mutator(p)
-	}
-}
-
 func _ObjTypeHandlerCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerCommandFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -335,6 +328,13 @@ func _ObjTypeHandlerSocketHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerSocketFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Socket(p)
+	}
+}
+
+func _ObjTypeHandlerMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HandlerMutatorFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Mutator(p)
 	}
 }
 
@@ -375,21 +375,21 @@ func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "EnvVars is a list of environment variables to use with command execution",
 				Name:              "envVars",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 			"filters": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Filters is a list of filters name to evaluate before executing this handler",
 				Name:              "filters",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 			"handlers": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Handlers is a list of handlers for a handler set.",
+				Description:       "Handlers is a list of handler names for a handler set.",
 				Name:              "handlers",
-				Type:              graphql1.String,
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Handler"))),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -403,14 +403,14 @@ func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Mutator is the handler event data mutator.",
 				Name:              "mutator",
-				Type:              graphql1.String,
+				Type:              graphql.OutputType("Mutator"),
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Name is the unique identifier for a handler.",
 				Name:              "name",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -438,7 +438,7 @@ func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Type is the handler type, i.e. pipe.",
 				Name:              "type",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
@@ -644,7 +644,7 @@ func _ObjectTypeHandlerSocketConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Host is the socket peer address.",
 				Name:              "host",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"port": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

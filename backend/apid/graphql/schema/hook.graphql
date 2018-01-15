@@ -6,7 +6,7 @@ type HookConfig {
   namespace: Namespace!
 
   "Name is the unique identifier for a hook"
-  name: String
+  name: String!
 
   "Command is the command to be executed"
   command: String
@@ -44,8 +44,8 @@ type Hook {
 
 type HookList {
   "Hooks is the list of hooks for the check hook"
-  hooks: String
+  hooks: [String!]!
 
   "Type indicates the type or response code for the check hook"
-  type: String
+  type: String!
 }

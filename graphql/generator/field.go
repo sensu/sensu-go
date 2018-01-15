@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
@@ -12,10 +13,8 @@ func toFieldName(name string) string {
 	name = strings.Title(name)
 
 	// NOTE: golint prefers method names use "ID" instead of "Id".
-	if name == "Id" {
-		name = "ID"
-	}
-	return name
+	re := regexp.MustCompile("Id([A-Z]|$)")
+	return re.ReplaceAllString(name, "ID${1}")
 }
 
 // genFields generates fields config for given AST
