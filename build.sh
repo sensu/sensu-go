@@ -321,11 +321,20 @@ elif [ "$cmd" == "deploy" ]; then
 
     echo " Deploying..."
 
-    # Authenticate to Google Cloud
-    gcloud auth activate-service-account --key-file=gcs-service-account.json
-    ./build-gcs-release.sh
+    # Authenticate to Google Cloud and push binaries
+    #openssl aes-256-cbc -K $encrypted_d9a31ecd7e9c_key -iv $encrypted_d9a31ecd7e9c_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
+    #gcloud auth activate-service-account --key-file=gcs-service-account.json
+    #./build-gcs-release.sh
 
-    docker_commands push versioned
+    # Deploy system packages to PackageCloud
+    gem install package_cloud
+    make clean
+    docker pull sensuapp/sensu-go-build
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build publish_travis
+
+    # Deploy Docker images to the Docker Hub
+    #docker_commands push versioned
 elif [ "$cmd" == "deps" ]; then
     install_deps
 elif [ "$cmd" == "docker" ]; then
