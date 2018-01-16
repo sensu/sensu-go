@@ -115,7 +115,9 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	if execution.Timeout != 0 {
 		SetProcessGroup(cmd)
 		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
-			KillProcess(cmd)
+			if err := KillProcess(cmd); err != nil {
+				return
+			}
 		})
 	}
 
