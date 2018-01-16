@@ -7,41 +7,23 @@ type TimeWindowWhen {
 }
 
 """
-WeekDay provides values for each day of the week
-"""
-enum WeekDay {
-  SATURDAY
-  SUNDAY
-  MONDAY
-  TUESDAY
-  WEDNESDAY
-  THRUSDAY
-  FRIDAY
-}
-
-"""
 TimeWindowDays defines the days of a time window
 """
 type TimeWindowDays {
-  all: TimeWindowTimeRange
-  sunday: TimeWindowTimeRange
-  monday: TimeWindowTimeRange
-  tuesday: TimeWindowTimeRange
-  wednesday: TimeWindowTimeRange
-  thursday: TimeWindowTimeRange
-  friday: TimeWindowTimeRange
-  saturday: TimeWindowTimeRange
+  all: [TimeWindowTimeRange!]
+  sunday: [TimeWindowTimeRange!]
+  monday: [TimeWindowTimeRange!]
+  tuesday: [TimeWindowTimeRange!]
+  wednesday: [TimeWindowTimeRange!]
+  thursday: [TimeWindowTimeRange!]
+  friday: [TimeWindowTimeRange!]
+  saturday: [TimeWindowTimeRange!]
 }
 
 """
 TimeWindowTimeRange defines the time ranges of a time
 """
 type TimeWindowTimeRange {
-  """
-  Day of the week where range is valid
-  """
-  day: WeekDay
-
   """
   Begin is the time which the time window should begin, in the format
   '3:00PM', which satisfies the time.Kitchen format
