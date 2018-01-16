@@ -9,6 +9,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/gocms-io/gcm/utility/utility_os"
 )
 
 const (
@@ -108,17 +110,24 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		execution.Duration = time.Since(started).Seconds()
 	}()
 
-	// Kill process and all of its children when timeout has expired
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// Kill process and all of its children when the timeout has expired.
+	// context.WithTimeout will not kill child/grandchild processes
+	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781),
+	// rather we will use a timer and utility_os package to perform full cleanup.
 	if execution.Timeout != 0 {
+		utility_os.SetChildProcessGroup(cmd)
 		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
-			if runtime.GOOS != "windows" {
-				syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			}
+			utility_os.Kill_process(cmd)
 		})
 	}
-	err := cmd.Run()
 
+	if err := cmd.Start(); err != nil {
+		// Something unexpected happended when attepting to
+		// fork/exec, return immediately.
+		return execution, err
+	}
+
+	err := cmd.Wait()
 	execution.Output = output.String()
 
 	// The command execution timed out if the context deadline was
