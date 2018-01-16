@@ -111,14 +111,18 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	// Kill process and all of its children when the timeout has expired.
 	// context.WithTimeout will not kill child/grandchild processes
 	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781),
-	// rather we will use a timer and utility_os package to perform full cleanup.
+	// rather we will use a timer and proc functions to perform full cleanup.
 	if execution.Timeout != 0 {
+		var err error
 		SetProcessGroup(cmd)
 		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
-			if err := KillProcess(cmd); err != nil {
-				return
-			}
+			err = KillProcess(cmd)
 		})
+		// Something unexpected happended when attepting to
+		// kill the process, return immediately.
+		if err != nil {
+			return execution, err
+		}
 	}
 
 	if err := cmd.Start(); err != nil {
