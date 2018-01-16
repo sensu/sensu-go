@@ -207,6 +207,11 @@
   version = "v1.0"
 
 [[projects]]
+  name = "github.com/gocms-io/gcm"
+  packages = ["utility/utility_os"]
+  revision = "d599ef72f4020a50f971edaeffd95464b3f99786"
+
+[[projects]]
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
