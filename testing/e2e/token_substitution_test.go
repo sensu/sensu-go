@@ -32,7 +32,7 @@ func TestTokenSubstitution(t *testing.T) {
 	defer cleanup()
 
 	// Create a check that take advantage of token substitution
-	check := types.FixtureCheckConfig("check_testCheckScheduling")
+	check := types.FixtureCheckConfig("check_tokenSubstitution")
 	output, err := sensuctl.run("check", "create", check.Name,
 		"--command", `echo {{ .ID }} {{ .Team }} {{ .Missing | default "defaultValue" }}`,
 		"--interval", "1",
@@ -42,7 +42,6 @@ func TestTokenSubstitution(t *testing.T) {
 		"--environment", check.Environment,
 		"--publish",
 	)
-
 	assert.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
@@ -56,5 +55,32 @@ func TestTokenSubstitution(t *testing.T) {
 	assert.NotNil(t, event)
 	// {{ .ID }} should have been replaced by the entity ID and {{ .Team }} by the
 	// custom attribute of the same name on the entity
-	assert.Equal(t, "TestCheckScheduling devops defaultValue\n", event.Check.Output)
+	assert.Contains(t, event.Check.Output, "TestCheckScheduling devops defaultValue")
+
+	// Create a check that take advantage of token substitution
+	checkUnmatchedToken := types.FixtureCheckConfig("check_unmatchedToken")
+	output, err = sensuctl.run("check", "create", checkUnmatchedToken.Name,
+		"--command", "{{ .Foo }}",
+		"--interval", "1",
+		"--subscriptions", "test",
+		"--handlers", strings.Join(check.Handlers, ","),
+		"--organization", checkUnmatchedToken.Organization,
+		"--environment", checkUnmatchedToken.Environment,
+		"--publish",
+	)
+	assert.NoError(t, err, string(output))
+
+	// Give it few seconds to make sure we've published a check request
+	time.Sleep(10 * time.Second)
+
+	output, err = sensuctl.run("event", "info", agent.ID, checkUnmatchedToken.Name)
+	assert.NoError(t, err, string(output))
+
+	event = types.Event{}
+	require.NoError(t, json.Unmarshal(output, &event))
+	assert.NotNil(t, event)
+	// {{ .Foo }} should not have been replaced and an error should have been
+	// immediated returned
+	assert.Contains(t, event.Check.Output, "has no entry for key")
+
 }

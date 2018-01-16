@@ -1,5 +1,10 @@
 package strings
 
+import (
+	"regexp"
+	"strings"
+)
+
 // InArray searches 'array' for 'item' string
 // Returns true 'item' is a value of 'array'
 func InArray(item string, array []string) bool {
@@ -8,6 +13,32 @@ func InArray(item string, array []string) bool {
 	}
 
 	for _, element := range array {
+		if element == item {
+			return true
+		}
+	}
+
+	return false
+}
+
+// FoundInArray searches array for item without distinguishing between uppercase
+// and lowercase and non-alphanumeric characters. Returns true if item is a
+// value of array
+func FoundInArray(item string, array []string) bool {
+	if item == "" || len(array) == 0 {
+		return false
+	}
+
+	// Prepare our regex in order to remove all non-alphanumeric characters
+	r, err := regexp.Compile("[^a-zA-Z0-9]+")
+	if err != nil {
+		return false
+	}
+
+	item = r.ReplaceAllString(strings.ToLower(item), "")
+
+	for _, element := range array {
+		element = r.ReplaceAllString(strings.ToLower(element), "")
 		if element == item {
 			return true
 		}

@@ -40,6 +40,8 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 				if err != nil {
 					return err
 				}
+				
+				defer func() { _ = in.Close() }()
 			} else {
 				in = os.Stdin
 			}

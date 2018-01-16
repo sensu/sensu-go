@@ -94,7 +94,8 @@ func (t *TimeWindowTimeRange) InWindow(current time.Time) (bool, error) {
 		}
 	}
 
-	return current.After(beginTime) && current.Before(endTime), nil
+	return (current.After(beginTime) || current.Equal(beginTime)) &&
+		(current.Before(endTime) || current.Equal(endTime)), nil
 }
 
 // InWindows determines if the current time falls between the provided time

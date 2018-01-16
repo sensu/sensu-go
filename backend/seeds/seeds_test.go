@@ -1,4 +1,4 @@
-package backend
+package seeds
 
 import (
 	"context"
@@ -18,10 +18,10 @@ func TestSeedInitialData(t *testing.T) {
 	}
 	defer st.Teardown()
 
-	err := seedInitialData(st)
+	err := SeedInitialData(st)
 	require.NoError(t, err, "seeding process should not raise an error")
 
-	err = seedInitialData(st)
+	err = SeedInitialData(st)
 	require.NoError(t, err, "seeding process should be able to be run more than once without error")
 
 	admin, err := st.GetUser(ctx, "admin")

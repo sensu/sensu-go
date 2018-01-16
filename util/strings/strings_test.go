@@ -26,6 +26,33 @@ func TestInArray(t *testing.T) {
 	assert.True(t, found, "it should return true if the item is found in the array")
 }
 
+func TestFindInArray(t *testing.T) {
+	var array []string
+
+	found := FoundInArray("Foo", []string{})
+	assert.False(t, found)
+
+	array = []string{"foo", "bar"}
+	found = FoundInArray("Foo", array)
+	assert.True(t, found)
+
+	array = []string{"foo", "bar"}
+	found = FoundInArray("FooBar", array)
+	assert.False(t, found)
+
+	array = []string{"foo", "bar"}
+	found = FoundInArray("Foo ", array)
+	assert.True(t, found)
+
+	array = []string{"foo_bar"}
+	found = FoundInArray("Foo_Bar", array)
+	assert.True(t, found)
+
+	array = []string{"foobar"}
+	found = FoundInArray("Foo_Qux", array)
+	assert.False(t, found)
+}
+
 func TestRemove(t *testing.T) {
 	var array []string
 

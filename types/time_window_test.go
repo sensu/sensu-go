@@ -151,7 +151,7 @@ func TestInWindows(t *testing.T) {
 		},
 		{
 			name: "is within one of the time windows of all days",
-			now:  mustParse(t, "2006-01-02T15:04:05Z"),
+			now:  mustParse(t, "2006-01-02T00:00:00Z"),
 			windows: TimeWindowWhen{
 				Days: TimeWindowDays{
 					All: []*TimeWindowTimeRange{
@@ -160,8 +160,8 @@ func TestInWindows(t *testing.T) {
 							End:   "11:00AM",
 						},
 						&TimeWindowTimeRange{
-							Begin: "3:00PM",
-							End:   "4:00PM",
+							Begin: "11:00 PM",
+							End:   "1:00 AM",
 						},
 					},
 				},

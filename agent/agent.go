@@ -457,6 +457,7 @@ func (a *Agent) sendKeepalive() error {
 		Type: transport.MessageTypeKeepalive,
 	}
 	keepalive := &types.Event{}
+
 	keepalive.Entity = a.getAgentEntity()
 
 	keepalive.Timestamp = time.Now().Unix()
