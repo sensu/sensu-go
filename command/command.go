@@ -9,8 +9,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/gocms-io/gcm/utility/utility_os"
 )
 
 const (
@@ -115,9 +113,9 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781),
 	// rather we will use a timer and utility_os package to perform full cleanup.
 	if execution.Timeout != 0 {
-		utility_os.SetChildProcessGroup(cmd)
+		SetProcessGroup(cmd)
 		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
-			utility_os.Kill_process(cmd)
+			KillProcess(cmd)
 		})
 	}
 
