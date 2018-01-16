@@ -18,6 +18,11 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	svc := graphql.NewService()
 	store := cfg.Store
 
+	// Register time window
+	schema.RegisterTimeWindowDays(svc, &timeWindowDaysImpl{})
+	schema.RegisterTimeWindowWhen(svc, &timeWindowWhenImpl{})
+	schema.RegisterTimeWindowTimeRange(svc, &timeWindowTimeRangeImpl{})
+
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterDeleteRecordInput(svc)
