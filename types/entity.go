@@ -55,7 +55,7 @@ func (e *Entity) UnmarshalJSON(b []byte) error {
 func (e *Entity) MarshalJSON() ([]byte, error) {
 	// Redact the entity before marshalling the entity so we don't leak any
 	// sensitive information
-	redactedEntity, err := dynamic.Redact(e)
+	redactedEntity, err := dynamic.Redact(e, e.Redact...)
 	if err != nil {
 		return nil, err
 	}
