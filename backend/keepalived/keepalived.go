@@ -175,9 +175,9 @@ func (k *Keepalived) processKeepalives() {
 	defer k.wg.Done()
 
 	var (
-		kMonitor monitor.Interface
-		event    *types.Event
-		ok       bool
+		mon   monitor.Interface
+		event *types.Event
+		ok    bool
 	)
 
 	for msg := range k.keepaliveChan {
@@ -203,16 +203,16 @@ func (k *Keepalived) processKeepalives() {
 		}
 
 		k.mu.Lock()
-		kMonitor, ok = k.monitors[entity.ID]
+		mon, ok = k.monitors[entity.ID]
 		// create if it doesn't exist
-		if !ok || kMonitor.IsStopped() {
+		if !ok || mon.IsStopped() {
 			timeout := time.Duration(entity.KeepaliveTimeout) * time.Second
-			kMonitor = k.MonitorFactory(entity, timeout, k, k)
-			k.monitors[entity.ID] = kMonitor
+			mon = k.MonitorFactory(entity, timeout, k, k)
+			k.monitors[entity.ID] = mon
 		}
 		k.mu.Unlock()
 
-		if err := kMonitor.HandleUpdate(event); err != nil {
+		if err := mon.HandleUpdate(event); err != nil {
 			logger.WithError(err).Error("error monitoring entity")
 		}
 	}
@@ -334,7 +334,9 @@ func (k *Keepalived) HandleFailure(e *types.Entity) error {
 	// this is a real keepalive event, emit it.
 	event := createKeepaliveEvent(e)
 	event.Check.Status = 1
-	k.MessageBus.Publish(messaging.TopicEventRaw, event)
+	if err := k.MessageBus.Publish(messaging.TopicEventRaw, event); err != nil {
+		return err
+	}
 
 	timeout := time.Now().Unix() + int64(e.KeepaliveTimeout)
 	return k.Store.UpdateFailingKeepalive(ctx, e, timeout)

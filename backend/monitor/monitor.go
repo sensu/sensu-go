@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -58,8 +57,6 @@ func (m *Monitor) HandleUpdate(event *types.Event) error {
 
 // HandleFailure passes an event to the failure handler function and runs it.
 func (m *Monitor) HandleFailure(entity *types.Entity) error {
-	fmt.Printf("Entity: %v\n", entity)
-	fmt.Println("In monitor failure handler")
 	defer m.Stop()
 	atomic.CompareAndSwapInt32(&m.failing, 0, 1)
 	return m.FailureHandler.HandleFailure(entity)
@@ -96,7 +93,7 @@ func (m *Monitor) start() {
 				}
 
 			case <-timer.C:
-				m.HandleFailure(m.Entity)
+				_ = m.HandleFailure(m.Entity)
 				timer.Reset(timerDuration)
 			}
 

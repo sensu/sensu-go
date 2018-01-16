@@ -44,8 +44,10 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 		MessageBus: suite.MessageBus,
 	}
 
-	keepalived.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
-		return &mockmonitor.MockMonitor{}
+	keepalived.MonitorFactory = func(*types.Entity, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
+		mon := &mockmonitor.MockMonitor{}
+		mon.On("HandleUpdate", mock.Anything).Return(nil)
+		return mon
 	}
 
 	suite.Keepalived = keepalived
@@ -120,11 +122,6 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			k := &Keepalived{}
-			mon := &mockmonitor.MockMonitor{}
-			mon.On("HandleUpdate", mock.Anything).Return(nil)
-			k.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
-				return mon
-			}
 			suite.Error(k.Start())
 
 			k.MessageBus = suite.MessageBus
@@ -163,6 +160,7 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 func (suite *KeepalivedTestSuite) TestEventProcessing() {
 	suite.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
 	mon := &mockmonitor.MockMonitor{}
+	mon.On("HandleUpdate", mock.Anything).Return(nil)
 	suite.Keepalived.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
 		return mon
 	}
@@ -173,8 +171,8 @@ func (suite *KeepalivedTestSuite) TestEventProcessing() {
 	suite.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
 	suite.Store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
 
-	//suite.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
 	suite.Keepalived.keepaliveChan <- event
+	suite.NoError(suite.Keepalived.Stop())
 	mon.AssertCalled(suite.T(), "HandleUpdate", event)
 }
 
