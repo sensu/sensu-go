@@ -85,8 +85,8 @@ message CheckConfig {
   // TTL represents the length of time in seconds for which a check result is valid.
   int64 ttl = 18;
 
-	// Timeout is the timeout, in seconds, at which the check has to run
-	uint32 timeout = 19;
+  // Timeout is the timeout, in seconds, at which the check has to run
+  uint32 timeout = 19;
 }
 
 // A Check is a check specification and optionally the results of the check's

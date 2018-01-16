@@ -6,6 +6,11 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Add `Timeout` field to CheckConfig.
+- CLI functionality for check `Timeout` field.
+- Add timeout support for check execution.
+- Add timeout support for check hook execution.
 
 ### Fixed
 - Fixed e2e test for token substitution on Windows
