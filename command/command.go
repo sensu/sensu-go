@@ -128,6 +128,7 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	}
 
 	err := cmd.Wait()
+
 	execution.Output = output.String()
 
 	// The command execution timed out if the context deadline was
