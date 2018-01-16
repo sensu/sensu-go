@@ -49,6 +49,7 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig) *types.Hook {
 	// Instantiate the execution command
 	ex := &command.Execution{
 		Command: hookConfig.Command,
+		Timeout: int(hookConfig.Timeout),
 	}
 
 	// If stdin is true, add JSON event data to command execution.
