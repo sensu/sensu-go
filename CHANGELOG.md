@@ -6,6 +6,19 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Logging redaction for entities
+
+### Changed
+- Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
+
+### Fixed
+- Fixed e2e test for token substitution on Windows
+- Fixed check subdue unit test for token substitution on Windows
+- Consider the first and last seconds of a time window when comparing the
+  current time
+- Fixed Travis deploy stage by removing caching for $GOPATH
+- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
 ### Changed
 - Removed the Visual Studio 2017 image in AppVeyor to prevent random failures

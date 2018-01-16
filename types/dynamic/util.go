@@ -92,6 +92,10 @@ func isExtendedAttributes(address *byte, value reflect.Value) bool {
 }
 
 func isEmpty(value reflect.Value) bool {
+	if !value.IsValid() {
+		return true
+	}
+
 	switch value.Kind() {
 	case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 		if value.Len() == 0 {
