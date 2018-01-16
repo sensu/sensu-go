@@ -40,7 +40,7 @@ type QueryNodeFieldResolverArgs struct {
 // QueryNodeFieldResolverParams contains contextual info to resolve node field
 type QueryNodeFieldResolverParams struct {
 	graphql.ResolveParams
-	QueryNodeFieldResolverArgs
+	Args QueryNodeFieldResolverArgs
 }
 
 // QueryNodeFieldResolver implement to resolve requests for the Query's node field.
@@ -220,7 +220,7 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 			"node": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"id": &graphql1.ArgumentConfig{
 					Description: "The ID of an object.",
-					Type:        graphql1.NewNonNull(graphql.InputType("ID")),
+					Type:        graphql1.NewNonNull(graphql1.ID),
 				}},
 				DeprecationReason: "",
 				Description:       "Node fetches an object given its ID.",
@@ -265,7 +265,7 @@ func _InterfaceTypeNodeConfigFn() graphql1.InterfaceConfig {
 			DeprecationReason: "",
 			Description:       "The ID of an object",
 			Name:              "id",
-			Type:              graphql1.NewNonNull(graphql.OutputType("ID")),
+			Type:              graphql1.NewNonNull(graphql1.ID),
 		}},
 		Name: "Node",
 		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {

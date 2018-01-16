@@ -552,7 +552,7 @@ func genFieldResolverInterface(field *ast.FieldDefinition, i info) jen.Code {
 		code.Commentf("%s contains contextual info to resolve %s field", paramsName, fieldName)
 		code.Type().Id(paramsName).Struct(
 			jen.Qual(servicePkg, "ResolveParams"),
-			jen.Id(argsName),
+			jen.Id("Args").Id(argsName),
 		)
 	}
 

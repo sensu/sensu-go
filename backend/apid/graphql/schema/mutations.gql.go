@@ -16,13 +16,47 @@ type MutationCreateCheckFieldResolverArgs struct {
 // MutationCreateCheckFieldResolverParams contains contextual info to resolve createCheck field
 type MutationCreateCheckFieldResolverParams struct {
 	graphql.ResolveParams
-	MutationCreateCheckFieldResolverArgs
+	Args MutationCreateCheckFieldResolverArgs
 }
 
 // MutationCreateCheckFieldResolver implement to resolve requests for the Mutation's createCheck field.
 type MutationCreateCheckFieldResolver interface {
 	// CreateCheck implements response to request for createCheck field.
 	CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error)
+}
+
+// MutationUpdateCheckFieldResolverArgs contains arguments provided to updateCheck when selected
+type MutationUpdateCheckFieldResolverArgs struct {
+	Input *UpdateCheckInput // Input - self descriptive
+}
+
+// MutationUpdateCheckFieldResolverParams contains contextual info to resolve updateCheck field
+type MutationUpdateCheckFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationUpdateCheckFieldResolverArgs
+}
+
+// MutationUpdateCheckFieldResolver implement to resolve requests for the Mutation's updateCheck field.
+type MutationUpdateCheckFieldResolver interface {
+	// UpdateCheck implements response to request for updateCheck field.
+	UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error)
+}
+
+// MutationDeleteCheckFieldResolverArgs contains arguments provided to deleteCheck when selected
+type MutationDeleteCheckFieldResolverArgs struct {
+	Input *DeleteRecordInput // Input - self descriptive
+}
+
+// MutationDeleteCheckFieldResolverParams contains contextual info to resolve deleteCheck field
+type MutationDeleteCheckFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationDeleteCheckFieldResolverArgs
+}
+
+// MutationDeleteCheckFieldResolver implement to resolve requests for the Mutation's deleteCheck field.
+type MutationDeleteCheckFieldResolver interface {
+	// DeleteCheck implements response to request for deleteCheck field.
+	DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error)
 }
 
 //
@@ -88,6 +122,8 @@ type MutationCreateCheckFieldResolver interface {
 //
 type MutationFieldResolvers interface {
 	MutationCreateCheckFieldResolver
+	MutationUpdateCheckFieldResolver
+	MutationDeleteCheckFieldResolver
 
 	// IsTypeOf is used to determine if a given value is associated with the Mutation type
 	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
@@ -147,6 +183,20 @@ func (_ MutationAliases) CreateCheck(p MutationCreateCheckFieldResolverParams) (
 	return ret, err
 }
 
+// UpdateCheck implements response to request for 'updateCheck' field.
+func (_ MutationAliases) UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// DeleteCheck implements response to request for 'deleteCheck' field.
+func (_ MutationAliases) DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
 // MutationType The root query for implementing GraphQL mutations.
 var MutationType = graphql.NewType("Mutation", graphql.ObjectKind)
 
@@ -167,19 +217,67 @@ func _ObjTypeMutationCreateCheckHandler(impl interface{}) graphql1.FieldResolveF
 	}
 }
 
+func _ObjTypeMutationUpdateCheckHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationUpdateCheckFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationUpdateCheckFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.UpdateCheck(frp)
+	}
+}
+
+func _ObjTypeMutationDeleteCheckHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationDeleteCheckFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationDeleteCheckFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.DeleteCheck(frp)
+	}
+}
+
 func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The root query for implementing GraphQL mutations.",
-		Fields: graphql1.Fields{"createCheck": &graphql1.Field{
-			Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
-				Description: "self descriptive",
-				Type:        graphql1.NewNonNull(graphql.InputType("CreateCheckInput")),
-			}},
-			DeprecationReason: "",
-			Description:       "Creates a new check.",
-			Name:              "createCheck",
-			Type:              graphql.OutputType("CreateCheckPayload"),
-		}},
+		Fields: graphql1.Fields{
+			"createCheck": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("CreateCheckInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Creates a new check.",
+				Name:              "createCheck",
+				Type:              graphql.OutputType("CreateCheckPayload"),
+			},
+			"deleteCheck": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("DeleteRecordInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Removes given check.",
+				Name:              "deleteCheck",
+				Type:              graphql.OutputType("DeleteRecordPayload"),
+			},
+			"updateCheck": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("UpdateCheckInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Updates given check.",
+				Name:              "updateCheck",
+				Type:              graphql.OutputType("UpdateCheckPayload"),
+			},
+		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
@@ -195,16 +293,377 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 
 // describe Mutation's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _ObjectTypeMutationDesc = graphql.ObjectDesc{
-	Config:        _ObjectTypeMutationConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{"createCheck": _ObjTypeMutationCreateCheckHandler},
+	Config: _ObjectTypeMutationConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"createCheck": _ObjTypeMutationCreateCheckHandler,
+		"deleteCheck": _ObjTypeMutationDeleteCheckHandler,
+		"updateCheck": _ObjTypeMutationUpdateCheckHandler,
+	},
 }
+
+// NamespaceInput refers to the namespace a resource may belong to.
+type NamespaceInput struct {
+	// Organization - self descriptive
+	Organization string
+	// Environment - self descriptive
+	Environment string
+}
+
+// NamespaceInputType NamespaceInput refers to the namespace a resource may belong to.
+var NamespaceInputType = graphql.NewType("NamespaceInput", graphql.InputKind)
+
+// RegisterNamespaceInput registers NamespaceInput object type with given service.
+func RegisterNamespaceInput(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeNamespaceInputDesc)
+}
+func _InputTypeNamespaceInputConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "NamespaceInput refers to the namespace a resource may belong to.",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"environment": &graphql1.InputObjectFieldConfig{
+				Description: "self descriptive",
+				Type:        graphql1.String,
+			},
+			"organization": &graphql1.InputObjectFieldConfig{
+				Description: "self descriptive",
+				Type:        graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Name: "NamespaceInput",
+	}
+}
+
+// describe NamespaceInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeNamespaceInputDesc = graphql.InputDesc{Config: _InputTypeNamespaceInputConfigFn}
+
+// DeleteRecordPayloadClientMutationIDFieldResolver implement to resolve requests for the DeleteRecordPayload's clientMutationId field.
+type DeleteRecordPayloadClientMutationIDFieldResolver interface {
+	// ClientMutationID implements response to request for clientMutationId field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+}
+
+// DeleteRecordPayloadDeletedIDFieldResolver implement to resolve requests for the DeleteRecordPayload's deletedId field.
+type DeleteRecordPayloadDeletedIDFieldResolver interface {
+	// DeletedID implements response to request for deletedId field.
+	DeletedID(p graphql.ResolveParams) (interface{}, error)
+}
+
+//
+// DeleteRecordPayloadFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'DeleteRecordPayload' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type DeleteRecordPayloadFieldResolvers interface {
+	DeleteRecordPayloadClientMutationIDFieldResolver
+	DeleteRecordPayloadDeletedIDFieldResolver
+
+	// IsTypeOf is used to determine if a given value is associated with the DeleteRecordPayload type
+	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+}
+
+// DeleteRecordPayloadAliases implements all methods on DeleteRecordPayloadFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type DeleteRecordPayloadAliases struct{}
+
+// ClientMutationID implements response to request for 'clientMutationId' field.
+func (_ DeleteRecordPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
+}
+
+// DeletedID implements response to request for 'deletedId' field.
+func (_ DeleteRecordPayloadAliases) DeletedID(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// DeleteRecordPayloadType Generic container for deleted record payload.
+var DeleteRecordPayloadType = graphql.NewType("DeleteRecordPayload", graphql.ObjectKind)
+
+// RegisterDeleteRecordPayload registers DeleteRecordPayload object type with given service.
+func RegisterDeleteRecordPayload(svc *graphql.Service, impl DeleteRecordPayloadFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeDeleteRecordPayloadDesc, impl)
+}
+func _ObjTypeDeleteRecordPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(DeleteRecordPayloadClientMutationIDFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationID(p)
+	}
+}
+
+func _ObjTypeDeleteRecordPayloadDeletedIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(DeleteRecordPayloadDeletedIDFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.DeletedID(p)
+	}
+}
+
+func _ObjectTypeDeleteRecordPayloadConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Generic container for deleted record payload.",
+		Fields: graphql1.Fields{
+			"clientMutationId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "A unique identifier for the client performing the mutation.",
+				Name:              "clientMutationId",
+				Type:              graphql1.String,
+			},
+			"deletedId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "ID of the deleted resource",
+				Name:              "deletedId",
+				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see DeleteRecordPayloadFieldResolvers.")
+		},
+		Name: "DeleteRecordPayload",
+	}
+}
+
+// describe DeleteRecordPayload's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeDeleteRecordPayloadDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeDeleteRecordPayloadConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"clientMutationId": _ObjTypeDeleteRecordPayloadClientMutationIDHandler,
+		"deletedId":        _ObjTypeDeleteRecordPayloadDeletedIDHandler,
+	},
+}
+
+// DeleteRecordInput Generic input used when deleting records.
+type DeleteRecordInput struct {
+	// ClientMutationID - A unique identifier for the client performing the mutation.
+	ClientMutationID string
+	// ID - Global ID of the check to update.
+	ID interface{}
+}
+
+// DeleteRecordInputType Generic input used when deleting records.
+var DeleteRecordInputType = graphql.NewType("DeleteRecordInput", graphql.InputKind)
+
+// RegisterDeleteRecordInput registers DeleteRecordInput object type with given service.
+func RegisterDeleteRecordInput(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeDeleteRecordInputDesc)
+}
+func _InputTypeDeleteRecordInputConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "Generic input used when deleting records.",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"clientMutationId": &graphql1.InputObjectFieldConfig{
+				Description: "A unique identifier for the client performing the mutation.",
+				Type:        graphql1.String,
+			},
+			"id": &graphql1.InputObjectFieldConfig{
+				Description: "Global ID of the check to update.",
+				Type:        graphql1.NewNonNull(graphql1.ID),
+			},
+		},
+		Name: "DeleteRecordInput",
+	}
+}
+
+// describe DeleteRecordInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeDeleteRecordInputDesc = graphql.InputDesc{Config: _InputTypeDeleteRecordInputConfigFn}
+
+// CheckConfigInputs self descriptive
+type CheckConfigInputs struct {
+	// Command - command to run.
+	Command string
+	// Interval - interval is the time interval, in seconds, in which the check should be run. Defaults to 60.
+	Interval int
+	/*
+	   LowFlapThreshold - lowFlapThreshold is the flap detection low threshold (% state change) for
+	   the check. Sensu uses the same flap detection algorithm as Nagios.
+	*/
+	LowFlapThreshold int
+	/*
+	   HighFlapThreshold - highFlapThreshold is the flap detection high threshold (% state change) for
+	   the check. Sensu uses the same flap detection algorithm as Nagios.
+	*/
+	HighFlapThreshold int
+	// Subscriptions - subscriptions refers to the list of subscribers for the check.
+	Subscriptions []string
+	// Handlers - handlers are the event handler for the check (incidents and/or metrics).
+	Handlers []string
+	// Publish - publish indicates if check requests are published for the check
+	Publish bool
+	// Assets - Provide a list of valid assets that are required to execute the check.
+	Assets []string
+}
+
+// CheckConfigInputsType self descriptive
+var CheckConfigInputsType = graphql.NewType("CheckConfigInputs", graphql.InputKind)
+
+// RegisterCheckConfigInputs registers CheckConfigInputs object type with given service.
+func RegisterCheckConfigInputs(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeCheckConfigInputsDesc)
+}
+func _InputTypeCheckConfigInputsConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"assets": &graphql1.InputObjectFieldConfig{
+				Description: "Provide a list of valid assets that are required to execute the check.",
+				Type:        graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+			},
+			"command": &graphql1.InputObjectFieldConfig{
+				Description: "command to run.",
+				Type:        graphql1.String,
+			},
+			"handlers": &graphql1.InputObjectFieldConfig{
+				Description: "handlers are the event handler for the check (incidents and/or metrics).",
+				Type:        graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+			},
+			"highFlapThreshold": &graphql1.InputObjectFieldConfig{
+				Description: "highFlapThreshold is the flap detection high threshold (% state change) for\nthe check. Sensu uses the same flap detection algorithm as Nagios.",
+				Type:        graphql1.Int,
+			},
+			"interval": &graphql1.InputObjectFieldConfig{
+				DefaultValue: "60",
+				Description:  "interval is the time interval, in seconds, in which the check should be run. Defaults to 60.",
+				Type:         graphql1.Int,
+			},
+			"lowFlapThreshold": &graphql1.InputObjectFieldConfig{
+				Description: "lowFlapThreshold is the flap detection low threshold (% state change) for\nthe check. Sensu uses the same flap detection algorithm as Nagios.",
+				Type:        graphql1.Int,
+			},
+			"publish": &graphql1.InputObjectFieldConfig{
+				DefaultValue: true,
+				Description:  "publish indicates if check requests are published for the check",
+				Type:         graphql1.Boolean,
+			},
+			"subscriptions": &graphql1.InputObjectFieldConfig{
+				Description: "subscriptions refers to the list of subscribers for the check.",
+				Type:        graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+			},
+		},
+		Name: "CheckConfigInputs",
+	}
+}
+
+// describe CheckConfigInputs's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeCheckConfigInputsDesc = graphql.InputDesc{Config: _InputTypeCheckConfigInputsConfigFn}
 
 // CreateCheckInput self descriptive
 type CreateCheckInput struct {
-	// ClientMutationID - A unique identifier for the client performing the mutation. ClientMutationID string
-	// Ns - namespace the resulting resource will belong to Ns interface{}
-	// Name - self descriptive Name string
-	// Command - self descriptive Command string
+	// ClientMutationID - A unique identifier for the client performing the mutation.
+	ClientMutationID string
+	// Ns - namespace the resulting resource will belong to.
+	Ns *NamespaceInput
+	// Name - name of the resulting check.
+	Name string
+	// Props - properties of the check
+	Props *CheckConfigInputs
 }
 
 // CreateCheckInputType self descriptive
@@ -222,12 +681,8 @@ func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
 				Description: "A unique identifier for the client performing the mutation.",
 				Type:        graphql1.String,
 			},
-			"command": &graphql1.InputObjectFieldConfig{
-				Description: "self descriptive",
-				Type:        graphql1.NewNonNull(graphql1.String),
-			},
 			"name": &graphql1.InputObjectFieldConfig{
-				Description: "self descriptive",
+				Description: "name of the resulting check.",
 				Type:        graphql1.NewNonNull(graphql1.String),
 			},
 			"ns": &graphql1.InputObjectFieldConfig{
@@ -235,8 +690,12 @@ func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
 					"environment":  "default",
 					"organization": "default",
 				},
-				Description: "namespace the resulting resource will belong to",
-				Type:        graphql.InputType("Namespace"),
+				Description: "namespace the resulting resource will belong to.",
+				Type:        graphql.InputType("NamespaceInput"),
+			},
+			"props": &graphql1.InputObjectFieldConfig{
+				Description: "properties of the check",
+				Type:        graphql1.NewNonNull(graphql.InputType("CheckConfigInputs")),
 			},
 		},
 		Name: "CreateCheckInput",
@@ -416,9 +875,9 @@ func _ObjectTypeCreateCheckPayloadConfigFn() graphql1.ObjectConfig {
 			"check": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "The new check.",
+				Description:       "The name of the new check.",
 				Name:              "check",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Check")),
+				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfig")),
 			},
 			"clientMutationId": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -447,5 +906,250 @@ var _ObjectTypeCreateCheckPayloadDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"check":            _ObjTypeCreateCheckPayloadCheckHandler,
 		"clientMutationId": _ObjTypeCreateCheckPayloadClientMutationIDHandler,
+	},
+}
+
+// UpdateCheckInput self descriptive
+type UpdateCheckInput struct {
+	// ClientMutationID - A unique identifier for the client performing the mutation.
+	ClientMutationID string
+	// ID - Global ID of the check to update.
+	ID interface{}
+	// Props - properties of the check
+	Props *CheckConfigInputs
+}
+
+// UpdateCheckInputType self descriptive
+var UpdateCheckInputType = graphql.NewType("UpdateCheckInput", graphql.InputKind)
+
+// RegisterUpdateCheckInput registers UpdateCheckInput object type with given service.
+func RegisterUpdateCheckInput(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeUpdateCheckInputDesc)
+}
+func _InputTypeUpdateCheckInputConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"clientMutationId": &graphql1.InputObjectFieldConfig{
+				Description: "A unique identifier for the client performing the mutation.",
+				Type:        graphql1.String,
+			},
+			"id": &graphql1.InputObjectFieldConfig{
+				Description: "Global ID of the check to update.",
+				Type:        graphql1.NewNonNull(graphql1.ID),
+			},
+			"props": &graphql1.InputObjectFieldConfig{
+				Description: "properties of the check",
+				Type:        graphql1.NewNonNull(graphql.InputType("CheckConfigInputs")),
+			},
+		},
+		Name: "UpdateCheckInput",
+	}
+}
+
+// describe UpdateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeUpdateCheckInputDesc = graphql.InputDesc{Config: _InputTypeUpdateCheckInputConfigFn}
+
+// UpdateCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the UpdateCheckPayload's clientMutationId field.
+type UpdateCheckPayloadClientMutationIDFieldResolver interface {
+	// ClientMutationID implements response to request for clientMutationId field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+}
+
+// UpdateCheckPayloadCheckFieldResolver implement to resolve requests for the UpdateCheckPayload's check field.
+type UpdateCheckPayloadCheckFieldResolver interface {
+	// Check implements response to request for check field.
+	Check(p graphql.ResolveParams) (interface{}, error)
+}
+
+//
+// UpdateCheckPayloadFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'UpdateCheckPayload' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type UpdateCheckPayloadFieldResolvers interface {
+	UpdateCheckPayloadClientMutationIDFieldResolver
+	UpdateCheckPayloadCheckFieldResolver
+
+	// IsTypeOf is used to determine if a given value is associated with the UpdateCheckPayload type
+	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+}
+
+// UpdateCheckPayloadAliases implements all methods on UpdateCheckPayloadFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type UpdateCheckPayloadAliases struct{}
+
+// ClientMutationID implements response to request for 'clientMutationId' field.
+func (_ UpdateCheckPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
+}
+
+// Check implements response to request for 'check' field.
+func (_ UpdateCheckPayloadAliases) Check(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// UpdateCheckPayloadType self descriptive
+var UpdateCheckPayloadType = graphql.NewType("UpdateCheckPayload", graphql.ObjectKind)
+
+// RegisterUpdateCheckPayload registers UpdateCheckPayload object type with given service.
+func RegisterUpdateCheckPayload(svc *graphql.Service, impl UpdateCheckPayloadFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeUpdateCheckPayloadDesc, impl)
+}
+func _ObjTypeUpdateCheckPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(UpdateCheckPayloadClientMutationIDFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationID(p)
+	}
+}
+
+func _ObjTypeUpdateCheckPayloadCheckHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(UpdateCheckPayloadCheckFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Check(p)
+	}
+}
+
+func _ObjectTypeUpdateCheckPayloadConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.Fields{
+			"check": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "The name of the new check.",
+				Name:              "check",
+				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfig")),
+			},
+			"clientMutationId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "A unique identifier for the client performing the mutation.",
+				Name:              "clientMutationId",
+				Type:              graphql1.String,
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see UpdateCheckPayloadFieldResolvers.")
+		},
+		Name: "UpdateCheckPayload",
+	}
+}
+
+// describe UpdateCheckPayload's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeUpdateCheckPayloadDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeUpdateCheckPayloadConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"check":            _ObjTypeUpdateCheckPayloadCheckHandler,
+		"clientMutationId": _ObjTypeUpdateCheckPayloadClientMutationIDHandler,
 	},
 }

@@ -85,7 +85,7 @@ func main() { // nolint
 			case "int32":
 				t = "Int"
 			case "bool":
-				t = "Bool"
+				t = "Boolean"
 			default:
 				t = field.Type
 			}

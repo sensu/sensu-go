@@ -42,7 +42,7 @@ type CheckConfig implements Node {
   source: String
 
   "STDIN indicates if the check command accepts JSON via stdin from the agent"
-  stdin: Bool
+  stdin: Boolean!
 
   "CheckHooks is the list of check hooks for the check"
   checkHooks: HookList
@@ -70,7 +70,7 @@ type Check {
   duration: Float
 
   "Executed describes the time in which the check request was executed"
-  executed: Time
+  executed: DateTime
 
   "History is the check state history."
   history: [CheckHistory]!

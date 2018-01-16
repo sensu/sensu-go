@@ -40,7 +40,7 @@ type HookConfigTimeoutFieldResolver interface {
 // HookConfigStdinFieldResolver implement to resolve requests for the HookConfig's stdin field.
 type HookConfigStdinFieldResolver interface {
 	// Stdin implements response to request for stdin field.
-	Stdin(p graphql.ResolveParams) (interface{}, error)
+	Stdin(p graphql.ResolveParams) (bool, error)
 }
 
 //
@@ -199,9 +199,9 @@ func (_ HookConfigAliases) Timeout(p graphql.ResolveParams) (int, error) {
 }
 
 // Stdin implements response to request for 'stdin' field.
-func (_ HookConfigAliases) Stdin(p graphql.ResolveParams) (interface{}, error) {
+func (_ HookConfigAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
+	ret := val.(bool)
 	return ret, err
 }
 
@@ -270,7 +270,7 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "id",
-				Type:              graphql1.NewNonNull(graphql.OutputType("ID")),
+				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -291,7 +291,7 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Stdin indicates if hook requests have stdin enabled",
 				Name:              "stdin",
-				Type:              graphql.OutputType("Bool"),
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
 			"timeout": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

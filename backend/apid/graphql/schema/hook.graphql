@@ -15,7 +15,7 @@ type HookConfig {
   timeout: Int
 
   "Stdin indicates if hook requests have stdin enabled"
-  stdin: Bool
+  stdin: Boolean!
 }
 
 """

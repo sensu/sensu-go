@@ -5,6 +5,7 @@ package schema
 import (
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
+	time "time"
 )
 
 // CheckConfigIDFieldResolver implement to resolve requests for the CheckConfig's id field.
@@ -76,7 +77,7 @@ type CheckConfigSourceFieldResolver interface {
 // CheckConfigStdinFieldResolver implement to resolve requests for the CheckConfig's stdin field.
 type CheckConfigStdinFieldResolver interface {
 	// Stdin implements response to request for stdin field.
-	Stdin(p graphql.ResolveParams) (interface{}, error)
+	Stdin(p graphql.ResolveParams) (bool, error)
 }
 
 // CheckConfigCheckHooksFieldResolver implement to resolve requests for the CheckConfig's checkHooks field.
@@ -297,9 +298,9 @@ func (_ CheckConfigAliases) Source(p graphql.ResolveParams) (string, error) {
 }
 
 // Stdin implements response to request for 'stdin' field.
-func (_ CheckConfigAliases) Stdin(p graphql.ResolveParams) (interface{}, error) {
+func (_ CheckConfigAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
+	ret := val.(bool)
 	return ret, err
 }
 
@@ -459,7 +460,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "The globally unique identifier of the check.",
 				Name:              "id",
-				Type:              graphql1.NewNonNull(graphql.OutputType("ID")),
+				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
 			"interval": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -508,7 +509,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "STDIN indicates if the check command accepts JSON via stdin from the agent",
 				Name:              "stdin",
-				Type:              graphql.OutputType("Bool"),
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
 			"subdue": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -575,7 +576,7 @@ type CheckDurationFieldResolver interface {
 // CheckExecutedFieldResolver implement to resolve requests for the Check's executed field.
 type CheckExecutedFieldResolver interface {
 	// Executed implements response to request for executed field.
-	Executed(p graphql.ResolveParams) (interface{}, error)
+	Executed(p graphql.ResolveParams) (*time.Time, error)
 }
 
 // CheckHistoryFieldResolver implement to resolve requests for the Check's history field.
@@ -752,9 +753,9 @@ func (_ CheckAliases) Duration(p graphql.ResolveParams) (float64, error) {
 }
 
 // Executed implements response to request for 'executed' field.
-func (_ CheckAliases) Executed(p graphql.ResolveParams) (interface{}, error) {
+func (_ CheckAliases) Executed(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
+	ret := val.(*time.Time)
 	return ret, err
 }
 
@@ -896,7 +897,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Executed describes the time in which the check request was executed",
 				Name:              "executed",
-				Type:              graphql.OutputType("Time"),
+				Type:              graphql1.DateTime,
 			},
 			"history": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

@@ -270,7 +270,7 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "id",
-				Type:              graphql1.NewNonNull(graphql.OutputType("ID")),
+				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

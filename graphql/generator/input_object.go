@@ -263,5 +263,5 @@ func genInputStructField(f *ast.InputValueDefinition, i info) jen.Code {
 	tRef := genConcreteTypeReference(f.Type, i)
 	comment := genFieldComment(name, desc, depr)
 
-	return jen.Comment(comment).Id(name).Add(tRef)
+	return jen.Comment(comment).Line().Id(name).Add(tRef)
 }

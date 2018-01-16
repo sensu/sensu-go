@@ -2,29 +2,124 @@
 The root query for implementing GraphQL mutations.
 """
 type Mutation {
+
+  #
+  # Checks
+  #
+
   "Creates a new check."
   createCheck(input: CreateCheckInput!): CreateCheckPayload
+  "Updates given check."
+  updateCheck(input: UpdateCheckInput!): UpdateCheckPayload
+  "Removes given check."
+  deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
+}
+
+"""
+NamespaceInput refers to the namespace a resource may belong to.
+"""
+input NamespaceInput {
+  organization: String!
+  environment: String
+}
+
+"""
+Generic container for deleted record payload.
+"""
+type DeleteRecordPayload {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "ID of the deleted resource"
+  deletedId: ID!
+}
+
+"""
+Generic input used when deleting records.
+"""
+input DeleteRecordInput {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "Global ID of the check to update."
+  id: ID!
 }
 
 #
 # CreateCheckMutation
 #
 
+input CheckConfigInputs {
+
+  "command to run."
+  command: String
+
+  "interval is the time interval, in seconds, in which the check should be run. Defaults to 60."
+  interval: Int = 60
+
+  """
+	lowFlapThreshold is the flap detection low threshold (% state change) for
+	the check. Sensu uses the same flap detection algorithm as Nagios.
+  """
+  lowFlapThreshold: Int
+
+  """
+	highFlapThreshold is the flap detection high threshold (% state change) for
+	the check. Sensu uses the same flap detection algorithm as Nagios.
+  """
+  highFlapThreshold: Int
+
+	"subscriptions refers to the list of subscribers for the check."
+  subscriptions: [String!]
+
+	"handlers are the event handler for the check (incidents and/or metrics)."
+  handlers: [String!]
+
+	"publish indicates if check requests are published for the check"
+  publish: Boolean = true
+
+	"Provide a list of valid assets that are required to execute the check."
+  assets: [String!]
+
+}
+
 input CreateCheckInput {
   "A unique identifier for the client performing the mutation."
   clientMutationId: String
 
-  "namespace the resulting resource will belong to"
-  ns: Namespace = {organization: "default", environment: "default"}
+  "namespace the resulting resource will belong to."
+  ns: NamespaceInput = {organization: "default", environment: "default"}
 
+  "name of the resulting check."
   name: String!
-  command: String!
+
+  "properties of the check"
+  props: CheckConfigInputs!
 }
 
 type CreateCheckPayload {
   "A unique identifier for the client performing the mutation."
   clientMutationId: String
 
-  "The new check."
-  check: Check!
+  "The name of the new check."
+  check: CheckConfig!
+}
+
+input UpdateCheckInput {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "Global ID of the check to update."
+  id: ID!
+
+  "properties of the check"
+  props: CheckConfigInputs!
+}
+
+type UpdateCheckPayload {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "The name of the new check."
+  check: CheckConfig!
 }

@@ -11,7 +11,7 @@ type Entity {
   system: System
   subscriptions: [String!]
   lastSeen: Int
-  deregister: Bool
+  deregister: Boolean!
   deregistration: Deregistration
   keepaliveTimeout: Int
   authorId: String!

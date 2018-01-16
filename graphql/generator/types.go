@@ -48,6 +48,8 @@ func genTypeReference(t ast.Type, expectedType string) *jen.Statement {
 		valueStatement = jen.Qual(defsPkg, "Boolean")
 	case "DateTime":
 		valueStatement = jen.Qual(defsPkg, "DateTime")
+	case "ID":
+		valueStatement = jen.Qual(defsPkg, "ID")
 	default:
 		name := namedType.Name.Value
 		valueStatement = jen.Qual(servicePkg, expectedType).Call(jen.Lit(name))

@@ -64,7 +64,7 @@ func interfacesThunk(typeMap graphql.TypeMap, cfg interface{}) interface{} {
 	return graphql.InterfacesThunk(func() []*graphql.Interface {
 		newInts := make([]*graphql.Interface, len(ints))
 		for i, mockedInt := range ints {
-			t := typeMap[mockedInt.Name()]
+			t := findType(typeMap, mockedInt.Name())
 			newInt := t.(*graphql.Interface)
 			newInts[i] = newInt
 		}
@@ -141,7 +141,7 @@ func replaceMockedType(t graphql.Type, m graphql.TypeMap) graphql.Type {
 		tt.OfType = replaceMockedType(tt.OfType, m)
 		return tt
 	case *mockType:
-		return m[t.Name()]
+		return findType(m, t.Name())
 	default:
 		return t
 	}

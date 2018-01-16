@@ -52,7 +52,7 @@ type EntityLastSeenFieldResolver interface {
 // EntityDeregisterFieldResolver implement to resolve requests for the Entity's deregister field.
 type EntityDeregisterFieldResolver interface {
 	// Deregister implements response to request for deregister field.
-	Deregister(p graphql.ResolveParams) (interface{}, error)
+	Deregister(p graphql.ResolveParams) (bool, error)
 }
 
 // EntityDeregistrationFieldResolver implement to resolve requests for the Entity's deregistration field.
@@ -248,9 +248,9 @@ func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (int, error) {
 }
 
 // Deregister implements response to request for 'deregister' field.
-func (_ EntityAliases) Deregister(p graphql.ResolveParams) (interface{}, error) {
+func (_ EntityAliases) Deregister(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
+	ret := val.(bool)
 	return ret, err
 }
 
@@ -385,7 +385,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "deregister",
-				Type:              graphql.OutputType("Bool"),
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
 			"deregistration": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -399,7 +399,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "id",
-				Type:              graphql1.NewNonNull(graphql.OutputType("ID")),
+				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
 			"keepaliveTimeout": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
