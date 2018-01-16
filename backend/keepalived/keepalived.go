@@ -148,8 +148,8 @@ func (k *Keepalived) initFromStore() error {
 			continue
 		}
 
-		// Recreate the monitor and reset its timer to alert when it's going to
-		// timeout.
+		// Recreate the monitor with a time offset calculated from the keepalive
+		// entry timestamp minus the current time.
 		d := time.Duration(int64(keepalive.Time) - time.Now().Unix())
 
 		if d < 0 {
@@ -204,7 +204,7 @@ func (k *Keepalived) processKeepalives() {
 
 		k.mu.Lock()
 		mon, ok = k.monitors[entity.ID]
-		// create if it doesn't exist
+		// create an entity monitor if it doesn't exist in the monitor map
 		if !ok || mon.IsStopped() {
 			timeout := time.Duration(entity.KeepaliveTimeout) * time.Second
 			mon = k.MonitorFactory(entity, timeout, k, k)

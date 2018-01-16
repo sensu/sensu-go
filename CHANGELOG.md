@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Moved monitor code out of keepalived and into its own package
+
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added
 - Logging redaction for entities

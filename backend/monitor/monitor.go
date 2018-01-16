@@ -30,12 +30,12 @@ type Monitor struct {
 	failing   int32
 }
 
-// UpdateHandler provides a HandleUpdate function.
+// UpdateHandler provides an event update handler.
 type UpdateHandler interface {
 	HandleUpdate(e *types.Event) error
 }
 
-// FailureHandler provides a HandleFailure function.
+// FailureHandler provides a failure handler.
 type FailureHandler interface {
 	HandleFailure(e *types.Entity) error
 }
@@ -49,13 +49,15 @@ func (m *Monitor) HandleUpdate(event *types.Event) error {
 		return nil
 	}
 
-	// Update the event. If the monitor is failing, flip status back to zero
+	// If the monitor is failing, flip status back to zero, reset it, and handle
+	// the event.
 	atomic.CompareAndSwapInt32(&m.failing, 1, 0)
-	m.reset(m.Timeout * time.Second)
+	m.reset(m.Timeout)
 	return m.UpdateHandler.HandleUpdate(event)
 }
 
-// HandleFailure passes an event to the failure handler function and runs it.
+// HandleFailure flips the monitor's status to failing and handles the failing
+// entity.
 func (m *Monitor) HandleFailure(entity *types.Entity) error {
 	defer m.Stop()
 	atomic.CompareAndSwapInt32(&m.failing, 0, 1)
@@ -132,7 +134,7 @@ func (m *Monitor) reset(t time.Duration) {
 	m.resetChan <- t
 }
 
-// New creates a new monitor from an entity.
+// New creates a new monitor from an entity, time duration, and handlers.
 func New(e *types.Entity, t time.Duration, updateHandler UpdateHandler, failureHandler FailureHandler) *Monitor {
 	monitor := &Monitor{
 		Entity:         e,

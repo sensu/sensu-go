@@ -1,5 +1,3 @@
-// +build !integration
-
 package monitor
 
 import (
@@ -103,13 +101,15 @@ func TestMonitorHandleFailure(t *testing.T) {
 
 }
 
-func TestMonitorStop(t *testing.T) {
+func TestMonitorStartStop(t *testing.T) {
 	assert := assert.New(t)
 
 	entity := types.FixtureEntity("entity")
 
 	handler := &testHandler{}
 	monitor := New(entity, (60 * time.Second), handler, handler)
+	assert.Equal((60 * time.Second), monitor.Timeout)
+	assert.False(monitor.IsStopped(), "IsStopped returns false if stopped")
 	monitor.Stop()
 	assert.True(monitor.IsStopped(), "IsStopped returns true if stopped")
 }

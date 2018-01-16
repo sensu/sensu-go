@@ -9,35 +9,22 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestKeepaliveMonitor(t *testing.T) {
-	bus := &mockbus.MockBus{}
+	bus := &messaging.WizardBus{}
 
-	okStatusCount := 0
-	warnStatusCount := 0
+	if err := bus.Start(); err != nil {
+		assert.FailNow(t, "message bus failed to start")
+	}
 
-	bus.On("Publish", messaging.TopicEventRaw, mock.MatchedBy(func(msg interface{}) bool {
-		event := msg.(*types.Event)
-		if event.Check.Config.Name == "keepalive" && event.Check.Status == 0 {
-			okStatusCount++
-			return true
-		}
-		return false
-	})).Return(nil)
+	eventChan := make(chan interface{}, 2)
 
-	bus.On("Publish", messaging.TopicEventRaw, mock.MatchedBy(func(msg interface{}) bool {
-		event := msg.(*types.Event)
-		if event.Check.Config.Name == "keepalive" && event.Check.Status == 1 {
-			warnStatusCount++
-			return true
-		}
-		return false
-	})).Return(nil)
+	if err := bus.Subscribe(messaging.TopicEventRaw, "test", eventChan); err != nil {
+		assert.FailNow(t, "failed to subscribe to message bus topic event raw")
+	}
 
 	store, err := testutil.NewStoreInstance()
 	if err != nil {
@@ -48,34 +35,45 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	entity := types.FixtureEntity("entity1")
-	entity.KeepaliveTimeout = 1
-
-	monitor := KeepaliveMonitor{
-		Entity:     entity,
-		MessageBus: bus,
+	k := &Keepalived{
 		Store:      store,
-		EventCreator: &MessageBusEventCreator{
-			MessageBus: bus,
-		},
+		MessageBus: bus,
 	}
 
-	monitor.Start()
+	if err := k.Start(); err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	entity := types.FixtureEntity("entity1")
+	entity.KeepaliveTimeout = 1
 
 	keepalive := &types.Event{
 		Entity:    entity,
 		Timestamp: time.Now().Unix(),
 	}
 
-	if err := monitor.Update(keepalive); err != nil {
-		assert.FailNow(t, err.Error())
+	if err := bus.Publish(messaging.TopicKeepalive, keepalive); err != nil {
+		assert.FailNow(t, "failed to publish keepalive event")
 	}
 
-	assert.Equal(t, 1, okStatusCount)
-	assert.Equal(t, 0, warnStatusCount)
+	msg, ok := <-eventChan
+	if !ok {
+		assert.FailNow(t, "failed to pull message off eventChan")
+	}
 
-	time.Sleep(1 * time.Second)
+	okEvent, ok := msg.(*types.Event)
+	if !ok {
+		assert.FailNow(t, "message type was not an event")
+	}
+	assert.Equal(t, int32(0), okEvent.Check.Status)
 
-	assert.Equal(t, 1, okStatusCount)
-	assert.Equal(t, 1, warnStatusCount)
+	msg, ok = <-eventChan
+	if !ok {
+		assert.FailNow(t, "failed to pull message off eventChan")
+	}
+	warnEvent, ok := msg.(*types.Event)
+	if !ok {
+		assert.FailNow(t, "message type was not an event")
+	}
+	assert.Equal(t, int32(1), warnEvent.Check.Status)
 }

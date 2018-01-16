@@ -1,5 +1,3 @@
-// +build !integration
-
 package keepalived
 
 import (
