@@ -101,15 +101,4 @@ func TestExecuteCommand(t *testing.T) {
 	assert.Equal(t, "Execution timed out\n", testutil.CleanOutput(sleepMultipleExec.Output))
 	assert.Equal(t, 2, sleepMultipleExec.Status)
 	assert.NotEqual(t, 0, sleepMultipleExec.Duration)
-
-	// test that multiple commands can time out
-	sleepMultiple = FakeCommand("asdf")
-	sleepMultiple.Timeout = 1
-	sleepMultiple.Command = "adsf"
-
-	sleepMultipleExec, sleepMultipleErr = ExecuteCommand(context.Background(), sleepMultiple)
-	assert.Equal(t, nil, sleepMultipleErr)
-	assert.Equal(t, "sh: adsf: command not found\n", testutil.CleanOutput(sleepMultipleExec.Output))
-	assert.Equal(t, 127, sleepMultipleExec.Status)
-	assert.NotEqual(t, 0, sleepMultipleExec.Duration)
 }
