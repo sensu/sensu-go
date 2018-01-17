@@ -3,9 +3,13 @@ Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
 """
 type Entity {
+  "The globally unique identifier of the record"
   id: ID!
+
+  "Namespace in which this record resides"
   namespace: Namespace!
 
+  "unique identifier for the entity"
   name: String!
   class: String
   system: System

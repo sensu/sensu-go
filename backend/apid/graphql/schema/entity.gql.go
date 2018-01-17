@@ -397,7 +397,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "The globally unique identifier of the record",
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
@@ -418,14 +418,14 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "unique identifier for the entity",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Namespace in which this record resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
 			},

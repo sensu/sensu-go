@@ -2,7 +2,10 @@
 A Handler is a handler specification.
 """
 type Handler {
+  "The globally unique identifier of the record."
   id: ID!
+
+  "namespace in which this record resides"
   namespace: Namespace!
 
   "Name is the unique identifier for a handler."

@@ -31,6 +31,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterQuery(svc, &queryImpl{store: store})
 	schema.RegisterMutation(svc, newMutationImpl(store))
+	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterNamespace(svc, &namespaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{})
 	schema.RegisterNamespaceInput(svc)

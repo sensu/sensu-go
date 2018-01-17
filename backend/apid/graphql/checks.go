@@ -8,6 +8,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var _ schema.CheckFieldResolvers = (*checkImpl)(nil)
+var _ schema.CheckConfigFieldResolvers = (*checkCfgImpl)(nil)
+var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
+
 //
 // Implement CheckConfigFieldResolvers
 //

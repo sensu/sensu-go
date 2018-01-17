@@ -104,7 +104,7 @@ func main() { // nolint
 	}
 
 	// Write to file
-	err = ioutil.WriteFile(outfile, []byte(out), 0755)
+	err = ioutil.WriteFile(outfile, []byte(out), 0644)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

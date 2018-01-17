@@ -1,0 +1,22 @@
+"""
+A Mutator is a mutator specification.
+"""
+type Mutator implements Node {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "Namespace in which this record resides"
+  namespace: Namespace!
+
+  "Name is the unique identifier for a mutator."
+  name: String!
+
+  "Command is the command to be executed."
+  command: String!
+
+  "Timeout is the command execution timeout in seconds."
+  timeout: Int
+
+  "Env is a list of environment variables to use with command execution"
+  envVars: [String!]
+}

@@ -1,6 +1,8 @@
 package graphql
 
 import (
+	"fmt"
+
 	"github.com/graphql-go/graphql"
 )
 
@@ -20,6 +22,7 @@ import (
 // object configuration; this mock only refers to the unique name of the
 // component it is referencing and is replace at the time the GraphQL service
 // is invoked.
+//
 
 type mockType struct{ name string }
 
@@ -110,10 +113,10 @@ func inputFieldsThunk(
 	fields graphql.InputObjectConfigFieldMap,
 ) interface{} {
 	mockedFields := []string{}
-	for _, f := range fields {
+	for n, f := range fields {
 		t := unwrapFieldType(f.Type)
-		if tt, ok := t.(*mockType); ok {
-			mockedFields = append(mockedFields, tt.Name())
+		if _, ok := t.(*mockType); ok {
+			mockedFields = append(mockedFields, n)
 		}
 	}
 
@@ -125,6 +128,7 @@ func inputFieldsThunk(
 		func() graphql.InputObjectConfigFieldMap {
 			for _, name := range mockedFields {
 				field := fields[name]
+				fmt.Printf("n: %s\nf: %#v\n", name, field)
 				field.Type = replaceMockedType(field.Type, typeMap)
 			}
 			return fields
@@ -149,9 +153,9 @@ func replaceMockedType(t graphql.Type, m graphql.TypeMap) graphql.Type {
 
 func unwrapFieldType(t graphql.Type) graphql.Type {
 	if tt, ok := t.(*graphql.NonNull); ok {
-		t = tt.OfType
+		t = unwrapFieldType(tt.OfType)
 	} else if tt, ok := t.(*graphql.List); ok {
-		t = tt.OfType
+		t = unwrapFieldType(tt.OfType)
 	}
 	return t
 }
