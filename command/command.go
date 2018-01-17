@@ -68,15 +68,12 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	// exit status cannot be determined.
 	var cmd *exec.Cmd
 
-	// Use the context deadline for command execution timeout.
-	// This will be effectively ignored if the context already has
-	// an earlier deadline, which is super rad.
-	var timeout context.CancelFunc
-	if execution.Timeout == 0 {
-		ctx, timeout = context.WithCancel(ctx)
-	} else {
-		ctx, timeout = context.WithTimeout(ctx, time.Duration(execution.Timeout)*time.Second)
-	}
+	// Use context.WithCancel for command execution timeout.
+	// context.WithTimeout will not kill child/grandchild processes
+	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781).
+	// Rather, we will use a timer, CancelFunc and proc functions
+	// to perform full cleanup.
+	ctx, timeout := context.WithCancel(ctx)
 	defer timeout()
 
 	// Taken from Sensu-Spawn (Sensu 1.x.x).
@@ -109,13 +106,11 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	}()
 
 	// Kill process and all of its children when the timeout has expired.
-	// context.WithTimeout will not kill child/grandchild processes
-	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781),
-	// rather we will use a timer and proc functions to perform full cleanup.
 	if execution.Timeout != 0 {
 		var err error
 		SetProcessGroup(cmd)
 		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
+			timeout()
 			err = KillProcess(cmd)
 		})
 		// Something unexpected happended when attepting to
@@ -135,9 +130,8 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 
 	execution.Output = output.String()
 
-	// The command execution timed out if the context deadline was
-	// exceeded.
-	if ctx.Err() == context.DeadlineExceeded {
+	// The command execution timed out if the context was cancelled prematurely
+	if ctx.Err() == context.Canceled {
 		execution.Output = TimeoutOutput
 		execution.Status = TimeoutExitStatus
 	} else if err != nil {
