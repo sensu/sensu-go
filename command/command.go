@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"os/exec"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -77,11 +76,7 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	defer timeout()
 
 	// Taken from Sensu-Spawn (Sensu 1.x.x).
-	if runtime.GOOS == "windows" {
-		cmd = exec.CommandContext(ctx, "cmd", "/c", execution.Command)
-	} else {
-		cmd = exec.CommandContext(ctx, "sh", "-c", execution.Command)
-	}
+	cmd = Command(ctx, execution.Command)
 
 	// Set the ENV for the command if it is set
 	if len(execution.Env) > 0 {

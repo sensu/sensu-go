@@ -3,9 +3,15 @@
 package command
 
 import (
+	"context"
 	"os/exec"
 	"syscall"
 )
+
+// Command returns a command to execute a script through a shell.
+func Command(ctx context.Context, command string) *exec.Cmd {
+	return exec.CommandContext(ctx, "sh", "-c", command)
+}
 
 // SetProcessGroup sets the process group of the command process
 func SetProcessGroup(cmd *exec.Cmd) {
