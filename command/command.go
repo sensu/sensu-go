@@ -8,6 +8,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -60,6 +62,7 @@ type Execution struct {
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
 func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, error) {
+	logger := logrus.WithFields(logrus.Fields{"component": "command"})
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
 	// known to have troubles, e.g. command not found. We still
@@ -102,17 +105,13 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 
 	// Kill process and all of its children when the timeout has expired.
 	if execution.Timeout != 0 {
-		var err error
 		SetProcessGroup(cmd)
 		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
 			timeout()
-			err = KillProcess(cmd)
+			if err := KillProcess(cmd); err != nil {
+				logger.WithError(err).Error("error when attempting to kill process")
+			}
 		})
-		// Something unexpected happended when attepting to
-		// kill the process, return immediately.
-		if err != nil {
-			return execution, err
-		}
 	}
 
 	if err := cmd.Start(); err != nil {

@@ -5,21 +5,18 @@ package command
 import (
 	"context"
 	"os/exec"
-	"strings"
 	"syscall"
 )
 
 // Command returns a command to execute a script through a shell.
 func Command(ctx context.Context, command string) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, "cmd", "/c", command)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		CmdLine: strings.Join(cmd.Args, " "),
-	}
-	return cmd
+	return exec.CommandContext(ctx, "cmd", "/c", command)
 }
 
 // SetProcessGroup sets the process group of the command process
-func SetProcessGroup(cmd *exec.Cmd) {}
+func SetProcessGroup(cmd *exec.Cmd) {
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP}
+}
 
 // KillProcess kills the command process and any child processes
 func KillProcess(cmd *exec.Cmd) error {
