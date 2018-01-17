@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Add an e2e test for logging redaction
 
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added
