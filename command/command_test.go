@@ -93,8 +93,10 @@ func TestExecuteCommand(t *testing.T) {
 	assert.NotEqual(t, 0, sleepExec.Duration)
 
 	// test that multiple commands can time out
-	sleepMultiple := FakeCommand("sleep 10; echo hello")
+	sleepMultiple := FakeCommand("sleep 10")
+	echoMultiple := FakeCommand("echo foo")
 	sleepMultiple.Timeout = 1
+	sleepMultiple.Command = sleepMultiple.Command + "; " + echoMultiple.Command
 
 	sleepMultipleExec, sleepMultipleErr := ExecuteCommand(context.Background(), sleepMultiple)
 	assert.Equal(t, nil, sleepMultipleErr)
