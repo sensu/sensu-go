@@ -1,0 +1,44 @@
+{
+    "product": "sensu-agent",
+    "company": "Sensu, Inc.",
+    "upgrade-code": "F8497B50-EC18-4F50-8CC8-1C9E53EEEB0B",
+    "files": {
+	"guid": "065B8879-540F-460E-A376-F297E06D0B1D",
+	"items": [
+	    "C:\\vagrant\\target\\windows-amd64\\sensu-agent"
+	]
+    },
+    "directories": [
+    ],
+    "env": {
+	"guid": "3D8D73C9-70CB-4BAB-BB4D-C72BA3AFFC53",
+	"vars": [
+	    {
+		"name": "PATH",
+		"value": "[INSTALLDIR]",
+		"permanent": "no",
+		"system": "no",
+		"action": "set",
+		"part": "last"
+	    }
+	]
+    },
+    "shortcuts": {
+	"guid": "228B5B15-96F8-45AF-A06A-4291DB866AB4",
+	"items": [
+	    {
+		"name": "sensu-agent",
+		"description": "Sensu Agent",
+		"target": "[INSTALLDIR]\\sensu-agent.exe",
+		"wdir": "INSTALLDIR",
+		"arguments": ""
+	    }
+	]
+    },
+    "choco": {
+	"description": "Sensu 2.x Agent",
+	"project-url": "https://github.com/sensu/sensu-go",
+	"tags": "sensu agent go",
+	"license-url": "https://github.com/sensu/sensu-go/blob/master/LICENSE"
+    }
+}
