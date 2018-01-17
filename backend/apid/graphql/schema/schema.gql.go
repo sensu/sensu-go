@@ -249,35 +249,3 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"node":   _ObjTypeQueryNodeHandler,
 	},
 }
-
-// NodeType Node describes an object with an ID.
-var NodeType = graphql.NewType("Node", graphql.InterfaceKind)
-
-// RegisterNode registers Node object type with given service.
-func RegisterNode(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
-	svc.RegisterInterface(_InterfaceTypeNodeDesc, impl)
-}
-func _InterfaceTypeNodeConfigFn() graphql1.InterfaceConfig {
-	return graphql1.InterfaceConfig{
-		Description: "Node describes an object with an ID.",
-		Fields: graphql1.Fields{"id": &graphql1.Field{
-			Args:              graphql1.FieldConfigArgument{},
-			DeprecationReason: "",
-			Description:       "The ID of an object",
-			Name:              "id",
-			Type:              graphql1.NewNonNull(graphql1.ID),
-		}},
-		Name: "Node",
-		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see InterfaceTypeResolver.")
-		},
-	}
-}
-
-// describe Node's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _InterfaceTypeNodeDesc = graphql.InterfaceDesc{Config: _InterfaceTypeNodeConfigFn}

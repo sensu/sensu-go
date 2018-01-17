@@ -18,11 +18,6 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	svc := graphql.NewService()
 	store := cfg.Store
 
-	// Register time window
-	schema.RegisterTimeWindowDays(svc, &timeWindowDaysImpl{})
-	schema.RegisterTimeWindowWhen(svc, &timeWindowWhenImpl{})
-	schema.RegisterTimeWindowTimeRange(svc, &timeWindowTimeRangeImpl{})
-
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterDeleteRecordInput(svc)
@@ -35,6 +30,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterNamespace(svc, &namespaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{})
 	schema.RegisterNamespaceInput(svc)
+	schema.RegisterPageInfo(svc, &pageInfoImpl{})
 	schema.RegisterSchema(svc)
 
 	// Register check types
@@ -57,6 +53,18 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterHook(svc, &hookImpl{})
 	schema.RegisterHookConfig(svc, &hookCfgImpl{})
 	schema.RegisterHookList(svc, &hookListImpl{})
+
+	// Register time window
+	schema.RegisterTimeWindowDays(svc, &timeWindowDaysImpl{})
+	schema.RegisterTimeWindowWhen(svc, &timeWindowWhenImpl{})
+	schema.RegisterTimeWindowTimeRange(svc, &timeWindowTimeRangeImpl{})
+
+	// Register user types
+	schema.RegisterRole(svc, &roleImpl{})
+	schema.RegisterRule(svc, &ruleImpl{})
+	schema.RegisterRuleResource(svc)
+	schema.RegisterRulePermission(svc)
+	schema.RegisterUser(svc, &userImpl{})
 
 	err := svc.Regenerate()
 	return svc, err

@@ -230,7 +230,7 @@ func genEnum(node *ast.EnumDefinition) jen.Code {
 		StructFunc(func(g *jen.Group) {
 			for _, v := range node.Values {
 				g.Comment(v.Name.Value + " - " + getDescription(v))
-				g.Id(v.Name.Value).String()
+				g.Id(v.Name.Value).Id(name)
 			}
 		})
 

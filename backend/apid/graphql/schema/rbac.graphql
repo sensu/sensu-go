@@ -1,0 +1,42 @@
+"""
+Rule maps permissions to a given type
+"""
+type Rule {
+  "namespace in which this record resides"
+  namespace: Namespace!
+
+  "resource the permissions apply to"
+  type: RuleResource!
+  permissions: [RulePermission!]!
+}
+
+"""
+Role describes set of rules
+"""
+type Role {
+  id: ID!
+  name: String!
+  rules: [Rule!]!
+}
+
+enum RuleResource {
+  ALL
+  ASSETS
+  CHECKS
+  ENTITIES
+  HANDLERS
+  HOOKS
+  MUTATORS
+  ORGANIZATIONS
+  ROLES
+  SILENCED
+  USERS
+}
+
+enum RulePermission {
+  ALL
+  CREATE
+  READ
+  UPDATE
+  DELETE
+}
