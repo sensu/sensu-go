@@ -6,6 +6,9 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Token substitution is now available for check hooks
+
 
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added

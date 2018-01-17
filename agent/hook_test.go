@@ -38,3 +38,22 @@ func TestExecuteHook(t *testing.T) {
 	assert.Equal(hook.Status, int32(0))
 	assert.Equal(hook.Output, "hello")
 }
+
+func TestPrepareHook(t *testing.T) {
+	assert := assert.New(t)
+
+	config := NewConfig()
+	agent := NewAgent(config)
+
+	// nil hook
+	assert.False(agent.prepareHook(nil))
+
+	// Invalid hook
+	hook := types.FixtureHookConfig("hook")
+	hook.Command = ""
+	assert.False(agent.prepareHook(hook))
+
+	// Valid check
+	hook.Command = "{{ .ID }}"
+	assert.True(agent.prepareHook(hook))
+}
