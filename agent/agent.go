@@ -40,39 +40,42 @@ const (
 type Config struct {
 	// AgentID is the entity ID for the running agent. Default is hostname.
 	AgentID string
-	// BackendURLs is a list of URLs for the Sensu Backend. Default: ws://127.0.0.1:8081
+	// API contains the Sensu client HTTP API configuration
+	API *APIConfig
+	// BackendURLs is a list of URLs for the Sensu Backend. Default:
+	// ws://127.0.0.1:8081
 	BackendURLs []string
-	// Subscriptions is an array of subscription names. Default: empty array.
-	Subscriptions []string
+	// CacheDir path where cached data is stored
+	CacheDir string
+	// Deregister indicates whether the entity is ephemeral
+	Deregister bool
+	// DeregistrationHandler specifies a single deregistration handler
+	DeregistrationHandler string
+	// Environment sets the Agent's RBAC environment identifier
+	Environment string
+	// ExtendedAttributes contains any custom attributes passed to the agent on
+	// start
+	ExtendedAttributes []byte
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
 	// keepalive to sensu-backend. Default: 60
 	KeepaliveInterval int
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
 	// back the backend.
 	KeepaliveTimeout uint32
-	// Deregister indicates whether the entity is ephemeral
-	Deregister bool
-	// DeregistrationHandler specifies a single deregistration handler
-	DeregistrationHandler string
-	// CacheDir path where cached data is stored
-	CacheDir string
-	// Environment sets the Agent's RBAC environment identifier
-	Environment string
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
-	// User sets the Agent's username
-	User string
 	// Password sets Agent's password
 	Password string
-	// TLS sets the TLSConfig for agent TLS options
-	TLS *types.TLSOptions
-	// API contains the Sensu client HTTP API configuration
-	API *APIConfig
+	// Redact contains the fields to redact when marshalling the agent's entity
+	Redact []string
 	// Socket contains the Sensu client socket configuration
 	Socket *SocketConfig
-	// ExtendedAttributes contains any custom attributes passed to the agent on
-	// start
-	ExtendedAttributes []byte
+	// Subscriptions is an array of subscription names. Default: empty array.
+	Subscriptions []string
+	// TLS sets the TLSConfig for agent TLS options
+	TLS *types.TLSOptions
+	// User sets the Agent's username
+	User string
 }
 
 // SocketConfig contains the Socket configuration
@@ -84,23 +87,22 @@ type SocketConfig struct {
 // NewConfig provides a new Config object initialized with defaults.
 func NewConfig() *Config {
 	c := &Config{
-		BackendURLs:       []string{"ws://127.0.0.1:8081"},
-		Subscriptions:     []string{},
-		KeepaliveInterval: 20,
-		KeepaliveTimeout:  120,
-		CacheDir:          "/var/cache/sensu",
-		Environment:       "default",
-		Organization:      "default",
-		User:              "agent",
-		Password:          "P@ssw0rd!",
 		API: &APIConfig{
 			Host: "127.0.0.1",
 			Port: 3031,
 		},
+		BackendURLs:       []string{"ws://127.0.0.1:8081"},
+		CacheDir:          "/var/cache/sensu",
+		Environment:       "default",
+		KeepaliveInterval: 20,
+		KeepaliveTimeout:  120,
+		Organization:      "default",
+		Password:          "P@ssw0rd!",
 		Socket: &SocketConfig{
 			Host: "127.0.0.1",
 			Port: 3030,
 		},
+		User: "agent",
 	}
 
 	hostname, err := os.Hostname()
@@ -116,16 +118,16 @@ func NewConfig() *Config {
 
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
-	config          *Config
-	backendSelector BackendSelector
-	handler         *handler.MessageHandler
-	conn            transport.Transport
-	sendq           chan *transport.Message
-	stopping        chan struct{}
-	stopped         chan struct{}
-	entity          *types.Entity
-	assetManager    *assetmanager.Manager
 	api             *http.Server
+	assetManager    *assetmanager.Manager
+	backendSelector BackendSelector
+	config          *Config
+	conn            transport.Transport
+	entity          *types.Entity
+	handler         *handler.MessageHandler
+	sendq           chan *transport.Message
+	stopped         chan struct{}
+	stopping        chan struct{}
 	wg              *sync.WaitGroup
 }
 
@@ -457,6 +459,7 @@ func (a *Agent) sendKeepalive() error {
 		Type: transport.MessageTypeKeepalive,
 	}
 	keepalive := &types.Event{}
+
 	keepalive.Entity = a.getAgentEntity()
 
 	keepalive.Timestamp = time.Now().Unix()

@@ -6,6 +6,30 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Add `Timeout` field to CheckConfig.
+- CLI functionality for check `Timeout` field.
+- Add timeout support for check execution.
+- Add timeout support for check hook execution.
+
+## [2.0.0-alpha.13] - 2018-01-16
+### Added
+- Logging redaction for entities
+
+### Changed
+- Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
+
+### Fixed
+- Fixed e2e test for token substitution on Windows
+- Fixed check subdue unit test for token substitution on Windows
+- Consider the first and last seconds of a time window when comparing the
+  current time
+- Fixed Travis deploy stage by removing caching for $GOPATH
+- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
+
+### Changed
+- Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
+- Made some slight quality-of-life adjustments to build-gcs-release.sh.
 
 ### Fixed
 - Fixed e2e test for token substitution on Windows

@@ -3,13 +3,15 @@
 # Build release for multiple platforms & archs and upload to GCS. Likely
 # temporary until we can use Github releases when repo is public.
 
+set -e
+
 # GCS bucket where we'll deploy builds
 BUCKET="sensu-binaries"
 CMD=${1:-"all"}
 TAG=""
 
 install_deps() {
-  pip install gsutil
+  pip install gsutil --user
 }
 
 # Checkout release tag
@@ -30,7 +32,7 @@ checkout_release () {
 }
 
 clean_target_dir() {
-  rm -r ./target/*
+  rm -rf ./target/*
 }
 
 build_supported_binaries() {
@@ -76,20 +78,19 @@ update_latest_txt() {
 }
 
 if [ "$CMD" == "all" ]; then
-  install_deps
   checkout_release
   build_supported_binaries
   upload_supported_binaries
   update_latest_txt
-
+elif [ "$CMD" == "deps" ]; then
+  install_deps
 # Build binaries for each platform & arch
 elif [ "$CMD" == "release" ]; then
   checkout_release $1
   build_supported_binaries
   upload_supported_binaries
-
 # Upload the file pointing to the latest release
-elif [ "$CMD" == "set-latest"]; then
+elif [ "$CMD" == "set-latest" ]; then
   checkout_release $1
   update_latest_txt
 fi
