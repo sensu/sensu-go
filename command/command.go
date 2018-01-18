@@ -5,17 +5,14 @@ import (
 	"bytes"
 	"context"
 	"os/exec"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
 const (
-	// DefaultTimeout specifies the default command execution
-	// timeout in seconds.
-	DefaultTimeout int = 60
-
 	// TimeoutOutput specifies the command execution output in the
 	// event of an execution timeout.
 	TimeoutOutput string = "Execution timed out\n"
@@ -65,11 +62,7 @@ type Execution struct {
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
 func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, error) {
-	// If Timeout is not specified, use the default.
-	if execution.Timeout == 0 {
-		execution.Timeout = DefaultTimeout
-	}
-
+	logger := logrus.WithFields(logrus.Fields{"component": "command"})
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
 	// known to have troubles, e.g. command not found. We still
@@ -77,18 +70,16 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	// exit status cannot be determined.
 	var cmd *exec.Cmd
 
-	// Use the context deadline for command execution timeout.
-	// This will be effectively ignored if the context already has
-	// an earlier deadline, which is super rad.
-	ctx, timeout := context.WithTimeout(ctx, time.Duration(execution.Timeout)*time.Second)
+	// Use context.WithCancel for command execution timeout.
+	// context.WithTimeout will not kill child/grandchild processes
+	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781).
+	// Rather, we will use a timer, CancelFunc and proc functions
+	// to perform full cleanup.
+	ctx, timeout := context.WithCancel(ctx)
 	defer timeout()
 
 	// Taken from Sensu-Spawn (Sensu 1.x.x).
-	if runtime.GOOS == "windows" {
-		cmd = exec.CommandContext(ctx, "cmd", "/c", execution.Command)
-	} else {
-		cmd = exec.CommandContext(ctx, "sh", "-c", execution.Command)
-	}
+	cmd = Command(ctx, execution.Command)
 
 	// Set the ENV for the command if it is set
 	if len(execution.Env) > 0 {
@@ -112,6 +103,17 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		execution.Duration = time.Since(started).Seconds()
 	}()
 
+	// Kill process and all of its children when the timeout has expired.
+	if execution.Timeout != 0 {
+		SetProcessGroup(cmd)
+		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
+			timeout()
+			if err := KillProcess(cmd); err != nil {
+				logger.WithError(err).Error("error when attempting to kill process")
+			}
+		})
+	}
+
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happended when attepting to
 		// fork/exec, return immediately.
@@ -122,9 +124,8 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 
 	execution.Output = output.String()
 
-	// The command execution timed out if the context deadline was
-	// exceeded.
-	if ctx.Err() == context.DeadlineExceeded {
+	// The command execution timed out if the context was cancelled prematurely
+	if ctx.Err() == context.Canceled {
 		execution.Output = TimeoutOutput
 		execution.Status = TimeoutExitStatus
 	} else if err != nil {
