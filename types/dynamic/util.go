@@ -101,6 +101,10 @@ func isEmpty(value reflect.Value) bool {
 		if value.Len() == 0 {
 			return true
 		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if value.Int() == int64(0) {
+			return true
+		}
 	case reflect.Interface, reflect.Ptr:
 		if value.IsNil() {
 			return true

@@ -134,7 +134,7 @@ func TestGetJSONStructField(t *testing.T) {
 	}
 
 	fields := getJSONFields(reflect.ValueOf(test), &test.Attributes[0])
-	require.Equal(3, len(fields))
+	require.Equal(2, len(fields))
 
 	field, ok := fields["valid"]
 	require.Equal(true, ok)
