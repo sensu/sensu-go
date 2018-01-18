@@ -1,8 +1,6 @@
 package graphql
 
 import (
-	"fmt"
-
 	"github.com/graphql-go/graphql"
 )
 
@@ -128,7 +126,6 @@ func inputFieldsThunk(
 		func() graphql.InputObjectConfigFieldMap {
 			for _, name := range mockedFields {
 				field := fields[name]
-				fmt.Printf("n: %s\nf: %#v\n", name, field)
 				field.Type = replaceMockedType(field.Type, typeMap)
 			}
 			return fields

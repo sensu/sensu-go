@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type exResolver struct{}
-
 func TestExerciseService(t *testing.T) {
 	svc := graphql.NewService()
 	require.NotNil(t, svc)
@@ -37,11 +35,13 @@ func TestExerciseService(t *testing.T) {
 	assert.NotEmpty(t, res.Data)
 }
 
+type exResolver struct{}
+
 func (*exResolver) IsTypeOf(_ interface{}, _ graphql.IsTypeOfParams) bool {
 	return true
 }
-func (*exResolver) ResolveType(_ interface{}, _ graphql.ResolveTypeParams) graphql.Type {
-	return schema.FooType
+func (*exResolver) ResolveType(_ interface{}, _ graphql.ResolveTypeParams) *graphql.Type {
+	return &schema.FooType
 }
 
 type fooImpl struct {
