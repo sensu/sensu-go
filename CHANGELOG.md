@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added proxy request validation.
 - CLI functionality for proxy check requests (add set-proxy-requests command).
 - Entities have been added to the state manager and synchronizer.
+- Added package leader, for facilitating execution by a single backend.
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
