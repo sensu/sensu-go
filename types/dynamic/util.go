@@ -193,11 +193,6 @@ type structField struct {
 	OmitEmpty bool
 }
 
-func (s structField) isEmpty() bool {
-	zeroValue := reflect.Zero(reflect.Indirect(s.Value).Type()).Interface()
-	return reflect.DeepEqual(zeroValue, s.Value.Interface())
-}
-
 func (s structField) jsonFieldName() (string, bool) {
 	fieldName := s.Field.Name
 	tag, ok := s.Field.Tag.Lookup("json")
