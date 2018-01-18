@@ -101,6 +101,10 @@ func isEmpty(value reflect.Value) bool {
 		if value.Len() == 0 {
 			return true
 		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if value.Int() == int64(0) {
+			return true
+		}
 	case reflect.Interface, reflect.Ptr:
 		if value.IsNil() {
 			return true
@@ -191,11 +195,6 @@ type structField struct {
 	Value     reflect.Value
 	JSONName  string
 	OmitEmpty bool
-}
-
-func (s structField) isEmpty() bool {
-	zeroValue := reflect.Zero(reflect.Indirect(s.Value).Type()).Interface()
-	return reflect.DeepEqual(zeroValue, s.Value.Interface())
 }
 
 func (s structField) jsonFieldName() (string, bool) {
