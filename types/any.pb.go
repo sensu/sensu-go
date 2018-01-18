@@ -31,6 +31,7 @@
 		Asset
 		Tokens
 		CheckRequest
+		ProxyRequests
 		CheckConfig
 		Check
 		CheckHistory
