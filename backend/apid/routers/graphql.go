@@ -6,19 +6,26 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	graphql "github.com/sensu/sensu-go/backend/apid/graphqlschema"
+	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/store"
+	graphqlservice "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
 
 // GraphQLRouter handles requests for /events
 type GraphQLRouter struct {
-	store store.Store
+	service *graphqlservice.Service
 }
 
 // NewGraphQLRouter instantiates new events controller
 func NewGraphQLRouter(store store.Store) *GraphQLRouter {
-	return &GraphQLRouter{store: store}
+	service, err := graphql.NewService(graphql.ServiceConfig{
+		Store: store,
+	})
+	if err != nil {
+		logger.WithError(err).Panic("unable to configure graphql service")
+	}
+	return &GraphQLRouter{service}
 }
 
 // Mount the GraphQLRouter to a parent Router
@@ -29,11 +36,9 @@ func (r *GraphQLRouter) Mount(parent *mux.Router) {
 func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	ctx := req.Context()
 
-	// Lift Etcd store into context so that resolvers may query and reset org &
-	// env keys to empty state so that all resources are queryable.
+	// reset org & env keys to empty state so that all resources are queryable.
 	ctx = context.WithValue(ctx, types.OrganizationKey, "")
 	ctx = context.WithValue(ctx, types.EnvironmentKey, "")
-	ctx = context.WithValue(ctx, types.StoreKey, r.store)
 
 	// Parse request body
 	rBody := map[string]interface{}{}
@@ -46,7 +51,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	queryVars, _ := rBody["variables"].(map[string]interface{})
 
 	// Execute given query
-	result := graphql.Execute(ctx, query, &queryVars)
+	result := r.service.Do(ctx, query, queryVars)
 	if len(result.Errors) > 0 {
 		logger.
 			WithField("errors", result.Errors).

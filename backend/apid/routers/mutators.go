@@ -36,8 +36,8 @@ func (r *MutatorsRouter) list(req *http.Request) (interface{}, error) {
 }
 
 func (r *MutatorsRouter) find(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	return r.controller.Find(req.Context(), params)
+	params := mux.Vars(req)
+	return r.controller.Find(req.Context(), params["id"])
 }
 
 func (r *MutatorsRouter) create(req *http.Request) (interface{}, error) {

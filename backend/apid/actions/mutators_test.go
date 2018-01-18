@@ -417,34 +417,23 @@ func TestMutatorFind(t *testing.T) {
 		name            string
 		ctx             context.Context
 		mutator         *types.Mutator
-		params          QueryParams
+		argument        string
 		expected        bool
 		expectedErrCode ErrCode
 	}{
 		{
-			name:            "No Params",
+			name:            "Found",
 			ctx:             readCtx,
-			params:          QueryParams{},
-			expected:        false,
-			expectedErrCode: InvalidArgument,
-		},
-		{
-			name:    "Found",
-			ctx:     readCtx,
-			mutator: types.FixtureMutator("abe"),
-			params: QueryParams{
-				"name": "abe",
-			},
+			mutator:         types.FixtureMutator("abe"),
+			argument:        "abe",
 			expected:        true,
 			expectedErrCode: 0,
 		},
 		{
-			name:    "Not Found",
-			ctx:     readCtx,
-			mutator: nil,
-			params: QueryParams{
-				"name": "fox mulder",
-			},
+			name:            "Not Found",
+			ctx:             readCtx,
+			mutator:         nil,
+			argument:        "fox mulder",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -453,10 +442,8 @@ func TestMutatorFind(t *testing.T) {
 			ctx: testutil.NewContext(testutil.ContextWithRules(
 				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
 			)),
-			mutator: types.FixtureMutator("troy maclure"),
-			params: QueryParams{
-				"name": "troy maclure",
-			},
+			mutator:         types.FixtureMutator("troy maclure"),
+			argument:        "troy maclure",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -468,11 +455,12 @@ func TestMutatorFind(t *testing.T) {
 			ctl := NewMutatorController(store)
 
 			// Mock store methods
-			store.On("GetMutatorByName", test.ctx, test.params["name"]).
+			store.
+				On("GetMutatorByName", test.ctx, test.argument).
 				Return(test.mutator, nil)
 
 			assert := assert.New(t)
-			result, err := ctl.Find(test.ctx, test.params)
+			result, err := ctl.Find(test.ctx, test.argument)
 			if cerr, ok := err.(Error); ok {
 				assert.Equal(test.expectedErrCode, cerr.Code)
 			} else {

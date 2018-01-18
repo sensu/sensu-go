@@ -13,6 +13,9 @@ type IsTypeOfParams = graphql.IsTypeOfParams
 // ResolveParams params for field resolvers
 type ResolveParams = graphql.ResolveParams
 
+// ResolveInfo is a collection of information about the current execution state
+type ResolveInfo = graphql.ResolveInfo
+
 // FieldHandler given implementation configures field resolver
 type FieldHandler func(impl interface{}) graphql.FieldResolveFn
 

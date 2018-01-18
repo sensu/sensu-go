@@ -17,6 +17,7 @@ type ServiceConfig struct {
 func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	svc := graphql.NewService()
 	store := cfg.Store
+	nodeResolver := newNodeResolver(store)
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
@@ -24,11 +25,11 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterDeleteRecordPayload(svc, &deleteRecordPayload{})
 	schema.RegisterHandler(svc, newHandlerImpl(store))
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
-	schema.RegisterQuery(svc, &queryImpl{store: store})
+	schema.RegisterQuery(svc, &queryImpl{store, nodeResolver})
 	schema.RegisterMutation(svc, newMutationImpl(store))
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterNamespace(svc, &namespaceImpl{})
-	schema.RegisterNode(svc, &nodeImpl{})
+	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
 	schema.RegisterNamespaceInput(svc)
 	schema.RegisterPageInfo(svc, &pageInfoImpl{})
 	schema.RegisterSchema(svc)

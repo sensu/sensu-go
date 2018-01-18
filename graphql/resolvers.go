@@ -92,7 +92,7 @@ type ScalarResolver interface {
 //   }`,
 //
 type InterfaceTypeResolver interface {
-	ResolveType(interface{}, ResolveTypeParams) Type
+	ResolveType(interface{}, ResolveTypeParams) *Type
 }
 
 //
@@ -128,7 +128,7 @@ type InterfaceTypeResolver interface {
 //   }
 //
 type UnionTypeResolver interface {
-	ResolveType(interface{}, ResolveTypeParams) Type
+	ResolveType(interface{}, ResolveTypeParams) *Type
 }
 
 // DefaultResolver uses reflection to attempt to resolve the result of a given
@@ -192,15 +192,17 @@ func DefaultResolver(source interface{}, fieldName string) (interface{}, error) 
 }
 
 type typeResolver interface {
-	ResolveType(interface{}, ResolveTypeParams) Type
+	ResolveType(interface{}, ResolveTypeParams) *Type
 }
 
 func newResolveTypeFn(typeMap graphql.TypeMap, impl interface{}) graphql.ResolveTypeFn {
 	resolver := impl.(typeResolver)
 	return func(p graphql.ResolveTypeParams) *graphql.Object {
 		typeRef := resolver.ResolveType(p.Value, p)
-		objType := typeMap[typeRef.Name()]
-		return objType.(*graphql.Object)
+		if objType, ok := typeMap[typeRef.Name()]; ok {
+			return objType.(*graphql.Object)
+		}
+		return nil
 	}
 }
 

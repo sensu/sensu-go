@@ -43,8 +43,7 @@ func (*handlerImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
 // Mutator implements response to request for 'mutator' field.
 func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 	handler := p.Source.(*types.Handler)
-	params := actions.QueryParams{"name": handler.Mutator}
-	return r.mutatorController.Find(p.Context, params)
+	return r.mutatorController.Find(p.Context, handler.Mutator)
 }
 
 // Handlers implements response to request for 'handlers' field.
