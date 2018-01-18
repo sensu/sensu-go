@@ -202,6 +202,7 @@ func TestPipelinedWhenFilter(t *testing.T) {
 	testCases := []struct {
 		name       string
 		filterName string
+		action     string
 		begin      time.Duration
 		end        time.Duration
 		expected   bool
@@ -209,6 +210,7 @@ func TestPipelinedWhenFilter(t *testing.T) {
 		{
 			name:       "in time window action allow",
 			filterName: "in_time_window_allow",
+			action:     types.EventFilterActionAllow,
 			begin:      -time.Minute * time.Duration(1),
 			end:        time.Minute * time.Duration(1),
 			expected:   false,
@@ -216,9 +218,26 @@ func TestPipelinedWhenFilter(t *testing.T) {
 		{
 			name:       "outside time window action allow",
 			filterName: "outside_time_window_allow",
+			action:     types.EventFilterActionAllow,
 			begin:      time.Minute * time.Duration(10),
 			end:        time.Minute * time.Duration(20),
 			expected:   true,
+		},
+		{
+			name:       "in time window action deny",
+			filterName: "in_time_window_deny",
+			action:     types.EventFilterActionDeny,
+			begin:      -time.Minute * time.Duration(1),
+			end:        time.Minute * time.Duration(1),
+			expected:   true,
+		},
+		{
+			name:       "outside time window action deny",
+			filterName: "outside_time_window_deny",
+			action:     types.EventFilterActionDeny,
+			begin:      time.Minute * time.Duration(10),
+			end:        time.Minute * time.Duration(20),
+			expected:   false,
 		},
 	}
 
@@ -228,7 +247,7 @@ func TestPipelinedWhenFilter(t *testing.T) {
 
 			filter := &types.EventFilter{
 				Name:       tc.name,
-				Action:     types.EventFilterActionAllow,
+				Action:     tc.action,
 				Statements: []string{`event.Check.Output == "bar"`},
 			}
 
