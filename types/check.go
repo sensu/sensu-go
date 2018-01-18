@@ -58,12 +58,12 @@ func (p *ProxyRequests) MarshalJSON() ([]byte, error) {
 	return dynamic.Marshal(p)
 }
 
-// SetExtendedAttributes sets the serialized ExtendedAttributes of c.
+// SetExtendedAttributes sets the serialized ClientAttributes of p.
 func (p *ProxyRequests) SetExtendedAttributes(e []byte) {
 	p.ClientAttributes = e
 }
 
-// GetExtendedAttributes gets the serialized ExtendedAttributes of c.
+// GetExtendedAttributes gets the serialized ClientAttributes of p.
 func (p *ProxyRequests) GetExtendedAttributes() []byte {
 	return p.ClientAttributes
 }
