@@ -12,6 +12,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add timeout support for check execution.
 - Add timeout support for check hook execution.
 
+### Changed
+- Moved monitor code out of keepalived and into its own package
+
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added
 - Logging redaction for entities
