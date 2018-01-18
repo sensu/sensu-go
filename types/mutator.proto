@@ -14,21 +14,21 @@ option (gogoproto.testgen_all) = true;
 
 // A Mutator is a mutator specification.
 message Mutator {
-	// Name is the unique identifier for a mutator.
-	string name = 1;
+  // Name is the unique identifier for a mutator.
+  string name = 1;
 
-	// Command is the command to be executed.
-	string command = 2;
+  // Command is the command to be executed.
+  string command = 2;
 
-	// Timeout is the command execution timeout in seconds.
-	uint32 timeout = 3;
+  // Timeout is the command execution timeout in seconds.
+  uint32 timeout = 3;
 
-	// Env is a list of environment variables to use with command execution
-	repeated string env_vars = 4 [(gogoproto.jsontag) = "env_vars"];
+  // Env is a list of environment variables to use with command execution
+  repeated string env_vars = 4 [(gogoproto.jsontag) = "env_vars"];
 
-	// Environment indicates to which env a mutator belongs to
-	string environment = 5;
+  // Environment indicates to which env a mutator belongs to
+  string environment = 5;
 
-	// Organization specifies the organization to which the mutator belongs.
-	string organization = 6;
+  // Organization specifies the organization to which the mutator belongs.
+  string organization = 6;
 }

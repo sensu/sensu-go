@@ -26,11 +26,11 @@ message Asset {
   // Metadata is a set of key value pair associated with the asset
   map<string, string> metadata = 4 [(gogoproto.nullable) = false];
 
-	// Filters are a collection of sensu queries, used by the system to determine
-	// if the asset should be installed. If more than one filter is present the
-	// queries are joined by the "AND" operator.
+  // Filters are a collection of sensu queries, used by the system to determine
+  // if the asset should be installed. If more than one filter is present the
+  // queries are joined by the "AND" operator.
   repeated string filters = 5 [(gogoproto.jsontag) = "filters"];
 
-	// Organization indicates to which org an asset belongs to
+  // Organization indicates to which org an asset belongs to
   string organization = 6;
 }
