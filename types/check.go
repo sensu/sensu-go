@@ -58,14 +58,14 @@ func (p *ProxyRequests) MarshalJSON() ([]byte, error) {
 	return dynamic.Marshal(p)
 }
 
-// SetExtendedAttributes sets the serialized ClientAttributes of p.
+// SetExtendedAttributes sets the serialized EntityAttributes of p.
 func (p *ProxyRequests) SetExtendedAttributes(e []byte) {
-	p.ClientAttributes = e
+	p.EntityAttributes = e
 }
 
-// GetExtendedAttributes gets the serialized ClientAttributes of p.
+// GetExtendedAttributes gets the serialized EntityAttributes of p.
 func (p *ProxyRequests) GetExtendedAttributes() []byte {
-	return p.ClientAttributes
+	return p.EntityAttributes
 }
 
 // Get implements govaluate.Parameters

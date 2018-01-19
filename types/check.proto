@@ -29,9 +29,9 @@ message CheckRequest {
 
 // A ProxyRequests represents a request to execute a proxy check
 message ProxyRequests {
-	// ClientAttributes store serialized arbitrary JSON-encoded data to match
-	// clients in the registry.
-	bytes client_attributes = 1 [(gogoproto.jsontag) = "-"];
+	// EntityAttributes store serialized arbitrary JSON-encoded data to match
+	// entities in the registry.
+	bytes entity_attributes = 1 [(gogoproto.jsontag) = "-"];
 
 	// Splay indicates if proxy check requests should be splayed, published evenly
 	// over a window of time.
