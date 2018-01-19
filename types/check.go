@@ -48,6 +48,31 @@ func (c *CheckConfig) Get(name string) (interface{}, error) {
 	return dynamic.GetField(c, name)
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (p *ProxyRequests) UnmarshalJSON(b []byte) error {
+	return dynamic.Unmarshal(b, p)
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (p *ProxyRequests) MarshalJSON() ([]byte, error) {
+	return dynamic.Marshal(p)
+}
+
+// SetExtendedAttributes sets the serialized ClientAttributes of p.
+func (p *ProxyRequests) SetExtendedAttributes(e []byte) {
+	p.ClientAttributes = e
+}
+
+// GetExtendedAttributes gets the serialized ClientAttributes of p.
+func (p *ProxyRequests) GetExtendedAttributes() []byte {
+	return p.ClientAttributes
+}
+
+// Get implements govaluate.Parameters
+func (p *ProxyRequests) Get(name string) (interface{}, error) {
+	return dynamic.GetField(p, name)
+}
+
 // Validate returns an error if the check does not pass validation tests.
 func (c *CheckConfig) Validate() error {
 	if err := ValidateName(c.Name); err != nil {
@@ -141,6 +166,7 @@ func FixtureCheckRequest(id string) *CheckRequest {
 // FixtureCheckConfig returns a fixture for a CheckConfig object.
 func FixtureCheckConfig(id string) *CheckConfig {
 	interval := uint32(60)
+	timeout := uint32(0)
 
 	return &CheckConfig{
 		Name:          id,
@@ -155,6 +181,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Publish:       true,
 		Cron:          "",
 		Ttl:           0,
+		Timeout:       timeout,
 	}
 }
 

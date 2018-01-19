@@ -75,6 +75,10 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 				Value: r.Cron,
 			},
 			{
+				Label: "Timeout",
+				Value: strconv.FormatInt(int64(r.Timeout), 10),
+			},
+			{
 				Label: "Subscriptions",
 				Value: strings.Join(r.Subscriptions, ", "),
 			},

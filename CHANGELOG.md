@@ -7,7 +7,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- Add `Timeout` field to CheckConfig.
+- CLI functionality for check `Timeout` field.
+- Add timeout support for check execution.
+- Add timeout support for check hook execution.
 - Add an e2e test for logging redaction
+
+### Changed
+- Moved monitor code out of keepalived and into its own package
 
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added

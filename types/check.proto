@@ -27,6 +27,21 @@ message CheckRequest {
 	repeated HookConfig hooks = 3 [(gogoproto.nullable) = false];
 }
 
+// A ProxyRequests represents a request to execute a proxy check
+message ProxyRequests {
+	// ClientAttributes store serialized arbitrary JSON-encoded data to match
+	// clients in the registry.
+	bytes client_attributes = 1 [(gogoproto.jsontag) = "-"];
+
+	// Splay indicates if proxy check requests should be splayed, published evenly
+	// over a window of time.
+	bool splay = 2;
+
+	// SplayCoverage is the percentage used for proxy check request splay
+	// calculation.
+	uint32 splay_coverage = 3;
+}
+
 // CheckConfig is the specification of a check.
 message CheckConfig {
 	// Command is the command to be executed.
@@ -84,6 +99,12 @@ message CheckConfig {
 
   // TTL represents the length of time in seconds for which a check result is valid.
   int64 ttl = 18;
+
+  // Timeout is the timeout, in seconds, at which the check has to run
+  uint32 timeout = 19;
+
+  // ProxyRequests represents a request to execute a proxy check
+  ProxyRequests proxy_requests = 20;
 }
 
 // A Check is a check specification and optionally the results of the check's

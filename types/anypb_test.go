@@ -31,6 +31,7 @@ It has these top-level messages:
 	Asset
 	Tokens
 	CheckRequest
+	ProxyRequests
 	CheckConfig
 	Check
 	CheckHistory
