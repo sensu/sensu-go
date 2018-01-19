@@ -176,15 +176,10 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/graphql-go/graphql"
   packages = [".","gqlerrors","language/ast","language/kinds","language/lexer","language/location","language/parser","language/printer","language/source","language/typeInfo","language/visitor","testutil"]
-  revision = "5e7dd4fc3e87341229fa03d8f79d2ab5455963fb"
-  version = "v0.7.4"
-
-[[projects]]
-  name = "github.com/graphql-go/relay"
-  packages = ["."]
-  revision = "9054c3f9e4f31c403e404f1292d6d12874d1fdc5"
+  revision = "1c504cfe6f6391d1ed5bc24b6c926965baf6015d"
 
 [[projects]]
   name = "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -353,7 +348,7 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = ["host","internal/common","net","process"]
+  packages = ["cpu","host","internal/common","mem","net","process"]
   revision = "a452de7c734a0fa0f16d2e5725b0fa5934d9fbec"
   version = "v2.17.08"
 
@@ -508,6 +503,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4849fa68b535a886415343e320cea137ec6b7e6f04d2475c744d6712a996229d"
+  inputs-digest = "32f394c1ef764d0b448b96dbc32fb106bd6edad7ff0e618e9cb46732d3f3a0a9"
   solver-name = "gps-cdcl"
   solver-version = 1
