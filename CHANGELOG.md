@@ -11,6 +11,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - CLI functionality for check `Timeout` field.
 - Add timeout support for check execution.
 - Add timeout support for check hook execution.
+- New gRPC inspired GraphQL implementation. See
+  [graphql/README](backend/apid/graphql/README.md) for usage.
 
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added
