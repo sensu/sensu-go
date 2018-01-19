@@ -142,7 +142,7 @@ func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField
 		if sf.JSONName == "-" {
 			continue
 		}
-		if sf.OmitEmpty && sf.isEmpty() {
+		if sf.OmitEmpty && isEmpty(sf.Value) {
 			continue
 		}
 		if elem.IsValid() {

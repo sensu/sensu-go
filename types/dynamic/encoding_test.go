@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -110,4 +111,39 @@ func TestUnmarshalNilProblematic(t *testing.T) {
 	var p *Problematic
 	err := Unmarshal([]byte("{}"), p)
 	require.Error(t, err)
+}
+
+func TestGetJSONStructField(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	test := struct {
+		Valid             int `json:"valid"`
+		invalidUnexported int
+		ValidEmpty        int `json:"validEmpty"`
+		InvalidEmpty      int `json:"invalidEmpty,omitempty"`
+		Invalid           int `json:"-"`
+		Attributes        []byte
+	}{
+		Valid:             5,
+		invalidUnexported: 1,
+		ValidEmpty:        0,
+		InvalidEmpty:      0,
+		Invalid:           10,
+		Attributes:        []byte(`"hello!"`),
+	}
+
+	fields := getJSONFields(reflect.ValueOf(test), &test.Attributes[0])
+	require.Equal(2, len(fields))
+
+	field, ok := fields["valid"]
+	require.Equal(true, ok)
+	assert.Equal(field.Value.Interface(), 5)
+	assert.Equal("valid", field.JSONName)
+	assert.Equal(false, field.OmitEmpty)
+
+	field = fields["validEmpty"]
+	assert.Equal(field.Value.Interface(), 0)
+	assert.Equal("validEmpty", field.JSONName)
+	assert.Equal(false, field.OmitEmpty)
 }
