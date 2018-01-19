@@ -47,7 +47,7 @@ export default createFragmentContainer(
   EventsList,
   graphql`
     fragment EventList_viewer on Viewer {
-      checkEvents {
+      events(first: 1000) {
         edges {
           node {
             ...EventRow_event

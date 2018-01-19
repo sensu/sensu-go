@@ -2,14 +2,14 @@ package relay
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	"github.com/sensu/sensu-go/graphql"
 	"golang.org/x/net/context"
 )
 
 // A NodeResolver describes an object that contains a globally unique ID.
 type NodeResolver struct {
-	Object     *graphql.Object
+	ObjectType graphql.Type
 	Translator globalid.Translator
 
 	Resolve  func(NodeResolverParams) (interface{}, error)

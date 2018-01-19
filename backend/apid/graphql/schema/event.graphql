@@ -1,0 +1,54 @@
+"""
+An Event is the encapsulating type sent across the Sensu websocket transport.
+"""
+type Event {
+  "The globally unique identifier of the record."
+  id: ID!
+
+  "namespace in which this record resides"
+  namespace: Namespace!
+
+  "Timestamp is the time in seconds since the Epoch."
+  timestamp: DateTime!
+
+  "Entity describes the entity in which the event occurred."
+  entity: Entity
+
+  """
+  Check describes the result of a check; if event is associated to check
+  execution.
+  """
+  check: Check
+
+  """
+  Hooks describes the results of multiple hooks; if event is associated to hook
+  execution.
+  """
+  hooks: [Hook!]
+
+  "isIncident determines if an event indicates an incident."
+  isIncident: Boolean!
+
+  "isResolution returns true if an event has just transitions from an incident."
+  isResolution: Boolean!
+
+  "isSilenced determines if an event has any silenced entries."
+  isSilenced: Boolean!
+
+  # TODO: Implement silences
+  # "Silenced is a list of silenced entry ids (subscription and check name)"
+  # silenced: [String]
+}
+
+"A connection to a sequence of records."
+type EventConnection {
+  edges: [EventEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"An edge in a connection."
+type EventEdge {
+  node: Event
+  cursor: String!
+}

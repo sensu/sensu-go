@@ -1,0 +1,38 @@
+"""
+TimeWindowWhen defines the "when" attributes for time windows
+"""
+type TimeWindowWhen {
+  "Days is a hash of days"
+  days: TimeWindowDays
+}
+
+"""
+TimeWindowDays defines the days of a time window
+"""
+type TimeWindowDays {
+  all: [TimeWindowTimeRange!]
+  sunday: [TimeWindowTimeRange!]
+  monday: [TimeWindowTimeRange!]
+  tuesday: [TimeWindowTimeRange!]
+  wednesday: [TimeWindowTimeRange!]
+  thursday: [TimeWindowTimeRange!]
+  friday: [TimeWindowTimeRange!]
+  saturday: [TimeWindowTimeRange!]
+}
+
+"""
+TimeWindowTimeRange defines the time ranges of a time
+"""
+type TimeWindowTimeRange {
+  """
+  Begin is the time which the time window should begin, in the format
+  '3:00PM', which satisfies the time.Kitchen format
+  """
+  begin: String!
+
+  """
+  End is the time which the filter should end, in the format '3:00PM', which
+  satisfies the time.Kitchen format
+  """
+  end: String!
+}

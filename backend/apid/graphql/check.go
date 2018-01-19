@@ -1,176 +1,91 @@
-package graphqlschema
+package graphql
 
 import (
 	"github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
+	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
-var checkConfigType *graphql.Object
-var checkConfigConnection *relay.ConnectionDefinitions
+var _ schema.CheckFieldResolvers = (*checkImpl)(nil)
+var _ schema.CheckConfigFieldResolvers = (*checkCfgImpl)(nil)
+var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
 
-func init() {
-	initNodeInterface()
-	initCheckConfigType()
-	initCheckConfigConnection()
+//
+// Implement CheckConfigFieldResolvers
+//
 
-	nodeResolver := newCheckConfigNodeResolver()
-	nodeRegister.RegisterResolver(nodeResolver)
+type checkCfgImpl struct {
+	schema.CheckConfigAliases
+	handlerCtrl actions.HandlerController
 }
 
-func initCheckConfigType() {
-	if checkConfigType != nil {
-		return
-	}
-
-	checkConfigType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "CheckConfig",
-		Description: "Represents the specification of a check",
-		Interfaces: graphql.InterfacesThunk(func() []*graphql.Interface {
-			return []*graphql.Interface{
-				nodeInterface,
-				multitenantInterface,
-			}
-		}),
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"id": &graphql.Field{
-					Name:        "id",
-					Description: "The ID of an object",
-					Type:        graphql.NewNonNull(graphql.ID),
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						idComponents := globalid.CheckTranslator.Encode(p.Source)
-						return idComponents.String(), nil
-					},
-				},
-				"name": &graphql.Field{
-					Description: "Name is the unique identifier for a check",
-					Type:        graphql.NewNonNull(graphql.String),
-				},
-				"interval": &graphql.Field{
-					Description: "Interval is the interval, in seconds, at which the check should be run",
-					Type:        graphql.NewNonNull(graphql.Int),
-				},
-				"subscriptions": &graphql.Field{
-					Description: "Subscriptions is the list of subscribers for the check",
-					Type:        graphql.NewList(graphql.String),
-				},
-				"command": &graphql.Field{
-					Description: "Command is the command to be executed",
-					Type:        graphql.String,
-				},
-				"highFlapThreshold": &graphql.Field{
-					Description: "the flap detection high threshold (% state change) for the check. Sensu uses the same flap detection algorithm as Nagios.",
-					Type:        graphql.Int,
-				},
-				"lowFlapThreshold": &graphql.Field{
-					Description: "the flap detection low threshold (% state change) for the check. Sensu uses the same flap detection algorithm as Nagios.",
-					Type:        graphql.Int,
-				},
-				"publish": &graphql.Field{
-					Description: "indicates if check requests are published for the check",
-					Type:        graphql.Boolean,
-				},
-				"handlerNames": &graphql.Field{
-					Description: "Handlers are the event handler for the check (incidents and/or metrics)",
-					Type:        graphql.NewList(graphql.String),
-					Resolve:     AliasResolver("Handlers"),
-				},
-				"runtimeAssetNames": &graphql.Field{
-					Description: "a list of assets required to execute check.",
-					Type:        graphql.NewList(graphql.String),
-					Resolve:     AliasResolver("RuntimeAssets"),
-				},
-				//
-				// TODO: Uncomment when types have been implemented.
-				//
-				// "handlers": &graphql.Field{
-				//	Description: "Handlers are the event handler for the check (incidents and/or metrics)",
-				//	Type:        graphql.NewList(handlerType),
-				//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				//		abilities := authorization.Handlers.WithContext(p.Context)
-				//		check, ok := p.Source.(*types.CheckConfig)
-				//		if !ok {
-				//			return nil, errors.New("source object is not an Event")
-				//		}
-				//
-				//		store := p.Context.Value(types.StoreKey).(store.HandlerStore)
-				//		handlers, err := store.GetHandlers(p.Context)
-				//		if err != nil {
-				//			return nil, err
-				//		}
-				//
-				//		results := []interface{}{}
-				//		for _, handler := range handlers {
-				//			for _, hName := range check.Handlers {
-				//				// Reject any handlers that are not assoicated with the check or
-				//				// handlers where the user does not have access to read.
-				//				if handler.Name == hName && abilities.CanRead(handler) {
-				//					results = append(results, handler)
-				//				}
-				//			}
-				//		}
-				//
-				//		return results, nil
-				//	},
-				// },
-				// TODO: Implement w/ associated types
-				// "runtimeAssets": &graphql.Field{
-				//	Description: "RuntimeAssets are a list of assets required to execute check",
-				//	Type:        graphql.NewList(assetType),
-				// },
-				// TODO: Should use type and not string
-				"environment": &graphql.Field{
-					Description: "Environment indicates to which env a check belongs to",
-					Type:        graphql.NewNonNull(graphql.String),
-					// Type:        graphql.NewNonNull(organizationType),
-				},
-				"organization": &graphql.Field{
-					Description: "Environment indicates to which env a check belongs to",
-					Type:        graphql.NewNonNull(graphql.String),
-					// Type:        graphql.NewNonNull(environmentType),
-				},
-			}
-		}),
-		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
-			_, ok := p.Value.(*types.CheckConfig)
-			return ok
-		},
-	})
+func newCheckCfgImpl(store store.Store) *checkCfgImpl {
+	return &checkCfgImpl{handlerCtrl: actions.NewHandlerController(store)}
 }
 
-func initCheckConfigConnection() {
-	if checkConfigConnection != nil {
-		return
-	}
-	checkConfigConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
-		Name:     "CheckConfig",
-		NodeType: checkConfigType,
-	})
+// ID implements response to request for 'id' field.
+func (r *checkCfgImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+	return globalid.CheckTranslator.EncodeToString(p.Source), nil
 }
 
-func newCheckConfigNodeResolver() relay.NodeResolver {
-	return relay.NodeResolver{
-		Object:     checkConfigType,
-		Translator: globalid.CheckTranslator,
-		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
-			components := p.IDComponents.(globalid.NamedComponents)
-			store := p.Context.Value(types.StoreKey).(store.CheckConfigStore)
-			controller := actions.NewCheckController(store)
+// Namespace implements response to request for 'namespace' field.
+func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
+	return p.Source, nil
+}
 
-			record, err := controller.Find(p.Context, components.Name())
-			if err == nil {
-				return record, nil
-			}
-
-			s, ok := actions.StatusFromError(err)
-			if ok && s == actions.NotFound {
-				return nil, nil
-			}
-			return nil, err
-		},
+// Handlers implements response to request for 'handlers' field.
+func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.CheckConfig)
+	handlers, err := r.handlerCtrl.Query(p.Context)
+	if err != nil {
+		return nil, err
 	}
+
+	// Filter out irrevelant handlers
+	for i := 0; i < len(handlers); {
+		for _, h := range check.Handlers {
+			if h == handlers[i].Name {
+				continue
+			}
+		}
+		handlers = append(handlers[:i], handlers[i+1:]...)
+	}
+	return handlers, nil
+}
+
+// IsTypeOf is used to determine if a given value is associated with the Check type
+func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*types.CheckConfig)
+	return ok
+}
+
+//
+// Implement CheckFieldResolvers
+//
+
+type checkImpl struct {
+	schema.CheckAliases
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*types.Check)
+	return ok
+}
+
+//
+// Implement CheckHistoryFieldResolvers
+//
+
+type checkHistoryImpl struct {
+	schema.CheckHistoryAliases
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (r *checkHistoryImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(types.CheckHistory)
+	return ok
 }

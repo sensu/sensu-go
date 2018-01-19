@@ -1,0 +1,119 @@
+"""
+CheckConfig is the specification of a check.
+"""
+type CheckConfig implements Node {
+  "The globally unique identifier of the check."
+  id: ID!
+
+  "namespace in which this check resides"
+  namespace: Namespace!
+
+  "name is the unique identifier for a check"
+  name: String!
+
+  "command is the command to be executed."
+  command: String!
+
+  "handlers are the event handler for the check (incidents and/or metrics)."
+  handlers: [Handler]!
+
+  """
+  HighFlapThreshold is the flap detection high threshold (% state change) for
+  the check. Sensu uses the same flap detection algorithm as Nagios.
+  """
+  highFlapThreshold: Int
+
+  "Interval is the interval, in seconds, at which the check should be run."
+  interval: Int!
+
+  """
+  LowFlapThreshold is the flap detection low threshold (% state change) for
+  the check. Sensu uses the same flap detection algorithm as Nagios.
+  """
+  lowFlapThreshold: Int
+
+  "Publish indicates if check requests are published for the check"
+  publish: Boolean!
+
+  "Subscriptions is the list of subscribers for the check."
+  subscriptions: [String]!
+
+  "Source indicates the name of the entity representing an external resource"
+  source: String
+
+  "STDIN indicates if the check command accepts JSON via stdin from the agent"
+  stdin: Boolean!
+
+  "CheckHooks is the list of check hooks for the check"
+  checkHooks: HookList
+
+  "Subdue represents one or more time windows when the check should be subdued."
+  subdue: TimeWindowWhen
+
+  # TODO: Create scalar to handle extended attributes
+  # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
+  # extendedAttributes: String
+
+  # "RuntimeAssets are a list of assets required to execute check."
+  # runtimeAssets: String
+}
+
+"A connection to a sequence of records."
+type CheckConfigConnection {
+  edges: [CheckConfigEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"An edge in a connection."
+type CheckConfigEdge {
+  node: CheckConfig
+  cursor: String!
+}
+
+"""
+A Check is a check specification and optionally the results of the check's
+execution.
+"""
+type Check {
+  "Config is the specification of a check"
+  config: CheckConfig
+
+  "Duration of execution"
+  duration: Float
+
+  "Executed describes the time in which the check request was executed"
+  executed: DateTime
+
+  "History is the check state history."
+  history: [CheckHistory]!
+
+  "Issued describes the time in which the check request was issued"
+  issued: Int!
+
+  "Output from the execution of Command"
+  output: String!
+
+  "State provides handlers with more information about the state change"
+  state: String!
+
+  "Status is the exit status code produced by the check"
+  status: Int!
+
+  """
+  TotalStateChange indicates the total state change percentage for the
+  check's history
+  """
+  totalStateChange: Int
+}
+
+"""
+CheckHistory is a record of a check execution and its status
+"""
+type CheckHistory {
+  "Status is the exit status code produced by the check."
+  status: Int
+
+  "Executed describes the time in which the check request was executed"
+  executed: Int
+}

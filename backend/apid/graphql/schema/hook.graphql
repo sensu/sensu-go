@@ -1,0 +1,54 @@
+"""
+HookConfig is the specification of a hook
+"""
+type HookConfig {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "Namespace in which this record resides"
+  namespace: Namespace!
+
+  "Name is the unique identifier for a hook"
+  name: String!
+
+  "Command is the command to be executed"
+  command: String
+
+  "Timeout is the timeout, in seconds, at which the hook has to run"
+  timeout: Int
+
+  "Stdin indicates if hook requests have stdin enabled"
+  stdin: Boolean!
+}
+
+"""
+A Hook is a hook specification and optionally the results of the hook's
+execution.
+"""
+type Hook {
+  "Config is the specification of a hook"
+  config: HookConfig
+
+  "Duration of execution"
+  duration: Int
+
+  "Executed describes the time in which the hook request was executed"
+  executed: Int
+
+  "Issued describes the time in which the hook request was issued"
+  issued: Int
+
+  "Output from the execution of Command"
+  output: String
+
+  "Status is the exit status code produced by the hook"
+  status: Int
+}
+
+type HookList {
+  "Hooks is the list of hooks for the check hook"
+  hooks: [String!]!
+
+  "Type indicates the type or response code for the check hook"
+  type: String!
+}

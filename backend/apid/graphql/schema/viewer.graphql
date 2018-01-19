@@ -1,0 +1,16 @@
+"""
+Describes a viewer of the system; generally an authenticated user.
+"""
+type Viewer {
+  "All entities the viewer has access to view."
+  entities(first: Int = 10, last: Int = 0, before: String, after: String): EntityConnection
+
+  "All check configurations the viewer has access to view."
+  checks(first: Int = 10, last: Int = 0, before: String, after: String): CheckConfigConnection
+
+  "All events the viewer has access to view."
+  events(first: Int = 10, last: Int = 0, before: String, after: String): EventConnection
+
+  "User account associated with the viewer."
+  user: User
+}

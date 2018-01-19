@@ -1,108 +1,98 @@
-package graphqlschema
+package graphql
 
 import (
-	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/relay"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
+	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
 
-var viewerType *graphql.Object
+var _ schema.ViewerFieldResolvers = (*viewerImpl)(nil)
 
-func init() {
-	viewerType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "Viewer",
-		Description: "A viewer of the system.",
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"entities": &graphql.Field{
-					Type:        entityConnection.ConnectionType,
-					Description: "A list of entities the given viewer has read access to",
-					Args:        relay.ConnectionArgs,
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						abilities := authorization.Entities.WithContext(p.Context)
-						store := p.Context.Value(types.StoreKey).(store.Store)
-						entities, err := store.GetEntities(p.Context)
-						if err != nil {
-							return nil, err
-						}
+//
+// Implement QueryFieldResolvers
+//
 
-						resources := []interface{}{}
-						for _, entity := range entities {
-							if abilities.CanRead(entity) {
-								resources = append(resources, entity)
-							}
-						}
+type viewerImpl struct {
+	checksCtrl actions.CheckController
+	entityCtrl actions.EntityController
+	eventsCtrl actions.EventController
+	usersCtrl  actions.UserController
+}
 
-						args := relay.NewConnectionArguments(p.Args)
-						return relay.ConnectionFromArray(resources, args), err
-					},
-				},
-				"checks": &graphql.Field{
-					Type:        checkConfigConnection.ConnectionType,
-					Description: "A list of checks the given viewer has read access to",
-					Args:        relay.ConnectionArgs,
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						store := p.Context.Value(types.StoreKey).(store.Store)
+func newViewerImpl(store store.Store, bus messaging.MessageBus) *viewerImpl {
+	return &viewerImpl{
+		checksCtrl: actions.NewCheckController(store),
+		entityCtrl: actions.NewEntityController(store),
+		eventsCtrl: actions.NewEventController(store, bus),
+		usersCtrl:  actions.NewUserController(store),
+	}
+}
 
-						controller := actions.NewCheckController(store)
+// Entities implements response to request for 'entities' field.
+func (r *viewerImpl) Entities(p schema.ViewerEntitiesFieldResolverParams) (interface{}, error) {
+	records, err := r.entityCtrl.Query(p.Context)
+	if err != nil {
+		return nil, err
+	}
 
-						checks, err := controller.Query(p.Context)
-						if err != nil {
-							return nil, err
-						}
+	info := relay.NewArrayConnectionInfo(
+		0, len(records),
+		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
+	)
 
-						results := make([]interface{}, len(checks))
-						for _, check := range checks {
-							results = append(results, check)
-						}
+	edges := make([]*relay.Edge, len(records))
+	for i, r := range records[info.Begin:info.End] {
+		edges[i] = relay.NewArrayConnectionEdge(r, i)
+	}
+	return relay.ArrayConnection{ArrayConnectionInfo: info, Edges: edges}, err
+}
 
-						args := relay.NewConnectionArguments(p.Args)
-						return relay.ConnectionFromArray(results, args), nil
-					},
-				},
-				"checkEvents": &graphql.Field{
-					Type:        checkEventConnection.ConnectionType,
-					Description: "A list of events the given viewer has read access to",
-					Args:        relay.ConnectionArgs,
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						abilities := authorization.Events.WithContext(p.Context)
-						store := p.Context.Value(types.StoreKey).(store.EventStore)
-						records, err := store.GetEvents(p.Context)
-						if err != nil {
-							return nil, err
-						}
+// Checks implements response to request for 'checks' field.
+func (r *viewerImpl) Checks(p schema.ViewerChecksFieldResolverParams) (interface{}, error) {
+	records, err := r.checksCtrl.Query(p.Context)
+	if err != nil {
+		return nil, err
+	}
 
-						resources := []interface{}{}
-						for _, record := range records {
-							if abilities.CanRead(record) {
-								resources = append(resources, record)
-							}
-						}
+	info := relay.NewArrayConnectionInfo(
+		0, len(records),
+		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
+	)
 
-						args := relay.NewConnectionArguments(p.Args)
-						return relay.ConnectionFromArray(resources, args), nil
-					},
-				},
-				"user": &graphql.Field{
-					Type:        userType,
-					Description: "User account associated with the viewer.",
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						ctx := p.Context
-						actor := ctx.Value(types.AuthorizationActorKey).(authorization.Actor)
-						store := ctx.Value(types.StoreKey).(store.Store)
+	edges := make([]*relay.Edge, len(records))
+	for i, r := range records[info.Begin:info.End] {
+		edges[i] = relay.NewArrayConnectionEdge(r, i)
+	}
+	return relay.ArrayConnection{ArrayConnectionInfo: info, Edges: edges}, err
+}
 
-						user, err := store.GetUser(ctx, actor.Name)
-						if err != nil {
-							return nil, err
-						}
+// Events implements response to request for 'events' field.
+func (r *viewerImpl) Events(p schema.ViewerEventsFieldResolverParams) (interface{}, error) {
+	records, err := r.eventsCtrl.Query(p.Context, actions.QueryParams{})
+	if err != nil {
+		return nil, err
+	}
 
-						return user, err
-					},
-				},
-			}
-		}),
-	})
+	info := relay.NewArrayConnectionInfo(
+		0, len(records),
+		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
+	)
+
+	edges := make([]*relay.Edge, len(records))
+	for i, r := range records[info.Begin:info.End] {
+		edges[i] = relay.NewArrayConnectionEdge(r, i)
+	}
+	return relay.ArrayConnection{ArrayConnectionInfo: info, Edges: edges}, err
+}
+
+// User implements response to request for 'user' field.
+func (r *viewerImpl) User(p graphql.ResolveParams) (interface{}, error) {
+	ctx := p.Context
+	actor := ctx.Value(types.AuthorizationActorKey).(authorization.Actor)
+	return actor, nil
 }

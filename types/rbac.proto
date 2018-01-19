@@ -14,14 +14,14 @@ option (gogoproto.testgen_all) = true;
 
 // Rule maps permissions to a given type
 message Rule {
-	string type = 1;
-	string environment = 2;
-	string organization = 3;
-	repeated string permissions = 4 [(gogoproto.jsontag) = "permissions"];
+  string type = 1;
+  string environment = 2;
+  string organization = 3;
+  repeated string permissions = 4 [(gogoproto.jsontag) = "permissions"];
 }
 
 // Role describes set of rules
 message Role {
-	string name = 1;
-	repeated Rule rules = 2 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+  string name = 1;
+  repeated Rule rules = 2 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
 }

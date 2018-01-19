@@ -14,7 +14,7 @@ option (gogoproto.testgen_all) = true;
 
 // Environment represents a Sensu environment in RBAC
 message Environment {
-	string description = 1 [(gogoproto.jsontag) = "description"];
-	string name = 2;
-	string organization = 3;
+  string description = 1 [(gogoproto.jsontag) = "description"];
+  string name = 2;
+  string organization = 3;
 }

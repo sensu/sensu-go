@@ -15,9 +15,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add an e2e test for logging redaction
 - Support for `When` field in `Filter` which enables filtering based on days
 and times of the week.
+- New gRPC inspired GraphQL implementation. See
+[graphql/README](backend/apid/graphql/README.md) for usage.
 
 ### Changed
 - Moved monitor code out of keepalived and into its own package
+>>>>>>> origin/master
 
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added

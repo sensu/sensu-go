@@ -1,0 +1,79 @@
+"""
+Entity is the Entity supplying the event. The default Entity for any
+Event is the running Agent process--if the Event is sent by an Agent.
+"""
+type Entity {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "Namespace in which this record resides"
+  namespace: Namespace!
+
+  "unique identifier for the entity"
+  name: String!
+  class: String
+  system: System
+  subscriptions: [String!]
+  lastSeen: Int
+  deregister: Boolean!
+  deregistration: Deregistration
+  keepaliveTimeout: Int
+  authorId: String!
+  author: User! # TODO: Implement w/ user type
+
+  # TODO: Use scalar?
+  # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
+  # extendedAttributes: String
+}
+
+"A connection to a sequence of records."
+type EntityConnection {
+  edges: [EntityEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"An edge in a connection."
+type EntityEdge {
+  node: Entity
+  cursor: String!
+}
+
+"""
+System contains information about the system that the Agent process
+is running on, used for additional Entity context.
+"""
+type System {
+  hostname: String
+  os: String
+  platform: String
+  platformFamily: String
+  platformVersion: String
+  network: Network
+}
+
+"""
+Network contains information about the system network interfaces
+that the Agent process is running on, used for additional Entity
+context.
+"""
+type Network {
+  interfaces: [NetworkInterface]
+}
+
+"""
+NetworkInterface contains information about a system network
+interface.
+"""
+type NetworkInterface {
+  name: String
+  mac: String
+  addresses: String
+}
+
+"""
+Deregistration contains configuration for Sensu entity de-registration.
+"""
+type Deregistration {
+  handler: String
+}

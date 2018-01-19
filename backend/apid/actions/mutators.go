@@ -167,13 +167,7 @@ func (c MutatorController) Destroy(ctx context.Context, params QueryParams) erro
 // It returns non-nil error if the params are invalid, read permissions
 // do not exist, or an internal error occurs while reading the underlying
 // Store.
-func (c MutatorController) Find(ctx context.Context, params QueryParams) (*types.Mutator, error) {
-	// Find (for mutators) requires a name
-	name := params["name"]
-	if name == "" {
-		return nil, NewErrorf(InvalidArgument, "Find() requires a name")
-	}
-
+func (c MutatorController) Find(ctx context.Context, name string) (*types.Mutator, error) {
 	result, err := c.Store.GetMutatorByName(ctx, name)
 	if err != nil {
 		return nil, NewErrorf(InternalErr, err)

@@ -8,7 +8,7 @@ import Checkbox from "material-ui/Checkbox";
 
 class EventRow extends React.Component {
   render() {
-    const { event: { entity, config, timestamp }, ...other } = this.props;
+    const { event: { entity, check, timestamp }, ...other } = this.props;
     const time = moment(timestamp).fromNow();
 
     return (
@@ -16,9 +16,9 @@ class EventRow extends React.Component {
         <TableCell padding="checkbox">
           <Checkbox />
         </TableCell>
-        <TableCell>{entity.uid}</TableCell>
-        <TableCell>{config.name}</TableCell>
-        <TableCell>{config.command}</TableCell>
+        <TableCell>{entity.name}</TableCell>
+        <TableCell>{check.config.name}</TableCell>
+        <TableCell>{check.config.command}</TableCell>
         <TableCell>{time}</TableCell>
       </TableRow>
     );
@@ -36,15 +36,17 @@ EventRow.propTypes = {
 export default createFragmentContainer(
   EventRow,
   graphql`
-    fragment EventRow_event on CheckEvent {
-      ... on CheckEvent {
+    fragment EventRow_event on Event {
+      ... on Event {
         timestamp
-        config {
-          name
-          command
+        check {
+          config {
+            name
+            command
+          }
         }
         entity {
-          uid: entityId
+          name
         }
       }
     }

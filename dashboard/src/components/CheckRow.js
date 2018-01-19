@@ -40,8 +40,10 @@ export default createFragmentContainer(
       command
       subscriptions
       interval
-      organization
-      environment
+      namespace {
+        organization
+        environment
+      }
     }
   `,
 );

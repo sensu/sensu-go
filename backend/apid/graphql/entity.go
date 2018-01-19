@@ -1,206 +1,121 @@
-package graphqlschema
+package graphql
 
 import (
-	"github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
-	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
 
-var entityType *graphql.Object
-var entityConnection *relay.ConnectionDefinitions
+var _ schema.EntityFieldResolvers = (*entityImpl)(nil)
+var _ schema.SystemFieldResolvers = (*systemImpl)(nil)
+var _ schema.NetworkFieldResolvers = (*networkImpl)(nil)
+var _ schema.NetworkInterfaceFieldResolvers = (*networkInterfaceImpl)(nil)
+var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
-func init() {
-	initNodeInterface()
-	initEntityType()
-	initEntityConnection()
+//
+// Implement EntityFieldResolvers
+//
 
-	nodeResolver := newEntityNodeResolver()
-	nodeRegister.RegisterResolver(nodeResolver)
+type entityImpl struct {
+	schema.EntityAliases
+	userCtrl actions.UserController
 }
 
-func initEntityType() {
-	if entityType != nil {
-		return
-	}
-
-	networkInterfaceType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "NetworkInterface",
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"name": &graphql.Field{
-					Description: "The name of the interface",
-					Type:        graphql.String,
-				},
-				"mac": &graphql.Field{
-					Description: "The MAC address of the interface",
-					Type:        graphql.String,
-				},
-				"addresses": &graphql.Field{
-					Description: "The addresses that belong to the interface",
-					Type:        graphql.NewList(graphql.String),
-				},
-			}
-		}),
-	})
-
-	networkType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "Network",
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"interfaces": &graphql.Field{
-					Description: "A list of all the network interfaces",
-					Type:        graphql.NewList(networkInterfaceType),
-				},
-			}
-		}),
-	})
-
-	systemType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "System",
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"hostname": &graphql.Field{
-					Description: "The hostname of the system",
-					Type:        graphql.NewNonNull(graphql.String),
-				},
-				"os": &graphql.Field{
-					Description: "The operating system of the system",
-					Type:        graphql.String,
-				},
-				"platform": &graphql.Field{
-					Description: "The platform of the system",
-					Type:        graphql.String,
-				},
-				"platformFamily": &graphql.Field{
-					Description: "The platform family of the system",
-					Type:        graphql.String,
-				},
-				"platformVersion": &graphql.Field{
-					Description: "The version of the platform for the system",
-					Type:        graphql.String,
-				},
-				"network": &graphql.Field{
-					Description: "The network interfaces on the system",
-					Type:        networkType,
-				},
-			}
-		}),
-	})
-
-	entityType = graphql.NewObject(graphql.ObjectConfig{
-		Name: "Entity",
-		Interfaces: graphql.InterfacesThunk(func() []*graphql.Interface {
-			return []*graphql.Interface{
-				nodeInterface,
-				multitenantInterface,
-			}
-		}),
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"id": &graphql.Field{
-					Description: "The ID of an object",
-					Type:        graphql.NewNonNull(graphql.ID),
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						idComponents := globalid.EntityTranslator.Encode(p.Source)
-						return idComponents.String(), nil
-					},
-				},
-				"entityId": &graphql.Field{
-					Description: "The given ID of an object; not globally unique",
-					Type:        graphql.NewNonNull(graphql.ID),
-					Resolve:     AliasResolver("ID"),
-				},
-				"class": &graphql.Field{
-					Description: "The type of entity",
-					Type:        graphql.String,
-				},
-				"system": &graphql.Field{
-					Description: "The system information of the entity",
-					Type:        systemType,
-				},
-				"subscriptions": &graphql.Field{
-					Description: "A list of the entity subscriptions",
-					Type:        graphql.NewList(graphql.String),
-				},
-				"lastSeen": &graphql.Field{
-					Description: "The last time the backend recieved a keepalive from the entity",
-					Type:        graphql.String,
-				},
-				"deregister": &graphql.Field{
-					Description: "If a deregisteation event should be created on the agent process stopping",
-					Type:        graphql.Boolean,
-				},
-				// TODO: figure out what this actually does
-				"keepaliveTimeout": &graphql.Field{
-					Description: "",
-					Type:        graphql.Int,
-				},
-				"environment": &graphql.Field{
-					Description: "The environment the entity belongs to",
-					Type:        graphql.NewNonNull(graphql.String),
-				},
-				"organization": &graphql.Field{
-					Description: "The organization the entity belongs to",
-					Type:        graphql.NewNonNull(graphql.String),
-				},
-				"user": &graphql.Field{
-					Description: "???", // TODO: Describe this... somehow.
-					Type:        userType,
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						entity := p.Source.(*types.Entity)
-						store := p.Context.Value(types.StoreKey).(store.UserStore)
-						record, err := store.GetUser(p.Context, entity.User)
-						if err != nil {
-							return nil, err
-						}
-
-						abilities := authorization.Users.WithContext(p.Context)
-						if abilities.CanRead(record) {
-							return record, err
-						}
-						return nil, nil
-					},
-				},
-			}
-		}),
-		IsTypeOf: func(p graphql.IsTypeOfParams) bool {
-			_, ok := p.Value.(*types.Entity)
-			return ok
-		},
-	})
+func newEntityImpl(store store.Store) *entityImpl {
+	userCtrl := actions.NewUserController(store)
+	return &entityImpl{userCtrl: userCtrl}
 }
 
-func initEntityConnection() {
-	if entityConnection != nil {
-		return
-	}
-
-	entityConnection = relay.NewConnectionDefinition(relay.ConnectionConfig{
-		Name:     "Entity",
-		NodeType: entityType,
-	})
+// ID implements response to request for 'id' field.
+func (*entityImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+	return globalid.EntityTranslator.EncodeToString(p.Source), nil
 }
 
-func newEntityNodeResolver() relay.NodeResolver {
-	return relay.NodeResolver{
-		Object:     entityType,
-		Translator: globalid.EntityTranslator,
-		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
-			components := p.IDComponents.(globalid.NamedComponents)
-			store := p.Context.Value(types.StoreKey).(store.EntityStore)
-			record, err := store.GetEntityByID(p.Context, components.Name())
-			if err != nil {
-				return nil, err
-			}
+// Namespace implements response to request for 'namespace' field.
+func (*entityImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
+	return p.Source, nil
+}
 
-			abilities := authorization.Entities.WithContext(p.Context)
-			if abilities.CanRead(record) {
-				return record, nil
-			}
-			return nil, nil
-		},
-	}
+// Name implements response to request for 'name' field.
+func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
+	entity := p.Source.(*types.Entity)
+	return entity.ID, nil
+}
+
+// AuthorId implements response to request for 'authorId' field.
+func (*entityImpl) AuthorID(p graphql.ResolveParams) (string, error) {
+	entity := p.Source.(*types.Entity)
+	return entity.User, nil
+}
+
+// Author implements response to request for 'author' field.
+func (r *entityImpl) Author(p graphql.ResolveParams) (interface{}, error) {
+	entity := p.Source.(*types.Entity)
+	user, err := r.userCtrl.Find(p.Context, entity.User)
+	return handleControllerResults(user, err)
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*entityImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*types.Entity)
+	return ok
+}
+
+//
+// Implement SystemFieldResolvers
+//
+
+type systemImpl struct {
+	schema.SystemAliases
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*systemImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(types.System)
+	return ok
+}
+
+//
+// Implement NetworkFieldResolvers
+//
+
+type networkImpl struct {
+	schema.NetworkAliases
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*networkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(types.Network)
+	return ok
+}
+
+//
+// Implement NetworkInterfaceFieldResolvers
+//
+
+type networkInterfaceImpl struct {
+	schema.NetworkInterfaceAliases
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*networkInterfaceImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(types.NetworkInterface)
+	return ok
+}
+
+//
+// Implement DeregistrationFieldResolvers
+//
+
+type deregistrationImpl struct {
+	schema.DeregistrationAliases
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*deregistrationImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(types.Deregistration)
+	return ok
 }

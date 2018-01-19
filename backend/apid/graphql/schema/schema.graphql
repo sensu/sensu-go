@@ -1,0 +1,22 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+"""
+The query root of Sensu's GraphQL interface.
+"""
+type Query {
+  """
+  Current viewer.
+  """
+  viewer: Viewer
+
+  """
+  Node fetches an object given its ID.
+  """
+  node(
+    "The ID of an object."
+    id: ID!
+  ): Node
+}

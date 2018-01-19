@@ -160,7 +160,7 @@ linter_commands () {
         exit 1
     fi
 
-    errcheck $(go list ./... | grep -v dashboardd | grep -v cli/commands/importer | grep -v agent/assetmanager)
+    errcheck $(go list ./... | grep -v dashboardd | grep -v cli/commands/importer | grep -v agent/assetmanager | grep -v scripts)
     if [ $? -ne 0 ]; then
         echo "Linting failed..."
         exit 1
@@ -170,7 +170,7 @@ linter_commands () {
 unit_test_commands () {
     echo "Running unit tests..."
 
-    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor)')
+    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
     if [ $? -ne 0 ]; then
         echo "Unit testing failed..."
         exit 1
@@ -180,7 +180,7 @@ unit_test_commands () {
 integration_test_commands () {
     echo "Running integration tests..."
 
-    go test -timeout=120s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor)')
+    go test -timeout=120s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
     if [ $? -ne 0 ]; then
         echo "Integration testing failed..."
         exit 1
