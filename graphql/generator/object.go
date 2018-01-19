@@ -187,16 +187,17 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 			}
 			g.Line()
 
+			// TODO: Removed until I decide what I want to do with it.
 			// Satisfy IsTypeOf() callback
 			// IsTypeOf(graphql.IsTypeOfParams) bool
-			g.Commentf(
-				"IsTypeOf is used to determine if a given value is associated with the %s type",
-				name,
-			)
-			g.Id("IsTypeOf").Params(
-				jen.Interface(),
-				jen.Qual(servicePkg, "IsTypeOfParams"),
-			).Bool()
+			// g.Commentf(
+			// 	"IsTypeOf is used to determine if a given value is associated with the %s type",
+			// 	name,
+			// )
+			// g.Id("IsTypeOf").Params(
+			// 	jen.Interface(),
+			// 	jen.Qual(servicePkg, "IsTypeOfParams"),
+			// ).Bool()
 		})
 
 	//

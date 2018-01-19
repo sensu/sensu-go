@@ -99,7 +99,7 @@ func genBuiltinTypeReference(t *ast.Named) jen.Code {
 	case "Boolean":
 		return jen.Bool()
 	case "DateTime":
-		return jen.Op("*").Qual("time", "Time")
+		return jen.Qual("time", "Time")
 	}
 	return nil
 }

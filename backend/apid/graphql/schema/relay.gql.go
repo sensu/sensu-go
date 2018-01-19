@@ -129,9 +129,6 @@ type PageInfoFieldResolvers interface {
 	PageInfoHasPreviousPageFieldResolver
 	PageInfoStartCursorFieldResolver
 	PageInfoEndCursorFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the PageInfo type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // PageInfoAliases implements all methods on PageInfoFieldResolvers interface by using reflection to

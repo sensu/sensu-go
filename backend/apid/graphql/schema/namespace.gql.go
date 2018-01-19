@@ -83,9 +83,6 @@ type NamespaceOrganizationFieldResolver interface {
 type NamespaceFieldResolvers interface {
 	NamespaceEnvironmentFieldResolver
 	NamespaceOrganizationFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Namespace type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // NamespaceAliases implements all methods on NamespaceFieldResolvers interface by using reflection to

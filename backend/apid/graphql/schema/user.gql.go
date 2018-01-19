@@ -97,9 +97,6 @@ type UserFieldResolvers interface {
 	UserRolesFieldResolver
 	UserDisabledFieldResolver
 	UserHasPasswordFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the User type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // UserAliases implements all methods on UserFieldResolvers interface by using reflection to

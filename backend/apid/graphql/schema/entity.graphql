@@ -19,11 +19,24 @@ type Entity {
   deregistration: Deregistration
   keepaliveTimeout: Int
   authorId: String!
-  # author: User! # TODO: Implement w/ user type
+  author: User! # TODO: Implement w/ user type
 
   # TODO: Use scalar?
   # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
   # extendedAttributes: String
+}
+
+"A connection to a sequence of records."
+type EntityConnection {
+  edges: [EntityEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"An edge in a connection."
+type EntityEdge {
+  node: Entity
+  cursor: String!
 }
 
 """

@@ -71,9 +71,12 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 			fields[fieldName].Resolve = handler(impl)
 		}
 
+		if typeResolver, ok := impl.(isTypeOfResolver); ok {
+			cfg.IsTypeOf = newIsTypeOfFn(typeResolver)
+		}
+
 		cfg.Fields = fieldsThunk(m, fields)
 		cfg.Interfaces = interfacesThunk(m, cfg.Interfaces)
-		cfg.IsTypeOf = newIsTypeOfFn(impl)
 		return graphql.NewObject(cfg)
 	}
 	service.types.addType(cfg.Name, ObjectKind, registrar)

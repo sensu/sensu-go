@@ -90,9 +90,6 @@ type RuleFieldResolvers interface {
 	RuleNamespaceFieldResolver
 	RuleTypeFieldResolver
 	RulePermissionsFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Rule type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // RuleAliases implements all methods on RuleFieldResolvers interface by using reflection to
@@ -323,9 +320,6 @@ type RoleFieldResolvers interface {
 	RoleIDFieldResolver
 	RoleNameFieldResolver
 	RoleRulesFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Role type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // RoleAliases implements all methods on RoleFieldResolvers interface by using reflection to

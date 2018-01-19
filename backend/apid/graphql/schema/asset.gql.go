@@ -111,9 +111,6 @@ type AssetFieldResolvers interface {
 	AssetUrlFieldResolver
 	AssetSha512FieldResolver
 	AssetFiltersFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Asset type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // AssetAliases implements all methods on AssetFieldResolvers interface by using reflection to

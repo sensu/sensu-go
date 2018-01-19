@@ -168,9 +168,6 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigStdinFieldResolver
 	CheckConfigCheckHooksFieldResolver
 	CheckConfigSubdueFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the CheckConfig type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // CheckConfigAliases implements all methods on CheckConfigFieldResolvers interface by using reflection to
@@ -561,6 +558,437 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 	},
 }
 
+// CheckConfigConnectionEdgesFieldResolver implement to resolve requests for the CheckConfigConnection's edges field.
+type CheckConfigConnectionEdgesFieldResolver interface {
+	// Edges implements response to request for edges field.
+	Edges(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckConfigConnectionPageInfoFieldResolver implement to resolve requests for the CheckConfigConnection's pageInfo field.
+type CheckConfigConnectionPageInfoFieldResolver interface {
+	// PageInfo implements response to request for pageInfo field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckConfigConnectionTotalCountFieldResolver implement to resolve requests for the CheckConfigConnection's totalCount field.
+type CheckConfigConnectionTotalCountFieldResolver interface {
+	// TotalCount implements response to request for totalCount field.
+	TotalCount(p graphql.ResolveParams) (int, error)
+}
+
+//
+// CheckConfigConnectionFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CheckConfigConnection' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type CheckConfigConnectionFieldResolvers interface {
+	CheckConfigConnectionEdgesFieldResolver
+	CheckConfigConnectionPageInfoFieldResolver
+	CheckConfigConnectionTotalCountFieldResolver
+}
+
+// CheckConfigConnectionAliases implements all methods on CheckConfigConnectionFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type CheckConfigConnectionAliases struct{}
+
+// Edges implements response to request for 'edges' field.
+func (_ CheckConfigConnectionAliases) Edges(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// PageInfo implements response to request for 'pageInfo' field.
+func (_ CheckConfigConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// TotalCount implements response to request for 'totalCount' field.
+func (_ CheckConfigConnectionAliases) TotalCount(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
+}
+
+// CheckConfigConnectionType A connection to a sequence of records.
+var CheckConfigConnectionType = graphql.NewType("CheckConfigConnection", graphql.ObjectKind)
+
+// RegisterCheckConfigConnection registers CheckConfigConnection object type with given service.
+func RegisterCheckConfigConnection(svc *graphql.Service, impl CheckConfigConnectionFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCheckConfigConnectionDesc, impl)
+}
+func _ObjTypeCheckConfigConnectionEdgesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigConnectionEdgesFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Edges(p)
+	}
+}
+
+func _ObjTypeCheckConfigConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigConnectionPageInfoFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PageInfo(p)
+	}
+}
+
+func _ObjTypeCheckConfigConnectionTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigConnectionTotalCountFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.TotalCount(p)
+	}
+}
+
+func _ObjectTypeCheckConfigConnectionConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "A connection to a sequence of records.",
+		Fields: graphql1.Fields{
+			"edges": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "edges",
+				Type:              graphql1.NewList(graphql.OutputType("CheckConfigEdge")),
+			},
+			"pageInfo": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "pageInfo",
+				Type:              graphql1.NewNonNull(graphql.OutputType("PageInfo")),
+			},
+			"totalCount": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "totalCount",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CheckConfigConnectionFieldResolvers.")
+		},
+		Name: "CheckConfigConnection",
+	}
+}
+
+// describe CheckConfigConnection's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCheckConfigConnectionDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCheckConfigConnectionConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"edges":      _ObjTypeCheckConfigConnectionEdgesHandler,
+		"pageInfo":   _ObjTypeCheckConfigConnectionPageInfoHandler,
+		"totalCount": _ObjTypeCheckConfigConnectionTotalCountHandler,
+	},
+}
+
+// CheckConfigEdgeNodeFieldResolver implement to resolve requests for the CheckConfigEdge's node field.
+type CheckConfigEdgeNodeFieldResolver interface {
+	// Node implements response to request for node field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckConfigEdgeCursorFieldResolver implement to resolve requests for the CheckConfigEdge's cursor field.
+type CheckConfigEdgeCursorFieldResolver interface {
+	// Cursor implements response to request for cursor field.
+	Cursor(p graphql.ResolveParams) (string, error)
+}
+
+//
+// CheckConfigEdgeFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CheckConfigEdge' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type CheckConfigEdgeFieldResolvers interface {
+	CheckConfigEdgeNodeFieldResolver
+	CheckConfigEdgeCursorFieldResolver
+}
+
+// CheckConfigEdgeAliases implements all methods on CheckConfigEdgeFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type CheckConfigEdgeAliases struct{}
+
+// Node implements response to request for 'node' field.
+func (_ CheckConfigEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// Cursor implements response to request for 'cursor' field.
+func (_ CheckConfigEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
+}
+
+// CheckConfigEdgeType An edge in a connection.
+var CheckConfigEdgeType = graphql.NewType("CheckConfigEdge", graphql.ObjectKind)
+
+// RegisterCheckConfigEdge registers CheckConfigEdge object type with given service.
+func RegisterCheckConfigEdge(svc *graphql.Service, impl CheckConfigEdgeFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCheckConfigEdgeDesc, impl)
+}
+func _ObjTypeCheckConfigEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigEdgeNodeFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Node(p)
+	}
+}
+
+func _ObjTypeCheckConfigEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigEdgeCursorFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cursor(p)
+	}
+}
+
+func _ObjectTypeCheckConfigEdgeConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "An edge in a connection.",
+		Fields: graphql1.Fields{
+			"cursor": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "cursor",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"node": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "node",
+				Type:              graphql.OutputType("CheckConfig"),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CheckConfigEdgeFieldResolvers.")
+		},
+		Name: "CheckConfigEdge",
+	}
+}
+
+// describe CheckConfigEdge's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCheckConfigEdgeDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCheckConfigEdgeConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"cursor": _ObjTypeCheckConfigEdgeCursorHandler,
+		"node":   _ObjTypeCheckConfigEdgeNodeHandler,
+	},
+}
+
 // CheckConfigFieldResolver implement to resolve requests for the Check's config field.
 type CheckConfigFieldResolver interface {
 	// Config implements response to request for config field.
@@ -576,7 +1004,7 @@ type CheckDurationFieldResolver interface {
 // CheckExecutedFieldResolver implement to resolve requests for the Check's executed field.
 type CheckExecutedFieldResolver interface {
 	// Executed implements response to request for executed field.
-	Executed(p graphql.ResolveParams) (*time.Time, error)
+	Executed(p graphql.ResolveParams) (time.Time, error)
 }
 
 // CheckHistoryFieldResolver implement to resolve requests for the Check's history field.
@@ -686,9 +1114,6 @@ type CheckFieldResolvers interface {
 	CheckStateFieldResolver
 	CheckStatusFieldResolver
 	CheckTotalStateChangeFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Check type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -753,9 +1178,9 @@ func (_ CheckAliases) Duration(p graphql.ResolveParams) (float64, error) {
 }
 
 // Executed implements response to request for 'executed' field.
-func (_ CheckAliases) Executed(p graphql.ResolveParams) (*time.Time, error) {
+func (_ CheckAliases) Executed(p graphql.ResolveParams) (time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(*time.Time)
+	ret := val.(time.Time)
 	return ret, err
 }
 
@@ -1047,9 +1472,6 @@ type CheckHistoryExecutedFieldResolver interface {
 type CheckHistoryFieldResolvers interface {
 	CheckHistoryStatusFieldResolver
 	CheckHistoryExecutedFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the CheckHistory type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // CheckHistoryAliases implements all methods on CheckHistoryFieldResolvers interface by using reflection to

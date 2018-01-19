@@ -58,6 +58,19 @@ type CheckConfig implements Node {
   # runtimeAssets: String
 }
 
+"A connection to a sequence of records."
+type CheckConfigConnection {
+  edges: [CheckConfigEdge]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"An edge in a connection."
+type CheckConfigEdge {
+  node: CheckConfig
+  cursor: String!
+}
+
 """
 A Check is a check specification and optionally the results of the check's
 execution.

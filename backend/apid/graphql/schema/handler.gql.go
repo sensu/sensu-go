@@ -146,9 +146,6 @@ type HandlerFieldResolvers interface {
 	HandlerHandlersFieldResolver
 	HandlerFiltersFieldResolver
 	HandlerEnvVarsFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Handler type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // HandlerAliases implements all methods on HandlerFieldResolvers interface by using reflection to
@@ -548,9 +545,6 @@ type HandlerSocketPortFieldResolver interface {
 type HandlerSocketFieldResolvers interface {
 	HandlerSocketHostFieldResolver
 	HandlerSocketPortFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the HandlerSocket type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // HandlerSocketAliases implements all methods on HandlerSocketFieldResolvers interface by using reflection to

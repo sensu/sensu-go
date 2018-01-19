@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
@@ -18,9 +19,11 @@ var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
 
 type checkCfgImpl struct {
 	schema.CheckConfigAliases
-	store interface {
-		store.HandlerStore
-	}
+	handlerCtrl actions.HandlerController
+}
+
+func newCheckCfgImpl(store store.Store) *checkCfgImpl {
+	return &checkCfgImpl{handlerCtrl: actions.NewHandlerController(store)}
 }
 
 // ID implements response to request for 'id' field.
@@ -35,8 +38,8 @@ func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
 
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.CheckConfig)          // infer source
-	handlers, err := r.store.GetHandlers(p.Context) // fetch all handlers
+	check := p.Source.(*types.CheckConfig)
+	handlers, err := r.handlerCtrl.Query(p.Context)
 	if err != nil {
 		return nil, err
 	}

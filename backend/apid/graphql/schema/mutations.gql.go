@@ -124,9 +124,6 @@ type MutationFieldResolvers interface {
 	MutationCreateCheckFieldResolver
 	MutationUpdateCheckFieldResolver
 	MutationDeleteCheckFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Mutation type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // MutationAliases implements all methods on MutationFieldResolvers interface by using reflection to
@@ -412,9 +409,6 @@ type DeleteRecordPayloadDeletedIDFieldResolver interface {
 type DeleteRecordPayloadFieldResolvers interface {
 	DeleteRecordPayloadClientMutationIDFieldResolver
 	DeleteRecordPayloadDeletedIDFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the DeleteRecordPayload type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // DeleteRecordPayloadAliases implements all methods on DeleteRecordPayloadFieldResolvers interface by using reflection to
@@ -781,9 +775,6 @@ type CreateCheckPayloadCheckFieldResolver interface {
 type CreateCheckPayloadFieldResolvers interface {
 	CreateCheckPayloadClientMutationIDFieldResolver
 	CreateCheckPayloadCheckFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the CreateCheckPayload type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // CreateCheckPayloadAliases implements all methods on CreateCheckPayloadFieldResolvers interface by using reflection to
@@ -1026,9 +1017,6 @@ type UpdateCheckPayloadCheckFieldResolver interface {
 type UpdateCheckPayloadFieldResolvers interface {
 	UpdateCheckPayloadClientMutationIDFieldResolver
 	UpdateCheckPayloadCheckFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the UpdateCheckPayload type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // UpdateCheckPayloadAliases implements all methods on UpdateCheckPayloadFieldResolvers interface by using reflection to

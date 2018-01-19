@@ -23,20 +23,24 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterDeleteRecordInput(svc)
 	schema.RegisterDeleteRecordPayload(svc, &deleteRecordPayload{})
+	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterHandler(svc, newHandlerImpl(store))
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
-	schema.RegisterQuery(svc, &queryImpl{store, nodeResolver})
+	schema.RegisterQuery(svc, newQueryImpl(store, nodeResolver))
 	schema.RegisterMutation(svc, newMutationImpl(store))
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterNamespace(svc, &namespaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
 	schema.RegisterNamespaceInput(svc)
 	schema.RegisterPageInfo(svc, &pageInfoImpl{})
+	schema.RegisterViewer(svc, newViewerImpl(store, cfg.Bus))
 	schema.RegisterSchema(svc)
 
 	// Register check types
 	schema.RegisterCheck(svc, &checkImpl{})
-	schema.RegisterCheckConfig(svc, &checkCfgImpl{store: store})
+	schema.RegisterCheckConfig(svc, newCheckCfgImpl(store))
+	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
+	schema.RegisterCheckConfigEdge(svc, &schema.CheckConfigEdgeAliases{})
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterCheckConfigInputs(svc)
 	schema.RegisterCreateCheckInput(svc)
@@ -45,10 +49,18 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterUpdateCheckPayload(svc, &checkMutationPayload{})
 
 	// Register entity types
-	schema.RegisterEntity(svc, &entityImpl{})
+	schema.RegisterEntity(svc, newEntityImpl(store))
+	schema.RegisterEntityConnection(svc, &schema.EntityConnectionAliases{})
+	schema.RegisterEntityEdge(svc, &schema.EntityEdgeAliases{})
 	schema.RegisterDeregistration(svc, &deregistrationImpl{})
 	schema.RegisterNetwork(svc, &networkImpl{})
 	schema.RegisterNetworkInterface(svc, &networkInterfaceImpl{})
+	schema.RegisterSystem(svc, &systemImpl{})
+
+	// Register event types
+	schema.RegisterEvent(svc, &eventImpl{})
+	schema.RegisterEventConnection(svc, &schema.EventConnectionAliases{})
+	schema.RegisterEventEdge(svc, &schema.EventEdgeAliases{})
 
 	// Register hook types
 	schema.RegisterHook(svc, &hookImpl{})

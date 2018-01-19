@@ -6,6 +6,8 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 )
 
+var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
+
 //
 // Implement QueryFieldResolvers
 //
@@ -13,13 +15,19 @@ import (
 type queryImpl struct {
 	store        store.Store
 	nodeResolver *nodeResolver
+	noLookup
 }
 
-// Checks implements response to request for 'checks' field.
-func (r *queryImpl) Checks(p graphql.ResolveParams) (interface{}, error) {
-	// TODO: Remove me
-	checks, err := r.store.GetCheckConfigs(p.Context)
-	return checks, err
+func newQueryImpl(store store.Store, resolver *nodeResolver) *queryImpl {
+	return &queryImpl{
+		store:        store,
+		nodeResolver: resolver,
+	}
+}
+
+// Viewer implements response to request for 'viewer' field.
+func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
+	return struct{}{}, nil
 }
 
 // Node implements response to request for 'node' field.
@@ -27,11 +35,6 @@ func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, er
 	resolver := r.nodeResolver
 	id := p.Args.ID.(string)
 	return resolver.Find(p.Context, id, p.Info)
-}
-
-// IsTypeOf is used to determine if a given value is associated with the type
-func (r *queryImpl) IsTypeOf(_ interface{}, _ graphql.IsTypeOfParams) bool {
-	return false
 }
 
 //

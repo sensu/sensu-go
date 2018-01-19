@@ -7,8 +7,10 @@ schema {
 The query root of Sensu's GraphQL interface.
 """
 type Query {
-  # TODO: Remove me.
-  checks: [Check]
+  """
+  Current viewer.
+  """
+  viewer: Viewer
 
   """
   Node fetches an object given its ID.

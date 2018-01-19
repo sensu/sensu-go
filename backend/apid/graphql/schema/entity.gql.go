@@ -73,6 +73,12 @@ type EntityAuthorIDFieldResolver interface {
 	AuthorID(p graphql.ResolveParams) (string, error)
 }
 
+// EntityAuthorFieldResolver implement to resolve requests for the Entity's author field.
+type EntityAuthorFieldResolver interface {
+	// Author implements response to request for author field.
+	Author(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // EntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Entity' type.
@@ -146,9 +152,7 @@ type EntityFieldResolvers interface {
 	EntityDeregistrationFieldResolver
 	EntityKeepaliveTimeoutFieldResolver
 	EntityAuthorIDFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Entity type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+	EntityAuthorFieldResolver
 }
 
 // EntityAliases implements all methods on EntityFieldResolvers interface by using reflection to
@@ -275,6 +279,13 @@ func (_ EntityAliases) AuthorID(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// Author implements response to request for 'author' field.
+func (_ EntityAliases) Author(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
 /*
 EntityType Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
@@ -362,10 +373,24 @@ func _ObjTypeEntityAuthorIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityAuthorHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityAuthorFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Author(p)
+	}
+}
+
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
 		Fields: graphql1.Fields{
+			"author": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "author",
+				Type:              graphql1.NewNonNull(graphql.OutputType("User")),
+			},
 			"authorId": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -461,6 +486,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"author":           _ObjTypeEntityAuthorHandler,
 		"authorId":         _ObjTypeEntityAuthorIDHandler,
 		"class":            _ObjTypeEntityClassHandler,
 		"deregister":       _ObjTypeEntityDeregisterHandler,
@@ -472,6 +498,437 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"namespace":        _ObjTypeEntityNamespaceHandler,
 		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
 		"system":           _ObjTypeEntitySystemHandler,
+	},
+}
+
+// EntityConnectionEdgesFieldResolver implement to resolve requests for the EntityConnection's edges field.
+type EntityConnectionEdgesFieldResolver interface {
+	// Edges implements response to request for edges field.
+	Edges(p graphql.ResolveParams) (interface{}, error)
+}
+
+// EntityConnectionPageInfoFieldResolver implement to resolve requests for the EntityConnection's pageInfo field.
+type EntityConnectionPageInfoFieldResolver interface {
+	// PageInfo implements response to request for pageInfo field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
+}
+
+// EntityConnectionTotalCountFieldResolver implement to resolve requests for the EntityConnection's totalCount field.
+type EntityConnectionTotalCountFieldResolver interface {
+	// TotalCount implements response to request for totalCount field.
+	TotalCount(p graphql.ResolveParams) (int, error)
+}
+
+//
+// EntityConnectionFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'EntityConnection' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type EntityConnectionFieldResolvers interface {
+	EntityConnectionEdgesFieldResolver
+	EntityConnectionPageInfoFieldResolver
+	EntityConnectionTotalCountFieldResolver
+}
+
+// EntityConnectionAliases implements all methods on EntityConnectionFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type EntityConnectionAliases struct{}
+
+// Edges implements response to request for 'edges' field.
+func (_ EntityConnectionAliases) Edges(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// PageInfo implements response to request for 'pageInfo' field.
+func (_ EntityConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// TotalCount implements response to request for 'totalCount' field.
+func (_ EntityConnectionAliases) TotalCount(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(int)
+	return ret, err
+}
+
+// EntityConnectionType A connection to a sequence of records.
+var EntityConnectionType = graphql.NewType("EntityConnection", graphql.ObjectKind)
+
+// RegisterEntityConnection registers EntityConnection object type with given service.
+func RegisterEntityConnection(svc *graphql.Service, impl EntityConnectionFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeEntityConnectionDesc, impl)
+}
+func _ObjTypeEntityConnectionEdgesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityConnectionEdgesFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Edges(p)
+	}
+}
+
+func _ObjTypeEntityConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityConnectionPageInfoFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PageInfo(p)
+	}
+}
+
+func _ObjTypeEntityConnectionTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityConnectionTotalCountFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.TotalCount(p)
+	}
+}
+
+func _ObjectTypeEntityConnectionConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "A connection to a sequence of records.",
+		Fields: graphql1.Fields{
+			"edges": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "edges",
+				Type:              graphql1.NewList(graphql.OutputType("EntityEdge")),
+			},
+			"pageInfo": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "pageInfo",
+				Type:              graphql1.NewNonNull(graphql.OutputType("PageInfo")),
+			},
+			"totalCount": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "totalCount",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see EntityConnectionFieldResolvers.")
+		},
+		Name: "EntityConnection",
+	}
+}
+
+// describe EntityConnection's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeEntityConnectionDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeEntityConnectionConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"edges":      _ObjTypeEntityConnectionEdgesHandler,
+		"pageInfo":   _ObjTypeEntityConnectionPageInfoHandler,
+		"totalCount": _ObjTypeEntityConnectionTotalCountHandler,
+	},
+}
+
+// EntityEdgeNodeFieldResolver implement to resolve requests for the EntityEdge's node field.
+type EntityEdgeNodeFieldResolver interface {
+	// Node implements response to request for node field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+}
+
+// EntityEdgeCursorFieldResolver implement to resolve requests for the EntityEdge's cursor field.
+type EntityEdgeCursorFieldResolver interface {
+	// Cursor implements response to request for cursor field.
+	Cursor(p graphql.ResolveParams) (string, error)
+}
+
+//
+// EntityEdgeFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'EntityEdge' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type EntityEdgeFieldResolvers interface {
+	EntityEdgeNodeFieldResolver
+	EntityEdgeCursorFieldResolver
+}
+
+// EntityEdgeAliases implements all methods on EntityEdgeFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type EntityEdgeAliases struct{}
+
+// Node implements response to request for 'node' field.
+func (_ EntityEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(interface{})
+	return ret, err
+}
+
+// Cursor implements response to request for 'cursor' field.
+func (_ EntityEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(string)
+	return ret, err
+}
+
+// EntityEdgeType An edge in a connection.
+var EntityEdgeType = graphql.NewType("EntityEdge", graphql.ObjectKind)
+
+// RegisterEntityEdge registers EntityEdge object type with given service.
+func RegisterEntityEdge(svc *graphql.Service, impl EntityEdgeFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeEntityEdgeDesc, impl)
+}
+func _ObjTypeEntityEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityEdgeNodeFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Node(p)
+	}
+}
+
+func _ObjTypeEntityEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityEdgeCursorFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cursor(p)
+	}
+}
+
+func _ObjectTypeEntityEdgeConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "An edge in a connection.",
+		Fields: graphql1.Fields{
+			"cursor": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "cursor",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"node": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "node",
+				Type:              graphql.OutputType("Entity"),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see EntityEdgeFieldResolvers.")
+		},
+		Name: "EntityEdge",
+	}
+}
+
+// describe EntityEdge's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeEntityEdgeDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeEntityEdgeConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"cursor": _ObjTypeEntityEdgeCursorHandler,
+		"node":   _ObjTypeEntityEdgeNodeHandler,
 	},
 }
 
@@ -579,9 +1036,6 @@ type SystemFieldResolvers interface {
 	SystemPlatformFamilyFieldResolver
 	SystemPlatformVersionFieldResolver
 	SystemNetworkFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the System type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // SystemAliases implements all methods on SystemFieldResolvers interface by using reflection to
@@ -867,9 +1321,6 @@ type NetworkInterfacesFieldResolver interface {
 //
 type NetworkFieldResolvers interface {
 	NetworkInterfacesFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Network type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // NetworkAliases implements all methods on NetworkFieldResolvers interface by using reflection to
@@ -1056,9 +1507,6 @@ type NetworkInterfaceFieldResolvers interface {
 	NetworkInterfaceNameFieldResolver
 	NetworkInterfaceMacFieldResolver
 	NetworkInterfaceAddressesFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the NetworkInterface type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // NetworkInterfaceAliases implements all methods on NetworkInterfaceFieldResolvers interface by using reflection to
@@ -1278,9 +1726,6 @@ type DeregistrationHandlerFieldResolver interface {
 //
 type DeregistrationFieldResolvers interface {
 	DeregistrationHandlerFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Deregistration type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // DeregistrationAliases implements all methods on DeregistrationFieldResolvers interface by using reflection to

@@ -76,9 +76,6 @@ type TimeWindowWhenDaysFieldResolver interface {
 //
 type TimeWindowWhenFieldResolvers interface {
 	TimeWindowWhenDaysFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the TimeWindowWhen type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // TimeWindowWhenAliases implements all methods on TimeWindowWhenFieldResolvers interface by using reflection to
@@ -296,9 +293,6 @@ type TimeWindowDaysFieldResolvers interface {
 	TimeWindowDaysThursdayFieldResolver
 	TimeWindowDaysFridayFieldResolver
 	TimeWindowDaysSaturdayFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the TimeWindowDays type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // TimeWindowDaysAliases implements all methods on TimeWindowDaysFieldResolvers interface by using reflection to
@@ -632,9 +626,6 @@ type TimeWindowTimeRangeEndFieldResolver interface {
 type TimeWindowTimeRangeFieldResolvers interface {
 	TimeWindowTimeRangeBeginFieldResolver
 	TimeWindowTimeRangeEndFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the TimeWindowTimeRange type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // TimeWindowTimeRangeAliases implements all methods on TimeWindowTimeRangeFieldResolvers interface by using reflection to

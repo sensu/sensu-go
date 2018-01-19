@@ -111,9 +111,6 @@ type HookConfigFieldResolvers interface {
 	HookConfigCommandFieldResolver
 	HookConfigTimeoutFieldResolver
 	HookConfigStdinFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the HookConfig type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // HookConfigAliases implements all methods on HookConfigFieldResolvers interface by using reflection to
@@ -431,9 +428,6 @@ type HookFieldResolvers interface {
 	HookIssuedFieldResolver
 	HookOutputFieldResolver
 	HookStatusFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Hook type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // HookAliases implements all methods on HookFieldResolvers interface by using reflection to
@@ -726,9 +720,6 @@ type HookListTypeFieldResolver interface {
 type HookListFieldResolvers interface {
 	HookListHooksFieldResolver
 	HookListTypeFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the HookList type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // HookListAliases implements all methods on HookListFieldResolvers interface by using reflection to

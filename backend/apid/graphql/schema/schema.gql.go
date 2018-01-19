@@ -26,10 +26,10 @@ func _SchemaConfigFn() graphql1.SchemaConfig {
 // describe schema's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _SchemaDesc = graphql.SchemaDesc{Config: _SchemaConfigFn}
 
-// QueryChecksFieldResolver implement to resolve requests for the Query's checks field.
-type QueryChecksFieldResolver interface {
-	// Checks implements response to request for checks field.
-	Checks(p graphql.ResolveParams) (interface{}, error)
+// QueryViewerFieldResolver implement to resolve requests for the Query's viewer field.
+type QueryViewerFieldResolver interface {
+	// Viewer implements response to request for viewer field.
+	Viewer(p graphql.ResolveParams) (interface{}, error)
 }
 
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
@@ -111,11 +111,8 @@ type QueryNodeFieldResolver interface {
 //   }
 //
 type QueryFieldResolvers interface {
-	QueryChecksFieldResolver
+	QueryViewerFieldResolver
 	QueryNodeFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Query type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // QueryAliases implements all methods on QueryFieldResolvers interface by using reflection to
@@ -165,8 +162,8 @@ type QueryFieldResolvers interface {
 //
 type QueryAliases struct{}
 
-// Checks implements response to request for 'checks' field.
-func (_ QueryAliases) Checks(p graphql.ResolveParams) (interface{}, error) {
+// Viewer implements response to request for 'viewer' field.
+func (_ QueryAliases) Viewer(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret := val.(interface{})
 	return ret, err
@@ -186,10 +183,10 @@ var QueryType = graphql.NewType("Query", graphql.ObjectKind)
 func RegisterQuery(svc *graphql.Service, impl QueryFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeQueryDesc, impl)
 }
-func _ObjTypeQueryChecksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryChecksFieldResolver)
+func _ObjTypeQueryViewerHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryViewerFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Checks(p)
+		return resolver.Viewer(p)
 	}
 }
 
@@ -210,13 +207,6 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The query root of Sensu's GraphQL interface.",
 		Fields: graphql1.Fields{
-			"checks": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "checks",
-				Type:              graphql1.NewList(graphql.OutputType("Check")),
-			},
 			"node": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"id": &graphql1.ArgumentConfig{
 					Description: "The ID of an object.",
@@ -226,6 +216,13 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Description:       "Node fetches an object given its ID.",
 				Name:              "node",
 				Type:              graphql.OutputType("Node"),
+			},
+			"viewer": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Current viewer.",
+				Name:              "viewer",
+				Type:              graphql.OutputType("Viewer"),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
@@ -245,7 +242,7 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeQueryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checks": _ObjTypeQueryChecksHandler,
 		"node":   _ObjTypeQueryNodeHandler,
+		"viewer": _ObjTypeQueryViewerHandler,
 	},
 }

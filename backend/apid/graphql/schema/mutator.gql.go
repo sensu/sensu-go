@@ -111,9 +111,6 @@ type MutatorFieldResolvers interface {
 	MutatorCommandFieldResolver
 	MutatorTimeoutFieldResolver
 	MutatorEnvVarsFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Mutator type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // MutatorAliases implements all methods on MutatorFieldResolvers interface by using reflection to

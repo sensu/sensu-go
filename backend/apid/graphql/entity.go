@@ -1,8 +1,10 @@
 package graphql
 
 import (
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
@@ -19,6 +21,12 @@ var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 type entityImpl struct {
 	schema.EntityAliases
+	userCtrl actions.UserController
+}
+
+func newEntityImpl(store store.Store) *entityImpl {
+	userCtrl := actions.NewUserController(store)
+	return &entityImpl{userCtrl: userCtrl}
 }
 
 // ID implements response to request for 'id' field.
@@ -41,6 +49,13 @@ func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
 func (*entityImpl) AuthorID(p graphql.ResolveParams) (string, error) {
 	entity := p.Source.(*types.Entity)
 	return entity.User, nil
+}
+
+// Author implements response to request for 'author' field.
+func (r *entityImpl) Author(p graphql.ResolveParams) (interface{}, error) {
+	entity := p.Source.(*types.Entity)
+	user, err := r.userCtrl.Find(p.Context, entity.User)
+	return handleControllerResults(user, err)
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
