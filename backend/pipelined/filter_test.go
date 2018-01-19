@@ -3,6 +3,7 @@ package pipelined
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -17,18 +18,22 @@ func TestPipelinedFilter(t *testing.T) {
 
 	// Mock the store responses
 	allowFilterBar := &types.EventFilter{
+		Name:       "allowFilterBar",
 		Action:     types.EventFilterActionAllow,
 		Statements: []string{`event.Check.Output == "bar"`},
 	}
 	allowFilterFoo := &types.EventFilter{
+		Name:       "allowFilterFoo",
 		Action:     types.EventFilterActionAllow,
 		Statements: []string{`event.Check.Output == "foo"`},
 	}
 	denyFilterBar := &types.EventFilter{
+		Name:       "denyFilterBar",
 		Action:     types.EventFilterActionDeny,
 		Statements: []string{`event.Check.Output == "bar"`},
 	}
 	denyFilterFoo := &types.EventFilter{
+		Name:       "denyFilterFoo",
 		Action:     types.EventFilterActionDeny,
 		Statements: []string{`event.Check.Output == "foo"`},
 	}
@@ -170,6 +175,97 @@ func TestPipelinedFilter(t *testing.T) {
 				},
 				Metrics:  tc.metrics,
 				Silenced: tc.silenced,
+			}
+
+			filtered := p.filterEvent(handler, event)
+			assert.Equal(t, tc.expected, filtered)
+		})
+	}
+}
+
+func TestPipelinedWhenFilter(t *testing.T) {
+	p := &Pipelined{}
+	store := &mockstore.MockStore{}
+	p.Store = store
+
+	event := &types.Event{
+		Check: &types.Check{
+			Status: 2,
+			Output: "bar",
+		},
+		Entity: &types.Entity{
+			Environment:  "default",
+			Organization: "default",
+		},
+	}
+
+	testCases := []struct {
+		name       string
+		filterName string
+		action     string
+		begin      time.Duration
+		end        time.Duration
+		expected   bool
+	}{
+		{
+			name:       "in time window action allow",
+			filterName: "in_time_window_allow",
+			action:     types.EventFilterActionAllow,
+			begin:      -time.Minute * time.Duration(1),
+			end:        time.Minute * time.Duration(1),
+			expected:   false,
+		},
+		{
+			name:       "outside time window action allow",
+			filterName: "outside_time_window_allow",
+			action:     types.EventFilterActionAllow,
+			begin:      time.Minute * time.Duration(10),
+			end:        time.Minute * time.Duration(20),
+			expected:   true,
+		},
+		{
+			name:       "in time window action deny",
+			filterName: "in_time_window_deny",
+			action:     types.EventFilterActionDeny,
+			begin:      -time.Minute * time.Duration(1),
+			end:        time.Minute * time.Duration(1),
+			expected:   true,
+		},
+		{
+			name:       "outside time window action deny",
+			filterName: "outside_time_window_deny",
+			action:     types.EventFilterActionDeny,
+			begin:      time.Minute * time.Duration(10),
+			end:        time.Minute * time.Duration(20),
+			expected:   false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			now := time.Now().UTC()
+
+			filter := &types.EventFilter{
+				Name:       tc.name,
+				Action:     tc.action,
+				Statements: []string{`event.Check.Output == "bar"`},
+			}
+
+			filter.When = &types.TimeWindowWhen{
+				Days: types.TimeWindowDays{
+					All: []*types.TimeWindowTimeRange{{
+						Begin: now.Add(tc.begin).Format("03:04PM"),
+						End:   now.Add(tc.end).Format("03:04PM"),
+					}},
+				},
+			}
+
+			store.On("GetEventFilterByName", mock.Anything, tc.filterName).Return(filter, nil)
+
+			handler := &types.Handler{
+				Type:    "pipe",
+				Command: "cat",
+				Filters: []string{tc.filterName},
 			}
 
 			filtered := p.filterEvent(handler, event)

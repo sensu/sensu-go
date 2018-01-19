@@ -3,9 +3,9 @@ package pipelined
 
 import (
 	"context"
+	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 
 	"github.com/sensu/govaluate"
@@ -33,14 +33,21 @@ func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 }
 
 // Returns true if the event should be filtered.
-func evaluateEventFilter(store store.Store, event *types.Event, filterName string) bool {
-	// Retrieve the filter from the store with its name
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
-	filter, err := store.GetEventFilterByName(ctx, filterName)
-	if err != nil {
-		logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
-		return false
+func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
+	if filter.When != nil {
+		inWindows, err := filter.When.InWindows(time.Now().UTC())
+		if err != nil {
+			logger.WithField("filter", filter.Name).Error(err)
+			return false
+		}
+
+		if filter.Action == types.EventFilterActionAllow && !inWindows {
+			return true
+		}
+
+		if filter.Action == types.EventFilterActionDeny && !inWindows {
+			return false
+		}
 	}
 
 	for _, statement := range filter.Statements {
@@ -103,8 +110,16 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 
 	// Iterate through all event filters, evaluating each statement against given event. The
 	// event is rejected if the product of all statements is true.
-	for _, filter := range handler.Filters {
-		filtered := evaluateEventFilter(p.Store, event, filter)
+	for _, filterName := range handler.Filters {
+		// Retrieve the filter from the store with its name
+		ctx := types.SetContextFromResource(context.Background(), event.Entity)
+		filter, err := p.Store.GetEventFilterByName(ctx, filterName)
+		if err != nil {
+			logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
+			return false
+		}
+
+		filtered := evaluateEventFilter(event, filter)
 		if !filtered {
 			return false
 		}

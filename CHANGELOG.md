@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add timeout support for check hook execution.
 - Token substitution is now available for check hooks
 - Add an e2e test for logging redaction
+- Support for `When` field in `Filter` which enables filtering based on days
+and times of the week.
 
 ### Changed
 - Moved monitor code out of keepalived and into its own package
@@ -28,7 +30,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed e2e test for token substitution on Windows
 - Fixed check subdue unit test for token substitution on Windows
 - Consider the first and last seconds of a time window when comparing the
-  current time
+current time
 - Fixed Travis deploy stage by removing caching for $GOPATH
 - Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
@@ -40,7 +42,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed e2e test for token substitution on Windows
 - Fixed check subdue unit test for token substitution on Windows
 - Consider the first and last seconds of a time window when comparing the
-  current time
+current time
 - Fixed Travis deploy stage by removing caching for $GOPATH
 - Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
@@ -61,7 +63,7 @@ string stored in this field.
 ## [2.0.0-alpha.11] - 2017-12-19
 ### Breaking Changes
 - The `Source` field on a check has been renamed to `ProxyEntityID`. Any checks
-  using the Source field will have to be recreated.
+using the Source field will have to be recreated.
 
 ### Added
 - Silenced entries with ExpireOnResolve set to true will now be deleted when an
@@ -75,13 +77,13 @@ event which has previously failing was resolved
 - Avoid using reflection in time.InWindows function.
 - Use multiple parallel jobs in CI tools to speed up the tests
 - Pulled in latest [github.com/coreos/etcd](https://github.com/coreos/etcd).
-  - Includes fix for panic that occurred on shutdown.
-  - Refer to their
-    [changelog](https://github.com/gyuho/etcd/blob/f444abaae344e562fc69323c75e1cf772c436543/CHANGELOG.md)
-    for more.
+- Includes fix for panic that occurred on shutdown.
+- Refer to their
+[changelog](https://github.com/gyuho/etcd/blob/f444abaae344e562fc69323c75e1cf772c436543/CHANGELOG.md)
+for more.
 - Switch to using [github.com/golang/dep](https://github.com/golang/dep) for
-  managing dependencies; `vendor/` directory has been removed.
-  - See [README](README.md) for usage.
+managing dependencies; `vendor/` directory has been removed.
+- See [README](README.md) for usage.
 
 ## [2.0.0-alpha.10] - 2017-12-12
 ### Added
