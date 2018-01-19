@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - CLI functionality for check `Timeout` field.
 - Add timeout support for check execution.
 - Add timeout support for check hook execution.
+- Token substitution is now available for check hooks
 - Add an e2e test for logging redaction
 
 ### Changed
