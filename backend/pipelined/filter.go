@@ -112,8 +112,7 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 	// event is rejected if the product of all statements is true.
 	for _, filterName := range handler.Filters {
 		// Retrieve the filter from the store with its name
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+		ctx := types.SetContextFromResource(context.Background(), event.Entity)
 		filter, err := p.Store.GetEventFilterByName(ctx, filterName)
 		if err != nil {
 			logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
