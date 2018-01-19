@@ -8,13 +8,15 @@
 set -e
 
 if ! [[ "$0" =~ scripts/genproto.sh ]]; then
-	echo "must be run from repository root"
-	exit 255
+    echo "must be run from repository root"
+    exit 255
 fi
 
-if [[ $(protoc --version | cut -f2 -d' ') != "3.4.0" ]]; then
-	echo "could not find protoc 3.4.0, is it installed + in PATH?"
-	exit 255
+PROTOC_VERSION="3.5.1"
+
+if [[ $(protoc --version | cut -f2 -d' ') != "${PROTOC_VERSION}" ]]; then
+    echo "could not find protoc ${PROTOC_VERSION}, is it installed + in PATH?"
+    exit 255
 fi
 
 # directories containing protos to be built
@@ -33,13 +35,13 @@ GOGOPROTO_PATH="${GOGOPROTO_ROOT}:${GOGOPROTO_ROOT}/protobuf"
 go get -u github.com/gogo/protobuf/{proto,protoc-gen-gogo,gogoproto}
 go get -u golang.org/x/tools/cmd/goimports
 pushd "${GOGOPROTO_ROOT}"
-  git reset --hard "${GOGO_PROTO_SHA}"
-  make install
+git reset --hard "${GOGO_PROTO_SHA}"
+make install
 popd
 
 for dir in ${DIRS}; do
-  pushd "$dir"
+    pushd "$dir"
     protoc --gofast_out=plugins:. -I="$SENSU_ROOT/vendor/:./" ./*.proto
     goimports -w ./*.pb.go
-  popd
+    popd
 done

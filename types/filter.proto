@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "time_window.proto";
 
 package sensu.types;
 
@@ -29,4 +30,7 @@ message EventFilter {
 
   // Organization indicates to which org a filter belongs to
   string organization = 5;
+
+  // When indicates a TimeWindowWhen that a filter uses to filter by days & times
+  TimeWindowWhen when = 6;
 }

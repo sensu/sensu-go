@@ -70,6 +70,7 @@ func TestCheckHooks(t *testing.T) {
 
 	// Create a hook with hook name hook1
 	hook := types.FixtureHookConfig("hook1")
+	hook.Command = "echo {{ .ID }}"
 
 	output, err = sensuctl.run("hook", "create", hook.Name,
 		"--command", hook.Command,
@@ -101,6 +102,9 @@ func TestCheckHooks(t *testing.T) {
 	require.NoError(t, json.Unmarshal(output, &event))
 	assert.NoError(t, err)
 	assert.NotNil(t, event)
+
+	// Ensure the token substitution has been applied for the hook's command
+	assert.Contains(t, event.Hooks[0].Output, agent.ID)
 
 	// Hook hook1 now exists, a check hook should be written to the event
 	assert.NotEmpty(t, event.Hooks)

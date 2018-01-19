@@ -9,6 +9,7 @@ import (
 
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 // ExecuteHooks executes all hooks contained in a check request based on
@@ -20,7 +21,14 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 		if hookShouldExecute(hookList.Type, status) {
 			// run all the hooks of that type
 			for _, hookName := range hookList.Hooks {
-				hook := a.executeHook(getHookConfig(hookName, request.Hooks))
+				hookConfig := getHookConfig(hookName, request.Hooks)
+				if ok := a.prepareHook(hookConfig); !ok {
+					// An error occured during the preparation of the hook and the error
+					// has been sent back to the server. At this point we should not
+					// execute the hook and wait for the next check request
+					continue
+				}
+				hook := a.executeHook(hookConfig)
 				executedHooks = append(executedHooks, hook)
 			}
 		}
@@ -29,21 +37,14 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 }
 
 func (a *Agent) executeHook(hookConfig *types.HookConfig) *types.Hook {
-	if hookConfig == nil {
-		return nil
+	// Instantiate Event and Hook
+	event := &types.Event{
+		Check: &types.Check{},
 	}
 
-	// Instantiate Event and Hook
-	event := &types.Event{}
 	hook := &types.Hook{
 		Config:   hookConfig,
 		Executed: time.Now().Unix(),
-	}
-
-	// Validate that the given hook is valid.
-	if err := hookConfig.Validate(); err != nil {
-		a.sendFailure(event, fmt.Errorf("given hook is invalid: %s", err))
-		return nil
 	}
 
 	// Instantiate the execution command
@@ -72,6 +73,48 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig) *types.Hook {
 	hook.Status = int32(ex.Status)
 
 	return hook
+}
+
+func (a *Agent) prepareHook(hookConfig *types.HookConfig) bool {
+	if hookConfig == nil {
+		return false
+	}
+
+	// Instantiate an event in case of failure
+	event := &types.Event{
+		Check: &types.Check{},
+	}
+
+	// Validate that the given hook is valid.
+	if err := hookConfig.Validate(); err != nil {
+		a.sendFailure(event, fmt.Errorf("given hook is invalid: %s", err))
+		return false
+	}
+
+	// Extract the extended attributes from the entity and combine them at the
+	// top-level so they can be easily accessed using token substitution
+	synthesizedEntity, err := dynamic.Synthesize(a.getAgentEntity())
+	if err != nil {
+		a.sendFailure(event, fmt.Errorf("could not synthesize the entity: %s", err))
+		return false
+	}
+
+	// Substitute tokens within the check configuration with the synthesized
+	// entity
+	hookConfigBytes, err := tokenSubstitution(synthesizedEntity, hookConfig)
+	if err != nil {
+		a.sendFailure(event, err)
+		return false
+	}
+
+	// Unmarshal the check configuration obtained after the token substitution
+	// back into the check config struct
+	if err = json.Unmarshal(hookConfigBytes, hookConfig); err != nil {
+		a.sendFailure(event, fmt.Errorf("could not unmarshal the hook config: %s", err))
+		return false
+	}
+
+	return true
 }
 
 func getHookConfig(hookName string, hookList []types.HookConfig) *types.HookConfig {

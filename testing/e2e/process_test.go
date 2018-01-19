@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -176,11 +177,12 @@ type agentProcess struct {
 }
 
 type agentConfig struct {
-	ID               string
-	BackendURLs      []string
 	APIPort          int
-	SocketPort       int
+	BackendURLs      []string
 	CustomAttributes string
+	ID               string
+	Redact           []string
+	SocketPort       int
 }
 
 // newAgent abstracts the initialization of an agent process and returns a
@@ -238,6 +240,12 @@ func (a *agentProcess) Start(t *testing.T) error {
 	if a.CustomAttributes != "" {
 		args = append(args, "--custom-attributes")
 		args = append(args, a.CustomAttributes)
+	}
+
+	// Support redact fields
+	if len(a.Redact) != 0 {
+		args = append(args, "--redact")
+		args = append(args, strings.Join(a.Redact, ","))
 	}
 
 	cmd := exec.Command(agentPath, args...)
