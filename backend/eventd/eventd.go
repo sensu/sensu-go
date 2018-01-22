@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -25,12 +27,15 @@ var (
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
-	Store        store.Store
-	MessageBus   messaging.MessageBus
-	HandlerCount int
+	Store          store.Store
+	MessageBus     messaging.MessageBus
+	HandlerCount   int
+	MonitorFactory monitor.FactoryFunc
 
 	eventChan    chan interface{}
 	errChan      chan error
+	monitors     map[string]monitor.Interface
+	mu           *sync.Mutex
 	shutdownChan chan struct{}
 	wg           *sync.WaitGroup
 }
@@ -49,6 +54,12 @@ func (e *Eventd) Start() error {
 		e.HandlerCount = 10
 	}
 
+	if e.MonitorFactory == nil {
+		e.MonitorFactory = func(entity *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+			return monitor.New(entity, t, updateHandler, failureHandler)
+		}
+	}
+
 	e.errChan = make(chan error, 1)
 	e.shutdownChan = make(chan struct{}, 1)
 
@@ -64,6 +75,8 @@ func (e *Eventd) Start() error {
 	e.wg.Add(e.HandlerCount)
 	e.startHandlers()
 
+	e.mu = &sync.Mutex{}
+	e.monitors = map[string]monitor.Interface{}
 	return nil
 }
 
@@ -112,6 +125,11 @@ func (e *Eventd) startHandlers() {
 }
 
 func (e *Eventd) handleMessage(msg interface{}) error {
+	var (
+		mon monitor.Interface
+		ok  bool
+	)
+
 	event, ok := msg.(*types.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")
@@ -122,6 +140,24 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
+	entity := event.Entity
+
+	// create a monitor for the event's entity if it doesn't exist in the
+	// monitor map
+	e.mu.Lock()
+	mon, ok = e.monitors[entity.ID]
+	if !ok || mon.IsStopped() {
+		timeout := time.Duration(event.Check.Config.Ttl) * time.Second
+		mon = e.MonitorFactory(entity, timeout, e, e)
+		e.monitors[entity.ID] = mon
+	}
+	e.mu.Unlock()
+
+	return mon.HandleUpdate(event)
+}
+
+// HandleUpdate updates the event in the store and sends it to the message bus.
+func (e *Eventd) HandleUpdate(event *types.Event) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
@@ -165,6 +201,13 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	}
 
 	return e.MessageBus.Publish(messaging.TopicEvent, event)
+}
+
+// HandleFailure ... what does this need to do right now? if the monitor
+// expires, create an event that the check failed...
+func (e *Eventd) HandleFailure(entity *types.Entity) error {
+	// create an event with failing status and publish it to the message bus
+	return nil
 }
 
 // Stop eventd.
