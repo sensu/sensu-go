@@ -3,6 +3,7 @@ package eventd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -55,8 +56,8 @@ func (e *Eventd) Start() error {
 	}
 
 	if e.MonitorFactory == nil {
-		e.MonitorFactory = func(entity *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
-			return monitor.New(entity, t, updateHandler, failureHandler)
+		e.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+			return monitor.New(entity, event, t, updateHandler, failureHandler)
 		}
 	}
 
@@ -140,24 +141,6 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	entity := event.Entity
-
-	// create a monitor for the event's entity if it doesn't exist in the
-	// monitor map
-	e.mu.Lock()
-	mon, ok = e.monitors[entity.ID]
-	if !ok || mon.IsStopped() {
-		timeout := time.Duration(event.Check.Config.Ttl) * time.Second
-		mon = e.MonitorFactory(entity, timeout, e, e)
-		e.monitors[entity.ID] = mon
-	}
-	e.mu.Unlock()
-
-	return mon.HandleUpdate(event)
-}
-
-// HandleUpdate updates the event in the store and sends it to the message bus.
-func (e *Eventd) HandleUpdate(event *types.Event) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
@@ -200,14 +183,77 @@ func (e *Eventd) HandleUpdate(event *types.Event) error {
 		return err
 	}
 
+	entity := event.Entity
+
+	if event.Check.Config.Ttl > 0 {
+		// create a monitor for the event's entity if it doesn't exist in the
+		// monitor map
+		// only monitor if there is a check TTL
+		e.mu.Lock()
+		mon, ok = e.monitors[entity.ID]
+		if !ok || mon.IsStopped() {
+			timeout := time.Duration(event.Check.Config.Ttl) * time.Second
+			mon = e.MonitorFactory(entity, event, timeout, e, e)
+			e.monitors[entity.ID] = mon
+		}
+		e.mu.Unlock()
+		return mon.HandleUpdate(event)
+	}
+
+	err = e.Store.UpdateEvent(ctx, event)
+	if err != nil {
+		return err
+	}
+
 	return e.MessageBus.Publish(messaging.TopicEvent, event)
 }
 
-// HandleFailure ... what does this need to do right now? if the monitor
-// expires, create an event that the check failed...
-func (e *Eventd) HandleFailure(entity *types.Entity) error {
-	// create an event with failing status and publish it to the message bus
-	return nil
+// HandleUpdate updates the event in the store and publishes it to TopicEvent.
+func (e *Eventd) HandleUpdate(event *types.Event) error {
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+
+	err := e.Store.UpdateEvent(ctx, event)
+	if err != nil {
+		return err
+	}
+
+	return e.MessageBus.Publish(messaging.TopicEvent, event)
+}
+
+// HandleFailure creates a check event with a warn status and publishes it to
+// TopicEvent.
+func (e *Eventd) HandleFailure(entity *types.Entity, event *types.Event) error {
+	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
+	ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
+
+	failedCheckEvent, err := e.createFailedCheckEvent(ctx, event)
+	if err != nil {
+		return err
+	}
+	err = e.Store.UpdateEvent(ctx, failedCheckEvent)
+	if err != nil {
+		return err
+	}
+
+	return e.MessageBus.Publish(messaging.TopicEvent, failedCheckEvent)
+}
+
+func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event) (*types.Event, error) {
+	lastCheckResult, err := e.Store.GetEventByEntityCheck(
+		ctx, event.Entity.ID, event.Check.Config.Name,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	output := fmt.Sprintf("Last check execution was %d seconds ago", time.Now().Unix()-lastCheckResult.Check.Executed)
+
+	lastCheckResult.Check.Output = output
+	lastCheckResult.Check.Status = 1
+	lastCheckResult.Timestamp = time.Now().Unix()
+
+	return lastCheckResult, nil
 }
 
 // Stop eventd.
@@ -228,4 +274,5 @@ func (e *Eventd) Status() error {
 // Err returns a channel to listen for terminal errors on.
 func (e *Eventd) Err() <-chan error {
 	return e.errChan
+
 }

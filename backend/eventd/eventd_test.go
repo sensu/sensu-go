@@ -26,12 +26,6 @@ func TestEventHandling(t *testing.T) {
 		HandlerCount: 5,
 	}
 
-	mon := &mockmonitor.MockMonitor{}
-	mon.On("HandleUpdate", mock.Anything).Return(errors.New("error handling update"))
-	e.MonitorFactory = func(*types.Entity, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
-		return mon
-	}
-
 	err := e.Start()
 	assert.NoError(t, err)
 
@@ -71,12 +65,13 @@ func TestEventHandling(t *testing.T) {
 	err = e.Stop()
 	assert.NoError(t, err)
 
-	mon.AssertCalled(t, "HandleUpdate", event)
+	mockStore.AssertCalled(t, "UpdateEvent", mock.AnythingOfType("*types.Event"))
 
+	// Make sure the event has been marked with the proper state
+	assert.Equal(t, types.EventPassingState, event.Check.State)
 }
 
-func TestEventUpdateHandler(t *testing.T) {
-
+func TestEventMonitor(t *testing.T) {
 	bus := &messaging.WizardBus{}
 	require.NoError(t, bus.Start())
 
@@ -87,7 +82,20 @@ func TestEventUpdateHandler(t *testing.T) {
 		HandlerCount: 5,
 	}
 
+	mon := &mockmonitor.MockMonitor{}
+	mon.On("HandleUpdate", mock.Anything).Return(errors.New("error handling update"))
+	e.MonitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
+		return mon
+	}
+
+	err := e.Start()
+	assert.NoError(t, err)
+
+	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
+
 	event := types.FixtureEvent("entity", "check")
+	event.Check.Config.Ttl = 90
+
 	var nilEvent *types.Event
 	// no previous event.
 	mockStore.On(
@@ -108,10 +116,12 @@ func TestEventUpdateHandler(t *testing.T) {
 		mock.Anything,
 	).Return([]*types.Silenced{}, nil)
 
-	if err := e.HandleUpdate(event); err != nil {
-		assert.FailNow(t, "Failed to update event")
-	}
+	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
+	err = e.Stop()
+	assert.NoError(t, err)
+
+	mon.AssertCalled(t, "HandleUpdate", event)
 	// Make sure the event has been marked with the proper state
 	assert.Equal(t, types.EventPassingState, event.Check.State)
 }
