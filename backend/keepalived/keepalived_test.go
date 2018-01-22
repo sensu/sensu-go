@@ -42,7 +42,7 @@ func (suite *KeepalivedTestSuite) SetupTest() {
 		MessageBus: suite.MessageBus,
 	}
 
-	keepalived.MonitorFactory = func(*types.Entity, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
+	keepalived.MonitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
 		mon := &mockmonitor.MockMonitor{}
 		mon.On("HandleUpdate", mock.Anything).Return(nil)
 		return mon
@@ -159,7 +159,7 @@ func (suite *KeepalivedTestSuite) TestEventProcessing() {
 	suite.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
 	mon := &mockmonitor.MockMonitor{}
 	mon.On("HandleUpdate", mock.Anything).Return(nil)
-	suite.Keepalived.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+	suite.Keepalived.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
 		return mon
 	}
 	suite.NoError(suite.Keepalived.Start())
