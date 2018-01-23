@@ -5,8 +5,9 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 )
 
@@ -60,7 +61,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 		return nil, err
 	}
 
-	st, err := e.NewStore()
+	st, err := etcdstore.NewStore(e)
 	if err != nil {
 		_ = e.Shutdown()
 		removeTmp()

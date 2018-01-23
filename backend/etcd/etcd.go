@@ -217,6 +217,11 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	return &Etcd{config, e, loopbackAddr}, nil
 }
 
+// Name returns the configured name for Etcd.
+func (e *Etcd) Name() string {
+	return e.cfg.Name
+}
+
 // Err returns the error channel for Etcd or nil if no etcd is started.
 func (e *Etcd) Err() <-chan error {
 	return e.etcd.Err()
