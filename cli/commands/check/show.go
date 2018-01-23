@@ -79,6 +79,10 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 				Value: strconv.FormatInt(int64(r.Timeout), 10),
 			},
 			{
+				Label: "TTL",
+				Value: strconv.FormatInt(int64(r.Ttl), 10),
+			},
+			{
 				Label: "Subscriptions",
 				Value: strings.Join(r.Subscriptions, ", "),
 			},
