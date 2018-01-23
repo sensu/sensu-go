@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -15,15 +16,15 @@ const (
 )
 
 var (
-	checkKeyBuilder = newKeyBuilder(checksPathPrefix)
+	checkKeyBuilder = store.NewKeyBuilder(checksPathPrefix)
 )
 
 func getCheckConfigPath(check *types.CheckConfig) string {
-	return checkKeyBuilder.withResource(check).build(check.Name)
+	return checkKeyBuilder.WithResource(check).Build(check.Name)
 }
 
 func getCheckConfigsPath(ctx context.Context, name string) string {
-	return checkKeyBuilder.withContext(ctx).build(name)
+	return checkKeyBuilder.WithContext(ctx).Build(name)
 }
 
 func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) error {

@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -16,7 +17,7 @@ const (
 )
 
 var (
-	eventKeyBuilder = newKeyBuilder(eventsPathPrefix)
+	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
 )
 
 func getEventPath(event *types.Event) string {
@@ -38,7 +39,7 @@ func getEventWithCheckPath(ctx context.Context, entity, check string) string {
 }
 
 func getEventsPath(ctx context.Context, entity string) string {
-	return eventKeyBuilder.withContext(ctx).build(entity)
+	return eventKeyBuilder.WithContext(ctx).Build(entity)
 }
 
 func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID string) error {

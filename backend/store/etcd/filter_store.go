@@ -7,20 +7,21 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 var (
 	eventFiltersPathPrefix = "event-filters"
-	eventFilterKeyBuilder  = newKeyBuilder(eventFiltersPathPrefix)
+	eventFilterKeyBuilder  = store.NewKeyBuilder(eventFiltersPathPrefix)
 )
 
 func getEventFilterPath(filter *types.EventFilter) string {
-	return eventFilterKeyBuilder.withResource(filter).build(filter.Name)
+	return eventFilterKeyBuilder.WithResource(filter).Build(filter.Name)
 }
 
 func getEventFiltersPath(ctx context.Context, name string) string {
-	return eventFilterKeyBuilder.withContext(ctx).build(name)
+	return eventFilterKeyBuilder.WithContext(ctx).Build(name)
 }
 
 func (s *etcdStore) DeleteEventFilterByName(ctx context.Context, name string) error {

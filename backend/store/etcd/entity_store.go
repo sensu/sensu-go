@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -15,15 +16,15 @@ const (
 )
 
 var (
-	entityKeyBuilder = newKeyBuilder(entityPathPrefix)
+	entityKeyBuilder = store.NewKeyBuilder(entityPathPrefix)
 )
 
 func getEntityPath(entity *types.Entity) string {
-	return entityKeyBuilder.withResource(entity).build(entity.ID)
+	return entityKeyBuilder.WithResource(entity).Build(entity.ID)
 }
 
 func getEntitiesPath(ctx context.Context, id string) string {
-	return entityKeyBuilder.withContext(ctx).build(id)
+	return entityKeyBuilder.WithContext(ctx).Build(id)
 }
 
 func (s *etcdStore) DeleteEntity(ctx context.Context, e *types.Entity) error {

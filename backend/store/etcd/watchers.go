@@ -33,7 +33,7 @@ func (s *etcdStore) GetCheckConfigWatcher(ctx context.Context) <-chan store.Watc
 
 	go func() {
 		watcher := clientv3.NewWatcher(s.client)
-		watcherChan := watcher.Watch(ctx, checkKeyBuilder.build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
+		watcherChan := watcher.Watch(ctx, checkKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
 		defer close(ch)
 
 		var (
@@ -76,7 +76,7 @@ func (s *etcdStore) GetAssetWatcher(ctx context.Context) <-chan store.WatchEvent
 
 	go func() {
 		watcher := clientv3.NewWatcher(s.client)
-		watcherChan := watcher.Watch(ctx, assetKeyBuilder.build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
+		watcherChan := watcher.Watch(ctx, assetKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
 		defer close(ch)
 
 		var (
@@ -119,7 +119,7 @@ func (s *etcdStore) GetHookConfigWatcher(ctx context.Context) <-chan store.Watch
 
 	go func() {
 		watcher := clientv3.NewWatcher(s.client)
-		watcherChan := watcher.Watch(ctx, hookKeyBuilder.build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
+		watcherChan := watcher.Watch(ctx, hookKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
 		defer close(ch)
 
 		var (
