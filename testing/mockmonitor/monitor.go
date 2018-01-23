@@ -28,7 +28,7 @@ func (m *MockMonitor) HandleUpdate(e *types.Event) error {
 }
 
 // HandleFailure ...
-func (m *MockMonitor) HandleFailure(e *types.Entity) error {
-	args := m.Called(e)
+func (m *MockMonitor) HandleFailure(entity *types.Entity, event *types.Event) error {
+	args := m.Called(entity, event)
 	return args.Error(0)
 }

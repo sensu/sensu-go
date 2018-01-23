@@ -19,7 +19,7 @@ func (handler *testHandler) HandleUpdate(event *types.Event) error {
 	return errors.New("test update handler error")
 }
 
-func (handler *testHandler) HandleFailure(entity *types.Entity) error {
+func (handler *testHandler) HandleFailure(entity *types.Entity, event *types.Event) error {
 	if entity.ID == "entity" {
 		return nil
 	}
@@ -60,7 +60,7 @@ func TestMonitorHandleUpdate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			monitor := New(tc.entity, (60 * time.Second), tc.handler, tc.handler)
+			monitor := New(tc.entity, nil, (60 * time.Second), tc.handler, tc.handler)
 
 			assert.EqualValues(tc.expectedErr, monitor.HandleUpdate(tc.event))
 		})
@@ -93,9 +93,9 @@ func TestMonitorHandleFailure(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			monitor := New(tc.entity, (60 * time.Second), tc.handler, tc.handler)
+			monitor := New(tc.entity, nil, (60 * time.Second), tc.handler, tc.handler)
 
-			assert.EqualValues(tc.expectedErr, monitor.HandleFailure(tc.entity))
+			assert.EqualValues(tc.expectedErr, monitor.HandleFailure(tc.entity, nil))
 		})
 	}
 
@@ -107,7 +107,7 @@ func TestMonitorStartStop(t *testing.T) {
 	entity := types.FixtureEntity("entity")
 
 	handler := &testHandler{}
-	monitor := New(entity, (60 * time.Second), handler, handler)
+	monitor := New(entity, nil, (60 * time.Second), handler, handler)
 	assert.Equal((60 * time.Second), monitor.Timeout)
 	assert.False(monitor.IsStopped(), "IsStopped returns false if stopped")
 	monitor.Stop()
@@ -126,7 +126,7 @@ func TestMonitorReset(t *testing.T) {
 
 	handler := &testHandler{}
 
-	monitor := New(entity, (60 * time.Second), handler, handler)
+	monitor := New(entity, nil, (60 * time.Second), handler, handler)
 	monitor.reset(0)
 	time.Sleep(100 * time.Millisecond)
 	assert.False(monitor.IsStopped())

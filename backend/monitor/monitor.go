@@ -11,15 +11,20 @@ import (
 type Interface interface {
 	Stop()
 	IsStopped() bool
-	HandleUpdate(e *types.Event) error
-	HandleFailure(e *types.Entity) error
+	HandleUpdate(event *types.Event) error
+	HandleFailure(entity *types.Entity, event *types.Event) error
 }
+
+// FactoryFunc takes an entity and returns a Monitor interface so the
+// monitor can be mocked.
+type FactoryFunc func(*types.Entity, *types.Event, time.Duration, UpdateHandler, FailureHandler) Interface
 
 // Monitor is a managed timer that is reset whenever the monitor observes a
 // Keepalive or Check Result Ttl event via the Update() function. Once the timer
 // has been stopped, it cannot be started or used again.
 type Monitor struct {
 	Entity         *types.Entity
+	Event          *types.Event
 	Timeout        time.Duration
 	FailureHandler FailureHandler
 	UpdateHandler  UpdateHandler
@@ -37,7 +42,7 @@ type UpdateHandler interface {
 
 // FailureHandler provides a failure handler.
 type FailureHandler interface {
-	HandleFailure(e *types.Entity) error
+	HandleFailure(entity *types.Entity, event *types.Event) error
 }
 
 // HandleUpdate causes the Monitor to observe the event. If the monitor has
@@ -58,10 +63,10 @@ func (m *Monitor) HandleUpdate(event *types.Event) error {
 
 // HandleFailure flips the monitor's status to failing and handles the failing
 // entity.
-func (m *Monitor) HandleFailure(entity *types.Entity) error {
+func (m *Monitor) HandleFailure(entity *types.Entity, event *types.Event) error {
 	defer m.Stop()
 	atomic.CompareAndSwapInt32(&m.failing, 0, 1)
-	return m.FailureHandler.HandleFailure(entity)
+	return m.FailureHandler.HandleFailure(entity, event)
 }
 
 // start initializes the monitor and starts its monitoring goroutine.
@@ -95,7 +100,7 @@ func (m *Monitor) start() {
 				}
 
 			case <-timer.C:
-				_ = m.HandleFailure(m.Entity)
+				_ = m.HandleFailure(m.Entity, m.Event)
 				timer.Reset(timerDuration)
 			}
 
@@ -135,9 +140,10 @@ func (m *Monitor) reset(t time.Duration) {
 }
 
 // New creates a new monitor from an entity, time duration, and handlers.
-func New(e *types.Entity, t time.Duration, updateHandler UpdateHandler, failureHandler FailureHandler) *Monitor {
+func New(entity *types.Entity, event *types.Event, t time.Duration, updateHandler UpdateHandler, failureHandler FailureHandler) *Monitor {
 	monitor := &Monitor{
-		Entity:         e,
+		Entity:         entity,
+		Event:          event,
 		Timeout:        t,
 		FailureHandler: failureHandler,
 		UpdateHandler:  updateHandler,

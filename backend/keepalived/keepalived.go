@@ -38,10 +38,6 @@ const (
 	RegistrationHandlerName = "registration"
 )
 
-// MonitorFactoryFunc takes an entity and returns a Monitor interface so the
-// monitor can be mocked.
-type MonitorFactoryFunc func(*types.Entity, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface
-
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
@@ -49,7 +45,7 @@ type Keepalived struct {
 	HandlerCount          int
 	Store                 store.Store
 	DeregistrationHandler string
-	MonitorFactory        MonitorFactoryFunc
+	MonitorFactory        monitor.FactoryFunc
 
 	mu            *sync.Mutex
 	monitors      map[string]monitor.Interface
@@ -70,8 +66,8 @@ func (k *Keepalived) Start() error {
 	}
 
 	if k.MonitorFactory == nil {
-		k.MonitorFactory = func(e *types.Entity, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
-			return monitor.New(e, t, updateHandler, failureHandler)
+		k.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+			return monitor.New(entity, event, t, updateHandler, failureHandler)
 		}
 	}
 
@@ -155,7 +151,7 @@ func (k *Keepalived) initFromStore() error {
 		if d < 0 {
 			d = 0
 		}
-		monitor := k.MonitorFactory(event.Entity, d, k, k)
+		monitor := k.MonitorFactory(event.Entity, nil, d, k, k)
 		k.monitors[keepalive.EntityID] = monitor
 	}
 
@@ -207,7 +203,7 @@ func (k *Keepalived) processKeepalives() {
 		// create an entity monitor if it doesn't exist in the monitor map
 		if !ok || mon.IsStopped() {
 			timeout := time.Duration(entity.KeepaliveTimeout) * time.Second
-			mon = k.MonitorFactory(entity, timeout, k, k)
+			mon = k.MonitorFactory(entity, nil, timeout, k, k)
 			k.monitors[entity.ID] = mon
 		}
 		k.mu.Unlock()
@@ -319,25 +315,25 @@ func (k *Keepalived) HandleUpdate(e *types.Event) error {
 
 // HandleFailure checks if the entity should be deregistered, and emits a
 // keepalive event if the entity is still valid.
-func (k *Keepalived) HandleFailure(e *types.Entity) error {
-	ctx := types.SetContextFromResource(context.Background(), e)
+func (k *Keepalived) HandleFailure(entity *types.Entity, event *types.Event) error {
+	ctx := types.SetContextFromResource(context.Background(), entity)
 
 	deregisterer := &Deregistration{
 		Store:      k.Store,
 		MessageBus: k.MessageBus,
 	}
 	// if the entity is supposed to be deregistered, do so.
-	if e.Deregister {
-		return deregisterer.Deregister(e)
+	if entity.Deregister {
+		return deregisterer.Deregister(entity)
 	}
 
 	// this is a real keepalive event, emit it.
-	event := createKeepaliveEvent(e)
+	event = createKeepaliveEvent(entity)
 	event.Check.Status = 1
 	if err := k.MessageBus.Publish(messaging.TopicEventRaw, event); err != nil {
 		return err
 	}
 
-	timeout := time.Now().Unix() + int64(e.KeepaliveTimeout)
-	return k.Store.UpdateFailingKeepalive(ctx, e, timeout)
+	timeout := time.Now().Unix() + int64(entity.KeepaliveTimeout)
+	return k.Store.UpdateFailingKeepalive(ctx, entity, timeout)
 }
