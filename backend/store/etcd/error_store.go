@@ -37,7 +37,7 @@ func errPathFromEntity(ns store.Namespace, entity string) string {
 
 // DeleteError deletes an error using the given entity, check and timestamp,
 // within the organization and environment stored in ctx.
-func (s *etcdStore) DeleteError(
+func (s *Store) DeleteError(
 	ctx context.Context,
 	entity string,
 	check string,
@@ -58,7 +58,7 @@ func (s *etcdStore) DeleteError(
 
 // DeleteErrorsByEntity deletes all errors associated with the given entity,
 // within the organization and environment stored in ctx.
-func (s *etcdStore) DeleteErrorsByEntity(
+func (s *Store) DeleteErrorsByEntity(
 	ctx context.Context,
 	entity string,
 ) error {
@@ -77,7 +77,7 @@ func (s *etcdStore) DeleteErrorsByEntity(
 
 // DeleteErrorsByEntityCheck deletes all errors associated with the given
 // entity and check within the organization and environment stored in ctx.
-func (s *etcdStore) DeleteErrorsByEntityCheck(
+func (s *Store) DeleteErrorsByEntityCheck(
 	ctx context.Context,
 	entity string,
 	check string,
@@ -97,7 +97,7 @@ func (s *etcdStore) DeleteErrorsByEntityCheck(
 
 // GetError returns error associated with given entity, check and timestamp,
 // in the given ctx's organization and environment.
-func (s *etcdStore) GetError(
+func (s *Store) GetError(
 	ctx context.Context,
 	entity string,
 	check string,
@@ -131,7 +131,7 @@ func (s *etcdStore) GetError(
 
 // GetErrors returns all errors in the given ctx's organization and
 // environment.
-func (s *etcdStore) GetErrors(ctx context.Context) ([]*types.Error, error) {
+func (s *Store) GetErrors(ctx context.Context) ([]*types.Error, error) {
 
 	// Build key
 	ns := store.NewNamespaceFromContext(ctx)
@@ -152,14 +152,14 @@ func (s *etcdStore) GetErrors(ctx context.Context) ([]*types.Error, error) {
 // GetErrorsByEntity returns all errors for the given entity within the ctx's
 // organization and environment. A nil slice with no error is returned if none
 // were found.
-func (s *etcdStore) GetErrorsByEntity(ctx context.Context, entity string) ([]*types.Error, error) {
+func (s *Store) GetErrorsByEntity(ctx context.Context, entity string) ([]*types.Error, error) {
 	return s.GetErrorsByEntityCheck(ctx, entity, "")
 }
 
-// GetErrorByEntityCheck returns an error using the given entity and check,
+// GetErrorsByEntityCheck returns an error using the given entity and check,
 // within the organization and environment stored in ctx. The resulting error
 // is nil if none was found.
-func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check string) ([]*types.Error, error) {
+func (s *Store) GetErrorsByEntityCheck(ctx context.Context, entity, check string) ([]*types.Error, error) {
 	if entity == "" {
 		return nil, errors.New("must specify entity id")
 	}
@@ -180,7 +180,7 @@ func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check st
 }
 
 // CreateError creates or updates a given error.
-func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
+func (s *Store) CreateError(ctx context.Context, perr *types.Error) error {
 	// Obtain new lease
 	lease, err := s.client.Grant(ctx, errorsKeyTTL)
 	if err != nil {

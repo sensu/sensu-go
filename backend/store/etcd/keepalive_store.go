@@ -18,12 +18,14 @@ func getKeepalivePath(keepalivesPath string, entity *types.Entity) string {
 	return path.Join(keepalivesPath, entity.Organization, entity.Environment, entity.ID)
 }
 
-func (s *etcdStore) DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error {
+// DeleteFailingKeepalive deletes a failing KeepaliveRecord.
+func (s *Store) DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error {
 	_, err := s.client.Delete(ctx, getKeepalivePath(s.keepalivesPath, entity))
 	return err
 }
 
-func (s *etcdStore) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error) {
+// GetFailingKeepalives gets all of the failing KeepaliveRecords.
+func (s *Store) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error) {
 	resp, err := s.client.Get(ctx, s.keepalivesPath, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
@@ -46,7 +48,8 @@ func (s *etcdStore) GetFailingKeepalives(ctx context.Context) ([]*types.Keepaliv
 	return keepalives, nil
 }
 
-func (s *etcdStore) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity, expiration int64) error {
+// UpdateFailingKeepalive updates a failing KeepaliveRecord.
+func (s *Store) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity, expiration int64) error {
 	kr := types.NewKeepaliveRecord(entity, expiration)
 	krBytes, err := json.Marshal(kr)
 	if err != nil {

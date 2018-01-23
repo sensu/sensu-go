@@ -23,7 +23,7 @@ type StoreInitializer struct {
 }
 
 // NewInitializer returns a new store initializer
-func (store *etcdStore) NewInitializer() (store.Initializer, error) {
+func (store *Store) NewInitializer() (store.Initializer, error) {
 	client := store.client
 	session, err := concurrency.NewSession(client) // TODO: move session into etcdStore?
 	if err != nil {

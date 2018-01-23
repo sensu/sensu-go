@@ -14,7 +14,8 @@ func getTokenPath(subject, id string) string {
 	return fmt.Sprintf("%s/tokens/%s/%s", EtcdRoot, subject, id)
 }
 
-func (s *etcdStore) CreateToken(claims *types.Claims) error {
+// CreateToken creates a Claims.
+func (s *Store) CreateToken(claims *types.Claims) error {
 	bytes, err := json.Marshal(claims)
 	if err != nil {
 		return err
@@ -26,7 +27,7 @@ func (s *etcdStore) CreateToken(claims *types.Claims) error {
 
 // DeleteTokens deletes multiples tokens, belonging to the same subject, with
 // a transaction
-func (s *etcdStore) DeleteTokens(subject string, ids []string) error {
+func (s *Store) DeleteTokens(subject string, ids []string) error {
 	if subject == "" || len(ids) == 0 {
 		return errors.New("must specify token subject and at least one ID")
 	}
@@ -48,7 +49,8 @@ func (s *etcdStore) DeleteTokens(subject string, ids []string) error {
 	return nil
 }
 
-func (s *etcdStore) GetToken(subject, id string) (*types.Claims, error) {
+// GetToken gets a Claims.
+func (s *Store) GetToken(subject, id string) (*types.Claims, error) {
 	resp, err := s.kvc.Get(context.TODO(), getTokenPath(subject, id), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err

@@ -29,8 +29,8 @@ func getSilencedPath(ctx context.Context, name string) string {
 	return silencedKeyBuilder.WithContext(ctx).Build(name)
 }
 
-// Delete a silenced entry by its id (subscription + checkname)
-func (s *etcdStore) DeleteSilencedEntryByID(ctx context.Context, silencedID string) error {
+// DeleteSilencedEntryByID a silenced entry by its id (subscription + checkname)
+func (s *Store) DeleteSilencedEntryByID(ctx context.Context, silencedID string) error {
 	if silencedID == "" {
 		return errors.New("must specify id")
 	}
@@ -39,8 +39,8 @@ func (s *etcdStore) DeleteSilencedEntryByID(ctx context.Context, silencedID stri
 	return err
 }
 
-// Get all silenced entries
-func (s *etcdStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
+// GetSilencedEntries gets all silenced entries.
+func (s *Store) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
 	resp, err := query(ctx, s, getSilencedPath)
 	if err != nil {
 		return nil, err
@@ -52,8 +52,8 @@ func (s *etcdStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, 
 	return silencedArray, nil
 }
 
-// Get silenced entries by subscription
-func (s *etcdStore) GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error) {
+// GetSilencedEntriesBySubscription gets all silenced entries that match a subscription.
+func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error) {
 	if subscription == "" {
 		return nil, errors.New("must specify subscription")
 	}
@@ -69,8 +69,8 @@ func (s *etcdStore) GetSilencedEntriesBySubscription(ctx context.Context, subscr
 	return silencedArray, nil
 }
 
-// Get silenced entries by checkname
-func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*types.Silenced, error) {
+// GetSilencedEntriesByCheckName gets all silenced entries that match a check name.
+func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*types.Silenced, error) {
 	if checkName == "" {
 		return nil, errors.New("must specify check name")
 	}
@@ -96,8 +96,8 @@ func (s *etcdStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName
 	return silencedArray, nil
 }
 
-// Get silenced entry by id
-func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error) {
+// GetSilencedEntryByID gets a silenced entry by id.
+func (s *Store) GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error) {
 	if id == "" {
 		return nil, errors.New("must specify id")
 	}
@@ -117,8 +117,8 @@ func (s *etcdStore) GetSilencedEntryByID(ctx context.Context, id string) (*types
 	return silencedArray[0], nil
 }
 
-// Create new silenced entry
-func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Silenced) error {
+// UpdateSilencedEntry updates a Silenced.
+func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silenced) error {
 	if err := silenced.Validate(); err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (s *etcdStore) UpdateSilencedEntry(ctx context.Context, silenced *types.Sil
 
 // arraySilencedEntries is a helper function to unmarshal entries from json and return
 // them as an array
-func (s *etcdStore) arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
+func (s *Store) arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
 	if len(resp.Kvs) == 0 {
 		return []*types.Silenced{}, nil
 	}

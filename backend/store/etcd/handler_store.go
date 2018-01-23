@@ -24,7 +24,8 @@ func getHandlersPath(ctx context.Context, name string) string {
 	return handlerKeyBuilder.WithContext(ctx).Build(name)
 }
 
-func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error {
+// DeleteHandlerByName deletes a Handler by name.
+func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name of handler")
 	}
@@ -35,7 +36,7 @@ func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error 
 
 // GetHandlers gets the list of handlers for an (optional) organization. Passing
 // the empty string as the org will return all handlers.
-func (s *etcdStore) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
+func (s *Store) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
 	resp, err := query(ctx, s, getHandlersPath)
 	if err != nil {
 		return nil, err
@@ -57,7 +58,8 @@ func (s *etcdStore) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
 	return handlersArray, nil
 }
 
-func (s *etcdStore) GetHandlerByName(ctx context.Context, name string) (*types.Handler, error) {
+// GetHandlerByName gets a Handler by name.
+func (s *Store) GetHandlerByName(ctx context.Context, name string) (*types.Handler, error) {
 	if name == "" {
 		return nil, errors.New("must specify name of handler")
 	}
@@ -79,7 +81,8 @@ func (s *etcdStore) GetHandlerByName(ctx context.Context, name string) (*types.H
 	return handler, nil
 }
 
-func (s *etcdStore) UpdateHandler(ctx context.Context, handler *types.Handler) error {
+// UpdateHandler updates a Handler.
+func (s *Store) UpdateHandler(ctx context.Context, handler *types.Handler) error {
 	if err := handler.Validate(); err != nil {
 		return err
 	}

@@ -12,7 +12,7 @@ import (
 
 func TestQuery(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		etcd := store.(*etcdStore)
+		etcd := store.(*Store)
 
 		// Create a new org "acme" and its environments "default" & "dev"
 		require.NoError(t, store.UpdateOrganization(context.Background(), types.FixtureOrganization("acme")))
