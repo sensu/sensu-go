@@ -17,6 +17,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 and times of the week.
 - New gRPC inspired GraphQL implementation. See
 [graphql/README](backend/apid/graphql/README.md) for usage.
+- Support for TTLs in check configs to monitor stale check results.
 
 ### Changed
 - Moved monitor code out of keepalived and into its own package
