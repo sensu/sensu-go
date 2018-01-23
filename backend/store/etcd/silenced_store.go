@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -16,7 +17,7 @@ const (
 )
 
 var (
-	silencedKeyBuilder = newKeyBuilder(silencedPathPrefix)
+	silencedKeyBuilder = store.NewKeyBuilder(silencedPathPrefix)
 )
 
 // Unknown subscriptions or checkNames are
@@ -25,7 +26,7 @@ var (
 
 // populates type keyBuilder with org and env info, returns a prefix
 func getSilencedPath(ctx context.Context, name string) string {
-	return silencedKeyBuilder.withContext(ctx).build(name)
+	return silencedKeyBuilder.WithContext(ctx).Build(name)
 }
 
 // Delete a silenced entry by its id (subscription + checkname)

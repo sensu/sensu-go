@@ -20,7 +20,7 @@ and times of the week.
 
 ### Changed
 - Moved monitor code out of keepalived and into its own package
->>>>>>> origin/master
+- Moved KeyBuilder from etcd package to store package.
 
 ## [2.0.0-alpha.13] - 2018-01-16
 ### Added

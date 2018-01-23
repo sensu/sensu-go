@@ -7,20 +7,21 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 var (
 	mutatorsPathPrefix = "mutators"
-	mutatorKeyBuilder  = newKeyBuilder(mutatorsPathPrefix)
+	mutatorKeyBuilder  = store.NewKeyBuilder(mutatorsPathPrefix)
 )
 
 func getMutatorPath(mutator *types.Mutator) string {
-	return mutatorKeyBuilder.withResource(mutator).build(mutator.Name)
+	return mutatorKeyBuilder.WithResource(mutator).Build(mutator.Name)
 }
 
 func getMutatorsPath(ctx context.Context, name string) string {
-	return mutatorKeyBuilder.withContext(ctx).build(name)
+	return mutatorKeyBuilder.WithContext(ctx).Build(name)
 }
 
 func (s *etcdStore) DeleteMutatorByName(ctx context.Context, name string) error {

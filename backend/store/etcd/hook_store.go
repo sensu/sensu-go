@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -15,15 +16,15 @@ const (
 )
 
 var (
-	hookKeyBuilder = newKeyBuilder(hooksPathPrefix)
+	hookKeyBuilder = store.NewKeyBuilder(hooksPathPrefix)
 )
 
 func getHookConfigPath(hook *types.HookConfig) string {
-	return hookKeyBuilder.withResource(hook).build(hook.Name)
+	return hookKeyBuilder.WithResource(hook).Build(hook.Name)
 }
 
 func getHookConfigsPath(ctx context.Context, name string) string {
-	return hookKeyBuilder.withContext(ctx).build(name)
+	return hookKeyBuilder.WithContext(ctx).Build(name)
 }
 
 func (s *etcdStore) DeleteHookConfigByName(ctx context.Context, name string) error {

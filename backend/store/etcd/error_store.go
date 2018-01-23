@@ -8,6 +8,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -17,21 +18,21 @@ const (
 )
 
 var (
-	errorsKeyBuilder = newKeyBuilder(errorsPathPrefix)
+	errorsKeyBuilder = store.NewKeyBuilder(errorsPathPrefix)
 )
 
-func errPathFromAllUniqueFields(ns namespace, entity, check, ts string) string {
-	builder := errorsKeyBuilder.withNamespace(ns)
-	return builder.build(entity, "check", check, ts)
+func errPathFromAllUniqueFields(ns store.Namespace, entity, check, ts string) string {
+	builder := errorsKeyBuilder.WithNamespace(ns)
+	return builder.Build(entity, "check", check, ts)
 }
 
-func errPathFromCheck(ns namespace, entity, check string) string {
+func errPathFromCheck(ns store.Namespace, entity, check string) string {
 	return errPathFromAllUniqueFields(ns, entity, check, "")
 }
 
-func errPathFromEntity(ns namespace, entity string) string {
-	builder := errorsKeyBuilder.withNamespace(ns)
-	return builder.buildPrefix(entity)
+func errPathFromEntity(ns store.Namespace, entity string) string {
+	builder := errorsKeyBuilder.WithNamespace(ns)
+	return builder.BuildPrefix(entity)
 }
 
 // DeleteError deletes an error using the given entity, check and timestamp,
@@ -47,7 +48,7 @@ func (s *etcdStore) DeleteError(
 	}
 
 	// Build key
-	ns := newNamespaceFromContext(ctx)
+	ns := store.NewNamespaceFromContext(ctx)
 	key := errPathFromAllUniqueFields(ns, entity, check, timestamp)
 
 	// Delete
@@ -66,7 +67,7 @@ func (s *etcdStore) DeleteErrorsByEntity(
 	}
 
 	// Build key
-	ns := newNamespaceFromContext(ctx)
+	ns := store.NewNamespaceFromContext(ctx)
 	key := errPathFromEntity(ns, entity)
 
 	// Delete
@@ -86,7 +87,7 @@ func (s *etcdStore) DeleteErrorsByEntityCheck(
 	}
 
 	// Build key
-	ns := newNamespaceFromContext(ctx)
+	ns := store.NewNamespaceFromContext(ctx)
 	key := errPathFromCheck(ns, entity, check)
 
 	// Delete
@@ -103,7 +104,7 @@ func (s *etcdStore) GetError(
 	timestamp string,
 ) (*types.Error, error) {
 	// Build key
-	ns := newNamespaceFromContext(ctx)
+	ns := store.NewNamespaceFromContext(ctx)
 	key := errPathFromAllUniqueFields(ns, entity, check, timestamp)
 
 	// Validate arguments
@@ -133,8 +134,8 @@ func (s *etcdStore) GetError(
 func (s *etcdStore) GetErrors(ctx context.Context) ([]*types.Error, error) {
 
 	// Build key
-	ns := newNamespaceFromContext(ctx)
-	key := errorsKeyBuilder.withNamespace(ns).buildPrefix()
+	ns := store.NewNamespaceFromContext(ctx)
+	key := errorsKeyBuilder.WithNamespace(ns).BuildPrefix()
 
 	// Fetch
 	resp, err := s.kvc.Get(ctx, key, clientv3.WithPrefix())
@@ -164,7 +165,7 @@ func (s *etcdStore) GetErrorsByEntityCheck(ctx context.Context, entity, check st
 	}
 
 	// Build key
-	ns := newNamespaceFromContext(ctx)
+	ns := store.NewNamespaceFromContext(ctx)
 	key := errPathFromCheck(ns, entity, check)
 
 	// Fetch
@@ -193,7 +194,7 @@ func (s *etcdStore) CreateError(ctx context.Context, perr *types.Error) error {
 	}
 
 	// Build key
-	key := errorsKeyBuilder.withContext(ctx).build(
+	key := errorsKeyBuilder.WithContext(ctx).Build(
 		perr.Event.Entity.ID,
 		"check", // Eventually will need a conditional when metrics are implemented
 		perr.Event.Check.Config.Name,
@@ -251,7 +252,7 @@ func permitAllErrorRecords(_ *types.Error) bool {
 // shouldRejectError configures a predicate to be used when rejecting error
 // entries. If entity argument is an empty string it will not reject based on
 // the error's entity; same rule applies for check argument.
-func shouldRejectError(ns namespace, entity string, check string) rejectErrorFn {
+func shouldRejectError(ns store.Namespace, entity string, check string) rejectErrorFn {
 	rejectWhereEnvDoesNotMatch := rejectByEnvironment(ns)
 	rejectWhereEntityDoesNotMatch := permitAllErrorRecords
 	rejectWhereCheckDoesNotMatch := permitAllErrorRecords

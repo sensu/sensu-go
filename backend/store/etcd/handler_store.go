@@ -7,20 +7,21 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 var (
 	handlersPathPrefix = "handlers"
-	handlerKeyBuilder  = newKeyBuilder(handlersPathPrefix)
+	handlerKeyBuilder  = store.NewKeyBuilder(handlersPathPrefix)
 )
 
 func getHandlerPath(handler *types.Handler) string {
-	return handlerKeyBuilder.withResource(handler).build(handler.Name)
+	return handlerKeyBuilder.WithResource(handler).Build(handler.Name)
 }
 
 func getHandlersPath(ctx context.Context, name string) string {
-	return handlerKeyBuilder.withContext(ctx).build(name)
+	return handlerKeyBuilder.WithContext(ctx).Build(name)
 }
 
 func (s *etcdStore) DeleteHandlerByName(ctx context.Context, name string) error {

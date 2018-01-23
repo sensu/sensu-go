@@ -8,16 +8,17 @@ import (
 
 	v3 "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 var (
 	environmentsPathPrefix = "environments"
-	environmentKeyBuilder  = newKeyBuilder(environmentsPathPrefix)
+	environmentKeyBuilder  = store.NewKeyBuilder(environmentsPathPrefix)
 )
 
 func getEnvironmentsPath(org, env string) string {
-	return environmentKeyBuilder.withOrg(org).build(env)
+	return environmentKeyBuilder.WithOrg(org).Build(env)
 }
 
 // DeleteEnvironment deletes an environment
@@ -33,11 +34,11 @@ func (s *etcdStore) DeleteEnvironment(ctx context.Context, env *types.Environmen
 
 	// Validate whether there are any resources referencing the organization
 	getresp, err := s.kvc.Txn(ctx).Then(
-		v3.OpGet(checkKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(entityKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(assetKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(handlerKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(mutatorKeyBuilder.withContext(ctx).build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(checkKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(entityKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(assetKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(handlerKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+		v3.OpGet(mutatorKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 	).Commit()
 	if err != nil {
 		return err

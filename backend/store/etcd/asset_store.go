@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -15,17 +16,17 @@ const (
 )
 
 var (
-	assetKeyBuilder = newKeyBuilder(assetsPathPrefix)
+	assetKeyBuilder = store.NewKeyBuilder(assetsPathPrefix)
 )
 
 func getAssetPath(asset *types.Asset) string {
-	return assetKeyBuilder.withResource(asset).build(asset.Name)
+	return assetKeyBuilder.WithResource(asset).Build(asset.Name)
 }
 
 func getAssetsPath(ctx context.Context, name string) string {
 	org := organization(ctx)
 
-	return assetKeyBuilder.withOrg(org).build(name)
+	return assetKeyBuilder.WithOrg(org).Build(name)
 }
 
 // TODO Cleanup associated checks?
