@@ -152,8 +152,6 @@ func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
 		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
-		fmt.Printf("REQUEST: %s/%s\n", request.Config.Name, request.Config.ProxyEntityID)
-		fmt.Printf("TOPIC: %s\n", topic)
 		if pubErr := execPtr.Bus.Publish(topic, request); err != nil {
 			logger.Info("error publishing check request: ", err.Error())
 			err = pubErr
@@ -274,7 +272,9 @@ func (execPtr *CheckExecutor) PublishProxyCheckRequests(entities []*types.Entity
 
 	for _, entity := range entities {
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
-		execPtr.PublishProxyCheckRequest(entity, check)
+		if err := execPtr.PublishProxyCheckRequest(entity, check); err != nil {
+			return err
+		}
 	}
 	return nil
 }
