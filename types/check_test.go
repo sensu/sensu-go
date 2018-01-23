@@ -114,3 +114,31 @@ func TestExtendedAttributes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 42.0, v)
 }
+
+func TestProxyRequestsValidate(t *testing.T) {
+	var p ProxyRequests
+
+	// Invalid splay coverage
+	p.SplayCoverage = 150
+	assert.Error(t, p.Validate())
+	p.SplayCoverage = 0
+
+	// Invalid splay and splay coverage
+	p.Splay = true
+	assert.Error(t, p.Validate())
+	p.SplayCoverage = 90
+
+	// Valid proxy request
+	assert.NoError(t, p.Validate())
+}
+
+func TestFixtureProxyRequests(t *testing.T) {
+	p := FixtureProxyRequests(true)
+
+	assert.Equal(t, true, p.Splay)
+	assert.Equal(t, uint32(90), p.SplayCoverage)
+	assert.NoError(t, p.Validate())
+
+	p.SplayCoverage = 0
+	assert.Error(t, p.Validate())
+}

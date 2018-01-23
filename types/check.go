@@ -13,6 +13,9 @@ import (
 // CheckRequestType is the message type string for check request.
 const CheckRequestType = "check_request"
 
+// DefaultSplayCoverage is the default splay coverage for proxy check requests
+const DefaultSplayCoverage = 90.0
+
 // Validate returns an error if the check does not pass validation tests.
 func (c *Check) Validate() error {
 	if config := c.Config; config != nil {
@@ -115,7 +118,26 @@ func (c *CheckConfig) Validate() error {
 		}
 	}
 
+	if c.ProxyRequests != nil {
+		if err := c.ProxyRequests.Validate(); err != nil {
+			return err
+		}
+	}
+
 	return c.Subdue.Validate()
+}
+
+// Validate returns an error if the ProxyRequests does not pass validation tests
+func (p *ProxyRequests) Validate() error {
+	if (p.SplayCoverage < 0) || (p.SplayCoverage > 100) {
+		return errors.New("proxy request splay coverage must be between 0 and 100")
+	}
+
+	if (p.Splay) && (p.SplayCoverage == 0) {
+		return errors.New("proxy request splay coverage must be greater than 0 if splay is enabled")
+	}
+
+	return nil
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
@@ -205,5 +227,17 @@ func FixtureCheck(id string) *Check {
 		Duration: 1.0,
 		History:  history,
 		Config:   config,
+	}
+}
+
+// FixtureProxyRequests returns a fixture for a ProxyRequests object.
+func FixtureProxyRequests(splay bool) *ProxyRequests {
+	splayCoverage := uint32(0)
+	if splay {
+		splayCoverage = DefaultSplayCoverage
+	}
+	return &ProxyRequests{
+		Splay:         splay,
+		SplayCoverage: splayCoverage,
 	}
 }
