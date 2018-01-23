@@ -9,10 +9,10 @@ import (
 	"text/template"
 )
 
-// tokenSubstitution evaluates the input template, that possibly contains
+// TokenSubstitution evaluates the input template, that possibly contains
 // tokens, with the provided data object and returns a slice of bytes
 // representing the result along with any error encountered
-func tokenSubstitution(data, input interface{}) ([]byte, error) {
+func TokenSubstitution(data, input interface{}) ([]byte, error) {
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal the provided template: %s", err.Error())
