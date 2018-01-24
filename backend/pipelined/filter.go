@@ -7,29 +7,18 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/types"
-
-	"github.com/sensu/govaluate"
+	"github.com/sensu/sensu-go/util/eval"
 )
 
 func evaluateEventFilterStatement(event *types.Event, statement string) bool {
-	expr, err := govaluate.NewEvaluableExpression(statement)
+	parameters := map[string]interface{}{"event": event}
+	result, err := eval.Evaluate(statement, parameters)
 	if err != nil {
-		logger.WithError(err).Error("failed to parse filter statement: ", statement)
+		logger.WithError(err).Errorf("statement '%s' is invalid", statement)
 		return false
 	}
 
-	result, err := expr.Evaluate(map[string]interface{}{"event": event})
-	if err != nil {
-		logger.WithError(err).Error("failed to evaluate statement: ", statement)
-		return false
-	}
-
-	match, ok := result.(bool)
-	if !ok {
-		logger.WithField("filter", statement).Error("filters must evaluate to boolean values")
-	}
-
-	return match
+	return result
 }
 
 // Returns true if the event should be filtered.

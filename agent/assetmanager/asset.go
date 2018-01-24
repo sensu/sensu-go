@@ -3,7 +3,6 @@ package assetmanager
 import (
 	"crypto/sha512"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,11 +11,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sensu/govaluate"
 	"github.com/cenkalti/backoff"
 	"github.com/mholt/archiver"
 	"github.com/nightlyone/lockfile"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/eval"
 	filetype "gopkg.in/h2non/filetype.v1"
 )
 
@@ -45,16 +44,12 @@ func (d *RuntimeAsset) isRelevantTo(entity types.Entity) (bool, error) {
 	params["entity"] = entity
 
 	for _, filter := range d.asset.Filters {
-		exp, err := govaluate.NewEvaluableExpression(filter)
+		result, err := eval.Evaluate(filter, params)
 		if err != nil {
 			return false, err
 		}
 
-		if res, err := exp.Evaluate(params); err != nil {
-			return false, err
-		} else if resBool, ok := res.(bool); !ok {
-			return false, errors.New("expression result was non-boolean value")
-		} else if !resBool {
+		if !result {
 			return false, nil
 		}
 	}
