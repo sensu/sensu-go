@@ -33,6 +33,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	// Custom
 	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
 	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
+	routes.path("{id}/execute", r.adhocRequest).Methods(http.MethodPost)
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
@@ -87,5 +88,12 @@ func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	err := r.controller.RemoveCheckHook(req.Context(), params["id"], params["type"], params["hook"])
+	return nil, err
+}
+
+func (r *ChecksRouter) adhocRequest(req *http.Request) (interface{}, error) {
+	params := mux.Vars(req)
+	err := r.controller.QueueAdhocRequest(req.Context(), params["id"])
+	// returns json with {"issued":<timestamp>}
 	return nil, err
 }

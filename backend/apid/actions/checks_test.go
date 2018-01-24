@@ -493,3 +493,6 @@ func TestCheckDestroy(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckAdhoc(t *testing.T) {
+}

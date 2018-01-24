@@ -2,6 +2,8 @@ package actions
 
 import (
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -28,17 +30,24 @@ var checkConfigUpdateFields = []string{
 	"ProxyRequests",
 }
 
+type CheckQueue interface {
+}
+
 // CheckController exposes actions in which a viewer can perform.
 type CheckController struct {
-	Store  store.CheckConfigStore
-	Policy authorization.CheckPolicy
+	Store      store.CheckConfigStore
+	Policy     authorization.CheckPolicy
+	checkQueue *queue.Queue
 }
 
 // NewCheckController returns new CheckController
 func NewCheckController(store store.CheckConfigStore) CheckController {
+	etcd := *etcd.Etcd
+	client, err := etcd.Etcd.NewClient()
 	return CheckController{
-		Store:  store,
-		Policy: authorization.Checks,
+		Store:      store,
+		Policy:     authorization.Checks,
+		checkQueue: queue.New("adhocChecks", client),
 	}
 }
 
@@ -270,4 +279,16 @@ func (a CheckController) findAndUpdateCheckConfig(
 
 	// Update
 	return a.updateCheckConfig(ctx, check)
+}
+
+// QueueAdhocRequest takes a check request and adds it to the queue for
+// processing.
+func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, subscriptions string) error {
+	// get the check from the store
+	// verify that the user has permissions to read those checks
+	// if there are subscriptions, update the check with the provided subscriptions;
+	// otherwise, use what the check already has
+	// finally, add the check to the queue
+	checkConfig, err := a.Find(ctx, name)
+	return err
 }
