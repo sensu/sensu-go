@@ -152,6 +152,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "ttl",
 			Prompt: &survey.Input{
 				Message: "TTL:",
+				Help:    "Time to live in seconds for which a check result is valid",
 				Default: opts.TTL,
 			},
 		},
