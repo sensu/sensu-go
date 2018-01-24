@@ -6,6 +6,11 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Add function for matching entities to a proxy check request.
+
+### Changed
+- Govaluate logic is now wrapped in the `util/eval` package.
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
@@ -20,10 +25,9 @@ and times of the week.
 - New gRPC inspired GraphQL implementation. See
 [graphql/README](backend/apid/graphql/README.md) for usage.
 - Support for TTLs in check configs to monitor stale check results.
-- Add function for matching entities to a proxy check request.
 
 ### Changed
-- Moved monitor code out of keepalived and into its own package
+- Moved monitor code out of keepalived and into its own package.
 - Moved KeyBuilder from etcd package to store package.
 
 ## [2.0.0-alpha.13] - 2018-01-16
