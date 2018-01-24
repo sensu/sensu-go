@@ -139,20 +139,20 @@ type CheckExecutor struct {
 }
 
 // Execute queues reqest on message bus
-func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
+func (e *CheckExecutor) Execute(check *types.CheckConfig) error {
 	// Ensure the check is configured to publish check requests
 	if !check.Publish {
 		return nil
 	}
 
 	var err error
-	request := execPtr.BuildRequest(check)
+	request := e.BuildRequest(check)
 
 	for _, sub := range check.Subscriptions {
 		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
-		if pubErr := execPtr.Bus.Publish(topic, request); err != nil {
+		if pubErr := e.Bus.Publish(topic, request); err != nil {
 			logger.Info("error publishing check request: ", err.Error())
 			err = pubErr
 		}
@@ -162,7 +162,7 @@ func (execPtr *CheckExecutor) Execute(check *types.CheckConfig) error {
 }
 
 // BuildRequest given check config fetches associated assets and builds request
-func (execPtr *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.CheckRequest {
+func (e *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.CheckRequest {
 	request := &types.CheckRequest{}
 	request.Config = check
 
@@ -170,7 +170,7 @@ func (execPtr *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.Chec
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
 		// Explode assets; get assets & filter out those that are irrelevant
-		allAssets := execPtr.State.GetAssetsInOrg(check.Organization)
+		allAssets := e.State.GetAssetsInOrg(check.Organization)
 		for _, asset := range allAssets {
 			if assetIsRelevant(asset, check) {
 				request.Assets = append(request.Assets, *asset)
@@ -182,7 +182,7 @@ func (execPtr *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.Chec
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		allHooks := execPtr.State.GetHooksInOrg(check.Organization)
+		allHooks := e.State.GetHooksInOrg(check.Organization)
 		for _, hook := range allHooks {
 			if hookIsRelevant(hook, check) {
 				request.Hooks = append(request.Hooks, *hook)
@@ -219,7 +219,7 @@ func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
 // method substitutes entity tokens in the check definition prior to publishling
 // the check request. If there are unmatched entity tokens, it returns an error,
 // and a check request is not published.
-func (execPtr *CheckExecutor) PublishProxyCheckRequest(entity *types.Entity, check *types.CheckConfig) error {
+func (e *CheckExecutor) PublishProxyCheckRequest(entity *types.Entity, check *types.CheckConfig) error {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity, err := dynamic.Synthesize(entity)
@@ -242,7 +242,7 @@ func (execPtr *CheckExecutor) PublishProxyCheckRequest(entity *types.Entity, che
 	}
 
 	check.ProxyEntityID = entity.ID
-	return execPtr.Execute(check)
+	return e.Execute(check)
 }
 
 // PublishProxyCheckRequests publishes proxy check requests for one or more
@@ -252,29 +252,39 @@ func (execPtr *CheckExecutor) PublishProxyCheckRequest(entity *types.Entity, che
 // 54s, leaving 6s for the last proxy check execution before the the next round
 // of proxy check requests for the same check. The PublishProxyCheckRequest
 // method is used to publish the proxy check requests.
-func (execPtr *CheckExecutor) PublishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
+func (e *CheckExecutor) PublishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
 	var err error
 	splay := float64(0)
 	numEntities := float64(len(entities))
 	if check.ProxyRequests.Splay {
-		next := time.Duration(time.Second * time.Duration(check.Interval))
-		if check.Cron != "" {
-			if next, err = NextCronTime(check.Cron); err != nil {
-				return err
-			}
+		if splay, err = calculateSplayInterval(check, numEntities); err != nil {
+			return err
 		}
-		splayCoverage := float64(check.ProxyRequests.SplayCoverage)
-		if splayCoverage == 0 {
-			splayCoverage = types.DefaultSplayCoverage
-		}
-		splay = next.Seconds() * (splayCoverage / 100.0) / numEntities
 	}
 
 	for _, entity := range entities {
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
-		if err := execPtr.PublishProxyCheckRequest(entity, check); err != nil {
+		if err := e.PublishProxyCheckRequest(entity, check); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// calculateSplayInterval calculates how many seconds between publishing proxy
+// requests to each individual entity (based on a configurable splay %)
+func calculateSplayInterval(check *types.CheckConfig, numEntities float64) (float64, error) {
+	var err error
+	next := time.Duration(time.Second * time.Duration(check.Interval))
+	if check.Cron != "" {
+		if next, err = NextCronTime(time.Now(), check.Cron); err != nil {
+			return 0, err
+		}
+	}
+	splayCoverage := float64(check.ProxyRequests.SplayCoverage)
+	if splayCoverage == 0 {
+		splayCoverage = types.DefaultSplayCoverage
+	}
+	splay := next.Seconds() * (splayCoverage / 100.0) / numEntities
+	return splay, nil
 }

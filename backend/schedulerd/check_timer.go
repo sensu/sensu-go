@@ -82,7 +82,7 @@ type CronTimer struct {
 
 // NewCronTimer establishes new check timer given a name & an initial interval
 func NewCronTimer(name string, cronStr string) *CronTimer {
-	diff, err := NextCronTime(cronStr)
+	diff, err := NextCronTime(time.Now(), cronStr)
 	// we shouldn't hit this error because we've already validated the cron string
 	// but log and exit cleanly to revert to the interval timer
 	if err != nil {
@@ -100,7 +100,7 @@ func (timerPtr *CronTimer) C() <-chan time.Time {
 
 // SetDuration updates the interval in which timers are set
 func (timerPtr *CronTimer) SetDuration(cronStr string, interval uint) {
-	diff, err := NextCronTime(cronStr)
+	diff, err := NextCronTime(time.Now(), cronStr)
 	// we shouldn't hit this error because we've already validated the cron string
 	// but log and exit cleanly to revert to the interval timer
 	if err != nil {
@@ -127,14 +127,13 @@ func (timerPtr *CronTimer) Stop() bool {
 
 // NextCronTime calculates how much time is between the current time and the
 // time indidcated by the cron string
-func NextCronTime(cronStr string) (time.Duration, error) {
+func NextCronTime(now time.Time, cronStr string) (time.Duration, error) {
 	schedule, err := cron.ParseStandard(cronStr)
 	if err != nil {
 		return 0, err
 	}
-	nowTime := time.Now()
-	nextTime := schedule.Next(nowTime)
-	diff := nextTime.Sub(nowTime)
+	nextTime := schedule.Next(now)
+	diff := nextTime.Sub(now)
 
 	return diff, nil
 }
