@@ -25,6 +25,7 @@ var checkConfigUpdateFields = []string{
 	"Cron",
 	"Timeout",
 	"Ttl",
+	"ProxyRequests",
 }
 
 // CheckController exposes actions in which a viewer can perform.

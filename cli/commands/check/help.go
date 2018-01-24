@@ -22,6 +22,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		AddCheckHookCommand(cli),
 		RemoveCheckHookCommand(cli),
 		SubdueCommand(cli),
+		SetProxyRequestsCommand(cli),
 	)
 
 	return cmd
