@@ -102,7 +102,7 @@ func TestMatchEntities(t *testing.T) {
 				return
 			}
 
-			for i, _ := range tc.want {
+			for i := range tc.want {
 				if !reflect.DeepEqual(got[i], tc.want[i]) {
 					t.Errorf("MatchEntities() = %v, want %v", got, tc.want)
 					return
