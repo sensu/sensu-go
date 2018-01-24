@@ -19,7 +19,7 @@ func getRolePath(name string) string {
 }
 
 // GetRoles ...
-func (s *etcdStore) GetRoles(ctx context.Context) ([]*types.Role, error) {
+func (s *Store) GetRoles(ctx context.Context) ([]*types.Role, error) {
 	resp, err := s.kvc.Get(ctx, getRolePath(""), clientv3.WithPrefix())
 	if err != nil {
 		return []*types.Role{}, err
@@ -29,7 +29,7 @@ func (s *etcdStore) GetRoles(ctx context.Context) ([]*types.Role, error) {
 }
 
 // GetRoleByName ...
-func (s *etcdStore) GetRoleByName(ctx context.Context, name string) (*types.Role, error) {
+func (s *Store) GetRoleByName(ctx context.Context, name string) (*types.Role, error) {
 	resp, err := s.kvc.Get(ctx, getRolePath(name), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (s *etcdStore) GetRoleByName(ctx context.Context, name string) (*types.Role
 }
 
 // UpdateRole ...
-func (s *etcdStore) UpdateRole(ctx context.Context, role *types.Role) error {
+func (s *Store) UpdateRole(ctx context.Context, role *types.Role) error {
 	if err := role.Validate(); err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (s *etcdStore) UpdateRole(ctx context.Context, role *types.Role) error {
 }
 
 // DeleteRoleByName ...
-func (s *etcdStore) DeleteRoleByName(ctx context.Context, name string) error {
+func (s *Store) DeleteRoleByName(ctx context.Context, name string) error {
 	_, err := s.kvc.Delete(ctx, getRolePath(name))
 	return err
 }

@@ -27,7 +27,8 @@ func getEntitiesPath(ctx context.Context, id string) string {
 	return entityKeyBuilder.WithContext(ctx).Build(id)
 }
 
-func (s *etcdStore) DeleteEntity(ctx context.Context, e *types.Entity) error {
+// DeleteEntity deletes an Entity.
+func (s *Store) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}
@@ -35,7 +36,8 @@ func (s *etcdStore) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	return err
 }
 
-func (s *etcdStore) DeleteEntityByID(ctx context.Context, id string) error {
+// DeleteEntityByID deletes an Entity by its ID.
+func (s *Store) DeleteEntityByID(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("must specify id")
 	}
@@ -44,7 +46,8 @@ func (s *etcdStore) DeleteEntityByID(ctx context.Context, id string) error {
 	return err
 }
 
-func (s *etcdStore) GetEntityByID(ctx context.Context, id string) (*types.Entity, error) {
+// GetEntityByID gets an Entity by ID.
+func (s *Store) GetEntityByID(ctx context.Context, id string) (*types.Entity, error) {
 	if id == "" {
 		return nil, errors.New("must specify id")
 	}
@@ -66,7 +69,7 @@ func (s *etcdStore) GetEntityByID(ctx context.Context, id string) (*types.Entity
 
 // GetEntities takes an optional org argument, an empty string will return
 // all entities.
-func (s *etcdStore) GetEntities(ctx context.Context) ([]*types.Entity, error) {
+func (s *Store) GetEntities(ctx context.Context) ([]*types.Entity, error) {
 	resp, err := query(ctx, s, getEntitiesPath)
 	if err != nil {
 		return nil, err
@@ -88,7 +91,8 @@ func (s *etcdStore) GetEntities(ctx context.Context) ([]*types.Entity, error) {
 	return earr, nil
 }
 
-func (s *etcdStore) UpdateEntity(ctx context.Context, e *types.Entity) error {
+// UpdateEntity updates an Entity.
+func (s *Store) UpdateEntity(ctx context.Context, e *types.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}

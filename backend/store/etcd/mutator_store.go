@@ -24,7 +24,8 @@ func getMutatorsPath(ctx context.Context, name string) string {
 	return mutatorKeyBuilder.WithContext(ctx).Build(name)
 }
 
-func (s *etcdStore) DeleteMutatorByName(ctx context.Context, name string) error {
+// DeleteMutatorByName deletes a Mutator by name.
+func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name of mutator")
 	}
@@ -33,9 +34,9 @@ func (s *etcdStore) DeleteMutatorByName(ctx context.Context, name string) error 
 	return err
 }
 
-// Mutators gets the list of mutators for an (optional) organization. If org is
+// GetMutators gets the list of mutators for an (optional) organization. If org is
 // the empty string, GetMutators returns all mutators for all orgs.
-func (s *etcdStore) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
+func (s *Store) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
 	resp, err := query(ctx, s, getMutatorsPath)
 	if err != nil {
 		return nil, err
@@ -57,7 +58,8 @@ func (s *etcdStore) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
 	return mutatorsArray, nil
 }
 
-func (s *etcdStore) GetMutatorByName(ctx context.Context, name string) (*types.Mutator, error) {
+// GetMutatorByName gets a Mutator by name.
+func (s *Store) GetMutatorByName(ctx context.Context, name string) (*types.Mutator, error) {
 	if name == "" {
 		return nil, errors.New("must specify name of mutator")
 	}
@@ -79,7 +81,8 @@ func (s *etcdStore) GetMutatorByName(ctx context.Context, name string) (*types.M
 	return mutator, nil
 }
 
-func (s *etcdStore) UpdateMutator(ctx context.Context, mutator *types.Mutator) error {
+// UpdateMutator updates a Mutator.
+func (s *Store) UpdateMutator(ctx context.Context, mutator *types.Mutator) error {
 	if err := mutator.Validate(); err != nil {
 		return err
 	}

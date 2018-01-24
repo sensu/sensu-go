@@ -27,7 +27,8 @@ func getCheckConfigsPath(ctx context.Context, name string) string {
 	return checkKeyBuilder.WithContext(ctx).Build(name)
 }
 
-func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) error {
+// DeleteCheckConfigByName deletes a CheckConfig by name.
+func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name")
 	}
@@ -38,7 +39,7 @@ func (s *etcdStore) DeleteCheckConfigByName(ctx context.Context, name string) er
 
 // GetCheckConfigs returns check configurations for an (optional) organization.
 // If org is the empty string, it returns all check configs.
-func (s *etcdStore) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
+func (s *Store) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
 	resp, err := query(ctx, s, getCheckConfigsPath)
 	if err != nil {
 		return nil, err
@@ -60,7 +61,8 @@ func (s *etcdStore) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, 
 	return checksArray, nil
 }
 
-func (s *etcdStore) GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error) {
+// GetCheckConfigByName gets a CheckConfig by name.
+func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error) {
 	if name == "" {
 		return nil, errors.New("must specify name")
 	}
@@ -82,7 +84,8 @@ func (s *etcdStore) GetCheckConfigByName(ctx context.Context, name string) (*typ
 	return check, nil
 }
 
-func (s *etcdStore) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
+// UpdateCheckConfig updates a CheckConfig.
+func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
 	if err := check.Validate(); err != nil {
 		return err
 	}

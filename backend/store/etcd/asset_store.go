@@ -29,8 +29,8 @@ func getAssetsPath(ctx context.Context, name string) string {
 	return assetKeyBuilder.WithOrg(org).Build(name)
 }
 
-// TODO Cleanup associated checks?
-func (s *etcdStore) DeleteAssetByName(ctx context.Context, name string) error {
+// DeleteAssetByName deletes an asset by name.
+func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name")
 	}
@@ -40,7 +40,7 @@ func (s *etcdStore) DeleteAssetByName(ctx context.Context, name string) error {
 }
 
 // GetAssets fetches all assets from the store
-func (s *etcdStore) GetAssets(ctx context.Context) ([]*types.Asset, error) {
+func (s *Store) GetAssets(ctx context.Context) ([]*types.Asset, error) {
 	resp, err := query(ctx, s, getAssetsPath)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,8 @@ func (s *etcdStore) GetAssets(ctx context.Context) ([]*types.Asset, error) {
 	return assetArray, nil
 }
 
-func (s *etcdStore) GetAssetByName(ctx context.Context, name string) (*types.Asset, error) {
+// GetAssetByName gets an Asset by name.
+func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, error) {
 	if name == "" {
 		return nil, errors.New("must specify organization and name")
 	}
@@ -84,7 +85,8 @@ func (s *etcdStore) GetAssetByName(ctx context.Context, name string) (*types.Ass
 	return asset, nil
 }
 
-func (s *etcdStore) UpdateAsset(ctx context.Context, asset *types.Asset) error {
+// UpdateAsset updates an asset.
+func (s *Store) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 	if err := asset.Validate(); err != nil {
 		return err
 	}

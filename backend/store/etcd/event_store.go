@@ -42,7 +42,8 @@ func getEventsPath(ctx context.Context, entity string) string {
 	return eventKeyBuilder.WithContext(ctx).Build(entity)
 }
 
-func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID string) error {
+// DeleteEventByEntityCheck deletes an event by entity ID and check ID.
+func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID string) error {
 	if entityID == "" || checkID == "" {
 		return errors.New("must specify entity and check id")
 	}
@@ -53,7 +54,7 @@ func (s *etcdStore) DeleteEventByEntityCheck(ctx context.Context, entityID, chec
 
 // GetEvents returns the events for an (optional) organization. If org is the
 // empty string, GetEvents returns all events for all orgs.
-func (s *etcdStore) GetEvents(ctx context.Context) ([]*types.Event, error) {
+func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 	resp, err := query(ctx, s, getEventsPath)
 	if err != nil {
 		return nil, err
@@ -89,7 +90,8 @@ func (s *etcdStore) GetEvents(ctx context.Context) ([]*types.Event, error) {
 	return eventsArray, nil
 }
 
-func (s *etcdStore) GetEventsByEntity(ctx context.Context, entityID string) ([]*types.Event, error) {
+// GetEventsByEntity gets all events matching a given entity ID.
+func (s *Store) GetEventsByEntity(ctx context.Context, entityID string) ([]*types.Event, error) {
 	if entityID == "" {
 		return nil, errors.New("must specify entity id")
 	}
@@ -116,7 +118,8 @@ func (s *etcdStore) GetEventsByEntity(ctx context.Context, entityID string) ([]*
 	return eventsArray, nil
 }
 
-func (s *etcdStore) GetEventByEntityCheck(ctx context.Context, entityID, checkID string) (*types.Event, error) {
+// GetEventByEntityCheck gets an event by entity and check ID.
+func (s *Store) GetEventByEntityCheck(ctx context.Context, entityID, checkID string) (*types.Event, error) {
 	if entityID == "" || checkID == "" {
 		return nil, errors.New("must specify entity and check id")
 	}
@@ -138,7 +141,8 @@ func (s *etcdStore) GetEventByEntityCheck(ctx context.Context, entityID, checkID
 	return event, nil
 }
 
-func (s *etcdStore) UpdateEvent(ctx context.Context, event *types.Event) error {
+// UpdateEvent updates an event.
+func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 	if event.Check == nil {
 		return errors.New("event has no check")
 	}

@@ -15,7 +15,8 @@ func getUserPath(id string) string {
 	return fmt.Sprintf("%s/users/%s", EtcdRoot, id)
 }
 
-func (s *etcdStore) AuthenticateUser(ctx context.Context, username, password string) (*types.User, error) {
+// AuthenticateUser authenticates a User by username and password.
+func (s *Store) AuthenticateUser(ctx context.Context, username, password string) (*types.User, error) {
 	user, err := s.GetUser(ctx, username)
 	if user == nil {
 		return nil, fmt.Errorf("User %s does not exist", username)
@@ -36,7 +37,7 @@ func (s *etcdStore) AuthenticateUser(ctx context.Context, username, password str
 }
 
 // CreateUser creates a new user
-func (s *etcdStore) CreateUser(u *types.User) error {
+func (s *Store) CreateUser(u *types.User) error {
 	// Hash the password
 	hash, err := hashPassword(u.Password)
 	if err != nil {
@@ -65,10 +66,11 @@ func (s *etcdStore) CreateUser(u *types.User) error {
 	return nil
 }
 
+// DeleteUser deletes a User.
 // NOTE:
 // Store probably shouldn't be responsible for deleting the token;
 // business logic.
-func (s *etcdStore) DeleteUser(ctx context.Context, user *types.User) error {
+func (s *Store) DeleteUser(ctx context.Context, user *types.User) error {
 	// Mark it as disabled
 	user.Disabled = true
 
@@ -106,7 +108,8 @@ func (s *etcdStore) DeleteUser(ctx context.Context, user *types.User) error {
 	return nil
 }
 
-func (s *etcdStore) GetUser(ctx context.Context, username string) (*types.User, error) {
+// GetUser gets a User.
+func (s *Store) GetUser(ctx context.Context, username string) (*types.User, error) {
 	resp, err := s.kvc.Get(ctx, getUserPath(username), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
@@ -125,7 +128,7 @@ func (s *etcdStore) GetUser(ctx context.Context, username string) (*types.User, 
 }
 
 // GetUsers retrieves all enabled users
-func (s *etcdStore) GetUsers() ([]*types.User, error) {
+func (s *Store) GetUsers() ([]*types.User, error) {
 	allUsers, err := s.GetAllUsers()
 	if err != nil {
 		return allUsers, err
@@ -143,7 +146,7 @@ func (s *etcdStore) GetUsers() ([]*types.User, error) {
 }
 
 // GetAllUsers retrieves all users
-func (s *etcdStore) GetAllUsers() ([]*types.User, error) {
+func (s *Store) GetAllUsers() ([]*types.User, error) {
 	resp, err := s.kvc.Get(context.TODO(), getUserPath(""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
@@ -166,7 +169,8 @@ func (s *etcdStore) GetAllUsers() ([]*types.User, error) {
 	return usersArray, nil
 }
 
-func (s *etcdStore) UpdateUser(u *types.User) error {
+// UpdateUser updates a User.
+func (s *Store) UpdateUser(u *types.User) error {
 	// Hash the password
 	hash, err := hashPassword(u.Password)
 	if err != nil {
