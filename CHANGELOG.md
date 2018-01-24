@@ -20,6 +20,7 @@ and times of the week.
 - New gRPC inspired GraphQL implementation. See
 [graphql/README](backend/apid/graphql/README.md) for usage.
 - Support for TTLs in check configs to monitor stale check results.
+- Add function for matching entities to a proxy check request.
 
 ### Changed
 - Moved monitor code out of keepalived and into its own package
