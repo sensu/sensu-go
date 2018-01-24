@@ -8,6 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - Added functions for publishing proxy check requests.
+- Added proxy request validation.
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
