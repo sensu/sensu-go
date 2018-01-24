@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -11,10 +12,10 @@ import (
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
-	e, cleanup := NewTestEtcd(t)
+	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	s, err := e.NewStore()
+	s, err := NewStore(e)
 	assert.NoError(t, err)
 	if err != nil {
 		assert.FailNow(t, "failed to get store from etcd")

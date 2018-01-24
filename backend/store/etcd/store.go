@@ -4,6 +4,7 @@ import (
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/etcd"
 )
 
 const (
@@ -15,13 +16,13 @@ const (
 type Store struct {
 	client *clientv3.Client
 	kvc    clientv3.KV
-	etcd   *Etcd
+	etcd   *etcd.Etcd
 
 	keepalivesPath string
 }
 
 // NewStore creates a new Store.
-func (e *Etcd) NewStore() (*Store, error) {
+func NewStore(e *etcd.Etcd) (*Store, error) {
 	c, err := e.NewClient()
 	if err != nil {
 		return nil, err
@@ -33,6 +34,6 @@ func (e *Etcd) NewStore() (*Store, error) {
 		kvc:    clientv3.NewKV(c),
 	}
 
-	store.keepalivesPath = path.Join(EtcdRoot, keepalivesPathPrefix, store.etcd.cfg.Name)
+	store.keepalivesPath = path.Join(EtcdRoot, keepalivesPathPrefix, store.etcd.Name())
 	return store, nil
 }

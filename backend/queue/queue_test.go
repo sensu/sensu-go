@@ -2,12 +2,11 @@ package queue
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -111,7 +110,6 @@ func TestDequeueParallel(t *testing.T) {
 		go func() {
 			value, err := queue.Dequeue(context.Background())
 			require.NoError(t, err)
-			fmt.Printf("value: %q\n", value)
 			mu.Lock()
 			results[value] = struct{}{}
 			mu.Unlock()
