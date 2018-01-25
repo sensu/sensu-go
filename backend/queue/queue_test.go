@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -24,7 +25,7 @@ func TestEnqueue(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestDequeue(t *testing.T) {
+func TestDequeueSingleItem(t *testing.T) {
 	t.Parallel()
 
 	e, cleanup := etcd.NewTestEtcd(t)
@@ -38,7 +39,7 @@ func TestDequeue(t *testing.T) {
 
 	value, err := queue.Dequeue(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "test value", value)
+	require.Equal(t, "test value", value.Value())
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -66,7 +67,7 @@ func TestDequeueFIFO(t *testing.T) {
 	for range items {
 		value, err := queue.Dequeue(context.Background())
 		require.NoError(t, err)
-		result = append(result, value)
+		result = append(result, value.Value())
 	}
 
 	require.Equal(t, items, result)
@@ -110,8 +111,9 @@ func TestDequeueParallel(t *testing.T) {
 		go func() {
 			value, err := queue.Dequeue(context.Background())
 			require.NoError(t, err)
+			fmt.Println(value)
 			mu.Lock()
-			results[value] = struct{}{}
+			results[value.Value()] = struct{}{}
 			mu.Unlock()
 			wg.Done()
 		}()
