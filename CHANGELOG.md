@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Govaluate logic is now wrapped in the `util/eval` package.
 - Added functions for publishing proxy check requests.
 - Added proxy request validation.
+- CLI functionality for proxy check requests (add set-proxy-requests command).
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
