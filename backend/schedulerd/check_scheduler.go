@@ -182,7 +182,7 @@ func (e *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.CheckReque
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		allHooks := e.State.GetHooksInOrg(check.Organization)
+		allHooks := e.State.GetHooksInOrgEnv(check.Organization, check.Environment)
 		for _, hook := range allHooks {
 			if hookIsRelevant(hook, check) {
 				request.Hooks = append(request.Hooks, *hook)

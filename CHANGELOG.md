@@ -15,6 +15,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
 
+### Fixed
+- Fixed a bug where retrieving check hooks were only from the check's
+organization, rather than the check's environment, too.
+
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
 - Add `Timeout` field to CheckConfig.
