@@ -82,6 +82,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "Name")      // heading
 	assert.Contains(out, "Command")   // heading
 	assert.Contains(out, "Assets")    // heading
+	assert.Contains(out, "TTL")       // heading
 	assert.Contains(out, "name-one")  // check name
 	assert.Contains(out, "asset-one") // asset name
 	assert.Contains(out, "60")        // interval

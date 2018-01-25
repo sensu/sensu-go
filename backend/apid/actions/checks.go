@@ -24,6 +24,8 @@ var checkConfigUpdateFields = []string{
 	"Subdue",
 	"Cron",
 	"Timeout",
+	"Ttl",
+	"ProxyRequests",
 }
 
 // CheckController exposes actions in which a viewer can perform.

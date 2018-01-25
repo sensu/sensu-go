@@ -84,6 +84,14 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "TTL",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				ttl := strconv.FormatUint(uint64(check.Ttl), 10)
+				return ttl
+			},
+		},
+		{
 			Title: "Subscriptions",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)

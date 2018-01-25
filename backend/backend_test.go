@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"

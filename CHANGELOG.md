@@ -6,6 +6,19 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Add function for matching entities to a proxy check request.
+- Added functions for publishing proxy check requests.
+- Added proxy request validation.
+- CLI functionality for proxy check requests (add set-proxy-requests command).
+- Entities have been added to the state manager and synchronizer.
+
+### Changed
+- Govaluate logic is now wrapped in the `util/eval` package.
+
+### Fixed
+- Fixed a bug where retrieving check hooks were only from the check's
+organization, rather than the check's environment, too.
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
@@ -22,7 +35,7 @@ and times of the week.
 - Support for TTLs in check configs to monitor stale check results.
 
 ### Changed
-- Moved monitor code out of keepalived and into its own package
+- Moved monitor code out of keepalived and into its own package.
 - Moved KeyBuilder from etcd package to store package.
 
 ## [2.0.0-alpha.13] - 2018-01-16
