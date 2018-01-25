@@ -4,7 +4,7 @@ import (
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/etcd"
 )
 
 const (
@@ -13,27 +13,27 @@ const (
 )
 
 // Store is an implementation of the sensu-go/backend/store.Store iface.
-type etcdStore struct {
+type Store struct {
 	client *clientv3.Client
 	kvc    clientv3.KV
-	etcd   *Etcd
+	etcd   *etcd.Etcd
 
 	keepalivesPath string
 }
 
-// NewStore ...
-func (e *Etcd) NewStore() (store.Store, error) {
+// NewStore creates a new Store.
+func NewStore(e *etcd.Etcd) (*Store, error) {
 	c, err := e.NewClient()
 	if err != nil {
 		return nil, err
 	}
 
-	store := &etcdStore{
+	store := &Store{
 		etcd:   e,
 		client: c,
 		kvc:    clientv3.NewKV(c),
 	}
 
-	store.keepalivesPath = path.Join(EtcdRoot, keepalivesPathPrefix, store.etcd.cfg.Name)
+	store.keepalivesPath = path.Join(EtcdRoot, keepalivesPathPrefix, store.etcd.Name())
 	return store, nil
 }

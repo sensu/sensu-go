@@ -143,7 +143,7 @@ func (a *Agent) prepareCheck(check *types.CheckConfig) bool {
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	checkBytes, err := tokenSubstitution(synthesizedEntity, check)
+	checkBytes, err := TokenSubstitution(synthesizedEntity, check)
 	if err != nil {
 		a.sendFailure(event, err)
 		return false

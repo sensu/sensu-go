@@ -27,7 +27,8 @@ func getHookConfigsPath(ctx context.Context, name string) string {
 	return hookKeyBuilder.WithContext(ctx).Build(name)
 }
 
-func (s *etcdStore) DeleteHookConfigByName(ctx context.Context, name string) error {
+// DeleteHookConfigByName deletes a HookConfig by name.
+func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name")
 	}
@@ -38,7 +39,7 @@ func (s *etcdStore) DeleteHookConfigByName(ctx context.Context, name string) err
 
 // GetHookConfigs returns hook configurations for an (optional) organization.
 // If org is the empty string, it returns all hook configs.
-func (s *etcdStore) GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error) {
+func (s *Store) GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error) {
 	resp, err := query(ctx, s, getHookConfigsPath)
 	if err != nil {
 		return nil, err
@@ -60,7 +61,8 @@ func (s *etcdStore) GetHookConfigs(ctx context.Context) ([]*types.HookConfig, er
 	return hooksArray, nil
 }
 
-func (s *etcdStore) GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error) {
+// GetHookConfigByName gets a HookConfig by name.
+func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error) {
 	if name == "" {
 		return nil, errors.New("must specify name")
 	}
@@ -82,7 +84,8 @@ func (s *etcdStore) GetHookConfigByName(ctx context.Context, name string) (*type
 	return hook, nil
 }
 
-func (s *etcdStore) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) error {
+// UpdateHookConfig updates a HookConfig.
+func (s *Store) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) error {
 	if err := hook.Validate(); err != nil {
 		return err
 	}

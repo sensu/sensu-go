@@ -101,7 +101,7 @@ func (a *Agent) prepareHook(hookConfig *types.HookConfig) bool {
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	hookConfigBytes, err := tokenSubstitution(synthesizedEntity, hookConfig)
+	hookConfigBytes, err := TokenSubstitution(synthesizedEntity, hookConfig)
 	if err != nil {
 		a.sendFailure(event, err)
 		return false

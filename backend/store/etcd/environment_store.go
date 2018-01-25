@@ -22,7 +22,7 @@ func getEnvironmentsPath(org, env string) string {
 }
 
 // DeleteEnvironment deletes an environment
-func (s *etcdStore) DeleteEnvironment(ctx context.Context, env *types.Environment) error {
+func (s *Store) DeleteEnvironment(ctx context.Context, env *types.Environment) error {
 	if err := env.Validate(); err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (s *etcdStore) DeleteEnvironment(ctx context.Context, env *types.Environmen
 }
 
 // GetEnvironment returns a single environment
-func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types.Environment, error) {
+func (s *Store) GetEnvironment(ctx context.Context, org, env string) (*types.Environment, error) {
 	resp, err := s.kvc.Get(
 		ctx,
 		getEnvironmentsPath(org, env),
@@ -98,8 +98,8 @@ func (s *etcdStore) GetEnvironment(ctx context.Context, org, env string) (*types
 	return envs[0], nil
 }
 
-// GetOrganizations returns all organizations
-func (s *etcdStore) GetEnvironments(ctx context.Context, org string) ([]*types.Environment, error) {
+// GetEnvironments returns all Environments.
+func (s *Store) GetEnvironments(ctx context.Context, org string) ([]*types.Environment, error) {
 	// Support "*" as a wildcard
 	if org == "*" {
 		org = ""
@@ -115,7 +115,7 @@ func (s *etcdStore) GetEnvironments(ctx context.Context, org string) ([]*types.E
 }
 
 // UpdateEnvironment updates an environment
-func (s *etcdStore) UpdateEnvironment(ctx context.Context, env *types.Environment) error {
+func (s *Store) UpdateEnvironment(ctx context.Context, env *types.Environment) error {
 	if err := env.Validate(); err != nil {
 		return err
 	}

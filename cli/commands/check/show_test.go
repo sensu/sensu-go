@@ -67,6 +67,12 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "Name")
 	assert.Contains(out, "Interval")
 	assert.Contains(out, "Command")
+	assert.Contains(out, "Cron")
+	assert.Contains(out, "Timeout")
+	assert.Contains(out, "TTL")
+	assert.Contains(out, "Subscriptions")
+	assert.Contains(out, "Handlers")
+	assert.Contains(out, "Runtime Assets")
 	assert.Contains(out, "Hooks")
 }
 

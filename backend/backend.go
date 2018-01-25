@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -18,7 +19,7 @@ import (
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/seeds"
-	"github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -235,7 +236,7 @@ func (b *Backend) Run() (derr error) {
 	// s.t. Etcd has its own Start() method, conforming to Daemon, then we will
 	// want to make sure that we aren't calling NewClient before starting it,
 	// I think. That might return a connection error.
-	st, err := b.etcd.NewStore()
+	st, err := etcdstore.NewStore(b.etcd)
 	if err != nil {
 		return err
 	}
@@ -388,7 +389,7 @@ func (b *Backend) Run() (derr error) {
 
 // Migration performs the migration of data inside the store
 func (b *Backend) Migration() error {
-	_, err := b.etcd.NewStore()
+	_, err := etcdstore.NewStore(b.etcd)
 	if err != nil {
 		return err
 	}

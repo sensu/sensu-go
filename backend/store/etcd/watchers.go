@@ -28,7 +28,7 @@ func getWatcherAction(event *clientv3.Event) store.WatchActionType {
 // the caller that a CheckConfig was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must
 // restart the watcher, if needed.
-func (s *etcdStore) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEventCheckConfig {
+func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEventCheckConfig {
 	ch := make(chan store.WatchEventCheckConfig)
 
 	go func() {
@@ -71,7 +71,7 @@ func (s *etcdStore) GetCheckConfigWatcher(ctx context.Context) <-chan store.Watc
 // the caller that an Asset was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must
 // restart the watcher, if needed.
-func (s *etcdStore) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsset {
+func (s *Store) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsset {
 	ch := make(chan store.WatchEventAsset)
 
 	go func() {
@@ -114,7 +114,7 @@ func (s *etcdStore) GetAssetWatcher(ctx context.Context) <-chan store.WatchEvent
 // the caller that a HookConfig was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must
 // restart the watcher, if needed.
-func (s *etcdStore) GetHookConfigWatcher(ctx context.Context) <-chan store.WatchEventHookConfig {
+func (s *Store) GetHookConfigWatcher(ctx context.Context) <-chan store.WatchEventHookConfig {
 	ch := make(chan store.WatchEventHookConfig)
 
 	go func() {

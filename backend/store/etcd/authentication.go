@@ -12,7 +12,7 @@ func getAuthenticationPath(id string) string {
 }
 
 // CreateJWTSecret creates a new JWT secret
-func (s *etcdStore) CreateJWTSecret(secret []byte) error {
+func (s *Store) CreateJWTSecret(secret []byte) error {
 	// We need to prepare a transaction to verify the version of the key
 	// corresponding to the user in etcd in order to ensure we only put the key
 	// if it does not exist
@@ -30,7 +30,7 @@ func (s *etcdStore) CreateJWTSecret(secret []byte) error {
 }
 
 // GetJWTSecret retrieves the JWT signing secret
-func (s *etcdStore) GetJWTSecret() ([]byte, error) {
+func (s *Store) GetJWTSecret() ([]byte, error) {
 	resp, err := s.kvc.Get(context.TODO(), getAuthenticationPath("secret"), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
@@ -42,7 +42,8 @@ func (s *etcdStore) GetJWTSecret() ([]byte, error) {
 	return resp.Kvs[0].Value, nil
 }
 
-func (s *etcdStore) UpdateJWTSecret(secret []byte) error {
+// UpdateJWTSecret replaces the jwt secret with a new one.
+func (s *Store) UpdateJWTSecret(secret []byte) error {
 	_, err := s.kvc.Put(context.TODO(), getAuthenticationPath("secret"), string(secret))
 	return err
 }

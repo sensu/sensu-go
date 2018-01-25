@@ -31,6 +31,7 @@ type checkOpts struct {
 	ProxyEntityID string `survey:"proxy-entity-id"`
 	Stdin         string `survey:"stdin"`
 	Timeout       string `survey:"timeout"`
+	TTL           string `survey:"ttl"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -66,6 +67,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.ProxyEntityID, _ = flags.GetString("proxy-entity-id")
 	opts.Stdin, _ = flags.GetString("stdin")
 	opts.Timeout, _ = flags.GetString("timeout")
+	opts.TTL, _ = flags.GetString("ttl")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -147,6 +149,14 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
+			Name: "ttl",
+			Prompt: &survey.Input{
+				Message: "TTL:",
+				Help:    "Time to live in seconds for which a check result is valid",
+				Default: opts.TTL,
+			},
+		},
+		{
 			Name: "subscriptions",
 			Prompt: &survey.Input{
 				Message: "Subscriptions:",
@@ -207,6 +217,7 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	interval, _ := strconv.ParseUint(opts.Interval, 10, 32)
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)
+	ttl, _ := strconv.ParseInt(opts.TTL, 10, 64)
 
 	check.Name = opts.Name
 	check.Environment = opts.Env
@@ -221,4 +232,5 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.ProxyEntityID = opts.ProxyEntityID
 	check.Stdin = stdin
 	check.Timeout = uint32(timeout)
+	check.Ttl = int64(ttl)
 }

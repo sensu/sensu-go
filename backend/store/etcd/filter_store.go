@@ -24,7 +24,8 @@ func getEventFiltersPath(ctx context.Context, name string) string {
 	return eventFilterKeyBuilder.WithContext(ctx).Build(name)
 }
 
-func (s *etcdStore) DeleteEventFilterByName(ctx context.Context, name string) error {
+// DeleteEventFilterByName deletes an EventFilter by name.
+func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("must specify name of filter")
 	}
@@ -43,7 +44,7 @@ func (s *etcdStore) DeleteEventFilterByName(ctx context.Context, name string) er
 
 // GetEventFilters gets the list of filters for an (optional) organization. Passing
 // the empty string as the org will return all filters.
-func (s *etcdStore) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
+func (s *Store) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
 	resp, err := query(ctx, s, getEventFiltersPath)
 	if err != nil {
 		return nil, err
@@ -65,7 +66,8 @@ func (s *etcdStore) GetEventFilters(ctx context.Context) ([]*types.EventFilter, 
 	return filtersArray, nil
 }
 
-func (s *etcdStore) GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error) {
+// GetEventFilterByName gets an EventFilter by name.
+func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error) {
 	if name == "" {
 		return nil, errors.New("must specify name of filter")
 	}
@@ -87,7 +89,8 @@ func (s *etcdStore) GetEventFilterByName(ctx context.Context, name string) (*typ
 	return filter, nil
 }
 
-func (s *etcdStore) UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error {
+// UpdateEventFilter updates an EventFilter.
+func (s *Store) UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error {
 	if err := filter.Validate(); err != nil {
 		return err
 	}

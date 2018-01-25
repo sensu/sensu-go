@@ -456,3 +456,169 @@ func TestRunExecCronSuite(t *testing.T) {
 	suite.Run(t, new(CheckExecCronSuite))
 	suite.Run(t, new(CheckSubdueCronSuite))
 }
+
+type CheckSchedulerProxySuite struct {
+	suite.Suite
+	check  *types.CheckConfig
+	exec   *CheckExecutor
+	msgBus *messaging.WizardBus
+}
+
+func (suite *CheckSchedulerProxySuite) SetupTest() {
+	suite.msgBus = &messaging.WizardBus{}
+	suite.NoError(suite.msgBus.Start())
+
+	request := types.FixtureCheckRequest("check1")
+	asset := request.Assets[0]
+	hook := request.Hooks[0]
+	suite.check = request.Config
+	suite.check.Interval = 10
+
+	state := &SchedulerState{}
+	state.SetChecks([]*types.CheckConfig{request.Config})
+	state.SetAssets([]*types.Asset{&asset})
+	state.SetHooks([]*types.HookConfig{&hook})
+
+	suite.exec = &CheckExecutor{
+		State: state,
+		Bus:   suite.msgBus,
+	}
+}
+
+func (suite *CheckSchedulerProxySuite) TestSplayCalculation() {
+	check := types.FixtureCheckConfig("check1")
+	check.ProxyRequests = types.FixtureProxyRequests(true)
+
+	// 10s * 90% / 3 = 3
+	check.Interval = 10
+	splay, err := calculateSplayInterval(check, 3)
+	suite.Equal(float64(3), splay)
+	suite.Nil(err)
+
+	// 20s * 50% / 5 = 2
+	check.Interval = 20
+	check.ProxyRequests.SplayCoverage = 50
+	splay, err = calculateSplayInterval(check, 5)
+	suite.Equal(float64(2), splay)
+	suite.Nil(err)
+
+	// invalid cron string
+	check.Cron = "invalid"
+	splay, err = calculateSplayInterval(check, 5)
+	suite.Equal(float64(0), splay)
+	suite.NotNil(err)
+
+	// at most, 60s from current time * 50% / 2 = 15
+	// this test will depend on when it is run, but the
+	// largest splay calculation will be 15
+	check.Cron = "* * * * *"
+	splay, err = calculateSplayInterval(check, 2)
+	suite.True(splay >= 0 && splay <= 15)
+	suite.Nil(err)
+}
+
+func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequest() {
+	entity := types.FixtureEntity("entity1")
+	check := suite.check
+	check.Subscriptions = []string{"subscription1"}
+	check.ProxyRequests = types.FixtureProxyRequests(true)
+
+	c1 := make(chan interface{}, 10)
+	topic := fmt.Sprintf(
+		"%s:%s:%s:subscription1",
+		messaging.TopicSubscriptions,
+		check.Organization,
+		check.Environment,
+	)
+	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
+
+	suite.NoError(suite.exec.PublishProxyCheckRequest(entity, check))
+	suite.NoError(suite.msgBus.Stop())
+	close(c1)
+
+	messages := []*types.CheckRequest{}
+	for msg := range c1 {
+		res, ok := msg.(*types.CheckRequest)
+		suite.True(ok)
+		messages = append(messages, res)
+	}
+	res := messages[0]
+	suite.Equal(1, len(messages))
+	suite.Equal("check1", res.Config.Name)
+	suite.Equal("entity1", res.Config.ProxyEntityID)
+}
+
+func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsInterval() {
+	entity1 := types.FixtureEntity("entity1")
+	entity2 := types.FixtureEntity("entity2")
+	entity3 := types.FixtureEntity("entity3")
+	entities := []*types.Entity{entity1, entity2, entity3}
+	check := suite.check
+	check.Subscriptions = []string{"subscription1"}
+	check.ProxyRequests = types.FixtureProxyRequests(true)
+
+	c1 := make(chan interface{}, 10)
+	topic := fmt.Sprintf(
+		"%s:%s:%s:subscription1",
+		messaging.TopicSubscriptions,
+		check.Organization,
+		check.Environment,
+	)
+	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
+
+	go func() {
+		for i := 0; i < len(entities); i++ {
+			entityName := fmt.Sprintf("entity%d", i+1)
+			select {
+			case msg := <-c1:
+				res, ok := msg.(*types.CheckRequest)
+				suite.True(ok)
+				suite.Equal("check1", res.Config.Name)
+				suite.Equal(entityName, res.Config.ProxyEntityID)
+			}
+		}
+	}()
+	suite.NoError(suite.exec.PublishProxyCheckRequests(entities, check))
+	suite.NoError(suite.msgBus.Stop())
+	close(c1)
+}
+
+func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsCron() {
+	entity1 := types.FixtureEntity("entity1")
+	entity2 := types.FixtureEntity("entity2")
+	entity3 := types.FixtureEntity("entity3")
+	entities := []*types.Entity{entity1, entity2, entity3}
+	check := suite.check
+	check.Subscriptions = []string{"subscription1"}
+	check.ProxyRequests = types.FixtureProxyRequests(true)
+	check.Cron = "* * * * *"
+
+	c1 := make(chan interface{}, 10)
+	topic := fmt.Sprintf(
+		"%s:%s:%s:subscription1",
+		messaging.TopicSubscriptions,
+		check.Organization,
+		check.Environment,
+	)
+	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
+
+	go func() {
+		for i := 0; i < len(entities); i++ {
+			entityName := fmt.Sprintf("entity%d", i+1)
+			select {
+			case msg := <-c1:
+				res, ok := msg.(*types.CheckRequest)
+				suite.True(ok)
+				suite.Equal("check1", res.Config.Name)
+				suite.Equal(entityName, res.Config.ProxyEntityID)
+			}
+		}
+	}()
+	suite.NoError(suite.exec.PublishProxyCheckRequests(entities, check))
+	suite.NoError(suite.msgBus.Stop())
+	close(c1)
+}
+
+func TestRunExecProxySuite(t *testing.T) {
+	suite.Run(t, new(CheckSchedulerProxySuite))
+}

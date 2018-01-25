@@ -83,7 +83,7 @@ func TestTokenSubstitution(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := tokenSubstitution(tc.data, tc.input)
+			result, err := TokenSubstitution(tc.data, tc.input)
 			testutil.CompareError(err, tc.expectedError, t)
 
 			if !tc.expectedError {
