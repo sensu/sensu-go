@@ -87,70 +87,102 @@ func newKey(prefix string) string {
 	return path.Join(prefix, buf.String())
 }
 
-// Add adds a new value to the ring.
+// Add adds a new value to the ring, if it is not already present.
 func (r *Ring) Add(ctx context.Context, value string) error {
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 		key := newKey(r.Name)
-		cmp := clientv3.Compare(clientv3.Version(key), "=", 0)
-		req := clientv3.OpPut(key, value)
-		response, err := r.kv.Txn(ctx).If(cmp).Then(req).Commit()
-		if err == nil && response.Succeeded {
-			return nil
-		}
+		putCmp := clientv3.Compare(clientv3.Version(key), "=", 0)
+		putOp := clientv3.OpPut(key, value)
+		cmps, ops, err := r.getRemovalOps(ctx, value)
 		if err != nil {
 			return err
+		}
+		cmps = append(cmps, putCmp)
+		ops = append(ops, putOp)
+		response, err := r.kv.Txn(ctx).If(cmps...).Then(ops...).Commit()
+		if err != nil {
+			return err
+		}
+		if response.Succeeded {
+			return nil
 		}
 	}
 }
 
 // Remove removes a value from the ring.
 func (r *Ring) Remove(ctx context.Context, value string) error {
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		cmps, ops, err := r.getRemovalOps(ctx, value)
+		if err != nil {
+			return err
+		}
+		if len(ops) == 0 {
+			return nil
+		}
+		response, err := r.kv.Txn(ctx).If(cmps...).Then(ops...).Commit()
+		if err != nil {
+			return err
+		}
+		if response.Succeeded {
+			return nil
+		}
+	}
+}
+
+func (r *Ring) getRemovalOps(ctx context.Context, value string) ([]clientv3.Cmp, []clientv3.Op, error) {
 	// Get all the items in the ring
 	response, err := r.client.Get(ctx, r.Name, clientv3.WithPrefix())
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
+	var cmps []clientv3.Cmp
+	var ops []clientv3.Op
+	// Compare all the values in the ring with the value supplied
 	for _, kv := range response.Kvs {
+		key := string(kv.Key)
 		if string(kv.Value) == value {
-			if _, err := r.kv.Delete(ctx, string(kv.Key)); err != nil {
-				return err
-			}
+			cmp := clientv3.Compare(clientv3.ModRevision(key), "=", kv.ModRevision)
+			cmps = append(cmps, cmp)
+			op := clientv3.OpDelete(key)
+			ops = append(ops, op)
 		}
 	}
-	// Need to retry, we are promised that there will be more.
-	if response.More {
-		return r.Remove(ctx, value)
-	}
-	return nil
+	return cmps, ops, nil
 }
 
 // Next returns the next item in the Ring. If Ring is empty, then Next will
 // return an empty value, and ErrEmptyRing.
 func (r *Ring) Next(ctx context.Context) (string, error) {
-	response, err := r.client.Get(ctx, r.Name, clientv3.WithFirstKey()...)
-	if err != nil {
-		return "", err
-	}
-	if len(response.Kvs) == 0 {
-		return "", ErrEmptyRing
-	}
-	kvs := response.Kvs[0]
-	key := string(kvs.Key)
-	value := string(kvs.Value)
-	cmp := clientv3.Compare(clientv3.ModRevision(key), "=", kvs.ModRevision)
-	delOp := clientv3.OpDelete(key)
+	for {
+		response, err := r.client.Get(ctx, r.Name, clientv3.WithFirstKey()...)
+		if err != nil {
+			return "", err
+		}
+		if len(response.Kvs) == 0 {
+			return "", ErrEmptyRing
+		}
+		kvs := response.Kvs[0]
+		key := string(kvs.Key)
+		value := string(kvs.Value)
+		delCmp := clientv3.Compare(clientv3.ModRevision(key), "=", kvs.ModRevision)
+		delOp := clientv3.OpDelete(key)
 
-	nextKey := newKey(r.Name)
-	putOp := clientv3.OpPut(nextKey, value)
-	resp, err := r.kv.Txn(ctx).If(cmp).Then(delOp, putOp).Commit()
-	if err != nil {
-		return "", err
+		nextKey := newKey(r.Name)
+		putCmp := clientv3.Compare(clientv3.ModRevision(nextKey), "=", 0)
+		putOp := clientv3.OpPut(nextKey, value)
+
+		resp, err := r.kv.Txn(ctx).If(delCmp, putCmp).Then(delOp, putOp).Commit()
+		if err != nil {
+			return "", err
+		}
+		if resp.Succeeded {
+			return value, nil
+		}
 	}
-	if resp.Succeeded {
-		return value, nil
-	}
-	return r.Next(ctx)
 }
