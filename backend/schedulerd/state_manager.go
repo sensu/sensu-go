@@ -156,17 +156,17 @@ func (statePtr *SchedulerState) GetCheck(name, org, env string) *types.CheckConf
 	return statePtr.checks[key]
 }
 
-// GetAssetsInOrg returns all assets associated given organization
-func (statePtr *SchedulerState) GetAssetsInOrg(org string) (res []*types.Asset) {
+// GetAssetsInNamespace returns all assets associated given organization
+func (statePtr *SchedulerState) GetAssetsInNamespace(org string) (res []*types.Asset) {
 	for _, asset := range statePtr.assets[org] {
 		res = append(res, asset)
 	}
 	return
 }
 
-// GetHooksInOrgEnv returns all hooks associated given organization
+// GetHooksInNamespace returns all hooks associated given organization
 // and environment
-func (statePtr *SchedulerState) GetHooksInOrgEnv(org string, env string) (res []*types.HookConfig) {
+func (statePtr *SchedulerState) GetHooksInNamespace(org string, env string) (res []*types.HookConfig) {
 	orgEnv := concatUniqueKey(org, env)
 	for _, hook := range statePtr.hooks[orgEnv] {
 		res = append(res, hook)
@@ -174,9 +174,9 @@ func (statePtr *SchedulerState) GetHooksInOrgEnv(org string, env string) (res []
 	return
 }
 
-// GetEntitiesInOrgEnv returns all entities associated given organization
+// GetEntitiesInNamespace returns all entities associated given organization
 // and environment
-func (statePtr *SchedulerState) GetEntitiesInOrgEnv(org string, env string) (res []*types.Entity) {
+func (statePtr *SchedulerState) GetEntitiesInNamespace(org string, env string) (res []*types.Entity) {
 	orgEnv := concatUniqueKey(org, env)
 	for _, entity := range statePtr.entities[orgEnv] {
 		res = append(res, entity)
