@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- Add function for matching entities to a proxy check request.
+
+### Changed
+- Govaluate logic is now wrapped in the `util/eval` package.
 - Added functions for publishing proxy check requests.
 - Added proxy request validation.
 
@@ -25,7 +29,7 @@ and times of the week.
 - Support for TTLs in check configs to monitor stale check results.
 
 ### Changed
-- Moved monitor code out of keepalived and into its own package
+- Moved monitor code out of keepalived and into its own package.
 - Moved KeyBuilder from etcd package to store package.
 
 ## [2.0.0-alpha.13] - 2018-01-16

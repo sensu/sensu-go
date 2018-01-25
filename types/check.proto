@@ -31,7 +31,7 @@ message CheckRequest {
 message ProxyRequests {
 	// EntityAttributes store serialized arbitrary JSON-encoded data to match
 	// entities in the registry.
-	bytes entity_attributes = 1 [(gogoproto.jsontag) = "-"];
+  repeated string entity_attributes = 1 [(gogoproto.jsontag) = "entity_attributes"];
 
 	// Splay indicates if proxy check requests should be splayed, published evenly
 	// over a window of time.
