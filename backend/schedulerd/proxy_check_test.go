@@ -83,6 +83,19 @@ func TestMatchEntities(t *testing.T) {
 			},
 		},
 		{
+			name:             "multiple matches",
+			entityAttributes: []string{`entity.Class == "proxy"`},
+			entities: []*types.Entity{
+				&types.Entity{ID: "foo", Class: "proxy"},
+				&types.Entity{ID: "bar", Class: "agent"},
+				&types.Entity{ID: "baz", Class: "proxy"},
+			},
+			want: []*types.Entity{
+				&types.Entity{ID: "foo", Class: "proxy"},
+				&types.Entity{ID: "baz", Class: "proxy"},
+			},
+		},
+		{
 			name:             "invalid expression",
 			entityAttributes: []string{`foo &&`},
 			entities: []*types.Entity{
