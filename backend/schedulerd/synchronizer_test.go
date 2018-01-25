@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -24,7 +25,7 @@ func TestSynchronizeChecks(t *testing.T) {
 			assert.Len(res, 1)
 		},
 	}
-	require.NoError(t, sync.Sync())
+	require.NoError(t, sync.Sync(context.Background()))
 }
 
 func TestSynchronizeAssets(t *testing.T) {
@@ -41,7 +42,7 @@ func TestSynchronizeAssets(t *testing.T) {
 			assert.Len(res, 1)
 		},
 	}
-	require.NoError(t, sync.Sync())
+	require.NoError(t, sync.Sync(context.Background()))
 }
 
 func TestSynchronizeHooks(t *testing.T) {
@@ -58,7 +59,7 @@ func TestSynchronizeHooks(t *testing.T) {
 			assert.Len(res, 1)
 		},
 	}
-	require.NoError(t, sync.Sync())
+	require.NoError(t, sync.Sync(context.Background()))
 }
 
 func TestSynchronizeEntities(t *testing.T) {
@@ -75,14 +76,14 @@ func TestSynchronizeEntities(t *testing.T) {
 			assert.Len(res, 1)
 		},
 	}
-	require.NoError(t, sync.Sync())
+	require.NoError(t, sync.Sync(context.Background()))
 }
 
 func TestSyncScheduler(t *testing.T) {
 	assert := assert.New(t)
 
 	scheduler := NewSynchronizeStateScheduler(30)
-	scheduler.Start()
+	scheduler.Start(context.Background())
 
 	err := scheduler.Stop()
 	assert.NoError(err)

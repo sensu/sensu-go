@@ -12,7 +12,7 @@ import (
 
 // ResourceSync interface for structs that fetch resources
 type ResourceSync interface {
-	Sync() error
+	Sync(ctx context.Context) error
 }
 
 // SynchronizeChecks fetches checks from the store and bubbles up results
@@ -22,8 +22,8 @@ type SynchronizeChecks struct {
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *SynchronizeChecks) Sync() error {
-	results, err := syncPtr.Store.GetCheckConfigs(context.TODO())
+func (syncPtr *SynchronizeChecks) Sync(ctx context.Context) error {
+	results, err := syncPtr.Store.GetCheckConfigs(ctx)
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}
@@ -38,8 +38,8 @@ type SynchronizeAssets struct {
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *SynchronizeAssets) Sync() error {
-	results, err := syncPtr.Store.GetAssets(context.TODO())
+func (syncPtr *SynchronizeAssets) Sync(ctx context.Context) error {
+	results, err := syncPtr.Store.GetAssets(ctx)
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}
@@ -54,8 +54,8 @@ type SynchronizeHooks struct {
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *SynchronizeHooks) Sync() error {
-	results, err := syncPtr.Store.GetHookConfigs(context.TODO())
+func (syncPtr *SynchronizeHooks) Sync(ctx context.Context) error {
+	results, err := syncPtr.Store.GetHookConfigs(ctx)
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}
@@ -70,8 +70,8 @@ type SynchronizeEntities struct {
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *SynchronizeEntities) Sync() error {
-	results, err := syncPtr.Store.GetEntities(context.TODO())
+func (syncPtr *SynchronizeEntities) Sync(ctx context.Context) error {
+	results, err := syncPtr.Store.GetEntities(ctx)
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}
@@ -106,8 +106,8 @@ func (recPtr *SynchronizeStateScheduler) SetInterval(i uint) {
 }
 
 // Start the scheduler
-func (recPtr *SynchronizeStateScheduler) Start() {
-	recPtr.Sync()
+func (recPtr *SynchronizeStateScheduler) Start(ctx context.Context) {
+	recPtr.Sync(ctx)
 
 	recPtr.stopping = make(chan struct{})
 	recPtr.waitGroup = &sync.WaitGroup{}
@@ -124,18 +124,18 @@ func (recPtr *SynchronizeStateScheduler) Start() {
 				recPtr.waitGroup.Done()
 				return
 			case <-ticker.C:
-				recPtr.Sync()
+				recPtr.Sync(ctx)
 			}
 		}
 	}()
 }
 
 // Sync executes all synchronizers
-func (recPtr *SynchronizeStateScheduler) Sync() {
+func (recPtr *SynchronizeStateScheduler) Sync(ctx context.Context) {
 	for _, syncer := range recPtr.synchronizers {
 		syncer := syncer
 		go func() {
-			if err := syncer.Sync(); err != nil {
+			if err := syncer.Sync(ctx); err != nil {
 				logger.Error(err)
 			}
 		}()

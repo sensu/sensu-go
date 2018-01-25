@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -57,8 +58,8 @@ func NewStateManager(store store.Store) *StateManager {
 }
 
 // Start keeping state synchronized
-func (mngrPtr *StateManager) Start() {
-	mngrPtr.synchronizer.Start()
+func (mngrPtr *StateManager) Start(ctx context.Context) {
+	mngrPtr.synchronizer.Start(ctx)
 }
 
 // Stop keeping state synchronized
