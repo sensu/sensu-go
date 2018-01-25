@@ -164,17 +164,21 @@ func (statePtr *SchedulerState) GetAssetsInOrg(org string) (res []*types.Asset) 
 	return
 }
 
-// GetHooksInOrg returns all hooks associated given organization
-func (statePtr *SchedulerState) GetHooksInOrg(org string) (res []*types.HookConfig) {
-	for _, hook := range statePtr.hooks[org] {
+// GetHooksInOrgEnv returns all hooks associated given organization
+// and environment
+func (statePtr *SchedulerState) GetHooksInOrgEnv(org string, env string) (res []*types.HookConfig) {
+	orgEnv := concatUniqueKey(org, env)
+	for _, hook := range statePtr.hooks[orgEnv] {
 		res = append(res, hook)
 	}
 	return
 }
 
-// GetEntitiesInOrg returns all entities associated given organization
-func (statePtr *SchedulerState) GetEntitiesInOrg(org string) (res []*types.Entity) {
-	for _, entity := range statePtr.entities[org] {
+// GetEntitiesInOrgEnv returns all entities associated given organization
+// and environment
+func (statePtr *SchedulerState) GetEntitiesInOrgEnv(org string, env string) (res []*types.Entity) {
+	orgEnv := concatUniqueKey(org, env)
+	for _, entity := range statePtr.entities[orgEnv] {
 		res = append(res, entity)
 	}
 	return
@@ -229,22 +233,26 @@ func (statePtr *SchedulerState) addAsset(asset *types.Asset) {
 
 func (statePtr *SchedulerState) addHook(hook *types.HookConfig) {
 	org := hook.Organization
-	if orgMap := statePtr.hooks[org]; orgMap == nil {
-		statePtr.hooks[org] = make(map[string]*types.HookConfig)
+	env := hook.Environment
+	orgEnv := concatUniqueKey(org, env)
+	if hookMap := statePtr.hooks[orgEnv]; hookMap == nil {
+		statePtr.hooks[orgEnv] = make(map[string]*types.HookConfig)
 	}
 
-	key := concatUniqueKey(hook.Name, org)
-	statePtr.hooks[org][key] = hook
+	key := concatUniqueKey(hook.Name, org, env)
+	statePtr.hooks[orgEnv][key] = hook
 }
 
 func (statePtr *SchedulerState) addEntity(entity *types.Entity) {
 	org := entity.Organization
-	if orgMap := statePtr.entities[org]; orgMap == nil {
-		statePtr.entities[org] = make(map[string]*types.Entity)
+	env := entity.Environment
+	orgEnv := concatUniqueKey(org, env)
+	if entityMap := statePtr.entities[orgEnv]; entityMap == nil {
+		statePtr.entities[orgEnv] = make(map[string]*types.Entity)
 	}
 
-	key := concatUniqueKey(entity.ID, org)
-	statePtr.entities[org][key] = entity
+	key := concatUniqueKey(entity.ID, org, env)
+	statePtr.entities[orgEnv][key] = entity
 }
 
 func concatUniqueKey(args ...string) string {
