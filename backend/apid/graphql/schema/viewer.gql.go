@@ -192,29 +192,25 @@ type ViewerAliases struct{}
 // Entities implements response to request for 'entities' field.
 func (_ ViewerAliases) Entities(p ViewerEntitiesFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Checks implements response to request for 'checks' field.
 func (_ ViewerAliases) Checks(p ViewerChecksFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Events implements response to request for 'events' field.
 func (_ ViewerAliases) Events(p ViewerEventsFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // User implements response to request for 'user' field.
 func (_ ViewerAliases) User(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // ViewerType Describes a viewer of the system; generally an authenticated user.
@@ -285,12 +281,12 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 						Type:        graphql1.String,
 					},
 					"first": &graphql1.ArgumentConfig{
-						DefaultValue: "10",
+						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
 					"last": &graphql1.ArgumentConfig{
-						DefaultValue: "0",
+						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
@@ -311,12 +307,12 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 						Type:        graphql1.String,
 					},
 					"first": &graphql1.ArgumentConfig{
-						DefaultValue: "10",
+						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
 					"last": &graphql1.ArgumentConfig{
-						DefaultValue: "0",
+						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
@@ -337,12 +333,12 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 						Type:        graphql1.String,
 					},
 					"first": &graphql1.ArgumentConfig{
-						DefaultValue: "10",
+						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
 					"last": &graphql1.ArgumentConfig{
-						DefaultValue: "0",
+						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},

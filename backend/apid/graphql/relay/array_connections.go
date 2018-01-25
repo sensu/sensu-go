@@ -21,8 +21,18 @@ func (c arrCursor) String() string {
 
 // ArrayConnection describes edges of connection
 type ArrayConnection struct {
-	ArrayConnectionInfo
-	Edges []*Edge
+	Edges      []*Edge
+	PageInfo   PageInfo
+	TotalCount int
+}
+
+// NewArrayConnection for given edges
+func NewArrayConnection(edges []*Edge, info ArrayConnectionInfo) ArrayConnection {
+	return ArrayConnection{
+		Edges:      edges,
+		PageInfo:   info.PageInfo,
+		TotalCount: info.TotalCount,
+	}
 }
 
 // ArrayConnectionInfo holds details of current page.
