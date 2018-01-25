@@ -15,14 +15,14 @@ type ResourceSync interface {
 	Sync() error
 }
 
-// SyncronizeChecks fetches checks from the store and bubbles up results
-type SyncronizeChecks struct {
+// SynchronizeChecks fetches checks from the store and bubbles up results
+type SynchronizeChecks struct {
 	Store    store.CheckConfigStore
 	OnUpdate func([]*types.CheckConfig)
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *SyncronizeChecks) Sync() error {
+func (syncPtr *SynchronizeChecks) Sync() error {
 	results, err := syncPtr.Store.GetCheckConfigs(context.TODO())
 	if err == nil {
 		syncPtr.OnUpdate(results)
@@ -31,14 +31,14 @@ func (syncPtr *SyncronizeChecks) Sync() error {
 	return err
 }
 
-// SyncronizeAssets fetches assets from the store and bubbles up results
-type SyncronizeAssets struct {
+// SynchronizeAssets fetches assets from the store and bubbles up results
+type SynchronizeAssets struct {
 	Store    store.AssetStore
 	OnUpdate func([]*types.Asset)
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *SyncronizeAssets) Sync() error {
+func (syncPtr *SynchronizeAssets) Sync() error {
 	results, err := syncPtr.Store.GetAssets(context.TODO())
 	if err == nil {
 		syncPtr.OnUpdate(results)
@@ -47,15 +47,31 @@ func (syncPtr *SyncronizeAssets) Sync() error {
 	return err
 }
 
-// SyncronizeHooks fetches hooks from the store and bubbles up results
-type SyncronizeHooks struct {
+// SynchronizeHooks fetches hooks from the store and bubbles up results
+type SynchronizeHooks struct {
 	Store    store.HookConfigStore
 	OnUpdate func([]*types.HookConfig)
 }
 
 // Sync fetches results from the store and passes them up w/ given handler
-func (syncPtr *SyncronizeHooks) Sync() error {
+func (syncPtr *SynchronizeHooks) Sync() error {
 	results, err := syncPtr.Store.GetHookConfigs(context.TODO())
+	if err == nil {
+		syncPtr.OnUpdate(results)
+	}
+
+	return err
+}
+
+// SynchronizeEntities fetches entities from the store and bubbles up results
+type SynchronizeEntities struct {
+	Store    store.EntityStore
+	OnUpdate func([]*types.Entity)
+}
+
+// Sync fetches results from the store and passes them up w/ given handler
+func (syncPtr *SynchronizeEntities) Sync() error {
+	results, err := syncPtr.Store.GetEntities(context.TODO())
 	if err == nil {
 		syncPtr.OnUpdate(results)
 	}

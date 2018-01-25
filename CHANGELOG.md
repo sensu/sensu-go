@@ -8,11 +8,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - Add function for matching entities to a proxy check request.
+- Added functions for publishing proxy check requests.
+- Added proxy request validation.
+- Entities have been added to the state manager and synchronizer.
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
-- Added functions for publishing proxy check requests.
-- Added proxy request validation.
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
