@@ -35,17 +35,21 @@ func NewStateManager(store store.Store) *StateManager {
 
 	manager.synchronizer = NewSynchronizeStateScheduler(
 		SynchronizeMinInterval,
-		&SyncronizeChecks{
+		&SynchronizeChecks{
 			Store:    store,
 			OnUpdate: manager.updateChecks,
 		},
-		&SyncronizeAssets{
+		&SynchronizeAssets{
 			Store:    store,
 			OnUpdate: manager.updateAssets,
 		},
-		&SyncronizeHooks{
+		&SynchronizeHooks{
 			Store:    store,
 			OnUpdate: manager.updateHooks,
+		},
+		&SynchronizeEntities{
+			Store:    store,
+			OnUpdate: manager.updateEntities,
 		},
 	)
 
@@ -101,6 +105,12 @@ func (mngrPtr *StateManager) updateHooks(hooks []*types.HookConfig) {
 	})
 }
 
+func (mngrPtr *StateManager) updateEntities(entities []*types.Entity) {
+	mngrPtr.updateState(func(state *SchedulerState) {
+		state.SetEntities(entities)
+	})
+}
+
 func (mngrPtr *StateManager) updateState(updateFn func(newState *SchedulerState)) {
 	// Lock to avoid competing updates
 	mngrPtr.mutex.Lock()
@@ -134,9 +144,10 @@ func (mngrPtr *StateManager) updateSyncInterval() {
 
 // A SchedulerState represents the internal state of the cache
 type SchedulerState struct {
-	checks map[string]*types.CheckConfig
-	assets map[string]map[string]*types.Asset
-	hooks  map[string]map[string]*types.HookConfig
+	checks   map[string]*types.CheckConfig
+	assets   map[string]map[string]*types.Asset
+	hooks    map[string]map[string]*types.HookConfig
+	entities map[string]map[string]*types.Entity
 }
 
 // GetCheck returns check given name and organization
@@ -157,6 +168,14 @@ func (statePtr *SchedulerState) GetAssetsInOrg(org string) (res []*types.Asset) 
 func (statePtr *SchedulerState) GetHooksInOrg(org string) (res []*types.HookConfig) {
 	for _, hook := range statePtr.hooks[org] {
 		res = append(res, hook)
+	}
+	return
+}
+
+// GetEntitiesInOrg returns all entities associated given organization
+func (statePtr *SchedulerState) GetEntitiesInOrg(org string) (res []*types.Entity) {
+	for _, entity := range statePtr.entities[org] {
+		res = append(res, entity)
 	}
 	return
 }
@@ -185,6 +204,14 @@ func (statePtr *SchedulerState) SetHooks(hooks []*types.HookConfig) {
 	}
 }
 
+// SetEntities overwrites current set of entities w/ given
+func (statePtr *SchedulerState) SetEntities(entities []*types.Entity) {
+	statePtr.entities = make(map[string]map[string]*types.Entity)
+	for _, entity := range entities {
+		statePtr.addEntity(entity)
+	}
+}
+
 func (statePtr *SchedulerState) addCheck(check *types.CheckConfig) {
 	key := concatUniqueKey(check.Name, check.Organization, check.Environment)
 	statePtr.checks[key] = check
@@ -208,6 +235,16 @@ func (statePtr *SchedulerState) addHook(hook *types.HookConfig) {
 
 	key := concatUniqueKey(hook.Name, org)
 	statePtr.hooks[org][key] = hook
+}
+
+func (statePtr *SchedulerState) addEntity(entity *types.Entity) {
+	org := entity.Organization
+	if orgMap := statePtr.entities[org]; orgMap == nil {
+		statePtr.entities[org] = make(map[string]*types.Entity)
+	}
+
+	key := concatUniqueKey(entity.ID, org)
+	statePtr.entities[org][key] = entity
 }
 
 func concatUniqueKey(args ...string) string {
