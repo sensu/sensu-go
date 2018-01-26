@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"context"
 	"errors"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -21,6 +22,8 @@ type Schedulerd struct {
 
 // Start the Scheduler daemon.
 func (s *Schedulerd) Start() error {
+	ctx := context.TODO()
+
 	if s.Store == nil {
 		return errors.New("no store available")
 	}
@@ -40,7 +43,7 @@ func (s *Schedulerd) Start() error {
 
 	// Start
 	s.schedulerManager.Start()
-	s.stateManager.Start()
+	s.stateManager.Start(ctx)
 
 	return nil
 }

@@ -170,7 +170,7 @@ func (e *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.CheckReque
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
 		// Explode assets; get assets & filter out those that are irrelevant
-		allAssets := e.State.GetAssetsInOrg(check.Organization)
+		allAssets := e.State.GetAssetsInNamespace(check.Organization)
 		for _, asset := range allAssets {
 			if assetIsRelevant(asset, check) {
 				request.Assets = append(request.Assets, *asset)
@@ -182,7 +182,7 @@ func (e *CheckExecutor) BuildRequest(check *types.CheckConfig) *types.CheckReque
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		allHooks := e.State.GetHooksInOrg(check.Organization)
+		allHooks := e.State.GetHooksInNamespace(check.Organization, check.Environment)
 		for _, hook := range allHooks {
 			if hookIsRelevant(hook, check) {
 				request.Hooks = append(request.Hooks, *hook)
