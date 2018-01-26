@@ -242,6 +242,8 @@ func (suite *CheckExecIntervalSuite) TestBuild() {
 }
 
 func TestRunExecIntervalSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(TimerIntervalSuite))
 	suite.Run(t, new(CheckSchedulerIntervalSuite))
 	suite.Run(t, new(CheckExecIntervalSuite))
@@ -451,6 +453,8 @@ func (suite *CheckExecCronSuite) TestBuild() {
 }
 
 func TestRunExecCronSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(TimerCronSuite))
 	suite.Run(t, new(CheckSchedulerCronSuite))
 	suite.Run(t, new(CheckExecCronSuite))
@@ -620,5 +624,7 @@ func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsCron() {
 }
 
 func TestRunExecProxySuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(CheckSchedulerProxySuite))
 }

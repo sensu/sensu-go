@@ -93,9 +93,9 @@ func TestBackendHTTPListener(t *testing.T) {
 				assert.NoError(t, err)
 			}()
 
-			retryConnect(t, fmt.Sprintf("localhost:%d", agentPort))
-			retryConnect(t, fmt.Sprintf("localhost:%d", apiPort))
-			retryConnect(t, fmt.Sprintf("localhost:%d", dashboardPort))
+			retryConnect(t, fmt.Sprintf("127.0.0.1:%d", agentPort))
+			retryConnect(t, fmt.Sprintf("127.0.0.1:%d", apiPort))
+			retryConnect(t, fmt.Sprintf("127.0.0.1:%d", dashboardPort))
 
 			userCredentials := base64.StdEncoding.EncodeToString([]byte("agent:P@ssw0rd!"))
 
@@ -106,7 +106,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				transport.HeaderKeyAgentID:       {"agent"},
 				transport.HeaderKeySubscriptions: {},
 			}
-			client, err := transport.Connect(fmt.Sprintf("%s://localhost:%d/", tc.wsScheme, agentPort), tc.tls, hdr)
+			client, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr)
 			assert.NoError(t, err)
 			require.NotNil(t, client)
 
