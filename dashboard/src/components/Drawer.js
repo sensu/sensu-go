@@ -1,5 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
+import compose from "lodash/fp/compose";
+import { withRouter, routerShape } from "found";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List, { ListItem } from "material-ui/List";
@@ -15,10 +17,12 @@ import EventIcon from "material-ui-icons/Announcement";
 import DashboardIcon from "material-ui-icons/Dashboard";
 import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
+import LogoutIcon from "material-ui-icons/ExitToApp";
 
+import { logout } from "../utils/authentication";
 import DrawerButton from "./DrawerButton";
 
-const logo = require("../assets/logo/silver-green.svg");
+const logo = require("../assets/logo/full/silver-green.svg");
 
 const styles = theme => {
   const listItemStyles = listItemIconStyles(theme);
@@ -47,7 +51,13 @@ class Drawer extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     onToggle: PropTypes.func.isRequired,
+    router: routerShape.isRequired,
     open: PropTypes.bool.isRequired,
+  };
+
+  handleLogout = async () => {
+    await logout();
+    this.props.router.push("/login");
   };
 
   render() {
@@ -81,6 +91,11 @@ class Drawer extends React.Component {
               primary="Feedback"
               href="https://www.sensuapp.org"
             />
+            <DrawerButton
+              Icon={LogoutIcon}
+              primary="Sign out"
+              onClick={this.handleLogout}
+            />
           </List>
         </div>
       </MaterialDrawer>
@@ -88,4 +103,4 @@ class Drawer extends React.Component {
   }
 }
 
-export default withStyles(styles)(Drawer);
+export default compose(withStyles(styles), withRouter)(Drawer);
