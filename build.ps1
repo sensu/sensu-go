@@ -36,6 +36,7 @@ function install_deps
     go get gopkg.in/alecthomas/gometalinter.v1
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
+    go get github.com/kisielk/errcheck
     go get github.com/golang/lint/golint
     go get github.com/UnnoTed/fileb0x
     install_golang_dep
@@ -164,7 +165,7 @@ function linter_commands
         exit 1
     }
 
-    errcheck $(go list ./... | Select-String -pattern "dashboardd", "cli/commands/importer", "agent/assetmanager" -notMatch)
+    errcheck $(go list ./... | Select-String -pattern "dashboardd", "cli/commands/importer", "agent/assetmanager", "scripts" -notMatch)
     If ($LASTEXITCODE -ne 0) {
         echo "Linting failed..."
         exit 1
