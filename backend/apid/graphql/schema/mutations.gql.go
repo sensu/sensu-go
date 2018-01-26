@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
@@ -176,22 +177,19 @@ type MutationAliases struct{}
 // CreateCheck implements response to request for 'createCheck' field.
 func (_ MutationAliases) CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // UpdateCheck implements response to request for 'updateCheck' field.
 func (_ MutationAliases) UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // DeleteCheck implements response to request for 'deleteCheck' field.
 func (_ MutationAliases) DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // MutationType The root query for implementing GraphQL mutations.
@@ -461,15 +459,14 @@ type DeleteRecordPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ DeleteRecordPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // DeletedID implements response to request for 'deletedId' field.
 func (_ DeleteRecordPayloadAliases) DeletedID(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // DeleteRecordPayloadType Generic container for deleted record payload.
@@ -623,7 +620,7 @@ func _InputTypeCheckConfigInputsConfigFn() graphql1.InputObjectConfig {
 				Type:        graphql1.Int,
 			},
 			"interval": &graphql1.InputObjectFieldConfig{
-				DefaultValue: "60",
+				DefaultValue: 60,
 				Description:  "interval is the time interval, in seconds, in which the check should be run. Defaults to 60.",
 				Type:         graphql1.Int,
 			},
@@ -827,15 +824,14 @@ type CreateCheckPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ CreateCheckPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Check implements response to request for 'check' field.
 func (_ CreateCheckPayloadAliases) Check(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // CreateCheckPayloadType self descriptive
@@ -1069,15 +1065,14 @@ type UpdateCheckPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ UpdateCheckPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Check implements response to request for 'check' field.
 func (_ UpdateCheckPayloadAliases) Check(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // UpdateCheckPayloadType self descriptive

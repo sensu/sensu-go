@@ -2,6 +2,7 @@ package generator
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
@@ -162,6 +163,16 @@ func genValue(v ast.Value) jen.Code {
 				}
 			}),
 		)
+	case *ast.IntValue:
+		if intValue, err := strconv.Atoi(val.Value); err == nil {
+			return jen.Lit(intValue)
+		}
+	case *ast.FloatValue:
+		if floatValue, err := strconv.ParseFloat(val.Value, 32); err == nil {
+			return jen.Lit(floatValue)
+		}
+	case *ast.BooleanValue:
+		return jen.Lit(val.Value)
 	}
 	return jen.Lit(v.GetValue())
 }

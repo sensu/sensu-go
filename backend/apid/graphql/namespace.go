@@ -29,8 +29,3 @@ func (*namespaceImpl) Environment(p graphql.ResolveParams) (string, error) {
 	g := p.Source.(namespaceGetter)
 	return g.GetEnvironment(), nil
 }
-
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*namespaceImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	return false
-}
