@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"fmt"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -45,39 +45,61 @@ func New(name string, client *clientv3.Client) *Queue {
 	return queue
 }
 
-// Interface provides methods for acting on an item retrieved from the queue.
-type Interface interface {
-	Ack(context.Context) error
-	Nack(context.Context) error
-	Value() string
-}
-
-// Item contains the key and data for a dequeued item
+// Item contains the key and value for a dequeued item, as well as the queue it
+// belongs to.
 type Item struct {
-	data *mvccpb.KeyValue
-}
-
-// Ack acknowledges the item has been received and processed, and deletes it
-// from the queue.
-func (i *Item) Ack(ctx context.Context) error {
-	return nil
-}
-
-// Nack returns the item to the queue.
-func (i *Item) Nack(ctx context.Context) error {
-	// how should this refer to the queue?
-	// put value in work queue
-	tryPut(ctx, i.Value())
-	// remove data from the in flight queue using its key
-	client.OpDelete(ctx, i.data.Key)
-	return nil
+	data  *mvccpb.KeyValue
+	queue *Queue
+	once  *sync.Once
 }
 
 // Value returns the string value of the item
 func (i *Item) Value() string {
-	fmt.Println(i.data)
-	fmt.Println(string(i.data.Value))
 	return string(i.data.Value)
+}
+
+func (i *Item) key() string {
+	return string(i.data.Key)
+}
+
+// Ack acknowledges the item has been received and processed, and deletes it
+// from the in flight queue.
+func (i *Item) Ack(ctx context.Context) error {
+	delCmp := clientv3.Compare(clientv3.ModRevision(string(i.data.Key)), "=", i.data.ModRevision)
+	delReq := clientv3.OpDelete(i.Value())
+	response, err := i.queue.kv.Txn(ctx).If(delCmp).Then(delReq).Commit()
+	if err == nil && response.Succeeded {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Nack returns the item to the work queue and deletes it from the in-flight
+// queue.
+func (i *Item) Nack(ctx context.Context) error {
+	// create a new key for use in the work queue
+	uName, err := i.queue.uniqueName()
+	if err != nil {
+		return err
+	}
+	uKey := path.Join(i.queue.Work, uName)
+
+	putCmp := clientv3.Compare(clientv3.ModRevision(uKey), "=", 0)
+	delCmp := clientv3.Compare(clientv3.ModRevision(i.key()), "=", i.data.ModRevision)
+	putReq := clientv3.OpPut(uKey, i.Value())
+	delReq := clientv3.OpDelete(i.key())
+
+	response, err := i.queue.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
+	if err == nil && response.Succeeded {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Enqueue adds a new value to the queue. It returns an error if the context is
@@ -98,7 +120,6 @@ func (q *Queue) tryPut(ctx context.Context, value string) error {
 		}
 
 		key := path.Join(q.Work, un)
-
 		cmp := clientv3.Compare(clientv3.Version(key), "=", 0)
 		req := clientv3.OpPut(key, value)
 		response, err := q.kv.Txn(ctx).If(cmp).Then(req).Commit()
@@ -125,12 +146,13 @@ func (q *Queue) uniqueName() (string, error) {
 func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
 	response, err := q.client.Get(ctx, q.Work, clientv3.WithFirstKey()...)
 	if err != nil {
-		return &Item{}, err
+		return nil, err
 	}
 	if len(response.Kvs) > 0 {
 		item, err := q.tryDelete(ctx, response.Kvs[0])
 		if err != nil {
-			return &Item{}, err
+
+			return nil, err
 		}
 		if item != nil {
 			return item, nil
@@ -144,14 +166,13 @@ func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
 	// Wait for the queue to receive an item
 	event, err := q.waitPutEvent(ctx)
 	if err != nil {
-		return &Item{}, err
+		return nil, err
 	}
 
 	if event != nil {
 		item, err := q.tryDelete(ctx, event.Kv)
-		fmt.Println(item)
 		if err != nil {
-			return &Item{}, err
+			return nil, err
 		}
 		return item, nil
 	}
@@ -161,25 +182,36 @@ func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
 
 func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, error) {
 	key := string(kv.Key)
-	cmp := clientv3.Compare(clientv3.ModRevision(key), "=", kv.ModRevision)
 
 	// generate a new key name
 	uName, err := q.uniqueName()
 	if err != nil {
-		return &Item{}, err
+		return nil, err
 	}
 	uKey := path.Join(q.InFlight, uName)
 
+	delCmp := clientv3.Compare(clientv3.ModRevision(key), "=", kv.ModRevision)
+	putCmp := clientv3.Compare(clientv3.ModRevision(uKey), "=", 0)
 	putReq := clientv3.OpPut(uKey, string(kv.Value))
 	delReq := clientv3.OpDelete(key)
-	response, err := q.kv.Txn(ctx).If(cmp).Then(putReq, delReq).Commit()
+
+	response, err := q.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
+
 	if err != nil {
-		return &Item{}, err
+		return nil, err
 	}
+	// return the new item
 	if response.Succeeded {
-		return &Item{data: kv}, nil
+		getResponse, err := q.client.Get(ctx, uKey)
+		if err != nil {
+			return nil, err
+		}
+		if len(getResponse.Kvs) > 0 {
+			newKv := getResponse.Kvs[0]
+			return &Item{data: newKv, queue: q}, nil
+		}
 	}
-	return &Item{}, nil
+	return nil, nil
 }
 
 // ensure that a waitPut also puts the item in the inflight lane and deletes it

@@ -123,3 +123,52 @@ func TestDequeueParallel(t *testing.T) {
 
 	assert.Equal(t, items, results)
 }
+
+func TestNack(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client, err := e.NewClient()
+	require.NoError(t, err)
+
+	queue := New("testnack", client)
+	err = queue.Enqueue(context.Background(), "test value")
+	require.NoError(t, err)
+
+	value, err := queue.Dequeue(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "test value", value.Value())
+
+	err = value.Nack(context.Background())
+	require.NoError(t, err)
+
+	value, err = queue.Dequeue(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "test value", value.Value())
+}
+
+func TestAck(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client, err := e.NewClient()
+	require.NoError(t, err)
+
+	queue := New("testack", client)
+	err = queue.Enqueue(context.Background(), "test value")
+	require.NoError(t, err)
+
+	value, err := queue.Dequeue(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "test value", value.Value())
+
+	err = value.Ack(context.Background())
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	value, err = queue.Dequeue(ctx)
+	require.Error(t, err)
+}

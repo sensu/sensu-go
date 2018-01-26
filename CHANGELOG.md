@@ -36,6 +36,9 @@ finished before its allotted execution timeout.
 ### Fixed
 - Fixed a bug where retrieving check hooks were only from the check's
 organization, rather than the check's environment, too.
+=======
+- Queues are now durable.
+>>>>>>> db091ed0... Fixed item returns and error handling
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
