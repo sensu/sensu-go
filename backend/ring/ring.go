@@ -1,5 +1,4 @@
 // Package ring implements a ring in etcd.
-
 package ring
 
 import (
@@ -44,7 +43,7 @@ type Interface interface {
 // Getter provides a way to get a Ring.
 type Getter interface {
 	// GetRing gets a named Ring.
-	GetRing(name string) Interface
+	GetRing(path ...string) Interface
 }
 
 // EtcdGetter is an Etcd implementation of Getter.
