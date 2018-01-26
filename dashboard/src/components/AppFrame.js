@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 
 import Drawer from "./Drawer";
+import QuickNav from "./QuickNav";
 import Toolbar from "./Toolbar";
 
 const styles = theme => ({
@@ -61,9 +62,9 @@ class AppFrame extends React.Component {
           className={classes.drawer}
         />
         {children}
+        <QuickNav />
       </div>
     );
   }
 }
-
 export default withStyles(styles)(AppFrame);
