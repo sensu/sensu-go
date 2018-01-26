@@ -17,8 +17,8 @@ const styles = theme => ({
     transition: theme.transitions.create("width"),
   },
   toolbar: {
-    paddingLeft: -12,
-    paddingRight: -12,
+    marginLeft: -12, // Account for button padding to match style guide.
+    marginRight: -12,
   },
   title: {
     marginLeft: 20,
