@@ -1,7 +1,6 @@
 import React from "react";
-// import PropTypes from "prop-types";
+import PropTypes from "prop-types";
 
-import { styles as listItemIconStyles } from "material-ui/List/ListItemIcon";
 import { withStyles } from "material-ui/styles";
 
 import DashboardIcon from "material-ui-icons/Dashboard";
@@ -14,37 +13,56 @@ import HandlerIcon from "material-ui-icons/CallSplit";
 
 import QuickNavButton from "./QuickNavButton";
 
-const styles = theme => {
-  const listItemStyles = listItemIconStyles(theme);
-
-  return {
-    listItemButton: listItemStyles.root, // TODO ...
-    listItemContent: {
-      flex: "1 1 auto",
-      padding: "0 16px",
-      height: listItemStyles.root.height,
-      "&:first-child": {
-        paddingLeft: theme.spacing.unit * 7,
-      },
-    },
-  };
+const styles = {
+  quicknavcontainer: { padding: "80px 0" },
 };
 
 class QuickNav extends React.Component {
+  static propTypes = {
+    // eslint-disable-next-line react/forbid-prop-types
+    classes: PropTypes.object.isRequired,
+  };
+
   render() {
+    const { classes } = this.props;
     return (
-      <div className="QuickNav" style={{ padding: "90px 0" }}>
-        <QuickNavButton Icon={DashboardIcon} primary="Dashboard" />
-        <QuickNavButton Icon={EventIcon} primary="Events" href="/events" />
-        <QuickNavButton Icon={EntityIcon} primary="Entities" />
-        <QuickNavButton Icon={CheckIcon} primary="Checks" href="/checks" />
+      <div className={classes.quicknavcontainer}>
         <QuickNavButton
+          className={classes.quicknavbutton}
+          Icon={DashboardIcon}
+          primary="Dashboard"
+        />
+        <QuickNavButton
+          className={classes.quicknavbutton}
+          Icon={EventIcon}
+          primary="Events"
+          href="/events"
+        />
+        <QuickNavButton
+          className={classes.quicknavbutton}
+          Icon={EntityIcon}
+          primary="Entities"
+        />
+        <QuickNavButton
+          className={classes.quicknavbutton}
+          Icon={CheckIcon}
+          primary="Checks"
+          href="/checks"
+        />
+        <QuickNavButton
+          className={classes.quicknavbutton}
           Icon={SilencedIcon}
           primary="Silenced"
           href="/silenced"
         />
-        <QuickNavButton Icon={HookIcon} primary="Hooks" href="/hooks" />
         <QuickNavButton
+          className={classes.quicknavbutton}
+          Icon={HookIcon}
+          primary="Hooks"
+          href="/hooks"
+        />
+        <QuickNavButton
+          className={classes.quicknavbutton}
           Icon={HandlerIcon}
           primary="Handlers"
           href="/handlers"

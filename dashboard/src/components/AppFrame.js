@@ -61,8 +61,8 @@ class AppFrame extends React.Component {
           onToggle={toggleToolbar}
           className={classes.drawer}
         />
+        <QuickNav className={classes.quicknav} />
         {children}
-        <QuickNav />
       </div>
     );
   }
