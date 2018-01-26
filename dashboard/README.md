@@ -74,7 +74,7 @@ choice that can automatically fix your code and point out problems.
 
 - [Code Highlighting](https://babeljs.io/docs/editors#syntax-highlighting-vim)
 - [Linting](https://github.com/vim-syntastic/syntastic/tree/master/syntax_checkers/javascript)
-- [Prettier](https://github.com/prettier/prettier/tree/master/editors/vim#vim-and-prettier-integration)
+- [Prettier](https://github.com/prettier/vim-prettier#install)
 - [Test Runner](https://github.com/janko-m/vim-test)
 
 ### VSCode

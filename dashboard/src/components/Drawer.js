@@ -18,14 +18,15 @@ import FeedbackIcon from "material-ui-icons/Feedback";
 
 import DrawerButton from "./DrawerButton";
 
-const logo = require("../assets/logo.png");
+const logo = require("../assets/logo/silver-green.svg");
 
 const styles = theme => {
   const listItemStyles = listItemIconStyles(theme);
 
   return {
     paper: {
-      width: 280,
+      minWidth: 264,
+      maxWidth: 400,
       backgroundColor: theme.palette.background.paper,
     },
     logo: { height: "inherit" },
@@ -53,7 +54,7 @@ class Drawer extends React.Component {
     const { open, onToggle, classes } = this.props;
 
     return (
-      <MaterialDrawer type="temporary" open={open} onRequestClose={onToggle}>
+      <MaterialDrawer type="temporary" open={open} onClose={onToggle}>
         <div className={classes.paper}>
           <List>
             <ListItem>

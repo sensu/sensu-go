@@ -14,22 +14,26 @@ import MenuIcon from "material-ui-icons/Menu";
 import AppSearch from "./AppSearch";
 import { logout } from "../utils/authentication";
 
-import logo from "../assets/sensu-logo-white.png";
+import logo from "../assets/wordmark-white.svg";
 import sampleAvatar from "../assets/sample-avatar.png";
 
 const styles = theme => ({
   appBar: {
     transition: theme.transitions.create("width"),
   },
+  toolbar: {
+    // paddingLeft: 12,
+    // paddingRight: 12,
+  },
   title: {
-    marginLeft: 24,
+    marginLeft: 20,
     flex: "0 1 auto",
   },
   grow: {
     flex: "1 1 auto",
   },
   logo: {
-    height: 15,
+    height: 16,
     marginRight: theme.spacing.unit * 1,
     verticalAlign: "baseline",
   },
@@ -38,14 +42,13 @@ const styles = theme => ({
     width: 32,
     borderColor: "#fff",
     borderWidth: 1,
+    marginRight: -12,
   },
   search: {
     marginRight: theme.spacing.unit,
   },
-  hamburgerButton: {
-    // [theme.breakpoints.up("sm")]: {
-    //   display: "none",
-    // },
+  drawerButton: {
+    marginLeft: -12,
   },
 });
 
@@ -89,12 +92,12 @@ class Toolbar extends React.Component {
 
     return (
       <AppBar className={classes.appBar}>
-        <MaterialToolbar>
+        <MaterialToolbar className={classes.toolbar}>
           <IconButton
-            className={classes.hamburgerButton}
+            className={classes.drawerButton}
             onClick={toggleToolbar}
             aria-label="Menu"
-            color="contrast"
+            color="inherit"
           >
             <MenuIcon />
           </IconButton>
@@ -105,7 +108,6 @@ class Toolbar extends React.Component {
             noWrap
           >
             <img alt="sensu logo" src={logo} className={classes.logo} />
-            Sensu
           </Typography>
           <div className={classes.grow} />
           <AppSearch className={classes.search} />
@@ -120,7 +122,7 @@ class Toolbar extends React.Component {
             id="profile-dropdown-menu"
             anchorEl={this.state.menuAnchorEl}
             open={this.state.menuOpen}
-            onRequestClose={this.handleMenuRequestClose}
+            onClose={this.handleMenuRequestClose}
           >
             <MenuItem>Profile</MenuItem>
             <MenuItem>My account</MenuItem>
