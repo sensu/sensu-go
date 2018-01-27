@@ -17,6 +17,9 @@ to that map.
 - Fixed a bug where we were attempting to kill processes that had already
 finished before its allotted execution timeout.
 
+### Changed
+- Queues are now durable.
+
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added
 - Add function for matching entities to a proxy check request.
@@ -36,9 +39,6 @@ finished before its allotted execution timeout.
 ### Fixed
 - Fixed a bug where retrieving check hooks were only from the check's
 organization, rather than the check's environment, too.
-=======
-- Queues are now durable.
->>>>>>> db091ed0... Fixed item returns and error handling
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
