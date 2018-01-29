@@ -58,12 +58,20 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	if c.Cron != "" {
+		if c.Interval != 0 {
+			return errors.New("can only specify one of check or cron schedule")
+		}
+
 		if _, err := cron.ParseStandard(c.Cron); err != nil {
 			return errors.New("check cron string is invalid")
 		}
 	}
 
 	if c.Interval == 0 {
+		if c.Cron != "" {
+			return errors.New("can only specify one of check or cron schedule")
+		}
+
 		return errors.New("check interval must be greater than 0")
 	}
 

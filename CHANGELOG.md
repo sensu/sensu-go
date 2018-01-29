@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
+- Cron and Interval scheduling are now mutually exclusive.
 
 ### Fixed
 - Fixed a bug where retrieving check hooks were only from the check's
