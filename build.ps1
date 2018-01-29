@@ -197,7 +197,7 @@ function e2e_commands
 {
     echo "Running e2e tests..."
 
-    go test -v $REPO_PATH/testing/e2e
+    go test $REPO_PATH/testing/e2e
     If ($LASTEXITCODE -ne 0) {
         echo "e2e testing failed..."
         exit 1
