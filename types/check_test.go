@@ -49,10 +49,6 @@ func TestCheckConfig(t *testing.T) {
 	assert.Error(t, c.Validate())
 	c.Interval = 60
 
-	// Invalid cron
-	assert.Error(t, c.Validate())
-	c.Cron = "* * * * *"
-
 	// Invalid command
 	assert.Error(t, c.Validate())
 	c.Command = "echo 'foo'"
@@ -72,6 +68,23 @@ func TestCheckConfig(t *testing.T) {
 	// Valid check
 	c.Ttl = 90
 	assert.NoError(t, c.Validate())
+}
+
+func TestScheduleValidation(t *testing.T) {
+	c := FixtureCheck("check")
+	config := c.Config
+
+	// Fixture comes with valid interval-based schedule
+	assert.NoError(t, config.Validate())
+
+	config.Cron = "* * * * *"
+	assert.Error(t, config.Validate())
+
+	config.Interval = 0
+	assert.NoError(t, config.Validate())
+
+	config.Cron = "this is an invalid cron"
+	assert.Error(t, config.Validate())
 }
 
 func TestFixtureCheckIsValid(t *testing.T) {
