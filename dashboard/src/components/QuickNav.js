@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classNames from "classnames";
 
 import { withStyles } from "material-ui/styles";
 
@@ -14,19 +15,22 @@ import HandlerIcon from "material-ui-icons/CallSplit";
 import QuickNavButton from "./QuickNavButton";
 
 const styles = {
-  quicknavcontainer: { padding: "80px 0" },
+  quicknavcontainer: { padding: 0 },
 };
 
 class QuickNav extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    className: PropTypes.string,
   };
 
+  static defaultProps = { className: "" };
+
   render() {
-    const { classes } = this.props;
+    const { classes, className } = this.props;
     return (
-      <div className={classes.quicknavcontainer}>
+      <div className={classNames(classes.quicknavcontainer, className)}>
         <QuickNavButton
           className={classes.quicknavbutton}
           Icon={DashboardIcon}

@@ -1,19 +1,25 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withRouter, routerShape } from "found";
-import { styles as listItemIconStyles } from "material-ui/List/ListItemIcon";
 import { withStyles } from "material-ui/styles";
-import List, { ListItem, ListItemIcon, ListItemText } from "material-ui/List";
+import Typography from "material-ui/Typography";
+import IconButton from "material-ui/IconButton";
 
-const styles = theme => {
-  const listItemStyles = listItemIconStyles(theme);
-
-  return {
-    listItem: listItemStyles.root,
-    listItemIcon: {
-      padding: "0 0",
-    },
-  };
+const styles = {
+  IconButton: { "flex-direction": "column" },
+  menuicon: {
+    padding: 0,
+    width: 24,
+    color: "rgba(0, 0, 0, 0.54)",
+  },
+  menutext: {
+    padding: 0,
+    fontSize: "0.6875rem",
+    color: "rgba(0, 0, 0, 0.87)",
+  },
+  label: {
+    flexDirection: "column",
+  },
 };
 
 class QuickNavButton extends React.Component {
@@ -37,16 +43,18 @@ class QuickNavButton extends React.Component {
     const handleClick = () => this.props.router.push(this.props.href);
 
     return (
-      <List>
-        <ListItem button onClick={onClick || handleClick}>
-          <ListItemIcon className={classes.ListItemIcon}>
-            <Icon />
-          </ListItemIcon>
-        </ListItem>
-        <ListItem button onClick={onClick || handleClick}>
-          <ListItemText primary={primary} {...props} />
-        </ListItem>
-      </List>
+      <IconButton
+        classes={{ label: classes.label }}
+        to={props.href}
+        role="button"
+        tabIndex={0}
+        onClick={onClick || handleClick}
+      >
+        <Icon className={classes.menuicon} />
+        <Typography className={classes.menutext} {...props.children}>
+          {primary}
+        </Typography>
+      </IconButton>
     );
   }
 }
