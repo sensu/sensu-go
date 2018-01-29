@@ -18,7 +18,8 @@ func TokenSubstitution(data, input interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("could not marshal the provided template: %s", err.Error())
 	}
 
-	inputString := strings.Replace(string(inputBytes), `\"`, `"`, -1)
+	// replace special character \" with "
+	inputString := strings.Replace(string(inputBytes), `\\\"`, `"`, -1)
 
 	tmpl := template.New("")
 	tmpl.Funcs(funcMap())

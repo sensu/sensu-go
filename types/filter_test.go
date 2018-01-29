@@ -48,18 +48,3 @@ func TestEventFilterValidate(t *testing.T) {
 	// Valid filter
 	assert.NoError(t, f.Validate())
 }
-
-func TestValidateStatements(t *testing.T) {
-	// Valid statement
-	statements := []string{"10 > 0"}
-	assert.NoError(t, validateStatements(statements))
-
-	// Invalid statement
-	statements = []string{"10. 0"}
-	assert.Error(t, validateStatements(statements))
-
-	// Forbidden modifier token
-	statements = []string{"10 + 2 > 0"}
-	assert.Error(t, validateStatements(statements))
-
-}

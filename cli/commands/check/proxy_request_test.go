@@ -15,7 +15,7 @@ import (
 )
 
 func TestSetProxyRequestsCommand(t *testing.T) {
-	const proxyJSON = `{"entity_attributes":["foo","bar"], "splay":true, "splay_coverage":90}`
+	const proxyJSON = `{"entity_attributes":["entity.Class == \"proxy\""], "splay":true, "splay_coverage":90}`
 	const invalidProxyJSON = `{"splay":true, "splay_coverage":0}`
 	tests := []struct {
 		args           []string
@@ -56,6 +56,44 @@ func TestSetProxyRequestsCommand(t *testing.T) {
 			} else {
 				os.Stdin = stdin
 			}
+			out, err := stest.RunCmd(cmd, test.args)
+			if test.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Regexp(t, test.expectedOutput, out)
+		})
+	}
+}
+
+func TestRemoveProxyRequestsCommand(t *testing.T) {
+	tests := []struct {
+		args           []string
+		fetchResponse  error
+		updateResponse error
+		expectedOutput string
+		expectError    bool
+	}{
+		{[]string{}, nil, nil, "Usage", false},
+		{[]string{"foo"}, errors.New("error"), nil, "", true},
+		{[]string{"bar"}, nil, errors.New("error"), "", true},
+		{[]string{"check1"}, nil, nil, "OK", false},
+	}
+
+	for i, test := range tests {
+		name := ""
+		if len(test.args) > 0 {
+			name = test.args[0]
+		}
+		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
+			check := types.FixtureCheckConfig("check1")
+			cli := stest.NewMockCLI()
+			client := cli.Client.(*client.MockClient)
+			client.On("FetchCheck", name).Return(check, test.fetchResponse)
+			client.On("UpdateCheck", mock.Anything).Return(test.updateResponse)
+			cmd := RemoveProxyRequestsCommand(cli)
 			out, err := stest.RunCmd(cmd, test.args)
 			if test.expectError {
 				assert.Error(t, err)
