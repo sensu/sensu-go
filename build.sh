@@ -170,7 +170,7 @@ linter_commands () {
 unit_test_commands () {
     echo "Running unit tests..."
 
-    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
+    go test -timeout=60s $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
     if [ $? -ne 0 ]; then
         echo "Unit testing failed..."
         exit 1
@@ -189,7 +189,7 @@ integration_test_commands () {
 
 e2e_commands () {
     echo "Running e2e tests..."
-    go test -v ${REPO_PATH}/testing/e2e $@
+    go test ${REPO_PATH}/testing/e2e $@
 }
 
 docker_commands () {
