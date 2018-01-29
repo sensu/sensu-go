@@ -35,9 +35,9 @@ const styles = theme => ({
   quicknav: {
     position: "fixed",
     display: "flex",
-    "flex-direction": "column",
-    "align-items": "center",
-    top: 64,
+    flexDirection: "column",
+    alignItems: "center",
+    top: 80,
     left: 0,
     width: 72,
   },

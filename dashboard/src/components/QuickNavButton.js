@@ -1,25 +1,28 @@
 import React from "react";
 import PropTypes from "prop-types";
+
 import { withRouter, routerShape } from "found";
 import { withStyles } from "material-ui/styles";
+
 import Typography from "material-ui/Typography";
 import IconButton from "material-ui/IconButton";
 
 const styles = {
-  IconButton: { "flex-direction": "column" },
   menuicon: {
-    padding: 0,
+    padding: "",
     width: 24,
-    color: "rgba(0, 0, 0, 0.54)",
+    color: "rgba(21, 25,40, .71)",
   },
   menutext: {
-    padding: 0,
+    padding: "4px 0 0",
     fontSize: "0.6875rem",
-    color: "rgba(0, 0, 0, 0.87)",
+    color: "#2D3555",
+    fontFamily: "SF Pro Text",
   },
   label: {
     flexDirection: "column",
   },
+  root: { width: 72, height: 72 },
 };
 
 class QuickNavButton extends React.Component {
@@ -44,7 +47,7 @@ class QuickNavButton extends React.Component {
 
     return (
       <IconButton
-        classes={{ label: classes.label }}
+        classes={{ root: classes.root, label: classes.label }}
         to={props.href}
         role="button"
         tabIndex={0}
