@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [2.0.0-alpha.15] - 2018-01-30
 ### Added
 - Add function for matching entities to a proxy check request.
 - Added functions for publishing proxy check requests.
