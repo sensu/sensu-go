@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var binDir = filepath.Join("..", "bin")
+var toolsDir = filepath.Join(binDir, "tools")
+
 func TestExecuteHook(t *testing.T) {
 	assert := assert.New(t)
 
