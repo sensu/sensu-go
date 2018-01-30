@@ -31,7 +31,7 @@ class QuickNav extends React.Component {
     const { classes, className } = this.props;
 
     return (
-      <div className={classNames(classes.quickNavcContainer, className)}>
+      <div className={classNames(classes.quickNavContainer, className)}>
         <QuickNavButton
           Icon={DashboardIcon}
           primary="Dashboard"

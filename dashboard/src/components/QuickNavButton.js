@@ -10,14 +10,17 @@ import IconButton from "material-ui/IconButton";
 
 const styles = {
   menuIcon: {
+    // TODO theme colour for this
     color: "rgba(21, 25,40, .71)",
   },
   menuText: {
     padding: "4px 0 0",
     fontSize: "0.6875rem",
+    // TODO come back to reassess typography
     fontFamily: "SF Pro Text",
-    color: "#2D3555",
+    color: "theme.palette.primary.contrastTest",
   },
+  // TODO theme colour for this
   active: { color: "rgba(151, 198, 115, 1)" },
   label: {
     flexDirection: "column",
