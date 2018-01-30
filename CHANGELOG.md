@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added package leader, for facilitating execution by a single backend.
 - Proxy check requests are now published to all entities described in
 `ProxyRequests` and `EntityAttributes`.
+- Add an e2e test for proxy check requests.
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
