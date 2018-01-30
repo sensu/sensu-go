@@ -79,6 +79,22 @@ func TestTokenSubstitution(t *testing.T) {
 			input:         types.CheckConfig{Command: `{{ .System.Hostname }}`},
 			expectedError: true,
 		},
+		{
+			name:            "extra escape character",
+			data:            map[string]interface{}{"ID": "foo", "Check": map[string]interface{}{"Name": "check_foo"}},
+			input:           types.CheckConfig{Command: `{{ .ID | default \"bar\" }}`},
+			expectedCommand: "",
+			expectedError:   true,
+		},
+		{
+			name: "multiple tokens and valid json",
+			data: types.FixtureEntity("entity"),
+			input: types.CheckConfig{Command: `{{ .ID }}; {{ "hello" }}; {{ .Class }}`,
+				ProxyRequests: &types.ProxyRequests{EntityAttributes: []string{`entity.Class == \"proxy\"`}},
+			},
+			expectedCommand: "entity; hello; host",
+			expectedError:   false,
+		},
 	}
 
 	for _, tc := range testCases {
