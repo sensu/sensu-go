@@ -113,9 +113,21 @@ func (s *CheckScheduler) Start() error {
 				// Point executor to lastest copy of the scheduler state
 				executor.State = state
 
-				// Publish check request
-				if err := executor.Execute(check); err != nil {
-					logger.Error(err)
+				// Publish proxy check requests, if applicable
+				if check.ProxyRequests != nil {
+					entities := state.GetEntitiesInNamespace(check.Organization, check.Environment)
+					if matchedEntities := matchEntities(entities, check.ProxyRequests); len(matchedEntities) != 0 {
+						if err := executor.PublishProxyCheckRequests(matchedEntities, check); err != nil {
+							logger.Error(err)
+						}
+					} else {
+						s.logger.Info("no matching entities, check will not be published")
+					}
+				} else {
+					// Publish check request
+					if err := executor.Execute(check); err != nil {
+						logger.Error(err)
+					}
 				}
 			}
 		}
@@ -215,11 +227,11 @@ func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
 	return false
 }
 
-// PublishProxyCheckRequest publishes a proxy check request for an entity. This
+// publishProxyCheckRequest publishes a proxy check request for an entity. This
 // method substitutes entity tokens in the check definition prior to publishling
 // the check request. If there are unmatched entity tokens, it returns an error,
 // and a check request is not published.
-func (e *CheckExecutor) PublishProxyCheckRequest(entity *types.Entity, check *types.CheckConfig) error {
+func (e *CheckExecutor) publishProxyCheckRequest(entity *types.Entity, check *types.CheckConfig) error {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity, err := dynamic.Synthesize(entity)
@@ -264,7 +276,7 @@ func (e *CheckExecutor) PublishProxyCheckRequests(entities []*types.Entity, chec
 
 	for _, entity := range entities {
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
-		if err := e.PublishProxyCheckRequest(entity, check); err != nil {
+		if err := e.publishProxyCheckRequest(entity, check); err != nil {
 			return err
 		}
 	}

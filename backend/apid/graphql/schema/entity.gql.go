@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -205,36 +206,33 @@ type EntityAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ EntityAliases) ID(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ EntityAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ EntityAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Class implements response to request for 'class' field.
 func (_ EntityAliases) Class(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // System implements response to request for 'system' field.
 func (_ EntityAliases) System(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
@@ -247,7 +245,7 @@ func (_ EntityAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) 
 // LastSeen implements response to request for 'lastSeen' field.
 func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -261,29 +259,27 @@ func (_ EntityAliases) Deregister(p graphql.ResolveParams) (bool, error) {
 // Deregistration implements response to request for 'deregistration' field.
 func (_ EntityAliases) Deregistration(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // KeepaliveTimeout implements response to request for 'keepaliveTimeout' field.
 func (_ EntityAliases) KeepaliveTimeout(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // AuthorID implements response to request for 'authorId' field.
 func (_ EntityAliases) AuthorID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Author implements response to request for 'author' field.
 func (_ EntityAliases) Author(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 /*
@@ -636,21 +632,19 @@ type EntityConnectionAliases struct{}
 // Edges implements response to request for 'edges' field.
 func (_ EntityConnectionAliases) Edges(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // PageInfo implements response to request for 'pageInfo' field.
 func (_ EntityConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // TotalCount implements response to request for 'totalCount' field.
 func (_ EntityConnectionAliases) TotalCount(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -859,14 +853,13 @@ type EntityEdgeAliases struct{}
 // Node implements response to request for 'node' field.
 func (_ EntityEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Cursor implements response to request for 'cursor' field.
 func (_ EntityEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
@@ -1088,43 +1081,42 @@ type SystemAliases struct{}
 // Hostname implements response to request for 'hostname' field.
 func (_ SystemAliases) Hostname(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Os implements response to request for 'os' field.
 func (_ SystemAliases) Os(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Platform implements response to request for 'platform' field.
 func (_ SystemAliases) Platform(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // PlatformFamily implements response to request for 'platformFamily' field.
 func (_ SystemAliases) PlatformFamily(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // PlatformVersion implements response to request for 'platformVersion' field.
 func (_ SystemAliases) PlatformVersion(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Network implements response to request for 'network' field.
 func (_ SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 /*
@@ -1373,8 +1365,7 @@ type NetworkAliases struct{}
 // Interfaces implements response to request for 'interfaces' field.
 func (_ NetworkAliases) Interfaces(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 /*
@@ -1559,21 +1550,21 @@ type NetworkInterfaceAliases struct{}
 // Name implements response to request for 'name' field.
 func (_ NetworkInterfaceAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Mac implements response to request for 'mac' field.
 func (_ NetworkInterfaceAliases) Mac(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Addresses implements response to request for 'addresses' field.
 func (_ NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
@@ -1778,7 +1769,7 @@ type DeregistrationAliases struct{}
 // Handler implements response to request for 'handler' field.
 func (_ DeregistrationAliases) Handler(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 

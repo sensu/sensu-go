@@ -27,7 +27,6 @@ func newMutationImpl(store store.Store) *mutationsImpl {
 
 type deleteRecordPayload struct {
 	schema.DeleteRecordPayloadAliases
-	noLookup
 }
 
 //
@@ -103,7 +102,6 @@ func copyCheckInputs(r *types.CheckConfig, ins *schema.CheckConfigInputs) {
 
 type checkMutationPayload struct {
 	schema.CreateCheckPayloadAliases
-	noLookup
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

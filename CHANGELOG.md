@@ -12,10 +12,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added proxy request validation.
 - CLI functionality for proxy check requests (add set-proxy-requests command).
 - Entities have been added to the state manager and synchronizer.
+- Added package leader, for facilitating execution by a single backend.
+- Proxy check requests are now published to all entities described in
+`ProxyRequests` and `EntityAttributes`.
 - Add integration tests to our CI.
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
+- Cron and Interval scheduling are now mutually exclusive.
 
 ### Fixed
 - Fixed a bug where retrieving check hooks were only from the check's

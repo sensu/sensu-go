@@ -37,7 +37,6 @@ func (register NodeRegister) RegisterResolver(resolver NodeResolver) {
 
 	if len(entry) > 1 && entry[0].IsKindOf == nil && entry[1].IsKindOf == nil {
 		logEntry := logger.WithFields(logrus.Fields{
-			"resolver": resolver,
 			"globalid": translatorName,
 		})
 		logEntry.Panic(
@@ -57,7 +56,7 @@ func (register NodeRegister) Lookup(components globalid.Components) *NodeResolve
 	entriesLen := len(entries)
 
 	logEntry := logger.WithFields(logrus.Fields{
-		"entriesLen":   entries,
+		"entriesLen":   entriesLen,
 		"idComponents": components,
 	})
 	logEntry.Debug("lookup")

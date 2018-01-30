@@ -536,7 +536,7 @@ func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequest() {
 	)
 	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.exec.PublishProxyCheckRequest(entity, check))
+	suite.NoError(suite.exec.publishProxyCheckRequest(entity, check))
 	suite.NoError(suite.msgBus.Stop())
 	close(c1)
 

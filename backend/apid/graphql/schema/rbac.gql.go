@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -142,22 +143,20 @@ type RuleAliases struct{}
 // Namespace implements response to request for 'namespace' field.
 func (_ RuleAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Type implements response to request for 'type' field.
 func (_ RuleAliases) Type(p graphql.ResolveParams) (RuleResource, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(RuleResource)
+	ret := RuleResource(val.(string))
 	return ret, err
 }
 
 // Permissions implements response to request for 'permissions' field.
 func (_ RuleAliases) Permissions(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // RuleType Rule maps permissions to a given type
@@ -372,22 +371,20 @@ type RoleAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ RoleAliases) ID(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ RoleAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Rules implements response to request for 'rules' field.
 func (_ RoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // RoleType Role describes set of rules

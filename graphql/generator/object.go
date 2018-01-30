@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 )
 
@@ -262,7 +263,7 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 		name := field.Name.Value
 		titleizedName := toFieldName(field.Name.Value)
 		resolverFnSignature := genFieldResolverSignature(field, i)
-		retType := genFieldResolverReturnType(field.Type, i)
+		coerceType := genFieldResolverTypeCoercion(field.Type, i)
 
 		code.Commentf("%s implements response to request for '%s' field.", titleizedName, name)
 		code.
@@ -275,8 +276,12 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 						jen.Id("p").Dot("Source"),
 						jen.Id("p").Dot("Info").Dot("FieldName"),
 					)
-				g.Id("ret").Op(":=").Id("val").Assert(retType)
-				g.Return(jen.List(jen.Id("ret"), jen.Id("err")))
+				if coerceType != nil {
+					g.Id("ret").Op(":=").Add(coerceType) //Id("val").Assert(retType)
+					g.Return(jen.List(jen.Id("ret"), jen.Id("err")))
+				} else {
+					g.Return(jen.List(jen.Id("val"), jen.Id("err")))
+				}
 			})
 	}
 
@@ -709,6 +714,62 @@ func genFieldResolverReturnType(t ast.Type, i info) jen.Code {
 		return code
 	}
 	return jen.Interface()
+}
+
+// Super crufty.
+func genFieldResolverTypeCoercion(t ast.Type, i info) jen.Code {
+	mkAssert := func(t jen.Code) jen.Code {
+		return jen.Id("val").Assert(t)
+	}
+
+	var namedType *ast.Named
+	switch ttype := t.(type) {
+	case *ast.List:
+		var ok bool
+		namedType, ok = ttype.Type.(*ast.Named)
+		if !ok {
+			nullType, ok := ttype.Type.(*ast.NonNull)
+			if !ok {
+				return nil
+			}
+			namedType, ok = nullType.Type.(*ast.Named)
+			if !ok {
+				return nil
+			}
+		}
+		statement := genBuiltinTypeReference(namedType)
+		if statement != nil {
+			return mkAssert(jen.Index().Add(statement))
+		}
+		return nil
+	case *ast.NonNull:
+		return genFieldResolverTypeCoercion(ttype.Type, i)
+	case *ast.Named:
+		namedType = ttype
+	default:
+		panic("unknown ast.Type given")
+	}
+
+	if def, ok := i.definitions[namedType.Name.Value]; ok {
+		if _, ok := def.(*ast.EnumDefinition); ok {
+			return jen.Id(namedType.Name.Value).Call(mkAssert(jen.String()))
+		}
+		return nil
+	}
+
+	switch namedType.Name.Value {
+	case graphql.Int.Name():
+		return jen.Qual(defsPkg, "Int").Op(".").Id("ParseValue").Call(jen.Id("val")).Assert(jen.Int())
+	case graphql.Float.Name():
+		return jen.Qual(defsPkg, "Float").Op(".").Id("ParseValue").Call(jen.Id("val")).Assert(jen.Float64())
+	case graphql.String.Name():
+		return jen.Qual("fmt", "Sprint").Call(jen.Id("val"))
+	case graphql.Boolean.Name():
+		return mkAssert(jen.Id("bool"))
+	case graphql.DateTime.Name():
+		return mkAssert(jen.Qual("time", "Time"))
+	}
+	return nil
 }
 
 //

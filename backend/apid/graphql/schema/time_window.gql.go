@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -128,8 +129,7 @@ type TimeWindowWhenAliases struct{}
 // Days implements response to request for 'days' field.
 func (_ TimeWindowWhenAliases) Days(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // TimeWindowWhenType TimeWindowWhen defines the "when" attributes for time windows
@@ -345,57 +345,49 @@ type TimeWindowDaysAliases struct{}
 // All implements response to request for 'all' field.
 func (_ TimeWindowDaysAliases) All(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Sunday implements response to request for 'sunday' field.
 func (_ TimeWindowDaysAliases) Sunday(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Monday implements response to request for 'monday' field.
 func (_ TimeWindowDaysAliases) Monday(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Tuesday implements response to request for 'tuesday' field.
 func (_ TimeWindowDaysAliases) Tuesday(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Wednesday implements response to request for 'wednesday' field.
 func (_ TimeWindowDaysAliases) Wednesday(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Thursday implements response to request for 'thursday' field.
 func (_ TimeWindowDaysAliases) Thursday(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Friday implements response to request for 'friday' field.
 func (_ TimeWindowDaysAliases) Friday(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Saturday implements response to request for 'saturday' field.
 func (_ TimeWindowDaysAliases) Saturday(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // TimeWindowDaysType TimeWindowDays defines the days of a time window
@@ -678,14 +670,14 @@ type TimeWindowTimeRangeAliases struct{}
 // Begin implements response to request for 'begin' field.
 func (_ TimeWindowTimeRangeAliases) Begin(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // End implements response to request for 'end' field.
 func (_ TimeWindowTimeRangeAliases) End(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
