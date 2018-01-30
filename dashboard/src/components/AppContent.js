@@ -8,6 +8,7 @@ const styles = theme => ({
     flex: "1 1 100%",
     maxWidth: "100%",
     margin: "0 auto",
+    position: "relative",
   }),
 
   // TODO: Make extra-wide gutter optional. (Maybe configured w/ prop?)

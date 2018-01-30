@@ -13,6 +13,7 @@
     "babel-runtime": "^6.23.0",
     "case-sensitive-paths-webpack-plugin": "^2.1.1",
     "chalk": "^2.1.0",
+    "classnames": "^2.2.5",
     "codecov": "^2.3.0",
     "css-loader": "^0.28.4",
     "dotenv": "^4.0.0",
