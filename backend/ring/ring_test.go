@@ -1,3 +1,5 @@
+// +build integration
+
 package ring
 
 import (
@@ -68,4 +70,25 @@ func TestNext(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, newItems[i%2], item)
 	}
+}
+
+func TestPeek(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	require.NoError(t, err)
+
+	ring := EtcdGetter{client}.GetRing("testpeek")
+
+	items := []string{"foo", "bar", "baz"}
+	for _, item := range items {
+		require.NoError(t, ring.Add(context.Background(), item))
+	}
+
+	item, err := ring.Peek(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "foo", item)
 }
