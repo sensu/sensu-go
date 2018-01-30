@@ -116,10 +116,12 @@ func (s *CheckScheduler) Start() error {
 				// Publish proxy check requests, if applicable
 				if check.ProxyRequests != nil {
 					entities := state.GetEntitiesInNamespace(check.Organization, check.Environment)
-					if matchedEntities := matchEntities(entities, check.ProxyRequests); matchedEntities != nil {
+					if matchedEntities := matchEntities(entities, check.ProxyRequests); len(matchedEntities) != 0 {
 						if err := executor.PublishProxyCheckRequests(matchedEntities, check); err != nil {
 							logger.Error(err)
 						}
+					} else {
+						s.logger.Info("no matching entities, check will not be published")
 					}
 				} else {
 					// Publish check request
