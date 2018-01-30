@@ -1,28 +1,31 @@
 import React from "react";
 import PropTypes from "prop-types";
-
+import compose from "lodash/fp/compose";
 import { withRouter, routerShape } from "found";
+
 import { withStyles } from "material-ui/styles";
 
 import Typography from "material-ui/Typography";
 import IconButton from "material-ui/IconButton";
 
 const styles = {
-  menuicon: {
-    padding: "",
-    width: 24,
+  menuIcon: {
     color: "rgba(21, 25,40, .71)",
   },
-  menutext: {
+  menuText: {
     padding: "4px 0 0",
     fontSize: "0.6875rem",
-    color: "#2D3555",
     fontFamily: "SF Pro Text",
+    color: "#2D3555",
   },
+  active: { color: "rgba(151, 198, 115, 1)" },
   label: {
     flexDirection: "column",
   },
-  root: { width: 72, height: 72 },
+  buttonSize: {
+    width: 72,
+    height: 72,
+  },
 };
 
 class QuickNavButton extends React.Component {
@@ -33,28 +36,38 @@ class QuickNavButton extends React.Component {
     primary: PropTypes.string.isRequired,
     router: routerShape.isRequired,
     href: PropTypes.string,
+    active: PropTypes.bool,
     onClick: PropTypes.func,
   };
 
   static defaultProps = {
     onClick: null,
     href: "",
+    active: false,
   };
 
   render() {
     const { classes, Icon, router, primary, onClick, ...props } = this.props;
     const handleClick = () => this.props.router.push(this.props.href);
-
     return (
       <IconButton
-        classes={{ root: classes.root, label: classes.label }}
+        classes={{
+          root: classes.buttonSize,
+          label: classes.label,
+        }}
         to={props.href}
         role="button"
         tabIndex={0}
         onClick={onClick || handleClick}
       >
-        <Icon className={classes.menuicon} />
-        <Typography className={classes.menutext} {...props.children}>
+        <Icon
+          classes={{ root: classes.menuIcon }}
+          className={props.active ? classes.active : null}
+        />
+        <Typography
+          classes={{ root: classes.menuText }}
+          className={props.active ? classes.active : null}
+        >
           {primary}
         </Typography>
       </IconButton>
@@ -62,4 +75,4 @@ class QuickNavButton extends React.Component {
   }
 }
 
-export default withRouter(withStyles(styles)(QuickNavButton));
+export default compose(withStyles(styles), withRouter)(QuickNavButton);

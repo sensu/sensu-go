@@ -15,7 +15,7 @@ import HandlerIcon from "material-ui-icons/CallSplit";
 import QuickNavButton from "./QuickNavButton";
 
 const styles = {
-  quicknavcontainer: { padding: 0 },
+  quickNavContainer: {},
 };
 
 class QuickNav extends React.Component {
@@ -29,47 +29,50 @@ class QuickNav extends React.Component {
 
   render() {
     const { classes, className } = this.props;
+
     return (
-      <div className={classNames(classes.quicknavcontainer, className)}>
+      <div className={classNames(classes.quickNavcContainer, className)}>
         <QuickNavButton
-          className={classes.quicknavbutton}
           Icon={DashboardIcon}
           primary="Dashboard"
+          href="/"
+          active={location.pathname === "/"}
         />
         <QuickNavButton
-          className={classes.quicknavbutton}
           Icon={EventIcon}
           primary="Events"
           href="/events"
+          active={location.pathname === "/events"}
         />
         <QuickNavButton
-          className={classes.quicknavbutton}
           Icon={EntityIcon}
           primary="Entities"
+          href="/entities"
+          active={location.pathname === "/entities"}
         />
         <QuickNavButton
-          className={classes.quicknavbutton}
           Icon={CheckIcon}
           primary="Checks"
           href="/checks"
+          active={location.pathname === "/checks"}
         />
         <QuickNavButton
-          className={classes.quicknavbutton}
           Icon={SilencedIcon}
-          primary="Silenced"
-          href="/silenced"
+          primary="Silences"
+          href="/silences"
+          active={location.pathname === "/silences"}
         />
         <QuickNavButton
-          className={classes.quicknavbutton}
           Icon={HookIcon}
           primary="Hooks"
           href="/hooks"
+          active={location.pathname === "/hooks"}
         />
         <QuickNavButton
-          className={classes.quicknavbutton}
           Icon={HandlerIcon}
           primary="Handlers"
           href="/handlers"
+          active={location.pathname === "/handlers"}
         />
       </div>
     );
