@@ -32,48 +32,13 @@ class QuickNav extends React.Component {
 
     return (
       <div className={classNames(classes.quickNavContainer, className)}>
-        <QuickNavButton
-          Icon={DashboardIcon}
-          primary="Dashboard"
-          href="/"
-          active={location.pathname === "/"}
-        />
-        <QuickNavButton
-          Icon={EventIcon}
-          primary="Events"
-          href="/events"
-          active={location.pathname === "/events"}
-        />
-        <QuickNavButton
-          Icon={EntityIcon}
-          primary="Entities"
-          href="/entities"
-          active={location.pathname === "/entities"}
-        />
-        <QuickNavButton
-          Icon={CheckIcon}
-          primary="Checks"
-          href="/checks"
-          active={location.pathname === "/checks"}
-        />
-        <QuickNavButton
-          Icon={SilencedIcon}
-          primary="Silences"
-          href="/silences"
-          active={location.pathname === "/silences"}
-        />
-        <QuickNavButton
-          Icon={HookIcon}
-          primary="Hooks"
-          href="/hooks"
-          active={location.pathname === "/hooks"}
-        />
-        <QuickNavButton
-          Icon={HandlerIcon}
-          primary="Handlers"
-          href="/handlers"
-          active={location.pathname === "/handlers"}
-        />
+        <QuickNavButton Icon={DashboardIcon} caption="Dashboard" to="/" exact />
+        <QuickNavButton Icon={EventIcon} caption="Events" to="/events" />
+        <QuickNavButton Icon={EntityIcon} caption="Entities" to="/entities" />
+        <QuickNavButton Icon={CheckIcon} caption="Checks" to="/checks" />
+        <QuickNavButton Icon={SilencedIcon} caption="Silences" to="/silences" />
+        <QuickNavButton Icon={HookIcon} caption="Hooks" to="/hooks" />
+        <QuickNavButton Icon={HandlerIcon} caption="Handlers" to="/handlers" />
       </div>
     );
   }

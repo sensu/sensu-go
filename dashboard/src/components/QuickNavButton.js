@@ -1,31 +1,32 @@
 import React from "react";
 import PropTypes from "prop-types";
 import compose from "lodash/fp/compose";
-import { withRouter, routerShape } from "found";
+import { withRouter, routerShape, Link } from "found";
 
 import { withStyles } from "material-ui/styles";
 
 import Typography from "material-ui/Typography";
 import IconButton from "material-ui/IconButton";
 
+import theme from "./Theme/Default";
+
 const styles = {
-  menuIcon: {
-    // TODO theme colour for this
-    color: "rgba(21, 25,40, .71)",
-  },
   menuText: {
+    color: "inherit",
     padding: "4px 0 0",
     fontSize: "0.6875rem",
     // TODO come back to reassess typography
     fontFamily: "SF Pro Text",
-    color: "theme.palette.primary.contrastTest",
   },
-  // TODO theme colour for this
-  active: { color: "rgba(151, 198, 115, 1)" },
+  active: {
+    color: `${theme.palette.secondary.main} !important`,
+    opacity: "1 !important",
+  },
+  inactive: { color: theme.palette.secondary.contrastText, opacity: 0.71 },
   label: {
     flexDirection: "column",
   },
-  buttonSize: {
+  button: {
     width: 72,
     height: 72,
   },
@@ -36,44 +37,30 @@ class QuickNavButton extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     Icon: PropTypes.func.isRequired,
-    primary: PropTypes.string.isRequired,
+    caption: PropTypes.string.isRequired,
     router: routerShape.isRequired,
-    href: PropTypes.string,
-    active: PropTypes.bool,
-    onClick: PropTypes.func,
-  };
-
-  static defaultProps = {
-    onClick: null,
-    href: "",
-    active: false,
+    to: PropTypes.string.isRequired,
   };
 
   render() {
-    const { classes, Icon, router, primary, onClick, ...props } = this.props;
-    const handleClick = () => this.props.router.push(this.props.href);
+    const { classes, Icon, router, caption, ...props } = this.props;
     return (
-      <IconButton
+      <Link
+        Component={IconButton}
         classes={{
-          root: classes.buttonSize,
+          root: classes.button,
           label: classes.label,
         }}
-        to={props.href}
+        to={props.to}
         role="button"
         tabIndex={0}
-        onClick={onClick || handleClick}
+        activeClassName={classes.active}
+        className={classes.inactive}
+        {...props}
       >
-        <Icon
-          classes={{ root: classes.menuIcon }}
-          className={props.active ? classes.active : null}
-        />
-        <Typography
-          classes={{ root: classes.menuText }}
-          className={props.active ? classes.active : null}
-        >
-          {primary}
-        </Typography>
-      </IconButton>
+        <Icon />
+        <Typography classes={{ root: classes.menuText }}>{caption}</Typography>
+      </Link>
     );
   }
 }
