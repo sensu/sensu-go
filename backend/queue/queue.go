@@ -58,6 +58,7 @@ type Item struct {
 	queue     *Queue
 	once      sync.Once
 	mu        *sync.Mutex
+	cancel    context.CancelFunc
 }
 
 // Ack acknowledges the item has been received and processed, and deletes it
@@ -65,9 +66,12 @@ type Item struct {
 func (i *Item) Ack(ctx context.Context) error {
 	var err error
 	i.once.Do(func() {
+		i.mu.Lock()
 		delCmp := clientv3.Compare(clientv3.ModRevision(i.Key), "=", i.Revision)
 		delReq := clientv3.OpDelete(i.Value)
 		_, err = i.queue.kv.Txn(ctx).If(delCmp).Then(delReq).Commit()
+		i.mu.Unlock()
+		i.cancel()
 	})
 	return err
 }
@@ -75,44 +79,51 @@ func (i *Item) Ack(ctx context.Context) error {
 // Nack returns the item to the work queue and deletes it from the in-flight
 // queue.
 func (i *Item) Nack(ctx context.Context) error {
-	var (
-		err error
-	)
-
+	var err error
 	i.once.Do(func() {
+		i.mu.Lock()
 		err = i.queue.swapLane(ctx, i.Key, i.Revision, i.Value, i.queue.work)
+		i.mu.Unlock()
+		i.cancel()
 	})
 	return err
 }
 
-// placeholder for updating the item timestamp and key
 func (i *Item) keepalive(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Second)
+	// stop the goroutine when the context is canceled (if Ack or Nack is
+	// called)
 	go func() {
-		for _ = range ticker.C {
-			// create new key with new timestamp
-			uName, err := i.queue.uniqueName()
-			if err != nil {
-				logger.WithError(err).Error("error creating unique name for item keepalive")
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				// create new key with new timestamp
+				uName, err := i.queue.uniqueName()
+				if err != nil {
+					logger.WithError(err).Error("error creating unique name for item keepalive")
+				}
+				updateKey := path.Join(i.queue.inFlight, uName)
+
+				i.mu.Lock()
+				// create new key, delete old key
+				putCmp := clientv3.Compare(clientv3.ModRevision(updateKey), "=", 0)
+				delCmp := clientv3.Compare(clientv3.ModRevision(i.Key), "=", i.Revision)
+				putReq := clientv3.OpPut(updateKey, i.Value)
+				delReq := clientv3.OpDelete(i.Key)
+
+				_, err = i.queue.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
+
+				if err != nil {
+					// log error
+					logger.WithError(err).Error("error updating item keepalive timestamp")
+				}
+
+				i.Key = updateKey
+				i.mu.Unlock()
+			case <-ctx.Done():
+				return
 			}
-			updateKey := path.Join(i.queue.inFlight, uName)
-
-			i.mu.Lock()
-			// create new key, delete old key
-			putCmp := clientv3.Compare(clientv3.ModRevision(updateKey), "=", 0)
-			delCmp := clientv3.Compare(clientv3.ModRevision(i.Key), "=", i.Revision)
-			putReq := clientv3.OpPut(updateKey, i.Value)
-			delReq := clientv3.OpDelete(i.Key)
-
-			_, err = i.queue.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
-
-			if err != nil {
-				// log error
-				logger.WithError(err).Error("error updating item keepalive timestamp")
-			}
-
-			i.Key = updateKey
-			i.mu.Unlock()
 		}
 	}()
 }
@@ -251,6 +262,7 @@ func (q *Queue) nackExpiredItems(ctx context.Context, timeout time.Duration) err
 		// If the item has timed out or the client has disconnected, the item is
 		// considered expired and should be moved back to the work queue.
 		if time.Now().Sub(itemTimestamp) > timeout || ctx.Err() != nil {
+
 			err = q.swapLane(ctx, string(item.Key), item.ModRevision, string(item.Value), q.work)
 			if err != nil {
 				return err
@@ -284,6 +296,7 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, erro
 	if response.Succeeded {
 		putResp := response.Responses[0].GetResponsePut()
 		revision := putResp.GetHeader().GetRevision()
+		context, cancel := context.WithCancel(ctx)
 		item := &Item{
 			Key:       string(uKey),
 			Value:     string(kv.Value),
@@ -291,15 +304,14 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, erro
 			Timestamp: time.Now().UnixNano(),
 			queue:     q,
 			mu:        &sync.Mutex{},
+			cancel:    cancel,
 		}
-		item.keepalive(ctx)
+		item.keepalive(context)
 		return item, nil
 	}
 	return nil, nil
 }
 
-// ensure that a waitPut also puts the item in the inflight lane and deletes it
-// from the current work queue
 func (q *Queue) waitPutEvent(ctx context.Context) (*clientv3.Event, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
