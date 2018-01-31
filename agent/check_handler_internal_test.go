@@ -34,50 +34,26 @@ func TestHandleCheck(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
-	handling := true
-	var events []*types.Event
 
-	go func() {
-		for handling {
-			select {
-			case msg := <-ch:
-				event := &types.Event{}
-				assert.NoError(json.Unmarshal(msg.Payload, event))
-				assert.NotNil(event)
-				assert.Equal(checkConfig.Name, event.Check.Config.Name)
-				events = append(events, event)
-			}
-		}
-	}()
-
-	agent.handleCheck(payload)
+	assert.NoError(agent.handleCheck(payload))
+	assert.Error(agent.handleCheck(payload))
+	assert.NotNil(t, <-agent.sendq)
 	time.Sleep(3 * time.Second)
-	agent.handleCheck(payload)
-	time.Sleep(3 * time.Second)
-	handling = false
-	// there should be 2 events for 2 non-overlapping check executions
-	assert.Equal(2, len(events))
+	select {
+	case msg := <-agent.sendq:
+		assert.FailNow("received unexpected message: %s", msg)
+	default:
+	}
 
-	handling = true
-	events = nil
-	go func() {
-		for handling {
-			select {
-			case msg := <-ch:
-				event := &types.Event{}
-				assert.NoError(json.Unmarshal(msg.Payload, event))
-				assert.NotNil(event)
-				events = append(events, event)
-			}
-		}
-	}()
-
-	agent.handleCheck(payload)
-	agent.handleCheck(payload)
-	time.Sleep(3 * time.Second)
-	handling = false
-	// there should be 1 event for 2 overlapping check executions
-	assert.Equal(1, len(events))
+	assert.NoError(agent.handleCheck(payload))
+	time.Sleep(4 * time.Second)
+	assert.NoError(agent.handleCheck(payload))
+	assert.NotNil(t, <-agent.sendq)
+	select {
+	case msg := <-agent.sendq:
+		assert.FailNow("received unexpected message: %s", msg)
+	default:
+	}
 }
 
 func TestExecuteCheck(t *testing.T) {
