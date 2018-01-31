@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 
+import QuickNav from "./QuickNav";
 import Drawer from "./Drawer";
 import Toolbar from "./Toolbar";
 
@@ -31,14 +32,30 @@ const styles = theme => ({
       width: 250,
     },
   },
+  quicknav: {
+    position: "fixed",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    top: 80,
+    left: 0,
+    width: 72,
+  },
+  maincontainer: {
+    position: "relative",
+    display: "flex",
+    width: "100%",
+  },
 });
 
 class AppFrame extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    children: PropTypes.element.isRequired,
+    children: PropTypes.element,
   };
+
+  static defaultProps = { children: null };
 
   state = {
     toolbar: false,
@@ -60,10 +77,12 @@ class AppFrame extends React.Component {
           onToggle={toggleToolbar}
           className={classes.drawer}
         />
-        {children}
+        <div className={classes.maincontainer}>
+          <QuickNav className={classes.quicknav} />
+          {children}
+        </div>
       </div>
     );
   }
 }
-
 export default withStyles(styles)(AppFrame);

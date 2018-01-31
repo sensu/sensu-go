@@ -7,8 +7,10 @@ import AppFrame from "./AppFrame";
 
 class AppWrapper extends React.Component {
   static propTypes = {
-    children: PropTypes.element.isRequired,
+    children: PropTypes.element,
   };
+
+  static defaultProps = { children: null };
 
   render() {
     const { children } = this.props;

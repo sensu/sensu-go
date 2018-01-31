@@ -6,6 +6,11 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added 
+- Add an e2e test for proxy check requests.
+- Add integration tests to our CI.
+
+## [2.0.0-alpha.15] - 2018-01-30
 ### Added
 - Add function for matching entities to a proxy check request.
 - Added functions for publishing proxy check requests.
@@ -15,7 +20,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added package leader, for facilitating execution by a single backend.
 - Proxy check requests are now published to all entities described in
 `ProxyRequests` and `EntityAttributes`.
-- Add integration tests to our CI.
+- Add quick navigation component for dashboard
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.

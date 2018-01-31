@@ -38,6 +38,9 @@ type Interface interface {
 	// returned again. Next returns the selected value, and an error indicating
 	// if the operation failed, or if the context was cancelled.
 	Next(context.Context) (string, error)
+
+	// Peek gets the next item in the Ring, but does not advance the iteration.
+	Peek(context.Context) (string, error)
 }
 
 // Getter provides a way to get a Ring.
@@ -155,8 +158,8 @@ func (r *Ring) getRemovalOps(ctx context.Context, value string) ([]clientv3.Cmp,
 	return cmps, ops, nil
 }
 
-// Next returns the next item in the Ring. If Ring is empty, then Next will
-// return an empty value, and ErrEmptyRing.
+// Next returns the next item in the Ring and advances the iteration. If the
+// Ring is empty, then Next will return an empty value, and ErrEmptyRing.
 func (r *Ring) Next(ctx context.Context) (string, error) {
 	for {
 		response, err := r.client.Get(ctx, r.Name, clientv3.WithFirstKey()...)
@@ -184,4 +187,17 @@ func (r *Ring) Next(ctx context.Context) (string, error) {
 			return value, nil
 		}
 	}
+}
+
+// Peek returns the next item in the Ring without advancing the iteration. If
+// the Ring is empty, then Peek returns an empty string and ErrEmptyRing.
+func (r *Ring) Peek(ctx context.Context) (string, error) {
+	response, err := r.client.Get(ctx, r.Name, clientv3.WithFirstKey()...)
+	if err != nil {
+		return "", err
+	}
+	if len(response.Kvs) == 0 {
+		return "", ErrEmptyRing
+	}
+	return string(response.Kvs[0].Value), nil
 }
