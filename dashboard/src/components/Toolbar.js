@@ -8,9 +8,9 @@ import IconButton from "material-ui/IconButton";
 import { withStyles } from "material-ui/styles";
 
 import MenuIcon from "material-ui-icons/Menu";
-import SearchIcon from "material-ui-icons/Search";
 
 import logo from "../assets/logo/wordmark/white.svg";
+import NamespaceLabel from "./NamespaceLabel";
 
 const styles = theme => ({
   appBar: {
@@ -41,9 +41,6 @@ class Toolbar extends React.Component {
     toggleToolbar: PropTypes.func.isRequired,
   };
 
-  //
-  // Render
-
   render() {
     const { toggleToolbar, classes } = this.props;
 
@@ -62,9 +59,8 @@ class Toolbar extends React.Component {
             <img alt="sensu logo" src={logo} className={classes.logo} />
           </Typography>
           <div className={classes.grow} />
-          <IconButton aria-label="Search" color="inherit">
-            <SearchIcon />
-          </IconButton>
+          {/* TODO should use some environment variables */}
+          <NamespaceLabel className={classes.OrgEnv} />
         </MaterialToolbar>
       </AppBar>
     );
