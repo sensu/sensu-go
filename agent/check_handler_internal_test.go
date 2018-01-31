@@ -21,7 +21,7 @@ func TestHandleCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	checkConfig := types.FixtureCheckConfig("check")
-	truePath := testutil.CommandPath(filepath.Join(toolsDir, "sleep 2"))
+	truePath := testutil.CommandPath(filepath.Join(toolsDir, "sleep 4"))
 	checkConfig.Command = truePath
 
 	request := &types.CheckRequest{Config: checkConfig}
@@ -35,9 +35,11 @@ func TestHandleCheck(t *testing.T) {
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
 
+	// second check should not execute since first check is still in progress
 	assert.NoError(agent.handleCheck(payload))
+	time.Sleep(2 * time.Second)
 	assert.Error(agent.handleCheck(payload))
-	time.Sleep(3 * time.Second)
+	time.Sleep(4 * time.Second)
 	assert.NotNil(t, <-agent.sendq)
 	select {
 	case <-agent.sendq:
@@ -45,9 +47,9 @@ func TestHandleCheck(t *testing.T) {
 	default:
 	}
 
+	// second check should execute since first check is no longer in progress
 	assert.NoError(agent.handleCheck(payload))
 	time.Sleep(4 * time.Second)
-	assert.NoError(agent.handleCheck(payload))
 	assert.NotNil(t, <-agent.sendq)
 	select {
 	case <-agent.sendq:
