@@ -187,7 +187,7 @@ function integration_test_commands
 {
     echo "Running integration tests..."
 
-    go test -timeout=180s -tags=integration $(go list ./... | Select-String -pattern "scripts", "testing", "vendor" -notMatch)
+    go test -timeout=200s -tags=integration $(go list ./... | Select-String -pattern "scripts", "testing", "vendor" -notMatch)
     If ($LASTEXITCODE -ne 0) {
         echo "Integration testing failed..."
         exit 1
