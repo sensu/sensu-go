@@ -6,9 +6,14 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-### Added 
+### Added
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
+
+### Fixed
+- Tracks in-progress checks with a map and mutex rather than an array to
+increase time efficiency and synchronize goroutines reading from and writing
+to that map.
 
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added

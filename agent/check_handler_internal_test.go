@@ -14,6 +14,37 @@ import (
 var binDir = filepath.Join("..", "bin")
 var toolsDir = filepath.Join(binDir, "tools")
 
+func TestHandleCheck(t *testing.T) {
+	assert := assert.New(t)
+
+	checkConfig := types.FixtureCheckConfig("check")
+	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
+	checkConfig.Command = truePath
+
+	request := &types.CheckRequest{Config: checkConfig}
+	payload, err := json.Marshal(request)
+	if err != nil {
+		assert.FailNow("error marshaling check request")
+	}
+
+	config := NewConfig()
+	agent := NewAgent(config)
+	ch := make(chan *transport.Message, 5)
+	agent.sendq = ch
+
+	// check is already in progress, it shouldn't execute
+	agent.inProgressMu.Lock()
+	agent.inProgress[request.Config.Name] = request.Config
+	agent.inProgressMu.Unlock()
+	assert.Error(agent.handleCheck(payload))
+
+	// check is not in progress, it should execute
+	agent.inProgressMu.Lock()
+	delete(agent.inProgress, request.Config.Name)
+	agent.inProgressMu.Unlock()
+	assert.NoError(agent.handleCheck(payload))
+}
+
 func TestExecuteCheck(t *testing.T) {
 	assert := assert.New(t)
 
