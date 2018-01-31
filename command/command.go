@@ -103,10 +103,11 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		execution.Duration = time.Since(started).Seconds()
 	}()
 
+	var timer *time.Timer
 	// Kill process and all of its children when the timeout has expired.
 	if execution.Timeout != 0 {
 		SetProcessGroup(cmd)
-		time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
+		timer = time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
 			timeout()
 			if err := KillProcess(cmd); err != nil {
 				logger.WithError(err).Error("error when attempting to kill process")
@@ -121,6 +122,9 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	}
 
 	err := cmd.Wait()
+	if timer != nil {
+		timer.Stop()
+	}
 
 	execution.Output = output.String()
 

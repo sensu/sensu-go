@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Tracks in-progress checks with a map and mutex rather than an array to
 increase time efficiency and synchronize goroutines reading from and writing
 to that map.
+- Fixed a bug where we were attempting to kill processes that had already
+finished before its allotted execution timeout.
 
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added
