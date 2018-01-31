@@ -20,6 +20,12 @@ environment:
       TEST_SUITE: unit
       GOGC: off
     - GOARCH: 386
+      TEST_SUITE: integration
+      GOGC: off
+    - GOARCH: amd64
+      TEST_SUITE: integration
+      GOGC: off
+    - GOARCH: 386
       TEST_SUITE: e2e
       GOGC: off
     - GOARCH: amd64

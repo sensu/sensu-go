@@ -8,6 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added 
 - Add an e2e test for proxy check requests.
+- Add integration tests to our CI.
 
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added
