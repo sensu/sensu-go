@@ -246,15 +246,17 @@ func (e *CheckExecutor) publishProxyCheckRequest(entity *types.Entity, check *ty
 		return err
 	}
 
+	substitutedCheck := &types.CheckConfig{}
+
 	// Unmarshal the check configuration obtained after the token substitution
 	// back into the check config struct
-	err = json.Unmarshal(checkBytes, check)
+	err = json.Unmarshal(checkBytes, substitutedCheck)
 	if err != nil {
 		return fmt.Errorf("could not unmarshal the check: %s", err)
 	}
 
-	check.ProxyEntityID = entity.ID
-	return e.Execute(check)
+	substitutedCheck.ProxyEntityID = entity.ID
+	return e.Execute(substitutedCheck)
 }
 
 // PublishProxyCheckRequests publishes proxy check requests for one or more

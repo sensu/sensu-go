@@ -125,6 +125,8 @@ type Agent struct {
 	conn            transport.Transport
 	entity          *types.Entity
 	handler         *handler.MessageHandler
+	inProgress      map[string]*types.CheckConfig
+	inProgressMu    *sync.Mutex
 	sendq           chan *transport.Message
 	stopped         chan struct{}
 	stopping        chan struct{}
@@ -137,6 +139,8 @@ func NewAgent(config *Config) *Agent {
 		config:          config,
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
 		handler:         handler.NewMessageHandler(),
+		inProgress:      make(map[string]*types.CheckConfig),
+		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),

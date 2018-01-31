@@ -7,6 +7,21 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- Add an e2e test for proxy check requests.
+- Add integration tests to our CI.
+
+### Fixed
+- Tracks in-progress checks with a map and mutex rather than an array to
+increase time efficiency and synchronize goroutines reading and writing
+from that map.
+
+### Fixed
+- Tracks in-progress checks with a map and mutex rather than an array to
+increase time efficiency and synchronize goroutines reading and writing
+from that map.
+
+## [2.0.0-alpha.15] - 2018-01-30
+### Added
 - Add function for matching entities to a proxy check request.
 - Added functions for publishing proxy check requests.
 - Added proxy request validation.
@@ -15,6 +30,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added package leader, for facilitating execution by a single backend.
 - Proxy check requests are now published to all entities described in
 `ProxyRequests` and `EntityAttributes`.
+- Add quick navigation component for dashboard
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
