@@ -10,9 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var bin = filepath.Join("..", "bin")
-var tools = filepath.Join(bin, "tools")
-
 func TestExecuteHook(t *testing.T) {
 	assert := assert.New(t)
 
@@ -24,7 +21,7 @@ func TestExecuteHook(t *testing.T) {
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
-	truePath := testutil.CommandPath(filepath.Join(tools, "true"))
+	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
 	hookConfig.Command = truePath
 
 	hook := agent.executeHook(hookConfig)

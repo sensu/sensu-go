@@ -1,12 +1,9 @@
-// +build integration
-
 package agent
 
 import (
 	"encoding/json"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
@@ -21,7 +18,7 @@ func TestHandleCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	checkConfig := types.FixtureCheckConfig("check")
-	truePath := testutil.CommandPath(filepath.Join(toolsDir, "sleep 4"))
+	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
 	checkConfig.Command = truePath
 
 	request := &types.CheckRequest{Config: checkConfig}
@@ -35,27 +32,17 @@ func TestHandleCheck(t *testing.T) {
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
 
-	// second check should not execute since first check is still in progress
-	assert.NoError(agent.handleCheck(payload))
-	time.Sleep(2 * time.Second)
+	// check is already in progress, it shouldn't execute
+	agent.inProgressMu.Lock()
+	agent.inProgress[request.Config.Name] = request.Config
+	agent.inProgressMu.Unlock()
 	assert.Error(agent.handleCheck(payload))
-	time.Sleep(4 * time.Second)
-	assert.NotNil(t, <-agent.sendq)
-	select {
-	case <-agent.sendq:
-		assert.FailNow("received unexpected message")
-	default:
-	}
 
-	// second check should execute since first check is no longer in progress
+	// check is not in progress, it should execute
+	agent.inProgressMu.Lock()
+	delete(agent.inProgress, request.Config.Name)
+	agent.inProgressMu.Unlock()
 	assert.NoError(agent.handleCheck(payload))
-	time.Sleep(4 * time.Second)
-	assert.NotNil(t, <-agent.sendq)
-	select {
-	case <-agent.sendq:
-		assert.FailNow("received unexpected message")
-	default:
-	}
 }
 
 func TestExecuteCheck(t *testing.T) {
