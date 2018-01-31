@@ -30,8 +30,8 @@ var (
 // client nacks it or times out.
 type Queue struct {
 	client      *clientv3.Client
-	Work        string
-	InFlight    string
+	work        string
+	inFlight    string
 	kv          clientv3.KV
 	itemTimeout time.Duration
 }
@@ -40,8 +40,8 @@ type Queue struct {
 func New(name string, client *clientv3.Client, itemTimeout time.Duration) *Queue {
 	queue := &Queue{
 		client:      client,
-		Work:        queueKeyBuilder.Build(name, workPrefix),
-		InFlight:    queueKeyBuilder.Build(name, inFlightPrefix),
+		work:        queueKeyBuilder.Build(name, workPrefix),
+		inFlight:    queueKeyBuilder.Build(name, inFlightPrefix),
 		kv:          clientv3.NewKV(client),
 		itemTimeout: itemTimeout,
 	}
@@ -56,7 +56,8 @@ type Item struct {
 	Revision  int64
 	Timestamp int64
 	queue     *Queue
-	once      *sync.Once
+	once      sync.Once
+	mu        *sync.Mutex
 }
 
 // Ack acknowledges the item has been received and processed, and deletes it
@@ -79,25 +80,24 @@ func (i *Item) Nack(ctx context.Context) error {
 	)
 
 	i.once.Do(func() {
-		err = i.queue.swapLane(ctx, i.Key, i.Revision, i.Value, i.queue.Work)
+		err = i.queue.swapLane(ctx, i.Key, i.Revision, i.Value, i.queue.work)
 	})
 	return err
 }
 
 // placeholder for updating the item timestamp and key
-func (i *Item) keepalive(ctx context.Context) error {
+func (i *Item) keepalive(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Second)
-	var (
-		err   error
-		uName string
-	)
 	go func() {
 		for _ = range ticker.C {
 			// create new key with new timestamp
-			uName, err = i.queue.uniqueName()
+			uName, err := i.queue.uniqueName()
+			if err != nil {
+				logger.WithError(err).Error("error creating unique name for item keepalive")
+			}
+			updateKey := path.Join(i.queue.inFlight, uName)
 
-			updateKey := path.Join(i.queue.InFlight, uName)
-
+			i.mu.Lock()
 			// create new key, delete old key
 			putCmp := clientv3.Compare(clientv3.ModRevision(updateKey), "=", 0)
 			delCmp := clientv3.Compare(clientv3.ModRevision(i.Key), "=", i.Revision)
@@ -106,10 +106,15 @@ func (i *Item) keepalive(ctx context.Context) error {
 
 			_, err = i.queue.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
 
+			if err != nil {
+				// log error
+				logger.WithError(err).Error("error updating item keepalive timestamp")
+			}
+
 			i.Key = updateKey
+			i.mu.Unlock()
 		}
 	}()
-	return err
 }
 
 func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision int64, value string, lane string) error {
@@ -125,9 +130,12 @@ func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision
 		putReq := clientv3.OpPut(uKey, value)
 		delReq := clientv3.OpDelete(currentKey)
 
-		response, _ := q.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
+		response, err := q.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
 		if response.Succeeded {
 			break
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -150,7 +158,7 @@ func (q *Queue) tryPut(ctx context.Context, value string) error {
 			return err
 		}
 
-		key := path.Join(q.Work, un)
+		key := path.Join(q.work, un)
 		cmp := clientv3.Compare(clientv3.Version(key), "=", 0)
 		req := clientv3.OpPut(key, value)
 		response, err := q.kv.Txn(ctx).If(cmp).Then(req).Commit()
@@ -175,19 +183,18 @@ func (q *Queue) uniqueName() (string, error) {
 // Dequeue gets a value from the queue. It returns an error if the context
 // is cancelled, the deadline exceeded, or if the client encounters an error.
 func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
-	err := q.nackExpiredItems(ctx, q.itemTimeout.Nanoseconds())
+	err := q.nackExpiredItems(ctx, q.itemTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := q.client.Get(ctx, q.Work, clientv3.WithFirstKey()...)
+	response, err := q.client.Get(ctx, q.work, clientv3.WithFirstKey()...)
 	if err != nil {
 		return nil, err
 	}
 	if len(response.Kvs) > 0 {
 		item, err := q.tryDelete(ctx, response.Kvs[0])
 		if err != nil {
-
 			return nil, err
 		}
 		if item != nil {
@@ -210,13 +217,12 @@ func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
 		if err != nil {
 			return nil, err
 		}
-		item.keepalive(ctx)
 		return item, nil
 	}
 	return q.Dequeue(ctx)
 }
 
-func (q *Queue) getItemTimestamp(key []byte) (int64, error) {
+func (q *Queue) getItemTimestamp(key []byte) (time.Time, error) {
 	splitByte := bytes.Split(key, []byte("/"))
 	binaryTimestamp := splitByte[len(splitByte)-1]
 
@@ -224,14 +230,15 @@ func (q *Queue) getItemTimestamp(key []byte) (int64, error) {
 	buf := bytes.NewReader(binaryTimestamp)
 	err := binary.Read(buf, binary.BigEndian, &itemTimestamp)
 	if err != nil {
-		return 0, err
+		return time.Time{}, err
 	}
-	return itemTimestamp, nil
+	unixTimestamp := time.Unix(0, itemTimestamp)
+	return unixTimestamp, nil
 }
 
-func (q *Queue) nackExpiredItems(ctx context.Context, timeout int64) error {
+func (q *Queue) nackExpiredItems(ctx context.Context, timeout time.Duration) error {
 	// get all items in the inflight queue
-	inFlightItems, err := q.client.Get(ctx, q.InFlight, clientv3.WithPrefix())
+	inFlightItems, err := q.client.Get(ctx, q.inFlight, clientv3.WithPrefix())
 	if err != nil {
 		return err
 	}
@@ -243,9 +250,8 @@ func (q *Queue) nackExpiredItems(ctx context.Context, timeout int64) error {
 		}
 		// If the item has timed out or the client has disconnected, the item is
 		// considered expired and should be moved back to the work queue.
-		elapsedTime := time.Now().UnixNano() - itemTimestamp
-		if elapsedTime > timeout || ctx.Err() != nil {
-			err = q.swapLane(ctx, string(item.Key), item.ModRevision, string(item.Value), q.Work)
+		if time.Now().Sub(itemTimestamp) > timeout || ctx.Err() != nil {
+			err = q.swapLane(ctx, string(item.Key), item.ModRevision, string(item.Value), q.work)
 			if err != nil {
 				return err
 			}
@@ -262,7 +268,7 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, erro
 	if err != nil {
 		return nil, err
 	}
-	uKey := path.Join(q.InFlight, uName)
+	uKey := path.Join(q.inFlight, uName)
 
 	delCmp := clientv3.Compare(clientv3.ModRevision(key), "=", kv.ModRevision)
 	putCmp := clientv3.Compare(clientv3.ModRevision(uKey), "=", 0)
@@ -278,15 +284,15 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, erro
 	if response.Succeeded {
 		putResp := response.Responses[0].GetResponsePut()
 		revision := putResp.GetHeader().GetRevision()
-		var once sync.Once
 		item := &Item{
 			Key:       string(uKey),
 			Value:     string(kv.Value),
 			Revision:  revision,
 			Timestamp: time.Now().UnixNano(),
 			queue:     q,
-			once:      &once,
+			mu:        &sync.Mutex{},
 		}
+		item.keepalive(ctx)
 		return item, nil
 	}
 	return nil, nil
@@ -297,7 +303,7 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, erro
 func (q *Queue) waitPutEvent(ctx context.Context) (*clientv3.Event, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	wc := q.client.Watch(ctx, q.Work, clientv3.WithPrefix())
+	wc := q.client.Watch(ctx, q.work, clientv3.WithPrefix())
 	if wc == nil {
 		return nil, ctx.Err()
 	}

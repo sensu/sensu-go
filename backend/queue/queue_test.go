@@ -41,7 +41,7 @@ func TestDequeueSingleItem(t *testing.T) {
 	require.Equal(t, "test single item dequeue", item.Value)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+	cancel()
 	item, err = queue.Dequeue(ctx)
 	require.Error(t, err)
 }
