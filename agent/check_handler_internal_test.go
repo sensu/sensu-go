@@ -59,6 +59,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
 	checkConfig.Command = truePath
+	checkConfig.Timeout = 10
 
 	agent.executeCheck(request)
 
@@ -80,6 +81,19 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(1, event.Check.Status)
+
+	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep 5"))
+	checkConfig.Command = sleepPath
+	checkConfig.Timeout = 1
+
+	agent.executeCheck(request)
+
+	msg = <-ch
+
+	event = &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.EqualValues(2, event.Check.Status)
 }
 
 func TestPrepareCheck(t *testing.T) {
