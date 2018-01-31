@@ -59,7 +59,6 @@ class Toolbar extends React.Component {
             <img alt="sensu logo" src={logo} className={classes.logo} />
           </Typography>
           <div className={classes.grow} />
-          {/* TODO should use some environment variables */}
           <NamespaceLabel className={classes.OrgEnv} />
         </MaterialToolbar>
       </AppBar>

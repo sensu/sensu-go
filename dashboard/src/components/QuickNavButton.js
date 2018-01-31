@@ -8,9 +8,7 @@ import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 import IconButton from "material-ui/IconButton";
 
-import theme from "./Theme/Default";
-
-const styles = {
+const styles = theme => ({
   menuText: {
     color: "inherit",
     padding: "4px 0 0",
@@ -30,7 +28,7 @@ const styles = {
     width: 72,
     height: 72,
   },
-};
+});
 
 class QuickNavButton extends React.Component {
   static propTypes = {

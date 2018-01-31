@@ -16,11 +16,13 @@ class NamespaceLabel extends React.Component {
   render() {
     const { ...props } = this.props;
 
+    /* TODO use global variables or something for this */
     return (
       <NamespaceLabelBuilder
         org="Test Org, Inc"
         env="Production"
-        icon="DonutSmall"
+        icon="Visibility"
+        iconColor="#F4B2C5"
         {...props}
       />
     );

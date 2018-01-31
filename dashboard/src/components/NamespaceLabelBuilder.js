@@ -5,15 +5,9 @@ import classNames from "classnames";
 import Typography from "material-ui/Typography";
 import { withStyles } from "material-ui/styles";
 
-import Icon from "material-ui/Icon";
-import DonutSmallIcon from "material-ui-icons/DonutSmall";
-import ExploreIcon from "material-ui-icons/Explore";
+import OrganizationIcon from "./OrganizationIcon";
 
-import theme from "./Theme/Default";
-
-const icons = { DonutSmall: DonutSmallIcon, Explore: ExploreIcon };
-
-const styles = {
+const styles = theme => ({
   orgEnvContainer: {
     display: "flex",
     alignSelf: "center",
@@ -27,25 +21,25 @@ const styles = {
     fontSize: "1rem",
   },
   org: {
-    margin: "0 4px 0 0",
     fontWeight: "lighter",
   },
-  env: { fontWeight: "bold" },
-  icon: { margin: "0 0 0 4px" },
-};
+  env: { margin: "0 4px", fontWeight: "bold" },
+});
 
-class OrganizationEnvironment extends React.Component {
+class NamespaceLabelBuilder extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    icon: PropTypes.string.isRequired,
     org: PropTypes.string.isRequired,
     env: PropTypes.string.isRequired,
+    icon: PropTypes.string.isRequired,
+    iconColor: PropTypes.string,
   };
 
+  static defaultProps = { iconColor: "" };
+
   render() {
-    const { classes, icon, org, env } = this.props;
-    const DisplayIcon = icons[icon];
+    const { classes, icon, iconColor, org, env } = this.props;
 
     return (
       <div className={classes.orgEnvContainer}>
@@ -55,12 +49,10 @@ class OrganizationEnvironment extends React.Component {
         <Typography className={classNames(classes.default, classes.env)}>
           {env}
         </Typography>
-        <Icon className={classes.icon}>
-          <DisplayIcon />
-        </Icon>
+        <OrganizationIcon icon={icon} iconColor={iconColor} />
       </div>
     );
   }
 }
 
-export default withStyles(styles)(OrganizationEnvironment);
+export default withStyles(styles)(NamespaceLabelBuilder);
