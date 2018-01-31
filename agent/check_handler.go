@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/command"
@@ -13,10 +12,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
-
-// tracks the check names that are still executing
-var inProgress = make(map[string]*types.CheckConfig)
-var mutex = &sync.Mutex{}
 
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(payload []byte) error {
@@ -29,9 +24,9 @@ func (a *Agent) handleCheck(payload []byte) error {
 
 	// only schedule check execution if its not already in progress
 	// ** check hooks are part of a checks execution
-	mutex.Lock()
-	_, in := inProgress[request.Config.Name]
-	mutex.Unlock()
+	a.inProgressMu.Lock()
+	_, in := a.inProgress[request.Config.Name]
+	a.inProgressMu.Unlock()
 	if !in {
 		logger.Info("scheduling check execution: ", request.Config.Name)
 
@@ -44,20 +39,20 @@ func (a *Agent) handleCheck(payload []byte) error {
 
 		go a.executeCheck(request)
 	} else {
-		logger.Info("check execution still in progress: ", request.Config.Name)
+		return fmt.Errorf("check execution still in progress: %s", request.Config.Name)
 	}
 
 	return nil
 }
 
 func (a *Agent) executeCheck(request *types.CheckRequest) {
-	mutex.Lock()
-	inProgress[request.Config.Name] = request.Config
-	mutex.Unlock()
+	a.inProgressMu.Lock()
+	a.inProgress[request.Config.Name] = request.Config
+	a.inProgressMu.Unlock()
 	defer func() {
-		mutex.Lock()
-		delete(inProgress, request.Config.Name)
-		mutex.Unlock()
+		a.inProgressMu.Lock()
+		delete(a.inProgress, request.Config.Name)
+		a.inProgressMu.Unlock()
 	}()
 
 	checkConfig := request.Config
