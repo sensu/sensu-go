@@ -37,11 +37,11 @@ func TestHandleCheck(t *testing.T) {
 
 	assert.NoError(agent.handleCheck(payload))
 	assert.Error(agent.handleCheck(payload))
-	assert.NotNil(t, <-agent.sendq)
 	time.Sleep(3 * time.Second)
+	assert.NotNil(t, <-agent.sendq)
 	select {
 	case msg := <-agent.sendq:
-		assert.FailNow("received unexpected message: %s", msg)
+		assert.FailNow("received unexpected message")
 	default:
 	}
 
@@ -51,7 +51,7 @@ func TestHandleCheck(t *testing.T) {
 	assert.NotNil(t, <-agent.sendq)
 	select {
 	case msg := <-agent.sendq:
-		assert.FailNow("received unexpected message: %s", msg)
+		assert.FailNow("received unexpected message")
 	default:
 	}
 }
