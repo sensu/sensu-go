@@ -18,6 +18,9 @@ to that map.
 finished before its allotted execution timeout.
 - Fixed a bug where an event could erroneously be shown as silenced.
 
+### Changed
+- Queues are now durable.
+
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added
 - Add function for matching entities to a proxy check request.
