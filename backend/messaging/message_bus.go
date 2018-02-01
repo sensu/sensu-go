@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sensu/sensu-go/backend/daemon"
 )
@@ -56,4 +57,10 @@ type MessageBus interface {
 // subscription based on the organization
 func SubscriptionTopic(org, env, sub string) string {
 	return fmt.Sprintf("%s:%s:%s:%s", TopicSubscriptions, org, env, sub)
+}
+
+// DirectSubscription is a helper that's meant for 1:1 producer-consumer
+// relationships.
+func DirectSubscription(org, env, sub, agentID string) string {
+	return strings.Join([]string{TopicSubscriptions, org, env, sub, agentID}, ":")
 }

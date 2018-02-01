@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 )
@@ -23,6 +22,12 @@ var (
 	upgrader = &websocket.Upgrader{}
 )
 
+// Store specifies storage requirements for Agentd.
+type Store interface {
+	middlewares.AuthStore
+	SessionStore
+}
+
 // Agentd is the backend HTTP API.
 type Agentd struct {
 	stopping   chan struct{}
@@ -31,7 +36,7 @@ type Agentd struct {
 	errChan    chan error
 	httpServer *http.Server
 
-	Store      store.Store
+	Store      Store
 	Host       string
 	Port       int
 	MessageBus messaging.MessageBus

@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"errors"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -148,4 +149,8 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 	}
 
 	return nil
+}
+
+func topicIsDirect(s string) bool {
+	return len(strings.Split(s, ":")) == 5
 }
