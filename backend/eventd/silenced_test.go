@@ -132,7 +132,46 @@ func TestSilencedBy(t *testing.T) {
 				types.FixtureSilenced("entity:foo:*"),
 				types.FixtureSilenced("entity:foo:*"),
 			},
-			expectedEntries: []string{"entity:foo:*"}},
+			expectedEntries: []string{"entity:foo:*"},
+		},
+		{
+			name: "not silenced, silenced & client don't have a common subscription",
+			event: &types.Event{
+				Check: &types.Check{
+					Config: &types.CheckConfig{
+						Name:          "check_cpu",
+						Subscriptions: []string{"linux", "windows"},
+					},
+				},
+				Entity: &types.Entity{
+					ID:            "foo",
+					Subscriptions: []string{"linux"},
+				},
+			},
+			entries: []*types.Silenced{
+				types.FixtureSilenced("windows:check_cpu"),
+			},
+			expectedEntries: []string{},
+		},
+		{
+			name: "silenced, silenced & client do have a common subscription",
+			event: &types.Event{
+				Check: &types.Check{
+					Config: &types.CheckConfig{
+						Name:          "check_cpu",
+						Subscriptions: []string{"linux", "windows"},
+					},
+				},
+				Entity: &types.Entity{
+					ID:            "foo",
+					Subscriptions: []string{"linux"},
+				},
+			},
+			entries: []*types.Silenced{
+				types.FixtureSilenced("linux:check_cpu"),
+			},
+			expectedEntries: []string{"linux:check_cpu"},
+		},
 	}
 
 	for _, tc := range testCases {
