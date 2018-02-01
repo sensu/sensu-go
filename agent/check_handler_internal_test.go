@@ -68,7 +68,7 @@ func TestExecuteCheck(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(0, event.Check.Status)
+	assert.EqualValues(int32(0), event.Check.Status)
 
 	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
 	checkConfig.Command = falsePath
@@ -80,7 +80,7 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(1, event.Check.Status)
+	assert.EqualValues(int32(1), event.Check.Status)
 
 	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep 5"))
 	checkConfig.Command = sleepPath
@@ -93,7 +93,7 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(2, event.Check.Status)
+	assert.EqualValues(int32(2), event.Check.Status)
 }
 
 func TestPrepareCheck(t *testing.T) {
