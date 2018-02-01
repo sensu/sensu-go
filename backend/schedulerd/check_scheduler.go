@@ -164,8 +164,8 @@ func (e *CheckExecutor) Execute(check *types.CheckConfig) error {
 		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
-		if pubErr := e.Bus.Publish(topic, request); err != nil {
-			logger.Info("error publishing check request: ", err.Error())
+		if pubErr := e.Bus.Publish(topic, request); pubErr != nil {
+			logger.Info("error publishing check request: ", pubErr.Error())
 			err = pubErr
 		}
 	}
