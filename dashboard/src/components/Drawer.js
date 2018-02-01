@@ -12,7 +12,7 @@ import { withStyles } from "material-ui/styles";
 import MenuIcon from "material-ui-icons/Menu";
 import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
-import EventIcon from "material-ui-icons/Announcement";
+import EventIcon from "material-ui-icons/Notifications";
 import DashboardIcon from "material-ui-icons/Dashboard";
 import SilenceIcon from "material-ui-icons/VolumeOff";
 import HookIcon from "material-ui-icons/Link";
@@ -93,7 +93,11 @@ class Drawer extends React.Component {
             <div className={classes.row}>
               {/* TODO update with global variables or whatever when we get them */}
               <div className={classes.orgIcon}>
-                <OrganizationIcon icon="Visibility" iconColor="#f4b2c0" />
+                <OrganizationIcon
+                  icon="Visibility"
+                  iconColor="#f4b2c0"
+                  iconSize="36"
+                />
               </div>
             </div>
             <div className={classes.row}>

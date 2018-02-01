@@ -16,25 +16,14 @@ const icons = {
 
 const styles = theme => ({
   iconContainer: { display: "flex" },
-  mainIcon: {
-    margin: 2,
-    height: 20,
-    width: 20,
-  },
   circle: {
     display: "inline-flex",
-    width: 24,
-    height: 24,
-    borderRadius: 24,
     backgroundColor: theme.palette.primary.contrastText,
     color: theme.palette.primary.dark,
   },
   smallCircle: {
     display: "inline-flex",
     margin: "16px 0 0 -8px",
-    width: 8,
-    height: 8,
-    borderRadius: 8,
   },
 });
 
@@ -44,25 +33,44 @@ class OrganizationIcon extends React.Component {
     classes: PropTypes.object.isRequired,
     icon: PropTypes.string.isRequired,
     iconColor: PropTypes.string,
+    iconSize: PropTypes.string,
   };
 
-  static defaultProps = { iconColor: "" };
+  static defaultProps = { iconColor: "", iconSize: "24" };
 
   render() {
-    const { classes, icon, iconColor } = this.props;
-    const background = {
+    const { classes, icon, iconColor, iconSize } = this.props;
+
+    const mainIcon = {
+      margin: iconSize * 0.08,
+      height: iconSize * 0.83,
+      width: iconSize * 0.83,
+    };
+
+    const circle = {
+      width: iconSize,
+      height: iconSize,
+      borderRadius: "100%",
+    };
+
+    const smallCircle = {
       backgroundColor: iconColor,
       border: "1px solid",
       borderColor: emphasize(iconColor, 0.15),
+      alignSelf: "flex-end",
+      width: iconSize / 3.1,
+      height: iconSize / 3.1,
+      borderRadius: iconSize / 3.1,
     };
+
     const DisplayIcon = icons[icon];
 
     return (
       <div className={classes.iconContainer}>
-        <div className={classes.circle}>
-          <DisplayIcon className={classes.mainIcon} />
+        <div className={classes.circle} style={circle}>
+          <DisplayIcon style={mainIcon} />
         </div>
-        <div className={classes.smallCircle} style={background} />
+        <div className={classes.smallCircle} style={smallCircle} />
       </div>
     );
   }
