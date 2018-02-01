@@ -24,6 +24,7 @@ import LogoutIcon from "material-ui-icons/ExitToApp";
 import { logout } from "../utils/authentication";
 import DrawerButton from "./DrawerButton";
 import OrganizationIcon from "./OrganizationIcon";
+import NamespaceSelector from "./NamespaceSelector";
 
 const logo = require("../assets/logo/graphic/green.svg");
 
@@ -42,7 +43,7 @@ const styles = theme => ({
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
-  // TODO create a resized version of the logo
+  // TODO create a resizable version of the logo
   logo: {
     padding: "16px 0 0",
     height: 42,
@@ -54,6 +55,10 @@ const styles = theme => ({
   },
   listItemContent: { padding: "0 16px 0" },
   orgIcon: { padding: "33px 0 0 16px" },
+  selector: {
+    margin: "8px 16px 0 16px",
+    width: "100%",
+  },
 });
 
 class Drawer extends React.Component {
@@ -89,6 +94,11 @@ class Drawer extends React.Component {
               {/* TODO update with global variables or whatever when we get them */}
               <div className={classes.orgIcon}>
                 <OrganizationIcon icon="Visibility" iconColor="#f4b2c0" />
+              </div>
+            </div>
+            <div className={classes.row}>
+              <div className={classes.selector}>
+                <NamespaceSelector />
               </div>
             </div>
           </div>
