@@ -82,7 +82,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(1), event.Check.Status)
 
-	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep 5"))
+	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep"), "5")
 	checkConfig.Command = sleepPath
 	checkConfig.Timeout = 1
 
