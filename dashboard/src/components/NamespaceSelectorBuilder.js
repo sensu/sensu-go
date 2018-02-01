@@ -20,7 +20,7 @@ const styles = theme => ({
     fontSize: "0.75rem",
   },
   envContainer: {
-    margin: "-5px 0 0",
+    margin: "-6px 0 0",
     display: "flex",
     justifyContent: "space-between",
   },

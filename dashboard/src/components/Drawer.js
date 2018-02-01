@@ -26,7 +26,7 @@ import DrawerButton from "./DrawerButton";
 import OrganizationIcon from "./OrganizationIcon";
 import NamespaceSelector from "./NamespaceSelector";
 
-const logo = require("../assets/logo/graphic/green.svg");
+const logo = require("../assets/logo/wordmark/green.svg");
 
 const styles = theme => ({
   paper: {
@@ -43,20 +43,17 @@ const styles = theme => ({
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
-  // TODO create a resizable version of the logo
   logo: {
-    padding: "16px 0 0",
-    height: 42,
-    width: 24,
+    margin: "16px -4px 0",
   },
   listItemButton: {
-    padding: "16px 0 0 16px",
+    padding: "8px 0 0 8px",
     color: theme.palette.primary.contrastText,
   },
   listItemContent: { padding: "0 16px 0" },
-  orgIcon: { padding: "33px 0 0 16px" },
+  orgIcon: { margin: "24px 0 0 16px" },
   selector: {
-    margin: "8px 16px 0 16px",
+    margin: "14px 16px 0 16px",
     width: "100%",
   },
 });
