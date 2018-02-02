@@ -20,6 +20,7 @@ import HandlerIcon from "material-ui-icons/CallSplit";
 import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
+import WandIcon from "../icons/Wand";
 
 import { logout } from "../utils/authentication";
 import DrawerButton from "./DrawerButton";
@@ -91,9 +92,9 @@ class Drawer extends React.Component {
               {/* TODO update with global variables or whatever when we get them */}
               <div className={classes.orgIcon}>
                 <OrganizationIcon
-                  icon="Visibility"
-                  iconColor="#f4b2c0"
-                  iconSize="36"
+                  icon="HalfHeart"
+                  iconColor="#FA8072"
+                  size={36}
                 />
               </div>
             </div>
@@ -124,6 +125,11 @@ class Drawer extends React.Component {
           <Divider />
           <List>
             <DrawerButton Icon={SettingsIcon} primary="Settings" />
+            <DrawerButton
+              Icon={WandIcon}
+              primary="Preferences"
+              href="/customize"
+            />
             <DrawerButton
               Icon={FeedbackIcon}
               primary="Feedback"

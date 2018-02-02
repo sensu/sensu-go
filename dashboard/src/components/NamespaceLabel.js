@@ -21,8 +21,8 @@ class NamespaceLabel extends React.Component {
       <NamespaceLabelBuilder
         org="Test Org, Inc"
         env="Production"
-        icon="Visibility"
-        iconColor="#F4B2C5"
+        icon="HalfHeart"
+        iconColor="#FA8072"
         {...props}
       />
     );
