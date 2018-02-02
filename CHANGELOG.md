@@ -17,6 +17,7 @@ to that map.
 - Fixed a bug where we were attempting to kill processes that had already
 finished before its allotted execution timeout.
 - Fixed a bug where an event could erroneously be shown as silenced.
+- Keepalive monitors now get updated with changes to a keepalive timeout.
 
 ### Changed
 - Queues are now durable.

@@ -109,7 +109,7 @@ func TestMonitorStartStop(t *testing.T) {
 	handler := &testHandler{}
 	monitor := New(entity, nil, (60 * time.Second), handler, handler)
 	assert.Equal((60 * time.Second), monitor.Timeout)
-	assert.False(monitor.IsStopped(), "IsStopped returns false if stopped")
+	assert.False(monitor.IsStopped(), "IsStopped returns false if not stopped")
 	monitor.Stop()
 	assert.True(monitor.IsStopped(), "IsStopped returns true if stopped")
 }
