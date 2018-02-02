@@ -212,11 +212,19 @@ func TestNackExpired(t *testing.T) {
 	item, err := queue.Dequeue(context.Background())
 	require.NoError(t, err)
 
+	// close the first client
+	client.Close()
 	// wait to make sure the item has timed out
 	time.Sleep(2 * time.Second)
 
+	// create a new client and queue
+	newClient, err := e.NewClient()
+	require.NoError(t, err)
+
+	newQueue := New("testexpired", newClient, time.Second)
+
 	// nacked item should go back in the work queue lane
-	item, err = queue.Dequeue(context.Background())
+	item, err = newQueue.Dequeue(context.Background())
 	require.NoError(t, err)
 
 	require.Equal(t, "test item", item.Value)
