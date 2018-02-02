@@ -68,6 +68,12 @@ type ViewerEventsFieldResolver interface {
 	Events(p ViewerEventsFieldResolverParams) (interface{}, error)
 }
 
+// ViewerOrganizationsFieldResolver implement to resolve requests for the Viewer's organizations field.
+type ViewerOrganizationsFieldResolver interface {
+	// Organizations implements response to request for organizations field.
+	Organizations(p graphql.ResolveParams) (interface{}, error)
+}
+
 // ViewerUserFieldResolver implement to resolve requests for the Viewer's user field.
 type ViewerUserFieldResolver interface {
 	// User implements response to request for user field.
@@ -139,6 +145,7 @@ type ViewerFieldResolvers interface {
 	ViewerEntitiesFieldResolver
 	ViewerChecksFieldResolver
 	ViewerEventsFieldResolver
+	ViewerOrganizationsFieldResolver
 	ViewerUserFieldResolver
 }
 
@@ -207,6 +214,12 @@ func (_ ViewerAliases) Events(p ViewerEventsFieldResolverParams) (interface{}, e
 	return val, err
 }
 
+// Organizations implements response to request for 'organizations' field.
+func (_ ViewerAliases) Organizations(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // User implements response to request for 'user' field.
 func (_ ViewerAliases) User(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -256,6 +269,13 @@ func _ObjTypeViewerEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Events(frp)
+	}
+}
+
+func _ObjTypeViewerOrganizationsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ViewerOrganizationsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Organizations(p)
 	}
 }
 
@@ -348,6 +368,13 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 				Name:              "events",
 				Type:              graphql.OutputType("EventConnection"),
 			},
+			"organizations": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "All organizations the viewer has access to view.",
+				Name:              "organizations",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Organization")))),
+			},
 			"user": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -373,9 +400,10 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeViewerDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeViewerConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checks":   _ObjTypeViewerChecksHandler,
-		"entities": _ObjTypeViewerEntitiesHandler,
-		"events":   _ObjTypeViewerEventsHandler,
-		"user":     _ObjTypeViewerUserHandler,
+		"checks":        _ObjTypeViewerChecksHandler,
+		"entities":      _ObjTypeViewerEntitiesHandler,
+		"events":        _ObjTypeViewerEventsHandler,
+		"organizations": _ObjTypeViewerOrganizationsHandler,
+		"user":          _ObjTypeViewerUserHandler,
 	},
 }

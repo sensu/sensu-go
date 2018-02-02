@@ -1,0 +1,10 @@
+"""
+Environment represents a Sensu environment in RBAC
+"""
+type Environment implements Node {
+  id: ID!
+  description: String
+  name: String!
+  organization: Organization!
+}
+

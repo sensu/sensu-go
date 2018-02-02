@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { graphql } from "react-relay";
 
 import DefaultThemeProvider from "./Theme/Provider";
 import RestrictUnauthenticated from "./RestrictUnauthenticated";
@@ -11,6 +12,19 @@ class AppWrapper extends React.Component {
   };
 
   static defaultProps = { children: null };
+
+  static query = graphql`
+    query AppWrapperQuery {
+      viewer {
+        organizations {
+          name
+          environments {
+            name
+          }
+        }
+      }
+    }
+  `;
 
   render() {
     const { children } = this.props;

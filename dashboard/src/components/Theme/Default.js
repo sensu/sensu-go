@@ -9,6 +9,7 @@ import colors from "../../colors";
 
 const DefaultTheme = createMuiTheme({
   palette: {
+    type: "dark",
     primary: {
       light: colors.paynesGrey[300],
       main: colors.paynesGrey[500],

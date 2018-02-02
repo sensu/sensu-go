@@ -9,7 +9,7 @@ import ChecksPage from "./pages/ChecksPage";
 export default makeRouteConfig(
   <Route>
     <Route path="/login" Component={LoginPage} />
-    <Route path="/" Component={AppWrapper}>
+    <Route path="/" Component={AppWrapper} query={AppWrapper.query}>
       <Route path="events" Component={EventsPage} query={EventsPage.query} />
       <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
       <Redirect from="dashboard" to="checks" />
