@@ -14,7 +14,10 @@ func ConfirmDelete(name string) bool {
 		Message: question,
 		Default: false,
 	}
-	survey.AskOne(prompt, &confirmation, nil)
+	err := survey.AskOne(prompt, &confirmation, nil)
+	if err != nil {
+		return false
+	}
 
 	return confirmation
 }
