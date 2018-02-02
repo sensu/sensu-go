@@ -219,7 +219,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
-	cmd.Flags().Uint(flagKeepaliveTimeout, uint(viper.Get(flagKeepaliveTimeout).(int)), "number of seconds until agent is considered dead by backend")
+	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err
 	}
