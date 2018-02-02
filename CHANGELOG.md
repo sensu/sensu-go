@@ -23,6 +23,7 @@ finished before its allotted execution timeout.
 ### Changed
 - Queues are now durable.
 - Refactoring of the check scheduling integration tests.
+- CLI resource delete confirmation is now `(y/N)`.
 
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added
