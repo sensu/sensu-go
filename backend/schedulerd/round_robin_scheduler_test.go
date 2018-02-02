@@ -15,20 +15,20 @@ func TestRoundRobinScheduler(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	bus := mockbus.MockBus{}
-	bus.On("Publish", "topic:agent1", mock.Anything).Return(nil)
+	bus.On("Publish", "sensu:check:default:default:entity:agent1", mock.Anything).Return(nil)
 	ring := mockring.Ring{}
 	getter := mockring.Getter{
-		"topic": &ring,
+		"subscription/ramen-vending-machine": &ring,
 	}
 	ring.On("Next", mock.Anything).Return("agent1", nil)
 	sched := newRoundRobinScheduler(ctx, &bus, getter)
 	msg := &roundRobinMessage{
-		req:   types.FixtureCheckRequest("foo"),
-		topic: "topic",
+		req:          types.FixtureCheckRequest("foo"),
+		subscription: "ramen-vending-machine",
 	}
 	wg, err := sched.Schedule(msg)
 	require.NoError(t, err)
 	wg.Wait()
 	ring.AssertCalled(t, "Next", mock.Anything)
-	bus.AssertCalled(t, "Publish", "topic:agent1", msg.req)
+	bus.AssertCalled(t, "Publish", "sensu:check:default:default:entity:agent1", msg.req)
 }

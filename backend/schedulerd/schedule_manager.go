@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/ring"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -20,7 +21,7 @@ type ScheduleManager struct {
 }
 
 // NewScheduleManager creates a new ScheduleManager.
-func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *ScheduleManager {
+func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager, rg ring.Getter) *ScheduleManager {
 	wg := &sync.WaitGroup{}
 	stopped := &atomic.Value{}
 
@@ -35,6 +36,7 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 			MessageBus:    msgBus,
 			WaitGroup:     wg,
 			StateManager:  stateMngr,
+			ringGetter:    rg,
 		}
 	}
 

@@ -2,7 +2,6 @@ package schedulerd
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -12,11 +11,11 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// roundRobinMessage is a combination of a check request and a topic
+// roundRobinMessage is a combination of a check request and a subscription
 type roundRobinMessage struct {
-	req   *types.CheckRequest
-	topic string
-	wg    sync.WaitGroup
+	req          *types.CheckRequest
+	subscription string
+	wg           sync.WaitGroup
 }
 
 // roundRobinScheduler is an appendage of CheckScheduler. It exists to handle
@@ -62,15 +61,19 @@ func (r *roundRobinScheduler) execute(msg *roundRobinMessage) {
 	timeout := time.Second * time.Duration(msg.req.Config.Interval)
 	ctx, cancel := context.WithTimeout(r.ctx, timeout)
 	defer cancel()
-	ring := r.ringGetter.GetRing(msg.topic)
-	agentID, err := ring.Next(ctx)
+	ring := r.ringGetter.GetRing("subscription", msg.subscription)
+	entityID, err := ring.Next(ctx)
 	if err != nil {
-		r.logError(err, agentID, msg.req.Config.Name)
+		r.logError(err, entityID, msg.req.Config.Name)
 		return
 	}
-	topic := fmt.Sprintf("%s:%s", msg.topic, agentID)
+	// GetEntitySubscription gets a subscription that maps directly to an
+	// entity.
+	sub := types.GetEntitySubscription(entityID)
+	cfg := msg.req.Config
+	topic := messaging.SubscriptionTopic(cfg.Organization, cfg.Environment, sub)
 	if err := r.bus.Publish(topic, msg.req); err != nil {
-		r.logError(err, agentID, msg.req.Config.Name)
+		r.logError(err, entityID, msg.req.Config.Name)
 	}
 }
 

@@ -214,12 +214,6 @@ func (s *Session) Start() error {
 			logger.WithError(err).Error("error starting subscription")
 			return err
 		}
-		direct := messaging.DirectSubscription(org, env, sub, agentID)
-		logger.Debugf("Creating direct subscription %q", direct)
-		if err := s.bus.Subscribe(direct, agentID, s.checkChannel); err != nil {
-			logger.WithError(err).Error("error starting subscription")
-			return err
-		}
 		ring := s.store.GetRing("subscription", topic)
 		if err := ring.Add(context.TODO(), agentID); err != nil {
 			logger.WithError(err).Errorf(
@@ -246,11 +240,6 @@ func (s *Session) Stop() {
 		if err := s.bus.Unsubscribe(topic, agentID); err != nil {
 			// Bus has stopped running already, no need for further unsubscribe
 			// attempts.
-			logger.Debug(err)
-			break
-		}
-		direct := messaging.DirectSubscription(org, env, sub, agentID)
-		if err := s.bus.Unsubscribe(direct, agentID); err != nil {
 			logger.Debug(err)
 			break
 		}
