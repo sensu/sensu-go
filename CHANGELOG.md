@@ -17,9 +17,11 @@ to that map.
 - Fixed a bug where we were attempting to kill processes that had already
 finished before its allotted execution timeout.
 - Fixed a bug where an event could erroneously be shown as silenced.
+- Properly log errors whenever a check request can't be published.
 
 ### Changed
 - Queues are now durable.
+- Refactoring of the check scheduling integration tests.
 
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added
