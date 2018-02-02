@@ -1,8 +1,9 @@
 package actions
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -30,7 +31,15 @@ var checkConfigUpdateFields = []string{
 	"ProxyRequests",
 }
 
-type CheckQueue interface {
+var (
+	adhocTimeout   = 2 * time.Second
+	adhocQueueName = "adhocRequest"
+)
+
+// CheckStore... need to populate this with the queue and store info
+type CheckStore interface {
+	store.CheckConfigStore
+	queue.Get
 }
 
 // CheckController exposes actions in which a viewer can perform.
@@ -41,13 +50,11 @@ type CheckController struct {
 }
 
 // NewCheckController returns new CheckController
-func NewCheckController(store store.CheckConfigStore) CheckController {
-	etcd := *etcd.Etcd
-	client, err := etcd.Etcd.NewClient()
+func NewCheckController(store CheckStore) CheckController {
 	return CheckController{
 		Store:      store,
 		Policy:     authorization.Checks,
-		checkQueue: queue.New("adhocChecks", client),
+		checkQueue: store.NewQueue(adhocQueueName, adhocTimeout),
 	}
 }
 

@@ -24,6 +24,27 @@ var (
 	queueKeyBuilder = store.NewKeyBuilder(queuePrefix)
 )
 
+// Interface defines the methods available on a Queue.
+type Interface interface {
+	Enqueue(ctx context.Context, value string) error
+	Dequeue(ctx context.Context) (*Item, error)
+}
+
+// Get ...
+type Get interface {
+	GetQueue(name string, timeout time.Duration) Interface
+}
+
+// EtcdGetter ...
+type EtcdGetter struct {
+	*clientv3.Client
+}
+
+// GetQueue ...
+func (e EtcdGetter) GetQueue(name string, timeout time.Duration) Interface {
+	return New(name, e.Client, timeout)
+}
+
 // Queue is a durable FIFO queue that is backed by etcd.
 // When an item is received by a client, it is deleted from
 // the work lane, and added to the in-flight lane. The item stays in-flight
