@@ -17,6 +17,7 @@ to that map.
 - Fixed a bug where we were attempting to kill processes that had already
 finished before its allotted execution timeout.
 - Fixed a bug where an event could erroneously be shown as silenced.
+- Fixed some build tags for tests using etcd stores.
 
 ### Changed
 - Queues are now durable.
