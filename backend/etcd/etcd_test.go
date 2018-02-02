@@ -1,4 +1,4 @@
-// +build !race
+// +build integration,!race
 
 package etcd
 
