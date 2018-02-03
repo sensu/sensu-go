@@ -216,7 +216,8 @@ func TestNackExpired(t *testing.T) {
 	require.NoError(t, err)
 
 	// close the first client
-	client.Close()
+	err = client.Close()
+	require.NoError(t, err)
 	cancel()
 
 	// create a new client and queue
