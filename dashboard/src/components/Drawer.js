@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import compose from "lodash/fp/compose";
-import { withRouter, routerShape } from "found";
+import { withRouter, routerShape, matchShape } from "found";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List from "material-ui/List";
@@ -23,6 +23,7 @@ import LogoutIcon from "material-ui-icons/ExitToApp";
 import WandIcon from "../icons/Wand";
 
 import { logout } from "../utils/authentication";
+import { makeNamespacedPath } from "./NamespaceLink";
 import DrawerButton from "./DrawerButton";
 import OrganizationIcon from "./OrganizationIcon";
 import NamespaceSelector from "./NamespaceSelector";
@@ -65,6 +66,7 @@ class Drawer extends React.Component {
     classes: PropTypes.object.isRequired,
     onToggle: PropTypes.func.isRequired,
     router: routerShape.isRequired,
+    match: matchShape.isRequired,
     open: PropTypes.bool.isRequired,
   };
 
@@ -74,7 +76,14 @@ class Drawer extends React.Component {
   };
 
   render() {
-    const { open, onToggle, classes } = this.props;
+    const { open, router, match, onToggle, classes } = this.props;
+    const linkTo = path => {
+      const fullPath = makeNamespacedPath(match.params)(path);
+      return () => {
+        router.push(fullPath);
+        onToggle();
+      };
+    };
 
     return (
       <MaterialDrawer type="temporary" open={open} onClose={onToggle}>
@@ -107,19 +116,31 @@ class Drawer extends React.Component {
           <Divider />
           <List>
             <DrawerButton Icon={DashboardIcon} primary="Dashboard" />
-            <DrawerButton Icon={EventIcon} primary="Events" href="/events" />
-            <DrawerButton Icon={EntityIcon} primary="Entities" />
-            <DrawerButton Icon={CheckIcon} primary="Checks" href="/checks" />
+            <DrawerButton
+              Icon={EventIcon}
+              primary="Events"
+              onClick={linkTo("events")}
+            />
+            <DrawerButton
+              Icon={EntityIcon}
+              primary="Entities"
+              onClick={linkTo("entities")}
+            />
+            <DrawerButton
+              Icon={CheckIcon}
+              primary="Checks"
+              onClick={linkTo("checks")}
+            />
             <DrawerButton
               Icon={SilenceIcon}
               primary="Silences"
-              href="/silences"
+              onClick={linkTo("silences")}
             />
-            <DrawerButton Icon={HookIcon} primary="Hooks" href="/hooks" />
+            <DrawerButton Icon={HookIcon} primary="Hooks" href="hooks" />
             <DrawerButton
               Icon={HandlerIcon}
               primary="Handlers"
-              href="/handlers"
+              onClick={linkTo("handlers")}
             />
           </List>
           <Divider />
@@ -128,7 +149,7 @@ class Drawer extends React.Component {
             <DrawerButton
               Icon={WandIcon}
               primary="Preferences"
-              href="/customize"
+              onClick={linkTo("preferences")}
             />
             <DrawerButton
               Icon={FeedbackIcon}
