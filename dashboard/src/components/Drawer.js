@@ -5,11 +5,9 @@ import { withRouter, routerShape, matchShape } from "found";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List from "material-ui/List";
-import IconButton from "material-ui/IconButton";
 import Divider from "material-ui/Divider";
 import { withStyles } from "material-ui/styles";
 
-import MenuIcon from "material-ui-icons/Menu";
 import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
 import EventIcon from "material-ui-icons/Notifications";
@@ -24,11 +22,8 @@ import WandIcon from "../icons/Wand";
 
 import { logout } from "../utils/authentication";
 import { makeNamespacedPath } from "./NamespaceLink";
+import DrawerHeader from "./DrawerHeader";
 import DrawerButton from "./DrawerButton";
-import OrganizationIcon from "./OrganizationIcon";
-import NamespaceSelector from "./NamespaceSelector";
-
-const logo = require("../assets/logo/wordmark/green.svg");
 
 const styles = theme => ({
   paper: {
@@ -44,19 +39,6 @@ const styles = theme => ({
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "space-between",
-  },
-  logo: {
-    margin: "16px -4px 0",
-  },
-  listItemButton: {
-    padding: "8px 0 0 8px",
-    color: theme.palette.primary.contrastText,
-  },
-  listItemContent: { padding: "0 16px 0" },
-  orgIcon: { margin: "24px 0 0 16px" },
-  selector: {
-    margin: "14px 16px 0 16px",
-    width: "100%",
   },
 });
 
@@ -88,31 +70,7 @@ class Drawer extends React.Component {
     return (
       <MaterialDrawer type="temporary" open={open} onClose={onToggle}>
         <div className={classes.paper}>
-          <div className={classes.header}>
-            <div className={classes.row}>
-              <IconButton className={classes.listItemButton} onClick={onToggle}>
-                <MenuIcon />
-              </IconButton>
-              <div className={classes.listItemContent}>
-                <img alt="sensu" src={logo} className={classes.logo} />
-              </div>
-            </div>
-            <div className={classes.row}>
-              {/* TODO update with global variables or whatever when we get them */}
-              <div className={classes.orgIcon}>
-                <OrganizationIcon
-                  icon="HalfHeart"
-                  iconColor="#FA8072"
-                  size={36}
-                />
-              </div>
-            </div>
-            <div className={classes.row}>
-              <div className={classes.selector}>
-                <NamespaceSelector />
-              </div>
-            </div>
-          </div>
+          <DrawerHeader onToggle={onToggle} />
           <Divider />
           <List>
             <DrawerButton Icon={DashboardIcon} primary="Dashboard" />

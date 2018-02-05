@@ -4,7 +4,7 @@ import { withStyles } from "material-ui/styles";
 
 import QuickNav from "./QuickNav";
 import Drawer from "./Drawer";
-import Toolbar from "./Toolbar";
+import AppBar from "./Toolbar";
 
 const styles = theme => ({
   "@global": {
@@ -58,23 +58,23 @@ class AppFrame extends React.Component {
   static defaultProps = { children: null };
 
   state = {
-    toolbar: false,
+    drawerOpen: true,
   };
 
   render() {
     const { children, classes } = this.props;
-    const { toolbar } = this.state;
+    const { drawerOpen } = this.state;
 
-    const toggleToolbar = () => {
-      this.setState({ toolbar: !toolbar });
+    const toggleDrawer = () => {
+      this.setState({ drawerOpen: !drawerOpen });
     };
 
     return (
       <div className={classes.root}>
-        <Toolbar toggleToolbar={toggleToolbar} />
+        <AppBar toggleToolbar={toggleDrawer} />
         <Drawer
-          open={toolbar}
-          onToggle={toggleToolbar}
+          open={drawerOpen}
+          onToggle={toggleDrawer}
           className={classes.drawer}
         />
         <div className={classes.maincontainer}>
