@@ -32,3 +32,8 @@ func (m *MockMonitor) HandleFailure(entity *types.Entity, event *types.Event) er
 	args := m.Called(entity, event)
 	return args.Error(0)
 }
+
+// GetTimeout ...
+func (m *MockMonitor) GetTimeout() {
+	return
+}
