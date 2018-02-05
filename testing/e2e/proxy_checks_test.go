@@ -42,8 +42,9 @@ func TestProxyChecks(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestProxyChecks",
-		BackendURLs: []string{backend.WSURL},
+		ID:                "TestProxyChecks",
+		BackendURLs:       []string{backend.WSURL},
+		KeepaliveInterval: 1,
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()

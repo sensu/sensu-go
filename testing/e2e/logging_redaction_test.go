@@ -23,10 +23,11 @@ func TestLoggingRedaction(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:               "TestLoggingRedaction",
-		BackendURLs:      []string{backend.WSURL},
-		CustomAttributes: `{"ec2_access_key": "P@ssw0rd!","secret": "P@ssw0rd!"}`,
-		Redact:           []string{"ec2_access_key"},
+		ID:                "TestLoggingRedaction",
+		BackendURLs:       []string{backend.WSURL},
+		CustomAttributes:  `{"ec2_access_key": "P@ssw0rd!","secret": "P@ssw0rd!"}`,
+		Redact:            []string{"ec2_access_key"},
+		KeepaliveInterval: 1,
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()

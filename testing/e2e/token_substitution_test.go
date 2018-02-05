@@ -24,9 +24,10 @@ func TestTokenSubstitution(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:               "TestCheckScheduling",
-		BackendURLs:      []string{backend.WSURL},
-		CustomAttributes: `{"team":"devops"}`,
+		ID:                "TestCheckScheduling",
+		BackendURLs:       []string{backend.WSURL},
+		CustomAttributes:  `{"team":"devops"}`,
+		KeepaliveInterval: 1,
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()

@@ -21,8 +21,9 @@ func TestCheckScheduling(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestCheckScheduling",
-		BackendURLs: []string{backend.WSURL},
+		ID:                "TestCheckScheduling",
+		BackendURLs:       []string{backend.WSURL},
+		KeepaliveInterval: 1,
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
