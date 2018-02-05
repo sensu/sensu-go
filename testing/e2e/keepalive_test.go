@@ -32,8 +32,9 @@ func (suite *EventTestSuite) SetupSuite() {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestKeepalives",
-		BackendURLs: []string{backend.WSURL},
+		ID:                "TestKeepalives",
+		BackendURLs:       []string{backend.WSURL},
+		KeepaliveInterval: 1,
 	}
 	agent, agentCleanup := newAgent(agentConfig, sensuctl, suite.T())
 
