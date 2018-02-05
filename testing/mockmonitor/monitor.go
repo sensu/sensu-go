@@ -1,6 +1,8 @@
 package mockmonitor
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,6 +36,6 @@ func (m *MockMonitor) HandleFailure(entity *types.Entity, event *types.Event) er
 }
 
 // GetTimeout ...
-func (m *MockMonitor) GetTimeout() {
-	return
+func (m *MockMonitor) GetTimeout() time.Duration {
+	return time.Duration(120 * time.Second)
 }
