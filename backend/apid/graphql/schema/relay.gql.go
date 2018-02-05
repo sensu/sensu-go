@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -195,14 +196,14 @@ func (_ PageInfoAliases) HasPreviousPage(p graphql.ResolveParams) (bool, error) 
 // StartCursor implements response to request for 'startCursor' field.
 func (_ PageInfoAliases) StartCursor(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // EndCursor implements response to request for 'endCursor' field.
 func (_ PageInfoAliases) EndCursor(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 

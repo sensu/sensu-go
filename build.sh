@@ -170,7 +170,7 @@ linter_commands () {
 unit_test_commands () {
     echo "Running unit tests..."
 
-    go test -timeout=60s -v $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
+    go test -timeout=60s $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
     if [ $? -ne 0 ]; then
         echo "Unit testing failed..."
         exit 1
@@ -180,16 +180,27 @@ unit_test_commands () {
 integration_test_commands () {
     echo "Running integration tests..."
 
-    go test -timeout=120s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
+    go test -timeout=180s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
     if [ $? -ne 0 ]; then
         echo "Integration testing failed..."
         exit 1
+    fi
+
+    # If the race detector was enabled, do a second pass without it
+    if [ ! -z "$RACE" ]; then
+        echo "Running integration tests without race detector..."
+
+        go test -timeout=180s -tags=integration $(go list ./... | egrep -v '(testing|vendor|scripts)')
+        if [ $? -ne 0 ]; then
+            echo "Integration testing failed..."
+            exit 1
+        fi
     fi
 }
 
 e2e_commands () {
     echo "Running e2e tests..."
-    go test -v ${REPO_PATH}/testing/e2e $@
+    go test ${REPO_PATH}/testing/e2e $@
 }
 
 docker_commands () {

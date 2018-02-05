@@ -45,11 +45,11 @@ func (r *viewerImpl) Entities(p schema.ViewerEntitiesFieldResolverParams) (inter
 		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
 	)
 
-	edges := make([]*relay.Edge, len(records))
+	edges := make([]*relay.Edge, info.End-info.Begin)
 	for i, r := range records[info.Begin:info.End] {
 		edges[i] = relay.NewArrayConnectionEdge(r, i)
 	}
-	return relay.ArrayConnection{ArrayConnectionInfo: info, Edges: edges}, err
+	return relay.NewArrayConnection(edges, info), nil
 }
 
 // Checks implements response to request for 'checks' field.
@@ -64,11 +64,11 @@ func (r *viewerImpl) Checks(p schema.ViewerChecksFieldResolverParams) (interface
 		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
 	)
 
-	edges := make([]*relay.Edge, len(records))
+	edges := make([]*relay.Edge, info.End-info.Begin)
 	for i, r := range records[info.Begin:info.End] {
 		edges[i] = relay.NewArrayConnectionEdge(r, i)
 	}
-	return relay.ArrayConnection{ArrayConnectionInfo: info, Edges: edges}, err
+	return relay.NewArrayConnection(edges, info), nil
 }
 
 // Events implements response to request for 'events' field.
@@ -87,12 +87,12 @@ func (r *viewerImpl) Events(p schema.ViewerEventsFieldResolverParams) (interface
 	for i, r := range records[info.Begin:info.End] {
 		edges[i] = relay.NewArrayConnectionEdge(r, i)
 	}
-	return relay.ArrayConnection{ArrayConnectionInfo: info, Edges: edges}, err
+	return relay.NewArrayConnection(edges, info), nil
 }
 
 // User implements response to request for 'user' field.
 func (r *viewerImpl) User(p graphql.ResolveParams) (interface{}, error) {
 	ctx := p.Context
 	actor := ctx.Value(types.AuthorizationActorKey).(authorization.Actor)
-	return actor, nil
+	return r.usersCtrl.Find(ctx, actor.Name)
 }

@@ -146,6 +146,7 @@ func DefaultResolver(source interface{}, fieldName string) (interface{}, error) 
 
 	// Struct
 	if sourceVal.Type().Kind() == reflect.Struct {
+		fieldName = strings.Title(fieldName)
 		for i := 0; i < sourceVal.NumField(); i++ {
 			valueField := sourceVal.Field(i)
 			typeField := sourceVal.Type().Field(i)
@@ -199,10 +200,16 @@ func newResolveTypeFn(typeMap graphql.TypeMap, impl interface{}) graphql.Resolve
 	resolver := impl.(typeResolver)
 	return func(p graphql.ResolveTypeParams) *graphql.Object {
 		typeRef := resolver.ResolveType(p.Value, p)
-		if objType, ok := typeMap[typeRef.Name()]; ok {
-			return objType.(*graphql.Object)
+		if typeRef == nil {
+			return nil
 		}
-		return nil
+
+		objType, ok := typeMap[typeRef.Name()]
+		if !ok {
+			return nil
+		}
+
+		return objType.(*graphql.Object)
 	}
 }
 

@@ -36,12 +36,14 @@ func newNodeResolver(store store.Store) *nodeResolver {
 }
 
 func (r *nodeResolver) FindType(i interface{}) *graphql.Type {
-	if translator, err := globalid.ReverseLookup(i); err != nil {
-		components := translator.Encode(i)
-		resolver := r.register.Lookup(components)
-		return &resolver.ObjectType
+	translator, err := globalid.ReverseLookup(i)
+	if err != nil {
+		return nil
 	}
-	return nil
+
+	components := translator.Encode(i)
+	resolver := r.register.Lookup(components)
+	return &resolver.ObjectType
 }
 
 func (r *nodeResolver) Find(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {

@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 	time "time"
@@ -185,15 +186,13 @@ type EventAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ EventAliases) ID(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ EventAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Timestamp implements response to request for 'timestamp' field.
@@ -206,22 +205,19 @@ func (_ EventAliases) Timestamp(p graphql.ResolveParams) (time.Time, error) {
 // Entity implements response to request for 'entity' field.
 func (_ EventAliases) Entity(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Check implements response to request for 'check' field.
 func (_ EventAliases) Check(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Hooks implements response to request for 'hooks' field.
 func (_ EventAliases) Hooks(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // IsIncident implements response to request for 'isIncident' field.
@@ -547,21 +543,19 @@ type EventConnectionAliases struct{}
 // Edges implements response to request for 'edges' field.
 func (_ EventConnectionAliases) Edges(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // PageInfo implements response to request for 'pageInfo' field.
 func (_ EventConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // TotalCount implements response to request for 'totalCount' field.
 func (_ EventConnectionAliases) TotalCount(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -770,14 +764,13 @@ type EventEdgeAliases struct{}
 // Node implements response to request for 'node' field.
 func (_ EventEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Cursor implements response to request for 'cursor' field.
 func (_ EventEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 

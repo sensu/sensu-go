@@ -7,13 +7,13 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/strings"
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
 // addToSilencedBy takes a silenced entry ID and adds it to a silence of IDs if
 // it's not already present in order to avoid duplicated elements
 func addToSilencedBy(id string, ids []string) []string {
-	if !strings.InArray(id, ids) {
+	if !stringsutil.InArray(id, ids) {
 		ids = append(ids, id)
 	}
 	return ids
@@ -87,6 +87,11 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 		}
 
 		for _, subscription := range event.Check.Config.Subscriptions {
+			// Make sure the entity is subscribed to this specific subscription
+			if !stringsutil.InArray(subscription, event.Entity.Subscriptions) {
+				continue
+			}
+
 			// Is this event silenced by one of the check subscription? (e.g.
 			// load-balancer:*)
 			if entry.ID == fmt.Sprintf("%s:*", subscription) && entry.StartSilence(time.Now().Unix()) {

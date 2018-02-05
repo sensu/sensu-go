@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 	time "time"
@@ -220,56 +221,53 @@ type CheckConfigAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ CheckConfigAliases) ID(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ CheckConfigAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ CheckConfigAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ CheckConfigAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Handlers implements response to request for 'handlers' field.
 func (_ CheckConfigAliases) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // HighFlapThreshold implements response to request for 'highFlapThreshold' field.
 func (_ CheckConfigAliases) HighFlapThreshold(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // Interval implements response to request for 'interval' field.
 func (_ CheckConfigAliases) Interval(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // LowFlapThreshold implements response to request for 'lowFlapThreshold' field.
 func (_ CheckConfigAliases) LowFlapThreshold(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -290,7 +288,7 @@ func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) ([]string, er
 // Source implements response to request for 'source' field.
 func (_ CheckConfigAliases) Source(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
@@ -304,15 +302,13 @@ func (_ CheckConfigAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 // CheckHooks implements response to request for 'checkHooks' field.
 func (_ CheckConfigAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Subdue implements response to request for 'subdue' field.
 func (_ CheckConfigAliases) Subdue(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // CheckConfigType CheckConfig is the specification of a check.
@@ -693,21 +689,19 @@ type CheckConfigConnectionAliases struct{}
 // Edges implements response to request for 'edges' field.
 func (_ CheckConfigConnectionAliases) Edges(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // PageInfo implements response to request for 'pageInfo' field.
 func (_ CheckConfigConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // TotalCount implements response to request for 'totalCount' field.
 func (_ CheckConfigConnectionAliases) TotalCount(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -916,14 +910,13 @@ type CheckConfigEdgeAliases struct{}
 // Node implements response to request for 'node' field.
 func (_ CheckConfigEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Cursor implements response to request for 'cursor' field.
 func (_ CheckConfigEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
@@ -1166,14 +1159,13 @@ type CheckAliases struct{}
 // Config implements response to request for 'config' field.
 func (_ CheckAliases) Config(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Duration implements response to request for 'duration' field.
 func (_ CheckAliases) Duration(p graphql.ResolveParams) (float64, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(float64)
+	ret := graphql1.Float.ParseValue(val).(float64)
 	return ret, err
 }
 
@@ -1187,42 +1179,41 @@ func (_ CheckAliases) Executed(p graphql.ResolveParams) (time.Time, error) {
 // History implements response to request for 'history' field.
 func (_ CheckAliases) History(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Issued implements response to request for 'issued' field.
 func (_ CheckAliases) Issued(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // Output implements response to request for 'output' field.
 func (_ CheckAliases) Output(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // State implements response to request for 'state' field.
 func (_ CheckAliases) State(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Status implements response to request for 'status' field.
 func (_ CheckAliases) Status(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // TotalStateChange implements response to request for 'totalStateChange' field.
 func (_ CheckAliases) TotalStateChange(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -1524,14 +1515,14 @@ type CheckHistoryAliases struct{}
 // Status implements response to request for 'status' field.
 func (_ CheckHistoryAliases) Status(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // Executed implements response to request for 'executed' field.
 func (_ CheckHistoryAliases) Executed(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 

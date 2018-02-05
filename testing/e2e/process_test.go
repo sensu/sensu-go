@@ -177,12 +177,14 @@ type agentProcess struct {
 }
 
 type agentConfig struct {
-	APIPort          int
-	BackendURLs      []string
-	CustomAttributes string
-	ID               string
-	Redact           []string
-	SocketPort       int
+	APIPort           int
+	BackendURLs       []string
+	CustomAttributes  string
+	ID                string
+	Redact            []string
+	SocketPort        int
+	KeepaliveTimeout  int
+	KeepaliveInterval int
 }
 
 // newAgent abstracts the initialization of an agent process and returns a
@@ -226,7 +228,8 @@ func (a *agentProcess) Start(t *testing.T) error {
 		"--organization", "default",
 		"--api-port", strconv.Itoa(port[0]),
 		"--socket-port", strconv.Itoa(port[1]),
-		"--keepalive-interval", "1",
+		"--keepalive-interval", strconv.Itoa(a.agentConfig.KeepaliveInterval),
+		"--keepalive-timeout", strconv.Itoa(a.agentConfig.KeepaliveTimeout),
 	}
 
 	// Support a single or multiple backend URLs

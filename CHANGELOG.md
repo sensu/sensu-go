@@ -7,14 +7,39 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- Add an e2e test for proxy check requests.
+- Add integration tests to our CI.
+
+### Fixed
+- Tracks in-progress checks with a map and mutex rather than an array to
+increase time efficiency and synchronize goroutines reading from and writing
+to that map.
+- Fixed a bug where we were attempting to kill processes that had already
+finished before its allotted execution timeout.
+- Fixed a bug where an event could erroneously be shown as silenced.
+- Properly log errors whenever a check request can't be published.
+- Fixed some build tags for tests using etcd stores.
+- Keepalive monitors now get updated with changes to a keepalive timeout.
+
+### Changed
+- Queues are now durable.
+- Refactoring of the check scheduling integration tests.
+
+## [2.0.0-alpha.15] - 2018-01-30
+### Added
 - Add function for matching entities to a proxy check request.
 - Added functions for publishing proxy check requests.
 - Added proxy request validation.
 - CLI functionality for proxy check requests (add set-proxy-requests command).
 - Entities have been added to the state manager and synchronizer.
+- Added package leader, for facilitating execution by a single backend.
+- Proxy check requests are now published to all entities described in
+`ProxyRequests` and `EntityAttributes`.
+- Add quick navigation component for dashboard
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
+- Cron and Interval scheduling are now mutually exclusive.
 
 ### Fixed
 - Fixed a bug where retrieving check hooks were only from the check's

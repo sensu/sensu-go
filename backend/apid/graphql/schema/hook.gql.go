@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -163,35 +164,33 @@ type HookConfigAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ HookConfigAliases) ID(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ HookConfigAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ HookConfigAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ HookConfigAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Timeout implements response to request for 'timeout' field.
 func (_ HookConfigAliases) Timeout(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -480,42 +479,41 @@ type HookAliases struct{}
 // Config implements response to request for 'config' field.
 func (_ HookAliases) Config(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Duration implements response to request for 'duration' field.
 func (_ HookAliases) Duration(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // Executed implements response to request for 'executed' field.
 func (_ HookAliases) Executed(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // Issued implements response to request for 'issued' field.
 func (_ HookAliases) Issued(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // Output implements response to request for 'output' field.
 func (_ HookAliases) Output(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Status implements response to request for 'status' field.
 func (_ HookAliases) Status(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
@@ -779,7 +777,7 @@ func (_ HookListAliases) Hooks(p graphql.ResolveParams) ([]string, error) {
 // Type implements response to request for 'type' field.
 func (_ HookListAliases) Type(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 

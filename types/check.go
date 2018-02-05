@@ -8,6 +8,7 @@ import (
 
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/util/eval"
 )
 
 // CheckRequestType is the message type string for check request.
@@ -58,13 +59,21 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	if c.Cron != "" {
+		if c.Interval != 0 {
+			return errors.New("must only specify either an interval or a cron schedule")
+		}
+
 		if _, err := cron.ParseStandard(c.Cron); err != nil {
 			return errors.New("check cron string is invalid")
 		}
 	}
 
-	if c.Interval == 0 {
+	if c.Interval == 0 && c.Cron == "" {
 		return errors.New("check interval must be greater than 0")
+	}
+
+	if c.Interval > 0 && c.Cron != "" {
+		return errors.New("must only specify either an interval or a cron schedule")
 	}
 
 	if c.Environment == "" {
@@ -112,7 +121,7 @@ func (p *ProxyRequests) Validate() error {
 		return errors.New("proxy request splay coverage must be greater than 0 if splay is enabled")
 	}
 
-	return nil
+	return eval.ValidateStatements(p.EntityAttributes)
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the

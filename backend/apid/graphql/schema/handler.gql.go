@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -198,64 +199,59 @@ type HandlerAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ HandlerAliases) ID(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Namespace implements response to request for 'namespace' field.
 func (_ HandlerAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ HandlerAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Type implements response to request for 'type' field.
 func (_ HandlerAliases) Type(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ HandlerAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Timeout implements response to request for 'timeout' field.
 func (_ HandlerAliases) Timeout(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
 // Socket implements response to request for 'socket' field.
 func (_ HandlerAliases) Socket(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Mutator implements response to request for 'mutator' field.
 func (_ HandlerAliases) Mutator(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Handlers implements response to request for 'handlers' field.
 func (_ HandlerAliases) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Filters implements response to request for 'filters' field.
@@ -597,14 +593,14 @@ type HandlerSocketAliases struct{}
 // Host implements response to request for 'host' field.
 func (_ HandlerSocketAliases) Host(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Port implements response to request for 'port' field.
 func (_ HandlerSocketAliases) Port(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
 }
 
