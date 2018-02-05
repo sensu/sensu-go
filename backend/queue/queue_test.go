@@ -21,7 +21,7 @@ func TestEnqueue(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testenq", client, time.Second)
+	queue := New("testenq", client)
 	err = queue.Enqueue(context.Background(), "test item")
 	assert.NoError(t, err)
 }
@@ -34,7 +34,7 @@ func TestDequeueSingleItem(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testdeq", client, time.Second)
+	queue := New("testdeq", client)
 	err = queue.Enqueue(context.Background(), "test single item dequeue")
 	require.NoError(t, err)
 
@@ -56,7 +56,7 @@ func TestDequeueFIFO(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testfifo", client, time.Second)
+	queue := New("testfifo", client)
 	items := []string{"hello", "there", "world", "asdf", "fjdksl", "lalalal"}
 
 	for _, item := range items {
@@ -82,7 +82,7 @@ func TestDequeueParallel(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testparallel", client, time.Second)
+	queue := New("testparallel", client)
 	items := map[string]struct{}{
 		"hello":   struct{}{},
 		"there":   struct{}{},
@@ -132,7 +132,7 @@ func TestNack(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testnack", client, time.Second)
+	queue := New("testnack", client)
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
@@ -156,7 +156,7 @@ func TestAck(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testack", client, time.Second)
+	queue := New("testack", client)
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
@@ -181,7 +181,7 @@ func TestOnce(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testonce", client, time.Second)
+	queue := New("testonce", client)
 
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
@@ -206,19 +206,34 @@ func TestNackExpired(t *testing.T) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	queue := New("testexpired", client, time.Second)
+	queue := New("testexpired", client)
+	queue.itemTimeout = 2 * time.Second
 
-	err = queue.Enqueue(context.Background(), "test item")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	err = queue.Enqueue(ctx, "test item")
 	require.NoError(t, err)
 
-	item, err := queue.Dequeue(context.Background())
+	item, err := queue.Dequeue(ctx)
+	require.NoError(t, err)
+
+	// close the first client
+	err = client.Close()
+	require.NoError(t, err)
+	cancel()
+
+	// create a new client and queue
+	newClient, err := e.NewClient()
 	require.NoError(t, err)
 
 	// wait to make sure the item has timed out
 	time.Sleep(2 * time.Second)
 
+	newQueue := New("testexpired", newClient)
+	newQueue.itemTimeout = 2 * time.Second
+
 	// nacked item should go back in the work queue lane
-	item, err = queue.Dequeue(context.Background())
+	item, err = newQueue.Dequeue(context.Background())
 	require.NoError(t, err)
 
 	require.Equal(t, "test item", item.Value)

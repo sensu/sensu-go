@@ -17,6 +17,7 @@ const (
 	queuePrefix    = "queue"
 	workPrefix     = "work"
 	inFlightPrefix = "inflight"
+	itemTimeout    = 60 * time.Second
 )
 
 var (
@@ -37,7 +38,7 @@ type Queue struct {
 }
 
 // New returns an instance of Queue.
-func New(name string, client *clientv3.Client, itemTimeout time.Duration) *Queue {
+func New(name string, client *clientv3.Client) *Queue {
 	queue := &Queue{
 		client:      client,
 		work:        queueKeyBuilder.Build(name, workPrefix),
