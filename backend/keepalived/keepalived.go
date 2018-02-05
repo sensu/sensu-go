@@ -200,9 +200,15 @@ func (k *Keepalived) processKeepalives() {
 
 		k.mu.Lock()
 		mon, ok = k.monitors[entity.ID]
+		timeout := time.Duration(entity.KeepaliveTimeout) * time.Second
 		// create an entity monitor if it doesn't exist in the monitor map
 		if !ok || mon.IsStopped() {
-			timeout := time.Duration(entity.KeepaliveTimeout) * time.Second
+			mon = k.MonitorFactory(entity, nil, timeout, k, k)
+			k.monitors[entity.ID] = mon
+		}
+		// stop the running monitor and reset it in the monitor map with new timeout
+		if mon.GetTimeout() != timeout {
+			mon.Stop()
 			mon = k.MonitorFactory(entity, nil, timeout, k, k)
 			k.monitors[entity.ID] = mon
 		}

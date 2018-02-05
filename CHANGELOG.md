@@ -19,6 +19,7 @@ finished before its allotted execution timeout.
 - Fixed a bug where an event could erroneously be shown as silenced.
 - Properly log errors whenever a check request can't be published.
 - Fixed some build tags for tests using etcd stores.
+- Keepalive monitors now get updated with changes to a keepalive timeout.
 
 ### Changed
 - Queues are now durable.

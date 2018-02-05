@@ -13,6 +13,7 @@ type Interface interface {
 	IsStopped() bool
 	HandleUpdate(event *types.Event) error
 	HandleFailure(entity *types.Entity, event *types.Event) error
+	GetTimeout() time.Duration
 }
 
 // FactoryFunc takes an entity and returns a Monitor interface so the
@@ -137,6 +138,11 @@ func (m *Monitor) reset(t time.Duration) {
 	}
 
 	m.resetChan <- t
+}
+
+// GetTimeout returns the monitors current timeout value
+func (m *Monitor) GetTimeout() time.Duration {
+	return m.Timeout
 }
 
 // New creates a new monitor from an entity, time duration, and handlers.
