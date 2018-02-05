@@ -165,15 +165,13 @@ type QueryAliases struct{}
 // Viewer implements response to request for 'viewer' field.
 func (_ QueryAliases) Viewer(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Node implements response to request for 'node' field.
 func (_ QueryAliases) Node(p QueryNodeFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // QueryType The query root of Sensu's GraphQL interface.

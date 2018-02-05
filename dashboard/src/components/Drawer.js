@@ -1,5 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
+import compose from "lodash/fp/compose";
+import { withRouter, routerShape } from "found";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List, { ListItem } from "material-ui/List";
@@ -15,17 +17,20 @@ import EventIcon from "material-ui-icons/Announcement";
 import DashboardIcon from "material-ui-icons/Dashboard";
 import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
+import LogoutIcon from "material-ui-icons/ExitToApp";
 
+import { logout } from "../utils/authentication";
 import DrawerButton from "./DrawerButton";
 
-const logo = require("../assets/logo.png");
+const logo = require("../assets/logo/full/silver-green.svg");
 
 const styles = theme => {
   const listItemStyles = listItemIconStyles(theme);
 
   return {
     paper: {
-      width: 280,
+      minWidth: 264,
+      maxWidth: 400,
       backgroundColor: theme.palette.background.paper,
     },
     logo: { height: "inherit" },
@@ -46,14 +51,20 @@ class Drawer extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     onToggle: PropTypes.func.isRequired,
+    router: routerShape.isRequired,
     open: PropTypes.bool.isRequired,
+  };
+
+  handleLogout = async () => {
+    await logout();
+    this.props.router.push("/login");
   };
 
   render() {
     const { open, onToggle, classes } = this.props;
 
     return (
-      <MaterialDrawer type="temporary" open={open} onRequestClose={onToggle}>
+      <MaterialDrawer type="temporary" open={open} onClose={onToggle}>
         <div className={classes.paper}>
           <List>
             <ListItem>
@@ -80,6 +91,11 @@ class Drawer extends React.Component {
               primary="Feedback"
               href="https://www.sensuapp.org"
             />
+            <DrawerButton
+              Icon={LogoutIcon}
+              primary="Sign out"
+              onClick={this.handleLogout}
+            />
           </List>
         </div>
       </MaterialDrawer>
@@ -87,4 +103,4 @@ class Drawer extends React.Component {
   }
 }
 
-export default withStyles(styles)(Drawer);
+export default compose(withStyles(styles), withRouter)(Drawer);

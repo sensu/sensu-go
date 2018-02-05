@@ -15,7 +15,6 @@ var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
 type queryImpl struct {
 	store        store.Store
 	nodeResolver *nodeResolver
-	noLookup
 }
 
 func newQueryImpl(store store.Store, resolver *nodeResolver) *queryImpl {

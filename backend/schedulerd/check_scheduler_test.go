@@ -1,4 +1,4 @@
-// +build integration
+// +build integration,race
 
 package schedulerd
 
@@ -11,44 +11,72 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
 )
 
-type CheckSchedulerIntervalSuite struct {
-	suite.Suite
+type TestCheckScheduler struct {
 	check     *types.CheckConfig
-	scheduler *CheckScheduler
+	exec      *CheckExecutor
 	msgBus    *messaging.WizardBus
+	scheduler *CheckScheduler
 }
 
-func (suite *CheckSchedulerIntervalSuite) SetupTest() {
-	suite.check = types.FixtureCheckConfig("check1")
-	suite.check.Interval = 1
-	suite.msgBus = &messaging.WizardBus{}
+func newScheduler(t *testing.T) *TestCheckScheduler {
+	t.Helper()
+
+	assert := assert.New(t)
+
+	scheduler := &TestCheckScheduler{}
+
+	request := types.FixtureCheckRequest("check1")
+	asset := request.Assets[0]
+	hook := request.Hooks[0]
+	scheduler.check = request.Config
+	scheduler.check.Interval = 1
+
+	scheduler.msgBus = &messaging.WizardBus{}
+	schedulerState := &SchedulerState{}
 
 	manager := NewStateManager(&mockstore.MockStore{})
 	manager.Update(func(state *SchedulerState) {
-		state.SetChecks([]*types.CheckConfig{suite.check})
+		state.SetChecks([]*types.CheckConfig{scheduler.check})
+		state.SetAssets([]*types.Asset{&asset})
+		state.SetHooks([]*types.HookConfig{&hook})
+		schedulerState = state
 	})
 
-	suite.scheduler = &CheckScheduler{
-		CheckName:     suite.check.Name,
-		CheckEnv:      suite.check.Environment,
-		CheckOrg:      suite.check.Organization,
-		CheckInterval: suite.check.Interval,
-		CheckCron:     suite.check.Cron,
-		LastCronState: suite.check.Cron,
+	scheduler.scheduler = &CheckScheduler{
+		CheckName:     scheduler.check.Name,
+		CheckEnv:      scheduler.check.Environment,
+		CheckOrg:      scheduler.check.Organization,
+		CheckInterval: scheduler.check.Interval,
+		CheckCron:     scheduler.check.Cron,
+		LastCronState: scheduler.check.Cron,
 		StateManager:  manager,
-		MessageBus:    suite.msgBus,
+		MessageBus:    scheduler.msgBus,
 		WaitGroup:     &sync.WaitGroup{},
 	}
 
-	suite.NoError(suite.msgBus.Start())
+	assert.NoError(scheduler.msgBus.Start())
+
+	scheduler.exec = &CheckExecutor{
+		State: schedulerState,
+		Bus:   scheduler.msgBus,
+	}
+
+	return scheduler
 }
 
-func (suite *CheckSchedulerIntervalSuite) TestStart() {
+func TestCheckSchedulerInterval(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	// Start a scheduler
+	scheduler := newScheduler(t)
+
 	// Set interval to smallest valid value
-	check := suite.check
+	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 
 	c1 := make(chan interface{}, 10)
@@ -58,58 +86,40 @@ func (suite *CheckSchedulerIntervalSuite) TestStart() {
 		check.Organization,
 		check.Environment,
 	)
-	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start())
-	time.Sleep(1 * time.Second)
-	suite.NoError(suite.scheduler.Stop())
-	suite.NoError(suite.msgBus.Stop())
-	close(c1)
-
-	messages := []*types.CheckRequest{}
-	for msg := range c1 {
-		res, ok := msg.(*types.CheckRequest)
-		suite.True(ok)
-		messages = append(messages, res)
+	if err := scheduler.msgBus.Subscribe(topic, "CheckSchedulerIntervalSuite", c1); err != nil {
+		assert.FailNow(err.Error())
 	}
-	res := messages[0]
-	suite.Equal(1, len(messages))
-	suite.Equal("check1", res.Config.Name)
+	defer func() {
+		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSchedulerIntervalSuite"))
+		close(c1)
+		assert.NoError(scheduler.msgBus.Stop())
+	}()
+
+	go func() {
+		select {
+		case msg := <-c1:
+			res, ok := msg.(*types.CheckRequest)
+			assert.True(ok)
+			assert.Equal("check1", res.Config.Name)
+		}
+	}()
+
+	assert.NoError(scheduler.scheduler.Start())
+	time.Sleep(5 * time.Second)
+	assert.NoError(scheduler.scheduler.Stop())
 }
 
-type CheckSubdueIntervalSuite struct {
-	suite.Suite
-	check     *types.CheckConfig
-	scheduler *CheckScheduler
-	msgBus    *messaging.WizardBus
-}
+func TestCheckSubdueIntervalSuite(t *testing.T) {
+	t.Parallel()
 
-func (suite *CheckSubdueIntervalSuite) SetupTest() {
-	suite.check = types.FixtureCheckConfig("check1")
-	suite.check.Interval = 1
-	suite.msgBus = &messaging.WizardBus{}
+	assert := assert.New(t)
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
-		state.SetChecks([]*types.CheckConfig{suite.check})
-	})
+	// Start a scheduler
+	scheduler := newScheduler(t)
 
-	suite.scheduler = &CheckScheduler{
-		CheckName:     suite.check.Name,
-		CheckEnv:      suite.check.Environment,
-		CheckOrg:      suite.check.Organization,
-		CheckInterval: suite.check.Interval,
-		StateManager:  manager,
-		MessageBus:    suite.msgBus,
-		WaitGroup:     &sync.WaitGroup{},
-	}
-
-	suite.NoError(suite.msgBus.Start())
-}
-
-func (suite *CheckSubdueIntervalSuite) TestStart() {
 	// Set interval to smallest valid value
-	check := suite.check
+	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 	check.Subdue = &types.TimeWindowWhen{
 		Days: types.TimeWindowDays{
@@ -133,156 +143,64 @@ func (suite *CheckSubdueIntervalSuite) TestStart() {
 		check.Organization,
 		check.Environment,
 	)
-	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start())
+	if err := scheduler.msgBus.Subscribe(topic, "CheckSubdueIntervalSuite", c1); err != nil {
+		assert.FailNow(err.Error())
+	}
+	defer func() {
+		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSubdueIntervalSuite"))
+		close(c1)
+		assert.NoError(scheduler.msgBus.Stop())
+	}()
+
+	assert.NoError(scheduler.scheduler.Start())
 	time.Sleep(1 * time.Second)
-	suite.NoError(suite.scheduler.Stop())
-	suite.NoError(suite.msgBus.Stop())
-	close(c1)
+	assert.NoError(scheduler.scheduler.Stop())
 
-	messages := []*types.CheckRequest{}
-	for msg := range c1 {
-		res, ok := msg.(*types.CheckRequest)
-		suite.True(ok)
-		messages = append(messages, res)
-	}
-	// Check should have been subdued at this time, so expect no messages
-	suite.Equal(0, len(messages))
+	// We should have no element in our channel
+	assert.Equal(0, len(c1))
 }
 
-type TimerIntervalSuite struct {
-	suite.Suite
-}
+func TestCheckExecIntervalSuite(t *testing.T) {
+	t.Parallel()
 
-func (suite *TimerIntervalSuite) TestSplay() {
-	timer := NewIntervalTimer("check1", 10)
+	assert := assert.New(t)
 
-	suite.Condition(func() bool { return timer.splay > 0 })
+	// Start a scheduler
+	scheduler := newScheduler(t)
 
-	timer2 := NewIntervalTimer("check1", 10)
-	suite.Equal(timer.splay, timer2.splay)
-}
-
-func (suite *TimerIntervalSuite) TestInitialOffset() {
-	inputs := []uint{1, 10, 60}
-	for _, intervalSeconds := range inputs {
-		now := time.Now()
-		timer := NewIntervalTimer("check1", intervalSeconds)
-		nextExecution := timer.calcInitialOffset()
-		executionTime := now.Add(nextExecution)
-
-		// We've scheduled it in the future.
-		suite.Condition(func() bool { return executionTime.Sub(now) > 0 })
-		// The offset is less than the check interval.
-		suite.Condition(func() bool { return nextExecution < (time.Duration(intervalSeconds) * time.Second) })
-		// The next execution occurs _before_ now + interval.
-		suite.Condition(func() bool { return executionTime.Before(now.Add(time.Duration(intervalSeconds) * time.Second)) })
-	}
-}
-
-func (suite *TimerIntervalSuite) TestStop() {
-	timer := NewIntervalTimer("check1", 10)
-	timer.Start()
-
-	result := timer.Stop()
-	suite.True(result)
-}
-
-type CheckExecIntervalSuite struct {
-	suite.Suite
-	check  *types.CheckConfig
-	exec   *CheckExecutor
-	msgBus messaging.MessageBus
-}
-
-func (suite *CheckExecIntervalSuite) SetupTest() {
-	suite.msgBus = &messaging.WizardBus{}
-	suite.NoError(suite.msgBus.Start())
-
-	request := types.FixtureCheckRequest("check1")
-	asset := request.Assets[0]
-	hook := request.Hooks[0]
-	suite.check = request.Config
-
-	state := &SchedulerState{}
-	state.SetChecks([]*types.CheckConfig{request.Config})
-	state.SetAssets([]*types.Asset{&asset})
-	state.SetHooks([]*types.HookConfig{&hook})
-
-	suite.exec = &CheckExecutor{
-		State: state,
-		Bus:   suite.msgBus,
-	}
-}
-
-func (suite *CheckExecIntervalSuite) AfterTest() {
-	suite.NoError(suite.msgBus.Stop())
-}
-
-func (suite *CheckExecIntervalSuite) TestBuild() {
-	check := suite.check
-	request := suite.exec.BuildRequest(check)
-	suite.NotNil(request)
-	suite.NotNil(request.Config)
-	suite.NotNil(request.Assets)
-	suite.NotEmpty(request.Assets)
-	suite.Len(request.Assets, 1)
-	suite.NotNil(request.Hooks)
-	suite.NotEmpty(request.Hooks)
-	suite.Len(request.Hooks, 1)
+	check := scheduler.check
+	request := scheduler.exec.BuildRequest(check)
+	assert.NotNil(request)
+	assert.NotNil(request.Config)
+	assert.NotNil(request.Assets)
+	assert.NotEmpty(request.Assets)
+	assert.Len(request.Assets, 1)
+	assert.NotNil(request.Hooks)
+	assert.NotEmpty(request.Hooks)
+	assert.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
 	check.CheckHooks = []types.HookList{}
-	request = suite.exec.BuildRequest(check)
-	suite.NotNil(request)
-	suite.NotNil(request.Config)
-	suite.Empty(request.Assets)
-	suite.Empty(request.Hooks)
+	request = scheduler.exec.BuildRequest(check)
+	assert.NotNil(request)
+	assert.NotNil(request.Config)
+	assert.Empty(request.Assets)
+	assert.Empty(request.Hooks)
+
+	assert.NoError(scheduler.msgBus.Stop())
 }
 
-func TestRunExecIntervalSuite(t *testing.T) {
-	suite.Run(t, new(TimerIntervalSuite))
-	suite.Run(t, new(CheckSchedulerIntervalSuite))
-	suite.Run(t, new(CheckExecIntervalSuite))
-	suite.Run(t, new(CheckSubdueIntervalSuite))
-}
+func TestCheckSchedulerCron(t *testing.T) {
+	t.Parallel()
 
-type CheckSchedulerCronSuite struct {
-	suite.Suite
-	check     *types.CheckConfig
-	scheduler *CheckScheduler
-	msgBus    *messaging.WizardBus
-}
+	assert := assert.New(t)
 
-func (suite *CheckSchedulerCronSuite) SetupTest() {
-	suite.check = types.FixtureCheckConfig("check1")
-	suite.check.Cron = "* * * * *"
-	suite.msgBus = &messaging.WizardBus{}
+	// Start a scheduler
+	scheduler := newScheduler(t)
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
-		state.SetChecks([]*types.CheckConfig{suite.check})
-	})
-
-	suite.scheduler = &CheckScheduler{
-		CheckName:     suite.check.Name,
-		CheckEnv:      suite.check.Environment,
-		CheckOrg:      suite.check.Organization,
-		CheckInterval: suite.check.Interval,
-		CheckCron:     suite.check.Cron,
-		LastCronState: suite.check.Cron,
-		StateManager:  manager,
-		MessageBus:    suite.msgBus,
-		WaitGroup:     &sync.WaitGroup{},
-	}
-
-	suite.NoError(suite.msgBus.Start())
-}
-
-func (suite *CheckSchedulerCronSuite) TestStart() {
 	// Set interval to smallest valid value
-	check := suite.check
+	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 
 	c1 := make(chan interface{}, 10)
@@ -292,58 +210,41 @@ func (suite *CheckSchedulerCronSuite) TestStart() {
 		check.Organization,
 		check.Environment,
 	)
-	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start())
+	if err := scheduler.msgBus.Subscribe(topic, "CheckSchedulerCronSuite", c1); err != nil {
+		assert.FailNow(err.Error())
+	}
+	defer func() {
+		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSchedulerCronSuite"))
+		close(c1)
+		assert.NoError(scheduler.msgBus.Stop())
+	}()
+
+	go func() {
+		select {
+		case msg := <-c1:
+			res, ok := msg.(*types.CheckRequest)
+			assert.True(ok)
+			assert.Equal("check1", res.Config.Name)
+		}
+	}()
+
+	assert.NoError(scheduler.scheduler.Start())
 	time.Sleep(60 * time.Second)
-	suite.NoError(suite.scheduler.Stop())
-	suite.NoError(suite.msgBus.Stop())
-	close(c1)
-
-	messages := []*types.CheckRequest{}
-	for msg := range c1 {
-		res, ok := msg.(*types.CheckRequest)
-		suite.True(ok)
-		messages = append(messages, res)
-	}
-	res := messages[0]
-	suite.Equal(1, len(messages))
-	suite.Equal("check1", res.Config.Name)
+	assert.NoError(scheduler.scheduler.Stop())
 }
 
-type CheckSubdueCronSuite struct {
-	suite.Suite
-	check     *types.CheckConfig
-	scheduler *CheckScheduler
-	msgBus    *messaging.WizardBus
-}
+func TestCheckSubdueCron(t *testing.T) {
+	t.Parallel()
 
-func (suite *CheckSubdueCronSuite) SetupTest() {
-	suite.check = types.FixtureCheckConfig("check1")
-	suite.check.Cron = "* * * * *"
-	suite.msgBus = &messaging.WizardBus{}
+	assert := assert.New(t)
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
-		state.SetChecks([]*types.CheckConfig{suite.check})
-	})
+	// Start a scheduler
+	scheduler := newScheduler(t)
 
-	suite.scheduler = &CheckScheduler{
-		CheckName:     suite.check.Name,
-		CheckEnv:      suite.check.Environment,
-		CheckOrg:      suite.check.Organization,
-		CheckInterval: suite.check.Interval,
-		StateManager:  manager,
-		MessageBus:    suite.msgBus,
-		WaitGroup:     &sync.WaitGroup{},
-	}
-
-	suite.NoError(suite.msgBus.Start())
-}
-
-func (suite *CheckSubdueCronSuite) TestStart() {
 	// Set interval to smallest valid value
-	check := suite.check
+	check := scheduler.check
+	check.Cron = "* * * * *"
 	check.Subscriptions = []string{"subscription1"}
 	check.Subdue = &types.TimeWindowWhen{
 		Days: types.TimeWindowDays{
@@ -367,159 +268,102 @@ func (suite *CheckSubdueCronSuite) TestStart() {
 		check.Organization,
 		check.Environment,
 	)
-	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.scheduler.Start())
+	if err := scheduler.msgBus.Subscribe(topic, "CheckSubdueCronSuite", c1); err != nil {
+		assert.FailNow(err.Error())
+	}
+	defer func() {
+		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSubdueCronSuite"))
+		close(c1)
+		assert.NoError(scheduler.msgBus.Stop())
+	}()
+
+	assert.NoError(scheduler.scheduler.Start())
 	time.Sleep(60 * time.Second)
-	suite.NoError(suite.scheduler.Stop())
-	suite.NoError(suite.msgBus.Stop())
-	close(c1)
+	assert.NoError(scheduler.scheduler.Stop())
 
-	messages := []*types.CheckRequest{}
-	for msg := range c1 {
-		res, ok := msg.(*types.CheckRequest)
-		suite.True(ok)
-		messages = append(messages, res)
-	}
-	// Check should have been subdued at this time, so expect no messages
-	suite.Equal(0, len(messages))
+	// We should have no element in our channel
+	assert.Equal(0, len(c1))
 }
 
-type TimerCronSuite struct {
-	suite.Suite
-}
+func TestCheckExecCron(t *testing.T) {
+	t.Parallel()
 
-func (suite *TimerCronSuite) TestStop() {
-	timer := NewCronTimer("check1", "* * * * *")
-	timer.Start()
+	assert := assert.New(t)
 
-	result := timer.Stop()
-	suite.True(result)
-}
+	// Start a scheduler
+	scheduler := newScheduler(t)
 
-type CheckExecCronSuite struct {
-	suite.Suite
-	check  *types.CheckConfig
-	exec   *CheckExecutor
-	msgBus messaging.MessageBus
-}
+	check := scheduler.check
+	check.Cron = "* * * * *"
 
-func (suite *CheckExecCronSuite) SetupTest() {
-	suite.msgBus = &messaging.WizardBus{}
-	suite.NoError(suite.msgBus.Start())
-
-	request := types.FixtureCheckRequest("check1")
-	request.Config.Cron = "* * * * *"
-	asset := request.Assets[0]
-	hook := request.Hooks[0]
-	suite.check = request.Config
-
-	state := &SchedulerState{}
-	state.SetChecks([]*types.CheckConfig{request.Config})
-	state.SetAssets([]*types.Asset{&asset})
-	state.SetHooks([]*types.HookConfig{&hook})
-
-	suite.exec = &CheckExecutor{
-		State: state,
-		Bus:   suite.msgBus,
-	}
-}
-
-func (suite *CheckExecCronSuite) AfterTest() {
-	suite.NoError(suite.msgBus.Stop())
-}
-
-func (suite *CheckExecCronSuite) TestBuild() {
-	check := suite.check
-	request := suite.exec.BuildRequest(check)
-	suite.NotNil(request)
-	suite.NotNil(request.Config)
-	suite.NotNil(request.Assets)
-	suite.NotEmpty(request.Assets)
-	suite.Len(request.Assets, 1)
-	suite.NotNil(request.Hooks)
-	suite.NotEmpty(request.Hooks)
-	suite.Len(request.Hooks, 1)
+	request := scheduler.exec.BuildRequest(check)
+	assert.NotNil(request)
+	assert.NotNil(request.Config)
+	assert.NotNil(request.Assets)
+	assert.NotEmpty(request.Assets)
+	assert.Len(request.Assets, 1)
+	assert.NotNil(request.Hooks)
+	assert.NotEmpty(request.Hooks)
+	assert.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
 	check.CheckHooks = []types.HookList{}
-	request = suite.exec.BuildRequest(check)
-	suite.NotNil(request)
-	suite.NotNil(request.Config)
-	suite.Empty(request.Assets)
-	suite.Empty(request.Hooks)
+	request = scheduler.exec.BuildRequest(check)
+	assert.NotNil(request)
+	assert.NotNil(request.Config)
+	assert.Empty(request.Assets)
+	assert.Empty(request.Hooks)
+
+	assert.NoError(scheduler.msgBus.Stop())
 }
 
-func TestRunExecCronSuite(t *testing.T) {
-	suite.Run(t, new(TimerCronSuite))
-	suite.Run(t, new(CheckSchedulerCronSuite))
-	suite.Run(t, new(CheckExecCronSuite))
-	suite.Run(t, new(CheckSubdueCronSuite))
-}
+func TestSplayCalculation(t *testing.T) {
+	t.Parallel()
 
-type CheckSchedulerProxySuite struct {
-	suite.Suite
-	check  *types.CheckConfig
-	exec   *CheckExecutor
-	msgBus *messaging.WizardBus
-}
+	assert := assert.New(t)
 
-func (suite *CheckSchedulerProxySuite) SetupTest() {
-	suite.msgBus = &messaging.WizardBus{}
-	suite.NoError(suite.msgBus.Start())
-
-	request := types.FixtureCheckRequest("check1")
-	asset := request.Assets[0]
-	hook := request.Hooks[0]
-	suite.check = request.Config
-	suite.check.Interval = 10
-
-	state := &SchedulerState{}
-	state.SetChecks([]*types.CheckConfig{request.Config})
-	state.SetAssets([]*types.Asset{&asset})
-	state.SetHooks([]*types.HookConfig{&hook})
-
-	suite.exec = &CheckExecutor{
-		State: state,
-		Bus:   suite.msgBus,
-	}
-}
-
-func (suite *CheckSchedulerProxySuite) TestSplayCalculation() {
 	check := types.FixtureCheckConfig("check1")
 	check.ProxyRequests = types.FixtureProxyRequests(true)
 
 	// 10s * 90% / 3 = 3
 	check.Interval = 10
 	splay, err := calculateSplayInterval(check, 3)
-	suite.Equal(float64(3), splay)
-	suite.Nil(err)
+	assert.Equal(float64(3), splay)
+	assert.Nil(err)
 
 	// 20s * 50% / 5 = 2
 	check.Interval = 20
 	check.ProxyRequests.SplayCoverage = 50
 	splay, err = calculateSplayInterval(check, 5)
-	suite.Equal(float64(2), splay)
-	suite.Nil(err)
+	assert.Equal(float64(2), splay)
+	assert.Nil(err)
 
 	// invalid cron string
 	check.Cron = "invalid"
 	splay, err = calculateSplayInterval(check, 5)
-	suite.Equal(float64(0), splay)
-	suite.NotNil(err)
+	assert.Equal(float64(0), splay)
+	assert.NotNil(err)
 
 	// at most, 60s from current time * 50% / 2 = 15
 	// this test will depend on when it is run, but the
 	// largest splay calculation will be 15
 	check.Cron = "* * * * *"
 	splay, err = calculateSplayInterval(check, 2)
-	suite.True(splay >= 0 && splay <= 15)
-	suite.Nil(err)
+	assert.True(splay >= 0 && splay <= 15)
+	assert.Nil(err)
 }
 
-func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequest() {
+func TestPublishProxyCheckRequest(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	// Start a scheduler
+	scheduler := newScheduler(t)
+
 	entity := types.FixtureEntity("entity1")
-	check := suite.check
+	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 	check.ProxyRequests = types.FixtureProxyRequests(true)
 
@@ -530,30 +374,42 @@ func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequest() {
 		check.Organization,
 		check.Environment,
 	)
-	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
 
-	suite.NoError(suite.exec.PublishProxyCheckRequest(entity, check))
-	suite.NoError(suite.msgBus.Stop())
-	close(c1)
-
-	messages := []*types.CheckRequest{}
-	for msg := range c1 {
-		res, ok := msg.(*types.CheckRequest)
-		suite.True(ok)
-		messages = append(messages, res)
+	if err := scheduler.msgBus.Subscribe(topic, "TestPublishProxyCheckRequest", c1); err != nil {
+		assert.FailNow(err.Error())
 	}
-	res := messages[0]
-	suite.Equal(1, len(messages))
-	suite.Equal("check1", res.Config.Name)
-	suite.Equal("entity1", res.Config.ProxyEntityID)
+	defer func() {
+		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "TestPublishProxyCheckRequest"))
+		close(c1)
+		assert.NoError(scheduler.msgBus.Stop())
+	}()
+
+	go func() {
+		select {
+		case msg := <-c1:
+			res, ok := msg.(*types.CheckRequest)
+			assert.True(ok)
+			assert.Equal("check1", res.Config.Name)
+			assert.Equal("entity1", res.Config.ProxyEntityID)
+		}
+	}()
+
+	assert.NoError(scheduler.exec.publishProxyCheckRequest(entity, check))
 }
 
-func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsInterval() {
+func TestPublishProxyCheckRequestsInterval(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	// Start a scheduler
+	scheduler := newScheduler(t)
+
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
 	entity3 := types.FixtureEntity("entity3")
 	entities := []*types.Entity{entity1, entity2, entity3}
-	check := suite.check
+	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 	check.ProxyRequests = types.FixtureProxyRequests(true)
 
@@ -564,7 +420,15 @@ func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsInterval() {
 		check.Organization,
 		check.Environment,
 	)
-	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
+
+	if err := scheduler.msgBus.Subscribe(topic, "TestPublishProxyCheckRequestsInterval", c1); err != nil {
+		assert.FailNow(err.Error())
+	}
+	defer func() {
+		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "TestPublishProxyCheckRequestsInterval"))
+		close(c1)
+		assert.NoError(scheduler.msgBus.Stop())
+	}()
 
 	go func() {
 		for i := 0; i < len(entities); i++ {
@@ -572,23 +436,29 @@ func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsInterval() {
 			select {
 			case msg := <-c1:
 				res, ok := msg.(*types.CheckRequest)
-				suite.True(ok)
-				suite.Equal("check1", res.Config.Name)
-				suite.Equal(entityName, res.Config.ProxyEntityID)
+				assert.True(ok)
+				assert.Equal("check1", res.Config.Name)
+				assert.Equal(entityName, res.Config.ProxyEntityID)
 			}
 		}
 	}()
-	suite.NoError(suite.exec.PublishProxyCheckRequests(entities, check))
-	suite.NoError(suite.msgBus.Stop())
-	close(c1)
+
+	assert.NoError(scheduler.exec.PublishProxyCheckRequests(entities, check))
 }
 
-func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsCron() {
+func TestPublishProxyCheckRequestsCron(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	// Start a scheduler
+	scheduler := newScheduler(t)
+
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
 	entity3 := types.FixtureEntity("entity3")
 	entities := []*types.Entity{entity1, entity2, entity3}
-	check := suite.check
+	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 	check.ProxyRequests = types.FixtureProxyRequests(true)
 	check.Cron = "* * * * *"
@@ -600,7 +470,15 @@ func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsCron() {
 		check.Organization,
 		check.Environment,
 	)
-	suite.NoError(suite.msgBus.Subscribe(topic, "channel1", c1))
+
+	if err := scheduler.msgBus.Subscribe(topic, "CheckSchedulerProxySuite", c1); err != nil {
+		assert.FailNow(err.Error())
+	}
+	defer func() {
+		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSchedulerProxySuite"))
+		close(c1)
+		assert.NoError(scheduler.msgBus.Stop())
+	}()
 
 	go func() {
 		for i := 0; i < len(entities); i++ {
@@ -608,17 +486,12 @@ func (suite *CheckSchedulerProxySuite) TestPublishProxyCheckRequestsCron() {
 			select {
 			case msg := <-c1:
 				res, ok := msg.(*types.CheckRequest)
-				suite.True(ok)
-				suite.Equal("check1", res.Config.Name)
-				suite.Equal(entityName, res.Config.ProxyEntityID)
+				assert.True(ok)
+				assert.Equal("check1", res.Config.Name)
+				assert.Equal(entityName, res.Config.ProxyEntityID)
 			}
 		}
 	}()
-	suite.NoError(suite.exec.PublishProxyCheckRequests(entities, check))
-	suite.NoError(suite.msgBus.Stop())
-	close(c1)
-}
 
-func TestRunExecProxySuite(t *testing.T) {
-	suite.Run(t, new(CheckSchedulerProxySuite))
+	assert.NoError(scheduler.exec.PublishProxyCheckRequests(entities, check))
 }

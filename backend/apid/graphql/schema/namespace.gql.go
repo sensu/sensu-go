@@ -3,6 +3,7 @@
 package schema
 
 import (
+	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -135,14 +136,14 @@ type NamespaceAliases struct{}
 // Environment implements response to request for 'environment' field.
 func (_ NamespaceAliases) Environment(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
 // Organization implements response to request for 'organization' field.
 func (_ NamespaceAliases) Organization(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 

@@ -53,6 +53,7 @@ func (service *Service) RegisterInput(t InputDesc) {
 func (service *Service) RegisterInterface(t InterfaceDesc, impl InterfaceTypeResolver) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg.ResolveType = nil
 		if impl != nil {
 			cfg.ResolveType = newResolveTypeFn(m, impl)
 		}
@@ -71,6 +72,7 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 			fields[fieldName].Resolve = handler(impl)
 		}
 
+		cfg.IsTypeOf = nil
 		if typeResolver, ok := impl.(isTypeOfResolver); ok {
 			cfg.IsTypeOf = newIsTypeOfFn(typeResolver)
 		}
@@ -93,6 +95,7 @@ func (service *Service) RegisterUnion(t UnionDesc, impl UnionTypeResolver) {
 		}
 		cfg.Types = newTypes
 
+		cfg.ResolveType = nil
 		if impl != nil {
 			cfg.ResolveType = newResolveTypeFn(m, impl)
 		}
