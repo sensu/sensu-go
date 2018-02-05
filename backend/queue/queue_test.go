@@ -1,3 +1,5 @@
+// +build integration,!race
+
 package queue
 
 import (
