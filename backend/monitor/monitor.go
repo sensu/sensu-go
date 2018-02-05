@@ -1,17 +1,24 @@
 package monitor
 
 import (
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
 )
 
-// Interface ...
+// Interface is the monitor interface.
 type Interface interface {
+	// Stop stops the monitor.
 	Stop()
+
+	// IsStopped returns true if the monitor is stopped, false otherwise.
 	IsStopped() bool
+
+	// HandleUpdate handles an update event with the monitor's UpdateHandler.
 	HandleUpdate(event *types.Event) error
+
+	// HandleFailure handles a failure event with the monitor's FailureHandler.
 	HandleFailure(entity *types.Entity, event *types.Event) error
 }
 
@@ -31,8 +38,9 @@ type Monitor struct {
 
 	resetChan chan time.Duration
 	timer     *time.Timer
-	stopped   int32
-	failing   int32
+	stopped   bool
+	failing   bool
+	mu        sync.Mutex
 }
 
 // UpdateHandler provides an event update handler.
@@ -54,9 +62,11 @@ func (m *Monitor) HandleUpdate(event *types.Event) error {
 		return nil
 	}
 
-	// If the monitor is failing, flip status back to zero, reset it, and handle
-	// the event.
-	atomic.CompareAndSwapInt32(&m.failing, 1, 0)
+	// If the monitor is failing, flip status back to false, reset it,
+	// handle the event.
+	m.mu.Lock()
+	m.failing = false
+	m.mu.Unlock()
 	m.reset(m.Timeout)
 	return m.UpdateHandler.HandleUpdate(event)
 }
@@ -65,7 +75,9 @@ func (m *Monitor) HandleUpdate(event *types.Event) error {
 // entity.
 func (m *Monitor) HandleFailure(entity *types.Entity, event *types.Event) error {
 	defer m.Stop()
-	atomic.CompareAndSwapInt32(&m.failing, 0, 1)
+	m.mu.Lock()
+	m.failing = true
+	m.mu.Unlock()
 	return m.FailureHandler.HandleFailure(entity, event)
 }
 
@@ -73,7 +85,10 @@ func (m *Monitor) HandleFailure(entity *types.Entity, event *types.Event) error 
 // If the monitor has been previously stopped, this method has no
 // effect.
 func (m *Monitor) start() {
-	if m.IsStopped() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.stopped {
 		return
 	}
 
@@ -115,24 +130,30 @@ func (m *Monitor) start() {
 // Stop the Monitor. Once the monitor has been stopped it
 // can no longer be used.
 func (m *Monitor) Stop() {
-	// atomically set stopped so that once Stop is called, all future
-	// reads of stopped are true.
-	if !atomic.CompareAndSwapInt32(&m.stopped, 0, 1) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.stopped {
 		return
 	}
 
+	m.stopped = true
 	close(m.resetChan)
 }
 
 // IsStopped returns true if the Monitor has been stopped.
 func (m *Monitor) IsStopped() bool {
-	return atomic.LoadInt32(&m.stopped) > 0
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.stopped
 }
 
 // Reset the Monitor's timer to emit an event at a given time.
 // Once the Monitor has been stopped, this has no effect.
 func (m *Monitor) reset(t time.Duration) {
-	if m.IsStopped() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.stopped {
 		return
 	}
 
