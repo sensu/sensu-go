@@ -190,25 +190,17 @@ func TestKeepaliveTimeout(t *testing.T) {
 	// keepalive to be sent, etc.
 	time.Sleep(10 * time.Second)
 
-	output, err := sensuctl.run("event", "list")
+	output, err := sensuctl.run("event", "info", agent.ID, "keepalive")
 	assert.NoError(t, err)
 
-	events := []types.Event{}
-	assert.NoError(t, json.Unmarshal(output, &events))
+	event := types.Event{}
+	assert.NoError(t, json.Unmarshal(output, &event))
 
-	assert.NotZero(t, len(events))
-
-	seen := false
-	for _, ev := range events {
-		if ev.Check.Config.Name == "keepalive" {
-			seen = true
-			assert.Equal(t, "TestKeepalives", ev.Entity.ID)
-			assert.NotZero(t, ev.Timestamp)
-			assert.Equal(t, "passing", ev.Check.State)
-			assert.Equal(t, int32(0), ev.Check.Status)
-		}
-	}
-	assert.True(t, seen)
+	assert.NotNil(t, event)
+	assert.Equal(t, "TestKeepalives", event.Entity.ID)
+	assert.NotZero(t, event.Timestamp)
+	assert.Equal(t, "passing", event.Check.State)
+	assert.Equal(t, int32(0), event.Check.Status)
 
 	// Kill the agent, and restart with a new KeepaliveTimeout
 	assert.NoError(t, agent.Kill())
@@ -224,23 +216,15 @@ func TestKeepaliveTimeout(t *testing.T) {
 	// keepalive to be sent, etc.
 	time.Sleep(10 * time.Second)
 
-	output, err = sensuctl.run("event", "list")
+	output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
 	assert.NoError(t, err)
 
-	events = []types.Event{}
-	assert.NoError(t, json.Unmarshal(output, &events))
+	event = types.Event{}
+	assert.NoError(t, json.Unmarshal(output, &event))
 
-	assert.NotZero(t, len(events))
-
-	seen = false
-	for _, ev := range events {
-		if ev.Check.Config.Name == "keepalive" {
-			seen = true
-			assert.Equal(t, "TestKeepalives", ev.Entity.ID)
-			assert.NotZero(t, ev.Timestamp)
-			assert.Equal(t, "failing", ev.Check.State)
-			assert.Equal(t, int32(1), ev.Check.Status)
-		}
-	}
-	assert.True(t, seen)
+	assert.NotNil(t, event)
+	assert.Equal(t, "TestKeepalives", event.Entity.ID)
+	assert.NotZero(t, event.Timestamp)
+	assert.Equal(t, "failing", event.Check.State)
+	assert.Equal(t, int32(1), event.Check.Status)
 }
