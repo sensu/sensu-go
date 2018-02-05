@@ -32,9 +32,8 @@ func (suite *EventTestSuite) SetupSuite() {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:                "TestKeepalives",
-		BackendURLs:       []string{backend.WSURL},
-		KeepaliveInterval: 1,
+		ID:          "TestKeepalives",
+		BackendURLs: []string{backend.WSURL},
 	}
 	agent, agentCleanup := newAgent(agentConfig, sensuctl, suite.T())
 
@@ -175,10 +174,9 @@ func TestKeepaliveTimeout(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:                "TestKeepalives",
-		BackendURLs:       []string{backend.WSURL},
-		KeepaliveTimeout:  5,
-		KeepaliveInterval: 1,
+		ID:               "TestKeepalives",
+		BackendURLs:      []string{backend.WSURL},
+		KeepaliveTimeout: 5,
 	}
 	agent, agentCleanup := newAgent(agentConfig, sensuctl, t)
 

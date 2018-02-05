@@ -33,9 +33,8 @@ func TestSilencing(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:                "TestSilencing",
-		BackendURLs:       []string{backend.WSURL},
-		KeepaliveInterval: 1,
+		ID:          "TestSilencing",
+		BackendURLs: []string{backend.WSURL},
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()

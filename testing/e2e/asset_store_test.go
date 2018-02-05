@@ -26,9 +26,8 @@ func TestAssetStore(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:                "TestAssetStore",
-		BackendURLs:       []string{backend.WSURL},
-		KeepaliveInterval: 1,
+		ID:          "TestAssetStore",
+		BackendURLs: []string{backend.WSURL},
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()

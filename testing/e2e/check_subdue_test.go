@@ -28,9 +28,8 @@ func TestCheckSubdue(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:                "TestCheckSubdue",
-		BackendURLs:       []string{backend.WSURL},
-		KeepaliveInterval: 1,
+		ID:          "TestCheckSubdue",
+		BackendURLs: []string{backend.WSURL},
 	}
 	_, cleanup = newAgent(agentConfig, ctl, t)
 	defer cleanup()
