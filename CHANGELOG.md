@@ -18,6 +18,7 @@ to that map.
 finished before its allotted execution timeout.
 - Fixed a bug where an event could erroneously be shown as silenced.
 - Properly log errors whenever a check request can't be published.
+- Fixed some build tags for tests using etcd stores.
 
 ### Changed
 - Queues are now durable.

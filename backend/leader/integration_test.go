@@ -1,4 +1,4 @@
-// +build integration
+// +build integration,!race
 
 package leader
 
