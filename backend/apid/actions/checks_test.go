@@ -495,4 +495,86 @@ func TestCheckDestroy(t *testing.T) {
 }
 
 func TestCheckAdhoc(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
+		),
+	)
+
+	badCheck := types.FixtureCheckConfig("check1")
+	badCheck.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.AdhocRequest
+		fetchResult     *types.CheckConfig
+		checkName       string
+		fetchErr        error
+		queueErr        error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Queued",
+			ctx:         defaultCtx,
+			argument:    types.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"}),
+			fetchResult: types.FixtureCheckConfig("check1"),
+			checkName:   "check1",
+			fetchErr:    nil,
+			queueErr:    nil,
+			expectedErr: false,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureAdhocRequest("check2", []string{"subscription1", "subscription2"}),
+			fetchResult:     types.FixtureCheckConfig("check2"),
+			checkName:       "check2",
+			fetchErr:        nil,
+			queueErr:        nil,
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewCheckController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetCheckConfigByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("Enqueue", mock.Anything, mock.Anything).
+				Return(tc.queueErr)
+
+			// Exec Query
+			err := actions.QueueAdhocRequest(tc.ctx, tc.name, tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+
 }

@@ -32,17 +32,17 @@ type Interface interface {
 
 // Get ...
 type Get interface {
-	GetQueue(name string, timeout time.Duration) Interface
+	GetQueue(name string) Interface
 }
 
 // EtcdGetter ...
 type EtcdGetter struct {
-	*clientv3.Client
+	Client *clientv3.Client
 }
 
 // GetQueue ...
-func (e EtcdGetter) GetQueue(name string, timeout time.Duration) Interface {
-	return New(name, e.Client, timeout)
+func (e EtcdGetter) GetQueue(name string) Interface {
+	return New(name, e.Client)
 }
 
 // Queue is a durable FIFO queue that is backed by etcd.

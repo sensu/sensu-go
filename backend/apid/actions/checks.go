@@ -1,10 +1,7 @@
 package actions
 
 import (
-	"time"
-
 	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -32,29 +29,28 @@ var checkConfigUpdateFields = []string{
 }
 
 var (
-	adhocTimeout   = 2 * time.Second
 	adhocQueueName = "adhocRequest"
 )
 
-// CheckStore... need to populate this with the queue and store info
+// CheckStore contains storage and queue info for Checks.
 type CheckStore interface {
 	store.CheckConfigStore
-	queue.Get
+	store.QueueStore
 }
 
 // CheckController exposes actions in which a viewer can perform.
 type CheckController struct {
 	Store      store.CheckConfigStore
 	Policy     authorization.CheckPolicy
-	checkQueue *queue.Queue
+	checkQueue store.QueueStore
 }
 
 // NewCheckController returns new CheckController
-func NewCheckController(store CheckStore) CheckController {
+func NewCheckController(store store.Store) CheckController {
 	return CheckController{
 		Store:      store,
 		Policy:     authorization.Checks,
-		checkQueue: store.NewQueue(adhocQueueName, adhocTimeout),
+		checkQueue: store,
 	}
 }
 
@@ -290,12 +286,25 @@ func (a CheckController) findAndUpdateCheckConfig(
 
 // QueueAdhocRequest takes a check request and adds it to the queue for
 // processing.
-func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, subscriptions string) error {
-	// get the check from the store
-	// verify that the user has permissions to read those checks
+func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adhocRequest *types.AdhocRequest) error {
+	checkConfig, err := a.Find(ctx, name)
+
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, checkConfig)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Verify viewer can make change
+	if yes := abilities.CanCreate(checkConfig); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
 	// if there are subscriptions, update the check with the provided subscriptions;
 	// otherwise, use what the check already has
+	if len(adhocRequest.Subscriptions) > 0 {
+		checkConfig.Subscriptions = adhocRequest.Subscriptions
+	}
+
 	// finally, add the check to the queue
-	checkConfig, err := a.Find(ctx, name)
+	a.checkQueue.Enqueue(ctx, checkConfig.String())
 	return err
 }

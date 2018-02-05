@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -479,6 +480,11 @@ type UserStore interface {
 
 	// UpdateHandler updates a given user.
 	UpdateUser(user *types.User) error
+}
+
+// QueueStore ...
+type QueueStore interface {
+	GetQueue(name string) queue.Interface
 }
 
 // Initializer provides methods to verify if a store is initialized
