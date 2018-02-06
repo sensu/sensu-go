@@ -118,12 +118,17 @@ func TestBlockOnNext(t *testing.T) {
 	require.NoError(t, r2.Add(context.Background(), "bar"))
 
 	var wg sync.WaitGroup
+	var errNext error
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 		value, err := r2.Next(context.Background())
-		require.NoError(t, err)
+		if err != nil {
+			errNext = err
+			return
+		}
+
 		assert.Equal(t, "bar", value)
 	}()
 
@@ -132,6 +137,9 @@ func TestBlockOnNext(t *testing.T) {
 	assert.Equal(t, "foo", value)
 
 	wg.Wait()
+
+	// Make sure we didn't encountered any error while getting the next item
+	require.NoError(t, errNext)
 
 	value, err = r1.Next(context.Background())
 	require.NoError(t, err)
@@ -201,7 +209,11 @@ func TestExpire(t *testing.T) {
 	ring.leaseTimeout = 1
 
 	ctx, cancel := context.WithCancel(context.Background())
-	require.NoError(t, ring.Add(ctx, "foo"))
+
+	if err := ring.Add(ctx, "foo"); err != nil {
+		cancel()
+		t.Fatal(err)
+	}
 
 	cancel()
 	// Give the cluster some time to expire the lease. Unfortunately there
