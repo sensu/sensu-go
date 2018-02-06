@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import compose from "lodash/fp/compose";
 import { withRouter, routerShape, matchShape } from "found";
+import { createFragmentContainer, graphql } from "react-relay";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List from "material-ui/List";
@@ -18,12 +19,16 @@ import HandlerIcon from "material-ui-icons/CallSplit";
 import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
+import IconButton from "material-ui/IconButton";
+import MenuIcon from "material-ui-icons/Menu";
 import WandIcon from "../icons/Wand";
+import OrganizationIcon from "./OrganizationIcon";
 
 import { logout } from "../utils/authentication";
 import { makeNamespacedPath } from "./NamespaceLink";
-import DrawerHeader from "./DrawerHeader";
 import DrawerButton from "./DrawerButton";
+import NamespaceSelector from "./NamespaceSelector";
+import logo from "../assets/logo/wordmark/green.svg";
 
 const styles = theme => ({
   paper: {
@@ -40,12 +45,28 @@ const styles = theme => ({
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
+  logo: {
+    height: 24,
+    margin: "12px 12px 0 0",
+  },
+  namespaceSelector: {
+    margin: "8px 0 -8px 0",
+    width: "100%",
+  },
+  namespaceIcon: {
+    margin: "24px 0 0 16px",
+  },
+  hamburgerButton: {
+    color: theme.palette.primary.contrastText,
+  },
 });
 
 class Drawer extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    // eslint-disable-next-line react/forbid-prop-types
+    viewer: PropTypes.object.isRequired,
     onToggle: PropTypes.func.isRequired,
     router: routerShape.isRequired,
     match: matchShape.isRequired,
@@ -58,7 +79,7 @@ class Drawer extends React.Component {
   };
 
   render() {
-    const { open, router, match, onToggle, classes } = this.props;
+    const { viewer, open, router, match, onToggle, classes } = this.props;
     const linkTo = path => {
       const fullPath = makeNamespacedPath(match.params)(path);
       return () => {
@@ -70,7 +91,33 @@ class Drawer extends React.Component {
     return (
       <MaterialDrawer type="temporary" open={open} onClose={onToggle}>
         <div className={classes.paper}>
-          <DrawerHeader onToggle={onToggle} />
+          <div className={classes.header}>
+            <div className={classes.row}>
+              <IconButton
+                onClick={onToggle}
+                className={classes.hamburgerButton}
+              >
+                <MenuIcon />
+              </IconButton>
+              <img alt="sensu" src={logo} className={classes.logo} />
+            </div>
+            <div className={classes.row}>
+              {/* TODO update with global variables or whatever when we get them */}
+              <div className={classes.namespaceIcon}>
+                <OrganizationIcon
+                  icon="HalfHeart"
+                  iconColor="#FA8072"
+                  size={36}
+                />
+              </div>
+            </div>
+            <div className={classes.row}>
+              <NamespaceSelector
+                viewer={viewer}
+                className={classes.namespaceSelector}
+              />
+            </div>
+          </div>
           <Divider />
           <List>
             <DrawerButton Icon={DashboardIcon} primary="Dashboard" />
@@ -126,4 +173,13 @@ class Drawer extends React.Component {
   }
 }
 
-export default compose(withStyles(styles), withRouter)(Drawer);
+const DrawerContainer = createFragmentContainer(
+  Drawer,
+  graphql`
+    fragment Drawer_viewer on Viewer {
+      ...NamespaceSelector_viewer
+    }
+  `,
+);
+
+export default compose(withStyles(styles), withRouter)(DrawerContainer);

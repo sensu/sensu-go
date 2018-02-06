@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
+import { createFragmentContainer, graphql } from "react-relay";
 
 import QuickNav from "./QuickNav";
 import Drawer from "./Drawer";
@@ -52,6 +53,8 @@ class AppFrame extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    // eslint-disable-next-line react/forbid-prop-types
+    viewer: PropTypes.object.isRequired,
     children: PropTypes.element,
   };
 
@@ -62,7 +65,7 @@ class AppFrame extends React.Component {
   };
 
   render() {
-    const { children, classes } = this.props;
+    const { children, viewer, classes } = this.props;
     const { drawerOpen } = this.state;
 
     const toggleDrawer = () => {
@@ -73,6 +76,7 @@ class AppFrame extends React.Component {
       <div className={classes.root}>
         <AppBar toggleToolbar={toggleDrawer} />
         <Drawer
+          viewer={viewer}
           open={drawerOpen}
           onToggle={toggleDrawer}
           className={classes.drawer}
@@ -85,4 +89,11 @@ class AppFrame extends React.Component {
     );
   }
 }
-export default withStyles(styles)(AppFrame);
+export default createFragmentContainer(
+  withStyles(styles)(AppFrame),
+  graphql`
+    fragment AppFrame_viewer on Viewer {
+      ...Drawer_viewer
+    }
+  `,
+);
