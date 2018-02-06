@@ -49,7 +49,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
-	require.NoError(t, cmd.Flags().Set("begin", "1257894000"))
+	require.NoError(t, cmd.Flags().Set("begin", "Jan 02 2006 3:04PM MST"))
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
 	assert.Regexp("OK", out)
