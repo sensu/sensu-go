@@ -20,6 +20,8 @@ finished before its allotted execution timeout.
 - Properly log errors whenever a check request can't be published.
 - Fixed some build tags for tests using etcd stores.
 - Keepalive monitors now get updated with changes to a keepalive timeout.
+- Prevent tests timeout in queue package
+- Fixed a bug in the queue package where timestamps were not parsed correctly.
 
 ### Changed
 - Queues are now durable.
