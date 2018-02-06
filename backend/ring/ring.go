@@ -217,6 +217,8 @@ func (r *Ring) Next(ctx context.Context) (string, error) {
 	}
 	go func() {
 		// This goroutine watches the ring for delete events
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
 		defer func() {
 			close(delChan)
 		}()
@@ -230,6 +232,12 @@ func (r *Ring) Next(ctx context.Context) (string, error) {
 				}
 			case <-ctx.Done():
 				return
+			case <-ticker.C:
+				// Use polling as well in case the delete event didn't fire.
+				// This seems to happen from time to time, but is very hard
+				// to reproduce.
+				// TODO: find some way of avoiding this.
+				delChan <- struct{}{}
 			}
 		}
 	}()

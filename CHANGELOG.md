@@ -23,6 +23,7 @@ finished before its allotted execution timeout.
 - Prevent tests timeout in queue package
 - Prevent tests timeout in ring package
 - Fixed a bug in the queue package where timestamps were not parsed correctly.
+- Fixed Ring's Next method hanging in cases where watch events are not propagated.
 
 ### Changed
 - Queues are now durable.
