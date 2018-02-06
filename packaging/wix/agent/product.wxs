@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
   <!--
       Unattended setup: The following variables can be set:
@@ -33,7 +34,11 @@
   <?endif ?>
 
   <!-- Additional file paths -->
+  <?define sensuLicenseSourcePath="$(var.ProjectDir)\packaging\files\windows\LICENSE.rtf" ?>
   <?define sensuAgentConfigExampleSourcePath="$(var.ProjectDir)\packaging\files\windows\agent.yml.example" ?>
+  <?define sensuAgentServiceConfigSourcePath="$(var.ProjectDir)\packaging\files\windows\sensu-agent-svc.xml" ?>
+  <?define serviceWrapperDotNet2SourcePath="$(var.ProjectDir)\packaging\files\windows\WinSW.NET2.exe" ?>
+  <?define serviceWrapperDotNet4SourcePath="$(var.ProjectDir)\packaging\files\windows\WinSW.NET4.exe" ?>
 
   <!--
       =============================================================================================
@@ -59,25 +64,28 @@
 	     InstallScope="perMachine" />
 
     <!-- License agreement -->
-    <WixVariable Id="WixUILicenseRtf" Value="assets\LICENSE.rtf" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.sensuLicenseSourcePath)" />
 
     <!-- UI customization -->
     <WixVariable Id="WixUIBannerBmp" Value="assets\banner_background.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="assets\dialog_background.bmp" />
 
     <!-- Define icons (ID should not be longer than 18 chars and must end with ".exe") -->
-    <Icon Id="Icon.exe" SourceFile="assets\project_48x48.ico" />
+    <Icon Id="Icon.exe" SourceFile="assets\project.ico" />
 
     <!-- Set properties for Programs & Features (Add/Remove Programs) -->
-    <Property Id="ARPPRODUCTION" Value="Icon.exe" />
+    <Property Id="ARPPRODUCTICON" Value="Icon.exe" />
     <Property Id="ARPHELPLINK" Value="$(var.InfoURL)" />
-    <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" /> <!-- Remove repair -->
+    <!--<Property Id="ARPNOREPAIR" Value="yes" Secure="yes" />--> <!-- Remove repair -->
     <Property Id="ARPNOMODIFY" Value="yes" Secure="yes" /> <!-- Remove modify -->
+
+    <!-- Disable the "uninstall requires a reboot" prompt -->
+    <!-- <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable"/> -->
 
     <!-- Upgrade logic -->
     <!-- AllowSameVersionUpgrades -> Always upgrade, never allow two versions to be installed -->
     <!-- AllowSameVersionUpgrades causes ICE61 which must be ignored -->
-    <MajorUpgrade DowngradeErrorMessage="!(loc.NewerInstalled)" AllowSameVersionUpgrades="yes" />
+    <MajorUpgrade DowngradeErrorMessage="!(loc.NewerInstalled)" AllowSameVersionUpgrades="no" />
 
     <!-- This is the main installer sequence run when the product is actually installed -->
     <InstallExecuteSequence>
@@ -85,7 +93,42 @@
       <!-- Determine the install location after the install path has been validated -->
       <Custom Action="SetARPINSTALLLOCATION" After="InstallValidate"></Custom>
 
+      <!-- Install the Sensu Agent service -->
+      <!--<Custom Action="InstallSensuAgentService" Before="InstallFinalize">
+	NOT Installed
+      </Custom>-->
+
+      <!-- Stop the Sensu Agent service (on uninstall) -->
+<!--      <Custom Action="StopSensuAgentService" After="InstallInitialize">
+	Installed AND NOT UPGRADINGPRODUCTCODE
+      </Custom>-->
+
+      <!-- Uninstall the Sensu Agent service (on uninstall) -->
+<!--      <Custom Action="UninstallSensuAgentService" After="InstallInitialize">
+	Installed AND NOT UPGRADINGPRODUCTCODE
+      </Custom>-->
     </InstallExecuteSequence>
+
+    <!--<CustomAction Id="InstallSensuAgentService"
+		  Return="check"
+		  Execute="deferred"
+		  Impersonate="no"
+		  Directory="sensuAgentBinDir"
+		  ExeCommand="[SystemFolder]cmd.exe /C sensu-agent-svc.exe install" />-->
+
+    <!-- <CustomAction Id="StopSensuAgentService"
+		  Return="check"
+		  Execute="deferred"
+		  Impersonate="no"
+		  Directory="sensuAgentBinDir"
+		  ExeCommand="[SystemFolder]cmd.exe /C sensu-agent-svc.exe stop" />
+
+    <CustomAction Id="UninstallSensuAgentService"
+		  Return="check"
+		  Execute="deferred"
+		  Impersonate="no"
+		  Directory="sensuAgentBinDir"
+		  ExeCommand="[SystemFolder]cmd.exe /C sensu-agent-svc.exe uninstall" /> -->
 
     <!--
 	Set up ARPINSTALLLOCATION property
@@ -99,6 +142,15 @@
     -->
     <Condition Message="!(loc.OS2Old)">
       <![CDATA[Installed or (VersionNT >= 500)]]>
+    </Condition>
+
+    <!-- Include .NET Framework properties -->
+    <PropertyRef Id="NETFRAMEWORK20"/>
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_40_OR_LATER_INSTALLED"/>
+
+    <!-- Restrict to >= .NET Framework 2.0 -->
+    <Condition Message="This application requires .NET Framework 2.0 or newer. Please install the .NET Framework then run this installer again.">
+      <![CDATA[Installed OR NETFRAMEWORK20 OR WIX_IS_NETFRAMEWORK_40_OR_LATER_INSTALLED]]>
     </Condition>
 
     <!--
@@ -138,7 +190,6 @@
 
 	  <!-- INSTALLDIR is a property name. We need it later for the UI, so it can be changed -->
 	  <Directory Id="INSTALLDIR" Name="!(loc.ApplicationName)">
-
 	    <!--
 		Components - the building blocks of MSIs
 		A component should only contain items that need to be installed or removed together
@@ -153,35 +204,92 @@
 	    </Component>
 
 	    <!-- Main program files -->
-	    <Component Id="sensuAgent.exe_comp" Guid="*" Win64="$(var.Win64)">
-	      <File Id="sensuAgentExe" Source="$(var.sensuAgentExeSourcePath)" KeyPath="yes" />
-	      <ServiceInstall Id="ServiceInstaller"
-			      Name="sensuAgentSvc"
-			      Account="LocalSystem"
-			      Description="!(loc.ServiceDescription)"
-			      DisplayName="!(loc.ServiceDisplayName)"
-			      ErrorControl="normal"
-			      LoadOrderGroup="NetworkProvider"
-			      Start="demand"
-			      Type="ownProcess"
-			      Vital="yes" />
-	      <ServiceControl Id="ServiceControl"
-			      Name="sensuAgentSvc"
-			      Stop="both"
-			      Remove="uninstall" />
-	    </Component>
+	    <Directory Id="sensuAgentBinDir" Name="bin">
+	      <Component Id="sensuAgentBinDir_comp" Guid="35faa42e-b600-4ce9-80d1-e03d7fdf8183">
+		<CreateFolder />
+	      </Component>
 
-	    <!-- Configuration file -->
+	      <Component Id="sensuAgent.exe_comp" Guid="*" Win64="$(var.Win64)">
+		<File Id="sensuAgentExe" Source="$(var.sensuAgentExeSourcePath)" KeyPath="yes" />
+	      </Component>
 
+	      <Component Id="sensuAgentSvc.xml_comp" Guid="*">
+		<File Id="sensuAgentSvcXml" Source="$(var.sensuAgentServiceConfigSourcePath)" KeyPath="yes" />
+		<util:XmlFile Id="setAgentSvcExePath"
+			      File="[#sensuAgentSvcXml]"
+			      Action="setValue"
+			      ElementPath="//service/executable"
+			      Value="[#sensuAgentExe]" />
+
+		<util:XmlFile Id="setAgentLogPath"
+			      File="[#sensuAgentSvcXml]"
+			      Action="setValue"
+			      ElementPath="//service/logpath"
+			      Value="[sensuLogFolder]" />
+	      </Component>
+
+	      <!-- WinSW for >= .NET 4.0 -->
+	      <Component Id="serviceWrapperDotNet4.exe_comp" Guid="82deb3d4-2bd3-42f3-a100-faa1b2b17f07">
+		<Condition>
+		  WIX_IS_NETFRAMEWORK_40_OR_LATER_INSTALLED
+		</Condition>
+
+		<File Id="serviceWrapperDotNet4Exe"
+		      Name="sensu-agent-svc.exe"
+		      Source="$(var.serviceWrapperDotNet4SourcePath)"
+		      KeyPath="yes" />
+
+		<ServiceInstall Id="sensuAgentSvcInstallNet4"
+				Type="ownProcess"
+				Name="SensuAgentSvc"
+				DisplayName="Sensu Agent"
+				Description="This service runs a Sensu agent."
+				Start="auto"
+				ErrorControl="normal"
+				LoadOrderGroup="NetworkProvider"
+				Vital="yes" />
+
+		<ServiceControl Id="sensuAgentSvcControlNet4"
+				Name="SensuAgentSvc"
+				Remove="uninstall"
+				Stop="uninstall"
+				Wait="yes" />
+	      </Component>
+
+	      <!-- WinSW for .NET 2.0 -->
+	      <Component Id="serviceWrapperDotNet2.exe_comp" Guid="3c1014f0-f151-4aee-ae49-8d1603fc4be5">
+		<Condition>
+		  NETFRAMEWORK20 AND NOT WIX_IS_NETFRAMEWORK_40_OR_LATER_INSTALLED
+		</Condition>
+
+		<File Id="serviceWrapperDotNet2Exe"
+		      Name="sensu-agent-svc.exe"
+		      Source="$(var.serviceWrapperDotNet2SourcePath)"
+		      KeyPath="yes" />
+
+		<ServiceInstall Id="sensuAgentSvcInstallNet2"
+				Type="ownProcess"
+				Name="SensuAgentSvc"
+				DisplayName="Sensu Agent"
+				Description="This service runs a Sensu agent."
+				Start="auto"
+				ErrorControl="normal"
+				LoadOrderGroup="NetworkProvider"
+				Vital="yes" />
+
+		<ServiceControl Id="sensuAgentSvcControlNet2"
+				Name="SensuAgentSvc"
+				Remove="uninstall"
+				Stop="uninstall"
+				Wait="yes" />
+	      </Component>
+	    </Directory>
 	  </Directory>
-
 	</Directory>
-
       </Directory>
 
       <!-- Registry entries -->
       <Component Id="RegValInstallLocation_comp" Guid="D752C12C-F22D-4ACC-905B-88183114DFC9">
-
 	<!--
 	    Do NOT use the application's default registry key here, because this key will be
 	    removed on uninstall
@@ -189,17 +297,14 @@
 	<RegistryKey Root="HKLM" Key="Software\!(loc.ManufacturerName)\InstalledProducts\!(loc.ApplicationName)">
 	  <RegistryValue Name="InstallLocation" Value="[INSTALLDIR]" Type="string" KeyPath="yes" />
 	</RegistryKey>
-
       </Component>
 
       <!-- AppData folders -->
       <Directory Id="CommonAppDataFolder">
-	
         <Directory Id="CommonAppDataManufacturerFolder" Name="sensu">
 
 	  <!-- Config folder -->
           <Directory Id="sensuConfigFolder" Name="config">
-
 	    <Component Id="CONFIGDIR_comp" Guid="9fced8ac-87ac-45ce-8bb4-be19a29e8a7a">
 	      <CreateFolder />
 	    </Component>
@@ -208,40 +313,30 @@
 	    <Component Id="sensuAgent.conf.example_comp" Guid="*">
 	      <File Id="sensuAgentConfigExample" Source="$(var.sensuAgentConfigExampleSourcePath)" KeyPath="yes" />
 	    </Component>
-
           </Directory>
 
 	  <!-- Cache folder -->
 	  <Directory Id="sensuCacheFolder" Name="cache">
-
 	    <Component Id="CACHEDIR_comp" Guid="11292d96-ee4f-4407-9a1e-c59d04ee6256">
 	      <CreateFolder />
 	    </Component>
-
 	  </Directory>
 
 	  <!-- Pid folder -->
 	  <Directory Id="sensuPidFolder" Name="run">
-
 	    <Component Id="PIDDIR_comp" Guid="789259ad-1cef-4e83-8da1-04bd7b4ccff7">
 	      <CreateFolder />
 	    </Component>
-
 	  </Directory>
 
 	  <!-- Log folder -->
 	  <Directory Id="sensuLogFolder" Name="log">
-
 	    <Component Id="LOGDIR_comp" Guid="e866b68c-2974-42c4-8e99-d530eae4a9f0">
 	      <CreateFolder />
 	    </Component>
-
 	  </Directory>
-	  
         </Directory>
-	
       </Directory>
-
     </Directory>
 
     <!-- Features define which parts of the app can be installed in custom installations -->
@@ -259,7 +354,11 @@
 	       Level="1">
 
 	<ComponentRef Id="INSTALLDIR_comp" />
+	<ComponentRef Id="sensuAgentBinDir_comp" />
 	<ComponentRef Id="sensuAgent.exe_comp" />
+	<ComponentRef Id="sensuAgentSvc.xml_comp" />
+	<ComponentRef Id="serviceWrapperDotNet4.exe_comp" />
+	<ComponentRef Id="serviceWrapperDotNet2.exe_comp" />
 	<ComponentRef Id="CONFIGDIR_comp" />
 	<ComponentRef Id="sensuAgent.conf.example_comp" />
 	<ComponentRef Id="CACHEDIR_comp" />
@@ -270,7 +369,6 @@
 	<ComponentRef Id="RegValInstallLocation_comp" />
 
       </Feature>
-
     </Feature>
 
     <UI>
@@ -281,5 +379,4 @@
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
 
   </Product>
-  
 </Wix>
