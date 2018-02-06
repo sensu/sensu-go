@@ -29,6 +29,9 @@ finished before its allotted execution timeout.
 - Refactoring of the check scheduling integration tests.
 - CLI resource delete confirmation is now `(y/N)`.
 
+### Removed
+- Dependency github.com/chzyer/readline
+
 ## [2.0.0-alpha.15] - 2018-01-30
 ### Added
 - Add function for matching entities to a proxy check request.
