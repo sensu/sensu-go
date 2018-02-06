@@ -235,8 +235,7 @@ func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
 }
 
 func (q *Queue) getItemTimestamp(key []byte) (time.Time, error) {
-	splitByte := bytes.Split(key, []byte("/"))
-	binaryTimestamp := splitByte[len(splitByte)-1]
+	binaryTimestamp := key[len(key)-8:]
 
 	var itemTimestamp int64
 	buf := bytes.NewReader(binaryTimestamp)
