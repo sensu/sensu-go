@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
+- Context switcher added for dashboard
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to
