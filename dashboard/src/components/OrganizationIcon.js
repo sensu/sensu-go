@@ -54,7 +54,7 @@ class OrganizationIcon extends React.Component {
   static defaultProps = {
     className: null,
     iconColor: "#FA8072",
-    icon: "Espresso",
+    icon: "Poly",
     size: 24.0,
     disableEnvironmentIdicator: false,
   };
