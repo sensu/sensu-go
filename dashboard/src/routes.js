@@ -9,6 +9,7 @@ import ChecksPage from "./pages/ChecksPage";
 export default makeRouteConfig(
   <Route>
     <Route path="/login" Component={LoginPage} />
+    <Redirect from="/" to="/default/default/" />
     <Route
       path="/:organization/:environment"
       Component={AppWrapper}
