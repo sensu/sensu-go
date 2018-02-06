@@ -19,9 +19,9 @@ state-dir: "C:\ProgramData\sensu\data"
 ##
 # ssl configuration
 ##
-#cert-file: "/path/to/ssl/cert.pem"
-#key-file: "/path/to/ssl/key.pem"
-#trusted-ca-file: "/path/to/trusted-certificate-authorities.pem"
+#cert-file: "C:\ProgramData\sensu\config\ssl\cert.pem"
+#key-file: "C:\ProgramData\sensu\config\ssl\key.pem"
+#trusted-ca-file: "C:\ProgramData\sensu\config\ssl\trusted-certificate-authorities.pem"
 #insecure-skip-tls-verify: false
 
 ##

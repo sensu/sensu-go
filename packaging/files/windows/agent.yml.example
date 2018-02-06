@@ -18,7 +18,7 @@
 ##
 # other
 ##
-#cache-dir: "C:\ProgramData\sensu\sensu-agent\cache"
+#cache-dir: "C:\ProgramData\sensu\cache\sensu-agent"
 #deregister: false
 #deregistration-handler: ""
 #keepalive-timeout: 120
