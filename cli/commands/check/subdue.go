@@ -4,16 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"regexp"
-	"strings"
-	"time"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
-
-var kitchenTZRE = regexp.MustCompile(`[0-1]?[0-9]:[0-5][0-9]\s?(AM|PM)( .+)?`)
 
 // SubdueCommand adds a command that allows a user to subdue a check
 func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
@@ -40,7 +36,7 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				
+
 				defer func() { _ = in.Close() }()
 			} else {
 				in = os.Stdin
@@ -51,7 +47,7 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			for _, windows := range timeWindows.MapTimeWindows() {
 				for _, window := range windows {
-					if err := convertToUTC(window); err != nil {
+					if err := helpers.ConvertToUTC(window); err != nil {
 						return err
 					}
 				}
@@ -72,45 +68,4 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("file", "f", "", "Subdue definition file")
 
 	return cmd
-}
-
-func convertToUTC(t *types.TimeWindowTimeRange) error {
-	begin, err := offsetTime(t.Begin)
-	if err != nil {
-		return nil
-	}
-	end, err := offsetTime(t.End)
-	if err != nil {
-		return nil
-	}
-	t.Begin = begin
-	t.End = end
-	return nil
-}
-
-func offsetTime(s string) (string, error) {
-	ts, tz, err := extractLocation(s)
-	if err != nil {
-		return "", err
-	}
-	tm, err := time.ParseInLocation(time.Kitchen, ts, tz)
-	if err != nil {
-		return "", err
-	}
-	_, offset := tm.Zone()
-	tm = tm.Add(-time.Duration(offset) * time.Second)
-	return tm.Format(time.Kitchen), nil
-}
-
-func extractLocation(s string) (string, *time.Location, error) {
-	tz := time.Local
-	beginMatches := kitchenTZRE.FindStringSubmatch(s)
-	possibleTZ := strings.TrimSpace(beginMatches[len(beginMatches)-1])
-	if len(possibleTZ) == 0 {
-		return s, tz, nil
-	}
-	loc, err := time.LoadLocation(possibleTZ)
-	trimmed := strings.TrimSpace(strings.TrimSuffix(s, possibleTZ))
-	normalized := strings.Replace(strings.Replace(trimmed, " AM", "AM", 0), " PM", "PM", 0)
-	return normalized, loc, err
 }
