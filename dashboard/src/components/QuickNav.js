@@ -32,7 +32,7 @@ class QuickNav extends React.Component {
 
     return (
       <div className={classNames(classes.quickNavContainer, className)}>
-        <QuickNavButton Icon={DashboardIcon} caption="Dashboard" to="/" exact />
+        <QuickNavButton Icon={DashboardIcon} caption="Dashboard" to="" exact />
         <QuickNavButton Icon={EventIcon} caption="Events" to="events" />
         <QuickNavButton Icon={EntityIcon} caption="Entities" to="entities" />
         <QuickNavButton Icon={CheckIcon} caption="Checks" to="checks" />

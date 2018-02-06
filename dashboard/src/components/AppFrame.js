@@ -61,7 +61,7 @@ class AppFrame extends React.Component {
   static defaultProps = { children: null };
 
   state = {
-    drawerOpen: true,
+    drawerOpen: false,
   };
 
   render() {

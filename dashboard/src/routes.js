@@ -9,10 +9,14 @@ import ChecksPage from "./pages/ChecksPage";
 export default makeRouteConfig(
   <Route>
     <Route path="/login" Component={LoginPage} />
-    <Route path="/:org/:env" Component={AppWrapper} query={AppWrapper.query}>
+    <Route
+      path="/:organization/:environment"
+      Component={AppWrapper}
+      query={AppWrapper.query}
+    >
       <Route path="events" Component={EventsPage} query={EventsPage.query} />
       <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
-      <Redirect from="/:org/:env" to="/:org/:env/dashboard" />
+      <Redirect from="dashboard" to="" />
     </Route>
   </Route>,
 );

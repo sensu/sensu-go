@@ -1,11 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { compose } from "recompose";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 
 import Button from "material-ui/ButtonBase";
 import NamespaceSelectorBuilder from "./NamespaceSelectorBuilder";
 import NamespaceSelectorMenu from "./NamespaceSelectorMenu";
+import { withNamespace, namespaceShape } from "./NamespaceLink";
 
 const styles = {
   button: {
@@ -20,6 +22,7 @@ class NamespaceSelector extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    currentNamespace: namespaceShape.isRequired,
     viewer: PropTypes.objectOf(PropTypes.any).isRequired,
   };
 
@@ -36,7 +39,7 @@ class NamespaceSelector extends React.Component {
   };
 
   render() {
-    const { viewer, classes, ...props } = this.props;
+    const { viewer, currentNamespace, classes, ...props } = this.props;
     const { anchorEl } = this.state;
 
     /* TODO use global variables or something for this */
@@ -47,7 +50,10 @@ class NamespaceSelector extends React.Component {
           className={classes.button}
           onClick={this.handleClick}
         >
-          <NamespaceSelectorBuilder org="Test Org, Inc" env="Production" />
+          <NamespaceSelectorBuilder
+            org={currentNamespace.organization}
+            env={currentNamespace.environment}
+          />
         </Button>
         <NamespaceSelectorMenu
           viewer={viewer}
@@ -62,7 +68,7 @@ class NamespaceSelector extends React.Component {
 }
 
 export default createFragmentContainer(
-  withStyles(styles)(NamespaceSelector),
+  compose(withStyles(styles), withNamespace)(NamespaceSelector),
   graphql`
     fragment NamespaceSelector_viewer on Viewer {
       ...NamespaceSelectorMenu_viewer

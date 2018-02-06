@@ -17,8 +17,8 @@ export const withNamespace = compose(
   withRouter,
   mapProps(({ match, ...props }) => ({
     currentNamespace: {
-      organization: match.params.org,
-      environment: match.params.env,
+      organization: match.params.organization,
+      environment: match.params.environment,
     },
     ...props,
   })),

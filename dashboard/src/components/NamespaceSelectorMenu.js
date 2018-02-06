@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import partition from "lodash/partition";
+import { map } from "lodash";
 import { compose } from "recompose";
 import { withStyles } from "material-ui/styles";
 import { createFragmentContainer, graphql } from "react-relay";
@@ -36,7 +37,7 @@ class NamespaceSelectorMenu extends React.Component {
   render() {
     const { viewer, currentNamespace, classes, ...props } = this.props;
     const navigateTo = (organization, environment) => () =>
-      window.location.assign(`/${organization}/${environment}`);
+      window.location.assign(`/${organization}/${environment}/`);
 
     const partitionedOrganizations = partition(
       viewer.organizations,
@@ -70,7 +71,7 @@ class NamespaceSelectorMenu extends React.Component {
           </MenuItem>
         ))}
         <Divider />
-        {otherOrganizations.map(organization =>
+        {map(otherOrganizations, (organization, i) => [
           organization.environments.map(environment => (
             <MenuItem
               className={classes.menuItem}
@@ -88,7 +89,8 @@ class NamespaceSelectorMenu extends React.Component {
               />
             </MenuItem>
           )),
-        )}
+          i + 1 < otherOrganizations.length ? <Divider /> : null,
+        ])}
       </Menu>
     );
   }

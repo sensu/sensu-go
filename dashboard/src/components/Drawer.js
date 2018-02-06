@@ -120,7 +120,11 @@ class Drawer extends React.Component {
           </div>
           <Divider />
           <List>
-            <DrawerButton Icon={DashboardIcon} primary="Dashboard" />
+            <DrawerButton
+              Icon={DashboardIcon}
+              primary="Dashboard"
+              onClick={linkTo("")}
+            />
             <DrawerButton
               Icon={EventIcon}
               primary="Events"
