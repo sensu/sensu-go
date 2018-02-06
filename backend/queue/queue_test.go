@@ -92,17 +92,22 @@ func TestDequeueParallel(t *testing.T) {
 		"lalalal": struct{}{},
 	}
 
+	var mu sync.Mutex
 	var wg sync.WaitGroup
 	wg.Add(len(items))
 	var errEnqueue error
 
 	for item := range items {
 		go func(item string) {
+			defer wg.Done()
+
+			// Prevent data races when inspecting the error
+			mu.Lock()
+			defer mu.Unlock()
+
 			if err := queue.Enqueue(context.Background(), item); err != nil {
 				errEnqueue = err
 			}
-
-			wg.Done()
 		}(item)
 	}
 	wg.Wait()
@@ -112,23 +117,25 @@ func TestDequeueParallel(t *testing.T) {
 	require.NoError(t, errEnqueue)
 
 	results := make(map[string]struct{})
-	var mu sync.Mutex
 	var errDequeue error
 	wg.Add(len(items))
 
 	for range items {
 		go func() {
+			defer wg.Done()
+
 			item, err := queue.Dequeue(context.Background())
+
+			// Prevent data races when inspecting the error or the result
+			mu.Lock()
+			defer mu.Unlock()
+
 			if err != nil {
 				errDequeue = err
-				wg.Done()
 				return
 			}
 
-			mu.Lock()
 			results[item.Value] = struct{}{}
-			mu.Unlock()
-			wg.Done()
 		}()
 	}
 	wg.Wait()
