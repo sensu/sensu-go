@@ -30,18 +30,18 @@ type Interface interface {
 	Dequeue(ctx context.Context) (*Item, error)
 }
 
-// Get ...
+// Get interface provides access to a queue.
 type Get interface {
-	GetQueue(name string) Interface
+	NewQueue(name string) Interface
 }
 
-// EtcdGetter ...
+// EtcdGetter provides access to the etcd client for creating a new queue.
 type EtcdGetter struct {
 	Client *clientv3.Client
 }
 
-// GetQueue ...
-func (e EtcdGetter) GetQueue(name string) Interface {
+// NewQueue provides a new queue.
+func (e EtcdGetter) NewQueue(name string) Interface {
 	return New(name, e.Client)
 }
 

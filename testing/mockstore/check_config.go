@@ -38,8 +38,8 @@ func (s *MockStore) GetCheckConfigWatcher(ctx context.Context) <-chan store.Watc
 	return args.Get(0).(<-chan store.WatchEventCheckConfig)
 }
 
-// GetQueue ...
-func (s *MockStore) GetQueue(name string) queue.Interface {
+// NewQueue ...
+func (s *MockStore) NewQueue(name string) queue.Interface {
 	args := s.Called(name)
 	return args.Get(0).(queue.Interface)
 }

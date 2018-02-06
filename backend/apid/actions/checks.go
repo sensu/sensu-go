@@ -2,6 +2,7 @@ package actions
 
 import (
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -35,22 +36,22 @@ var (
 // CheckStore contains storage and queue info for Checks.
 type CheckStore interface {
 	store.CheckConfigStore
-	store.QueueStore
+	queue.Get
 }
 
 // CheckController exposes actions in which a viewer can perform.
 type CheckController struct {
-	Store      store.CheckConfigStore
+	Store      CheckStore
 	Policy     authorization.CheckPolicy
-	checkQueue store.QueueStore
+	checkQueue queue.Interface
 }
 
 // NewCheckController returns new CheckController
-func NewCheckController(store store.Store) CheckController {
+func NewCheckController(store CheckStore) CheckController {
 	return CheckController{
 		Store:      store,
 		Policy:     authorization.Checks,
-		checkQueue: store,
+		checkQueue: store.NewQueue(adhocQueueName),
 	}
 }
 
@@ -79,6 +80,7 @@ func (a CheckController) Query(ctx context.Context) ([]*types.CheckConfig, error
 func (a CheckController) Find(ctx context.Context, name string) (*types.CheckConfig, error) {
 	// Fetch from store
 	result, serr := a.Store.GetCheckConfigByName(ctx, name)
+
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -288,6 +290,9 @@ func (a CheckController) findAndUpdateCheckConfig(
 // processing.
 func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adhocRequest *types.AdhocRequest) error {
 	checkConfig, err := a.Find(ctx, name)
+	if err != nil {
+		return err
+	}
 
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, checkConfig)
