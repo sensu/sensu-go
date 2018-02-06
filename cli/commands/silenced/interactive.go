@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
@@ -46,7 +47,7 @@ func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
 	if err != nil {
 		return err
 	}
-	s.Begin, err = strconv.ParseInt(o.Begin, 10, 64)
+	s.Begin, err = helpers.ConvertToUnixUTC(o.Begin)
 	return err
 }
 
@@ -120,7 +121,13 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 			Prompt: &survey.Input{
 				Message: "Begin time:",
 				Default: o.Begin,
-				Help:    "Start silencing events at this time.",
+				Help:    "Start silencing events at this time. Format: Jan 02 2006 3:04PM MST",
+			},
+			Validate: func(val interface{}) error {
+				if _, err := helpers.ConvertToUnixUTC(val.(string)); err != nil {
+					return fmt.Errorf(err.Error())
+				}
+				return nil
 			},
 		},
 		{

@@ -85,19 +85,3 @@ func TestSubdueCommand(t *testing.T) {
 		})
 	}
 }
-
-func TestOffsetTime(t *testing.T) {
-	tests := []struct {
-		In   string
-		Want string
-	}{
-		{"8:00AM MST", "3:00PM"},
-	}
-	for _, test := range tests {
-		t.Run(test.In, func(t *testing.T) {
-			got, err := offsetTime(test.In)
-			require.NoError(t, err)
-			require.Equal(t, test.Want, got)
-		})
-	}
-}
