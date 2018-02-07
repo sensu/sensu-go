@@ -16,10 +16,6 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
 
-### Changed
-- Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
-in `sensuctl` with optional timezone. Stores the field as unix epoch time.
-
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to
 increase time efficiency and synchronize goroutines reading from and writing
