@@ -6,16 +6,15 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
+in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ## [2.0.0-alpha.16] - 2018-02-07
 ### Added
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
-
-### Changed
-- Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
-in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to
