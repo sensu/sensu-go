@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/commands/timeutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -47,7 +47,7 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			for _, windows := range timeWindows.MapTimeWindows() {
 				for _, window := range windows {
-					if err := helpers.ConvertToUTC(window); err != nil {
+					if err := timeutil.ConvertToUTC(window); err != nil {
 						return err
 					}
 				}

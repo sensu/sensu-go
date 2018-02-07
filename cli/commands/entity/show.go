@@ -6,6 +6,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/commands/timeutil"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/types"
@@ -71,7 +72,7 @@ func printEntityToList(r *types.Entity, writer io.Writer) {
 			},
 			{
 				Label: "Last Seen",
-				Value: helpers.HumanTimestamp(r.LastSeen),
+				Value: timeutil.HumanTimestamp(r.LastSeen),
 			},
 			{
 				Label: "Hostname",
