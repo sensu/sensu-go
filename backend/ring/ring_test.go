@@ -21,6 +21,7 @@ func TestAdd(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	ring := EtcdGetter{client}.GetRing("testadd")
 	err = ring.Add(context.Background(), "foo")
@@ -35,6 +36,7 @@ func TestRemove(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	ring := EtcdGetter{client}.GetRing("testremove")
 	require.NoError(t, ring.Add(context.Background(), "foo"))
@@ -49,6 +51,7 @@ func TestNext(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	ring := EtcdGetter{client}.GetRing("testnext")
 
@@ -82,6 +85,7 @@ func TestPeek(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	ring := EtcdGetter{client}.GetRing("testpeek")
 
@@ -107,6 +111,7 @@ func TestBlockOnNext(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	getter := EtcdGetter{client}
 
@@ -154,6 +159,7 @@ func TestTransferOwnership(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	getter := EtcdGetter{client}
 
@@ -185,6 +191,7 @@ func TestErrNotOwner(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	getter := EtcdGetter{client}
 
@@ -204,6 +211,7 @@ func TestExpire(t *testing.T) {
 
 	client, err := e.NewClient()
 	require.NoError(t, err)
+	defer client.Close()
 
 	ring := EtcdGetter{client}.GetRing("testexpire").(*Ring)
 	ring.leaseTimeout = 1
