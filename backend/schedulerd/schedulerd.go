@@ -5,13 +5,13 @@ import (
 	"errors"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/ring"
+	"github.com/sensu/sensu-go/types"
 )
 
 // Store specifies the storage requirements for Schedulerd.
 type Store interface {
 	StateManagerStore
-	ring.Getter
+	types.RingGetter
 }
 
 // Schedulerd handles scheduling check requests for each check's

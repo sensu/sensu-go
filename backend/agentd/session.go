@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/ring"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
@@ -20,7 +19,7 @@ import (
 type SessionStore interface {
 	store.EntityStore
 	store.EnvironmentStore
-	ring.Getter
+	types.RingGetter
 }
 
 // A Session is a server-side connection between a Sensu backend server and

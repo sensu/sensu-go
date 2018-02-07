@@ -11,7 +11,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/ring"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 	sensutime "github.com/sensu/sensu-go/util/time"
@@ -34,7 +33,7 @@ type CheckScheduler struct {
 
 	logger *logrus.Entry
 
-	ringGetter ring.Getter
+	ringGetter types.RingGetter
 	ctx        context.Context
 	cancel     context.CancelFunc
 }

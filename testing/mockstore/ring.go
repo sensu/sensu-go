@@ -2,19 +2,20 @@ package mockstore
 
 import (
 	"context"
+	"errors"
 	"path"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/ring"
+	"github.com/sensu/sensu-go/types"
 )
 
 var mu sync.Mutex
-var rings = make(map[string]*Ring)
+var rings = make(map[string]types.Ring)
 
 // GetRing ...
-func (s *MockStore) GetRing(parts ...string) ring.Interface {
+func (s *MockStore) GetRing(parts ...string) types.Ring {
 	mu.Lock()
 	defer mu.Unlock()
 	name := path.Join(parts...)
@@ -70,7 +71,7 @@ func (r *Ring) Next(context.Context) (string, error) {
 		return "", r.err
 	}
 	if len(r.data) == 0 {
-		return "", ring.ErrEmptyRing
+		return "", errors.New("empty ring")
 	}
 	keys := make([]int64, 0, len(r.data))
 	for k := range r.data {
@@ -98,7 +99,7 @@ func (r *Ring) Peek(context.Context) (string, error) {
 		return "", r.err
 	}
 	if len(r.data) == 0 {
-		return "", ring.ErrEmptyRing
+		return "", errors.New("empty ring")
 	}
 	keys := make([]int64, 0, len(r.data))
 	for k := range r.data {

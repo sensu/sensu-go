@@ -4,15 +4,15 @@ import (
 	"context"
 	"path"
 
-	"github.com/sensu/sensu-go/backend/ring"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
 // Getter ...
-type Getter map[string]ring.Interface
+type Getter map[string]types.Ring
 
 // GetRing ...
-func (g Getter) GetRing(p ...string) ring.Interface {
+func (g Getter) GetRing(p ...string) types.Ring {
 	s := path.Join(p...)
 	return g[s]
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/ring"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -23,7 +22,7 @@ type roundRobinMessage struct {
 type roundRobinScheduler struct {
 	messages   chan *roundRobinMessage
 	ctx        context.Context
-	ringGetter ring.Getter
+	ringGetter types.RingGetter
 	bus        messaging.MessageBus
 }
 
@@ -31,7 +30,7 @@ type roundRobinScheduler struct {
 //
 // When the scheduler is created, it starts a goroutine that will stop when
 // the provided context is cancelled.
-func newRoundRobinScheduler(ctx context.Context, bus messaging.MessageBus, rg ring.Getter) *roundRobinScheduler {
+func newRoundRobinScheduler(ctx context.Context, bus messaging.MessageBus, rg types.RingGetter) *roundRobinScheduler {
 	sched := &roundRobinScheduler{
 		messages:   make(chan *roundRobinMessage),
 		ctx:        ctx,

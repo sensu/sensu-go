@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -28,42 +29,13 @@ var (
 	ringKeyBuilder = store.NewKeyBuilder(ringPathPrefix)
 )
 
-// Interface is the interface of a Ring. Ring's methods are atomic and
-// goroutine-safe.
-type Interface interface {
-	// Add adds an item to the ring. It returns a non-nil error if the
-	// operation failed, or the context is cancelled before the operation
-	// completed.
-	Add(ctx context.Context, value string) error
-
-	// Remove removes an item from the ring. It returns a non-nil error if the
-	// operation failed, or the context is cancelled before the operation
-	// completed.
-	Remove(ctx context.Context, value string) error
-
-	// Next gets the next item in the Ring. The other items in the Ring will
-	// all be returned by subsequent calls to Next before this item is
-	// returned again. Next returns the selected value, and an error indicating
-	// if the operation failed, or if the context was cancelled.
-	Next(context.Context) (string, error)
-
-	// Peek gets the next item in the Ring, but does not advance the iteration.
-	Peek(context.Context) (string, error)
-}
-
-// Getter provides a way to get a Ring.
-type Getter interface {
-	// GetRing gets a named Ring.
-	GetRing(path ...string) Interface
-}
-
 // EtcdGetter is an Etcd implementation of Getter.
 type EtcdGetter struct {
 	*clientv3.Client
 }
 
 // GetRing gets a named Ring.
-func (e EtcdGetter) GetRing(path ...string) Interface {
+func (e EtcdGetter) GetRing(path ...string) types.Ring {
 	return New(ringKeyBuilder.Build(path...), e.Client)
 }
 
