@@ -11,6 +11,9 @@ type Viewer {
   "All events the viewer has access to view."
   events(first: Int = 10, last: Int = 10, before: String, after: String): EventConnection
 
+  "All organizations the viewer has access to view."
+  organizations: [Organization!]!
+
   "User account associated with the viewer."
   user: User
 }
