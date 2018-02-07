@@ -113,9 +113,21 @@ func (s *CheckScheduler) Start() error {
 				// Point executor to lastest copy of the scheduler state
 				executor.State = state
 
-				// Publish check request
-				if err := executor.Execute(check); err != nil {
-					logger.Error(err)
+				// Publish proxy check requests, if applicable
+				if check.ProxyRequests != nil {
+					entities := state.GetEntitiesInNamespace(check.Organization, check.Environment)
+					if matchedEntities := matchEntities(entities, check.ProxyRequests); len(matchedEntities) != 0 {
+						if err := executor.PublishProxyCheckRequests(matchedEntities, check); err != nil {
+							logger.Error(err)
+						}
+					} else {
+						s.logger.Info("no matching entities, check will not be published")
+					}
+				} else {
+					// Publish check request
+					if err := executor.Execute(check); err != nil {
+						logger.Error(err)
+					}
 				}
 			}
 		}
@@ -152,8 +164,8 @@ func (e *CheckExecutor) Execute(check *types.CheckConfig) error {
 		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
-		if pubErr := e.Bus.Publish(topic, request); err != nil {
-			logger.Info("error publishing check request: ", err.Error())
+		if pubErr := e.Bus.Publish(topic, request); pubErr != nil {
+			logger.Info("error publishing check request: ", pubErr.Error())
 			err = pubErr
 		}
 	}
@@ -215,11 +227,11 @@ func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
 	return false
 }
 
-// PublishProxyCheckRequest publishes a proxy check request for an entity. This
+// publishProxyCheckRequest publishes a proxy check request for an entity. This
 // method substitutes entity tokens in the check definition prior to publishling
 // the check request. If there are unmatched entity tokens, it returns an error,
 // and a check request is not published.
-func (e *CheckExecutor) PublishProxyCheckRequest(entity *types.Entity, check *types.CheckConfig) error {
+func (e *CheckExecutor) publishProxyCheckRequest(entity *types.Entity, check *types.CheckConfig) error {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity, err := dynamic.Synthesize(entity)
@@ -234,15 +246,17 @@ func (e *CheckExecutor) PublishProxyCheckRequest(entity *types.Entity, check *ty
 		return err
 	}
 
+	substitutedCheck := &types.CheckConfig{}
+
 	// Unmarshal the check configuration obtained after the token substitution
 	// back into the check config struct
-	err = json.Unmarshal(checkBytes, check)
+	err = json.Unmarshal(checkBytes, substitutedCheck)
 	if err != nil {
 		return fmt.Errorf("could not unmarshal the check: %s", err)
 	}
 
-	check.ProxyEntityID = entity.ID
-	return e.Execute(check)
+	substitutedCheck.ProxyEntityID = entity.ID
+	return e.Execute(substitutedCheck)
 }
 
 // PublishProxyCheckRequests publishes proxy check requests for one or more
@@ -264,7 +278,7 @@ func (e *CheckExecutor) PublishProxyCheckRequests(entities []*types.Entity, chec
 
 	for _, entity := range entities {
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
-		if err := e.PublishProxyCheckRequest(entity, check); err != nil {
+		if err := e.publishProxyCheckRequest(entity, check); err != nil {
 			return err
 		}
 	}

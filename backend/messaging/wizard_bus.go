@@ -99,12 +99,11 @@ func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- inte
 	}
 
 	b.mutex.Lock()
+	defer b.mutex.Unlock()
 
 	if _, ok := b.topics[topic]; !ok {
 		b.topics[topic] = b.createTopic(topic)
 	}
-
-	b.mutex.Unlock()
 
 	b.topics[topic].Subscribe(consumer, channel)
 

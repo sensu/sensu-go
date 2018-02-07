@@ -6,6 +6,44 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
+in `sensuctl` with optional timezone. Stores the field as unix epoch time.
+
+## [2.0.0-alpha.16] - 2018-02-07
+### Added
+- Add an e2e test for proxy check requests.
+- Add integration tests to our CI.
+- Context switcher added for dashboard
+
+### Changed
+- Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
+in `sensuctl` with optional timezone. Stores the field as unix epoch time.
+
+### Fixed
+- Tracks in-progress checks with a map and mutex rather than an array to
+increase time efficiency and synchronize goroutines reading from and writing
+to that map.
+- Fixed a bug where we were attempting to kill processes that had already
+finished before its allotted execution timeout.
+- Fixed a bug where an event could erroneously be shown as silenced.
+- Properly log errors whenever a check request can't be published.
+- Fixed some build tags for tests using etcd stores.
+- Keepalive monitors now get updated with changes to a keepalive timeout.
+- Prevent tests timeout in queue package
+- Prevent tests timeout in ring package
+- Fixed a bug in the queue package where timestamps were not parsed correctly.
+- Fixed Ring's Next method hanging in cases where watch events are not propagated.
+
+### Changed
+- Queues are now durable.
+- Refactoring of the check scheduling integration tests.
+- CLI resource delete confirmation is now `(y/N)`.
+
+### Removed
+- Dependency github.com/chzyer/readline
+
+## [2.0.0-alpha.15] - 2018-01-30
 ### Added
 - Add function for matching entities to a proxy check request.
 - Added functions for publishing proxy check requests.
@@ -13,9 +51,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - CLI functionality for proxy check requests (add set-proxy-requests command).
 - Entities have been added to the state manager and synchronizer.
 - Added package leader, for facilitating execution by a single backend.
+- Proxy check requests are now published to all entities described in
+`ProxyRequests` and `EntityAttributes`.
+- Add quick navigation component for dashboard
 
 ### Changed
 - Govaluate logic is now wrapped in the `util/eval` package.
+- Cron and Interval scheduling are now mutually exclusive.
 
 ### Fixed
 - Fixed a bug where retrieving check hooks were only from the check's

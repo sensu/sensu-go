@@ -180,10 +180,21 @@ unit_test_commands () {
 integration_test_commands () {
     echo "Running integration tests..."
 
-    go test -timeout=120s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
+    go test -timeout=180s -tags=integration $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
     if [ $? -ne 0 ]; then
         echo "Integration testing failed..."
         exit 1
+    fi
+
+    # If the race detector was enabled, do a second pass without it
+    if [ ! -z "$RACE" ]; then
+        echo "Running integration tests without race detector..."
+
+        go test -timeout=180s -tags=integration $(go list ./... | egrep -v '(testing|vendor|scripts)')
+        if [ $? -ne 0 ]; then
+            echo "Integration testing failed..."
+            exit 1
+        fi
     fi
 }
 

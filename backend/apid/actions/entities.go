@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// checkConfigUpdateFields whitelists fields allowed to be updated for CheckConfigs
+// entityUpdateFields whitelists fields allowed to be updated for Entities
 var entityUpdateFields = []string{
 	"Subscriptions",
 }

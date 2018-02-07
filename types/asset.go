@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+
+	"github.com/sensu/sensu-go/util/eval"
 )
 
 // AssetNameRegexStr used to validate name of asset
@@ -42,7 +44,7 @@ func (a *Asset) Validate() error {
 		return errors.New("URL must be HTTP or HTTPS")
 	}
 
-	return validateStatements(a.Filters)
+	return eval.ValidateStatements(a.Filters)
 }
 
 // GetEnvironment refers to the organization the check belongs to

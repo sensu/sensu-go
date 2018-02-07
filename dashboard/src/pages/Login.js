@@ -12,7 +12,7 @@ import { authenticate } from "../utils/authentication";
 
 // defaultRoute describe the location where the user will land after a
 // successful login.
-const defaultRoute = "/checks";
+const defaultRoute = "/";
 
 class Login extends React.Component {
   static propTypes = {

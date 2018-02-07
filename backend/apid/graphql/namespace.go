@@ -13,7 +13,7 @@ type namespaceGetter interface {
 }
 
 //
-// Implement HandlerFieldResolvers
+// Implement NamespaceFieldResolvers
 //
 
 type namespaceImpl struct{}

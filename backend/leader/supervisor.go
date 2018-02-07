@@ -18,6 +18,8 @@ var super *supervisor
 var keyBuilder = store.NewKeyBuilder(sensuLeaderKey)
 
 type supervisor struct {
+	workPerformed int64
+	leaderName    atomic.Value
 	session       *concurrency.Session
 	election      *concurrency.Election
 	isLeader      chan struct{}
@@ -26,8 +28,6 @@ type supervisor struct {
 	cancel        context.CancelFunc
 	nodeName      string
 	logger        *logrus.Entry
-	leaderName    atomic.Value
-	workPerformed int64
 	wg            sync.WaitGroup
 	workInFlight  sync.WaitGroup
 }

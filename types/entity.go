@@ -74,7 +74,7 @@ func FixtureEntity(id string) *Entity {
 	return &Entity{
 		ID:               id,
 		Class:            "host",
-		Subscriptions:    []string{"subscription"},
+		Subscriptions:    []string{"linux"},
 		Environment:      "default",
 		Organization:     "default",
 		KeepaliveTimeout: 120,

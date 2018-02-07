@@ -11,6 +11,7 @@ import (
 
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -162,4 +163,68 @@ func TestEventTestSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, new(EventTestSuite))
+}
+
+func TestKeepaliveTimeout(t *testing.T) {
+	// Start the backend
+	backend, backendCleanup := newBackend(t)
+
+	// Initializes sensuctl
+	sensuctl, sensuctlCleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+
+	// Start the agent
+	agentConfig := agentConfig{
+		ID:               "TestKeepalives",
+		BackendURLs:      []string{backend.WSURL},
+		KeepaliveTimeout: 5,
+	}
+	agent, agentCleanup := newAgent(agentConfig, sensuctl, t)
+
+	defer func() {
+		backendCleanup()
+		agentCleanup()
+		sensuctlCleanup()
+	}()
+
+	// Allow time for agent connection to be established, etcd to start,
+	// keepalive to be sent, etc.
+	time.Sleep(10 * time.Second)
+
+	output, err := sensuctl.run("event", "info", agent.ID, "keepalive")
+	assert.NoError(t, err)
+
+	event := types.Event{}
+	assert.NoError(t, json.Unmarshal(output, &event))
+
+	assert.NotNil(t, event)
+	assert.Equal(t, "TestKeepalives", event.Entity.ID)
+	assert.NotZero(t, event.Timestamp)
+	assert.Equal(t, "passing", event.Check.State)
+	assert.Equal(t, int32(0), event.Check.Status)
+
+	// Kill the agent, and restart with a new KeepaliveTimeout
+	assert.NoError(t, agent.Kill())
+
+	// Allow time agent connection to be killed
+	time.Sleep(10 * time.Second)
+
+	agentConfig.KeepaliveTimeout = 1
+	agentConfig.KeepaliveInterval = 2
+	agent, agentCleanup = newAgent(agentConfig, sensuctl, t)
+
+	// Allow time for agent connection to be established, etcd to start,
+	// keepalive to be sent, etc.
+	time.Sleep(10 * time.Second)
+
+	output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
+	assert.NoError(t, err)
+
+	event = types.Event{}
+	assert.NoError(t, json.Unmarshal(output, &event))
+
+	assert.NotNil(t, event)
+	assert.Equal(t, "TestKeepalives", event.Entity.ID)
+	assert.NotZero(t, event.Timestamp)
+	assert.Equal(t, "failing", event.Check.State)
+	assert.Equal(t, int32(1), event.Check.Status)
 }

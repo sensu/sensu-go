@@ -27,10 +27,6 @@ required = ["github.com/shirou/w32"]
   version = "1.1.0"
 
 [[constraint]]
-  name = "github.com/chzyer/readline"
-  version = "1.4.0"
-
-[[constraint]]
   name = "github.com/coreos/pkg"
   version = "3.0.0"
 

@@ -1,6 +1,10 @@
 package eval
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestEvaluate(t *testing.T) {
 	type args struct {
@@ -67,4 +71,19 @@ func TestEvaluate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateStatements(t *testing.T) {
+	// Valid statement
+	statements := []string{"10 > 0"}
+	assert.NoError(t, ValidateStatements(statements))
+
+	// Invalid statement
+	statements = []string{"10. 0"}
+	assert.Error(t, ValidateStatements(statements))
+
+	// Forbidden modifier token
+	statements = []string{"10 + 2 > 0"}
+	assert.Error(t, ValidateStatements(statements))
+
 }
