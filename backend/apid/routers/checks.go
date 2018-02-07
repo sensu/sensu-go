@@ -5,7 +5,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -15,7 +14,7 @@ type ChecksRouter struct {
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(store store.Store) *ChecksRouter {
+func NewChecksRouter(store queueStore) *ChecksRouter {
 	return &ChecksRouter{
 		controller: actions.NewCheckController(store),
 	}
@@ -97,7 +96,7 @@ func (r *ChecksRouter) adhocRequest(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 	params := mux.Vars(req)
-	err := r.controller.QueueAdhocRequest(req.Context(), params["id"], adhocReq)
+	err := r.controller.QueueAdhocRequest(req.Context(), params["id"], &adhocReq)
 	// needs to return a 202 and json with {"issued":<timestamp>} to be
 	// backwards compatible
 	return nil, err

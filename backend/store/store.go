@@ -481,10 +481,6 @@ type UserStore interface {
 	UpdateUser(user *types.User) error
 }
 
-//type Queue interface {
-//	NewQueue(name string) queue.Interface
-//}
-
 // Initializer provides methods to verify if a store is initialized
 type Initializer interface {
 	// Close closes the session to the store and unlock any mutex

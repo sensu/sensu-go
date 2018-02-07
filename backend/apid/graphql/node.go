@@ -20,7 +20,7 @@ type nodeResolver struct {
 	register relay.NodeRegister
 }
 
-func newNodeResolver(store store.Store) *nodeResolver {
+func newNodeResolver(store QueueStore) *nodeResolver {
 	register := relay.NodeRegister{}
 
 	registerAssetNodeResolver(register, store)
@@ -99,7 +99,7 @@ type checkNodeResolver struct {
 	controller actions.CheckController
 }
 
-func registerCheckNodeResolver(register relay.NodeRegister, store store.CheckConfigStore) {
+func registerCheckNodeResolver(register relay.NodeRegister, store QueueStore) {
 	controller := actions.NewCheckController(store)
 	resolver := &checkNodeResolver{controller}
 	register.RegisterResolver(relay.NodeResolver{

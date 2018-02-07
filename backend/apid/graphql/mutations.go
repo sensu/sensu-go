@@ -4,7 +4,6 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
@@ -19,7 +18,7 @@ type mutationsImpl struct {
 	checkController actions.CheckController
 }
 
-func newMutationImpl(store store.Store) *mutationsImpl {
+func newMutationImpl(store QueueStore) *mutationsImpl {
 	return &mutationsImpl{
 		checkController: actions.NewCheckController(store),
 	}

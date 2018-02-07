@@ -310,6 +310,6 @@ func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adh
 	}
 
 	// finally, add the check to the queue
-	a.checkQueue.Enqueue(ctx, checkConfig.String())
+	err = a.checkQueue.Enqueue(ctx, checkConfig.String())
 	return err
 }

@@ -6,5 +6,5 @@ import (
 
 // NewQueue creates a new etcd backed queue.
 func (s *Store) NewQueue(name string) queue.Interface {
-	return queue.EtcdGetter{Client: s.client}.GetQueue(name)
+	return queue.EtcdGetter{Client: s.client}.NewQueue(name)
 }
