@@ -12,6 +12,7 @@ var silencedUpdateFields = []string{
 	"Expire",
 	"ExpireOnResolve",
 	"Reason",
+	"Begin",
 }
 
 // SilencedController exposes actions in which a viewer can perform.

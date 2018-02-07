@@ -60,7 +60,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("expire", "e", expireDefault, "expiry in seconds")
 	_ = cmd.Flags().StringP("subscription", "s", "", "silence subscription")
 	_ = cmd.Flags().StringP("check", "c", "", "silence check")
-	_ = cmd.Flags().StringP("begin", "b", beginDefault, "silence begin in epoch time")
+	_ = cmd.Flags().StringP("begin", "b", beginDefault, "silence begin in human readable time (Format: Jan 02 2006 3:04PM MST)")
 	_ = cmd.MarkFlagRequired("reason")
 
 	return cmd

@@ -6,6 +6,9 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
+in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ## [2.0.0-alpha.16] - 2018-02-07
 ### Added
