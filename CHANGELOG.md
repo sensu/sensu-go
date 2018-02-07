@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [2.0.0-alpha.16] - 2018-02-07
 ### Added
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
