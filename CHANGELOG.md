@@ -17,6 +17,10 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Increased the timeout in the store's watchers tests
 - Incremental retry mechanism when waiting for agent and backend in e2e tests.
 
+### Fixed
+- Fixed required flags in CLI `check` and `silenced` creation and added better
+error checking.
+
 ## [2.0.0-alpha.16] - 2018-02-07
 ### Added
 - Add an e2e test for proxy check requests.
