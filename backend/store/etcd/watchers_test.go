@@ -78,7 +78,7 @@ func TestAssetWatcher(t *testing.T) {
 		case _, ok := <-watchChan:
 			assert.False(t, ok, "watch channel wasn't closed")
 		case <-time.After(5 * time.Second):
-			assert.Fail(t, "failed to close watch channel in  seconds")
+			assert.Fail(t, "failed to close watch channel in 5 seconds")
 		}
 	})
 }
