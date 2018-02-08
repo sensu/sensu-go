@@ -17,11 +17,12 @@ type Store interface {
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
-	Store      Store
+	Store      QueueStore
 	MessageBus messaging.MessageBus
 
-	stateManager     *StateManager
-	schedulerManager *ScheduleManager
+	stateManager         *StateManager
+	schedulerManager     *ScheduleManager
+	adhocRequestExecutor *AdhocRequestExecutor
 
 	errChan chan error
 }
@@ -44,12 +45,16 @@ func (s *Schedulerd) Start() error {
 	// Check Schedulers
 	s.schedulerManager = NewScheduleManager(s.MessageBus, s.stateManager, s.Store)
 
+	// Adhoc Request Executor
+	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.Store, s.MessageBus)
+
 	// Sync
 	s.errChan = make(chan error, 1)
 
 	// Start
 	s.schedulerManager.Start()
 	s.stateManager.Start(ctx)
+	s.adhocRequestExecutor.Start(ctx)
 
 	return nil
 }
