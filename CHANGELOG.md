@@ -15,6 +15,7 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
+- Add api support for adhoc check requests.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to

@@ -5,6 +5,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -12,6 +13,12 @@ import (
 var _ schema.CheckFieldResolvers = (*checkImpl)(nil)
 var _ schema.CheckConfigFieldResolvers = (*checkCfgImpl)(nil)
 var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
+
+// QueueStore contains store and queue interfaces.
+type QueueStore interface {
+	store.Store
+	queue.Get
+}
 
 //
 // Implement CheckConfigFieldResolvers

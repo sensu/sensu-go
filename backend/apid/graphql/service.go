@@ -3,13 +3,12 @@ package graphql
 import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 )
 
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	Store store.Store
+	Store QueueStore
 	Bus   messaging.MessageBus
 }
 
