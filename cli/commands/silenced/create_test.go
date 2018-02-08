@@ -46,6 +46,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	client.On("CreateSilenced", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("reason", "just because"))
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
@@ -63,6 +64,7 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(nil)
 
 	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("reason", "just because"))
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
@@ -80,6 +82,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("reason", "just because"))
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
