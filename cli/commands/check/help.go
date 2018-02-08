@@ -14,16 +14,17 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 
 	// Add sub-commands
 	cmd.AddCommand(
+		AddCheckHookCommand(cli),
 		CreateCommand(cli),
 		DeleteCommand(cli),
+		ExecuteCommand(cli),
 		ListCommand(cli),
-		ShowCommand(cli),
-		UpdateCommand(cli),
-		AddCheckHookCommand(cli),
 		RemoveCheckHookCommand(cli),
-		SubdueCommand(cli),
-		SetProxyRequestsCommand(cli),
 		RemoveProxyRequestsCommand(cli),
+		SetProxyRequestsCommand(cli),
+		ShowCommand(cli),
+		SubdueCommand(cli),
+		UpdateCommand(cli),
 	)
 
 	return cmd

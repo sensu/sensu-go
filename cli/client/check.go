@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"path"
 
 	"github.com/sensu/sensu-go/types"
@@ -61,6 +62,27 @@ func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
 	}
 
 	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
+
+// ExecuteCheck sends an execution request with the provided adhoc request
+func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
+	bytes, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Post("/checks/" + req.Name + "/execute")
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		fmt.Println(res.StatusCode())
 		return unmarshalError(res)
 	}
 

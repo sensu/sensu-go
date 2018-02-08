@@ -8,7 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - Context switcher added for dashboard
-- Add api support for adhoc check requests.
+- Add API support for adhoc check requests.
+- Add CLI support for adhoc check requests.
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)

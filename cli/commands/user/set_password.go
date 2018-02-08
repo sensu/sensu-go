@@ -5,9 +5,8 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +32,7 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 			var promptForCurrentPassword bool
 
 			// Retrieve current username from JWT
-			currentUsername := getCurrentUsername(cli.Config)
+			currentUsername := helpers.GetCurrentUsername(cli.Config)
 
 			// If no username is given we user the current user's name
 			if len(args) > 0 {
@@ -73,13 +72,6 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func getCurrentUsername(cfg config.Config) string {
-	accessToken := cfg.Tokens().Access
-	token, _ := jwt.ParseWithClaims(accessToken, &types.Claims{}, nil)
-	claims := token.Claims.(*types.Claims)
-	return claims.StandardClaims.Subject
 }
 
 func verifyExistingPassword(username string, cli *cli.SensuCli) error {
