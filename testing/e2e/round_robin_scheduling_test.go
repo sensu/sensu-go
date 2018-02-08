@@ -59,8 +59,9 @@ func TestRoundRobinScheduling(t *testing.T) {
 	check := types.FixtureCheckConfig("TestCheckScheduling")
 	check.Publish = true
 	check.Interval = 1
-	check.Ttl = 2
-	check.Subscriptions = []string{"roundrobin:test"}
+	check.Ttl = 5
+	check.Subscriptions = []string{"test"}
+	check.RoundRobin = true
 
 	err := clientA.CreateCheck(check)
 	require.NoError(t, err)

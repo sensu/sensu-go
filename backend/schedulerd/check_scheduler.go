@@ -16,8 +16,6 @@ import (
 	sensutime "github.com/sensu/sensu-go/util/time"
 )
 
-const roundRobinPrefix = "roundrobin:"
-
 // A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
 	CheckName     string
@@ -172,9 +170,8 @@ func (e *CheckExecutor) Execute(check *types.CheckConfig) error {
 
 	for _, sub := range check.Subscriptions {
 		org, env := check.Organization, check.Environment
-		if strings.HasPrefix(sub, roundRobinPrefix) {
-			sub := strings.TrimPrefix(sub, roundRobinPrefix)
-			topic := messaging.SubscriptionTopic(org, env, sub)
+		topic := messaging.SubscriptionTopic(org, env, sub)
+		if check.RoundRobin {
 			msg := &roundRobinMessage{
 				subscription: topic,
 				req:          request,
@@ -185,7 +182,6 @@ func (e *CheckExecutor) Execute(check *types.CheckConfig) error {
 			}
 			continue
 		}
-		topic := messaging.SubscriptionTopic(org, env, sub)
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
 		if pubErr := e.Bus.Publish(topic, request); pubErr != nil {
