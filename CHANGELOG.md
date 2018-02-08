@@ -7,6 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- Add .gitattributes file with merge stratety for the Changelog.
 - Context switcher added for dashboard
 - Add api support for adhoc check requests.
 
