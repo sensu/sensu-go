@@ -35,7 +35,7 @@ func TestCheckConfigWatcher(t *testing.T) {
 			assert.Equal(t, checkCfg.Environment, ev.CheckConfig.Environment)
 			assert.Equal(t, checkCfg.Name, ev.CheckConfig.Name)
 		case <-time.After(10 * time.Second):
-			assert.Fail(t, "failed to receive a watch event in 5 seconds")
+			assert.Fail(t, "failed to receive a watch event in 10 seconds")
 		}
 
 		cancel()
@@ -69,7 +69,7 @@ func TestAssetWatcher(t *testing.T) {
 			assert.Equal(t, asset.Organization, ev.Asset.Organization)
 			assert.Equal(t, asset.Name, ev.Asset.Name)
 		case <-time.After(10 * time.Second):
-			assert.Fail(t, "failed to receive a watch event in 5 seconds")
+			assert.Fail(t, "failed to receive a watch event in 10 seconds")
 		}
 
 		cancel()
@@ -78,7 +78,7 @@ func TestAssetWatcher(t *testing.T) {
 		case _, ok := <-watchChan:
 			assert.False(t, ok, "watch channel wasn't closed")
 		case <-time.After(5 * time.Second):
-			assert.Fail(t, "failed to close watch channel in 5 seconds")
+			assert.Fail(t, "failed to close watch channel in  seconds")
 		}
 	})
 }
@@ -105,7 +105,7 @@ func TestHookConfigWatcher(t *testing.T) {
 			assert.Equal(t, hookCfg.Environment, ev.HookConfig.Environment)
 			assert.Equal(t, hookCfg.Name, ev.HookConfig.Name)
 		case <-time.After(10 * time.Second):
-			assert.Fail(t, "failed to receive a watch event in 5 seconds")
+			assert.Fail(t, "failed to receive a watch event in 10 seconds")
 		}
 
 		cancel()
