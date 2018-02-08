@@ -53,11 +53,13 @@ func TestRoundRobinScheduling(t *testing.T) {
 	// sensuctl does not currently support objects updates with flag parameters
 	clientA := newSensuClient(backendA.HTTPURL)
 	clientB := newSensuClient(backendA.HTTPURL)
+	clientC := newSensuClient(backendA.HTTPURL)
 
 	// Create a check that publish check requests
 	check := types.FixtureCheckConfig("TestCheckScheduling")
 	check.Publish = true
 	check.Interval = 1
+	check.Ttl = 2
 	check.Subscriptions = []string{"roundrobin:test"}
 
 	err := clientA.CreateCheck(check)
@@ -72,11 +74,11 @@ func TestRoundRobinScheduling(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, eventA)
 
-	eventB, err := clientA.FetchEvent(agentB.ID, check.Name)
+	eventB, err := clientB.FetchEvent(agentB.ID, check.Name)
 	require.NoError(t, err)
 	require.NotNil(t, eventB)
 
-	eventC, err := clientB.FetchEvent(agentC.ID, check.Name)
+	eventC, err := clientC.FetchEvent(agentC.ID, check.Name)
 	require.NoError(t, err)
 	require.NotNil(t, eventC)
 
@@ -85,6 +87,7 @@ func TestRoundRobinScheduling(t *testing.T) {
 
 	executed := make(map[int64]struct{})
 	for _, h := range histories {
+		assert.Equal(t, int32(0), h.Status)
 		e := h.Executed
 		executed[e] = struct{}{}
 	}
