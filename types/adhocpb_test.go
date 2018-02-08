@@ -53,6 +53,8 @@ It has these top-level messages:
 	HookList
 	KeepaliveRecord
 	Metrics
+	MetricPoint
+	MetricTag
 	Mutator
 	Organization
 	Rule
