@@ -28,6 +28,7 @@ be avoided.
 exclusive fields.
 - Added `--interactive` flag to CLI which is required to run interactive mode.
 - Added CLI role rule-add Organization and Environment interactive prompts.
+- Add built-in only_check_output mutator to pipelined.
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
@@ -46,6 +47,7 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
 - Add built-in only_check_output mutator to pipelined.
+- Add api support for adhoc check requests.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to
