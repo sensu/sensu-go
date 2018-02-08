@@ -8,7 +8,7 @@ import DashboardIcon from "material-ui-icons/Dashboard";
 import EventIcon from "material-ui-icons/Notifications";
 import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
-import SilencedIcon from "material-ui-icons/VolumeOff";
+import SilenceIcon from "material-ui-icons/VolumeOff";
 import HookIcon from "material-ui-icons/Link";
 import HandlerIcon from "material-ui-icons/CallSplit";
 
@@ -32,13 +32,13 @@ class QuickNav extends React.Component {
 
     return (
       <div className={classNames(classes.quickNavContainer, className)}>
-        <QuickNavButton Icon={DashboardIcon} caption="Dashboard" to="/" exact />
-        <QuickNavButton Icon={EventIcon} caption="Events" to="/events" />
-        <QuickNavButton Icon={EntityIcon} caption="Entities" to="/entities" />
-        <QuickNavButton Icon={CheckIcon} caption="Checks" to="/checks" />
-        <QuickNavButton Icon={SilencedIcon} caption="Silences" to="/silences" />
-        <QuickNavButton Icon={HookIcon} caption="Hooks" to="/hooks" />
-        <QuickNavButton Icon={HandlerIcon} caption="Handlers" to="/handlers" />
+        <QuickNavButton Icon={DashboardIcon} caption="Dashboard" to="" exact />
+        <QuickNavButton Icon={EventIcon} caption="Events" to="events" />
+        <QuickNavButton Icon={EntityIcon} caption="Entities" to="entities" />
+        <QuickNavButton Icon={CheckIcon} caption="Checks" to="checks" />
+        <QuickNavButton Icon={SilenceIcon} caption="Silences" to="silences" />
+        <QuickNavButton Icon={HookIcon} caption="Hooks" to="hooks" />
+        <QuickNavButton Icon={HandlerIcon} caption="Handlers" to="handlers" />
       </div>
     );
   }

@@ -59,7 +59,7 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	if c.Cron != "" {
-		if c.Interval != 0 {
+		if c.Interval > 0 {
 			return errors.New("must only specify either an interval or a cron schedule")
 		}
 
@@ -69,11 +69,7 @@ func (c *CheckConfig) Validate() error {
 	}
 
 	if c.Interval == 0 && c.Cron == "" {
-		return errors.New("check interval must be greater than 0")
-	}
-
-	if c.Interval > 0 && c.Cron != "" {
-		return errors.New("must only specify either an interval or a cron schedule")
+		return errors.New("check interval must be greater than 0 or a valid cron schedule must be provided")
 	}
 
 	if c.Environment == "" {

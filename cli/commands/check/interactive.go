@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	intervalDefault = "60"
-	stdinDefault    = "false"
+	stdinDefault = "false"
 )
 
 type checkOpts struct {
@@ -36,7 +35,6 @@ type checkOpts struct {
 
 func newCheckOpts() *checkOpts {
 	opts := checkOpts{}
-	opts.Interval = intervalDefault
 	return &opts
 }
 
@@ -135,7 +133,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Validate: func(val interface{}) error {
 				if val.(string) != "" {
 					if _, err := cron.ParseStandard(val.(string)); err != nil {
-						return fmt.Errorf(err.Error())
+						return err
 					}
 				}
 				return nil
