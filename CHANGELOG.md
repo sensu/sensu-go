@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Context switcher added for dashboard
 - Add api support for adhoc check requests.
+- Add event metrics type, implementing the Sensu Metrics Format.
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
