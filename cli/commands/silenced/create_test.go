@@ -89,3 +89,17 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	assert.Equal("whoops", err.Error())
 	assert.Empty(out)
 }
+
+func TestCreateCommandRunEClosureWithMissingRequiredFlags(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(errors.New("error"))
+
+	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("expire", "5"))
+	out, err := test.RunCmd(cmd, []string{})
+	require.Error(t, err)
+	assert.Empty(out)
+}

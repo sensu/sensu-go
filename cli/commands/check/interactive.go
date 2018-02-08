@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	intervalDefault = "60"
-	stdinDefault    = "false"
+	stdinDefault = "false"
 )
 
 type checkOpts struct {
@@ -36,7 +35,6 @@ type checkOpts struct {
 
 func newCheckOpts() *checkOpts {
 	opts := checkOpts{}
-	opts.Interval = intervalDefault
 	return &opts
 }
 
