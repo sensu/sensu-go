@@ -1,7 +1,9 @@
 package routers
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -32,7 +34,8 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	// Custom
 	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
 	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
-	routes.path("{id}/execute", r.adhocRequest).Methods(http.MethodPost)
+	// handlefunc returns a custom status and response
+	parent.HandleFunc("{id}/execute", r.adhocRequest).Methods(http.MethodPost)
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
@@ -90,14 +93,28 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *ChecksRouter) adhocRequest(req *http.Request) (interface{}, error) {
+func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
 	adhocReq := types.AdhocRequest{}
 	if err := unmarshalBody(req, &adhocReq); err != nil {
-		return nil, err
+		writeError(w, err)
+		return
 	}
 	params := mux.Vars(req)
-	err := r.controller.QueueAdhocRequest(req.Context(), params["id"], &adhocReq)
-	// needs to return a 202 and json with {"issued":<timestamp>} to be
-	// backwards compatible
-	return nil, err
+	if err := r.controller.QueueAdhocRequest(req.Context(), params["id"], &adhocReq); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	response := make(map[string]interface{})
+	response["issued"] = time.Now().Unix()
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	if _, err := w.Write(jsonResponse); err != nil {
+		writeError(w, err)
+	}
 }
