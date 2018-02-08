@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
 in `sensuctl` with optional timezone. Stores the field as unix epoch time.
+- Incremental retry mechanism when waiting for agent and backend in e2e tests.
 
 ## [2.0.0-alpha.16] - 2018-02-07
 ### Added
