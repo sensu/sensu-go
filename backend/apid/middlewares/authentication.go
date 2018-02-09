@@ -1,12 +1,20 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
+
+// AuthStore specifies the storage requirements for auth types.
+type AuthStore interface {
+	// AuthenticateUser attempts to authenticate a user with the given username
+	// and hashed password. An error is returned if the user does not exist, is
+	// disabled or the given password does not match.
+	AuthenticateUser(ctx context.Context, user, pass string) (*types.User, error)
+}
 
 // Authentication is a HTTP middleware that enforces authentication
 type Authentication struct{}
@@ -37,7 +45,7 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 }
 
 // BasicAuthentication is HTTP middleware for basic authentication
-func BasicAuthentication(next http.Handler, store store.Store) http.Handler {
+func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()
 		if !ok {

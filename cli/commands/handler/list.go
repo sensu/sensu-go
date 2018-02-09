@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -20,7 +21,11 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "list",
 		Short:        "list handlers",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			org := cli.Config.Organization()
 			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
 				org = "*"

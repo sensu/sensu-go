@@ -1,6 +1,7 @@
 package logout
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -15,6 +16,10 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		Short:        "Logout from sensuctl",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			// Logout from the configured Sensu instance
 			tokens := cli.Config.Tokens()
 			if err := cli.Client.Logout(tokens.Refresh); err != nil {

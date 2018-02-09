@@ -3,13 +3,12 @@ package graphql
 import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 )
 
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	Store store.Store
+	Store QueueStore
 	Bus   messaging.MessageBus
 }
 
@@ -23,6 +22,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterDeleteRecordInput(svc)
 	schema.RegisterDeleteRecordPayload(svc, &deleteRecordPayload{})
+	schema.RegisterEnvironment(svc, newEnvImpl(store))
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterHandler(svc, newHandlerImpl(store))
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
@@ -32,6 +32,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterNamespace(svc, &namespaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
 	schema.RegisterNamespaceInput(svc)
+	schema.RegisterOrganization(svc, newOrgImpl(store))
 	schema.RegisterPageInfo(svc, &pageInfoImpl{})
 	schema.RegisterViewer(svc, newViewerImpl(store, cfg.Bus))
 	schema.RegisterSchema(svc)

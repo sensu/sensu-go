@@ -90,6 +90,7 @@ func TestSilencing(t *testing.T) {
 	output, err = sensuctl.run("silenced", "create",
 		"--subscription", "entity:TestSilencing",
 		"--check", "check_silencing",
+		"--reason", "to test silencing",
 	)
 	assert.NoError(t, err, string(output))
 

@@ -45,7 +45,7 @@ func TestSubdueCommand(t *testing.T) {
 		expectedOutput string
 		expectError    bool
 	}{
-		{[]string{}, false, "", nil, nil, "Usage", false},
+		{[]string{}, false, "", nil, nil, "Usage", true},
 		{[]string{"foo"}, false, "", errors.New("error"), nil, "", true},
 		{[]string{"bar"}, false, "", nil, errors.New("error"), "", true},
 		{[]string{"check1"}, false, "", nil, nil, "", true},
@@ -82,22 +82,6 @@ func TestSubdueCommand(t *testing.T) {
 			}
 
 			assert.Regexp(t, test.expectedOutput, out)
-		})
-	}
-}
-
-func TestOffsetTime(t *testing.T) {
-	tests := []struct {
-		In   string
-		Want string
-	}{
-		{"8:00AM MST", "3:00PM"},
-	}
-	for _, test := range tests {
-		t.Run(test.In, func(t *testing.T) {
-			got, err := offsetTime(test.In)
-			require.NoError(t, err)
-			require.Equal(t, test.Want, got)
 		})
 	}
 }

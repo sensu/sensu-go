@@ -44,6 +44,8 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
+	require.NoError(t, cmd.Flags().Set("subscriptions", "system"))
+	require.NoError(t, cmd.Flags().Set("interval", "10"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 	require.NoError(t, err)
 
@@ -59,6 +61,8 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
+	require.NoError(t, cmd.Flags().Set("subscriptions", "system"))
+	require.NoError(t, cmd.Flags().Set("interval", "10"))
 	require.NoError(t, cmd.Flags().Set("runtime-assets", "ruby22"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 	require.NoError(t, err)
@@ -75,6 +79,8 @@ func TestCreateCommandRunEClosureWithDepsSTDIN(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
+	require.NoError(t, cmd.Flags().Set("subscriptions", "system"))
+	require.NoError(t, cmd.Flags().Set("interval", "10"))
 	require.NoError(t, cmd.Flags().Set("runtime-assets", "ruby22"))
 	require.NoError(t, cmd.Flags().Set("stdin", "true"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
@@ -92,9 +98,25 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
+	require.NoError(t, cmd.Flags().Set("subscriptions", "system"))
+	require.NoError(t, cmd.Flags().Set("interval", "10"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
 	assert.Empty(out)
 	assert.Error(err)
 	assert.Equal("whoops", err.Error())
+}
+
+func TestCreateCommandRunEClosureWithMissingRequiredFlags(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(errors.New("error"))
+
+	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("interval", "5"))
+	out, err := test.RunCmd(cmd, []string{"checky"})
+	require.Error(t, err)
+	assert.Empty(out)
 }

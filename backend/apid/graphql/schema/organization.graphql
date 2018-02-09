@@ -1,0 +1,17 @@
+"""
+Organization represents a Sensu organization in RBAC
+"""
+type Organization {
+  "The globally unique identifier of the check."
+  id: ID!
+
+  "Description is more information for an organization."
+  description: String
+
+  "Name is the unique identifier for an organization."
+  name: String!
+
+  "Environments that belong to the organization"
+  environments: [Environment!]!
+}
+

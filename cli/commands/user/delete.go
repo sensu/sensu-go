@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -11,14 +12,14 @@ import (
 // DeleteCommand adds a command that allows admin's to disable users
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := cobra.Command{
-		Use:          "disable USERNAME",
+		Use:          "disable [USERNAME]",
 		Short:        "disable user given username",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 1 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			username := args[0]

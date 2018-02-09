@@ -2,29 +2,27 @@ package check
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
-	"regexp"
-	"strings"
-	"time"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/timeutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
-var kitchenTZRE = regexp.MustCompile(`[0-1]?[0-9]:[0-5][0-9]\s?(AM|PM)( .+)?`)
-
 // SubdueCommand adds a command that allows a user to subdue a check
 func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "subdue NAME",
+		Use:          "subdue [NAME]",
 		Short:        "subdue checks from file or stdin",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			check, err := cli.Client.FetchCheck(args[0])
@@ -40,7 +38,7 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				
+
 				defer func() { _ = in.Close() }()
 			} else {
 				in = os.Stdin
@@ -51,7 +49,7 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			for _, windows := range timeWindows.MapTimeWindows() {
 				for _, window := range windows {
-					if err := convertToUTC(window); err != nil {
+					if err := timeutil.ConvertToUTC(window); err != nil {
 						return err
 					}
 				}
@@ -72,45 +70,4 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("file", "f", "", "Subdue definition file")
 
 	return cmd
-}
-
-func convertToUTC(t *types.TimeWindowTimeRange) error {
-	begin, err := offsetTime(t.Begin)
-	if err != nil {
-		return nil
-	}
-	end, err := offsetTime(t.End)
-	if err != nil {
-		return nil
-	}
-	t.Begin = begin
-	t.End = end
-	return nil
-}
-
-func offsetTime(s string) (string, error) {
-	ts, tz, err := extractLocation(s)
-	if err != nil {
-		return "", err
-	}
-	tm, err := time.ParseInLocation(time.Kitchen, ts, tz)
-	if err != nil {
-		return "", err
-	}
-	_, offset := tm.Zone()
-	tm = tm.Add(-time.Duration(offset) * time.Second)
-	return tm.Format(time.Kitchen), nil
-}
-
-func extractLocation(s string) (string, *time.Location, error) {
-	tz := time.Local
-	beginMatches := kitchenTZRE.FindStringSubmatch(s)
-	possibleTZ := strings.TrimSpace(beginMatches[len(beginMatches)-1])
-	if len(possibleTZ) == 0 {
-		return s, tz, nil
-	}
-	loc, err := time.LoadLocation(possibleTZ)
-	trimmed := strings.TrimSpace(strings.TrimSuffix(s, possibleTZ))
-	normalized := strings.Replace(strings.Replace(trimmed, " AM", "AM", 0), " PM", "PM", 0)
-	return normalized, loc, err
 }

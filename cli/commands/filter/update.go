@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -10,14 +11,14 @@ import (
 // UpdateCommand defines the 'filter update' subcommand
 func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "update NAME",
+		Use:          "update [NAME]",
 		Short:        "update filters",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Print ot usage if we do not receive one argument
+			// Print out usage if we do not receive one argument
 			if len(args) != 1 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch the requested filter from the API

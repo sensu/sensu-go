@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -19,7 +18,7 @@ func addEntitySubscription(entityID string, subscriptions []string) []string {
 // so, retrieves the corresponding entity in the store in order to replace the
 // event's entity with it. In case no entity exists, we create an entity with
 // the proxy class
-func getProxyEntity(event *types.Event, s store.Store) error {
+func getProxyEntity(event *types.Event, s SessionStore) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 

@@ -12,9 +12,16 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
+
+// QueueStore contains store and queue interfaces.
+type QueueStore interface {
+	store.Store
+	queue.Get
+}
 
 // APId is the backend HTTP API.
 type APId struct {
@@ -28,7 +35,7 @@ type APId struct {
 	BackendStatus func() types.StatusMap
 	Host          string
 	Port          int
-	Store         store.Store
+	Store         QueueStore
 	TLS           *types.TLSOptions
 }
 
@@ -135,7 +142,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store, bus messaging.MessageBus) {
+func registerRestrictedResources(router *mux.Router, store QueueStore, bus messaging.MessageBus) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),

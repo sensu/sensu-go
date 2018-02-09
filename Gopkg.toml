@@ -27,10 +27,6 @@ required = ["github.com/shirou/w32"]
   version = "1.1.0"
 
 [[constraint]]
-  name = "github.com/chzyer/readline"
-  version = "1.4.0"
-
-[[constraint]]
   name = "github.com/coreos/pkg"
   version = "3.0.0"
 
@@ -79,8 +75,8 @@ required = ["github.com/shirou/w32"]
   version = "2.17.8"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/spf13/cobra"
+  revision = "fd32f09af19efc9b1279c54e0d8ed23f66232a15"
 
 [[constraint]]
   name = "github.com/spf13/pflag"
