@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"path"
 
 	"github.com/sensu/sensu-go/types"
@@ -82,7 +81,6 @@ func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		fmt.Println(res.StatusCode())
 		return unmarshalError(res)
 	}
 
