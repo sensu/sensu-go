@@ -185,10 +185,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	entity := event.Entity
 
-	if event.Check.Config.Ttl > 0 {
+	if event.Check.Config.Ttl > 0 && !event.Check.Config.RoundRobin {
 		// create a monitor for the event's entity if it doesn't exist in the
 		// monitor map
-		// only monitor if there is a check TTL
+		// only monitor if there is a check TTL and the check is not a
+		// round robin check.
 		e.mu.Lock()
 		mon, ok = e.monitors[entity.ID]
 		if !ok || mon.IsStopped() {

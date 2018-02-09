@@ -105,6 +105,9 @@ message CheckConfig {
 
   // ProxyRequests represents a request to execute a proxy check
   ProxyRequests proxy_requests = 20;
+
+  // RoundRobin enables round-robin scheduling if set true.
+  bool round_robin = 21;
 }
 
 // A Check is a check specification and optionally the results of the check's

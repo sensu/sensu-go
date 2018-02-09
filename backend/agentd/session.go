@@ -15,6 +15,13 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// SessionStore specifies the storage requirements of the Session.
+type SessionStore interface {
+	store.EntityStore
+	store.EnvironmentStore
+	types.RingGetter
+}
+
 // A Session is a server-side connection between a Sensu backend server and
 // the Sensu agent process via the Sensu transport. It is responsible for
 // relaying messages to the message bus on behalf of the agent and from the
@@ -25,7 +32,7 @@ type Session struct {
 
 	cfg          SessionConfig
 	conn         transport.Transport
-	store        store.Store
+	store        SessionStore
 	handler      *handler.MessageHandler
 	stopping     chan struct{}
 	wg           *sync.WaitGroup
@@ -54,7 +61,7 @@ type SessionConfig struct {
 
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
-func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
+func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -196,11 +203,20 @@ func (s *Session) Start() error {
 	go s.recvPump()
 	go s.subPump()
 
+	org, env := s.cfg.Organization, s.cfg.Environment
+	agentID := s.cfg.AgentID
+
 	for _, sub := range s.cfg.Subscriptions {
-		topic := messaging.SubscriptionTopic(s.cfg.Organization, s.cfg.Environment, sub)
-		logger.Debugf("Subscribing to topic %s", topic)
-		if err := s.bus.Subscribe(topic, s.cfg.AgentID, s.checkChannel); err != nil {
+		topic := messaging.SubscriptionTopic(org, env, sub)
+		logger.Debugf("Subscribing to topic %q", topic)
+		if err := s.bus.Subscribe(topic, agentID, s.checkChannel); err != nil {
 			logger.WithError(err).Error("error starting subscription")
+			return err
+		}
+		ring := s.store.GetRing("subscription", topic)
+		if err := ring.Add(context.TODO(), agentID); err != nil {
+			logger.WithError(err).Errorf(
+				"error adding agent %q to ring", s.cfg.AgentID)
 			return err
 		}
 	}
@@ -213,12 +229,24 @@ func (s *Session) Start() error {
 func (s *Session) Stop() {
 	close(s.stopping)
 	s.wg.Wait()
+
+	org, env := s.cfg.Organization, s.cfg.Environment
+	agentID := s.cfg.AgentID
+
 	for _, sub := range s.cfg.Subscriptions {
-		if err := s.bus.Unsubscribe(sub, s.ID); err != nil {
+		topic := messaging.SubscriptionTopic(org, env, sub)
+		logger.Debugf("Unsubscribing from topic %q", topic)
+		if err := s.bus.Unsubscribe(topic, agentID); err != nil {
 			// Bus has stopped running already, no need for further unsubscribe
 			// attempts.
 			logger.Debug(err)
 			break
+		}
+		ring := s.store.GetRing("subscription", topic)
+		if err := ring.Remove(context.TODO(), s.cfg.AgentID); err != nil {
+			// Try to remove as many entries as possible, so don't return early
+			logger.WithError(err).Errorf(
+				"error removing agent %q from ring", s.cfg.AgentID)
 		}
 	}
 	close(s.checkChannel)

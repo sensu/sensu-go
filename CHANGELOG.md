@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add .gitattributes file with merge stratety for the Changelog.
 - Context switcher added for dashboard
 - Add api support for adhoc check requests.
+- Check scheduler now supports round-robin scheduling.
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
@@ -21,6 +22,7 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 ### Added
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
+- Context switcher added for dashboard
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to
