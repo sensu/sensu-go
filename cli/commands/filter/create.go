@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -12,13 +14,23 @@ import (
 // CreateCommand defines the 'filter create' subcommand
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
+		Use:          "create [NAME]",
 		Short:        "create new filters",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("action")
+				_ = cmd.MarkFlagRequired("statements")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				return cmd.Help()
+			}
 
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			opts := newFilterOpts()
 
 			if len(args) > 0 {
@@ -33,7 +45,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				opts.withFlags(flags)
+				opts.withFlags(cmd.Flags())
 			}
 
 			// Apply given arguments to check
@@ -65,9 +77,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			"determine if the event matches this filter",
 	)
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("action")
-	_ = cmd.MarkFlagRequired("statements")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

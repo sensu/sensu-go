@@ -1,7 +1,6 @@
 package role
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -12,14 +11,13 @@ import (
 // DeleteCommand defines new command to delete roles
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "delete NAME",
+		Use:          "delete [NAME]",
 		Short:        "delete role given name",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 1 {
-				_ = cmd.Help()
-				return errors.New("missing arguments")
+				return cmd.Help()
 			}
 
 			name := args[0]

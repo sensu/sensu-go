@@ -17,8 +17,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If pattern is wrong print out help
 			if len(args) > 1 {
-				_ = cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 			id, err := getID(cmd, args)
 			if err != nil {

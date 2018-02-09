@@ -75,8 +75,8 @@ required = ["github.com/shirou/w32"]
   version = "2.17.8"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/spf13/cobra"
+  revision = "fd32f09af19efc9b1279c54e0d8ed23f66232a15"
 
 [[constraint]]
   name = "github.com/spf13/pflag"

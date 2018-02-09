@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -16,10 +15,8 @@ func SetFormatCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "Set format for active profile",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if argsLen := len(args); argsLen == 0 {
-				return errors.New("please provide the name of the format as an argument")
-			} else if argsLen > 1 {
-				return errors.New("too many arguments provided")
+			if len(args) != 1 {
+				return cmd.Help()
 			}
 
 			newFormat := args[0]

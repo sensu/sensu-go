@@ -16,8 +16,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				_ = cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			// Delete event via API

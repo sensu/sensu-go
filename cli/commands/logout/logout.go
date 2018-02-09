@@ -15,6 +15,9 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		Short:        "Logout from sensuctl",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return cmd.Help()
+			}
 			// Logout from the configured Sensu instance
 			tokens := cli.Config.Tokens()
 			if err := cli.Client.Logout(tokens.Refresh); err != nil {

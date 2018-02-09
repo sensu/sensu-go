@@ -28,8 +28,9 @@ func TestRemoveRuleCommandRunEClosureWithoutName(t *testing.T) {
 	cmd := RemoveRuleCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"sdfasdf"})
 
-	assert.Empty(out)
-	assert.Error(err)
+	// Print help usage and no error
+	assert.NotEmpty(out)
+	assert.NoError(err)
 }
 
 func TestRemoveRuleCommandRunEClosureWithFlags(t *testing.T) {

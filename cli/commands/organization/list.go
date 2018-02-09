@@ -16,7 +16,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "list",
 		Short:        "list organizations",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return cmd.Help()
+			}
 			// Fetch orgs from API
 			results, err := cli.Client.ListOrganizations()
 			if err != nil {

@@ -14,7 +14,7 @@ import (
 // request for a check
 func SetProxyRequestsCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "set-proxy-requests NAME",
+		Use:          "set-proxy-requests [NAME]",
 		Short:        "set proxy requests for a check from file or stdin",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {

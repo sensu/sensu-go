@@ -39,8 +39,10 @@ func TestLogoutServerError(t *testing.T) {
 	tokens := types.FixtureTokens("foo", "bar")
 	config.On("Tokens").Return(tokens)
 
-	_, err := test.RunCmd(cmd, []string{"bar"})
-	assert.Error(t, err)
+	out, err := test.RunCmd(cmd, []string{"bar"})
+	// No error, print help usage
+	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestLogoutServerConfigFile(t *testing.T) {
@@ -55,6 +57,8 @@ func TestLogoutServerConfigFile(t *testing.T) {
 	config.On("SaveTokens", mock.AnythingOfType("*types.Tokens")).Return(fmt.Errorf("error"))
 	config.On("Tokens").Return(tokens)
 
-	_, err := test.RunCmd(cmd, []string{"bar"})
-	assert.Error(t, err)
+	out, err := test.RunCmd(cmd, []string{"bar"})
+	// No error, print usage
+	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }

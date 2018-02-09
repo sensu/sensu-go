@@ -18,8 +18,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 1 {
-				_ = cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			name := args[0]

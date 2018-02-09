@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -11,12 +13,15 @@ import (
 // CreateCommand adds command that allows users to create new environments
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
+		Use:          "create [NAME]",
 		Short:        "create new environment",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				return cmd.Help()
+			}
+
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			opts := envOpts{}
 
 			if len(args) > 0 {
@@ -30,7 +35,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				opts.withFlags(flags)
+				opts.withFlags(cmd.Flags())
 			}
 
 			if opts.Org == "" {
@@ -62,8 +67,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	// even if we are actually create this env
 	_ = cmd.Flags().StringP("org", "", "", "Name of organization")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("name")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

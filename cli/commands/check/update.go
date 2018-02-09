@@ -10,7 +10,7 @@ import (
 // UpdateCommand adds command that allows user to create new checks
 func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "update NAME",
+		Use:          "update [NAME]",
 		Short:        "update checks",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {

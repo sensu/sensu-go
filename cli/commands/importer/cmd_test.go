@@ -42,7 +42,8 @@ func TestImportCommandRunWithBadJSON(t *testing.T) {
 	cmd := ImportCommand(cli)
 
 	out, err := test.RunCmd(cmd, []string{"in"})
-	assert.Error(err)
+	// Print help usage and return no error
+	assert.NoError(err)
 	assert.NotEmpty(out)
 }
 

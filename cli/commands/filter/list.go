@@ -19,6 +19,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list filters",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return cmd.Help()
+			}
 			org := cli.Config.Organization()
 			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
 				org = "*"
