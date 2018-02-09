@@ -4,8 +4,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -29,6 +31,10 @@ func TestExecuteCommandRunEClosureSuccess(t *testing.T) {
 
 	client := cli.Client.(*clientmock.MockClient)
 	client.On("ExecuteCheck", mock.AnythingOfType("*types.AdhocRequest")).Return(nil)
+
+	config := cli.Config.(*clientmock.MockConfig)
+	_, accessToken, _ := jwt.AccessToken("foo")
+	config.On("Tokens").Return(&types.Tokens{Access: accessToken})
 
 	cmd := ExecuteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("reason", "foo"))
