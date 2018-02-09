@@ -57,7 +57,7 @@ func TestListCommandRunEClosureMissingArgs(t *testing.T) {
 	cmd := CreateCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
-	// Print help usage and no error
+	// Print help usage
 	assert.NotEmpty(out)
-	assert.NoError(err)
+	assert.Error(err)
 }

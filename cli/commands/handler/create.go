@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -18,7 +19,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
@@ -44,7 +46,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			if err := handler.Validate(); err != nil {
 				if !isInteractive {
-					return cmd.Help()
+					_ = cmd.Help()
+					return errors.New("invalid argument(s) received")
 				}
 				return err
 			}

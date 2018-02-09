@@ -1,6 +1,7 @@
 package silenced
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -17,7 +18,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If pattern is wrong print out help
 			if len(args) > 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 			id, err := getID(cmd, args)
 			if err != nil {

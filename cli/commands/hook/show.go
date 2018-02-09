@@ -1,6 +1,7 @@
 package hook
 
 import (
+	"errors"
 	"io"
 	"strconv"
 
@@ -20,7 +21,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch handlers from API

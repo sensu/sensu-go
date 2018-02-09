@@ -30,7 +30,7 @@ func TestCreateCommandRunEClosureWithoutAllFlags(t *testing.T) {
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("type", ""))
 	out, err := test.RunCmd(cmd, []string{"my-handler"})
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Regexp("Usage", out) // usage should print out
 }
 

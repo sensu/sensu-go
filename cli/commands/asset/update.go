@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
@@ -18,7 +19,8 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print out usage if we do not receive one argument
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch assets from API

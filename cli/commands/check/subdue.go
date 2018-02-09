@@ -2,6 +2,7 @@ package check
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -20,7 +21,8 @@ func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			check, err := cli.Client.FetchCheck(args[0])

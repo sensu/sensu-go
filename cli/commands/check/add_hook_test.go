@@ -72,7 +72,6 @@ func TestAddCheckHookCommandRunEClosureMissingArgs(t *testing.T) {
 	cmd := AddCheckHookCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
-	// No error, print help usage
 	assert.NotEmpty(out)
-	assert.NoError(err)
+	assert.Error(err)
 }

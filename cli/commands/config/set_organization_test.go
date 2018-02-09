@@ -31,12 +31,12 @@ func TestSetOrgBadsArgs(t *testing.T) {
 	// No args...
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out, "output should display help usage")
-	assert.NoError(err, "error should not be returned")
+	assert.Error(err, "error should be returned")
 
 	// Too many args...
 	out, err = test.RunCmd(cmd, []string{"one", "two"})
 	assert.NotEmpty(out, "output should display help usage")
-	assert.NoError(err, "error should not be returned")
+	assert.Error(err, "error should be returned")
 }
 
 func TestSetOrgExec(t *testing.T) {

@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -22,7 +23,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 			org := cli.Config.Organization()
 			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {

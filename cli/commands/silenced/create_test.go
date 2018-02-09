@@ -34,8 +34,8 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("expire", "aaaaaa"))
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
-	// Print help usage and no error
-	require.NoError(t, err)
+	// Print help usage
+	require.Error(t, err)
 	assert.NotEmpty(out)
 }
 
