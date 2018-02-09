@@ -24,6 +24,11 @@ func AddAllOrganization(flagSet *pflag.FlagSet) {
 	flagSet.Bool(flags.AllOrgs, false, "Include records from all organizations")
 }
 
+// AddInteractiveFlag adds the '--interactive' flag to the given command
+func AddInteractiveFlag(flagSet *pflag.FlagSet) {
+	flagSet.Bool(flags.Interactive, false, "Determines if CLI is in interactive mode")
+}
+
 // FlagHasChanged determines if the user has set the value of a flag,
 // or left it to default
 func FlagHasChanged(name string, flagset *pflag.FlagSet) bool {

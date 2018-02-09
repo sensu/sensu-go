@@ -1,6 +1,7 @@
 package configure
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
@@ -27,6 +28,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		Short:        "Initialize sensuctl configuration",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
+
 			flags := cmd.Flags()
 
 			nonInteractive, err := flags.GetBool("non-interactive")
@@ -39,13 +45,13 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if nonInteractive {
 				answers.withFlags(flags)
 			} else {
-				if err := answers.administerQuestionnaire(cli.Config); err != nil {
+				if err = answers.administerQuestionnaire(cli.Config); err != nil {
 					return err
 				}
 			}
 
 			// Write new API URL to disk
-			if err := cli.Config.SaveAPIUrl(answers.URL); err != nil {
+			if err = cli.Config.SaveAPIUrl(answers.URL); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
 				return fmt.Errorf(
 					"unable to write new configuration file with error: %s",

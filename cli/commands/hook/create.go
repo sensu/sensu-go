@@ -1,9 +1,12 @@
 package hook
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -11,13 +14,23 @@ import (
 // CreateCommand adds command that allows user to create new hooks
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
+		Use:          "create [NAME]",
 		Short:        "create new hooks",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("command")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			opts := newHookOpts()
 
 			if len(args) > 0 {
@@ -32,7 +45,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				opts.withFlags(flags)
+				opts.withFlags(cmd.Flags())
 			}
 
 			// Apply given arguments to hook
@@ -66,8 +79,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("timeout", "t", timeoutDefault, "timeout, in seconds, at which the hook has to run")
 	_ = cmd.Flags().BoolP("stdin", "s", false, "stdin enabled on hook")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("command")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

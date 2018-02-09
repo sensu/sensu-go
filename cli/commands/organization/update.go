@@ -11,14 +11,14 @@ import (
 // UpdateCommand allows the user to update organization
 func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "update NAME",
+		Use:          "update [NAME]",
 		Short:        "update organization description",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Print ot usage if we do not receive one argument
+			// Print out usage if we do not receive one argument
 			if len(args) != 1 {
 				_ = cmd.Help()
-				return errors.New("missing arguments")
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch organizations from API

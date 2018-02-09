@@ -2,6 +2,7 @@ package check
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -14,13 +15,14 @@ import (
 // SubdueCommand adds a command that allows a user to subdue a check
 func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "subdue NAME",
+		Use:          "subdue [NAME]",
 		Short:        "subdue checks from file or stdin",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			check, err := cli.Client.FetchCheck(args[0])

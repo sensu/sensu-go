@@ -34,8 +34,9 @@ func TestCreateCommandRunEClosureWithoutFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("expire", "aaaaaa"))
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
+	// Print help usage
 	require.Error(t, err)
-	assert.Empty(out)
+	assert.NotEmpty(out)
 }
 
 func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
@@ -46,6 +47,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	client.On("CreateSilenced", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("reason", "just because"))
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
@@ -63,6 +65,7 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(nil)
 
 	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("reason", "just because"))
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
@@ -80,6 +83,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("reason", "just because"))
 	require.NoError(t, cmd.Flags().Set("expire", "5"))
 	require.NoError(t, cmd.Flags().Set("expire-on-resolve", "false"))
 	require.NoError(t, cmd.Flags().Set("subscription", "weeklyworldnews"))
@@ -87,5 +91,19 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 	require.Error(t, err)
 	assert.Equal("whoops", err.Error())
+	assert.Empty(out)
+}
+
+func TestCreateCommandRunEClosureWithMissingRequiredFlags(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(errors.New("error"))
+
+	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("expire", "5"))
+	out, err := test.RunCmd(cmd, []string{})
+	require.Error(t, err)
 	assert.Empty(out)
 }

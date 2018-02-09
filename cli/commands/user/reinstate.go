@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -17,7 +18,7 @@ func ReinstateCommand(cli *cli.SensuCli) *cobra.Command {
 			// If no name is present print out usage
 			if len(args) != 1 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			username := args[0]
