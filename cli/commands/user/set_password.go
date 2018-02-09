@@ -25,10 +25,13 @@ type passwordPromptInput struct {
 // SetPasswordCommand adds command that allows user to create new users
 func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "change-password USERNAME",
+		Use:          "change-password [USERNAME]",
 		Short:        "change password for given user",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 1 {
+				return cmd.Help()
+			}
 			var username string
 			var promptForCurrentPassword bool
 

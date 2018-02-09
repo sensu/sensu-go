@@ -20,8 +20,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				_ = cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			id, err := getID(cmd, args)

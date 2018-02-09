@@ -14,7 +14,7 @@ import (
 // ShowCommand defines new asset info command
 func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info NAME",
+		Use:          "info [NAME]",
 		Short:        "show detailed information on given asset",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {

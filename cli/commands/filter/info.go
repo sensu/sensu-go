@@ -21,8 +21,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			format, _ := cmd.Flags().GetString("format")
 
 			if len(args) != 1 {
-				_ = cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			// Fetch the filter from API

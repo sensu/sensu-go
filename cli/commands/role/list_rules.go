@@ -1,7 +1,6 @@
 package role
 
 import (
-	"errors"
 	"io"
 	"strings"
 
@@ -15,12 +14,12 @@ import (
 // ListRulesCommand defines new command to list rules associated w/ a role
 func ListRulesCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "list-rules ROLE",
+		Use:          "list-rules [ROLE]",
 		Short:        "list rules associated with a role",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				return errors.New("must provide the name of a role")
+				return cmd.Help()
 			}
 
 			// Fetch roles from API

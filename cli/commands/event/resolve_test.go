@@ -19,7 +19,7 @@ func TestResolveCommand(t *testing.T) {
 		expectedOutput string
 		expectError    bool
 	}{
-		{[]string{}, nil, nil, "Usage", true},
+		{[]string{}, nil, nil, "Usage", false},
 		{[]string{"foo", "bar"}, nil, nil, "", false},
 		{[]string{"foo", "bar"}, fmt.Errorf("error"), nil, "", true},
 		{[]string{"foo", "bar"}, nil, fmt.Errorf("error"), "", true},

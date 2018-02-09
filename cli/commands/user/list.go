@@ -18,7 +18,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "list",
 		Short:        "list users",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return cmd.Help()
+			}
 			// Fetch users from API
 			results, err := cli.Client.ListUsers()
 			if err != nil {

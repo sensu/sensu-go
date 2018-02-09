@@ -71,6 +71,9 @@ func configureRootCommand() *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string) error {
+	if len(args) != 0 {
+		return cmd.Help()
+	}
 	if stdin == nil {
 		stdin = os.Stdin
 	}

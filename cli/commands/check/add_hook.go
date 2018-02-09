@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -21,15 +22,26 @@ type checkHookOpts struct {
 // AddCheckHookCommand defines new command to add hooks to a check
 func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "add-hook CHECKNAME",
+		Use:          "add-hook [CHECKNAME]",
 		Short:        "add-hook to check",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("type")
+				_ = cmd.MarkFlagRequired("hooks")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) != 1 {
+				return cmd.Help()
+			}
+
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 
 			opts := &checkHookOpts{}
-			opts.withFlags(flags)
+			opts.withFlags(cmd.Flags())
 
 			if len(args) > 0 {
 				opts.Check = args[0]
@@ -71,10 +83,7 @@ func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("type", "t", "", "type associated with the hook")
 	cmd.Flags().StringP("hooks", "k", "", "comma separated list of hooks associated with the check")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("type")
-	_ = cmd.MarkFlagRequired("hooks")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }
 

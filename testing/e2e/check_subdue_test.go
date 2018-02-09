@@ -83,6 +83,7 @@ func createCheck(t *testing.T, ctl *sensuCtl) {
 		"--publish",
 		"--interval", "1",
 		"--subscriptions", "test",
+		"--command", "true",
 	)
 	require.NoError(t, err, string(out))
 }
