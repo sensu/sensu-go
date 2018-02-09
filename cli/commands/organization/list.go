@@ -1,6 +1,7 @@
 package organization
 
 import (
+	"errors"
 	"io"
 
 	"github.com/sensu/sensu-go/cli"
@@ -18,7 +19,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 			// Fetch orgs from API
 			results, err := cli.Client.ListOrganizations()

@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -27,7 +28,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)

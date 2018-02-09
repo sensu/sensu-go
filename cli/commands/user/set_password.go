@@ -30,7 +30,8 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 			var username string
 			var promptForCurrentPassword bool
@@ -38,7 +39,7 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 			// Retrieve current username from JWT
 			currentUsername := getCurrentUsername(cli.Config)
 
-			// If no username is given we user the current user's name
+			// If no username is given we use the current user's name
 			if len(args) > 0 {
 				username = args[0]
 			} else {

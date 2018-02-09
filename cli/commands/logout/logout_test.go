@@ -42,7 +42,7 @@ func TestLogoutServerError(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"bar"})
 	// No error, print help usage
 	assert.NotEmpty(t, out)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestLogoutServerConfigFile(t *testing.T) {
@@ -58,7 +58,7 @@ func TestLogoutServerConfigFile(t *testing.T) {
 	config.On("Tokens").Return(tokens)
 
 	out, err := test.RunCmd(cmd, []string{"bar"})
-	// No error, print usage
+	// Print usage
 	assert.NotEmpty(t, out)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

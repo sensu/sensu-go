@@ -30,9 +30,8 @@ func TestRemoveCheckHookCommandRunEClosureWithoutName(t *testing.T) {
 	cmd := RemoveCheckHookCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"sdfasdf"})
 
-	// No error, print help usage
 	assert.NotEmpty(out)
-	assert.NoError(err)
+	assert.Error(err)
 }
 
 func TestRemoveCheckHookCommandRunEClosureWithFlags(t *testing.T) {

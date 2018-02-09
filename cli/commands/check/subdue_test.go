@@ -45,7 +45,7 @@ func TestSubdueCommand(t *testing.T) {
 		expectedOutput string
 		expectError    bool
 	}{
-		{[]string{}, false, "", nil, nil, "Usage", false},
+		{[]string{}, false, "", nil, nil, "Usage", true},
 		{[]string{"foo"}, false, "", errors.New("error"), nil, "", true},
 		{[]string{"bar"}, false, "", nil, errors.New("error"), "", true},
 		{[]string{"check1"}, false, "", nil, nil, "", true},

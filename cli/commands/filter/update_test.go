@@ -19,7 +19,7 @@ func TestUpdateCommand(t *testing.T) {
 		expectedOutput string
 		expectError    bool
 	}{
-		{[]string{}, nil, nil, "Usage", false},
+		{[]string{}, nil, nil, "Usage", true},
 		{[]string{"foo"}, fmt.Errorf("error"), nil, "", true},
 		{[]string{"bar"}, nil, fmt.Errorf("error"), "", true},
 	}

@@ -53,7 +53,8 @@ type CreateExecutor struct {
 // Run runs the command given arguments
 func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
-		return cmd.Help()
+		_ = cmd.Help()
+		return errors.New("invalid argument(s) received")
 	}
 
 	cfg := ConfigureAsset{

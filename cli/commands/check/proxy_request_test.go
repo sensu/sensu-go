@@ -26,7 +26,7 @@ func TestSetProxyRequestsCommand(t *testing.T) {
 		expectedOutput string
 		expectError    bool
 	}{
-		{[]string{}, false, "", nil, nil, "Usage", false},
+		{[]string{}, false, "", nil, nil, "Usage", true},
 		{[]string{"foo"}, false, "", errors.New("error"), nil, "", true},
 		{[]string{"bar"}, false, "", nil, errors.New("error"), "", true},
 		{[]string{"check1"}, false, "", nil, nil, "", true},
@@ -76,7 +76,7 @@ func TestRemoveProxyRequestsCommand(t *testing.T) {
 		expectedOutput string
 		expectError    bool
 	}{
-		{[]string{}, nil, nil, "Usage", false},
+		{[]string{}, nil, nil, "Usage", true},
 		{[]string{"foo"}, errors.New("error"), nil, "", true},
 		{[]string{"bar"}, nil, errors.New("error"), "", true},
 		{[]string{"check1"}, nil, nil, "OK", false},

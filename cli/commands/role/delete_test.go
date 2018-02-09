@@ -31,7 +31,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
-	assert.NoError(err)         // no error on help usage
+	assert.Error(err)
 }
 
 func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {

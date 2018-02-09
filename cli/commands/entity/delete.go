@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -32,7 +33,8 @@ type deleteExecutor struct {
 func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 	// If no ID was given print out usage
 	if len(args) != 1 {
-		return cmd.Help()
+		_ = cmd.Help()
+		return errors.New("invalid argument(s) received")
 	}
 	id := args[0]
 
