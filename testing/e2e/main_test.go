@@ -11,10 +11,12 @@ import (
 	"github.com/sensu/sensu-go/testing/testutil"
 )
 
-var binDir, agentPath, backendPath, sensuctlPath string
+var agentPath, backendPath, sensuctlPath string
+
+var binDir = filepath.Join("..", "..", "bin")
+var toolsDir = filepath.Join(binDir, "tools")
 
 func TestMain(m *testing.M) {
-	flag.StringVar(&binDir, "bin-dir", "../../bin", "directory containing sensu binaries")
 	flag.Parse()
 
 	agentBin := testutil.CommandPath("sensu-agent")

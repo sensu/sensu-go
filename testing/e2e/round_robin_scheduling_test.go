@@ -1,9 +1,11 @@
 package e2e
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,9 +61,9 @@ func TestRoundRobinScheduling(t *testing.T) {
 	check := types.FixtureCheckConfig("TestCheckScheduling")
 	check.Publish = true
 	check.Interval = 1
-	check.Ttl = 5
 	check.Subscriptions = []string{"test"}
 	check.RoundRobin = true
+	check.Command = testutil.CommandPath(filepath.Join(toolsDir, "true"))
 
 	err := clientA.CreateCheck(check)
 	require.NoError(t, err)
