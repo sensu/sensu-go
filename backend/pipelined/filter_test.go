@@ -116,6 +116,14 @@ func TestPipelinedFilter(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "Deny Filters With One Match",
+			status:   1,
+			metrics:  nil,
+			silenced: []string{},
+			filters:  []string{"denyFilterBar", "denyFilterFoo"},
+			expected: true,
+		},
+		{
 			name:     "Silenced With Metrics",
 			status:   1,
 			metrics:  &types.Metrics{},
