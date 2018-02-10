@@ -76,30 +76,36 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 // filterEvent filters a Sensu event, determining if it will continue
 // through the Sensu pipeline.
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
-	// Do not filter the event if the event has metrics
-	if event.HasMetrics() {
-		return false
-	}
-
-	// Filter if the event has any silenced entries
-	if event.IsSilenced() {
-		return true
-	}
-
-	// Filter the event if it is not an incident and the event has not just
-	// transitioned from being an incident to a healthy state
-	if !event.IsIncident() && !event.IsResolution() {
-		return true
-	}
-
-	// Do not filter the event if the handler has no event filters
-	if len(handler.Filters) == 0 {
-		return false
-	}
-
 	// Iterate through all event filters, evaluating each statement against given event. The
 	// event is rejected if the product of all statements is true.
 	for _, filterName := range handler.Filters {
+		// Do not filter the event if it indicates an incident
+		// or incident resolution.
+		if filterName == "is_incident" {
+			if !event.IsIncident() && !event.IsResolution() {
+				return true
+			}
+
+			continue
+		}
+
+		// Do not filter the event if the event has metrics
+		if filterName == "has_metrics" {
+			if !event.HasMetrics() {
+				return true
+			}
+
+			continue
+		}
+
+		if filterName == "not_silenced" {
+			if event.IsSilenced() {
+				return true
+			}
+
+			continue
+		}
+
 		// Retrieve the filter from the store with its name
 		ctx := types.SetContextFromResource(context.Background(), event.Entity)
 		filter, err := p.Store.GetEventFilterByName(ctx, filterName)
@@ -109,10 +115,10 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 		}
 
 		filtered := evaluateEventFilter(event, filter)
-		if !filtered {
-			return false
+		if filtered {
+			return true
 		}
 	}
 
-	return true
+	return false
 }
