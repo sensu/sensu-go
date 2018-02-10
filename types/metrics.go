@@ -19,11 +19,10 @@ func FixtureMetrics() *Metrics {
 
 // FixtureMetricPoint returns a testing fixture for a Metric Point object.
 func FixtureMetricPoint() *MetricPoint {
-	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	return &MetricPoint{
 		Name:      "answer",
 		Value:     42.0,
-		Timestamp: timestamp,
+		Timestamp: time.Now().UnixNano(),
 		Tags:      []*MetricTag{FixtureMetricTag()},
 	}
 }
