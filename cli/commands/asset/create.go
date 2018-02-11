@@ -128,7 +128,7 @@ func (cfgPtr *ConfigureAsset) administerQuestionnaire() error {
 		{
 			Name: "org",
 			Prompt: &survey.Input{
-				Message: "Org:",
+				Message: "Organization:",
 				Default: cfgPtr.Org,
 			},
 			Validate: survey.Required,
