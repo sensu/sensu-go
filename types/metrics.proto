@@ -29,7 +29,7 @@ message MetricPoint {
   // The metric point value.
   double value = 2;
 
-  // The metric point timestamp, time in milliseconds since the Epoch.
+  // The metric point timestamp, time in nanoseconds since the Epoch.
   int64 timestamp = 3;
 
   // Tags is a list of metric tags (dimensions).
