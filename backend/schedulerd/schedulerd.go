@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -12,12 +13,13 @@ import (
 type Store interface {
 	StateManagerStore
 	types.RingGetter
+	queue.Get
 }
 
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
-	Store      QueueStore
+	Store      Store
 	MessageBus messaging.MessageBus
 
 	stateManager         *StateManager
@@ -54,8 +56,8 @@ func (s *Schedulerd) Start() error {
 	// Start
 	s.schedulerManager.Start()
 	s.stateManager.Start(ctx)
-	s.adhocRequestExecutor.Start(ctx)
 
+	s.adhocRequestExecutor.Start(ctx)
 	return nil
 }
 

@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/sensu/sensu-go/backend/etcd"
-	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -15,7 +14,6 @@ import (
 // IntegrationTestStore wrapper for etcd & store
 type IntegrationTestStore struct {
 	*etcdstore.Store
-	queue.Get
 	// underscores to avoid collision w/ store
 	_etcd        *etcd.Etcd
 	_removeTmpFn func()

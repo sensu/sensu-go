@@ -2,17 +2,13 @@ package schedulerd
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/dynamic"
 	sensutime "github.com/sensu/sensu-go/util/time"
 )
 
@@ -247,38 +243,6 @@ func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
 	return false
 }
 
-// publishProxyCheckRequest publishes a proxy check request for an entity. This
-// method substitutes entity tokens in the check definition prior to publishling
-// the check request. If there are unmatched entity tokens, it returns an error,
-// and a check request is not published.
-func (e *CheckExecutor) publishProxyCheckRequest(entity *types.Entity, check *types.CheckConfig) error {
-	// Extract the extended attributes from the entity and combine them at the
-	// top-level so they can be easily accessed using token substitution
-	synthesizedEntity, err := dynamic.Synthesize(entity)
-	if err != nil {
-		return fmt.Errorf("could not synthesize the entity: %s", err)
-	}
-
-	// Substitute tokens within the check configuration with the synthesized
-	// entity
-	checkBytes, err := agent.TokenSubstitution(synthesizedEntity, check)
-	if err != nil {
-		return err
-	}
-
-	substitutedCheck := &types.CheckConfig{}
-
-	// Unmarshal the check configuration obtained after the token substitution
-	// back into the check config struct
-	err = json.Unmarshal(checkBytes, substitutedCheck)
-	if err != nil {
-		return fmt.Errorf("could not unmarshal the check: %s", err)
-	}
-
-	substitutedCheck.ProxyEntityID = entity.ID
-	return e.Execute(substitutedCheck)
-}
-
 // PublishProxyCheckRequests publishes proxy check requests for one or more
 // entities. This method can optionally splay proxy check requests, evenly, over
 // a period of time, determined by the check interval and a configurable splay
@@ -298,27 +262,13 @@ func (e *CheckExecutor) PublishProxyCheckRequests(entities []*types.Entity, chec
 
 	for _, entity := range entities {
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
-		if err := e.publishProxyCheckRequest(entity, check); err != nil {
+		substitutedCheck, err := substituteEntityTokens(entity, check)
+		if err != nil {
+			return err
+		}
+		if err := e.Execute(substitutedCheck); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-// calculateSplayInterval calculates how many seconds between publishing proxy
-// requests to each individual entity (based on a configurable splay %)
-func calculateSplayInterval(check *types.CheckConfig, numEntities float64) (float64, error) {
-	var err error
-	next := time.Duration(time.Second * time.Duration(check.Interval))
-	if check.Cron != "" {
-		if next, err = NextCronTime(time.Now(), check.Cron); err != nil {
-			return 0, err
-		}
-	}
-	splayCoverage := float64(check.ProxyRequests.SplayCoverage)
-	if splayCoverage == 0 {
-		splayCoverage = types.DefaultSplayCoverage
-	}
-	splay := next.Seconds() * (splayCoverage / 100.0) / numEntities
-	return splay, nil
 }

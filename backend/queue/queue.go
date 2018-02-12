@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"fmt"
 	"path"
 	"sync"
 	"time"
@@ -222,6 +223,7 @@ func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
 	}
 
 	response, err := q.client.Get(ctx, q.work, clientv3.WithFirstKey()...)
+	fmt.Printf("Response from get with first key: %v\n", response)
 	if err != nil {
 		return nil, err
 	}
@@ -235,6 +237,7 @@ func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
 		}
 	}
 	if response.More {
+		fmt.Println("in response.More")
 		// Need to retry, we are promised that there will be more.
 		return q.Dequeue(ctx)
 	}
@@ -334,13 +337,17 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, erro
 }
 
 func (q *Queue) waitPutEvent(ctx context.Context) (*clientv3.Event, error) {
+	fmt.Println("In waitPutEvent")
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	wc := q.client.Watch(ctx, q.work, clientv3.WithPrefix())
+	// wc is a channel
+	fmt.Printf("wc is %v\n", wc)
 	if wc == nil {
 		return nil, ctx.Err()
 	}
 	for response := range wc {
+		fmt.Printf("wc response: %v\n", response)
 		events := response.Events
 		for _, event := range events {
 			if event.Type == mvccpb.PUT {
