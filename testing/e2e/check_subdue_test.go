@@ -131,6 +131,6 @@ func subdueCheck(t *testing.T, ctl *sensuCtl, data string) {
 	defer func() {
 		ctl.SetStdin(os.Stdin)
 	}()
-	_, err := ctl.run("check", "subdue", "mycheck")
+	_, err := ctl.run("check", "set-subdue", "mycheck")
 	require.NoError(t, err)
 }
