@@ -216,14 +216,14 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "high-flap-threshold",
 			Prompt: &survey.Input{
 				Message: "High Flap Threshold:",
-				Default: opts.Timeout,
+				Default: opts.HighFlapThreshold,
 			},
 		},
 		{
 			Name: "low-flap-threshold",
 			Prompt: &survey.Input{
 				Message: "Low Flap Threshold:",
-				Default: opts.Timeout,
+				Default: opts.LowFlapThreshold,
 			},
 		},
 	}...)
