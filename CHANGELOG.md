@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - Add CLI support for adhoc check requests.
+- Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
+of a check. This allows updating single fields and completely clearing out
+non-required fields.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
@@ -29,8 +32,6 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ### Fixed
  - Fixed required flags in `sensuctl` so requirements are enforced.
-
-### Fixed
 - Add support for embedded fields to dynamic.Marshal.
 
 ## [2.0.0-alpha.16] - 2018-02-07

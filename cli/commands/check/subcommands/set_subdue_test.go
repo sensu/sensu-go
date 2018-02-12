@@ -1,4 +1,4 @@
-package check
+package subcommands
 
 import (
 	"errors"
@@ -34,7 +34,7 @@ func fileFromString(t *testing.T, s string) (string, *os.File, func()) {
 	return name, tf, cleanup
 }
 
-func TestSubdueCommand(t *testing.T) {
+func TestSetSubdueCommand(t *testing.T) {
 	const subdueJSON = `{"days":{"all":[{"begin":"3:00 PM","end":"4:00 PM"}]}}`
 	tests := []struct {
 		args           []string
@@ -65,7 +65,7 @@ func TestSubdueCommand(t *testing.T) {
 			client := cli.Client.(*client.MockClient)
 			client.On("FetchCheck", name).Return(check, test.fetchResponse)
 			client.On("UpdateCheck", mock.Anything).Return(test.updateResponse)
-			cmd := SubdueCommand(cli)
+			cmd := SetSubdueCommand(cli)
 			name, stdin, cleanup := fileFromString(t, test.stdin)
 			defer cleanup()
 			if test.useflag {
