@@ -20,7 +20,7 @@ func TestRemoveCheckHookCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("remove-hook", cmd.Use)
-	assert.Regexp("remove hook from check", cmd.Short)
+	assert.Regexp("from a check", cmd.Short)
 }
 
 func TestRemoveCheckHookCommandRunEClosureWithoutName(t *testing.T) {

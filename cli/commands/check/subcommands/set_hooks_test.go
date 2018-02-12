@@ -20,7 +20,7 @@ func TestSetCheckHooksCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("set-hooks", cmd.Use)
-	assert.Regexp("to check", cmd.Short)
+	assert.Regexp("of a check", cmd.Short)
 }
 
 func TestSetCheckHooksCommandRunEClosureSucess(t *testing.T) {
