@@ -1,4 +1,4 @@
-package check
+package subcommands
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ import (
 func RemoveCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "remove-hook [CHECKNAME] [TYPE] [HOOKNAME]",
-		Short:        "remove hook from check",
+		Short:        "removes a hook from a check",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage

@@ -1,4 +1,4 @@
-package check
+package subcommands
 
 import (
 	"encoding/json"
@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// SubdueCommand adds a command that allows a user to subdue a check
-func SubdueCommand(cli *cli.SensuCli) *cobra.Command {
+// SetSubdueCommand adds a command that allows a user to subdue a check
+func SetSubdueCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "subdue [NAME]",
-		Short:        "subdue checks from file or stdin",
+		Use:          "set-subdue [NAME]",
+		Short:        "set subdue of a check from file or stdin",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
