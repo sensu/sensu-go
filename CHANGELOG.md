@@ -15,6 +15,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 exclusive fields.
 - Added `--interactive` flag to CLI which is required to run interactive mode.
 - Added CLI role rule-add Organization and Environment interactive prompts.
+- Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
+of a check. This allows updating single fields and completely clearing out
+non-required fields.
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)

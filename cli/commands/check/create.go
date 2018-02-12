@@ -93,6 +93,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().StringP("timeout", "t", "", "timeout, in seconds, at which the check has to run")
 	cmd.Flags().StringP("ttl", "", "", "time to live in seconds for which a check result is valid")
+	cmd.Flags().StringP("high-flap-threshold", "", "", "flap detection high threshold (percent state change) for the check")
+	cmd.Flags().StringP("low-flap-threshold", "", "", "flap detection low threshold (percent state change) for the check")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd

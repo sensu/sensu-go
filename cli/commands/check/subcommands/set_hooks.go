@@ -1,4 +1,4 @@
-package check
+package subcommands
 
 import (
 	"errors"
@@ -19,11 +19,11 @@ type checkHookOpts struct {
 	Hooks string `survey:"hooks"`
 }
 
-// AddCheckHookCommand defines new command to add hooks to a check
-func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
+// SetCheckHooksCommand defines new command to set hooks of a check
+func SetCheckHooksCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "add-hook [CHECKNAME]",
-		Short:        "add-hook to check",
+		Use:          "set-hooks [CHECKNAME]",
+		Short:        "set hooks of a check",
 		SilenceUsage: true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
@@ -43,10 +43,8 @@ func AddCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 
 			opts := &checkHookOpts{}
 			opts.withFlags(cmd.Flags())
+			opts.Check = args[0]
 
-			if len(args) > 0 {
-				opts.Check = args[0]
-			}
 			if isInteractive {
 				cmd.SilenceUsage = false
 				if err := opts.administerQuestionnaire(); err != nil {
