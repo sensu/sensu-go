@@ -43,18 +43,21 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 
 			opts := &ruleOpts{}
+
 			opts.Org = cli.Config.Organization()
 			opts.Env = cli.Config.Environment()
-			opts.withFlags(cmd.Flags())
 
 			if len(args) > 0 {
 				opts.Role = args[0]
 			}
+
 			if isInteractive {
 				cmd.SilenceUsage = false
 				if err := opts.administerQuestionnaire(); err != nil {
 					return err
 				}
+			} else {
+				opts.withFlags(cmd.Flags())
 			}
 
 			if opts.Role == "" {
@@ -120,6 +123,22 @@ func (opts *ruleOpts) administerQuestionnaire() error {
 			Prompt: &survey.Input{
 				Message: "Role Name:",
 				Default: opts.Role,
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "org",
+			Prompt: &survey.Input{
+				Message: "Organization:",
+				Default: opts.Org,
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "env",
+			Prompt: &survey.Input{
+				Message: "Environment:",
+				Default: opts.Env,
 			},
 			Validate: survey.Required,
 		},
