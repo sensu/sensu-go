@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [2.0.0-alpha.17] - 2018-02-13
 ### Added
 - Add .gitattributes file with merge strategy for the Changelog.
 - Context switcher added for dashboard
