@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"io"
 	"strings"
 
@@ -18,7 +19,11 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "list",
 		Short:        "list users",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			// Fetch users from API
 			results, err := cli.Client.ListUsers()
 			if err != nil {

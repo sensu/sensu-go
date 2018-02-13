@@ -1,12 +1,14 @@
 package entity
 
 import (
+	"errors"
 	"io"
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/commands/timeutil"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -18,7 +20,11 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "list",
 		Short:        "list entities",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			org := cli.Config.Organization()
 			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
 				org = "*"
@@ -76,7 +82,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Last Seen",
 			CellTransformer: func(data interface{}) string {
 				entity, _ := data.(types.Entity)
-				return helpers.HumanTimestamp(entity.LastSeen)
+				return timeutil.HumanTimestamp(entity.LastSeen)
 			},
 		},
 	})

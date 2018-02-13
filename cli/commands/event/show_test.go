@@ -42,7 +42,7 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
 	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.NotEmpty(t, out)
 	assert.Contains(t, out, "Usage")
 }

@@ -1,11 +1,13 @@
 package entity
 
 import (
+	"errors"
 	"io"
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/commands/timeutil"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/types"
@@ -20,7 +22,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch handlers from API
@@ -71,7 +74,7 @@ func printEntityToList(r *types.Entity, writer io.Writer) {
 			},
 			{
 				Label: "Last Seen",
-				Value: helpers.HumanTimestamp(r.LastSeen),
+				Value: timeutil.HumanTimestamp(r.LastSeen),
 			},
 			{
 				Label: "Hostname",

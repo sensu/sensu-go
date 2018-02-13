@@ -30,7 +30,7 @@ func TestRemoveRoleCommandRunEClosureWithoutName(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
-	assert.Nil(err)
+	assert.Error(err)
 }
 
 func TestRemoveRoleCommandRunEClosureWithFlags(t *testing.T) {

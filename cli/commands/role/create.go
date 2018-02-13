@@ -12,12 +12,13 @@ import (
 // CreateCommand defines new command to create roles
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
+		Use:          "create [NAME]",
 		Short:        "create new roles",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				return errors.New("must provide role's name as first argument")
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			role := &types.Role{Name: args[0]}

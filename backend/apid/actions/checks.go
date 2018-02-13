@@ -2,6 +2,7 @@ package actions
 
 import (
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -28,17 +29,29 @@ var checkConfigUpdateFields = []string{
 	"ProxyRequests",
 }
 
+var (
+	adhocQueueName = "adhocRequest"
+)
+
+// CheckStore contains storage and queue info for Checks.
+type CheckStore interface {
+	store.CheckConfigStore
+	queue.Get
+}
+
 // CheckController exposes actions in which a viewer can perform.
 type CheckController struct {
-	Store  store.CheckConfigStore
-	Policy authorization.CheckPolicy
+	Store      CheckStore
+	Policy     authorization.CheckPolicy
+	checkQueue queue.Interface
 }
 
 // NewCheckController returns new CheckController
-func NewCheckController(store store.CheckConfigStore) CheckController {
+func NewCheckController(store CheckStore) CheckController {
 	return CheckController{
-		Store:  store,
-		Policy: authorization.Checks,
+		Store:      store,
+		Policy:     authorization.Checks,
+		checkQueue: store.NewQueue(adhocQueueName),
 	}
 }
 
@@ -67,6 +80,7 @@ func (a CheckController) Query(ctx context.Context) ([]*types.CheckConfig, error
 func (a CheckController) Find(ctx context.Context, name string) (*types.CheckConfig, error) {
 	// Fetch from store
 	result, serr := a.Store.GetCheckConfigByName(ctx, name)
+
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -270,4 +284,32 @@ func (a CheckController) findAndUpdateCheckConfig(
 
 	// Update
 	return a.updateCheckConfig(ctx, check)
+}
+
+// QueueAdhocRequest takes a check request and adds it to the queue for
+// processing.
+func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adhocRequest *types.AdhocRequest) error {
+	checkConfig, err := a.Find(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, checkConfig)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Verify viewer can make change
+	if yes := abilities.CanCreate(checkConfig); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// if there are subscriptions, update the check with the provided subscriptions;
+	// otherwise, use what the check already has
+	if len(adhocRequest.Subscriptions) > 0 {
+		checkConfig.Subscriptions = adhocRequest.Subscriptions
+	}
+
+	// finally, add the check to the queue
+	err = a.checkQueue.Enqueue(ctx, checkConfig.String())
+	return err
 }

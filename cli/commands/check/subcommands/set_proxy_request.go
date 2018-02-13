@@ -1,7 +1,8 @@
-package check
+package subcommands
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -11,16 +12,17 @@ import (
 )
 
 // SetProxyRequestsCommand adds a command that allows a user to set the proxy
-// request for a check
+// requests for a check
 func SetProxyRequestsCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "set-proxy-requests NAME",
+		Use:          "set-proxy-requests [NAME]",
 		Short:        "set proxy requests for a check from file or stdin",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			check, err := cli.Client.FetchCheck(args[0])
@@ -59,40 +61,6 @@ func SetProxyRequestsCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("file", "f", "", "Proxy request definition file")
-
-	return cmd
-}
-
-// RemoveProxyRequestsCommand adds a command that allows a user to set the proxy
-// request for a check
-func RemoveProxyRequestsCommand(cli *cli.SensuCli) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:          "remove-proxy-requests NAME",
-		Short:        "removes proxy requests for a check",
-		SilenceUsage: false,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// Print usage if we do not receive one argument
-			if len(args) != 1 {
-				return cmd.Help()
-			}
-
-			check, err := cli.Client.FetchCheck(args[0])
-			if err != nil {
-				return err
-			}
-			check.ProxyRequests = nil
-
-			if err := check.Validate(); err != nil {
-				return err
-			}
-			if err := cli.Client.UpdateCheck(check); err != nil {
-				return err
-			}
-
-			fmt.Fprintln(cmd.OutOrStdout(), "OK")
-			return nil
-		},
-	}
 
 	return cmd
 }
