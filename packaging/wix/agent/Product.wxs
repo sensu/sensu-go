@@ -39,6 +39,9 @@
   <?define sensuAgentServiceConfigSourcePath="$(var.ProjectDir)\packaging\files\windows\sensu-agent-svc.xml" ?>
   <?define serviceWrapperDotNet2SourcePath="$(var.ProjectDir)\packaging\files\windows\WinSW.NET2.exe" ?>
   <?define serviceWrapperDotNet4SourcePath="$(var.ProjectDir)\packaging\files\windows\WinSW.NET4.exe" ?>
+  <?define bannerBmpPath="$(var.ProjectDir)\packaging\wix\agent\assets\banner_background.bmp" ?>
+  <?define dialogBmpPath="$(var.ProjectDir)\packaging\wix\agent\assets\dialog_background.bmp" ?>
+  <?define iconPath="$(var.ProjectDir)\packaging\wix\agent\assets\project.ico" ?>
 
   <!--
       =============================================================================================
@@ -67,11 +70,11 @@
     <WixVariable Id="WixUILicenseRtf" Value="$(var.sensuLicenseSourcePath)" />
 
     <!-- UI customization -->
-    <WixVariable Id="WixUIBannerBmp" Value="assets\banner_background.bmp" />
-    <WixVariable Id="WixUIDialogBmp" Value="assets\dialog_background.bmp" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.bannerBmpPath)" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.dialogBmpPath)" />
 
     <!-- Define icons (ID should not be longer than 18 chars and must end with ".exe") -->
-    <Icon Id="Icon.exe" SourceFile="assets\project.ico" />
+    <Icon Id="Icon.exe" SourceFile="$(var.iconPath)" />
 
     <!-- Set properties for Programs & Features (Add/Remove Programs) -->
     <Property Id="ARPPRODUCTICON" Value="Icon.exe" />
