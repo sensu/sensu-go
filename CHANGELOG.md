@@ -31,8 +31,6 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ### Fixed
  - Fixed required flags in `sensuctl` so requirements are enforced.
-
-### Fixed
 - Add support for embedded fields to dynamic.Marshal.
 
 ## [2.0.0-alpha.16] - 2018-02-07
