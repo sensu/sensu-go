@@ -35,6 +35,10 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ### Fixed
 - Fixed required flags in `sensuctl` so requirements are enforced.
+- Renamed CLI asset create interactive prompt "Org" to "Organization"
+
+### Fixed
+ - Fixed required flags in `sensuctl` so requirements are enforced.
 - Add support for embedded fields to dynamic.Marshal.
 - Increased the timeout in the store's watchers tests
 - Incremental retry mechanism when waiting for agent and backend in e2e tests.
