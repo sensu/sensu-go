@@ -1,6 +1,7 @@
 package silenced
 
 import (
+	"errors"
 	"io"
 	"time"
 
@@ -20,6 +21,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list silenced entries",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			org := cli.Config.Organization()
 			flg := cmd.Flags()
 			if ok, err := flg.GetBool(flags.AllOrgs); err != nil {

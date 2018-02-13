@@ -18,7 +18,7 @@ func TestDeleteCommand(t *testing.T) {
 		expectError    bool
 		skipConfirm    bool
 	}{
-		{"", nil, "Usage", false, true},
+		{"", nil, "Usage", true, true},
 		{"foo", fmt.Errorf("error"), "", true, true},
 		{"foo", nil, "Deleted", false, true},
 		{"foo", nil, "Canceled", false, false},

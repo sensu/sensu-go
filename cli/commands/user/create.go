@@ -1,10 +1,12 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -21,12 +23,23 @@ type createOpts struct {
 // CreateCommand adds command that allows user to create new users
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
+		Use:          "create [NAME]",
 		Short:        "create new users",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("password")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
+
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			opts := &createOpts{}
 
 			if len(args) > 0 {
@@ -38,7 +51,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				opts.withFlags(flags)
+				opts.withFlags(cmd.Flags())
 			}
 
 			user := opts.toUser()
@@ -63,9 +76,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().Bool("admin", false, "Give user the administrator role")
 	_ = cmd.Flags().StringP("roles", "r", "", "Comma separated list of roles to assign")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("password")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }
 

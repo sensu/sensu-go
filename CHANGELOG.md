@@ -6,17 +6,34 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Add .gitattributes file with merge strategy for the Changelog.
+- Context switcher added for dashboard
+- Add api support for adhoc check requests.
+- Check scheduler now supports round-robin scheduling.
+- Added better error checking for CLI commands and support for mutually
+exclusive fields.
+- Added `--interactive` flag to CLI which is required to run interactive mode.
+- Added CLI role rule-add Organization and Environment interactive prompts.
+- Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
+of a check. This allows updating single fields and completely clearing out
+non-required fields.
+
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
 in `sensuctl` with optional timezone. Stores the field as unix epoch time.
+- Increased the timeout in the store's watchers tests
 - Incremental retry mechanism when waiting for agent and backend in e2e tests.
+- Renamed CLI asset create interactive prompt "Org" to "Organization"
+
+### Fixed
+ - Fixed required flags in `sensuctl` so requirements are enforced.
 
 ## [2.0.0-alpha.16] - 2018-02-07
 ### Added
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
-- Add api support for adhoc check requests.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to

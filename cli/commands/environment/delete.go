@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -18,7 +19,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			// If no name is present print out usage
 			if len(args) != 1 || args[0] == "" {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			org := cli.Config.Organization()

@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
@@ -12,13 +13,14 @@ import (
 // UpdateCommand adds command that allows user to create new assets
 func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "update NAME",
+		Use:          "update [NAME]",
 		Short:        "update assets",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Print ot usage if we do not receive one argument
+			// Print out usage if we do not receive one argument
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch assets from API

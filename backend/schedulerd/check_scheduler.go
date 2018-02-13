@@ -1,6 +1,7 @@
 package schedulerd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -28,13 +29,16 @@ type CheckScheduler struct {
 	MessageBus   messaging.MessageBus
 	WaitGroup    *sync.WaitGroup
 
-	logger   *logrus.Entry
-	stopping chan struct{}
+	logger *logrus.Entry
+
+	ringGetter types.RingGetter
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
-// Start scheduler, ...
+// Start starts the CheckScheduler. It always returns nil error.
 func (s *CheckScheduler) Start() error {
-	s.stopping = make(chan struct{})
+	s.ctx, s.cancel = context.WithCancel(context.Background())
 	s.WaitGroup.Add(1)
 	defer s.WaitGroup.Done()
 
@@ -51,7 +55,10 @@ func (s *CheckScheduler) Start() error {
 			s.logger.Infof("starting new interval scheduler")
 			timer = NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
 		}
-		executor := &CheckExecutor{Bus: s.MessageBus}
+		executor := &CheckExecutor{
+			Bus:        s.MessageBus,
+			roundRobin: newRoundRobinScheduler(s.ctx, s.MessageBus, s.ringGetter),
+		}
 
 		// TODO(greg): Refactor this part to make the code more easily tested.
 		timer.Start()
@@ -59,7 +66,7 @@ func (s *CheckScheduler) Start() error {
 
 		for {
 			select {
-			case <-s.stopping:
+			case <-s.ctx.Done():
 				return
 			case <-timer.C():
 				// Fetch check from scheduler's state
@@ -139,15 +146,16 @@ func (s *CheckScheduler) Start() error {
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
 	s.logger.Infof("stopping scheduler")
-	close(s.stopping)
+	s.cancel()
 
 	return nil
 }
 
 // CheckExecutor builds request & publishes
 type CheckExecutor struct {
-	Bus   messaging.MessageBus
-	State *SchedulerState
+	Bus        messaging.MessageBus
+	State      *SchedulerState
+	roundRobin *roundRobinScheduler
 }
 
 // Execute queues reqest on message bus
@@ -161,11 +169,23 @@ func (e *CheckExecutor) Execute(check *types.CheckConfig) error {
 	request := e.BuildRequest(check)
 
 	for _, sub := range check.Subscriptions {
-		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
+		org, env := check.Organization, check.Environment
+		topic := messaging.SubscriptionTopic(org, env, sub)
+		if check.RoundRobin {
+			msg := &roundRobinMessage{
+				subscription: topic,
+				req:          request,
+			}
+			_, err := e.roundRobin.Schedule(msg)
+			if err != nil {
+				logger.WithError(err).Error("error scheduling round robin request")
+			}
+			continue
+		}
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
 		if pubErr := e.Bus.Publish(topic, request); pubErr != nil {
-			logger.Info("error publishing check request: ", pubErr.Error())
+			logger.WithError(pubErr).Error("error publishing check request")
 			err = pubErr
 		}
 	}

@@ -32,7 +32,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
-	assert.Nil(err)
+	assert.Error(err)
 }
 
 func TestDeleteCommandRunEClosureMissingFlags(t *testing.T) {
@@ -48,7 +48,7 @@ func TestDeleteCommandRunEClosureMissingFlags(t *testing.T) {
 
 	assert.NotContains(out, "OK")
 	assert.Contains(out, "Usage")
-	assert.NoError(err)
+	assert.Error(err)
 }
 
 func TestDeleteCommandRunEClosureTooManyFlags(t *testing.T) {
@@ -65,7 +65,7 @@ func TestDeleteCommandRunEClosureTooManyFlags(t *testing.T) {
 
 	assert.NotContains(out, "OK")
 	assert.Contains(out, "Usage")
-	assert.NoError(err)
+	assert.Error(err)
 }
 
 func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {

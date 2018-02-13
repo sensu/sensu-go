@@ -25,17 +25,21 @@ type passwordPromptInput struct {
 // SetPasswordCommand adds command that allows user to create new users
 func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "change-password USERNAME",
+		Use:          "change-password [USERNAME]",
 		Short:        "change password for given user",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			var username string
 			var promptForCurrentPassword bool
 
 			// Retrieve current username from JWT
 			currentUsername := getCurrentUsername(cli.Config)
 
-			// If no username is given we user the current user's name
+			// If no username is given we use the current user's name
 			if len(args) > 0 {
 				username = args[0]
 			} else {

@@ -13,7 +13,7 @@ import (
 
 // IntegrationTestStore wrapper for etcd & store
 type IntegrationTestStore struct {
-	store.Store
+	*etcdstore.Store
 	// underscores to avoid collision w/ store
 	_etcd        *etcd.Etcd
 	_removeTmpFn func()
