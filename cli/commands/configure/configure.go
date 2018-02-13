@@ -27,6 +27,15 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		Use:          "configure",
 		Short:        "Initialize sensuctl configuration",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			flags := cmd.Flags()
+			nonInteractive, _ := flags.GetBool("non-interactive")
+			if nonInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("username")
+				_ = cmd.MarkFlagRequired("password")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				_ = cmd.Help()
@@ -121,10 +130,6 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("environment", "", cli.Config.Environment(), "environment")
 	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
 	_ = cmd.Flags().StringP("organization", "", cli.Config.Organization(), "organization")
-
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("username")
-	_ = cmd.MarkFlagRequired("password")
 
 	return cmd
 }
