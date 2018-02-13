@@ -147,3 +147,44 @@ func TestGetJSONStructField(t *testing.T) {
 	assert.Equal("validEmpty", field.JSONName)
 	assert.Equal(false, field.OmitEmpty)
 }
+
+type Embedded struct {
+	Bar   string `json:"bar"`
+	Attrs []byte `json:"-"`
+}
+
+func (e *Embedded) GetExtendedAttributes() []byte {
+	return e.Attrs
+}
+
+func (e *Embedded) SetExtendedAttributes(b []byte) {
+	e.Attrs = b
+}
+
+type EmbeddedTest struct {
+	Foo string `json:"foo"`
+	Embedded
+	Baz string `json:"baz"`
+}
+
+func TestMarshalUnmarshalEmbedded(t *testing.T) {
+	test := &EmbeddedTest{
+		Foo: "foo",
+		Embedded: Embedded{
+			Bar: "bar",
+		},
+		Baz: "baz",
+	}
+
+	require.NoError(t, SetField(test, "extended", true))
+
+	b, err := Marshal(test)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, `{"bar":"bar","baz":"baz","foo":"foo","extended":true}`, string(b))
+
+	var result EmbeddedTest
+	require.NoError(t, Unmarshal(b, &result))
+
+	require.Equal(t, test, &result)
+}
