@@ -60,11 +60,10 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	checkHooks := request.Hooks
 
 	// Instantiate Event
+	check := types.NewCheck(checkConfig)
+	check.Executed = time.Now().Unix()
 	event := &types.Event{
-		Check: &types.Check{
-			Config:   checkConfig,
-			Executed: time.Now().Unix(),
-		},
+		Check: check,
 	}
 
 	// Ensure that the asset manager is aware of all the assets required to
@@ -123,18 +122,23 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 // prepareCheck prepares a check before its execution by validating the
 // configuration and performing token substitution. A boolean value is returned,
 // indicathing whether the check should be executed or not
-func (a *Agent) prepareCheck(check *types.CheckConfig) bool {
+func (a *Agent) prepareCheck(cfg *types.CheckConfig) bool {
 	// Instantiate an event in case of failure
+	check := types.NewCheck(cfg)
+	check.Executed = time.Now().Unix()
 	event := &types.Event{
-		Check: &types.Check{
-			Config:   check,
-			Executed: time.Now().Unix(),
-		},
+		Check: check,
 	}
 
 	// Validate that the given check is valid.
 	if err := check.Validate(); err != nil {
 		a.sendFailure(event, fmt.Errorf("given check is invalid: %s", err))
+		return false
+	}
+
+	// Special case for agents
+	if check.Interval < 1 {
+		a.sendFailure(event, errors.New("given check is invalid: missing interval"))
 		return false
 	}
 
@@ -148,7 +152,7 @@ func (a *Agent) prepareCheck(check *types.CheckConfig) bool {
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	checkBytes, err := TokenSubstitution(synthesizedEntity, check)
+	checkBytes, err := TokenSubstitution(synthesizedEntity, cfg)
 	if err != nil {
 		a.sendFailure(event, err)
 		return false
@@ -156,7 +160,7 @@ func (a *Agent) prepareCheck(check *types.CheckConfig) bool {
 
 	// Unmarshal the check configuration obtained after the token substitution
 	// back into the check config struct
-	err = json.Unmarshal(checkBytes, check)
+	err = json.Unmarshal(checkBytes, cfg)
 	if err != nil {
 		a.sendFailure(event, fmt.Errorf("could not unmarshal the check: %s", err))
 		return false

@@ -36,20 +36,20 @@ func TestErrorStorage(t *testing.T) {
 		assert.EqualValues(t, []*types.Error{perr}, entityErrors)
 
 		// GetErrorsByCheck
-		checkErrors, err := store.GetErrorsByEntityCheck(ctx, perr.Event.Entity.ID, perr.Event.Check.Config.Name)
+		checkErrors, err := store.GetErrorsByEntityCheck(ctx, perr.Event.Entity.ID, perr.Event.Check.Name)
 		require.NoError(t, err)
 		assert.Len(t, checkErrors, 1)
 		assert.EqualValues(t, []*types.Error{perr}, checkErrors)
 
 		// GetError
-		perrRes, err := store.GetError(ctx, perr.Event.Entity.ID, perr.Event.Check.Config.Name, string(perr.Timestamp))
+		perrRes, err := store.GetError(ctx, perr.Event.Entity.ID, perr.Event.Check.Name, string(perr.Timestamp))
 		require.NoError(t, err)
 		assert.EqualValues(t, perr, perrRes)
 
 		// Delete error
 		cerr = store.CreateError(ctx, perr) // Ensure error is present
 		require.NoError(t, cerr)
-		err = store.DeleteError(ctx, perr.Event.Entity.ID, perr.Event.Check.Config.Name, string(perr.Timestamp))
+		err = store.DeleteError(ctx, perr.Event.Entity.ID, perr.Event.Check.Name, string(perr.Timestamp))
 		require.NoError(t, err)
 		allErrors, err = store.GetErrors(ctx) // Check that error is gone
 		require.NoError(t, err)
@@ -58,7 +58,7 @@ func TestErrorStorage(t *testing.T) {
 		// Delete errors by check
 		cerr = store.CreateError(ctx, perr) // Ensure error is present
 		require.NoError(t, cerr)
-		err = store.DeleteErrorsByEntityCheck(ctx, perr.Event.Entity.ID, perr.Event.Check.Config.Name)
+		err = store.DeleteErrorsByEntityCheck(ctx, perr.Event.Entity.ID, perr.Event.Check.Name)
 		require.NoError(t, err)
 		allErrors, err = store.GetErrors(ctx) // Check that error is gone
 		require.NoError(t, err)

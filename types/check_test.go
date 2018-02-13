@@ -15,26 +15,8 @@ func TestCheckValidate(t *testing.T) {
 	assert.Error(t, c.Validate())
 	c.Status = 0
 
-	// Valid w/o config
-	assert.NoError(t, c.Validate())
+	c.Name = "test"
 
-	c.Config = &CheckConfig{
-		Name: "test",
-	}
-
-	// Invalid w/ bad config
-	assert.Error(t, c.Validate())
-
-	c.Config = &CheckConfig{
-		Name:         "test",
-		Interval:     10,
-		Command:      "yes",
-		Environment:  "default",
-		Organization: "default",
-		Ttl:          30,
-	}
-
-	// Valid check
 	assert.NoError(t, c.Validate())
 }
 
@@ -72,33 +54,31 @@ func TestCheckConfig(t *testing.T) {
 
 func TestScheduleValidation(t *testing.T) {
 	c := FixtureCheck("check")
-	config := c.Config
 
 	// Fixture comes with valid interval-based schedule
-	assert.NoError(t, config.Validate())
+	assert.NoError(t, c.Validate())
 
-	config.Cron = "* * * * *"
-	assert.Error(t, config.Validate())
+	c.Cron = "* * * * *"
+	assert.Error(t, c.Validate())
 
-	config.Interval = 0
-	assert.NoError(t, config.Validate())
+	c.Interval = 0
+	assert.NoError(t, c.Validate())
 
-	config.Cron = "this is an invalid cron"
-	assert.Error(t, config.Validate())
+	c.Cron = "this is an invalid cron"
+	assert.Error(t, c.Validate())
 }
 
 func TestFixtureCheckIsValid(t *testing.T) {
 	c := FixtureCheck("check")
-	config := c.Config
 
-	assert.Equal(t, "check", config.Name)
-	assert.NoError(t, config.Validate())
+	assert.Equal(t, "check", c.Name)
+	assert.NoError(t, c.Validate())
 
-	config.RuntimeAssets = []string{"good"}
-	assert.NoError(t, config.Validate())
+	c.RuntimeAssets = []string{"good"}
+	assert.NoError(t, c.Validate())
 
-	config.RuntimeAssets = []string{"BAD--a!!!---ASDFASDF$$$$"}
-	assert.Error(t, config.Validate())
+	c.RuntimeAssets = []string{"BAD--a!!!---ASDFASDF$$$$"}
+	assert.Error(t, c.Validate())
 }
 
 func TestMergeWith(t *testing.T) {
@@ -120,8 +100,8 @@ func TestExtendedAttributes(t *testing.T) {
 		Get(string) (interface{}, error)
 	}
 	check := FixtureCheck("chekov")
-	check.Config.SetExtendedAttributes([]byte(`{"foo":{"bar":42,"baz":9001}}`))
-	g, err := check.Config.Get("foo")
+	check.SetExtendedAttributes([]byte(`{"foo":{"bar":42,"baz":9001}}`))
+	g, err := check.Get("foo")
 	require.NoError(t, err)
 	v, err := g.(getter).Get("bar")
 	require.NoError(t, err)

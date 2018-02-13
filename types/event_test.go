@@ -18,9 +18,9 @@ func TestFixtureEventIsValid(t *testing.T) {
 func TestEventValidate(t *testing.T) {
 	event := FixtureEvent("entity", "check")
 
-	event.Check.Config.Name = ""
+	event.Check.Name = ""
 	assert.Error(t, event.Validate())
-	event.Check.Config.Name = "check"
+	event.Check.Name = "check"
 
 	event.Entity.ID = ""
 	assert.Error(t, event.Validate())

@@ -17,19 +17,102 @@ const CheckRequestType = "check_request"
 // DefaultSplayCoverage is the default splay coverage for proxy check requests
 const DefaultSplayCoverage = 90.0
 
+// NewCheck creates a new Check. It copies the fields from CheckConfig that
+// match with Check's fields.
+//
+// Because CheckConfig uses extended attributes, embedding CheckConfig was
+// deemed to be too complicated, due to interactions between promoted methods
+// and encoding/json.
+func NewCheck(c *CheckConfig) *Check {
+	check := &Check{
+		Command:            c.Command,
+		Environment:        c.Environment,
+		Handlers:           c.Handlers,
+		HighFlapThreshold:  c.HighFlapThreshold,
+		Interval:           c.Interval,
+		LowFlapThreshold:   c.LowFlapThreshold,
+		Name:               c.Name,
+		Organization:       c.Organization,
+		Publish:            c.Publish,
+		RuntimeAssets:      c.RuntimeAssets,
+		Subscriptions:      c.Subscriptions,
+		ExtendedAttributes: c.ExtendedAttributes,
+		ProxyEntityID:      c.ProxyEntityID,
+		CheckHooks:         c.CheckHooks,
+		Stdin:              c.Stdin,
+		Subdue:             c.Subdue,
+		Cron:               c.Cron,
+		Ttl:                c.Ttl,
+		Timeout:            c.Timeout,
+		ProxyRequests:      c.ProxyRequests,
+		RoundRobin:         c.RoundRobin,
+	}
+	return check
+}
+
 // Validate returns an error if the check does not pass validation tests.
 func (c *Check) Validate() error {
-	if config := c.Config; config != nil {
-		if err := config.Validate(); err != nil {
+	if err := ValidateName(c.Name); err != nil {
+		return errors.New("check name " + err.Error())
+	}
+	if c.Status < 0 {
+		return errors.New("check status must be greater than or equal to 0")
+	}
+	if c.Cron != "" {
+		if c.Interval > 0 {
+			return errors.New("must only specify either an interval or a cron schedule")
+		}
+
+		if _, err := cron.ParseStandard(c.Cron); err != nil {
+			return errors.New("check cron string is invalid")
+		}
+	}
+
+	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
+		return errors.New("ttl must be greater than check interval")
+	}
+
+	for _, assetName := range c.RuntimeAssets {
+		if err := ValidateAssetName(assetName); err != nil {
+			return fmt.Errorf("asset's %s", err)
+		}
+	}
+
+	// The entity can be empty but can't contain invalid characters (only
+	// alphanumeric string)
+	if c.ProxyEntityID != "" {
+		if err := ValidateName(c.ProxyEntityID); err != nil {
+			return errors.New("proxy entity id " + err.Error())
+		}
+	}
+
+	if c.ProxyRequests != nil {
+		if err := c.ProxyRequests.Validate(); err != nil {
 			return err
 		}
 	}
 
-	if c.Status < 0 {
-		return errors.New("check status must be greater than or equal to 0")
-	}
+	return c.Subdue.Validate()
+}
 
-	return nil
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (c *Check) UnmarshalJSON(b []byte) error {
+	return dynamic.Unmarshal(b, c)
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (c *Check) MarshalJSON() ([]byte, error) {
+	return dynamic.Marshal(c)
+}
+
+// SetExtendedAttributes sets the serialized ExtendedAttributes of c.
+func (c *Check) SetExtendedAttributes(e []byte) {
+	c.ExtendedAttributes = e
+}
+
+// Get implements govaluate.Parameters
+func (c *Check) Get(name string) (interface{}, error) {
+	return dynamic.GetField(c, name)
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -199,15 +282,13 @@ func FixtureCheck(id string) *Check {
 		}
 	}
 
-	return &Check{
-		Status:   0,
-		Output:   "",
-		Issued:   t,
-		Executed: t + 1,
-		Duration: 1.0,
-		History:  history,
-		Config:   config,
-	}
+	c := NewCheck(config)
+	c.Issued = t
+	c.Executed = t + 1
+	c.Duration = 1.0
+	c.History = history
+
+	return c
 }
 
 // FixtureProxyRequests returns a fixture for a ProxyRequests object.

@@ -44,8 +44,8 @@ func TestEventdMonitor(t *testing.T) {
 	}
 
 	event := types.FixtureEvent("entity1", "check1")
-	event.Check.Config.Interval = 1
-	event.Check.Config.Ttl = 2
+	event.Check.Interval = 1
+	event.Check.Ttl = 2
 
 	if err := bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		assert.FailNow(t, "failed to publish event to TopicEventRaw")

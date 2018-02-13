@@ -62,7 +62,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Check",
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
-				return event.Check.Config.Name
+				return event.Check.Name
 			},
 		},
 		{

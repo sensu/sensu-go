@@ -118,7 +118,7 @@ func (a EventController) Destroy(ctx context.Context, params QueryParams) error 
 
 // Update updates the event indicated by the supplied entity and check.
 func (a EventController) Update(ctx context.Context, event types.Event) error {
-	check := event.Check.Config
+	check := event.Check
 	entity := event.Entity
 
 	// Adjust context
@@ -156,7 +156,7 @@ func (a EventController) Update(ctx context.Context, event types.Event) error {
 // Create creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
 func (a EventController) Create(ctx context.Context, event types.Event) error {
-	check := event.Check.Config
+	check := event.Check
 	entity := event.Entity
 
 	// Adjust context

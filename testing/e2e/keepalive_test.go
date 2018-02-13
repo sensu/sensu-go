@@ -68,7 +68,7 @@ func (suite *EventTestSuite) TestKeepaliveEvent() {
 
 	seen := false
 	for _, ev := range events {
-		if ev.Check.Config.Name == "keepalive" {
+		if ev.Check.Name == "keepalive" {
 			seen = true
 			assert.Equal("TestKeepalives", ev.Entity.ID)
 			assert.NotZero(ev.Timestamp)
@@ -132,7 +132,7 @@ func (suite *EventTestSuite) TestCheck() {
 	assert.NotNil(event.Check)
 	assert.NotNil(event.Entity)
 	assert.Equal("TestKeepalives", event.Entity.ID)
-	assert.Equal(checkName, event.Check.Config.Name)
+	assert.Equal(checkName, event.Check.Name)
 }
 
 func (suite *EventTestSuite) TestHTTPAPI() {

@@ -21,16 +21,16 @@ func prepareEvent(a *Agent, event *types.Event) error {
 	}
 
 	// Make sure the check has all required attributes
-	if event.Check.Config.Interval == 0 {
-		event.Check.Config.Interval = 1
+	if event.Check.Interval == 0 {
+		event.Check.Interval = 1
 	}
 
-	if event.Check.Config.Organization == "" {
-		event.Check.Config.Organization = a.config.Organization
+	if event.Check.Organization == "" {
+		event.Check.Organization = a.config.Organization
 	}
 
-	if event.Check.Config.Environment == "" {
-		event.Check.Config.Environment = a.config.Environment
+	if event.Check.Environment == "" {
+		event.Check.Environment = a.config.Environment
 	}
 
 	if event.Check.Executed == 0 {
@@ -55,9 +55,6 @@ func prepareEvent(a *Agent, event *types.Event) error {
 // translateToEvent accepts a 1.x compatible check result
 // and attempts to translate it to a 2.x event
 func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error {
-	var checkConfig types.CheckConfig
-	var check types.Check
-
 	if result.Name == "" {
 		return fmt.Errorf("a check name must be provided")
 	}
@@ -76,20 +73,21 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 		}
 	}
 
-	check.Status = result.Status
-	checkConfig.Command = result.Command
-	checkConfig.Subscriptions = result.Subscribers
-	checkConfig.Interval = result.Interval
-	checkConfig.Name = result.Name
-	check.Issued = result.Issued
-	check.Executed = result.Executed
-	check.Duration = result.Duration
-	check.Output = result.Output
-	checkConfig.SetExtendedAttributes(result.GetExtendedAttributes())
+	check := &types.Check{
+		Status:        result.Status,
+		Command:       result.Command,
+		Subscriptions: result.Subscribers,
+		Interval:      result.Interval,
+		Name:          result.Name,
+		Issued:        result.Issued,
+		Executed:      result.Executed,
+		Duration:      result.Duration,
+		Output:        result.Output,
+	}
+	check.SetExtendedAttributes(result.GetExtendedAttributes())
 
 	// add config and check values to the 2.x event
-	check.Config = &checkConfig
-	event.Check = &check
+	event.Check = check
 
 	return nil
 }

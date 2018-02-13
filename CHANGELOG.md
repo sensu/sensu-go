@@ -12,6 +12,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 of a check. This allows updating single fields and completely clearing out
 non-required fields.
 
+### Changed
+- Refactor Check data structure to not depend on CheckConfig. This is a breaking
+change that will cause existing Sensu alpha installations to break if upgraded.
+This change was made before beta release so that further breaking changes could
+be avoided.
+
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
 - Add .gitattributes file with merge strategy for the Changelog.
