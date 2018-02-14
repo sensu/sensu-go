@@ -1,6 +1,7 @@
 package configure
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
@@ -26,7 +27,21 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		Use:          "configure",
 		Short:        "Initialize sensuctl configuration",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			flags := cmd.Flags()
+			nonInteractive, _ := flags.GetBool("non-interactive")
+			if nonInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("username")
+				_ = cmd.MarkFlagRequired("password")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
+
 			flags := cmd.Flags()
 
 			nonInteractive, err := flags.GetBool("non-interactive")
@@ -39,13 +54,13 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if nonInteractive {
 				answers.withFlags(flags)
 			} else {
-				if err := answers.administerQuestionnaire(cli.Config); err != nil {
+				if err = answers.administerQuestionnaire(cli.Config); err != nil {
 					return err
 				}
 			}
 
 			// Write new API URL to disk
-			if err := cli.Config.SaveAPIUrl(answers.URL); err != nil {
+			if err = cli.Config.SaveAPIUrl(answers.URL); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
 				return fmt.Errorf(
 					"unable to write new configuration file with error: %s",
@@ -115,10 +130,6 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("environment", "", cli.Config.Environment(), "environment")
 	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
 	_ = cmd.Flags().StringP("organization", "", cli.Config.Organization(), "organization")
-
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("username")
-	_ = cmd.MarkFlagRequired("password")
 
 	return cmd
 }

@@ -36,3 +36,6 @@ packaging/hooks/*/rpm/*
 .packagecloud
 vendor/
 gcs-service-account.json
+*.wixobj
+*.wixpdb
+*.msi

@@ -67,6 +67,26 @@ func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
 	return nil
 }
 
+// ExecuteCheck sends an execution request with the provided adhoc request
+func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
+	bytes, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Post("/checks/" + req.Name + "/execute")
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
+
 // FetchCheck fetches a specific check
 func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 	var check *types.CheckConfig

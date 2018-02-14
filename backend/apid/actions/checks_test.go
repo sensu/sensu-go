@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -16,6 +17,7 @@ func TestNewCheckController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
+	store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
 	actions := NewCheckController(store)
 
 	assert.NotNil(actions)
@@ -82,6 +84,7 @@ func TestCheckQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
 		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -153,6 +156,7 @@ func TestCheckFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
 		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -252,6 +256,7 @@ func TestCheckCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
 		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -363,6 +368,7 @@ func TestCheckUpdate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
 		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -463,6 +469,7 @@ func TestCheckDestroy(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
 		actions := NewCheckController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -492,4 +499,91 @@ func TestCheckDestroy(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckAdhoc(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate, types.RulePermRead),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
+		),
+	)
+
+	badCheck := types.FixtureCheckConfig("check1")
+	badCheck.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.AdhocRequest
+		fetchResult     *types.CheckConfig
+		checkName       string
+		fetchErr        error
+		queueErr        error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Queued",
+			ctx:         defaultCtx,
+			argument:    types.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"}),
+			fetchResult: types.FixtureCheckConfig("check1"),
+			checkName:   "check1",
+			fetchErr:    nil,
+			queueErr:    nil,
+			expectedErr: false,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureAdhocRequest("check2", []string{"subscription1", "subscription2"}),
+			fetchResult:     types.FixtureCheckConfig("check2"),
+			checkName:       "check2",
+			fetchErr:        nil,
+			queueErr:        nil,
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		queue := &mockqueue.MockQueue{}
+		store.On("NewQueue", mock.Anything, mock.Anything).Return(queue)
+		actions := NewCheckController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetCheckConfigByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			queue.
+				On("Enqueue", mock.Anything, mock.Anything).
+				Return(tc.queueErr)
+
+			// Exec Query
+			err := actions.QueueAdhocRequest(tc.ctx, tc.checkName, tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+
 }

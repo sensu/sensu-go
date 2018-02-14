@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -18,13 +19,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			// If no name is present print out usage
 			if len(args) != 1 || args[0] == "" {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			org := cli.Config.Organization()
 			env := args[0]
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-				if confirmed := helpers.ConfirmDelete(env, cmd.OutOrStdout()); !confirmed {
+				if confirmed := helpers.ConfirmDelete(env); !confirmed {
 					_, err := fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return err
 				}

@@ -1,6 +1,7 @@
 package silenced
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -21,7 +22,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			id, err := getID(cmd, args)

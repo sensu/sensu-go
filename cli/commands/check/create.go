@@ -1,9 +1,12 @@
 package check
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -11,13 +14,24 @@ import (
 // CreateCommand adds command that allows user to create new checks
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
+		Use:          "create [NAME]",
 		Short:        "create new checks",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("command")
+				_ = cmd.MarkFlagRequired("subscriptions")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			opts := newCheckOpts()
 
 			if len(args) > 0 {
@@ -32,7 +46,13 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				opts.withFlags(flags)
+				opts.withFlags(cmd.Flags())
+				if opts.Interval != "" && opts.Cron != "" {
+					return fmt.Errorf("cannot specify --interval and --cron at the same time")
+				}
+				if opts.Interval == "" && opts.Cron == "" {
+					return fmt.Errorf("must specify --interval or --cron")
+				}
 			}
 
 			// Apply given arguments to check
@@ -63,21 +83,19 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("command", "c", "", "the command the check should run")
-	cmd.Flags().StringP("cron", "", "", "the cron schedule at which the check is run")
+	cmd.Flags().String("cron", "", "the cron schedule at which the check is run")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
-	cmd.Flags().StringP("interval", "i", intervalDefault, "interval, in second, at which the check is run")
+	cmd.Flags().StringP("interval", "i", "", "interval, in seconds, at which the check is run")
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
 	cmd.Flags().String("proxy-entity-id", "", "the check proxy entity, used to create a proxy entity for an external resource")
 	cmd.Flags().BoolP("publish", "p", true, "publish check requests")
 	cmd.Flags().BoolP("stdin", "", false, "accept event data via STDIN")
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().StringP("timeout", "t", "", "timeout, in seconds, at which the check has to run")
-	cmd.Flags().StringP("ttl", "", "", "time to live in seconds for which a check result is valid")
+	cmd.Flags().String("ttl", "", "time to live in seconds for which a check result is valid")
+	cmd.Flags().String("high-flap-threshold", "", "flap detection high threshold (percent state change) for the check")
+	cmd.Flags().String("low-flap-threshold", "", "flap detection low threshold (percent state change) for the check")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("command")
-	_ = cmd.MarkFlagRequired("interval")
-	_ = cmd.MarkFlagRequired("subscriptions")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

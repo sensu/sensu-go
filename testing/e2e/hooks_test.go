@@ -82,7 +82,7 @@ func TestCheckHooks(t *testing.T) {
 
 	// Add hook with hook name hook1 to check
 	checkHook := types.FixtureHookList("hook1")
-	output, err = sensuctl.run("check", "add-hook", check.Name,
+	output, err = sensuctl.run("check", "set-hooks", check.Name,
 		"--organization", check.Organization,
 		"--environment", check.Environment,
 		"--type", checkHook.Type,

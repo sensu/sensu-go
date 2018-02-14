@@ -6,7 +6,6 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
@@ -22,14 +21,16 @@ type viewerImpl struct {
 	entityCtrl actions.EntityController
 	eventsCtrl actions.EventController
 	usersCtrl  actions.UserController
+	orgsCtrl   actions.OrganizationsController
 }
 
-func newViewerImpl(store store.Store, bus messaging.MessageBus) *viewerImpl {
+func newViewerImpl(store QueueStore, bus messaging.MessageBus) *viewerImpl {
 	return &viewerImpl{
 		checksCtrl: actions.NewCheckController(store),
 		entityCtrl: actions.NewEntityController(store),
 		eventsCtrl: actions.NewEventController(store, bus),
 		usersCtrl:  actions.NewUserController(store),
+		orgsCtrl:   actions.NewOrganizationsController(store),
 	}
 }
 
@@ -88,6 +89,11 @@ func (r *viewerImpl) Events(p schema.ViewerEventsFieldResolverParams) (interface
 		edges[i] = relay.NewArrayConnectionEdge(r, i)
 	}
 	return relay.NewArrayConnection(edges, info), nil
+}
+
+// Organizations implements response to request for 'organizations' field.
+func (r *viewerImpl) Organizations(p graphql.ResolveParams) (interface{}, error) {
+	return r.orgsCtrl.Query(p.Context)
 }
 
 // User implements response to request for 'user' field.

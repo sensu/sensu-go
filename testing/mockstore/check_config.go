@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -35,4 +36,10 @@ func (s *MockStore) UpdateCheckConfig(ctx context.Context, check *types.CheckCon
 func (s *MockStore) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEventCheckConfig {
 	args := s.Called(ctx)
 	return args.Get(0).(<-chan store.WatchEventCheckConfig)
+}
+
+// NewQueue ...
+func (s *MockStore) NewQueue(name string) queue.Interface {
+	args := s.Called(name)
+	return args.Get(0).(queue.Interface)
 }

@@ -1,6 +1,7 @@
 package silenced
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -18,7 +19,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			// If pattern is wrong print out help
 			if len(args) > 1 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 			id, err := getID(cmd, args)
 			if err != nil {
@@ -26,7 +27,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-				if confirmed := helpers.ConfirmDelete(id, cmd.OutOrStdout()); !confirmed {
+				if confirmed := helpers.ConfirmDelete(id); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}

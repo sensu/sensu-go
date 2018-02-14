@@ -19,13 +19,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			// If no name is present print out usage
 			if len(args) != 1 {
 				_ = cmd.Help()
-				return errors.New("missing arguments")
+				return errors.New("invalid argument(s) received")
 			}
 
 			org := args[0]
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-				if confirmed := helpers.ConfirmDelete(org, cmd.OutOrStdout()); !confirmed {
+				if confirmed := helpers.ConfirmDelete(org); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}

@@ -5,9 +5,8 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -25,17 +24,21 @@ type passwordPromptInput struct {
 // SetPasswordCommand adds command that allows user to create new users
 func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "change-password USERNAME",
+		Use:          "change-password [USERNAME]",
 		Short:        "change password for given user",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			var username string
 			var promptForCurrentPassword bool
 
 			// Retrieve current username from JWT
-			currentUsername := getCurrentUsername(cli.Config)
+			currentUsername := helpers.GetCurrentUsername(cli.Config)
 
-			// If no username is given we user the current user's name
+			// If no username is given we use the current user's name
 			if len(args) > 0 {
 				username = args[0]
 			} else {
@@ -73,13 +76,6 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func getCurrentUsername(cfg config.Config) string {
-	accessToken := cfg.Tokens().Access
-	token, _ := jwt.ParseWithClaims(accessToken, &types.Claims{}, nil)
-	claims := token.Claims.(*types.Claims)
-	return claims.StandardClaims.Subject
 }
 
 func verifyExistingPassword(username string, cli *cli.SensuCli) error {

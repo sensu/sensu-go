@@ -1,11 +1,12 @@
 package routers
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -15,7 +16,7 @@ type ChecksRouter struct {
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(store store.CheckConfigStore) *ChecksRouter {
+func NewChecksRouter(store queueStore) *ChecksRouter {
 	return &ChecksRouter{
 		controller: actions.NewCheckController(store),
 	}
@@ -33,6 +34,9 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	// Custom
 	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
 	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
+
+	// handlefunc returns a custom status and response
+	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
@@ -88,4 +92,30 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	err := r.controller.RemoveCheckHook(req.Context(), params["id"], params["type"], params["hook"])
 	return nil, err
+}
+
+func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
+	adhocReq := types.AdhocRequest{}
+	if err := unmarshalBody(req, &adhocReq); err != nil {
+		writeError(w, err)
+		return
+	}
+	params := mux.Vars(req)
+	if err := r.controller.QueueAdhocRequest(req.Context(), params["id"], &adhocReq); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	response := make(map[string]interface{})
+	response["issued"] = time.Now().Unix()
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	if _, err := w.Write(jsonResponse); err != nil {
+		writeError(w, err)
+	}
 }

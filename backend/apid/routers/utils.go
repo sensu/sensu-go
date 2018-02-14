@@ -8,7 +8,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/store"
 )
+
+type queueStore interface {
+	store.Store
+	queue.Get
+}
 
 type errorBody struct {
 	Message string `json:"error"`

@@ -20,6 +20,12 @@ func (c *MockClient) DeleteCheck(check *types.CheckConfig) error {
 	return args.Error(0)
 }
 
+// ExecuteCheck for use with mock lib
+func (c *MockClient) ExecuteCheck(req *types.AdhocRequest) error {
+	args := c.Called(req)
+	return args.Error(0)
+}
+
 // FetchCheck for use with mock lib
 func (c *MockClient) FetchCheck(name string) (*types.CheckConfig, error) {
 	args := c.Called(name)
