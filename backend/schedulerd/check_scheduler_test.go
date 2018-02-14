@@ -358,7 +358,7 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 		}
 	}()
 
-	assert.NoError(scheduler.exec.publishProxyCheckRequest(entity, check))
+	assert.NoError(scheduler.exec.PublishProxyCheckRequests([]*types.Entity{entity}, check))
 }
 
 func TestPublishProxyCheckRequestsInterval(t *testing.T) {

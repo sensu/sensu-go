@@ -1,7 +1,10 @@
+// +build integration,race
+
 package schedulerd
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -17,24 +20,30 @@ func TestAdhocExecutor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 	bus := &messaging.WizardBus{}
-	newAdhocExec := NewAdhocRequestExecutor(store, bus)
-	if err = newAdhocExec.Start(context.Background()); err != nil {
-		assert.FailNow(t, err.Error())
-	}
-
+	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, bus)
+	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())
 
 	goodCheck := types.FixtureCheckConfig("goodCheck")
-	ch := make(chan interface{}, 10)
-	assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
+	goodCheck.Subscriptions = []string{"subscription1"}
 
-	if err = newAdhocExec.adhocQueue.Enqueue(context.Background(), goodCheck.String()); err != nil {
+	goodCheckRequest := &types.CheckRequest{}
+	goodCheckRequest.Config = goodCheck
+	ch := make(chan interface{}, 1)
+	topic := messaging.SubscriptionTopic(goodCheck.Organization, goodCheck.Environment, "subscription1")
+	assert.NoError(t, bus.Subscribe(topic, "channel", ch))
+
+	marshaledCheck, err := json.Marshal(goodCheck)
+	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
-	for msg := range ch {
-		result, ok := msg.(*types.CheckConfig)
-		assert.True(t, ok)
-		assert.EqualValues(t, goodCheck, result)
+	if err = newAdhocExec.adhocQueue.Enqueue(context.Background(), string(marshaledCheck)); err != nil {
+		assert.FailNow(t, err.Error())
 	}
+
+	msg := <-ch
+	result, ok := msg.(*types.CheckRequest)
+	assert.True(t, ok)
+	assert.EqualValues(t, goodCheckRequest, result)
 }

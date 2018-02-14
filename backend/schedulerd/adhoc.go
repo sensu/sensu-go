@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -19,60 +18,67 @@ var (
 // AdhocRequestExecutor takes new check requests from the adhoc queue and runs
 // them.
 type AdhocRequestExecutor struct {
-	adhocQueue queue.Interface
-	store      StateManagerStore
-	bus        messaging.MessageBus
+	adhocQueue     queue.Interface
+	store          StateManagerStore
+	bus            messaging.MessageBus
+	ctx            context.Context
+	cancel         context.CancelFunc
+	listenQueueErr chan error
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(store Store, bus messaging.MessageBus) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store Store, bus messaging.MessageBus) *AdhocRequestExecutor {
+	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
 		adhocQueue: store.NewQueue(adhocQueueName),
 		store:      store,
 		bus:        bus,
+		ctx:        ctx,
+		cancel:     cancel,
 	}
-	fmt.Println("in NewAdhocRequestExecutor")
+	go executor.listenQueue(ctx)
 	return executor
 }
 
-// Start starts the AdhocRequestExecutor. It will return errors encountered in
-// listenQueue and processCheck methods.
-func (a *AdhocRequestExecutor) Start(ctx context.Context) error {
-	var wg sync.WaitGroup
-	var err error
-	fmt.Println("in adhoc Start")
-	wg.Add(1)
-	// listenQueue is blocking
-	go func() {
-		defer wg.Done()
-		err = a.listenQueue(ctx)
-	}()
-	return err
+// Stop calls the context cancel function to stop the AdhocRequestExecutor.
+func (a *AdhocRequestExecutor) Stop() {
+	a.cancel()
 }
 
-func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) error {
-	fmt.Println("in adhoc listenQueue")
+func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 	for {
-		fmt.Println("in for")
+		select {
+		case <-a.ctx.Done():
+			return
+		default:
+		}
 		// listen to the queue, unmarshal value into a check request, and execute it
 		item, err := a.adhocQueue.Dequeue(ctx)
 		if err != nil {
-			return err
+			a.listenQueueErr <- err
+			continue
 		}
 		var check types.CheckConfig
 		if err := json.Unmarshal([]byte(item.Value), &check); err != nil {
-			item.Nack(ctx)
-			return err
+			a.listenQueueErr <- fmt.Errorf("unable to process invalid check: %s", err)
+			if ackErr := item.Ack(ctx); ackErr != nil {
+				a.listenQueueErr <- ackErr
+			}
+			continue
 		}
+
 		if err := a.processCheck(ctx, &check); err != nil {
-			item.Nack(ctx)
-			return err
+			a.listenQueueErr <- err
+			if nackErr := item.Nack(ctx); nackErr != nil {
+				a.listenQueueErr <- nackErr
+			}
+			continue
 		}
 		if err = item.Ack(ctx); err != nil {
-			return err
+			a.listenQueueErr <- err
+			continue
 		}
 	}
-	return nil
 }
 
 func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *types.CheckConfig) error {
@@ -87,7 +93,6 @@ func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *types.Ch
 			if err := a.proxyCheck(matchedEntities, check); err != nil {
 				logger.Error(err)
 			} else {
-				// TODO wording for this, check isn't 'published' but executed?
 				logger.Info("no matching entities, check will not be published")
 			}
 		}
@@ -106,7 +111,7 @@ func (a *AdhocRequestExecutor) proxyCheck(entities []*types.Entity, check *types
 	}
 
 	for _, entity := range entities {
-		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
+		time.Sleep(time.Duration(splay) * time.Second)
 		substitutedCheck, err := substituteEntityTokens(entity, check)
 		if err != nil {
 			return err

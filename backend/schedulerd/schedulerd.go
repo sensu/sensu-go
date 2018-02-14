@@ -48,7 +48,7 @@ func (s *Schedulerd) Start() error {
 	s.schedulerManager = NewScheduleManager(s.MessageBus, s.stateManager, s.Store)
 
 	// Adhoc Request Executor
-	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.Store, s.MessageBus)
+	s.adhocRequestExecutor = NewAdhocRequestExecutor(ctx, s.Store, s.MessageBus)
 
 	// Sync
 	s.errChan = make(chan error, 1)
@@ -57,7 +57,6 @@ func (s *Schedulerd) Start() error {
 	s.schedulerManager.Start()
 	s.stateManager.Start(ctx)
 
-	s.adhocRequestExecutor.Start(ctx)
 	return nil
 }
 
@@ -65,6 +64,7 @@ func (s *Schedulerd) Start() error {
 func (s *Schedulerd) Stop() error {
 	err := s.stateManager.Stop()
 	s.schedulerManager.Stop()
+	s.adhocRequestExecutor.Stop()
 
 	close(s.errChan)
 	return err
