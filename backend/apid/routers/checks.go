@@ -34,8 +34,9 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	// Custom
 	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
 	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
+
 	// handlefunc returns a custom status and response
-	parent.HandleFunc("{id}/execute", r.adhocRequest).Methods(http.MethodPost)
+	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
