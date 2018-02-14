@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -22,24 +23,36 @@ type executionOpts struct {
 // ExecuteCommand defines a new command to request a check execution
 func ExecuteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "execute NAME",
+		Use:          "execute [NAME]",
 		Short:        "request a check execution",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("check")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			opts := &executionOpts{}
-			opts.withFlags(flags)
 
 			if len(args) > 0 {
 				opts.Name = args[0]
 			}
+
 			if isInteractive {
 				cmd.SilenceUsage = false
 				if err := opts.administerQuestionnaire(); err != nil {
 					return err
 				}
+			} else {
+				opts.withFlags(cmd.Flags())
 			}
 
 			if opts.Name == "" {
@@ -71,14 +84,15 @@ func ExecuteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("reason", "r", "", "optional reason for requesting a check execution")
 	cmd.Flags().StringP("subscriptions", "s", "", "optional comma separated list of subscriptions to override the check configuration")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("check")
+	helpers.AddInteractiveFlag(cmd.Flags())
 
 	return cmd
 }
 
 func (opts *executionOpts) withFlags(flags *pflag.FlagSet) {
-	opts.Name, _ = flags.GetString("check")
+	if name, _ := flags.GetString("check"); name != "" {
+		opts.Name = name
+	}
 	opts.Reason, _ = flags.GetString("reason")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 }

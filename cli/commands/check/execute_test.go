@@ -45,23 +45,16 @@ func TestExecuteCommandRunEClosureSuccess(t *testing.T) {
 	assert.Contains(out, "Issued")
 }
 
-func TestExecuteCommandRunEInvalid(t *testing.T) {
-	assert := assert.New(t)
-	cli := test.NewMockCLI()
-
-	cmd := ExecuteCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"name"})
-
-	assert.Empty(out)
-	assert.Error(err)
-}
-
 func TestExecuteCommandRunEClosureServerErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
 	client.On("ExecuteCheck", mock.AnythingOfType("*types.AdhocRequest")).Return(errors.New("whoops"))
+
+	config := cli.Config.(*clientmock.MockConfig)
+	_, accessToken, _ := jwt.AccessToken("foo")
+	config.On("Tokens").Return(&types.Tokens{Access: accessToken})
 
 	cmd := ExecuteCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"name"})
