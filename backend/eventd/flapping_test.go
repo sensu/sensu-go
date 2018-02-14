@@ -43,9 +43,7 @@ func TestIsFlapping(t *testing.T) {
 		{
 			"low_flap_threshold not configured",
 			&types.Event{
-				Check: &types.Check{
-					Config: &types.CheckConfig{},
-				},
+				Check: &types.Check{},
 			},
 			false,
 		},
@@ -53,9 +51,7 @@ func TestIsFlapping(t *testing.T) {
 			"high_flap_threshold not configured",
 			&types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						LowFlapThreshold: 10,
-					},
+					LowFlapThreshold: 10,
 				},
 			},
 			false,
@@ -64,12 +60,10 @@ func TestIsFlapping(t *testing.T) {
 			"check is still flapping",
 			&types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						LowFlapThreshold:  10,
-						HighFlapThreshold: 30,
-					},
-					State:            types.EventFlappingState,
-					TotalStateChange: 15,
+					LowFlapThreshold:  10,
+					HighFlapThreshold: 30,
+					State:             types.EventFlappingState,
+					TotalStateChange:  15,
 				},
 			},
 			true,
@@ -78,12 +72,10 @@ func TestIsFlapping(t *testing.T) {
 			"check is no longer flapping",
 			&types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						LowFlapThreshold:  10,
-						HighFlapThreshold: 30,
-					},
-					State:            types.EventFlappingState,
-					TotalStateChange: 5,
+					LowFlapThreshold:  10,
+					HighFlapThreshold: 30,
+					State:             types.EventFlappingState,
+					TotalStateChange:  5,
 				},
 			},
 			false,
@@ -92,12 +84,10 @@ func TestIsFlapping(t *testing.T) {
 			"check is now flapping",
 			&types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						LowFlapThreshold:  10,
-						HighFlapThreshold: 30,
-					},
-					State:            types.EventFailingState,
-					TotalStateChange: 35,
+					LowFlapThreshold:  10,
+					HighFlapThreshold: 30,
+					State:             types.EventFailingState,
+					TotalStateChange:  35,
 				},
 			},
 			true,
@@ -106,12 +96,10 @@ func TestIsFlapping(t *testing.T) {
 			"check is not flapping",
 			&types.Event{
 				Check: &types.Check{
-					State: types.EventPassingState,
-					Config: &types.CheckConfig{
-						LowFlapThreshold:  10,
-						HighFlapThreshold: 30,
-					},
-					TotalStateChange: 5,
+					State:             types.EventPassingState,
+					LowFlapThreshold:  10,
+					HighFlapThreshold: 30,
+					TotalStateChange:  5,
 				},
 			},
 			false,

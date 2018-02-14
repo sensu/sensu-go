@@ -336,7 +336,7 @@ func TestEventUpdate(t *testing.T) {
 	)
 
 	badEvent := types.FixtureEvent("entity1", "check1")
-	badEvent.Check.Config.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string
@@ -445,7 +445,7 @@ func TestEventCreate(t *testing.T) {
 	)
 
 	badEvent := types.FixtureEvent("entity1", "check1")
-	badEvent.Check.Config.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string

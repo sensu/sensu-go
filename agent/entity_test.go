@@ -93,7 +93,7 @@ func TestGetEntities(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.agent.getEntities(tc.event)
 			assert.Equal(tc.expectedAgentID, tc.event.Entity.ID)
-			assert.Equal(tc.expectedSource, tc.event.Check.Config.ProxyEntityID)
+			assert.Equal(tc.expectedSource, tc.event.Check.ProxyEntityID)
 		})
 	}
 }

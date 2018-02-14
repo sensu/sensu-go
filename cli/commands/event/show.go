@@ -65,7 +65,7 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 	}
 
 	cfg := &list.Config{
-		Title: fmt.Sprintf("%s - %s", event.Entity.ID, event.Check.Config.Name),
+		Title: fmt.Sprintf("%s - %s", event.Entity.ID, event.Check.Name),
 		Rows: []*list.Row{
 			{
 				Label: "Entity",
@@ -73,7 +73,7 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 			},
 			{
 				Label: "Check",
-				Value: event.Check.Config.Name,
+				Value: event.Check.Name,
 			},
 			{
 				Label: "Output",

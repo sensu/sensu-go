@@ -85,7 +85,7 @@ func TestEventHandler(t *testing.T) {
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)
 	assert.Equal(t, "TestEventHandler", event.Entity.ID)
-	assert.Equal(t, "test", event.Check.Config.Name)
+	assert.Equal(t, "test", event.Check.Name)
 
 	// There should be a JSON event file in the OS temp directory
 	_, err = os.Stat(handlerJSONFile)

@@ -40,7 +40,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 
 	for _, event := range events {
 		if err := adapterPtr.Store.DeleteEventByEntityCheck(
-			ctx, entity.ID, event.Check.Config.Name,
+			ctx, entity.ID, event.Check.Name,
 		); err != nil {
 			return fmt.Errorf("error deleting event for entity: %s", err.Error())
 		}
@@ -56,16 +56,14 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 
 	if entity.Deregistration.Handler != "" {
 		deregistrationCheck := &types.Check{
-			Config: &types.CheckConfig{
-				Name:          "deregistration",
-				Interval:      entity.KeepaliveTimeout,
-				Subscriptions: []string{""},
-				Command:       "",
-				Handlers:      []string{entity.Deregistration.Handler},
-				Environment:   entity.Environment,
-				Organization:  entity.Organization,
-			},
-			Status: 1,
+			Name:          "deregistration",
+			Interval:      entity.KeepaliveTimeout,
+			Subscriptions: []string{""},
+			Command:       "",
+			Handlers:      []string{entity.Deregistration.Handler},
+			Environment:   entity.Environment,
+			Organization:  entity.Organization,
+			Status:        1,
 		}
 
 		deregistrationEvent := &types.Event{

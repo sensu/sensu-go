@@ -42,9 +42,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The event has a proxy entity with a corresponding entity",
 			event: &types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						ProxyEntityID: "bar",
-					},
+					ProxyEntityID: "bar",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
@@ -55,9 +53,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The event has a proxy entity with no corresponding entity",
 			event: &types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						ProxyEntityID: "baz",
-					},
+					ProxyEntityID: "baz",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
@@ -68,9 +64,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The proxy entity can't be queried",
 			event: &types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						ProxyEntityID: "quux",
-					},
+					ProxyEntityID: "quux",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
@@ -80,9 +74,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The proxy entity can't be created",
 			event: &types.Event{
 				Check: &types.Check{
-					Config: &types.CheckConfig{
-						ProxyEntityID: "qux",
-					},
+					ProxyEntityID: "qux",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},

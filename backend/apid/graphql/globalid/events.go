@@ -99,7 +99,7 @@ func encodeEvent(event *types.Event) StandardComponents {
 		components.resourceType = eventCheckType
 		components.uniqueComponent = encodeUniqueComponents(
 			event.Entity.ID,
-			event.Check.Config.Name,
+			event.Check.Name,
 			timestamp,
 		)
 	} else if event.Metrics != nil {

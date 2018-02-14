@@ -197,7 +197,7 @@ func (s *Store) CreateError(ctx context.Context, perr *types.Error) error {
 	key := errorsKeyBuilder.WithContext(ctx).Build(
 		perr.Event.Entity.ID,
 		"check", // Eventually will need a conditional when metrics are implemented
-		perr.Event.Check.Config.Name,
+		perr.Event.Check.Name,
 		string(perr.Timestamp),
 	)
 
@@ -215,7 +215,7 @@ func (s *Store) CreateError(ctx context.Context, perr *types.Error) error {
 		return fmt.Errorf(
 			"could not create the error %s/%s in environment %s/%s",
 			perr.Event.Entity.ID,
-			perr.Event.Check.Config.Name,
+			perr.Event.Check.Name,
 			perr.GetOrganization(),
 			perr.GetEnvironment(),
 		)
@@ -266,7 +266,7 @@ func shouldRejectError(ns store.Namespace, entity string, check string) rejectEr
 	if check != "" {
 		rejectWhereCheckDoesNotMatch = func(perr *types.Error) bool {
 			errCheck := perr.Event.Check
-			return errCheck != nil && errCheck.Config.Name != check
+			return errCheck != nil && errCheck.Name != check
 		}
 	}
 
