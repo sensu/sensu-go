@@ -3,7 +3,10 @@ import PropTypes from "prop-types";
 import { createFragmentContainer, graphql } from "react-relay";
 import moment from "moment";
 import { withStyles } from "material-ui/styles";
+import Typography from "material-ui/Typography";
+
 import Checkbox from "material-ui/Checkbox";
+import chevronIcon from "material-ui-icons/ChevronRight";
 
 const styles = theme => ({
   row: {
@@ -14,20 +17,34 @@ const styles = theme => ({
     // TODO revist with typography
     fontFamily: "SF Pro Text",
   },
-  checkbox: { display: "inline-block", verticalAlign: "top" },
-  content: { display: "inline-block", padding: "16px 0 0" },
+  checkbox: {
+    display: "inline-block",
+    verticalAlign: "top",
+  },
+  content: {
+    display: "inline-block",
+    padding: "16px 0 0",
+  },
+  caption: { verticalAlign: "top" },
   command: { fontSize: "0.8125rem" },
+  chevron: { verticalAlign: "top", marginTop: -4 },
 });
 
 class EventListItem extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    Chevron: PropTypes.func.isRequired,
+  };
+
+  static defaultProps = {
+    Chevron: chevronIcon,
   };
 
   render() {
     const {
       classes,
+      Chevron,
       event: { entity, check, timestamp },
       ...other
     } = this.props;
@@ -39,9 +56,10 @@ class EventListItem extends React.Component {
           <Checkbox />
         </div>
         <div className={classes.content}>
-          <span>{entity.name}</span>
-          <span>{check.config.name}</span>
-          <div className={classes.command}>{check.config.command}</div>
+          <span className={classes.caption}>{entity.name}</span>
+          <Chevron className={classes.chevron} />
+          <span className={classes.caption}>{check.config.name}</span>
+          <Typography type="caption">{check.config.command}</Typography>
           <div {...other} />
           <div>{time}</div>
         </div>
