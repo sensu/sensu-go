@@ -1,4 +1,4 @@
-package check
+package subcommands
 
 import (
 	"testing"
@@ -11,19 +11,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddCheckHookCommand(t *testing.T) {
+func TestSetCheckHooksCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
-	cmd := AddCheckHookCommand(cli)
+	cmd := SetCheckHooksCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
-	assert.Regexp("add-hook", cmd.Use)
-	assert.Regexp("to check", cmd.Short)
+	assert.Regexp("set-hooks", cmd.Use)
+	assert.Regexp("of a check", cmd.Short)
 }
 
-func TestAddCheckHookCommandRunEClosureSucess(t *testing.T) {
+func TestSetCheckHooksCommandRunEClosureSucess(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 
@@ -31,7 +31,7 @@ func TestAddCheckHookCommandRunEClosureSucess(t *testing.T) {
 	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.HookList")).Return(nil)
 	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
 
-	cmd := AddCheckHookCommand(cli)
+	cmd := SetCheckHooksCommand(cli)
 	require.NoError(t, cmd.Flags().Set("type", "non-zero"))
 
 	out, err := test.RunCmd(cmd, []string{"name"})
@@ -40,36 +40,36 @@ func TestAddCheckHookCommandRunEClosureSucess(t *testing.T) {
 	assert.Contains(out, "Added")
 }
 
-func TestAddCheckHookCommandRunEInvalid(t *testing.T) {
+func TestSetCheckHooksCommandRunEInvalid(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 
-	cmd := AddCheckHookCommand(cli)
+	cmd := SetCheckHooksCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"name"})
 
 	assert.Empty(out)
 	assert.Error(err)
 }
 
-func TestAddCheckHookCommandRunEClosureServerErr(t *testing.T) {
+func TestSetCheckHooksCommandRunEClosureServerErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
 	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.checkHook")).Return(nil)
 
-	cmd := AddCheckHookCommand(cli)
+	cmd := SetCheckHooksCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"name"})
 
 	assert.Empty(out)
 	assert.Error(err)
 }
 
-func TestAddCheckHookCommandRunEClosureMissingArgs(t *testing.T) {
+func TestSetCheckHooksCommandRunEClosureMissingArgs(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 
-	cmd := AddCheckHookCommand(cli)
+	cmd := SetCheckHooksCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
