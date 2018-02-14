@@ -15,7 +15,7 @@ const styles = theme => ({
   eventsContainer: {
     border: "1px solid",
     borderRadius: 2,
-    borderColor: "#D5D6DD",
+    borderColor: theme.palette.divider,
   },
   tableHeader: {
     padding: "20px 0 16px",

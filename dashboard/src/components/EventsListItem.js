@@ -5,18 +5,19 @@ import moment from "moment";
 import { withStyles } from "material-ui/styles";
 import Checkbox from "material-ui/Checkbox";
 
-const styles = {
+const styles = theme => ({
   row: {
     width: "100%",
     paddingBottom: 16,
-    borderBottom: "1px solid #D5D6DD",
+    borderBottomColor: theme.palette.divider,
+    borderBottom: "1px solid",
     // TODO revist with typography
     fontFamily: "SF Pro Text",
   },
   checkbox: { display: "inline-block", verticalAlign: "top" },
   content: { display: "inline-block", padding: "16px 0 0" },
   command: { fontSize: "0.8125rem" },
-};
+});
 
 class EventListItem extends React.Component {
   static propTypes = {
@@ -41,8 +42,8 @@ class EventListItem extends React.Component {
           <span>{entity.name}</span>
           <span>{check.config.name}</span>
           <div className={classes.command}>{check.config.command}</div>
-          <div>{time}</div>
           <div {...other} />
+          <div>{time}</div>
         </div>
       </div>
     );
