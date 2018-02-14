@@ -17,9 +17,6 @@ non-required fields.
 - Add .gitattributes file with merge strategy for the Changelog.
 - Context switcher added for dashboard.
 - Add API support for adhoc check requests.
-- Add .gitattributes file with merge strategy for the Changelog.
-- Context switcher added for dashboard
-- Add api support for adhoc check requests.
 - Check scheduler now supports round-robin scheduling.
 - Added better error checking for CLI commands and support for mutually
 exclusive fields.
@@ -35,17 +32,7 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ### Fixed
 - Fixed required flags in `sensuctl` so requirements are enforced.
-- Renamed CLI asset create interactive prompt "Org" to "Organization"
-
-### Fixed
- - Fixed required flags in `sensuctl` so requirements are enforced.
 - Add support for embedded fields to dynamic.Marshal.
-- Increased the timeout in the store's watchers tests
-- Incremental retry mechanism when waiting for agent and backend in e2e tests.
-- Renamed CLI asset create interactive prompt "Org" to "Organization"
-- Increased the timeout in the store's watchers tests
-- Incremental retry mechanism when waiting for agent and backend in e2e tests.
-- Renamed CLI asset create interactive prompt "Org" to "Organization"
 
 ## [2.0.0-alpha.16] - 2018-02-07
 ### Added
