@@ -20,7 +20,7 @@ class EventsList extends React.Component {
 
   render() {
     const { viewer } = this.props;
-    const events = get(viewer, "checkEvents.edges", []);
+    const events = get(viewer, "events.edges", []);
 
     return (
       <Table>
