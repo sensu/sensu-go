@@ -41,7 +41,7 @@ func TestDeleteCommandRunMissingArgs(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Contains(t, out, "Usage")
 }
 

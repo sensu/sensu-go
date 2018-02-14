@@ -17,7 +17,7 @@ func ResolveCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
 				_ = cmd.Help()
-				return errors.New("missing argument(s)")
+				return errors.New("invalid argument(s) received")
 			}
 
 			entity := args[0]

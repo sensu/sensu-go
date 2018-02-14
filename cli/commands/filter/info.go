@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"errors"
 	"io"
 	"strings"
 
@@ -22,7 +23,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 
 			if len(args) != 1 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch the filter from API

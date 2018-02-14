@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"errors"
 	"io"
 	"strings"
 
@@ -14,12 +15,13 @@ import (
 // ShowCommand defines new asset info command
 func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info NAME",
+		Use:          "info [NAME]",
 		Short:        "show detailed information on given asset",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				return cmd.Help()
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch handlers from API

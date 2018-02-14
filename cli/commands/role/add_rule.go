@@ -6,6 +6,8 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -22,26 +24,40 @@ type ruleOpts struct {
 // AddRuleCommand defines new command to add rules to a role
 func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "add-rule ROLE-NAME",
+		Use:          "add-rule [ROLE-NAME]",
 		Short:        "add-rule to role",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("type")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
+
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 
 			opts := &ruleOpts{}
+
 			opts.Org = cli.Config.Organization()
 			opts.Env = cli.Config.Environment()
-			opts.withFlags(flags)
 
 			if len(args) > 0 {
 				opts.Role = args[0]
 			}
+
 			if isInteractive {
 				cmd.SilenceUsage = false
 				if err := opts.administerQuestionnaire(); err != nil {
 					return err
 				}
+			} else {
+				opts.withFlags(cmd.Flags())
 			}
 
 			if opts.Role == "" {
@@ -72,9 +88,7 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().BoolP("update", "u", false, "update permission")
 	_ = cmd.Flags().BoolP("delete", "d", false, "delete permission")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("type")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }
 
@@ -109,6 +123,22 @@ func (opts *ruleOpts) administerQuestionnaire() error {
 			Prompt: &survey.Input{
 				Message: "Role Name:",
 				Default: opts.Role,
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "org",
+			Prompt: &survey.Input{
+				Message: "Organization:",
+				Default: opts.Org,
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "env",
+			Prompt: &survey.Input{
+				Message: "Environment:",
+				Default: opts.Env,
 			},
 			Validate: survey.Required,
 		},

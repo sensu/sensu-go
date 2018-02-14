@@ -1,6 +1,7 @@
 package silenced
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
@@ -16,7 +17,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 			id, err := getID(cmd, args)
 			if err != nil {
@@ -55,6 +56,5 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().BoolP("expire-on-resolve", "x", false, "clear silenced entry on resolution")
 	_ = cmd.Flags().StringP("expire", "e", expireDefault, "expiry in seconds")
 	_ = cmd.Flags().StringP("begin", "b", beginDefault, "silence begin in human readable time (Format: Jan 02 2006 3:04PM MST)")
-	_ = cmd.MarkFlagRequired("reason")
 	return cmd
 }

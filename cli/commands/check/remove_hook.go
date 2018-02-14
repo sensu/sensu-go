@@ -11,13 +11,14 @@ import (
 // RemoveCheckHookCommand defines new command to delete hooks from a check
 func RemoveCheckHookCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
-		Use:          "remove-hook CHECKNAME TYPE HOOKNAME",
+		Use:          "remove-hook [CHECKNAME] [TYPE] [HOOKNAME]",
 		Short:        "remove hook from check",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 3 {
-				return errors.New("missing arguments")
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
 			}
 
 			checkName := args[0]

@@ -32,10 +32,11 @@ type deleteExecutor struct {
 
 func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 	// If no ID was given print out usage
-	id, err := e.extractID(args)
-	if err != nil {
-		return cmd.Help()
+	if len(args) != 1 {
+		_ = cmd.Help()
+		return errors.New("invalid argument(s) received")
 	}
+	id := args[0]
 
 	if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 		if confirmed := helpers.ConfirmDelete(id); !confirmed {
@@ -50,17 +51,6 @@ func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintln(cmd.OutOrStdout(), "OK")
 	return nil
-}
-
-func (e *deleteExecutor) extractID(args []string) (string, error) {
-	// If no name is present print out usage
-	if len(args) < 1 {
-		return "", errors.New("name argument not received")
-	} else if len(args) > 1 {
-		return args[0], errors.New("too many arguments received")
-	}
-
-	return args[0], nil
 }
 
 func (e *deleteExecutor) deleteEntityByID(id string) (err error) {
