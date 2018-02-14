@@ -17,6 +17,7 @@ non-required fields.
 change that will cause existing Sensu alpha installations to break if upgraded.
 This change was made before beta release so that further breaking changes could
 be avoided.
+- Make indentation in protocol buffers files consistent.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
