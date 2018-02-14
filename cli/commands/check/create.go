@@ -83,7 +83,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("command", "c", "", "the command the check should run")
-	cmd.Flags().StringP("cron", "", "", "the cron schedule at which the check is run")
+	cmd.Flags().String("cron", "", "the cron schedule at which the check is run")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to invoke when check fails")
 	cmd.Flags().StringP("interval", "i", "", "interval, in seconds, at which the check is run")
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this check depends on")
@@ -92,9 +92,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().BoolP("stdin", "", false, "accept event data via STDIN")
 	cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of topics check requests will be sent to")
 	cmd.Flags().StringP("timeout", "t", "", "timeout, in seconds, at which the check has to run")
-	cmd.Flags().StringP("ttl", "", "", "time to live in seconds for which a check result is valid")
-	cmd.Flags().StringP("high-flap-threshold", "", "", "flap detection high threshold (percent state change) for the check")
-	cmd.Flags().StringP("low-flap-threshold", "", "", "flap detection low threshold (percent state change) for the check")
+	cmd.Flags().String("ttl", "", "time to live in seconds for which a check result is valid")
+	cmd.Flags().String("high-flap-threshold", "", "flap detection high threshold (percent state change) for the check")
+	cmd.Flags().String("low-flap-threshold", "", "flap detection low threshold (percent state change) for the check")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
