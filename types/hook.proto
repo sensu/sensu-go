@@ -37,7 +37,7 @@ message HookConfig {
 // execution.
 message Hook {
   // Config is the specification of a hook
-  HookConfig config = 1 [(gogoproto.nullable) = true];
+  HookConfig config = 1 [(gogoproto.nullable) = false, (gogoproto.embed) = true];
 
   // Duration of execution
   double duration = 2;
