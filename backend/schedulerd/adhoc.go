@@ -111,7 +111,7 @@ func (a *AdhocRequestExecutor) proxyCheck(entities []*types.Entity, check *types
 	}
 
 	for _, entity := range entities {
-		time.Sleep(time.Duration(splay) * time.Second)
+		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
 		substitutedCheck, err := substituteProxyEntityTokens(entity, check)
 		if err != nil {
 			return err
