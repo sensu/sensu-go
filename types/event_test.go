@@ -27,10 +27,10 @@ func TestEventValidate(t *testing.T) {
 	event.Entity.ID = "entity"
 
 	hook := FixtureHook("hook")
-	hook.Config.Name = ""
+	hook.Name = ""
 	event.Hooks = append(event.Hooks, hook)
 	assert.Error(t, event.Validate())
-	hook.Config.Name = "hook"
+	hook.Name = "hook"
 
 	assert.NoError(t, event.Validate())
 }

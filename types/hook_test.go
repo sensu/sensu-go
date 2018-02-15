@@ -13,18 +13,12 @@ func TestHookValidate(t *testing.T) {
 	h.Status = -1
 	assert.Error(t, h.Validate())
 
-	// Valid without config
+	// Invalid without config
 	h.Status = 0
-	assert.NoError(t, h.Validate())
-
-	// Invalid with bad config
-	h.Config = &HookConfig{
-		Name: "test",
-	}
 	assert.Error(t, h.Validate())
 
 	// Valid with valid config
-	h.Config = &HookConfig{
+	h.HookConfig = HookConfig{
 		Name:         "test",
 		Command:      "yes",
 		Timeout:      10,
@@ -63,7 +57,7 @@ func TestHookConfig(t *testing.T) {
 
 func TestFixtureHookIsValid(t *testing.T) {
 	c := FixtureHook("hook")
-	config := c.Config
+	config := c.HookConfig
 
 	assert.Equal(t, "hook", config.Name)
 	assert.NoError(t, config.Validate())

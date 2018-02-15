@@ -43,8 +43,8 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig) *types.Hook {
 	}
 
 	hook := &types.Hook{
-		Config:   hookConfig,
-		Executed: time.Now().Unix(),
+		HookConfig: *hookConfig,
+		Executed:   time.Now().Unix(),
 	}
 
 	// Instantiate the execution command
