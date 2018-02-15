@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { graphql } from "react-relay";
 
-import ThemeProvider from "./ThemeProvider";
+import ThemeProvider from "./AppThemeProvider";
 import RestrictUnauthenticated from "./RestrictUnauthenticated";
 import AppFrame from "./AppFrame";
 

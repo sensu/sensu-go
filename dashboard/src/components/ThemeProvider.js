@@ -11,8 +11,8 @@ class ThemeProvider extends React.Component {
   };
 
   static defaultProps = {
-    theme: "dva",
-    dark: true,
+    theme: "sensu",
+    dark: false,
   };
 
   componentWillMount() {
@@ -23,7 +23,7 @@ class ThemeProvider extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     if (
-      nextProps.theme !== this.props.theme &&
+      nextProps.theme !== this.props.theme ||
       nextProps.dark !== this.props.dark
     ) {
       const type = nextProps.dark ? "dark" : "light";

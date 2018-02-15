@@ -28,6 +28,7 @@ import { logout } from "../utils/authentication";
 import { makeNamespacedPath } from "./NamespaceLink";
 import DrawerButton from "./DrawerButton";
 import NamespaceSelector from "./NamespaceSelector";
+import Preferences from "./Preferences";
 import logo from "../assets/logo/wordmark/green.svg";
 
 const styles = theme => ({
@@ -73,6 +74,10 @@ class Drawer extends React.Component {
     open: PropTypes.bool.isRequired,
   };
 
+  state = {
+    preferencesOpen: false,
+  };
+
   handleLogout = async () => {
     await logout();
     this.props.router.push("/login");
@@ -80,6 +85,7 @@ class Drawer extends React.Component {
 
   render() {
     const { viewer, open, router, match, onToggle, classes } = this.props;
+    const { preferencesOpen } = this.state;
     const linkTo = path => {
       const fullPath = makeNamespacedPath(match.params)(path);
       return () => {
@@ -158,7 +164,7 @@ class Drawer extends React.Component {
             <DrawerButton
               Icon={WandIcon}
               primary="Preferences"
-              onClick={linkTo("preferences")}
+              onClick={() => this.setState({ preferencesOpen: true })}
             />
             <DrawerButton
               Icon={FeedbackIcon}
@@ -172,6 +178,10 @@ class Drawer extends React.Component {
             />
           </List>
         </div>
+        <Preferences
+          open={preferencesOpen}
+          onClose={() => this.setState({ preferencesOpen: false })}
+        />
       </MaterialDrawer>
     );
   }
