@@ -7,9 +7,9 @@ import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 
 import checkboxIcon from "material-ui/Checkbox";
-import arrowIcon from "material-ui-icons/ArrowDropDown";
 
 import EventsListItem from "./EventsListItem";
+import EventsContainerMenu from "./EventsContainerMenu";
 
 const styles = theme => ({
   eventsContainer: {
@@ -22,10 +22,6 @@ const styles = theme => ({
     backgroundColor: theme.palette.primary.light,
     color: theme.palette.primary.contrastText,
     // TODO revist with typography
-    fontFamily: "SF Pro Text",
-    textTransform: "uppercase",
-    fontWeight: "bold",
-    fontSize: "0.875rem",
     display: "flex",
     alignItems: "center",
   },
@@ -42,17 +38,15 @@ class EventsContainer extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.shape({ checkEvents: PropTypes.object }).isRequired,
-    DropdownArrow: PropTypes.func.isRequired,
     Checkbox: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
-    DropdownArrow: arrowIcon,
     Checkbox: checkboxIcon,
   };
 
   render() {
-    const { classes, viewer, Checkbox, DropdownArrow } = this.props;
+    const { classes, viewer, Checkbox } = this.props;
     const events = get(viewer, "events.edges", []);
 
     return (
@@ -61,18 +55,9 @@ class EventsContainer extends React.Component {
           <span className={classes.tableHeaderButton}>
             <Checkbox className={classes.checkbox} />
           </span>
-          <span className={classes.tableHeaderButton}>
-            Entity
-            <DropdownArrow className={classes.arrow} />
-          </span>
-          <span className={classes.tableHeaderButton}>
-            Check
-            <DropdownArrow className={classes.arrow} />
-          </span>
-          <span className={classes.tableHeaderButton}>
-            Status
-            <DropdownArrow className={classes.arrow} />
-          </span>
+          <EventsContainerMenu label="Entity" contents="List of Entities" />
+          <EventsContainerMenu label="Check" contents="List of Checks" />
+          <EventsContainerMenu label="Status" contents="List of Statuses" />
         </div>
         {map(events, (event, i) => (
           <EventsListItem key={i} event={event.node} />

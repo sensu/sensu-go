@@ -11,7 +11,6 @@ import chevronIcon from "material-ui-icons/ChevronRight";
 const styles = theme => ({
   row: {
     width: "100%",
-    paddingBottom: 16,
     borderBottomColor: theme.palette.divider,
     borderBottom: "1px solid",
     // TODO revist with typography
@@ -23,11 +22,12 @@ const styles = theme => ({
   },
   content: {
     display: "inline-block",
-    padding: "16px 0 0",
+    padding: "8px 0",
   },
   caption: { verticalAlign: "top" },
-  command: { fontSize: "0.8125rem" },
+  command: { fontSize: "0.8125rem", margin: "4px 0" },
   chevron: { verticalAlign: "top", marginTop: -4 },
+  time: { textTransform: "uppercase", fontSize: "0.8125rem" },
 });
 
 class EventListItem extends React.Component {
@@ -59,9 +59,11 @@ class EventListItem extends React.Component {
           <span className={classes.caption}>{entity.name}</span>
           <Chevron className={classes.chevron} />
           <span className={classes.caption}>{check.config.name}</span>
-          <Typography type="caption">{check.config.command}</Typography>
+          <Typography type="caption" className={classes.command}>
+            {check.config.command}
+          </Typography>
           <div {...other} />
-          <div>{time}</div>
+          <div className={classes.time}>Last occured: {time}</div>
         </div>
       </div>
     );
