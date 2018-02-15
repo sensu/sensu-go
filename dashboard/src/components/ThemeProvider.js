@@ -12,7 +12,7 @@ class ThemeProvider extends React.Component {
 
   static defaultProps = {
     theme: "dva",
-    dark: false,
+    dark: true,
   };
 
   componentWillMount() {

@@ -1,8 +1,8 @@
-import { createMuiTheme } from "material-ui/styles";
+import createTheme from "./createTheme";
 import colors from "../colors";
 
-const SensuTheme = (type = "dark") =>
-  createMuiTheme({
+const theme = (type = "dark") =>
+  createTheme({
     palette: {
       type,
 
@@ -21,4 +21,4 @@ const SensuTheme = (type = "dark") =>
     },
   });
 
-export default SensuTheme;
+export default theme;

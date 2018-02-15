@@ -1,4 +1,4 @@
-import { createMuiTheme } from "material-ui/styles";
+import createTheme from "./createTheme";
 import colors from "../colors";
 
 const shadowKeyUmbraOpacity = 0.2;
@@ -20,7 +20,7 @@ function createShadow(...px) {
 }
 
 const dva = (type = "dark") =>
-  createMuiTheme({
+  createTheme({
     palette:
       type === "dark"
         ? {
