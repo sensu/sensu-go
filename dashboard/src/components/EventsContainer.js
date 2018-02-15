@@ -47,6 +47,9 @@ class EventsContainer extends React.Component {
   render() {
     const { classes, viewer, Checkbox } = this.props;
     const events = get(viewer, "events.edges", []);
+    const entityNames = map(events, edge => edge.node.entity.name);
+    const checkNames = map(events, edge => edge.node.check.config.name);
+    const statuses = map(events, edge => edge.node.check.status);
 
     return (
       <div className={classes.eventsContainer}>
@@ -54,9 +57,9 @@ class EventsContainer extends React.Component {
           <span className={classes.tableHeaderButton}>
             <Checkbox className={classes.checkbox} />
           </span>
-          <EventsContainerMenu label="Entity" contents="List of Entities" />
-          <EventsContainerMenu label="Check" contents="List of Checks" />
-          <EventsContainerMenu label="Status" contents="List of Statuses" />
+          <EventsContainerMenu label="Entity" contents={entityNames} />
+          <EventsContainerMenu label="Check" contents={checkNames} />
+          <EventsContainerMenu label="Status" contents={statuses} />
         </div>
         {map(events, (event, i) => (
           <EventsListItem key={i} event={event.node} />
@@ -73,6 +76,15 @@ export default createFragmentContainer(
       events(first: 1000) {
         edges {
           node {
+            entity {
+              name
+            }
+            check {
+              status
+              config {
+                name
+              }
+            }
             ...EventsListItem_event
           }
         }
