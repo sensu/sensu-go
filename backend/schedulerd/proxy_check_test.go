@@ -162,3 +162,20 @@ func TestSplayCalculation(t *testing.T) {
 	assert.True(splay >= 0 && splay <= 15)
 	assert.Nil(err)
 }
+
+func TestSubstituteProxyEntityTokens(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	entity := types.FixtureEntity("entity1")
+	check := types.FixtureCheckConfig("check1")
+	check.Subscriptions = []string{"subscription1"}
+	check.ProxyRequests = types.FixtureProxyRequests(true)
+
+	substitutedProxyEntityTokens, err := substituteProxyEntityTokens(entity, check)
+	if err != nil {
+		assert.FailNow(err.Error())
+	}
+	assert.Equal(entity.ID, substitutedProxyEntityTokens.ProxyEntityID)
+}

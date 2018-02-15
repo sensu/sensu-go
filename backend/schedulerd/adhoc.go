@@ -112,7 +112,7 @@ func (a *AdhocRequestExecutor) proxyCheck(entities []*types.Entity, check *types
 
 	for _, entity := range entities {
 		time.Sleep(time.Duration(splay) * time.Second)
-		substitutedCheck, err := substituteEntityTokens(entity, check)
+		substitutedCheck, err := substituteProxyEntityTokens(entity, check)
 		if err != nil {
 			return err
 		}

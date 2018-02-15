@@ -262,7 +262,7 @@ func (e *CheckExecutor) PublishProxyCheckRequests(entities []*types.Entity, chec
 
 	for _, entity := range entities {
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
-		substitutedCheck, err := substituteEntityTokens(entity, check)
+		substitutedCheck, err := substituteProxyEntityTokens(entity, check)
 		if err != nil {
 			return err
 		}

@@ -41,9 +41,9 @@ OUTER:
 	return matched
 }
 
-// substituteEntityTokens substitutes entity tokens in the check definition. If
+// substituteProxyEntityTokens substitutes entity tokens in the proxy check definition. If
 // there are unmatched entity tokens, it returns an error.
-func substituteEntityTokens(entity *types.Entity, check *types.CheckConfig) (*types.CheckConfig, error) {
+func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig) (*types.CheckConfig, error) {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity, err := dynamic.Synthesize(entity)
