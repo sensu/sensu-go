@@ -29,7 +29,6 @@ const styles = theme => ({
     marginLeft: 16,
     display: "flex",
   },
-  arrow: { marginTop: -4 },
   checkbox: { marginTop: -4, width: 24, height: 24 },
 });
 
@@ -70,11 +69,11 @@ class EventsContainer extends React.Component {
 export default createFragmentContainer(
   withStyles(styles)(EventsContainer),
   graphql`
-    fragment EventList_viewer on Viewer {
+    fragment EventsContainer_viewer on Viewer {
       events(first: 1000) {
         edges {
           node {
-            ...EventRow_event
+            ...EventsListItem_event
           }
         }
         pageInfo {

@@ -14,7 +14,7 @@ class EventsPage extends React.Component {
   static query = graphql`
     query EventsPageQuery {
       viewer {
-        ...EventList_viewer
+        ...EventsContainer_viewer
       }
     }
   `;

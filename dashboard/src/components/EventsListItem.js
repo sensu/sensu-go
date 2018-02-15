@@ -70,7 +70,7 @@ class EventListItem extends React.Component {
         <div className={classes.checkbox}>
           <Checkbox />
         </div>
-        <div className={classes.status}>X{check.status}</div>
+        <div className={classes.status}>{check.status}</div>
         <div className={classes.content}>
           <span className={classes.caption}>{entity.name}</span>
           <Chevron className={classes.chevron} />
@@ -105,10 +105,11 @@ EventListItem.propTypes = {
 export default createFragmentContainer(
   withStyles(styles)(EventListItem),
   graphql`
-    fragment EventRow_event on Event {
+    fragment EventsListItem_event on Event {
       ... on Event {
         timestamp
         check {
+          status
           config {
             name
             command
