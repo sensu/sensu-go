@@ -13,6 +13,11 @@ environment:
   GOVERSION: 1.9
 
   matrix:
+    - GOARCH: amd64
+      TEST_SUITE: wait_for_appveyor_jobs
+      TIME_OUT_MINS: 30
+      APPVEYOR_API_TOKEN:
+        secure: rkeQYUjyfquA6N33QIUU46tWQMgnxZfHvn1Y6WiZm6o=
     - GOARCH: 386
       TEST_SUITE: unit
       GOGC: off
@@ -34,11 +39,11 @@ environment:
 
 install:
   - rmdir c:\go /s /q
-  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.msi
-  - msiexec /i go%GOVERSION%.windows-amd64.msi /q
+  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-%GOARCH%.msi
+  - msiexec /i go%GOVERSION%.windows-%GOARCH%.msi /q
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin\windows_386;%GOPATH%\bin;c:\go\bin;%PATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
   - ps: .\build.ps1 deps
@@ -49,3 +54,19 @@ platform:
 
 build_script:
   - ps: .\build.ps1 $env:TEST_SUITE
+
+before_deploy:
+  - ps: .\build.ps1 package_agent
+
+deploy:
+  provider: GitHub
+  release: $(appveyor_repo_tag_name)
+  description: ''
+  artifact: /sensu.*/
+  auth_token:
+    secure: e3aSzq/Y9btOgFMXc3rfGwjPLj/LnxyG8KY6czcrywgQXEm+9X74fvGFE0B9Km/j
+  draft: false
+  prerelease: true
+  on:
+    appveyor_repo_tag: true
+    good_to_deploy: true
