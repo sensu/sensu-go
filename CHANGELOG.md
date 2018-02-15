@@ -20,6 +20,10 @@ This change was made before beta release so that further breaking changes could
 be avoided.
 - Make indentation in protocol buffers files consistent.
 
+### Fixed
+- Fixed a bug in time.InWindow that in some cases would cause subdued checks to
+  be executed.
+
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
 - Add .gitattributes file with merge strategy for the Changelog.
