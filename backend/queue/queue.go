@@ -337,6 +337,7 @@ func (q *Queue) waitPutEvent(ctx context.Context) (*clientv3.Event, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	wc := q.client.Watch(ctx, q.work, clientv3.WithPrefix())
+	// wc is a channel
 	if wc == nil {
 		return nil, ctx.Err()
 	}
