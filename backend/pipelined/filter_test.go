@@ -56,7 +56,7 @@ func TestPipelinedFilter(t *testing.T) {
 			status:   0,
 			metrics:  nil,
 			silenced: []string{},
-			filters:  nil,
+			filters:  []string{"is_incident"},
 			expected: true,
 		},
 		{
@@ -64,7 +64,7 @@ func TestPipelinedFilter(t *testing.T) {
 			status:   1,
 			metrics:  nil,
 			silenced: []string{},
-			filters:  nil,
+			filters:  []string{"is_incident"},
 			expected: false,
 		},
 		{
@@ -72,7 +72,7 @@ func TestPipelinedFilter(t *testing.T) {
 			status:   0,
 			metrics:  &types.Metrics{},
 			silenced: []string{},
-			filters:  nil,
+			filters:  []string{"has_metrics"},
 			expected: false,
 		},
 		{
@@ -80,7 +80,7 @@ func TestPipelinedFilter(t *testing.T) {
 			status:   1,
 			metrics:  &types.Metrics{},
 			silenced: []string{},
-			filters:  nil,
+			filters:  []string{"has_metrics"},
 			expected: false,
 		},
 		{
@@ -116,11 +116,19 @@ func TestPipelinedFilter(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "Deny Filters With One Match",
+			status:   1,
+			metrics:  nil,
+			silenced: []string{},
+			filters:  []string{"denyFilterBar", "denyFilterFoo"},
+			expected: true,
+		},
+		{
 			name:     "Silenced With Metrics",
 			status:   1,
 			metrics:  &types.Metrics{},
 			silenced: []string{"entity1"},
-			filters:  nil,
+			filters:  []string{"has_metrics"},
 			expected: false,
 		},
 		{
@@ -128,7 +136,7 @@ func TestPipelinedFilter(t *testing.T) {
 			status:   1,
 			metrics:  nil,
 			silenced: []string{"entity1"},
-			filters:  nil,
+			filters:  []string{"is_incident", "not_silenced"},
 			expected: true,
 		},
 		{
@@ -139,7 +147,7 @@ func TestPipelinedFilter(t *testing.T) {
 			},
 			metrics:  nil,
 			silenced: []string{},
-			filters:  nil,
+			filters:  []string{"is_incident"},
 			expected: true,
 		},
 		{
@@ -150,7 +158,7 @@ func TestPipelinedFilter(t *testing.T) {
 			},
 			metrics:  nil,
 			silenced: []string{},
-			filters:  nil,
+			filters:  []string{"is_incident"},
 			expected: false,
 		},
 	}
