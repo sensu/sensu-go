@@ -57,6 +57,38 @@ func TestPipelinedJsonMutator(t *testing.T) {
 	assert.Equal(t, expected, output)
 }
 
+func TestPipelinedOnlyCheckOutputMutator(t *testing.T) {
+	p := &Pipelined{}
+
+	event := &types.Event{}
+	event.Check = &types.Check{}
+	event.Check.Output = "foo"
+
+	output := p.onlyCheckOutputMutator(event)
+
+	expected := []byte("foo")
+	assert.Equal(t, expected, output)
+}
+
+func TestPipelinedOnlyCheckOutputMutate(t *testing.T) {
+	p := &Pipelined{}
+
+	handler := types.FakeHandlerCommand("cat")
+	handler.Type = "pipe"
+	handler.Mutator = "only_check_output"
+
+	event := &types.Event{}
+	event.Check = &types.Check{}
+	event.Check.Output = "foo"
+
+	eventData, err := p.mutateEvent(handler, event)
+
+	expected := []byte("foo")
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, eventData)
+}
+
 func TestPipelinedPipeMutator(t *testing.T) {
 	p := &Pipelined{}
 

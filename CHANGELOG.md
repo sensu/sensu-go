@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
 of a check. This allows updating single fields and completely clearing out
 non-required fields.
+- Add built-in only_check_output mutator to pipelined.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
@@ -46,6 +47,7 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
+- Add api support for adhoc check requests.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to

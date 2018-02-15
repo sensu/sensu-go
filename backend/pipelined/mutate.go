@@ -24,6 +24,12 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 		return eventData, nil
 	}
 
+	if handler.Mutator == "only_check_output" {
+		eventData := p.onlyCheckOutputMutator(event)
+
+		return eventData, nil
+	}
+
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 	mutator, err := p.Store.GetMutatorByName(ctx, handler.Mutator)
@@ -57,6 +63,15 @@ func (p *Pipelined) jsonMutator(event *types.Event) ([]byte, error) {
 	}
 
 	return eventData, nil
+}
+
+// onlyCheckOutputMutator returns only the check output from the Sensu
+// event. This mutator is considered to be "built-in" (1.x parity), it
+// is most commonly used by tcp/udp handlers (e.g. influxdb). This
+// mutator can probably be removed/replaced when 2.0 has extension
+// support.
+func (p *Pipelined) onlyCheckOutputMutator(event *types.Event) []byte {
+	return []byte(event.Check.Output)
 }
 
 // pipeMutator fork/executes a child process for a Sensu mutator
