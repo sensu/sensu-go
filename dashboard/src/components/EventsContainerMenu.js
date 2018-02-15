@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import map from "lodash/map";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 import Button from "material-ui/ButtonBase";
@@ -10,6 +9,8 @@ import { ListItemText } from "material-ui/List";
 
 import arrowIcon from "material-ui-icons/ArrowDropDown";
 
+import EventStatus from "./EventStatus";
+
 const styles = {
   tableHeaderButton: {
     marginLeft: 16,
@@ -17,6 +18,7 @@ const styles = {
   },
   arrow: { marginTop: -4 },
   checkbox: { marginTop: -4, width: 24, height: 24 },
+  humanStatus: { marginLeft: 5 },
 };
 
 class EventsContainerMenu extends React.Component {
@@ -27,9 +29,13 @@ class EventsContainerMenu extends React.Component {
     contents: PropTypes.array.isRequired,
     label: PropTypes.string.isRequired,
     DropdownArrow: PropTypes.func.isRequired,
+    icons: PropTypes.bool,
   };
 
-  static defaultProps = { DropdownArrow: arrowIcon };
+  static defaultProps = {
+    DropdownArrow: arrowIcon,
+    icons: false,
+  };
 
   state = {
     anchorEl: null,
@@ -44,8 +50,36 @@ class EventsContainerMenu extends React.Component {
   };
 
   render() {
-    const { classes, label, contents, DropdownArrow } = this.props;
+    const { classes, label, icons, contents, DropdownArrow } = this.props;
     const { anchorEl } = this.state;
+
+    let items = {};
+    if (!icons) {
+      items = contents.map(name => (
+        <MenuItem
+          className={classes.menuItem}
+          key={label}
+          onClick={this.redirect}
+        >
+          <ListItemText primary={name} />
+        </MenuItem>
+      ));
+    } else {
+      const humanStatuses = ["Passing", "Warning", "Critical", "Unknown"];
+      // TODO this code is probably reusable/make new component
+      items = contents.map(status => (
+        <MenuItem
+          className={classes.menuItem}
+          key={label}
+          onCLick={this.redirect}
+        >
+          <EventStatus status={status} />
+          <span className={classes.humanStatus}>
+            {status > 2 ? "Unknown" : humanStatuses[status]}
+          </span>
+        </MenuItem>
+      ));
+    }
 
     return (
       <span>
@@ -62,15 +96,7 @@ class EventsContainerMenu extends React.Component {
           onClose={this.onClose}
           id={`events-container-menu-${label}`}
         >
-          {map(contents, name => (
-            <MenuItem
-              className={classes.menuItem}
-              key={label}
-              onClick={this.redirect}
-            >
-              <ListItemText primary={name} />
-            </MenuItem>
-          ))}
+          {items}
         </Menu>
       </span>
     );

@@ -59,7 +59,7 @@ class EventsContainer extends React.Component {
           </span>
           <EventsContainerMenu label="Entity" contents={entityNames} />
           <EventsContainerMenu label="Check" contents={checkNames} />
-          <EventsContainerMenu label="Status" contents={statuses} />
+          <EventsContainerMenu label="Status" contents={statuses} icons />
         </div>
         {map(events, (event, i) => (
           <EventsListItem key={i} event={event.node} />
