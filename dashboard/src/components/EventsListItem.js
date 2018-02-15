@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+
 import { createFragmentContainer, graphql } from "react-relay";
 import moment from "moment";
 import { withStyles } from "material-ui/styles";
@@ -7,6 +8,8 @@ import Typography from "material-ui/Typography";
 
 import Checkbox from "material-ui/Checkbox";
 import chevronIcon from "material-ui-icons/ChevronRight";
+
+import EventStatus from "./EventStatus";
 
 const styles = theme => ({
   row: {
@@ -70,7 +73,9 @@ class EventListItem extends React.Component {
         <div className={classes.checkbox}>
           <Checkbox />
         </div>
-        <div className={classes.status}>{check.status}</div>
+        <div className={classes.status}>
+          <EventStatus status={check.status} />
+        </div>
         <div className={classes.content}>
           <span className={classes.caption}>{entity.name}</span>
           <Chevron className={classes.chevron} />
