@@ -10,6 +10,7 @@ import chevronIcon from "material-ui-icons/ChevronRight";
 
 const styles = theme => ({
   row: {
+    display: "flex",
     width: "100%",
     borderBottomColor: theme.palette.divider,
     borderBottom: "1px solid",
@@ -20,14 +21,28 @@ const styles = theme => ({
     display: "inline-block",
     verticalAlign: "top",
   },
-  content: {
+  status: {
     display: "inline-block",
-    padding: "8px 0",
+    verticalAlign: "top",
+    padding: "14px 0",
   },
-  caption: { verticalAlign: "top" },
-  command: { fontSize: "0.8125rem", margin: "4px 0" },
-  chevron: { verticalAlign: "top", marginTop: -4 },
-  time: { textTransform: "uppercase", fontSize: "0.8125rem" },
+  content: {
+    width: "100%",
+    display: "inline-block",
+    padding: 14,
+  },
+  command: { fontSize: "0.8125rem", margin: "4px 0 8px" },
+  chevron: { verticalAlign: "top", marginTop: -2 },
+  timeHolder: {
+    width: "100%",
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  time: {
+    textTransform: "uppercase",
+    fontSize: "0.8125rem",
+  },
+  pipe: { marginTop: -4 },
 });
 
 class EventListItem extends React.Component {
@@ -55,6 +70,7 @@ class EventListItem extends React.Component {
         <div className={classes.checkbox}>
           <Checkbox />
         </div>
+        <div className={classes.status}>X{check.status}</div>
         <div className={classes.content}>
           <span className={classes.caption}>{entity.name}</span>
           <Chevron className={classes.chevron} />
@@ -63,7 +79,13 @@ class EventListItem extends React.Component {
             {check.config.command}
           </Typography>
           <div {...other} />
-          <div className={classes.time}>Last occured: {time}</div>
+          <div className={classes.timeHolder}>
+            <div className={classes.time}>Occurances</div>
+            <div className={classes.pipe}>|</div>
+            <div className={classes.time}>Last occured: {time}</div>
+            <div className={classes.pipe}>|</div>
+            <div className={classes.time}>Last OK</div>
+          </div>
         </div>
       </div>
     );
