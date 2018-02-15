@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
 of a check. This allows updating single fields and completely clearing out
 non-required fields.
+- Add built-in only_check_output mutator to pipelined.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
@@ -28,7 +29,6 @@ be avoided.
 exclusive fields.
 - Added `--interactive` flag to CLI which is required to run interactive mode.
 - Added CLI role rule-add Organization and Environment interactive prompts.
-- Add built-in only_check_output mutator to pipelined.
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
@@ -46,7 +46,6 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
-- Add built-in only_check_output mutator to pipelined.
 - Add api support for adhoc check requests.
 
 ### Fixed
