@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 of a check. This allows updating single fields and completely clearing out
 non-required fields.
 - Add built-in only_check_output mutator to pipelined.
+- Allow publish, cron, ttl, timeout, low flap threshold and more fields to be
+  set when importing legacy settings.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking

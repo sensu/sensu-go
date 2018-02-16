@@ -280,8 +280,6 @@ func (i *LegacyCheckImporter) newCheck(name string) types.CheckConfig {
 //   - `type` if value is metric
 //   - `extension`
 //   - `standalone`; we'll have to figure out what to do with this to avoid conflicts
-//   - `publish`
-//   - `cron`
 //   - `auto_resolve` if `false`
 //   - `force_resolve`
 //   - `handle` if false
@@ -293,10 +291,6 @@ func (i *LegacyCheckImporter) newCheck(name string) types.CheckConfig {
 //
 // NOTE: Fields that are currently ignored
 //
-//   - `ttl`
-//   - `timeout`
-//   - `low_flap_threshold`
-//   - `high_flap_threshold`
 //   - `aggregate`
 //   - `aggregates`
 //
@@ -304,11 +298,17 @@ func (i *LegacyCheckImporter) newCheck(name string) types.CheckConfig {
 //
 //   - `type` if `standard` or empty
 //   - `command`
+//   - `cron`
 //   - `subscribers`
-//   - `interval`
 //   - `handle` if true
 //   - `handler`
 //   - `handlers`
+//   - `high_flap_threshold`
+//   - `interval`
+//   - `low_flap_threshold`
+//   - `publish`
+//   - `timeout`
+//   - `ttl`
 //
 func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]interface{}) {
 	reporter := i.reporter.WithValue("name", check.Name)
@@ -329,16 +329,6 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 	// "standalone": true
 	if val, ok := cfg["standalone"].(bool); ok && val {
 		reporter.Error("standalone are not supported at this time")
-	}
-
-	// "publish": false
-	if val, ok := cfg["publish"].(bool); ok && val {
-		reporter.Error("unpublished checks are not supported at this time")
-	}
-
-	// "cron": "0 0 0 X X X"
-	if _, ok := cfg["cron"]; ok {
-		reporter.Error(unsupportedAttr("checks", "cron"))
 	}
 
 	// "auto_resolve": false
@@ -384,26 +374,6 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 	//
 	// Capture unsupported attributes and warn user
 
-	// "ttl": int
-	if _, ok := cfg["ttl"]; ok {
-		reporter.Warn(unsupportedAttr("checks", "ttl"))
-	}
-
-	// "timeout": int
-	if _, ok := cfg["timeout"]; ok {
-		reporter.Warn(unsupportedAttr("checks", "timeout"))
-	}
-
-	// "low_flap_threshold": float
-	if _, ok := cfg["low_flap_threshold"]; ok {
-		reporter.Warn(unsupportedAttr("checks", "low_flap_threshold"))
-	}
-
-	// "high_flap_threshold": float
-	if _, ok := cfg["high_flap_threshold"]; ok {
-		reporter.Warn(unsupportedAttr("checks", "high_flap_threshold"))
-	}
-
 	// "aggregate": string
 	if _, ok := cfg["aggregate"]; ok {
 		reporter.Warn(unsupportedAttr("checks", "aggregate"))
@@ -421,8 +391,16 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 		check.Command = val
 	}
 
-	if val, ok := cfg["subscribers"].([]string); ok {
-		check.Subscriptions = val
+	if val, ok := cfg["cron"].(string); ok {
+		check.Cron = val
+	}
+
+	if vals, ok := cfg["subscribers"].([]interface{}); ok {
+		for _, val := range vals {
+			if val, ok := val.(string); ok {
+				check.Subscriptions = append(check.Subscriptions, val)
+			}
+		}
 	}
 
 	if val, ok := cfg["interval"].(float64); ok {
@@ -435,6 +413,27 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 
 	if val, ok := cfg["handlers"].([]string); ok {
 		check.Handlers = append(check.Handlers, val...)
+	}
+
+	check.Publish = true
+	if val, ok := cfg["publish"].(bool); ok {
+		check.Publish = val
+	}
+
+	if val, ok := cfg["ttl"].(int64); ok {
+		check.Ttl = val
+	}
+
+	if val, ok := cfg["timeout"].(int64); ok {
+		check.Timeout = uint32(val)
+	}
+
+	if val, ok := cfg["low_flap_threshold"].(int64); ok {
+		check.LowFlapThreshold = uint32(val)
+	}
+
+	if val, ok := cfg["high_flap_threshold"].(int64); ok {
+		check.HighFlapThreshold = uint32(val)
 	}
 }
 
