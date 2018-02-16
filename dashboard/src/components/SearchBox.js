@@ -2,12 +2,15 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { withStyles } from "material-ui/styles";
-
+import Typography from "material-ui/Typography";
 import filterIcon from "material-ui-icons/FilterList";
 
 const styles = theme => ({
   box: {
     display: "flex",
+    border: "1px solid",
+    borderColor: theme.palette.divider,
+    backgroundColor: "white",
     boxShadow:
       "0 0 2px 0 rgba(0,0,0,0.14), 0 2px 2px 0 rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20)",
   },
@@ -15,20 +18,20 @@ const styles = theme => ({
     display: "flex",
     padding: "6px 8px 8px",
     height: 36,
-    border: "1px solid",
-    borderColor: theme.palette.divider,
-    borderRightColor: "white",
-    backgroundColor: "white",
   },
   textField: {
     borderRadius: 3,
-    alignSelf: "flex-end",
     width: 300,
     height: 36,
     fontSize: 14,
-    border: "1px solid",
-    borderColor: theme.palette.divider,
-    borderLeftColor: "white",
+    border: "none",
+    "&:focus": { outline: "none" },
+  },
+  save: {
+    alignSelf: "center",
+    marginRight: 8,
+    color: theme.palette.primary.light,
+    fontWeight: "bold",
   },
 });
 
@@ -57,6 +60,9 @@ class SearchBox extends React.Component {
           placeholder={"Filter all events"}
           className={classes.textField}
         />
+        <Typography className={classes.save} type="button">
+          Save
+        </Typography>
       </div>
     );
   }
