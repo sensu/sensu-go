@@ -12,7 +12,7 @@ class EventsPage extends React.Component {
   };
 
   static query = graphql`
-    query EventsPageQuery {
+    query EventsPageQuery($filter: String) {
       viewer {
         ...EventsContainer_viewer
       }
@@ -23,8 +23,10 @@ class EventsPage extends React.Component {
     const { viewer } = this.props;
     return (
       <AppContent>
-        <Typography type="headline">Recent Events</Typography>
-        <EventsContainer viewer={viewer} />
+        <div>
+          <Typography type="headline">Recent Events</Typography>
+          <EventsContainer viewer={viewer} />
+        </div>
       </AppContent>
     );
   }

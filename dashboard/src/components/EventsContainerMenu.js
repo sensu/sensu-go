@@ -51,9 +51,9 @@ class EventsContainerMenu extends React.Component {
     this.setState({ anchorEl: event.currentTarget });
   };
 
-  handleChange = () => {
-    const value = this.dropdown.value;
+  selectValue = value => () => {
     this.props.onSelectValue(value);
+    this.setState({ anchorEl: null });
   };
 
   render() {
@@ -67,7 +67,7 @@ class EventsContainerMenu extends React.Component {
           className={classes.menuItem}
           // eslint-disable-next-line react/no-array-index-key
           key={`${label}-${i}`}
-          onChange={this.handleChange}
+          onClick={this.selectValue(name)}
         >
           <ListItemText primary={name} />
         </MenuItem>
@@ -80,7 +80,7 @@ class EventsContainerMenu extends React.Component {
           className={classes.menuItem}
           // eslint-disable-next-line react/no-array-index-key
           key={`${label}-${i}`}
-          onChange={this.handleChange}
+          onClick={this.selectValue(name)}
         >
           <EventStatus status={status} />
           <span className={classes.humanStatus}>

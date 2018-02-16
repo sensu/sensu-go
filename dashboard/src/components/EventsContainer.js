@@ -44,12 +44,19 @@ class EventsContainer extends React.Component {
     Checkbox: checkboxIcon,
   };
 
-  requery = selectValue => {
-    this.setState({ data: selectValue });
+  state = {
+    filters: [],
+  };
+
+  requery = newValue => {
+    // look at drawer for push params
+    this.setState(st => ({ filters: [...st.filters, newValue] }));
   };
 
   render() {
     const { classes, viewer, Checkbox } = this.props;
+    const { filters } = this.state;
+
     // TODO maybe revisit for pagination issues
     const events = get(viewer, "events.edges", []);
     const entities = get(viewer, "entities.edges", []);
@@ -58,12 +65,15 @@ class EventsContainer extends React.Component {
     const checkNames = [map(checks, edge => edge.node.name), "keepalive"];
     const statuses = [0, 1, 2, 3];
 
-    const data = events.map(event => (
-      <EventsListItem
-        key={`${event.node.entity.name}-${event.node.check.config.name}`}
-        event={event.node}
-      />
-    ));
+    let data = null;
+    if (filters.length === 0) {
+      data = events.map(event => (
+        <EventsListItem
+          key={`${event.node.entity.name}-${event.node.check.config.name}`}
+          event={event.node}
+        />
+      ));
+    }
 
     return (
       <div className={classes.eventsContainer}>
@@ -112,7 +122,7 @@ export default createFragmentContainer(
           }
         }
       }
-      events(first: 1000) {
+      events(first: 1000, filter: $filter) {
         edges {
           node {
             entity {
