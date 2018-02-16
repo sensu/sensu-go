@@ -40,7 +40,7 @@ func NewImporter(s ...resourceImporter) *Importer {
 
 // Run ...
 func (i *Importer) Run(d map[string]interface{}) error {
-	defer i.report.Flush()
+	defer func() { _ = i.report.Flush() }()
 
 	if i.Debug {
 		i.report.LogLevel = logrus.DebugLevel
@@ -53,12 +53,16 @@ func (i *Importer) Run(d map[string]interface{}) error {
 
 	reporter.Debug("instantiating resources for given entries")
 	for _, r := range i.importers {
-		r.Import(d)
+		if err := r.Import(d); err != nil {
+			return err
+		}
 	}
 
 	reporter.Debug("validating given resources")
 	for _, r := range i.importers {
-		r.Validate()
+		if err := r.Validate(); err != nil {
+			return err
+		}
 	}
 
 	// Guard against saving resources with errors

@@ -165,7 +165,7 @@ function linter_commands
         exit 1
     }
 
-    errcheck $(go list ./... | Select-String -pattern "dashboardd", "cli/commands/importer", "agent/assetmanager", "scripts" -notMatch)
+    errcheck $(go list ./... | Select-String -pattern "dashboardd", "agent/assetmanager", "scripts" -notMatch)
     If ($LASTEXITCODE -ne 0) {
         echo "Linting failed..."
         exit 1

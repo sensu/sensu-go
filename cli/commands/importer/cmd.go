@@ -33,7 +33,7 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			stat, _ := cli.InFile.Stat()
 			if stat.Mode()&os.ModeNamedPipe == 0 {
-				cmd.Help() // Print out usage
+				_ = cmd.Help() // Print out usage
 				return nil
 			}
 
