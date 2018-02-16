@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { graphql } from "react-relay";
 
-import DefaultThemeProvider from "./Theme/Provider";
+import ThemeProvider from "./AppThemeProvider";
 import RestrictUnauthenticated from "./RestrictUnauthenticated";
 import AppFrame from "./AppFrame";
 
@@ -26,9 +26,9 @@ class AppWrapper extends React.Component {
     const { viewer, children } = this.props;
     return (
       <RestrictUnauthenticated>
-        <DefaultThemeProvider>
+        <ThemeProvider>
           <AppFrame viewer={viewer}>{children}</AppFrame>
-        </DefaultThemeProvider>
+        </ThemeProvider>
       </RestrictUnauthenticated>
     );
   }

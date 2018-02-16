@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
-import DefaultThemeProvider, { ExteriorTheme } from "../components/Theme";
+import ThemeProvider from "../components/ThemeProvider";
 
 class ExteriorWrapper extends React.Component {
   static propTypes = {
@@ -35,9 +35,9 @@ class ExteriorWrapper extends React.Component {
   render() {
     const { classes, children } = this.props;
     return (
-      <DefaultThemeProvider theme={ExteriorTheme}>
+      <ThemeProvider>
         <div className={classes.root}>{children}</div>
-      </DefaultThemeProvider>
+      </ThemeProvider>
     );
   }
 }
