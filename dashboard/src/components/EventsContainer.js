@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
+import { withRouter, routerShape } from "found";
 import map from "lodash/map";
 import get from "lodash/get";
 import { createFragmentContainer, graphql } from "react-relay";
@@ -37,6 +38,7 @@ class EventsContainer extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.shape({ checkEvents: PropTypes.object }).isRequired,
+    router: routerShape.isRequired,
     Checkbox: PropTypes.func.isRequired,
   };
 
@@ -48,9 +50,23 @@ class EventsContainer extends React.Component {
     filters: [],
   };
 
-  requery = newValue => {
-    // look at drawer for push params
-    this.setState(st => ({ filters: [...st.filters, newValue] }));
+  // TODO revist this later
+  requeryEntity = newValue => {
+    this.props.router.push(
+      `${window.location.pathname}?filter=event.Entity.ID=='${newValue}'`,
+    );
+  };
+  requeryCheck = newValue => {
+    this.props.router.push(
+      `${
+        window.location.pathname
+      }?filter=event.Check.Config.Name=='${newValue}'`,
+    );
+  };
+  requeryStatus = newValue => {
+    this.props.router.push(
+      `${window.location.pathname}?filter=event.Check.Status==${newValue}`,
+    );
   };
 
   render() {
@@ -82,17 +98,17 @@ class EventsContainer extends React.Component {
             <Checkbox className={classes.checkbox} />
           </span>
           <EventsContainerMenu
-            onSelectValue={this.requery}
+            onSelectValue={this.requeryEntity}
             label="Entity"
             contents={entityNames}
           />
           <EventsContainerMenu
-            onSelectValue={this.requery}
+            onSelectValue={this.requeryCheck}
             label="Check"
             contents={checkNames}
           />
           <EventsContainerMenu
-            onSelectValue={this.requery}
+            onSelectValue={this.requeryStatus}
             label="Status"
             contents={statuses}
             icons
@@ -105,7 +121,7 @@ class EventsContainer extends React.Component {
 }
 
 export default createFragmentContainer(
-  withStyles(styles)(EventsContainer),
+  withStyles(styles)(withRouter(EventsContainer)),
   graphql`
     fragment EventsContainer_viewer on Viewer {
       entities(first: 1000) {

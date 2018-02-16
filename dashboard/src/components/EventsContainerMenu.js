@@ -80,7 +80,7 @@ class EventsContainerMenu extends React.Component {
           className={classes.menuItem}
           // eslint-disable-next-line react/no-array-index-key
           key={`${label}-${i}`}
-          onClick={this.selectValue(name)}
+          onClick={this.selectValue(status)}
         >
           <EventStatus status={status} />
           <span className={classes.humanStatus}>
