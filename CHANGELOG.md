@@ -8,9 +8,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - Add CLI support for adhoc check requests.
+- Check scheduler now handles adhoc check requests.
 - Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
 of a check. This allows updating single fields and completely clearing out
 non-required fields.
+- Add built-in only_check_output mutator to pipelined.
+- Allow publish, cron, ttl, timeout, low flap threshold and more fields to be
+  set when importing legacy settings.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
@@ -19,6 +23,12 @@ This change was made before beta release so that further breaking changes could
 be avoided.
 - Make indentation in protocol buffers files consistent.
 - The `ab0x.go` file containing the dashboard assets is no longer committed.
+- Refactor Hook data structure. This is similar to what was done to Check,
+except that HookConfig is now embedded in Hook.
+
+### Fixed
+- Fixed a bug in time.InWindow that in some cases would cause subdued checks to
+  be executed.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
@@ -30,6 +40,7 @@ be avoided.
 exclusive fields.
 - Added `--interactive` flag to CLI which is required to run interactive mode.
 - Added CLI role rule-add Organization and Environment interactive prompts.
+- Added events page list and simple buttons to filter
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
@@ -47,6 +58,7 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
 - Context switcher added for dashboard
+- Add api support for adhoc check requests.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to

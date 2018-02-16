@@ -21,10 +21,8 @@ const HookRequestType = "hook_request"
 
 // Validate returns an error if the hook does not pass validation tests.
 func (c *Hook) Validate() error {
-	if config := c.Config; config != nil {
-		if err := config.Validate(); err != nil {
-			return err
-		}
+	if err := c.HookConfig.Validate(); err != nil {
+		return err
 	}
 
 	if c.Status < 0 {
@@ -124,12 +122,12 @@ func FixtureHook(id string) *Hook {
 	config := FixtureHookConfig(id)
 
 	return &Hook{
-		Status:   0,
-		Output:   "",
-		Issued:   t,
-		Executed: t + 1,
-		Duration: 1.0,
-		Config:   config,
+		Status:     0,
+		Output:     "",
+		Issued:     t,
+		Executed:   t + 1,
+		Duration:   1.0,
+		HookConfig: *config,
 	}
 }
 

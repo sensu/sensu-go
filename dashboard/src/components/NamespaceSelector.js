@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
+
 import { compose } from "recompose";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
-
 import Button from "material-ui/ButtonBase";
+
 import NamespaceSelectorBuilder from "./NamespaceSelectorBuilder";
 import NamespaceSelectorMenu from "./NamespaceSelectorMenu";
 import { withNamespace, namespaceShape } from "./NamespaceLink";

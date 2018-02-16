@@ -12,10 +12,10 @@ import (
 
 // StateManagerStore specifies the storage requirements for StateManagers.
 type StateManagerStore interface {
-	store.CheckConfigStore
 	store.AssetStore
-	store.HookConfigStore
+	store.CheckConfigStore
 	store.EntityStore
+	store.HookConfigStore
 }
 
 // SynchronizeMinInterval minimum interval inwhich we poll the store for updates

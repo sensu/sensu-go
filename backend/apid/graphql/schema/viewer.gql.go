@@ -54,6 +54,7 @@ type ViewerEventsFieldResolverArgs struct {
 	Last   int    // Last - self descriptive
 	Before string // Before - self descriptive
 	After  string // After - self descriptive
+	Filter string // Filter - self descriptive
 }
 
 // ViewerEventsFieldResolverParams contains contextual info to resolve events field
@@ -349,6 +350,10 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 						Type:        graphql1.String,
 					},
 					"before": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"filter": &graphql1.ArgumentConfig{
 						Description: "self descriptive",
 						Type:        graphql1.String,
 					},

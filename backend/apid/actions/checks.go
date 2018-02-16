@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"encoding/json"
+
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
@@ -310,6 +312,10 @@ func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adh
 	}
 
 	// finally, add the check to the queue
-	err = a.checkQueue.Enqueue(ctx, checkConfig.String())
+	marshaledCheck, err := json.Marshal(checkConfig)
+	if err != nil {
+		return err
+	}
+	err = a.checkQueue.Enqueue(ctx, string(marshaledCheck))
 	return err
 }

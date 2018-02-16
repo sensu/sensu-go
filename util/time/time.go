@@ -14,7 +14,7 @@ import (
 func InWindow(current time.Time, begin, end string) (bool, error) {
 	// Get the year, month and day of the provided current time (e.g. 2016, 01 &
 	// 02)
-	year, month, day := current.Date()
+	year, month, day := current.UTC().Date()
 
 	// Remove any whitespaces in the begin and end times, for backward
 	// compatibility with Sensu v1 so "3:00 PM" becomes "3:00PM" and satisfies the
