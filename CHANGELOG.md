@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 exclusive fields.
 - Added `--interactive` flag to CLI which is required to run interactive mode.
 - Added CLI role rule-add Organization and Environment interactive prompts.
+- Added events page list and simple buttons to filter
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
