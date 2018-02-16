@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { graphql } from "react-relay";
+import Typography from "material-ui/Typography";
 
-import Paper from "material-ui/Paper";
 import AppContent from "../components/AppContent";
-import EventList from "../components/EventList";
+import EventsContainer from "../components/EventsContainer";
 
 class EventsPage extends React.Component {
   static propTypes = {
@@ -12,9 +12,9 @@ class EventsPage extends React.Component {
   };
 
   static query = graphql`
-    query EventsPageQuery {
+    query EventsPageQuery($filter: String) {
       viewer {
-        ...EventList_viewer
+        ...EventsContainer_viewer
       }
     }
   `;
@@ -23,9 +23,10 @@ class EventsPage extends React.Component {
     const { viewer } = this.props;
     return (
       <AppContent>
-        <Paper>
-          <EventList viewer={viewer} />
-        </Paper>
+        <div>
+          <Typography type="headline">Recent Events</Typography>
+          <EventsContainer viewer={viewer} />
+        </div>
       </AppContent>
     );
   }

@@ -28,7 +28,9 @@ class EventRow extends React.Component {
 EventRow.propTypes = {
   event: PropTypes.shape({
     entity: PropTypes.shape({ id: "" }).isRequired,
-    config: PropTypes.shape({ name: "", command: "" }).isRequired,
+    check: PropTypes.shape({
+      config: PropTypes.shape({ name: "", command: "" }),
+    }).isRequired,
     timestamp: PropTypes.string.isRequired,
   }).isRequired,
 };

@@ -15,7 +15,12 @@ export default makeRouteConfig(
       Component={AppWrapper}
       query={AppWrapper.query}
     >
-      <Route path="events" Component={EventsPage} query={EventsPage.query} />
+      <Route
+        path="events"
+        Component={EventsPage}
+        query={EventsPage.query}
+        prepareVariables={(_, route) => route.location.query}
+      />
       <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
       <Redirect from="dashboard" to="" />
     </Route>
