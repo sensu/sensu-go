@@ -27,10 +27,10 @@ state-dir: "/var/lib/sensu"
 ##
 # store configuration
 ##
-#store-client-url: ""
-#store-peer-url: ""
-#store-initial-cluster: ""
-#store-initial-advertise-peer-url: ""
-#store-initial-cluster-state: ""
-#store-initial-cluster-token: ""
-#store-node-name: ""
+#listen-client-urls: ""
+#listen-peer-urls: ""
+#initial-cluster: ""
+#initial-advertise-peer-urls: ""
+#initial-cluster-state: ""
+#initial-cluster-token: ""
+#name: ""
