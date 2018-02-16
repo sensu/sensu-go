@@ -20,7 +20,7 @@ const styles = theme => ({
   },
   [theme.breakpoints.up(900 + theme.spacing.unit * 6)]: {
     content: {
-      maxWidth: 900,
+      maxWidth: 1000,
     },
   },
 });

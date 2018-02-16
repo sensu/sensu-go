@@ -34,16 +34,17 @@ const styles = theme => ({
     display: "inline-block",
     padding: 14,
   },
-  command: { fontSize: "0.8125rem", margin: "4px 0 8px" },
-  chevron: { verticalAlign: "top", marginTop: -2 },
+  command: { fontSize: "0.8125rem" },
+  chevron: {
+    verticalAlign: "top",
+    marginTop: -2,
+    color: theme.palette.primary.light,
+  },
   timeHolder: {
     width: "100%",
     display: "flex",
-    justifyContent: "space-between",
-  },
-  time: {
-    textTransform: "uppercase",
     fontSize: "0.8125rem",
+    margin: "4px 0 6px",
   },
   pipe: { marginTop: -4 },
 });
@@ -80,17 +81,16 @@ class EventListItem extends React.Component {
           <span className={classes.caption}>{entity.name}</span>
           <Chevron className={classes.chevron} />
           <span className={classes.caption}>{check.config.name}</span>
+          <div {...other} />
+          <div className={classes.timeHolder}>
+            Last ran<span className={classes.time}>&nbsp;{time}.</span>&nbsp;With
+            an exit status of&nbsp;<span className={classes.time}>
+              {check.status}.
+            </span>
+          </div>
           <Typography type="caption" className={classes.command}>
             {check.config.command}
           </Typography>
-          <div {...other} />
-          <div className={classes.timeHolder}>
-            <div className={classes.time}>Occurances</div>
-            <div className={classes.pipe}>|</div>
-            <div className={classes.time}>Last occured: {time}</div>
-            <div className={classes.pipe}>|</div>
-            <div className={classes.time}>Last OK</div>
-          </div>
         </div>
       </div>
     );
