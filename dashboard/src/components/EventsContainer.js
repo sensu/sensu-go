@@ -71,7 +71,6 @@ class EventsContainer extends React.Component {
 
   render() {
     const { classes, viewer, Checkbox } = this.props;
-    const { filters } = this.state;
 
     // TODO maybe revisit for pagination issues
     const events = get(viewer, "events.edges", []);
@@ -81,15 +80,12 @@ class EventsContainer extends React.Component {
     const checkNames = [map(checks, edge => edge.node.name), "keepalive"];
     const statuses = [0, 1, 2, 3];
 
-    let data = null;
-    if (filters.length === 0) {
-      data = events.map(event => (
-        <EventsListItem
-          key={`${event.node.entity.name}-${event.node.check.config.name}`}
-          event={event.node}
-        />
-      ));
-    }
+    const data = events.map(event => (
+      <EventsListItem
+        key={`${event.node.entity.name}-${event.node.check.config.name}`}
+        event={event.node}
+      />
+    ));
 
     return (
       <div className={classes.eventsContainer}>
