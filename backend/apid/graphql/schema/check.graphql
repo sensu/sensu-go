@@ -76,8 +76,47 @@ A Check is a check specification and optionally the results of the check's
 execution.
 """
 type Check {
-  "Config is the specification of a check"
-  config: CheckConfig
+  "name is the unique identifier for a check"
+  name: String!
+
+  "command is the command to be executed."
+  command: String!
+
+  "handlers are the event handler for the check (incidents and/or metrics)."
+  handlers: [Handler]!
+
+  """
+  HighFlapThreshold is the flap detection high threshold (% state change) for
+  the check. Sensu uses the same flap detection algorithm as Nagios.
+  """
+  highFlapThreshold: Int
+
+  "Interval is the interval, in seconds, at which the check should be run."
+  interval: Int!
+
+  """
+  LowFlapThreshold is the flap detection low threshold (% state change) for
+  the check. Sensu uses the same flap detection algorithm as Nagios.
+  """
+  lowFlapThreshold: Int
+
+  "Publish indicates if check requests are published for the check"
+  publish: Boolean!
+
+  "Subscriptions is the list of subscribers for the check."
+  subscriptions: [String]!
+
+  "Source indicates the name of the entity representing an external resource"
+  source: String
+
+  "STDIN indicates if the check command accepts JSON via stdin from the agent"
+  stdin: Boolean!
+
+  "CheckHooks is the list of check hooks for the check"
+  checkHooks: HookList
+
+  "Subdue represents one or more time windows when the check should be subdued."
+  subdue: TimeWindowWhen
 
   "Duration of execution"
   duration: Float

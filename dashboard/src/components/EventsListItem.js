@@ -23,6 +23,7 @@ const styles = theme => ({
   checkbox: {
     display: "inline-block",
     verticalAlign: "top",
+    marginLeft: 4,
   },
   status: {
     display: "inline-block",
@@ -80,7 +81,7 @@ class EventListItem extends React.Component {
         <div className={classes.content}>
           <span className={classes.caption}>{entity.name}</span>
           <Chevron className={classes.chevron} />
-          <span className={classes.caption}>{check.config.name}</span>
+          <span className={classes.caption}>{check.name}</span>
           <div {...other} />
           <div className={classes.timeHolder}>
             Last ran<span className={classes.time}>&nbsp;{time}.</span>&nbsp;With
@@ -89,7 +90,7 @@ class EventListItem extends React.Component {
             </span>
           </div>
           <Typography type="caption" className={classes.command}>
-            {check.config.command}
+            {check.command}
           </Typography>
         </div>
       </div>
@@ -101,7 +102,8 @@ EventListItem.propTypes = {
   event: PropTypes.shape({
     entity: PropTypes.shape({ id: "" }).isRequired,
     check: PropTypes.shape({
-      config: PropTypes.shape({ name: "", command: "" }),
+      name: "",
+      command: "",
     }).isRequired,
     timestamp: PropTypes.string.isRequired,
   }).isRequired,
@@ -115,10 +117,8 @@ export default createFragmentContainer(
         timestamp
         check {
           status
-          config {
-            name
-            command
-          }
+          name
+          command
         }
         entity {
           name
