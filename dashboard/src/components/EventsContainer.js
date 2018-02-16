@@ -44,12 +44,26 @@ class EventsContainer extends React.Component {
     Checkbox: checkboxIcon,
   };
 
+  requery = selectValue => {
+    this.setState({ data: selectValue });
+  };
+
   render() {
     const { classes, viewer, Checkbox } = this.props;
+    // TODO maybe revisit for pagination issues
     const events = get(viewer, "events.edges", []);
-    const entityNames = map(events, edge => edge.node.entity.name);
-    const checkNames = map(events, edge => edge.node.check.config.name);
-    const statuses = map(events, edge => edge.node.check.status);
+    const entities = get(viewer, "entities.edges", []);
+    const entityNames = map(entities, edge => edge.node.name);
+    const checks = get(viewer, "checks.edges", []);
+    const checkNames = [map(checks, edge => edge.node.name), "keepalive"];
+    const statuses = [0, 1, 2, 3];
+
+    const data = events.map(event => (
+      <EventsListItem
+        key={`${event.node.entity.name}-${event.node.check.config.name}`}
+        event={event.node}
+      />
+    ));
 
     return (
       <div className={classes.eventsContainer}>
@@ -57,13 +71,24 @@ class EventsContainer extends React.Component {
           <span className={classes.tableHeaderButton}>
             <Checkbox className={classes.checkbox} />
           </span>
-          <EventsContainerMenu label="Entity" contents={entityNames} />
-          <EventsContainerMenu label="Check" contents={checkNames} />
-          <EventsContainerMenu label="Status" contents={statuses} icons />
+          <EventsContainerMenu
+            onSelectValue={this.requery}
+            label="Entity"
+            contents={entityNames}
+          />
+          <EventsContainerMenu
+            onSelectValue={this.requery}
+            label="Check"
+            contents={checkNames}
+          />
+          <EventsContainerMenu
+            onSelectValue={this.requery}
+            label="Status"
+            contents={statuses}
+            icons
+          />
         </div>
-        {map(events, (event, i) => (
-          <EventsListItem key={i} event={event.node} />
-        ))}
+        {data}
       </div>
     );
   }
@@ -73,6 +98,20 @@ export default createFragmentContainer(
   withStyles(styles)(EventsContainer),
   graphql`
     fragment EventsContainer_viewer on Viewer {
+      entities(first: 1000) {
+        edges {
+          node {
+            name
+          }
+        }
+      }
+      checks(first: 1000) {
+        edges {
+          node {
+            name
+          }
+        }
+      }
       events(first: 1000) {
         edges {
           node {

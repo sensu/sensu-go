@@ -30,6 +30,7 @@ class EventsContainerMenu extends React.Component {
     label: PropTypes.string.isRequired,
     DropdownArrow: PropTypes.func.isRequired,
     icons: PropTypes.bool,
+    onSelectValue: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -39,6 +40,7 @@ class EventsContainerMenu extends React.Component {
 
   state = {
     anchorEl: null,
+    selectValue: null,
   };
 
   onClose = () => {
@@ -49,17 +51,23 @@ class EventsContainerMenu extends React.Component {
     this.setState({ anchorEl: event.currentTarget });
   };
 
+  handleChange = () => {
+    const value = this.dropdown.value;
+    this.props.onSelectValue(value);
+  };
+
   render() {
     const { classes, label, icons, contents, DropdownArrow } = this.props;
     const { anchorEl } = this.state;
 
     let items = {};
     if (!icons) {
-      items = contents.map(name => (
+      items = contents.map((name, i) => (
         <MenuItem
           className={classes.menuItem}
-          key={label}
-          onClick={this.redirect}
+          // eslint-disable-next-line react/no-array-index-key
+          key={`${label}-${i}`}
+          onChange={this.handleChange}
         >
           <ListItemText primary={name} />
         </MenuItem>
@@ -67,11 +75,12 @@ class EventsContainerMenu extends React.Component {
     } else {
       const humanStatuses = ["Passing", "Warning", "Critical", "Unknown"];
       // TODO this code is probably reusable/make new component
-      items = contents.map(status => (
+      items = contents.map((status, i) => (
         <MenuItem
           className={classes.menuItem}
-          key={label}
-          onCLick={this.redirect}
+          // eslint-disable-next-line react/no-array-index-key
+          key={`${label}-${i}`}
+          onChange={this.handleChange}
         >
           <EventStatus status={status} />
           <span className={classes.humanStatus}>

@@ -12,7 +12,7 @@ const styles = {};
 
 class EventStatus extends React.Component {
   static propTypes = {
-    status: PropTypes.string.isRequired,
+    status: PropTypes.number.isRequired,
   };
 
   static defaultProps = {};
