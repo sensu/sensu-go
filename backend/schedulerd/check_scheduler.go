@@ -113,7 +113,7 @@ func (s *CheckScheduler) Start() error {
 				// Point executor to lastest copy of the scheduler state
 				executor.setState(state)
 
-				if err := executor.ProcessCheck(s.ctx, check); err != nil {
+				if err := executor.processCheck(s.ctx, check); err != nil {
 					logger.Error(err)
 				}
 			}

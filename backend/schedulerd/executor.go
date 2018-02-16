@@ -18,9 +18,7 @@ var (
 
 // Executor executes scheduled or adhoc checks
 type Executor interface {
-	// ProcessCheck processes a check by publishing its proxy requests (if any)
-	// and publishing the check itself
-	ProcessCheck(ctx context.Context, check *types.CheckConfig) error
+	processCheck(ctx context.Context, check *types.CheckConfig) error
 	getEntities(ctx context.Context) ([]*types.Entity, error)
 	publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error
 	execute(check *types.CheckConfig) error
@@ -30,26 +28,26 @@ type Executor interface {
 
 // CheckExecutor executes scheduled checks in the check scheduler
 type CheckExecutor struct {
-	Bus          messaging.MessageBus
-	State        *SchedulerState
+	bus          messaging.MessageBus
+	state        *SchedulerState
 	roundRobin   *roundRobinScheduler
-	Organization string
-	Environment  string
+	organization string
+	environment  string
 }
 
 // NewCheckExecutor creates a new check executor
 func NewCheckExecutor(bus messaging.MessageBus, roundRobin *roundRobinScheduler, org string, env string) *CheckExecutor {
-	return &CheckExecutor{Bus: bus, roundRobin: roundRobin, Organization: org, Environment: env}
+	return &CheckExecutor{bus: bus, roundRobin: roundRobin, organization: org, environment: env}
 }
 
 // ProcessCheck processes a check by publishing its proxy requests (if any)
 // and publishing the check itself
-func (c *CheckExecutor) ProcessCheck(ctx context.Context, check *types.CheckConfig) error {
+func (c *CheckExecutor) processCheck(ctx context.Context, check *types.CheckConfig) error {
 	return processCheck(ctx, c, check)
 }
 
 func (c *CheckExecutor) getEntities(ctx context.Context) ([]*types.Entity, error) {
-	return c.State.GetEntitiesInNamespace(c.Organization, c.Environment), nil
+	return c.state.GetEntitiesInNamespace(c.organization, c.environment), nil
 }
 
 func (c *CheckExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
@@ -81,7 +79,7 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 		}
 		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
 
-		if pubErr := c.Bus.Publish(topic, request); pubErr != nil {
+		if pubErr := c.bus.Publish(topic, request); pubErr != nil {
 			logger.WithError(pubErr).Error("error publishing check request")
 			err = pubErr
 		}
@@ -98,7 +96,7 @@ func (c *CheckExecutor) buildRequest(check *types.CheckConfig) *types.CheckReque
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
 		// Explode assets; get assets & filter out those that are irrelevant
-		allAssets := c.State.GetAssetsInNamespace(check.Organization)
+		allAssets := c.state.GetAssetsInNamespace(check.Organization)
 		for _, asset := range allAssets {
 			if assetIsRelevant(asset, check) {
 				request.Assets = append(request.Assets, *asset)
@@ -110,7 +108,7 @@ func (c *CheckExecutor) buildRequest(check *types.CheckConfig) *types.CheckReque
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		allHooks := c.State.GetHooksInNamespace(check.Organization, check.Environment)
+		allHooks := c.state.GetHooksInNamespace(check.Organization, check.Environment)
 		for _, hook := range allHooks {
 			if hookIsRelevant(hook, check) {
 				request.Hooks = append(request.Hooks, *hook)
@@ -144,7 +142,7 @@ func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
 }
 
 func (c *CheckExecutor) setState(state *SchedulerState) {
-	c.State = state
+	c.state = state
 }
 
 // AdhocRequestExecutor takes new check requests from the adhoc queue and runs
@@ -199,7 +197,7 @@ func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 			continue
 		}
 
-		if err = a.ProcessCheck(ctx, &check); err != nil {
+		if err = a.processCheck(ctx, &check); err != nil {
 			a.listenQueueErr <- err
 			if nackErr := item.Nack(ctx); nackErr != nil {
 				a.listenQueueErr <- nackErr
@@ -213,9 +211,9 @@ func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 	}
 }
 
-// ProcessCheck processes a check by publishing its proxy requests (if any)
+// processCheck processes a check by publishing its proxy requests (if any)
 // and publishing the check itself
-func (a *AdhocRequestExecutor) ProcessCheck(ctx context.Context, check *types.CheckConfig) error {
+func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *types.CheckConfig) error {
 	return processCheck(ctx, a, check)
 }
 

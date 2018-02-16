@@ -60,8 +60,8 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	assert.NoError(scheduler.msgBus.Start())
 
 	scheduler.exec = &CheckExecutor{
-		State: schedulerState,
-		Bus:   scheduler.msgBus,
+		state: schedulerState,
+		bus:   scheduler.msgBus,
 	}
 
 	return scheduler
