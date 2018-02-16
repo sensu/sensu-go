@@ -22,7 +22,7 @@ change that will cause existing Sensu alpha installations to break if upgraded.
 This change was made before beta release so that further breaking changes could
 be avoided.
 - Make indentation in protocol buffers files consistent.
-- The `ab0x.go` file containing the dashboard assets is no longer committed.
+- Update the dashboard static assets.
 - Refactor Hook data structure. This is similar to what was done to Check,
 except that HookConfig is now embedded in Hook.
 
