@@ -24,6 +24,7 @@ be avoided.
 - Make indentation in protocol buffers files consistent.
 - Refactor Hook data structure. This is similar to what was done to Check,
 except that HookConfig is now embedded in Hook.
+- Refactor CheckExecutor and AdhocRequestExecutor into an Executor interface.
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
