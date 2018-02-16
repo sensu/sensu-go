@@ -17,6 +17,8 @@ const styles = theme => ({
     border: "1px solid",
     borderRadius: 2,
     borderColor: theme.palette.divider,
+    marginTop: 16,
+    marginBottom: 16,
   },
   tableHeader: {
     padding: "20px 0 16px",
@@ -30,7 +32,12 @@ const styles = theme => ({
     marginLeft: 16,
     display: "flex",
   },
-  checkbox: { marginTop: -4, width: 24, height: 24 },
+  checkbox: {
+    marginTop: -4,
+    width: 24,
+    height: 24,
+    color: theme.palette.primary.contrastText,
+  },
 });
 
 class EventsContainer extends React.Component {
@@ -58,9 +65,7 @@ class EventsContainer extends React.Component {
   };
   requeryCheck = newValue => {
     this.props.router.push(
-      `${
-        window.location.pathname
-      }?filter=event.Check.Config.Name=='${newValue}'`,
+      `${window.location.pathname}?filter=event.Check.Name=='${newValue}'`,
     );
   };
   requeryStatus = newValue => {
@@ -77,21 +82,14 @@ class EventsContainer extends React.Component {
     const entities = get(viewer, "entities.edges", []);
     const entityNames = map(entities, edge => edge.node.name);
     const checks = get(viewer, "checks.edges", []);
-    const checkNames = [map(checks, edge => edge.node.name), "keepalive"];
+    const checkNames = [...map(checks, edge => edge.node.name), "keepalive"];
     const statuses = [0, 1, 2, 3];
-
-    const data = events.map(event => (
-      <EventsListItem
-        key={`${event.node.entity.name}-${event.node.check.config.name}`}
-        event={event.node}
-      />
-    ));
 
     return (
       <div className={classes.eventsContainer}>
         <div className={classes.tableHeader}>
           <span className={classes.tableHeaderButton}>
-            <Checkbox className={classes.checkbox} />
+            <Checkbox color="secondary" className={classes.checkbox} />
           </span>
           <EventsContainerMenu
             onSelectValue={this.requeryEntity}
@@ -110,7 +108,9 @@ class EventsContainer extends React.Component {
             icons
           />
         </div>
-        {data}
+        {events.map(event => (
+          <EventsListItem key={event.node.id} event={event.node} />
+        ))}
       </div>
     );
   }
@@ -137,15 +137,7 @@ export default createFragmentContainer(
       events(first: 1000, filter: $filter) {
         edges {
           node {
-            entity {
-              name
-            }
-            check {
-              status
-              config {
-                name
-              }
-            }
+            id
             ...EventsListItem_event
           }
         }

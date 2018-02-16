@@ -982,10 +982,76 @@ var _ObjectTypeCheckConfigEdgeDesc = graphql.ObjectDesc{
 	},
 }
 
-// CheckConfigFieldResolver implement to resolve requests for the Check's config field.
-type CheckConfigFieldResolver interface {
-	// Config implements response to request for config field.
-	Config(p graphql.ResolveParams) (interface{}, error)
+// CheckNameFieldResolver implement to resolve requests for the Check's name field.
+type CheckNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+// CheckCommandFieldResolver implement to resolve requests for the Check's command field.
+type CheckCommandFieldResolver interface {
+	// Command implements response to request for command field.
+	Command(p graphql.ResolveParams) (string, error)
+}
+
+// CheckHandlersFieldResolver implement to resolve requests for the Check's handlers field.
+type CheckHandlersFieldResolver interface {
+	// Handlers implements response to request for handlers field.
+	Handlers(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckHighFlapThresholdFieldResolver implement to resolve requests for the Check's highFlapThreshold field.
+type CheckHighFlapThresholdFieldResolver interface {
+	// HighFlapThreshold implements response to request for highFlapThreshold field.
+	HighFlapThreshold(p graphql.ResolveParams) (int, error)
+}
+
+// CheckIntervalFieldResolver implement to resolve requests for the Check's interval field.
+type CheckIntervalFieldResolver interface {
+	// Interval implements response to request for interval field.
+	Interval(p graphql.ResolveParams) (int, error)
+}
+
+// CheckLowFlapThresholdFieldResolver implement to resolve requests for the Check's lowFlapThreshold field.
+type CheckLowFlapThresholdFieldResolver interface {
+	// LowFlapThreshold implements response to request for lowFlapThreshold field.
+	LowFlapThreshold(p graphql.ResolveParams) (int, error)
+}
+
+// CheckPublishFieldResolver implement to resolve requests for the Check's publish field.
+type CheckPublishFieldResolver interface {
+	// Publish implements response to request for publish field.
+	Publish(p graphql.ResolveParams) (bool, error)
+}
+
+// CheckSubscriptionsFieldResolver implement to resolve requests for the Check's subscriptions field.
+type CheckSubscriptionsFieldResolver interface {
+	// Subscriptions implements response to request for subscriptions field.
+	Subscriptions(p graphql.ResolveParams) ([]string, error)
+}
+
+// CheckSourceFieldResolver implement to resolve requests for the Check's source field.
+type CheckSourceFieldResolver interface {
+	// Source implements response to request for source field.
+	Source(p graphql.ResolveParams) (string, error)
+}
+
+// CheckStdinFieldResolver implement to resolve requests for the Check's stdin field.
+type CheckStdinFieldResolver interface {
+	// Stdin implements response to request for stdin field.
+	Stdin(p graphql.ResolveParams) (bool, error)
+}
+
+// CheckCheckHooksFieldResolver implement to resolve requests for the Check's checkHooks field.
+type CheckCheckHooksFieldResolver interface {
+	// CheckHooks implements response to request for checkHooks field.
+	CheckHooks(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckSubdueFieldResolver implement to resolve requests for the Check's subdue field.
+type CheckSubdueFieldResolver interface {
+	// Subdue implements response to request for subdue field.
+	Subdue(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckDurationFieldResolver implement to resolve requests for the Check's duration field.
@@ -1098,7 +1164,18 @@ type CheckTotalStateChangeFieldResolver interface {
 //   }
 //
 type CheckFieldResolvers interface {
-	CheckConfigFieldResolver
+	CheckNameFieldResolver
+	CheckCommandFieldResolver
+	CheckHandlersFieldResolver
+	CheckHighFlapThresholdFieldResolver
+	CheckIntervalFieldResolver
+	CheckLowFlapThresholdFieldResolver
+	CheckPublishFieldResolver
+	CheckSubscriptionsFieldResolver
+	CheckSourceFieldResolver
+	CheckStdinFieldResolver
+	CheckCheckHooksFieldResolver
+	CheckSubdueFieldResolver
 	CheckDurationFieldResolver
 	CheckExecutedFieldResolver
 	CheckHistoryFieldResolver
@@ -1156,8 +1233,83 @@ type CheckFieldResolvers interface {
 //
 type CheckAliases struct{}
 
-// Config implements response to request for 'config' field.
-func (_ CheckAliases) Config(p graphql.ResolveParams) (interface{}, error) {
+// Name implements response to request for 'name' field.
+func (_ CheckAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
+// Command implements response to request for 'command' field.
+func (_ CheckAliases) Command(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
+// Handlers implements response to request for 'handlers' field.
+func (_ CheckAliases) Handlers(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// HighFlapThreshold implements response to request for 'highFlapThreshold' field.
+func (_ CheckAliases) HighFlapThreshold(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// Interval implements response to request for 'interval' field.
+func (_ CheckAliases) Interval(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// LowFlapThreshold implements response to request for 'lowFlapThreshold' field.
+func (_ CheckAliases) LowFlapThreshold(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// Publish implements response to request for 'publish' field.
+func (_ CheckAliases) Publish(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(bool)
+	return ret, err
+}
+
+// Subscriptions implements response to request for 'subscriptions' field.
+func (_ CheckAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.([]string)
+	return ret, err
+}
+
+// Source implements response to request for 'source' field.
+func (_ CheckAliases) Source(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
+// Stdin implements response to request for 'stdin' field.
+func (_ CheckAliases) Stdin(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(bool)
+	return ret, err
+}
+
+// CheckHooks implements response to request for 'checkHooks' field.
+func (_ CheckAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Subdue implements response to request for 'subdue' field.
+func (_ CheckAliases) Subdue(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -1227,10 +1379,87 @@ var CheckType = graphql.NewType("Check", graphql.ObjectKind)
 func RegisterCheck(svc *graphql.Service, impl CheckFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeCheckDesc, impl)
 }
-func _ObjTypeCheckConfigHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigFieldResolver)
+func _ObjTypeCheckNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckNameFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Config(p)
+		return resolver.Name(p)
+	}
+}
+
+func _ObjTypeCheckCommandHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckCommandFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Command(p)
+	}
+}
+
+func _ObjTypeCheckHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckHandlersFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handlers(p)
+	}
+}
+
+func _ObjTypeCheckHighFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckHighFlapThresholdFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.HighFlapThreshold(p)
+	}
+}
+
+func _ObjTypeCheckIntervalHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckIntervalFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Interval(p)
+	}
+}
+
+func _ObjTypeCheckLowFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckLowFlapThresholdFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LowFlapThreshold(p)
+	}
+}
+
+func _ObjTypeCheckPublishHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckPublishFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Publish(p)
+	}
+}
+
+func _ObjTypeCheckSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckSubscriptionsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subscriptions(p)
+	}
+}
+
+func _ObjTypeCheckSourceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckSourceFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Source(p)
+	}
+}
+
+func _ObjTypeCheckStdinHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckStdinFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Stdin(p)
+	}
+}
+
+func _ObjTypeCheckCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckCheckHooksFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CheckHooks(p)
+	}
+}
+
+func _ObjTypeCheckSubdueHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckSubdueFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subdue(p)
 	}
 }
 
@@ -1294,12 +1523,19 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
 		Fields: graphql1.Fields{
-			"config": &graphql1.Field{
+			"checkHooks": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Config is the specification of a check",
-				Name:              "config",
-				Type:              graphql.OutputType("CheckConfig"),
+				Description:       "CheckHooks is the list of check hooks for the check",
+				Name:              "checkHooks",
+				Type:              graphql.OutputType("HookList"),
+			},
+			"command": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "command is the command to be executed.",
+				Name:              "command",
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"duration": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1315,12 +1551,33 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "executed",
 				Type:              graphql1.DateTime,
 			},
+			"handlers": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "handlers are the event handler for the check (incidents and/or metrics).",
+				Name:              "handlers",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Handler"))),
+			},
+			"highFlapThreshold": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "HighFlapThreshold is the flap detection high threshold (% state change) for\nthe check. Sensu uses the same flap detection algorithm as Nagios.",
+				Name:              "highFlapThreshold",
+				Type:              graphql1.Int,
+			},
 			"history": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "History is the check state history.",
 				Name:              "history",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
+			},
+			"interval": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Interval is the interval, in seconds, at which the check should be run.",
+				Name:              "interval",
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"issued": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1329,12 +1586,40 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "issued",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
+			"lowFlapThreshold": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "LowFlapThreshold is the flap detection low threshold (% state change) for\nthe check. Sensu uses the same flap detection algorithm as Nagios.",
+				Name:              "lowFlapThreshold",
+				Type:              graphql1.Int,
+			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "name is the unique identifier for a check",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"output": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Output from the execution of Command",
 				Name:              "output",
 				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"publish": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Publish indicates if check requests are published for the check",
+				Name:              "publish",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"source": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Source indicates the name of the entity representing an external resource",
+				Name:              "source",
+				Type:              graphql1.String,
 			},
 			"state": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1349,6 +1634,27 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Description:       "Status is the exit status code produced by the check",
 				Name:              "status",
 				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"stdin": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "STDIN indicates if the check command accepts JSON via stdin from the agent",
+				Name:              "stdin",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"subdue": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subdue represents one or more time windows when the check should be subdued.",
+				Name:              "subdue",
+				Type:              graphql.OutputType("TimeWindowWhen"),
+			},
+			"subscriptions": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subscriptions is the list of subscribers for the check.",
+				Name:              "subscriptions",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
 			"totalStateChange": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1375,15 +1681,26 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeCheckConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"config":           _ObjTypeCheckConfigHandler,
-		"duration":         _ObjTypeCheckDurationHandler,
-		"executed":         _ObjTypeCheckExecutedHandler,
-		"history":          _ObjTypeCheckHistoryHandler,
-		"issued":           _ObjTypeCheckIssuedHandler,
-		"output":           _ObjTypeCheckOutputHandler,
-		"state":            _ObjTypeCheckStateHandler,
-		"status":           _ObjTypeCheckStatusHandler,
-		"totalStateChange": _ObjTypeCheckTotalStateChangeHandler,
+		"checkHooks":        _ObjTypeCheckCheckHooksHandler,
+		"command":           _ObjTypeCheckCommandHandler,
+		"duration":          _ObjTypeCheckDurationHandler,
+		"executed":          _ObjTypeCheckExecutedHandler,
+		"handlers":          _ObjTypeCheckHandlersHandler,
+		"highFlapThreshold": _ObjTypeCheckHighFlapThresholdHandler,
+		"history":           _ObjTypeCheckHistoryHandler,
+		"interval":          _ObjTypeCheckIntervalHandler,
+		"issued":            _ObjTypeCheckIssuedHandler,
+		"lowFlapThreshold":  _ObjTypeCheckLowFlapThresholdHandler,
+		"name":              _ObjTypeCheckNameHandler,
+		"output":            _ObjTypeCheckOutputHandler,
+		"publish":           _ObjTypeCheckPublishHandler,
+		"source":            _ObjTypeCheckSourceHandler,
+		"state":             _ObjTypeCheckStateHandler,
+		"status":            _ObjTypeCheckStatusHandler,
+		"stdin":             _ObjTypeCheckStdinHandler,
+		"subdue":            _ObjTypeCheckSubdueHandler,
+		"subscriptions":     _ObjTypeCheckSubscriptionsHandler,
+		"totalStateChange":  _ObjTypeCheckTotalStateChangeHandler,
 	},
 }
 
