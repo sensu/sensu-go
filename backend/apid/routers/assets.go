@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -37,7 +38,11 @@ func (r *AssetsRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *AssetsRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	record, err := r.controller.Find(req.Context(), params["id"])
+	assetPath, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	record, err := r.controller.Find(req.Context(), assetPath)
 	return record, err
 }
 

@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -52,7 +53,11 @@ func (r *UsersRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	record, err := r.controller.Find(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	record, err := r.controller.Find(req.Context(), id)
 
 	// Obfustace users password
 	record.Password = ""
@@ -87,13 +92,21 @@ func (r *UsersRouter) update(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) destroy(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.Disable(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.Disable(req.Context(), id)
 	return nil, err
 }
 
 func (r *UsersRouter) reinstate(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.Enable(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.Enable(req.Context(), id)
 	return nil, err
 }
 
@@ -104,20 +117,40 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	}
 
 	vars := mux.Vars(req)
-	cfg := types.User{Username: vars["id"], Password: params["password"]}
+	id, err := url.PathUnescape(vars["id"])
+	if err != nil {
+		return nil, err
+	}
+	cfg := types.User{Username: id, Password: params["password"]}
 
-	err := r.controller.Update(req.Context(), cfg)
+	err = r.controller.Update(req.Context(), cfg)
 	return nil, err
 }
 
 func (r *UsersRouter) addRole(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.AddRole(req.Context(), params["id"], params["role"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	role, err := url.PathUnescape(params["role"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.AddRole(req.Context(), id, role)
 	return nil, err
 }
 
 func (r *UsersRouter) removeRole(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.RemoveRole(req.Context(), params["id"], params["role"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	role, err := url.PathUnescape(params["role"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.RemoveRole(req.Context(), id, role)
 	return nil, err
 }
