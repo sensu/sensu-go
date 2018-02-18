@@ -2,7 +2,7 @@ version: '3'
 services:
   sensu-backend1:
     image: sensuapp/sensu-go:master
-    command: sensu-backend start --store-client-url http://0.0.0.0:2379
+    command: sensu-backend start --listen-client-urls http://0.0.0.0:2379
     hostname: backend1
     restart: always
     ports:

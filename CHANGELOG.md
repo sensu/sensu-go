@@ -25,6 +25,7 @@ be avoided.
 - Refactor Hook data structure. This is similar to what was done to Check,
 except that HookConfig is now embedded in Hook.
 - Refactor CheckExecutor and AdhocRequestExecutor into an Executor interface.
+- Changed the sensu-backend etcd flag constants to match the etcd flag names.
 - Upgraded to Etcd v3.3.1
 
 ### Fixed
