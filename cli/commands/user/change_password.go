@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	badCurrentPasswordError   = errors.New("given password did not match the one on file")
-	emptyCurrentPasswordError = errors.New("current user's password must be provided")
-	passwordsDoNotMatchError  = errors.New("given passwords do not match")
+	errBadCurrentPassword   = errors.New("given password did not match the one on file")
+	errEmptyCurrentPassword = errors.New("current user's password must be provided")
+	errPasswordsDoNotMatch  = errors.New("given passwords do not match")
 )
 
 type passwordOpts struct {
@@ -130,12 +130,12 @@ func verifyExistingPassword(cli *cli.SensuCli, flags *pflag.FlagSet, isInteracti
 
 	// Validate that the current password has been provided
 	if input.Password == "" {
-		return emptyCurrentPasswordError
+		return errEmptyCurrentPassword
 	}
 
 	// Attempt to authenticate
 	if _, err := cli.Client.CreateAccessToken(cli.Config.APIUrl(), username, input.Password); err != nil {
-		return badCurrentPasswordError
+		return errBadCurrentPassword
 	}
 
 	return nil
@@ -172,7 +172,7 @@ func (opts *passwordOpts) withFlags(flags *pflag.FlagSet) error {
 
 func (opts *passwordOpts) validate() error {
 	if opts.New != opts.Confirm {
-		return passwordsDoNotMatchError
+		return errPasswordsDoNotMatch
 	}
 
 	user := types.User{Password: opts.New}
