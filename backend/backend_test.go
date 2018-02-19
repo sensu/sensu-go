@@ -5,9 +5,9 @@ package backend
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -59,7 +59,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			ports := make([]int, 5)
 			err := testutil.RandomPorts(ports)
 			if err != nil {
-				log.Panic(err)
+				t.Fatal(err)
 			}
 			clURL := fmt.Sprintf("%s://127.0.0.1:%d", tc.httpScheme, ports[0])
 			apURL := fmt.Sprintf("%s://127.0.0.1:%d", tc.httpScheme, ports[1])
@@ -90,9 +90,16 @@ func TestBackendHTTPListener(t *testing.T) {
 				assert.FailNow(t, "failed to start backend")
 			}
 
+			var runError error
+			var runWg sync.WaitGroup
+			runWg.Add(1)
 			go func() {
-				err = b.Run()
-				assert.NoError(t, err)
+				defer runWg.Done()
+				runError = b.Run()
+			}()
+			defer func() {
+				runWg.Wait()
+				assert.NoError(t, runError)
 			}()
 
 			retryConnect(t, fmt.Sprintf("127.0.0.1:%d", agentPort))
@@ -109,11 +116,12 @@ func TestBackendHTTPListener(t *testing.T) {
 				transport.HeaderKeySubscriptions: {},
 			}
 			client, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			require.NotNil(t, client)
 
 			assert.NoError(t, client.Close())
 			b.Stop()
+
 		})
 	}
 }
