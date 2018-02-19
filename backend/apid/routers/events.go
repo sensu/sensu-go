@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -33,25 +34,30 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
-	records, err := r.controller.Query(req.Context(), actions.QueryParams{})
+	records, err := r.controller.Query(req.Context(), "", "")
 	return records, err
 }
 
 func (r *EventsRouter) listByEntity(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	records, err := r.controller.Query(req.Context(), params)
+	entity := url.PathEscape(params["entity"])
+	records, err := r.controller.Query(req.Context(), entity, "")
 	return records, err
 }
 
 func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	record, err := r.controller.Find(req.Context(), params)
+	entity := url.PathEscape(params["entity"])
+	check := url.PathEscape(params["check"])
+	record, err := r.controller.Find(req.Context(), entity, check)
 	return record, err
 }
 
 func (r *EventsRouter) destroy(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	return nil, r.controller.Destroy(req.Context(), params)
+	entity := url.PathEscape(params["entity"])
+	check := url.PathEscape(params["check"])
+	return nil, r.controller.Destroy(req.Context(), entity, check)
 }
 
 func (r *EventsRouter) create(req *http.Request) (interface{}, error) {

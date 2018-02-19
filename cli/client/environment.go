@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -17,7 +18,7 @@ func (client *RestClient) CreateEnvironment(org string, env *types.Environment) 
 
 	res, err := client.R().
 		SetBody(bytes).
-		Post(fmt.Sprintf("/rbac/organizations/%s/environments", org))
+		Post(fmt.Sprintf("/rbac/organizations/%s/environments", url.PathEscape(org)))
 
 	if err != nil {
 		return err
@@ -32,6 +33,7 @@ func (client *RestClient) CreateEnvironment(org string, env *types.Environment) 
 
 // DeleteEnvironment deletes an environment on configured Sensu instance
 func (client *RestClient) DeleteEnvironment(org, env string) error {
+	org, env = url.PathEscape(org), url.PathEscape(env)
 	res, err := client.R().Delete(
 		fmt.Sprintf("/rbac/organizations/%s/environments/%s", org, env),
 	)
@@ -52,7 +54,7 @@ func (client *RestClient) ListEnvironments(org string) ([]types.Environment, err
 	var envs []types.Environment
 
 	res, err := client.R().Get(
-		fmt.Sprintf("/rbac/organizations/%s/environments", org),
+		fmt.Sprintf("/rbac/organizations/%s/environments", url.PathEscape(org)),
 	)
 	if err != nil {
 		return envs, err
@@ -71,8 +73,8 @@ func (client *RestClient) FetchEnvironment(envName string) (*types.Environment, 
 	var env *types.Environment
 	path := fmt.Sprintf(
 		"/rbac/organizations/%s/environments/%s",
-		client.config.Organization(),
-		envName,
+		url.PathEscape(client.config.Organization()),
+		url.PathEscape(envName),
 	)
 
 	res, err := client.R().Get(path)
@@ -96,7 +98,7 @@ func (client *RestClient) UpdateEnvironment(env *types.Environment) error {
 	}
 
 	path := fmt.Sprintf("/rbac/organizations/%s/environments/%s",
-		env.Organization, env.Name)
+		url.PathEscape(env.Organization), url.PathEscape(env.Name))
 	res, err := client.R().SetBody(b).Patch(path)
 	if err != nil {
 		return err

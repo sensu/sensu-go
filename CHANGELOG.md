@@ -31,6 +31,7 @@ except that HookConfig is now embedded in Hook.
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
   be executed.
+- Fixed a bug in the HTTP API where resource names could not contain special characters.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added

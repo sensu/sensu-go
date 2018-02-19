@@ -47,10 +47,10 @@
   revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
 
 [[projects]]
+  branch = "master"
   name = "github.com/coreos/etcd"
   packages = ["alarm","auth","auth/authpb","client","clientv3","clientv3/concurrency","compactor","discovery","embed","error","etcdserver","etcdserver/api","etcdserver/api/etcdhttp","etcdserver/api/v2http","etcdserver/api/v2http/httptypes","etcdserver/api/v2v3","etcdserver/api/v3client","etcdserver/api/v3election","etcdserver/api/v3election/v3electionpb","etcdserver/api/v3election/v3electionpb/gw","etcdserver/api/v3lock","etcdserver/api/v3lock/v3lockpb","etcdserver/api/v3lock/v3lockpb/gw","etcdserver/api/v3rpc","etcdserver/api/v3rpc/rpctypes","etcdserver/auth","etcdserver/etcdserverpb","etcdserver/etcdserverpb/gw","etcdserver/membership","etcdserver/stats","lease","lease/leasehttp","lease/leasepb","mvcc","mvcc/backend","mvcc/mvccpb","pkg/adt","pkg/contention","pkg/cors","pkg/cpuutil","pkg/crc","pkg/debugutil","pkg/fileutil","pkg/httputil","pkg/idutil","pkg/ioutil","pkg/logutil","pkg/netutil","pkg/pathutil","pkg/pbutil","pkg/runtime","pkg/schedule","pkg/srv","pkg/tlsutil","pkg/transport","pkg/types","pkg/wait","proxy/grpcproxy/adapter","raft","raft/raftpb","rafthttp","snap","snap/snappb","store","version","wal","wal/walpb"]
-  revision = "28f3f26c0e303392556035b694f75768d449d33d"
-  version = "v3.3.1"
+  revision = "a7f1fbe00ec216fcb3a1919397a103b41dca8413"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -98,12 +98,6 @@
   name = "github.com/dsnet/compress"
   packages = [".","bzip2","bzip2/internal/sais","internal","internal/errors","internal/prefix"]
   revision = "f41072d47fff1112fa37146dfc812a476cce2d7f"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/dustin/go-humanize"
-  packages = ["."]
-  revision = "bb3d318650d48840a39aa21a027c6630e198e626"
 
 [[projects]]
   name = "github.com/emicklei/proto"
@@ -167,7 +161,7 @@
   name = "github.com/gorilla/mux"
   packages = ["."]
   revision = "24fca303ac6da784b9e8269f724ddeb0b2eea5e7"
-  version = "v1.5.0"
+  version = "v1.6.1"
 
 [[projects]]
   name = "github.com/gorilla/websocket"
@@ -484,8 +478,8 @@
 [[projects]]
   name = "gopkg.in/AlecAivazis/survey.v1"
   packages = ["core","terminal"]
-  revision = "344ec26ea976135df7508f1f513e5490a4686e11"
-  version = "v1.4.0"
+  revision = "0aa8b6a162b391fe2d95648b7677d1d6ac2090a6"
+  version = "v1.4.1"
 
 [[projects]]
   name = "gopkg.in/h2non/filetype.v1"
@@ -502,6 +496,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "57ac0e0b4e0b48ae1a89ea41559069114de64a91197af07f1cb57f5a48b698a6"
+  inputs-digest = "fdf70818de1519fadbc690581098ba6e37526dc2cb9f5df069b45f89d9f5c09b"
   solver-name = "gps-cdcl"
   solver-version = 1

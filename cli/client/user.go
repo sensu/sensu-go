@@ -2,12 +2,14 @@ package client
 
 import (
 	"encoding/json"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
 
 // AddRoleToUser adds roles to given user on configured Sensu instance
 func (client *RestClient) AddRoleToUser(username, role string) error {
+	username, role = url.PathEscape(username), url.PathEscape(role)
 	res, err := client.R().Put("/rbac/users/" + username + "/roles/" + role)
 	if err != nil {
 		return err
@@ -36,7 +38,7 @@ func (client *RestClient) CreateUser(user *types.User) error {
 
 // DisableUser disables a user on configured Sensu instance
 func (client *RestClient) DisableUser(username string) error {
-	res, err := client.R().Delete("/rbac/users/" + username)
+	res, err := client.R().Delete("/rbac/users/" + url.PathEscape(username))
 
 	if err != nil {
 		return err
@@ -68,7 +70,7 @@ func (client *RestClient) ListUsers() ([]types.User, error) {
 
 // ReinstateUser reinstates a disabled user on configured Sensu instance
 func (client *RestClient) ReinstateUser(uname string) error {
-	res, err := client.R().Put("/rbac/users/" + uname + "/reinstate")
+	res, err := client.R().Put("/rbac/users/" + url.PathEscape(uname) + "/reinstate")
 
 	if err != nil {
 		return err
@@ -83,6 +85,7 @@ func (client *RestClient) ReinstateUser(uname string) error {
 
 // RemoveRoleFromUser removes role from given user on configured Sensu instance
 func (client *RestClient) RemoveRoleFromUser(username, role string) error {
+	username, role = url.PathEscape(username), url.PathEscape(role)
 	res, err := client.R().Delete("/rbac/users/" + username + "/roles/" + role)
 	if err != nil {
 		return err
@@ -104,7 +107,7 @@ func (client *RestClient) UpdatePassword(username, pwd string) error {
 
 	res, err := client.R().
 		SetBody(bytes).
-		Put("/rbac/users/" + username + "/password")
+		Put("/rbac/users/" + url.PathEscape(username) + "/password")
 
 	if err != nil {
 		return err

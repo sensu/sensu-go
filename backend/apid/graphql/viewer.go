@@ -75,7 +75,7 @@ func (r *viewerImpl) Checks(p schema.ViewerChecksFieldResolverParams) (interface
 
 // Events implements response to request for 'events' field.
 func (r *viewerImpl) Events(p schema.ViewerEventsFieldResolverParams) (interface{}, error) {
-	records, err := r.eventsCtrl.Query(p.Context, actions.QueryParams{})
+	records, err := r.eventsCtrl.Query(p.Context, "", "")
 	if err != nil {
 		return nil, err
 	}

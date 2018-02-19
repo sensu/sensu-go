@@ -131,7 +131,7 @@ func (c MutatorController) Query(ctx context.Context) ([]*types.Mutator, error) 
 // It returns non-nil error if the params are invalid, delete permissions
 // do not exist, or an internal error occurs while updating the underlying
 // Store.
-func (c MutatorController) Destroy(ctx context.Context, params QueryParams) error {
+func (c MutatorController) Destroy(ctx context.Context, name string) error {
 	policy := c.Policy.WithContext(ctx)
 
 	// Verify permissions
@@ -140,7 +140,6 @@ func (c MutatorController) Destroy(ctx context.Context, params QueryParams) erro
 	}
 
 	// Validate parameters
-	name := params["name"]
 	if name == "" {
 		return NewErrorf(InvalidArgument, "name is undefined")
 	}

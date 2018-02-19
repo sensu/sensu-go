@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"path"
 
 	"github.com/sensu/sensu-go/types"
@@ -29,7 +30,7 @@ func (client *RestClient) CreateSilenced(silenced *types.Silenced) error {
 
 // DeleteSilenced deletes a silenced entry.
 func (client *RestClient) DeleteSilenced(id string) error {
-	res, err := client.R().Delete(fmt.Sprintf("/silenced/%s", id))
+	res, err := client.R().Delete(fmt.Sprintf("/silenced/%s", url.PathEscape(id)))
 	if err != nil {
 		return err
 	}
@@ -54,9 +55,9 @@ func (client *RestClient) ListSilenceds(org, sub, check string) ([]types.Silence
 	}
 	endpoint := "/silenced"
 	if sub != "" {
-		endpoint = path.Join(endpoint, "subscriptions", sub)
+		endpoint = path.Join(endpoint, "subscriptions", url.PathEscape(sub))
 	} else if check != "" {
-		endpoint = path.Join(endpoint, "checks", check)
+		endpoint = path.Join(endpoint, "checks", url.PathEscape(check))
 	}
 	resp, err := client.R().SetQueryParam("org", org).Get(endpoint)
 	if err != nil {
@@ -73,7 +74,7 @@ func (client *RestClient) ListSilenceds(org, sub, check string) ([]types.Silence
 
 // FetchSilenced fetches a silenced entry from configured Sensu instance
 func (client *RestClient) FetchSilenced(id string) (*types.Silenced, error) {
-	resp, err := client.R().Get(path.Join("/silenced", id))
+	resp, err := client.R().Get(path.Join("/silenced", url.PathEscape(id)))
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func (client *RestClient) UpdateSilenced(s *types.Silenced) error {
 	if err != nil {
 		return err
 	}
-	resp, err := client.R().SetBody(b).Patch(path.Join("/silenced", s.ID))
+	resp, err := client.R().SetBody(b).Patch(path.Join("/silenced", url.PathEscape(s.ID)))
 	if err != nil {
 		return err
 	}

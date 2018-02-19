@@ -132,7 +132,7 @@ func TestMutatorDestroy(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		arguments       QueryParams
+		mutator         string
 		fetchResult     *types.Mutator
 		fetchErr        error
 		deleteErr       error
@@ -142,14 +142,14 @@ func TestMutatorDestroy(t *testing.T) {
 		{
 			name:        "Deleted",
 			ctx:         defaultCtx,
-			arguments:   QueryParams{"name": "mutator1"},
+			mutator:     "mutator1",
 			fetchResult: types.FixtureMutator("mutator1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Does Not Exist",
 			ctx:             defaultCtx,
-			arguments:       QueryParams{"name": "mutator1"},
+			mutator:         "mutator1",
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
@@ -157,7 +157,7 @@ func TestMutatorDestroy(t *testing.T) {
 		{
 			name:            "Store Err on Delete",
 			ctx:             defaultCtx,
-			arguments:       QueryParams{"name": "mutator1"},
+			mutator:         "mutator1",
 			fetchResult:     types.FixtureMutator("mutator1"),
 			deleteErr:       errors.New("dunno"),
 			expectedErr:     true,
@@ -166,7 +166,7 @@ func TestMutatorDestroy(t *testing.T) {
 		{
 			name:            "Store Err on Fetch",
 			ctx:             defaultCtx,
-			arguments:       QueryParams{"name": "mutator1"},
+			mutator:         "mutator1",
 			fetchResult:     types.FixtureMutator("mutator1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
@@ -175,7 +175,7 @@ func TestMutatorDestroy(t *testing.T) {
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
-			arguments:       QueryParams{"name": "mutator1"},
+			mutator:         "mutator1",
 			fetchResult:     types.FixtureMutator("mutator1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
@@ -198,7 +198,7 @@ func TestMutatorDestroy(t *testing.T) {
 				Return(tc.deleteErr)
 
 			// Exec Query
-			err := actions.Destroy(tc.ctx, tc.arguments)
+			err := actions.Destroy(tc.ctx, tc.mutator)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

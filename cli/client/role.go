@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"net/url"
 	"path"
 
 	"github.com/sensu/sensu-go/types"
@@ -10,8 +11,11 @@ import (
 const rolesBasePath = "/rbac/roles"
 
 func rolesPath(ext ...string) string {
-	components := append([]string{rolesBasePath}, ext...)
-	return path.Join(components...)
+	parts := ext
+	for i := range parts {
+		parts[i] = url.PathEscape(parts[i])
+	}
+	return path.Join(append([]string{rolesBasePath}, parts...)...)
 }
 
 // CreateRole creates new role on configured Sensu instance

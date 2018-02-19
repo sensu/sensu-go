@@ -31,7 +31,7 @@ func (r *WrappedRouter) Match(req *http.Request, match *mux.RouteMatch) bool {
 // middleware. Eg. you would some routes to require authetication while others
 // you would not.
 func NewSubrouter(r *mux.Route, ms ...middlewares.HTTPMiddleware) *mux.Router {
-	subRouter := r.Subrouter()
+	subRouter := r.Subrouter().UseEncodedPath()
 	wrapper := WrappedRouter{
 		Router:     subRouter,
 		middleware: middlewares.NewStack(ms),
