@@ -13,10 +13,10 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const (
-	badCurrentPasswordError   = "given password did not match the one on file"
-	emptyCurrentPasswordError = "current user's password must be provided"
-	passwordsDoNotMatchError  = "given passwords do not match"
+var (
+	badCurrentPasswordError   = errors.New("given password did not match the one on file")
+	emptyCurrentPasswordError = errors.New("current user's password must be provided")
+	passwordsDoNotMatchError  = errors.New("given passwords do not match")
 )
 
 type passwordOpts struct {
@@ -69,7 +69,6 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 			if promptForCurrentPassword {
 				if err := verifyExistingPassword(cli, cmd.Flags(), isInteractive, currentUsername); err != nil {
 					return err
-					// return errors.New(badCurrentPasswordError)
 				}
 			}
 
@@ -131,12 +130,12 @@ func verifyExistingPassword(cli *cli.SensuCli, flags *pflag.FlagSet, isInteracti
 
 	// Validate that the current password has been provided
 	if input.Password == "" {
-		return errors.New(emptyCurrentPasswordError)
+		return emptyCurrentPasswordError
 	}
 
 	// Attempt to authenticate
 	if _, err := cli.Client.CreateAccessToken(cli.Config.APIUrl(), username, input.Password); err != nil {
-		return errors.New(badCurrentPasswordError)
+		return badCurrentPasswordError
 	}
 
 	return nil
@@ -173,7 +172,7 @@ func (opts *passwordOpts) withFlags(flags *pflag.FlagSet) error {
 
 func (opts *passwordOpts) validate() error {
 	if opts.New != opts.Confirm {
-		return errors.New(passwordsDoNotMatchError)
+		return passwordsDoNotMatchError
 	}
 
 	user := types.User{Password: opts.New}
