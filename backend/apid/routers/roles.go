@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -42,7 +43,11 @@ func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	record, err := r.controller.Find(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	record, err := r.controller.Find(req.Context(), id)
 	return record, err
 }
 
@@ -68,7 +73,11 @@ func (r *RolesRouter) update(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) destroy(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.Destroy(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.Destroy(req.Context(), id)
 	return nil, err
 }
 
@@ -79,13 +88,25 @@ func (r *RolesRouter) addRule(req *http.Request) (interface{}, error) {
 	}
 
 	params := mux.Vars(req)
-	err := r.controller.AddRule(req.Context(), params["id"], cfg)
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.AddRule(req.Context(), id, cfg)
 
 	return nil, err
 }
 
 func (r *RolesRouter) rmRule(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.RemoveRule(req.Context(), params["id"], params["type"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	typ, err := url.PathUnescape(params["type"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.RemoveRule(req.Context(), id, typ)
 	return nil, err
 }

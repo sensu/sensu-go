@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -11,7 +12,7 @@ import (
 func (client *RestClient) ListHandlers(org string) ([]types.Handler, error) {
 	var handlers []types.Handler
 
-	res, err := client.R().Get("/handlers?org=" + org)
+	res, err := client.R().Get("/handlers?org=" + url.QueryEscape(org))
 	if err != nil {
 		return handlers, err
 	}
@@ -45,7 +46,7 @@ func (client *RestClient) CreateHandler(handler *types.Handler) (err error) {
 
 // DeleteHandler deletes given handler from the configured Sensu instance
 func (client *RestClient) DeleteHandler(handler *types.Handler) (err error) {
-	res, err := client.R().Delete("/handlers/" + handler.Name)
+	res, err := client.R().Delete("/handlers/" + url.PathEscape(handler.Name))
 	if err != nil {
 		return err
 	}
@@ -60,7 +61,7 @@ func (client *RestClient) DeleteHandler(handler *types.Handler) (err error) {
 // FetchHandler fetches a specific handler
 func (client *RestClient) FetchHandler(name string) (*types.Handler, error) {
 	var handler *types.Handler
-	res, err := client.R().Get("/handlers/" + name)
+	res, err := client.R().Get("/handlers/" + url.PathEscape(name))
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (client *RestClient) UpdateHandler(handler *types.Handler) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/handlers/" + handler.Name)
+	res, err := client.R().SetBody(bytes).Patch("/handlers/" + url.PathEscape(handler.Name))
 	if err != nil {
 		return err
 	}

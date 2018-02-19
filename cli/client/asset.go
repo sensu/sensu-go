@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -28,13 +29,14 @@ func (client *RestClient) ListAssets(org string) ([]types.Asset, error) {
 func (client *RestClient) FetchAsset(name string) (*types.Asset, error) {
 	var asset types.Asset
 
-	res, err := client.R().Get("/assets/" + name)
+	assetPath := fmt.Sprintf("/assets/%s", url.PathEscape(name))
+	res, err := client.R().Get(assetPath)
 	if err != nil {
-		return &asset, err
+		return &asset, fmt.Errorf("GET %q: %s", assetPath, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		return &asset, fmt.Errorf("%v", res.String())
+		return &asset, fmt.Errorf("GET %q: %s", assetPath, res.String())
 	}
 
 	err = json.Unmarshal(res.Body(), &asset)
@@ -71,13 +73,14 @@ func (client *RestClient) UpdateAsset(asset *types.Asset) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/assets/" + asset.Name)
+	assetPath := fmt.Sprintf("/assets/%s", url.PathEscape(asset.Name))
+	res, err := client.R().SetBody(bytes).Patch(assetPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("PATCH %q: %s", assetPath, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return fmt.Errorf("PATCH %q: %s", assetPath, res.String())
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -30,7 +31,7 @@ func (client *RestClient) CreateMutator(mutator *types.Mutator) (err error) {
 	if err == nil {
 		_, err = client.R().
 			SetBody(bytes).
-			Put("/mutators/" + mutator.Name)
+			Put("/mutators/" + url.PathEscape(mutator.Name))
 	}
 
 	return

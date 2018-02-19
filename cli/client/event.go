@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
@@ -10,7 +11,7 @@ import (
 
 func eventPath(entity, check string) string {
 	const path = "/events/%s/%s"
-	return fmt.Sprintf(path, entity, check)
+	return fmt.Sprintf(path, url.PathEscape(entity), url.PathEscape(check))
 }
 
 // FetchEvent fetches a specific event
@@ -33,7 +34,7 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 func (client *RestClient) ListEvents(org string) ([]types.Event, error) {
 	var events []types.Event
 
-	res, err := client.R().Get("/events?org=" + org)
+	res, err := client.R().Get("/events?org=" + url.QueryEscape(org))
 	if err != nil {
 		return events, err
 	}
