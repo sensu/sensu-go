@@ -10,6 +10,7 @@ import (
 
 func TestInfo(t *testing.T) {
 	info, _ := Info()
+	assert.NotEmpty(t, info.Arch)
 	assert.NotEmpty(t, info.Hostname)
 	assert.NotEmpty(t, info.OS)
 	assert.NotEmpty(t, info.Platform)
