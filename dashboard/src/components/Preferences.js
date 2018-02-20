@@ -52,6 +52,7 @@ class Preferences extends React.Component {
       type: "theme/CHANGE",
       payload: { theme },
     });
+    this.setState({ anchorEl: null });
   };
 
   handleThemeClick = event => {
