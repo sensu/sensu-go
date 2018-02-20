@@ -9,7 +9,6 @@ coverage.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-/backend/dashboardd/ab0x.go
 
 # misc
 .DS_Store
