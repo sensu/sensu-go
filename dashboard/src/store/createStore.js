@@ -1,5 +1,6 @@
 import { createStore as create, applyMiddleware } from "redux";
-import { compose, identity } from "lodash/fp";
+import { compose } from "lodash/fp";
+import { devToolsEnhancer } from "redux-devtools-extension/logOnlyInProduction";
 import BrowserProtocol from "farce/lib/BrowserProtocol";
 import createHistoryEnhancer from "farce/lib/createHistoryEnhancer";
 import queryMiddleware from "farce/lib/queryMiddleware";
@@ -23,7 +24,7 @@ function createStore(reducer) {
       middlewares: [queryMiddleware],
     }),
     createMatchEnhancer(new Matcher(routeConfig)),
-    identity,
+    devToolsEnhancer({ title: "Sensu Web UI" }),
   );
 
   return create(reducer, enhancer);
