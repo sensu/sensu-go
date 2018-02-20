@@ -92,7 +92,9 @@ change goes in the Changelog.
 
 Any _new_ functionality goes here. This may be a new field on a data type or a new data
 type altogether; a new API endpoint; or possibly a whole new feature. In general, these
-are sentence that start with the word "added." Examples:
+are sentence that start with the word "added."
+
+Examples:
 
 - `begin` field to silences that initiates silencing at a given timestamp
 - /healthz endpoint that reports health of the sensu-agent process
@@ -100,15 +102,19 @@ are sentence that start with the word "added." Examples:
 ### Changed
 
 Changes to any existing component or functionality of the system that does not cause
-breaking changes to users or developers go here. _Changed_ is distinguishable from 
-_Fixed_ in that it is a change to intentional functionality. Examples:
+breaking changes to users or developers go here. _Changed_ is distinguishable from
+_Fixed_ in that it is a change to intentional functionality.
+
+Examples:
 
 - `sensu-agent` exits gracefully instead of crashing upon disconnect
 - Refactored the API to use reusable controller logic
 
 ### Fixed
 
-Fixed bugs go here. Examples:
+Fixed bugs go here.
+
+Examples:
 
 - `sensu-agent` no longer ignores keepalive configuration
 - Don't delete auth tokens at startup
@@ -116,7 +122,9 @@ Fixed bugs go here. Examples:
 ### Deprecated
 
 Deprecated should include any soon-to-be removed functionality. An entry here that
-is user facing will likely yield entries in _Removed_ or _Breaking_ eventually. Examples:
+is user facing will likely yield entries in _Removed_ or _Breaking_ eventually.
+
+Examples:
 
 - The /health API endpoint is being replaced by /healthz on the backend
 - The /stash API endpoint is being removed in a future release
@@ -126,7 +134,9 @@ is user facing will likely yield entries in _Removed_ or _Breaking_ eventually. 
 Removed is for the removal of functionality that does not directly impact users,
 these entries most likely only impact developers of Sensu.  If user facing
 functionality is removed, an entry should be added to the _Breaking Changes_
-section instead. Examples:
+section instead.
+
+Examples:
 
 - Removed references to `encoding/json` in favor of `json-iter`.
 - Removed unused `Store` interface for `BlobStore`.
@@ -135,6 +145,8 @@ section instead. Examples:
 
 Any fixes to address security exploits should be added to this section. If
 available, include an associated CVE entry.
+
+Examples:
 
 - Upgraded build to use Go 1.9.1 to address [CVE-2017-15041](https://www.cvedetails.com/cve/CVE-2017-15041/)
 - Fixed issue where users could view entities without permission
@@ -145,6 +157,8 @@ Whenever you have to make a change that will cause users to be unable to
 upgrade versions of Sensu without intervention by an operator, your change
 goes here. Try to avoid these. If they're required, we should have documented
 justification in a GitHub issue and preferably a proposal. We should also bump
-minor versions at this time. Examples:
+minor versions at this time.
+
+Examples:
 
 - Refactored how Checks are stored in Etcd, `sensu-backend migrate` is required to upgrade
