@@ -17,6 +17,7 @@ non-required fields.
 set when importing legacy settings.
 - Add CPU architecture in system information of entities.
 - The `sensuctl user change-password` subcommand now accepts flag parameters.
+- Configured and enabled etcd autocompaction.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
