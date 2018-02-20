@@ -27,7 +27,18 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
-	handlers, err := p.expandHandlers(ctx, event.Check.Handlers, 1)
+	var handlerList []string
+
+	if event.HasCheck() {
+		handlerList = append(handlerList, event.Check.Handlers...)
+	}
+
+	if event.HasMetrics() {
+		handlerList = append(handlerList, event.Metrics.Handlers...)
+	}
+
+	handlers, err := p.expandHandlers(ctx, handlerList, 1)
+
 	if err != nil {
 		return err
 	}

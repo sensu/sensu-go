@@ -26,10 +26,12 @@ func TestPipelined(t *testing.T) {
 
 	entity := types.FixtureEntity("entity1")
 	check := types.FixtureCheck("check1")
+	metrics := types.FixtureMetrics()
 
 	event := &types.Event{
-		Entity: entity,
-		Check:  check,
+		Entity:  entity,
+		Check:   check,
+		Metrics: metrics,
 	}
 
 	notIncident, _ := json.Marshal(event)

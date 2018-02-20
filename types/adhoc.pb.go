@@ -53,6 +53,8 @@
 		HookList
 		KeepaliveRecord
 		Metrics
+		MetricPoint
+		MetricTag
 		Mutator
 		Organization
 		Rule

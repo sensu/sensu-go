@@ -46,6 +46,15 @@ func (e *Event) Validate() error {
 	return nil
 }
 
+// HasCheck determines if an event has check data.
+func (e *Event) HasCheck() bool {
+	if e.Check != nil {
+		return true
+	}
+
+	return false
+}
+
 // HasMetrics determines if an event has metric data.
 func (e *Event) HasMetrics() bool {
 	if e.Metrics != nil {
