@@ -81,6 +81,27 @@ choice that can automatically fix your code and point out problems.
 
 Contribution welcome.
 
+## Available Browser Extensions
+
+### React Developer Tools
+
+Adds React debugging tools to the Chrome Developer Tools.
+
+Available on the [Chrome Extension Gallery](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi?hl=en).
+
+### Relay DevTools
+
+Allow you to inspect data in the store of your Relay apps, and how that data
+changes over time in response to GraphQL queries, and client mutations.
+
+Available on the [Chrome Extension Gallery](https://chrome.google.com/webstore/detail/relay-devtools/oppikflppfjfdpjimpdadhelffjpciba?hl=en).
+
+### Redux DevTools
+
+The extension provides power-ups for your Redux development workflow.
+
+Available on the [Chrome Extension Gallery](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en).
+
 ## Available Scripts
 
 In the project directory, you can run:
