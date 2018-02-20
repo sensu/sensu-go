@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { withStyles } from "material-ui/styles";
-import Typography from "material-ui/Typography";
+// import Typography from "material-ui/Typography";
 import filterIcon from "material-ui-icons/FilterList";
 
 const styles = theme => ({
@@ -68,9 +68,9 @@ class SearchBox extends React.Component {
           value={this.props.state}
           onChange={this.updateInput}
         />
-        <Typography className={classes.save} type="button">
+        {/* <Typography className={classes.save} type="button">
           Save
-        </Typography>
+        </Typography> */}
       </div>
     );
   }
