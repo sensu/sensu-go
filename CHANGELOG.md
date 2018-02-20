@@ -30,6 +30,7 @@ except that HookConfig is now embedded in Hook.
 - Refactor CheckExecutor and AdhocRequestExecutor into an Executor interface.
 - Changed the sensu-backend etcd flag constants to match the etcd flag names.
 - Upgraded to Etcd v3.3.1
+- Removed 3DES from the list of allowed ciphers in the backend and agent.
 - Password input fields are now aligned in  `sensuctl user change-password`
 subcommand.
 
