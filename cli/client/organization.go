@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -36,7 +37,7 @@ func (client *RestClient) UpdateOrganization(org *types.Organization) error {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/rbac/organizations/" + org.Name)
+	res, err := client.R().SetBody(bytes).Patch("/rbac/organizations/" + url.PathEscape(org.Name))
 	if err != nil {
 		return err
 	}
@@ -50,7 +51,7 @@ func (client *RestClient) UpdateOrganization(org *types.Organization) error {
 
 // DeleteOrganization deletes an organization on configured Sensu instance
 func (client *RestClient) DeleteOrganization(org string) error {
-	res, err := client.R().Delete("/rbac/organizations/" + org)
+	res, err := client.R().Delete("/rbac/organizations/" + url.PathEscape(org))
 
 	if err != nil {
 		return err
@@ -84,7 +85,7 @@ func (client *RestClient) ListOrganizations() ([]types.Organization, error) {
 func (client *RestClient) FetchOrganization(orgName string) (*types.Organization, error) {
 	var org *types.Organization
 
-	res, err := client.R().Get("/rbac/organizations/" + orgName)
+	res, err := client.R().Get("/rbac/organizations/" + url.PathEscape(orgName))
 	if err != nil {
 		return org, err
 	}

@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -37,7 +38,11 @@ func (r *MutatorsRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *MutatorsRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	return r.controller.Find(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	return r.controller.Find(req.Context(), id)
 }
 
 func (r *MutatorsRouter) create(req *http.Request) (interface{}, error) {
@@ -62,6 +67,10 @@ func (r *MutatorsRouter) update(req *http.Request) (interface{}, error) {
 
 func (r *MutatorsRouter) destroy(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	err := r.controller.Destroy(req.Context(), params)
+	name, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.Destroy(req.Context(), name)
 	return nil, err
 }

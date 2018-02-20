@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -37,7 +38,11 @@ func (r *EventFiltersRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *EventFiltersRouter) find(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	return r.controller.Find(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	return r.controller.Find(req.Context(), id)
 }
 
 func (r *EventFiltersRouter) create(req *http.Request) (interface{}, error) {
@@ -62,6 +67,10 @@ func (r *EventFiltersRouter) update(req *http.Request) (interface{}, error) {
 
 func (r *EventFiltersRouter) destroy(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	err := r.controller.Destroy(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.Destroy(req.Context(), id)
 	return nil, err
 }

@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -32,7 +33,7 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/hooks/" + hook.Name)
+	res, err := client.R().SetBody(bytes).Patch("/hooks/" + url.PathEscape(hook.Name))
 	if err != nil {
 		return err
 	}
@@ -46,7 +47,7 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 
 // DeleteHook deletes hook from configured Sensu instance
 func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
-	res, err := client.R().Delete("/hooks/" + hook.Name)
+	res, err := client.R().Delete("/hooks/" + url.PathEscape(hook.Name))
 
 	if err != nil {
 		return err
@@ -63,7 +64,7 @@ func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
 func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 	var hook *types.HookConfig
 
-	res, err := client.R().Get("/hooks/" + name)
+	res, err := client.R().Get("/hooks/" + url.PathEscape(name))
 	if err != nil {
 		return nil, err
 	}
