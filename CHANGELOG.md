@@ -14,7 +14,8 @@ of a check. This allows updating single fields and completely clearing out
 non-required fields.
 - Add built-in only_check_output mutator to pipelined.
 - Allow publish, cron, ttl, timeout, low flap threshold and more fields to be
-  set when importing legacy settings.
+set when importing legacy settings.
+- The `sensuctl user change-password` subcommand now accepts flag parameters.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
@@ -27,9 +28,12 @@ except that HookConfig is now embedded in Hook.
 - Refactor CheckExecutor and AdhocRequestExecutor into an Executor interface.
 - Changed the sensu-backend etcd flag constants to match the etcd flag names.
 - Upgraded to Etcd v3.3.1
+- Password input fields are now aligned in  `sensuctl user change-password`
+subcommand.
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
+be executed.
   be executed.
 - Fixed a bug in the HTTP API where resource names could not contain special characters.
 
