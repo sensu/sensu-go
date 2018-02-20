@@ -41,6 +41,7 @@ message System {
   string  platform_family = 4;
   string  platform_version = 5;
   Network network = 6 [(gogoproto.nullable) = false];
+  string arch = 7;
 }
 
 // Network contains information about the system network interfaces

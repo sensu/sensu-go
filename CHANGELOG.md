@@ -15,6 +15,7 @@ non-required fields.
 - Add built-in only_check_output mutator to pipelined.
 - Allow publish, cron, ttl, timeout, low flap threshold and more fields to be
 set when importing legacy settings.
+- Add CPU architecture in system information of entities.
 - The `sensuctl user change-password` subcommand now accepts flag parameters.
 
 ### Changed
