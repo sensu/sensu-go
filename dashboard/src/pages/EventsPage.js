@@ -38,6 +38,14 @@ class EventsPage extends React.Component {
     }
   `;
 
+  state = { inputValue: "" };
+
+  requerySearchBox = query => {
+    this.setState({ inputValue: query });
+    // TODO return to this and make it actually query
+    console.log(query);
+  };
+
   render() {
     const { viewer, classes } = this.props;
     return (
@@ -47,7 +55,10 @@ class EventsPage extends React.Component {
             <Typography className={classes.title} type="headline">
               Recent Events
             </Typography>
-            <SearchBox />
+            <SearchBox
+              onUpdateInput={this.requerySearchBox}
+              state={this.state.inputValue}
+            />
           </div>
           <div className={classes.container}>
             <EventsContainer viewer={viewer} />

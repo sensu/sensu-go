@@ -68,6 +68,7 @@ class EventsContainer extends React.Component {
       `${window.location.pathname}?filter=event.Check.Name=='${newValue}'`,
     );
   };
+
   requeryStatus = newValue => {
     this.props.router.push(
       `${window.location.pathname}?filter=event.Check.Status==${newValue}`,

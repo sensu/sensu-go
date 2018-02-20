@@ -40,10 +40,16 @@ class SearchBox extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     FilterIcon: PropTypes.func.isRequired,
+    onUpdateInput: PropTypes.func.isRequired,
+    state: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
     FilterIcon: filterIcon,
+  };
+
+  updateInput = event => {
+    this.props.onUpdateInput(event.currentTarget.value);
   };
 
   render() {
@@ -59,6 +65,8 @@ class SearchBox extends React.Component {
           type="text"
           placeholder={"Filter all events"}
           className={classes.textField}
+          value={this.props.state}
+          onChange={this.updateInput}
         />
         <Typography className={classes.save} type="button">
           Save
