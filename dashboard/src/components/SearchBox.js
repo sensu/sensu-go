@@ -18,6 +18,8 @@ const styles = theme => ({
     display: "flex",
     padding: "6px 8px 8px",
     height: 36,
+    // TODO find proper reference to this in theme, default icon color
+    color: "rgba(0, 0, 0, 0.54)",
   },
   textField: {
     borderRadius: 3,
