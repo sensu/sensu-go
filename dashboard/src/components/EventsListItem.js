@@ -90,7 +90,7 @@ class EventListItem extends React.Component {
             </span>
           </div>
           <Typography type="caption" className={classes.command}>
-            {check.command}
+            {check.output}
           </Typography>
         </div>
       </div>
@@ -103,7 +103,7 @@ EventListItem.propTypes = {
     entity: PropTypes.shape({ id: "" }).isRequired,
     check: PropTypes.shape({
       name: "",
-      command: "",
+      output: "",
     }).isRequired,
     timestamp: PropTypes.string.isRequired,
   }).isRequired,
@@ -118,7 +118,7 @@ export default createFragmentContainer(
         check {
           status
           name
-          command
+          output
         }
         entity {
           name
