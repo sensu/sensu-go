@@ -104,7 +104,7 @@ func TestLegacyFilterImporter(t *testing.T) {
 				i := NewImporter(filterImporter)
 
 				// Set the reporter
-				defer i.report.Flush()
+				defer func() { _ = i.report.Flush() }()
 				reporter := report.NewWriter(&i.report)
 				i.importers[0].SetReporter(&reporter)
 
@@ -129,7 +129,7 @@ func TestLegacySettings(t *testing.T) {
 			}
 
 			var data map[string]interface{}
-			json.Unmarshal(file, &data)
+			_ = json.Unmarshal(file, &data)
 
 			client := clientmock.MockClient{}
 			importer := NewSensuV1SettingsImporter("default", "default", &client)

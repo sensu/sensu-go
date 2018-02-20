@@ -105,7 +105,7 @@ func TestRBAC(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	checkHook := types.FixtureHookList("hook1")
-	output, err = adminctl.run("check", "add-hook", defaultCheck.Name,
+	output, err = adminctl.run("check", "set-hooks", defaultCheck.Name,
 		"--organization", defaultCheck.Organization,
 		"--environment", defaultCheck.Environment,
 		"--type", checkHook.Type,
@@ -113,7 +113,7 @@ func TestRBAC(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	output, err = adminctl.run("check", "add-hook", devCheck.Name,
+	output, err = adminctl.run("check", "set-hooks", devCheck.Name,
 		"--organization", devCheck.Organization,
 		"--environment", devCheck.Environment,
 		"--type", checkHook.Type,
@@ -121,7 +121,7 @@ func TestRBAC(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	output, err = adminctl.run("check", "add-hook", prodCheck.Name,
+	output, err = adminctl.run("check", "set-hooks", prodCheck.Name,
 		"--organization", prodCheck.Organization,
 		"--environment", prodCheck.Environment,
 		"--type", checkHook.Type,

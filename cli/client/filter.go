@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -32,7 +33,7 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 
 // DeleteFilter deletes a filter from configured Sensu instance
 func (client *RestClient) DeleteFilter(filter *types.EventFilter) error {
-	res, err := client.R().Delete("/filters/" + filter.Name)
+	res, err := client.R().Delete("/filters/" + url.PathEscape(filter.Name))
 
 	if err != nil {
 		return err
@@ -49,7 +50,7 @@ func (client *RestClient) DeleteFilter(filter *types.EventFilter) error {
 func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 	var filter *types.EventFilter
 
-	res, err := client.R().Get("/filters/" + name)
+	res, err := client.R().Get("/filters/" + url.PathEscape(name))
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +66,7 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 // ListFilters fetches all filters from configured Sensu instance
 func (client *RestClient) ListFilters(org string) ([]types.EventFilter, error) {
 	var filters []types.EventFilter
-	res, err := client.R().Get("/filters?org=" + org)
+	res, err := client.R().Get("/filters?org=" + url.QueryEscape(org))
 	if err != nil {
 		return filters, err
 	}
@@ -84,7 +85,7 @@ func (client *RestClient) UpdateFilter(f *types.EventFilter) error {
 	if err != nil {
 		return err
 	}
-	resp, err := client.R().SetBody(b).Patch(fmt.Sprintf("/filters/%s", f.Name))
+	resp, err := client.R().SetBody(b).Patch(fmt.Sprintf("/filters/%s", url.PathEscape(f.Name)))
 	if err != nil {
 		return err
 	}

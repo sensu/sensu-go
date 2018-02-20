@@ -34,7 +34,7 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 	entries = append(entries, results...)
 
 	// Retrieve silenced entries using the check subscriptions
-	for _, value := range event.Check.Config.Subscriptions {
+	for _, value := range event.Check.Subscriptions {
 		results, err = s.GetSilencedEntriesBySubscription(ctx, value)
 		if err != nil {
 			return err
@@ -43,7 +43,7 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 	}
 
 	// Retrieve silenced entries using the check name
-	results, err = s.GetSilencedEntriesByCheckName(ctx, event.Check.Config.Name)
+	results, err = s.GetSilencedEntriesByCheckName(ctx, event.Check.Name)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 	for _, entry := range silencedEntries {
 
 		// Is this event silenced for all subscriptions? (e.g. *:check_cpu)
-		if entry.ID == fmt.Sprintf("*:%s", event.Check.Config.Name) && entry.StartSilence(time.Now().Unix()) {
+		if entry.ID == fmt.Sprintf("*:%s", event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
 			silencedBy = addToSilencedBy(entry.ID, silencedBy)
 			continue
 		}
@@ -81,12 +81,12 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 
 		// Is this event silenced for this particular entity? (e.g.
 		// entity:id:check_cpu)
-		if entry.ID == fmt.Sprintf("%s:%s", types.GetEntitySubscription(event.Entity.ID), event.Check.Config.Name) && entry.StartSilence(time.Now().Unix()) {
+		if entry.ID == fmt.Sprintf("%s:%s", types.GetEntitySubscription(event.Entity.ID), event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
 			silencedBy = addToSilencedBy(entry.ID, silencedBy)
 			continue
 		}
 
-		for _, subscription := range event.Check.Config.Subscriptions {
+		for _, subscription := range event.Check.Subscriptions {
 			// Make sure the entity is subscribed to this specific subscription
 			if !stringsutil.InArray(subscription, event.Entity.Subscriptions) {
 				continue
@@ -101,7 +101,7 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 
 			// Is this event silenced by one of the check subscription for this
 			// particular check? (e.g. load-balancer:check_cpu)
-			if entry.ID == fmt.Sprintf("%s:%s", subscription, event.Check.Config.Name) && entry.StartSilence(time.Now().Unix()) {
+			if entry.ID == fmt.Sprintf("%s:%s", subscription, event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
 				silencedBy = addToSilencedBy(entry.ID, silencedBy)
 				continue
 			}

@@ -13,30 +13,30 @@ import (
 )
 
 const (
-	intervalDefault = "60"
-	stdinDefault    = "false"
+	stdinDefault = "false"
 )
 
 type checkOpts struct {
-	Name          string `survey:"name"`
-	Command       string `survey:"command"`
-	Interval      string `survey:"interval"`
-	Cron          string `survey:"cron"`
-	Subscriptions string `survey:"subscriptions"`
-	Handlers      string `survey:"handlers"`
-	RuntimeAssets string `survey:"assets"`
-	Env           string
-	Org           string
-	Publish       string `survey:"publish"`
-	ProxyEntityID string `survey:"proxy-entity-id"`
-	Stdin         string `survey:"stdin"`
-	Timeout       string `survey:"timeout"`
-	TTL           string `survey:"ttl"`
+	Name              string `survey:"name"`
+	Command           string `survey:"command"`
+	Interval          string `survey:"interval"`
+	Cron              string `survey:"cron"`
+	Subscriptions     string `survey:"subscriptions"`
+	Handlers          string `survey:"handlers"`
+	RuntimeAssets     string `survey:"assets"`
+	Env               string
+	Org               string
+	Publish           string `survey:"publish"`
+	ProxyEntityID     string `survey:"proxy-entity-id"`
+	Stdin             string `survey:"stdin"`
+	Timeout           string `survey:"timeout"`
+	TTL               string `survey:"ttl"`
+	HighFlapThreshold string `survey:"high-flap-threshold"`
+	LowFlapThreshold  string `survey:"low-flap-threshold"`
 }
 
 func newCheckOpts() *checkOpts {
 	opts := checkOpts{}
-	opts.Interval = intervalDefault
 	return &opts
 }
 
@@ -53,6 +53,8 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.ProxyEntityID = check.ProxyEntityID
 	opts.Stdin = stdinDefault
 	opts.Timeout = strconv.Itoa(int(check.Timeout))
+	opts.HighFlapThreshold = strconv.Itoa(int(check.HighFlapThreshold))
+	opts.LowFlapThreshold = strconv.Itoa(int(check.LowFlapThreshold))
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -68,6 +70,8 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Stdin, _ = flags.GetString("stdin")
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.TTL, _ = flags.GetString("ttl")
+	opts.HighFlapThreshold, _ = flags.GetString("high-flap-threshold")
+	opts.LowFlapThreshold, _ = flags.GetString("low-flap-threshold")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -208,6 +212,20 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Help:    "If check accepts JSON event data to the check command's stdin. Defaults to false.",
 			},
 		},
+		{
+			Name: "high-flap-threshold",
+			Prompt: &survey.Input{
+				Message: "High Flap Threshold:",
+				Default: opts.HighFlapThreshold,
+			},
+		},
+		{
+			Name: "low-flap-threshold",
+			Prompt: &survey.Input{
+				Message: "Low Flap Threshold:",
+				Default: opts.LowFlapThreshold,
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -218,6 +236,8 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)
 	ttl, _ := strconv.ParseInt(opts.TTL, 10, 64)
+	highFlap, _ := strconv.ParseUint(opts.HighFlapThreshold, 10, 32)
+	lowFlap, _ := strconv.ParseUint(opts.LowFlapThreshold, 10, 32)
 
 	check.Name = opts.Name
 	check.Environment = opts.Env
@@ -233,4 +253,6 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Stdin = stdin
 	check.Timeout = uint32(timeout)
 	check.Ttl = int64(ttl)
+	check.HighFlapThreshold = uint32(highFlap)
+	check.LowFlapThreshold = uint32(lowFlap)
 }

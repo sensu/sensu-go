@@ -260,14 +260,12 @@ func (k *Keepalived) startMonitorSweeper() {
 
 func createKeepaliveEvent(entity *types.Entity) *types.Event {
 	keepaliveCheck := &types.Check{
-		Config: &types.CheckConfig{
-			Name:         KeepaliveCheckName,
-			Interval:     entity.KeepaliveTimeout,
-			Handlers:     []string{KeepaliveHandlerName},
-			Environment:  entity.Environment,
-			Organization: entity.Organization,
-		},
-		Status: 1,
+		Name:         KeepaliveCheckName,
+		Interval:     entity.KeepaliveTimeout,
+		Handlers:     []string{KeepaliveHandlerName},
+		Environment:  entity.Environment,
+		Organization: entity.Organization,
+		Status:       1,
 	}
 	keepaliveEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
@@ -280,14 +278,12 @@ func createKeepaliveEvent(entity *types.Entity) *types.Event {
 
 func createRegistrationEvent(entity *types.Entity) *types.Event {
 	registrationCheck := &types.Check{
-		Config: &types.CheckConfig{
-			Name:         RegistrationCheckName,
-			Interval:     entity.KeepaliveTimeout,
-			Handlers:     []string{RegistrationHandlerName},
-			Environment:  entity.Environment,
-			Organization: entity.Organization,
-		},
-		Status: 1,
+		Name:         RegistrationCheckName,
+		Interval:     entity.KeepaliveTimeout,
+		Handlers:     []string{RegistrationHandlerName},
+		Environment:  entity.Environment,
+		Organization: entity.Organization,
+		Status:       1,
 	}
 	registrationEvent := &types.Event{
 		Timestamp: time.Now().Unix(),

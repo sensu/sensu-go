@@ -192,6 +192,13 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.InitialCluster = config.InitialCluster
 	cfg.ClusterState = config.InitialClusterState
 
+	// Every 5 minutes, we will prune all values in etcd to only their latest
+	// revision.
+	cfg.AutoCompactionMode = "revision"
+	// This has to stay in ns until https://github.com/coreos/etcd/issues/9337
+	// is resolved.
+	cfg.AutoCompactionRetention = "1ns"
+
 	if config.TLSConfig != nil {
 		cfg.ClientTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)
 		cfg.PeerTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)

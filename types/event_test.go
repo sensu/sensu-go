@@ -18,19 +18,19 @@ func TestFixtureEventIsValid(t *testing.T) {
 func TestEventValidate(t *testing.T) {
 	event := FixtureEvent("entity", "check")
 
-	event.Check.Config.Name = ""
+	event.Check.Name = ""
 	assert.Error(t, event.Validate())
-	event.Check.Config.Name = "check"
+	event.Check.Name = "check"
 
 	event.Entity.ID = ""
 	assert.Error(t, event.Validate())
 	event.Entity.ID = "entity"
 
 	hook := FixtureHook("hook")
-	hook.Config.Name = ""
+	hook.Name = ""
 	event.Hooks = append(event.Hooks, hook)
 	assert.Error(t, event.Validate())
-	hook.Config.Name = "hook"
+	hook.Name = "hook"
 
 	assert.NoError(t, event.Validate())
 }

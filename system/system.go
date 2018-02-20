@@ -4,6 +4,8 @@
 package system
 
 import (
+	"runtime"
+
 	"github.com/sensu/sensu-go/types"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/net"
@@ -19,6 +21,7 @@ func Info() (types.System, error) {
 	}
 
 	system := types.System{
+		Arch:            runtime.GOARCH,
 		Hostname:        info.Hostname,
 		OS:              info.OS,
 		Platform:        info.Platform,

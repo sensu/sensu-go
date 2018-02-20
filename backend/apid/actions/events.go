@@ -32,11 +32,8 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a EventController) Query(ctx context.Context, params QueryParams) ([]*types.Event, error) {
+func (a EventController) Query(ctx context.Context, entityID, checkName string) ([]*types.Event, error) {
 	var results []*types.Event
-
-	entityID := params["entity"]
-	checkName := params["check"]
 
 	// Fetch from store
 	var serr error
@@ -70,13 +67,13 @@ func (a EventController) Query(ctx context.Context, params QueryParams) ([]*type
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a EventController) Find(ctx context.Context, params QueryParams) (*types.Event, error) {
+func (a EventController) Find(ctx context.Context, entity, check string) (*types.Event, error) {
 	// Find (for events) requires both an entity and check
-	if params["entity"] == "" || params["check"] == "" {
+	if entity == "" || check == "" {
 		return nil, NewErrorf(InvalidArgument, "Find() requires both an entity and a check")
 	}
 
-	result, err := a.Store.GetEventByEntityCheck(ctx, params["entity"], params["check"])
+	result, err := a.Store.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
@@ -91,9 +88,8 @@ func (a EventController) Find(ctx context.Context, params QueryParams) (*types.E
 }
 
 // Destroy destroys the event indicated by the supplied entity and check.
-func (a EventController) Destroy(ctx context.Context, params QueryParams) error {
+func (a EventController) Destroy(ctx context.Context, entity, check string) error {
 	// Destroy (for events) requires both an entity and check
-	entity, check := params["entity"], params["check"]
 	if entity == "" || check == "" {
 		return NewErrorf(InvalidArgument, "Destroy() requires both an entity and a check")
 	}
@@ -118,7 +114,7 @@ func (a EventController) Destroy(ctx context.Context, params QueryParams) error 
 
 // Update updates the event indicated by the supplied entity and check.
 func (a EventController) Update(ctx context.Context, event types.Event) error {
-	check := event.Check.Config
+	check := event.Check
 	entity := event.Entity
 
 	// Adjust context
@@ -156,7 +152,7 @@ func (a EventController) Update(ctx context.Context, event types.Event) error {
 // Create creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
 func (a EventController) Create(ctx context.Context, event types.Event) error {
-	check := event.Check.Config
+	check := event.Check
 	entity := event.Entity
 
 	// Adjust context

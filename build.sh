@@ -160,7 +160,7 @@ linter_commands () {
         exit 1
     fi
 
-    errcheck $(go list ./... | grep -v dashboardd | grep -v cli/commands/importer | grep -v agent/assetmanager | grep -v scripts)
+    errcheck $(go list ./... | grep -v dashboardd | grep -v agent/assetmanager | grep -v scripts)
     if [ $? -ne 0 ]; then
         echo "Linting failed..."
         exit 1

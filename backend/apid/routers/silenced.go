@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -42,7 +43,11 @@ func (r *SilencedRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *SilencedRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	return r.controller.Find(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	return r.controller.Find(req.Context(), id)
 }
 
 func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {

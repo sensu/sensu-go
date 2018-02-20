@@ -40,10 +40,11 @@ type AssetAPIClient interface {
 // CheckAPIClient client methods for checks
 type CheckAPIClient interface {
 	CreateCheck(*types.CheckConfig) error
-	UpdateCheck(*types.CheckConfig) error
 	DeleteCheck(*types.CheckConfig) error
+	ExecuteCheck(*types.AdhocRequest) error
 	FetchCheck(string) (*types.CheckConfig, error)
 	ListChecks(string) ([]types.CheckConfig, error)
+	UpdateCheck(*types.CheckConfig) error
 
 	AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error
 	RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error

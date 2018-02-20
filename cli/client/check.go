@@ -2,6 +2,8 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/url"
 	"path"
 
 	"github.com/sensu/sensu-go/types"
@@ -10,8 +12,11 @@ import (
 const checksBasePath = "/checks"
 
 func checksPath(ext ...string) string {
-	components := append([]string{checksBasePath}, ext...)
-	return path.Join(components...)
+	parts := ext
+	for i := range parts {
+		parts[i] = url.PathEscape(parts[i])
+	}
+	return path.Join(append([]string{checksBasePath}, parts...)...)
 }
 
 // CreateCheck creates new check on configured Sensu instance
@@ -40,7 +45,8 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/checks/" + check.Name)
+	checkPath := fmt.Sprintf("/checks/%s", url.PathEscape(check.Name))
+	res, err := client.R().SetBody(bytes).Patch(checkPath)
 	if err != nil {
 		return err
 	}
@@ -54,7 +60,28 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 
 // DeleteCheck deletes check from configured Sensu instance
 func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
-	res, err := client.R().Delete("/checks/" + check.Name)
+	res, err := client.R().Delete("/checks/" + url.PathEscape(check.Name))
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
+
+// ExecuteCheck sends an execution request with the provided adhoc request
+func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
+	bytes, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	checkPath := fmt.Sprintf("/checks/%s/execute", url.PathEscape(req.Name))
+	res, err := client.R().SetBody(bytes).Post(checkPath)
 
 	if err != nil {
 		return err
@@ -71,9 +98,10 @@ func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
 func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 	var check *types.CheckConfig
 
-	res, err := client.R().Get("/checks/" + name)
+	checkPath := fmt.Sprintf("/checks/%s", url.PathEscape(name))
+	res, err := client.R().Get(checkPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GET %q: %s", checkPath, err)
 	}
 
 	if res.StatusCode() >= 400 {

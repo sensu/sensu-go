@@ -3,6 +3,7 @@ package routers
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -34,8 +35,9 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	// Custom
 	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
 	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
+
 	// handlefunc returns a custom status and response
-	parent.HandleFunc("{id}/execute", r.adhocRequest).Methods(http.MethodPost)
+	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
@@ -45,7 +47,11 @@ func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	record, err := r.controller.Find(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	record, err := r.controller.Find(req.Context(), id)
 	return record, err
 }
 
@@ -71,7 +77,11 @@ func (r *ChecksRouter) update(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.Destroy(req.Context(), params["id"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.Destroy(req.Context(), id)
 	return nil, err
 }
 
@@ -82,14 +92,30 @@ func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 	}
 
 	params := mux.Vars(req)
-	err := r.controller.AddCheckHook(req.Context(), params["id"], cfg)
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.AddCheckHook(req.Context(), id, cfg)
 
 	return nil, err
 }
 
 func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	err := r.controller.RemoveCheckHook(req.Context(), params["id"], params["type"], params["hook"])
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	typ, err := url.PathUnescape(params["type"])
+	if err != nil {
+		return nil, err
+	}
+	hook, err := url.PathUnescape(params["hook"])
+	if err != nil {
+		return nil, err
+	}
+	err = r.controller.RemoveCheckHook(req.Context(), id, typ, hook)
 	return nil, err
 }
 
@@ -100,7 +126,12 @@ func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	params := mux.Vars(req)
-	if err := r.controller.QueueAdhocRequest(req.Context(), params["id"], &adhocReq); err != nil {
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := r.controller.QueueAdhocRequest(req.Context(), id, &adhocReq); err != nil {
 		writeError(w, err)
 		return
 	}

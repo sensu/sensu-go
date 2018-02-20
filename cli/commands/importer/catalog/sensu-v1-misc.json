@@ -1,15 +1,56 @@
 {
   "checks": {
-    "meowmix": {
+    "my-simple-check": {
       "type": "check",
-      "command": "...",
+      "command": "true",
       "interval": 30,
-      "ttl":300
+      "ttl":300,
+      "subscribers": ["unix"]
     },
-    "is-google-still-up": {
+    "my-cron-check": {
+      "type": "check",
+      "command": "false",
+      "ttl":30,
+      "cron": "* * ? * 5",
+      "subscribers": ["unix"]
+    },
+    "is-google-seriously-still-up": {
       "command": "ping -c 25 google.com",
       "interval": 30,
-      "handler": "slack"
+      "handler": "slack",
+      "subscribers": ["unix"]
+    },
+    "my-unpublished-check": {
+      "command": "echo 'lol'",
+      "interval": 5,
+      "handler": "slack",
+      "publish": false,
+      "subscribers": ["unix"]
+    },
+    "my-ttl-check": {
+      "command": "echo 'ttl'",
+      "interval": 5,
+      "ttl": 500,
+      "subscribers": ["unix"]
+    },
+    "my-timeout-check": {
+      "command": "echo 'timeout'",
+      "interval": 5,
+      "timeout": 30,
+      "subscribers": ["unix"]
+    },
+    "my-flappy-check": {
+      "command": "echo 'flappin'",
+      "interval": 5,
+      "low_flap_threshold": 10,
+      "high_flap_threshold": 50,
+      "subscribers": ["unix"]
+    },
+    "my-auto-resolve-check": {
+      "command": "echo 'flappin'",
+      "interval": 5,
+      "auto_resolve": false,
+      "subscribers": ["unix"]
     }
   },
   "handlers": {

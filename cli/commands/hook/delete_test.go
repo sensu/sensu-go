@@ -32,7 +32,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{})
 
-	assert.NoError(err)
+	assert.Error(err)
 	assert.Regexp("Usage", out) // usage should print out
 }
 

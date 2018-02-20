@@ -35,7 +35,8 @@ func TestEventQuery(t *testing.T) {
 		name        string
 		ctx         context.Context
 		events      []*types.Event
-		params      QueryParams
+		entity      string
+		check       string
 		expectedLen int
 		storeErr    error
 		expectedErr error
@@ -44,7 +45,6 @@ func TestEventQuery(t *testing.T) {
 			name:        "No Params No Events",
 			ctx:         defaultCtx,
 			events:      []*types.Event{},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -56,7 +56,6 @@ func TestEventQuery(t *testing.T) {
 				types.FixtureEvent("entity1", "check1"),
 				types.FixtureEvent("entity2", "check2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -70,7 +69,6 @@ func TestEventQuery(t *testing.T) {
 				types.FixtureEvent("entity1", "check1"),
 				types.FixtureEvent("entity2", "check2"),
 			},
-			params:      QueryParams{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -81,20 +79,16 @@ func TestEventQuery(t *testing.T) {
 			events: []*types.Event{
 				types.FixtureEvent("entity1", "check1"),
 			},
-			params: QueryParams{
-				"entity": "entity1",
-			},
+			entity:      "entity1",
 			expectedLen: 1,
 			storeErr:    nil,
 			expectedErr: nil,
 		},
 		{
-			name:   "Store Failure",
-			ctx:    defaultCtx,
-			events: nil,
-			params: QueryParams{
-				"entity": "entity1",
-			},
+			name:        "Store Failure",
+			ctx:         defaultCtx,
+			events:      nil,
+			entity:      "entity1",
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
@@ -114,7 +108,7 @@ func TestEventQuery(t *testing.T) {
 			store.On("GetEventsByEntity", tc.ctx, mock.Anything).Return(tc.events, tc.storeErr)
 
 			// Exec Query
-			results, err := eventController.Query(tc.ctx, tc.params)
+			results, err := eventController.Query(tc.ctx, tc.entity, tc.check)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
@@ -132,54 +126,46 @@ func TestEventFind(t *testing.T) {
 		name            string
 		ctx             context.Context
 		event           *types.Event
-		params          QueryParams
+		entity          string
+		check           string
 		expected        bool
 		expectedErrCode ErrCode
 	}{
 		{
 			name:            "No Params",
 			ctx:             defaultCtx,
-			params:          QueryParams{},
 			expected:        false,
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name: "Only Entity Param",
-			ctx:  defaultCtx,
-			params: QueryParams{
-				"entity": "entity1",
-			},
+			name:            "Only Entity Param",
+			ctx:             defaultCtx,
+			entity:          "entity1",
 			expected:        false,
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name: "Only Check Param",
-			ctx:  defaultCtx,
-			params: QueryParams{
-				"check": "check1",
-			},
+			name:            "Only Check Param",
+			ctx:             defaultCtx,
+			check:           "check1",
 			expected:        false,
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name:  "Found",
-			ctx:   defaultCtx,
-			event: types.FixtureEvent("entity1", "check1"),
-			params: QueryParams{
-				"entity": "entity1",
-				"check":  "check1",
-			},
+			name:            "Found",
+			ctx:             defaultCtx,
+			event:           types.FixtureEvent("entity1", "check1"),
+			entity:          "entity1",
+			check:           "check1",
 			expected:        true,
 			expectedErrCode: 0,
 		},
 		{
-			name:  "Not Found",
-			ctx:   defaultCtx,
-			event: nil,
-			params: QueryParams{
-				"entity": "entity1",
-				"check":  "check1",
-			},
+			name:            "Not Found",
+			ctx:             defaultCtx,
+			event:           nil,
+			entity:          "entity1",
+			check:           "check1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -188,11 +174,9 @@ func TestEventFind(t *testing.T) {
 			ctx: testutil.NewContext(testutil.ContextWithRules(
 				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
 			)),
-			event: types.FixtureEvent("entity1", "check1"),
-			params: QueryParams{
-				"entity": "entity1",
-				"check":  "check1",
-			},
+			event:           types.FixtureEvent("entity1", "check1"),
+			entity:          "entity1",
+			check:           "check1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -212,7 +196,7 @@ func TestEventFind(t *testing.T) {
 				Return(tc.event, nil)
 
 			// Exec Query
-			result, err := eventController.Find(tc.ctx, tc.params)
+			result, err := eventController.Find(tc.ctx, tc.entity, tc.check)
 
 			inferErr, ok := err.(Error)
 			if ok {
@@ -234,50 +218,42 @@ func TestEventDestroy(t *testing.T) {
 		name            string
 		ctx             context.Context
 		event           *types.Event
-		params          QueryParams
+		entity          string
+		check           string
 		expected        bool
 		expectedErrCode ErrCode
 	}{
 		{
 			name:            "No Params",
 			ctx:             defaultCtx,
-			params:          QueryParams{},
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name: "Only Entity Param",
-			ctx:  defaultCtx,
-			params: QueryParams{
-				"entity": "entity1",
-			},
+			name:            "Only Entity Param",
+			ctx:             defaultCtx,
+			entity:          "entity1",
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name: "Only Check Param",
-			ctx:  defaultCtx,
-			params: QueryParams{
-				"check": "check1",
-			},
+			name:            "Only Check Param",
+			ctx:             defaultCtx,
+			check:           "check1",
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name:  "Delete",
-			ctx:   defaultCtx,
-			event: types.FixtureEvent("entity1", "check1"),
-			params: QueryParams{
-				"entity": "entity1",
-				"check":  "check1",
-			},
+			name:            "Delete",
+			ctx:             defaultCtx,
+			event:           types.FixtureEvent("entity1", "check1"),
+			entity:          "entity1",
+			check:           "check1",
 			expectedErrCode: 0,
 		},
 		{
-			name:  "Not Found",
-			ctx:   defaultCtx,
-			event: nil,
-			params: QueryParams{
-				"entity": "entity1",
-				"check":  "check1",
-			},
+			name:            "Not Found",
+			ctx:             defaultCtx,
+			event:           nil,
+			entity:          "entity1",
+			check:           "check1",
 			expectedErrCode: NotFound,
 		},
 		{
@@ -285,11 +261,9 @@ func TestEventDestroy(t *testing.T) {
 			ctx: testutil.NewContext(testutil.ContextWithRules(
 				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
 			)),
-			event: types.FixtureEvent("entity1", "check1"),
-			params: QueryParams{
-				"entity": "entity1",
-				"check":  "check1",
-			},
+			event:           types.FixtureEvent("entity1", "check1"),
+			entity:          "entity1",
+			check:           "check1",
 			expectedErrCode: NotFound,
 		},
 	}
@@ -311,7 +285,7 @@ func TestEventDestroy(t *testing.T) {
 				Return(nil)
 
 			// Exec Query
-			err := eventController.Destroy(tc.ctx, tc.params)
+			err := eventController.Destroy(tc.ctx, tc.entity, tc.check)
 
 			inferErr, ok := err.(Error)
 			if ok {
@@ -336,7 +310,7 @@ func TestEventUpdate(t *testing.T) {
 	)
 
 	badEvent := types.FixtureEvent("entity1", "check1")
-	badEvent.Check.Config.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string
@@ -445,7 +419,7 @@ func TestEventCreate(t *testing.T) {
 	)
 
 	badEvent := types.FixtureEvent("entity1", "check1")
-	badEvent.Check.Config.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string

@@ -1,9 +1,12 @@
 package silenced
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -14,18 +17,22 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "create",
 		Short:        "create a silenced entry",
 		SilenceUsage: true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("reason")
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
+
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 
 			opts := newSilencedOpts()
-
-			if len(args) > 0 {
-				opts.Subscription = args[0]
-			}
-			if len(args) > 1 {
-				opts.Check = args[1]
-			}
 
 			opts.Org = cli.Config.Organization()
 			opts.Env = cli.Config.Environment()
@@ -35,8 +42,11 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				if err := opts.withFlags(flags); err != nil {
+				if err := opts.withFlags(cmd.Flags()); err != nil {
 					return err
+				}
+				if opts.Check == "" && opts.Subscription == "" {
+					return fmt.Errorf("must specify --check or --subscription")
 				}
 			}
 			var silenced types.Silenced
@@ -61,7 +71,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("subscription", "s", "", "silence subscription")
 	_ = cmd.Flags().StringP("check", "c", "", "silence check")
 	_ = cmd.Flags().StringP("begin", "b", beginDefault, "silence begin in human readable time (Format: Jan 02 2006 3:04PM MST)")
-	_ = cmd.MarkFlagRequired("reason")
 
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

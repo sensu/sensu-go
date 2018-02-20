@@ -37,7 +37,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("subscription", "nytimes"))
 	out, err := test.RunCmd(cmd, []string{"a", "b"})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Regexp("Usage", out) // usage should print out
 }
 

@@ -45,7 +45,7 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 	cmd := ShowCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
-	assert.NoError(err)
+	assert.Error(err)
 	assert.NotEmpty(out)
 	assert.Contains(out, "Usage")
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -21,9 +22,17 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		Org:    cli.Config.Organization(),
 	}
 	cmd := &cobra.Command{
-		Use:   "create NAME",
+		Use:   "create [NAME]",
 		Short: "create new assets",
-		RunE:  exec.Run,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired("sha512")
+				_ = cmd.MarkFlagRequired("url")
+			}
+		},
+		RunE: exec.Run,
 	}
 
 	_ = cmd.Flags().StringP("sha512", "", "", "SHA-512 checksum of the asset's archive")
@@ -31,10 +40,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringSliceP("metadata", "m", []string{}, "metadata associated with asset")
 	_ = cmd.Flags().StringSlice("filter", []string{}, "queries used by an entity to determine if it should include the asset")
 
-	// Mark flags are required for bash-completions
-	_ = cmd.MarkFlagRequired("sha512")
-	_ = cmd.MarkFlagRequired("url")
-
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }
 
@@ -47,7 +53,8 @@ type CreateExecutor struct {
 // Run runs the command given arguments
 func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
-		return errors.New("too many arguments given")
+		_ = cmd.Help()
+		return errors.New("invalid argument(s) received")
 	}
 
 	cfg := ConfigureAsset{
@@ -85,7 +92,7 @@ type ConfigureAsset struct {
 
 // Configure returns a new asset or returns error if arguments are invalid
 func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
-	isInteractive := cfgPtr.Flags.NFlag() == 0
+	isInteractive, _ := cfgPtr.Flags.GetBool(flags.Interactive)
 
 	if len(cfgPtr.Args) == 1 {
 		cfgPtr.cfg.Name = cfgPtr.Args[0]
@@ -121,7 +128,7 @@ func (cfgPtr *ConfigureAsset) administerQuestionnaire() error {
 		{
 			Name: "org",
 			Prompt: &survey.Input{
-				Message: "Org:",
+				Message: "Organization:",
 				Default: cfgPtr.Org,
 			},
 			Validate: survey.Required,

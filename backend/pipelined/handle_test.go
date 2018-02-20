@@ -57,7 +57,7 @@ func TestPipelinedHandleEvent(t *testing.T) {
 	// how useful this would be.
 	assert.NoError(t, p.handleEvent(event))
 
-	event.Check.Config.Handlers = []string{"handler1"}
+	event.Check.Handlers = []string{"handler1"}
 	store.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
 	assert.NoError(t, p.handleEvent(event))
 }

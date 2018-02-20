@@ -145,7 +145,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
 	prevEvent, err := e.Store.GetEventByEntityCheck(
-		ctx, event.Entity.ID, event.Check.Config.Name,
+		ctx, event.Entity.ID, event.Check.Name,
 	)
 	if err != nil {
 		return err
@@ -185,14 +185,15 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	entity := event.Entity
 
-	if event.Check.Config.Ttl > 0 {
+	if event.Check.Ttl > 0 && !event.Check.RoundRobin {
 		// create a monitor for the event's entity if it doesn't exist in the
 		// monitor map
-		// only monitor if there is a check TTL
+		// only monitor if there is a check TTL and the check is not a
+		// round robin check.
 		e.mu.Lock()
 		mon, ok = e.monitors[entity.ID]
 		if !ok || mon.IsStopped() {
-			timeout := time.Duration(event.Check.Config.Ttl) * time.Second
+			timeout := time.Duration(event.Check.Ttl) * time.Second
 			mon = e.MonitorFactory(entity, event, timeout, e, e)
 			e.monitors[entity.ID] = mon
 		}
@@ -241,7 +242,7 @@ func (e *Eventd) HandleFailure(entity *types.Entity, event *types.Event) error {
 
 func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event) (*types.Event, error) {
 	lastCheckResult, err := e.Store.GetEventByEntityCheck(
-		ctx, event.Entity.ID, event.Check.Config.Name,
+		ctx, event.Entity.ID, event.Check.Name,
 	)
 	if err != nil {
 		return nil, err

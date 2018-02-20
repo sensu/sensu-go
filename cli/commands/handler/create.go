@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -11,13 +14,16 @@ import (
 // CreateCommand adds command that allows the user to create new handlers
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create NAME",
+		Use:          "create [NAME]",
 		Short:        "create new handlers",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags := cmd.Flags()
-			isInteractive := flags.NFlag() == 0
+			if len(args) > 1 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			opts := newHandlerOpts()
 
 			if len(args) > 0 {
@@ -32,7 +38,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				opts.withFlags(flags)
+				opts.withFlags(cmd.Flags())
 			}
 
 			handler := types.Handler{}
@@ -41,7 +47,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			if err := handler.Validate(); err != nil {
 				if !isInteractive {
 					_ = cmd.Help()
-					return nil
+					return errors.New("invalid argument(s) received")
 				}
 				return err
 			}
@@ -65,5 +71,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("timeout", "i", "", "execution duration timeout in seconds (hard stop)")
 	cmd.Flags().StringP("type", "t", typeDefault, "type of handler (pipe, tcp, udp, or set)")
 
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

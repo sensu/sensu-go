@@ -1,6 +1,7 @@
 package event
 
 import (
+	"errors"
 	"io"
 	"strconv"
 	"time"
@@ -20,7 +21,11 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "list",
 		Short:        "list events",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			org := cli.Config.Organization()
 			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
 				org = "*"
@@ -57,7 +62,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Check",
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
-				return event.Check.Config.Name
+				return event.Check.Name
 			},
 		},
 		{

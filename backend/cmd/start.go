@@ -35,13 +35,13 @@ const (
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
 
 	// Etcd flag constants
-	flagStoreClientURL               = "store-client-url"
-	flagStorePeerURL                 = "store-peer-url"
-	flagStoreInitialCluster          = "store-initial-cluster"
-	flagStoreInitialAdvertisePeerURL = "store-initial-advertise-peer-url"
-	flagStoreInitialClusterState     = "store-initial-cluster-state"
-	flagStoreInitialClusterToken     = "store-initial-cluster-token"
-	flagStoreNodeName                = "store-node-name"
+	flagStoreClientURL               = "listen-client-urls"
+	flagStorePeerURL                 = "listen-peer-urls"
+	flagStoreInitialCluster          = "initial-cluster"
+	flagStoreInitialAdvertisePeerURL = "initial-advertise-peer-urls"
+	flagStoreInitialClusterState     = "initial-cluster-state"
+	flagStoreInitialClusterToken     = "initial-cluster-token"
+	flagStoreNodeName                = "name"
 )
 
 func init() {
@@ -208,8 +208,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip ssl verification")
 
 	// Etcd flags
-	cmd.Flags().String(flagStoreClientURL, viper.GetString(flagStoreClientURL), "store client listen URL")
-	cmd.Flags().String(flagStorePeerURL, viper.GetString(flagStorePeerURL), "store peer URL")
+	cmd.Flags().String(flagStoreClientURL, viper.GetString(flagStoreClientURL), "store listen client URL")
+	cmd.Flags().String(flagStorePeerURL, viper.GetString(flagStorePeerURL), "store listen peer URL")
 	cmd.Flags().String(flagStoreInitialCluster, viper.GetString(flagStoreInitialCluster), "store initial cluster")
 	cmd.Flags().String(flagStoreInitialAdvertisePeerURL, viper.GetString(flagStoreInitialAdvertisePeerURL), "store initial advertise peer URL")
 	cmd.Flags().String(flagStoreInitialClusterState, viper.GetString(flagStoreInitialClusterState), "store initial cluster state")

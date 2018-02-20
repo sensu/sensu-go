@@ -1,6 +1,7 @@
 package apid
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -39,6 +41,14 @@ type APId struct {
 	TLS           *types.TLSOptions
 }
 
+func notFoundHandler(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	resp := map[string]interface{}{
+		"error": "not found", "code": actions.NotFound,
+	}
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
 // Start Apid.
 func (a *APId) Start() error {
 	if a.Store == nil {
@@ -55,7 +65,8 @@ func (a *APId) Start() error {
 
 	a.errChan = make(chan error, 1)
 
-	router := mux.NewRouter()
+	router := mux.NewRouter().UseEncodedPath()
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	registerUnauthenticatedResources(router, a.BackendStatus)
 	registerAuthenticationResources(router, a.Store)
 	registerRestrictedResources(router, a.Store, a.MessageBus)

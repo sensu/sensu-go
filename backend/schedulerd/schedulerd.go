@@ -5,17 +5,26 @@ import (
 	"errors"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/types"
 )
+
+// Store specifies the storage requirements for Schedulerd.
+type Store interface {
+	StateManagerStore
+	types.RingGetter
+	queue.Get
+}
 
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
-	Store      store.Store
+	Store      Store
 	MessageBus messaging.MessageBus
 
-	stateManager     *StateManager
-	schedulerManager *ScheduleManager
+	stateManager         *StateManager
+	schedulerManager     *ScheduleManager
+	adhocRequestExecutor *AdhocRequestExecutor
 
 	errChan chan error
 }
@@ -36,7 +45,10 @@ func (s *Schedulerd) Start() error {
 	s.stateManager = NewStateManager(s.Store)
 
 	// Check Schedulers
-	s.schedulerManager = NewScheduleManager(s.MessageBus, s.stateManager)
+	s.schedulerManager = NewScheduleManager(s.MessageBus, s.stateManager, s.Store)
+
+	// Adhoc Request Executor
+	s.adhocRequestExecutor = NewAdhocRequestExecutor(ctx, s.Store, s.MessageBus)
 
 	// Sync
 	s.errChan = make(chan error, 1)
@@ -52,6 +64,7 @@ func (s *Schedulerd) Start() error {
 func (s *Schedulerd) Stop() error {
 	err := s.stateManager.Stop()
 	s.schedulerManager.Stop()
+	s.adhocRequestExecutor.Stop()
 
 	close(s.errChan)
 	return err

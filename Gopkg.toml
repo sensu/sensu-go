@@ -75,8 +75,8 @@ required = ["github.com/shirou/w32"]
   version = "2.17.8"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/spf13/cobra"
+  revision = "fd32f09af19efc9b1279c54e0d8ed23f66232a15"
 
 [[constraint]]
   name = "github.com/spf13/pflag"
@@ -110,26 +110,6 @@ required = ["github.com/shirou/w32"]
   name = "github.com/go-resty/resty"
   version = "1.0"
 
-# Lock etcd and some of it's dependencies
-[[override]]
-  name = "github.com/ugorji/go"
-  branch = "master"
-
-# Lock etcd and some of it's dependencies
-[[override]]
-  name = "google.golang.org/grpc"
-  revision = "9a2334748bab9638f1480ad4f0ac6ac0c6c3a486"
-
-# Lock etcd and some of it's dependencies
-[[override]]
-  name = "github.com/grpc-ecosystem/grpc-gateway"
-  revision = "8cc3a55af3bcf171a1c23a90c4df9cf591706104"
-
-# Lock etcd and some of it's dependencies
-[[override]]
-  name = "github.com/coreos/bbolt"
-  revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
-
 # Locked for Windows
 [[override]]
   name = "github.com/StackExchange/wmi"
@@ -157,8 +137,8 @@ required = ["github.com/shirou/w32"]
   revision = "f41072d47fff1112fa37146dfc812a476cce2d7f"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/coreos/etcd"
+  version = "3.3.1"
 
 [[constraint]]
   name = "github.com/robfig/cron"

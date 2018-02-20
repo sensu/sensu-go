@@ -30,7 +30,7 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	var handlerList []string
 
 	if event.HasCheck() {
-		handlerList = append(handlerList, event.Check.Config.Handlers...)
+		handlerList = append(handlerList, event.Check.Handlers...)
 	}
 
 	if event.HasMetrics() {
@@ -38,6 +38,7 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	}
 
 	handlers, err := p.expandHandlers(ctx, handlerList, 1)
+
 	if err != nil {
 		return err
 	}
@@ -47,7 +48,7 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 
 		if filtered {
 			logger.WithFields(logrus.Fields{
-				"check":        event.Check.Config.GetName(),
+				"check":        event.Check.Name,
 				"entity":       event.Entity.ID,
 				"organization": event.Entity.Organization,
 				"environment":  event.Entity.Environment,

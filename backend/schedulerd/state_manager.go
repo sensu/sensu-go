@@ -10,6 +10,14 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// StateManagerStore specifies the storage requirements for StateManagers.
+type StateManagerStore interface {
+	store.AssetStore
+	store.CheckConfigStore
+	store.EntityStore
+	store.HookConfigStore
+}
+
 // SynchronizeMinInterval minimum interval inwhich we poll the store for updates
 const SynchronizeMinInterval = uint(10)
 
@@ -25,7 +33,7 @@ type StateManager struct {
 }
 
 // NewStateManager returns a new instance of schedulerd's cache
-func NewStateManager(store store.Store) *StateManager {
+func NewStateManager(store StateManagerStore) *StateManager {
 	manager := &StateManager{
 		OnChecksChange: func(state *SchedulerState) {},
 

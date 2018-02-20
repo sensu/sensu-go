@@ -27,7 +27,7 @@ func getEventPath(event *types.Event) string {
 		event.Entity.Organization,
 		event.Entity.Environment,
 		event.Entity.ID,
-		event.Check.Config.Name,
+		event.Check.Name,
 	)
 }
 
@@ -172,7 +172,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 		return fmt.Errorf(
 			"could not create the event %s/%s in environment %s/%s",
 			event.Entity.ID,
-			event.Check.Config.Name,
+			event.Check.Name,
 			event.Entity.Organization,
 			event.Entity.Environment,
 		)

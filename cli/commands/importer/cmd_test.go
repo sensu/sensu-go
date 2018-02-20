@@ -35,13 +35,14 @@ func TestImportCommandRunWithBadJSON(t *testing.T) {
 	assert := assert.New(t)
 
 	reader, writer, _ := os.Pipe()
-	writer.Write([]byte("one two three"))
+	_, _ = writer.Write([]byte("one two three"))
 
 	cli := test.NewMockCLI()
 	cli.InFile = reader
 	cmd := ImportCommand(cli)
 
 	out, err := test.RunCmd(cmd, []string{"in"})
+	// Print help usage
 	assert.Error(err)
 	assert.NotEmpty(out)
 }
@@ -52,7 +53,7 @@ func TestImportCommandRunWithGoodJSON(t *testing.T) {
 
 	reader, writer, _ := os.Pipe()
 	cli.InFile = reader
-	writer.Write([]byte(`{"ok":"yup"}`))
+	_, _ = writer.Write([]byte(`{"ok":"yup"}`))
 
 	cmd := ImportCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -68,11 +69,11 @@ func TestImportCommandRunWithLegacyImporter(t *testing.T) {
 	reader, writer, _ := os.Pipe()
 	cli.InFile = reader
 
-	writer.Write([]byte(`{"ok":"yup"}`))
+	_, _ = writer.Write([]byte(`{"ok":"yup"}`))
 
 	cmd := ImportCommand(cli)
-	cmd.Flags().Set("legacy", "t")
-	cmd.Flags().Set("verbose", "t")
+	_ = cmd.Flags().Set("legacy", "t")
+	_ = cmd.Flags().Set("verbose", "t")
 
 	out, err := test.RunCmd(cmd, []string{})
 
@@ -88,11 +89,11 @@ func TestImportCommandRunWithLegacyImporterInvalidResources(t *testing.T) {
 	reader, writer, _ := os.Pipe()
 	cli.InFile = reader
 
-	writer.Write([]byte(`{"checks": {"frank%%%": {}}}`))
+	_, _ = writer.Write([]byte(`{"checks": {"frank%%%": {}}}`))
 
 	cmd := ImportCommand(cli)
-	cmd.Flags().Set("legacy", "t")
-	cmd.Flags().Set("verbose", "t")
+	_ = cmd.Flags().Set("legacy", "t")
+	_ = cmd.Flags().Set("verbose", "t")
 
 	out, err := test.RunCmd(cmd, []string{})
 

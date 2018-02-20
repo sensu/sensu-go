@@ -27,9 +27,13 @@ func ImportCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			}
 			stat, _ := cli.InFile.Stat()
 			if stat.Mode()&os.ModeNamedPipe == 0 {
-				cmd.Help() // Print out usage
+				_ = cmd.Help() // Print out usage
 				return nil
 			}
 

@@ -1,6 +1,7 @@
 package event
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -23,7 +24,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
 				_ = cmd.Help()
-				return nil
+				return errors.New("invalid argument(s) received")
 			}
 
 			// Fetch event from API
@@ -64,7 +65,7 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 	}
 
 	cfg := &list.Config{
-		Title: fmt.Sprintf("%s - %s", event.Entity.ID, event.Check.Config.Name),
+		Title: fmt.Sprintf("%s - %s", event.Entity.ID, event.Check.Name),
 		Rows: []*list.Row{
 			{
 				Label: "Entity",
@@ -72,7 +73,7 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 			},
 			{
 				Label: "Check",
-				Value: event.Check.Config.Name,
+				Value: event.Check.Name,
 			},
 			{
 				Label: "Output",

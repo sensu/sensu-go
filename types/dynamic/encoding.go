@@ -150,6 +150,21 @@ func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField
 				continue
 			}
 		}
+		// if the field is embedded, flatten it out
+		if sf.Field.Anonymous {
+			var attrAddr *byte
+			if x, ok := sf.Value.Interface().(AttrGetter); ok {
+				attrs := x.GetExtendedAttributes()
+				if len(attrs) > 0 {
+					attrAddr = &attrs[0]
+				}
+			}
+			fields := getJSONFields(sf.Value, attrAddr)
+			for k, v := range fields {
+				result[k] = v
+			}
+			continue
+		}
 		// sf is a valid JSON field.
 		result[sf.JSONName] = sf
 	}

@@ -5,13 +5,19 @@ import slateBlue from "./slateBlue";
 import magenta from "./magenta";
 import paynesGrey from "./paynesGrey";
 import pistachio from "./pistachio";
+import cornflowerBlue from "./cornflowerBlue";
+import cyberGrape from "./cyberGrape";
+import persianPink from "./persianPink";
 
 export default {
   ...muiColors,
-  magenta,
-  salmon,
   appleGreen,
-  slateBlue,
+  cornflowerBlue,
+  cyberGrape,
+  magenta,
   paynesGrey,
+  persianPink,
   pistachio,
+  salmon,
+  slateBlue,
 };

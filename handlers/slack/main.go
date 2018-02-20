@@ -71,6 +71,10 @@ func configureRootCommand() *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string) error {
+	if len(args) != 0 {
+		_ = cmd.Help()
+		return errors.New("invalid argument(s) received")
+	}
 	if stdin == nil {
 		stdin = os.Stdin
 	}
@@ -111,7 +115,7 @@ func chomp(s string) string {
 }
 
 func eventKey(event *types.Event) string {
-	return fmt.Sprintf("%s/%s", event.Entity.ID, event.Check.Config.Name)
+	return fmt.Sprintf("%s/%s", event.Entity.ID, event.Check.Name)
 }
 
 func eventSummary(event *types.Event, maxLength int) string {
@@ -167,7 +171,7 @@ func messageAttachment(event *types.Event) *slack.Attachment {
 			},
 			&slack.AttachmentField{
 				Title: "Check",
-				Value: event.Check.Config.Name,
+				Value: event.Check.Name,
 				Short: true,
 			},
 		},

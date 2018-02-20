@@ -94,7 +94,7 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
 	event := types.FixtureEvent("entity", "check")
-	event.Check.Config.Ttl = 90
+	event.Check.Ttl = 90
 
 	var nilEvent *types.Event
 	// no previous event.

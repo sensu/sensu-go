@@ -105,38 +105,103 @@ message CheckConfig {
 
   // ProxyRequests represents a request to execute a proxy check
   ProxyRequests proxy_requests = 20;
+
+  // RoundRobin enables round-robin scheduling if set true.
+  bool round_robin = 21;
 }
 
 // A Check is a check specification and optionally the results of the check's
 // execution.
 message Check {
-  // Config is the specification of a check
-  CheckConfig config = 1 [(gogoproto.nullable) = true];
+  // Command is the command to be executed.
+  string command = 1;
+
+  // Environment indicates to which env a check belongs to
+  string environment = 2;
+
+  // Handlers are the event handler for the check (incidents and/or metrics).
+  repeated string handlers = 3 [(gogoproto.jsontag) = "handlers"];
+
+  // HighFlapThreshold is the flap detection high threshold (% state change) for
+  // the check. Sensu uses the same flap detection algorithm as Nagios.
+  uint32 high_flap_threshold = 4;
+
+  // Interval is the interval, in seconds, at which the check should be run.
+  uint32 interval = 5;
+
+  // LowFlapThreshold is the flap detection low threshold (% state change) for
+  // the check. Sensu uses the same flap detection algorithm as Nagios.
+  uint32 low_flap_threshold = 6;
+
+  // Name is the unique identifier for a check.
+  string name = 7;
+
+  // Organization indicates to which org a check belongs to
+  string organization = 8;
+
+  // Publish indicates if check requests are published for the check
+  bool publish = 9;
+
+  // RuntimeAssets are a list of assets required to execute check.
+  repeated string runtime_assets = 10 [(gogoproto.jsontag) = "runtime_assets"];
+
+  // Subscriptions is the list of subscribers for the check.
+  repeated string subscriptions = 11 [(gogoproto.jsontag) = "subscriptions"];
+
+  // Sources indicates the name of the entity representing an external resource
+  string proxy_entity_id = 13 [(gogoproto.jsontag) = "proxy_entity_id", (gogoproto.customname) = "ProxyEntityID"];
+
+  // CheckHooks is the list of check hooks for the check
+  repeated HookList check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
+
+  // STDIN indicates if the check command accepts JSON via stdin from the agent
+  bool stdin = 15;
+
+  // Subdue represents one or more time windows when the check should be subdued.
+  TimeWindowWhen subdue = 16 [(gogoproto.jsontag) = "subdue"];
+
+  // Cron is the cron string at which the check should be run.
+  string cron = 17;
+
+  // TTL represents the length of time in seconds for which a check result is valid.
+  int64 ttl = 18;
+
+  // Timeout is the timeout, in seconds, at which the check has to run
+  uint32 timeout = 19;
+
+  // ProxyRequests represents a request to execute a proxy check
+  ProxyRequests proxy_requests = 20;
+
+  // RoundRobin enables round-robin scheduling if set true.
+  bool round_robin = 21;
 
   // Duration of execution
-  double duration = 2;
+  double duration = 22;
 
   // Executed describes the time in which the check request was executed
-  int64 executed = 3;
+  int64 executed = 23;
 
   // History is the check state history.
-  repeated CheckHistory history = 4 [(gogoproto.jsontag) = "history", (gogoproto.nullable) = false];
+  repeated CheckHistory history = 24 [(gogoproto.jsontag) = "history", (gogoproto.nullable) = false];
 
   // Issued describes the time in which the check request was issued
-  int64 issued = 5;
+  int64 issued = 25;
 
   // Output from the execution of Command
-  string output = 6;
+  string output = 26;
 
   // State provides handlers with more information about the state change
-  string state = 7;
+  string state = 27;
 
   // Status is the exit status code produced by the check
-  int32 status = 8;
+  int32 status = 28;
 
   // TotalStateChange indicates the total state change percentage for the
   // check's history
-  uint32 total_state_change = 9;
+  uint32 total_state_change = 29;
+
+  // ExtendedAttributes store serialized arbitrary JSON-encoded data
+  bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];
 }
 
 // CheckHistory is a record of a check execution and its status

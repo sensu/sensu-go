@@ -7,20 +7,68 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
-- Context switcher added for dashboard
-- Add api support for adhoc check requests.
+- Add CLI support for adhoc check requests.
+- Check scheduler now handles adhoc check requests.
+- Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
+of a check. This allows updating single fields and completely clearing out
+non-required fields.
+- Add built-in only_check_output mutator to pipelined.
+- Allow publish, cron, ttl, timeout, low flap threshold and more fields to be
+set when importing legacy settings.
+- Add CPU architecture in system information of entities.
+- The `sensuctl user change-password` subcommand now accepts flag parameters.
+- Configured and enabled etcd autocompaction.
 - Add event metrics type, implementing the Sensu Metrics Format.
+
+### Changed
+- Refactor Check data structure to not depend on CheckConfig. This is a breaking
+change that will cause existing Sensu alpha installations to break if upgraded.
+This change was made before beta release so that further breaking changes could
+be avoided.
+- Make indentation in protocol buffers files consistent.
+- Refactor Hook data structure. This is similar to what was done to Check,
+except that HookConfig is now embedded in Hook.
+- Refactor CheckExecutor and AdhocRequestExecutor into an Executor interface.
+- Changed the sensu-backend etcd flag constants to match the etcd flag names.
+- Upgraded to Etcd v3.3.1
+- Password input fields are now aligned in  `sensuctl user change-password`
+subcommand.
+
+### Fixed
+- Fixed a bug in time.InWindow that in some cases would cause subdued checks to
+be executed.
+  be executed.
+- Fixed a bug in the HTTP API where resource names could not contain special characters.
+
+## [2.0.0-alpha.17] - 2018-02-13
+### Added
+- Add .gitattributes file with merge strategy for the Changelog.
+- Context switcher added for dashboard.
+- Add API support for adhoc check requests.
+- Check scheduler now supports round-robin scheduling.
+- Added better error checking for CLI commands and support for mutually
+exclusive fields.
+- Added `--interactive` flag to CLI which is required to run interactive mode.
+- Added CLI role rule-add Organization and Environment interactive prompts.
+- Added events page list and simple buttons to filter
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
 in `sensuctl` with optional timezone. Stores the field as unix epoch time.
-- Increased the timeout in the store's watchers tests
+- Increased the timeout in the store's watchers tests.
 - Incremental retry mechanism when waiting for agent and backend in e2e tests.
+- Renamed CLI asset create interactive prompt "Org" to "Organization".
+
+### Fixed
+- Fixed required flags in `sensuctl` so requirements are enforced.
+- Add support for embedded fields to dynamic.Marshal.
 
 ## [2.0.0-alpha.16] - 2018-02-07
 ### Added
 - Add an e2e test for proxy check requests.
 - Add integration tests to our CI.
+- Context switcher added for dashboard
+- Add api support for adhoc check requests.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to
