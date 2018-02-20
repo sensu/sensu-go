@@ -61,10 +61,10 @@ type FailureHandler interface {
 func (m *Monitor) HandleUpdate(event *types.Event) error {
 	// If the monitor has not started yet, wait 1 second to avoid a data race on
 	// resetChan and check again.
-	if !m.started {
+	if !m.IsStarted() {
 		time.Sleep(1 * time.Second)
 		// If the monitor still has not started after an additional second, fail.
-		if !m.started {
+		if !m.IsStarted() {
 			return errors.New("monitor has not started within 1 second")
 		}
 	}
@@ -108,8 +108,8 @@ func (m *Monitor) start() {
 	timerDuration := m.Timeout * time.Second
 	m.timer = time.NewTimer(timerDuration)
 	m.resetChan = make(chan time.Duration)
+	m.started = true
 	go func() {
-		m.started = true
 		timer := m.timer
 
 		for {
@@ -160,6 +160,13 @@ func (m *Monitor) IsStopped() bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.stopped
+}
+
+// IsStarted returns true if the Monitor has been started.
+func (m *Monitor) IsStarted() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.started
 }
 
 // Reset the Monitor's timer to emit an event at a given time.
