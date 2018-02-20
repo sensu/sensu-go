@@ -170,7 +170,7 @@ func (a *Agent) receivePump(conn transport.Transport) {
 		case <-a.stopping:
 			return
 		case msg, ok := <-recvChan:
-			if !ok {
+			if !ok || msg == nil {
 				return
 			}
 
