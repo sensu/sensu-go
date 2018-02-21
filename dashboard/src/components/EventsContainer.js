@@ -14,11 +14,9 @@ import EventsContainerMenu from "./EventsContainerMenu";
 
 const styles = theme => ({
   eventsContainer: {
-    border: "1px solid",
-    borderRadius: 2,
-    borderColor: theme.palette.divider,
     marginTop: 16,
     marginBottom: 16,
+    backgroundColor: theme.palette.background.paper,
   },
   tableHeader: {
     padding: "20px 0 16px",
