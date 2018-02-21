@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"errors"
 	"sync"
 	"time"
 
@@ -39,6 +40,7 @@ type Monitor struct {
 
 	resetChan chan time.Duration
 	timer     *time.Timer
+	started   bool
 	stopped   bool
 	failing   bool
 	mu        sync.Mutex
@@ -57,6 +59,16 @@ type FailureHandler interface {
 // HandleUpdate causes the Monitor to observe the event. If the monitor has
 // been stopped, this method has no effect.
 func (m *Monitor) HandleUpdate(event *types.Event) error {
+	// If the monitor has not started yet, wait 1 second to avoid a data race on
+	// resetChan and check again.
+	if !m.IsStarted() {
+		time.Sleep(1 * time.Second)
+		// If the monitor still has not started after an additional second, fail.
+		if !m.IsStarted() {
+			return errors.New("monitor has not started within 1 second")
+		}
+	}
+
 	// once the monitor is stopped, we can't continue, because the
 	// reset channel will be closed.
 	if m.IsStopped() {
@@ -96,6 +108,7 @@ func (m *Monitor) start() {
 	timerDuration := m.Timeout * time.Second
 	m.timer = time.NewTimer(timerDuration)
 	m.resetChan = make(chan time.Duration)
+	m.started = true
 	go func() {
 		timer := m.timer
 
@@ -149,6 +162,13 @@ func (m *Monitor) IsStopped() bool {
 	return m.stopped
 }
 
+// IsStarted returns true if the Monitor has been started.
+func (m *Monitor) IsStarted() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.started
+}
+
 // Reset the Monitor's timer to emit an event at a given time.
 // Once the Monitor has been stopped, this has no effect.
 func (m *Monitor) reset(t time.Duration) {
@@ -174,6 +194,7 @@ func New(entity *types.Entity, event *types.Event, t time.Duration, updateHandle
 		Timeout:        t,
 		FailureHandler: failureHandler,
 		UpdateHandler:  updateHandler,
+		started:        false,
 	}
 	monitor.start()
 	return monitor
