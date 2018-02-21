@@ -1,5 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { compose } from "lodash/fp";
 import { withStyles } from "material-ui/styles";
 
 import Modal from "material-ui/Modal";
@@ -34,33 +36,23 @@ class Preferences extends React.Component {
     classes: PropTypes.object.isRequired,
     open: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
-  };
-
-  static contextTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
-    CURRENT_THEME: PropTypes.object.isRequired,
+    dispatch: PropTypes.func.isRequired,
   };
 
   state = {
     anchorEl: null,
   };
 
-  componentDidMount() {
-    const caster = this.context.CURRENT_THEME;
-    this.unsubscribeId = caster.subscribe(st => this.setState(st));
-  }
-
-  componentWillUnmount() {
-    if (this.unsubscribeId !== null) {
-      const caster = this.context.CURRENT_THEME;
-      caster.unsubscribe(this.unsubscribeId);
-    }
-  }
-
   handleToggle = () => {
-    const caster = this.context.CURRENT_THEME;
-    const st = caster.getState();
-    caster.setState({ ...st, dark: !st.dark });
+    this.props.dispatch({ type: "theme/TOGGLE_DARK_MODE" });
+  };
+
+  handleThemeSelect = theme => () => {
+    this.props.dispatch({
+      type: "theme/CHANGE",
+      payload: { theme },
+    });
+    this.setState({ anchorEl: null });
   };
 
   handleThemeClick = event => {
@@ -69,12 +61,6 @@ class Preferences extends React.Component {
 
   handleThemeClose = () => {
     this.setState({ anchorEl: null });
-  };
-
-  handleThemeSelect = theme => () => {
-    const caster = this.context.CURRENT_THEME;
-    const st = caster.getState();
-    caster.setState({ ...st, theme });
   };
 
   render() {
@@ -130,4 +116,4 @@ class Preferences extends React.Component {
   }
 }
 
-export default withStyles(styles)(Preferences);
+export default compose(connect(), withStyles(styles))(Preferences);
