@@ -93,7 +93,7 @@ func (m *Monitor) start() {
 		return
 	}
 
-	timerDuration := m.Timeout * time.Second
+	timerDuration := m.Timeout
 	m.timer = time.NewTimer(timerDuration)
 	m.resetChan = make(chan time.Duration)
 	go func() {

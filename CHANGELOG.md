@@ -40,6 +40,7 @@ subcommand.
 be executed.
   be executed.
 - Fixed a bug in the HTTP API where resource names could not contain special characters.
+- Resolved a bug in the keepalive monitor timer which was causing it to erroneously expire.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
