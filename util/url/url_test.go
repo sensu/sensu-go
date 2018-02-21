@@ -20,10 +20,40 @@ func Test(t *testing.T) {
 			expectedURL: "ws://127.0.0.1:8081",
 		},
 		{
-			name:        "URL with port",
+			name:        "URL with default port",
 			backendURL:  "ws://127.0.0.1:8081",
 			port:        "8081",
 			expectedURL: "ws://127.0.0.1:8081",
+		},
+		{
+			name:        "URL with non-default port",
+			backendURL:  "ws://127.0.0.1:8082",
+			port:        "8081",
+			expectedURL: "ws://127.0.0.1:8082",
+		},
+		{
+			name:        "URL without port with forward-slash",
+			backendURL:  "ws://127.0.0.1/",
+			port:        "8081",
+			expectedURL: "ws://127.0.0.1:8081/",
+		},
+		{
+			name:        "URL with non-default port with forward-slash",
+			backendURL:  "ws://127.0.0.1:8082/",
+			port:        "8081",
+			expectedURL: "ws://127.0.0.1:8082/",
+		},
+		{
+			name:        "URL without port with forward-slash",
+			backendURL:  "ws://[::1]/",
+			port:        "8081",
+			expectedURL: "ws://[::1]:8081/",
+		},
+		{
+			name:        "URL with non-default port with forward-slash",
+			backendURL:  "ws://[::1]:8082/",
+			port:        "8081",
+			expectedURL: "ws://[::1]:8082/",
 		},
 	}
 
