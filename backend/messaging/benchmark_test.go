@@ -16,7 +16,7 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 		done = make(chan struct{})
 		for i := 0; i < numClients; i++ {
 			ch := make(chan interface{}, 1000)
-			go func(ch chan interface{}) {
+			go func(ch chan interface{}, i int) {
 				_ = bus.Subscribe(topicName, string(i), ch)
 				for {
 					select {
@@ -27,7 +27,7 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 						return
 					}
 				}
-			}(ch)
+			}(ch, i)
 		}
 		return done
 
