@@ -93,7 +93,7 @@ func TestProxyChecks(t *testing.T) {
 	output, err = sensuctl.run("event", "info", source, checkProxy.Name)
 	assert.NoError(t, err, string(output))
 
-	// Make sure the agent's entity did not produced an event for our proxy check
+	// Make sure the agent's entity did not produce an event for our proxy check
 	// request, because it shouldn't have matched the entity_attributes
 	output, err = sensuctl.run("event", "info", agent.ID, checkProxy.Name)
 	assert.Error(t, err, string(output))

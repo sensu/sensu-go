@@ -39,9 +39,12 @@ subcommand.
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
 be executed.
-  be executed.
-- Fixed a bug in the HTTP API where resource names could not contain special characters.
-- Resolved a bug in the keepalive monitor timer which was causing it to erroneously expire.
+- Fixed a bug in the HTTP API where resource names could not contain special
+characters.
+- Resolved a bug in the keepalive monitor timer which was causing it to
+erroneously expire.
+- Resolved a bug in how an executor processes checks. If a check contains proxy
+requests, the check should not duplicately execute after the proxy requests.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
