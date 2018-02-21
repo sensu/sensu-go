@@ -22,7 +22,6 @@ const styles = theme => ({
     padding: "20px 0 16px",
     backgroundColor: theme.palette.primary.light,
     color: theme.palette.primary.contrastText,
-    // TODO revist with typography
     display: "flex",
     alignItems: "center",
   },
