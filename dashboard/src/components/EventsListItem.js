@@ -5,9 +5,12 @@ import { createFragmentContainer, graphql } from "react-relay";
 import moment from "moment";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
+import Menu, { MenuItem } from "material-ui/Menu";
+import Button from "material-ui/ButtonBase";
 
 import Checkbox from "material-ui/Checkbox";
 import chevronIcon from "material-ui-icons/ChevronRight";
+import disclosureIcon from "material-ui-icons/MoreVert";
 
 import EventStatus from "./EventStatus";
 
@@ -29,6 +32,10 @@ const styles = theme => ({
     display: "inline-block",
     verticalAlign: "top",
     padding: "14px 0",
+  },
+  silenceButton: {
+    marginRight: 4,
+    paddingTop: 14,
   },
   content: {
     width: "100%",
@@ -55,19 +62,42 @@ class EventListItem extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     Chevron: PropTypes.func.isRequired,
+    Disclosure: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
     Chevron: chevronIcon,
+    Disclosure: disclosureIcon,
+  };
+
+  state = { anchorEl: null };
+
+  onClose = () => {
+    this.setState({ anchorEl: null });
+  };
+
+  handleClick = event => {
+    this.setState({ anchorEl: event.currentTarget });
+  };
+
+  silenceEntity = entity => () => {
+    console.log(entity);
+    this.setState({ anchorEl: null });
+  };
+  silenceCheck = check => () => {
+    console.log(check);
+    this.setState({ anchorEl: null });
   };
 
   render() {
     const {
       classes,
       Chevron,
+      Disclosure,
       event: { entity, check, timestamp },
       ...other
     } = this.props;
+    const { anchorEl } = this.state;
     const time = moment(timestamp).fromNow();
 
     return (
@@ -92,6 +122,30 @@ class EventListItem extends React.Component {
           <Typography type="caption" className={classes.command}>
             {check.output}
           </Typography>
+        </div>
+        <div className={classes.silenceButton}>
+          <Button onClick={this.handleClick}>
+            <Disclosure />
+          </Button>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={this.onClose}
+            id="silenceButton"
+          >
+            <MenuItem
+              key={"silence-Entity"}
+              onClick={this.silenceEntity("entity")}
+            >
+              Silence Entity
+            </MenuItem>
+            <MenuItem
+              key={"silence-Check"}
+              onClick={this.silenceCheck("entity")}
+            >
+              Silence Check
+            </MenuItem>
+          </Menu>
         </div>
       </div>
     );
