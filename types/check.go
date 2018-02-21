@@ -231,6 +231,7 @@ func (c *Check) MergeWith(chk *Check) {
 	}
 
 	c.History = history
+	c.LastOK = chk.LastOK
 }
 
 // FixtureCheckRequest returns a fixture for a CheckRequest object.

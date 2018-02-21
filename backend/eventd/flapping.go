@@ -25,6 +25,7 @@ func state(event *types.Event) {
 		event.Check.State = types.EventFlappingState
 	} else if event.Check.Status == 0 {
 		event.Check.State = types.EventPassingState
+		event.Check.LastOK = event.Timestamp
 	} else {
 		event.Check.State = types.EventFailingState
 	}

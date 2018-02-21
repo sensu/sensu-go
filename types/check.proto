@@ -200,6 +200,9 @@ message Check {
   // check's history
   uint32 total_state_change = 29;
 
+  // LastOK displays last time this check was ok; if event status is 0 this is set to timestamp
+  int64 last_ok = 30 [(gogoproto.customname) = "LastOK"];
+
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];
 }
