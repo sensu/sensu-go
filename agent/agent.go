@@ -19,6 +19,7 @@ import (
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/wait"
 )
 
 const (
@@ -120,6 +121,7 @@ type Agent struct {
 	conn            transport.Transport
 	entity          *types.Entity
 	handler         *handler.MessageHandler
+	header          http.Header
 	inProgress      map[string]*types.CheckConfig
 	inProgressMu    *sync.Mutex
 	sendq           chan *transport.Message
@@ -131,8 +133,8 @@ type Agent struct {
 // NewAgent creates a new Agent and returns a pointer to it.
 func NewAgent(config *Config) *Agent {
 	agent := &Agent{
-		config:          config,
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
+		config:          config,
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
@@ -154,12 +156,44 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 		m, err := a.conn.Receive()
 		if err != nil {
 			logger.WithError(err).Error("transport receive error")
+
+			// If we encountered a connection error, try to reconnect
+			if _, ok := err.(transport.ConnectionError); ok {
+				// The first step is to close the current websocket connection, which is
+				// no longer useful
+				if err := a.conn.Close(); err != nil {
+					logger.Debug(err)
+				}
+
+				// Now, we must attempt to reconnect to the backend, with exponential
+				// backoff
+				w := wait.Backoff{
+					InitialDelayInterval: 500 * time.Millisecond,
+					MaxDelayInterval:     10 * time.Second,
+					MaxRetryAttempts:     0, // Unlimited attempts
+					Multiplier:           1.5,
+				}
+				if err := w.ExponentialBackoff(func() (bool, error) {
+					if err = a.conn.Reconnect(a.backendSelector.Select(), a.config.TLS, a.header); err != nil {
+						logger.WithError(err).Error("reconnection attempt failed")
+						return false, nil
+					}
+
+					// At this point, the reconnection was successful
+					logger.Info("successfully reconnected")
+
+					return true, nil
+				}); err != nil {
+					logger.WithError(err).Fatal("could not reconnect to transport")
+				}
+			}
+
 		}
 		out <- m
 	}
 }
 
-func (a *Agent) receivePump(conn transport.Transport) {
+func (a *Agent) receivePump() {
 	logger.Info("connected - starting receivePump")
 
 	recvChan := make(chan *transport.Message)
@@ -193,7 +227,7 @@ func (a *Agent) sendMessage(msgType string, payload []byte) {
 	a.sendq <- msg
 }
 
-func (a *Agent) sendPump(conn transport.Transport) {
+func (a *Agent) sendPump() {
 	// The sendPump is actually responsible for shutting down the transport
 	// to prevent a race condition between it and something else trying
 	// to close the transport (which actually causes a write to the websocket
@@ -211,9 +245,8 @@ func (a *Agent) sendPump(conn transport.Transport) {
 	for {
 		select {
 		case msg := <-a.sendq:
-			err := conn.Send(msg)
-			if err != nil {
-				logger.WithError(err).Fatal("transport send error")
+			if err := a.conn.Send(msg); err != nil {
+				logger.WithError(err).Warning("transport send error")
 			}
 		case <-a.stopping:
 			return
@@ -263,13 +296,14 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 func (a *Agent) Run() error {
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
-	header := a.buildTransportHeaderMap()
-	header.Set("Authorization", "Basic "+userCredentials)
+	a.header = a.buildTransportHeaderMap()
+	a.header.Set("Authorization", "Basic "+userCredentials)
 
-	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, header)
+	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
 	if err != nil {
 		return err
 	}
+
 	a.conn = conn
 
 	if _, _, err := a.createListenSockets(); err != nil {
@@ -278,8 +312,8 @@ func (a *Agent) Run() error {
 
 	// These are in separate goroutines so that they can, theoretically, be executing
 	// concurrently.
-	go a.sendPump(conn)
-	go a.receivePump(conn)
+	go a.sendPump()
+	go a.receivePump()
 
 	// Send an immediate keepalive once we've connected.
 	if err := a.sendKeepalive(); err != nil {

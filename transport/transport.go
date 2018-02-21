@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -86,21 +88,24 @@ type Message struct {
 // The Transport interface defines the set of methods available to a connection
 // between the Sensu backend and agent.
 type Transport interface {
+	// Close will cleanly shutdown a sensu transport connection.
+	Close() error
+
 	// Closed returns true if the underlying connection is closed.
 	Closed() bool
 
-	// Close will cleanly shutdown a sensu transport connection.
-	Close() error
+	// Receive is used to receive a message from the transport. It takes a context
+	// and blocks until the next message is received from the transport.
+	Receive() (*Message, error)
+
+	// Reconnect ...
+	Reconnect(string, *types.TLSOptions, http.Header) error
 
 	// Send is used to send a message over the transport. It takes a message type
 	// hint and a serialized payload. Send will block until the message has been
 	// sent. Send is synchronous, returning nil if the write to the underlying
 	// socket was successful and an error otherwise.
 	Send(*Message) error
-
-	// Receive is used to receive a message from the transport. It takes a context
-	// and blocks until the next message is received from the transport.
-	Receive() (*Message, error)
 }
 
 // A WebSocketTransport is a connection between sensu Agents and Backends over
@@ -120,41 +125,27 @@ func NewTransport(conn *websocket.Conn) Transport {
 	}
 }
 
+// Close attempts to send a "going away" message over the websocket connection.
+// This will cause a Write over the websocket transport, which can cause a
+// panic. We rescue potential panics and consider the connection closed,
+// returning nil, because the connection _will_ be closed. Hay!
+func (t *WebSocketTransport) Close() error {
+	t.mutex.Lock()
+	defer func() {
+		// WriteMessage can annoyingly panic, because the websocket conn isn't safe
+		// for concurrent use. Recover here, and unlock the mutex.
+		_ = recover()
+		t.mutex.Unlock()
+	}()
+	t.closed = true
+	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
+}
+
 // Closed returns true if the underlying websocket connection has been closed.
 func (t *WebSocketTransport) Closed() bool {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 	return t.closed
-}
-
-// Send a message over the websocket connection. If the connection has been
-// closed, returns a ClosedError. Returns a ConnectionError if the websocket
-// connection returns an error while sending, but the connection is still open.
-func (t *WebSocketTransport) Send(m *Message) error {
-	t.mutex.RLock()
-	if t.closed {
-		t.mutex.RUnlock()
-		return ClosedError{"the websocket connection is no longer open"}
-	}
-	t.mutex.RUnlock()
-
-	msg := Encode(m.Type, m.Payload)
-	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
-	if err != nil {
-		// If we get _any_ error, let's just considered the connection closed,
-		// because it's _really_ hard to figure out what errors from the
-		// websocket library are terminal and which aren't. So, abandon all
-		// hope, and reconnect if we get an error from the websocket lib.
-		t.mutex.Lock()
-		t.closed = true
-		t.mutex.Unlock()
-		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-			return ClosedError{err.Error()}
-		}
-		return ConnectionError{err.Error()}
-	}
-
-	return nil
 }
 
 // Receive a message over the websocket connection. Like Send, returns either
@@ -188,18 +179,62 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 	return &Message{msgType, payload}, nil
 }
 
-// Close attempts to send a "going away" message over the websocket connection.
-// This will cause a Write over the websocket transport, which can cause a
-// panic. We rescue potential panics and consider the connection closed,
-// returning nil, because the connection _will_ be closed. Hay!
-func (t *WebSocketTransport) Close() error {
+// Reconnect attempts to establish a new connection to the websocket backend. If
+// it's successful, it will replace the connection in the Transport client with
+// this new connection so it can be immediately used
+func (t *WebSocketTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header) error {
+	t.mutex.RLock()
+
+	// Verify that the connection has been marked as closed, otherwise return
+	// immediately
+	if !t.closed {
+		t.mutex.RUnlock()
+		return nil
+	}
+	t.mutex.RUnlock()
+
+	// Try to connect to the websocket backend
+	conn, err := connect(wsServerURL, tlsOpts, requestHeader)
+	if err != nil {
+		return err
+	}
+
+	// Replace the connection in the Transport cient with this new connection and
+	// mark it as ready to be used
 	t.mutex.Lock()
-	defer func() {
-		// WriteMessage can annoyingly panic, because the websocket conn isn't safe
-		// for concurrent use. Recover here, and unlock the mutex.
-		_ = recover()
+	t.Connection = conn
+	t.closed = false
+	t.mutex.Unlock()
+
+	return nil
+}
+
+// Send a message over the websocket connection. If the connection has been
+// closed, returns a ClosedError. Returns a ConnectionError if the websocket
+// connection returns an error while sending, but the connection is still open.
+func (t *WebSocketTransport) Send(m *Message) error {
+	t.mutex.RLock()
+	if t.closed {
+		t.mutex.RUnlock()
+		return ClosedError{"the websocket connection is no longer open"}
+	}
+	t.mutex.RUnlock()
+
+	msg := Encode(m.Type, m.Payload)
+	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
+	if err != nil {
+		// If we get _any_ error, let's just considered the connection closed,
+		// because it's _really_ hard to figure out what errors from the
+		// websocket library are terminal and which aren't. So, abandon all
+		// hope, and reconnect if we get an error from the websocket lib.
+		t.mutex.Lock()
+		t.closed = true
 		t.mutex.Unlock()
-	}()
-	t.closed = true
-	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
+		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+			return ClosedError{err.Error()}
+		}
+		return ConnectionError{err.Error()}
+	}
+
+	return nil
 }
