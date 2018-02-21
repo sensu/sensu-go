@@ -820,7 +820,6 @@ type LegacyEntityImporter struct {
 	SaveFunc func(*types.Entity) error
 
 	reporter *report.Writer
-	entities []*types.Entity
 }
 
 // Name of the importer
@@ -853,7 +852,9 @@ func (i *LegacyEntityImporter) Save() (int, error) {
 	return 0, nil
 }
 
-func (i *LegacyEntityImporter) newEntity(name string) types.Entity {
+// NewEntity creates a new Entity with the importer's Organization and
+// Environment.
+func (i *LegacyEntityImporter) NewEntity(name string) types.Entity {
 	return types.Entity{
 		ID:           name,
 		Organization: i.Org,
@@ -861,7 +862,7 @@ func (i *LegacyEntityImporter) newEntity(name string) types.Entity {
 	}
 }
 
-//
+// ApplyCfg applies a configuration to an entity.
 // example #1:
 //
 // {
@@ -900,8 +901,8 @@ func (i *LegacyEntityImporter) newEntity(name string) types.Entity {
 //
 // NOTE: Valid keys
 //
-func (i *LegacyEntityImporter) applyCfg(entity *types.Entity, cfg map[string]interface{}) {
-	// ...
+func (i *LegacyEntityImporter) ApplyCfg(entity *types.Entity, cfg map[string]interface{}) {
+	// TODO
 }
 
 //
@@ -946,7 +947,7 @@ func (i *LegacyExtensionImporter) Save() (int, error) {
 	return 0, nil
 }
 
-//
+// ApplyCfg applies a configuration to an entity.
 // example #1:
 //
 // {
@@ -979,8 +980,8 @@ func (i *LegacyExtensionImporter) Save() (int, error) {
 //
 // NOTE: Valid keys
 //
-func (i *LegacyExtensionImporter) applyCfg(_ *types.Entity, cfg map[string]interface{}) {
-	// ...
+func (i *LegacyExtensionImporter) ApplyCfg(_ *types.Entity, cfg map[string]interface{}) {
+	// TODO
 }
 
 //

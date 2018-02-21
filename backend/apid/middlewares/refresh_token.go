@@ -91,6 +91,5 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, types.RefreshTokenString, payload.Refresh)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
 	})
 }

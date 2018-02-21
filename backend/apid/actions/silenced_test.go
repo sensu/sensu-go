@@ -427,7 +427,6 @@ func TestSilencedDestroy(t *testing.T) {
 		ctx             context.Context
 		params          QueryParams
 		fetchResult     *types.Silenced
-		fetchErr        error
 		deleteErr       error
 		expectedErr     bool
 		expectedErrCode ErrCode

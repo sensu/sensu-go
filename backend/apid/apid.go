@@ -1,6 +1,7 @@
 package apid
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -101,7 +102,7 @@ func (a *APId) Start() error {
 
 // Stop httpApi.
 func (a *APId) Stop() error {
-	if err := a.httpServer.Shutdown(nil); err != nil {
+	if err := a.httpServer.Shutdown(context.TODO()); err != nil {
 		// failure/timeout shutting down the server gracefully
 		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
 		if closeErr := a.httpServer.Close(); closeErr != nil {

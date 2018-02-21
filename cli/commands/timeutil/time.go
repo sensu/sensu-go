@@ -78,6 +78,6 @@ func extractLocation(s string, format *regexp.Regexp) (string, *time.Location, e
 	}
 	loc, err := time.LoadLocation(possibleTZ)
 	trimmed := strings.TrimSpace(strings.TrimSuffix(s, possibleTZ))
-	normalized := strings.Replace(strings.Replace(trimmed, " AM", "AM", 0), " PM", "PM", 0)
+	normalized := strings.Replace(strings.Replace(trimmed, " AM", "AM", -1), " PM", "PM", -1)
 	return normalized, loc, err
 }

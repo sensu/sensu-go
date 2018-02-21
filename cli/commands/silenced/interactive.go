@@ -124,10 +124,8 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 				Help:    "Start silencing events at this time. Format: Jan 02 2006 3:04PM MST",
 			},
 			Validate: func(val interface{}) error {
-				if _, err := timeutil.ConvertToUnixUTC(val.(string)); err != nil {
-					return err
-				}
-				return nil
+				_, err := timeutil.ConvertToUnixUTC(val.(string))
+				return err
 			},
 		},
 		{

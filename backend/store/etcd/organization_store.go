@@ -121,11 +121,7 @@ func (s *Store) UpdateOrganization(ctx context.Context, org *types.Organization)
 
 	_, err = s.kvc.Put(ctx, getOrganizationsPath(org.Name), string(bytes))
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func unmarshalOrganizations(kvs []*mvccpb.KeyValue) ([]*types.Organization, error) {

@@ -278,10 +278,7 @@ func (e *Etcd) Healthy() bool {
 	//
 	// https://godoc.org/github.com/coreos/etcd/etcdserver/etcdserverpb#StatusResponse
 	_, err = mapi.Status(context.TODO(), e.cfg.ListenClientURL)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // LoopbackURL returns the lookback URL used by etcd

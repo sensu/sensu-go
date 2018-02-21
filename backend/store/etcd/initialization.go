@@ -55,11 +55,8 @@ func (s *StoreInitializer) IsInitialized() (bool, error) {
 
 // FlagAsInitialized - set .initialized key
 func (s *StoreInitializer) FlagAsInitialized() error {
-	if _, err := s.client.Put(s.ctx, initializationKey, "1"); err != nil {
-		return err
-	}
-
-	return nil
+	_, err := s.client.Put(s.ctx, initializationKey, "1")
+	return err
 }
 
 // Close session & unlock
