@@ -1,8 +1,8 @@
-# Sensu 2.0 Frequently Asked Questions (FAQ)
+# Sensu Core 2.0 Frequently Asked Questions (FAQ)
 
-## Should I use the 2.0 Open Sourcing in production?
+## Should I use Sensu Core 2.0 in production?
 
-It depends. Depending on your industry and the nature of the infrastructure, e.g. fintech, you may need to use Sensu 1.x, as it has been battle tested for 6 years, and it is commercially supported by Sensu Inc. However, the 2.0 Open Sourcing can be considered production ready for most users.
+It depends. Depending on your industry and the nature of the infrastructure, e.g. fintech, you may need to use Sensu 1.x, as it has been battle tested for 6 years, and it is commercially supported by Sensu Inc. However, Sensu 2.0 can be considered production ready for most users.
 
 ## Why the design and architecture changes? Where’s my RabbitMQ?
 
