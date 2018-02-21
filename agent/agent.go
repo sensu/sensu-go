@@ -204,8 +204,8 @@ func (a *Agent) receivePump() {
 		case <-a.stopping:
 			return
 		case msg, ok := <-recvChan:
-			if !ok || msg == nil {
-				return
+			if msg == nil || !ok {
+				continue
 			}
 
 			logger.Info("message received - type: ", msg.Type, " message: ", string(msg.Payload))
