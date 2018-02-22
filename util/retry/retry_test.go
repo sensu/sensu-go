@@ -1,4 +1,4 @@
-package wait
+package retry
 
 import (
 	"errors"
@@ -31,19 +31,19 @@ func mockBackoffFuncErr() func() (bool, error) {
 func TestExponentialBackoff(t *testing.T) {
 	// It should reach MaxRetryAttempts
 	fn := mockBackoffFunc(3)
-	b := Backoff{
+	b := ExponentialBackoff{
 		InitialDelayInterval: 1 * time.Millisecond,
 		MaxDelayInterval:     1 * time.Second,
 		MaxRetryAttempts:     2,
 		Multiplier:           1.5,
 	}
-	assert.Error(t, b.ExponentialBackoff(fn))
+	assert.Error(t, b.Retry(fn))
 
 	// It should be successful
 	b.MaxRetryAttempts = 3
-	assert.NoError(t, b.ExponentialBackoff(fn))
+	assert.NoError(t, b.Retry(fn))
 
 	// It should return an error from our func
 	errFn := mockBackoffFuncErr()
-	assert.Equal(t, errBackoff, b.ExponentialBackoff(errFn))
+	assert.Equal(t, errBackoff, b.Retry(errFn))
 }

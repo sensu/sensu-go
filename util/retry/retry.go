@@ -1,12 +1,12 @@
-package wait
+package retry
 
 import (
 	"errors"
 	"time"
 )
 
-// Backoff contains the configuration for exponential backoff
-type Backoff struct {
+// ExponentialBackoff contains the configuration for exponential backoff
+type ExponentialBackoff struct {
 	// InitialDelayInterval represents the initial amount of time of sleep
 	InitialDelayInterval time.Duration
 	// MaxDelayInterval represents the maximal amount of time of sleep between
@@ -29,9 +29,9 @@ type BackoffFunc func() (done bool, err error)
 // reached
 var ErrMaxRetryAttempts = errors.New("maximal number of retry attempts reached")
 
-// ExponentialBackoff retries the provided func with exponential backoff, until
+// Retry retries the provided func with exponential backoff, until
 // the maximal number of retries is reached
-func (b *Backoff) ExponentialBackoff(fn BackoffFunc) error {
+func (b *ExponentialBackoff) Retry(fn BackoffFunc) error {
 	sleep := b.InitialDelayInterval
 
 	for i := 0; i < b.MaxRetryAttempts || b.MaxRetryAttempts == 0; i++ {

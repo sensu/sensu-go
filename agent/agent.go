@@ -19,7 +19,7 @@ import (
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/wait"
+	"github.com/sensu/sensu-go/util/retry"
 )
 
 const (
@@ -167,13 +167,13 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 
 				// Now, we must attempt to reconnect to the backend, with exponential
 				// backoff
-				w := wait.Backoff{
+				backoff := retry.ExponentialBackoff{
 					InitialDelayInterval: 500 * time.Millisecond,
 					MaxDelayInterval:     10 * time.Second,
 					MaxRetryAttempts:     0, // Unlimited attempts
 					Multiplier:           1.5,
 				}
-				if err := w.ExponentialBackoff(func() (bool, error) {
+				if err := backoff.Retry(func() (bool, error) {
 					if err = a.conn.Reconnect(a.backendSelector.Select(), a.config.TLS, a.header); err != nil {
 						logger.WithError(err).Error("reconnection attempt failed")
 						return false, nil
