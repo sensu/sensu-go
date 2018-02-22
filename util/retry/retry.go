@@ -2,6 +2,7 @@ package retry
 
 import (
 	"errors"
+	"math/rand"
 	"time"
 )
 
@@ -31,15 +32,19 @@ var ErrMaxRetryAttempts = errors.New("maximal number of retry attempts reached")
 // Retry retries the provided func with exponential backoff, until
 // the maximal number of retries is reached
 func (b *ExponentialBackoff) Retry(fn Func) error {
-	sleep := b.InitialDelayInterval
+	wait := b.InitialDelayInterval
 
 	for i := 0; i < b.MaxRetryAttempts || b.MaxRetryAttempts == 0; i++ {
 		if i != 0 {
 			// Sleep for the determined duration
-			time.Sleep(sleep)
+			time.Sleep(wait)
 
 			// Exponentially increase that sleep duration
-			sleep = time.Duration(float64(sleep) * b.Multiplier)
+			wait = time.Duration(float64(wait) * b.Multiplier)
+
+			// Add a jitter (randomized delay) for the next attempt, to prevent
+			// potential collisions
+			wait = wait + time.Duration(rand.Float64()*float64(wait))
 		}
 
 		if ok, err := fn(i); err != nil || ok {
