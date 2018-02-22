@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { withStyles } from "material-ui/styles";
+import Paper from "material-ui/Paper";
 // import Typography from "material-ui/Typography";
 import filterIcon from "material-ui-icons/FilterList";
 
@@ -10,9 +11,6 @@ const styles = theme => ({
     display: "flex",
     border: "1px solid",
     borderColor: theme.palette.divider,
-    backgroundColor: theme.palette.background.paper,
-    boxShadow:
-      "0 0 2px 0 rgba(0,0,0,0.14), 0 2px 2px 0 rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20)",
   },
   filterIconContainer: {
     display: "flex",
@@ -26,6 +24,7 @@ const styles = theme => ({
     height: 36,
     fontSize: 14,
     border: "none",
+    backgroundColor: theme.palette.background.paper,
     "&:focus": { outline: "none" },
   },
   save: {
@@ -57,7 +56,7 @@ class SearchBox extends React.Component {
     const { classes, FilterIcon } = this.props;
 
     return (
-      <div className={classes.box}>
+      <Paper className={classes.box}>
         <div className={classes.filterIconContainer}>
           <FilterIcon className={classes.filterIcon} />
         </div>
@@ -72,7 +71,7 @@ class SearchBox extends React.Component {
         {/* <Typography className={classes.save} type="button">
           Save
         </Typography> */}
-      </div>
+      </Paper>
     );
   }
 }
