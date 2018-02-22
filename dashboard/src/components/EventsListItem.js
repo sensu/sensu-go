@@ -15,8 +15,9 @@ const styles = theme => ({
   row: {
     display: "flex",
     width: "100%",
-    borderBottomColor: theme.palette.divider,
-    borderBottom: "1px solid",
+    borderColor: theme.palette.divider,
+    border: "1px solid",
+    borderTop: "none",
     // TODO revist with typography
     fontFamily: "SF Pro Text",
   },
