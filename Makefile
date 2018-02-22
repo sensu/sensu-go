@@ -347,8 +347,7 @@ publish_travis:
 
 PC_PUSH_CMD=package_cloud push --skip-errors
 PC_USER=sensu
-PC_REPOSITORY=nightly
-
+PC_REPOSITORY=$(shell version/version.sh)
 
 ##
 # publish packages without a service
