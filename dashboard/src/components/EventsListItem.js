@@ -9,8 +9,8 @@ import Menu, { MenuItem } from "material-ui/Menu";
 import Button from "material-ui/ButtonBase";
 
 import Checkbox from "material-ui/Checkbox";
-import chevronIcon from "material-ui-icons/ChevronRight";
-import disclosureIcon from "material-ui-icons/MoreVert";
+import Chevron from "material-ui-icons/ChevronRight";
+import Disclosure from "material-ui-icons/MoreVert";
 
 import EventStatus from "./EventStatus";
 
@@ -62,13 +62,6 @@ class EventListItem extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    Chevron: PropTypes.func.isRequired,
-    Disclosure: PropTypes.func.isRequired,
-  };
-
-  static defaultProps = {
-    Chevron: chevronIcon,
-    Disclosure: disclosureIcon,
   };
 
   state = { anchorEl: null };
@@ -82,25 +75,26 @@ class EventListItem extends React.Component {
   };
 
   silenceEntity = entity => () => {
-    console.log(entity);
+    // eslint-disable-next-line
+    console.info("entity", entity);
     this.setState({ anchorEl: null });
   };
 
   silenceCheck = check => () => {
-    console.log(check);
+    // eslint-disable-next-line
+    console.info("check", check);
     this.setState({ anchorEl: null });
   };
 
   resolve = event => () => {
-    console.log(event);
+    // eslint-disable-next-line
+    console.info("event", event);
     this.setState({ anchorEl: null });
   };
 
   render() {
     const {
       classes,
-      Chevron,
-      Disclosure,
       event: { entity, check, timestamp },
       ...other
     } = this.props;
