@@ -33,9 +33,11 @@ const styles = theme => ({
     verticalAlign: "top",
     padding: "14px 0",
   },
-  silenceButton: {
+  disclosure: {
     marginRight: 4,
     paddingTop: 14,
+    // TODO add this colour to theme
+    color: "rgba(0, 0, 0, 0.54)",
   },
   content: {
     width: "100%",
@@ -84,8 +86,14 @@ class EventListItem extends React.Component {
     console.log(entity);
     this.setState({ anchorEl: null });
   };
+
   silenceCheck = check => () => {
     console.log(check);
+    this.setState({ anchorEl: null });
+  };
+
+  resolve = event => () => {
+    console.log(event);
     this.setState({ anchorEl: null });
   };
 
@@ -123,10 +131,11 @@ class EventListItem extends React.Component {
             {check.output}
           </Typography>
         </div>
-        <div className={classes.silenceButton}>
+        <div className={classes.disclosure}>
           <Button onClick={this.handleClick}>
             <Disclosure />
           </Button>
+          {/* TODO give these functionality, pass correct value */}
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -144,6 +153,9 @@ class EventListItem extends React.Component {
               onClick={this.silenceCheck("entity")}
             >
               Silence Check
+            </MenuItem>
+            <MenuItem key={"resolve"} onClick={this.resolve("event")}>
+              Resolve
             </MenuItem>
           </Menu>
         </div>
