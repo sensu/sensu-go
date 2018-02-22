@@ -43,7 +43,8 @@ class EventsPage extends React.Component {
   requerySearchBox = query => {
     this.setState({ inputValue: query });
     // TODO return to this and make it actually query
-    console.log(query);
+    // eslint-disable-next-line no-console
+    console.info("query", query);
   };
 
   render() {

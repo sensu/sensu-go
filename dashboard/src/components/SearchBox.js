@@ -10,7 +10,7 @@ const styles = theme => ({
     display: "flex",
     border: "1px solid",
     borderColor: theme.palette.divider,
-    backgroundColor: "white",
+    backgroundColor: theme.palette.background.paper,
     boxShadow:
       "0 0 2px 0 rgba(0,0,0,0.14), 0 2px 2px 0 rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20)",
   },
@@ -18,8 +18,7 @@ const styles = theme => ({
     display: "flex",
     padding: "6px 8px 8px",
     height: 36,
-    // TODO find proper reference to this in theme, default icon color
-    color: "rgba(0, 0, 0, 0.54)",
+    color: theme.palette.action.active,
   },
   textField: {
     borderRadius: 3,
@@ -31,7 +30,7 @@ const styles = theme => ({
   },
   save: {
     alignSelf: "center",
-    marginRight: 8,
+    marginRight: theme.spacing.unit,
     color: theme.palette.primary.light,
     fontWeight: "bold",
   },
