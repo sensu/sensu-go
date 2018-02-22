@@ -36,8 +36,7 @@ const styles = theme => ({
   disclosure: {
     marginRight: 4,
     paddingTop: 14,
-    // TODO add this colour to theme
-    color: "rgba(0, 0, 0, 0.54)",
+    color: theme.palette.action.active,
   },
   content: {
     width: "100%",
