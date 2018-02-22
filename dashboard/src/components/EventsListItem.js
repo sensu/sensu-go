@@ -5,9 +5,12 @@ import { createFragmentContainer, graphql } from "react-relay";
 import moment from "moment";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
+import Menu, { MenuItem } from "material-ui/Menu";
+import Button from "material-ui/ButtonBase";
 
 import Checkbox from "material-ui/Checkbox";
-import chevronIcon from "material-ui-icons/ChevronRight";
+import Chevron from "material-ui-icons/ChevronRight";
+import Disclosure from "material-ui-icons/MoreVert";
 
 import EventStatus from "./EventStatus";
 
@@ -30,6 +33,11 @@ const styles = theme => ({
     display: "inline-block",
     verticalAlign: "top",
     padding: "14px 0",
+  },
+  disclosure: {
+    marginRight: 4,
+    paddingTop: 14,
+    color: theme.palette.action.active,
   },
   content: {
     width: "100%",
@@ -55,20 +63,43 @@ class EventListItem extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    Chevron: PropTypes.func.isRequired,
   };
 
-  static defaultProps = {
-    Chevron: chevronIcon,
+  state = { anchorEl: null };
+
+  onClose = () => {
+    this.setState({ anchorEl: null });
+  };
+
+  handleClick = event => {
+    this.setState({ anchorEl: event.currentTarget });
+  };
+
+  silenceEntity = entity => () => {
+    // eslint-disable-next-line
+    console.info("entity", entity);
+    this.setState({ anchorEl: null });
+  };
+
+  silenceCheck = check => () => {
+    // eslint-disable-next-line
+    console.info("check", check);
+    this.setState({ anchorEl: null });
+  };
+
+  resolve = event => () => {
+    // eslint-disable-next-line
+    console.info("event", event);
+    this.setState({ anchorEl: null });
   };
 
   render() {
     const {
       classes,
-      Chevron,
       event: { entity, check, timestamp },
       ...other
     } = this.props;
+    const { anchorEl } = this.state;
     const time = moment(timestamp).fromNow();
 
     return (
@@ -93,6 +124,34 @@ class EventListItem extends React.Component {
           <Typography type="caption" className={classes.command}>
             {check.output}
           </Typography>
+        </div>
+        <div className={classes.disclosure}>
+          <Button onClick={this.handleClick}>
+            <Disclosure />
+          </Button>
+          {/* TODO give these functionality, pass correct value */}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={this.onClose}
+            id="silenceButton"
+          >
+            <MenuItem
+              key={"silence-Entity"}
+              onClick={this.silenceEntity("entity")}
+            >
+              Silence Entity
+            </MenuItem>
+            <MenuItem
+              key={"silence-Check"}
+              onClick={this.silenceCheck("entity")}
+            >
+              Silence Check
+            </MenuItem>
+            <MenuItem key={"resolve"} onClick={this.resolve("event")}>
+              Resolve
+            </MenuItem>
+          </Menu>
         </div>
       </div>
     );
