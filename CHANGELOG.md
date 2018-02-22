@@ -19,6 +19,7 @@ set when importing legacy settings.
 - The `sensuctl user change-password` subcommand now accepts flag parameters.
 - Configured and enabled etcd autocompaction.
 - Add event metrics type, implementing the Sensu Metrics Format.
+- Added non-functional selections for resolving and silencing to web ui
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
