@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Made Changelog examples in CONTRIBUTING.md more obvious
 - Added cli support for setting environment variables in mutators and handlers.
 - Added gRPC extension service definition.
+- Support for nightlies in build/packaging tooling.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024

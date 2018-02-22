@@ -38,3 +38,4 @@ gcs-service-account.json
 *.wixobj
 *.wixpdb
 *.msi
+version-bin
