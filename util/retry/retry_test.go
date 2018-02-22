@@ -10,9 +10,9 @@ import (
 
 var errBackoff = errors.New("error")
 
-func mockBackoffFunc(max int) func() (bool, error) {
+func mockBackoffFunc(max int) func(retry int) (bool, error) {
 	i := 0
-	return func() (bool, error) {
+	return func(retry int) (bool, error) {
 		i++
 		if i == max {
 			return true, nil
@@ -22,8 +22,8 @@ func mockBackoffFunc(max int) func() (bool, error) {
 	}
 }
 
-func mockBackoffFuncErr() func() (bool, error) {
-	return func() (bool, error) {
+func mockBackoffFuncErr() func(retry int) (bool, error) {
+	return func(retry int) (bool, error) {
 		return false, errBackoff
 	}
 }

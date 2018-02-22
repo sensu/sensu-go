@@ -20,10 +20,9 @@ type ExponentialBackoff struct {
 	Multiplier float64
 }
 
-// BackoffFunc represents a function to retry with exponential backoff, which
-// returns true if the attempt is successful, or an error if the retry should be
-// aborted
-type BackoffFunc func() (done bool, err error)
+// Func represents a function to retry, which returns true if the attempt is
+// successful, or an error if the retry should be aborted
+type Func func(retry int) (done bool, err error)
 
 // ErrMaxRetryAttempts is returned when the number of maximal retry attempts is
 // reached
@@ -31,7 +30,7 @@ var ErrMaxRetryAttempts = errors.New("maximal number of retry attempts reached")
 
 // Retry retries the provided func with exponential backoff, until
 // the maximal number of retries is reached
-func (b *ExponentialBackoff) Retry(fn BackoffFunc) error {
+func (b *ExponentialBackoff) Retry(fn Func) error {
 	sleep := b.InitialDelayInterval
 
 	for i := 0; i < b.MaxRetryAttempts || b.MaxRetryAttempts == 0; i++ {
@@ -43,7 +42,7 @@ func (b *ExponentialBackoff) Retry(fn BackoffFunc) error {
 			sleep = time.Duration(float64(sleep) * b.Multiplier)
 		}
 
-		if ok, err := fn(); err != nil || ok {
+		if ok, err := fn(i); err != nil || ok {
 			return err
 		}
 	}
