@@ -20,7 +20,8 @@ set when importing legacy settings.
 - Configured and enabled etcd autocompaction.
 - Add event metrics type, implementing the Sensu Metrics Format.
 - Added non-functional selections for resolving and silencing to web ui
-- Add LastOk to check type. This will be updated to reflect the last timestamp of a succesful check 
+- Add LastOk to check type. This will be updated to reflect the last timestamp
+of a successful check.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
@@ -48,6 +49,7 @@ characters.
 erroneously expire.
 - Resolved a bug in how an executor processes checks. If a check contains proxy
 requests, the check should not duplicately execute after the proxy requests.
+- Removed an erroneous validation statement in check handler.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
