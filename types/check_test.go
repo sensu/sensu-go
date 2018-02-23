@@ -15,6 +15,11 @@ func TestCheckValidate(t *testing.T) {
 	assert.Error(t, c.Validate())
 	c.Status = 0
 
+	// Invalid interval
+	c.Interval = 0
+	assert.Error(t, c.Validate())
+	c.Interval = 10
+
 	c.Name = "test"
 
 	assert.NoError(t, c.Validate())

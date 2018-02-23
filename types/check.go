@@ -66,6 +66,10 @@ func (c *Check) Validate() error {
 		if _, err := cron.ParseStandard(c.Cron); err != nil {
 			return errors.New("check cron string is invalid")
 		}
+	} else {
+		if c.Interval < 1 {
+			return errors.New("check interval must be greater than or equal to 1")
+		}
 	}
 
 	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
