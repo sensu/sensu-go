@@ -39,6 +39,7 @@ jobs:
       script: "./build.sh deploy"
       on:
         tags: true
+        branch: master
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint GOGC=off
