@@ -74,7 +74,7 @@ build_tool_binary () {
 
     local outfile="target/${goos}-${goarch}/${subdir}/${cmd}"
 
-    GOOS=$goos GOARCH=$goarch go build -i -o $outfile ${REPO_PATH}/${subdir}/${cmd}/...
+    GOOS=$goos GOARCH=$goarch go build -o $outfile ${REPO_PATH}/${subdir}/${cmd}/...
 
     echo $outfile
 }
@@ -98,7 +98,7 @@ build_binary () {
     local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
     local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 
-    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -i -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
     echo $outfile
 }

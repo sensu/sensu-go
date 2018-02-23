@@ -54,7 +54,7 @@ function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string
     $outfile = "target/$goos-$goarch/$subdir/$bin.exe"
     $env:GOOS = $goos
     $env:GOARCH = $goarch
-    go build -i -o $outfile "$REPO_PATH/$subdir/$bin/..."
+    go build -o $outfile "$REPO_PATH/$subdir/$bin/..."
     If ($LASTEXITCODE -ne 0) {
         echo "Failed to build $outfile..."
         exit 1
@@ -96,7 +96,7 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
     $ldflags = $ldflags + " -X $version_pkg.BuildDate=$build_date"
     $ldflags = $ldflags + " -X $version_pkg.BuildSHA=$build_sha"
 
-    go build -ldflags "$ldflags" -i -o $outfile "$REPO_PATH/$bin/cmd/..."
+    go build -ldflags "$ldflags" -o $outfile "$REPO_PATH/$bin/cmd/..."
     If ($LASTEXITCODE -ne 0) {
         echo "Failed to build $outfile..."
         exit 1
