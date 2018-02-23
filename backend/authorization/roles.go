@@ -39,12 +39,8 @@ func (p *RolePolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *RolePolicy) CanRead(r *types.Role) bool {
-	if canPerform(p, types.RulePermRead) {
-		return true
-	}
-
 	// TODO: May want to allow users to view roles associated w/ their account.
-	return false
+	return canPerform(p, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.

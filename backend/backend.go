@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
@@ -32,12 +30,6 @@ const (
 
 	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
 	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
-)
-
-var (
-	// upgrader is safe for concurrent use, and we don't need any particularly
-	// specialized configurations for different uses.
-	upgrader = &websocket.Upgrader{}
 )
 
 // Config specifies a Backend configuration.

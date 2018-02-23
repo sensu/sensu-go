@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,7 +39,7 @@ func TestRefreshTokenInvalidAccessToken(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
 
-func TTestRefreshTokenNoRefreshToken(t *testing.T) {
+func TestRefreshTokenNoRefreshToken(t *testing.T) {
 	mware := RefreshToken{}
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
@@ -101,11 +102,17 @@ func TestRefreshTokenSuccess(t *testing.T) {
 	server := httptest.NewServer(mware.Then(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Make sure the context has been injected with the tokens info
-			assert.NotNil(t, r.Context().Value(types.AccessTokenClaims))
-			assert.NotNil(t, r.Context().Value(types.RefreshTokenClaims))
-			assert.NotNil(t, r.Context().Value(types.RefreshTokenString))
-
-			return
+			if r.Context().Value(types.AccessTokenClaims) == nil {
+				http.Error(w, "nil AccessTokenClaims", 500)
+				return
+			}
+			if r.Context().Value(types.RefreshTokenClaims) == nil {
+				http.Error(w, "nil RefreshTokenClaims", 500)
+				return
+			}
+			if r.Context().Value(types.RefreshTokenString) == nil {
+				http.Error(w, "nil RefreshTokenString", 500)
+			}
 		}),
 	))
 	defer server.Close()
@@ -121,4 +128,6 @@ func TestRefreshTokenSuccess(t *testing.T) {
 	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+	b, _ := ioutil.ReadAll(res.Body)
+	assert.Equal(t, "", string(b))
 }

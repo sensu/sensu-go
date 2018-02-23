@@ -130,7 +130,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 				},
 				{
 					Begin: "10:00 PM",
-					End:   "12:30 AM",
+					End:   "2:00 AM",
 				},
 			},
 		},
@@ -225,7 +225,7 @@ func TestCheckSubdueCron(t *testing.T) {
 				},
 				{
 					Begin: "10:00 PM",
-					End:   "12:30 AM",
+					End:   "2:00 AM",
 				},
 			},
 		},

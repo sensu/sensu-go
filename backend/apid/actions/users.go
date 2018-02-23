@@ -10,12 +10,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-// userUpdateFields refers to fields a viewer may update
-var userUpdateFields = []string{
-	"Password",
-	"Roles",
-}
-
 // UserController exposes actions in which a viewer can perform.
 type UserController struct {
 	Store interface {

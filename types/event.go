@@ -48,48 +48,31 @@ func (e *Event) Validate() error {
 
 // HasCheck determines if an event has check data.
 func (e *Event) HasCheck() bool {
-	if e.Check != nil {
-		return true
-	}
-
-	return false
+	return e.Check != nil
 }
 
 // HasMetrics determines if an event has metric data.
 func (e *Event) HasMetrics() bool {
-	if e.Metrics != nil {
-		return true
-	}
-
-	return false
+	return e.Metrics != nil
 }
 
 // IsIncident determines if an event indicates an incident.
 func (e *Event) IsIncident() bool {
-	if e.Check.Status != 0 {
-		return true
-	}
-
-	return false
+	return e.HasCheck() && e.Check.Status != 0
 }
 
 // IsResolution returns true if an event has just transitionned from an incident
 func (e *Event) IsResolution() bool {
 	// Try to retrieve the previous status in the check history and verify if it
 	// was a non-zero status, therefore indicating a resolution
-	if len(e.Check.History) > 0 && e.Check.History[len(e.Check.History)-1].Status != 0 &&
-		!e.IsIncident() {
-		return true
-	}
+	isResolution := (len(e.Check.History) > 0 &&
+		e.Check.History[len(e.Check.History)-1].Status != 0 &&
+		!e.IsIncident())
 
-	return false
+	return isResolution
 }
 
 // IsSilenced determines if an event has any silenced entries
 func (e *Event) IsSilenced() bool {
-	if len(e.Silenced) > 0 {
-		return true
-	}
-
-	return false
+	return len(e.Silenced) > 0
 }

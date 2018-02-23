@@ -15,7 +15,6 @@ import (
 func testHandler() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Success")
-		return
 	})
 }
 
@@ -41,8 +40,6 @@ func TestEnvironment(t *testing.T) {
 			assert.NotNil(t, env)
 			envString, _ := env.(string)
 			assert.Equal(t, "bar", envString)
-
-			return
 		}),
 	))
 	defer server.Close()

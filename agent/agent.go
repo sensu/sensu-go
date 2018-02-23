@@ -36,6 +36,10 @@ const (
 	TCPSocketReadDeadline = 500 * time.Millisecond
 )
 
+var (
+	pingRe = regexp.MustCompile(`\s+ping\s+`)
+)
+
 // A Config specifies Agent configuration.
 type Config struct {
 	// AgentID is the entity ID for the running agent. Default is hostname.
@@ -264,8 +268,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			}
 		}
 
-		match, _ := regexp.MatchString("\\s+ping\\s+", string(messageBuffer.Bytes()))
-		if match {
+		if match := pingRe.Match(messageBuffer.Bytes()); match {
 			logger.Debug("tcp socket received ping")
 			_, err = c.Write([]byte("pong"))
 			if err != nil {
@@ -348,8 +351,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 				return
 			}
 			// If the message is a ping, return without notifying sender.
-			match, _ := regexp.MatchString("\\s+ping\\s+", string(buf[:bytesRead]))
-			if match {
+			if match := pingRe.Match(buf[:bytesRead]); match {
 				return
 			}
 

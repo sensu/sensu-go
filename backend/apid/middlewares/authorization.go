@@ -59,6 +59,5 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(ctx, types.AuthorizationActorKey, actor)
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
 	})
 }

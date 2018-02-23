@@ -56,12 +56,9 @@ type StandardComponents struct {
 
 // String returns the string representation of the global ID.
 func (id StandardComponents) String() string {
-	var pathComponents []string
-	var nameComponents []string
-
-	nameComponents = append([]string{id.resourceType}, id.uniqueComponent)
+	nameComponents := append([]string{id.resourceType}, id.uniqueComponent)
 	nameComponents = omitEmpty(nameComponents)
-	pathComponents = omitEmpty([]string{
+	pathComponents := omitEmpty([]string{
 		id.resource,
 		id.organization,
 		id.environment,

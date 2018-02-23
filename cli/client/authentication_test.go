@@ -37,7 +37,6 @@ func TestCreateAccessToken(t *testing.T) {
 func TestCreateAccessTokenForbidden(t *testing.T) {
 	testHandler := func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-		return
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
 	defer server.Close()
@@ -79,7 +78,6 @@ func TestRefreshAccessToken(t *testing.T) {
 func TestRefreshAccessTokenForbidden(t *testing.T) {
 	testHandler := func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-		return
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
 	defer server.Close()

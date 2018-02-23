@@ -220,7 +220,6 @@ func TestEventDestroy(t *testing.T) {
 		event           *types.Event
 		entity          string
 		check           string
-		expected        bool
 		expectedErrCode ErrCode
 	}{
 		{

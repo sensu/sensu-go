@@ -113,6 +113,6 @@ func TestConfigureAsset(t *testing.T) {
 
 	// Bad Metadata
 	require.NoError(t, flags.Set("metadata", "Five- Six"))
-	asset, errs = cfg.Configure()
+	_, errs = cfg.Configure()
 	assert.NotEmpty(errs)
 }

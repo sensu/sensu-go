@@ -59,11 +59,7 @@ func (s *Store) UpdateRole(ctx context.Context, role *types.Role) error {
 	}
 
 	_, err = s.kvc.Put(ctx, getRolePath(role.Name), string(roleBytes))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // DeleteRoleByName ...

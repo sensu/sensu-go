@@ -7,7 +7,6 @@ import (
 )
 
 func BenchmarkWizardBusPublish(b *testing.B) {
-	type msg *int
 	topicName := "topic"
 
 	tt := []int{1, 10, 100, 1000, 10000}

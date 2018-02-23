@@ -54,9 +54,7 @@ func TestFindInArray(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	var array []string
-
-	array = []string{"bar", "qux"}
+	array := []string{"bar", "qux"}
 	array = Remove("bar", array)
 	assert.Equal(t, []string{"qux"}, array)
 

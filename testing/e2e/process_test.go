@@ -348,11 +348,8 @@ func (s *sensuCtl) run(args ...string) ([]byte, error) {
 	cmd := exec.Command(sensuctlPath, args...)
 	cmd.Stdin = s.stdin
 	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return out, err
-	}
 
-	return out, nil
+	return out, err
 }
 
 func (s *sensuCtl) SetStdin(r io.Reader) {
