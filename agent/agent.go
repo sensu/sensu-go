@@ -181,9 +181,8 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 						return false, nil
 					}
 
-					// At this point, the reconnection was successful
+					// At this point, the attempt was successful
 					logger.Info("successfully reconnected")
-
 					return true, nil
 				}); err != nil {
 					logger.WithError(err).Fatal("could not reconnect to transport")

@@ -28,8 +28,15 @@ func mockBackoffFuncErr() func(retry int) (bool, error) {
 	}
 }
 
+func mockBackoffFuncSleep() func(retry int) (bool, error) {
+	return func(retry int) (bool, error) {
+		time.Sleep(50 * time.Millisecond)
+		return false, nil
+	}
+}
+
 func TestExponentialBackoff(t *testing.T) {
-	// It should reach MaxRetryAttempts
+	// It should reach the MaxRetryAttempts
 	fn := mockBackoffFunc(3)
 	b := ExponentialBackoff{
 		InitialDelayInterval: 1 * time.Millisecond,
@@ -46,4 +53,10 @@ func TestExponentialBackoff(t *testing.T) {
 	// It should return an error from our func
 	errFn := mockBackoffFuncErr()
 	assert.Equal(t, errBackoff, b.Retry(errFn))
+
+	// It should reach the MaxElapsedTime, since our mockBackoffFuncSleep func
+	// sleeps for 50ms and we have 3 retry attempts
+	b.MaxElapsedTime = 60 * time.Millisecond
+	sleepFn := mockBackoffFuncSleep()
+	assert.Equal(t, ErrMaxElapsedTime, b.Retry(sleepFn))
 }
