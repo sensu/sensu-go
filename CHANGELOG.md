@@ -20,6 +20,8 @@ set when importing legacy settings.
 - Configured and enabled etcd autocompaction.
 - Add event metrics type, implementing the Sensu Metrics Format.
 - Agents now try to reconnect to the backend if the connection is lost.
+- Added non-functional selections for resolving and silencing to web ui
+- Add LastOk to check type. This will be updated to reflect the last timestamp of a succesful check 
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
@@ -35,13 +37,18 @@ except that HookConfig is now embedded in Hook.
 - Removed 3DES from the list of allowed ciphers in the backend and agent.
 - Password input fields are now aligned in  `sensuctl user change-password`
 subcommand.
+- Agent backend URLs without a port specified will now default to port 8081.
+- Travis encrypted variables have been updated to work with travis-ci.org
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
 be executed.
-  be executed.
-- Fixed a bug in the HTTP API where resource names could not contain special characters.
-- Resolved a bug in the keepalive monitor timer which was causing it to erroneously expire.
+- Fixed a bug in the HTTP API where resource names could not contain special
+characters.
+- Resolved a bug in the keepalive monitor timer which was causing it to
+erroneously expire.
+- Resolved a bug in how an executor processes checks. If a check contains proxy
+requests, the check should not duplicately execute after the proxy requests.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added

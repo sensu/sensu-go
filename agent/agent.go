@@ -87,7 +87,7 @@ func NewConfig() *Config {
 			Host: "127.0.0.1",
 			Port: 3031,
 		},
-		BackendURLs:       []string{"ws://127.0.0.1:8081"},
+		BackendURLs:       []string{},
 		CacheDir:          "/var/cache/sensu",
 		Environment:       "default",
 		KeepaliveInterval: 20,

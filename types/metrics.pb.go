@@ -50,7 +50,7 @@ type MetricPoint struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The metric point value.
 	Value float64 `protobuf:"fixed64,2,opt,name=value,proto3" json:"value,omitempty"`
-	// The metric point timestamp, time in milliseconds since the Epoch.
+	// The metric point timestamp, time in nanoseconds since the Epoch.
 	Timestamp int64 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	// Tags is a list of metric tags (dimensions).
 	Tags []*MetricTag `protobuf:"bytes,4,rep,name=tags" json:"tags"`

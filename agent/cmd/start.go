@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/path"
+	"github.com/sensu/sensu-go/util/url"
 	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -25,6 +26,10 @@ var (
 )
 
 const (
+	// DefaultBackendPort specifies the default port to use when a port is not
+	// specified in backend urls
+	DefaultBackendPort = "8081"
+
 	flagAgentID               = "id"
 	flagAPIHost               = "api-host"
 	flagAPIPort               = "api-port"
@@ -101,7 +106,6 @@ func newStartCommand() *cobra.Command {
 			cfg := agent.NewConfig()
 			cfg.API.Host = viper.GetString(flagAPIHost)
 			cfg.API.Port = viper.GetInt(flagAPIPort)
-			cfg.BackendURLs = viper.GetStringSlice(flagBackendURL)
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
@@ -118,6 +122,14 @@ func newStartCommand() *cobra.Command {
 			agentID := viper.GetString(flagAgentID)
 			if agentID != "" {
 				cfg.AgentID = agentID
+			}
+
+			for _, backendURL := range viper.GetStringSlice(flagBackendURL) {
+				newURL, err := url.AppendPortIfMissing(backendURL, DefaultBackendPort)
+				if err != nil {
+					return err
+				}
+				cfg.BackendURLs = append(cfg.BackendURLs, newURL)
 			}
 
 			// Get a single or a list of redact fields

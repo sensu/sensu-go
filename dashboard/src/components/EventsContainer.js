@@ -6,6 +6,7 @@ import map from "lodash/map";
 import get from "lodash/get";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
+import Paper from "material-ui/Paper";
 
 import checkboxIcon from "material-ui/Checkbox";
 
@@ -14,9 +15,6 @@ import EventsContainerMenu from "./EventsContainerMenu";
 
 const styles = theme => ({
   eventsContainer: {
-    border: "1px solid",
-    borderRadius: 2,
-    borderColor: theme.palette.divider,
     marginTop: 16,
     marginBottom: 16,
   },
@@ -24,7 +22,6 @@ const styles = theme => ({
     padding: "20px 0 16px",
     backgroundColor: theme.palette.primary.light,
     color: theme.palette.primary.contrastText,
-    // TODO revist with typography
     display: "flex",
     alignItems: "center",
   },
@@ -68,6 +65,7 @@ class EventsContainer extends React.Component {
       `${window.location.pathname}?filter=event.Check.Name=='${newValue}'`,
     );
   };
+
   requeryStatus = newValue => {
     this.props.router.push(
       `${window.location.pathname}?filter=event.Check.Status==${newValue}`,
@@ -86,7 +84,7 @@ class EventsContainer extends React.Component {
     const statuses = [0, 1, 2, 3];
 
     return (
-      <div className={classes.eventsContainer}>
+      <Paper className={classes.eventsContainer}>
         <div className={classes.tableHeader}>
           <span className={classes.tableHeaderButton}>
             <Checkbox color="secondary" className={classes.checkbox} />
@@ -111,7 +109,7 @@ class EventsContainer extends React.Component {
         {events.map(event => (
           <EventsListItem key={event.node.id} event={event.node} />
         ))}
-      </div>
+      </Paper>
     );
   }
 }

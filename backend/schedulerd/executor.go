@@ -281,10 +281,12 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 		if matchedEntities := matchEntities(entities, check.ProxyRequests); len(matchedEntities) != 0 {
 			if err := executor.publishProxyCheckRequests(matchedEntities, check); err != nil {
 				logger.Error(err)
-			} else {
-				logger.Info("no matching entities, check will not be published")
 			}
+		} else {
+			logger.Info("no matching entities, check will not be published")
 		}
+	} else {
+		return executor.execute(check)
 	}
-	return executor.execute(check)
+	return nil
 }

@@ -11,7 +11,7 @@ import (
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
-			Class:            "agent",
+			Class:            types.EntityAgentClass,
 			Deregister:       a.config.Deregister,
 			Environment:      a.config.Environment,
 			ID:               a.config.AgentID,
