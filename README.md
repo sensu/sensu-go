@@ -32,7 +32,7 @@ Otherwise, see the **for non-C++ users** [instructions here.](https://github.com
 
 ### Quick Start
 
-Once you make a change to any `*.proto` file within the **types** package, you will need regenerate the associated `*.pb.go` file. To do so, simply run the [genproto.sh](https://github.com/sensu/sensu-go/blob/master/scripts/genproto.sh) script, which will install all required dependencies and launch the code generation.
+Once you make a change to any `*.proto` file within the **types** package, you will need to regenerate the associated `*.pb.go` file. To do so, simply run the [genproto.sh](https://github.com/sensu/sensu-go/blob/master/scripts/genproto.sh) script, which will install all required dependencies and launch the code generation (be sure to run the below `./build.sh deps` first though).
 
 ## Dependencies
 
