@@ -1,6 +1,6 @@
 # Sensu 2.0
 
-[![Build Status](https://travis-ci.com/sensu/sensu-go.svg?token=bQ4K7jzHALx4myyBoqcu&branch=master)](https://travis-ci.com/sensu/sensu-go)
+[![Build Status](https://travis-ci.com/sensu/sensu-go.svg?branch=master)](https://travis-ci.com/sensu/sensu-go)
 
 ## Contributing/Development
 
@@ -15,7 +15,7 @@ information on the DCO, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Overview
 
-We are using the version **proto3** of the protocol buffers language. Here's some useful ressources:
+We are using the version **proto3** of the protocol buffers language. Here are some useful resources:
 
 [To learn more about protocol buffers](https://developers.google.com/protocol-buffers/docs/overview)
 
@@ -36,7 +36,7 @@ Once you make a change to any `*.proto` file within the **types** package, you w
 
 ## Dependencies
 
-Sensu uses [golang/dep](https://github.com/golang/dep) for managing it's
+Sensu uses [golang/dep](https://github.com/golang/dep) for managing its
 dependencies.
 
 ### Usage
