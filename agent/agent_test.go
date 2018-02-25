@@ -42,7 +42,7 @@ func TestSendLoop(t *testing.T) {
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
@@ -79,7 +79,7 @@ func TestReceiveLoop(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
@@ -107,7 +107,7 @@ func TestReceiveLoop(t *testing.T) {
 func TestHandleTCPMessages(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
@@ -153,7 +153,7 @@ func TestHandleTCPMessages(t *testing.T) {
 func TestHandleUDPMessages(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
@@ -199,7 +199,7 @@ func TestHandleUDPMessages(t *testing.T) {
 func TestReceivePingTCP(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
@@ -234,7 +234,7 @@ func TestReceivePingTCP(t *testing.T) {
 func TestReceiveMultiWriteTCP(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
@@ -278,7 +278,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 func TestMultiWriteTimeoutTCP(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)

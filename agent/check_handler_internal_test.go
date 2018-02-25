@@ -27,7 +27,7 @@ func TestHandleCheck(t *testing.T) {
 		assert.FailNow("error marshaling check request")
 	}
 
-	config := NewConfig()
+	config := FixtureConfig()
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
@@ -52,7 +52,7 @@ func TestExecuteCheck(t *testing.T) {
 	request := &types.CheckRequest{Config: checkConfig}
 	checkConfig.Stdin = true
 
-	config := NewConfig()
+	config := FixtureConfig()
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
@@ -99,7 +99,7 @@ func TestExecuteCheck(t *testing.T) {
 func TestPrepareCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	config := NewConfig()
+	config := FixtureConfig()
 	agent := NewAgent(config)
 
 	// Invalid check

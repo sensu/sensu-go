@@ -47,7 +47,7 @@ func TestAddEvent(t *testing.T) {
 	for _, tc := range testCases {
 		testName := fmt.Sprintf("add event %s", tc.desc)
 		t.Run(testName, func(t *testing.T) {
-			config := NewConfig()
+			config := FixtureConfig()
 			agent := NewAgent(config)
 
 			encoded, _ := json.Marshal(tc.event)
@@ -88,7 +88,7 @@ func TestHealthz(t *testing.T) {
 
 		t.Run(testName, func(t *testing.T) {
 			// need to figure out how to pass the mock transport into the agent
-			config := NewConfig()
+			config := FixtureConfig()
 			agent := NewAgent(config)
 			agent.conn = transport
 			transport.On("Closed").Return(tc.closeConn)
