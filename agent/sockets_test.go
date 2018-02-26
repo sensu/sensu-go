@@ -107,7 +107,7 @@ func TestHandleUDPMessages(t *testing.T) {
 func TestMultiWriteTimeoutTCP(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
@@ -147,7 +147,7 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 func TestReceiveMultiWriteTCP(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
@@ -191,7 +191,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 func TestReceivePingTCP(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)

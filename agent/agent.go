@@ -211,9 +211,9 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 					Multiplier:           1.5,
 				}
 				if err := backoff.Retry(func(retry int) (bool, error) {
-					if retry != 0 {
-						logger.Debugf("reconnection attempt #%d", retry)
-					}
+					//if retry != 0 {
+					//	logger.Debugf("reconnection attempt #%d", retry)
+					//}
 
 					if err = a.conn.Reconnect(a.backendSelector.Select(), a.config.TLS, a.header); err != nil {
 						logger.WithError(err).Error("reconnection attempt failed")
