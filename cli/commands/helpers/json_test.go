@@ -20,5 +20,5 @@ func TestPrintJSON(t *testing.T) {
 	buf := new(bytes.Buffer)
 	writer := io.Writer(buf)
 	require.NoError(t, PrintJSON(testInput, writer))
-	assert.Equal(string(buf.Bytes()), "{\n  \"commandAnd\": \"echo bar && exit 1\",\n  \"commandLessThan\": \"echo foo >> output.txt\"\n}\n\n")
+	assert.Equal("{\n  \"commandAnd\": \"echo bar && exit 1\",\n  \"commandLessThan\": \"echo foo >> output.txt\"\n}\n\n", buf.String())
 }

@@ -14,6 +14,10 @@ import (
 	"github.com/sensu/sensu-go/types/v1"
 )
 
+var (
+	pingRe = regexp.MustCompile(`\s+ping\s+`)
+)
+
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
 func (a *Agent) createListenSockets() (string, string, error) {
@@ -125,8 +129,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			}
 		}
 
-		match, _ := regexp.MatchString("\\s+ping\\s+", string(messageBuffer.Bytes()))
-		if match {
+		if match := pingRe.Match(messageBuffer.Bytes()); match {
 			logger.Debug("tcp socket received ping")
 			_, err = c.Write([]byte("pong"))
 			if err != nil {
@@ -209,8 +212,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 				return
 			}
 			// If the message is a ping, return without notifying sender.
-			match, _ := regexp.MatchString("\\s+ping\\s+", string(buf[:bytesRead]))
-			if match {
+			if match := pingRe.Match(buf[:bytesRead]); match {
 				return
 			}
 

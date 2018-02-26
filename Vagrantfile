@@ -11,8 +11,8 @@ Vagrant.configure("2") do |config|
     apt-get install -y ruby ruby-dev build-essential rpm rpmlint
     gem install --no-ri --no-rdoc fpm
     gem install --no-ri --no-rdoc package_cloud
-    wget https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz
-    tar -C /usr/local -zxvf go1.8.3.linux-amd64.tar.gz
+    wget https://storage.googleapis.com/golang/go1.10.linux-amd64.tar.gz
+    tar -C /usr/local -zxvf go1.10.linux-amd64.tar.gz
     chown -R ubuntu:ubuntu /usr/local/go
     chown ubuntu:ubuntu /go
     echo 'export GOROOT="/usr/local/go"' >> /home/ubuntu/.profile

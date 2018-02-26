@@ -181,15 +181,11 @@ func messageAttachment(event *types.Event) *slack.Attachment {
 
 func sendMessage(event *types.Event) error {
 	hook := slack.NewWebHook(webhookURL)
-	err := hook.PostMessage(&slack.WebHookPostPayload{
+	return hook.PostMessage(&slack.WebHookPostPayload{
 		Text:        "",
 		Channel:     channel,
 		Attachments: []*slack.Attachment{messageAttachment(event)},
 	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func validateEvent(event *types.Event) error {

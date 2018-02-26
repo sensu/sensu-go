@@ -13,7 +13,6 @@ import (
 )
 
 const timeWindow = `{"days":{"all":[{"begin":"12:00 AM","end":"11:59 PM"},{"begin":"11:00 PM","end":"1:00 AM"}]}}`
-const timeWindowSmall = `{"days":{"all":[{"begin":"11:58 PM","end":"11:59 PM"}]}}`
 
 func TestCheckSubdue(t *testing.T) {
 	t.Parallel()

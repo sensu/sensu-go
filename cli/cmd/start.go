@@ -107,6 +107,3 @@ Management Commands:
 Run '{{.CommandPath}} COMMAND --help' for more information on a command.
 {{- end}}
 `
-
-var helpTemplate = `
-{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`

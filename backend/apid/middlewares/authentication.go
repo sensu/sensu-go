@@ -40,7 +40,6 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 
 		// The user is not authenticated
 		http.Error(w, "Bad credentials given", http.StatusUnauthorized)
-		return
 	})
 }
 
@@ -66,6 +65,5 @@ func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 		claims, _ := jwt.NewClaims(username)
 		ctx := jwt.SetClaimsIntoContext(r, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
 	})
 }

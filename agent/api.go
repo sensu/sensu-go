@@ -77,6 +77,5 @@ func addEvent(a *Agent) http.HandlerFunc {
 		a.sendMessage(transport.MessageTypeEvent, msg)
 
 		w.WriteHeader(http.StatusCreated)
-		return
 	}
 }

@@ -136,12 +136,6 @@ func (a *Agent) prepareCheck(cfg *types.CheckConfig) bool {
 		return false
 	}
 
-	// Special case for agents
-	if check.Interval < 1 {
-		a.sendFailure(event, errors.New("given check is invalid: missing interval"))
-		return false
-	}
-
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity, err := dynamic.Synthesize(a.getAgentEntity())

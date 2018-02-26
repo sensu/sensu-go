@@ -14,7 +14,6 @@ type MockMonitor struct {
 
 // Stop ...
 func (m *MockMonitor) Stop() {
-	return
 }
 
 // IsStopped ...

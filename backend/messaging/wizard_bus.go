@@ -4,14 +4,6 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
-
-	"github.com/Sirupsen/logrus"
-)
-
-var (
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "message_bus",
-	})
 )
 
 // WizardBus is an in-memory message bus.

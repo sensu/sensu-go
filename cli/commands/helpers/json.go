@@ -23,7 +23,7 @@ func PrintJSON(r interface{}, io io.Writer) error {
 		return err
 	}
 
-	s := htmlReplacer.Replace(string(buf.Bytes()))
+	s := htmlReplacer.Replace(buf.String())
 	_, err := fmt.Fprintln(io, s)
 	return err
 }

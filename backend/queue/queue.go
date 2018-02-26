@@ -282,7 +282,7 @@ func (q *Queue) nackExpiredItems(ctx context.Context, timeout time.Duration) err
 		}
 		// If the item has timed out or the client has disconnected, the item is
 		// considered expired and should be moved back to the work queue.
-		if time.Now().Sub(itemTimestamp) > timeout || ctx.Err() != nil {
+		if time.Since(itemTimestamp) > timeout || ctx.Err() != nil {
 
 			err = q.swapLane(ctx, string(item.Key), item.ModRevision, string(item.Value), q.work)
 			if err != nil {

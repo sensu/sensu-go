@@ -66,6 +66,10 @@ func (c *Check) Validate() error {
 		if _, err := cron.ParseStandard(c.Cron); err != nil {
 			return errors.New("check cron string is invalid")
 		}
+	} else {
+		if c.Interval < 1 {
+			return errors.New("check interval must be greater than or equal to 1")
+		}
 	}
 
 	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
@@ -192,7 +196,7 @@ func (c *CheckConfig) Validate() error {
 
 // Validate returns an error if the ProxyRequests does not pass validation tests
 func (p *ProxyRequests) Validate() error {
-	if (p.SplayCoverage < 0) || (p.SplayCoverage > 100) {
+	if p.SplayCoverage > 100 {
 		return errors.New("proxy request splay coverage must be between 0 and 100")
 	}
 
