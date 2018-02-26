@@ -35,17 +35,25 @@ const styles = theme => ({
   },
   quicknav: {
     position: "fixed",
-    display: "flex",
     flexDirection: "column",
     alignItems: "center",
     top: 80,
     left: 0,
     width: 72,
+    display: "none",
+    [theme.breakpoints.up("md")]: {
+      display: "flex",
+    },
   },
   maincontainer: {
     position: "relative",
     display: "flex",
     width: "100%",
+    paddingTop: 64,
+    [theme.breakpoints.up("md")]: {
+      paddingLeft: 72,
+      paddingRight: 72,
+    },
   },
 });
 
