@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classnames from "classnames";
 import { withStyles } from "material-ui/styles";
 
 const styles = theme => ({
@@ -29,12 +30,18 @@ class AppContent extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    className: PropTypes.string,
     children: PropTypes.element.isRequired,
   };
 
+  static defaultProps = {
+    className: "",
+  };
+
   render() {
-    const { classes, children } = this.props;
-    return <div className={classes.content}>{children}</div>;
+    const { classes, className, children } = this.props;
+    const contentCls = classnames(classes.content, className);
+    return <div className={contentCls}>{children}</div>;
   }
 }
 
