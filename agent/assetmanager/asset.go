@@ -11,11 +11,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cenkalti/backoff"
 	"github.com/mholt/archiver"
 	"github.com/nightlyone/lockfile"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/util/retry"
 	filetype "gopkg.in/h2non/filetype.v1"
 )
 
@@ -93,11 +93,26 @@ func (d *RuntimeAsset) awaitLock() (*lockfile.Lockfile, error) {
 	}
 
 	// If we fail to get a lock, retry for 90s
-	expBackoff := backoff.NewExponentialBackOff()
-	expBackoff.InitialInterval = 50 * time.Millisecond
-	expBackoff.MaxElapsedTime = 90 * time.Second
-	expBackoff.Multiplier = 1.5
-	if err := backoff.Retry(lockfile.TryLock, expBackoff); err != nil {
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 50 * time.Millisecond,
+		MaxDelayInterval:     5 * time.Second,
+		MaxElapsedTime:       90 * time.Second,
+		Multiplier:           1.5,
+	}
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if retry != 0 {
+			logger.Debugf("attempt to acquire a lock #%d", retry)
+		}
+
+		if err := lockfile.TryLock(); err != nil {
+			logger.WithError(err).Error("attempt to acquire a lock failed")
+			return false, nil
+		}
+
+		// At this point, the attempt was successful
+		logger.Info("successfully acquired a lock")
+		return true, nil
+	}); err != nil {
 		return nil, err
 	}
 

@@ -19,6 +19,7 @@ set when importing legacy settings.
 - The `sensuctl user change-password` subcommand now accepts flag parameters.
 - Configured and enabled etcd autocompaction.
 - Add event metrics type, implementing the Sensu Metrics Format.
+- Agents now try to reconnect to the backend if the connection is lost.
 - Added non-functional selections for resolving and silencing to web ui
 - Add LastOk to check type. This will be updated to reflect the last timestamp
 of a successful check.
