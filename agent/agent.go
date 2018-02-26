@@ -140,14 +140,11 @@ func NewConfig() *Config {
 
 // GetDefaultAgentID returns the default agent ID
 func GetDefaultAgentID() string {
-	defaultAgentID := ""
-	hostname, err := os.Hostname()
+	defaultAgentID, err := os.Hostname()
 	if err != nil {
 		logger.WithError(err).Error("error getting hostname")
 		// TODO(greg): wat do?
 		defaultAgentID = "unidentified-sensu-agent"
-	} else {
-		defaultAgentID = hostname
 	}
 	return defaultAgentID
 }
