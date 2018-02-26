@@ -15,7 +15,7 @@ import (
 func TestHandleTCPMessages(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
@@ -61,7 +61,7 @@ func TestHandleTCPMessages(t *testing.T) {
 func TestHandleUDPMessages(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)

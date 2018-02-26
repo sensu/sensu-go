@@ -38,7 +38,7 @@ func TestSendLoop(t *testing.T) {
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
@@ -75,7 +75,7 @@ func TestReceiveLoop(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	cfg := NewConfig()
+	cfg := FixtureConfig()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0

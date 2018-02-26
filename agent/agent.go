@@ -19,6 +19,7 @@ import (
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/retry"
 )
 
@@ -30,6 +31,29 @@ const (
 	// TCPSocketReadDeadline specifies the maximum time the TCP socket will wait
 	// to receive data.
 	TCPSocketReadDeadline = 500 * time.Millisecond
+
+	// DefaultAPIHost specifies the default API Host
+	DefaultAPIHost = "127.0.0.1"
+	// DefaultAPIPort specifies the default API Port
+	DefaultAPIPort = 3031
+	// DefaultBackendURL specifies the default backend URL
+	DefaultBackendURL = "ws://127.0.0.1:8081"
+	// DefaultEnvironment specifies the default environment
+	DefaultEnvironment = "defaut"
+	// DefaultKeepaliveInterval specifies the default keepalive interval
+	DefaultKeepaliveInterval = 20
+	// DefaultKeepaliveTimeout specifies the default keepalive timeout
+	DefaultKeepaliveTimeout = 120
+	// DefaultOrganization specifies the default organization
+	DefaultOrganization = "default"
+	// DefaultPassword specifies the default password
+	DefaultPassword = "P@ssw0rd!"
+	// DefaultSocketHost specifies the default socket host
+	DefaultSocketHost = "127.0.0.1"
+	// DefaultSocketPort specifies the default socket port
+	DefaultSocketPort = 3030
+	// DefaultUser specifies the default user
+	DefaultUser = "agent"
 )
 
 // A Config specifies Agent configuration.
@@ -80,36 +104,52 @@ type SocketConfig struct {
 	Port int
 }
 
-// NewConfig provides a new Config object initialized with defaults.
-func NewConfig() *Config {
+// FixtureConfig provides a new Config object initialized with defaults for use
+// in tests
+func FixtureConfig() *Config {
 	c := &Config{
+		AgentID: GetDefaultAgentID(),
 		API: &APIConfig{
-			Host: "127.0.0.1",
-			Port: 3031,
+			Host: DefaultAPIHost,
+			Port: DefaultAPIPort,
 		},
 		BackendURLs:       []string{},
-		CacheDir:          "/var/cache/sensu",
-		Environment:       "default",
-		KeepaliveInterval: 20,
-		KeepaliveTimeout:  120,
-		Organization:      "default",
-		Password:          "P@ssw0rd!",
+		CacheDir:          path.SystemCacheDir("sensu-agent"),
+		Environment:       DefaultEnvironment,
+		KeepaliveInterval: DefaultKeepaliveInterval,
+		KeepaliveTimeout:  DefaultKeepaliveTimeout,
+		Organization:      DefaultOrganization,
+		Password:          DefaultPassword,
 		Socket: &SocketConfig{
-			Host: "127.0.0.1",
-			Port: 3030,
+			Host: DefaultSocketHost,
+			Port: DefaultSocketPort,
 		},
-		User: "agent",
+		User: DefaultUser,
 	}
+	return c
+}
 
+// NewConfig provides a new empty Config object
+func NewConfig() *Config {
+	c := &Config{
+		API:    &APIConfig{},
+		Socket: &SocketConfig{},
+	}
+	return c
+}
+
+// GetDefaultAgentID returns the default agent ID
+func GetDefaultAgentID() string {
+	defaultAgentID := ""
 	hostname, err := os.Hostname()
 	if err != nil {
 		logger.WithError(err).Error("error getting hostname")
 		// TODO(greg): wat do?
-		c.AgentID = "unidentified-sensu-agent"
+		defaultAgentID = "unidentified-sensu-agent"
+	} else {
+		defaultAgentID = hostname
 	}
-	c.AgentID = hostname
-
-	return c
+	return defaultAgentID
 }
 
 // An Agent receives and acts on messages from a Sensu Backend.

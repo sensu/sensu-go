@@ -42,6 +42,7 @@ subcommand.
 - Travis encrypted variables have been updated to work with travis-ci.org
 - Upgraded all builds to use Go 1.10.
 - Use megacheck instead of errcheck.
+- Cleaned agent configuration.
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
