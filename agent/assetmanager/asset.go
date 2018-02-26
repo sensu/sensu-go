@@ -100,7 +100,9 @@ func (d *RuntimeAsset) awaitLock() (*lockfile.Lockfile, error) {
 		Multiplier:           1.5,
 	}
 	if err := backoff.Retry(func(retry int) (bool, error) {
-		logger.Debugf("attempt to acquire a lock #%d", retry)
+		if retry != 0 {
+			logger.Debugf("attempt to acquire a lock #%d", retry)
+		}
 
 		if err := lockfile.TryLock(); err != nil {
 			logger.WithError(err).Error("attempt to acquire a lock failed")
