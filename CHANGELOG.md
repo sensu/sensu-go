@@ -23,6 +23,7 @@ set when importing legacy settings.
 - Added non-functional selections for resolving and silencing to web ui
 - Add LastOk to check type. This will be updated to reflect the last timestamp
 of a successful check.
+- Added GraphQL explorer to web UI.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
