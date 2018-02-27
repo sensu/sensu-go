@@ -33,6 +33,7 @@ func TestSetCheckHooksCommandRunEClosureSucess(t *testing.T) {
 
 	cmd := SetCheckHooksCommand(cli)
 	require.NoError(t, cmd.Flags().Set("type", "non-zero"))
+	require.NoError(t, cmd.Flags().Set("hooks", "hook"))
 
 	out, err := test.RunCmd(cmd, []string{"name"})
 	require.NoError(t, err)

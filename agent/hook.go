@@ -28,8 +28,13 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 					// execute the hook and wait for the next check request
 					continue
 				}
-				hook := a.executeHook(hookConfig)
-				executedHooks = append(executedHooks, hook)
+				// Do not duplicate hook execution for types that fall into both an exit
+				// code and severity (ex. 0, non-zero)
+				in := hookInList(hookConfig.Name, executedHooks)
+				if !in {
+					hook := a.executeHook(hookConfig)
+					executedHooks = append(executedHooks, hook)
+				}
 			}
 		}
 	}
@@ -124,6 +129,15 @@ func getHookConfig(hookName string, hookList []types.HookConfig) *types.HookConf
 		}
 	}
 	return nil
+}
+
+func hookInList(hookName string, hookList []*types.Hook) bool {
+	for _, hook := range hookList {
+		if hook.Name == hookName {
+			return true
+		}
+	}
+	return false
 }
 
 func hookShouldExecute(hookType string, status int) bool {
