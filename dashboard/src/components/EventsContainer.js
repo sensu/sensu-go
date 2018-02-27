@@ -35,6 +35,9 @@ const styles = theme => ({
     height: 24,
     color: theme.palette.primary.contrastText,
   },
+  hidden: {
+    display: "none",
+  },
 });
 
 class EventsContainer extends React.Component {
@@ -45,29 +48,55 @@ class EventsContainer extends React.Component {
     router: routerShape.isRequired,
   };
 
+  // constructor is needed in order to set the inital state of the checkbox for each
+  // event item. We need to know how many events will be displayed before render.
   constructor(props) {
     super(props);
 
-    this.state = { checked: false, rowState: [], filters: [] };
-
+    this.state = {
+      rowState: [],
+      switchHeader: false,
+      filters: [],
+    };
     const { viewer } = props;
-    const events = get(viewer, "events.edges", []);
-    for (let i = 0; i < events.length; i += 1) {
-      this.state.rowState[i] = this.state.checked;
+    const eventsLength = get(viewer, "events.edges", []).length;
+    for (let i = 0; i < eventsLength; i += 1) {
+      this.state.rowState[i] = false;
     }
   }
 
+  // click checkbox for all items in list
   selectAll = () => {
-    this.state.checked = !this.state.checked;
     const newState = [];
-    for (let i = 0; i < this.state.rowState.length; i += 1) {
-      newState[i] = this.state.checked;
+    // if there's any number of boxes checked, show bulk actions button
+    if (
+      this.state.rowState.includes(false) ||
+      (this.state.rowState.includes(true) &&
+        this.state.rowState.includes(false))
+    ) {
+      for (let i = 0; i < this.state.rowState.length; i += 1) {
+        newState[i] = true;
+      }
+      this.setState({ switchHeader: true });
+    } else {
+      // unhide the default header buttons only if there's no checks
+      for (let i = 0; i < this.state.rowState.length; i += 1) {
+        newState[i] = false;
+      }
+      this.setState({ switchHeader: false });
     }
     this.setState({ rowState: newState });
   };
 
+  // click single checkbox
   selectCheckbox = i => () => {
     this.state.rowState[i] = !this.state.rowState[i];
+    // only show the default header buttons if there's none selected
+    if (this.state.rowState.includes(true)) {
+      this.setState({ switchHeader: true });
+    } else {
+      this.setState({ switchHeader: false });
+    }
     this.forceUpdate();
   };
 
@@ -111,22 +140,24 @@ class EventsContainer extends React.Component {
               onClick={this.selectAll}
             />
           </span>
-          <EventsContainerMenu
-            onSelectValue={this.requeryEntity}
-            label="Entity"
-            contents={entityNames}
-          />
-          <EventsContainerMenu
-            onSelectValue={this.requeryCheck}
-            label="Check"
-            contents={checkNames}
-          />
-          <EventsContainerMenu
-            onSelectValue={this.requeryStatus}
-            label="Status"
-            contents={statuses}
-            icons
-          />
+          <div style={this.state.switchHeader ? { display: "none" } : {}}>
+            <EventsContainerMenu
+              onSelectValue={this.requeryEntity}
+              label="Entity"
+              contents={entityNames}
+            />
+            <EventsContainerMenu
+              onSelectValue={this.requeryCheck}
+              label="Check"
+              contents={checkNames}
+            />
+            <EventsContainerMenu
+              onSelectValue={this.requeryStatus}
+              label="Status"
+              contents={statuses}
+              icons
+            />
+          </div>
         </div>
         {events.map((event, i) => (
           <EventsListItem
