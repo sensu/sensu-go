@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test(t *testing.T) {
+func TestAppendPortIfMissing(t *testing.T) {
 	testCases := []struct {
 		name        string
 		backendURL  string

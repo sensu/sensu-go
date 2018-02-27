@@ -203,6 +203,12 @@ message Check {
   // LastOK displays last time this check was ok; if event status is 0 this is set to timestamp
   int64 last_ok = 30 [(gogoproto.customname) = "LastOK"];
 
+  // Occurrences indicates the number of times an event has occurred for a client/check pair with the same check status
+  int64 occurrences = 31;
+
+  // OccurrencesWatermark indicates the high water mark tracking number of occurrences at the current severity
+  int64 occurrences_watermark = 32;
+
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];
 }

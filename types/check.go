@@ -221,21 +221,23 @@ func (b ByExecuted) Less(i, j int) bool { return b[i].Executed < b[j].Executed }
 
 // MergeWith updates the current Check with the history of the check given as
 // an argument, updating the current check's history appropriately.
-func (c *Check) MergeWith(chk *Check) {
-	history := chk.History
+func (c *Check) MergeWith(prevCheck *Check) {
+	history := prevCheck.History
 	histEntry := CheckHistory{
-		Status:   chk.Status,
-		Executed: chk.Executed,
+		Status:   c.Status,
+		Executed: c.Executed,
 	}
 
-	history = append([]CheckHistory{histEntry}, history...)
+	history = append(history, histEntry)
 	sort.Sort(ByExecuted(history))
 	if len(history) > 21 {
 		history = history[1:]
 	}
 
 	c.History = history
-	c.LastOK = chk.LastOK
+	c.LastOK = prevCheck.LastOK
+	c.Occurrences = prevCheck.Occurrences
+	c.OccurrencesWatermark = prevCheck.OccurrencesWatermark
 }
 
 // FixtureCheckRequest returns a fixture for a CheckRequest object.

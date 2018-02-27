@@ -160,6 +160,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		event.Check.MergeWith(prevEvent.Check)
 	}
 
+	updateOccurrences(event)
+
 	// Calculate percent state change for this check's history
 	event.Check.TotalStateChange = totalStateChange(event)
 
@@ -207,6 +209,23 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	}
 
 	return e.MessageBus.Publish(messaging.TopicEvent, event)
+}
+
+func updateOccurrences(event *types.Event) {
+	if len(event.Check.History) > 1 && (event.IsIncident() || isFlapping(event)) {
+		historyLen := len(event.Check.History)
+		if event.Check.History[historyLen-1].Status == event.Check.History[historyLen-2].Status {
+			event.Check.Occurrences++
+		} else {
+			event.Check.Occurrences = 1
+		}
+	} else {
+		event.Check.Occurrences = 1
+	}
+
+	if event.Check.Occurrences > event.Check.OccurrencesWatermark {
+		event.Check.OccurrencesWatermark = event.Check.Occurrences
+	}
 }
 
 // HandleUpdate updates the event in the store and publishes it to TopicEvent.

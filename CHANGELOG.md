@@ -24,6 +24,7 @@ set when importing legacy settings.
 - Add LastOk to check type. This will be updated to reflect the last timestamp
 of a successful check.
 - Added GraphQL explorer to web UI.
+- Added check occurrences and occurrences_watermark attributes from Sensu 1.x.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
@@ -59,6 +60,7 @@ requests, the check should not duplicately execute after the proxy requests.
 - Removed an erroneous validation statement in check handler.
 - Fixed HookList `hooks` validation and updated `type` validation message to
 allow "0" as a valid type.
+- Events' check statuses & execution times are now properly added to CheckHistory.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added

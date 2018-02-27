@@ -67,6 +67,8 @@ func TestEventHandling(t *testing.T) {
 
 	mockStore.AssertCalled(t, "UpdateEvent", mock.AnythingOfType("*types.Event"))
 
+	assert.Equal(t, int64(1), event.Check.Occurrences)
+
 	// Make sure the event has been marked with the proper state
 	assert.Equal(t, types.EventPassingState, event.Check.State)
 	assert.Equal(t, event.Timestamp, event.Check.LastOK)
@@ -125,4 +127,82 @@ func TestEventMonitor(t *testing.T) {
 	mon.AssertCalled(t, "HandleUpdate", event)
 	// Make sure the event has been marked with the proper state
 	assert.Equal(t, types.EventPassingState, event.Check.State)
+}
+
+func TestCheckOccurrences(t *testing.T) {
+	testCases := []struct {
+		name                         string
+		status                       int32
+		occurrences                  int64
+		history                      []types.CheckHistory
+		expectedOccurrences          int64
+		expectedOccurrencesWatermark int64
+	}{
+		{
+			name:        "No previous occurences, check OK",
+			status:      0,
+			occurrences: int64(0),
+			history: []types.CheckHistory{
+				{Status: 0, Executed: time.Now().Unix() - 1},
+			},
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+		{
+			name:        "No previous occurences, check WARN",
+			status:      1,
+			occurrences: int64(0),
+			history: []types.CheckHistory{
+				{Status: 1, Executed: time.Now().Unix() - 1},
+			},
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+		{
+			name:        "previous WARN occurences, check OK",
+			status:      0,
+			occurrences: int64(1),
+			history: []types.CheckHistory{
+				{Status: 1, Executed: time.Now().Unix() - 2},
+				{Status: 0, Executed: time.Now().Unix() - 1},
+			},
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+		{
+			name:        "previous WARN occurences, check WARN",
+			status:      1,
+			occurrences: int64(1),
+			history: []types.CheckHistory{
+				{Status: 1, Executed: time.Now().Unix() - 2},
+				{Status: 1, Executed: time.Now().Unix() - 1},
+			},
+			expectedOccurrences:          2,
+			expectedOccurrencesWatermark: 2,
+		},
+		{
+			name:        "previous CRIT occurences, check WARN",
+			status:      1,
+			occurrences: int64(1),
+			history: []types.CheckHistory{
+				{Status: 2, Executed: time.Now().Unix() - 2},
+				{Status: 1, Executed: time.Now().Unix() - 1},
+			},
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := types.FixtureEvent("entity1", "check1")
+			event.Check.Status = tc.status
+			event.Check.Occurrences = tc.occurrences
+			event.Check.History = tc.history
+			updateOccurrences(event)
+
+			assert.Equal(t, tc.expectedOccurrences, event.Check.Occurrences)
+			assert.Equal(t, tc.expectedOccurrencesWatermark, event.Check.OccurrencesWatermark)
+		})
+	}
 }
