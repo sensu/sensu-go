@@ -6,19 +6,25 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type ManagerTestSuite struct {
-	suite.Suite
+type managerTest struct {
 	cacheDir string
 	manager  *Manager
 }
 
-func (suite *ManagerTestSuite) SetupTest() {
+func (m *managerTest) Dispose(t *testing.T) {
+	require.NoError(t, os.RemoveAll(m.cacheDir))
+}
+
+func newManagerTest(t *testing.T) *managerTest {
 	// Create a fake cache directory so that we have a safe place to test results
-	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-")
-	suite.cacheDir = tmpDir
+	test := &managerTest{}
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "agent-deps-")
+	require.NoError(t, err)
+	test.cacheDir = tmpDir
 
 	// Ex. manager
 	manager := &Manager{}
@@ -28,50 +34,48 @@ func (suite *ManagerTestSuite) SetupTest() {
 		CacheDir: tmpDir,
 		BaseEnv:  os.Environ(),
 	}
-	suite.manager = manager
+	test.manager = manager
+	return test
 }
 
-func (suite *ManagerTestSuite) AfterTest() {
-	// Remove tmpdir
-	suite.NoError(os.RemoveAll(suite.cacheDir))
-}
-
-func (suite *ManagerTestSuite) TestNewManager() {
+func TestNewManager(t *testing.T) {
 	manager := New("./tmp", &types.Entity{})
 
-	suite.NotNil(manager)
-	suite.NotNil(manager.store)
-	suite.NotNil(manager.factory)
+	require.NotNil(t, manager)
+	require.NotNil(t, manager.store)
+	require.NotNil(t, manager.factory)
 }
 
-func (suite *ManagerTestSuite) TestSetCacheDir() {
+func TestSetCacheDir(t *testing.T) {
+	test := newManagerTest(t)
+	defer test.Dispose(t)
 	asset := NewRuntimeAsset(types.FixtureAsset("asset"), "")
-	suite.manager.store.assets["123"] = asset
+	test.manager.store.assets["123"] = asset
 
-	suite.manager.SetCacheDir("my-test-dir")
-	suite.Contains(suite.manager.factory.CacheDir, "my-test-dir")
-	suite.Empty(suite.manager.store.assets, "clears existing assets from store")
+	test.manager.SetCacheDir("my-test-dir")
+	assert.Contains(t, test.manager.factory.CacheDir, "my-test-dir")
+	assert.Empty(t, test.manager.store.assets, "clears existing assets from store")
 }
 
-func (suite *ManagerTestSuite) TestReset() {
+func TestReset(t *testing.T) {
+	test := newManagerTest(t)
+	defer test.Dispose(t)
 	asset := NewRuntimeAsset(types.FixtureAsset("asset"), "")
-	suite.manager.store.assets["123"] = asset
+	test.manager.store.assets["123"] = asset
 
-	suite.manager.Reset()
-	suite.Empty(suite.manager.store.assets, "clears existing assets from store")
+	test.manager.Reset()
+	require.Empty(t, test.manager.store.assets, "clears existing assets from store")
 }
 
-func (suite *ManagerTestSuite) TestRegisterSet() {
+func TestRegisterSet(t *testing.T) {
+	test := newManagerTest(t)
+	defer test.Dispose(t)
 	assets := []types.Asset{*types.FixtureAsset("asset")}
-	assetSet := suite.manager.RegisterSet(assets)
-	suite.NotEmpty(assetSet.Env)
-	suite.NotEmpty(assetSet.assets)
+	assetSet := test.manager.RegisterSet(assets)
+	assert.NotEmpty(t, assetSet.Env)
+	assert.NotEmpty(t, assetSet.assets)
 
-	store := suite.manager.store
-	suite.NotEmpty(store.assets)
-	suite.NotEmpty(store.assetSets)
-}
-
-func TestManager(t *testing.T) {
-	suite.Run(t, new(ManagerTestSuite))
+	store := test.manager.store
+	assert.NotEmpty(t, store.assets)
+	assert.NotEmpty(t, store.assetSets)
 }

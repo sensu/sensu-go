@@ -4,121 +4,126 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 )
 
-type ListDetailsRowSuite struct {
-	suite.Suite
+type listDetailsRowTest struct {
 	out *exWriter
 	row *rowElem
 }
 
-func (suite *ListDetailsRowSuite) SetupTest() {
-	suite.out = &exWriter{}
-	suite.row = &rowElem{
-		label: "repo size",
-		value: "16.2 GB",
+func newListDetailsRowTest() *listDetailsRowTest {
+	return &listDetailsRowTest{
+		out: &exWriter{},
+		row: &rowElem{
+			label: "repo size",
+			value: "16.2 GB",
+		},
 	}
 }
 
-func (suite *ListDetailsRowSuite) TestStyleLabel() {
+func TestStyleLabel(t *testing.T) {
 	// When a formatter is not configured default is used
-	suite.row.label = "repo size"
-	suite.Equal("Repo Size: ", suite.row.styleLabel())
+	test := newListDetailsRowTest()
+	test.row.label = "repo size"
+	assert.Equal(t, "Repo Size: ", test.row.styleLabel())
 
 	// When a formatter /is/ configured
-	suite.row.label = "repo size"
-	suite.row.labelStyle = func(_ string) string { return "cake" }
-	suite.Equal("cake", suite.row.styleLabel())
+	test.row.label = "repo size"
+	test.row.labelStyle = func(_ string) string { return "cake" }
+	assert.Equal(t, "cake", test.row.styleLabel())
 }
 
-func (suite *ListDetailsRowSuite) TestStyledLabel() {
+func TestStyledLabel(t *testing.T) {
 	// Returns styled label & memo val initially unset
-	suite.row.label = "repo size"
-	suite.Empty(suite.row.labelMemo)
-	suite.Equal("Repo Size: ", suite.row.styledLabel())
+	test := newListDetailsRowTest()
+	test.row.label = "repo size"
+	assert.Empty(t, test.row.labelMemo)
+	assert.Equal(t, "Repo Size: ", test.row.styledLabel())
 
 	// Result is memoized
-	suite.row.label = "something way diff"
-	suite.NotEmpty(suite.row.labelMemo)
-	suite.Equal("Repo Size: ", suite.row.labelMemo)
-	suite.Equal("Repo Size: ", suite.row.styledLabel())
+	test.row.label = "something way diff"
+	assert.NotEmpty(t, test.row.labelMemo)
+	assert.Equal(t, "Repo Size: ", test.row.labelMemo)
+	assert.Equal(t, "Repo Size: ", test.row.styledLabel())
 }
 
-func (suite *ListDetailsRowSuite) TestWrite() {
-	suite.row.label = "repo size"
-	suite.Equal(11, suite.row.labelLen())
+func TestWriteListDetailsRow(t *testing.T) {
+	test := newListDetailsRowTest()
+	test.row.label = "repo size"
+	assert.Equal(t, 11, test.row.labelLen())
 }
 
-func (suite *ListDetailsRowSuite) TestLabelLen() {
-	suite.row.label = "repo size"
-	suite.row.value = "12GB"
+func TestLabelLen(t *testing.T) {
+	test := newListDetailsRowTest()
+	test.row.label = "repo size"
+	test.row.value = "12GB"
 
-	suite.row.write(suite.out, 11)
-	suite.Equal("Repo Size: 12GB\n", suite.out.result)
+	test.row.write(test.out, 11)
+	assert.Equal(t, "Repo Size: 12GB\n", test.out.result)
 
-	suite.out.Clean()
-	suite.row.write(suite.out, 20)
-	suite.Equal("Repo Size:          12GB\n", suite.out.result)
+	test.out.Clean()
+	test.row.write(test.out, 20)
+	assert.Equal(t, "Repo Size:          12GB\n", test.out.result)
 }
 
-func (suite *ListDetailsRowSuite) TestFormattedValue() {
+func TestFormattedValue(t *testing.T) {
 	// When a formatter is not configured
-	suite.row.value = "smrt"
-	suite.Equal("smrt", suite.row.formattedValue())
+	test := newListDetailsRowTest()
+	test.row.value = "smrt"
+	assert.Equal(t, "smrt", test.row.formattedValue())
 
 	// When a formatter /is/ configured
-	suite.row.value = "smrt"
-	suite.row.valueFormatter = func(_ string) string { return "smart" }
-	suite.Equal("smart", suite.row.formattedValue())
+	test.row.value = "smrt"
+	test.row.valueFormatter = func(_ string) string { return "smart" }
+	assert.Equal(t, "smart", test.row.formattedValue())
 }
 
-type ListDetailsSuite struct {
-	suite.Suite
+type listDetailsTest struct {
 	out  *exWriter
 	list *listElem
 }
 
-func (suite *ListDetailsSuite) SetupTest() {
-	suite.out = &exWriter{}
-	suite.list = &listElem{
-		title: "Check",
-		rows: []*rowElem{
-			{
-				label: "repo size",
-				value: "16.2 GB",
+func newListDetailsTest() *listDetailsTest {
+	return &listDetailsTest{
+		out: &exWriter{},
+		list: &listElem{
+			title: "Check",
+			rows: []*rowElem{
+				{
+					label: "repo size",
+					value: "16.2 GB",
+				},
 			},
 		},
 	}
 }
 
-func (suite *ListDetailsSuite) TestLongestLabel() {
+func TestLongestLabel(t *testing.T) {
 	// When a formatter is not configured
-	suite.list.rows[0].labelStyle = func(_ string) string { return "1234:" }
-	suite.Equal(5, suite.list.longestLabel())
+	test := newListDetailsTest()
+	test.list.rows[0].labelStyle = func(_ string) string { return "1234:" }
+	assert.Equal(t, 5, test.list.longestLabel())
 }
 
-func (suite *ListDetailsSuite) TestWriteTitle() {
-	suite.list.title = "Check 'disk_full'"
-	suite.list.writeTitle(suite.out)
-	suite.NotEmpty(suite.out.result)
-	suite.Regexp("^=== ", suite.out.result)
-	suite.Regexp("disk_full", suite.out.result)
+func TestWriteTitle(t *testing.T) {
+	test := newListDetailsTest()
+	test.list.title = "Check 'disk_full'"
+	test.list.writeTitle(test.out)
+	assert.NotEmpty(t, test.out.result)
+	assert.Regexp(t, "^=== ", test.out.result)
+	assert.Regexp(t, "disk_full", test.out.result)
 }
 
-func (suite *ListDetailsSuite) TestWriteRows() {
-	suite.list.writeRows(suite.out)
-	suite.NotEmpty(suite.out.result)
+func TestWriteRows(t *testing.T) {
+	test := newListDetailsTest()
+	test.list.writeRows(test.out)
+	assert.NotEmpty(t, test.out.result)
 }
 
-func (suite *ListDetailsSuite) TestWrite() {
-	suite.list.write(suite.out)
-	suite.NotEmpty(suite.out.result)
-}
-
-func TestRunSuites(t *testing.T) {
-	suite.Run(t, new(ListDetailsRowSuite))
-	suite.Run(t, new(ListDetailsSuite))
+func TestWriteListDetails(t *testing.T) {
+	test := newListDetailsTest()
+	test.list.write(test.out)
+	assert.NotEmpty(t, test.out.result)
 }
 
 func TestPrint(t *testing.T) {

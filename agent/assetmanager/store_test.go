@@ -4,59 +4,59 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
 )
 
-type StoreTestSuite struct {
-	suite.Suite
+type storeTest struct {
 	store      *AssetStore
 	newAssetFn func(*types.Asset) *RuntimeAsset
 	newSetFn   func([]*RuntimeAsset) *RuntimeAssetSet
 }
 
-func (suite *StoreTestSuite) SetupTest() {
-	suite.store = NewAssetStore()
-	suite.newAssetFn = func(a *types.Asset) *RuntimeAsset {
-		return NewRuntimeAsset(a, "")
-	}
-	suite.newSetFn = func(a []*RuntimeAsset) *RuntimeAssetSet {
-		return NewRuntimeAssetSet(a, []string{})
+func newStoreTest() *storeTest {
+	return &storeTest{
+		store: NewAssetStore(),
+		newAssetFn: func(a *types.Asset) *RuntimeAsset {
+			return NewRuntimeAsset(a, "")
+		},
+		newSetFn: func(a []*RuntimeAsset) *RuntimeAssetSet {
+			return NewRuntimeAssetSet(a, []string{})
+		},
 	}
 }
 
-func (suite *StoreTestSuite) TestNew() {
+func TestNew(t *testing.T) {
 	store := NewAssetStore()
-	suite.NotNil(store)
-	suite.Empty(store.assets)
-	suite.Empty(store.assetSets)
-	suite.NotNil(store.rwMutex)
+	assert.NotNil(t, store)
+	assert.Empty(t, store.assets)
+	assert.Empty(t, store.assetSets)
+	assert.NotNil(t, store.rwMutex)
 }
 
-func (suite *StoreTestSuite) TestFetchAsset() {
+func TestFetchAsset(t *testing.T) {
 	asset := types.FixtureAsset("name")
-	runtimeAsset := suite.store.FetchAsset(asset, suite.newAssetFn)
-	suite.NotNil(runtimeAsset)
+	test := newStoreTest()
+	runtimeAsset := test.store.FetchAsset(asset, test.newAssetFn)
+	assert.NotNil(t, runtimeAsset)
 
-	secondRun := suite.store.FetchAsset(asset, suite.newAssetFn)
-	suite.Equal(&runtimeAsset, &secondRun)
+	secondRun := test.store.FetchAsset(asset, test.newAssetFn)
+	assert.Equal(t, &runtimeAsset, &secondRun)
 }
 
-func (suite *StoreTestSuite) TestFetchSet() {
+func TestFetchSet(t *testing.T) {
 	asset := types.FixtureAsset("name")
 	runtimeAssets := []*RuntimeAsset{&RuntimeAsset{asset: asset}}
-	assetSet := suite.store.FetchSet(runtimeAssets, suite.newSetFn)
-	suite.NotNil(assetSet)
+	test := newStoreTest()
+	assetSet := test.store.FetchSet(runtimeAssets, test.newSetFn)
+	assert.NotNil(t, assetSet)
 
-	secondRun := suite.store.FetchSet(runtimeAssets, suite.newSetFn)
-	suite.Equal(&assetSet, &secondRun)
+	secondRun := test.store.FetchSet(runtimeAssets, test.newSetFn)
+	assert.Equal(t, &assetSet, &secondRun)
 }
 
-func (suite *StoreTestSuite) TestFetchClear() {
-	suite.store.Clear()
-	suite.Empty(suite.store.assets)
-	suite.Empty(suite.store.assetSets)
-}
-
-func TestStore(t *testing.T) {
-	suite.Run(t, new(StoreTestSuite))
+func TestFetchClear(t *testing.T) {
+	test := newStoreTest()
+	test.store.Clear()
+	assert.Empty(t, test.store.assets)
+	assert.Empty(t, test.store.assetSets)
 }

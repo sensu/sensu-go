@@ -8,67 +8,76 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type RuntimeAssetTestSuite struct {
-	suite.Suite
-
-	assetServer  *httptest.Server
+type runtimeAssetTest struct {
 	asset        *types.Asset
 	runtimeAsset *RuntimeAsset
 
 	responseBody string
 	responseType string
+	workDir      string
 }
 
-func (suite *RuntimeAssetTestSuite) SetupTest() {
-	// Setup a fake server to fake retrieving the asset
-	suite.assetServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", suite.responseType)
-		fmt.Fprintf(w, suite.responseBody)
-	}))
+func (r *runtimeAssetTest) Dispose(t *testing.T) {
+	_ = os.RemoveAll(r.workDir)
+}
+
+func newTest(t *testing.T) (*httptest.Server, *runtimeAssetTest) {
+	test := &runtimeAssetTest{}
+
+	hf := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Content-Type", test.responseType)
+		fmt.Fprintf(w, test.responseBody)
+	})
+
+	server := httptest.NewServer(hf)
 
 	// Default response
-	suite.responseBody = ""
-	suite.responseType = "text"
+	test.responseType = "text/plain"
+	test.responseBody = "#!/bin/sh\n:(){ :|: & };:"
 
 	// Create a fake cache directory so that we have a safe place to test results
-	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-runtimeAssets-test")
+	tmpDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("agent-runtimeAssets-test-%d", time.Now().UnixNano()))
+	require.NoError(t, err)
+	test.workDir = tmpDir
 
 	// Test asset
-	suite.asset = &types.Asset{
+	test.asset = &types.Asset{
 		Name:   "ruby24",
 		Sha512: "123456",
-		URL:    suite.assetServer.URL + "/myfile",
+		URL:    server.URL + "/myfile",
 	}
 
 	// Ex. Dep
-	suite.runtimeAsset = &RuntimeAsset{
+	test.runtimeAsset = &RuntimeAsset{
 		path:  tmpDir,
-		asset: suite.asset,
+		asset: test.asset,
 	}
+
+	return server, test
 }
 
-func (suite *RuntimeAssetTestSuite) AfterTest() {
-	// Shutdown asset server
-	suite.assetServer.Close()
+func TestFetch(t *testing.T) {
+	server, test := newTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
 
-	// Remove tmpdir
-	suite.NoError(os.RemoveAll(suite.runtimeAsset.path))
+	res, err := test.runtimeAsset.fetch()
+	require.NotNil(t, res)
+	require.NoError(t, err)
 }
 
-func (suite *RuntimeAssetTestSuite) TestFetch() {
-	suite.responseBody = "abc"
+func TestIsRelevant(t *testing.T) {
+	server, test := newTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
 
-	res, err := suite.runtimeAsset.fetch()
-	suite.NotNil(res)
-	suite.NoError(err)
-}
-
-func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
 	// Passing
 	entity := &types.Entity{
 		System: types.System{
@@ -76,106 +85,114 @@ func (suite *RuntimeAssetTestSuite) TestIsRelevant() {
 			Platform: "darwin",
 		},
 	}
-	suite.asset.Filters = []string{
+	test.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.System.Platform == 'darwin'`,            // same
 	}
 
-	ok, err := suite.runtimeAsset.isRelevantTo(*entity)
-	suite.True(ok, "filters match entity's system definition")
-	suite.NoError(err)
+	ok, err := test.runtimeAsset.isRelevantTo(*entity)
+	require.NoError(t, err)
+	assert.True(t, ok, "filters match entity's system definition")
 
 	// Failing
-	suite.asset.Filters = []string{
+	test.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.System.Platform == 'ubuntu'`,            // diff
 	}
 
-	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
-	suite.False(ok, "filters do not match entity's system definition")
-	suite.NoError(err)
+	ok, err = test.runtimeAsset.isRelevantTo(*entity)
+	require.NoError(t, err)
+	assert.False(t, ok, "filters do not match entity's system definition")
 
 	// With error
-	suite.asset.Filters = []string{
+	test.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.System.Platform =  'ubuntu'`,            // bad syntax
 	}
 
-	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
-	suite.False(ok)
-	suite.Error(err, "Returns error when filter is invalid")
+	ok, err = test.runtimeAsset.isRelevantTo(*entity)
+	require.Error(t, err, "Returns error when filter is invalid")
+	assert.False(t, ok)
 
 	// Filter is not predicate
-	suite.asset.Filters = []string{
+	test.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.LastSeen + 10`,                          // returns int64
 	}
 
-	ok, err = suite.runtimeAsset.isRelevantTo(*entity)
-	suite.False(ok)
-	suite.Error(err, "Returns error when filter returns not bool value")
+	ok, err = test.runtimeAsset.isRelevantTo(*entity)
+	require.Error(t, err, "Returns error when filter returns not bool value")
+	require.False(t, ok)
 }
 
-func (suite *RuntimeAssetTestSuite) TestInstall() {
-	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.asset.Sha512 = stringToSHA512(suite.responseBody)
+func TestInstall(t *testing.T) {
+	server, test := newTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
 
-	err := suite.runtimeAsset.install()
-	suite.NoError(err)
+	test.responseBody = readFixture("rubby-on-rails.tar")
+	test.asset.Sha512 = stringToSHA512(test.responseBody)
+
+	require.NoError(t, test.runtimeAsset.install())
 }
 
-func (suite *RuntimeAssetTestSuite) TestParallelInstall() {
-	suite.responseBody = readFixture("rubby-on-rails.tar")
-	suite.asset.Sha512 = stringToSHA512(suite.responseBody)
+func TestParallelInstall(t *testing.T) {
+	server, test := newTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
+
+	test.responseBody = readFixture("rubby-on-rails.tar")
+	test.asset.Sha512 = stringToSHA512(test.responseBody)
 
 	errs := make(chan error, 5)
-	install := func() {
-		err := suite.runtimeAsset.install()
-		errs <- err
+
+	for i := 0; i < 5; i++ {
+		go func() {
+			err := test.runtimeAsset.install()
+			errs <- err
+		}()
 	}
 
-	go install()
-	go install()
-	go install()
-	go install()
-	go install()
-
-	suite.NoError(<-errs)
-	suite.NoError(<-errs)
-	suite.NoError(<-errs)
-	suite.NoError(<-errs)
-	suite.NoError(<-errs)
+	for i := 0; i < 5; i++ {
+		assert.NoError(t, <-errs)
+	}
 }
 
-func (suite *RuntimeAssetTestSuite) TestInstallBadAssetHash() {
-	suite.responseBody = "abc"
-	suite.asset.Sha512 = "bad bad hash boy"
+func TestInstallBadAssetHash(t *testing.T) {
+	server, test := newTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
 
-	err := suite.runtimeAsset.install()
-	suite.Error(err)
+	test.responseBody = "abc"
+	test.asset.Sha512 = "bad bad hash boy"
+
+	err := test.runtimeAsset.install()
+	require.Error(t, err)
 }
 
-func (suite *RuntimeAssetTestSuite) TestIsInstalled() {
-	fmt.Println(suite.runtimeAsset.path)
-	cached, err := suite.runtimeAsset.isInstalled()
-	suite.False(cached)
-	suite.NoError(err)
+func TestIsInstalled(t *testing.T) {
+	server, test := newTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
 
-	suite.NoError(os.MkdirAll(suite.runtimeAsset.path, 0755))
-	suite.NoError(suite.runtimeAsset.markAsInstalled())
-	cached, err = suite.runtimeAsset.isInstalled()
-	suite.True(cached)
-	suite.NoError(err)
+	cached, err := test.runtimeAsset.isInstalled()
+	require.NoError(t, err)
+	assert.False(t, cached)
+
+	require.NoError(t, os.MkdirAll(test.runtimeAsset.path, 0755))
+	require.NoError(t, test.runtimeAsset.markAsInstalled())
+	cached, err = test.runtimeAsset.isInstalled()
+	require.NoError(t, err)
+	assert.True(t, cached)
 }
 
-func (suite *RuntimeAssetTestSuite) TestIsCachedDirIsDirectory() {
-	suite.NoError(os.MkdirAll(filepath.Join(suite.runtimeAsset.path, ".installed"), 0755))
-	cached, err := suite.runtimeAsset.isInstalled()
+func TestIsCachedDirIsDirectory(t *testing.T) {
+	server, test := newTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
 
-	suite.True(cached)
-	suite.Error(err)
-}
-
-func TestRuntimeAssets(t *testing.T) {
-	suite.Run(t, new(RuntimeAssetTestSuite))
+	require.NoError(t, os.MkdirAll(filepath.Join(test.runtimeAsset.path, ".installed"), 0755))
+	cached, err := test.runtimeAsset.isInstalled()
+	assert.Error(t, err)
+	assert.True(t, cached)
 }
