@@ -67,6 +67,8 @@ class EventListItem extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    checked: PropTypes.bool.isRequired,
+    onChange: PropTypes.func.isRequired,
   };
 
   state = { anchorEl: null };
@@ -109,7 +111,10 @@ class EventListItem extends React.Component {
     return (
       <Typography component="div" className={classes.row}>
         <div className={classes.checkbox}>
-          <Checkbox />
+          <Checkbox
+            onChange={this.props.onChange}
+            checked={this.props.checked}
+          />
         </div>
         <div className={classes.status}>
           <EventStatus status={check.status} />

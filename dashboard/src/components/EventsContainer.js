@@ -8,7 +8,7 @@ import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
 
-import checkboxIcon from "material-ui/Checkbox";
+import Checkbox from "material-ui/Checkbox";
 
 import EventsListItem from "./EventsListItem";
 import EventsContainerMenu from "./EventsContainerMenu";
@@ -43,15 +43,32 @@ class EventsContainer extends React.Component {
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.shape({ checkEvents: PropTypes.object }).isRequired,
     router: routerShape.isRequired,
-    Checkbox: PropTypes.func.isRequired,
   };
 
-  static defaultProps = {
-    Checkbox: checkboxIcon,
+  constructor(props) {
+    super(props);
+
+    this.state = { checked: false, rowState: [], filters: [] };
+
+    const { viewer } = props;
+    const events = get(viewer, "events.edges", []);
+    for (let i = 0; i < events.length; i += 1) {
+      this.state.rowState[i] = this.state.checked;
+    }
+  }
+
+  selectAll = () => {
+    this.state.checked = !this.state.checked;
+    const newState = [];
+    for (let i = 0; i < this.state.rowState.length; i += 1) {
+      newState[i] = this.state.checked;
+    }
+    this.setState({ rowState: newState });
   };
 
-  state = {
-    filters: [],
+  selectCheckbox = i => () => {
+    this.state.rowState[i] = !this.state.rowState[i];
+    this.forceUpdate();
   };
 
   // TODO revist this later
@@ -60,6 +77,7 @@ class EventsContainer extends React.Component {
       `${window.location.pathname}?filter=event.Entity.ID=='${newValue}'`,
     );
   };
+
   requeryCheck = newValue => {
     this.props.router.push(
       `${window.location.pathname}?filter=event.Check.Name=='${newValue}'`,
@@ -73,7 +91,7 @@ class EventsContainer extends React.Component {
   };
 
   render() {
-    const { classes, viewer, Checkbox } = this.props;
+    const { classes, viewer } = this.props;
 
     // TODO maybe revisit for pagination issues
     const events = get(viewer, "events.edges", []);
@@ -87,7 +105,11 @@ class EventsContainer extends React.Component {
       <Paper className={classes.eventsContainer}>
         <div className={classes.tableHeader}>
           <span className={classes.tableHeaderButton}>
-            <Checkbox color="secondary" className={classes.checkbox} />
+            <Checkbox
+              color="secondary"
+              className={classes.checkbox}
+              onClick={this.selectAll}
+            />
           </span>
           <EventsContainerMenu
             onSelectValue={this.requeryEntity}
@@ -106,8 +128,13 @@ class EventsContainer extends React.Component {
             icons
           />
         </div>
-        {events.map(event => (
-          <EventsListItem key={event.node.id} event={event.node} />
+        {events.map((event, i) => (
+          <EventsListItem
+            key={event.node.id}
+            event={event.node}
+            onChange={this.selectCheckbox(i)}
+            checked={this.state.rowState[i]}
+          />
         ))}
       </Paper>
     );
