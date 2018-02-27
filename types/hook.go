@@ -63,9 +63,13 @@ func (h *HookList) Validate() error {
 		return errors.New("type cannot be empty")
 	}
 
+	if h.Hooks == nil || len(h.Hooks) == 0 {
+		return errors.New("hooks cannot be empty")
+	}
+
 	if !(CheckHookRegex.MatchString(h.Type) || isSeverity(h.Type)) {
 		return errors.New(
-			"valid check hook types are \"1\"-\"255\", \"ok\", \"warning\", \"critical\", \"unknown\", and \"non-zero\"",
+			"valid check hook types are \"0\"-\"255\", \"ok\", \"warning\", \"critical\", \"unknown\", and \"non-zero\"",
 		)
 	}
 

@@ -28,6 +28,30 @@ func TestHookValidate(t *testing.T) {
 	assert.NoError(t, h.Validate())
 }
 
+func TestHookListValidate(t *testing.T) {
+	var h HookList
+
+	// Invalid hooks
+	h.Hooks = nil
+	assert.Error(t, h.Validate())
+
+	// Invalid hooks
+	h.Hooks = []string{}
+	assert.Error(t, h.Validate())
+
+	// Invalid without type
+	h.Hooks = append(h.Hooks, "hook")
+	assert.Error(t, h.Validate())
+
+	// Invalid type
+	h.Type = "invalid"
+	assert.Error(t, h.Validate())
+
+	// Valid
+	h.Type = "0"
+	assert.NoError(t, h.Validate())
+}
+
 func TestHookConfig(t *testing.T) {
 	var h HookConfig
 
