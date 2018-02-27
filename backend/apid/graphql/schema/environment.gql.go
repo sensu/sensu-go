@@ -5,6 +5,7 @@ package schema
 import (
 	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
@@ -30,6 +31,28 @@ type EnvironmentNameFieldResolver interface {
 type EnvironmentOrganizationFieldResolver interface {
 	// Organization implements response to request for organization field.
 	Organization(p graphql.ResolveParams) (interface{}, error)
+}
+
+// EnvironmentEventsFieldResolverArgs contains arguments provided to events when selected
+type EnvironmentEventsFieldResolverArgs struct {
+	First   int             // First - self descriptive
+	Last    int             // Last - self descriptive
+	Before  string          // Before - self descriptive
+	After   string          // After - self descriptive
+	Filter  string          // Filter - self descriptive
+	OrderBy EventsListOrder // OrderBy - self descriptive
+}
+
+// EnvironmentEventsFieldResolverParams contains contextual info to resolve events field
+type EnvironmentEventsFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EnvironmentEventsFieldResolverArgs
+}
+
+// EnvironmentEventsFieldResolver implement to resolve requests for the Environment's events field.
+type EnvironmentEventsFieldResolver interface {
+	// Events implements response to request for events field.
+	Events(p EnvironmentEventsFieldResolverParams) (interface{}, error)
 }
 
 //
@@ -98,6 +121,7 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentDescriptionFieldResolver
 	EnvironmentNameFieldResolver
 	EnvironmentOrganizationFieldResolver
+	EnvironmentEventsFieldResolver
 }
 
 // EnvironmentAliases implements all methods on EnvironmentFieldResolvers interface by using reflection to
@@ -173,6 +197,12 @@ func (_ EnvironmentAliases) Organization(p graphql.ResolveParams) (interface{}, 
 	return val, err
 }
 
+// Events implements response to request for 'events' field.
+func (_ EnvironmentAliases) Events(p EnvironmentEventsFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // EnvironmentType Environment represents a Sensu environment in RBAC
 var EnvironmentType = graphql.NewType("Environment", graphql.ObjectKind)
 
@@ -208,6 +238,19 @@ func _ObjTypeEnvironmentOrganizationHandler(impl interface{}) graphql1.FieldReso
 	}
 }
 
+func _ObjTypeEnvironmentEventsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentEventsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EnvironmentEventsFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Events(frp)
+	}
+}
+
 func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Environment represents a Sensu environment in RBAC",
@@ -215,28 +258,63 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 			"description": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "The description given to the environment.",
 				Name:              "description",
 				Type:              graphql1.String,
+			},
+			"events": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"after": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"before": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"filter": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"first": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"last": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "SEVERITY",
+						Description:  "self descriptive",
+						Type:         graphql.InputType("EventsListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All events associated with the environment.",
+				Name:              "events",
+				Type:              graphql.OutputType("EventConnection"),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "The globally unique identifier of the record.",
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "name is the unique identifier for a organization.",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"organization": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "The organization the environment belongs to.",
 				Name:              "organization",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Organization")),
 			},
@@ -260,8 +338,62 @@ var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEnvironmentConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"description":  _ObjTypeEnvironmentDescriptionHandler,
+		"events":       _ObjTypeEnvironmentEventsHandler,
 		"id":           _ObjTypeEnvironmentIDHandler,
 		"name":         _ObjTypeEnvironmentNameHandler,
 		"organization": _ObjTypeEnvironmentOrganizationHandler,
 	},
+}
+
+// EventsListOrder self descriptive
+type EventsListOrder string
+
+// EventsListOrders holds enum values
+var EventsListOrders = _EnumTypeEventsListOrderValues{
+	NEWEST:   "NEWEST",
+	OLDEST:   "OLDEST",
+	SEVERITY: "SEVERITY",
+}
+
+// EventsListOrderType self descriptive
+var EventsListOrderType = graphql.NewType("EventsListOrder", graphql.EnumKind)
+
+// RegisterEventsListOrder registers EventsListOrder object type with given service.
+func RegisterEventsListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeEventsListOrderDesc)
+}
+func _EnumTypeEventsListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "self descriptive",
+		Name:        "EventsListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"NEWEST": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NEWEST",
+			},
+			"OLDEST": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "OLDEST",
+			},
+			"SEVERITY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "SEVERITY",
+			},
+		},
+	}
+}
+
+// describe EventsListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeEventsListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEventsListOrderConfigFn}
+
+type _EnumTypeEventsListOrderValues struct {
+	// OLDEST - self descriptive
+	OLDEST EventsListOrder
+	// NEWEST - self descriptive
+	NEWEST EventsListOrder
+	// SEVERITY - self descriptive
+	SEVERITY EventsListOrder
 }

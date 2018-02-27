@@ -41,7 +41,13 @@ class EventsContainer extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.shape({ checkEvents: PropTypes.object }).isRequired,
+    viewer: PropTypes.shape({
+      checks: PropTypes.object,
+      entities: PropTypes.object,
+    }).isRequired,
+    environment: PropTypes.shape({
+      events: PropTypes.object,
+    }).isRequired,
     router: routerShape.isRequired,
     Checkbox: PropTypes.func.isRequired,
   };
@@ -73,10 +79,10 @@ class EventsContainer extends React.Component {
   };
 
   render() {
-    const { classes, viewer, Checkbox } = this.props;
+    const { classes, viewer, environment, Checkbox } = this.props;
 
     // TODO maybe revisit for pagination issues
-    const events = get(viewer, "events.edges", []);
+    const events = get(environment, "events.edges", []);
     const entities = get(viewer, "entities.edges", []);
     const entityNames = map(entities, edge => edge.node.name);
     const checks = get(viewer, "checks.edges", []);
@@ -132,7 +138,10 @@ export default createFragmentContainer(
           }
         }
       }
-      events(first: 1000, filter: $filter) {
+    }
+
+    fragment EventsContainer_environment on Environment {
+      events(first: 100, filter: $filter) {
         edges {
           node {
             id

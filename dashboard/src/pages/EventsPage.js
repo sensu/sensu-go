@@ -28,13 +28,19 @@ class EventsPage extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.objectOf(PropTypes.any).isRequired,
   };
 
   static query = graphql`
-    query EventsPageQuery($filter: String) {
+    query EventsPageQuery(
+      $filter: String
+      $environment: String!
+      $organization: String!
+    ) {
       viewer {
         ...EventsContainer_viewer
+      }
+      environment(organization: $organization, environment: $environment) {
+        ...EventsContainer_environment
       }
     }
   `;
@@ -49,7 +55,7 @@ class EventsPage extends React.Component {
   };
 
   render() {
-    const { viewer, classes } = this.props;
+    const { classes, ...props } = this.props;
     return (
       <AppContent>
         <div>
@@ -63,7 +69,7 @@ class EventsPage extends React.Component {
             />
           </div>
           <div className={classes.container}>
-            <EventsContainer viewer={viewer} />
+            <EventsContainer {...props} />
           </div>
         </div>
       </AppContent>

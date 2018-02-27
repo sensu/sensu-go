@@ -48,27 +48,6 @@ type ViewerChecksFieldResolver interface {
 	Checks(p ViewerChecksFieldResolverParams) (interface{}, error)
 }
 
-// ViewerEventsFieldResolverArgs contains arguments provided to events when selected
-type ViewerEventsFieldResolverArgs struct {
-	First  int    // First - self descriptive
-	Last   int    // Last - self descriptive
-	Before string // Before - self descriptive
-	After  string // After - self descriptive
-	Filter string // Filter - self descriptive
-}
-
-// ViewerEventsFieldResolverParams contains contextual info to resolve events field
-type ViewerEventsFieldResolverParams struct {
-	graphql.ResolveParams
-	Args ViewerEventsFieldResolverArgs
-}
-
-// ViewerEventsFieldResolver implement to resolve requests for the Viewer's events field.
-type ViewerEventsFieldResolver interface {
-	// Events implements response to request for events field.
-	Events(p ViewerEventsFieldResolverParams) (interface{}, error)
-}
-
 // ViewerOrganizationsFieldResolver implement to resolve requests for the Viewer's organizations field.
 type ViewerOrganizationsFieldResolver interface {
 	// Organizations implements response to request for organizations field.
@@ -145,7 +124,6 @@ type ViewerUserFieldResolver interface {
 type ViewerFieldResolvers interface {
 	ViewerEntitiesFieldResolver
 	ViewerChecksFieldResolver
-	ViewerEventsFieldResolver
 	ViewerOrganizationsFieldResolver
 	ViewerUserFieldResolver
 }
@@ -209,12 +187,6 @@ func (_ ViewerAliases) Checks(p ViewerChecksFieldResolverParams) (interface{}, e
 	return val, err
 }
 
-// Events implements response to request for 'events' field.
-func (_ ViewerAliases) Events(p ViewerEventsFieldResolverParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
 // Organizations implements response to request for 'organizations' field.
 func (_ ViewerAliases) Organizations(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -257,19 +229,6 @@ func _ObjTypeViewerChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Checks(frp)
-	}
-}
-
-func _ObjTypeViewerEventsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ViewerEventsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := ViewerEventsFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
-		if err != nil {
-			return nil, err
-		}
-
-		return resolver.Events(frp)
 	}
 }
 
@@ -343,36 +302,6 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 				Name:              "entities",
 				Type:              graphql.OutputType("EntityConnection"),
 			},
-			"events": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{
-					"after": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"before": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"filter": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"first": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
-						Description:  "self descriptive",
-						Type:         graphql1.Int,
-					},
-					"last": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
-						Description:  "self descriptive",
-						Type:         graphql1.Int,
-					},
-				},
-				DeprecationReason: "",
-				Description:       "All events the viewer has access to view.",
-				Name:              "events",
-				Type:              graphql.OutputType("EventConnection"),
-			},
 			"organizations": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -407,7 +336,6 @@ var _ObjectTypeViewerDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"checks":        _ObjTypeViewerChecksHandler,
 		"entities":      _ObjTypeViewerEntitiesHandler,
-		"events":        _ObjTypeViewerEventsHandler,
 		"organizations": _ObjTypeViewerOrganizationsHandler,
 		"user":          _ObjTypeViewerUserHandler,
 	},
