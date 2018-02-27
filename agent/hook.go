@@ -29,7 +29,7 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 					continue
 				}
 				// Do not duplicate hook execution for types that fall into both an exit
-				// code and severity (ex. 0, non-zero)
+				// code and severity (ex. 0, ok)
 				in := hookInList(hookConfig.Name, executedHooks)
 				if !in {
 					hook := a.executeHook(hookConfig)

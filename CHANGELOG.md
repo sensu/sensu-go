@@ -45,7 +45,7 @@ subcommand.
 - Use megacheck instead of errcheck.
 - Cleaned agent configuration.
 - We no longer duplicate hook execution for types that fall into both an exit
-code and severity (ex. 0, non-zero).
+code and severity (ex. 0, ok).
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
