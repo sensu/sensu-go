@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
+import moment from "moment";
 
 import { createFragmentContainer, graphql } from "react-relay";
-import moment from "moment";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 import Menu, { MenuItem } from "material-ui/Menu";
@@ -21,8 +21,7 @@ const styles = theme => ({
     borderColor: theme.palette.divider,
     border: "1px solid",
     borderTop: "none",
-    // TODO revist with typography
-    fontFamily: "SF Pro Text",
+    color: theme.palette.text.primary,
   },
   checkbox: {
     display: "inline-block",
@@ -40,11 +39,16 @@ const styles = theme => ({
     color: theme.palette.action.active,
   },
   content: {
-    width: "100%",
+    width: "calc(100% - 104px)",
     display: "inline-block",
     padding: 14,
   },
-  command: { fontSize: "0.8125rem" },
+  command: {
+    fontSize: "0.8125rem",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
   chevron: {
     verticalAlign: "top",
     marginTop: -2,
@@ -103,7 +107,7 @@ class EventListItem extends React.Component {
     const time = moment(timestamp).fromNow();
 
     return (
-      <div className={classes.row}>
+      <Typography component="div" className={classes.row}>
         <div className={classes.checkbox}>
           <Checkbox />
         </div>
@@ -153,7 +157,7 @@ class EventListItem extends React.Component {
             </MenuItem>
           </Menu>
         </div>
-      </div>
+      </Typography>
     );
   }
 }
