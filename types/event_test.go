@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -186,6 +187,50 @@ func TestEventIsSilenced(t *testing.T) {
 			event.Silenced = tc.silenced
 			silenced := event.IsSilenced()
 			assert.Equal(t, tc.expected, silenced)
+		})
+	}
+}
+
+func TestEventsBySeverity(t *testing.T) {
+	critical := FixtureEvent("entity", "check")
+	critical.Check.Status = 1
+	warn := FixtureEvent("entity", "check")
+	warn.Check.Status = 2
+	unknown := FixtureEvent("entity", "check")
+	unknown.Check.Status = 3
+	ok := FixtureEvent("entity", "check")
+	ok.Check.Status = 0
+	okOlder := FixtureEvent("entity", "check")
+	okOlder.Timestamp = 42
+	noCheck := FixtureEvent("entity", "check")
+	noCheck.Check = nil
+
+	testCases := []struct {
+		name     string
+		input    []*Event
+		expected []*Event
+	}{
+		{
+			name:     "Sorts by severity",
+			input:    []*Event{ok, warn, unknown, noCheck, okOlder, critical},
+			expected: []*Event{critical, warn, unknown, ok, okOlder, noCheck},
+		},
+		{
+			name:     "Fallback to timestamp when severity is same",
+			input:    []*Event{okOlder, ok, okOlder},
+			expected: []*Event{ok, okOlder, okOlder},
+		},
+		{
+			name:     "Events w/o a check are sorted to end",
+			input:    []*Event{critical, noCheck, ok},
+			expected: []*Event{critical, ok, noCheck},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Sort(EventsBySeverity(tc.input))
+			assert.EqualValues(t, tc.expected, tc.input)
 		})
 	}
 }

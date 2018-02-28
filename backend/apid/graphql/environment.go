@@ -80,30 +80,12 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 	}
 
 	if p.Args.OrderBy == schema.EventsListOrders.SEVERITY {
-		sort.Slice(filteredEvents, func(i, j int) bool {
-			first, second := filteredEvents[i], filteredEvents[j]
-
-			// Sort events with the same exit status by timestamp
-			if first.Check.Status == second.Check.Status {
-				return first.Timestamp > second.Timestamp
-			}
-
-			// We want the order of importance to go 1, 2, 3, 0 so we shift status by one.
-			// (Critical, Warning, Unknown, & OK.)
-			firstStatus := (first.Check.Status + 3) % 4
-			secondStatus := (second.Check.Status + 3) % 4
-			return firstStatus < secondStatus
-		})
+		sort.Sort(types.EventsBySeverity(filteredEvents))
 	} else {
-		sort.Slice(filteredEvents, func(i, j int) bool {
-			first, second := filteredEvents[i], filteredEvents[j]
-
-			if p.Args.OrderBy == schema.EventsListOrders.NEWEST {
-				return first.Timestamp > second.Timestamp
-			}
-			return first.Timestamp < second.Timestamp
-		})
-
+		sort.Sort(types.EventsByTimestamp(
+			filteredEvents,
+			p.Args.OrderBy == schema.EventsListOrders.NEWEST,
+		))
 	}
 
 	info := relay.NewArrayConnectionInfo(
