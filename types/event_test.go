@@ -234,3 +234,37 @@ func TestEventsBySeverity(t *testing.T) {
 		})
 	}
 }
+
+func TestEventsByTimestamp(t *testing.T) {
+	old := &Event{Timestamp: 3}
+	older := &Event{Timestamp: 2}
+	oldest := &Event{Timestamp: 1}
+	okButHow := &Event{Timestamp: 0}
+
+	testCases := []struct {
+		name     string
+		inEvents []*Event
+		inDir    bool
+		expected []*Event
+	}{
+		{
+			name:     "Sorts ascending",
+			inDir:    false,
+			inEvents: []*Event{old, okButHow, oldest, older},
+			expected: []*Event{okButHow, oldest, older, old},
+		},
+		{
+			name:     "Sorts descending",
+			inDir:    true,
+			inEvents: []*Event{old, okButHow, oldest, older},
+			expected: []*Event{old, older, oldest, okButHow},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Sort(EventsByTimestamp(tc.inEvents, tc.inDir))
+			assert.EqualValues(t, tc.expected, tc.inEvents)
+		})
+	}
+}
