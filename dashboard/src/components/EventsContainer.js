@@ -7,6 +7,8 @@ import get from "lodash/get";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
+import Button from "material-ui/Button";
+import Typography from "material-ui/Typography";
 
 import Checkbox from "material-ui/Checkbox";
 
@@ -34,6 +36,12 @@ const styles = theme => ({
     width: 24,
     height: 24,
     color: theme.palette.primary.contrastText,
+  },
+  altMenuButton: {
+    color: theme.palette.primary.contrastText,
+    padding: "0 0 1px",
+    minHeight: 20,
+    "&:hover": { backgroundColor: "inherit" },
   },
   hidden: {
     display: "none",
@@ -100,9 +108,13 @@ class EventsContainer extends React.Component {
     this.forceUpdate();
   };
 
-  bulkAction = action => () => {
+  resolve = action => () => {
     console.log(action);
   };
+
+  silence = action => () {
+
+  }
 
   // TODO revist this later
   requeryEntity = newValue => {
@@ -146,11 +158,12 @@ class EventsContainer extends React.Component {
             />
           </span>
           <div style={this.state.switchHeader ? {} : { display: "none" }}>
-            <EventsContainerMenu
-              onSelectValue={this.bulkAction}
-              label="Bulk Actions"
-              contents={["Silence", "Resolve"]}
-            />
+            <Button className={classes.altMenuButton} onClick={this.silence}>
+              <Typography type="button">Silence</Typography>
+            </Button>
+            <Button className={classes.altMenuButton} onClick={this.resolve}>
+              <Typography type="button">Resolve</Typography>
+            </Button>
           </div>
           <div style={this.state.switchHeader ? { display: "none" } : {}}>
             <EventsContainerMenu
@@ -171,6 +184,8 @@ class EventsContainer extends React.Component {
             />
           </div>
         </div>
+        {/* TODO pass in resolve and silence functions to reuse for single actions
+            the silence dialog is the same, just maybe some prefilled options for list */}
         {events.map((event, i) => (
           <EventsListItem
             key={event.node.id}
