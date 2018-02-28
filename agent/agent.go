@@ -39,7 +39,7 @@ const (
 	// DefaultBackendURL specifies the default backend URL
 	DefaultBackendURL = "ws://127.0.0.1:8081"
 	// DefaultEnvironment specifies the default environment
-	DefaultEnvironment = "defaut"
+	DefaultEnvironment = "default"
 	// DefaultKeepaliveInterval specifies the default keepalive interval
 	DefaultKeepaliveInterval = 20
 	// DefaultKeepaliveTimeout specifies the default keepalive timeout
