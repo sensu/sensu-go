@@ -100,6 +100,10 @@ class EventsContainer extends React.Component {
     this.forceUpdate();
   };
 
+  bulkAction = action => () => {
+    console.log(action);
+  };
+
   // TODO revist this later
   requeryEntity = newValue => {
     this.props.router.push(
@@ -138,8 +142,16 @@ class EventsContainer extends React.Component {
               color="secondary"
               className={classes.checkbox}
               onClick={this.selectAll}
+              checked={this.state.switchHeader}
             />
           </span>
+          <div style={this.state.switchHeader ? {} : { display: "none" }}>
+            <EventsContainerMenu
+              onSelectValue={this.bulkAction}
+              label="Bulk Actions"
+              contents={["Silence", "Resolve"]}
+            />
+          </div>
           <div style={this.state.switchHeader ? { display: "none" } : {}}>
             <EventsContainerMenu
               onSelectValue={this.requeryEntity}
