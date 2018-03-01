@@ -1713,7 +1713,7 @@ type CheckHistoryStatusFieldResolver interface {
 // CheckHistoryExecutedFieldResolver implement to resolve requests for the CheckHistory's executed field.
 type CheckHistoryExecutedFieldResolver interface {
 	// Executed implements response to request for executed field.
-	Executed(p graphql.ResolveParams) (int, error)
+	Executed(p graphql.ResolveParams) (time.Time, error)
 }
 
 //
@@ -1837,9 +1837,9 @@ func (_ CheckHistoryAliases) Status(p graphql.ResolveParams) (int, error) {
 }
 
 // Executed implements response to request for 'executed' field.
-func (_ CheckHistoryAliases) Executed(p graphql.ResolveParams) (int, error) {
+func (_ CheckHistoryAliases) Executed(p graphql.ResolveParams) (time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret := val.(time.Time)
 	return ret, err
 }
 
@@ -1873,7 +1873,7 @@ func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Executed describes the time in which the check request was executed",
 				Name:              "executed",
-				Type:              graphql1.Int,
+				Type:              graphql1.DateTime,
 			},
 			"status": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

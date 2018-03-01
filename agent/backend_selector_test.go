@@ -18,7 +18,7 @@ func TestBackendSelector(t *testing.T) {
 		received[i] = selector.Select()
 	}
 
-	sort.Sort(sort.StringSlice(received))
+	sort.Strings(received)
 	assert.EqualValues(t, expected, received)
 }
 

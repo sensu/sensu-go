@@ -13,6 +13,12 @@ type Query {
   viewer: Viewer
 
   """
+  Environment fetches the environment associated with the given
+  organization & environment arguments.
+  """
+  environment(environment: String!, organization: String!): Environment
+
+  """
   Node fetches an object given its ID.
   """
   node(

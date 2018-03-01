@@ -4,6 +4,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/types"
 )
 
 var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
@@ -27,6 +28,14 @@ func newQueryImpl(store store.Store, resolver *nodeResolver) *queryImpl {
 // Viewer implements response to request for 'viewer' field.
 func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
 	return struct{}{}, nil
+}
+
+// Environment implements response to request for 'environment' field.
+func (r *queryImpl) Environment(p schema.QueryEnvironmentFieldResolverParams) (interface{}, error) {
+	return types.Environment{
+		Name:         p.Args.Environment,
+		Organization: p.Args.Organization,
+	}, nil
 }
 
 // Node implements response to request for 'node' field.
