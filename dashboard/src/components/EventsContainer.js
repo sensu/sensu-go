@@ -4,6 +4,8 @@ import PropTypes from "prop-types";
 import { withRouter, routerShape } from "found";
 import map from "lodash/map";
 import get from "lodash/get";
+import every from "lodash/every";
+import reduce from "lodash/reduce";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
@@ -56,51 +58,49 @@ class EventsContainer extends React.Component {
     router: routerShape.isRequired,
   };
 
-  // constructor is needed in order to set the inital state of the checkbox for each
-  // event item. We need to know how many events will be displayed before render.
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      rowState: [],
-      switchHeader: false,
-      filters: [],
-    };
-    const { viewer } = props;
-    const eventsLength = get(viewer, "events.edges", []).length;
-    for (let i = 0; i < eventsLength; i += 1) {
-      this.state.rowState[i] = false;
-    }
-  }
+  state = {
+    rowState: [],
+    switchHeader: false,
+    filters: [],
+  };
 
   // click checkbox for all items in list
   selectAll = () => {
-    const newState = [];
-    // if there's any number of boxes checked, show bulk actions button
-    if (
-      this.state.rowState.includes(false) ||
-      (this.state.rowState.includes(true) &&
-        this.state.rowState.includes(false))
-    ) {
-      for (let i = 0; i < this.state.rowState.length; i += 1) {
-        newState[i] = true;
-      }
+    let newState = [];
+    const keys = map(get(this.props.viewer, "events.edges", []), edge =>
+      get(edge, "node.id"),
+    );
+    // if every state is false or undefined, switch the header
+    if (every(this.state.rowState, value => Boolean(value) === false)) {
+      newState = reduce(
+        keys,
+        (result, key) => ({
+          ...result,
+          [key]: true,
+        }),
+        {},
+      );
       this.setState({ switchHeader: true });
     } else {
-      // unhide the default header buttons only if there's no checks
-      for (let i = 0; i < this.state.rowState.length; i += 1) {
-        newState[i] = false;
-      }
+      newState = reduce(
+        keys,
+        (result, key) => ({
+          ...result,
+          [key]: false,
+        }),
+        {},
+      );
       this.setState({ switchHeader: false });
     }
+    console.log(newState);
     this.setState({ rowState: newState });
   };
 
   // click single checkbox
-  selectCheckbox = i => () => {
-    this.state.rowState[i] = !this.state.rowState[i];
+  selectCheckbox = id => () => {
+    this.state.rowState[id] = !this.state.rowState[id];
     // only show the default header buttons if there's none selected
-    if (this.state.rowState.includes(true)) {
+    if (every(this.state.rowState, value => value === true)) {
       this.setState({ switchHeader: true });
     } else {
       this.setState({ switchHeader: false });
@@ -186,12 +186,12 @@ class EventsContainer extends React.Component {
         </div>
         {/* TODO pass in resolve and silence functions to reuse for single actions
             the silence dialog is the same, just maybe some prefilled options for list */}
-        {events.map((event, i) => (
+        {events.map(event => (
           <EventsListItem
             key={event.node.id}
             event={event.node}
-            onChange={this.selectCheckbox(i)}
-            checked={this.state.rowState[i]}
+            onChange={this.selectCheckbox(event.node.id)}
+            checked={this.state.rowState[event.node.id]}
           />
         ))}
       </Paper>
