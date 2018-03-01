@@ -2,10 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { withRouter, routerShape } from "found";
-import map from "lodash/map";
-import get from "lodash/get";
-import every from "lodash/every";
-import reduce from "lodash/reduce";
+import { map, get, every, some, reduce } from "lodash";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
@@ -54,58 +51,45 @@ class EventsContainer extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.shape({ checkEvents: PropTypes.object }).isRequired,
+    viewer: PropTypes.shape({ events: PropTypes.object }).isRequired,
     router: routerShape.isRequired,
   };
 
   state = {
-    rowState: [],
-    switchHeader: false,
+    rowState: {},
     filters: [],
   };
 
   // click checkbox for all items in list
   selectAll = () => {
-    let newState = [];
-    const keys = map(get(this.props.viewer, "events.edges", []), edge =>
-      get(edge, "node.id"),
+    const keys = map(
+      get(this.props.viewer, "events.edges", []),
+      edge => edge.node.id,
     );
     // if every state is false or undefined, switch the header
-    if (every(this.state.rowState, value => Boolean(value) === false)) {
-      newState = reduce(
+    const newState = !this.eventsSelected();
+    this.setState({
+      rowState: reduce(
         keys,
-        (result, key) => ({
-          ...result,
-          [key]: true,
-        }),
-        {},
-      );
-      this.setState({ switchHeader: true });
-    } else {
-      newState = reduce(
-        keys,
-        (result, key) => ({
-          ...result,
-          [key]: false,
-        }),
-        {},
-      );
-      this.setState({ switchHeader: false });
-    }
-    console.log(newState);
-    this.setState({ rowState: newState });
+        (acc, key) => Object.assign(acc, { [key]: newState }),
+        this.state.rowState,
+      ),
+    });
   };
 
   // click single checkbox
   selectCheckbox = id => () => {
     this.state.rowState[id] = !this.state.rowState[id];
-    // only show the default header buttons if there's none selected
-    if (every(this.state.rowState, value => value === true)) {
-      this.setState({ switchHeader: true });
-    } else {
-      this.setState({ switchHeader: false });
-    }
-    this.forceUpdate();
+    this.setState({ rowState: this.state.rowState });
+  };
+
+  eventsSelected = () => some(this.state.rowState, Boolean);
+  allEventsSelected = () => {
+    const { rowState } = this.state;
+    return (
+      get(this.props.viewer, "events.edges", []).length ===
+        Object.keys(rowState).length && every(rowState, Boolean)
+    );
   };
 
   resolve = () => {
@@ -137,6 +121,7 @@ class EventsContainer extends React.Component {
 
   render() {
     const { classes, viewer } = this.props;
+    const { rowState } = this.state;
 
     // TODO maybe revisit for pagination issues
     const events = get(viewer, "events.edges", []);
@@ -146,6 +131,9 @@ class EventsContainer extends React.Component {
     const checkNames = [...map(checks, edge => edge.node.name), "keepalive"];
     const statuses = [0, 1, 2, 3];
 
+    const allEventsSelected = this.allEventsSelected();
+    const someEventsSelected = this.eventsSelected();
+
     return (
       <Paper className={classes.eventsContainer}>
         <div className={classes.tableHeader}>
@@ -154,10 +142,11 @@ class EventsContainer extends React.Component {
               color="secondary"
               className={classes.checkbox}
               onClick={this.selectAll}
-              checked={this.state.switchHeader}
+              checked={allEventsSelected}
+              indeterminate={!allEventsSelected && someEventsSelected}
             />
           </span>
-          <div style={this.state.switchHeader ? {} : { display: "none" }}>
+          <div style={someEventsSelected ? {} : { display: "none" }}>
             <Button className={classes.altMenuButton} onClick={this.silence}>
               <Typography type="button">Silence</Typography>
             </Button>
@@ -165,7 +154,7 @@ class EventsContainer extends React.Component {
               <Typography type="button">Resolve</Typography>
             </Button>
           </div>
-          <div style={this.state.switchHeader ? { display: "none" } : {}}>
+          <div style={someEventsSelected ? { display: "none" } : {}}>
             <EventsContainerMenu
               onSelectValue={this.requeryEntity}
               label="Entity"
@@ -191,7 +180,7 @@ class EventsContainer extends React.Component {
             key={event.node.id}
             event={event.node}
             onChange={this.selectCheckbox(event.node.id)}
-            checked={this.state.rowState[event.node.id]}
+            checked={Boolean(rowState[event.node.id])}
           />
         ))}
       </Paper>

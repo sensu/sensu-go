@@ -63,15 +63,45 @@ const styles = theme => ({
   pipe: { marginTop: -4 },
 });
 
+function fromNow(date) {
+  const delta = new Date() - new Date(date);
+  if (delta > 0) {
+    return moment.duration(delta).humanize(true);
+  }
+  return "just now";
+}
+
 class EventListItem extends React.Component {
   static propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     checked: PropTypes.bool.isRequired,
     onChange: PropTypes.func.isRequired,
+
+    event: PropTypes.shape({
+      entity: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }).isRequired,
+      check: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        output: PropTypes.string.isRequired,
+      }).isRequired,
+      timestamp: PropTypes.string.isRequired,
+    }).isRequired,
   };
 
+  constructor(props) {
+    super(props);
+    this.fromNow = fromNow(props.event.timestamp);
+  }
+
   state = { anchorEl: null };
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.event.timestamp !== nextProps.event.timestamp) {
+      this.fromNow = fromNow(nextProps.event.timestamp);
+    }
+  }
 
   onClose = () => {
     this.setState({ anchorEl: null });
@@ -100,13 +130,9 @@ class EventListItem extends React.Component {
   };
 
   render() {
-    const {
-      classes,
-      event: { entity, check, timestamp },
-      ...other
-    } = this.props;
+    const { classes, event: { entity, check } } = this.props;
     const { anchorEl } = this.state;
-    const time = moment(timestamp).fromNow();
+    const time = this.fromNow;
 
     return (
       <Typography component="div" className={classes.row}>
@@ -123,7 +149,6 @@ class EventListItem extends React.Component {
           <span className={classes.caption}>{entity.name}</span>
           <Chevron className={classes.chevron} />
           <span className={classes.caption}>{check.name}</span>
-          <div {...other} />
           <div className={classes.timeHolder}>
             Last ran<span className={classes.time}>&nbsp;{time}.</span>&nbsp;With
             an exit status of&nbsp;<span className={classes.time}>
@@ -166,17 +191,6 @@ class EventListItem extends React.Component {
     );
   }
 }
-
-EventListItem.propTypes = {
-  event: PropTypes.shape({
-    entity: PropTypes.shape({ id: "" }).isRequired,
-    check: PropTypes.shape({
-      name: "",
-      output: "",
-    }).isRequired,
-    timestamp: PropTypes.string.isRequired,
-  }).isRequired,
-};
 
 export default createFragmentContainer(
   withStyles(styles)(EventListItem),
