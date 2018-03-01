@@ -132,7 +132,7 @@ func TestEventMonitor(t *testing.T) {
 func TestCheckOccurrences(t *testing.T) {
 	testCases := []struct {
 		name                         string
-		status                       int32
+		status                       uint32
 		occurrences                  int64
 		history                      []types.CheckHistory
 		expectedOccurrences          int64

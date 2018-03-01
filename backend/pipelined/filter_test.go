@@ -44,7 +44,7 @@ func TestPipelinedFilter(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		status   int32
+		status   uint32
 		history  []types.CheckHistory
 		metrics  *types.Metrics
 		silenced []string
