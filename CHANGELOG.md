@@ -61,6 +61,7 @@ requests, the check should not duplicately execute after the proxy requests.
 - Fixed HookList `hooks` validation and updated `type` validation message to
 allow "0" as a valid type.
 - Events' check statuses & execution times are now properly added to CheckHistory.
+- Use uint32 for status so it's not empty when marshalling.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
