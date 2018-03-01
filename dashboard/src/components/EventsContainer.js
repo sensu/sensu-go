@@ -108,13 +108,13 @@ class EventsContainer extends React.Component {
     this.forceUpdate();
   };
 
-  resolve = action => () => {
-    console.log(action);
+  resolve = () => {
+    // for each item set as true in rowState -> resolve
   };
 
-  silence = action => () {
-
-  }
+  silence = () => {
+    // silence each item that is true in rowState
+  };
 
   // TODO revist this later
   requeryEntity = newValue => {
