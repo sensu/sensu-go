@@ -55,9 +55,6 @@ func (c *Check) Validate() error {
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}
-	if c.Status < 0 {
-		return errors.New("check status must be greater than or equal to 0")
-	}
 	if c.Cron != "" {
 		if c.Interval > 0 {
 			return errors.New("must only specify either an interval or a cron schedule")

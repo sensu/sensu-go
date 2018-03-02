@@ -101,7 +101,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	}
 
 	event.Check.Duration = ex.Duration
-	event.Check.Status = int32(ex.Status)
+	event.Check.Status = uint32(ex.Status)
 
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()

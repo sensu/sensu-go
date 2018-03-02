@@ -194,7 +194,7 @@ message Check {
   string state = 27;
 
   // Status is the exit status code produced by the check
-  int32 status = 28;
+  uint32 status = 28;
 
   // TotalStateChange indicates the total state change percentage for the
   // check's history
@@ -216,7 +216,7 @@ message Check {
 // CheckHistory is a record of a check execution and its status
 message CheckHistory {
   // Status is the exit status code produced by the check.
-  int32 status = 1;
+  uint32 status = 1;
 
   // Executed describes the time in which the check request was executed
   int64 executed = 2;

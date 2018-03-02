@@ -7,7 +7,7 @@ import (
 // CheckResult contains the 1.x compatible check result payload
 type CheckResult struct {
 	Client             string   `json:"client"`
-	Status             int32    `json:"status"`
+	Status             uint32   `json:"status"`
 	Command            string   `json:"command"`
 	Subscribers        []string `json:"subscribers"`
 	Interval           uint32   `json:"interval"`

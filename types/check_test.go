@@ -10,11 +10,6 @@ import (
 func TestCheckValidate(t *testing.T) {
 	var c Check
 
-	// Invalid status
-	c.Status = -1
-	assert.Error(t, c.Validate())
-	c.Status = 0
-
 	// Invalid interval
 	c.Interval = 0
 	assert.Error(t, c.Validate())

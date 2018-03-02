@@ -116,7 +116,7 @@ func cmpBySeverity(a, b *Event) bool {
 // We want the order of importance to be critical (1), warning (2), unknown (3),
 // and Ok (0) so we shift the check's status. If event is not a check sort to
 // very end.
-func deriveSeverity(e *Event) int32 {
+func deriveSeverity(e *Event) uint32 {
 	if e.Check != nil {
 		return (e.Check.Status + 3) % 4
 	}

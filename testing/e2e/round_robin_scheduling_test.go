@@ -90,7 +90,7 @@ func TestRoundRobinScheduling(t *testing.T) {
 
 	executed := make(map[int64]struct{})
 	for _, h := range histories {
-		assert.Equal(t, int32(0), h.Status)
+		assert.Equal(t, uint32(0), h.Status)
 		e := h.Executed
 		executed[e] = struct{}{}
 	}
