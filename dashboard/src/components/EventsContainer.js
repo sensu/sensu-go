@@ -13,6 +13,7 @@ import Checkbox from "material-ui/Checkbox";
 
 import EventsListItem from "./EventsListItem";
 import EventsContainerMenu from "./EventsContainerMenu";
+import ResolveEventMutation from "../mutations/ResolveEventMutation";
 
 const styles = theme => ({
   eventsContainer: {
@@ -49,9 +50,9 @@ const styles = theme => ({
 
 class EventsContainer extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.shape({ events: PropTypes.object }).isRequired,
+    relay: PropTypes.shape({ environment: PropTypes.object }).isRequired,
     router: routerShape.isRequired,
   };
 
@@ -62,10 +63,7 @@ class EventsContainer extends React.Component {
 
   // click checkbox for all items in list
   selectAll = () => {
-    const keys = map(
-      get(this.props.viewer, "events.edges", []),
-      edge => edge.node.id,
-    );
+    const keys = map(this.props.viewer.events.edges, edge => edge.node.id);
     // if every state is false or undefined, switch the header
     const newState = !this.eventsSelected();
     this.setState({
@@ -93,7 +91,21 @@ class EventsContainer extends React.Component {
   };
 
   resolve = () => {
-    // for each item set as true in rowState -> resolve
+    const selectedKeys = reduce(
+      this.state.rowState,
+      (selected, val, key) => (val ? [...selected, key] : selected),
+      [],
+    );
+
+    selectedKeys.forEach(key => {
+      ResolveEventMutation.commit(this.props.relay.environment, key, {
+        onCompleted: () => {
+          this.setState(({ rowState }) =>
+            Object.assign(rowState, { [key]: false }),
+          );
+        },
+      });
+    });
   };
 
   silence = () => {
@@ -130,8 +142,6 @@ class EventsContainer extends React.Component {
     const checks = get(viewer, "checks.edges", []);
     const checkNames = [...map(checks, edge => edge.node.name), "keepalive"];
     const statuses = [0, 1, 2, 3];
-
-    const allEventsSelected = this.allEventsSelected();
     const someEventsSelected = this.eventsSelected();
 
     return (
@@ -142,8 +152,8 @@ class EventsContainer extends React.Component {
               color="secondary"
               className={classes.checkbox}
               onClick={this.selectAll}
-              checked={allEventsSelected}
-              indeterminate={!allEventsSelected && someEventsSelected}
+              checked={false}
+              indeterminate={someEventsSelected}
             />
           </span>
           <div style={someEventsSelected ? {} : { display: "none" }}>

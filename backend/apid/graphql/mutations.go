@@ -140,13 +140,15 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 		return nil, err
 	}
 
-	event.Check.Status = 0
-	event.Check.Output = "Resolved manually by " + p.Args.Input.Source
-	event.Timestamp = int64(time.Now().Unix())
+	if event.Check != nil && event.Check.Status > 0 {
+		event.Check.Status = 0
+		event.Check.Output = "Manually resolved manually with " + p.Args.Input.Source
+		event.Timestamp = int64(time.Now().Unix())
 
-	err = r.eventController.Create(ctx, *event)
-	if err != nil {
-		return nil, err
+		err = r.eventController.Create(ctx, *event)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return map[string]interface{}{

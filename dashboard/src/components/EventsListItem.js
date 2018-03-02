@@ -12,6 +12,7 @@ import Checkbox from "material-ui/Checkbox";
 import Chevron from "material-ui-icons/ChevronRight";
 import Disclosure from "material-ui-icons/MoreVert";
 
+import ResolveEventMutation from "../mutations/ResolveEventMutation";
 import EventStatus from "./EventStatus";
 
 const styles = theme => ({
@@ -73,11 +74,11 @@ function fromNow(date) {
 
 class EventListItem extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     checked: PropTypes.bool.isRequired,
     onChange: PropTypes.func.isRequired,
 
+    relay: PropTypes.object.isRequired,
     event: PropTypes.shape({
       entity: PropTypes.shape({
         name: PropTypes.string.isRequired,
@@ -123,9 +124,9 @@ class EventListItem extends React.Component {
     this.setState({ anchorEl: null });
   };
 
-  resolve = event => () => {
-    // eslint-disable-next-line
-    console.info("event", event);
+  resolve = () => {
+    const { relay, event } = this.props;
+    ResolveEventMutation.commit(relay.environment, event.id, {});
     this.setState({ anchorEl: null });
   };
 
@@ -182,7 +183,7 @@ class EventListItem extends React.Component {
             >
               Silence Check
             </MenuItem>
-            <MenuItem key={"resolve"} onClick={this.resolve("event")}>
+            <MenuItem key={"resolve"} onClick={this.resolve}>
               Resolve
             </MenuItem>
           </Menu>
@@ -197,6 +198,7 @@ export default createFragmentContainer(
   graphql`
     fragment EventsListItem_event on Event {
       ... on Event {
+        id
         timestamp
         check {
           status
