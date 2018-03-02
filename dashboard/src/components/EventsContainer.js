@@ -51,8 +51,14 @@ const styles = theme => ({
 class EventsContainer extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.shape({ events: PropTypes.object }).isRequired,
     relay: PropTypes.shape({ environment: PropTypes.object }).isRequired,
+    viewer: PropTypes.shape({
+      checks: PropTypes.object,
+      entities: PropTypes.object,
+    }).isRequired,
+    environment: PropTypes.shape({
+      events: PropTypes.object,
+    }).isRequired,
     router: routerShape.isRequired,
   };
 
@@ -63,7 +69,7 @@ class EventsContainer extends React.Component {
 
   // click checkbox for all items in list
   selectAll = () => {
-    const keys = map(this.props.viewer.events.edges, edge => edge.node.id);
+    const keys = map(this.props.environment.events.edges, edge => edge.node.id);
     // if every state is false or undefined, switch the header
     const newState = !this.eventsSelected();
     this.setState({
@@ -82,10 +88,11 @@ class EventsContainer extends React.Component {
   };
 
   eventsSelected = () => some(this.state.rowState, Boolean);
+
   allEventsSelected = () => {
     const { rowState } = this.state;
     return (
-      get(this.props.viewer, "events.edges", []).length ===
+      this.props.environment.events.edges.length ===
         Object.keys(rowState).length && every(rowState, Boolean)
     );
   };
@@ -132,11 +139,11 @@ class EventsContainer extends React.Component {
   };
 
   render() {
-    const { classes, viewer } = this.props;
+    const { classes, viewer, environment } = this.props;
     const { rowState } = this.state;
 
     // TODO maybe revisit for pagination issues
-    const events = get(viewer, "events.edges", []);
+    const events = get(environment, "events.edges", []);
     const entities = get(viewer, "entities.edges", []);
     const entityNames = map(entities, edge => edge.node.name);
     const checks = get(viewer, "checks.edges", []);
@@ -216,7 +223,10 @@ export default createFragmentContainer(
           }
         }
       }
-      events(first: 1000, filter: $filter) {
+    }
+
+    fragment EventsContainer_environment on Environment {
+      events(first: 100, filter: $filter) {
         edges {
           node {
             id

@@ -32,6 +32,24 @@ type QueryViewerFieldResolver interface {
 	Viewer(p graphql.ResolveParams) (interface{}, error)
 }
 
+// QueryEnvironmentFieldResolverArgs contains arguments provided to environment when selected
+type QueryEnvironmentFieldResolverArgs struct {
+	Environment  string // Environment - self descriptive
+	Organization string // Organization - self descriptive
+}
+
+// QueryEnvironmentFieldResolverParams contains contextual info to resolve environment field
+type QueryEnvironmentFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryEnvironmentFieldResolverArgs
+}
+
+// QueryEnvironmentFieldResolver implement to resolve requests for the Query's environment field.
+type QueryEnvironmentFieldResolver interface {
+	// Environment implements response to request for environment field.
+	Environment(p QueryEnvironmentFieldResolverParams) (interface{}, error)
+}
+
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
 type QueryNodeFieldResolverArgs struct {
 	ID interface{} // ID - The ID of an object.
@@ -112,6 +130,7 @@ type QueryNodeFieldResolver interface {
 //
 type QueryFieldResolvers interface {
 	QueryViewerFieldResolver
+	QueryEnvironmentFieldResolver
 	QueryNodeFieldResolver
 }
 
@@ -168,6 +187,12 @@ func (_ QueryAliases) Viewer(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
+// Environment implements response to request for 'environment' field.
+func (_ QueryAliases) Environment(p QueryEnvironmentFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Node implements response to request for 'node' field.
 func (_ QueryAliases) Node(p QueryNodeFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -188,6 +213,19 @@ func _ObjTypeQueryViewerHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeQueryEnvironmentHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryEnvironmentFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryEnvironmentFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Environment(frp)
+	}
+}
+
 func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryNodeFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -205,6 +243,22 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The query root of Sensu's GraphQL interface.",
 		Fields: graphql1.Fields{
+			"environment": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"environment": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+					"organization": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "Environment fetches the environment associated with the given\norganization & environment arguments.",
+				Name:              "environment",
+				Type:              graphql.OutputType("Environment"),
+			},
 			"node": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"id": &graphql1.ArgumentConfig{
 					Description: "The ID of an object.",
@@ -240,7 +294,8 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeQueryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"node":   _ObjTypeQueryNodeHandler,
-		"viewer": _ObjTypeQueryViewerHandler,
+		"environment": _ObjTypeQueryEnvironmentHandler,
+		"node":        _ObjTypeQueryNodeHandler,
+		"viewer":      _ObjTypeQueryViewerHandler,
 	},
 }

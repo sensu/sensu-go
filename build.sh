@@ -303,6 +303,15 @@ prompt_confirm() {
     esac
 }
 
+check_deploy() {
+    echo "Checking..."
+
+    # Prompt for confirmation if deploying outside Travis
+    if [[ -z "${TRAVIS}" || "${TRAVIS}" != true ]]; then
+        prompt_confirm "You are trying to deploy outside of Travis. Are you sure?" || exit 0
+    fi
+}
+
 deploy() {
     echo "Deploying..."
 
@@ -323,58 +332,75 @@ deploy() {
     docker_commands push versioned
 }
 
-if [ "$cmd" == "build" ]; then
-    build_commands
-elif [ "$cmd" == "build_agent" ]; then
-    build_command agent
-elif [ "$cmd" == "build_backend" ]; then
-    build_command backend
-elif [ "$cmd" == "build_cli" ]; then
-    build_command cli
-elif [ "$cmd" == "build_dashboard" ]; then
-    install_dashboard_deps
-    build_dashboard
-    bundle_static_assets
-elif [ "$cmd" == "build_tools" ]; then
-    build_tools
-elif [ "$cmd" == "dashboard" ]; then
-    install_dashboard_deps
-    test_dashboard
-elif [ "$cmd" == "dashboard-ci" ]; then
-    install_yarn
-    install_dashboard_deps
-    test_dashboard
-    ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
-elif [ "$cmd" == "deploy" ]; then
-    if [[ -z "${TRAVIS}" || "${TRAVIS}" != true ]]; then
-        prompt_confirm "You are trying to deploy outside of Travis. Are you sure?" || exit 0
-    fi
-    deploy
-elif [ "$cmd" == "deps" ]; then
-    install_deps
-elif [ "$cmd" == "docker" ]; then
-    docker_commands "${@:2}"
-elif [ "$cmd" == "e2e" ]; then
-    # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
-    build_commands
-    e2e_commands "${@:2}"
-elif [ "$cmd" == "lint" ]; then
-    linter_commands
-elif [ "$cmd" == "none" ]; then
-    echo "noop"
-elif [ "$cmd" == "quality" ]; then
-    linter_commands
-    unit_test_commands
-elif [ "$cmd" == "unit" ]; then
-    unit_test_commands
-elif [ "$cmd" == "integration" ]; then
-    integration_test_commands
-else
-    install_deps
-    linter_commands
-    build_tools
-    unit_test_commands
-    integration_test_commands
-    build_commands
-    e2e_commands
-fi
+case "$cmd" in
+    "build")
+        build_commands
+        ;;
+    "build_agent")
+        build_command agent
+        ;;
+    "build_backend")
+        build_command backend
+        ;;
+    "build_cli")
+        build_command cli
+        ;;
+    "build_dashboard")
+        install_dashboard_deps
+        build_dashboard
+        bundle_static_assets
+        ;;
+    "build_tools")
+        build_tools
+        ;;
+    "dashboard")
+        install_dashboard_deps
+        test_dashboard
+        ;;
+    "dashboard-ci")
+        install_yarn
+        install_dashboard_deps
+        test_dashboard
+        ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
+        ;;
+    "deploy")
+        check_deploy
+        deploy
+        ;;
+    "deps")
+        install_deps
+        ;;
+    "docker")
+        docker_commands "${@:2}"
+        ;;
+    "e2e")
+        # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
+        build_commands
+        e2e_commands "${@:2}"
+        ;;
+    "lint")
+        linter_commands
+        ;;
+    "none")
+        echo "noop"
+        ;;
+    "quality")
+        linter_commands
+        unit_test_commands
+        ;;
+    "unit")
+        unit_test_commands
+        ;;
+    "integration")
+        integration_test_commands
+        ;;
+    *)
+        install_deps
+        linter_commands
+        build_tools
+        unit_test_commands
+        integration_test_commands
+        build_commands
+        e2e_commands
+        ;;
+esac

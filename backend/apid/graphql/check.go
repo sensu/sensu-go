@@ -1,6 +1,8 @@
 package graphql
 
 import (
+	"time"
+
 	"github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
@@ -83,12 +85,28 @@ func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	return ok
 }
 
+// Executed implements response to request for 'executed' field.
+func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
+	c := p.Source.(*types.Check)
+	return time.Unix(c.Executed, 0), nil
+}
+
 //
 // Implement CheckHistoryFieldResolvers
 //
 
-type checkHistoryImpl struct {
-	schema.CheckHistoryAliases
+type checkHistoryImpl struct{}
+
+// Status implements response to request for 'status' field.
+func (r *checkHistoryImpl) Status(p graphql.ResolveParams) (int, error) {
+	h := p.Source.(types.CheckHistory)
+	return int(h.Status), nil
+}
+
+// Executed implements response to request for 'executed' field.
+func (r *checkHistoryImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
+	h := p.Source.(types.CheckHistory)
+	return time.Unix(h.Executed, 0), nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

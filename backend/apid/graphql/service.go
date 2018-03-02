@@ -24,6 +24,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterDeleteRecordPayload(svc, &deleteRecordPayload{})
 	schema.RegisterEnvironment(svc, newEnvImpl(store))
 	schema.RegisterEvent(svc, &eventImpl{})
+	schema.RegisterEventsListOrder(svc)
 	schema.RegisterHandler(svc, newHandlerImpl(store))
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterQuery(svc, newQueryImpl(store, nodeResolver))

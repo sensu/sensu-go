@@ -21,7 +21,10 @@ export default makeRouteConfig(
         path="events"
         Component={EventsPage}
         query={EventsPage.query}
-        prepareVariables={(_, route) => route.location.query}
+        prepareVariables={(params, route) => ({
+          ...params,
+          ...route.location.query,
+        })}
       />
       <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
       <Route path="query-explorer" Component={QueryPage} />

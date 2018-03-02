@@ -154,5 +154,5 @@ type CheckHistory {
   status: Int
 
   "Executed describes the time in which the check request was executed"
-  executed: Int
+  executed: DateTime
 }
