@@ -12,51 +12,46 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type mockDeregisterer struct {
 	mock.Mock
 }
 
-type KeepalivedTestSuite struct {
-	suite.Suite
+type keepalivedTest struct {
 	Keepalived   *Keepalived
 	MessageBus   messaging.MessageBus
 	Store        *mockstore.MockStore
 	Deregisterer *mockDeregisterer
 }
 
-func (suite *KeepalivedTestSuite) SetupTest() {
-	suite.MessageBus = &messaging.WizardBus{}
-	suite.NoError(suite.MessageBus.Start())
-
-	mockStore := &mockstore.MockStore{}
-	dereg := &mockDeregisterer{}
-
-	suite.Deregisterer = dereg
-	suite.Store = mockStore
-
-	keepalived := &Keepalived{
-		Store:      suite.Store,
-		MessageBus: suite.MessageBus,
+func newKeepalivedTest(t *testing.T) *keepalivedTest {
+	store := &mockstore.MockStore{}
+	deregisterer := &mockDeregisterer{}
+	bus := &messaging.WizardBus{}
+	test := &keepalivedTest{
+		MessageBus:   bus,
+		Store:        store,
+		Deregisterer: deregisterer,
+		Keepalived: &Keepalived{
+			Store:      store,
+			MessageBus: bus,
+			MonitorFactory: func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
+				mon := &mockmonitor.MockMonitor{}
+				mon.On("HandleUpdate", mock.Anything).Return(nil)
+				return mon
+			},
+		},
 	}
-
-	keepalived.MonitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
-		mon := &mockmonitor.MockMonitor{}
-		mon.On("HandleUpdate", mock.Anything).Return(nil)
-		return mon
-	}
-
-	suite.Keepalived = keepalived
+	require.NoError(t, test.MessageBus.Start())
+	return test
 }
 
-func (suite *KeepalivedTestSuite) AfterTest() {
-	suite.NoError(suite.MessageBus.Stop())
-	suite.NoError(suite.Keepalived.Stop())
+func (k *keepalivedTest) Dispose(t *testing.T) {
+	assert.NoError(t, k.MessageBus.Stop())
 }
 
-func (suite *KeepalivedTestSuite) TestStartStop() {
+func TestStartStop(t *testing.T) {
 	failingEvent := func(e *types.Event) *types.Event {
 		e.Check.Status = 1
 		return e
@@ -116,14 +111,16 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 		},
 	}
 
-	t := suite.T()
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			k := &Keepalived{}
-			suite.Error(k.Start())
+			test := newKeepalivedTest(t)
+			defer test.Dispose(t)
 
-			k.MessageBus = suite.MessageBus
-			suite.Error(k.Start())
+			k := &Keepalived{}
+			assert.Error(t, k.Start())
+
+			k.MessageBus = test.MessageBus
+			assert.Error(t, k.Start())
 
 			store := &mockstore.MockStore{}
 			store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
@@ -135,47 +132,41 @@ func (suite *KeepalivedTestSuite) TestStartStop() {
 			}
 
 			k.Store = store
-			suite.NoError(k.Start())
-			suite.NotNil(k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
+			assert.NoError(t, k.Start())
+			assert.NotNil(t, k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
 
-			suite.NoError(k.Status())
+			assert.NoError(t, k.Status())
 
 			var err error
 			select {
 			case err = <-k.Err():
 			default:
 			}
-			suite.NoError(err)
-
-			suite.NoError(k.Stop())
-
-			suite.Equal(tc.monitors, len(k.monitors))
+			assert.NoError(t, err)
+			assert.NoError(t, k.Stop())
+			assert.Equal(t, tc.monitors, len(k.monitors))
 		})
 	}
-
 }
 
-func (suite *KeepalivedTestSuite) TestEventProcessing() {
-	suite.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
+func TestEventProcessing(t *testing.T) {
+	test := newKeepalivedTest(t)
+	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
 	mon := &mockmonitor.MockMonitor{}
 	mon.On("HandleUpdate", mock.Anything).Return(nil)
-	suite.Keepalived.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+	test.Keepalived.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
 		return mon
 	}
-	suite.NoError(suite.Keepalived.Start())
+	require.NoError(t, test.Keepalived.Start())
 	event := types.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
-	suite.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
-	suite.Store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
+	test.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
+	test.Store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
 
-	suite.Keepalived.keepaliveChan <- event
-	suite.NoError(suite.Keepalived.Stop())
-	mon.AssertCalled(suite.T(), "HandleUpdate", event)
-}
-
-func TestKeepalivedSuite(t *testing.T) {
-	suite.Run(t, new(KeepalivedTestSuite))
+	test.Keepalived.keepaliveChan <- event
+	assert.NoError(t, test.Keepalived.Stop())
+	mon.AssertCalled(t, "HandleUpdate", event)
 }
 
 func TestProcessRegistration(t *testing.T) {

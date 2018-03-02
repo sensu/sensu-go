@@ -8,93 +8,98 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type AssetSetTestSuite struct {
-	suite.Suite
-
-	cacheDir    string
-	asset       *RuntimeAsset
-	assetSet    *RuntimeAssetSet
-	assetServer *httptest.Server
+type assetTest struct {
+	cacheDir string
+	asset    *RuntimeAsset
+	assetSet *RuntimeAssetSet
 }
 
-func (suite *AssetSetTestSuite) SetupTest() {
-	// Ex script
+func (a *assetTest) Dispose(t *testing.T) {
+	// Remove tmpdir
+	_ = os.RemoveAll(a.cacheDir)
+}
+
+func newAssetTest(t *testing.T) (*httptest.Server, *assetTest) {
+	test := &assetTest{}
 	exBody := readFixture("rubby-on-rails.tar")
 	exSha512 := stringToSHA512(exBody)
-
-	// Setup a fake server to fake retrieving the asset
-	suite.assetServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text")
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Content-Type", "text/plain")
 		fmt.Fprintf(w, exBody)
 	}))
+	// Ex script
 
 	// Ex. asset
 	asset := types.FixtureAsset("asset")
 	asset.Name = "ruby24"
 	asset.Sha512 = exSha512
-	asset.URL = suite.assetServer.URL + "/myfile"
+	asset.URL = server.URL + "/myfile"
 
 	// Create a fake cache directory so that we have a safe place to test results
-	tmpDir, _ := ioutil.TempDir(os.TempDir(), "agent-deps-")
-	suite.cacheDir = tmpDir
+	tmpDir, err := ioutil.TempDir(os.TempDir(), fmt.Sprintf("agent-deps-%d", time.Now().UnixNano()))
+	require.NoError(t, err)
+	test.cacheDir = tmpDir
 
 	// Ex. set
 	runtimeAsset := NewRuntimeAsset(asset, tmpDir)
 	runtimeSet := NewRuntimeAssetSet([]*RuntimeAsset{runtimeAsset}, []string{})
-	suite.asset = runtimeAsset
-	suite.assetSet = runtimeSet
+	test.asset = runtimeAsset
+	test.assetSet = runtimeSet
+
+	return server, test
 }
 
-func (suite *AssetSetTestSuite) AfterTest() {
-	// Shutdown asset server
-	suite.assetServer.Close()
-
-	// Remove tmpdir
-	suite.NoError(os.RemoveAll(suite.cacheDir))
-}
-
-func (suite *AssetSetTestSuite) TestNewSet() {
+func TestNewSet(t *testing.T) {
 	asset := NewRuntimeAsset(types.FixtureAsset("asset"), "test")
 	set := NewRuntimeAssetSet([]*RuntimeAsset{asset}, []string{"TEST="})
 
-	suite.NotNil(set)
-	suite.NotEmpty(set.env)
-	suite.NotEmpty(set.assets)
+	assert.NotNil(t, set)
+	assert.NotEmpty(t, set.env)
+	assert.NotEmpty(t, set.assets)
 }
 
-func (suite *AssetSetTestSuite) TestManagerPaths() {
-	paths := suite.assetSet.paths()
-	suite.NotEmpty(paths)
-	suite.Contains(paths, suite.asset.path)
+func TestManagerPaths(t *testing.T) {
+	server, test := newAssetTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
+
+	paths := test.assetSet.paths()
+	assert.NotEmpty(t, paths)
+	assert.Contains(t, paths, test.asset.path)
 }
 
-func (suite *AssetSetTestSuite) TestComputeEnv() {
-	suite.asset.path = filepath.Join("tmp", "test")
-	suite.assetSet.computeEnv([]string{
+func TestComputeEnv(t *testing.T) {
+	server, test := newAssetTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
+
+	test.asset.path = filepath.Join("tmp", "test")
+	test.assetSet.computeEnv([]string{
 		"PATH=tmp/bin",
 		"LD_LIBRARY_PATH=tmp/lib",
 		"CPATH=tmp/include",
 		"CAKES=are.tasty",
 	})
 
-	resEnv := suite.assetSet.Env()
-	suite.NotEmpty(resEnv)
-	suite.Contains(resEnv[0], suite.asset.path)
-	suite.Contains(resEnv[1], suite.asset.path)
-	suite.Contains(resEnv[2], suite.asset.path)
-	suite.NotContains(resEnv[3], suite.asset.path)
+	resEnv := test.assetSet.Env()
+	assert.NotEmpty(t, resEnv)
+	assert.Contains(t, resEnv[0], test.asset.path)
+	assert.Contains(t, resEnv[1], test.asset.path)
+	assert.Contains(t, resEnv[2], test.asset.path)
+	assert.NotContains(t, resEnv[3], test.asset.path)
 }
 
-func (suite *AssetSetTestSuite) TestManagerInstall() {
-	err := suite.assetSet.InstallAll()
-	suite.NoError(err)
-}
+func TestManagerInstall(t *testing.T) {
+	server, test := newAssetTest(t)
+	defer server.Close()
+	defer test.Dispose(t)
 
-func TestRuntimeAssetSet(t *testing.T) {
-	suite.Run(t, new(AssetSetTestSuite))
+	require.NoError(t, test.assetSet.InstallAll())
 }

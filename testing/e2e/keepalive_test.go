@@ -12,20 +12,21 @@ import (
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/require"
 )
 
-type EventTestSuite struct {
-	suite.Suite
+type eventsTest struct {
 	bep      *backendProcess
 	cleanup  func()
 	ap       *agentProcess
 	sensuctl *sensuCtl
 }
 
-func (suite *EventTestSuite) SetupSuite() {
+func newEventsTest(t *testing.T) *eventsTest {
+	test := &eventsTest{}
+
 	// Start the backend
-	backend, backendCleanup := newBackend(suite.T())
+	backend, backendCleanup := newBackend(t)
 
 	// Initializes sensuctl
 	sensuctl, sensuctlCleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
@@ -35,12 +36,13 @@ func (suite *EventTestSuite) SetupSuite() {
 		ID:          "TestKeepalives",
 		BackendURLs: []string{backend.WSURL},
 	}
-	agent, agentCleanup := newAgent(agentConfig, sensuctl, suite.T())
+	agent, agentCleanup := newAgent(agentConfig, sensuctl, t)
 
-	suite.ap = agent
-	suite.bep = backend
-	suite.sensuctl = sensuctl
-	suite.cleanup = func() {
+	test.ap = agent
+	test.bep = backend
+	test.sensuctl = sensuctl
+
+	test.cleanup = func() {
 		backendCleanup()
 		agentCleanup()
 		sensuctlCleanup()
@@ -49,20 +51,22 @@ func (suite *EventTestSuite) SetupSuite() {
 	// Allow time agent connection to be established, etcd to start,
 	// keepalive to be sent, etc.
 	time.Sleep(10 * time.Second)
+
+	return test
 }
 
-func (suite *EventTestSuite) TearDownSuite() {
-	suite.cleanup()
-}
+func TestKeepaliveEvent(t *testing.T) {
+	test := newEventsTest(t)
+	defer test.cleanup()
+	t.Parallel()
 
-func (suite *EventTestSuite) TestKeepaliveEvent() {
-	assert := suite.Assert()
+	assert := assert.New(t)
 
-	output, err := suite.sensuctl.run("event", "list")
+	output, err := test.sensuctl.run("event", "list")
 	assert.NoError(err)
 
 	events := []types.Event{}
-	suite.NoError(json.Unmarshal(output, &events))
+	assert.NoError(json.Unmarshal(output, &events))
 
 	assert.NotZero(len(events))
 
@@ -78,15 +82,18 @@ func (suite *EventTestSuite) TestKeepaliveEvent() {
 	assert.True(seen)
 }
 
-func (suite *EventTestSuite) TestEntity() {
-	assert := suite.Assert()
+func TestEntity(t *testing.T) {
+	test := newEventsTest(t)
+	defer test.cleanup()
+	assert := assert.New(t)
+	t.Parallel()
 
 	// Retrieve the entitites
-	output, err := suite.sensuctl.run("entity", "list")
-	assert.NoError(err)
+	output, err := test.sensuctl.run("entity", "list")
+	require.NoError(t, err)
 
 	entities := []types.Entity{}
-	suite.NoError(json.Unmarshal(output, &entities))
+	assert.NoError(json.Unmarshal(output, &entities))
 
 	assert.Equal(1, len(entities))
 	assert.Equal("TestKeepalives", entities[0].ID)
@@ -95,8 +102,11 @@ func (suite *EventTestSuite) TestEntity() {
 	assert.NotZero(entities[0].LastSeen)
 }
 
-func (suite *EventTestSuite) TestCheck() {
-	assert := suite.Assert()
+func TestCheck(t *testing.T) {
+	test := newEventsTest(t)
+	defer test.cleanup()
+	assert := assert.New(t)
+	t.Parallel()
 
 	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
 	falseAbsPath, err := filepath.Abs(falsePath)
@@ -105,7 +115,7 @@ func (suite *EventTestSuite) TestCheck() {
 
 	// Create a standard check
 	checkName := "test_check"
-	_, err = suite.sensuctl.run("check", "create", checkName,
+	_, err = test.sensuctl.run("check", "create", checkName,
 		"--command", falseAbsPath,
 		"--interval", "1",
 		"--subscriptions", "test",
@@ -114,20 +124,20 @@ func (suite *EventTestSuite) TestCheck() {
 	assert.NoError(err)
 
 	// Make sure the check has been properly created
-	output, err := suite.sensuctl.run("check", "info", checkName)
-	assert.NoError(err)
+	output, err := test.sensuctl.run("check", "info", checkName)
+	require.NoError(t, err)
 
 	result := types.CheckConfig{}
-	suite.NoError(json.Unmarshal(output, &result))
+	assert.NoError(json.Unmarshal(output, &result))
 	assert.Equal(result.Name, checkName)
 
 	// Allow enough time for the check to run.
 	time.Sleep(20 * time.Second)
-	output, err = suite.sensuctl.run("event", "info", suite.ap.ID, checkName)
-	assert.NoError(err)
+	output, err = test.sensuctl.run("event", "info", test.ap.ID, checkName)
+	require.NoError(t, err)
 
 	event := types.Event{}
-	suite.NoError(json.Unmarshal(output, &event))
+	assert.NoError(json.Unmarshal(output, &event))
 	assert.NotNil(event)
 	assert.NotNil(event.Check)
 	assert.NotNil(event.Entity)
@@ -135,34 +145,31 @@ func (suite *EventTestSuite) TestCheck() {
 	assert.Equal(checkName, event.Check.Name)
 }
 
-func (suite *EventTestSuite) TestHTTPAPI() {
-	assert := suite.Assert()
+func TestHTTPAPI(t *testing.T) {
+	test := newEventsTest(t)
+	defer test.cleanup()
+	assert := assert.New(t)
+	t.Parallel()
 
-	newEvent := types.FixtureEvent(suite.ap.ID, "proxy-check")
+	newEvent := types.FixtureEvent(test.ap.ID, "proxy-check")
 	encoded, _ := json.Marshal(newEvent)
-	url := fmt.Sprintf("http://127.0.0.1:%d/events", suite.ap.APIPort)
+	url := fmt.Sprintf("http://127.0.0.1:%d/events", test.ap.APIPort)
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(encoded))
 
 	client := &http.Client{}
 	res, err := client.Do(req)
-	assert.NoError(err)
+	require.NoError(t, err)
 	defer func() {
-		suite.NoError(res.Body.Close())
+		assert.NoError(res.Body.Close())
 	}()
 
 	// Give it a second to receive the new event
 	time.Sleep(5 * time.Second)
 
 	// Make sure the new event has been received
-	output, err := suite.sensuctl.run("event", "info", suite.ap.ID, "proxy-check")
+	output, err := test.sensuctl.run("event", "info", test.ap.ID, "proxy-check")
 	assert.NoError(err, string(output))
 	assert.NotNil(output)
-}
-
-func TestEventTestSuite(t *testing.T) {
-	t.Parallel()
-
-	suite.Run(t, new(EventTestSuite))
 }
 
 func TestKeepaliveTimeout(t *testing.T) {

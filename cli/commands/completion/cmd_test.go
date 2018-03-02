@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommand(t *testing.T) {
@@ -20,104 +20,110 @@ func TestCommand(t *testing.T) {
 	assert.Regexp("shell completion code", cmd.Short)
 }
 
-type ExecutorSuite struct {
-	suite.Suite
+type executorTest struct {
 	exec    *completionExecutor
 	rootCmd *cobra.Command
 	cmd     *cobra.Command
 	out     *exWriter
 }
 
-func (suite *ExecutorSuite) SetupTest() {
-	suite.rootCmd = &cobra.Command{
+func newExecutorTest() *executorTest {
+	test := &executorTest{}
+	test.rootCmd = &cobra.Command{
 		Use:          "sensuctl",
 		Short:        "sensuctl test test tests",
 		SilenceUsage: true,
 	}
-	suite.cmd = Command(suite.rootCmd)
-	suite.exec = &completionExecutor{rootCmd: suite.rootCmd}
+	test.cmd = Command(test.rootCmd)
+	test.exec = &completionExecutor{rootCmd: test.rootCmd}
 
-	suite.out = &exWriter{}
-	suite.cmd.SetOutput(suite.out)
-	suite.rootCmd.SetOutput(suite.out)
+	test.out = &exWriter{}
+	test.cmd.SetOutput(test.out)
+	test.rootCmd.SetOutput(test.out)
+
+	return test
 }
 
-func (suite *ExecutorSuite) TestRunWithNoArguments() {
-	err := suite.exec.run(suite.cmd, []string{})
-	out := suite.out.result
+func TestRunWithNoArguments(t *testing.T) {
+	test := newExecutorTest()
+	err := test.exec.run(test.cmd, []string{})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "help")
-	suite.Nil(err)
+	require.NoError(t, err)
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "help")
 }
 
-func (suite *ExecutorSuite) TestRunWithArgZsh() {
-	err := suite.exec.run(suite.cmd, []string{"zsh"})
-	out := suite.out.result
+func TestRunWithArgZsh(t *testing.T) {
+	test := newExecutorTest()
+	err := test.exec.run(test.cmd, []string{"zsh"})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "BASH_COMPLETION_EOF")
-	suite.Contains(out, "convert_bash_to_zsh")
-	suite.Nil(err)
+	require.NoError(t, err)
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "BASH_COMPLETION_EOF")
+	assert.Contains(t, out, "convert_bash_to_zsh")
 }
 
-func (suite *ExecutorSuite) TestRunWithArgBash() {
-	err := suite.exec.run(suite.cmd, []string{"bash"})
-	out := suite.out.result
+func TestRunWithArgBash(t *testing.T) {
+	test := newExecutorTest()
+	err := test.exec.run(test.cmd, []string{"bash"})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "_init_completion")
-	suite.NoError(err)
+	require.NoError(t, err)
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "_init_completion")
 }
 
-func (suite *ExecutorSuite) TestRunWithBadArg() {
-	err := suite.exec.run(suite.cmd, []string{"fish"})
-	out := suite.out.result
+func TestRunWithBadArg(t *testing.T) {
+	test := newExecutorTest()
+	err := test.exec.run(test.cmd, []string{"fish"})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "unknown shell")
-	suite.Contains(out, "usage")
-	suite.Nil(err)
+	require.NoError(t, err)
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "unknown shell")
+	assert.Contains(t, out, "usage")
 }
 
-func (suite *ExecutorSuite) TestHelpWithNoArgs() {
-	suite.exec.runHelp(suite.cmd, []string{"completion"})
-	out := suite.out.result
+func TestHelpWithNoArgs(t *testing.T) {
+	test := newExecutorTest()
+	test.exec.runHelp(test.cmd, []string{"completion"})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "Output shell completion code for the given shell")
-	suite.Contains(out, "help")
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "Output shell completion code for the given shell")
+	assert.Contains(t, out, "help")
 }
 
-func (suite *ExecutorSuite) TestHelpWithZsh() {
-	suite.exec.runHelp(suite.cmd, []string{"completion", "zsh"})
-	out := suite.out.result
+func TestHelpWithZsh(t *testing.T) {
+	test := newExecutorTest()
+	test.exec.runHelp(test.cmd, []string{"completion", "zsh"})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "Add the following")
-	suite.Contains(out, "zshrc")
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "Add the following")
+	assert.Contains(t, out, "zshrc")
 }
 
-func (suite *ExecutorSuite) TestHelpWithBash() {
-	suite.exec.runHelp(suite.cmd, []string{"completion", "bash"})
-	out := suite.out.result
+func TestHelpWithBash(t *testing.T) {
+	test := newExecutorTest()
+	test.exec.runHelp(test.cmd, []string{"completion", "bash"})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "add the following")
-	suite.Contains(out, "bash_profile")
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "add the following")
+	assert.Contains(t, out, "bash_profile")
 }
 
-func (suite *ExecutorSuite) TestHelpWithBadArg() {
-	suite.exec.runHelp(suite.cmd, []string{"completion", "fish"})
-	out := suite.out.result
+func TestHelpWithBadArg(t *testing.T) {
+	test := newExecutorTest()
+	test.exec.runHelp(test.cmd, []string{"completion", "fish"})
+	out := test.out.result
 
-	suite.NotEmpty(out)
-	suite.Contains(out, "unknown shell")
-	suite.Contains(out, "help")
-}
-
-func TestRunExecSuite(t *testing.T) {
-	suite.Run(t, new(ExecutorSuite))
+	require.NotEmpty(t, out)
+	assert.Contains(t, out, "unknown shell")
+	assert.Contains(t, out, "help")
 }
 
 type exWriter struct {
