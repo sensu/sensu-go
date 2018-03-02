@@ -60,7 +60,7 @@ func TestEventdMonitor(t *testing.T) {
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}
-	assert.Equal(t, int32(0), okEvent.Check.Status)
+	assert.Equal(t, uint32(0), okEvent.Check.Status)
 
 	msg, ok = <-eventChan
 	if !ok {
@@ -70,5 +70,5 @@ func TestEventdMonitor(t *testing.T) {
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}
-	assert.Equal(t, int32(1), warnEvent.Check.Status)
+	assert.Equal(t, uint32(1), warnEvent.Check.Status)
 }
