@@ -245,13 +245,17 @@ consistent. The following is a list of standard names for common subcommands.
 
 ## Subcommand Conventions
 
-### Lists
+### Create
 
-- The "at a glance" view.
-- Use a table element. [details](#table).
-- Highlight primary identifier by using the colour blue. [details](#colour-elems).
-- Highlight any values important values with red. (eg. failing check status.) [details](#colour-elems).
-- colspan is limited; limit columns to only the most important ones.
+- Support creation through an interactive mode. [details](#interactive-prompts).
+- Support creation through arguments and flags.
+- Validate input before firing POST request.
+- As much as possible return helpful error messages.
+- "Created." message should be returned on success.
+
+### Delete
+
+TODO
 
 ### Info
 
@@ -263,19 +267,15 @@ consistent. The following is a list of standard names for common subcommands.
 - Use a list element when displaying slices with many entries or entries with
   long names.
 
-### Create
+### Lists
 
-- Support creation through an interactive mode. [details](#interactive-prompts).
-- Support creation through arguments and flags.
-- Validate input before firing POST request.
-- As much as possible return helpful error messages.
-- "Created." message should be returned on success.
+- The "at a glance" view.
+- Use a table element. [details](#table).
+- Highlight primary identifier by using the colour blue. [details](#colour-elems).
+- Highlight any values important values with red. (eg. failing check status.) [details](#colour-elems).
+- colspan is limited; limit columns to only the most important ones.
 
 ### Update
-
-TODO
-
-### Delete
 
 TODO
 
