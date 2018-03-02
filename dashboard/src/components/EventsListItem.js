@@ -65,8 +65,8 @@ const styles = theme => ({
 });
 
 function fromNow(date) {
-  const delta = new Date() - new Date(date);
-  if (delta > 0) {
+  const delta = new Date(date) - new Date();
+  if (delta < 0) {
     return moment.duration(delta).humanize(true);
   }
   return "just now";
@@ -151,10 +151,8 @@ class EventListItem extends React.Component {
           <Chevron className={classes.chevron} />
           <span className={classes.caption}>{check.name}</span>
           <div className={classes.timeHolder}>
-            Last ran<span className={classes.time}>&nbsp;{time}.</span>&nbsp;With
-            an exit status of&nbsp;<span className={classes.time}>
-              {check.status}.
-            </span>
+            Last occurred <em>&nbsp;{time}&nbsp;</em> and exited with status
+            <em>&nbsp;{check.status}.</em>
           </div>
           <Typography type="caption" className={classes.command}>
             {check.output}
