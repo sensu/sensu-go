@@ -54,7 +54,7 @@ func TestHandleTCPMessages(t *testing.T) {
 
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
-	assert.Equal(int32(0), event.Check.Status)
+	assert.Equal(uint32(0), event.Check.Status)
 	ta.Stop()
 }
 
@@ -100,7 +100,7 @@ func TestHandleUDPMessages(t *testing.T) {
 
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
-	assert.Equal(int32(0), event.Check.Status)
+	assert.Equal(uint32(0), event.Check.Status)
 	ta.Stop()
 }
 
@@ -183,7 +183,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
-	assert.Equal(int32(0), event.Check.Status)
+	assert.Equal(uint32(0), event.Check.Status)
 
 	ta.Stop()
 }

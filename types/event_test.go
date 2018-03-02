@@ -74,7 +74,7 @@ func TestEventHasMetrics(t *testing.T) {
 func TestEventIsIncident(t *testing.T) {
 	testCases := []struct {
 		name     string
-		status   int32
+		status   uint32
 		expected bool
 	}{
 		{
@@ -85,11 +85,6 @@ func TestEventIsIncident(t *testing.T) {
 		{
 			name:     "Non-zero Status",
 			status:   1,
-			expected: true,
-		},
-		{
-			name:     "Negative Status",
-			status:   -1,
 			expected: true,
 		},
 	}
@@ -111,7 +106,7 @@ func TestEventIsResolution(t *testing.T) {
 	testCases := []struct {
 		name     string
 		history  []CheckHistory
-		status   int32
+		status   uint32
 		expected bool
 	}{
 		{
