@@ -200,7 +200,7 @@ func TestKeepaliveTimeout(t *testing.T) {
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
 	assert.NotZero(t, event.Timestamp)
 	assert.Equal(t, "passing", event.Check.State)
-	assert.Equal(t, int32(0), event.Check.Status)
+	assert.Equal(t, uint32(0), event.Check.Status)
 
 	// Kill the agent, and restart with a new KeepaliveTimeout
 	assert.NoError(t, agent.Kill())
@@ -226,5 +226,5 @@ func TestKeepaliveTimeout(t *testing.T) {
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
 	assert.NotZero(t, event.Timestamp)
 	assert.Equal(t, "failing", event.Check.State)
-	assert.Equal(t, int32(1), event.Check.Status)
+	assert.Equal(t, uint32(1), event.Check.Status)
 }
