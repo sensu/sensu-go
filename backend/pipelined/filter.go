@@ -12,7 +12,7 @@ import (
 
 func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	parameters := map[string]interface{}{"event": event}
-	result, err := eval.Evaluate(statement, parameters)
+	result, err := eval.EvaluatePredicate(statement, parameters)
 	if err != nil {
 		logger.WithError(err).Errorf("statement '%s' is invalid", statement)
 		return false

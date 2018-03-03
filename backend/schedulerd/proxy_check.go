@@ -21,7 +21,7 @@ OUTER:
 		for _, expression := range proxyRequest.EntityAttributes {
 			parameters := map[string]interface{}{"entity": entity}
 
-			result, err := eval.Evaluate(expression, parameters)
+			result, err := eval.EvaluatePredicate(expression, parameters)
 			if err != nil {
 				// Skip to the next entity
 				logger.WithError(err).Errorf("expression '%s' is invalid", expression)

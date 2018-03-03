@@ -78,6 +78,25 @@ func (e *Event) IsSilenced() bool {
 	return len(e.Silenced) > 0
 }
 
+// Get implements govaluate.Parameters
+func (e *Event) Get(name string) (interface{}, error) {
+	switch name {
+	case "Timestamp":
+		return e.Timestamp, nil
+	case "Entity":
+		return e.Entity, nil
+	case "Check":
+		return e.Check, nil
+	case "Metrics":
+		return e.Metrics, nil
+	case "Silenced":
+		return e.Silenced, nil
+	case "Hook":
+		return e.Hooks, nil
+	}
+	return nil, errors.New("no parameter '" + name + "' found")
+}
+
 //
 // Sorting
 

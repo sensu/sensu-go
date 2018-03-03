@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEvaluate(t *testing.T) {
+func TestEvaluatePredicate(t *testing.T) {
 	type args struct {
 		expression string
 		parameters map[string]interface{}
@@ -61,7 +61,7 @@ func TestEvaluate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Evaluate(tt.args.expression, tt.args.parameters)
+			got, err := EvaluatePredicate(tt.args.expression, tt.args.parameters)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Evaluate() error = %v, wantErr %v", err, tt.wantErr)
 				return
