@@ -188,10 +188,6 @@ func (i *LegacyCheckImporter) Import(data map[string]interface{}) error {
 		for name, cfg := range vals {
 			check := i.newCheck(name)
 			i.applyCfg(&check, cfg.(map[string]interface{}))
-
-			check.Name = name
-			check.Organization = i.Org
-			check.Environment = i.Env
 			i.checks = append(i.checks, &check)
 		}
 	} else if _, ok = data["checks"]; ok {
@@ -411,8 +407,12 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 		check.Handlers = []string{val}
 	}
 
-	if val, ok := cfg["handlers"].([]string); ok {
-		check.Handlers = append(check.Handlers, val...)
+	if vals, ok := cfg["handlers"].([]interface{}); ok {
+		for _, val := range vals {
+			if val, ok := val.(string); ok {
+				check.Handlers = append(check.Handlers, val)
+			}
+		}
 	}
 
 	check.Publish = true
@@ -420,19 +420,19 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 		check.Publish = val
 	}
 
-	if val, ok := cfg["ttl"].(int64); ok {
-		check.Ttl = val
+	if val, ok := cfg["ttl"].(float64); ok {
+		check.Ttl = int64(val)
 	}
 
-	if val, ok := cfg["timeout"].(int64); ok {
+	if val, ok := cfg["timeout"].(float64); ok {
 		check.Timeout = uint32(val)
 	}
 
-	if val, ok := cfg["low_flap_threshold"].(int64); ok {
+	if val, ok := cfg["low_flap_threshold"].(float64); ok {
 		check.LowFlapThreshold = uint32(val)
 	}
 
-	if val, ok := cfg["high_flap_threshold"].(int64); ok {
+	if val, ok := cfg["high_flap_threshold"].(float64); ok {
 		check.HighFlapThreshold = uint32(val)
 	}
 }

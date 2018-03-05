@@ -193,8 +193,18 @@ TODO
 
 ### Interactive Prompts
 
-Interactive prompts are used when information is required to be collected;
-most commonly when creating and updating resources.
+Interactive prompts are useful for users that try Sensu for the first time or
+don't know or care what gets created, so they don't need to know the
+exact structure and details of a given resource.
+
+The goal behind the interactive prompt is to create a valid resource with just
+enough questions, in order to cover the required and most common fields without
+overwhelming the user. Once created, this resource can be customized using the
+appropriate management subcommands.
+
+The interactive prompt needs to be explicitly called with a specific flag and
+should not be used as the fallback if no flags were provided; instead the help
+usage should be presented to the user.
 
 ### Colour Elems
 
@@ -230,28 +240,34 @@ of our end users, we ask that developers keep the naming of the subcommands
 consistent. The following is a list of standard names for common subcommands.
 
 - If you're intention is to add a command that adds a new resource to the system
-  consider naming the command `create`. When the command adds an item to an
-  existing resource prefix the command's name with `add` (eg. `add-role`,
+  consider naming the command `create`. When the command adds an item to a list
+  of an existing resource, prefix the command's name with `add` (eg. `add-role`,
   `add-subscription`).
 - When adding a new command that removes a resource from the system consider
   naming the command `delete`. When the command removes an item from an existing
-  resource prefix the command's name with `remove` (eg. `remove-role`,
+  resource, prefix the command's name with `remove` (eg. `remove-role`,
   `remove-subscription`).
 - When adding a new command that lists a collection of resources consider naming
-  the command `list`. If the command lists a collection of associated resources
+  the command `list`. If the command lists a collection of associated resources,
   prefix the command's name with `list` (eg. `list-roles`, `list-members`).
 - When adding a new command that shows expanded details of a resource consider
   naming the command `info`.
+- When the command updates an item from an existing resource, prefix
+  the command's name with `set` (eg. `set-command`, `set-subscriptions`).
 
 ## Subcommand Conventions
 
-### Lists
+### Create
 
-- The "at a glance" view.
-- Use a table element. [details](#table).
-- Highlight primary identifier by using the colour blue. [details](#colour-elems).
-- Highlight any values important values with red. (eg. failing check status.) [details](#colour-elems).
-- colspan is limited; limit columns to only the most important ones.
+- Support creation through an interactive mode. [details](#interactive-prompts).
+- Support creation through arguments and flags.
+- Validate input before firing POST request.
+- As much as possible return helpful error messages.
+- "Created." message should be returned on success.
+
+### Delete
+
+TODO
 
 ### Info
 
@@ -263,19 +279,15 @@ consistent. The following is a list of standard names for common subcommands.
 - Use a list element when displaying slices with many entries or entries with
   long names.
 
-### Create
+### Lists
 
-- Support creation through an interactive mode. [details](#interactive-prompts).
-- Support creation through arguments and flags.
-- Validate input before firing POST request.
-- As much as possible return helpful error messages.
-- "Created." message should be returned on success.
+- The "at a glance" view.
+- Use a table element. [details](#table).
+- Highlight primary identifier by using the colour blue. [details](#colour-elems).
+- Highlight any values important values with red. (eg. failing check status.) [details](#colour-elems).
+- colspan is limited; limit columns to only the most important ones.
 
 ### Update
-
-TODO
-
-### Delete
 
 TODO
 

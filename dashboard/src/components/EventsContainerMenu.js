@@ -7,7 +7,7 @@ import Button from "material-ui/ButtonBase";
 import Menu, { MenuItem } from "material-ui/Menu";
 import { ListItemText } from "material-ui/List";
 
-import arrowIcon from "material-ui-icons/ArrowDropDown";
+import DropdownArrow from "material-ui-icons/ArrowDropDown";
 
 import EventStatus from "./EventStatus";
 
@@ -28,13 +28,11 @@ class EventsContainerMenu extends React.Component {
     // eslint-disable-next-line react/forbid-prop-types
     contents: PropTypes.array.isRequired,
     label: PropTypes.string.isRequired,
-    DropdownArrow: PropTypes.func.isRequired,
     icons: PropTypes.bool,
     onSelectValue: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
-    DropdownArrow: arrowIcon,
     icons: false,
   };
 
@@ -57,7 +55,7 @@ class EventsContainerMenu extends React.Component {
   };
 
   render() {
-    const { classes, label, icons, contents, DropdownArrow } = this.props;
+    const { classes, label, icons, contents } = this.props;
     const { anchorEl } = this.state;
 
     let items = {};

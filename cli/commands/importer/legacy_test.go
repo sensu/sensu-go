@@ -2,17 +2,175 @@ package importer
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/Sirupsen/logrus"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/elements/report"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
+
+func newReportWriter() report.Writer {
+	r := report.New()
+	r.Out = os.Stdout
+	r.LogLevel = logrus.InfoLevel
+	return report.NewWriter(&r)
+}
+
+func TestLegacyCheckImporter(t *testing.T) {
+	newWithDefaults := func(c types.CheckConfig) types.CheckConfig {
+		c.Name = "my-check"
+		c.Environment = "default"
+		c.Organization = "default"
+		return c
+	}
+
+	testCases := []struct {
+		name          string
+		data          []byte
+		expectedCheck types.CheckConfig
+	}{
+		{
+			"simple check",
+			[]byte(`"command": "true", "interval": 30`),
+			newWithDefaults(types.CheckConfig{
+				Name:     "my-check",
+				Command:  "true",
+				Interval: 30,
+				Publish:  true,
+			}),
+		},
+		{
+			"cron check",
+			[]byte(`"command": "true", "cron": "*/5 * ? * *"`),
+			newWithDefaults(types.CheckConfig{
+				Name:    "my-check",
+				Command: "true",
+				Cron:    "*/5 * ? * *",
+				Publish: true,
+			}),
+		},
+		{
+			"check w/ handler",
+			[]byte(`"command": "true", "interval": 30, "handler": "slack"`),
+			newWithDefaults(types.CheckConfig{
+				Name:     "my-check",
+				Command:  "true",
+				Handlers: []string{"slack"},
+				Interval: 30,
+				Publish:  true,
+			}),
+		},
+		{
+			"check w/ handlers",
+			[]byte(`"command": "true", "interval": 30, "handlers": ["slack"]`),
+			newWithDefaults(types.CheckConfig{
+				Name:     "my-check",
+				Command:  "true",
+				Interval: 30,
+				Handlers: []string{"slack"},
+				Publish:  true,
+			}),
+		},
+		{
+			"unpublished check",
+			[]byte(`"command": "true", "interval": 30, "publish": false`),
+			newWithDefaults(types.CheckConfig{
+				Name:     "my-check",
+				Command:  "true",
+				Interval: 30,
+				Publish:  false,
+			}),
+		},
+		{
+			"check w/ ttl",
+			[]byte(`"command": "true", "interval": 30, "ttl": 600`),
+			newWithDefaults(types.CheckConfig{
+				Name:     "my-check",
+				Command:  "true",
+				Interval: 30,
+				Ttl:      600,
+				Publish:  true,
+			}),
+		},
+		{
+			"check w/ timeout",
+			[]byte(`"command": "true", "interval": 30, "timeout": 15`),
+			newWithDefaults(types.CheckConfig{
+				Name:     "my-check",
+				Command:  "true",
+				Interval: 30,
+				Timeout:  15,
+				Publish:  true,
+			}),
+		},
+		{
+			"check w/ subscribers",
+			[]byte(`"command": "true", "interval": 30, "subscribers": ["unix"]`),
+			newWithDefaults(types.CheckConfig{
+				Name:          "my-check",
+				Command:       "true",
+				Interval:      30,
+				Subscriptions: []string{"unix"},
+				Publish:       true,
+			}),
+		},
+		{
+			"flapping check",
+			[]byte(`"command": "true", "interval": 30, "low_flap_threshold": 10, "high_flap_threshold": 50`),
+			newWithDefaults(types.CheckConfig{
+				Name:              "my-check",
+				Command:           "true",
+				Interval:          30,
+				LowFlapThreshold:  10,
+				HighFlapThreshold: 50,
+				Publish:           true,
+			}),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(
+			fmt.Sprintf("Run filter importer with '%s'", tc.name), func(t *testing.T) {
+				// Make sure the raw JSON correspond to the 1.x spec
+				rawData := []byte(`{"checks": {"my-check": {`)
+				rawData = append(rawData, tc.data...)
+				rawData = append(rawData, []byte(`}}}`)...)
+
+				// Import the raw JSON data
+				var data map[string]interface{}
+				if err := json.Unmarshal(rawData, &data); err != nil {
+					assert.FailNow(t, err.Error())
+				}
+
+				// Create the filter importer
+				client := func(*types.CheckConfig) error { return nil }
+				importer := &LegacyCheckImporter{
+					Org:      "default",
+					Env:      "default",
+					SaveFunc: client,
+				}
+
+				// Set the reporter
+				reporter := newReportWriter()
+				importer.SetReporter(&reporter)
+
+				// Import
+				if err := importer.Import(data); err != nil {
+					assert.FailNow(t, err.Error())
+				}
+
+				assert.EqualValues(t, &tc.expectedCheck, importer.checks[0])
+			},
+		)
+	}
+}
 
 func TestLegacyFilterImporter(t *testing.T) {
 	testCases := []struct {

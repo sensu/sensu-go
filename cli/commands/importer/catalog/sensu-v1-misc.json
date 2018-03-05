@@ -5,58 +5,69 @@
       "command": "true",
       "interval": 30,
       "ttl":300,
-      "subscribers": ["unix"]
+      "subscribers": ["unix", "www"]
     },
     "my-cron-check": {
       "type": "check",
       "command": "false",
       "ttl":30,
       "cron": "* * ? * 5",
-      "subscribers": ["unix"]
+      "subscribers": ["windows", "kibana"]
     },
     "is-google-seriously-still-up": {
       "command": "ping -c 25 google.com",
       "interval": 30,
       "handler": "slack",
-      "subscribers": ["unix"]
+      "subscribers": ["unix", "postgresql"]
     },
     "my-unpublished-check": {
       "command": "echo 'lol'",
       "interval": 5,
       "handler": "slack",
       "publish": false,
-      "subscribers": ["unix"]
+      "subscribers": ["RPi", "kafka"]
     },
     "my-ttl-check": {
       "command": "echo 'ttl'",
       "interval": 5,
       "ttl": 500,
-      "subscribers": ["unix"]
+      "subscribers": ["windows", "www"]
     },
     "my-timeout-check": {
-      "command": "echo 'timeout'",
-      "interval": 5,
-      "timeout": 30,
-      "subscribers": ["unix"]
+      "command": "sleep 15",
+      "interval": 60,
+      "timeout": 10,
+      "subscribers": ["unix", "redis"]
     },
     "my-flappy-check": {
-      "command": "echo 'flappin'",
-      "interval": 5,
+      "command": "exit `awk -v min=0 -v max=2 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`",
+      "interval": 15,
       "low_flap_threshold": 10,
       "high_flap_threshold": 50,
-      "subscribers": ["unix"]
+      "subscribers": ["unix", "ci"]
+    },
+    "my-check-w-handlers": {
+      "command": "exit 2",
+      "interval": 15,
+      "handlers": ["slack", "pagerduty"],
+      "publish": false,
+      "subscribers": ["RPi", "kafka"]
     },
     "my-auto-resolve-check": {
-      "command": "echo 'flappin'",
+      "command": "false",
       "interval": 5,
       "auto_resolve": false,
-      "subscribers": ["unix"]
+      "subscribers": ["windows", "elasticsearch"]
     }
   },
   "handlers": {
     "slack": {
       "type": "pipe",
-      "command": "tools/slack"
+      "command": "true"
+    },
+    "pagerduty": {
+      "type": "pipe",
+      "command": "false"
     }
   },
   "mutators": {

@@ -1,9 +1,15 @@
 package graphql
 
 import (
+	"errors"
+	"time"
+
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
@@ -16,11 +22,18 @@ var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
 
 type mutationsImpl struct {
 	checkController actions.CheckController
+	eventController actions.EventController
 }
 
-func newMutationImpl(store QueueStore) *mutationsImpl {
+type mutationsStore interface {
+	store.Store
+	queue.Get
+}
+
+func newMutationImpl(store mutationsStore, bus messaging.MessageBus) *mutationsImpl {
 	return &mutationsImpl{
 		checkController: actions.NewCheckController(store),
+		eventController: actions.NewEventController(store, bus),
 	}
 }
 
@@ -106,4 +119,40 @@ type checkMutationPayload struct {
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*mutationsImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	return false
+}
+
+//
+// Implement event mutations
+//
+
+// ResolveEvent implements response to request for the 'resolveEvent' field.
+func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID.(string))
+	ctx := setContextFromComponents(p.Context, components)
+
+	evComponents, ok := components.(globalid.EventComponents)
+	if !ok {
+		return nil, errors.New("given id does not appear to reference event")
+	}
+
+	event, err := r.eventController.Find(ctx, evComponents.EntityName(), evComponents.CheckName())
+	if err != nil {
+		return nil, err
+	}
+
+	if event.Check != nil && event.Check.Status > 0 {
+		event.Check.Status = 0
+		event.Check.Output = "Manually resolved manually with " + p.Args.Input.Source
+		event.Timestamp = int64(time.Now().Unix())
+
+		err = r.eventController.Create(ctx, *event)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"event":            event,
+	}, nil
 }
