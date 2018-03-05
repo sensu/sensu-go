@@ -44,7 +44,8 @@ func (a *Asset) Validate() error {
 		return errors.New("URL must be HTTP or HTTPS")
 	}
 
-	return eval.ValidateStatements(a.Filters)
+	// Validate the statements and forbid govaluate's modifier tokens
+	return eval.ValidateStatements(a.Filters, true)
 }
 
 // GetEnvironment refers to the organization the check belongs to
