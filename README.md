@@ -1,6 +1,6 @@
 # Sensu 2.0
 
-[![Build Status](https://travis-ci.com/sensu/sensu-go.svg?branch=master)](https://travis-ci.com/sensu/sensu-go)
+[![Build Status](https://travis-ci.org/sensu/sensu-go.svg?branch=master)](https://travis-ci.org/sensu/sensu-go)
 
 ## Contributing/Development
 

@@ -48,6 +48,8 @@ subcommand.
 - We no longer duplicate hook execution for types that fall into both an exit
 code and severity (ex. 0, ok).
 - Updated the sensuctl guidelines.
+- Changed travis badge to use travis-ci.org in README.md.
+
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
