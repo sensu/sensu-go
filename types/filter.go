@@ -41,7 +41,7 @@ func (f *EventFilter) Validate() error {
 		return errors.New("filter must have one or more statements")
 	}
 
-	if err := eval.ValidateStatements(f.Statements); err != nil {
+	if err := eval.ValidateStatements(f.Statements, false); err != nil {
 		return err
 	}
 

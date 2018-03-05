@@ -201,7 +201,7 @@ func (p *ProxyRequests) Validate() error {
 		return errors.New("proxy request splay coverage must be greater than 0 if splay is enabled")
 	}
 
-	return eval.ValidateStatements(p.EntityAttributes)
+	return eval.ValidateStatements(p.EntityAttributes, false)
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
