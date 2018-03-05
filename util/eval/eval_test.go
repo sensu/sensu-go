@@ -86,7 +86,7 @@ func TestValidateStatements(t *testing.T) {
 	statements = []string{"10 + 2 > 0"}
 	assert.Error(t, ValidateStatements(statements, true))
 
-	// Forbidden modifier token
+	// Allowed modifier token
 	statements = []string{"10 + 2 > 0"}
 	assert.NoError(t, ValidateStatements(statements, false))
 }
