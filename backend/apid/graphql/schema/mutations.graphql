@@ -13,6 +13,13 @@ type Mutation {
   updateCheck(input: UpdateCheckInput!): UpdateCheckPayload
   "Removes given check."
   deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
+
+  #
+  # Events
+  #
+
+  "Resolves an event."
+  resolveEvent(input: ResolveEventInput!): ResolveEventPayload
 }
 
 """
@@ -122,4 +129,27 @@ type UpdateCheckPayload {
 
   "The name of the new check."
   check: CheckConfig!
+}
+
+#
+# ResolveEventMutation
+#
+
+input ResolveEventInput {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "Global ID of the event to resolve."
+  id: ID!
+
+  "The source of the resolve request"
+  source: String = "GraphQL"
+}
+
+type ResolveEventPayload {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "The event that was resolved."
+  event: Event!
 }

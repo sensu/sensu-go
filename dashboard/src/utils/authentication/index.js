@@ -1,4 +1,4 @@
-import identity from "lodash/fp/identity";
+import tap from "lodash/fp/tap";
 import moment from "moment";
 
 import { requestNewTokens, refreshTokens, invalidateTokens } from "./requests";
@@ -25,7 +25,7 @@ export function getAccessToken() {
     }
 
     // When expired, attempt to refresh the token and return result
-    const refresh = refreshTokens(authTokens);
+    const refresh = refreshTokens(authTokens).then(tap(updateState));
     return refresh.then(newTokens => newTokens.accessToken);
   }
 
@@ -51,7 +51,7 @@ export function authenticate(username, password) {
 
   // Request new auth tokens from the backend and update state
   const requestPromise = requestNewTokens(username, password);
-  return requestPromise.then(identity(updateState));
+  return requestPromise.then(tap(updateState));
 }
 
 // Logout clears state, storage and sends invalidation requets to backend.

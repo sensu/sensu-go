@@ -2,16 +2,18 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { withRouter, routerShape } from "found";
-import map from "lodash/map";
-import get from "lodash/get";
+import { map, get, every, some, reduce } from "lodash";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
+import Button from "material-ui/Button";
+import Typography from "material-ui/Typography";
 
-import checkboxIcon from "material-ui/Checkbox";
+import Checkbox from "material-ui/Checkbox";
 
 import EventsListItem from "./EventsListItem";
 import EventsContainerMenu from "./EventsContainerMenu";
+import ResolveEventMutation from "../mutations/ResolveEventMutation";
 
 const styles = theme => ({
   eventsContainer: {
@@ -35,12 +37,21 @@ const styles = theme => ({
     height: 24,
     color: theme.palette.primary.contrastText,
   },
+  altMenuButton: {
+    color: theme.palette.primary.contrastText,
+    padding: "0 0 1px",
+    minHeight: 20,
+    "&:hover": { backgroundColor: "inherit" },
+  },
+  hidden: {
+    display: "none",
+  },
 });
 
 class EventsContainer extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    relay: PropTypes.shape({ environment: PropTypes.object }).isRequired,
     viewer: PropTypes.shape({
       checks: PropTypes.object,
       entities: PropTypes.object,
@@ -49,15 +60,63 @@ class EventsContainer extends React.Component {
       events: PropTypes.object,
     }).isRequired,
     router: routerShape.isRequired,
-    Checkbox: PropTypes.func.isRequired,
-  };
-
-  static defaultProps = {
-    Checkbox: checkboxIcon,
   };
 
   state = {
+    rowState: {},
     filters: [],
+  };
+
+  // click checkbox for all items in list
+  selectAll = () => {
+    const keys = map(this.props.environment.events.edges, edge => edge.node.id);
+    // if every state is false or undefined, switch the header
+    const newState = !this.eventsSelected();
+    this.setState({
+      rowState: reduce(
+        keys,
+        (acc, key) => Object.assign(acc, { [key]: newState }),
+        this.state.rowState,
+      ),
+    });
+  };
+
+  // click single checkbox
+  selectCheckbox = id => () => {
+    this.state.rowState[id] = !this.state.rowState[id];
+    this.setState({ rowState: this.state.rowState });
+  };
+
+  eventsSelected = () => some(this.state.rowState, Boolean);
+
+  allEventsSelected = () => {
+    const { rowState } = this.state;
+    return (
+      this.props.environment.events.edges.length ===
+        Object.keys(rowState).length && every(rowState, Boolean)
+    );
+  };
+
+  resolve = () => {
+    const selectedKeys = reduce(
+      this.state.rowState,
+      (selected, val, key) => (val ? [...selected, key] : selected),
+      [],
+    );
+
+    selectedKeys.forEach(key => {
+      ResolveEventMutation.commit(this.props.relay.environment, key, {
+        onCompleted: () => {
+          this.setState(({ rowState }) =>
+            Object.assign(rowState, { [key]: false }),
+          );
+        },
+      });
+    });
+  };
+
+  silence = () => {
+    // silence each item that is true in rowState
   };
 
   // TODO revist this later
@@ -66,6 +125,7 @@ class EventsContainer extends React.Component {
       `${window.location.pathname}?filter=event.Entity.ID=='${newValue}'`,
     );
   };
+
   requeryCheck = newValue => {
     this.props.router.push(
       `${window.location.pathname}?filter=event.Check.Name=='${newValue}'`,
@@ -79,7 +139,8 @@ class EventsContainer extends React.Component {
   };
 
   render() {
-    const { classes, viewer, environment, Checkbox } = this.props;
+    const { classes, viewer, environment } = this.props;
+    const { rowState } = this.state;
 
     // TODO maybe revisit for pagination issues
     const events = get(environment, "events.edges", []);
@@ -88,32 +149,56 @@ class EventsContainer extends React.Component {
     const checks = get(viewer, "checks.edges", []);
     const checkNames = [...map(checks, edge => edge.node.name), "keepalive"];
     const statuses = [0, 1, 2, 3];
+    const someEventsSelected = this.eventsSelected();
 
     return (
       <Paper className={classes.eventsContainer}>
         <div className={classes.tableHeader}>
           <span className={classes.tableHeaderButton}>
-            <Checkbox color="secondary" className={classes.checkbox} />
+            <Checkbox
+              color="secondary"
+              className={classes.checkbox}
+              onClick={this.selectAll}
+              checked={false}
+              indeterminate={someEventsSelected}
+            />
           </span>
-          <EventsContainerMenu
-            onSelectValue={this.requeryEntity}
-            label="Entity"
-            contents={entityNames}
-          />
-          <EventsContainerMenu
-            onSelectValue={this.requeryCheck}
-            label="Check"
-            contents={checkNames}
-          />
-          <EventsContainerMenu
-            onSelectValue={this.requeryStatus}
-            label="Status"
-            contents={statuses}
-            icons
-          />
+          <div style={someEventsSelected ? {} : { display: "none" }}>
+            <Button className={classes.altMenuButton} onClick={this.silence}>
+              <Typography type="button">Silence</Typography>
+            </Button>
+            <Button className={classes.altMenuButton} onClick={this.resolve}>
+              <Typography type="button">Resolve</Typography>
+            </Button>
+          </div>
+          <div style={someEventsSelected ? { display: "none" } : {}}>
+            <EventsContainerMenu
+              onSelectValue={this.requeryEntity}
+              label="Entity"
+              contents={entityNames}
+            />
+            <EventsContainerMenu
+              onSelectValue={this.requeryCheck}
+              label="Check"
+              contents={checkNames}
+            />
+            <EventsContainerMenu
+              onSelectValue={this.requeryStatus}
+              label="Status"
+              contents={statuses}
+              icons
+            />
+          </div>
         </div>
+        {/* TODO pass in resolve and silence functions to reuse for single actions
+            the silence dialog is the same, just maybe some prefilled options for list */}
         {events.map(event => (
-          <EventsListItem key={event.node.id} event={event.node} />
+          <EventsListItem
+            key={event.node.id}
+            event={event.node}
+            onChange={this.selectCheckbox(event.node.id)}
+            checked={Boolean(rowState[event.node.id])}
+          />
         ))}
       </Paper>
     );
