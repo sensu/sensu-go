@@ -76,14 +76,17 @@ func TestEvaluate(t *testing.T) {
 func TestValidateStatements(t *testing.T) {
 	// Valid statement
 	statements := []string{"10 > 0"}
-	assert.NoError(t, ValidateStatements(statements))
+	assert.NoError(t, ValidateStatements(statements, false))
 
 	// Invalid statement
 	statements = []string{"10. 0"}
-	assert.Error(t, ValidateStatements(statements))
+	assert.Error(t, ValidateStatements(statements, false))
 
 	// Forbidden modifier token
 	statements = []string{"10 + 2 > 0"}
-	assert.Error(t, ValidateStatements(statements))
+	assert.Error(t, ValidateStatements(statements, true))
 
+	// Allowed modifier token
+	statements = []string{"10 + 2 > 0"}
+	assert.NoError(t, ValidateStatements(statements, false))
 }
