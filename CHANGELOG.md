@@ -7,6 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- A `--debug` flag on sensu-backend for enabling a pprof HTTP endpoint on localhost.
 - Add CLI support for adhoc check requests.
 - Check scheduler now handles adhoc check requests.
 - Added `set-FIELD` and `remove-FIELD` commands for all updatable fields

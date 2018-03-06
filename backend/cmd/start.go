@@ -3,10 +3,14 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/types"
@@ -33,6 +37,7 @@ const (
 	flagKeyFile               = "key-file"
 	flagTrustedCAFile         = "trusted-ca-file"
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
+	flagDebug                 = "debug"
 
 	// Etcd flag constants
 	flagStoreClientURL               = "listen-client-urls"
@@ -142,6 +147,12 @@ func newStartCommand() *cobra.Command {
 				return sensuBackend.Migration()
 			}
 
+			if viper.GetBool(flagDebug) {
+				go func() {
+					log.Println(http.ListenAndServe("localhost:6060", nil))
+				}()
+			}
+
 			return sensuBackend.Run()
 		},
 	}
@@ -206,6 +217,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "tls certificate key")
 	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "tls certificate authority")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip ssl verification")
+	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
 
 	// Etcd flags
 	cmd.Flags().String(flagStoreClientURL, viper.GetString(flagStoreClientURL), "store listen client URL")
