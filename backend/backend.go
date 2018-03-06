@@ -15,6 +15,8 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/migration"
 	"github.com/sensu/sensu-go/backend/pipelined"
+	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/ring"
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
@@ -228,87 +230,120 @@ func (b *Backend) Run() (derr error) {
 	// s.t. Etcd has its own Start() method, conforming to Daemon, then we will
 	// want to make sure that we aren't calling NewClient before starting it,
 	// I think. That might return a connection error.
-	st, err := etcdstore.NewStore(b.etcd)
+	client, err := b.etcd.NewClient()
 	if err != nil {
 		return err
 	}
+	etcdName := b.etcd.Name()
 
 	// Seed initial data
-	err = seeds.SeedInitialData(st)
-	if err != nil {
+	store := etcdstore.NewStore(client, etcdName)
+	if err := seeds.SeedInitialData(store); err != nil {
 		return err
 	}
 
-	b.schedulerd = &schedulerd.Schedulerd{
-		MessageBus: b.messageBus,
-		Store:      st,
-	}
-	err = b.schedulerd.Start()
+	bus := b.messageBus
+	tlsOpts := b.Config.TLS
+	ringGetter := ring.EtcdGetter{Client: client}
+	queueGetter := queue.EtcdGetter{Client: client}
+
+	b.schedulerd, err = schedulerd.New(schedulerd.Config{
+		Store:       store,
+		Bus:         bus,
+		RingGetter:  ringGetter,
+		QueueGetter: queueGetter,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating schedulerd: %s", err)
+	}
+	if err := b.schedulerd.Start(); err != nil {
+		return fmt.Errorf("error starting schedulerd: %s", err)
 	}
 
-	b.pipelined = &pipelined.Pipelined{
-		Store:      st,
-		MessageBus: b.messageBus,
+	b.pipelined, err = pipelined.New(pipelined.Config{
+		Store: store,
+		Bus:   bus,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating pipelined: %s", err)
 	}
+
 	if err := b.pipelined.Start(); err != nil {
-		return err
+		return fmt.Errorf("error starting pipelined: %s", err)
 	}
 
 	// TLS config gets passed down here
-	b.apid = &apid.APId{
-		Store:         st,
+	b.apid, err = apid.New(apid.Config{
 		Host:          b.Config.APIHost,
 		Port:          b.Config.APIPort,
+		Bus:           bus,
+		Store:         store,
+		QueueGetter:   queueGetter,
+		TLS:           tlsOpts,
 		BackendStatus: b.Status,
-		TLS:           b.Config.TLS,
-		MessageBus:    b.messageBus,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating apid: %s", err)
 	}
 
 	if err := b.apid.Start(); err != nil {
-		return err
+		return fmt.Errorf("error starting apid: %s", err)
 	}
 
-	b.agentd = &agentd.Agentd{
-		Store:      st,
+	b.agentd, err = agentd.New(agentd.Config{
 		Host:       b.Config.AgentHost,
 		Port:       b.Config.AgentPort,
-		MessageBus: b.messageBus,
-		TLS:        b.Config.TLS,
+		Bus:        bus,
+		Store:      store,
+		RingGetter: ringGetter,
+		TLS:        tlsOpts,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating agentd: %s", err)
 	}
+
 	if err := b.agentd.Start(); err != nil {
-		return err
+		return fmt.Errorf("error starting agentd: %s", err)
 	}
 
-	b.dashboardd = &dashboardd.Dashboardd{
-		BackendStatus: b.Status,
-		Config: dashboardd.Config{
-			Dir:  b.Config.DashboardDir,
-			Host: b.Config.DashboardHost,
-			Port: b.Config.DashboardPort,
-			TLS:  b.Config.TLS,
-		},
+	dashCfg := dashboardd.Config{
+		Dir:  b.Config.DashboardDir,
+		Host: b.Config.DashboardHost,
+		Port: b.Config.DashboardPort,
+		TLS:  b.Config.TLS,
 	}
+	b.dashboardd, err = dashboardd.New(dashCfg)
+	if err != nil {
+		return fmt.Errorf("error creating dashboardd: %s", err)
+	}
+
 	if err := b.dashboardd.Start(); err != nil {
-		return err
+		return fmt.Errorf("error starting dashboardd: %s", err)
 	}
 
-	b.eventd = &eventd.Eventd{
-		Store:      st,
-		MessageBus: b.messageBus,
+	b.eventd, err = eventd.New(eventd.Config{
+		Store: store,
+		Bus:   bus,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating eventd: %s", err)
 	}
+
 	if err := b.eventd.Start(); err != nil {
-		return err
+		return fmt.Errorf("error starting eventd: %s", err)
 	}
 
-	b.keepalived = &keepalived.Keepalived{
-		Store:                 st,
-		MessageBus:            b.messageBus,
+	b.keepalived, err = keepalived.New(keepalived.Config{
 		DeregistrationHandler: b.Config.DeregistrationHandler,
+		Bus:   bus,
+		Store: store,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating keepalived: %s", err)
 	}
+
 	if err := b.keepalived.Start(); err != nil {
-		return err
+		return fmt.Errorf("error starting keepalived: %s", err)
 	}
 
 	eg := errGroup{
@@ -381,11 +416,6 @@ func (b *Backend) Run() (derr error) {
 
 // Migration performs the migration of data inside the store
 func (b *Backend) Migration() error {
-	_, err := etcdstore.NewStore(b.etcd)
-	if err != nil {
-		return err
-	}
-
 	logger.Infof("starting migration on the store with URL '%s'", b.etcd.LoopbackURL())
 	migration.Run(b.etcd.LoopbackURL())
 	return nil

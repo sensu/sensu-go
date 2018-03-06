@@ -61,12 +61,14 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 		return nil, err
 	}
 
-	st, err := etcdstore.NewStore(e)
+	client, err := e.NewClient()
 	if err != nil {
 		_ = e.Shutdown()
 		removeTmp()
 		return nil, err
 	}
+
+	st := etcdstore.NewStore(client, e.Name())
 
 	return &IntegrationTestStore{
 		Store:        st,

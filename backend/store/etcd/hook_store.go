@@ -33,7 +33,7 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.kvc.Delete(ctx, getHookConfigsPath(ctx, name))
+	_, err := s.client.Delete(ctx, getHookConfigsPath(ctx, name))
 	return err
 }
 
@@ -67,7 +67,7 @@ func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.Ho
 		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.kvc.Get(ctx, getHookConfigsPath(ctx, name))
+	resp, err := s.client.Get(ctx, getHookConfigsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (s *Store) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) er
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(hook.Organization, hook.Environment)), ">", 0)
 	req := clientv3.OpPut(getHookConfigPath(hook), string(hookBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

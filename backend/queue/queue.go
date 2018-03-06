@@ -11,38 +11,28 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 const (
-	queuePrefix    = "queue"
-	workPrefix     = "work"
-	inFlightPrefix = "inflight"
-	itemTimeout    = 60 * time.Second
+	queuePrefix     = "queue"
+	workPostfix     = "work"
+	inFlightPostfix = "inflight"
+	itemTimeout     = 60 * time.Second
 )
 
 var (
 	queueKeyBuilder = store.NewKeyBuilder(queuePrefix)
 )
 
-// Interface defines the methods available on a Queue.
-type Interface interface {
-	Enqueue(ctx context.Context, value string) error
-	Dequeue(ctx context.Context) (*Item, error)
-}
-
-// Get interface provides access to a queue.
-type Get interface {
-	NewQueue(name string) Interface
-}
-
 // EtcdGetter provides access to the etcd client for creating a new queue.
 type EtcdGetter struct {
 	Client *clientv3.Client
 }
 
-// NewQueue provides a new queue.
-func (e EtcdGetter) NewQueue(name string) Interface {
-	return New(name, e.Client)
+// GetQueue gets a new Queue.
+func (e EtcdGetter) GetQueue(path ...string) types.Queue {
+	return New(queueKeyBuilder.Build(path...), e.Client)
 }
 
 // Queue is a durable FIFO queue that is backed by etcd.
@@ -62,35 +52,39 @@ type Queue struct {
 func New(name string, client *clientv3.Client) *Queue {
 	queue := &Queue{
 		client:      client,
-		work:        queueKeyBuilder.Build(name, workPrefix),
-		inFlight:    queueKeyBuilder.Build(name, inFlightPrefix),
+		work:        path.Join(name, workPostfix),
+		inFlight:    path.Join(name, inFlightPostfix),
 		kv:          clientv3.NewKV(client),
 		itemTimeout: itemTimeout,
 	}
 	return queue
 }
 
-// Item contains the key and value for a dequeued item, as well as the queue it
-// belongs to.
+// Item is a Queue item.
 type Item struct {
-	Key       string
-	Value     string
-	Revision  int64
-	Timestamp int64
+	key       string
+	value     string
+	revision  int64
+	timestamp int64
 	queue     *Queue
 	once      sync.Once
 	mu        *sync.Mutex
 	cancel    context.CancelFunc
 }
 
-// Ack acknowledges the item has been received and processed, and deletes it
+// Value returns the value of the Item.
+func (i *Item) Value() string {
+	return i.value
+}
+
+// Ack acknowledges the Item has been received and processed, and deletes it
 // from the in flight queue.
 func (i *Item) Ack(ctx context.Context) error {
 	var err error
 	i.once.Do(func() {
 		i.mu.Lock()
-		delCmp := clientv3.Compare(clientv3.ModRevision(i.Key), "=", i.Revision)
-		delReq := clientv3.OpDelete(i.Value)
+		delCmp := clientv3.Compare(clientv3.ModRevision(i.key), "=", i.revision)
+		delReq := clientv3.OpDelete(i.value)
 		_, err = i.queue.kv.Txn(ctx).If(delCmp).Then(delReq).Commit()
 		i.mu.Unlock()
 		i.cancel()
@@ -98,13 +92,13 @@ func (i *Item) Ack(ctx context.Context) error {
 	return err
 }
 
-// Nack returns the item to the work queue and deletes it from the in-flight
+// Nack returns the Item to the work queue and deletes it from the in-flight
 // queue.
 func (i *Item) Nack(ctx context.Context) error {
 	var err error
 	i.once.Do(func() {
 		i.mu.Lock()
-		err = i.queue.swapLane(ctx, i.Key, i.Revision, i.Value, i.queue.work)
+		err = i.queue.swapLane(ctx, i.key, i.revision, i.value, i.queue.work)
 		i.mu.Unlock()
 		i.cancel()
 	})
@@ -130,9 +124,9 @@ func (i *Item) keepalive(ctx context.Context) {
 				i.mu.Lock()
 				// create new key, delete old key
 				putCmp := clientv3.Compare(clientv3.ModRevision(updateKey), "=", 0)
-				delCmp := clientv3.Compare(clientv3.ModRevision(i.Key), "=", i.Revision)
-				putReq := clientv3.OpPut(updateKey, i.Value)
-				delReq := clientv3.OpDelete(i.Key)
+				delCmp := clientv3.Compare(clientv3.ModRevision(i.key), "=", i.revision)
+				putReq := clientv3.OpPut(updateKey, i.value)
+				delReq := clientv3.OpDelete(i.key)
 
 				_, err = i.queue.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
 
@@ -141,7 +135,7 @@ func (i *Item) keepalive(ctx context.Context) {
 					logger.WithError(err).Error("error updating item keepalive timestamp")
 				}
 
-				i.Key = updateKey
+				i.key = updateKey
 				i.mu.Unlock()
 			case <-ctx.Done():
 				return
@@ -215,7 +209,7 @@ func (q *Queue) uniqueName() (string, error) {
 
 // Dequeue gets a value from the queue. It returns an error if the context
 // is cancelled, the deadline exceeded, or if the client encounters an error.
-func (q *Queue) Dequeue(ctx context.Context) (*Item, error) {
+func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
 	err := q.nackExpiredItems(ctx, q.itemTimeout)
 	if err != nil {
 		return nil, err
@@ -293,7 +287,7 @@ func (q *Queue) nackExpiredItems(ctx context.Context, timeout time.Duration) err
 	return nil
 }
 
-func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, error) {
+func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.QueueItem, error) {
 	key := string(kv.Key)
 
 	// generate a new key name
@@ -318,11 +312,12 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, erro
 		putResp := response.Responses[0].GetResponsePut()
 		revision := putResp.GetHeader().GetRevision()
 		context, cancel := context.WithCancel(ctx)
+		value := string(kv.Value)
 		item := &Item{
-			Key:       string(uKey),
-			Value:     string(kv.Value),
-			Revision:  revision,
-			Timestamp: time.Now().UnixNano(),
+			key:       string(uKey),
+			value:     value,
+			revision:  revision,
+			timestamp: time.Now().UnixNano(),
 			queue:     q,
 			mu:        &sync.Mutex{},
 			cancel:    cancel,

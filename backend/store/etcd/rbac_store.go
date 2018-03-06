@@ -20,7 +20,7 @@ func getRolePath(name string) string {
 
 // GetRoles ...
 func (s *Store) GetRoles(ctx context.Context) ([]*types.Role, error) {
-	resp, err := s.kvc.Get(ctx, getRolePath(""), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, getRolePath(""), clientv3.WithPrefix())
 	if err != nil {
 		return []*types.Role{}, err
 	}
@@ -30,7 +30,7 @@ func (s *Store) GetRoles(ctx context.Context) ([]*types.Role, error) {
 
 // GetRoleByName ...
 func (s *Store) GetRoleByName(ctx context.Context, name string) (*types.Role, error) {
-	resp, err := s.kvc.Get(ctx, getRolePath(name), clientv3.WithLimit(1))
+	resp, err := s.client.Get(ctx, getRolePath(name), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -58,13 +58,13 @@ func (s *Store) UpdateRole(ctx context.Context, role *types.Role) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(ctx, getRolePath(role.Name), string(roleBytes))
+	_, err = s.client.Put(ctx, getRolePath(role.Name), string(roleBytes))
 	return err
 }
 
 // DeleteRoleByName ...
 func (s *Store) DeleteRoleByName(ctx context.Context, name string) error {
-	_, err := s.kvc.Delete(ctx, getRolePath(name))
+	_, err := s.client.Delete(ctx, getRolePath(name))
 	return err
 }
 

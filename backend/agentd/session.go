@@ -19,7 +19,6 @@ import (
 type SessionStore interface {
 	store.EntityStore
 	store.EnvironmentStore
-	types.RingGetter
 }
 
 // A Session is a server-side connection between a Sensu backend server and
@@ -33,6 +32,7 @@ type Session struct {
 	cfg          SessionConfig
 	conn         transport.Transport
 	store        SessionStore
+	ringGetter   types.RingGetter
 	handler      *handler.MessageHandler
 	stopping     chan struct{}
 	wg           *sync.WaitGroup
@@ -49,7 +49,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 	return handler
 }
 
-// A SessionConfig contains all of the ncessary information to intiialize
+// A SessionConfig contains all of the ncessary information to initialize
 // an agent session.
 type SessionConfig struct {
 	Organization  string
@@ -61,7 +61,7 @@ type SessionConfig struct {
 
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
-func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store) (*Session, error) {
+func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store, getter types.RingGetter) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -83,9 +83,9 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 		wg:           &sync.WaitGroup{},
 		sendq:        make(chan *transport.Message, 10),
 		checkChannel: make(chan interface{}, 100),
-
-		store: store,
-		bus:   bus,
+		store:        store,
+		bus:          bus,
+		ringGetter:   getter,
 	}
 	s.handler = newSessionHandler(s)
 	return s, nil
@@ -213,7 +213,7 @@ func (s *Session) Start() error {
 			logger.WithError(err).Error("error starting subscription")
 			return err
 		}
-		ring := s.store.GetRing("subscription", topic)
+		ring := s.ringGetter.GetRing("subscription", topic)
 		if err := ring.Add(context.TODO(), agentID); err != nil {
 			logger.WithError(err).Errorf(
 				"error adding agent %q to ring", s.cfg.AgentID)
@@ -242,7 +242,7 @@ func (s *Session) Stop() {
 			logger.Debug(err)
 			break
 		}
-		ring := s.store.GetRing("subscription", topic)
+		ring := s.ringGetter.GetRing("subscription", topic)
 		if err := ring.Remove(context.TODO(), s.cfg.AgentID); err != nil {
 			// Try to remove as many entries as possible, so don't return early
 			logger.WithError(err).Errorf(

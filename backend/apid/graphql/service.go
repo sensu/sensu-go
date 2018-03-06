@@ -3,20 +3,23 @@ package graphql
 import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/types"
 )
 
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	Store QueueStore
-	Bus   messaging.MessageBus
+	Store       store.Store
+	Bus         messaging.MessageBus
+	QueueGetter types.QueueGetter
 }
 
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	svc := graphql.NewService()
 	store := cfg.Store
-	nodeResolver := newNodeResolver(store)
+	nodeResolver := newNodeResolver(store, cfg.QueueGetter)
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
@@ -28,7 +31,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterHandler(svc, newHandlerImpl(store))
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterQuery(svc, newQueryImpl(store, nodeResolver))
-	schema.RegisterMutation(svc, newMutationImpl(store, cfg.Bus))
+	schema.RegisterMutation(svc, newMutationImpl(store, cfg.QueueGetter, cfg.Bus))
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterNamespace(svc, &namespaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
@@ -38,7 +41,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterResolveEventInput(svc)
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
 	schema.RegisterSchema(svc)
-	schema.RegisterViewer(svc, newViewerImpl(store, cfg.Bus))
+	schema.RegisterViewer(svc, newViewerImpl(store, cfg.QueueGetter, cfg.Bus))
 
 	// Register check types
 	schema.RegisterCheck(svc, &checkImpl{})

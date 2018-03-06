@@ -48,7 +48,7 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID 
 		return errors.New("must specify entity and check id")
 	}
 
-	_, err := s.kvc.Delete(ctx, getEventWithCheckPath(ctx, entityID, checkID))
+	_, err := s.client.Delete(ctx, getEventWithCheckPath(ctx, entityID, checkID))
 	return err
 }
 
@@ -96,7 +96,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityID string) ([]*type
 		return nil, errors.New("must specify entity id")
 	}
 
-	resp, err := s.kvc.Get(ctx, getEventsPath(ctx, entityID), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, getEventsPath(ctx, entityID), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityID, checkID str
 		return nil, errors.New("must specify entity and check id")
 	}
 
-	resp, err := s.kvc.Get(ctx, getEventWithCheckPath(ctx, entityID, checkID), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, getEventWithCheckPath(ctx, entityID, checkID), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 
 	cmp := environmentExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

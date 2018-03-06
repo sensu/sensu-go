@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEventdMonitor(t *testing.T) {
@@ -34,10 +35,8 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	e := &Eventd{
-		Store:      store,
-		MessageBus: bus,
-	}
+	e, err := New(Config{Store: store, Bus: bus})
+	require.NoError(t, err)
 
 	if err := e.Start(); err != nil {
 		assert.FailNow(t, err.Error())

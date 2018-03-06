@@ -21,7 +21,7 @@ func (s *Store) CreateToken(claims *types.Claims) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getTokenPath(claims.Subject, claims.Id), string(bytes))
+	_, err = s.client.Put(context.TODO(), getTokenPath(claims.Subject, claims.Id), string(bytes))
 	return err
 }
 
@@ -38,7 +38,7 @@ func (s *Store) DeleteTokens(subject string, ids []string) error {
 		ops[i] = clientv3.OpDelete(getTokenPath(subject, ids[i]))
 	}
 
-	res, err := s.kvc.Txn(context.TODO()).Then(ops...).Commit()
+	res, err := s.client.Txn(context.TODO()).Then(ops...).Commit()
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (s *Store) DeleteTokens(subject string, ids []string) error {
 
 // GetToken gets a Claims.
 func (s *Store) GetToken(subject, id string) (*types.Claims, error) {
-	resp, err := s.kvc.Get(context.TODO(), getTokenPath(subject, id), clientv3.WithLimit(1))
+	resp, err := s.client.Get(context.TODO(), getTokenPath(subject, id), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
