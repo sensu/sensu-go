@@ -67,9 +67,13 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 	var filteredEvents []*types.Event
 	filter := p.Args.Filter
 	if len(filter) > 0 {
+		predicate, err := eval.NewPredicate(filter)
+		if err != nil {
+			return nil, err
+		}
+
 		for _, event := range records {
-			args := map[string]interface{}{"event": event}
-			if matched, err := eval.Evaluate(filter, args); err != nil {
+			if matched, err := predicate.Eval(event); err != nil {
 				return nil, err
 			} else if matched {
 				filteredEvents = append(filteredEvents, event)

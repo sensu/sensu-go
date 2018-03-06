@@ -44,7 +44,7 @@ func (d *RuntimeAsset) isRelevantTo(entity types.Entity) (bool, error) {
 	params["entity"] = entity
 
 	for _, filter := range d.asset.Filters {
-		result, err := eval.Evaluate(filter, params)
+		result, err := eval.EvaluatePredicate(filter, params)
 		if err != nil {
 			return false, err
 		}

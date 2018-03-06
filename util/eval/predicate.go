@@ -6,16 +6,26 @@ import (
 	"github.com/sensu/govaluate"
 )
 
-// Evaluate performs the evaluation of the given expression with provided
-// parameters. An error is returned if it could not evaluate the expression with
-// the provided parameters
-func Evaluate(expression string, parameters map[string]interface{}) (bool, error) {
+// Predicate defines a group of logical expressions that can be used for
+// in-memory filtering of resources.
+type Predicate struct {
+	expression *govaluate.EvaluableExpression
+}
+
+// NewPredicate initiailizes new predicate given expression.
+func NewPredicate(expression string) (*Predicate, error) {
 	expr, err := govaluate.NewEvaluableExpression(expression)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse the expression: %s", err.Error())
+		return nil, fmt.Errorf("failed to parse the expression: %s", err.Error())
 	}
+	return &Predicate{expr}, nil
+}
 
-	result, err := expr.Evaluate(parameters)
+// Eval performs the evaluation of the given expression with provided
+// parameters. An error is returned if it could not evaluate the expression with
+// the provided parameters
+func (p *Predicate) Eval(parameters govaluate.Parameters) (bool, error) {
+	result, err := p.expression.Eval(parameters)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate the expression: %s", err.Error())
 	}
@@ -26,6 +36,25 @@ func Evaluate(expression string, parameters map[string]interface{}) (bool, error
 	}
 
 	return match, nil
+}
+
+// Evaluate is funcationally the same as Eval with the exception that given map
+// is automatically wrapped into a `govalute.Parameters` structure.
+func (p *Predicate) Evaluate(parameters map[string]interface{}) (bool, error) {
+	if parameters == nil {
+		return p.Eval(nil)
+	}
+	return p.Eval(govaluate.MapParameters(parameters))
+}
+
+// EvaluatePredicate provides conveinent method of evaluating a given predicate
+// when expression will only be evaluated one time.
+func EvaluatePredicate(expression string, parameters map[string]interface{}) (bool, error) {
+	predicate, err := NewPredicate(expression)
+	if err != nil {
+		return false, err
+	}
+	return predicate.Evaluate(parameters)
 }
 
 // ValidateStatements ensure that the given statements can be parsed

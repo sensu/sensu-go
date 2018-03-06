@@ -122,19 +122,19 @@ class EventsContainer extends React.Component {
   // TODO revist this later
   requeryEntity = newValue => {
     this.props.router.push(
-      `${window.location.pathname}?filter=event.Entity.ID=='${newValue}'`,
+      `${window.location.pathname}?filter=Entity.ID=='${newValue}'`,
     );
   };
 
   requeryCheck = newValue => {
     this.props.router.push(
-      `${window.location.pathname}?filter=event.Check.Name=='${newValue}'`,
+      `${window.location.pathname}?filter=Check.Name=='${newValue}'`,
     );
   };
 
   requeryStatus = newValue => {
     this.props.router.push(
-      `${window.location.pathname}?filter=event.Check.Status==${newValue}`,
+      `${window.location.pathname}?filter=Check.Status==${newValue}`,
     );
   };
 
