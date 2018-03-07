@@ -1,7 +1,7 @@
 """
 An Event is the encapsulating type sent across the Sensu websocket transport.
 """
-type Event {
+type Event implements Node {
   "The globally unique identifier of the record."
   id: ID!
 

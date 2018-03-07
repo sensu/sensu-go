@@ -1,7 +1,7 @@
 """
 HookConfig is the specification of a hook
 """
-type HookConfig {
+type HookConfig implements Node {
   "The globally unique identifier of the record"
   id: ID!
 

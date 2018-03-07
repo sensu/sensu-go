@@ -297,7 +297,8 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.Int,
 			},
 		},
-		Interfaces: []*graphql1.Interface{},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Node")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
