@@ -31,6 +31,7 @@ func newNodeResolver(store QueueStore) *nodeResolver {
 	registerMutatorNodeResolver(register, store)
 	registerRoleNodeResolver(register, store)
 	registerUserNodeResolver(register, store)
+	registerEventNodeResolver(register, store)
 
 	return &nodeResolver{register}
 }
@@ -244,5 +245,32 @@ func registerUserNodeResolver(register relay.NodeRegister, store store.Store) {
 func (f *userNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
 	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
+	return handleControllerResults(record, err)
+}
+
+// events
+
+type eventNodeResolver struct {
+	controller actions.EventController
+}
+
+func registerEventNodeResolver(register relay.NodeRegister, store QueueStore) {
+	controller := actions.NewEventController(store, nil)
+	resolver := &eventNodeResolver{controller}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.EventType,
+		Translator: globalid.EventTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *eventNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	evComponents, ok := p.IDComponents.(globalid.EventComponents)
+	if !ok {
+		return nil, errors.New("given id does not appear to reference event")
+	}
+
+	ctx := setContextFromComponents(p.Context, p.IDComponents)
+	record, err := f.controller.Find(ctx, evComponents.EntityName(), evComponents.CheckName())
 	return handleControllerResults(record, err)
 }
