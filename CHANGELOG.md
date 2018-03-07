@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [2.0.0-nightly.1] - 2018-03-07
 ### Added
 - A `--debug` flag on sensu-backend for enabling a pprof HTTP endpoint on localhost.
 - Add CLI support for adhoc check requests.
