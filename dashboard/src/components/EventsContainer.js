@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { withRouter, routerShape } from "found";
+import { withRouter, routerShape, matchShape } from "found";
 import { map, get, every, some, reduce } from "lodash";
+import { compose } from "lodash/fp";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
@@ -60,6 +61,7 @@ class EventsContainer extends React.Component {
       events: PropTypes.object,
     }).isRequired,
     router: routerShape.isRequired,
+    match: matchShape.isRequired,
   };
 
   state = {
@@ -119,23 +121,28 @@ class EventsContainer extends React.Component {
     // silence each item that is true in rowState
   };
 
-  // TODO revist this later
+  changeQuery = (key, val) => {
+    const { match, router } = this.props;
+    const query = new URLSearchParams(match.location.query);
+
+    query.set(key, val);
+    router.push(`${match.location.pathname}?${query.toString()}`);
+  };
+
   requeryEntity = newValue => {
-    this.props.router.push(
-      `${window.location.pathname}?filter=Entity.ID=='${newValue}'`,
-    );
+    this.changeQuery("filter", `Entity.ID=='${newValue}'`);
   };
 
   requeryCheck = newValue => {
-    this.props.router.push(
-      `${window.location.pathname}?filter=Check.Name=='${newValue}'`,
-    );
+    this.changeQuery("filter", `Check.Name=='${newValue}'`);
   };
 
   requeryStatus = newValue => {
-    this.props.router.push(
-      `${window.location.pathname}?filter=Check.Status==${newValue}`,
-    );
+    this.changeQuery("filter", `Check.Status=='${newValue}'`);
+  };
+
+  requerySort = newValue => {
+    this.changeQuery("order", newValue);
   };
 
   render() {
@@ -188,6 +195,11 @@ class EventsContainer extends React.Component {
               contents={statuses}
               icons
             />
+            <EventsContainerMenu
+              onSelectValue={this.requerySort}
+              label="Sort"
+              contents={["SEVERITY", "NEWEST", "OLDEST"]}
+            />
           </div>
         </div>
         {/* TODO pass in resolve and silence functions to reuse for single actions
@@ -205,8 +217,9 @@ class EventsContainer extends React.Component {
   }
 }
 
+const enhance = compose(withStyles(styles), withRouter);
 export default createFragmentContainer(
-  withStyles(styles)(withRouter(EventsContainer)),
+  enhance(EventsContainer),
   graphql`
     fragment EventsContainer_viewer on Viewer {
       entities(first: 1000) {
@@ -226,7 +239,7 @@ export default createFragmentContainer(
     }
 
     fragment EventsContainer_environment on Environment {
-      events(first: 100, filter: $filter) {
+      events(first: 100, filter: $filter, orderBy: $order) {
         edges {
           node {
             id

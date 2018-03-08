@@ -33,6 +33,7 @@ class EventsPage extends React.Component {
   static query = graphql`
     query EventsPageQuery(
       $filter: String
+      $order: EventsListOrder = SEVERITY
       $environment: String!
       $organization: String!
     ) {
@@ -47,11 +48,11 @@ class EventsPage extends React.Component {
 
   state = { inputValue: "" };
 
-  requerySearchBox = query => {
-    this.setState({ inputValue: query });
+  requerySearchBox = inputValue => {
+    this.setState({ inputValue });
     // TODO return to this and make it actually query
     // eslint-disable-next-line no-console
-    console.info("query", query);
+    console.info("inputValue", inputValue);
   };
 
   render() {
