@@ -109,7 +109,7 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 
 		// Retrieve the filter from the store with its name
 		ctx := types.SetContextFromResource(context.Background(), event.Entity)
-		filter, err := p.Store.GetEventFilterByName(ctx, filterName)
+		filter, err := p.store.GetEventFilterByName(ctx, filterName)
 		if err != nil {
 			logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
 			return false

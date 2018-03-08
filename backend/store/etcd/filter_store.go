@@ -30,7 +30,7 @@ func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error 
 		return errors.New("must specify name of filter")
 	}
 
-	resp, err := s.kvc.Delete(ctx, getEventFiltersPath(ctx, name))
+	resp, err := s.client.Delete(ctx, getEventFiltersPath(ctx, name))
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*types.E
 		return nil, errors.New("must specify name of filter")
 	}
 
-	resp, err := s.kvc.Get(ctx, getEventFiltersPath(ctx, name))
+	resp, err := s.client.Get(ctx, getEventFiltersPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (s *Store) UpdateEventFilter(ctx context.Context, filter *types.EventFilter
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(filter.Organization, filter.Environment)), ">", 0)
 	req := clientv3.OpPut(getEventFilterPath(filter), string(filterBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHelperMutatorProcess(t *testing.T) {
@@ -29,7 +30,8 @@ func TestHelperMutatorProcess(t *testing.T) {
 }
 
 func TestPipelinedMutate(t *testing.T) {
-	p := &Pipelined{}
+	p, err := New(Config{Store: nil, Bus: nil})
+	require.NoError(t, err)
 
 	handler := types.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
@@ -45,7 +47,8 @@ func TestPipelinedMutate(t *testing.T) {
 }
 
 func TestPipelinedJsonMutator(t *testing.T) {
-	p := &Pipelined{}
+	p, err := New(Config{Store: nil, Bus: nil})
+	require.NoError(t, err)
 
 	event := &types.Event{}
 
@@ -58,7 +61,8 @@ func TestPipelinedJsonMutator(t *testing.T) {
 }
 
 func TestPipelinedOnlyCheckOutputMutator(t *testing.T) {
-	p := &Pipelined{}
+	p, err := New(Config{Store: nil, Bus: nil})
+	require.NoError(t, err)
 
 	event := &types.Event{}
 	event.Check = &types.Check{}
@@ -71,7 +75,8 @@ func TestPipelinedOnlyCheckOutputMutator(t *testing.T) {
 }
 
 func TestPipelinedOnlyCheckOutputMutate(t *testing.T) {
-	p := &Pipelined{}
+	p, err := New(Config{Store: nil, Bus: nil})
+	require.NoError(t, err)
 
 	handler := types.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
@@ -90,7 +95,8 @@ func TestPipelinedOnlyCheckOutputMutate(t *testing.T) {
 }
 
 func TestPipelinedPipeMutator(t *testing.T) {
-	p := &Pipelined{}
+	p, err := New(Config{Store: nil, Bus: nil})
+	require.NoError(t, err)
 
 	mutator := types.FakeMutatorCommand("cat")
 

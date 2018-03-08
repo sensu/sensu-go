@@ -53,6 +53,7 @@ code and severity (ex. 0, ok).
 - Updated the sensuctl guidelines.
 - Changed travis badge to use travis-ci.org in README.md.
 - Govaluate's modifier tokens can now be optionally forbidden.
+- Refactor store, queue and ring interfaces, and daemon I/O details.
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to

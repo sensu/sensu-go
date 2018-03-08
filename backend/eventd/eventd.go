@@ -28,10 +28,10 @@ var (
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
-	Store          store.Store
-	MessageBus     messaging.MessageBus
-	HandlerCount   int
-	MonitorFactory monitor.FactoryFunc
+	store          store.Store
+	bus            messaging.MessageBus
+	handlerCount   int
+	monitorFactory monitor.FactoryFunc
 
 	eventChan    chan interface{}
 	errChan      chan error
@@ -41,48 +41,53 @@ type Eventd struct {
 	wg           *sync.WaitGroup
 }
 
-// Start eventd.
-func (e *Eventd) Start() error {
-	if e.Store == nil {
-		return errors.New("no store found")
-	}
+// Option is a functional option.
+type Option func(*Eventd) error
 
-	if e.MessageBus == nil {
-		return errors.New("no message bus found")
-	}
+// Config configures Eventd
+type Config struct {
+	Store store.Store
+	Bus   messaging.MessageBus
+}
 
-	if e.HandlerCount == 0 {
-		e.HandlerCount = 10
+// New creates a new Eventd.
+func New(c Config, opts ...Option) (*Eventd, error) {
+	e := &Eventd{
+		store:        c.Store,
+		bus:          c.Bus,
+		handlerCount: 10,
+		monitorFactory: func(entity *types.Entity, event *types.Event, t time.Duration, u monitor.UpdateHandler, f monitor.FailureHandler) monitor.Interface {
+			return monitor.New(entity, event, t, u, f)
+		},
+		errChan:      make(chan error, 1),
+		shutdownChan: make(chan struct{}, 1),
+		eventChan:    make(chan interface{}, 100),
+		wg:           &sync.WaitGroup{},
+		mu:           &sync.Mutex{},
+		monitors:     make(map[string]monitor.Interface),
 	}
-
-	if e.MonitorFactory == nil {
-		e.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
-			return monitor.New(entity, event, t, updateHandler, failureHandler)
+	for _, o := range opts {
+		if err := o(e); err != nil {
+			return nil, err
 		}
 	}
+	return e, nil
+}
 
-	e.errChan = make(chan error, 1)
-	e.shutdownChan = make(chan struct{}, 1)
-
-	ch := make(chan interface{}, 100)
-	e.eventChan = ch
-
-	err := e.MessageBus.Subscribe(messaging.TopicEventRaw, ComponentName, ch)
+// Start eventd.
+func (e *Eventd) Start() error {
+	e.wg.Add(e.handlerCount)
+	err := e.bus.Subscribe(messaging.TopicEventRaw, ComponentName, e.eventChan)
 	if err != nil {
 		return err
 	}
-
-	e.wg = &sync.WaitGroup{}
-	e.wg.Add(e.HandlerCount)
 	e.startHandlers()
 
-	e.mu = &sync.Mutex{}
-	e.monitors = map[string]monitor.Interface{}
 	return nil
 }
 
 func (e *Eventd) startHandlers() {
-	for i := 0; i < e.HandlerCount; i++ {
+	for i := 0; i < e.handlerCount; i++ {
 		go func() {
 			defer e.wg.Done()
 
@@ -144,7 +149,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
-	prevEvent, err := e.Store.GetEventByEntityCheck(
+	prevEvent, err := e.store.GetEventByEntityCheck(
 		ctx, event.Entity.ID, event.Check.Name,
 	)
 	if err != nil {
@@ -169,18 +174,18 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	state(event)
 
 	// Add any silenced subscriptions to the event
-	err = getSilenced(ctx, event, e.Store)
+	err = getSilenced(ctx, event, e.store)
 	if err != nil {
 		return err
 	}
 
 	// Handle expire on resolve silenced entries
-	err = handleExpireOnResolveEntries(ctx, event, e.Store)
+	err = handleExpireOnResolveEntries(ctx, event, e.store)
 	if err != nil {
 		return err
 	}
 
-	err = e.Store.UpdateEvent(ctx, event)
+	err = e.store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
 	}
@@ -196,19 +201,19 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		mon, ok = e.monitors[entity.ID]
 		if !ok || mon.IsStopped() {
 			timeout := time.Duration(event.Check.Ttl) * time.Second
-			mon = e.MonitorFactory(entity, event, timeout, e, e)
+			mon = e.monitorFactory(entity, event, timeout, e, e)
 			e.monitors[entity.ID] = mon
 		}
 		e.mu.Unlock()
 		return mon.HandleUpdate(event)
 	}
 
-	err = e.Store.UpdateEvent(ctx, event)
+	err = e.store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
 	}
 
-	return e.MessageBus.Publish(messaging.TopicEvent, event)
+	return e.bus.Publish(messaging.TopicEvent, event)
 }
 
 func updateOccurrences(event *types.Event) {
@@ -233,12 +238,12 @@ func (e *Eventd) HandleUpdate(event *types.Event) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
-	err := e.Store.UpdateEvent(ctx, event)
+	err := e.store.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
 	}
 
-	return e.MessageBus.Publish(messaging.TopicEvent, event)
+	return e.bus.Publish(messaging.TopicEvent, event)
 }
 
 // HandleFailure creates a check event with a warn status and publishes it to
@@ -251,16 +256,16 @@ func (e *Eventd) HandleFailure(entity *types.Entity, event *types.Event) error {
 	if err != nil {
 		return err
 	}
-	err = e.Store.UpdateEvent(ctx, failedCheckEvent)
+	err = e.store.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
 		return err
 	}
 
-	return e.MessageBus.Publish(messaging.TopicEvent, failedCheckEvent)
+	return e.bus.Publish(messaging.TopicEvent, failedCheckEvent)
 }
 
 func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event) (*types.Event, error) {
-	lastCheckResult, err := e.Store.GetEventByEntityCheck(
+	lastCheckResult, err := e.store.GetEventByEntityCheck(
 		ctx, event.Entity.ID, event.Check.Name,
 	)
 	if err != nil {
@@ -279,7 +284,7 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event)
 // Stop eventd.
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
-	err := e.MessageBus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
+	err := e.bus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()

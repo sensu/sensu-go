@@ -46,15 +46,15 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	})
 
 	scheduler.scheduler = &CheckScheduler{
-		CheckName:     scheduler.check.Name,
-		CheckEnv:      scheduler.check.Environment,
-		CheckOrg:      scheduler.check.Organization,
-		CheckInterval: scheduler.check.Interval,
-		CheckCron:     scheduler.check.Cron,
-		LastCronState: scheduler.check.Cron,
-		StateManager:  manager,
-		MessageBus:    scheduler.msgBus,
-		WaitGroup:     &sync.WaitGroup{},
+		checkName:     scheduler.check.Name,
+		checkEnv:      scheduler.check.Environment,
+		checkOrg:      scheduler.check.Organization,
+		checkInterval: scheduler.check.Interval,
+		checkCron:     scheduler.check.Cron,
+		lastCronState: scheduler.check.Cron,
+		stateManager:  manager,
+		bus:           scheduler.msgBus,
+		wg:            &sync.WaitGroup{},
 	}
 
 	assert.NoError(scheduler.msgBus.Start())

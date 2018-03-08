@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -148,7 +148,7 @@ func (c *CheckExecutor) setState(state *SchedulerState) {
 // AdhocRequestExecutor takes new check requests from the adhoc queue and runs
 // them
 type AdhocRequestExecutor struct {
-	adhocQueue     queue.Interface
+	adhocQueue     types.Queue
 	store          StateManagerStore
 	bus            messaging.MessageBus
 	ctx            context.Context
@@ -157,10 +157,11 @@ type AdhocRequestExecutor struct {
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store Store, bus messaging.MessageBus) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
-		adhocQueue: store.NewQueue(adhocQueueName),
+		//adhocQueue: store.NewQueue(adhocQueueName),
+		adhocQueue: queue,
 		store:      store,
 		bus:        bus,
 		ctx:        ctx,
@@ -189,7 +190,7 @@ func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 			continue
 		}
 		var check types.CheckConfig
-		if err = json.Unmarshal([]byte(item.Value), &check); err != nil {
+		if err := json.NewDecoder(strings.NewReader(item.Value())).Decode(&check); err != nil {
 			a.listenQueueErr <- fmt.Errorf("unable to process invalid check: %s", err)
 			if ackErr := item.Ack(ctx); ackErr != nil {
 				a.listenQueueErr <- ackErr

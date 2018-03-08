@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -24,10 +25,19 @@ var (
 	// that it does not have ownership of.
 	ErrNotOwner = errors.New("ring: not owner")
 
-	backendID      = uuid.New().String()
 	ringPathPrefix = "rings"
 	ringKeyBuilder = store.NewKeyBuilder(ringPathPrefix)
+
+	backendID   string
+	backendOnce sync.Once
 )
+
+func getBackendID() string {
+	backendOnce.Do(func() {
+		backendID = uuid.New().String()
+	})
+	return backendID
+}
 
 // EtcdGetter is an Etcd implementation of Getter.
 type EtcdGetter struct {
@@ -58,7 +68,7 @@ func New(name string, client *clientv3.Client) *Ring {
 		Name:         name,
 		client:       client,
 		kv:           clientv3.NewKV(client),
-		backendID:    backendID,
+		backendID:    getBackendID(),
 		leaseTimeout: 15, // 15 seconds
 	}
 }

@@ -13,45 +13,42 @@ import (
 
 // A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
-	CheckName     string
-	CheckEnv      string
-	CheckOrg      string
-	CheckInterval uint32
-	CheckCron     string
-	LastCronState string
-
-	StateManager *StateManager
-	MessageBus   messaging.MessageBus
-	WaitGroup    *sync.WaitGroup
-
-	logger *logrus.Entry
-
-	ringGetter types.RingGetter
-	ctx        context.Context
-	cancel     context.CancelFunc
+	checkName     string
+	checkEnv      string
+	checkOrg      string
+	checkInterval uint32
+	checkCron     string
+	lastCronState string
+	stateManager  *StateManager
+	bus           messaging.MessageBus
+	wg            *sync.WaitGroup
+	logger        *logrus.Entry
+	ringGetter    types.RingGetter
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 // Start starts the CheckScheduler. It always returns nil error.
 func (s *CheckScheduler) Start() error {
 	s.ctx, s.cancel = context.WithCancel(context.Background())
-	s.WaitGroup.Add(1)
-	defer s.WaitGroup.Done()
+	s.wg.Add(1)
+	defer s.wg.Done()
 
-	s.logger = logger.WithFields(logrus.Fields{"name": s.CheckName, "org": s.CheckOrg, "env": s.CheckEnv})
+	s.logger = logger.WithFields(logrus.Fields{"name": s.checkName, "org": s.checkOrg, "env": s.checkEnv})
 
 	go func() {
 	toggle:
 		var timer CheckTimer
-		if s.CheckCron != "" {
+		if s.checkCron != "" {
 			s.logger.Infof("starting new cron scheduler")
-			timer = NewCronTimer(s.CheckName, s.CheckCron)
+			timer = NewCronTimer(s.checkName, s.checkCron)
 		}
-		if timer == nil || s.CheckCron == "" {
+		if timer == nil || s.checkCron == "" {
 			s.logger.Infof("starting new interval scheduler")
-			timer = NewIntervalTimer(s.CheckName, uint(s.CheckInterval))
+			timer = NewIntervalTimer(s.checkName, uint(s.checkInterval))
 		}
 
-		executor := NewCheckExecutor(s.MessageBus, newRoundRobinScheduler(s.ctx, s.MessageBus, s.ringGetter), s.CheckOrg, s.CheckEnv)
+		executor := NewCheckExecutor(s.bus, newRoundRobinScheduler(s.ctx, s.bus, s.ringGetter), s.checkOrg, s.checkEnv)
 
 		// TODO(greg): Refactor this part to make the code more easily tested.
 		timer.Start()
@@ -63,8 +60,8 @@ func (s *CheckScheduler) Start() error {
 				return
 			case <-timer.C():
 				// Fetch check from scheduler's state
-				state := s.StateManager.State()
-				check := state.GetCheck(s.CheckName, s.CheckOrg, s.CheckEnv)
+				state := s.stateManager.State()
+				check := state.GetCheck(s.checkName, s.checkOrg, s.checkEnv)
 
 				// The check has been deleted
 				if check == nil {
@@ -73,19 +70,19 @@ func (s *CheckScheduler) Start() error {
 				}
 
 				// Indicates a state change from cron to interval or interval to cron
-				if (s.LastCronState != "" && check.Cron == "") ||
-					(s.LastCronState == "" && check.Cron != "") {
+				if (s.lastCronState != "" && check.Cron == "") ||
+					(s.lastCronState == "" && check.Cron != "") {
 					s.logger.Info("check schedule type has changed")
 					// Update the CheckScheduler with current check state and last cron state
-					s.LastCronState = check.Cron
-					s.CheckCron = check.Cron
-					s.CheckInterval = check.Interval
+					s.lastCronState = check.Cron
+					s.checkCron = check.Cron
+					s.checkInterval = check.Interval
 					timer.Stop()
 					goto toggle
 				}
 
 				// Update the CheckScheduler with the last cron state
-				s.LastCronState = check.Cron
+				s.lastCronState = check.Cron
 
 				if subdue := check.GetSubdue(); subdue != nil {
 					isSubdued, err := sensutime.InWindows(time.Now(), *subdue)

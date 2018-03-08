@@ -13,16 +13,13 @@ import (
 )
 
 func TestPipelined(t *testing.T) {
-	p := &Pipelined{}
-
 	bus := &messaging.WizardBus{}
 	require.NoError(t, bus.Start())
-	p.MessageBus = bus
-
 	store := &mockstore.MockStore{}
-	p.Store = store
 
-	assert.NoError(t, p.Start())
+	p, err := New(Config{Bus: bus, Store: store})
+	require.NoError(t, err)
+	require.NoError(t, p.Start())
 
 	entity := types.FixtureEntity("entity1")
 	check := types.FixtureCheck("check1")

@@ -30,7 +30,7 @@ func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 		return errors.New("must specify name of mutator")
 	}
 
-	_, err := s.kvc.Delete(ctx, getMutatorsPath(ctx, name))
+	_, err := s.client.Delete(ctx, getMutatorsPath(ctx, name))
 	return err
 }
 
@@ -64,7 +64,7 @@ func (s *Store) GetMutatorByName(ctx context.Context, name string) (*types.Mutat
 		return nil, errors.New("must specify name of mutator")
 	}
 
-	resp, err := s.kvc.Get(ctx, getMutatorsPath(ctx, name))
+	resp, err := s.client.Get(ctx, getMutatorsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (s *Store) UpdateMutator(ctx context.Context, mutator *types.Mutator) error
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(mutator.Organization, mutator.Environment)), ">", 0)
 	req := clientv3.OpPut(getMutatorPath(mutator), string(mutatorBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -71,7 +72,8 @@ func TestGoodSessionConfig(t *testing.T) {
 		Environment:   "env",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st)
+	getter := &mockring.Getter{}
+	session, err := NewSession(cfg, conn, bus, st, getter)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -100,7 +102,8 @@ func TestBadSessionConfig(t *testing.T) {
 	cfg := SessionConfig{
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st)
+	getter := &mockring.Getter{}
+	session, err := NewSession(cfg, conn, bus, st, getter)
 	assert.Nil(t, session)
 	assert.Error(t, err)
 }

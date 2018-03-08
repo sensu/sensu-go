@@ -40,7 +40,7 @@ func TestDequeueSingleItem(t *testing.T) {
 
 	item, err := queue.Dequeue(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "test single item dequeue", item.Value)
+	require.Equal(t, "test single item dequeue", item.Value())
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	cancel()
@@ -68,7 +68,7 @@ func TestDequeueFIFO(t *testing.T) {
 	for range items {
 		item, err := queue.Dequeue(context.Background())
 		require.NoError(t, err)
-		result = append(result, item.Value)
+		result = append(result, item.Value())
 	}
 
 	require.Equal(t, items, result)
@@ -135,7 +135,7 @@ func TestDequeueParallel(t *testing.T) {
 				return
 			}
 
-			results[item.Value] = struct{}{}
+			results[item.Value()] = struct{}{}
 		}()
 	}
 	wg.Wait()
@@ -161,14 +161,14 @@ func TestNack(t *testing.T) {
 
 	item, err := queue.Dequeue(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "test item", item.Value)
+	require.Equal(t, "test item", item.Value())
 
 	err = item.Nack(context.Background())
 	require.NoError(t, err)
 
 	item, err = queue.Dequeue(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "test item", item.Value)
+	require.Equal(t, "test item", item.Value())
 }
 
 func TestAck(t *testing.T) {
@@ -185,7 +185,7 @@ func TestAck(t *testing.T) {
 
 	item, err := queue.Dequeue(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "test item", item.Value)
+	require.Equal(t, "test item", item.Value())
 
 	err = item.Ack(context.Background())
 	require.NoError(t, err)
@@ -211,7 +211,7 @@ func TestOnce(t *testing.T) {
 
 	item, err := queue.Dequeue(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "test item", item.Value)
+	require.Equal(t, "test item", item.Value())
 
 	// nack should return the original itemt to the queue for reprocessing, ack
 	// called after should have no effect
@@ -219,7 +219,7 @@ func TestOnce(t *testing.T) {
 	require.NoError(t, item.Ack(context.Background()))
 	nackedItem, err := queue.Dequeue(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, item.Value, nackedItem.Value)
+	require.Equal(t, item.Value(), nackedItem.Value())
 }
 
 func TestNackExpired(t *testing.T) {
@@ -259,5 +259,5 @@ func TestNackExpired(t *testing.T) {
 	item, err = newQueue.Dequeue(context.Background())
 	require.NoError(t, err)
 
-	require.Equal(t, "test item", item.Value)
+	require.Equal(t, "test item", item.Value())
 }
