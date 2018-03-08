@@ -18,7 +18,7 @@ nice=""
 KILL_ON_STOP_TIMEOUT=0
 
 # Maximum number of open file descriptors.
-MAX_OPEN_FILES=65536
+MAX_OPEN_FILES=65535
 
 # When loading default and sysconfig files, we use `set -a` to make
 # all variables automatically into environment variables.
@@ -57,6 +57,7 @@ start() {
   chroot --userspec "$user":"$group" "$chroot" sh -c "
 
     cd \"$chdir\"
+    ulimit -n ${MAX_OPEN_FILES}
     exec \"$program\" $args
   " >> /var/log/sensu-agent.log 2>> /var/log/sensu-agent.log &
 

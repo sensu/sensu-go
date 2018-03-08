@@ -8,7 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
-(default) to 65536.
+(default) to 65535.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added

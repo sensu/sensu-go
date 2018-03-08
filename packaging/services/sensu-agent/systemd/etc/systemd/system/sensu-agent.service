@@ -10,7 +10,7 @@ Group=sensu
 # exist, it continues onward.
 EnvironmentFile=-/etc/default/sensu-agent
 EnvironmentFile=-/etc/sysconfig/sensu-agent
-LimitNOFILE=65536
+LimitNOFILE=65535
 ExecStart=/usr/bin/sensu-agent start
 Restart=always
 WorkingDirectory=/
