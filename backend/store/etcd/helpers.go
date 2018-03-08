@@ -35,7 +35,7 @@ func query(ctx context.Context, store *Store, fn getObjectsPath) (*clientv3.GetR
 		ctx = context.WithValue(ctx, types.EnvironmentKey, "")
 	}
 
-	resp, err := store.kvc.Get(ctx, fn(ctx, ""), clientv3.WithPrefix())
+	resp, err := store.client.Get(ctx, fn(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return resp, err
 	}

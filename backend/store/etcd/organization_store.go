@@ -46,7 +46,7 @@ func (s *Store) CreateOrganization(ctx context.Context, org *types.Organization)
 
 	orgKey := getOrganizationsPath(org.Name)
 
-	res, err := s.kvc.Txn(ctx).
+	res, err := s.client.Txn(ctx).
 		If(
 			// Ensure the organization does not already exist
 			v3.Compare(v3.Version(orgKey), "=", 0)).
@@ -76,7 +76,7 @@ func (s *Store) DeleteOrganizationByName(ctx context.Context, name string) error
 	}
 
 	// Validate whether there are any resources referencing the organization
-	getresp, err := s.kvc.Txn(ctx).Then(
+	getresp, err := s.client.Txn(ctx).Then(
 		v3.OpGet(checkKeyBuilder.WithOrg(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 		v3.OpGet(entityKeyBuilder.WithOrg(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 		v3.OpGet(assetKeyBuilder.WithOrg(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
@@ -107,7 +107,7 @@ func (s *Store) DeleteOrganizationByName(ctx context.Context, name string) error
 	}
 
 	// Delete the resource
-	resp, err := s.kvc.Delete(ctx, getOrganizationsPath(name), v3.WithPrefix())
+	resp, err := s.client.Delete(ctx, getOrganizationsPath(name), v3.WithPrefix())
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (s *Store) DeleteOrganizationByName(ctx context.Context, name string) error
 
 // GetOrganizationByName returns a single organization named *name*
 func (s *Store) GetOrganizationByName(ctx context.Context, name string) (*types.Organization, error) {
-	resp, err := s.kvc.Get(
+	resp, err := s.client.Get(
 		ctx,
 		getOrganizationsPath(name),
 		v3.WithLimit(1),
@@ -144,7 +144,7 @@ func (s *Store) GetOrganizationByName(ctx context.Context, name string) (*types.
 
 // GetOrganizations returns all organizations
 func (s *Store) GetOrganizations(ctx context.Context) ([]*types.Organization, error) {
-	resp, err := s.kvc.Get(
+	resp, err := s.client.Get(
 		ctx,
 		getOrganizationsPath(""),
 		v3.WithPrefix(),
@@ -172,7 +172,7 @@ func (s *Store) UpdateOrganization(ctx context.Context, org *types.Organization)
 	// should be used instead
 	cmp := v3.Compare(v3.Version(getOrganizationsPath(org.Name)), ">", 0)
 	req := v3.OpPut(getOrganizationsPath(org.Name), string(bytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

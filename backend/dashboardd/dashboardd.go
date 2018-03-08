@@ -29,14 +29,40 @@ type Config struct {
 
 // Dashboardd represents the dashboard daemon
 type Dashboardd struct {
-	stopping      chan struct{}
-	running       *atomic.Value
-	wg            *sync.WaitGroup
-	errChan       chan error
-	BackendStatus func() types.StatusMap
-	httpServer    *http.Server
+	stopping   chan struct{}
+	running    *atomic.Value
+	wg         *sync.WaitGroup
+	errChan    chan error
+	httpServer *http.Server
 
 	Config
+}
+
+// Option is a functional option.
+type Option func(*Dashboardd) error
+
+// New creates a new Dashboardd.
+func New(cfg Config, opts ...Option) (*Dashboardd, error) {
+	d := &Dashboardd{
+		Config:   cfg,
+		stopping: make(chan struct{}, 1),
+		running:  &atomic.Value{},
+		wg:       &sync.WaitGroup{},
+		errChan:  make(chan error, 1),
+	}
+	d.httpServer = &http.Server{
+		Addr:         fmt.Sprintf("%s:%d", d.Host, d.Port),
+		Handler:      httpRouter(d),
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+	for _, o := range opts {
+		if err := o(d); err != nil {
+			return nil, err
+		}
+	}
+
+	return d, nil
 }
 
 var logger *logrus.Entry
@@ -49,21 +75,6 @@ func init() {
 
 // Start dashboardd
 func (d *Dashboardd) Start() error {
-	d.stopping = make(chan struct{}, 1)
-	d.running = &atomic.Value{}
-	d.wg = &sync.WaitGroup{}
-
-	d.errChan = make(chan error, 1)
-
-	router := httpRouter(d)
-
-	d.httpServer = &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", d.Host, d.Port),
-		Handler:      router,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
-
 	logger.Info("starting dashboardd on address: ", d.httpServer.Addr)
 	d.wg.Add(1)
 
@@ -76,8 +87,6 @@ func (d *Dashboardd) Start() error {
 		} else {
 			err = d.httpServer.ListenAndServe()
 		}
-		// TODO (JK): need a way to handle closing things like errChan, etc.
-		// in cases where there's a failure to start the daemon
 		if err != nil && err != http.ErrServerClosed {
 			d.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
 		}

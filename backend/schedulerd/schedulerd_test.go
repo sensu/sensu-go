@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,10 +31,13 @@ func TestSchedulerd(t *testing.T) {
 	// Mock a default organization & environment
 	require.NoError(t, st.CreateOrganization(context.Background(), types.FixtureOrganization("default")))
 
-	checker := &Schedulerd{
-		Store:      st,
-		MessageBus: bus,
-	}
+	checker, err := New(Config{
+		Store:       st,
+		RingGetter:  mockring.Getter{},
+		QueueGetter: queue.NewMemoryGetter(),
+		Bus:         bus,
+	})
+	require.NoError(t, err)
 	require.NoError(t, checker.Start())
 
 	ch := make(chan interface{}, 10)
@@ -47,8 +52,7 @@ func TestSchedulerd(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	err := st.DeleteCheckConfigByName(ctx, check.Name)
-	assert.NoError(t, err)
+	require.NoError(t, st.DeleteCheckConfigByName(ctx, check.Name))
 
 	time.Sleep(1 * time.Second)
 

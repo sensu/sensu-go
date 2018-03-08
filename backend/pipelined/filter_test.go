@@ -14,7 +14,7 @@ import (
 func TestPipelinedFilter(t *testing.T) {
 	p := &Pipelined{}
 	store := &mockstore.MockStore{}
-	p.Store = store
+	p.store = store
 
 	// Mock the store responses
 	allowFilterBar := &types.EventFilter{
@@ -194,7 +194,7 @@ func TestPipelinedFilter(t *testing.T) {
 func TestPipelinedWhenFilter(t *testing.T) {
 	p := &Pipelined{}
 	store := &mockstore.MockStore{}
-	p.Store = store
+	p.store = store
 
 	event := &types.Event{
 		Check: &types.Check{

@@ -6,6 +6,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
@@ -24,9 +25,9 @@ type viewerImpl struct {
 	orgsCtrl   actions.OrganizationsController
 }
 
-func newViewerImpl(store QueueStore, bus messaging.MessageBus) *viewerImpl {
+func newViewerImpl(store store.Store, getter types.QueueGetter, bus messaging.MessageBus) *viewerImpl {
 	return &viewerImpl{
-		checksCtrl: actions.NewCheckController(store),
+		checksCtrl: actions.NewCheckController(store, getter),
 		entityCtrl: actions.NewEntityController(store),
 		eventsCtrl: actions.NewEventController(store, bus),
 		usersCtrl:  actions.NewUserController(store),

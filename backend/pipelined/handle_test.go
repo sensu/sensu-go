@@ -37,7 +37,7 @@ func TestPipelinedHandleEvent(t *testing.T) {
 	p := &Pipelined{}
 
 	store := &mockstore.MockStore{}
-	p.Store = store
+	p.store = store
 
 	entity := types.FixtureEntity("entity1")
 	check := types.FixtureCheck("check1")
@@ -65,7 +65,7 @@ func TestPipelinedHandleEvent(t *testing.T) {
 func TestPipelinedExpandHandlers(t *testing.T) {
 	p := &Pipelined{}
 	store := &mockstore.MockStore{}
-	p.Store = store
+	p.store = store
 
 	handler1 := types.FixtureHandler("handler1")
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, handler1.Organization)

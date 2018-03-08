@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/types"
 )
 
 //
@@ -20,11 +21,11 @@ type nodeResolver struct {
 	register relay.NodeRegister
 }
 
-func newNodeResolver(store QueueStore) *nodeResolver {
+func newNodeResolver(store store.Store, getter types.QueueGetter) *nodeResolver {
 	register := relay.NodeRegister{}
 
 	registerAssetNodeResolver(register, store)
-	registerCheckNodeResolver(register, store)
+	registerCheckNodeResolver(register, store, getter)
 	registerEntityNodeResolver(register, store)
 	registerHandlerNodeResolver(register, store)
 	registerHookNodeResolver(register, store)
@@ -100,8 +101,8 @@ type checkNodeResolver struct {
 	controller actions.CheckController
 }
 
-func registerCheckNodeResolver(register relay.NodeRegister, store QueueStore) {
-	controller := actions.NewCheckController(store)
+func registerCheckNodeResolver(register relay.NodeRegister, store store.Store, getter types.QueueGetter) {
+	controller := actions.NewCheckController(store, getter)
 	resolver := &checkNodeResolver{controller}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.CheckConfigType,
@@ -254,7 +255,7 @@ type eventNodeResolver struct {
 	controller actions.EventController
 }
 
-func registerEventNodeResolver(register relay.NodeRegister, store QueueStore) {
+func registerEventNodeResolver(register relay.NodeRegister, store store.Store) {
 	controller := actions.NewEventController(store, nil)
 	resolver := &eventNodeResolver{controller}
 	register.RegisterResolver(relay.NodeResolver{
