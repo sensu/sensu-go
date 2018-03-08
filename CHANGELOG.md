@@ -70,6 +70,7 @@ allow "0" as a valid type.
 - Sensu v1 Check's with TTL, timeout and threshold values can now be imported
 correctly.
 - Use uint32 for status so it's not empty when marshalling.
+- Automatically create a "default" environment when creating a new organization.
 
 ## [2.0.0-alpha.17] - 2018-02-13
 ### Added
