@@ -378,6 +378,10 @@ type MutatorStore interface {
 
 // OrganizationStore provides methods for managing organizations
 type OrganizationStore interface {
+	// CreateOrganization creates a given organization and a default environment
+	// within this new organization
+	CreateOrganization(ctx context.Context, org *types.Organization) error
+
 	// DeleteOrganizationByName deletes an organization using the given name.
 	DeleteOrganizationByName(ctx context.Context, name string) error
 
@@ -389,7 +393,7 @@ type OrganizationStore interface {
 	// result is nil if none was found.
 	GetOrganizationByName(ctx context.Context, name string) (*types.Organization, error)
 
-	// UpdateOrganization creates or updates a given organization.
+	// UpdateOrganization updates an existing organization.
 	UpdateOrganization(ctx context.Context, org *types.Organization) error
 }
 
