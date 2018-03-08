@@ -188,8 +188,6 @@ func TestOrganizationsCreate(t *testing.T) {
 		name            string
 		ctx             context.Context
 		argument        *types.Organization
-		fetchResult     *types.Organization
-		fetchErr        error
 		createErr       error
 		expectedErr     bool
 		expectedErrCode ErrCode
@@ -201,26 +199,10 @@ func TestOrganizationsCreate(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			name:            "Already Exists",
-			ctx:             defaultCtx,
-			argument:        types.FixtureOrganization("org1"),
-			fetchResult:     types.FixtureOrganization("org1"),
-			expectedErr:     true,
-			expectedErrCode: AlreadyExistsErr,
-		},
-		{
 			name:            "Store Err on Create",
 			ctx:             defaultCtx,
 			argument:        types.FixtureOrganization("org1"),
 			createErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "Store Err on Fetch",
-			ctx:             defaultCtx,
-			argument:        types.FixtureOrganization("org1"),
-			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
@@ -249,10 +231,7 @@ func TestOrganizationsCreate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetOrganizationByName", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateOrganization", mock.Anything, mock.Anything).
+				On("CreateOrganization", mock.Anything, mock.Anything).
 				Return(tc.createErr)
 
 			// Exec Query

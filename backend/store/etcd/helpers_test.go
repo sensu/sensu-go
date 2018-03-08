@@ -17,12 +17,9 @@ func TestQuery(t *testing.T) {
 		etcd := store.(*Store)
 
 		// Create a new org "acme" and its environments "default" & "dev"
-		require.NoError(t, store.UpdateOrganization(context.Background(), types.FixtureOrganization("acme")))
-		defaultEnv := types.FixtureEnvironment("default")
-		defaultEnv.Organization = "acme"
+		require.NoError(t, store.CreateOrganization(context.Background(), types.FixtureOrganization("acme")))
 		devEnv := types.FixtureEnvironment("dev")
 		devEnv.Organization = "acme"
-		require.NoError(t, store.UpdateEnvironment(context.Background(), defaultEnv))
 		require.NoError(t, store.UpdateEnvironment(context.Background(), devEnv))
 
 		// Create /checks/default/default/check1

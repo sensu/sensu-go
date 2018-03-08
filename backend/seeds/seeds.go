@@ -57,15 +57,9 @@ func SeedInitialData(store store.Store) (err error) {
 		return err
 	}
 
-	// Default organization
+	// Default organization & environment
 	if err := setupDefaultOrganization(store); err != nil {
 		logger.WithError(err).Error("unable to setup 'default' organization")
-		return err
-	}
-
-	// Default environment
-	if err := setupDefaultEnvironment(store); err != nil {
-		logger.WithError(err).Error("unable to setup 'default' environment")
 		return err
 	}
 
@@ -88,18 +82,8 @@ func setupAdminRole(store store.Store) error {
 	)
 }
 
-func setupDefaultEnvironment(store store.Store) error {
-	return store.UpdateEnvironment(
-		context.Background(),
-		&types.Environment{
-			Name:         "default",
-			Organization: "default",
-			Description:  "Default environment",
-		})
-}
-
 func setupDefaultOrganization(store store.Store) error {
-	return store.UpdateOrganization(
+	return store.CreateOrganization(
 		context.Background(),
 		&types.Organization{
 			Name:        "default",

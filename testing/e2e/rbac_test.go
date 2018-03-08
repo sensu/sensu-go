@@ -49,11 +49,6 @@ func TestRBAC(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	output, err = adminctl.run("environment", "create", "default",
-		"--organization", "acme",
-	)
-	assert.NoError(t, err, string(output))
-
 	output, err = adminctl.run("environment", "create", "dev",
 		"--organization", "acme",
 	)
