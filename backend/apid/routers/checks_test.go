@@ -31,10 +31,11 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	queue := &mockqueue.MockQueue{}
 	adhocRequest := types.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"})
 	checkConfig := types.FixtureCheckConfig("check1")
-	store.On("NewQueue", mock.Anything, mock.Anything).Return(queue)
 	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(checkConfig, nil)
 	queue.On("Enqueue", mock.Anything, mock.Anything).Return(nil)
-	checkController := actions.NewCheckController(store)
+	getter := &mockqueue.Getter{}
+	getter.On("GetQueue", mock.Anything).Return(queue)
+	checkController := actions.NewCheckController(store, getter)
 	c := &ChecksRouter{controller: checkController}
 	payload, _ := json.Marshal(adhocRequest)
 	req, err := http.NewRequest(http.MethodPost, "/checks/check1/execute", bytes.NewBuffer(payload))

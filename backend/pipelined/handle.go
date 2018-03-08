@@ -92,7 +92,7 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 	expanded := map[string]*types.Handler{}
 
 	for _, handlerName := range handlers {
-		handler, err := p.Store.GetHandlerByName(ctx, handlerName)
+		handler, err := p.store.GetHandlerByName(ctx, handlerName)
 
 		if handler == nil {
 			if err != nil {

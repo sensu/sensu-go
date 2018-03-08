@@ -9,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,11 +16,10 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	s, err := NewStore(e)
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "failed to get store from etcd")
-	}
+	client, err := e.NewClient()
+	require.NoError(t, err)
+
+	s := NewStore(client, e.Name())
 
 	// Mock a default organization
 	require.NoError(t, s.UpdateOrganization(context.Background(), types.FixtureOrganization("default")))

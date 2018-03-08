@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	graphqlservice "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
@@ -18,10 +19,11 @@ type GraphQLRouter struct {
 }
 
 // NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(store queueStore, bus messaging.MessageBus) *GraphQLRouter {
+func NewGraphQLRouter(store store.Store, bus messaging.MessageBus, getter types.QueueGetter) *GraphQLRouter {
 	service, err := graphql.NewService(graphql.ServiceConfig{
-		Store: store,
-		Bus:   bus,
+		Store:       store,
+		Bus:         bus,
+		QueueGetter: getter,
 	})
 	if err != nil {
 		logger.WithError(err).Panic("unable to configure graphql service")

@@ -6,6 +6,9 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Changed the maximum number of open file descriptors on a system to from 1024
+(default) to 65535.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
@@ -54,6 +57,7 @@ code and severity (ex. 0, ok).
 - Changed travis badge to use travis-ci.org in README.md.
 - Govaluate's modifier tokens can now be optionally forbidden.
 - Increase the stack size on Travis CI.
+- Refactor store, queue and ring interfaces, and daemon I/O details.
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to

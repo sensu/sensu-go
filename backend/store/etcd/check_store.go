@@ -33,7 +33,7 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 		return errors.New("must specify name")
 	}
 
-	_, err := s.kvc.Delete(ctx, getCheckConfigsPath(ctx, name))
+	_, err := s.client.Delete(ctx, getCheckConfigsPath(ctx, name))
 	return err
 }
 
@@ -67,7 +67,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.kvc.Get(ctx, getCheckConfigsPath(ctx, name))
+	resp, err := s.client.Get(ctx, getCheckConfigsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig)
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(check.Organization, check.Environment)), ">", 0)
 	req := clientv3.OpPut(getCheckConfigPath(check), string(checkBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

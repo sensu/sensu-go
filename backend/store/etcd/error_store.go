@@ -52,7 +52,7 @@ func (s *Store) DeleteError(
 	key := errPathFromAllUniqueFields(ns, entity, check, timestamp)
 
 	// Delete
-	_, err := s.kvc.Delete(ctx, key)
+	_, err := s.client.Delete(ctx, key)
 	return err
 }
 
@@ -71,7 +71,7 @@ func (s *Store) DeleteErrorsByEntity(
 	key := errPathFromEntity(ns, entity)
 
 	// Delete
-	_, err := s.kvc.Delete(ctx, key, clientv3.WithPrefix())
+	_, err := s.client.Delete(ctx, key, clientv3.WithPrefix())
 	return err
 }
 
@@ -91,7 +91,7 @@ func (s *Store) DeleteErrorsByEntityCheck(
 	key := errPathFromCheck(ns, entity, check)
 
 	// Delete
-	_, err := s.kvc.Delete(ctx, key, clientv3.WithPrefix())
+	_, err := s.client.Delete(ctx, key, clientv3.WithPrefix())
 	return err
 }
 
@@ -115,7 +115,7 @@ func (s *Store) GetError(
 	}
 
 	// Fetch
-	resp, err := s.kvc.Get(ctx, key)
+	resp, err := s.client.Get(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (s *Store) GetErrors(ctx context.Context) ([]*types.Error, error) {
 	key := errorsKeyBuilder.WithNamespace(ns).BuildPrefix()
 
 	// Fetch
-	resp, err := s.kvc.Get(ctx, key, clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (s *Store) GetErrorsByEntityCheck(ctx context.Context, entity, check string
 	key := errPathFromCheck(ns, entity, check)
 
 	// Fetch
-	resp, err := s.kvc.Get(ctx, key, clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (s *Store) CreateError(ctx context.Context, perr *types.Error) error {
 	)
 
 	// Configure transaction
-	txn := s.kvc.Txn(ctx).
+	txn := s.client.Txn(ctx).
 		If(environmentExistsForResource(perr.Event.Entity)).
 		Then(clientv3.OpPut(key, string(perrBytes), clientv3.WithLease(lease.ID)))
 

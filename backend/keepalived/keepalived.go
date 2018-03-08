@@ -2,7 +2,6 @@ package keepalived
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
@@ -41,49 +40,61 @@ const (
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
-	MessageBus            messaging.MessageBus
-	HandlerCount          int
-	Store                 store.Store
-	DeregistrationHandler string
-	MonitorFactory        monitor.FactoryFunc
+	bus                   messaging.MessageBus
+	handlerCount          int
+	store                 store.Store
+	deregistrationHandler string
+	monitorFactory        monitor.FactoryFunc
+	mu                    *sync.Mutex
+	monitors              map[string]monitor.Interface
+	wg                    *sync.WaitGroup
+	keepaliveChan         chan interface{}
+	errChan               chan error
+}
 
-	mu            *sync.Mutex
-	monitors      map[string]monitor.Interface
-	wg            *sync.WaitGroup
-	keepaliveChan chan interface{}
-	errChan       chan error
+// Option is a functional option.
+type Option func(*Keepalived) error
+
+// Config configures Keepalived.
+type Config struct {
+	Store                 store.Store
+	Bus                   messaging.MessageBus
+	DeregistrationHandler string
+}
+
+// New creates a new Keepalived.
+func New(c Config, opts ...Option) (*Keepalived, error) {
+	k := &Keepalived{
+		store: c.Store,
+		bus:   c.Bus,
+		deregistrationHandler: c.DeregistrationHandler,
+		monitorFactory: func(entity *types.Entity, event *types.Event, t time.Duration, u monitor.UpdateHandler, f monitor.FailureHandler) monitor.Interface {
+			return monitor.New(entity, event, t, u, f)
+		},
+		keepaliveChan: make(chan interface{}, 10),
+		handlerCount:  DefaultHandlerCount,
+		mu:            &sync.Mutex{},
+		monitors:      map[string]monitor.Interface{},
+		errChan:       make(chan error, 1),
+	}
+	for _, o := range opts {
+		if err := o(k); err != nil {
+			return nil, err
+		}
+	}
+	return k, nil
 }
 
 // Start starts the daemon, returning an error if preconditions for startup
 // fail.
 func (k *Keepalived) Start() error {
-	if k.MessageBus == nil {
-		return errors.New("no message bus found")
-	}
 
-	if k.Store == nil {
-		return errors.New("no keepalive store found")
-	}
-
-	if k.MonitorFactory == nil {
-		k.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
-			return monitor.New(entity, event, t, updateHandler, failureHandler)
-		}
-	}
-
-	k.keepaliveChan = make(chan interface{}, 10)
-	err := k.MessageBus.Subscribe(messaging.TopicKeepalive, "keepalived", k.keepaliveChan)
+	err := k.bus.Subscribe(messaging.TopicKeepalive, "keepalived", k.keepaliveChan)
 	if err != nil {
 		return err
 	}
-
-	if k.HandlerCount == 0 {
-		k.HandlerCount = DefaultHandlerCount
-	}
-
-	k.mu = &sync.Mutex{}
-	k.monitors = map[string]monitor.Interface{}
 	if err := k.initFromStore(); err != nil {
+		_ = k.bus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
 		return err
 	}
 
@@ -91,7 +102,6 @@ func (k *Keepalived) Start() error {
 
 	k.startMonitorSweeper()
 
-	k.errChan = make(chan error, 1)
 	return nil
 }
 
@@ -103,7 +113,7 @@ func (k *Keepalived) Stop() error {
 	for _, monitor := range k.monitors {
 		go monitor.Stop()
 	}
-	err := k.MessageBus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
+	err := k.bus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
 	close(k.errChan)
 	return err
 }
@@ -121,7 +131,7 @@ func (k *Keepalived) Err() <-chan error {
 
 func (k *Keepalived) initFromStore() error {
 	// For which clients were we previously alerting?
-	keepalives, err := k.Store.GetFailingKeepalives(context.TODO())
+	keepalives, err := k.store.GetFailingKeepalives(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -129,7 +139,7 @@ func (k *Keepalived) initFromStore() error {
 	for _, keepalive := range keepalives {
 		entityCtx := context.WithValue(context.TODO(), types.OrganizationKey, keepalive.Organization)
 		entityCtx = context.WithValue(entityCtx, types.EnvironmentKey, keepalive.Environment)
-		event, err := k.Store.GetEventByEntityCheck(entityCtx, keepalive.EntityID, "keepalive")
+		event, err := k.store.GetEventByEntityCheck(entityCtx, keepalive.EntityID, "keepalive")
 		if err != nil {
 			return err
 		}
@@ -151,7 +161,7 @@ func (k *Keepalived) initFromStore() error {
 		if d < 0 {
 			d = 0
 		}
-		monitor := k.MonitorFactory(event.Entity, nil, d, k, k)
+		monitor := k.monitorFactory(event.Entity, nil, d, k, k)
 		k.monitors[keepalive.EntityID] = monitor
 	}
 
@@ -160,9 +170,9 @@ func (k *Keepalived) initFromStore() error {
 
 func (k *Keepalived) startWorkers() {
 	k.wg = &sync.WaitGroup{}
-	k.wg.Add(k.HandlerCount)
+	k.wg.Add(k.handlerCount)
 
-	for i := 0; i < k.HandlerCount; i++ {
+	for i := 0; i < k.handlerCount; i++ {
 		go k.processKeepalives()
 	}
 }
@@ -203,13 +213,13 @@ func (k *Keepalived) processKeepalives() {
 		timeout := time.Duration(entity.KeepaliveTimeout) * time.Second
 		// create an entity monitor if it doesn't exist in the monitor map
 		if !ok || mon.IsStopped() {
-			mon = k.MonitorFactory(entity, nil, timeout, k, k)
+			mon = k.monitorFactory(entity, nil, timeout, k, k)
 			k.monitors[entity.ID] = mon
 		}
 		// stop the running monitor and reset it in the monitor map with new timeout
 		if mon.GetTimeout() != timeout {
 			mon.Stop()
-			mon = k.MonitorFactory(entity, nil, timeout, k, k)
+			mon = k.monitorFactory(entity, nil, timeout, k, k)
 			k.monitors[entity.ID] = mon
 		}
 		k.mu.Unlock()
@@ -226,7 +236,7 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 	}
 
 	ctx := types.SetContextFromResource(context.Background(), entity)
-	fetchedEntity, err := k.Store.GetEntityByID(ctx, entity.ID)
+	fetchedEntity, err := k.store.GetEntityByID(ctx, entity.ID)
 
 	if err != nil {
 		return err
@@ -234,7 +244,7 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 
 	if fetchedEntity == nil {
 		event := createRegistrationEvent(entity)
-		err = k.MessageBus.Publish(messaging.TopicEvent, event)
+		err = k.bus.Publish(messaging.TopicEvent, event)
 	}
 
 	return err
@@ -300,19 +310,19 @@ func (k *Keepalived) HandleUpdate(e *types.Event) error {
 	entity := e.Entity
 
 	ctx := types.SetContextFromResource(context.Background(), entity)
-	if err := k.Store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
+	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
 		return err
 	}
 
 	entity.LastSeen = e.Timestamp
 
-	if err := k.Store.UpdateEntity(ctx, entity); err != nil {
+	if err := k.store.UpdateEntity(ctx, entity); err != nil {
 		logger.WithError(err).Error("error updating entity in store")
 		return err
 	}
 	event := createKeepaliveEvent(entity)
 	event.Check.Status = 0
-	return k.MessageBus.Publish(messaging.TopicEventRaw, event)
+	return k.bus.Publish(messaging.TopicEventRaw, event)
 }
 
 // HandleFailure checks if the entity should be deregistered, and emits a
@@ -323,8 +333,8 @@ func (k *Keepalived) HandleFailure(entity *types.Entity, _ *types.Event) error {
 	ctx := types.SetContextFromResource(context.Background(), entity)
 
 	deregisterer := &Deregistration{
-		Store:      k.Store,
-		MessageBus: k.MessageBus,
+		Store:      k.store,
+		MessageBus: k.bus,
 	}
 	// if the entity is supposed to be deregistered, do so.
 	if entity.Deregister {
@@ -334,10 +344,10 @@ func (k *Keepalived) HandleFailure(entity *types.Entity, _ *types.Event) error {
 	// this is a real keepalive event, emit it.
 	event := createKeepaliveEvent(entity)
 	event.Check.Status = 1
-	if err := k.MessageBus.Publish(messaging.TopicEventRaw, event); err != nil {
+	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		return err
 	}
 
 	timeout := time.Now().Unix() + int64(entity.KeepaliveTimeout)
-	return k.Store.UpdateFailingKeepalive(ctx, entity, timeout)
+	return k.store.UpdateFailingKeepalive(ctx, entity, timeout)
 }
