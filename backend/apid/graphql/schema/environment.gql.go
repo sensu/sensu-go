@@ -33,6 +33,26 @@ type EnvironmentOrganizationFieldResolver interface {
 	Organization(p graphql.ResolveParams) (interface{}, error)
 }
 
+// EnvironmentChecksFieldResolverArgs contains arguments provided to checks when selected
+type EnvironmentChecksFieldResolverArgs struct {
+	First  int    // First - self descriptive
+	Last   int    // Last - self descriptive
+	Before string // Before - self descriptive
+	After  string // After - self descriptive
+}
+
+// EnvironmentChecksFieldResolverParams contains contextual info to resolve checks field
+type EnvironmentChecksFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EnvironmentChecksFieldResolverArgs
+}
+
+// EnvironmentChecksFieldResolver implement to resolve requests for the Environment's checks field.
+type EnvironmentChecksFieldResolver interface {
+	// Checks implements response to request for checks field.
+	Checks(p EnvironmentChecksFieldResolverParams) (interface{}, error)
+}
+
 // EnvironmentEventsFieldResolverArgs contains arguments provided to events when selected
 type EnvironmentEventsFieldResolverArgs struct {
 	First   int             // First - self descriptive
@@ -121,6 +141,7 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentDescriptionFieldResolver
 	EnvironmentNameFieldResolver
 	EnvironmentOrganizationFieldResolver
+	EnvironmentChecksFieldResolver
 	EnvironmentEventsFieldResolver
 }
 
@@ -197,6 +218,12 @@ func (_ EnvironmentAliases) Organization(p graphql.ResolveParams) (interface{}, 
 	return val, err
 }
 
+// Checks implements response to request for 'checks' field.
+func (_ EnvironmentAliases) Checks(p EnvironmentChecksFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Events implements response to request for 'events' field.
 func (_ EnvironmentAliases) Events(p EnvironmentEventsFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -238,6 +265,19 @@ func _ObjTypeEnvironmentOrganizationHandler(impl interface{}) graphql1.FieldReso
 	}
 }
 
+func _ObjTypeEnvironmentChecksHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentChecksFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EnvironmentChecksFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Checks(frp)
+	}
+}
+
 func _ObjTypeEnvironmentEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EnvironmentEventsFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -255,6 +295,32 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Environment represents a Sensu environment in RBAC",
 		Fields: graphql1.Fields{
+			"checks": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"after": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"before": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"first": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"last": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All check configurations associated with the environment.",
+				Name:              "checks",
+				Type:              graphql.OutputType("CheckConfigConnection"),
+			},
 			"description": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -337,6 +403,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEnvironmentConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"checks":       _ObjTypeEnvironmentChecksHandler,
 		"description":  _ObjTypeEnvironmentDescriptionHandler,
 		"events":       _ObjTypeEnvironmentEventsHandler,
 		"id":           _ObjTypeEnvironmentIDHandler,

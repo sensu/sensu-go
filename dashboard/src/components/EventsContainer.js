@@ -2,9 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { withRouter, routerShape, matchShape } from "found";
-import { map, every, some, reduce, capitalize } from "lodash";
+import { every, some, reduce, capitalize } from "lodash";
 import { compose } from "lodash/fp";
-import { join } from "ramda";
+import { map, join } from "ramda";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 
@@ -69,7 +69,7 @@ class EventsContainer extends React.Component {
 
   // click checkbox for all items in list
   selectAll = () => {
-    const keys = map(this.props.environment.events.edges, edge => edge.node.id);
+    const keys = map(edge => edge.node.id, this.props.environment.events.edges);
     // if every state is false or undefined, switch the header
     const newState = !this.eventsSelected();
     this.setState({
@@ -152,9 +152,9 @@ class EventsContainer extends React.Component {
     const { classes, viewer, environment } = this.props;
     const { rowState } = this.state;
 
-    const entityNames = map(viewer.entities.edges, edge => edge.node.name);
+    const entityNames = map(edge => edge.node.name, viewer.entities.edges);
     const checkNames = [
-      ...map(viewer.checks.edges, edge => edge.node.name),
+      ...map(edge => edge.node.name, environment.checks.edges),
       "keepalive",
     ];
 
@@ -277,6 +277,9 @@ export default createFragmentContainer(
           }
         }
       }
+    }
+
+    fragment EventsContainer_environment on Environment {
       checks(first: 1000) {
         edges {
           node {
@@ -284,9 +287,7 @@ export default createFragmentContainer(
           }
         }
       }
-    }
 
-    fragment EventsContainer_environment on Environment {
       events(first: 100, filter: $filter, orderBy: $order) {
         edges {
           node {

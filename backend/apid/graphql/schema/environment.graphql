@@ -14,8 +14,8 @@ type Environment implements Node {
   "The organization the environment belongs to."
   organization: Organization!
 
-  # "All entities associated with the environment."
-  # entities(first: Int = 10, last: Int = 10, before: String, after: String): EntityConnection
+  "All entities associated with the environment."
+  entities(first: Int = 10, last: Int = 10, before: String, after: String): EntityConnection
 
   "All check configurations associated with the environment."
   checks(first: Int = 10, last: Int = 10, before: String, after: String): CheckConfigConnection

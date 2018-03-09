@@ -7,7 +7,6 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
@@ -25,7 +24,7 @@ type envImpl struct {
 	eventsCtrl actions.EventController
 }
 
-func newEnvImpl(store store.Store) *envImpl {
+func newEnvImpl(store QueueStore) *envImpl {
 	return &envImpl{
 		orgCtrl:    actions.NewOrganizationsController(store),
 		checksCtrl: actions.NewCheckController(store),
@@ -59,16 +58,18 @@ func (r *envImpl) Organization(p graphql.ResolveParams) (interface{}, error) {
 
 // Checks implements response to request for 'checks' field.
 func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interface{}, error) {
-	records, err := r.checksCtrl.Query(p.Context)
+	env := p.Source.(types.Environment)
+	ctx := types.SetContextFromResource(p.Context, &env)
+	records, err := r.checksCtrl.Query(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	// pagination
 	info := relay.NewArrayConnectionInfo(
 		0, len(records),
 		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
 	)
-
 	edges := make([]*relay.Edge, info.End-info.Begin)
 	for i, r := range records[info.Begin:info.End] {
 		edges[i] = relay.NewArrayConnectionEdge(r, i)
