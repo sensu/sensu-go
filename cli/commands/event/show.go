@@ -45,11 +45,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := helpers.PrintJSON(event, cmd.OutOrStdout()); err != nil {
 					return err
 				}
-			} else {
-				printEntityToList(event, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printEntityToList(event, cmd.OutOrStdout())
 		},
 	}
 
@@ -58,7 +55,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEntityToList(event *types.Event, writer io.Writer) {
+func printEntityToList(event *types.Event, writer io.Writer) error {
 	statusHistory := []string{}
 	for _, entry := range event.Check.History {
 		statusHistory = append(statusHistory, fmt.Sprint(entry.Status))
@@ -106,5 +103,5 @@ func printEntityToList(event *types.Event, writer io.Writer) {
 		cfg.Rows = append(cfg.Rows[:len(cfg.Rows)-1], silencedBy, cfg.Rows[len(cfg.Rows)-1])
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

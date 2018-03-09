@@ -37,11 +37,8 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
 					return err
 				}
-			} else {
-				printToList(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -50,7 +47,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printToList(filter *types.EventFilter, writer io.Writer) {
+func printToList(filter *types.EventFilter, writer io.Writer) error {
 	cfg := &list.Config{
 		Title: filter.Name,
 		Rows: []*list.Row{
@@ -77,5 +74,5 @@ func printToList(filter *types.EventFilter, writer io.Writer) {
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

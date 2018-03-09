@@ -43,11 +43,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
 					return err
 				}
-			} else {
-				printCheckToList(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printCheckToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -56,7 +53,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printCheckToList(r *types.CheckConfig, writer io.Writer) {
+func printCheckToList(r *types.CheckConfig, writer io.Writer) error {
 	cfg := &list.Config{
 		Title: r.Name,
 		Rows: []*list.Row{
@@ -123,5 +120,5 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) {
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

@@ -35,9 +35,9 @@ type Row struct {
 }
 
 // Print (s) out details list given configuration data
-func Print(out io.Writer, cfg *Config) {
+func Print(out io.Writer, cfg *Config) error {
 	listElem := newListElem(cfg)
-	listElem.write(out)
+	return listElem.write(out)
 }
 
 type listElem struct {
@@ -72,26 +72,32 @@ func newListElem(cfg *Config) listElem {
 	return writer
 }
 
-func (e *listElem) write(out io.Writer) {
-	e.writeTitle(out)
-	e.writeRows(out)
+func (e *listElem) write(out io.Writer) error {
+	if err := e.writeTitle(out); err != nil {
+		return err
+	}
+	return e.writeRows(out)
 }
 
-func (e *listElem) writeTitle(out io.Writer) {
+func (e *listElem) writeTitle(out io.Writer) error {
 	transformer := defaultTitleStyle
 	if e.titleStyle != nil {
 		transformer = e.titleStyle
 	}
 
-	fmt.Fprintln(out, transformer(e.title))
+	_, err := fmt.Fprintln(out, transformer(e.title))
+	return err
 }
 
-func (e *listElem) writeRows(out io.Writer) {
+func (e *listElem) writeRows(out io.Writer) error {
 	labelLen := e.longestLabel()
 
 	for _, row := range e.rows {
-		row.write(out, labelLen)
+		if err := row.write(out, labelLen); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (e *listElem) longestLabel() (max int) {
@@ -104,13 +110,14 @@ func (e *listElem) longestLabel() (max int) {
 	return
 }
 
-func (e *rowElem) write(out io.Writer, len int) {
-	fmt.Fprintf(
+func (e *rowElem) write(out io.Writer, len int) error {
+	_, err := fmt.Fprintf(
 		out,
 		"%s%s\n",
 		padUtf8.Right(e.styledLabel(), len, " "),
 		e.formattedValue(),
 	)
+	return err
 }
 
 func (e *rowElem) styleLabel() string {

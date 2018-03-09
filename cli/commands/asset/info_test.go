@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestShowCommand(t *testing.T) {
+func TestInfoCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
@@ -23,14 +23,14 @@ func TestShowCommand(t *testing.T) {
 	assert.Regexp("asset", cmd.Short)
 }
 
-func TestShowCommandRunEClosure(t *testing.T) {
+func TestInfoCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchAsset", "in").Return(types.FixtureAsset("name-one"), nil)
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
 
 	assert.NotEmpty(out)
@@ -38,11 +38,11 @@ func TestShowCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestShowCommandRunMissingArgs(t *testing.T) {
+func TestInfoCommandRunMissingArgs(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -50,14 +50,14 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 	assert.Error(err)
 }
 
-func TestShowCommandRunEClosureWithTable(t *testing.T) {
+func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchAsset", "in").Return(types.FixtureAsset("name-one"), nil)
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "tabular"))
 
 	out, err := test.RunCmd(cmd, []string{"in"})
@@ -69,14 +69,14 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestShowCommandRunEClosureWithErr(t *testing.T) {
+func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchAsset", "in").Return(&types.Asset{}, errors.New("my-err"))
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
 
 	assert.Error(err)

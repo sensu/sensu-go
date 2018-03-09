@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type listDetailsRowTest struct {
@@ -142,7 +143,8 @@ func TestPrint(t *testing.T) {
 		},
 	}
 
-	Print(out, config)
+	err := Print(out, config)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out.result)
 }
 

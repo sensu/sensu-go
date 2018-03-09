@@ -1,22 +1,23 @@
-package asset
+package hook
 
 import (
 	"errors"
 	"io"
-	"strings"
+	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
-// ShowCommand defines new asset info command
-func ShowCommand(cli *cli.SensuCli) *cobra.Command {
+// InfoCommand defines new hook info command
+func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info [NAME]",
-		Short:        "show detailed information on given asset",
+		Use:          "info [ID]",
+		Short:        "show detailed hook information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -25,8 +26,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch handlers from API
-			assetName := args[0]
-			r, err := cli.Client.FetchAsset(assetName)
+			hookID := args[0]
+			r, err := cli.Client.FetchHook(hookID)
 			if err != nil {
 				return err
 			}
@@ -41,11 +42,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
 					return err
 				}
-			} else {
-				printAssetToList(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printHookToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -54,12 +52,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printAssetToList(r *types.Asset, writer io.Writer) {
-	var metadata []string
-	for k, v := range r.Metadata {
-		metadata = append(metadata, k+"="+v)
-	}
-
+func printHookToList(r *types.HookConfig, writer io.Writer) error {
 	cfg := &list.Config{
 		Title: r.Name,
 		Rows: []*list.Row{
@@ -68,27 +61,27 @@ func printAssetToList(r *types.Asset, writer io.Writer) {
 				Value: r.Name,
 			},
 			{
+				Label: "Command",
+				Value: r.Command,
+			},
+			{
+				Label: "Timeout",
+				Value: strconv.FormatInt(int64(r.Timeout), 10),
+			},
+			{
+				Label: "Stdin?",
+				Value: globals.BooleanStyleP(r.Stdin),
+			},
+			{
 				Label: "Organization",
 				Value: r.Organization,
 			},
 			{
-				Label: "URL",
-				Value: r.URL,
-			},
-			{
-				Label: "SHA-512 Checksum",
-				Value: r.Sha512,
-			},
-			{
-				Label: "Filters",
-				Value: strings.Join(r.Filters, ", "),
-			},
-			{
-				Label: "Metadata",
-				Value: strings.Join(metadata, ", "),
+				Label: "Environment",
+				Value: r.Environment,
 			},
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

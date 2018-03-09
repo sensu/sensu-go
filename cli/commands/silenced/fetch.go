@@ -44,11 +44,8 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
 					return err
 				}
-			} else {
-				printToList(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -60,7 +57,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 
 }
 
-func printToList(r *types.Silenced, writer io.Writer) {
+func printToList(r *types.Silenced, writer io.Writer) error {
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{
@@ -99,5 +96,5 @@ func printToList(r *types.Silenced, writer io.Writer) {
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

@@ -44,11 +44,8 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
 					return err
 				}
-			} else {
-				printCheckToList(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printCheckToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -57,7 +54,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printCheckToList(handler *types.Handler, writer io.Writer) {
+func printCheckToList(handler *types.Handler, writer io.Writer) error {
 	// Determine what will be executed based on the type
 	var execute string
 	switch handler.Type {
@@ -121,5 +118,5 @@ func printCheckToList(handler *types.Handler, writer io.Writer) {
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

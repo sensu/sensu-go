@@ -43,11 +43,8 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
 					return err
 				}
-			} else {
-				printEntityToList(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printEntityToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -56,7 +53,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEntityToList(r *types.Entity, writer io.Writer) {
+func printEntityToList(r *types.Entity, writer io.Writer) error {
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{
@@ -108,5 +105,5 @@ func printEntityToList(r *types.Entity, writer io.Writer) {
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }
