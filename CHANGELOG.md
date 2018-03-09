@@ -32,6 +32,7 @@ set when importing legacy settings.
 of a successful check.
 - Added GraphQL explorer to web UI.
 - Added check occurrences and occurrences_watermark attributes from Sensu 1.x.
+- Added custom functions to evaluate a unix timestamp in govaluate.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking

@@ -58,6 +58,66 @@ func TestEvaluatePredicate(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "negative hour",
+			args: args{
+				expression: "hour(timestamp) == 19",
+				parameters: map[string]interface{}{
+					"timestamp": 1520275913, // Monday, March 5, 2018 6:51:53 PM UTC
+				},
+			},
+			want: false,
+		},
+		{
+			name: "positive hour",
+			args: args{
+				expression: "hour(timestamp) == 18",
+				parameters: map[string]interface{}{
+					"timestamp": 1520275913, // Monday, March 5, 2018 6:51:53 PM UTC
+				},
+			},
+			want: true,
+		},
+		{
+			name: "positive between hour",
+			args: args{
+				expression: "hour(timestamp) >= 17 && hour(timestamp) <= 19",
+				parameters: map[string]interface{}{
+					"timestamp": 1520275913, // Monday, March 5, 2018 6:51:53 PM UTC
+				},
+			},
+			want: true,
+		},
+		{
+			name: "positive weekday",
+			args: args{
+				expression: "weekday(timestamp) == 1",
+				parameters: map[string]interface{}{
+					"timestamp": 1520275913, // Monday, March 5, 2018 6:51:53 PM UTC
+				},
+			},
+			want: true,
+		},
+		{
+			name: "negative weekday",
+			args: args{
+				expression: "weekday(timestamp) == 2",
+				parameters: map[string]interface{}{
+					"timestamp": 1520275913, // Monday, March 5, 2018 6:51:53 PM UTC
+				},
+			},
+			want: false,
+		},
+		{
+			name: "positive weekday array",
+			args: args{
+				expression: "weekday(timestamp) in (1, 2, 3, 4, 5)",
+				parameters: map[string]interface{}{
+					"timestamp": 1520275913,
+				},
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
