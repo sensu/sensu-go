@@ -14,10 +14,14 @@ import { MenuItem } from "material-ui/Menu";
 import { ListItemText, ListItemIcon } from "material-ui/List";
 import Checkbox from "material-ui/Checkbox";
 
-import TableList, { TableListHeader, TableListSelect } from "./TableList";
 import EventsListItem from "./EventsListItem";
 import EventStatus from "./EventStatus";
 import ResolveEventMutation from "../mutations/ResolveEventMutation";
+import TableList, {
+  TableListHeader,
+  TableListSelect,
+  TableListEmptyState,
+} from "./TableList";
 
 const styles = theme => ({
   root: {
@@ -248,6 +252,12 @@ class EventsContainer extends React.Component {
             </TableListSelect>
           </div>
         </TableListHeader>
+        {events.length === 0 && (
+          <TableListEmptyState
+            primary="No results matched your query."
+            secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
+          />
+        )}
         {/* TODO pass in resolve and silence functions to reuse for single actions
             the silence dialog is the same, just maybe some prefilled options for list */}
         {events.map(event => (
