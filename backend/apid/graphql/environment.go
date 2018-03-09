@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
@@ -25,10 +26,10 @@ type envImpl struct {
 	eventsCtrl actions.EventController
 }
 
-func newEnvImpl(store QueueStore) *envImpl {
+func newEnvImpl(store store.Store, getter types.QueueGetter) *envImpl {
 	return &envImpl{
 		orgCtrl:    actions.NewOrganizationsController(store),
-		checksCtrl: actions.NewCheckController(store),
+		checksCtrl: actions.NewCheckController(store, getter),
 		entityCtrl: actions.NewEntityController(store),
 		eventsCtrl: actions.NewEventController(store, nil),
 	}
