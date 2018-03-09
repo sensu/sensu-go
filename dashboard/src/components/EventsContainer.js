@@ -51,12 +51,10 @@ class EventsContainer extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     relay: PropTypes.shape({ environment: PropTypes.object }).isRequired,
-    viewer: PropTypes.shape({
-      checks: PropTypes.object,
-      entities: PropTypes.object,
-    }).isRequired,
     environment: PropTypes.shape({
       events: PropTypes.object,
+      checks: PropTypes.object,
+      entities: PropTypes.object,
     }).isRequired,
     router: routerShape.isRequired,
     match: matchShape.isRequired,
@@ -149,10 +147,10 @@ class EventsContainer extends React.Component {
   };
 
   render() {
-    const { classes, viewer, environment } = this.props;
+    const { classes, environment } = this.props;
     const { rowState } = this.state;
 
-    const entityNames = map(edge => edge.node.name, viewer.entities.edges);
+    const entityNames = map(edge => edge.node.name, environment.entities.edges);
     const checkNames = [
       ...map(edge => edge.node.name, environment.checks.edges),
       "keepalive",
@@ -269,18 +267,16 @@ const enhance = compose(withStyles(styles), withRouter);
 export default createFragmentContainer(
   enhance(EventsContainer),
   graphql`
-    fragment EventsContainer_viewer on Viewer {
-      entities(first: 1000) {
+    fragment EventsContainer_environment on Environment {
+      checks(first: 1000) {
         edges {
           node {
             name
           }
         }
       }
-    }
 
-    fragment EventsContainer_environment on Environment {
-      checks(first: 1000) {
+      entities(first: 1000) {
         edges {
           node {
             name

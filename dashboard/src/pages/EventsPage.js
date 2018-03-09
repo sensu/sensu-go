@@ -37,9 +37,6 @@ class EventsPage extends React.Component {
       $environment: String!
       $organization: String!
     ) {
-      viewer {
-        ...EventsContainer_viewer
-      }
       environment(organization: $organization, environment: $environment) {
         ...EventsContainer_environment
       }

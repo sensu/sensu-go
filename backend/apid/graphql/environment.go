@@ -21,6 +21,7 @@ var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
 type envImpl struct {
 	orgCtrl    actions.OrganizationsController
 	checksCtrl actions.CheckController
+	entityCtrl actions.EntityController
 	eventsCtrl actions.EventController
 }
 
@@ -28,6 +29,7 @@ func newEnvImpl(store QueueStore) *envImpl {
 	return &envImpl{
 		orgCtrl:    actions.NewOrganizationsController(store),
 		checksCtrl: actions.NewCheckController(store),
+		entityCtrl: actions.NewEntityController(store),
 		eventsCtrl: actions.NewEventController(store, nil),
 	}
 }
@@ -70,6 +72,27 @@ func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interfa
 		0, len(records),
 		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
 	)
+	edges := make([]*relay.Edge, info.End-info.Begin)
+	for i, r := range records[info.Begin:info.End] {
+		edges[i] = relay.NewArrayConnectionEdge(r, i)
+	}
+	return relay.NewArrayConnection(edges, info), nil
+}
+
+// Entities implements response to request for 'entities' field.
+func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (interface{}, error) {
+	env := p.Source.(types.Environment)
+	ctx := types.SetContextFromResource(p.Context, &env)
+	records, err := r.entityCtrl.Query(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	info := relay.NewArrayConnectionInfo(
+		0, len(records),
+		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
+	)
+
 	edges := make([]*relay.Edge, info.End-info.Begin)
 	for i, r := range records[info.Begin:info.End] {
 		edges[i] = relay.NewArrayConnectionEdge(r, i)

@@ -33,6 +33,26 @@ type EnvironmentOrganizationFieldResolver interface {
 	Organization(p graphql.ResolveParams) (interface{}, error)
 }
 
+// EnvironmentEntitiesFieldResolverArgs contains arguments provided to entities when selected
+type EnvironmentEntitiesFieldResolverArgs struct {
+	First  int    // First - self descriptive
+	Last   int    // Last - self descriptive
+	Before string // Before - self descriptive
+	After  string // After - self descriptive
+}
+
+// EnvironmentEntitiesFieldResolverParams contains contextual info to resolve entities field
+type EnvironmentEntitiesFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EnvironmentEntitiesFieldResolverArgs
+}
+
+// EnvironmentEntitiesFieldResolver implement to resolve requests for the Environment's entities field.
+type EnvironmentEntitiesFieldResolver interface {
+	// Entities implements response to request for entities field.
+	Entities(p EnvironmentEntitiesFieldResolverParams) (interface{}, error)
+}
+
 // EnvironmentChecksFieldResolverArgs contains arguments provided to checks when selected
 type EnvironmentChecksFieldResolverArgs struct {
 	First  int    // First - self descriptive
@@ -141,6 +161,7 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentDescriptionFieldResolver
 	EnvironmentNameFieldResolver
 	EnvironmentOrganizationFieldResolver
+	EnvironmentEntitiesFieldResolver
 	EnvironmentChecksFieldResolver
 	EnvironmentEventsFieldResolver
 }
@@ -218,6 +239,12 @@ func (_ EnvironmentAliases) Organization(p graphql.ResolveParams) (interface{}, 
 	return val, err
 }
 
+// Entities implements response to request for 'entities' field.
+func (_ EnvironmentAliases) Entities(p EnvironmentEntitiesFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Checks implements response to request for 'checks' field.
 func (_ EnvironmentAliases) Checks(p EnvironmentChecksFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -262,6 +289,19 @@ func _ObjTypeEnvironmentOrganizationHandler(impl interface{}) graphql1.FieldReso
 	resolver := impl.(EnvironmentOrganizationFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Organization(p)
+	}
+}
+
+func _ObjTypeEnvironmentEntitiesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentEntitiesFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EnvironmentEntitiesFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Entities(frp)
 	}
 }
 
@@ -327,6 +367,32 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 				Description:       "The description given to the environment.",
 				Name:              "description",
 				Type:              graphql1.String,
+			},
+			"entities": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"after": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"before": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.String,
+					},
+					"first": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"last": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All entities associated with the environment.",
+				Name:              "entities",
+				Type:              graphql.OutputType("EntityConnection"),
 			},
 			"events": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
@@ -405,6 +471,7 @@ var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"checks":       _ObjTypeEnvironmentChecksHandler,
 		"description":  _ObjTypeEnvironmentDescriptionHandler,
+		"entities":     _ObjTypeEnvironmentEntitiesHandler,
 		"events":       _ObjTypeEnvironmentEventsHandler,
 		"id":           _ObjTypeEnvironmentIDHandler,
 		"name":         _ObjTypeEnvironmentNameHandler,
