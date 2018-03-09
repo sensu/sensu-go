@@ -198,6 +198,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	// This has to stay in ns until https://github.com/coreos/etcd/issues/9337
 	// is resolved.
 	cfg.AutoCompactionRetention = "1ns"
+	// Default to 4G etcd size. TODO: make this configurable.
+	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
 
 	if config.TLSConfig != nil {
 		cfg.ClientTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)
