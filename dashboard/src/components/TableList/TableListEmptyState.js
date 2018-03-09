@@ -46,10 +46,10 @@ export class TableListItem extends React.Component {
         >
           ⁉️
         </span>
-        <Typography className={classes.line} type="title">
+        <Typography className={classes.line} variant="title">
           {primary}
         </Typography>
-        <Typography className={classes.line} type="body1">
+        <Typography className={classes.line} variant="body1">
           {secondary}
         </Typography>
       </div>

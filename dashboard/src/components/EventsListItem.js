@@ -9,7 +9,6 @@ import Menu, { MenuItem } from "material-ui/Menu";
 import Button from "material-ui/ButtonBase";
 
 import Checkbox from "material-ui/Checkbox";
-import Chevron from "material-ui-icons/ChevronRight";
 import Disclosure from "material-ui-icons/MoreVert";
 
 import ResolveEventMutation from "../mutations/ResolveEventMutation";
@@ -17,13 +16,12 @@ import EventStatus from "./EventStatus";
 import { TableListItem } from "./TableList";
 
 const styles = theme => ({
-  row: {
-    display: "flex",
-    width: "100%",
-    borderColor: theme.palette.divider,
-    border: "1px solid",
-    borderTop: "none",
-    color: theme.palette.text.primary,
+  root: {
+    color: theme.palette.text.secondary,
+    "& strong": {
+      fontWeight: "normal",
+      color: theme.palette.text.primary,
+    },
   },
   checkbox: {
     display: "inline-block",
@@ -50,11 +48,6 @@ const styles = theme => ({
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-  },
-  chevron: {
-    verticalAlign: "top",
-    marginTop: -2,
-    color: theme.palette.primary.light,
   },
   timeHolder: {
     width: "100%",
@@ -114,14 +107,14 @@ class EventListItem extends React.Component {
   };
 
   silenceEntity = entity => () => {
-    // eslint-disable-next-line
-    console.info("entity", entity);
+    // eslint-disable-next-line no-console
+    console.info("implement entity silencing!", "id:", entity);
     this.setState({ anchorEl: null });
   };
 
   silenceCheck = check => () => {
-    // eslint-disable-next-line
-    console.info("check", check);
+    // eslint-disable-next-line no-console
+    console.info("implement check silencing!", "id:", check);
     this.setState({ anchorEl: null });
   };
 
@@ -137,22 +130,24 @@ class EventListItem extends React.Component {
     const time = this.fromNow;
 
     return (
-      <TableListItem selected={checked}>
+      <TableListItem className={classes.root} selected={checked}>
         <div className={classes.checkbox}>
-          <Checkbox onChange={onChange} checked={checked} />
+          <Checkbox color="primary" onChange={onChange} checked={checked} />
         </div>
         <div className={classes.status}>
           <EventStatus status={check.status} />
         </div>
         <div className={classes.content}>
-          <span className={classes.caption}>{entity.name}</span>
-          <Chevron className={classes.chevron} />
-          <span className={classes.caption}>{check.name}</span>
+          <span className={classes.caption}>
+            <strong>
+              {entity.name} › {check.name}
+            </strong>
+          </span>
           <div className={classes.timeHolder}>
-            Last occurred <em>&nbsp;{time}&nbsp;</em> and exited with status
-            <em>&nbsp;{check.status}.</em>
+            Last occurred <strong>&nbsp;{time}&nbsp;</strong> and exited with
+            status <strong>&nbsp;{check.status}.</strong>
           </div>
-          <Typography type="caption" className={classes.command}>
+          <Typography variant="caption" className={classes.command}>
             {check.output}
           </Typography>
         </div>

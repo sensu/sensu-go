@@ -54,7 +54,7 @@ class QuickNavButton extends React.Component {
         {...props}
       >
         <Icon />
-        <Typography type="caption" classes={{ root: classes.menuText }}>
+        <Typography variant="caption" classes={{ root: classes.menuText }}>
           {caption}
         </Typography>
       </NamespaceLink>

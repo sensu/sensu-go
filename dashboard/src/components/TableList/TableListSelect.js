@@ -5,17 +5,13 @@ import warning from "warning";
 
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
-import Button from "material-ui/ButtonBase";
 import Menu from "material-ui/Menu";
 import DropdownArrow from "material-ui-icons/ArrowDropDown";
+import Button from "./TableListButton";
 
-const styles = theme => ({
+const styles = {
   root: {
-    height: theme.spacing.unit * 3,
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: theme.spacing.unit,
-    boxSizing: "content-box",
+    paddingRight: 0,
   },
   button: {
     display: "flex",
@@ -23,7 +19,7 @@ const styles = theme => ({
   arrow: {
     marginTop: -4,
   },
-});
+};
 
 export class TableListSelect extends React.Component {
   static propTypes = {
@@ -58,7 +54,6 @@ export class TableListSelect extends React.Component {
     const { classes, className: classNameProp, label, ...props } = this.props;
     const { anchorEl } = this.state;
 
-    const className = classnames(classes.root, classNameProp);
     const menuItems = React.Children.map(this.props.children, child => {
       const { value, onClick: onClickProp } = child.props;
 
@@ -79,10 +74,11 @@ export class TableListSelect extends React.Component {
       return React.cloneElement(child, { onClick, value: undefined });
     });
 
+    const className = classnames(classes.root, classNameProp);
     return (
       <Button className={className} onClick={this.handleOpen} {...props}>
         <span className={classes.button}>
-          <Typography type="button">{label}</Typography>
+          <Typography variant="button">{label}</Typography>
           <DropdownArrow className={classes.arrow} />
         </span>
 

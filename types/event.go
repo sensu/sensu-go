@@ -134,6 +134,16 @@ func (e *Event) Get(name string) (interface{}, error) {
 		return e.Check, nil
 	case "Metrics":
 		return e.Metrics, nil
+	case "HasCheck":
+		return e.HasCheck(), nil
+	case "HasMetrics":
+		return e.HasMetrics(), nil
+	case "IsIncident":
+		return e.IsIncident(), nil
+	case "IsResolution":
+		return e.IsResolution(), nil
+	case "IsSilenced":
+		return e.IsSilenced(), nil
 	}
 	return nil, errors.New("no parameter '" + name + "' found")
 }

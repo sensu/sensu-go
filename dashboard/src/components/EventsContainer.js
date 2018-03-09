@@ -1,14 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { withRouter, routerShape, matchShape } from "found";
+import { withRouter } from "found";
 import { every, some, reduce, capitalize } from "lodash";
 import { compose } from "lodash/fp";
 import { map, join } from "ramda";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
 
-import Button from "material-ui/Button";
 import Typography from "material-ui/Typography";
 import { MenuItem } from "material-ui/Menu";
 import { ListItemText, ListItemIcon } from "material-ui/List";
@@ -21,6 +20,7 @@ import TableList, {
   TableListHeader,
   TableListSelect,
   TableListEmptyState,
+  TableListButton as Button,
 } from "./TableList";
 
 const styles = theme => ({
@@ -40,12 +40,6 @@ const styles = theme => ({
     height: 24,
     color: theme.palette.primary.contrastText,
   },
-  altMenuButton: {
-    color: theme.palette.primary.contrastText,
-    padding: "0 0 1px",
-    minHeight: 20,
-    "&:hover": { backgroundColor: "inherit" },
-  },
   hidden: {
     display: "none",
   },
@@ -60,8 +54,7 @@ class EventsContainer extends React.Component {
       checks: PropTypes.object,
       entities: PropTypes.object,
     }).isRequired,
-    router: routerShape.isRequired,
-    match: matchShape.isRequired,
+    onQueryChange: PropTypes.func.isRequired,
   };
 
   state = {
@@ -121,33 +114,29 @@ class EventsContainer extends React.Component {
     // silence each item that is true in rowState
   };
 
-  changeQuery = (key, val) => {
-    const { match, router } = this.props;
-    const query = new URLSearchParams(match.location.query);
-
-    query.set(key, val);
-    router.push(`${match.location.pathname}?${query.toString()}`);
-  };
-
   requeryEntity = newValue => {
-    this.changeQuery("filter", `Entity.ID=='${newValue}'`);
+    this.props.onQueryChange("filter", `Entity.ID=='${newValue}'`);
   };
 
   requeryCheck = newValue => {
-    this.changeQuery("filter", `Check.Name=='${newValue}'`);
+    this.props.onQueryChange("filter", `Check.Name=='${newValue}'`);
   };
 
   requeryStatus = newValue => {
-    if (newValue.length === 1) {
-      this.changeQuery("filter", `Check.Status==${newValue}`);
-      return;
+    if (Array.isArray(newValue)) {
+      if (newValue.length === 1) {
+        this.props.onQueryChange("filter", `Check.Status==${newValue}`);
+      } else {
+        const val = join(",", newValue);
+        this.props.onQueryChange("filter", `Check.Status IN (${val})`);
+      }
+    } else {
+      this.props.onQueryChange("filter", newValue);
     }
-    const val = join(",", newValue);
-    this.changeQuery("filter", `Check.Status IN (${val})`);
   };
 
   requerySort = newValue => {
-    this.changeQuery("order", newValue);
+    this.props.onQueryChange("order", newValue);
   };
 
   render() {
@@ -176,11 +165,11 @@ class EventsContainer extends React.Component {
             />
           </span>
           <div style={someEventsSelected ? {} : { display: "none" }}>
-            <Button className={classes.altMenuButton} onClick={this.silence}>
-              <Typography type="button">Silence</Typography>
+            <Button className={classes.headerButton} onClick={this.silence}>
+              <Typography variant="button">Silence</Typography>
             </Button>
-            <Button className={classes.altMenuButton} onClick={this.resolve}>
-              <Typography type="button">Resolve</Typography>
+            <Button className={classes.headerButton} onClick={this.resolve}>
+              <Typography variant="button">Resolve</Typography>
             </Button>
           </div>
           <div style={someEventsSelected ? { display: "none" } : {}}>
@@ -211,7 +200,7 @@ class EventsContainer extends React.Component {
               label="Status"
               onChange={this.requeryStatus}
             >
-              <MenuItem key="incident" value={[1, 2, 3]}>
+              <MenuItem key="incident" value={"HasCheck && IsIncident"}>
                 <ListItemText primary="Incident" style={{ paddingLeft: 40 }} />
               </MenuItem>
               <MenuItem key="warning" value={[1]}>

@@ -52,7 +52,7 @@ class Toolbar extends React.Component {
           </IconButton>
           <Typography
             className={classes.title}
-            type="title"
+            variant="title"
             color="inherit"
             noWrap
           >
