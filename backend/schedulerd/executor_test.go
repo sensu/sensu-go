@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,7 @@ func TestAdhocExecutor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 	bus := &messaging.WizardBus{}
-	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, bus)
+	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus)
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())
 

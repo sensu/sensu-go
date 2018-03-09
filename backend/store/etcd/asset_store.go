@@ -35,7 +35,7 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.kvc.Delete(ctx, getAssetsPath(ctx, name))
+	_, err := s.client.Delete(ctx, getAssetsPath(ctx, name))
 	return err
 }
 
@@ -68,7 +68,7 @@ func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, 
 		return nil, errors.New("must specify organization and name")
 	}
 
-	resp, err := s.kvc.Get(ctx, getAssetsPath(ctx, name))
+	resp, err := s.client.Get(ctx, getAssetsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (s *Store) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 
 	cmp := clientv3.Compare(clientv3.Version(getOrganizationsPath(asset.Organization)), ">", 0)
 	req := clientv3.OpPut(getAssetPath(asset), string(assetBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

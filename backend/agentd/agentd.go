@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 )
@@ -31,49 +31,76 @@ type Store interface {
 
 // Agentd is the backend HTTP API.
 type Agentd struct {
+	// Host is the hostname Agentd is running on.
+	Host string
+
+	// Port is the port Agentd is running on.
+	Port int
+
 	stopping   chan struct{}
 	running    *atomic.Value
 	wg         *sync.WaitGroup
 	errChan    chan error
 	httpServer *http.Server
+	store      Store
+	bus        messaging.MessageBus
+	tls        *types.TLSOptions
+	ringGetter types.RingGetter
+}
 
-	Store      Store
+// Config configures an Agentd.
+type Config struct {
 	Host       string
 	Port       int
-	MessageBus messaging.MessageBus
+	Bus        messaging.MessageBus
+	Store      store.Store
+	RingGetter types.RingGetter
 	TLS        *types.TLSOptions
 }
 
-// Start Agentd.
-func (a *Agentd) Start() error {
-	if a.Store == nil {
-		return errors.New("no store found")
+// Option is a functional option.
+type Option func(*Agentd) error
+
+// New creates a new Agentd.
+func New(c Config, opts ...Option) (*Agentd, error) {
+	a := &Agentd{
+		Host:       c.Host,
+		Port:       c.Port,
+		bus:        c.Bus,
+		store:      c.Store,
+		tls:        c.TLS,
+		ringGetter: c.RingGetter,
+		stopping:   make(chan struct{}, 1),
+		running:    &atomic.Value{},
+		wg:         &sync.WaitGroup{},
+		errChan:    make(chan error, 1),
 	}
-
-	a.stopping = make(chan struct{}, 1)
-	a.running = &atomic.Value{}
-	a.wg = &sync.WaitGroup{}
-
-	a.errChan = make(chan error, 1)
-
-	// TODO: add JWT authentication support
-	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.Store)
-
+	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.store)
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+	for _, o := range opts {
+		if err := o(a); err != nil {
+			return nil, err
+		}
+	}
+	return a, nil
+}
 
+// Start Agentd.
+func (a *Agentd) Start() error {
+	// TODO: add JWT authentication support
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
 	a.wg.Add(1)
 
 	go func() {
 		defer a.wg.Done()
 		var err error
-		if a.TLS != nil {
-			err = a.httpServer.ListenAndServeTLS(a.TLS.CertFile, a.TLS.KeyFile)
+		if a.tls != nil {
+			err = a.httpServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
 		} else {
 			err = a.httpServer.ListenAndServe()
 		}
@@ -130,7 +157,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentID, cfg.Subscriptions)
 
-	session, err := NewSession(cfg, transport.NewTransport(conn), a.MessageBus, a.Store)
+	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store, a.ringGetter)
 	if err != nil {
 		logger.Error("failed to create session: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

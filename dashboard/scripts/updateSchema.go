@@ -18,9 +18,11 @@ func main() {
 	// use a mock for the store since we need a non-nil store to avoid issues when
 	// trying to create a queue in the service
 	store := &mockstore.MockStore{}
-	store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
+	getter := &mockqueue.Getter{}
+	queue := &mockqueue.MockQueue{}
+	getter.On("GetQueue", mock.Anything).Return(queue)
 	// Save JSON of full schema introspection for Babel Relay Plugin to use
-	service, err := graphql.NewService(graphql.ServiceConfig{Store: store})
+	service, err := graphql.NewService(graphql.ServiceConfig{Store: store, QueueGetter: getter})
 	if err != nil {
 		log.Fatalf("ERROR: %v", err)
 		return

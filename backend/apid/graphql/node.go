@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/types"
 )
 
 //
@@ -20,17 +21,18 @@ type nodeResolver struct {
 	register relay.NodeRegister
 }
 
-func newNodeResolver(store QueueStore) *nodeResolver {
+func newNodeResolver(store store.Store, getter types.QueueGetter) *nodeResolver {
 	register := relay.NodeRegister{}
 
 	registerAssetNodeResolver(register, store)
-	registerCheckNodeResolver(register, store)
+	registerCheckNodeResolver(register, store, getter)
 	registerEntityNodeResolver(register, store)
 	registerHandlerNodeResolver(register, store)
 	registerHookNodeResolver(register, store)
 	registerMutatorNodeResolver(register, store)
 	registerRoleNodeResolver(register, store)
 	registerUserNodeResolver(register, store)
+	registerEventNodeResolver(register, store)
 
 	return &nodeResolver{register}
 }
@@ -99,8 +101,8 @@ type checkNodeResolver struct {
 	controller actions.CheckController
 }
 
-func registerCheckNodeResolver(register relay.NodeRegister, store QueueStore) {
-	controller := actions.NewCheckController(store)
+func registerCheckNodeResolver(register relay.NodeRegister, store store.Store, getter types.QueueGetter) {
+	controller := actions.NewCheckController(store, getter)
 	resolver := &checkNodeResolver{controller}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.CheckConfigType,
@@ -244,5 +246,32 @@ func registerUserNodeResolver(register relay.NodeRegister, store store.Store) {
 func (f *userNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
 	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
+	return handleControllerResults(record, err)
+}
+
+// events
+
+type eventNodeResolver struct {
+	controller actions.EventController
+}
+
+func registerEventNodeResolver(register relay.NodeRegister, store store.Store) {
+	controller := actions.NewEventController(store, nil)
+	resolver := &eventNodeResolver{controller}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.EventType,
+		Translator: globalid.EventTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *eventNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	evComponents, ok := p.IDComponents.(globalid.EventComponents)
+	if !ok {
+		return nil, errors.New("given id does not appear to reference event")
+	}
+
+	ctx := setContextFromComponents(p.Context, p.IDComponents)
+	record, err := f.controller.Find(ctx, evComponents.EntityName(), evComponents.CheckName())
 	return handleControllerResults(record, err)
 }

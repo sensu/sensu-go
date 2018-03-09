@@ -2,7 +2,6 @@
 package pipelined
 
 import (
-	"errors"
 	"sync"
 	"sync/atomic"
 
@@ -27,31 +26,42 @@ type Pipelined struct {
 	wg        *sync.WaitGroup
 	errChan   chan error
 	eventChan chan interface{}
+	store     store.Store
+	bus       messaging.MessageBus
+}
 
-	Store      store.Store
-	MessageBus messaging.MessageBus
+// Config configures a Pipelined.
+type Config struct {
+	Store store.Store
+	Bus   messaging.MessageBus
+}
+
+// Option is a functional option used to configure Pipelined.
+type Option func(*Pipelined) error
+
+// New creates a new Pipelined with supplied Options applied.
+func New(c Config, options ...Option) (*Pipelined, error) {
+	p := &Pipelined{
+		store:     c.Store,
+		bus:       c.Bus,
+		stopping:  make(chan struct{}, 1),
+		running:   &atomic.Value{},
+		wg:        &sync.WaitGroup{},
+		errChan:   make(chan error, 1),
+		eventChan: make(chan interface{}, 100),
+	}
+	for _, o := range options {
+		if err := o(p); err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }
 
 // Start pipelined, subscribing to the "event" message bus topic to
 // pass Sensu events to the pipelines for handling (goroutines).
 func (p *Pipelined) Start() error {
-	if p.Store == nil {
-		return errors.New("no store found")
-	}
-
-	if p.MessageBus == nil {
-		return errors.New("no message bus found")
-	}
-
-	p.stopping = make(chan struct{}, 1)
-	p.running = &atomic.Value{}
-	p.wg = &sync.WaitGroup{}
-
-	p.errChan = make(chan error, 1)
-
-	p.eventChan = make(chan interface{}, 100)
-
-	if err := p.MessageBus.Subscribe(messaging.TopicEvent, "pipelined", p.eventChan); err != nil {
+	if err := p.bus.Subscribe(messaging.TopicEvent, "pipelined", p.eventChan); err != nil {
 		return err
 	}
 
@@ -66,7 +76,7 @@ func (p *Pipelined) Stop() error {
 	close(p.stopping)
 	p.wg.Wait()
 	close(p.errChan)
-	err := p.MessageBus.Unsubscribe(messaging.TopicEvent, "pipelined")
+	err := p.bus.Unsubscribe(messaging.TopicEvent, "pipelined")
 	close(p.eventChan)
 
 	return err

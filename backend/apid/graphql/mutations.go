@@ -8,7 +8,6 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
@@ -25,14 +24,9 @@ type mutationsImpl struct {
 	eventController actions.EventController
 }
 
-type mutationsStore interface {
-	store.Store
-	queue.Get
-}
-
-func newMutationImpl(store mutationsStore, bus messaging.MessageBus) *mutationsImpl {
+func newMutationImpl(store store.Store, getter types.QueueGetter, bus messaging.MessageBus) *mutationsImpl {
 	return &mutationsImpl{
-		checkController: actions.NewCheckController(store),
+		checkController: actions.NewCheckController(store, getter),
 		eventController: actions.NewEventController(store, bus),
 	}
 }

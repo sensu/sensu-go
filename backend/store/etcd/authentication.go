@@ -18,7 +18,7 @@ func (s *Store) CreateJWTSecret(secret []byte) error {
 	// if it does not exist
 	cmp := clientv3.Compare(clientv3.Version(getAuthenticationPath("secret")), "=", 0)
 	req := clientv3.OpPut(getAuthenticationPath("secret"), string(secret))
-	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(context.TODO()).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (s *Store) CreateJWTSecret(secret []byte) error {
 
 // GetJWTSecret retrieves the JWT signing secret
 func (s *Store) GetJWTSecret() ([]byte, error) {
-	resp, err := s.kvc.Get(context.TODO(), getAuthenticationPath("secret"), clientv3.WithLimit(1))
+	resp, err := s.client.Get(context.TODO(), getAuthenticationPath("secret"), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +44,6 @@ func (s *Store) GetJWTSecret() ([]byte, error) {
 
 // UpdateJWTSecret replaces the jwt secret with a new one.
 func (s *Store) UpdateJWTSecret(secret []byte) error {
-	_, err := s.kvc.Put(context.TODO(), getAuthenticationPath("secret"), string(secret))
+	_, err := s.client.Put(context.TODO(), getAuthenticationPath("secret"), string(secret))
 	return err
 }

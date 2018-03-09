@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeepaliveMonitor(t *testing.T) {
@@ -35,10 +36,8 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	k := &Keepalived{
-		Store:      store,
-		MessageBus: bus,
-	}
+	k, err := New(Config{Store: store, Bus: bus})
+	require.NoError(t, err)
 
 	if err := k.Start(); err != nil {
 		assert.FailNow(t, err.Error())

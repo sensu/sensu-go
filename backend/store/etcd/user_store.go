@@ -55,7 +55,7 @@ func (s *Store) CreateUser(u *types.User) error {
 	// if it does not exist
 	cmp := clientv3.Compare(clientv3.Version(getUserPath(u.Username)), "=", 0)
 	req := clientv3.OpPut(getUserPath(u.Username), string(userBytes))
-	res, err := s.kvc.Txn(context.TODO()).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(context.TODO()).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (s *Store) DeleteUser(ctx context.Context, user *types.User) error {
 
 	// Construct the list of operations to make in the transaction
 	userKey := getUserPath(user.Username)
-	txn := s.kvc.Txn(ctx).
+	txn := s.client.Txn(ctx).
 		// Ensure that the key exists
 		If(clientv3.Compare(clientv3.CreateRevision(userKey), ">", 0)).
 		// If key exists, delete user & any access token from allow list
@@ -110,7 +110,7 @@ func (s *Store) DeleteUser(ctx context.Context, user *types.User) error {
 
 // GetUser gets a User.
 func (s *Store) GetUser(ctx context.Context, username string) (*types.User, error) {
-	resp, err := s.kvc.Get(ctx, getUserPath(username), clientv3.WithLimit(1))
+	resp, err := s.client.Get(ctx, getUserPath(username), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (s *Store) GetUsers() ([]*types.User, error) {
 
 // GetAllUsers retrieves all users
 func (s *Store) GetAllUsers() ([]*types.User, error) {
-	resp, err := s.kvc.Get(context.TODO(), getUserPath(""), clientv3.WithPrefix())
+	resp, err := s.client.Get(context.TODO(), getUserPath(""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (s *Store) UpdateUser(u *types.User) error {
 		return err
 	}
 
-	_, err = s.kvc.Put(context.TODO(), getUserPath(u.Username), string(bytes))
+	_, err = s.client.Put(context.TODO(), getUserPath(u.Username), string(bytes))
 	return err
 }
 

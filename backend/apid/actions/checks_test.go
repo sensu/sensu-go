@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -17,12 +18,11 @@ func TestNewCheckController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
-	actions := NewCheckController(store)
+	actions := NewCheckController(store, queue.NewMemoryGetter())
 
 	assert.NotNil(actions)
-	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
+	assert.Equal(store, actions.store)
+	assert.NotNil(actions.policy)
 }
 
 func TestCheckQuery(t *testing.T) {
@@ -84,8 +84,7 @@ func TestCheckQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
-		actions := NewCheckController(store)
+		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -156,8 +155,7 @@ func TestCheckFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
-		actions := NewCheckController(store)
+		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -256,8 +254,7 @@ func TestCheckCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
-		actions := NewCheckController(store)
+		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -368,8 +365,7 @@ func TestCheckUpdate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
-		actions := NewCheckController(store)
+		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -469,8 +465,7 @@ func TestCheckDestroy(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		store.On("NewQueue", mock.Anything, mock.Anything).Return(&mockqueue.MockQueue{})
-		actions := NewCheckController(store)
+		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -555,8 +550,9 @@ func TestCheckAdhoc(t *testing.T) {
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
 		queue := &mockqueue.MockQueue{}
-		store.On("NewQueue", mock.Anything, mock.Anything).Return(queue)
-		actions := NewCheckController(store)
+		getter := &mockqueue.Getter{}
+		getter.On("GetQueue", mock.Anything).Return(queue)
+		actions := NewCheckController(store, getter)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)

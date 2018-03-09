@@ -3,7 +3,6 @@ package apid
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -15,31 +14,79 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
-// QueueStore contains store and queue interfaces.
-type QueueStore interface {
-	store.Store
-	queue.Get
-}
-
 // APId is the backend HTTP API.
 type APId struct {
-	stopping   chan struct{}
-	running    *atomic.Value
-	wg         *sync.WaitGroup
-	errChan    chan error
-	httpServer *http.Server
-	MessageBus messaging.MessageBus
+	// Host is the host APId is running on.
+	Host string
 
-	BackendStatus func() types.StatusMap
+	// Port is the port APId is running on.
+	Port int
+
+	stopping      chan struct{}
+	running       *atomic.Value
+	wg            *sync.WaitGroup
+	errChan       chan error
+	httpServer    *http.Server
+	bus           messaging.MessageBus
+	backendStatus func() types.StatusMap
+	store         store.Store
+	queueGetter   types.QueueGetter
+	tls           *types.TLSOptions
+}
+
+// Option is a functional option.
+type Option func(*APId) error
+
+// Config configures APId.
+type Config struct {
 	Host          string
 	Port          int
-	Store         QueueStore
+	Bus           messaging.MessageBus
+	Store         store.Store
+	QueueGetter   types.QueueGetter
 	TLS           *types.TLSOptions
+	BackendStatus func() types.StatusMap
+}
+
+// New creates a new APId.
+func New(c Config, opts ...Option) (*APId, error) {
+	a := &APId{
+		Host:          c.Host,
+		Port:          c.Port,
+		store:         c.Store,
+		queueGetter:   c.QueueGetter,
+		tls:           c.TLS,
+		backendStatus: c.BackendStatus,
+		stopping:      make(chan struct{}, 1),
+		running:       &atomic.Value{},
+		wg:            &sync.WaitGroup{},
+		errChan:       make(chan error, 1),
+	}
+
+	router := mux.NewRouter().UseEncodedPath()
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	registerUnauthenticatedResources(router, a.backendStatus)
+	registerAuthenticationResources(router, a.store)
+	registerRestrictedResources(router, a.store, a.queueGetter, a.bus)
+
+	a.httpServer = &http.Server{
+		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
+		Handler:      router,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	for _, o := range opts {
+		if err := o(a); err != nil {
+			return nil, err
+		}
+	}
+
+	return a, nil
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
@@ -50,48 +97,19 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// Start Apid.
+// Start APId.
 func (a *APId) Start() error {
-	if a.Store == nil {
-		return errors.New("no store found")
-	}
-
-	if a.MessageBus == nil {
-		return errors.New("no message bus found")
-	}
-
-	a.stopping = make(chan struct{}, 1)
-	a.running = &atomic.Value{}
-	a.wg = &sync.WaitGroup{}
-
-	a.errChan = make(chan error, 1)
-
-	router := mux.NewRouter().UseEncodedPath()
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	registerUnauthenticatedResources(router, a.BackendStatus)
-	registerAuthenticationResources(router, a.Store)
-	registerRestrictedResources(router, a.Store, a.MessageBus)
-
-	a.httpServer = &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      router,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
-
 	logger.Info("starting apid on address: ", a.httpServer.Addr)
 	a.wg.Add(1)
 
 	go func() {
 		defer a.wg.Done()
 		var err error
-		if a.TLS != nil {
-			err = a.httpServer.ListenAndServeTLS(a.TLS.CertFile, a.TLS.KeyFile)
+		if a.tls != nil {
+			err = a.httpServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
 		} else {
 			err = a.httpServer.ListenAndServe()
 		}
-		// TODO (JK): need a way to handle closing things like errChan, etc.
-		// in cases where there's a failure to start the daemon
 		if err != nil && err != http.ErrServerClosed {
 			a.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
 		}
@@ -154,7 +172,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store QueueStore, bus messaging.MessageBus) {
+func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
@@ -166,12 +184,12 @@ func registerRestrictedResources(router *mux.Router, store QueueStore, bus messa
 			middlewares.LimitRequest{},
 		),
 		routers.NewAssetRouter(store),
-		routers.NewChecksRouter(store),
+		routers.NewChecksRouter(store, getter),
 		routers.NewEntitiesRouter(store),
 		routers.NewEnvironmentsRouter(store),
 		routers.NewEventFiltersRouter(store),
 		routers.NewEventsRouter(store, bus),
-		routers.NewGraphQLRouter(store, bus),
+		routers.NewGraphQLRouter(store, bus, getter),
 		routers.NewHandlersRouter(store),
 		routers.NewHooksRouter(store),
 		routers.NewMutatorsRouter(store),

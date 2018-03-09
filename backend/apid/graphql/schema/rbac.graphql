@@ -13,7 +13,7 @@ type Rule {
 """
 Role describes set of rules
 """
-type Role {
+type Role implements Node {
   id: ID!
   name: String!
   rules: [Rule!]!

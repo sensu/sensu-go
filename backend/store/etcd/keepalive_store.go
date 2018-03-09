@@ -58,7 +58,7 @@ func (s *Store) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(entity.Organization, entity.Environment)), ">", 0)
 	req := clientv3.OpPut(getKeepalivePath(s.keepalivesPath, entity), string(krBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}
