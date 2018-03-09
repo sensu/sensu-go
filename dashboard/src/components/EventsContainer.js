@@ -156,7 +156,7 @@ class EventsContainer extends React.Component {
       "keepalive",
     ];
 
-    const events = environment.events.edges || [];
+    const events = (environment.events && environment.events.edges) || [];
     const someEventsSelected = this.eventsSelected();
 
     return (

@@ -37,11 +37,11 @@ const styles = theme => ({
   },
   disclosure: {
     color: theme.palette.action.active,
-    marginRight: -12,
+    marginLeft: 12,
     paddingTop: 14,
   },
   content: {
-    width: "calc(100% - 104px)",
+    width: "calc(100% - 96px)",
     display: "inline-block",
     padding: 14,
   },

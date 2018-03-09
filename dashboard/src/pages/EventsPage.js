@@ -2,8 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { graphql } from "react-relay";
-import Typography from "material-ui/Typography";
+import { routerShape, matchShape } from "found";
 import { withStyles } from "material-ui/styles";
+import Typography from "material-ui/Typography";
 
 import AppContent from "../components/AppContent";
 import EventsContainer from "../components/EventsContainer";
@@ -26,8 +27,12 @@ const styles = {
 
 class EventsPage extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    location: PropTypes.shape({
+      query: PropTypes.object.isRequired,
+    }).isRequired,
+    router: routerShape.isRequired,
+    match: matchShape.isRequired,
   };
 
   static query = graphql`
@@ -43,13 +48,26 @@ class EventsPage extends React.Component {
     }
   `;
 
-  state = { inputValue: "" };
+  constructor(props) {
+    super(props);
+    this.state = {
+      filterValue: props.location.query.filter,
+    };
+  }
 
-  requerySearchBox = inputValue => {
-    this.setState({ inputValue });
-    // TODO return to this and make it actually query
-    // eslint-disable-next-line no-console
-    console.info("inputValue", inputValue);
+  changeQuery = (key, val) => {
+    const { match, router } = this.props;
+    const query = new URLSearchParams(match.location.query);
+
+    query.set(key, val);
+    router.push(`${match.location.pathname}?${query.toString()}`);
+  };
+
+  requerySearchBox = filterValue => {
+    this.setState({ filterValue });
+    if (filterValue.length > 10) {
+      this.changeQuery("filter", filterValue);
+    }
   };
 
   render() {
@@ -63,7 +81,7 @@ class EventsPage extends React.Component {
             </Typography>
             <SearchBox
               onUpdateInput={this.requerySearchBox}
-              state={this.state.inputValue}
+              state={this.state.filterValue}
             />
           </div>
           <div className={classes.container}>
