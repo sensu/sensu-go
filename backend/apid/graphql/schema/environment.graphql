@@ -16,9 +16,9 @@ type Environment implements Node {
 
   # "All entities associated with the environment."
   # entities(first: Int = 10, last: Int = 10, before: String, after: String): EntityConnection
-  #
-  # "All check configurations associated with the environment."
-  # checks(first: Int = 10, last: Int = 10, before: String, after: String): CheckConfigConnection
+
+  "All check configurations associated with the environment."
+  checks(first: Int = 10, last: Int = 10, before: String, after: String): CheckConfigConnection
 
   "All events associated with the environment."
   events(first: Int = 10, last: Int = 10, before: String, after: String, filter: String, orderBy: EventsListOrder = SEVERITY): EventConnection

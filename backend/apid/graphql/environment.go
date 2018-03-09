@@ -21,12 +21,14 @@ var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
 
 type envImpl struct {
 	orgCtrl    actions.OrganizationsController
+	checksCtrl actions.CheckController
 	eventsCtrl actions.EventController
 }
 
 func newEnvImpl(store store.Store) *envImpl {
 	return &envImpl{
 		orgCtrl:    actions.NewOrganizationsController(store),
+		checksCtrl: actions.NewCheckController(store),
 		eventsCtrl: actions.NewEventController(store, nil),
 	}
 }
@@ -55,6 +57,25 @@ func (r *envImpl) Organization(p graphql.ResolveParams) (interface{}, error) {
 	return handleControllerResults(org, err)
 }
 
+// Checks implements response to request for 'checks' field.
+func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interface{}, error) {
+	records, err := r.checksCtrl.Query(p.Context)
+	if err != nil {
+		return nil, err
+	}
+
+	info := relay.NewArrayConnectionInfo(
+		0, len(records),
+		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
+	)
+
+	edges := make([]*relay.Edge, info.End-info.Begin)
+	for i, r := range records[info.Begin:info.End] {
+		edges[i] = relay.NewArrayConnectionEdge(r, i)
+	}
+	return relay.NewArrayConnection(edges, info), nil
+}
+
 // Events implements response to request for 'events' field.
 func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interface{}, error) {
 	env := p.Source.(types.Environment)
@@ -64,6 +85,7 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 		return nil, err
 	}
 
+	// apply filters
 	var filteredEvents []*types.Event
 	filter := p.Args.Filter
 	if len(filter) > 0 {
@@ -83,6 +105,7 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 		filteredEvents = records
 	}
 
+	// sort records
 	if p.Args.OrderBy == schema.EventsListOrders.SEVERITY {
 		sort.Sort(types.EventsBySeverity(filteredEvents))
 	} else {
@@ -92,11 +115,11 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 		))
 	}
 
+	// pagination
 	info := relay.NewArrayConnectionInfo(
 		0, len(filteredEvents),
 		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
 	)
-
 	edges := make([]*relay.Edge, info.End-info.Begin)
 	for i, r := range filteredEvents[info.Begin:info.End] {
 		edges[i] = relay.NewArrayConnectionEdge(r, i)
