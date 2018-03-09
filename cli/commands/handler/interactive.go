@@ -54,7 +54,7 @@ func (opts *handlerOpts) withHandler(handler *types.Handler) {
 
 func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
-	opts.Filters, _ = flags.GetString("handlers")
+	opts.Filters, _ = flags.GetString("filters")
 	opts.Handlers, _ = flags.GetString("handlers")
 	opts.Mutator, _ = flags.GetString("mutator")
 	opts.SocketHost, _ = flags.GetString("socket-host")
