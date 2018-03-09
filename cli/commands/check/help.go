@@ -20,7 +20,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		DeleteCommand(cli),
 		ExecuteCommand(cli),
 		ListCommand(cli),
-		ShowCommand(cli),
+		InfoCommand(cli),
 		UpdateCommand(cli),
 
 		// Remove commands (clear out fields)

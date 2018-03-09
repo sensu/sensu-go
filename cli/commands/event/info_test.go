@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestShowCommand(t *testing.T) {
+func TestInfoCommand(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 
 	assert.NotNil(t, cmd, "cmd should be returned")
 	assert.NotNil(t, cmd.RunE, "cmd should be able to be executed")
@@ -22,14 +22,14 @@ func TestShowCommand(t *testing.T) {
 	assert.Regexp(t, "event", cmd.Short)
 }
 
-func TestShowCommandRunEClosure(t *testing.T) {
+func TestInfoCommandRunEClosure(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
 		On("FetchEvent", "foo", "check_foo").
 		Return(types.FixtureEvent("foo", "check_foo"), nil)
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
 
 	assert.NotEmpty(t, out)
@@ -37,24 +37,24 @@ func TestShowCommandRunEClosure(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestShowCommandRunMissingArgs(t *testing.T) {
+func TestInfoCommandRunMissingArgs(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 	require.Error(t, err)
 	assert.NotEmpty(t, out)
 	assert.Contains(t, out, "Usage")
 }
 
-func TestShowCommandRunEClosureWithTable(t *testing.T) {
+func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
 		On("FetchEvent", "foo", "check_foo").
 		Return(types.FixtureEvent("foo", "check_foo"), nil)
 	cli.Config.(*client.MockConfig).On("Format").Return("tabular")
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "tabular"))
 
 	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
@@ -64,14 +64,14 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(t, out, "Check")
 }
 
-func TestShowCommandRunEClosureWithErr(t *testing.T) {
+func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
 		On("FetchEvent", "foo", "check_foo").
 		Return(types.FixtureEvent("foo", "check_foo"), fmt.Errorf("error"))
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
 
 	assert.NotNil(t, err)

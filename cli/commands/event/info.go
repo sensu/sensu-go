@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ShowCommand defines new event info command
-func ShowCommand(cli *cli.SensuCli) *cobra.Command {
+// InfoCommand defines new event info command
+func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [ENTITY] [CHECK]",
 		Short:        "show detailed event information",
