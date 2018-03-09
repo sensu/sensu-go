@@ -48,7 +48,7 @@
     "lint-staged": "^6.1.0",
     "lodash": "^4.17.4",
     "material-ui": "v1.0.0-beta.30",
-    "material-ui-icons": "^1.0.0-beta.36",
+    "material-ui-icons": "^1.0.0-beta.17",
     "moment": "^2.19.1",
     "object-assign": "^4.1.1",
     "postcss-flexbugs-fixes": "^3.2.0",
