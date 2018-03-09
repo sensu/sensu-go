@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
 (default) to 65535.
+- Increased the default etcd size limit from 2GB to 4GB.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
