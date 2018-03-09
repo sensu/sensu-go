@@ -83,7 +83,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Silenced",
 			CellTransformer: func(data interface{}) string {
 				event, _ := data.(types.Event)
-				return globals.BooleanStyleP(len(event.Silenced) > 0)
+				return globals.BooleanStyleP(len(event.Check.Silenced) > 0)
 			},
 		},
 		{

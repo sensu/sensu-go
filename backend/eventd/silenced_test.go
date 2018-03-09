@@ -47,7 +47,7 @@ func TestGetSilenced(t *testing.T) {
 
 			result := getSilenced(ctx, tc.event, mockStore)
 			assert.Nil(t, result)
-			assert.Equal(t, tc.expectedEntries, tc.event.Silenced)
+			assert.Equal(t, tc.expectedEntries, tc.event.Check.Silenced)
 		})
 	}
 }
@@ -243,12 +243,12 @@ func TestHandleExpireOnResolveEntries(t *testing.T) {
 				mock.Anything,
 			).Return(nil)
 
-			tc.event.Silenced = []string{tc.silencedEntry.ID}
+			tc.event.Check.Silenced = []string{tc.silencedEntry.ID}
 
 			err := handleExpireOnResolveEntries(ctx, tc.event, mockStore)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedSilencedEntries, tc.event.Silenced)
+			assert.Equal(t, tc.expectedSilencedEntries, tc.event.Check.Silenced)
 		})
 	}
 }
