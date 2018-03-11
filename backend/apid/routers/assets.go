@@ -25,10 +25,10 @@ func NewAssetRouter(store store.AssetStore) *AssetsRouter {
 // Mount the AssetsRouter to a parent Router
 func (r *AssetsRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/assets"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.patch(r.update)
 }
 
 func (r *AssetsRouter) list(req *http.Request) (interface{}, error) {

@@ -25,11 +25,11 @@ func NewRolesRouter(store store.RBACStore) *RolesRouter {
 // Mount the RolesRouter to a parent Router
 func (r *RolesRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/rbac/roles"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.patch(r.update)
+	routes.del(r.destroy)
 
 	// Custom
 	routes.path("{id}/rules/{type}", r.addRule).Methods(http.MethodPut)

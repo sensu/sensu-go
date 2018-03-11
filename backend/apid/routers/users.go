@@ -25,11 +25,11 @@ func NewUsersRouter(store store.Store) *UsersRouter {
 // Mount the UsersRouter to a parent Router
 func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/rbac/users"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.patch(r.update)
+	routes.del(r.destroy)
 
 	// Custom
 	routes.path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)

@@ -25,10 +25,10 @@ func NewEntitiesRouter(store store.EntityStore) *EntitiesRouter {
 // Mount the EntitiesRouter to a parent Router
 func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/entities"}
-	routes.destroy(r.destroy)
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.update(r.update)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.patch(r.update)
+	routes.del(r.destroy)
 }
 
 func (r *EntitiesRouter) destroy(req *http.Request) (interface{}, error) {

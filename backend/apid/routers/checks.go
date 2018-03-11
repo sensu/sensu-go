@@ -27,11 +27,11 @@ func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter 
 // Mount the ChecksRouter to a parent Router
 func (r *ChecksRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/checks"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.patch(r.update)
+	routes.del(r.destroy)
 
 	// Custom
 	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)

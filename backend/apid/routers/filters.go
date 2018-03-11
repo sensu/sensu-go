@@ -25,11 +25,11 @@ func NewEventFiltersRouter(store store.EventFilterStore) *EventFiltersRouter {
 // Mount the EventFiltersRouter to a parent Router
 func (r *EventFiltersRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/filters"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.patch(r.update)
+	routes.del(r.destroy)
 }
 
 func (r *EventFiltersRouter) list(req *http.Request) (interface{}, error) {
