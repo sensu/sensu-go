@@ -12,6 +12,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Increased the default etcd size limit from 2GB to 4GB.
 - Move Hooks and Silenced out of Event and into Check.
 
+### Added
+- Support for managing mutators via sensuctl.
+
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
 - A `--debug` flag on sensu-backend for enabling a pprof HTTP endpoint on localhost.
@@ -33,6 +36,7 @@ set when importing legacy settings.
 of a successful check.
 - Added GraphQL explorer to web UI.
 - Added check occurrences and occurrences_watermark attributes from Sensu 1.x.
+- Added issue template for GitHub.
 - Added custom functions to evaluate a unix timestamp in govaluate.
 
 ### Changed
