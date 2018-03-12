@@ -22,6 +22,93 @@ func TestNewMutatorController(t *testing.T) {
 	assert.NotNil(ctl.Policy)
 }
 
+func TestMutatorCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(
+				types.RuleTypeMutator,
+				types.RulePermCreate,
+				types.RulePermUpdate,
+			),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
+		),
+	)
+
+	badMut := types.FixtureMutator("bad")
+	badMut.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	tests := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Mutator
+		fetchResult     *types.Mutator
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureMutator("sleepy"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureMutator("sleepy"),
+			fetchResult: types.FixtureMutator("sleepy"),
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureMutator("sneezy"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badMut,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, test := range tests {
+		store := &mockstore.MockStore{}
+		ctl := NewMutatorController(store)
+
+		t.Run(test.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			store.On("GetMutatorByName", mock.Anything, mock.Anything).
+				Return(test.fetchResult, test.fetchErr)
+
+			store.On("UpdateMutator", mock.Anything, mock.Anything).Return(test.createErr)
+
+			err := ctl.CreateOrReplace(test.ctx, *test.argument)
+
+			if test.expectedErr {
+				if cerr, ok := err.(Error); ok {
+					assert.Equal(test.expectedErrCode, cerr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestMutatorCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),

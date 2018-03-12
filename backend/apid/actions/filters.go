@@ -61,6 +61,33 @@ func (c EventFilterController) Create(ctx context.Context, filter types.EventFil
 	return nil
 }
 
+// CreateOrReplace creates a new EventFilter resource.
+// It returns non-nil error if the new Filter is invalid, update permissions
+// do not exist, or an internal error occurs while updating the underlying
+// store.
+func (c EventFilterController) CreateOrReplace(ctx context.Context, filter types.EventFilter) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &filter)
+	policy := c.Policy.WithContext(ctx)
+
+	// Verify permissions
+	if !(policy.CanCreate(&filter) && policy.CanUpdate(&filter)) {
+		return NewErrorf(PermissionDenied, "create")
+	}
+
+	// Validate
+	if err := filter.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := c.Store.UpdateEventFilter(ctx, &filter); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
 // Update updates a Filter.
 // It returns non-nil error if the new Filter is invalid, create permissions
 // do not exist, or an internal error occurs while updating the underlying

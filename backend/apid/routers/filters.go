@@ -30,6 +30,7 @@ func (r *EventFiltersRouter) Mount(parent *mux.Router) {
 	routes.post(r.create)
 	routes.patch(r.update)
 	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 }
 
 func (r *EventFiltersRouter) list(req *http.Request) (interface{}, error) {
@@ -52,6 +53,16 @@ func (r *EventFiltersRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), filter)
+	return filter, err
+}
+
+func (r *EventFiltersRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	filter := types.EventFilter{}
+	if err := unmarshalBody(req, &filter); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.CreateOrReplace(req.Context(), filter)
 	return filter, err
 }
 

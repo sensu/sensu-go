@@ -177,6 +177,99 @@ func TestRoleFind(t *testing.T) {
 	}
 }
 
+func TestRoleCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
+		types.RuleTypeRole,
+		types.RulePermCreate,
+		types.RulePermUpdate,
+	))
+	badCtx := testutil.NewContext(testutil.ContextWithPerms(
+		types.RuleTypeRole,
+		types.RulePermCreate,
+	))
+
+	badRole := simpleRoleFixture()
+	badRole.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Role
+		fetchResult     *types.Role
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    simpleRoleFixture(),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    simpleRoleFixture(),
+			fetchResult: simpleRoleFixture(),
+		},
+		{
+			name:            "Store Err on Create",
+			ctx:             defaultCtx,
+			argument:        simpleRoleFixture(),
+			createErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             badCtx,
+			argument:        simpleRoleFixture(),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badRole,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewRoleController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetRoleByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateRole", mock.Anything, mock.Anything).
+				Return(tc.createErr)
+
+			// Exec Query
+			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestRoleCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
 		types.RuleTypeRole,

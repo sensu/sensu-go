@@ -285,6 +285,106 @@ func TestCheckCreate(t *testing.T) {
 	}
 }
 
+func TestCheckCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(
+				types.RuleTypeCheck,
+				types.RulePermCreate,
+				types.RulePermUpdate,
+			),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
+		),
+	)
+
+	badCheck := types.FixtureCheckConfig("check1")
+	badCheck.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.CheckConfig
+		fetchResult     *types.CheckConfig
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureCheckConfig("check1"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureCheckConfig("check1"),
+			fetchResult: types.FixtureCheckConfig("check1"),
+		},
+		{
+			name:            "Store Err on Create",
+			ctx:             defaultCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			createErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureCheckConfig("check1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badCheck,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewCheckController(store, queue.NewMemoryGetter())
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetCheckConfigByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateCheckConfig", mock.Anything, mock.Anything).
+				Return(tc.createErr)
+
+			// Exec Query
+			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestCheckUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),

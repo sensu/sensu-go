@@ -30,7 +30,7 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 	routes.getAll(r.list)
 	routes.get(r.find)
 	routes.patch(r.update)
-
+	routes.put(r.createOrReplace)
 }
 
 func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
@@ -40,6 +40,15 @@ func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	return handler, r.controller.Create(req.Context(), handler)
+}
+
+func (r *HandlersRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	handler := types.Handler{}
+	if err := unmarshalBody(req, &handler); err != nil {
+		return nil, err
+	}
+
+	return handler, r.controller.CreateOrReplace(req.Context(), handler)
 }
 
 func (r *HandlersRouter) destroy(req *http.Request) (interface{}, error) {

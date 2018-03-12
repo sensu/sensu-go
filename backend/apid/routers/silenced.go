@@ -30,6 +30,7 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.post(r.create)
 	routes.patch(r.update)
 	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 
 	// Custom
 	routes.path("subscriptions/{subscription}", r.list).Methods(http.MethodGet)
@@ -57,6 +58,16 @@ func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), cfg)
+	return cfg, err
+}
+
+func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	cfg := types.Silenced{}
+	if err := unmarshalBody(req, &cfg); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.CreateOrReplace(req.Context(), cfg)
 	return cfg, err
 }
 

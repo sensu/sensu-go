@@ -74,7 +74,7 @@ func (a SilencedController) Find(ctx context.Context, id string) (*types.Silence
 	return nil, NewErrorf(NotFound)
 }
 
-// Create instatiates, validates and persists new resource if viewer has access.
+// Create creates a new silenced entry. It returns an error if the entry already exists.
 func (a SilencedController) Create(ctx context.Context, newSilence types.Silenced) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newSilence)
@@ -97,11 +97,6 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 		newSilence.Creator = actor.Name
 	}
 
-	// Validate
-	if err := newSilence.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
 	// Check for existing
 	if e, serr := a.Store.GetSilencedEntryByID(ctx, newSilence.ID); serr != nil {
 		return NewError(InternalErr, serr)
@@ -112,6 +107,52 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 	// Verify viewer can make change
 	if yes := abilities.CanCreate(&newSilence); !yes {
 		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newSilence.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateSilencedEntry(ctx, &newSilence); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// CreateOrReplace creates or replaces a silenced entry.
+func (a SilencedController) CreateOrReplace(ctx context.Context, newSilence types.Silenced) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &newSilence)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Populate newSilence.ID with the subscription and checkName. Substitute a
+	// splat if one of the values does not exist. If both values are empty, the
+	// validator will return an error when attempting to update it in the store.
+	if newSilence.Subscription != "" && newSilence.Check != "" {
+		newSilence.ID = newSilence.Subscription + ":" + newSilence.Check
+	} else if newSilence.Check == "" && newSilence.Subscription != "" {
+		newSilence.ID = newSilence.Subscription + ":" + "*"
+	} else if newSilence.Subscription == "" && newSilence.Check != "" {
+		newSilence.ID = "*" + ":" + newSilence.Check
+	}
+
+	// Retrieve the subject of the JWT, which represents the logged on user, in
+	// order to set it as the creator of the silenced entry
+	if actor, ok := ctx.Value(types.AuthorizationActorKey).(authorization.Actor); ok {
+		newSilence.Creator = actor.Name
+	}
+
+	// Verify viewer can make change
+	if !(abilities.CanCreate(&newSilence) && abilities.CanUpdate(&newSilence)) {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newSilence.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
 	}
 
 	// Persist
@@ -142,11 +183,6 @@ func (a SilencedController) Update(ctx context.Context, given types.Silenced) er
 
 	// Copy
 	copyFields(silence, &given, silencedUpdateFields...)
-
-	// Validate
-	if err := silence.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
 
 	// Persist Changes
 	if serr := a.Store.UpdateSilencedEntry(ctx, silence); serr != nil {

@@ -65,9 +65,9 @@ func (a UserController) Find(ctx context.Context, name string) (*types.User, err
 	return nil, NewErrorf(NotFound)
 }
 
-// Create instantiates, validates and persists new resource if viewer has access.
+// Create creates a new user. It returns an error if the user already exists.
 func (a UserController) Create(ctx context.Context, newUser types.User) error {
-	// User for existing
+	// Check for existing
 	if e, err := a.Store.GetUser(ctx, newUser.Username); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
@@ -77,6 +77,37 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 	// Verify viewer can make change
 	abilities := a.Policy.WithContext(ctx)
 	if yes := abilities.CanCreate(); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newUser.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Validate password
+	if err := newUser.ValidatePassword(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Validate roles
+	if err := validateRoles(ctx, a.Store, newUser.Roles); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateUser(&newUser); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// CreateOrReplace creates or replaces a user.
+func (a UserController) CreateOrReplace(ctx context.Context, newUser types.User) error {
+	// Verify viewer can make change
+	abilities := a.Policy.WithContext(ctx)
+	if !(abilities.CanCreate() && abilities.CanUpdate(&newUser)) {
 		return NewErrorf(PermissionDenied)
 	}
 

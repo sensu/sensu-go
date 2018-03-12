@@ -32,6 +32,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	routes.post(r.create)
 	routes.patch(r.update)
 	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 
 	// Custom
 	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
@@ -63,6 +64,16 @@ func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), cfg)
+	return cfg, err
+}
+
+func (r *ChecksRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	cfg := types.CheckConfig{}
+	if err := unmarshalBody(req, &cfg); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.CreateOrReplace(req.Context(), cfg)
 	return cfg, err
 }
 

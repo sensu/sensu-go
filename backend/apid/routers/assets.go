@@ -29,6 +29,7 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 	routes.get(r.find)
 	routes.post(r.create)
 	routes.patch(r.update)
+	routes.put(r.createOrReplace)
 }
 
 func (r *AssetsRouter) list(req *http.Request) (interface{}, error) {
@@ -64,4 +65,13 @@ func (r *AssetsRouter) update(req *http.Request) (interface{}, error) {
 
 	err := r.controller.Update(req.Context(), cfg)
 	return cfg, err
+}
+
+func (r *AssetsRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	var asset types.Asset
+	if err := unmarshalBody(req, &asset); err != nil {
+		return nil, err
+	}
+	err := r.controller.CreateOrReplace(req.Context(), asset)
+	return asset, err
 }

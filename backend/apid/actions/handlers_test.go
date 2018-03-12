@@ -115,6 +115,93 @@ func TestHandlerCreate(t *testing.T) {
 	}
 }
 
+func TestHandlerCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(
+				types.RuleTypeHandler,
+				types.RulePermCreate,
+				types.RulePermUpdate,
+			),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermCreate),
+		),
+	)
+
+	badHandler := types.FixtureHandler("bad")
+	badHandler.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	tests := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Handler
+		fetchResult     *types.Handler
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureHandler("foo"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureHandler("foo"),
+			fetchResult: types.FixtureHandler("foo"),
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureHandler("foo"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badHandler,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, test := range tests {
+		store := &mockstore.MockStore{}
+		ctl := NewHandlerController(store)
+
+		t.Run(test.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			store.On("GetHandlerByName", mock.Anything, mock.Anything).
+				Return(test.fetchResult, test.fetchErr)
+
+			store.On("UpdateHandler", mock.Anything, mock.Anything).Return(test.createErr)
+
+			err := ctl.CreateOrReplace(test.ctx, *test.argument)
+
+			if test.expectedErr {
+				if cerr, ok := err.(Error); ok {
+					assert.Equal(test.expectedErrCode, cerr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestHandlerDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),

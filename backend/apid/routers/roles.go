@@ -30,6 +30,7 @@ func (r *RolesRouter) Mount(parent *mux.Router) {
 	routes.post(r.create)
 	routes.patch(r.update)
 	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 
 	// Custom
 	routes.path("{id}/rules/{type}", r.addRule).Methods(http.MethodPut)
@@ -58,6 +59,16 @@ func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), cfg)
+	return cfg, err
+}
+
+func (r *RolesRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	cfg := types.Role{}
+	if err := unmarshalBody(req, &cfg); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.CreateOrReplace(req.Context(), cfg)
 	return cfg, err
 }
 

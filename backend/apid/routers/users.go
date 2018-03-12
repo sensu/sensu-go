@@ -30,6 +30,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.post(r.create)
 	routes.patch(r.update)
 	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 
 	// Custom
 	routes.path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
@@ -72,7 +73,20 @@ func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
 
 	err := r.controller.Create(req.Context(), cfg)
 
-	// Obfustace users password
+	// Hide user's password
+	cfg.Password = ""
+	return cfg, err
+}
+
+func (r *UsersRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	cfg := types.User{}
+	if err := unmarshalBody(req, &cfg); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.CreateOrReplace(req.Context(), cfg)
+
+	// Hide user's password
 	cfg.Password = ""
 	return cfg, err
 }

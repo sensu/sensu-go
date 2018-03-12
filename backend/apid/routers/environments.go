@@ -29,6 +29,7 @@ func (r *EnvironmentsRouter) Mount(parent *mux.Router) {
 	routes.path("{organization}/environments/{environment}", r.find).Methods(http.MethodGet)
 	routes.path("{organization}/environments", r.create).Methods(http.MethodPost)
 	routes.path("{organization}/environments/{environment}", r.update).Methods(http.MethodPatch)
+	routes.path("{organization}/environments/{environment}", r.createOrReplace).Methods(http.MethodPut)
 	routes.path("{organization}/environments/{environment}", r.destroy).Methods(http.MethodDelete)
 }
 
@@ -67,6 +68,21 @@ func (r *EnvironmentsRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err = r.controller.Create(req.Context(), env)
+	return env, err
+}
+
+func (r *EnvironmentsRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	env := types.Environment{}
+	var err error
+	if err = unmarshalBody(req, &env); err != nil {
+		return nil, err
+	}
+	env.Organization, err = url.PathUnescape(mux.Vars(req)["organization"])
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.controller.CreateOrReplace(req.Context(), env)
 	return env, err
 }
 

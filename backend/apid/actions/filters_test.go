@@ -22,6 +22,93 @@ func TestNewEventFilterController(t *testing.T) {
 	assert.NotNil(ctl.Policy)
 }
 
+func TestEventFilterCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(
+				types.RuleTypeEventFilter,
+				types.RulePermCreate,
+				types.RulePermUpdate,
+			),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermCreate),
+		),
+	)
+
+	badMut := types.FixtureEventFilter("bad")
+	badMut.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	tests := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.EventFilter
+		fetchResult     *types.EventFilter
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEventFilter("sleepy"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEventFilter("sleepy"),
+			fetchResult: types.FixtureEventFilter("sleepy"),
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureEventFilter("sneezy"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badMut,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, test := range tests {
+		store := &mockstore.MockStore{}
+		ctl := NewEventFilterController(store)
+
+		t.Run(test.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			store.On("GetEventFilterByName", mock.Anything, mock.Anything).
+				Return(test.fetchResult, test.fetchErr)
+
+			store.On("UpdateEventFilter", mock.Anything, mock.Anything).Return(test.createErr)
+
+			err := ctl.CreateOrReplace(test.ctx, *test.argument)
+
+			if test.expectedErr {
+				if cerr, ok := err.(Error); ok {
+					assert.Equal(test.expectedErrCode, cerr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestEventFilterCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),

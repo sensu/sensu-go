@@ -177,6 +177,106 @@ func TestHookFind(t *testing.T) {
 	}
 }
 
+func TestHookCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(
+				types.RuleTypeHook,
+				types.RulePermCreate,
+				types.RulePermUpdate,
+			),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
+		),
+	)
+
+	badHook := types.FixtureHookConfig("hook1")
+	badHook.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.HookConfig
+		fetchResult     *types.HookConfig
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureHookConfig("hook1"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureHookConfig("hook1"),
+			fetchResult: types.FixtureHookConfig("hook1"),
+		},
+		{
+			name:            "Store Err on Create",
+			ctx:             defaultCtx,
+			argument:        types.FixtureHookConfig("hook1"),
+			createErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureHookConfig("hook1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badHook,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewHookController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetHookConfigByName", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateHookConfig", mock.Anything, mock.Anything).
+				Return(tc.createErr)
+
+			// Exec Query
+			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestHookCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),

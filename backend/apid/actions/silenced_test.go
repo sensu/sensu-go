@@ -200,6 +200,120 @@ func TestSilencedFind(t *testing.T) {
 	}
 }
 
+func TestSilencedCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithPerms(
+			types.RuleTypeSilenced,
+			types.RulePermCreate,
+			types.RulePermUpdate,
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermCreate),
+	)
+	actorCtx := testutil.NewContext(
+		testutil.ContextWithActor("actorID", types.FixtureRuleWithPerms(
+			types.RuleTypeSilenced, types.RulePermCreate, types.RulePermUpdate)),
+	)
+
+	badSilence := types.FixtureSilenced("*:silence1")
+	badSilence.Check = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Silenced
+		fetchResult     *types.Silenced
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+		expectedCreator string
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureSilenced("*:silence1"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureSilenced("*:silence1"),
+			fetchResult: types.FixtureSilenced("*:silence1"),
+		},
+		{
+			name:            "Store Err on Create",
+			ctx:             defaultCtx,
+			argument:        types.FixtureSilenced("*:silence1"),
+			createErr:       errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureSilenced("*:silence1"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badSilence,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:            "Creator",
+			ctx:             actorCtx,
+			argument:        types.FixtureSilenced("*:silence1"),
+			expectedErr:     false,
+			expectedCreator: "actorID",
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewSilencedController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			// Mock store methods
+			store.
+				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
+				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
+				Return(tc.createErr).
+				Run(func(args mock.Arguments) {
+					if tc.expectedCreator != "" {
+						bytes, _ := json.Marshal(args[1])
+						entry := types.Silenced{}
+						_ = json.Unmarshal(bytes, &entry)
+
+						assert.Equal(tc.expectedCreator, entry.Creator)
+					}
+				})
+
+			// Exec Query
+			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Given was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
 func TestSilencedCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermCreate),
