@@ -30,7 +30,7 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 		return errors.New("must specify name of handler")
 	}
 
-	_, err := s.kvc.Delete(ctx, getHandlersPath(ctx, name))
+	_, err := s.client.Delete(ctx, getHandlersPath(ctx, name))
 	return err
 }
 
@@ -64,7 +64,7 @@ func (s *Store) GetHandlerByName(ctx context.Context, name string) (*types.Handl
 		return nil, errors.New("must specify name of handler")
 	}
 
-	resp, err := s.kvc.Get(ctx, getHandlersPath(ctx, name))
+	resp, err := s.client.Get(ctx, getHandlersPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (s *Store) UpdateHandler(ctx context.Context, handler *types.Handler) error
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(handler.Organization, handler.Environment)), ">", 0)
 	req := clientv3.OpPut(getHandlerPath(handler), string(handlerBytes))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

@@ -35,7 +35,7 @@ func (s *Store) DeleteSilencedEntryByID(ctx context.Context, silencedID string) 
 		return errors.New("must specify id")
 	}
 
-	_, err := s.kvc.Delete(ctx, getSilencedPath(ctx, silencedID))
+	_, err := s.client.Delete(ctx, getSilencedPath(ctx, silencedID))
 	return err
 }
 
@@ -57,7 +57,7 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 	if subscription == "" {
 		return nil, errors.New("must specify subscription")
 	}
-	resp, err := s.kvc.Get(ctx, getSilencedPath(ctx, subscription), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, getSilencedPath(ctx, subscription), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 	if checkName == "" {
 		return nil, errors.New("must specify check name")
 	}
-	resp, err := s.kvc.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (s *Store) GetSilencedEntryByID(ctx context.Context, id string) (*types.Sil
 		return nil, errors.New("must specify id")
 	}
 
-	resp, err := s.kvc.Get(ctx, getSilencedPath(ctx, id))
+	resp, err := s.client.Get(ctx, getSilencedPath(ctx, id))
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 	} else {
 		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes))
 	}
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

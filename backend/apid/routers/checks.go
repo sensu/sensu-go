@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -17,9 +18,9 @@ type ChecksRouter struct {
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(store queueStore) *ChecksRouter {
+func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter {
 	return &ChecksRouter{
-		controller: actions.NewCheckController(store),
+		controller: actions.NewCheckController(store, getter),
 	}
 }
 

@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/sensu/govaluate"
 )
@@ -14,7 +15,9 @@ type Predicate struct {
 
 // NewPredicate initiailizes new predicate given expression.
 func NewPredicate(expression string) (*Predicate, error) {
-	expr, err := govaluate.NewEvaluableExpression(expression)
+	funcs := expressionFunctions()
+
+	expr, err := govaluate.NewEvaluableExpressionWithFunctions(expression, funcs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse the expression: %s", err.Error())
 	}
@@ -60,8 +63,10 @@ func EvaluatePredicate(expression string, parameters map[string]interface{}) (bo
 // ValidateStatements ensure that the given statements can be parsed
 // successfully and, optionally, that it does not contain any modifier tokens.
 func ValidateStatements(statements []string, forbidModifier bool) error {
+	funcs := expressionFunctions()
+
 	for _, statement := range statements {
-		exp, err := govaluate.NewEvaluableExpression(statement)
+		exp, err := govaluate.NewEvaluableExpressionWithFunctions(statement, funcs)
 		if err != nil {
 			return fmt.Errorf("invalid statement '%s': %s", statement, err.Error())
 		}
@@ -82,4 +87,20 @@ func ValidateStatements(statements []string, forbidModifier bool) error {
 	}
 
 	return nil
+}
+
+func expressionFunctions() map[string]govaluate.ExpressionFunction {
+	return map[string]govaluate.ExpressionFunction{
+		// hour returns the hour within the day
+		"hour": func(args ...interface{}) (interface{}, error) {
+			t := time.Unix(int64(args[0].(float64)), 0).UTC()
+			return float64(t.Hour()), nil
+		},
+		// weekday returns the number representation of the day of the week, where
+		// Sunday = 0
+		"weekday": func(args ...interface{}) (interface{}, error) {
+			t := time.Unix(int64(args[0].(float64)), 0).UTC()
+			return float64(t.Weekday()), nil
+		},
+	}
 }

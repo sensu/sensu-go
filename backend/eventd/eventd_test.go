@@ -20,14 +20,11 @@ func TestEventHandling(t *testing.T) {
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
-	e := &Eventd{
-		Store:        mockStore,
-		MessageBus:   bus,
-		HandlerCount: 5,
-	}
+	e, err := New(Config{Store: mockStore, Bus: bus})
+	require.NoError(t, err)
+	e.handlerCount = 5
 
-	err := e.Start()
-	assert.NoError(t, err)
+	require.NoError(t, e.Start())
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
@@ -79,20 +76,17 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
-	e := &Eventd{
-		Store:        mockStore,
-		MessageBus:   bus,
-		HandlerCount: 5,
-	}
+	e, err := New(Config{Store: mockStore, Bus: bus})
+	require.NoError(t, err)
+	e.handlerCount = 5
 
 	mon := &mockmonitor.MockMonitor{}
 	mon.On("HandleUpdate", mock.Anything).Return(errors.New("error handling update"))
-	e.MonitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
+	e.monitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
 		return mon
 	}
 
-	err := e.Start()
-	assert.NoError(t, err)
+	require.NoError(t, e.Start())
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 

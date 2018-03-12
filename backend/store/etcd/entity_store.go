@@ -32,7 +32,7 @@ func (s *Store) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}
-	_, err := s.kvc.Delete(ctx, getEntityPath(e))
+	_, err := s.client.Delete(ctx, getEntityPath(e))
 	return err
 }
 
@@ -42,7 +42,7 @@ func (s *Store) DeleteEntityByID(ctx context.Context, id string) error {
 		return errors.New("must specify id")
 	}
 
-	_, err := s.kvc.Delete(ctx, getEntitiesPath(ctx, id))
+	_, err := s.client.Delete(ctx, getEntitiesPath(ctx, id))
 	return err
 }
 
@@ -52,7 +52,7 @@ func (s *Store) GetEntityByID(ctx context.Context, id string) (*types.Entity, er
 		return nil, errors.New("must specify id")
 	}
 
-	resp, err := s.kvc.Get(ctx, getEntitiesPath(ctx, id), clientv3.WithLimit(1))
+	resp, err := s.client.Get(ctx, getEntitiesPath(ctx, id), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (s *Store) UpdateEntity(ctx context.Context, e *types.Entity) error {
 
 	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(e.Organization, e.Environment)), ">", 0)
 	req := clientv3.OpPut(getEntityPath(e), string(eStr))
-	res, err := s.kvc.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return err
 	}

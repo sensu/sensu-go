@@ -29,19 +29,18 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}
 	deregisterer := &mockDeregisterer{}
 	bus := &messaging.WizardBus{}
+	k, err := New(Config{Store: store, Bus: bus})
+	require.NoError(t, err)
+	k.monitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
+		mon := &mockmonitor.MockMonitor{}
+		mon.On("HandleUpdate", mock.Anything).Return(nil)
+		return mon
+	}
 	test := &keepalivedTest{
 		MessageBus:   bus,
 		Store:        store,
 		Deregisterer: deregisterer,
-		Keepalived: &Keepalived{
-			Store:      store,
-			MessageBus: bus,
-			MonitorFactory: func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
-				mon := &mockmonitor.MockMonitor{}
-				mon.On("HandleUpdate", mock.Anything).Return(nil)
-				return mon
-			},
-		},
+		Keepalived:   k,
 	}
 	require.NoError(t, test.MessageBus.Start())
 	return test
@@ -116,26 +115,18 @@ func TestStartStop(t *testing.T) {
 			test := newKeepalivedTest(t)
 			defer test.Dispose(t)
 
-			k := &Keepalived{}
-			assert.Error(t, k.Start())
+			k := test.Keepalived
 
-			k.MessageBus = test.MessageBus
-			assert.Error(t, k.Start())
-
-			store := &mockstore.MockStore{}
-			store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
+			test.Store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
 			for _, event := range tc.events {
-				store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+				test.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
 				if event.Check.Status != 0 {
-					store.On("UpdateFailingKeepalive", mock.Anything, event.Entity, mock.AnythingOfType("int64")).Return(nil)
+					test.Store.On("UpdateFailingKeepalive", mock.Anything, event.Entity, mock.AnythingOfType("int64")).Return(nil)
 				}
 			}
 
-			k.Store = store
-			assert.NoError(t, k.Start())
-			assert.NotNil(t, k.MonitorFactory, "*Keepalived.Start() ensures there is a MonitorFactory")
-
-			assert.NoError(t, k.Status())
+			require.NoError(t, k.Start())
+			require.NoError(t, k.Status())
 
 			var err error
 			select {
@@ -154,7 +145,7 @@ func TestEventProcessing(t *testing.T) {
 	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
 	mon := &mockmonitor.MockMonitor{}
 	mon.On("HandleUpdate", mock.Anything).Return(nil)
-	test.Keepalived.MonitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
+	test.Keepalived.monitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
 		return mon
 	}
 	require.NoError(t, test.Keepalived.Start())
@@ -213,10 +204,8 @@ func TestProcessRegistration(t *testing.T) {
 			err := messageBus.Subscribe(messaging.TopicEvent, "test-subscriber", testChan)
 			require.NoError(t, err)
 
-			keepalived := &Keepalived{
-				Store:      store,
-				MessageBus: messageBus,
-			}
+			keepalived, err := New(Config{Store: store, Bus: messageBus})
+			require.NoError(t, err)
 
 			store.On("GetEntityByID", mock.Anything, "agent1").Return(tc.storeEntity, nil)
 			err = keepalived.handleEntityRegistration(tc.entity)

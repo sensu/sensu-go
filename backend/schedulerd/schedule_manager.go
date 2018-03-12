@@ -26,26 +26,25 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager, rg
 
 	newSchedulerFn := func(check *types.CheckConfig) *CheckScheduler {
 		return &CheckScheduler{
-			CheckName:     check.Name,
-			CheckEnv:      check.Environment,
-			CheckOrg:      check.Organization,
-			CheckInterval: check.Interval,
-			CheckCron:     check.Cron,
-			LastCronState: check.Cron,
-			MessageBus:    msgBus,
-			WaitGroup:     wg,
-			StateManager:  stateMngr,
+			checkName:     check.Name,
+			checkEnv:      check.Environment,
+			checkOrg:      check.Organization,
+			checkInterval: check.Interval,
+			checkCron:     check.Cron,
+			lastCronState: check.Cron,
+			bus:           msgBus,
+			wg:            wg,
+			stateManager:  stateMngr,
 			ringGetter:    rg,
 		}
 	}
 
 	manager := &ScheduleManager{
 		newSchedulerFn: newSchedulerFn,
-
-		items:   map[string]*CheckScheduler{},
-		mutex:   &sync.Mutex{},
-		stopped: stopped,
-		wg:      wg,
+		items:          map[string]*CheckScheduler{},
+		mutex:          &sync.Mutex{},
+		stopped:        stopped,
+		wg:             wg,
 	}
 
 	// Listen to state updates and add schedulers if necassarily
