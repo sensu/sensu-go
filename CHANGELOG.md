@@ -6,6 +6,9 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
+- Added ability to sort events in web UI.
+
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
 (default) to 65535.

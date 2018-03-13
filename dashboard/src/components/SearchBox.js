@@ -26,6 +26,7 @@ const styles = theme => ({
     border: "none",
     backgroundColor: theme.palette.background.paper,
     "&:focus": { outline: "none" },
+    color: theme.palette.text.primary,
   },
   save: {
     alignSelf: "center",

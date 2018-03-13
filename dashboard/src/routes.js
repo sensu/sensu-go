@@ -11,6 +11,7 @@ export default makeRouteConfig(
   <Route>
     <Route path="/login" Component={LoginPage} />
     <Redirect from="/" to="/default/default/" />
+    <Route path="query-explorer" Component={QueryPage} />
 
     <Route
       path="/:organization/:environment"
@@ -27,7 +28,6 @@ export default makeRouteConfig(
         })}
       />
       <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
-      <Route path="query-explorer" Component={QueryPage} />
       <Redirect from="dashboard" to="" />
     </Route>
   </Route>,
