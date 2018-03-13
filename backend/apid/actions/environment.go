@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -114,8 +113,6 @@ func (c EnvironmentController) Update(ctx context.Context, delta types.Environme
 	if err := env.Update(&delta, envUpdateFields...); err != nil {
 		return NewError(InternalErr, err)
 	}
-
-	fmt.Printf("%#v\n", env)
 
 	// Validate
 	if err := env.Validate(); err != nil {

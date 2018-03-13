@@ -28,7 +28,6 @@ func (r *HooksRouter) Mount(parent *mux.Router) {
 	routes.getAll(r.list)
 	routes.get(r.find)
 	routes.post(r.create)
-	routes.patch(r.update)
 	routes.del(r.destroy)
 	routes.put(r.createOrReplace)
 }
@@ -65,16 +64,6 @@ func (r *HooksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), cfg)
-	return cfg, err
-}
-
-func (r *HooksRouter) update(req *http.Request) (interface{}, error) {
-	cfg := types.HookConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Update(req.Context(), cfg)
 	return cfg, err
 }
 

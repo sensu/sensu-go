@@ -28,7 +28,6 @@ func (r *OrganizationsRouter) Mount(parent *mux.Router) {
 	routes.getAll(r.list)
 	routes.get(r.find)
 	routes.post(r.create)
-	routes.patch(r.update)
 	routes.del(r.destroy)
 	routes.put(r.createOrReplace)
 }
@@ -65,16 +64,6 @@ func (r *OrganizationsRouter) createOrReplace(req *http.Request) (interface{}, e
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), org)
-	return org, err
-}
-
-func (r *OrganizationsRouter) update(req *http.Request) (interface{}, error) {
-	org := types.Organization{}
-	if err := unmarshalBody(req, &org); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Update(req.Context(), org)
 	return org, err
 }
 

@@ -31,7 +31,6 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
 	routes.post(r.create)
-	routes.patch(r.update)
 	routes.put(r.createOrReplace)
 }
 
@@ -69,16 +68,6 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), event)
-	return event, err
-}
-
-func (r *EventsRouter) update(req *http.Request) (interface{}, error) {
-	event := types.Event{}
-	if err := unmarshalBody(req, &event); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Update(req.Context(), event)
 	return event, err
 }
 

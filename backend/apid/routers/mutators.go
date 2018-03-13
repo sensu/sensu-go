@@ -28,7 +28,6 @@ func (r *MutatorsRouter) Mount(parent *mux.Router) {
 	routes.getAll(r.list)
 	routes.get(r.find)
 	routes.post(r.create)
-	routes.patch(r.update)
 	routes.del(r.destroy)
 }
 
@@ -52,16 +51,6 @@ func (r *MutatorsRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), mut)
-	return mut, err
-}
-
-func (r *MutatorsRouter) update(req *http.Request) (interface{}, error) {
-	mut := types.Mutator{}
-	if err := unmarshalBody(req, &mut); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Update(req.Context(), mut)
 	return mut, err
 }
 

@@ -29,7 +29,6 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 	routes.del(r.destroy)
 	routes.getAll(r.list)
 	routes.get(r.find)
-	routes.patch(r.update)
 	routes.put(r.createOrReplace)
 }
 
@@ -71,13 +70,4 @@ func (r *HandlersRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *HandlersRouter) list(req *http.Request) (interface{}, error) {
 	return r.controller.Query(req.Context())
-}
-
-func (r *HandlersRouter) update(req *http.Request) (interface{}, error) {
-	handler := types.Handler{}
-	if err := unmarshalBody(req, &handler); err != nil {
-		return nil, err
-	}
-
-	return handler, r.controller.Update(req.Context(), handler)
 }
