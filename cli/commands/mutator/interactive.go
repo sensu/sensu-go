@@ -16,10 +16,6 @@ type mutatorOpts struct {
 	Org     string
 }
 
-const (
-	typeDefault = "pipe"
-)
-
 func newMutatorOpts() *mutatorOpts {
 	opts := mutatorOpts{}
 	return &opts

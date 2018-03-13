@@ -42,7 +42,7 @@ jobs:
         tags: true
 env:
   matrix:
-  - GOARCH=amd64 TEST_SUITE=lint GOGC=off
+  - GOARCH=amd64 TEST_SUITE=lint
   - GOARCH=386 TEST_SUITE=unit GOGC=off
   - GOARCH=amd64 TEST_SUITE=unit GOGC=off
   - GOARCH=386 TEST_SUITE=integration GOGC=off
