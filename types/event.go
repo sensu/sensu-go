@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"sort"
 	"time"
@@ -22,6 +23,50 @@ func FixtureEvent(entityID, checkID string) *Event {
 		Entity:    FixtureEntity(entityID),
 		Check:     FixtureCheck(checkID),
 	}
+}
+
+// UnmarshalJSON ...
+func (e *Event) UnmarshalJSON(b []byte) error {
+	// HACK HACK HACK
+	// This method is a compatibility shim that should be removed
+	// when we remove Silenceds and Hooks from Events
+	type Evt Event
+	var evt Evt
+	if err := json.Unmarshal(b, &evt); err != nil {
+		return err
+	}
+	if evt.Check == nil {
+		*e = Event(evt)
+		return nil
+	}
+	silenced := make(map[string]struct{})
+	for _, s := range append(evt.Silenced, evt.Check.Silenced...) {
+		silenced[s] = struct{}{}
+	}
+	newSilenced := make([]string, 0, len(silenced))
+	for s := range silenced {
+		newSilenced = append(newSilenced, s)
+	}
+	if len(newSilenced) > 0 {
+		evt.Check.Silenced = newSilenced
+	}
+	evt.Silenced = nil
+
+	hooks := make(map[*Hook]struct{})
+	for _, h := range append(evt.Hooks, evt.Check.Hooks...) {
+		hooks[h] = struct{}{}
+	}
+	newHooks := make([]*Hook, 0, len(hooks))
+	for h := range hooks {
+		newHooks = append(newHooks, h)
+	}
+	if len(newHooks) > 0 {
+		evt.Check.Hooks = newHooks
+	}
+	evt.Hooks = nil
+
+	*e = Event(evt)
+	return nil
 }
 
 // Validate returns an error if the event does not pass validation tests.
@@ -75,7 +120,7 @@ func (e *Event) IsResolution() bool {
 
 // IsSilenced determines if an event has any silenced entries
 func (e *Event) IsSilenced() bool {
-	return len(e.Silenced) > 0
+	return len(e.Check.Silenced) > 0
 }
 
 // Get implements govaluate.Parameters
@@ -89,10 +134,6 @@ func (e *Event) Get(name string) (interface{}, error) {
 		return e.Check, nil
 	case "Metrics":
 		return e.Metrics, nil
-	case "Silenced":
-		return e.Silenced, nil
-	case "Hook":
-		return e.Hooks, nil
 	}
 	return nil, errors.New("no parameter '" + name + "' found")
 }

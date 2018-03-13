@@ -173,16 +173,16 @@ func TestPipelinedFilter(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			event := &types.Event{
 				Check: &types.Check{
-					Status:  tc.status,
-					History: tc.history,
-					Output:  "foo",
+					Status:   tc.status,
+					History:  tc.history,
+					Output:   "foo",
+					Silenced: tc.silenced,
 				},
 				Entity: &types.Entity{
 					Environment:  "default",
 					Organization: "default",
 				},
-				Metrics:  tc.metrics,
-				Silenced: tc.silenced,
+				Metrics: tc.metrics,
 			}
 
 			filtered := p.filterEvent(handler, event)

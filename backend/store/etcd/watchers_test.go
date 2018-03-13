@@ -69,6 +69,7 @@ func TestAssetWatcher(t *testing.T) {
 			assert.Equal(t, asset.Organization, ev.Asset.Organization)
 			assert.Equal(t, asset.Name, ev.Asset.Name)
 		case <-time.After(10 * time.Second):
+			cancel()
 			assert.Fail(t, "failed to receive a watch event in 10 seconds")
 		}
 

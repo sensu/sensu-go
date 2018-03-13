@@ -1,25 +1,23 @@
-package event
+package mutator
 
 import (
 	"errors"
 	"io"
 	"strconv"
-	"time"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
-// ListCommand defines new list events command
+// ListCommand defines the 'mutator list' subcommand
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
-		Short:        "list events",
+		Short:        "list mutators",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
@@ -31,8 +29,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				org = "*"
 			}
 
-			// Fetch events from API
-			results, err := cli.Client.ListEvents(org)
+			// Fetch mutators from the API
+			results, err := cli.Client.ListMutators(org)
 			if err != nil {
 				return err
 			}
@@ -51,50 +49,30 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 func printToTable(results interface{}, writer io.Writer) {
 	table := table.New([]*table.Column{
 		{
-			Title:       "Entity",
+			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return event.Entity.ID
+				mutator, _ := data.(types.Mutator)
+				return mutator.Name
 			},
 		},
 		{
-			Title: "Check",
+			Title:       "Command",
+			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return event.Check.Name
+				mutator, _ := data.(types.Mutator)
+				return mutator.Command
 			},
 		},
 		{
-			Title: "Output",
+			Title:       "Timeout",
+			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return event.Check.Output
-			},
-		},
-		{
-			Title: "Status",
-			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return strconv.Itoa(int(event.Check.Status))
-			},
-		},
-		{
-			Title: "Silenced",
-			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				return globals.BooleanStyleP(len(event.Check.Silenced) > 0)
-			},
-		},
-		{
-			Title: "Timestamp",
-			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
-				time := time.Unix(event.Timestamp, 0)
-				return time.String()
+				mutator, _ := data.(types.Mutator)
+				timeout := strconv.FormatUint(uint64(mutator.Timeout), 10)
+				return timeout
 			},
 		},
 	})
-
 	table.Render(writer, results)
 }

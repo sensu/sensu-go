@@ -1,35 +1,38 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { withRouter, routerShape } from "found";
-import { map, get, every, some, reduce } from "lodash";
+import { withRouter, routerShape, matchShape } from "found";
+import { every, some, reduce, capitalize } from "lodash";
+import { compose } from "lodash/fp";
+import { map, join } from "ramda";
 import { createFragmentContainer, graphql } from "react-relay";
 import { withStyles } from "material-ui/styles";
-import Paper from "material-ui/Paper";
+
 import Button from "material-ui/Button";
 import Typography from "material-ui/Typography";
-
+import { MenuItem } from "material-ui/Menu";
+import { ListItemText, ListItemIcon } from "material-ui/List";
 import Checkbox from "material-ui/Checkbox";
 
 import EventsListItem from "./EventsListItem";
-import EventsContainerMenu from "./EventsContainerMenu";
+import EventStatus from "./EventStatus";
 import ResolveEventMutation from "../mutations/ResolveEventMutation";
+import TableList, {
+  TableListHeader,
+  TableListSelect,
+  TableListEmptyState,
+} from "./TableList";
 
 const styles = theme => ({
-  eventsContainer: {
+  root: {
     marginTop: 16,
     marginBottom: 16,
   },
-  tableHeader: {
-    padding: "20px 0 16px",
-    backgroundColor: theme.palette.primary.light,
-    color: theme.palette.primary.contrastText,
-    display: "flex",
-    alignItems: "center",
-  },
-  tableHeaderButton: {
-    marginLeft: 16,
-    display: "flex",
+  headerButton: {
+    marginLeft: theme.spacing.unit / 2,
+    "&:first-child": {
+      marginLeft: theme.spacing.unit,
+    },
   },
   checkbox: {
     marginTop: -4,
@@ -52,14 +55,13 @@ class EventsContainer extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     relay: PropTypes.shape({ environment: PropTypes.object }).isRequired,
-    viewer: PropTypes.shape({
+    environment: PropTypes.shape({
+      events: PropTypes.object,
       checks: PropTypes.object,
       entities: PropTypes.object,
     }).isRequired,
-    environment: PropTypes.shape({
-      events: PropTypes.object,
-    }).isRequired,
     router: routerShape.isRequired,
+    match: matchShape.isRequired,
   };
 
   state = {
@@ -69,7 +71,7 @@ class EventsContainer extends React.Component {
 
   // click checkbox for all items in list
   selectAll = () => {
-    const keys = map(this.props.environment.events.edges, edge => edge.node.id);
+    const keys = map(edge => edge.node.id, this.props.environment.events.edges);
     // if every state is false or undefined, switch the header
     const newState = !this.eventsSelected();
     this.setState({
@@ -119,41 +121,51 @@ class EventsContainer extends React.Component {
     // silence each item that is true in rowState
   };
 
-  // TODO revist this later
+  changeQuery = (key, val) => {
+    const { match, router } = this.props;
+    const query = new URLSearchParams(match.location.query);
+
+    query.set(key, val);
+    router.push(`${match.location.pathname}?${query.toString()}`);
+  };
+
   requeryEntity = newValue => {
-    this.props.router.push(
-      `${window.location.pathname}?filter=Entity.ID=='${newValue}'`,
-    );
+    this.changeQuery("filter", `Entity.ID=='${newValue}'`);
   };
 
   requeryCheck = newValue => {
-    this.props.router.push(
-      `${window.location.pathname}?filter=Check.Name=='${newValue}'`,
-    );
+    this.changeQuery("filter", `Check.Name=='${newValue}'`);
   };
 
   requeryStatus = newValue => {
-    this.props.router.push(
-      `${window.location.pathname}?filter=Check.Status==${newValue}`,
-    );
+    if (newValue.length === 1) {
+      this.changeQuery("filter", `Check.Status==${newValue}`);
+      return;
+    }
+    const val = join(",", newValue);
+    this.changeQuery("filter", `Check.Status IN (${val})`);
+  };
+
+  requerySort = newValue => {
+    this.changeQuery("order", newValue);
   };
 
   render() {
-    const { classes, viewer, environment } = this.props;
+    const { classes, environment } = this.props;
     const { rowState } = this.state;
 
-    // TODO maybe revisit for pagination issues
-    const events = get(environment, "events.edges", []);
-    const entities = get(viewer, "entities.edges", []);
-    const entityNames = map(entities, edge => edge.node.name);
-    const checks = get(viewer, "checks.edges", []);
-    const checkNames = [...map(checks, edge => edge.node.name), "keepalive"];
-    const statuses = [0, 1, 2, 3];
+    const entityNames = map(edge => edge.node.name, environment.entities.edges);
+    const checkNames = [
+      ...map(edge => edge.node.name, environment.checks.edges),
+      "keepalive",
+    ];
+
+    const events = (environment.events && environment.events.edges) || [];
     const someEventsSelected = this.eventsSelected();
 
     return (
-      <Paper className={classes.eventsContainer}>
-        <div className={classes.tableHeader}>
+      <TableList className={classes.root}>
+        <TableListHeader active={someEventsSelected}>
           <span className={classes.tableHeaderButton}>
             <Checkbox
               color="secondary"
@@ -172,24 +184,80 @@ class EventsContainer extends React.Component {
             </Button>
           </div>
           <div style={someEventsSelected ? { display: "none" } : {}}>
-            <EventsContainerMenu
-              onSelectValue={this.requeryEntity}
+            <TableListSelect
+              className={classes.headerButton}
               label="Entity"
-              contents={entityNames}
-            />
-            <EventsContainerMenu
-              onSelectValue={this.requeryCheck}
+              onChange={this.requeryEntity}
+            >
+              {entityNames.map(name => (
+                <MenuItem key={name} value={name}>
+                  <ListItemText primary={name} />
+                </MenuItem>
+              ))}
+            </TableListSelect>
+            <TableListSelect
+              className={classes.headerButton}
               label="Check"
-              contents={checkNames}
-            />
-            <EventsContainerMenu
-              onSelectValue={this.requeryStatus}
+              onChange={this.requeryCheck}
+            >
+              {checkNames.map(name => (
+                <MenuItem key={name} value={name}>
+                  <ListItemText primary={name} />
+                </MenuItem>
+              ))}
+            </TableListSelect>
+            <TableListSelect
+              className={classes.headerButton}
               label="Status"
-              contents={statuses}
-              icons
-            />
+              onChange={this.requeryStatus}
+            >
+              <MenuItem key="incident" value={[1, 2, 3]}>
+                <ListItemText primary="Incident" style={{ paddingLeft: 40 }} />
+              </MenuItem>
+              <MenuItem key="warning" value={[1]}>
+                <ListItemIcon>
+                  <EventStatus status={1} />
+                </ListItemIcon>
+                <ListItemText primary="Warning" />
+              </MenuItem>
+              <MenuItem key="critical" value={[2]}>
+                <ListItemIcon>
+                  <EventStatus status={2} />
+                </ListItemIcon>
+                <ListItemText primary="Critical" />
+              </MenuItem>
+              <MenuItem key="unknown" value={[3]}>
+                <ListItemIcon>
+                  <EventStatus status={3} />
+                </ListItemIcon>
+                <ListItemText primary="Unknown" />
+              </MenuItem>
+              <MenuItem key="passing" value={[0]}>
+                <ListItemIcon>
+                  <EventStatus status={0} />
+                </ListItemIcon>
+                <ListItemText primary="Passing" />
+              </MenuItem>
+            </TableListSelect>
+            <TableListSelect
+              className={classes.headerButton}
+              label="Sort"
+              onChange={this.requerySort}
+            >
+              {["SEVERITY", "NEWEST", "OLDEST"].map(name => (
+                <MenuItem key={name} value={name}>
+                  <ListItemText primary={capitalize(name)} />
+                </MenuItem>
+              ))}
+            </TableListSelect>
           </div>
-        </div>
+        </TableListHeader>
+        {events.length === 0 && (
+          <TableListEmptyState
+            primary="No results matched your query."
+            secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
+          />
+        )}
         {/* TODO pass in resolve and silence functions to reuse for single actions
             the silence dialog is the same, just maybe some prefilled options for list */}
         {events.map(event => (
@@ -200,22 +268,16 @@ class EventsContainer extends React.Component {
             checked={Boolean(rowState[event.node.id])}
           />
         ))}
-      </Paper>
+      </TableList>
     );
   }
 }
 
+const enhance = compose(withStyles(styles), withRouter);
 export default createFragmentContainer(
-  withStyles(styles)(withRouter(EventsContainer)),
+  enhance(EventsContainer),
   graphql`
-    fragment EventsContainer_viewer on Viewer {
-      entities(first: 1000) {
-        edges {
-          node {
-            name
-          }
-        }
-      }
+    fragment EventsContainer_environment on Environment {
       checks(first: 1000) {
         edges {
           node {
@@ -223,10 +285,16 @@ export default createFragmentContainer(
           }
         }
       }
-    }
 
-    fragment EventsContainer_environment on Environment {
-      events(first: 100, filter: $filter) {
+      entities(first: 1000) {
+        edges {
+          node {
+            name
+          }
+        }
+      }
+
+      events(first: 100, filter: $filter, orderBy: $order) {
         edges {
           node {
             id
