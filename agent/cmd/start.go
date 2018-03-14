@@ -49,6 +49,8 @@ const (
 	flagSocketPort            = "socket-port"
 	flagSubscriptions         = "subscriptions"
 	flagUser                  = "user"
+	flagDisableAPI            = "disable-api"
+	flagDisableSockets        = "disable-sockets"
 )
 
 func init() {
@@ -153,6 +155,14 @@ func newStartCommand() *cobra.Command {
 				return err
 			}
 
+			if !viper.GetBool(flagDisableAPI) {
+				sensuAgent.StartAPI()
+			}
+
+			if !viper.GetBool(flagDisableSockets) {
+				sensuAgent.StartSocketListeners()
+			}
+
 			sigs := make(chan os.Signal, 1)
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -208,6 +218,8 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
 	viper.SetDefault(flagSubscriptions, []string{})
 	viper.SetDefault(flagUser, agent.DefaultUser)
+	viper.SetDefault(flagDisableAPI, false)
+	viper.SetDefault(flagDisableSockets, false)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -232,6 +244,9 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
 	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
+	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
+	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
+
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err
 	}
