@@ -97,6 +97,11 @@ func (s *Session) recvPump() {
 	defer func() {
 		logger.Info("session disconnected - stopping recvPump")
 		s.wg.Done()
+		select {
+		case <-s.stopping:
+		default:
+			s.Stop()
+		}
 	}()
 
 	for {
@@ -110,7 +115,6 @@ func (s *Session) recvPump() {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
 				logger.Warn("stopping session <%s>: recv error: ", s.ID, err.Error())
-				s.Stop()
 				return
 			default:
 				logger.Error("recv error: ", err.Error())
