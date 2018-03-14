@@ -45,7 +45,7 @@ func New(config config.Config) *RestClient {
 		// Pass the organization and environment as query parameters, except when
 		// we are creating or updating an object, since we will use the object
 		// attributes to determine the org & env
-		if r.Method != http.MethodPost && r.Method != http.MethodPut {
+		if r.Method != http.MethodPost && r.Method != http.MethodPut && r.Method != http.MethodPatch {
 			if param := r.QueryParam.Get("env"); param == "" {
 				r.SetQueryParam("env", config.Environment())
 			}

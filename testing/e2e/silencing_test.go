@@ -84,7 +84,7 @@ func TestSilencing(t *testing.T) {
 	event := types.Event{}
 	_ = json.Unmarshal(output, &event)
 	assert.NotNil(t, event)
-	assert.Empty(t, event.Silenced)
+	assert.Empty(t, event.Check.Silenced)
 
 	// Create a silencing entry for that particular entity and check
 	output, err = sensuctl.run("silenced", "create",
@@ -113,17 +113,17 @@ func TestSilencing(t *testing.T) {
 	event = types.Event{}
 	_ = json.Unmarshal(output, &event)
 	assert.NotNil(t, event)
-	assert.NotEmpty(t, event.Silenced)
+	assert.NotEmpty(t, event.Check.Silenced)
 
 	// Make sure the keepalive event is not silenced by our silenced entry
 	// N.B. This is currently broken, see
 	// https://github.com/sensu/sensu-go/issues/707
-	// output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
-	// assert.NoError(t, err, string(output))
-	// event = types.Event{}
-	// json.Unmarshal(output, &event)
-	// assert.NotNil(t, event)
-	// assert.Empty(t, event.Silenced)
+	output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
+	assert.NoError(t, err, string(output))
+	event = types.Event{}
+	json.Unmarshal(output, &event)
+	assert.NotNil(t, event)
+	assert.Empty(t, event.Check.Silenced)
 
 	// The number of files created by the handler should not have increased since
 	// the silenced entry was created

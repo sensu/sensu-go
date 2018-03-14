@@ -209,6 +209,12 @@ message Check {
   // OccurrencesWatermark indicates the high water mark tracking number of occurrences at the current severity
   int64 occurrences_watermark = 32;
 
+  // Silenced is a list of silenced entry ids (subscription and check name)
+  repeated string silenced = 33 [(gogoproto.nullable) = true];
+
+  // Hooks describes the results of multiple hooks; if event is associated to hook execution.
+  repeated Hook hooks = 34 [(gogoproto.nullable) = true];
+
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];
 }

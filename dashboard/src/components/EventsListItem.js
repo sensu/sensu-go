@@ -14,6 +14,7 @@ import Disclosure from "material-ui-icons/MoreVert";
 
 import ResolveEventMutation from "../mutations/ResolveEventMutation";
 import EventStatus from "./EventStatus";
+import { TableListItem } from "./TableList";
 
 const styles = theme => ({
   row: {
@@ -27,7 +28,7 @@ const styles = theme => ({
   checkbox: {
     display: "inline-block",
     verticalAlign: "top",
-    marginLeft: 4,
+    marginLeft: -12,
   },
   status: {
     display: "inline-block",
@@ -35,12 +36,12 @@ const styles = theme => ({
     padding: "14px 0",
   },
   disclosure: {
-    marginRight: 4,
-    paddingTop: 14,
     color: theme.palette.action.active,
+    marginLeft: 12,
+    paddingTop: 14,
   },
   content: {
-    width: "calc(100% - 104px)",
+    width: "calc(100% - 96px)",
     display: "inline-block",
     padding: 14,
   },
@@ -131,17 +132,14 @@ class EventListItem extends React.Component {
   };
 
   render() {
-    const { classes, event: { entity, check } } = this.props;
+    const { checked, classes, event: { entity, check }, onChange } = this.props;
     const { anchorEl } = this.state;
     const time = this.fromNow;
 
     return (
-      <Typography component="div" className={classes.row}>
+      <TableListItem selected={checked}>
         <div className={classes.checkbox}>
-          <Checkbox
-            onChange={this.props.onChange}
-            checked={this.props.checked}
-          />
+          <Checkbox onChange={onChange} checked={checked} />
         </div>
         <div className={classes.status}>
           <EventStatus status={check.status} />
@@ -186,7 +184,7 @@ class EventListItem extends React.Component {
             </MenuItem>
           </Menu>
         </div>
-      </Typography>
+      </TableListItem>
     );
   }
 }

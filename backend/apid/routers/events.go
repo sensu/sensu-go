@@ -26,11 +26,12 @@ func NewEventsRouter(store store.EventStore, bus messaging.MessageBus) *EventsRo
 // Mount the EventsRouter to a parent Router
 func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/events"}
-	routes.index(r.list)
+	routes.getAll(r.list)
 	routes.path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
-	routes.create(r.create)
+	routes.post(r.create)
+	routes.put(r.createOrReplace)
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
@@ -67,5 +68,15 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), event)
+	return event, err
+}
+
+func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	event := types.Event{}
+	if err := unmarshalBody(req, &event); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.CreateOrReplace(req.Context(), event)
 	return event, err
 }

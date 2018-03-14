@@ -66,7 +66,7 @@ func TestCheckHooks(t *testing.T) {
 	assert.NotNil(t, event)
 
 	// Hook hook1 does not exist, no check hook should execute
-	assert.Empty(t, event.Hooks)
+	assert.Empty(t, event.Check.Hooks)
 
 	// Create a hook with hook name hook1
 	hook := types.FixtureHookConfig("hook1")
@@ -104,8 +104,8 @@ func TestCheckHooks(t *testing.T) {
 	assert.NotNil(t, event)
 
 	// Ensure the token substitution has been applied for the hook's command
-	assert.Contains(t, event.Hooks[0].Output, agent.ID)
+	assert.Contains(t, event.Check.Hooks[0].Output, agent.ID)
 
 	// Hook hook1 now exists, a check hook should be written to the event
-	assert.NotEmpty(t, event.Hooks)
+	assert.NotEmpty(t, event.Check.Hooks)
 }

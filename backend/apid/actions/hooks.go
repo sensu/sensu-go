@@ -66,13 +66,13 @@ func (a HookController) Find(ctx context.Context, name string) (*types.HookConfi
 	return nil, NewErrorf(NotFound)
 }
 
-// Create instatiates, validates and persists new resource if viewer has access.
+// Create creates a Hook. If the Hook already exists, an error is returned.
 func (a HookController) Create(ctx context.Context, newHook types.HookConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newHook)
 	abilities := a.Policy.WithContext(ctx)
 
-	// Hook for existing
+	// Check for existing
 	if e, err := a.Store.GetHookConfigByName(ctx, newHook.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
@@ -81,6 +81,30 @@ func (a HookController) Create(ctx context.Context, newHook types.HookConfig) er
 
 	// Verify viewer can make change
 	if yes := abilities.CanCreate(&newHook); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newHook.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateHookConfig(ctx, &newHook); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// CreateOrReplace creates or replaces a Hook.
+func (a HookController) CreateOrReplace(ctx context.Context, newHook types.HookConfig) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &newHook)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Verify viewer can make change
+	if !(abilities.CanCreate(&newHook) && abilities.CanUpdate(&newHook)) {
 		return NewErrorf(PermissionDenied)
 	}
 

@@ -102,9 +102,33 @@ func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig)
 		return NewErrorf(AlreadyExistsErr)
 	}
 
+	// Validate
+	if err := newCheck.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
 	// Verify viewer can make change
 	if yes := abilities.CanCreate(&newCheck); !yes {
 		return NewErrorf(PermissionDenied)
+	}
+
+	// Persist
+	if err := a.store.UpdateCheckConfig(ctx, &newCheck); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// CreateOrReplace instatiates and persists new resource if viewer has access.
+func (a CheckController) CreateOrReplace(ctx context.Context, newCheck types.CheckConfig) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &newCheck)
+	abilities := a.policy.WithContext(ctx)
+
+	// Verify viewer can make change
+	if !(abilities.CanCreate(&newCheck) && abilities.CanUpdate(&newCheck)) {
+		return NewErrorf(PermissionDenied, "create/update")
 	}
 
 	// Validate

@@ -107,7 +107,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
-		event.Hooks = a.ExecuteHooks(request, ex.Status)
+		event.Check.Hooks = a.ExecuteHooks(request, ex.Status)
 	}
 
 	msg, err := json.Marshal(event)

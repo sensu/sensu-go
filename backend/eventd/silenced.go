@@ -53,7 +53,7 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 	silencedIDs := silencedBy(event, entries)
 
 	// Add to the event all silenced entries ID that actually silence it
-	event.Silenced = silencedIDs
+	event.Check.Silenced = silencedIDs
 
 	return nil
 }
@@ -118,7 +118,7 @@ func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store
 
 	nonExpireOnResolveEntries := []string{}
 
-	for _, silencedID := range event.Silenced {
+	for _, silencedID := range event.Check.Silenced {
 		silencedEntry, err := store.GetSilencedEntryByID(ctx, silencedID)
 		if err != nil {
 			return err
@@ -134,7 +134,7 @@ func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store
 		}
 	}
 
-	event.Silenced = nonExpireOnResolveEntries
+	event.Check.Silenced = nonExpireOnResolveEntries
 
 	return nil
 }

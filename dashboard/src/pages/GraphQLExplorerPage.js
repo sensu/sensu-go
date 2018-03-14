@@ -2,22 +2,24 @@ import React from "react";
 import PropTypes from "prop-types";
 import GraphiQL from "graphiql";
 import Paper from "material-ui/Paper";
+import Typography from "material-ui/Typography";
 import { withStyles } from "material-ui/styles";
+
+import RestrictUnauthenticated from "../components/RestrictUnauthenticated";
 import { getAccessToken } from "../utils/authentication";
-import AppContent from "../components/AppContent";
 
 require("graphiql/graphiql.css");
 
-const styles = () => ({
-  root: {
-    maxWidth: "calc(100% - 72px*2)",
-  },
+const styles = theme => ({
   content: {
-    flex: "1 1 100%",
-    width: "100%",
-    height: "100%",
-    minHeight: "350px",
-    maxHeight: "600px",
+    margin: theme.spacing.unit * 2,
+  },
+  explorer: {
+    height: 600,
+  },
+  title: {
+    padding: theme.spacing.unit,
+    paddingLeft: 14,
   },
 });
 
@@ -48,11 +50,16 @@ class QueryPage extends React.Component {
   render() {
     const { classes } = this.props;
     return (
-      <AppContent className={classes.root}>
+      <RestrictUnauthenticated>
         <Paper className={classes.content}>
-          <GraphiQL fetcher={fetchQuery} />
+          <Typography type="headline" className={classes.title}>
+            Sensu GraphQL Explorer
+          </Typography>
+          <div className={classes.explorer}>
+            <GraphiQL fetcher={fetchQuery} />
+          </div>
         </Paper>
-      </AppContent>
+      </RestrictUnauthenticated>
     );
   }
 }

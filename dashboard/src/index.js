@@ -15,6 +15,9 @@ import environment from "./environment";
 // Fonts
 import "typeface-roboto"; // eslint-disable-line
 
+// Polyfill
+import "url-search-params-polyfill"; // eslint-disable-line import/first
+
 // Configure Router
 const Router = createConnectedRouter({
   render: createRender({

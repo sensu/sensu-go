@@ -86,7 +86,7 @@ func printEntityToList(event *types.Event, writer io.Writer) error {
 			},
 			{
 				Label: "Silenced",
-				Value: strconv.FormatBool(len(event.Silenced) > 0),
+				Value: strconv.FormatBool(len(event.Check.Silenced) > 0),
 			},
 			{
 				Label: "Timestamp",
@@ -95,10 +95,10 @@ func printEntityToList(event *types.Event, writer io.Writer) error {
 		},
 	}
 
-	if len(event.Silenced) > 0 {
+	if len(event.Check.Silenced) > 0 {
 		silencedBy := &list.Row{
 			Label: "Silenced By",
-			Value: strings.Join(event.Silenced, ", "),
+			Value: strings.Join(event.Check.Silenced, ", "),
 		}
 		cfg.Rows = append(cfg.Rows[:len(cfg.Rows)-1], silencedBy, cfg.Rows[len(cfg.Rows)-1])
 	}

@@ -74,13 +74,13 @@ func (client *RestClient) UpdateAsset(asset *types.Asset) (err error) {
 	}
 
 	assetPath := fmt.Sprintf("/assets/%s", url.PathEscape(asset.Name))
-	res, err := client.R().SetBody(bytes).Patch(assetPath)
+	res, err := client.R().SetBody(bytes).Put(assetPath)
 	if err != nil {
-		return fmt.Errorf("PATCH %q: %s", assetPath, err)
+		return fmt.Errorf("PUT %q: %s", assetPath, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("PATCH %q: %s", assetPath, res.String())
+		return fmt.Errorf("PUT %q: %s", assetPath, res.String())
 	}
 
 	return nil
