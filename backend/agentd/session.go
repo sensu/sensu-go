@@ -93,10 +93,19 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 	return s, nil
 }
 
-func (s *Session) receiveMessages(out chan *transport.Message) {
-	defer close(out)
+func (s *Session) recvPump() {
+	defer func() {
+		logger.Info("session disconnected - stopping recvPump")
+		s.wg.Done()
+	}()
+
 	for {
-		m, err := s.conn.Receive()
+		select {
+		case <-s.stopping:
+			return
+		default:
+		}
+		msg, err := s.conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
@@ -108,32 +117,8 @@ func (s *Session) receiveMessages(out chan *transport.Message) {
 				continue
 			}
 		}
-		out <- m
-	}
-}
-
-func (s *Session) recvPump() {
-	defer func() {
-		logger.Info("session disconnected - stopping recvPump")
-		s.wg.Done()
-	}()
-
-	msgChannel := make(chan *transport.Message)
-	go s.receiveMessages(msgChannel)
-	for {
-		select {
-		case msg, ok := <-msgChannel:
-			if !ok {
-				return
-			}
-
-			logger.Debugf("session - received message: %s", string(msg.Payload))
-			err := s.handler.Handle(msg.Type, msg.Payload)
-			if err != nil {
-				logger.Error("error handling message: ", msg)
-			}
-		case <-s.stopping:
-			return
+		if err := s.handler.Handle(msg.Type, msg.Payload); err != nil {
+			logger.Error("error handling message: ", msg)
 		}
 	}
 }
