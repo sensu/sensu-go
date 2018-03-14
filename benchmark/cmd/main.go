@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
-	"github.com/coreos/rkt/tests/testutils/logger"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/util/path"
@@ -52,7 +52,7 @@ func main() {
 
 		agent := agent.NewAgent(cfg)
 		if err := agent.Run(); err != nil {
-			logger.Error(err)
+			log.Print(err)
 			continue
 		}
 		agents[i] = agent

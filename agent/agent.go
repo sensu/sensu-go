@@ -5,6 +5,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -345,12 +346,6 @@ func (a *Agent) Run() error {
 
 	a.conn = conn
 
-	/*
-		if _, _, err := a.createListenSockets(); err != nil {
-			return err
-		}
-	*/
-
 	// These are in separate goroutines so that they can, theoretically, be executing
 	// concurrently.
 	go a.sendPump()
@@ -376,22 +371,26 @@ func (a *Agent) Run() error {
 		}
 	}()
 
-	/*
-			// Prepare the HTTP API server
-			a.api = newServer(a)
+	return nil
+}
 
-		// Start the HTTP API server
-		go func() {
-			logger.Info("starting api on address: ", a.api.Addr)
+// StartAPI starts the Agent HTTP API. After attempting to start the API, if the
+// HTTP server encounters a fatal error, it will shutdown the rest of the agent.
+func (a *Agent) StartAPI() {
+	// Prepare the HTTP API server
+	a.api = newServer(a)
 
-			if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
-				logger.Fatal(err)
-			}
-		}()
+	// Start the HTTP API server
+	go func() {
+		logger.Info("starting api on address: ", a.api.Addr)
 
-		// Allow Stop() to block until the HTTP server shuts down.
-		a.wg.Add(1)
-	*/
+		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
+			logger.WithError(err).Fatal("the agent API has crashed")
+		}
+	}()
+
+	// Allow Stop() to block until the HTTP server shuts down.
+	a.wg.Add(1)
 
 	go func() {
 		// NOTE: This does not guarantee a clean shutdown of the HTTP API.
@@ -399,21 +398,24 @@ func (a *Agent) Run() error {
 		// The goroutine running the HTTP Server has to return before Stop()
 		// can return, so we use this to signal that goroutine to shutdown.
 		<-a.stopping
-		logger.Info("api shutting down")
+		logger.Info("API shutting down")
 
-		/*
-				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-				defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
 
-					if err := a.api.Shutdown(ctx); err != nil {
-						logger.Error(err)
-					}
+		if err := a.api.Shutdown(ctx); err != nil {
+			logger.WithError(err).Error("error shutting down the API server")
+		}
 
-			a.wg.Done()
-		*/
+		a.wg.Done()
 	}()
+}
 
-	return nil
+// StartSocketListeners starts the agent's TCP and UDP socket listeners.
+func (a *Agent) StartSocketListeners() {
+	if _, _, err := a.createListenSockets(); err != nil {
+		logger.WithError(err).Error("unable to start socket listeners")
+	}
 }
 
 // Stop shuts down the agent. It will block until all listening goroutines
