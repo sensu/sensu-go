@@ -92,7 +92,6 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 
 // Start Agentd.
 func (a *Agentd) Start() error {
-	// TODO: add JWT authentication support
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
 	a.wg.Add(1)
 

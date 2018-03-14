@@ -16,6 +16,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Increased the default etcd size limit from 2GB to 4GB.
 - Move Hooks and Silenced out of Event and into Check.
 
+### Fixed
+- Shut down sessions properly when agent connections are disrupted.
+
 ### Added
 - Support for managing mutators via sensuctl.
 

@@ -61,6 +61,8 @@ type SessionConfig struct {
 
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
+// The Session is responsible for stopping itself, and does so when it
+// encounters a receive error.
 func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store, getter types.RingGetter) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
@@ -91,46 +93,36 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 	return s, nil
 }
 
-func (s *Session) receiveMessages(out chan *transport.Message) {
-	defer close(out)
+func (s *Session) recvPump() {
+	defer func() {
+		logger.Info("session disconnected - stopping recvPump")
+		s.wg.Done()
+		select {
+		case <-s.stopping:
+		default:
+			s.Stop()
+		}
+	}()
+
 	for {
-		m, err := s.conn.Receive()
+		select {
+		case <-s.stopping:
+			return
+		default:
+		}
+		msg, err := s.conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
-				logger.Error("recv error: ", err.Error())
+				logger.Warn("stopping session <%s>: recv error: ", s.ID, err.Error())
 				return
 			default:
 				logger.Error("recv error: ", err.Error())
 				continue
 			}
 		}
-		out <- m
-	}
-}
-
-func (s *Session) recvPump() {
-	defer func() {
-		logger.Info("session disconnected - stopping recvPump")
-		s.wg.Done()
-	}()
-
-	msgChannel := make(chan *transport.Message)
-	go s.receiveMessages(msgChannel)
-	for {
-		select {
-		case msg, ok := <-msgChannel:
-			if !ok {
-				return
-			}
-
-			logger.Debugf("session - received message: %s", string(msg.Payload))
-			err := s.handler.Handle(msg.Type, msg.Payload)
-			if err != nil {
-				logger.Error("error handling message: ", msg)
-			}
-		case <-s.stopping:
-			return
+		if err := s.handler.Handle(msg.Type, msg.Payload); err != nil {
+			logger.Error("error handling message: ", msg)
 		}
 	}
 }
@@ -196,7 +188,7 @@ func (s *Session) sendPump() {
 // 2. Start receive pump
 // 3. Start subscription pump
 // 5. Ensure bus unsubscribe when the session shuts down.
-func (s *Session) Start() error {
+func (s *Session) Start() (err error) {
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(3)
 	go s.sendPump()
@@ -205,6 +197,12 @@ func (s *Session) Start() error {
 
 	org, env := s.cfg.Organization, s.cfg.Environment
 	agentID := s.cfg.AgentID
+
+	defer func() {
+		if err != nil {
+			s.Stop()
+		}
+	}()
 
 	for _, sub := range s.cfg.Subscriptions {
 		topic := messaging.SubscriptionTopic(org, env, sub)
@@ -242,6 +240,9 @@ func (s *Session) Stop() {
 			logger.Debug(err)
 			break
 		}
+	}
+	for _, sub := range s.cfg.Subscriptions {
+		topic := messaging.SubscriptionTopic(org, env, sub)
 		ring := s.ringGetter.GetRing("subscription", topic)
 		if err := ring.Remove(context.TODO(), s.cfg.AgentID); err != nil {
 			// Try to remove as many entries as possible, so don't return early
