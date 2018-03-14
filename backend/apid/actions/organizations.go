@@ -59,7 +59,7 @@ func (a OrganizationsController) Find(ctx context.Context, name string) (*types.
 	return nil, NewErrorf(NotFound)
 }
 
-// Create instatiates, validates and persists new resource if viewer has access.
+// Create creates a new organization. It returns an error if the  organization exists.
 func (a OrganizationsController) Create(ctx context.Context, newOrg types.Organization) error {
 	abilities := a.Policy.WithContext(ctx)
 
@@ -72,6 +72,28 @@ func (a OrganizationsController) Create(ctx context.Context, newOrg types.Organi
 
 	// Verify viewer can make change
 	if yes := abilities.CanCreate(&newOrg); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newOrg.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateOrganization(ctx, &newOrg); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// CreateOrReplace creates or replaces an organization.
+func (a OrganizationsController) CreateOrReplace(ctx context.Context, newOrg types.Organization) error {
+	abilities := a.Policy.WithContext(ctx)
+
+	// Verify viewer can make change
+	if !(abilities.CanCreate(&newOrg) && abilities.CanUpdate(&newOrg)) {
 		return NewErrorf(PermissionDenied)
 	}
 

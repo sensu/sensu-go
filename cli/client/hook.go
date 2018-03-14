@@ -33,7 +33,7 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/hooks/" + url.PathEscape(hook.Name))
+	res, err := client.R().SetBody(bytes).Put("/hooks/" + url.PathEscape(hook.Name))
 	if err != nil {
 		return err
 	}

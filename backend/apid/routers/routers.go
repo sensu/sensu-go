@@ -136,11 +136,12 @@ type actionHandlerFunc func(r *http.Request) (interface{}, error)
 // resourceRoute mounts resources in a convetional RESTful manner.
 //
 //   routes := resourceRoute{pathPrefix: "checks", router: ...}
-//   routes.index(myIndexAction)    // given action is mounted at GET /checks
-//   routes.show(myShowAction)      // given action is mounted at GET /checks/:id
-//   routes.update(myUpdateAction)  // given action is mounted at {PUT,PATCH} /checks/:id
-//   routes.create(myCreateAction)  // given action is mounted at POST /checks
-//   routes.destroy(myCreateAction) // given action is mounted at DELETE /checks/:id
+//   routes.getAll(myIndexAction) // given action is mounted at GET /checks
+//   routes.get(myShowAction)     // given action is mounted at GET /checks/:id
+//   routes.put(myCreateAction)   // given action is mounted at PUT /checks/:id
+//   routes.patch(myUpdateAction) // given action is mounted at PATCH /checks/:id
+//   routes.post(myCreateAction)  // given action is mounted at POST /checks
+//   routes.del(myCreateAction)   // given action is mounted at DELETE /checks/:id
 //   routes.path("{id}/publish", publishAction).Methods(http.MethodDelete) // when you need something customer
 //
 type resourceRoute struct {
@@ -148,23 +149,29 @@ type resourceRoute struct {
 	pathPrefix string
 }
 
-func (r *resourceRoute) index(fn actionHandlerFunc) *mux.Route {
+func (r *resourceRoute) getAll(fn actionHandlerFunc) *mux.Route {
 	return r.path("", fn).Methods(http.MethodGet)
 }
 
-func (r *resourceRoute) show(fn actionHandlerFunc) *mux.Route {
+func (r *resourceRoute) get(fn actionHandlerFunc) *mux.Route {
 	return r.path("{id}", fn).Methods(http.MethodGet)
 }
 
-func (r *resourceRoute) create(fn actionHandlerFunc) *mux.Route {
+func (r *resourceRoute) post(fn actionHandlerFunc) *mux.Route {
 	return r.path("", fn).Methods(http.MethodPost)
 }
 
-func (r *resourceRoute) update(fn actionHandlerFunc) *mux.Route {
-	return r.path("{id}", fn).Methods(http.MethodPut, http.MethodPatch)
+// TODO: uncomment this and use it once controller update fits
+// http patch semantics.
+//func (r *resourceRoute) patch(fn actionHandlerFunc) *mux.Route {
+//	return r.path("{id}", fn).Methods(http.MethodPatch)
+//}
+
+func (r *resourceRoute) put(fn actionHandlerFunc) *mux.Route {
+	return r.path("{id}", fn).Methods(http.MethodPut)
 }
 
-func (r *resourceRoute) destroy(fn actionHandlerFunc) *mux.Route {
+func (r *resourceRoute) del(fn actionHandlerFunc) *mux.Route {
 	return r.path("{id}", fn).Methods(http.MethodDelete)
 }
 

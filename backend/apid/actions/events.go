@@ -158,22 +158,44 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 	// Adjust context
 	policy := a.Policy.WithContext(ctx)
 
-	// Validate
-	if err := event.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
 	// Check for existing
 	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
 	if err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
-		return a.Update(ctx, event)
+		return NewErrorf(AlreadyExistsErr)
 	}
 
 	// Verify permissions
 	if ok := policy.CanCreate(&event); !ok {
 		return NewErrorf(PermissionDenied, "create")
+	}
+
+	if err := event.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Publish to event pipeline
+	if err := a.Bus.Publish(messaging.TopicEventRaw, &event); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// CreateOrReplace creates the event indicated by the supplied entity and check.
+// If an event already exists for the entity and check, it updates that event.
+func (a EventController) CreateOrReplace(ctx context.Context, event types.Event) error {
+	// Adjust context
+	policy := a.Policy.WithContext(ctx)
+
+	// Verify permissions
+	if !(policy.CanCreate(&event) && policy.CanUpdate(&event)) {
+		return NewErrorf(PermissionDenied, "create/update")
+	}
+
+	if err := event.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
 	}
 
 	// Publish to event pipeline

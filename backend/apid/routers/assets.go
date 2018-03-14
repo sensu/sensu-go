@@ -25,10 +25,10 @@ func NewAssetRouter(store store.AssetStore) *AssetsRouter {
 // Mount the AssetsRouter to a parent Router
 func (r *AssetsRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/assets"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.put(r.createOrReplace)
 }
 
 func (r *AssetsRouter) list(req *http.Request) (interface{}, error) {
@@ -56,12 +56,11 @@ func (r *AssetsRouter) create(req *http.Request) (interface{}, error) {
 	return cfg, err
 }
 
-func (r *AssetsRouter) update(req *http.Request) (interface{}, error) {
-	cfg := types.Asset{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+func (r *AssetsRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	var asset types.Asset
+	if err := unmarshalBody(req, &asset); err != nil {
 		return nil, err
 	}
-
-	err := r.controller.Update(req.Context(), cfg)
-	return cfg, err
+	err := r.controller.CreateOrReplace(req.Context(), asset)
+	return asset, err
 }

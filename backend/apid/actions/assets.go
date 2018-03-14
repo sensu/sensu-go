@@ -136,3 +136,27 @@ func (a AssetController) Update(ctx context.Context, given types.Asset) error {
 
 	return nil
 }
+
+// CreateOrReplace creates or replaces the asset given.
+func (a AssetController) CreateOrReplace(ctx context.Context, asset types.Asset) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &asset)
+	abilities := a.Policy.WithContext(ctx)
+
+	// Verify viewer can make change
+	if !(abilities.CanUpdate() && abilities.CanCreate()) {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := asset.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist Changes
+	if serr := a.Store.UpdateAsset(ctx, &asset); serr != nil {
+		return NewError(InternalErr, serr)
+	}
+
+	return nil
+}

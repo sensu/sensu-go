@@ -82,7 +82,7 @@ func (client *RestClient) UpdateMutator(mutator *types.Mutator) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/mutators/" + url.PathEscape(mutator.Name))
+	res, err := client.R().SetBody(bytes).Put("/mutators/" + url.PathEscape(mutator.Name))
 	if err != nil {
 		return err
 	}

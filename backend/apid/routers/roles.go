@@ -25,11 +25,11 @@ func NewRolesRouter(store store.RBACStore) *RolesRouter {
 // Mount the RolesRouter to a parent Router
 func (r *RolesRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/rbac/roles"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 
 	// Custom
 	routes.path("{id}/rules/{type}", r.addRule).Methods(http.MethodPut)
@@ -61,13 +61,13 @@ func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 	return cfg, err
 }
 
-func (r *RolesRouter) update(req *http.Request) (interface{}, error) {
+func (r *RolesRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.Role{}
 	if err := unmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
-	err := r.controller.Update(req.Context(), cfg)
+	err := r.controller.CreateOrReplace(req.Context(), cfg)
 	return cfg, err
 }
 
