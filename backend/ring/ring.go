@@ -30,6 +30,9 @@ var (
 
 	backendID   string
 	backendOnce sync.Once
+
+	leaseIDCache map[string]clientv3.LeaseID = make(map[string]clientv3.LeaseID)
+	pkgMu        sync.Mutex
 )
 
 func getBackendID() string {
@@ -60,12 +63,12 @@ type Ring struct {
 	kv           clientv3.KV
 	backendID    string
 	leaseTimeout int64
-	leaseID      *clientv3.LeaseID
-	mu           sync.Mutex
 }
 
 // New returns a new Ring.
 func New(name string, client *clientv3.Client) *Ring {
+	pkgMu.Lock()
+	defer pkgMu.Unlock()
 	return &Ring{
 		Name:         name,
 		client:       client,
@@ -76,9 +79,10 @@ func New(name string, client *clientv3.Client) *Ring {
 }
 
 func (r *Ring) getLeaseID() (clientv3.LeaseID, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.leaseID == nil {
+	pkgMu.Lock()
+	defer pkgMu.Unlock()
+	leaseID, ok := leaseIDCache[r.Name]
+	if !ok {
 		ctx := context.Background()
 		lease, err := r.client.Grant(ctx, r.leaseTimeout)
 		if err != nil {
@@ -90,9 +94,10 @@ func (r *Ring) getLeaseID() (clientv3.LeaseID, error) {
 		}
 		<-ch
 
-		r.leaseID = &lease.ID
+		leaseIDCache[r.Name] = lease.ID
+		leaseID = lease.ID
 	}
-	return *r.leaseID, nil
+	return leaseID, nil
 }
 
 func newKey(prefix string) string {
