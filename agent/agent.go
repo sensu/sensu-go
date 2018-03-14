@@ -5,7 +5,6 @@
 package agent
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -346,9 +345,11 @@ func (a *Agent) Run() error {
 
 	a.conn = conn
 
-	if _, _, err := a.createListenSockets(); err != nil {
-		return err
-	}
+	/*
+		if _, _, err := a.createListenSockets(); err != nil {
+			return err
+		}
+	*/
 
 	// These are in separate goroutines so that they can, theoretically, be executing
 	// concurrently.
@@ -375,20 +376,23 @@ func (a *Agent) Run() error {
 		}
 	}()
 
-	// Prepare the HTTP API server
-	a.api = newServer(a)
+	/*
+			// Prepare the HTTP API server
+			a.api = newServer(a)
 
-	// Start the HTTP API server
-	go func() {
-		logger.Info("starting api on address: ", a.api.Addr)
+		// Start the HTTP API server
+		go func() {
+			logger.Info("starting api on address: ", a.api.Addr)
 
-		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
-			logger.Fatal(err)
-		}
-	}()
+			if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
+				logger.Fatal(err)
+			}
+		}()
 
-	// Allow Stop() to block until the HTTP server shuts down.
-	a.wg.Add(1)
+		// Allow Stop() to block until the HTTP server shuts down.
+		a.wg.Add(1)
+	*/
+
 	go func() {
 		// NOTE: This does not guarantee a clean shutdown of the HTTP API.
 		// This is _only_ for the purpose of making Stop() a blocking call.
@@ -397,13 +401,16 @@ func (a *Agent) Run() error {
 		<-a.stopping
 		logger.Info("api shutting down")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
+		/*
+				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+				defer cancel()
 
-		if err := a.api.Shutdown(ctx); err != nil {
-			logger.Error(err)
-		}
-		a.wg.Done()
+					if err := a.api.Shutdown(ctx); err != nil {
+						logger.Error(err)
+					}
+
+			a.wg.Done()
+		*/
 	}()
 
 	return nil
