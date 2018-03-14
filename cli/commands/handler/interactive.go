@@ -12,14 +12,15 @@ import (
 
 type handlerOpts struct {
 	Name       string `survey:"name"`
-	Type       string `survey:"type"`
-	Mutator    string `survey:"mutator"`
 	Command    string `survey:"command"`
-	Timeout    string `survey:"timeout"`
+	EnvVars    string `survey:"env-vars"`
 	Filters    string `survey:"filters"`
 	Handlers   string `survey:"handlers"`
+	Mutator    string `survey:"mutator"`
 	SocketHost string `survey:"socketHost"`
 	SocketPort string `survey:"socketPort"`
+	Timeout    string `survey:"timeout"`
+	Type       string `survey:"type"`
 	Env        string
 	Org        string
 }
@@ -40,6 +41,7 @@ func (opts *handlerOpts) withHandler(handler *types.Handler) {
 	opts.Org = handler.Organization
 
 	opts.Command = handler.Command
+	opts.EnvVars = strings.Join(handler.EnvVars, ",")
 	opts.Filters = strings.Join(handler.Filters, ",")
 	opts.Handlers = strings.Join(handler.Handlers, ",")
 	opts.Mutator = handler.Mutator
@@ -54,6 +56,7 @@ func (opts *handlerOpts) withHandler(handler *types.Handler) {
 
 func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
+	opts.EnvVars, _ = flags.GetString("env-vars")
 	opts.Filters, _ = flags.GetString("filters")
 	opts.Handlers, _ = flags.GetString("handlers")
 	opts.Mutator, _ = flags.GetString("mutator")
@@ -122,6 +125,14 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 	}
 
 	qs = append(qs, []*survey.Question{
+		{
+			Name: "env-vars",
+			Prompt: &survey.Input{
+				Message: "Environment variables:",
+				Help:    "A list of comma-separated key=value pairs of environment variables.",
+				Default: opts.EnvVars,
+			},
+		},
 		{
 			Name: "filters",
 			Prompt: &survey.Input{
@@ -218,6 +229,7 @@ func (opts *handlerOpts) Copy(handler *types.Handler) {
 	handler.Organization = opts.Org
 
 	handler.Command = opts.Command
+	handler.EnvVars = helpers.SafeSplitCSV(opts.EnvVars)
 	handler.Mutator = opts.Mutator
 	handler.Type = strings.ToLower(opts.Type)
 

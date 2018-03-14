@@ -63,6 +63,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().String("command", "", "command to be executed. The event data is passed to the process via STDIN")
+	cmd.Flags().String("env-vars", "", "comma separated list of key=value environment variables for the mutator command")
 	cmd.Flags().String("filters", "", "comma separated list of filters to use when filtering events for the handler")
 	cmd.Flags().String("handlers", "", "comma separated list of handlers to call using the handler set")
 	cmd.Flags().StringP("mutator", "m", "", "Sensu event mutator (name) to use to mutate event data for the handler")

@@ -2,8 +2,10 @@ package mutator
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
@@ -12,6 +14,7 @@ type mutatorOpts struct {
 	Name    string `survey:"name"`
 	Command string `survey:"command"`
 	Timeout string `survey:"timeout"`
+	EnvVars string `survey:"env-vars"`
 	Env     string
 	Org     string
 }
@@ -28,11 +31,13 @@ func (opts *mutatorOpts) withMutator(mutator *types.Mutator) {
 
 	opts.Command = mutator.Command
 	opts.Timeout = strconv.FormatUint(uint64(mutator.Timeout), 10)
+	opts.EnvVars = strings.Join(mutator.EnvVars, ",")
 }
 
 func (opts *mutatorOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
 	opts.Timeout, _ = flags.GetString("timeout")
+	opts.EnvVars, _ = flags.GetString("env-vars")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -85,6 +90,14 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.Timeout,
 			},
 		},
+		{
+			Name: "env-vars",
+			Prompt: &survey.Input{
+				Message: "Environment variables:",
+				Help:    "A list of comma-separated key=value pairs of environment variables.",
+				Default: opts.EnvVars,
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -96,6 +109,7 @@ func (opts *mutatorOpts) Copy(mutator *types.Mutator) {
 	mutator.Organization = opts.Org
 
 	mutator.Command = opts.Command
+	mutator.EnvVars = helpers.SafeSplitCSV(opts.EnvVars)
 
 	if len(opts.Timeout) > 0 {
 		t, _ := strconv.ParseUint(opts.Timeout, 10, 32)

@@ -46,6 +46,7 @@ func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("timeout", "15"))
 	require.NoError(t, cmd.Flags().Set("mutator", ""))
 	require.NoError(t, cmd.Flags().Set("handlers", "slack,pagerduty"))
+	require.NoError(t, cmd.Flags().Set("env-vars", "key1=val1,key2=val2"))
 	out, err := test.RunCmd(cmd, []string{"test-handler"})
 
 	assert.Regexp("OK", out)

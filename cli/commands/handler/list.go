@@ -119,6 +119,14 @@ func printToTable(results interface{}, writer io.Writer) {
 				}
 			},
 		},
+		{
+			Title:       "Environment Variables",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				handler, _ := data.(types.Handler)
+				return strings.Join(handler.EnvVars, ",")
+			},
+		},
 	})
 
 	table.Render(writer, results)
