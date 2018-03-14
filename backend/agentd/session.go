@@ -61,6 +61,8 @@ type SessionConfig struct {
 
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
+// The Session is responsible for stopping itself, and does so when it
+// encounters a receive error.
 func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store, getter types.RingGetter) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
@@ -98,7 +100,8 @@ func (s *Session) receiveMessages(out chan *transport.Message) {
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
-				logger.Error("recv error: ", err.Error())
+				logger.Warn("stopping session <%s>: recv error: ", s.ID, err.Error())
+				s.Stop()
 				return
 			default:
 				logger.Error("recv error: ", err.Error())
@@ -196,7 +199,7 @@ func (s *Session) sendPump() {
 // 2. Start receive pump
 // 3. Start subscription pump
 // 5. Ensure bus unsubscribe when the session shuts down.
-func (s *Session) Start() error {
+func (s *Session) Start() (err error) {
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(3)
 	go s.sendPump()
@@ -205,6 +208,12 @@ func (s *Session) Start() error {
 
 	org, env := s.cfg.Organization, s.cfg.Environment
 	agentID := s.cfg.AgentID
+
+	defer func() {
+		if err != nil {
+			s.Stop()
+		}
+	}()
 
 	for _, sub := range s.cfg.Subscriptions {
 		topic := messaging.SubscriptionTopic(org, env, sub)
@@ -242,6 +251,9 @@ func (s *Session) Stop() {
 			logger.Debug(err)
 			break
 		}
+	}
+	for _, sub := range s.cfg.Subscriptions {
+		topic := messaging.SubscriptionTopic(org, env, sub)
 		ring := s.ringGetter.GetRing("subscription", topic)
 		if err := ring.Remove(context.TODO(), s.cfg.AgentID); err != nil {
 			// Try to remove as many entries as possible, so don't return early
