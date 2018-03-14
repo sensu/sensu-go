@@ -208,14 +208,15 @@ func TestExpire(t *testing.T) {
 	ring := EtcdGetter{client}.GetRing("testexpire").(*Ring)
 	ring.leaseTimeout = 1
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	if err := ring.Add(ctx, "foo"); err != nil {
-		cancel()
+	if err := ring.Add(context.Background(), "foo"); err != nil {
 		t.Fatal(err)
 	}
 
-	cancel()
+	// Simulate the client dying
+	if _, err := ring.client.Revoke(context.Background(), *ring.leaseID); err != nil {
+		t.Fatal(err)
+	}
+
 	// Give the cluster some time to expire the lease. Unfortunately there
 	// doesn't seem to be any way to be informed of when the lease expires.
 	time.Sleep(time.Second * 5)
