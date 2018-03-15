@@ -32,7 +32,6 @@ type Session struct {
 	cfg          SessionConfig
 	conn         transport.Transport
 	store        SessionStore
-	ringGetter   types.RingGetter
 	handler      *handler.MessageHandler
 	stopping     chan struct{}
 	wg           *sync.WaitGroup
@@ -63,7 +62,7 @@ type SessionConfig struct {
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store, getter types.RingGetter) (*Session, error) {
+func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store) (*Session, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -87,7 +86,6 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 		checkChannel: make(chan interface{}, 100),
 		store:        store,
 		bus:          bus,
-		ringGetter:   getter,
 	}
 	s.handler = newSessionHandler(s)
 	return s, nil
@@ -211,12 +209,6 @@ func (s *Session) Start() (err error) {
 			logger.WithError(err).Error("error starting subscription")
 			return err
 		}
-		ring := s.ringGetter.GetRing("subscription", topic)
-		if err := ring.Add(context.TODO(), agentID); err != nil {
-			logger.WithError(err).Errorf(
-				"error adding agent %q to ring", s.cfg.AgentID)
-			return err
-		}
 	}
 
 	return nil
@@ -239,15 +231,6 @@ func (s *Session) Stop() {
 			// attempts.
 			logger.Debug(err)
 			break
-		}
-	}
-	for _, sub := range s.cfg.Subscriptions {
-		topic := messaging.SubscriptionTopic(org, env, sub)
-		ring := s.ringGetter.GetRing("subscription", topic)
-		if err := ring.Remove(context.TODO(), s.cfg.AgentID); err != nil {
-			// Try to remove as many entries as possible, so don't return early
-			logger.WithError(err).Errorf(
-				"error removing agent %q from ring", s.cfg.AgentID)
 		}
 	}
 	close(s.checkChannel)

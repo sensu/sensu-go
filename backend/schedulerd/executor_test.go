@@ -11,8 +11,10 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAdhocExecutor(t *testing.T) {
@@ -21,7 +23,10 @@ func TestAdhocExecutor(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus)
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())

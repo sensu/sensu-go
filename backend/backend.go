@@ -170,7 +170,18 @@ func NewBackend(config *Config) (*Backend, error) {
 	}
 	b.etcd = e
 
-	b.messageBus = &messaging.WizardBus{}
+	client, err := e.NewClient()
+	if err != nil {
+		return nil, err
+	}
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: ring.EtcdGetter{Client: client},
+	})
+	if err != nil {
+		return nil, err
+	}
+	b.messageBus = bus
 
 	return b, nil
 }
@@ -244,13 +255,11 @@ func (b *Backend) Run() (derr error) {
 
 	bus := b.messageBus
 	tlsOpts := b.Config.TLS
-	ringGetter := ring.EtcdGetter{Client: client}
 	queueGetter := queue.EtcdGetter{Client: client}
 
 	b.schedulerd, err = schedulerd.New(schedulerd.Config{
 		Store:       store,
 		Bus:         bus,
-		RingGetter:  ringGetter,
 		QueueGetter: queueGetter,
 	})
 	if err != nil {
@@ -291,12 +300,11 @@ func (b *Backend) Run() (derr error) {
 	}
 
 	b.agentd, err = agentd.New(agentd.Config{
-		Host:       b.Config.AgentHost,
-		Port:       b.Config.AgentPort,
-		Bus:        bus,
-		Store:      store,
-		RingGetter: ringGetter,
-		TLS:        tlsOpts,
+		Host:  b.Config.AgentHost,
+		Port:  b.Config.AgentPort,
+		Bus:   bus,
+		Store: store,
+		TLS:   tlsOpts,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating agentd: %s", err)

@@ -31,7 +31,7 @@ var (
 	backendID   string
 	backendOnce sync.Once
 
-	leaseIDCache map[string]clientv3.LeaseID = make(map[string]clientv3.LeaseID)
+	leaseIDCache = make(map[string]clientv3.LeaseID)
 	pkgMu        sync.Mutex
 )
 

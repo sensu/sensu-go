@@ -7,7 +7,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/types"
 	sensutime "github.com/sensu/sensu-go/util/time"
 )
 
@@ -23,7 +22,6 @@ type CheckScheduler struct {
 	bus           messaging.MessageBus
 	wg            *sync.WaitGroup
 	logger        *logrus.Entry
-	ringGetter    types.RingGetter
 	ctx           context.Context
 	cancel        context.CancelFunc
 }
@@ -48,7 +46,7 @@ func (s *CheckScheduler) Start() error {
 			timer = NewIntervalTimer(s.checkName, uint(s.checkInterval))
 		}
 
-		executor := NewCheckExecutor(s.bus, newRoundRobinScheduler(s.ctx, s.bus, s.ringGetter), s.checkOrg, s.checkEnv)
+		executor := NewCheckExecutor(s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkOrg, s.checkEnv)
 
 		// TODO(greg): Refactor this part to make the code more easily tested.
 		timer.Start()

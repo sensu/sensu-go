@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestCheckScheduler struct {
@@ -34,7 +36,11 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
 
-	scheduler.msgBus = &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
+	scheduler.msgBus = bus
 	schedulerState := &SchedulerState{}
 
 	manager := NewStateManager(&mockstore.MockStore{})

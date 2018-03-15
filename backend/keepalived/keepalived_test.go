@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/testing/mockmonitor"
+	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,10 @@ type keepalivedTest struct {
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}
 	deregisterer := &mockDeregisterer{}
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	k, err := New(Config{Store: store, Bus: bus})
 	require.NoError(t, err)
 	k.monitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
@@ -195,14 +199,16 @@ func TestProcessRegistration(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			messageBus := &messaging.WizardBus{}
+			messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+				RingGetter: &mockring.Getter{},
+			})
+			require.NoError(t, err)
 			require.NoError(t, messageBus.Start())
 
 			store := &mockstore.MockStore{}
 
 			testChan := make(chan interface{}, 1)
-			err := messageBus.Subscribe(messaging.TopicEvent, "test-subscriber", testChan)
-			require.NoError(t, err)
+			require.NoError(t, messageBus.Subscribe(messaging.TopicEvent, "test-subscriber", testChan))
 
 			keepalived, err := New(Config{Store: store, Bus: messageBus})
 			require.NoError(t, err)

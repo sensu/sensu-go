@@ -20,7 +20,7 @@ type ScheduleManager struct {
 }
 
 // NewScheduleManager creates a new ScheduleManager.
-func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager, rg types.RingGetter) *ScheduleManager {
+func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *ScheduleManager {
 	wg := &sync.WaitGroup{}
 	stopped := &atomic.Value{}
 
@@ -35,7 +35,6 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager, rg
 			bus:           msgBus,
 			wg:            wg,
 			stateManager:  stateMngr,
-			ringGetter:    rg,
 		}
 	}
 

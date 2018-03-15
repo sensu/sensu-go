@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,10 @@ import (
 )
 
 func TestPipelined(t *testing.T) {
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 	store := &mockstore.MockStore{}
 

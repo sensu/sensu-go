@@ -45,17 +45,15 @@ type Agentd struct {
 	store      Store
 	bus        messaging.MessageBus
 	tls        *types.TLSOptions
-	ringGetter types.RingGetter
 }
 
 // Config configures an Agentd.
 type Config struct {
-	Host       string
-	Port       int
-	Bus        messaging.MessageBus
-	Store      store.Store
-	RingGetter types.RingGetter
-	TLS        *types.TLSOptions
+	Host  string
+	Port  int
+	Bus   messaging.MessageBus
+	Store store.Store
+	TLS   *types.TLSOptions
 }
 
 // Option is a functional option.
@@ -64,16 +62,15 @@ type Option func(*Agentd) error
 // New creates a new Agentd.
 func New(c Config, opts ...Option) (*Agentd, error) {
 	a := &Agentd{
-		Host:       c.Host,
-		Port:       c.Port,
-		bus:        c.Bus,
-		store:      c.Store,
-		tls:        c.TLS,
-		ringGetter: c.RingGetter,
-		stopping:   make(chan struct{}, 1),
-		running:    &atomic.Value{},
-		wg:         &sync.WaitGroup{},
-		errChan:    make(chan error, 1),
+		Host:     c.Host,
+		Port:     c.Port,
+		bus:      c.Bus,
+		store:    c.Store,
+		tls:      c.TLS,
+		stopping: make(chan struct{}, 1),
+		running:  &atomic.Value{},
+		wg:       &sync.WaitGroup{},
+		errChan:  make(chan error, 1),
 	}
 	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.store)
 	a.httpServer = &http.Server{
@@ -156,7 +153,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentID, cfg.Subscriptions)
 
-	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store, a.ringGetter)
+	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store)
 	if err != nil {
 		logger.Error("failed to create session: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

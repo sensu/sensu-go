@@ -50,6 +50,11 @@ type MessageBus interface {
 
 	// Publish sends a message to a topic.
 	Publish(topic string, message interface{}) error
+
+	// PublishDirect routes a message to a single consumer of a topic.
+	// Implementations should make an effort for this to be fairly balanced
+	// between consumers.
+	PublishDirect(topic string, message interface{}) error
 }
 
 // SubscriptionTopic is a helper to determine the proper topic name for a
