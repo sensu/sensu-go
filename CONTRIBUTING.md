@@ -103,7 +103,7 @@ Examples:
 
 Changes to any existing component or functionality of the system that does not cause
 breaking changes to users or developers go here. _Changed_ is distinguishable from
-_Fixed_ in that it is a change to intentional functionality.
+_Fixed_ in that it is an intentional change to existing functionality.
 
 Examples:
 
