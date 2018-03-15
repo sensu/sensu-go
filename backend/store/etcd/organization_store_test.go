@@ -59,6 +59,8 @@ func TestOrgStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		// Delete an empty org
+		defaultEnv := types.Environment{Name: "default", Organization: org.Name}
+		require.NoError(t, store.DeleteEnvironment(ctx, &defaultEnv))
 		require.NoError(t, store.DeleteRoleByName(ctx, "1"))
 		err = store.DeleteOrganizationByName(ctx, org.Name)
 		assert.NoError(t, err)
