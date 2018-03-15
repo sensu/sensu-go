@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
-// import Typography from "material-ui/Typography";
+import Typography from "material-ui/Typography";
 import filterIcon from "material-ui-icons/FilterList";
 
 const styles = theme => ({
@@ -61,15 +61,16 @@ class SearchBox extends React.Component {
         <div className={classes.filterIconContainer}>
           <FilterIcon className={classes.filterIcon} />
         </div>
-        <input
-          id="search"
+        <Typography
+          component="input"
           type="text"
+          variant="body1"
           placeholder={"Filter all events"}
           className={classes.textField}
           value={this.props.state}
           onChange={this.updateInput}
         />
-        {/* <Typography className={classes.save} type="button">
+        {/* <Typography className={classes.save} variant="button">
           Save
         </Typography> */}
       </Paper>

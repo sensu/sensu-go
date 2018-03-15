@@ -27,14 +27,14 @@ const styles = theme => ({
     // hover
     // https://material.io/guidelines/components/data-tables.html#data-tables-interaction
     "&:hover": {
-      backgroundColor: theme.palette.action.hover,
+      backgroundColor: theme.palette.action.selected,
     },
   },
 
   // selected
   // https://material.io/guidelines/components/data-tables.html#data-tables-interaction
   selected: {
-    backgroundColor: theme.palette.action.selected,
+    backgroundColor: theme.palette.action.hover,
   },
 });
 

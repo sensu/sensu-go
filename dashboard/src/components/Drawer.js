@@ -95,7 +95,7 @@ class Drawer extends React.Component {
     };
 
     return (
-      <MaterialDrawer type="temporary" open={open} onClose={onToggle}>
+      <MaterialDrawer variant="temporary" open={open} onClose={onToggle}>
         <div className={classes.paper}>
           <div className={classes.header}>
             <div className={classes.row}>

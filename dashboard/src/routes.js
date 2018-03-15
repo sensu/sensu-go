@@ -19,13 +19,18 @@ export default makeRouteConfig(
       query={AppWrapper.query}
     >
       <Route
-        path="events"
+        path="events/"
         Component={EventsPage}
         query={EventsPage.query}
         prepareVariables={(params, route) => ({
           ...params,
           ...route.location.query,
         })}
+      />
+      <Redirect
+        exact
+        from="events"
+        to="events?filter=HasCheck && HasIncident"
       />
       <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
       <Redirect from="dashboard" to="" />

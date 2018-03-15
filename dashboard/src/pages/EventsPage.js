@@ -25,6 +25,8 @@ const styles = {
   },
 };
 
+const defaultExpression = "HasCheck && IsIncident";
+
 class EventsPage extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
@@ -37,7 +39,7 @@ class EventsPage extends React.Component {
 
   static query = graphql`
     query EventsPageQuery(
-      $filter: String
+      $filter: String = "HasCheck && IsIncident"
       $order: EventsListOrder = SEVERITY
       $environment: String!
       $organization: String!
@@ -50,24 +52,31 @@ class EventsPage extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      filterValue: props.location.query.filter,
-    };
+
+    let filterValue = props.location.query.filter;
+    if (filterValue === undefined) {
+      filterValue = defaultExpression;
+    }
+    this.state = { filterValue };
   }
 
   changeQuery = (key, val) => {
     const { match, router } = this.props;
     const query = new URLSearchParams(match.location.query);
 
+    if (key === "filter") {
+      this.setState({ filterValue: val });
+    }
     query.set(key, val);
+
     router.push(`${match.location.pathname}?${query.toString()}`);
   };
 
   requerySearchBox = filterValue => {
-    this.setState({ filterValue });
-    if (filterValue.length > 10) {
+    if (filterValue.length >= 10) {
       this.changeQuery("filter", filterValue);
     }
+    this.setState({ filterValue });
   };
 
   render() {
@@ -76,7 +85,7 @@ class EventsPage extends React.Component {
       <AppContent>
         <div>
           <div className={classes.headline}>
-            <Typography className={classes.title} type="headline">
+            <Typography className={classes.title} variant="headline">
               Recent Events
             </Typography>
             <SearchBox
@@ -85,7 +94,7 @@ class EventsPage extends React.Component {
             />
           </div>
           <div className={classes.container}>
-            <EventsContainer {...props} />
+            <EventsContainer onQueryChange={this.changeQuery} {...props} />
           </div>
         </div>
       </AppContent>
