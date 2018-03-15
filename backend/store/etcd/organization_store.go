@@ -168,20 +168,7 @@ func (s *Store) UpdateOrganization(ctx context.Context, org *types.Organization)
 		return err
 	}
 
-	// Make sure the organization already exists, otherwise CreateOrganization
-	// should be used instead
-	cmp := v3.Compare(v3.Version(getOrganizationsPath(org.Name)), ">", 0)
-	req := v3.OpPut(getOrganizationsPath(org.Name), string(bytes))
-	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
-	if err != nil {
-		return err
-	}
-	if !res.Succeeded {
-		return fmt.Errorf(
-			"the organization %s does not exist, cannot update it",
-			org.Name,
-		)
-	}
+	_, err = s.client.Put(ctx, getOrganizationsPath(org.Name), string(bytes))
 
 	return err
 }
