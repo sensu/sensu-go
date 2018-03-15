@@ -46,7 +46,7 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 	}
 
 	checkPath := fmt.Sprintf("/checks/%s", url.PathEscape(check.Name))
-	res, err := client.R().SetBody(bytes).Patch(checkPath)
+	res, err := client.R().SetBody(bytes).Put(checkPath)
 	if err != nil {
 		return err
 	}

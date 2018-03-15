@@ -99,7 +99,7 @@ func (client *RestClient) UpdateEnvironment(env *types.Environment) error {
 
 	path := fmt.Sprintf("/rbac/organizations/%s/environments/%s",
 		url.PathEscape(env.Organization), url.PathEscape(env.Name))
-	res, err := client.R().SetBody(b).Patch(path)
+	res, err := client.R().SetBody(b).Put(path)
 	if err != nil {
 		return err
 	}

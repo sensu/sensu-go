@@ -85,7 +85,7 @@ func (client *RestClient) UpdateFilter(f *types.EventFilter) error {
 	if err != nil {
 		return err
 	}
-	resp, err := client.R().SetBody(b).Patch(fmt.Sprintf("/filters/%s", url.PathEscape(f.Name)))
+	resp, err := client.R().SetBody(b).Put(fmt.Sprintf("/filters/%s", url.PathEscape(f.Name)))
 	if err != nil {
 		return err
 	}

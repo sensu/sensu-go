@@ -35,11 +35,6 @@ func (c EnvironmentController) Create(ctx context.Context, env types.Environment
 	ctx = addOrgEnvToContext(ctx, &env)
 	policy := c.Policy.WithContext(ctx)
 
-	// Validate
-	if err := env.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
 	// Check for existing
 	if e, err := c.Store.GetEnvironment(ctx, env.Organization, env.Name); err != nil {
 		return NewError(InternalErr, err)
@@ -52,6 +47,11 @@ func (c EnvironmentController) Create(ctx context.Context, env types.Environment
 		return NewErrorf(PermissionDenied, "create")
 	}
 
+	// Validate
+	if err := env.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
 	// Persist
 	if err := c.Store.UpdateEnvironment(ctx, &env); err != nil {
 		return NewError(InternalErr, err)
@@ -60,14 +60,38 @@ func (c EnvironmentController) Create(ctx context.Context, env types.Environment
 	return nil
 }
 
-// Update updates a Filter.
-// It returns non-nil error if the new Filter is invalid, create permissions
+// CreateOrReplace creates a new Environment resource.
+// It returns non-nil error if the new Filter is invalid, update permissions
+// do not exist, or an internal error occurs while updating the underlying
+// store.
+func (c EnvironmentController) CreateOrReplace(ctx context.Context, env types.Environment) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &env)
+	policy := c.Policy.WithContext(ctx)
+
+	// Verify permissions
+	if !(policy.CanCreate(&env) && policy.CanUpdate(&env)) {
+		return NewErrorf(PermissionDenied, "create/update")
+	}
+
+	// Validate
+	if err := env.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := c.Store.UpdateEnvironment(ctx, &env); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// Update updates an Environment.
+// It returns non-nil error if the new Environment is invalid, create permissions
 // do not exist, or an internal error occurs while updating the underlying
 // store.
 func (c EnvironmentController) Update(ctx context.Context, delta types.Environment) error {
-	if err := delta.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &delta)
 	policy := c.Policy.WithContext(ctx)

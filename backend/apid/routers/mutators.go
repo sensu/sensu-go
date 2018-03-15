@@ -25,11 +25,10 @@ func NewMutatorsRouter(store store.MutatorStore) *MutatorsRouter {
 // Mount the MutatorsRouter to a parent Router
 func (r *MutatorsRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/mutators"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.del(r.destroy)
 }
 
 func (r *MutatorsRouter) list(req *http.Request) (interface{}, error) {
@@ -52,16 +51,6 @@ func (r *MutatorsRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	err := r.controller.Create(req.Context(), mut)
-	return mut, err
-}
-
-func (r *MutatorsRouter) update(req *http.Request) (interface{}, error) {
-	mut := types.Mutator{}
-	if err := unmarshalBody(req, &mut); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Update(req.Context(), mut)
 	return mut, err
 }
 

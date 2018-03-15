@@ -22,6 +22,96 @@ func TestNewEnvironmentController(t *testing.T) {
 	assert.NotNil(ctl.Policy)
 }
 
+func TestEnvironmentCreateOrReplace(t *testing.T) {
+	defaultCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(
+				types.RuleTypeEnvironment,
+				types.RulePermCreate,
+				types.RulePermUpdate,
+			),
+		),
+	)
+	wrongPermsCtx := testutil.NewContext(
+		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithRules(
+			types.FixtureRuleWithPerms(
+				types.RuleTypeEnvironment,
+				types.RulePermCreate,
+			),
+		),
+	)
+
+	badMut := types.FixtureEnvironment("bad")
+	badMut.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
+
+	tests := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Environment
+		fetchResult     *types.Environment
+		fetchErr        error
+		createErr       error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:        "Created",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEnvironment("sleepy"),
+			expectedErr: false,
+		},
+		{
+			name:        "Already Exists",
+			ctx:         defaultCtx,
+			argument:    types.FixtureEnvironment("sleepy"),
+			fetchResult: types.FixtureEnvironment("sleepy"),
+		},
+		{
+			name:            "No Permission",
+			ctx:             wrongPermsCtx,
+			argument:        types.FixtureEnvironment("sneezy"),
+			expectedErr:     true,
+			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:            "Validation Error",
+			ctx:             defaultCtx,
+			argument:        badMut,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+	}
+
+	for _, test := range tests {
+		store := &mockstore.MockStore{}
+		ctl := NewEnvironmentController(store)
+
+		t.Run(test.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			store.On("GetEnvironment", mock.Anything, mock.Anything, mock.Anything).
+				Return(test.fetchResult, test.fetchErr)
+
+			store.On("UpdateEnvironment", mock.Anything, mock.Anything).Return(test.createErr)
+
+			err := ctl.CreateOrReplace(test.ctx, *test.argument)
+
+			if test.expectedErr {
+				if cerr, ok := err.(Error); ok {
+					assert.Equal(test.expectedErrCode, cerr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
+
 func TestEnvironmentCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithOrgEnv("default", "default"),
@@ -229,8 +319,8 @@ func TestEnvironmentUpdate(t *testing.T) {
 		),
 	)
 
-	badEnvironment := types.FixtureEnvironment("env1")
-	badEnvironment.Organization = ""
+	badEnvironment := types.FixtureEnvironment("$$$")
+	badEnvironment.Organization = "$$"
 
 	testCases := []struct {
 		name            string
@@ -284,12 +374,11 @@ func TestEnvironmentUpdate(t *testing.T) {
 			expectedErrCode: PermissionDenied,
 		},
 		{
-			name:            "Validation Error",
-			ctx:             defaultCtx,
-			argument:        badEnvironment,
-			fetchResult:     types.FixtureEnvironment("env1"),
-			expectedErr:     true,
-			expectedErrCode: InvalidArgument,
+			name:        "Validation Error",
+			ctx:         defaultCtx,
+			argument:    badEnvironment,
+			fetchResult: types.FixtureEnvironment("env1"),
+			expectedErr: false, // only the description can be updated
 		},
 	}
 

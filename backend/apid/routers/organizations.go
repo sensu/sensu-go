@@ -25,11 +25,11 @@ func NewOrganizationsRouter(store store.OrganizationStore) *OrganizationsRouter 
 // Mount the OrganizationsRouter to a parent Router
 func (r *OrganizationsRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/rbac/organizations"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 }
 
 func (r *OrganizationsRouter) list(req *http.Request) (interface{}, error) {
@@ -57,13 +57,13 @@ func (r *OrganizationsRouter) create(req *http.Request) (interface{}, error) {
 	return org, err
 }
 
-func (r *OrganizationsRouter) update(req *http.Request) (interface{}, error) {
+func (r *OrganizationsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	org := types.Organization{}
 	if err := unmarshalBody(req, &org); err != nil {
 		return nil, err
 	}
 
-	err := r.controller.Update(req.Context(), org)
+	err := r.controller.CreateOrReplace(req.Context(), org)
 	return org, err
 }
 

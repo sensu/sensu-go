@@ -81,7 +81,7 @@ func (client *RestClient) UpdateHandler(handler *types.Handler) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/handlers/" + url.PathEscape(handler.Name))
+	res, err := client.R().SetBody(bytes).Put("/handlers/" + url.PathEscape(handler.Name))
 	if err != nil {
 		return err
 	}

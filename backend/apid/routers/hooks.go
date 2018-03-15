@@ -25,11 +25,11 @@ func NewHooksRouter(store store.HookConfigStore) *HooksRouter {
 // Mount the HooksRouter to a parent Router
 func (r *HooksRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/hooks"}
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.create(r.create)
-	routes.update(r.update)
-	routes.destroy(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.post(r.create)
+	routes.del(r.destroy)
+	routes.put(r.createOrReplace)
 }
 
 func (r *HooksRouter) list(req *http.Request) (interface{}, error) {
@@ -57,13 +57,13 @@ func (r *HooksRouter) create(req *http.Request) (interface{}, error) {
 	return cfg, err
 }
 
-func (r *HooksRouter) update(req *http.Request) (interface{}, error) {
+func (r *HooksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.HookConfig{}
 	if err := unmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
-	err := r.controller.Update(req.Context(), cfg)
+	err := r.controller.CreateOrReplace(req.Context(), cfg)
 	return cfg, err
 }
 

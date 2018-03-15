@@ -53,7 +53,7 @@ func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Patch("/entities/" + entity.ID)
+	res, err := client.R().SetBody(bytes).Put("/entities/" + entity.ID)
 	if err != nil {
 		return err
 	}

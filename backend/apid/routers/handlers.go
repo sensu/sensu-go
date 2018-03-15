@@ -25,12 +25,11 @@ func NewHandlersRouter(store store.HandlerStore) *HandlersRouter {
 // Mount the HandlersRouter to a parent Router
 func (r *HandlersRouter) Mount(parent *mux.Router) {
 	routes := resourceRoute{router: parent, pathPrefix: "/handlers"}
-	routes.create(r.create)
-	routes.destroy(r.destroy)
-	routes.index(r.list)
-	routes.show(r.find)
-	routes.update(r.update)
-
+	routes.post(r.create)
+	routes.del(r.destroy)
+	routes.getAll(r.list)
+	routes.get(r.find)
+	routes.put(r.createOrReplace)
 }
 
 func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
@@ -40,6 +39,15 @@ func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	return handler, r.controller.Create(req.Context(), handler)
+}
+
+func (r *HandlersRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	handler := types.Handler{}
+	if err := unmarshalBody(req, &handler); err != nil {
+		return nil, err
+	}
+
+	return handler, r.controller.CreateOrReplace(req.Context(), handler)
 }
 
 func (r *HandlersRouter) destroy(req *http.Request) (interface{}, error) {
@@ -62,13 +70,4 @@ func (r *HandlersRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *HandlersRouter) list(req *http.Request) (interface{}, error) {
 	return r.controller.Query(req.Context())
-}
-
-func (r *HandlersRouter) update(req *http.Request) (interface{}, error) {
-	handler := types.Handler{}
-	if err := unmarshalBody(req, &handler); err != nil {
-		return nil, err
-	}
-
-	return handler, r.controller.Update(req.Context(), handler)
 }

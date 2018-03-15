@@ -91,7 +91,7 @@ func (client *RestClient) UpdateSilenced(s *types.Silenced) error {
 	if err != nil {
 		return err
 	}
-	resp, err := client.R().SetBody(b).Patch(path.Join("/silenced", url.PathEscape(s.ID)))
+	resp, err := client.R().SetBody(b).Put(path.Join("/silenced", url.PathEscape(s.ID)))
 	if err != nil {
 		return err
 	}

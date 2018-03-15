@@ -30,6 +30,9 @@ var (
 
 	backendID   string
 	backendOnce sync.Once
+
+	leaseIDCache map[string]clientv3.LeaseID = make(map[string]clientv3.LeaseID)
+	pkgMu        sync.Mutex
 )
 
 func getBackendID() string {
@@ -64,13 +67,37 @@ type Ring struct {
 
 // New returns a new Ring.
 func New(name string, client *clientv3.Client) *Ring {
+	pkgMu.Lock()
+	defer pkgMu.Unlock()
 	return &Ring{
 		Name:         name,
 		client:       client,
 		kv:           clientv3.NewKV(client),
 		backendID:    getBackendID(),
-		leaseTimeout: 15, // 15 seconds
+		leaseTimeout: 120, // 120 seconds
 	}
+}
+
+func (r *Ring) getLeaseID() (clientv3.LeaseID, error) {
+	pkgMu.Lock()
+	defer pkgMu.Unlock()
+	leaseID, ok := leaseIDCache[r.Name]
+	if !ok {
+		ctx := context.Background()
+		lease, err := r.client.Grant(ctx, r.leaseTimeout)
+		if err != nil {
+			return 0, err
+		}
+		ch, err := r.client.KeepAlive(ctx, lease.ID)
+		if err != nil {
+			return 0, err
+		}
+		<-ch
+
+		leaseIDCache[r.Name] = lease.ID
+		leaseID = lease.ID
+	}
+	return leaseID, nil
 }
 
 func newKey(prefix string) string {
@@ -91,19 +118,19 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		lease, err := r.client.Grant(ctx, r.leaseTimeout)
+		key := newKey(r.Name)
+		putCmp := clientv3.Compare(clientv3.Version(key), "=", 0)
+		leaseID, err := r.getLeaseID()
 		if err != nil {
 			return err
 		}
-		key := newKey(r.Name)
-		putCmp := clientv3.Compare(clientv3.Version(key), "=", 0)
-		putOp := clientv3.OpPut(key, value, clientv3.WithLease(lease.ID))
+		putOp := clientv3.OpPut(key, value, clientv3.WithLease(leaseID))
 		cmps, ops, err := r.getRemovalOps(ctx, value)
 		if err != nil {
 			return err
 		}
 		ownershipAssertion := clientv3.OpPut(
-			path.Join(r.Name, value), r.backendID, clientv3.WithLease(lease.ID))
+			path.Join(r.Name, value), r.backendID, clientv3.WithLease(leaseID))
 		cmps = append(cmps, putCmp)
 		ops = append(ops, putOp, ownershipAssertion)
 		response, err := r.kv.Txn(ctx).If(cmps...).Then(ops...).Commit()
@@ -111,15 +138,7 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 			return err
 		}
 		if response.Succeeded {
-			ch, err := r.client.KeepAlive(ctx, lease.ID)
-			if err != nil {
-				return err
-			}
-			<-ch
 			return nil
-		}
-		if _, err := r.client.Revoke(ctx, lease.ID); err != nil {
-			return err
 		}
 	}
 }

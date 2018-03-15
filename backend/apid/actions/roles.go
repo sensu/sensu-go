@@ -62,7 +62,7 @@ func (a RoleController) Find(ctx context.Context, name string) (*types.Role, err
 	return nil, NewErrorf(NotFound)
 }
 
-// Create instantiates, validates and persists new resource if viewer has access.
+// Create creates a new role. It returns an error if the role already exists.
 func (a RoleController) Create(ctx context.Context, newRole types.Role) error {
 	// Role for existing
 	if e, err := a.Store.GetRoleByName(ctx, newRole.Name); err != nil {
@@ -74,6 +74,27 @@ func (a RoleController) Create(ctx context.Context, newRole types.Role) error {
 	// Verify viewer can make change
 	abilities := a.Policy.WithContext(ctx)
 	if yes := abilities.CanCreate(); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Validate
+	if err := newRole.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := a.Store.UpdateRole(ctx, &newRole); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
+// CreateOrReplace creates or replaces a role.
+func (a RoleController) CreateOrReplace(ctx context.Context, newRole types.Role) error {
+	// Verify viewer can make change
+	abilities := a.Policy.WithContext(ctx)
+	if !(abilities.CanCreate() && abilities.CanUpdate()) {
 		return NewErrorf(PermissionDenied)
 	}
 
@@ -165,6 +186,10 @@ func (a RoleController) findRole(ctx context.Context, name string) (*types.Role,
 }
 
 func (a RoleController) updateRole(ctx context.Context, role *types.Role) error {
+	if err := role.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
 	if err := a.Store.UpdateRole(ctx, role); err != nil {
 		return NewError(InternalErr, err)
 	}
@@ -192,11 +217,6 @@ func (a RoleController) findAndUpdateRole(
 	// Configure
 	if err := configureFn(role); err != nil {
 		return err
-	}
-
-	// Validate
-	if err := role.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
 	}
 
 	// Update

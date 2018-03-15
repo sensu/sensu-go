@@ -8,12 +8,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - Added ability to sort events in web UI.
+- Add PUT support to APId for the various resource types.
+- Added flags to disable the agent's API and Socket listeners
+- Made Changelog examples in CONTRIBUTING.md more obvious
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
 (default) to 65535.
 - Increased the default etcd size limit from 2GB to 4GB.
 - Move Hooks and Silenced out of Event and into Check.
+
+### Fixed
+- Shut down sessions properly when agent connections are disrupted.
 
 ### Added
 - Support for managing mutators via sensuctl.

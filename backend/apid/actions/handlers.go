@@ -66,6 +66,33 @@ func (c HandlerController) Create(ctx context.Context, handler types.Handler) er
 	return nil
 }
 
+// CreateOrReplace creates or replaces a handler resource.
+// It returns non-nil error if the handler is invalid, permissions
+// do not exist, or an internal error occurs while updating the underlying
+// Store.
+func (c HandlerController) CreateOrReplace(ctx context.Context, handler types.Handler) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &handler)
+	abilities := c.Policy.WithContext(ctx)
+
+	// Verify permissions
+	if !(abilities.CanCreate(&handler) && abilities.CanUpdate(&handler)) {
+		return NewErrorf(PermissionDenied, "create/update")
+	}
+
+	// Validate
+	if err := handler.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := c.Store.UpdateHandler(ctx, &handler); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
 // Destroy removes a resource if viewer has access.
 func (c HandlerController) Destroy(ctx context.Context, name string) error {
 	abilities := c.Policy.WithContext(ctx)

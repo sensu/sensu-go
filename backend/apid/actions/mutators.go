@@ -62,6 +62,33 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 	return nil
 }
 
+// CreateOrReplace creates or replaces a Mutator resource.
+// It returns non-nil error if the mutator is invalid, update permissions
+// do not exist, or an internal error occurs while updating the underlying
+// Store.
+func (c MutatorController) CreateOrReplace(ctx context.Context, mut types.Mutator) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &mut)
+	policy := c.Policy.WithContext(ctx)
+
+	// Verify permissions
+	if !(policy.CanCreate(&mut) && policy.CanUpdate(&mut)) {
+		return NewErrorf(PermissionDenied, "create/update")
+	}
+
+	// Validate
+	if err := mut.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist
+	if err := c.Store.UpdateMutator(ctx, &mut); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}
+
 // Update updates a mutator.
 // It returns non-nil error if the new mutator is invalid, create permissions
 // do not exist, or an internal error occurs while updating the underlying
