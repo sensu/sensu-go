@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added ability to sort events in web UI.
 - Add PUT support to APId for the various resource types.
 - Added flags to disable the agent's API and Socket listeners
+- Made Changelog examples in CONTRIBUTING.md more obvious
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
