@@ -21,18 +21,10 @@ func TestOrgStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(orgs))
 
-		// We should not be able to update a missing organization
-		org := types.FixtureOrganization("acme")
-		err = store.UpdateOrganization(ctx, org)
-		assert.Error(t, err)
-
 		// We should be able to create a new organization
+		org := types.FixtureOrganization("acme")
 		err = store.CreateOrganization(ctx, org)
 		assert.NoError(t, err)
-
-		// We should be able to create an existing organization
-		err = store.CreateOrganization(ctx, org)
-		assert.Error(t, err)
 
 		result, err := store.GetOrganizationByName(ctx, org.Name)
 		assert.NoError(t, err)
