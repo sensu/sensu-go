@@ -92,7 +92,7 @@ change goes in the Changelog.
 
 Any _new_ functionality goes here. This may be a new field on a data type or a new data
 type altogether; a new API endpoint; or possibly a whole new feature. In general, these
-are sentence that start with the word "added."
+are sentences that start with the word "added."
 
 Examples:
 
