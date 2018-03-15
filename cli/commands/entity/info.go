@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ShowCommand defines new entity info command
-func ShowCommand(cli *cli.SensuCli) *cobra.Command {
+// InfoCommand defines new entity info command
+func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [ID]",
 		Short:        "show detailed entity information",
@@ -40,14 +40,9 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
-					return err
-				}
-			} else {
-				printEntityToList(r, cmd.OutOrStdout())
+				return helpers.PrintJSON(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printEntityToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -56,7 +51,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEntityToList(r *types.Entity, writer io.Writer) {
+func printEntityToList(r *types.Entity, writer io.Writer) error {
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{
@@ -108,5 +103,5 @@ func printEntityToList(r *types.Entity, writer io.Writer) {
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

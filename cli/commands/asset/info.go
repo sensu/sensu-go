@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ShowCommand defines new asset info command
-func ShowCommand(cli *cli.SensuCli) *cobra.Command {
+// InfoCommand defines new asset info command
+func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [NAME]",
 		Short:        "show detailed information on given asset",
@@ -38,14 +38,9 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
-					return err
-				}
-			} else {
-				printAssetToList(r, cmd.OutOrStdout())
+				return helpers.PrintJSON(r, cmd.OutOrStdout())
 			}
-
-			return nil
+			return printAssetToList(r, cmd.OutOrStdout())
 		},
 	}
 
@@ -54,7 +49,7 @@ func ShowCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printAssetToList(r *types.Asset, writer io.Writer) {
+func printAssetToList(r *types.Asset, writer io.Writer) error {
 	var metadata []string
 	for k, v := range r.Metadata {
 		metadata = append(metadata, k+"="+v)
@@ -90,5 +85,5 @@ func printAssetToList(r *types.Asset, writer io.Writer) {
 		},
 	}
 
-	list.Print(writer, cfg)
+	return list.Print(writer, cfg)
 }

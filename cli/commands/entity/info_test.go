@@ -1,4 +1,4 @@
-package check
+package entity
 
 import (
 	"errors"
@@ -11,79 +11,71 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestShowCommand(t *testing.T) {
+func TestInfoCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("info", cmd.Use)
-	assert.Regexp("check", cmd.Short)
+	assert.Regexp("entity", cmd.Short)
 }
 
-func TestShowCommandRunEClosure(t *testing.T) {
+func TestInfoCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchCheck", "in").Return(types.FixtureCheckConfig("name-one"), nil)
+	client.On("FetchEntity", "in").Return(types.FixtureEntity("name-one"), nil)
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
-	require.NoError(t, err)
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "name-one")
+	assert.Nil(err)
 }
 
-func TestShowCommandRunMissingArgs(t *testing.T) {
+func TestInfoCommandRunMissingArgs(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
-	require.Error(t, err)
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "Usage")
+	assert.Error(err)
 }
 
-func TestShowCommandRunEClosureWithTable(t *testing.T) {
+func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchCheck", "in").Return(types.FixtureCheckConfig("name-one"), nil)
+	client.On("FetchEntity", "in").Return(types.FixtureEntity("name-one"), nil)
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "tabular"))
 
 	out, err := test.RunCmd(cmd, []string{"in"})
-	require.NoError(t, err)
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "Name")
-	assert.Contains(out, "Interval")
-	assert.Contains(out, "Command")
-	assert.Contains(out, "Cron")
-	assert.Contains(out, "Timeout")
-	assert.Contains(out, "TTL")
-	assert.Contains(out, "Subscriptions")
-	assert.Contains(out, "Handlers")
-	assert.Contains(out, "Runtime Assets")
-	assert.Contains(out, "Hooks")
+	assert.Contains(out, "Host")
+	assert.Contains(out, "OS")
+	assert.Nil(err)
 }
 
-func TestShowCommandRunEClosureWithErr(t *testing.T) {
+func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchCheck", "in").Return(&types.CheckConfig{}, errors.New("my-err"))
+	client.On("FetchEntity", "in").Return(&types.Entity{}, errors.New("my-err"))
 
-	cmd := ShowCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
 
 	assert.NotNil(err)
