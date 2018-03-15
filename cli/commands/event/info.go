@@ -42,9 +42,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if format == "json" {
-				if err := helpers.PrintJSON(event, cmd.OutOrStdout()); err != nil {
-					return err
-				}
+				return helpers.PrintJSON(event, cmd.OutOrStdout())
 			}
 			return printEntityToList(event, cmd.OutOrStdout())
 		},
