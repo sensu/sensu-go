@@ -40,7 +40,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			opts.Org = cli.Config.Organization()
 			opts.Env = cli.Config.Environment()
-
 			if isInteractive {
 				if err := opts.administerQuestionnaire(false); err != nil {
 					return err
@@ -70,6 +69,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().StringP("command", "c", "", "command to be executed. The event data is passed to the process via STDIN")
+	cmd.Flags().String("env-vars", "", "comma separated list of key=value environment variables for the mutator command")
 	cmd.Flags().StringP("timeout", "t", "", "execution duration timeout in seconds (hard stop)")
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd

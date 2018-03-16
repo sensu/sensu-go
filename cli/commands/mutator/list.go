@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
@@ -62,6 +63,14 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				mutator, _ := data.(types.Mutator)
 				return mutator.Command
+			},
+		},
+		{
+			Title:       "Environment Variables",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				mutator, _ := data.(types.Mutator)
+				return strings.Join(mutator.EnvVars, ",")
 			},
 		},
 		{
