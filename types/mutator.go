@@ -52,3 +52,8 @@ func FixtureMutator(name string) *Mutator {
 		Organization: "default",
 	}
 }
+
+// URIPath returns the path component of a Mutator URI.
+func (m *Mutator) URIPath() string {
+	return fmt.Sprintf("/mutators/%s", m.Name)
+}

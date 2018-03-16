@@ -93,3 +93,8 @@ func FixtureDenyEventFilter(name string) *EventFilter {
 		Organization: "default",
 	}
 }
+
+// URIPath returns the path component of a Filter URI.
+func (f *EventFilter) URIPath() string {
+	return fmt.Sprintf("/filters/%s", f.Name)
+}

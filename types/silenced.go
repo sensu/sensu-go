@@ -72,3 +72,8 @@ func SilencedID(subscription, check string) (string, error) {
 	}
 	return fmt.Sprintf("%s:%s", subscription, check), nil
 }
+
+// URIPath returns the path component of a Silenced URI.
+func (s *Silenced) URIPath() string {
+	return fmt.Sprintf("/silenced/%s", s.ID)
+}

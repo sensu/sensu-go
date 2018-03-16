@@ -43,3 +43,8 @@ func (e *Environment) Update(from *Environment, fields ...string) error {
 	}
 	return nil
 }
+
+// URIPath returns the path component of a Environment URI.
+func (e *Environment) URIPath() string {
+	return fmt.Sprintf("/%s/environments/%s", e.Organization, e.Name)
+}

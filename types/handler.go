@@ -1,6 +1,9 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	fmt "fmt"
+)
 
 const (
 	// HandlerPipeType represents handlers that pipes event data // into arbitrary
@@ -69,4 +72,9 @@ func FixtureSetHandler(name string, handlers ...string) *Handler {
 	handler := FixtureHandler(name)
 	handler.Handlers = handlers
 	return handler
+}
+
+// URIPath returns the path component of a Handler URI.
+func (h *Handler) URIPath() string {
+	return fmt.Sprintf("/handlers/%s", h.Name)
 }

@@ -306,3 +306,8 @@ func FixtureProxyRequests(splay bool) *ProxyRequests {
 		SplayCoverage: splayCoverage,
 	}
 }
+
+// URIPath returns the path component of a Check URI.
+func (c *Check) URIPath() string {
+	return fmt.Sprintf("/checks/%s", c.Name)
+}

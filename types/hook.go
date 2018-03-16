@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
+	fmt "fmt"
 	"regexp"
 	"time"
 )
@@ -20,12 +21,12 @@ var Severities = []string{"ok", "warning", "critical", "unknown", "non-zero"}
 const HookRequestType = "hook_request"
 
 // Validate returns an error if the hook does not pass validation tests.
-func (c *Hook) Validate() error {
-	if err := c.HookConfig.Validate(); err != nil {
+func (h *Hook) Validate() error {
+	if err := h.HookConfig.Validate(); err != nil {
 		return err
 	}
 
-	if c.Status < 0 {
+	if h.Status < 0 {
 		return errors.New("hook status must be greater than or equal to 0")
 	}
 
@@ -141,4 +142,9 @@ func FixtureHookList(hookName string) *HookList {
 		Hooks: []string{hookName},
 		Type:  "non-zero",
 	}
+}
+
+// URIPath returns the path component of a Hook URI.
+func (h *Hook) URIPath() string {
+	return fmt.Sprintf("/hooks/%s", h.Name)
 }

@@ -80,3 +80,8 @@ func FixtureEntity(id string) *Entity {
 		KeepaliveTimeout: 120,
 	}
 }
+
+// URIPath returns the path component of a Entity URI.
+func (e *Entity) URIPath() string {
+	return fmt.Sprintf("/entities/%s", e.ID)
+}

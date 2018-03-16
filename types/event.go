@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
+	fmt "fmt"
 	"sort"
 	"time"
 )
@@ -211,4 +212,9 @@ func (s *eventSorter) Swap(i, j int) {
 // Less implements sort.Interface.
 func (s *eventSorter) Less(i, j int) bool {
 	return s.byFn(s.events[i], s.events[j])
+}
+
+// URIPath returns the path component of a Event URI.
+func (e *Event) URIPath() string {
+	return fmt.Sprintf("/%s/%s", e.Entity.ID, e.Check.Name)
 }
