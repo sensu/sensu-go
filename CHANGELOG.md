@@ -19,6 +19,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Increased the default etcd size limit from 2GB to 4GB.
 - Move Hooks and Silenced out of Event and into Check.
 - Handle round-robin scheduling in wizardbus.
+- Added informational logging for failed entity keepalives.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.
