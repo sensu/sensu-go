@@ -1,0 +1,27 @@
+// automatically generated file, do not edit!
+package types
+
+import "errors"
+
+var ErrNoType = errors.New("the named type could not be found")
+var ErrInvalidResource = errors.New("the named type is not a Resource")
+
+// typeMap is used to dynamically look up data types from strings.
+var typeMap = map[string]interface{}{ {{ range $index, $typename := .TypeNames }}
+  "{{ $typename }}": {{ $typename }}{}, {{ end }}
+}
+
+// ResolveResource returns a zero-valued resource, given a name.
+// If the named type does not exist, or if the type is not a Resource,
+// then an error will be returned.
+func ResolveResource(name string) (Resource, error) {
+  t, ok := typeMap[name]
+  if !ok {
+    return nil, ErrNoType
+  }
+  r, ok := t.(Resource)
+  if !ok {
+    return nil, ErrInvalidResource
+  }
+  return r, nil
+}
