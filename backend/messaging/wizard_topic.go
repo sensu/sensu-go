@@ -12,6 +12,7 @@ type WizardTopic struct {
 // Send a message to all subscribers to this topic.
 func (wTopic *WizardTopic) Send(msg interface{}) {
 	wTopic.RLock()
+	defer wTopic.RUnlock()
 
 	for _, ch := range wTopic.Bindings {
 		select {
@@ -20,8 +21,6 @@ func (wTopic *WizardTopic) Send(msg interface{}) {
 			continue
 		}
 	}
-
-	wTopic.RUnlock()
 }
 
 // Subscribe a channel, identified by a consumer name, to this topic.

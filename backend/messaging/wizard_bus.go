@@ -1,12 +1,15 @@
 package messaging
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"sync/atomic"
+
+	"github.com/sensu/sensu-go/types"
 )
 
-// WizardBus is an in-memory message bus.
+// WizardBus is a message bus.
 //
 // For every topic, WizardBus creates a new goroutine responsible for fanning
 // messages out to each subscriber for a given topic. Any type can be passed
@@ -15,20 +18,42 @@ import (
 // message types over a single topic, however, as we do not want to introduce
 // a dependency on reflection to determine the type of the received interface{}.
 type WizardBus struct {
-	running *atomic.Value
-	mutex   *sync.RWMutex
-	errchan chan error
-	topics  map[string]*WizardTopic
+	running    atomic.Value
+	topicsMu   sync.RWMutex
+	topics     map[string]*WizardTopic
+	errchan    chan error
+	ringGetter types.RingGetter
+	ringCache  map[string]types.Ring
+	ringMu     sync.Mutex
+}
+
+// WizardBusConfig configures a WizardBus
+type WizardBusConfig struct {
+	RingGetter types.RingGetter
+}
+
+// WizardOption is a functional option.
+type WizardOption func(*WizardBus) error
+
+// NewWizardBus creates a new WizardBus.
+func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error) {
+	bus := &WizardBus{
+		errchan:    make(chan error, 1),
+		topics:     make(map[string]*WizardTopic),
+		ringGetter: cfg.RingGetter,
+		ringCache:  make(map[string]types.Ring),
+	}
+	for _, opt := range opts {
+		if err := opt(bus); err != nil {
+			return nil, err
+		}
+	}
+	return bus, nil
 }
 
 // Start ...
 func (b *WizardBus) Start() error {
-	b.errchan = make(chan error, 1)
-	b.running = &atomic.Value{}
-	b.mutex = &sync.RWMutex{}
-	b.topics = map[string]*WizardTopic{}
 	b.running.Store(true)
-
 	return nil
 }
 
@@ -36,11 +61,11 @@ func (b *WizardBus) Start() error {
 func (b *WizardBus) Stop() error {
 	b.running.Store(false)
 	close(b.errchan)
-	b.mutex.Lock()
+	b.topicsMu.Lock()
 	for _, wTopic := range b.topics {
 		wTopic.Close()
 	}
-	b.mutex.Unlock()
+	b.topicsMu.Unlock()
 	return nil
 }
 
@@ -90,8 +115,8 @@ func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- inte
 		return errors.New("bus no longer running")
 	}
 
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+	b.topicsMu.Lock()
+	defer b.topicsMu.Unlock()
 
 	if _, ok := b.topics[topic]; !ok {
 		b.topics[topic] = b.createTopic(topic)
@@ -114,14 +139,21 @@ func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
 		return errors.New("bus no longer running")
 	}
 
-	b.mutex.RLock()
+	b.topicsMu.RLock()
 	wTopic, ok := b.topics[topic]
 	if !ok {
 		return errors.New("topic not found")
 	}
-	b.mutex.RUnlock()
+	b.topicsMu.RUnlock()
 
 	wTopic.Unsubscribe(consumer)
+	b.ringMu.Lock()
+	ring, ok := b.ringCache[topic]
+	b.ringMu.Unlock()
+	if ok {
+		return ring.Remove(context.Background(), consumer)
+	}
+
 	return nil
 }
 
@@ -132,12 +164,70 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 		return errors.New("bus no longer running")
 	}
 
-	b.mutex.RLock()
-	defer b.mutex.RUnlock()
+	b.topicsMu.RLock()
+	defer b.topicsMu.RUnlock()
 
 	if wTopic, ok := b.topics[topic]; ok {
 		wTopic.Send(msg)
 	}
 
 	return nil
+}
+
+// PublishDirect publishes a message to a single consumer.
+func (b *WizardBus) PublishDirect(topic string, msg interface{}) error {
+	if !b.running.Load().(bool) {
+		return errors.New("bus no longer running")
+	}
+
+	b.topicsMu.RLock()
+	wt, ok := b.topics[topic]
+	b.topicsMu.RUnlock()
+
+	if !ok {
+		return nil
+	}
+
+	ring, err := b.getRing(topic, wt)
+	if err != nil {
+		return err
+	}
+
+	subscriber, err := ring.Next(context.Background())
+	if err != nil {
+		return err
+	}
+
+	wt.RLock()
+	defer wt.RUnlock()
+
+	wt.Bindings[subscriber] <- msg
+
+	return nil
+}
+
+// getRing finds a cached ring, or constructs one for the topic.
+// rings are lazily constructed; they are not created until the need for one
+// is identified by a call to PublishDirect.
+func (b *WizardBus) getRing(topic string, wt *WizardTopic) (types.Ring, error) {
+	var err error
+	b.ringMu.Lock()
+	defer b.ringMu.Unlock()
+	ring, ok := b.ringCache[topic]
+	if !ok {
+		ring = b.ringGetter.GetRing(topic)
+		wt.RLock()
+		bindings := make([]string, 0, len(wt.Bindings))
+		for subscriber := range wt.Bindings {
+			bindings = append(bindings, subscriber)
+		}
+		wt.RUnlock()
+		for _, subscriber := range bindings {
+			if err := ring.Add(context.Background(), subscriber); err != nil {
+				return nil, err
+			}
+		}
+		b.ringCache[topic] = ring
+	}
+	return ring, err
 }

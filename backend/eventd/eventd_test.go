@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/testing/mockmonitor"
+	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,10 @@ import (
 )
 
 func TestEventHandling(t *testing.T) {
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
@@ -72,7 +76,10 @@ func TestEventHandling(t *testing.T) {
 }
 
 func TestEventMonitor(t *testing.T) {
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}

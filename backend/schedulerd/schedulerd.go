@@ -12,7 +12,6 @@ import (
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
 	store                store.Store
-	ringGetter           types.RingGetter
 	queueGetter          types.QueueGetter
 	bus                  messaging.MessageBus
 	stateManager         *StateManager
@@ -27,7 +26,6 @@ type Option func(*Schedulerd) error
 // Config configures Schedulerd.
 type Config struct {
 	Store       store.Store
-	RingGetter  types.RingGetter
 	QueueGetter types.QueueGetter
 	Bus         messaging.MessageBus
 }
@@ -36,13 +34,12 @@ type Config struct {
 func New(c Config, opts ...Option) (*Schedulerd, error) {
 	s := &Schedulerd{
 		store:        c.Store,
-		ringGetter:   c.RingGetter,
 		queueGetter:  c.QueueGetter,
 		bus:          c.Bus,
 		errChan:      make(chan error, 1),
 		stateManager: NewStateManager(c.Store),
 	}
-	s.schedulerManager = NewScheduleManager(s.bus, s.stateManager, s.ringGetter)
+	s.schedulerManager = NewScheduleManager(s.bus, s.stateManager)
 	for _, o := range opts {
 		if err := o(s); err != nil {
 			return nil, err

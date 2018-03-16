@@ -48,3 +48,9 @@ func (m *MockBus) Unsubscribe(topic, consumer string) error {
 	args := m.Called(topic, consumer)
 	return args.Error(0)
 }
+
+// PublishDirect ...
+func (m *MockBus) PublishDirect(topic string, message interface{}) error {
+	args := m.Called(topic, message)
+	return args.Error(0)
+}

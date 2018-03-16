@@ -3,7 +3,6 @@ package schedulerd
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -20,22 +19,20 @@ type roundRobinMessage struct {
 // roundRobinScheduler is an appendage of CheckScheduler. It exists to handle
 // round-robin execution for subscriptions that specify it.
 type roundRobinScheduler struct {
-	messages   chan *roundRobinMessage
-	ctx        context.Context
-	ringGetter types.RingGetter
-	bus        messaging.MessageBus
+	messages chan *roundRobinMessage
+	ctx      context.Context
+	bus      messaging.MessageBus
 }
 
 // newRoundRobinScheduler creates a new roundRobinScheduler.
 //
 // When the scheduler is created, it starts a goroutine that will stop when
 // the provided context is cancelled.
-func newRoundRobinScheduler(ctx context.Context, bus messaging.MessageBus, rg types.RingGetter) *roundRobinScheduler {
+func newRoundRobinScheduler(ctx context.Context, bus messaging.MessageBus) *roundRobinScheduler {
 	sched := &roundRobinScheduler{
-		messages:   make(chan *roundRobinMessage),
-		ctx:        ctx,
-		bus:        bus,
-		ringGetter: rg,
+		messages: make(chan *roundRobinMessage),
+		ctx:      ctx,
+		bus:      bus,
 	}
 	go sched.loop()
 	return sched
@@ -57,22 +54,8 @@ func (r *roundRobinScheduler) loop() {
 // execute executes a round robin check request
 func (r *roundRobinScheduler) execute(msg *roundRobinMessage) {
 	defer msg.wg.Done()
-	timeout := time.Second * time.Duration(msg.req.Config.Interval)
-	ctx, cancel := context.WithTimeout(r.ctx, timeout)
-	defer cancel()
-	ring := r.ringGetter.GetRing("subscription", msg.subscription)
-	entityID, err := ring.Next(ctx)
-	if err != nil {
-		r.logError(err, entityID, msg.req.Config.Name)
-		return
-	}
-	// GetEntitySubscription gets a subscription that maps directly to an
-	// entity.
-	sub := types.GetEntitySubscription(entityID)
-	cfg := msg.req.Config
-	topic := messaging.SubscriptionTopic(cfg.Organization, cfg.Environment, sub)
-	if err := r.bus.Publish(topic, msg.req); err != nil {
-		r.logError(err, entityID, msg.req.Config.Name)
+	if err := r.bus.PublishDirect(msg.subscription, msg.req); err != nil {
+		r.logError(err, msg.req.Config.Name)
 	}
 }
 
@@ -89,9 +72,9 @@ func (r *roundRobinScheduler) Schedule(msg *roundRobinMessage) (*sync.WaitGroup,
 }
 
 // logError logs errors and adds agentID and checkName as fields.
-func (r *roundRobinScheduler) logError(err error, agentID, checkName string) {
+func (r *roundRobinScheduler) logError(err error, checkName string) {
 	logger.
-		WithFields(logrus.Fields{"agent": agentID, "check": checkName}).
+		WithFields(logrus.Fields{"check": checkName}).
 		WithError(err).
 		Error("error publishing round robin check request")
 }

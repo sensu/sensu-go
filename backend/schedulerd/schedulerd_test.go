@@ -16,7 +16,10 @@ import (
 
 func TestSchedulerd(t *testing.T) {
 	// Setup wizard bus
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	if berr := bus.Start(); berr != nil {
 		assert.FailNow(t, berr.Error())
 	}
@@ -36,7 +39,6 @@ func TestSchedulerd(t *testing.T) {
 
 	checker, err := New(Config{
 		Store:       st,
-		RingGetter:  mockring.Getter{},
 		QueueGetter: queue.NewMemoryGetter(),
 		Bus:         bus,
 	})

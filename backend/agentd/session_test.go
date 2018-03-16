@@ -55,7 +55,10 @@ func TestGoodSessionConfig(t *testing.T) {
 		sendCh: make(chan *transport.Message, 10),
 	}
 
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
 	st := &mockstore.MockStore{}
@@ -72,8 +75,7 @@ func TestGoodSessionConfig(t *testing.T) {
 		Environment:   "env",
 		Subscriptions: []string{"testing"},
 	}
-	getter := &mockring.Getter{}
-	session, err := NewSession(cfg, conn, bus, st, getter)
+	session, err := NewSession(cfg, conn, bus, st)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -83,7 +85,10 @@ func TestBadSessionConfig(t *testing.T) {
 		sendCh: make(chan *transport.Message, 10),
 	}
 
-	bus := &messaging.WizardBus{}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
 	st := &mockstore.MockStore{}
@@ -102,8 +107,7 @@ func TestBadSessionConfig(t *testing.T) {
 	cfg := SessionConfig{
 		Subscriptions: []string{"testing"},
 	}
-	getter := &mockring.Getter{}
-	session, err := NewSession(cfg, conn, bus, st, getter)
+	session, err := NewSession(cfg, conn, bus, st)
 	assert.Nil(t, session)
 	assert.Error(t, err)
 }
