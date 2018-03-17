@@ -29,6 +29,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &wrapper); err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}
+	w.Type = wrapper.Type
 	resource, err := ResolveResource(wrapper.Type)
 	if err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
@@ -37,9 +38,8 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("no spec provided")
 	}
 	if err := json.Unmarshal(*wrapper.Value, &resource); err != nil {
-		return nil
+		return err
 	}
-	w.Type = wrapper.Type
 	w.Value = resource
 	return nil
 }

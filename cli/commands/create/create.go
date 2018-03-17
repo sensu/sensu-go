@@ -1,0 +1,161 @@
+package create
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+	"github.com/spf13/cobra"
+)
+
+type organizer interface {
+	GetOrganization() string
+}
+
+type environmenter interface {
+	GetEnvironment() string
+}
+
+func CreateCommand(cli *cli.SensuCli) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create [-f FILE]",
+		Short: "create new resources from file or STDIN",
+		RunE:  execute(cli),
+	}
+
+	_ = cmd.Flags().StringP("file", "f", "", "File or directory to create resources from")
+
+	return cmd
+}
+
+func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		var in io.Reader
+		if len(args) > 1 {
+			_ = cmd.Help()
+			return errors.New("invalid argument(s) received")
+		}
+		defaultOrg, _ := cmd.Flags().GetString("organization")
+		defaultEnv, _ := cmd.Flags().GetString("environment")
+		fp, err := cmd.Flags().GetString("file")
+		if err != nil {
+			return err
+		}
+		if fp == "" {
+			if err := detectEmptyStdin(os.Stdin); err != nil {
+				_ = cmd.Help()
+				return err
+			}
+			in = os.Stdin
+		} else {
+			f, err := os.Open(fp)
+			if err != nil {
+				return err
+			}
+			stat, err := f.Stat()
+			if err != nil {
+				return err
+			}
+			if stat.IsDir() {
+				return errors.New("directories not supported yet")
+			}
+			in = f
+		}
+		resources, err := parseResources(in)
+		if err != nil {
+			return err
+		}
+		if err := validateResources(resources, defaultOrg, defaultEnv); err != nil {
+			return err
+		}
+		return putResources(cli.Client, resources)
+	}
+}
+
+func detectEmptyStdin(f *os.File) error {
+	fi, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	if fi.Size() == 0 {
+		if fi.Mode()&os.ModeNamedPipe == 0 {
+			return errors.New("empty stdin")
+		}
+	}
+	return nil
+}
+
+func parseResources(in io.Reader) ([]types.Resource, error) {
+	var resources []types.Resource
+	dec := json.NewDecoder(in)
+	dec.DisallowUnknownFields()
+	var err error
+	errCount := 0
+	for dec.More() {
+		var w types.Wrapper
+		if rerr := dec.Decode(&w); rerr != nil {
+			// Write out as many errors as possible before bailing,
+			// but cap it at 10.
+			err = errors.New("error parsing resources")
+			if errCount > 10 {
+				err = errors.New("too many errors")
+				break
+			}
+			describeError(rerr)
+			err = rerr
+			errCount++
+		}
+		resources = append(resources, w.Value)
+	}
+	return resources, err
+}
+
+func validateResources(resources []types.Resource, defaultOrg, defaultEnv string) error {
+	var err error
+	errCount := 0
+	for _, resource := range resources {
+		// Use the default organization and environment if they are not given.
+		// This is obviously a little ugly - it wouldn't hurt to investigate
+		// a cleaner way of doing this. Perhaps the HTTP API could accommodate
+		// this with URL parameters or something.
+		if o, ok := resource.(organizer); ok && o.GetOrganization() == "" {
+			reflectSetField(resource, "Organization", defaultOrg)
+		}
+		if e, ok := resource.(environmenter); ok && e.GetEnvironment() == "" {
+			reflectSetField(resource, "Environment", defaultEnv)
+		}
+		if verr := resource.Validate(); verr != nil {
+			errCount++
+			fmt.Fprintf(os.Stderr, "error validating resource: %s\n", verr)
+			if errCount >= 10 {
+				err = errors.New("too many errors")
+				break
+			}
+			err = errors.New("resource validation failed")
+		}
+	}
+	return err
+}
+
+func describeError(err error) {
+	jsonErr, ok := err.(*json.UnmarshalTypeError)
+	if !ok {
+		fmt.Fprintln(os.Stderr, "error parsing resource:", err)
+		return
+	}
+	fmt.Fprintf(os.Stderr, "error parsing resource (offset %d): %s\n", jsonErr.Offset, err)
+}
+
+func putResources(client client.GenericClient, resources []types.Resource) error {
+	for _, resource := range resources {
+		if err := client.PutResource(resource); err != nil {
+			return err
+		}
+	}
+	return nil
+}
