@@ -74,5 +74,6 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		return adapterPtr.MessageBus.Publish(messaging.TopicEvent, deregistrationEvent)
 	}
 
+	logger.Infof("entity %s deregistered", entity.GetID())
 	return nil
 }
