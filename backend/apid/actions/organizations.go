@@ -63,13 +63,6 @@ func (a OrganizationsController) Find(ctx context.Context, name string) (*types.
 func (a OrganizationsController) Create(ctx context.Context, newOrg types.Organization) error {
 	abilities := a.Policy.WithContext(ctx)
 
-	// Check for existing
-	if e, err := a.Store.GetOrganizationByName(ctx, newOrg.Name); err != nil {
-		return NewError(InternalErr, err)
-	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr)
-	}
-
 	// Verify viewer can make change
 	if yes := abilities.CanCreate(&newOrg); !yes {
 		return NewErrorf(PermissionDenied)
@@ -81,7 +74,7 @@ func (a OrganizationsController) Create(ctx context.Context, newOrg types.Organi
 	}
 
 	// Persist
-	if err := a.Store.UpdateOrganization(ctx, &newOrg); err != nil {
+	if err := a.Store.CreateOrganization(ctx, &newOrg); err != nil {
 		return NewError(InternalErr, err)
 	}
 

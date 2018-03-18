@@ -21,8 +21,9 @@ func TestOrgStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(orgs))
 
+		// We should be able to create a new organization
 		org := types.FixtureOrganization("acme")
-		err = store.UpdateOrganization(ctx, org)
+		err = store.CreateOrganization(ctx, org)
 		assert.NoError(t, err)
 
 		result, err := store.GetOrganizationByName(ctx, org.Name)
@@ -58,6 +59,8 @@ func TestOrgStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		// Delete an empty org
+		defaultEnv := types.Environment{Name: "default", Organization: org.Name}
+		require.NoError(t, store.DeleteEnvironment(ctx, &defaultEnv))
 		require.NoError(t, store.DeleteRoleByName(ctx, "1"))
 		err = store.DeleteOrganizationByName(ctx, org.Name)
 		assert.NoError(t, err)

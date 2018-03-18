@@ -20,6 +20,55 @@ func getOrganizationsPath(name string) string {
 	return path.Join(EtcdRoot, organizationsPathPrefix, name)
 }
 
+// CreateOrganization creates an organization and a default environment with the
+// provided org
+func (s *Store) CreateOrganization(ctx context.Context, org *types.Organization) error {
+	if err := org.Validate(); err != nil {
+		return err
+	}
+
+	orgBytes, err := json.Marshal(org)
+	if err != nil {
+		return err
+	}
+
+	// Define a default environment for this new organization
+	env := types.Environment{
+		Name:         "default",
+		Description:  "Default organization",
+		Organization: org.Name,
+	}
+
+	envBytes, err := json.Marshal(env)
+	if err != nil {
+		return err
+	}
+
+	orgKey := getOrganizationsPath(org.Name)
+
+	res, err := s.client.Txn(ctx).
+		If(
+			// Ensure the organization does not already exist
+			v3.Compare(v3.Version(orgKey), "=", 0)).
+		Then(
+			// Create both the organization and a default environment
+			v3.OpPut(orgKey, string(orgBytes)),
+			v3.OpPut(getEnvironmentsPath(org.Name, env.Name), string(envBytes)),
+		).Commit()
+	if err != nil {
+		return err
+	}
+
+	if !res.Succeeded {
+		return fmt.Errorf(
+			"could not create the organization %s with a default environment",
+			org.Name,
+		)
+	}
+
+	return err
+}
+
 // DeleteOrganizationByName deletes the organization named *name*
 func (s *Store) DeleteOrganizationByName(ctx context.Context, name string) error {
 	if name == "" {

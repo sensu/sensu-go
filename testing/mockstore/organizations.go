@@ -6,6 +6,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// CreateOrganization ...
+func (s *MockStore) CreateOrganization(ctx context.Context, org *types.Organization) error {
+	args := s.Called(ctx, org)
+	return args.Error(0)
+}
+
 // DeleteOrganizationByName ...
 func (s *MockStore) DeleteOrganizationByName(ctx context.Context, name string) error {
 	args := s.Called(ctx, name)

@@ -31,11 +31,8 @@ func TestSchedulerd(t *testing.T) {
 	}
 	defer st.Teardown()
 
-	// Mock a default organization
-	require.NoError(t, st.UpdateOrganization(context.Background(), types.FixtureOrganization("default")))
-
-	// Mock a default environment
-	require.NoError(t, st.UpdateEnvironment(context.Background(), types.FixtureEnvironment("default")))
+	// Mock a default organization & environment
+	require.NoError(t, st.CreateOrganization(context.Background(), types.FixtureOrganization("default")))
 
 	checker, err := New(Config{
 		Store:       st,
