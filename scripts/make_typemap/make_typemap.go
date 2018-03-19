@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"flag"
-	"fmt"
 	"html/template"
 	"log"
 	"os"
@@ -52,7 +51,6 @@ func discoverTypeNames() (typeNames, error) {
 		line := scanner.Bytes()
 		matches := typeRe.FindSubmatch(line)
 		if len(matches) > 1 {
-			fmt.Println(string(matches[1]))
 			// capturing group match in matches[1]
 			t.TypeNames = append(t.TypeNames, string(matches[1]))
 		}

@@ -1,5 +1,6 @@
-// automatically generated file, do not edit!
 package types
+
+// automatically generated file, do not edit!
 
 import "errors"
 
