@@ -165,6 +165,9 @@ linter_commands () {
         echo "Linting failed..."
         exit 1
     fi
+
+    # Make sure every package has a LICENSE
+    go list ./... | sed -n '1!p' | sed -e 's_github.com/sensu/sensu-go/__g' | xargs -I '{}' stat '{}'/LICENSE > /dev/null
 }
 
 unit_test_commands () {
