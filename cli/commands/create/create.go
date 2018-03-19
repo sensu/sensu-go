@@ -107,7 +107,6 @@ func parseResources(in io.Reader) ([]types.Resource, error) {
 				break
 			}
 			describeError(rerr)
-			err = rerr
 			errCount++
 		}
 		resources = append(resources, w.Value)
