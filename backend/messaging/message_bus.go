@@ -1,3 +1,5 @@
+// Package messaging provides the means of coordination between the different
+// components of the Sensu backend.
 package messaging
 
 import (
@@ -22,6 +24,24 @@ const (
 	TopicSubscriptions = "sensu:check"
 )
 
+// A Subscriber receives messages via a channel.
+type Subscriber interface {
+
+	// Receiver returns the channel a subscriber uses to receive messages.
+	Receiver() chan<- interface{}
+}
+
+// A Subscription is a cancellable subscription to a WizardTopic.
+type Subscription struct {
+	id     string
+	cancel func(string)
+}
+
+// Cancel a WizardSubscription.
+func (t Subscription) Cancel() {
+	t.cancel(t.id)
+}
+
 // MessageBus is the interface to the internal messaging system.
 //
 // The MessageBus is a simple implementation of Event Sourcing where you have
@@ -38,15 +58,9 @@ type MessageBus interface {
 	daemon.Daemon
 
 	// Subscribe allows a consumer to subscribe to a topic,
-	// binding a read-only channel to the topic. Topic messages
-	// are delivered to the channel as simple byte arrays.
-	Subscribe(topic string, consumer string, channel chan<- interface{}) error
-
-	// Unsubscribe allows a consumer to unsubscribe from a topic,
-	// removing its read-only channel from the topic's bindings.
-	// The channel is not closed, as it may still having other
-	// topic bindings.
-	Unsubscribe(topic string, consumer string) error
+	// binding a specific Subscriber to the topic. Topic messages
+	// are delivered to the subscriber as type `interface{}`.
+	Subscribe(topic string, consumer string, subscriber Subscriber) (Subscription, error)
 
 	// Publish sends a message to a topic.
 	Publish(topic string, message interface{}) error

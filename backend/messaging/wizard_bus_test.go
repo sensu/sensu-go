@@ -12,6 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type channelSubscriber struct {
+	Channel chan interface{}
+}
+
+func (c channelSubscriber) Receiver() chan<- interface{} {
+	return c.Channel
+}
+
 func TestWizardBus(t *testing.T) {
 	b, err := NewWizardBus(WizardBusConfig{
 		RingGetter: &mockring.Getter{},
@@ -22,19 +30,26 @@ func TestWizardBus(t *testing.T) {
 	// Should be able to publish with no subscribers.
 	require.NoError(t, b.Publish("topic", "message1"))
 
-	c1 := make(chan interface{}, 100)
-	c2 := make(chan interface{}, 100)
+	sub1 := channelSubscriber{make(chan interface{}, 100)}
+	sub2 := channelSubscriber{make(chan interface{}, 100)}
 
 	// Topic publisher should not be blocked by a channel.
-	c3 := make(chan interface{}, 1)
+	sub3 := channelSubscriber{make(chan interface{}, 1)}
 
 	// Will unsubscribe from the topic after receiving messages.
-	c4 := make(chan interface{}, 100)
+	sub4 := channelSubscriber{make(chan interface{}, 100)}
 
-	assert.NoError(t, b.Subscribe("topic", "consumer1", c1))
-	assert.NoError(t, b.Subscribe("topic", "consumer2", c2))
-	assert.NoError(t, b.Subscribe("topic", "consumer3", c3))
-	assert.NoError(t, b.Subscribe("topic", "consumer4", c4))
+	subscr1, err := b.Subscribe("topic", "1", sub1)
+	assert.NoError(t, err)
+
+	subscr2, err := b.Subscribe("topic", "2", sub2)
+	assert.NoError(t, err)
+
+	subscr3, err := b.Subscribe("topic", "3", sub3)
+	assert.NoError(t, err)
+
+	subscr4, err := b.Subscribe("topic", "4", sub4)
+	assert.NoError(t, err)
 
 	err = b.Publish("topic", "message2")
 	assert.NoError(t, err)
@@ -43,26 +58,32 @@ func TestWizardBus(t *testing.T) {
 	err = b.Publish("topic", "message4")
 	assert.NoError(t, err)
 
-	assert.NoError(t, b.Unsubscribe("topic", "consumer4"))
+	subscr4.Cancel()
+	close(sub4.Channel)
 
 	require.NoError(t, b.Stop())
-	close(c1)
-	close(c2)
-	close(c3)
+	subscr1.Cancel()
+	close(sub1.Channel)
+
+	subscr2.Cancel()
+	close(sub2.Channel)
+
+	subscr3.Cancel()
+	close(sub3.Channel)
 
 	received := 0
 	messages := []string{}
-	for m := range c1 {
+	for m := range sub1.Channel {
 		received++
 		messages = append(messages, m.(string))
 	}
 
-	for m := range c2 {
+	for m := range sub2.Channel {
 		received++
 		messages = append(messages, m.(string))
 	}
 
-	for m := range c3 {
+	for m := range sub3.Channel {
 		received++
 		messages = append(messages, m.(string))
 	}
@@ -88,10 +109,11 @@ func BenchmarkSubscribe(b *testing.B) {
 		b.Run(fmt.Sprintf("%d subscribers", tc), func(b *testing.B) {
 			b.SetParallelism(tc)
 			b.RunParallel(func(pb *testing.PB) {
+				i := 0
 				for pb.Next() {
-					ch := make(chan interface{})
-					subID := string(rand.Int())
-					_ = bus.Subscribe("topic", subID, ch)
+					sub := channelSubscriber{make(chan interface{})}
+					_, _ = bus.Subscribe("topic", fmt.Sprintf("client-%d", i), sub)
+					i++
 				}
 			})
 		})
@@ -112,31 +134,32 @@ func TestPublishDirect(t *testing.T) {
 	require.NoError(t, bus.Start())
 	defer bus.Stop()
 
-	subscribers := map[string]chan interface{}{
-		"a": make(chan interface{}, 1),
-		"b": make(chan interface{}, 1),
-		"c": make(chan interface{}, 1),
+	subscribers := map[string]channelSubscriber{
+		"a": channelSubscriber{make(chan interface{}, 1)},
+		"b": channelSubscriber{make(chan interface{}, 1)},
+		"c": channelSubscriber{make(chan interface{}, 1)},
 	}
-	for sub, ch := range subscribers {
-		require.NoError(t, bus.Subscribe("topic", sub, ch))
+	for id, ch := range subscribers {
+		_, err := bus.Subscribe("topic", id, ch)
+		require.NoError(t, err)
 	}
 	require.NoError(t, bus.PublishDirect("topic", "hello, world"))
 	select {
-	case msg := <-subscribers["a"]:
+	case msg := <-subscribers["a"].Channel:
 		assert.Equal(t, msg, "hello, world")
-	case <-subscribers["b"]:
+	case <-subscribers["b"].Channel:
 		t.Error("got message on b")
-	case <-subscribers["c"]:
+	case <-subscribers["c"].Channel:
 		t.Error("got message on c")
 	default:
 		t.Error("no message sent")
 	}
 	select {
-	case <-subscribers["a"]:
+	case <-subscribers["a"].Channel:
 		t.Error("got message on a")
-	case <-subscribers["b"]:
+	case <-subscribers["b"].Channel:
 		t.Error("got message on b")
-	case <-subscribers["c"]:
+	case <-subscribers["c"].Channel:
 		t.Error("got message on c")
 	default:
 	}

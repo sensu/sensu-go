@@ -16,19 +16,20 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 	startClients := func(wg *sync.WaitGroup, bus *WizardBus, numClients int) (done chan struct{}) {
 		done = make(chan struct{})
 		for i := 0; i < numClients; i++ {
-			ch := make(chan interface{}, 1000)
-			go func(ch chan interface{}, i int) {
-				_ = bus.Subscribe(topicName, string(i), ch)
+			ch := channelSubscriber{make(chan interface{}, 1000)}
+			go func(client string, ch channelSubscriber) {
+				subsc, _ := bus.Subscribe(topicName, client, ch)
 				for {
 					select {
-					case <-ch:
+					case <-ch.Channel:
 					case <-done:
 						wg.Done()
-						close(ch)
+						subsc.Cancel()
+						close(ch.Channel)
 						return
 					}
 				}
-			}(ch, i)
+			}(fmt.Sprintf("client-%d", i), ch)
 		}
 		return done
 

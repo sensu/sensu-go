@@ -24,6 +24,11 @@ type keepalivedTest struct {
 	MessageBus   messaging.MessageBus
 	Store        *mockstore.MockStore
 	Deregisterer *mockDeregisterer
+	receiver     chan interface{}
+}
+
+func (k *keepalivedTest) Receiver() chan<- interface{} {
+	return k.receiver
 }
 
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
@@ -45,6 +50,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 		Store:        store,
 		Deregisterer: deregisterer,
 		Keepalived:   k,
+		receiver:     make(chan interface{}),
 	}
 	require.NoError(t, test.MessageBus.Start())
 	return test
@@ -164,6 +170,14 @@ func TestEventProcessing(t *testing.T) {
 	mon.AssertCalled(t, "HandleUpdate", event)
 }
 
+type testSubscriber struct {
+	ch chan interface{}
+}
+
+func (t testSubscriber) Receiver() chan<- interface{} {
+	return t.ch
+}
+
 func TestProcessRegistration(t *testing.T) {
 	newEntityWithClass := func(class string) *types.Entity {
 		entity := types.FixtureEntity("agent1")
@@ -207,8 +221,11 @@ func TestProcessRegistration(t *testing.T) {
 
 			store := &mockstore.MockStore{}
 
-			testChan := make(chan interface{}, 1)
-			require.NoError(t, messageBus.Subscribe(messaging.TopicEvent, "test-subscriber", testChan))
+			tsub := testSubscriber{
+				ch: make(chan interface{}, 1),
+			}
+			subscription, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub)
+			require.NoError(t, err)
 
 			keepalived, err := New(Config{Store: store, Bus: messageBus})
 			require.NoError(t, err)
@@ -217,7 +234,8 @@ func TestProcessRegistration(t *testing.T) {
 			err = keepalived.handleEntityRegistration(tc.entity)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedLen, len(testChan))
+			assert.Equal(t, tc.expectedLen, len(tsub.ch))
+			subscription.Cancel()
 		})
 	}
 }

@@ -27,6 +27,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Shut down sessions properly when agent connections are disrupted.
 - Fixed shutdown log message in backend
 - Stopped double-writing events in eventd
+- Agents from different orgs/envs with the same ID connected to the same backend
+  no longer overwrite each other's messagebus subscriptions.
 
 ### Added
 - Support for managing mutators via sensuctl.
