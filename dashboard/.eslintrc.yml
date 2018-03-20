@@ -6,7 +6,7 @@ extends:
 plugins:
   - import
   - jsx-a11y
-  - graphql
+  # - graphql
   - prettier
   - react
 env:
@@ -30,8 +30,10 @@ rules:
   # https://github.com/prettier/prettier#eslint
   prettier/prettier: error
 
+  # Disabled for the time being as it no longer works with the latest version of
+  # the graphql module.
   # https://github.com/apollographql/eslint-plugin-graphql
-  graphql/template-strings:
-    - "error"
-    - env: "relay"
-      schemaJsonFilepath: "./data/schema.json"
+  # graphql/template-strings:
+  #   - "error"
+  #   - env: "relay"
+  #     schemaJsonFilepath: "./data/schema.json"

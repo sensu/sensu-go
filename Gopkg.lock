@@ -496,6 +496,18 @@
   revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/httpfs"
+  packages = ["vfsutil"]
+  revision = "809beceb23714880abc4a382a00c05f89d13b1cc"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/vfsgen"
+  packages = ["."]
+  revision = "ffb13db8def02f545acc58bd288ec6057c2bbfb9"
+
+[[projects]]
   name = "github.com/soheilhy/cmux"
   packages = ["."]
   revision = "bb79a83465015a27a175925ebd155e660f55e9f1"
@@ -550,8 +562,7 @@
   packages = [
     "assert",
     "mock",
-    "require",
-    "suite"
+    "require"
   ]
   revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
 
@@ -611,9 +622,7 @@
     "internal/timeseries",
     "lex/httplex",
     "publicsuffix",
-    "trace",
-    "webdav",
-    "webdav/internal/xml"
+    "trace"
   ]
   revision = "b60f3a92103dfd93dfcb900ec77c6d0643510868"
 
@@ -712,6 +721,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4896971be68d4cc9956d44ff68d70559206444b3b855c15dfd01b73a238c72a0"
+  inputs-digest = "38a527ab25686997652979053a56c9986b6cee78b916ed49750f48a2fe70faee"
   solver-name = "gps-cdcl"
   solver-version = 1

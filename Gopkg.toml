@@ -155,3 +155,7 @@ required = ["github.com/shirou/w32"]
 [[constraint]]
   branch = "master"
   name = "github.com/mitchellh/mapstructure"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/shurcooL/vfsgen"

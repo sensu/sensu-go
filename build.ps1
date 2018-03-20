@@ -38,7 +38,6 @@ function install_deps
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
     go get github.com/golang/lint/golint
-    go get github.com/UnnoTed/fileb0x
     install_golang_dep
 }
 
@@ -139,6 +138,27 @@ function build_commands
     ForEach ($bin in "agent","backend","cli") {
         build_command $bin
     }
+}
+
+function build_agent
+{
+    build_command "agent"
+}
+
+function build_backend
+{
+    build_dashboard
+    build_command "backend"
+}
+
+function build_cli
+{
+    build_command "cli"
+}
+
+function build_dashboard
+{
+    go generate ./dashboard
 }
 
 function build_command([string]$bin)

@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/dashboard"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -21,7 +23,6 @@ const (
 
 // Config represents the dashboard configuration
 type Config struct {
-	Dir  string
 	Host string
 	Port int
 	TLS  *types.TLSOptions
@@ -131,28 +132,45 @@ func httpRouter(d *Dashboardd) *mux.Router {
 		logger.Fatal(err)
 	}
 
-	r.Handle("/events", httputil.NewSingleHostReverseProxy(target))
-	r.Handle("/entities", httputil.NewSingleHostReverseProxy(target))
+	// Proxy endpoints
+	r.Handle("/auth", httputil.NewSingleHostReverseProxy(target))
+	r.Handle("/graphql", httputil.NewSingleHostReverseProxy(target))
 
-	// Serve static content
-	if d.Dir != "" {
-		r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(http.Dir(d.Dir))))
-	} else {
-		r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(HTTP)))
-	}
+	// Serve assets
+	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handler := dashboard.HTTPHandler
+
+		// wrap all static assets in a the immutable handler so that they are not
+		// needless revalidated when the client refreshes.
+		if strings.HasPrefix(r.URL.Path, "/static") {
+			handler = immutableHandler(handler)
+		} else {
+			handler = noCacheHandler(handler)
+		}
+		handler.ServeHTTP(w, r)
+	})
 
 	return r
+}
+
+// immutableHandler sets the proper headers to allow client to cache file
+// indefinitely.
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#Freshness
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#Revalidation_and_reloading
+func immutableHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("cache-control", "max-age=31536000, immutable")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // noCacheHandler sets the proper headers to prevent any sort of caching for the
 // index.html file, served as /
 func noCacheHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			w.Header().Set("cache-control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("pragma", "no-cache")
-			w.Header().Set("expires", "0")
-		}
+		w.Header().Set("cache-control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("pragma", "no-cache")
+		w.Header().Set("expires", "0")
 		next.ServeHTTP(w, r)
 	})
 }

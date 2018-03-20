@@ -48,7 +48,6 @@ type Config struct {
 	APIPort int
 
 	// Dashboardd Configuration
-	DashboardDir  string
 	DashboardHost string
 	DashboardPort int
 
@@ -315,7 +314,6 @@ func (b *Backend) Run() (derr error) {
 	}
 
 	dashCfg := dashboardd.Config{
-		Dir:  b.Config.DashboardDir,
 		Host: b.Config.DashboardHost,
 		Port: b.Config.DashboardPort,
 		TLS:  b.Config.TLS,
