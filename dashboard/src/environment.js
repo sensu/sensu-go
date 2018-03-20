@@ -15,9 +15,9 @@ const store = new Store(source);
 
 // Create a network layer from the fetch function
 const network = new RelayNetworkLayer([
-  process.env.NODE_ENV === "production" ? loggerMiddleware : null,
-  process.env.NODE_ENV === "production" ? errorMiddleware : null,
-  process.env.NODE_ENV === "production" ? perfMiddleware : null,
+  ...(process.env.NODE_ENV !== "production"
+    ? [loggerMiddleware(), errorMiddleware(), perfMiddleware()]
+    : []),
   authMiddleware({
     token: getAccessToken,
   }),
