@@ -208,11 +208,6 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return mon.HandleUpdate(event)
 	}
 
-	err = e.store.UpdateEvent(ctx, event)
-	if err != nil {
-		return err
-	}
-
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
 
