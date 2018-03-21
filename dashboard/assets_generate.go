@@ -12,10 +12,10 @@ import (
 func main() {
 	dir := http.Dir("build")
 	err := vfsgen.Generate(dir, vfsgen.Options{
-		Filename:     "httpassets_release.go",
+		Filename:     "assets_generated.go",
 		PackageName:  "dashboard",
 		BuildTags:    "release",
-		VariableName: "httpAssets",
+		VariableName: "generatedAssets",
 	})
 	if err != nil {
 		log.Fatalln(err)

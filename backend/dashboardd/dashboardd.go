@@ -133,12 +133,18 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	}
 
 	// Proxy endpoints
-	r.Handle("/auth", httputil.NewSingleHostReverseProxy(target))
-	r.Handle("/graphql", httputil.NewSingleHostReverseProxy(target))
+	r.PathPrefix("/auth").Handler(httputil.NewSingleHostReverseProxy(target))
+	r.PathPrefix("/graphql").Handler(httputil.NewSingleHostReverseProxy(target))
 
 	// Serve assets
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handler := dashboard.HTTPHandler
+		fs := dashboard.Assets
+		handler := http.FileServer(fs)
+
+		// Fallback to index if path didn't match an asset
+		if f, _ := fs.Open(r.URL.Path); f == nil {
+			r.URL.Path = "/"
+		}
 
 		// wrap all static assets in a the immutable handler so that they are not
 		// needless revalidated when the client refreshes.
@@ -147,6 +153,8 @@ func httpRouter(d *Dashboardd) *mux.Router {
 		} else {
 			handler = noCacheHandler(handler)
 		}
+
+		// Serve asset
 		handler.ServeHTTP(w, r)
 	})
 

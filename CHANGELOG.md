@@ -20,6 +20,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Move Hooks and Silenced out of Event and into Check.
 - Handle round-robin scheduling in wizardbus.
 - Added informational logging for failed entity keepalives.
+- Replaced fileb0x with vfsgen for bundling static assets into binary.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.

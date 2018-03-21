@@ -378,7 +378,9 @@ case "$cmd" in
         ;;
     "e2e")
         # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
-        build_commands
+        build_command agent
+        build_command backend
+        build_command cli
         e2e_commands "${@:2}"
         ;;
     "lint")
