@@ -49,6 +49,7 @@ type Keepalived struct {
 	monitors              map[string]monitor.Interface
 	wg                    *sync.WaitGroup
 	keepaliveChan         chan interface{}
+	subscription          messaging.Subscription
 	errChan               chan error
 }
 
@@ -85,16 +86,25 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 	return k, nil
 }
 
+// Receiver returns the keepalive receiver channel.
+func (k *Keepalived) Receiver() chan<- interface{} {
+	return k.keepaliveChan
+}
+
 // Start starts the daemon, returning an error if preconditions for startup
 // fail.
 func (k *Keepalived) Start() error {
 
-	err := k.bus.Subscribe(messaging.TopicKeepalive, "keepalived", k.keepaliveChan)
+	sub, err := k.bus.Subscribe(messaging.TopicKeepalive, "keepalived", k)
 	if err != nil {
 		return err
 	}
+	k.subscription = sub
+
 	if err := k.initFromStore(); err != nil {
-		_ = k.bus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
+		if err := k.subscription.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
 		return err
 	}
 
@@ -108,12 +118,12 @@ func (k *Keepalived) Start() error {
 // Stop stops the daemon, returning an error if one was encountered during
 // shutdown.
 func (k *Keepalived) Stop() error {
+	err := k.subscription.Cancel()
 	close(k.keepaliveChan)
 	k.wg.Wait()
 	for _, monitor := range k.monitors {
 		go monitor.Stop()
 	}
-	err := k.bus.Unsubscribe(messaging.TopicKeepalive, "keepalived")
 	close(k.errChan)
 	return err
 }

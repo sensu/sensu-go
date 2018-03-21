@@ -20,11 +20,9 @@ import (
 type WizardBus struct {
 	running    atomic.Value
 	topicsMu   sync.RWMutex
-	topics     map[string]*WizardTopic
+	topics     map[string]*wizardTopic
 	errchan    chan error
 	ringGetter types.RingGetter
-	ringCache  map[string]types.Ring
-	ringMu     sync.Mutex
 }
 
 // WizardBusConfig configures a WizardBus
@@ -39,9 +37,8 @@ type WizardOption func(*WizardBus) error
 func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error) {
 	bus := &WizardBus{
 		errchan:    make(chan error, 1),
-		topics:     make(map[string]*WizardTopic),
+		topics:     make(map[string]*wizardTopic),
 		ringGetter: cfg.RingGetter,
-		ringCache:  make(map[string]types.Ring),
 	}
 	for _, opt := range opts {
 		if err := opt(bus); err != nil {
@@ -90,9 +87,10 @@ func (b *WizardBus) Err() <-chan error {
 // topic's send buffer, lock the topic's mutex (R), write the message
 // to each consumer channel bound to the topic, and then unlock the
 // topic's mutex.
-func (b *WizardBus) createTopic(topic string) *WizardTopic {
-	wTopic := &WizardTopic{
-		Bindings: make(map[string](chan<- interface{})),
+func (b *WizardBus) createTopic(topic string) *wizardTopic {
+	wTopic := &wizardTopic{
+		id:       topic,
+		bindings: make(map[string]Subscriber),
 	}
 
 	return wTopic
@@ -110,9 +108,9 @@ func (b *WizardBus) createTopic(topic string) *WizardTopic {
 // Modifying received messages will introduce data races. While these _may_ be
 // detected by the Golang race detector, this is not always the case and is
 // only exacerbated by the fact that we test each package individually.
-func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- interface{}) error {
+func (b *WizardBus) Subscribe(topic string, consumer string, sub Subscriber) (Subscription, error) {
 	if !b.running.Load().(bool) {
-		return errors.New("bus no longer running")
+		return Subscription{}, errors.New("bus no longer running")
 	}
 
 	b.topicsMu.Lock()
@@ -122,39 +120,8 @@ func (b *WizardBus) Subscribe(topic string, consumer string, channel chan<- inte
 		b.topics[topic] = b.createTopic(topic)
 	}
 
-	b.topics[topic].Subscribe(consumer, channel)
-
-	return nil
-}
-
-// Unsubscribe from a WizardBus topic. This function locks the
-// WizardBus mutex (RW), fetches the appropriate WizardTopic (noop if
-// missing), unlocks the WizardBus mutex, locks the WizardTopic's
-// mutex (RW), fetches the consumer channel from the WizardTopic's
-// bindings (noop if missing), and deletes the channel from
-// WizardTopic's bindings (it does not close the channel because it
-// could be bound to another topic).
-func (b *WizardBus) Unsubscribe(topic string, consumer string) error {
-	if !b.running.Load().(bool) {
-		return errors.New("bus no longer running")
-	}
-
-	b.topicsMu.RLock()
-	wTopic, ok := b.topics[topic]
-	if !ok {
-		return errors.New("topic not found")
-	}
-	b.topicsMu.RUnlock()
-
-	wTopic.Unsubscribe(consumer)
-	b.ringMu.Lock()
-	ring, ok := b.ringCache[topic]
-	b.ringMu.Unlock()
-	if ok {
-		return ring.Remove(context.Background(), consumer)
-	}
-
-	return nil
+	subscription, err := b.topics[topic].Subscribe(consumer, sub)
+	return subscription, err
 }
 
 // Publish publishes a message to a topic. If the topic does not
@@ -188,46 +155,33 @@ func (b *WizardBus) PublishDirect(topic string, msg interface{}) error {
 		return nil
 	}
 
-	ring, err := b.getRing(topic, wt)
-	if err != nil {
-		return err
+	if wt.ring == nil {
+		if err := b.makeRing(wt); err != nil {
+			return err
+		}
 	}
 
-	subscriber, err := ring.Next(context.Background())
-	if err != nil {
-		return err
-	}
-
-	wt.RLock()
-	defer wt.RUnlock()
-
-	wt.Bindings[subscriber] <- msg
-
-	return nil
+	return wt.SendDirect(msg)
 }
 
-// getRing finds a cached ring, or constructs one for the topic.
-// rings are lazily constructed; they are not created until the need for one
-// is identified by a call to PublishDirect.
-func (b *WizardBus) getRing(topic string, wt *WizardTopic) (types.Ring, error) {
-	var err error
-	b.ringMu.Lock()
-	defer b.ringMu.Unlock()
-	ring, ok := b.ringCache[topic]
-	if !ok {
-		ring = b.ringGetter.GetRing(topic)
-		wt.RLock()
-		bindings := make([]string, 0, len(wt.Bindings))
-		for subscriber := range wt.Bindings {
-			bindings = append(bindings, subscriber)
-		}
-		wt.RUnlock()
-		for _, subscriber := range bindings {
-			if err := ring.Add(context.Background(), subscriber); err != nil {
-				return nil, err
-			}
-		}
-		b.ringCache[topic] = ring
+// makeRing constructs a ring for a topic. rings are lazily constructed;
+// they are not created until the need for one is identified by a call to PublishDirect.
+func (b *WizardBus) makeRing(wt *wizardTopic) error {
+	ring := b.ringGetter.GetRing(wt.id)
+
+	wt.RLock()
+	bindings := make([]string, 0, len(wt.bindings))
+	for id := range wt.bindings {
+		bindings = append(bindings, id)
 	}
-	return ring, err
+	wt.RUnlock()
+
+	for _, id := range bindings {
+		if err := ring.Add(context.Background(), id); err != nil {
+			return err
+		}
+	}
+	wt.ring = ring
+
+	return nil
 }

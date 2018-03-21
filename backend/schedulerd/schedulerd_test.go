@@ -14,6 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testSubscriber struct {
+	ch chan interface{}
+}
+
+func (ts testSubscriber) Receiver() chan<- interface{} {
+	return ts.ch
+}
+
 func TestSchedulerd(t *testing.T) {
 	// Setup wizard bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
@@ -42,8 +50,13 @@ func TestSchedulerd(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, checker.Start())
 
-	ch := make(chan interface{}, 10)
-	assert.NoError(t, bus.Subscribe("subscription", "channel", ch))
+	tsub := testSubscriber{
+		ch: make(chan interface{}, 10),
+	}
+	sub, err := bus.Subscribe("subscription", "testSubscriber", tsub)
+	if err != nil {
+		assert.FailNow(t, "could not subscribe", err)
+	}
 
 	check := types.FixtureCheckConfig("check_name")
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
@@ -57,12 +70,13 @@ func TestSchedulerd(t *testing.T) {
 	require.NoError(t, st.DeleteCheckConfigByName(ctx, check.Name))
 
 	time.Sleep(1 * time.Second)
+	sub.Cancel()
+	close(tsub.ch)
 
 	assert.NoError(t, checker.Stop())
 	assert.NoError(t, bus.Stop())
-	close(ch)
 
-	for msg := range ch {
+	for msg := range tsub.ch {
 		result, ok := msg.(*types.CheckConfig)
 		assert.True(t, ok)
 		assert.EqualValues(t, check, result)

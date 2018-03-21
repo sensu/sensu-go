@@ -21,13 +21,14 @@ const (
 // handler configuration determines which Sensu filters and mutator
 // are used.
 type Pipelined struct {
-	stopping  chan struct{}
-	running   *atomic.Value
-	wg        *sync.WaitGroup
-	errChan   chan error
-	eventChan chan interface{}
-	store     store.Store
-	bus       messaging.MessageBus
+	stopping     chan struct{}
+	running      *atomic.Value
+	wg           *sync.WaitGroup
+	errChan      chan error
+	eventChan    chan interface{}
+	subscription messaging.Subscription
+	store        store.Store
+	bus          messaging.MessageBus
 }
 
 // Config configures a Pipelined.
@@ -58,12 +59,19 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 	return p, nil
 }
 
+// Receiver returns the event channel for pipelined.
+func (p *Pipelined) Receiver() chan<- interface{} {
+	return p.eventChan
+}
+
 // Start pipelined, subscribing to the "event" message bus topic to
 // pass Sensu events to the pipelines for handling (goroutines).
 func (p *Pipelined) Start() error {
-	if err := p.bus.Subscribe(messaging.TopicEvent, "pipelined", p.eventChan); err != nil {
+	sub, err := p.bus.Subscribe(messaging.TopicEvent, "pipelined", p)
+	if err != nil {
 		return err
 	}
+	p.subscription = sub
 
 	p.createPipelines(PipelineCount, p.eventChan)
 
@@ -76,7 +84,7 @@ func (p *Pipelined) Stop() error {
 	close(p.stopping)
 	p.wg.Wait()
 	close(p.errChan)
-	err := p.bus.Unsubscribe(messaging.TopicEvent, "pipelined")
+	err := p.subscription.Cancel()
 	close(p.eventChan)
 
 	return err

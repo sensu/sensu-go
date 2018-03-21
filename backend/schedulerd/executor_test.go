@@ -37,8 +37,18 @@ func TestAdhocExecutor(t *testing.T) {
 	goodCheckRequest := &types.CheckRequest{}
 	goodCheckRequest.Config = goodCheck
 	ch := make(chan interface{}, 1)
+	tsub := testSubscriber{ch}
+
 	topic := messaging.SubscriptionTopic(goodCheck.Organization, goodCheck.Environment, "subscription1")
-	assert.NoError(t, bus.Subscribe(topic, "channel", ch))
+	sub, err := bus.Subscribe(topic, "testSubscriber", tsub)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	defer func() {
+		close(ch)
+		sub.Cancel()
+	}()
 
 	marshaledCheck, err := json.Marshal(goodCheck)
 	if err != nil {
@@ -75,12 +85,16 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 		check.Organization,
 		check.Environment,
 	)
+	tsub := testSubscriber{
+		ch: c1,
+	}
 
-	if err := scheduler.msgBus.Subscribe(topic, "TestPublishProxyCheckRequest", c1); err != nil {
+	sub, err := scheduler.msgBus.Subscribe(topic, "testSubscriber", tsub)
+	if err != nil {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "TestPublishProxyCheckRequest"))
+		sub.Cancel()
 		close(c1)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
@@ -122,11 +136,16 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 		check.Environment,
 	)
 
-	if err := scheduler.msgBus.Subscribe(topic, "TestPublishProxyCheckRequestsInterval", c1); err != nil {
+	tsub := testSubscriber{
+		ch: c1,
+	}
+
+	sub, err := scheduler.msgBus.Subscribe(topic, "testSubscriber", tsub)
+	if err != nil {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "TestPublishProxyCheckRequestsInterval"))
+		sub.Cancel()
 		close(c1)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
@@ -172,11 +191,14 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 		check.Environment,
 	)
 
-	if err := scheduler.msgBus.Subscribe(topic, "CheckSchedulerProxySuite", c1); err != nil {
+	tsub := testSubscriber{c1}
+
+	sub, err := scheduler.msgBus.Subscribe(topic, "testSubscriber", tsub)
+	if err != nil {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSchedulerProxySuite"))
+		sub.Cancel()
 		close(c1)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()

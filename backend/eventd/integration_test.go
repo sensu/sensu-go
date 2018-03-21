@@ -14,6 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testReceiver struct {
+	c chan interface{}
+}
+
+func (r testReceiver) Receiver() chan<- interface{} {
+	return r.c
+}
+
 func TestEventdMonitor(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
@@ -26,7 +34,11 @@ func TestEventdMonitor(t *testing.T) {
 
 	eventChan := make(chan interface{}, 2)
 
-	if err := bus.Subscribe(messaging.TopicEvent, "test", eventChan); err != nil {
+	subscriber := testReceiver{
+		c: eventChan,
+	}
+	sub, err := bus.Subscribe(messaging.TopicEvent, "testReceiver", subscriber)
+	if err != nil {
 		assert.FailNow(t, "failed to subscribe to message bus topic event")
 	}
 
@@ -74,4 +86,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, "message type was not an event")
 	}
 	assert.Equal(t, uint32(1), warnEvent.Check.Status)
+
+	assert.NoError(t, sub.Cancel())
+	close(eventChan)
 }

@@ -34,6 +34,7 @@ type Eventd struct {
 	monitorFactory monitor.FactoryFunc
 
 	eventChan    chan interface{}
+	subscription messaging.Subscription
 	errChan      chan error
 	monitors     map[string]monitor.Interface
 	mu           *sync.Mutex
@@ -74,10 +75,16 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 	return e, nil
 }
 
+// Receiver returns the event receiver channel.
+func (e *Eventd) Receiver() chan<- interface{} {
+	return e.eventChan
+}
+
 // Start eventd.
 func (e *Eventd) Start() error {
 	e.wg.Add(e.handlerCount)
-	err := e.bus.Subscribe(messaging.TopicEventRaw, ComponentName, e.eventChan)
+	sub, err := e.bus.Subscribe(messaging.TopicEventRaw, "eventd", e)
+	e.subscription = sub
 	if err != nil {
 		return err
 	}
@@ -279,11 +286,13 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event)
 // Stop eventd.
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
-	err := e.bus.Unsubscribe(messaging.TopicEventRaw, ComponentName)
+	if err := e.subscription.Cancel(); err != nil {
+		logger.WithError(err).Error("unable to unsubscribe from message bus")
+	}
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()
-	return err
+	return nil
 }
 
 // Status returns an error if eventd is unhealthy.

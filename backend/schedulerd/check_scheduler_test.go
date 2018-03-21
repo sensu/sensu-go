@@ -17,10 +17,16 @@ import (
 )
 
 type TestCheckScheduler struct {
-	check     *types.CheckConfig
-	exec      *CheckExecutor
-	msgBus    *messaging.WizardBus
-	scheduler *CheckScheduler
+	check        *types.CheckConfig
+	exec         *CheckExecutor
+	msgBus       *messaging.WizardBus
+	scheduler    *CheckScheduler
+	channel      chan interface{}
+	subscription messaging.Subscription
+}
+
+func (tcs *TestCheckScheduler) Receiver() chan<- interface{} {
+	return tcs.channel
 }
 
 func newScheduler(t *testing.T) *TestCheckScheduler {
@@ -29,6 +35,7 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	assert := assert.New(t)
 
 	scheduler := &TestCheckScheduler{}
+	scheduler.channel = make(chan interface{}, 2)
 
 	request := types.FixtureCheckRequest("check1")
 	asset := request.Assets[0]
@@ -85,26 +92,21 @@ func TestCheckSchedulerInterval(t *testing.T) {
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 
-	c1 := make(chan interface{}, 10)
-	topic := fmt.Sprintf(
-		"%s:%s:%s:subscription1",
-		messaging.TopicSubscriptions,
-		check.Organization,
-		check.Environment,
-	)
+	topic := messaging.SubscriptionTopic(check.Organization, check.Environment, "subscription1")
 
-	if err := scheduler.msgBus.Subscribe(topic, "CheckSchedulerIntervalSuite", c1); err != nil {
+	sub, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)
+	if err != nil {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSchedulerIntervalSuite"))
-		close(c1)
+		close(scheduler.channel)
+		sub.Cancel()
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
 	go func() {
 		select {
-		case msg := <-c1:
+		case msg := <-scheduler.channel:
 			res, ok := msg.(*types.CheckRequest)
 			assert.True(ok)
 			assert.Equal("check1", res.Config.Name)
@@ -142,7 +144,6 @@ func TestCheckSubdueInterval(t *testing.T) {
 		},
 	}
 
-	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
 		"%s:%s:%s:subscription1",
 		messaging.TopicSubscriptions,
@@ -150,12 +151,13 @@ func TestCheckSubdueInterval(t *testing.T) {
 		check.Environment,
 	)
 
-	if err := scheduler.msgBus.Subscribe(topic, "CheckSubdueIntervalSuite", c1); err != nil {
+	subscription, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)
+	if err != nil {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSubdueIntervalSuite"))
-		close(c1)
+		subscription.Cancel()
+		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -164,7 +166,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 	assert.NoError(scheduler.scheduler.Stop())
 
 	// We should have no element in our channel
-	assert.Equal(0, len(c1))
+	assert.Equal(0, len(scheduler.channel))
 }
 
 func TestCheckSchedulerCron(t *testing.T) {
@@ -179,7 +181,6 @@ func TestCheckSchedulerCron(t *testing.T) {
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 
-	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
 		"%s:%s:%s:subscription1",
 		messaging.TopicSubscriptions,
@@ -187,18 +188,19 @@ func TestCheckSchedulerCron(t *testing.T) {
 		check.Environment,
 	)
 
-	if err := scheduler.msgBus.Subscribe(topic, "CheckSchedulerCronSuite", c1); err != nil {
+	subscription, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)
+	if err != nil {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSchedulerCronSuite"))
-		close(c1)
+		close(scheduler.channel)
+		subscription.Cancel()
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
 	go func() {
 		select {
-		case msg := <-c1:
+		case msg := <-scheduler.channel:
 			res, ok := msg.(*types.CheckRequest)
 			assert.True(ok)
 			assert.Equal("check1", res.Config.Name)
@@ -237,7 +239,6 @@ func TestCheckSubdueCron(t *testing.T) {
 		},
 	}
 
-	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
 		"%s:%s:%s:subscription1",
 		messaging.TopicSubscriptions,
@@ -245,12 +246,13 @@ func TestCheckSubdueCron(t *testing.T) {
 		check.Environment,
 	)
 
-	if err := scheduler.msgBus.Subscribe(topic, "CheckSubdueCronSuite", c1); err != nil {
+	subscription, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)
+	if err != nil {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		assert.NoError(scheduler.msgBus.Unsubscribe(topic, "CheckSubdueCronSuite"))
-		close(c1)
+		close(scheduler.channel)
+		subscription.Cancel()
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -259,5 +261,5 @@ func TestCheckSubdueCron(t *testing.T) {
 	assert.NoError(scheduler.scheduler.Stop())
 
 	// We should have no element in our channel
-	assert.Equal(0, len(c1))
+	assert.Equal(0, len(scheduler.channel))
 }

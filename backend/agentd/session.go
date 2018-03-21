@@ -38,6 +38,8 @@ type Session struct {
 	sendq        chan *transport.Message
 	checkChannel chan interface{}
 	bus          messaging.MessageBus
+
+	subscriptions chan messaging.Subscription
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -77,18 +79,24 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 	logger.Infof("agent connected: id=%s subscriptions=%s", cfg.AgentID, cfg.Subscriptions)
 
 	s := &Session{
-		ID:           id.String(),
-		conn:         conn,
-		cfg:          cfg,
-		stopping:     make(chan struct{}, 1),
-		wg:           &sync.WaitGroup{},
-		sendq:        make(chan *transport.Message, 10),
-		checkChannel: make(chan interface{}, 100),
-		store:        store,
-		bus:          bus,
+		ID:            id.String(),
+		conn:          conn,
+		cfg:           cfg,
+		stopping:      make(chan struct{}, 1),
+		wg:            &sync.WaitGroup{},
+		sendq:         make(chan *transport.Message, 10),
+		checkChannel:  make(chan interface{}, 100),
+		store:         store,
+		bus:           bus,
+		subscriptions: make(chan messaging.Subscription, len(cfg.Subscriptions)),
 	}
 	s.handler = newSessionHandler(s)
 	return s, nil
+}
+
+// Receiver returns the check channel for the session.
+func (s *Session) Receiver() chan<- interface{} {
+	return s.checkChannel
 }
 
 func (s *Session) recvPump() {
@@ -194,7 +202,7 @@ func (s *Session) Start() (err error) {
 	go s.subPump()
 
 	org, env := s.cfg.Organization, s.cfg.Environment
-	agentID := s.cfg.AgentID
+	agentID := fmt.Sprintf("%s:%s:%s", org, env, s.cfg.AgentID)
 
 	defer func() {
 		if err != nil {
@@ -205,11 +213,14 @@ func (s *Session) Start() (err error) {
 	for _, sub := range s.cfg.Subscriptions {
 		topic := messaging.SubscriptionTopic(org, env, sub)
 		logger.Debugf("Subscribing to topic %q", topic)
-		if err := s.bus.Subscribe(topic, agentID, s.checkChannel); err != nil {
+		subscription, err := s.bus.Subscribe(topic, agentID, s)
+		if err != nil {
 			logger.WithError(err).Error("error starting subscription")
 			return err
 		}
+		s.subscriptions <- subscription
 	}
+	close(s.subscriptions)
 
 	return nil
 }
@@ -220,17 +231,9 @@ func (s *Session) Stop() {
 	close(s.stopping)
 	s.wg.Wait()
 
-	org, env := s.cfg.Organization, s.cfg.Environment
-	agentID := s.cfg.AgentID
-
-	for _, sub := range s.cfg.Subscriptions {
-		topic := messaging.SubscriptionTopic(org, env, sub)
-		logger.Debugf("Unsubscribing from topic %q", topic)
-		if err := s.bus.Unsubscribe(topic, agentID); err != nil {
-			// Bus has stopped running already, no need for further unsubscribe
-			// attempts.
-			logger.Debug(err)
-			break
+	for sub := range s.subscriptions {
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
 		}
 	}
 	close(s.checkChannel)
