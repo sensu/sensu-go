@@ -22,6 +22,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Handle round-robin scheduling in wizardbus.
 - Added informational logging for failed entity keepalives.
 - Replaced fileb0x with vfsgen for bundling static assets into binary.
+- Updated etcd to 3.3.2 from 3.3.1 to fix an issue with autocompaction settings.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.
