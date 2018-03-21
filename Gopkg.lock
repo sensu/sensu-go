@@ -114,8 +114,8 @@
     "wal",
     "wal/walpb"
   ]
-  revision = "28f3f26c0e303392556035b694f75768d449d33d"
-  version = "v3.3.1"
+  revision = "c9d46ab3799b7f2174268e75f72d01e6d6aac953"
+  version = "v3.3.2"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -550,8 +550,7 @@
   packages = [
     "assert",
     "mock",
-    "require",
-    "suite"
+    "require"
   ]
   revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
 
@@ -712,6 +711,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4896971be68d4cc9956d44ff68d70559206444b3b855c15dfd01b73a238c72a0"
+  inputs-digest = "77eb53019a0b9a5ee6653e3f38ba8b3ad2e39bdf05960f4d022db4ddc331d78b"
   solver-name = "gps-cdcl"
   solver-version = 1
