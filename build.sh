@@ -98,7 +98,7 @@ build_binary () {
     local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
     local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 
-    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -tags $tags -ldflags "${ldflags}" -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -tags "$tags" -ldflags "${ldflags}" -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
     echo $outfile
 }
