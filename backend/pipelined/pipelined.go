@@ -84,10 +84,10 @@ func (p *Pipelined) Stop() error {
 	close(p.stopping)
 	p.wg.Wait()
 	close(p.errChan)
-	p.subscription.Cancel()
+	err := p.subscription.Cancel()
 	close(p.eventChan)
 
-	return nil
+	return err
 }
 
 // Status returns an error if pipelined is unhealthy.

@@ -34,12 +34,12 @@ type Subscriber interface {
 // A Subscription is a cancellable subscription to a WizardTopic.
 type Subscription struct {
 	id     string
-	cancel func(string)
+	cancel func(string) error
 }
 
 // Cancel a WizardSubscription.
-func (t Subscription) Cancel() {
-	t.cancel(t.id)
+func (t Subscription) Cancel() error {
+	return t.cancel(t.id)
 }
 
 // MessageBus is the interface to the internal messaging system.

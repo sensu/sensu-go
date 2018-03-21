@@ -102,7 +102,9 @@ func (k *Keepalived) Start() error {
 	k.subscription = sub
 
 	if err := k.initFromStore(); err != nil {
-		k.subscription.Cancel()
+		if err := k.subscription.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
 		return err
 	}
 
@@ -116,14 +118,14 @@ func (k *Keepalived) Start() error {
 // Stop stops the daemon, returning an error if one was encountered during
 // shutdown.
 func (k *Keepalived) Stop() error {
-	k.subscription.Cancel()
+	err := k.subscription.Cancel()
 	close(k.keepaliveChan)
 	k.wg.Wait()
 	for _, monitor := range k.monitors {
 		go monitor.Stop()
 	}
 	close(k.errChan)
-	return nil
+	return err
 }
 
 // Status returns nil if the Daemon is healthy, otherwise it returns an error.

@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
+
+	"github.com/sensu/sensu-go/backend/ring"
+	"github.com/sensu/sensu-go/util/retry"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -70,14 +74,29 @@ func (wTopic *wizardTopic) Subscribe(id string, sub Subscriber) (Subscription, e
 }
 
 // Unsubscribe a consumer from this topic.
-func (wTopic *wizardTopic) unsubscribe(id string) {
+func (wTopic *wizardTopic) unsubscribe(id string) error {
 	wTopic.Lock()
 	delete(wTopic.bindings, id)
-	if wTopic.ring != nil {
-		// TODO: What do we do in the case of this failing?
-		_ = wTopic.ring.Remove(context.Background(), id)
-	}
 	wTopic.Unlock()
+
+	if wTopic.ring != nil {
+		backoff := &retry.ExponentialBackoff{
+			MaxDelayInterval: 5 * time.Second,
+			MaxElapsedTime:   60 * time.Second,
+		}
+
+		var err error
+		backoff.Retry(func(int) (bool, error) {
+			err = wTopic.ring.Remove(context.Background(), id)
+			if err != nil && err != ring.ErrNotOwner {
+				return false, nil
+			}
+			return true, nil
+		})
+		return err
+	}
+
+	return nil
 }
 
 // Close all WizardTopic bindings.

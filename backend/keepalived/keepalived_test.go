@@ -235,7 +235,7 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedLen, len(tsub.ch))
-			subscription.Cancel()
+			assert.NoError(t, subscription.Cancel())
 		})
 	}
 }

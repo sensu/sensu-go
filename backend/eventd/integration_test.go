@@ -87,6 +87,6 @@ func TestEventdMonitor(t *testing.T) {
 	}
 	assert.Equal(t, uint32(1), warnEvent.Check.Status)
 
-	sub.Cancel()
+	assert.NoError(t, sub.Cancel())
 	close(eventChan)
 }

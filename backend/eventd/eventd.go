@@ -286,7 +286,9 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event)
 // Stop eventd.
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
-	e.subscription.Cancel()
+	if err := e.subscription.Cancel(); err != nil {
+		logger.WithError(err).Error("unable to unsubscribe from message bus")
+	}
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()

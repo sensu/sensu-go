@@ -232,7 +232,9 @@ func (s *Session) Stop() {
 	s.wg.Wait()
 
 	for sub := range s.subscriptions {
-		sub.Cancel()
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
 	}
 	close(s.checkChannel)
 }
