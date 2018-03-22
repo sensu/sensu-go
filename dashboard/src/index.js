@@ -11,6 +11,7 @@ import createStore from "./store";
 import reducer from "./reducer";
 import registerServiceWorker from "./registerServiceWorker";
 import environment from "./environment";
+import AppThemeProvider from "./components/AppThemeProvider";
 
 // Fonts
 import "typeface-roboto"; // eslint-disable-line
@@ -35,7 +36,10 @@ store.dispatch(FarceActions.init());
 // Renderer
 ReactDOM.render(
   <Provider store={store}>
-    <Router resolver={new Resolver(environment)} />
+    {/* TODO: Move me! */}
+    <AppThemeProvider>
+      <Router resolver={new Resolver(environment)} />
+    </AppThemeProvider>
   </Provider>,
   document.getElementById("root"),
 );

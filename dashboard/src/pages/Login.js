@@ -7,8 +7,11 @@ import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
+import Typography from "material-ui/Typography";
 import AppThemeProvider from "../components/AppThemeProvider";
 import AppRoot from "../components/AppRoot";
+import Logo from "../icons/SensuLogoGraphic";
+import Wordmark from "../icons/SensuWordmark";
 import { authenticate } from "../utils/authentication";
 
 // defaultRoute describe the location where the user will land after a
@@ -17,25 +20,51 @@ const defaultRoute = "/";
 
 class Login extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     router: routerShape.isRequired,
   };
 
   // Temp.
   static styles = theme => ({
+    "@global": {
+      html: {
+        background: theme.palette.primary.main,
+      },
+    },
     loginCard: {
       margin: "0 auto",
-      padding: "40px 28px",
-      width: 300,
-      textAlign: "right",
+      padding: 48,
+      maxWidth: 450,
+      textAlign: "left",
       alignSelf: "center",
+      height: "auto",
+      minHeight: 500,
     },
     textField: {
       marginBottom: theme.spacing.unit,
     },
+    actionsContainer: {
+      marginTop: theme.spacing.unit * 5,
+      textAlign: "right",
+    },
     button: {
       textTransform: "uppercase",
+    },
+    icon: {
+      color: theme.palette.secondary.main,
+      marginBottom: theme.spacing.unit,
+    },
+    wordmark: {
+      color: theme.palette.secondary.main,
+      fontSize: theme.spacing.unit * 1.5,
+      marginBottom: theme.spacing.unit,
+      marginLeft: theme.spacing.unit / 2,
+    },
+    headline: {
+      marginTop: theme.spacing.unit * 2,
+    },
+    form: {
+      marginTop: theme.spacing.unit * 3,
     },
   });
 
@@ -83,7 +112,15 @@ class Login extends React.Component {
       <AppThemeProvider>
         <AppRoot>
           <Paper className={classes.loginCard}>
-            <form onSubmit={this.handleSubmit}>
+            <Logo className={classes.icon} />
+            <Wordmark className={classes.wordmark} />
+            <div className={classes.headline}>
+              <Typography variant="headline">Sign in</Typography>
+              <Typography variant="subheading">
+                with your Sensu Account
+              </Typography>
+            </div>
+            <form className={classes.form} onSubmit={this.handleSubmit}>
               <TextField
                 name="username"
                 label="Username"
@@ -109,15 +146,17 @@ class Login extends React.Component {
                 error={!!authError}
                 helperText={authError}
               />
-              <Button
-                type="submit"
-                color="primary"
-                variant="raised"
-                disabled={disabled}
-                className={classes.button}
-              >
-                Log in
-              </Button>
+              <div className={classes.actionsContainer}>
+                <Button
+                  type="submit"
+                  color="primary"
+                  variant="raised"
+                  disabled={disabled}
+                  className={classes.button}
+                >
+                  Log in
+                </Button>
+              </div>
             </form>
           </Paper>
         </AppRoot>

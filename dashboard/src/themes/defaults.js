@@ -5,12 +5,20 @@ const defaults = {
     // ...
   },
   typography: () => {
-    const fontFamily = `"SF Pro Text", "Roboto", "Helvetica", "Arial", sans-serif`;
+    const body = `"SF Pro Text", "Roboto", "Helvetica", "Arial", sans-serif`;
+    const title = `"SF Pro Display", "Roboto", "Helvetica", "Arial", sans-serif`;
 
     return {
-      fontFamily,
-      caption: {
-        fontFamily: `"SF Pro Display", "Roboto", "Helvetica", "Arial", sans-serif`,
+      fontFamily: title,
+      body1: {
+        fontFamily: body,
+      },
+      body2: {
+        fontFamily: body,
+      },
+      button: {
+        fontFamily: title,
+        fontWeight: "bold",
       },
     };
   },
