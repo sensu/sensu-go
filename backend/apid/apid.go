@@ -61,6 +61,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		queueGetter:   c.QueueGetter,
 		tls:           c.TLS,
 		backendStatus: c.BackendStatus,
+		bus:           c.Bus,
 		stopping:      make(chan struct{}, 1),
 		running:       &atomic.Value{},
 		wg:            &sync.WaitGroup{},

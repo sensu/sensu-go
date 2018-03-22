@@ -30,8 +30,8 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
+	routes.path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
 	routes.post(r.create)
-	routes.put(r.createOrReplace)
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
