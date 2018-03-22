@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os/exec"
 
 	"github.com/shurcooL/vfsgen"
 )
@@ -27,6 +28,30 @@ func init() {
 `))
 
 func main() {
+	if _, err := exec.LookPath("node"); err != nil {
+		log.Println("'node' was not found in your PATH, unable to bundle web UI.")
+		log.Println("See https://nodejs.org/en/download/package-manager/ for installation instructions.")
+		log.Println("Skipping dashboard build.")
+		return
+	}
+
+	if _, err := exec.LookPath("yarn"); err != nil {
+		log.Println("'yarn' was not found in your PATH, unable to bundle web UI.")
+		log.Println("See https://yarnpkg.com/en/docs/install for installation instructions.")
+		log.Println("Skipping dashboard build.")
+		return
+	}
+
+	// install web ui depedencies
+	if err := exec.Command("yarn install").Run(); err != nil {
+		log.Fatalf("Unable to run 'yarn install'. Failed with error: '%s'\n")
+	}
+
+	// install web ui depedencies
+	if err := exec.Command("yarn build").Run(); err != nil {
+		log.Fatalf("Unable to run 'yarn build'. Failed with error: '%s'\n")
+	}
+
 	// box files
 	dir := http.Dir("build")
 	err := vfsgen.Generate(dir, vfsgen.Options{

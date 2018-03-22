@@ -142,7 +142,7 @@ build_agent() {
 }
 
 build_backend() {
-    build_dashboard $@
+    build_dashboard
     build_command backend $@
 }
 
@@ -151,7 +151,6 @@ build_cli() {
 }
 
 build_dashboard() {
-    check_for_presence_of_yarn
     go generate $@ ./dashboard
 }
 
@@ -241,6 +240,10 @@ docker_commands () {
         build_tool_binary linux amd64 $cmd "handlers"
     done
 
+    # When publishing image, ensure that we can bundle the web UI.
+    if [ "$push" == "push" ]; then
+        bail_unless_yarn_is_present
+    fi
     build_dashboard
 
     for cmd in agent backend cli; do
@@ -270,12 +273,13 @@ docker_commands () {
     fi
 }
 
-check_for_presence_of_yarn() {
+bail_unless_yarn_is_present() {
     if hash yarn 2>/dev/null; then
-        echo "⚡️  Yarn is installed, continuing."
+        echo "⚡️  Yarn is installe!"
     else
-        echo "🛑  Please install yarn to build dashboard."
+        echo "🛑  You must have Yarn installed to bundle the web UI."
         echo "See https://yarnpkg.com/en/docs/install"
+        exit 1
     fi
 }
 
@@ -284,7 +288,7 @@ install_yarn() {
 }
 
 install_dashboard_deps() {
-    check_for_presence_of_yarn
+    bail_unless_yarn_is_present
     pushd "${DASHBOARD_PATH}"
     yarn install
     yarn precompile
