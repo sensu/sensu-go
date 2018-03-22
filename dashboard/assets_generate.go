@@ -9,8 +9,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
+	"strings"
 
+	"github.com/mgutz/ansi"
 	"github.com/shurcooL/vfsgen"
 )
 
@@ -43,14 +46,10 @@ func main() {
 	}
 
 	// install web ui depedencies
-	if err := exec.Command("yarn install").Run(); err != nil {
-		log.Fatalf("Unable to run 'yarn install'. Failed with error: '%s'\n")
-	}
+	mustRunCmd("yarn", "install")
 
 	// install web ui depedencies
-	if err := exec.Command("yarn build").Run(); err != nil {
-		log.Fatalf("Unable to run 'yarn build'. Failed with error: '%s'\n")
-	}
+	mustRunCmd("yarn", "build")
 
 	// box files
 	dir := http.Dir("build")
@@ -76,9 +75,27 @@ func main() {
 		GeneratedVariableName: "vfsAssets",
 	})
 
-	fmt.Printf("writing %s\n", filenameGlueFile)
+	fmt.Printf("Writing %s\n", filenameGlueFile)
 	err = ioutil.WriteFile(filenameGlueFile, buf.Bytes(), 0644)
 	if err != nil {
 		log.Fatalln(err)
+	}
+}
+
+func mustRunCmd(pro string, args ...string) {
+	buf := bytes.Buffer{}
+	cmd := exec.Command(pro, args...)
+	cmd.Stdout = &buf
+
+	cmdStr := strings.Join(append([]string{pro}, args...), " ")
+	fmt.Printf("Running '%s'\n", cmdStr)
+	if err := cmd.Run(); err != nil {
+		red := ansi.ColorFunc("red+b")
+		white := ansi.ColorFunc("white+b")
+
+		fmt.Println("")
+		fmt.Fprint(os.Stderr, buf.String())
+		fmt.Fprintf(os.Stderr, "%s %s '%s'\n", red("Error"), "failed to run", white(cmdStr))
+		os.Exit(1)
 	}
 }

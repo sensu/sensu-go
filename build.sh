@@ -132,9 +132,9 @@ build_tool () {
 build_commands () {
     echo "Build all commands..."
 
-    build_agent
-    build_backend
-    build_cli
+    build_agent $@
+    build_backend $@
+    build_cli $@
 }
 
 build_agent() {
@@ -142,7 +142,7 @@ build_agent() {
 }
 
 build_backend() {
-    build_dashboard
+    build_dashboard $@
     build_command backend $@
 }
 
@@ -275,7 +275,7 @@ docker_commands () {
 
 bail_unless_yarn_is_present() {
     if hash yarn 2>/dev/null; then
-        echo "⚡️  Yarn is installe!"
+        echo "⚡️  Yarn is installed!"
     else
         echo "🛑  You must have Yarn installed to bundle the web UI."
         echo "See https://yarnpkg.com/en/docs/install"
@@ -345,7 +345,7 @@ deploy() {
 
 case "$cmd" in
     "build")
-        build_commands
+        build_commands "${@:2}"
         ;;
     "build_agent")
         build_agent "${@:2}"
