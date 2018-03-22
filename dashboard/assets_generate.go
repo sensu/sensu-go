@@ -99,7 +99,7 @@ func mustRunCmd(pro string, args ...string) {
 
 		fmt.Println("")
 		fmt.Fprint(os.Stderr, buf.String())
-		fmt.Fprintf(os.Stderr, "%s %s '%s'\n", red("Error"), "failed to run", white(cmdStr))
+		fmt.Fprintf(os.Stderr, "🛑  %s %s '%s'\n", red("Error"), "failed to run", white(cmdStr))
 		os.Exit(1)
 	}
 }
