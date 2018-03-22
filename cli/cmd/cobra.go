@@ -10,7 +10,8 @@ func init() {
 	cobra.AddTemplateFunc("hasManagementSubCommands", hasManagementSubCommands)
 	cobra.AddTemplateFunc("operationalSubCommands", operationalSubCommands)
 	cobra.AddTemplateFunc("managementSubCommands", managementSubCommands)
-	cobra.AddTemplateFunc("wrappedFlagUsages", wrappedFlagUsages)
+	cobra.AddTemplateFunc("wrappedInheritedFlagUsages", wrappedInheritedFlagUsages)
+	cobra.AddTemplateFunc("wrappedLocalFlagUsages", wrappedLocalFlagUsages)
 }
 
 func hasOperationalSubCommands(cmd *cobra.Command) bool {
@@ -41,10 +42,18 @@ func managementSubCommands(cmd *cobra.Command) []*cobra.Command {
 	return cmds
 }
 
-func wrappedFlagUsages(cmd *cobra.Command) string {
+func wrappedInheritedFlagUsages(cmd *cobra.Command) string {
 	width := 80
 	if ws, err := term.GetWinsize(0); err == nil {
 		width = int(ws.Width)
 	}
-	return cmd.Flags().FlagUsagesWrapped(width - 1)
+	return cmd.InheritedFlags().FlagUsagesWrapped(width - 1)
+}
+
+func wrappedLocalFlagUsages(cmd *cobra.Command) string {
+	width := 80
+	if ws, err := term.GetWinsize(0); err == nil {
+		width = int(ws.Width)
+	}
+	return cmd.LocalFlags().FlagUsagesWrapped(width - 1)
 }
