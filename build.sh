@@ -40,7 +40,6 @@ install_deps () {
     go get github.com/jgautheron/goconst/cmd/goconst
     go get honnef.co/go/tools/cmd/megacheck
     go get github.com/golang/lint/golint
-    go get github.com/UnnoTed/fileb0x
     install_golang_dep
 }
 
@@ -84,6 +83,7 @@ build_binary () {
     local goarch=$2
     local cmd=$3
     local cmd_name=$4
+    local ext="${@:5}"
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
@@ -98,7 +98,7 @@ build_binary () {
     local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
     local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 
-    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $ext -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
     echo $outfile
 }
@@ -130,23 +130,42 @@ build_tool () {
 }
 
 build_commands () {
-    echo "Running build..."
+    echo "Build all commands..."
 
-    for cmd in agent backend cli; do
-        build_command $cmd
-    done
+    build_agent
+    build_backend
+    build_cli
+}
+
+build_agent() {
+    build_command agent $@
+}
+
+build_backend() {
+    build_dashboard $@
+    build_command backend $@
+}
+
+build_cli() {
+    build_command cli $@
+}
+
+build_dashboard() {
+    check_for_presence_of_yarn
+    go generate $@ ./dashboard
 }
 
 build_command () {
     local cmd=$1
     local cmd_name=$(cmd_name_map $cmd)
+    local ext="${@:2}"
 
     if [ ! -d bin/ ]; then
         mkdir -p bin/
     fi
 
     echo "Building $cmd for ${GOOS}-${GOARCH}"
-    out=$(build_binary $GOOS $GOARCH $cmd $cmd_name)
+    out=$(build_binary $GOOS $GOARCH $cmd $cmd_name $ext)
     rm -f bin/$(basename $out)
     cp ${out} bin
 }
@@ -222,9 +241,7 @@ docker_commands () {
         build_tool_binary linux amd64 $cmd "handlers"
     done
 
-    # install_dashboard_deps
-    # build_dashboard
-    # bundle_static_assets
+    build_dashboard
 
     for cmd in agent backend cli; do
         echo "Building $cmd for linux-amd64"
@@ -255,10 +272,10 @@ docker_commands () {
 
 check_for_presence_of_yarn() {
     if hash yarn 2>/dev/null; then
-        echo "Yarn is installed, continuing."
+        echo "⚡️  Yarn is installed, continuing."
     else
-        echo "Please install yarn to build dashboard."
-        exit 1
+        echo "🛑  Please install yarn to build dashboard."
+        echo "See https://yarnpkg.com/en/docs/install"
     fi
 }
 
@@ -267,7 +284,6 @@ install_yarn() {
 }
 
 install_dashboard_deps() {
-    go get github.com/UnnoTed/fileb0x
     check_for_presence_of_yarn
     pushd "${DASHBOARD_PATH}"
     yarn install
@@ -280,18 +296,6 @@ test_dashboard() {
     yarn lint
     yarn test --coverage
     popd
-}
-
-build_dashboard() {
-    pushd "${DASHBOARD_PATH}"
-    yarn install
-    yarn precompile
-    yarn build
-    popd
-}
-
-bundle_static_assets() {
-    fileb0x ./.b0x.yaml
 }
 
 prompt_confirm() {
@@ -340,18 +344,13 @@ case "$cmd" in
         build_commands
         ;;
     "build_agent")
-        build_command agent
+        build_agent "${@:2}"
         ;;
     "build_backend")
-        build_command backend
+        build_backend "${@:2}"
         ;;
     "build_cli")
-        build_command cli
-        ;;
-    "build_dashboard")
-        install_dashboard_deps
-        build_dashboard
-        bundle_static_assets
+        build_cli "${@:2}"
         ;;
     "build_tools")
         build_tools
@@ -378,7 +377,9 @@ case "$cmd" in
         ;;
     "e2e")
         # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
-        build_commands
+        build_command agent
+        build_command backend
+        build_command cli
         e2e_commands "${@:2}"
         ;;
     "lint")

@@ -12,7 +12,7 @@ class RestrictUnauthenticated extends React.Component {
   // TODO: Have something emit tokens when access token is updated / revoked?
   componentWillMount() {
     getAccessToken().then(token => {
-      if (!token) {
+      if (token === null) {
         this.props.router.push("/login");
       }
     });

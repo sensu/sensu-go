@@ -1,16 +1,20 @@
 package dashboardd
 
 import (
+	"compress/gzip"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/NYTimes/gziphandler"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/dashboard"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -21,7 +25,6 @@ const (
 
 // Config represents the dashboard configuration
 type Config struct {
-	Dir  string
 	Host string
 	Port int
 	TLS  *types.TLSOptions
@@ -131,28 +134,68 @@ func httpRouter(d *Dashboardd) *mux.Router {
 		logger.Fatal(err)
 	}
 
-	r.Handle("/events", httputil.NewSingleHostReverseProxy(target))
-	r.Handle("/entities", httputil.NewSingleHostReverseProxy(target))
+	// Proxy endpoints
+	r.PathPrefix("/auth").Handler(httputil.NewSingleHostReverseProxy(target))
+	r.PathPrefix("/graphql").Handler(httputil.NewSingleHostReverseProxy(target))
 
-	// Serve static content
-	if d.Dir != "" {
-		r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(http.Dir(d.Dir))))
-	} else {
-		r.PathPrefix("/").Handler(noCacheHandler(http.FileServer(HTTP)))
-	}
+	// Serve assets
+	r.PathPrefix("/").Handler(assetsHandler())
 
 	return r
+}
+
+func assetsHandler() http.Handler {
+	fs := dashboard.Assets
+	handler := http.FileServer(fs)
+
+	// Gzip content
+	gziphandler, err := gziphandler.NewGzipLevelAndMinSize(
+		gzip.DefaultCompression,
+		gziphandler.DefaultMinSize,
+	)
+	if err != nil {
+		panic(err)
+	}
+	handler = gziphandler(handler)
+
+	// Set proper headers
+	immutableHandler := immutableHandler(handler)
+	noCacheHandler := noCacheHandler(handler)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Fallback to index if path didn't match an asset
+		if f, _ := fs.Open(r.URL.Path); f == nil {
+			r.URL.Path = "/"
+		}
+
+		// wrap all static assets in a the immutable handler so that they are not
+		// needless revalidated when the client refreshes.
+		if strings.HasPrefix(r.URL.Path, "/static") {
+			immutableHandler.ServeHTTP(w, r)
+		} else {
+			noCacheHandler.ServeHTTP(w, r)
+		}
+	})
+}
+
+// immutableHandler sets the proper headers to allow client to cache file
+// indefinitely.
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#Freshness
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#Revalidation_and_reloading
+func immutableHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("cache-control", "max-age=31536000, immutable")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // noCacheHandler sets the proper headers to prevent any sort of caching for the
 // index.html file, served as /
 func noCacheHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			w.Header().Set("cache-control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("pragma", "no-cache")
-			w.Header().Set("expires", "0")
-		}
+		w.Header().Set("cache-control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("pragma", "no-cache")
+		w.Header().Set("expires", "0")
 		next.ServeHTTP(w, r)
 	})
 }
