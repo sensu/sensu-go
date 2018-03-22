@@ -142,7 +142,7 @@ build_agent() {
 }
 
 build_backend() {
-    build_dashboard
+    build_dashboard $@
     build_command backend $@
 }
 
@@ -152,13 +152,13 @@ build_cli() {
 
 build_dashboard() {
     check_for_presence_of_yarn
-    go generate ./dashboard
+    go generate $@ ./dashboard
 }
 
 build_command () {
     local cmd=$1
     local cmd_name=$(cmd_name_map $cmd)
-    local ext=$2
+    local ext="${@:2}"
 
     if [ ! -d bin/ ]; then
         mkdir -p bin/
@@ -272,11 +272,10 @@ docker_commands () {
 
 check_for_presence_of_yarn() {
     if hash yarn 2>/dev/null; then
-        echo "⚡️ Yarn is installed, continuing."
+        echo "⚡️  Yarn is installed, continuing."
     else
-        echo "🛑 Please install yarn to build dashboard."
+        echo "🛑  Please install yarn to build dashboard."
         echo "See https://yarnpkg.com/en/docs/install"
-        exit 1
     fi
 }
 
