@@ -25,6 +25,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 and yarn are now dependencies for building the backend.
 - Updated etcd to 3.3.2 from 3.3.1 to fix an issue with autocompaction settings.
 - Updated and corrected logging style for variable fields.
+- Build protobufs with go generate.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.
