@@ -151,6 +151,7 @@ build_cli() {
 }
 
 build_dashboard() {
+    echo "Building web UI"
     go generate $@ ./dashboard
 }
 
