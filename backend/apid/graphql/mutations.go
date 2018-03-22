@@ -139,7 +139,7 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 		event.Check.Output = "Manually resolved manually with " + p.Args.Input.Source
 		event.Timestamp = int64(time.Now().Unix())
 
-		err = r.eventController.Create(ctx, *event)
+		err = r.eventController.CreateOrReplace(ctx, *event)
 		if err != nil {
 			return nil, err
 		}
