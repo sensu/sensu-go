@@ -21,19 +21,40 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("invalid argument(s) received")
 			}
 
+			rule := types.Rule{}
+
 			role := &types.Role{Name: args[0]}
 			if err := role.Validate(); err != nil {
 				return err
 			}
 
+			opts := &ruleOpts{}
+
+			opts.Org = cli.Config.Organization()
+			opts.Env = cli.Config.Environment()
+
+			opts.withFlags(cmd.Flags())
+			opts.Role = args[0]
+
+			opts.Copy(&rule)
+			if err := rule.Validate(); err != nil {
+				return err
+			}
+			role.Rules = append(role.Rules, rule)
+
 			if err := cli.Client.CreateRole(role); err != nil {
 				return err
 			}
-
-			fmt.Fprintln(cmd.OutOrStdout(), "Created")
-			return nil
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			return err
 		},
 	}
+
+	_ = cmd.Flags().StringP("type", "t", "", "type associated with the rule")
+	_ = cmd.Flags().BoolP("create", "c", false, "create permission")
+	_ = cmd.Flags().BoolP("read", "r", false, "read permission")
+	_ = cmd.Flags().BoolP("update", "u", false, "update permission")
+	_ = cmd.Flags().BoolP("delete", "d", false, "delete permission")
 
 	return cmd
 }
