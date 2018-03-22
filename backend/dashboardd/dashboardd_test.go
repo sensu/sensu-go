@@ -17,14 +17,14 @@ func TestDashboardRouter(t *testing.T) {
 		path string
 		want int
 	}{
-		{"/auth", http.StatusOK},
-		{"/graphql", http.StatusOK},
-		{"/index.html", http.StatusOK},
+		{"/favicon.ico", http.StatusOK},
+		{"/manifest.json", http.StatusOK},
+		{"/asset-manifest.json", http.StatusOK},
 	}
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("path %s", tc.path), func(t *testing.T) {
-			req, _ := http.NewRequest(http.MethodGet, "/", nil)
+			req, _ := http.NewRequest(http.MethodGet, tc.path, nil)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, req)
 
