@@ -101,7 +101,7 @@ func (a *Agentd) Start() error {
 			err = a.httpServer.ListenAndServe()
 		}
 		if err != nil && err != http.ErrServerClosed {
-			logger.Errorf("failed to start http/https server %s", err.Error())
+			logger.WithError(err).Error("failed to start http/https server")
 		}
 	}()
 
@@ -138,7 +138,7 @@ func (a *Agentd) Err() <-chan error {
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Error("transport error on websocket upgrade: ", err.Error())
+		logger.WithError(err).Error("transport error on websocket upgrade")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -155,14 +155,14 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store)
 	if err != nil {
-		logger.Error("failed to create session: ", err.Error())
+		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = session.Start()
 	if err != nil {
-		logger.Error("failed to start session: ", err.Error())
+		logger.WithError(err).Error("failed to start session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

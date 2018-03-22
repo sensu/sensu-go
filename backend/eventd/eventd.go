@@ -104,7 +104,7 @@ func (e *Eventd) startHandlers() {
 					// drain the event channel.
 					for msg := range e.eventChan {
 						if err := e.handleMessage(msg); err != nil {
-							logger.Errorf("eventd - error handling event: %s", err.Error())
+							logger.WithError(err).Error("eventd - error handling event")
 						}
 					}
 					return
@@ -129,7 +129,7 @@ func (e *Eventd) startHandlers() {
 					}
 
 					if err := e.handleMessage(msg); err != nil {
-						logger.Errorf("eventd - error handling event: %s", err.Error())
+						logger.WithError(err).Error("eventd - error handling event")
 					}
 				}
 			}

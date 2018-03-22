@@ -112,7 +112,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 
 	msg, err := json.Marshal(event)
 	if err != nil {
-		logger.Error("error marshaling check result: ", err.Error())
+		logger.WithError(err).Error("error marshaling check result")
 		return
 	}
 
@@ -170,7 +170,7 @@ func (a *Agent) sendFailure(event *types.Event, err error) {
 	event.Timestamp = time.Now().Unix()
 
 	if msg, err := json.Marshal(event); err != nil {
-		logger.Error("error marshaling check failure: ", err.Error())
+		logger.WithError(err).Error("error marshaling check failure")
 	} else {
 		a.sendMessage(transport.MessageTypeEvent, msg)
 	}

@@ -58,7 +58,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	if len(result.Errors) > 0 {
 		logger.
 			WithField("errors", result.Errors).
-			Errorf("error(s) occurred while executing GraphQL operation")
+			Error("error(s) occurred while executing GraphQL operation")
 	}
 
 	return result, nil

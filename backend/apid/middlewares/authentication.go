@@ -57,7 +57,7 @@ func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 		if err != nil {
 			logger.WithField(
 				"user", username,
-			).WithError(err).Errorf("invalid username and/or password")
+			).WithError(err).Error("invalid username and/or password")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
