@@ -229,6 +229,7 @@ docker_commands () {
     local push=$1
     local release=$2
     local build_sha=$(git rev-parse HEAD)
+    local ext=${@:3}
 
     for cmd in cat false sleep true; do
         echo "Building tools/$cmd for linux-amd64"
@@ -244,12 +245,12 @@ docker_commands () {
     if [ "$push" == "push" ]; then
         bail_unless_yarn_is_present
     fi
-    build_dashboard
+    build_dashboard $ext
 
     for cmd in agent backend cli; do
         echo "Building $cmd for linux-amd64"
         local cmd_name=$(cmd_name_map $cmd)
-        build_binary linux amd64 $cmd $cmd_name
+        build_binary linux amd64 $cmd $cmd_name $ext
     done
 
     docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
@@ -377,7 +378,7 @@ case "$cmd" in
         install_deps
         ;;
     "docker")
-        docker_commands "${@:2}"
+        docker_commands nopush master "${@:2}"
         ;;
     "e2e")
         # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
