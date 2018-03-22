@@ -77,10 +77,17 @@ var usageTemplate = `Usage:
 
 {{ .Short | trim }}
 
-{{- if .HasFlags}}
+{{- if .HasAvailableLocalFlags}}
 
-Options:
-{{ wrappedFlagUsages . | trimRightSpace}}
+Flags:
+{{ wrappedLocalFlagUsages . | trimRightSpace}}
+
+{{- end}}
+
+{{- if .HasAvailableInheritedFlags}}
+
+Global Flags:
+{{ wrappedInheritedFlagUsages . | trimRightSpace}}
 
 {{- end}}
 
