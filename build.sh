@@ -83,7 +83,7 @@ build_binary () {
     local goarch=$2
     local cmd=$3
     local cmd_name=$4
-    local tags=$5
+    local ext=$5
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
@@ -98,7 +98,7 @@ build_binary () {
     local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
     local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 
-    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -tags "$tags" -ldflags "${ldflags}" -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $ext -o $outfile ${REPO_PATH}/${cmd}/cmd/...
 
     echo $outfile
 }
@@ -138,16 +138,16 @@ build_commands () {
 }
 
 build_agent() {
-    build_command agent
+    build_command agent $@
 }
 
 build_backend() {
     build_dashboard
-    build_command backend
+    build_command backend $@
 }
 
 build_cli() {
-    build_command cli
+    build_command cli $@
 }
 
 build_dashboard() {
@@ -158,14 +158,14 @@ build_dashboard() {
 build_command () {
     local cmd=$1
     local cmd_name=$(cmd_name_map $cmd)
-    local tags=$2
+    local ext=$2
 
     if [ ! -d bin/ ]; then
         mkdir -p bin/
     fi
 
     echo "Building $cmd for ${GOOS}-${GOARCH}"
-    out=$(build_binary $GOOS $GOARCH $cmd $cmd_name $tags)
+    out=$(build_binary $GOOS $GOARCH $cmd $cmd_name $ext)
     rm -f bin/$(basename $out)
     cp ${out} bin
 }
@@ -246,7 +246,7 @@ docker_commands () {
     for cmd in agent backend cli; do
         echo "Building $cmd for linux-amd64"
         local cmd_name=$(cmd_name_map $cmd)
-        build_binary linux amd64 $cmd $cmd_name release
+        build_binary linux amd64 $cmd $cmd_name
     done
 
     docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
@@ -345,13 +345,13 @@ case "$cmd" in
         build_commands
         ;;
     "build_agent")
-        build_agent
+        build_agent "${@:2}"
         ;;
     "build_backend")
-        build_backend
+        build_backend "${@:2}"
         ;;
     "build_cli")
-        build_cli
+        build_cli "${@:2}"
         ;;
     "build_tools")
         build_tools

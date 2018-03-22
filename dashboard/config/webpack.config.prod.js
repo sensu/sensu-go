@@ -301,7 +301,6 @@ module.exports = {
           // https://github.com/facebookincubator/create-react-app/issues/2612
           return;
         }
-        no - console;
         // eslint-disable-next-line no-console
         console.log(message);
       },

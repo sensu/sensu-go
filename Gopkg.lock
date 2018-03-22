@@ -17,6 +17,12 @@
   revision = "04b7f292a41fcb5da32dda536c0807fc13e8351c"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/NYTimes/gziphandler"
+  packages = ["."]
+  revision = "5032c8878b9dd46cfe8c625c0d9b9f258a560ee8"
+
+[[projects]]
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
@@ -479,8 +485,10 @@
 [[projects]]
   name = "github.com/shirou/gopsutil"
   packages = [
+    "cpu",
     "host",
     "internal/common",
+    "mem",
     "net",
     "process"
   ]
@@ -719,6 +727,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b28f3dc7ad57684ccc790956c8e3116bae30488655414779690a2ed02b697cd6"
+  inputs-digest = "66715a9acd5a94739a58830794a0f656058525e3f540ff787379b1ec4c2790e4"
   solver-name = "gps-cdcl"
   solver-version = 1

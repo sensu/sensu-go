@@ -1,6 +1,7 @@
 package dashboardd
 
 import (
+	"compress/gzip"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -10,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/NYTimes/gziphandler"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/dashboard"
@@ -137,10 +139,30 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	r.PathPrefix("/graphql").Handler(httputil.NewSingleHostReverseProxy(target))
 
 	// Serve assets
-	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fs := dashboard.Assets
-		handler := http.FileServer(fs)
+	r.PathPrefix("/").Handler(assetsHandler())
 
+	return r
+}
+
+func assetsHandler() http.Handler {
+	fs := dashboard.Assets
+	handler := http.FileServer(fs)
+
+	// Gzip content
+	gziphandler, err := gziphandler.NewGzipLevelAndMinSize(
+		gzip.DefaultCompression,
+		gziphandler.DefaultMinSize,
+	)
+	if err != nil {
+		panic(err)
+	}
+	handler = gziphandler(handler)
+
+	// Set proper headers
+	immutableHandler := immutableHandler(handler)
+	noCacheHandler := noCacheHandler(handler)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Fallback to index if path didn't match an asset
 		if f, _ := fs.Open(r.URL.Path); f == nil {
 			r.URL.Path = "/"
@@ -149,16 +171,11 @@ func httpRouter(d *Dashboardd) *mux.Router {
 		// wrap all static assets in a the immutable handler so that they are not
 		// needless revalidated when the client refreshes.
 		if strings.HasPrefix(r.URL.Path, "/static") {
-			handler = immutableHandler(handler)
+			immutableHandler.ServeHTTP(w, r)
 		} else {
-			handler = noCacheHandler(handler)
+			noCacheHandler.ServeHTTP(w, r)
 		}
-
-		// Serve asset
-		handler.ServeHTTP(w, r)
 	})
-
-	return r
 }
 
 // immutableHandler sets the proper headers to allow client to cache file
