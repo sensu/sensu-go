@@ -21,7 +21,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # generated go file
-/assets_generated.go
+/assets_vfsgen.go
+/assets_glue.go
 
 # relay
 /**/__generated__/*graph*

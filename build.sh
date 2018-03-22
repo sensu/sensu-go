@@ -143,7 +143,7 @@ build_agent() {
 
 build_backend() {
     build_dashboard
-    build_command backend release
+    build_command backend
 }
 
 build_cli() {
@@ -152,7 +152,7 @@ build_cli() {
 
 build_dashboard() {
     check_for_presence_of_yarn
-    go generate -tags release ./dashboard
+    go generate ./dashboard
 }
 
 build_command () {

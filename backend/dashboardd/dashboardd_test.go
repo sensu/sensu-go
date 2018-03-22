@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDashboardRouter(t *testing.T) {
@@ -17,7 +19,7 @@ func TestDashboardRouter(t *testing.T) {
 	}{
 		{"/auth", http.StatusOK},
 		{"/graphql", http.StatusOK},
-		{"/test", http.StatusOK},
+		{"/index.html", http.StatusOK},
 	}
 
 	for _, tc := range testCases {
@@ -26,7 +28,7 @@ func TestDashboardRouter(t *testing.T) {
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, req)
 
-			t.Skip("What do we want to assert here")
+			assert.Equal(t, tc.want, res.Code)
 		})
 	}
 }
