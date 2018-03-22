@@ -78,9 +78,9 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// Make sure the refresh token belongs to the same user as the access token
 		if accessClaims.Subject == "" || accessClaims.Subject != refreshClaims.Subject {
 			logger.WithFields(logrus.Fields{
-				"user":            refreshClaims.Subject,
-				"token (access)":  accessClaims.Subject,
-				"token (refresh)": refreshClaims.Subject,
+				"user":          refreshClaims.Subject,
+				"access_token":  accessClaims.Subject,
+				"refresh_token": refreshClaims.Subject,
 			}).Error("the access and refresh tokens subject do not match")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return

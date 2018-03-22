@@ -219,7 +219,7 @@ func (s *Session) Start() (err error) {
 
 	for _, sub := range s.cfg.Subscriptions {
 		topic := messaging.SubscriptionTopic(org, env, sub)
-		logger.WithField("topic", topic).Debug("Subscribing to topic")
+		logger.WithField("topic", topic).Debug("subscribing to topic")
 		subscription, err := s.bus.Subscribe(topic, agentID, s)
 		if err != nil {
 			logger.WithError(err).Error("error starting subscription")
