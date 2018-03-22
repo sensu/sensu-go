@@ -358,7 +358,7 @@ func (k *Keepalived) HandleFailure(entity *types.Entity, _ *types.Event) error {
 		return err
 	}
 
-	logger.Infof("keepalive timed out, creating keepalive event for entity %s", entity.GetID())
+	logger.WithField("entity", entity.GetID()).Info("keepalive timed out, creating keepalive event for entity")
 	timeout := time.Now().Unix() + int64(entity.KeepaliveTimeout)
 	return k.store.UpdateFailingKeepalive(ctx, entity, timeout)
 }

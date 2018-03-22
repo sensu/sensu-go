@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/types"
 )
@@ -37,7 +38,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// it's expired
 		accessToken, err := jwt.ValidateExpiredToken(accessTokenString)
 		if err != nil {
-			logger.Errorf("access token is invalid: %s", err.Error())
+			logger.WithError(err).Error("access token is invalid")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -46,7 +47,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		payload := &types.Tokens{}
 		err = decoder.Decode(payload)
 		if err != nil {
-			logger.Errorf("could not decode the refresh token: %s", err.Error())
+			logger.WithError(err).Error("could not decode the refresh token")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -54,7 +55,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// Now we want to validate the refresh token
 		refreshToken, err := jwt.ValidateToken(payload.Refresh)
 		if err != nil {
-			logger.Errorf("refresh token is invalid: %s", err.Error())
+			logger.WithError(err).Error("refresh token is invalid")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -62,26 +63,25 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// Retrieve the claims for both tokens
 		accessClaims, err := jwt.GetClaims(accessToken)
 		if err != nil {
-			logger.Errorf("could not parse the access token claims: %s", err.Error())
+			logger.WithError(err).Error("could not parse the access token claims")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		refreshClaims, err := jwt.GetClaims(refreshToken)
 		if err != nil {
-			logger.Errorf("could not parse the refresh token claims: %s", err.Error())
+			logger.WithError(err).Error("could not parse the refresh token claims")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		// Make sure the refresh token belongs to the same user as the access token
 		if accessClaims.Subject == "" || accessClaims.Subject != refreshClaims.Subject {
-			logger.WithField(
-				"user", refreshClaims.Subject,
-			).Errorf("the access and refresh tokens subject do not match: %s != %s",
-				accessClaims.Subject,
-				refreshClaims.Subject,
-			)
+			logger.WithFields(logrus.Fields{
+				"user":            refreshClaims.Subject,
+				"token (access)":  accessClaims.Subject,
+				"token (refresh)": refreshClaims.Subject,
+			}).Error("the access and refresh tokens subject do not match")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}

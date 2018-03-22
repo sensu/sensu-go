@@ -3,6 +3,7 @@ package middlewares
 import (
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -23,9 +24,10 @@ func (m AllowList) Then(next http.Handler) http.Handler {
 
 		// Validate that the JWT is authorized
 		if _, err := m.Store.GetToken(claims.Subject, claims.Id); err != nil {
-			logger.WithField(
-				"user", claims.Subject,
-			).Errorf("access token %s is not authorized: %s", claims.Id, err.Error())
+			logger.WithFields(logrus.Fields{
+				"user":         claims.Subject,
+				"access token": claims.Id,
+			}).WithError(err).Error("access token is not authorized")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}

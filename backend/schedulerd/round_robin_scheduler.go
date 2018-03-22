@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
 )
@@ -73,8 +72,5 @@ func (r *roundRobinScheduler) Schedule(msg *roundRobinMessage) (*sync.WaitGroup,
 
 // logError logs errors and adds agentID and checkName as fields.
 func (r *roundRobinScheduler) logError(err error, checkName string) {
-	logger.
-		WithFields(logrus.Fields{"check": checkName}).
-		WithError(err).
-		Error("error publishing round robin check request")
+	logger.WithField("check", checkName).WithError(err).Error("error publishing round robin check request")
 }

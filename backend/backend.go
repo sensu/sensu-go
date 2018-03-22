@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime/debug"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
@@ -381,8 +382,10 @@ func (b *Backend) Run() (derr error) {
 	defer func() {
 		if err := recover(); err != nil {
 			trace := string(debug.Stack())
-			logger.Errorf("panic in %s", trace)
-			logger.Errorf("recovering from panic due to error %s, shutting down etcd", err)
+			logger.WithFields(logrus.Fields{
+				"error": err,
+				"panic": trace,
+			}).Error("recovering from panic due to error, shutting down etcd")
 		}
 		err := b.etcd.Shutdown()
 		if derr == nil {

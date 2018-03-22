@@ -35,14 +35,14 @@ func environments(storeURL string) {
 		envBytes := kv.Value
 		env := &types.Environment{}
 		if err := json.Unmarshal(envBytes, env); err != nil {
-			logger.WithError(err).Info("error unmarshaling environment: ")
+			logger.WithError(err).Info("error unmarshaling environment")
 			continue
 		}
 
 		if env.Organization == "" {
 			pathParts := strings.Split(string(kv.Key), "/")
 			if len(pathParts) != 5 {
-				logger.Info("cannot parse environment key for migration: ", kv.Key)
+				logger.WithField("key", kv.Key).Info("cannot parse environment key for migration")
 				continue
 			}
 
@@ -50,7 +50,7 @@ func environments(storeURL string) {
 			envBytes, _ := json.Marshal(env)
 			_, err := client.Put(context.Background(), string(kv.Key), string(envBytes))
 			if err != nil {
-				logger.WithError(err).Info("error updating environment in store: ")
+				logger.WithError(err).Info("error updating environment in store")
 			}
 		}
 	}

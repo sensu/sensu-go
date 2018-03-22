@@ -99,9 +99,9 @@ func (d *Dashboardd) Start() error {
 func (d *Dashboardd) Stop() error {
 	if err := d.httpServer.Shutdown(nil); err != nil {
 		// failure/timeout shutting down the server gracefully
-		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
+		logger.WithError(err).Error("failed to shutdown http server gracefully - forcing shutdown")
 		if closeErr := d.httpServer.Close(); closeErr != nil {
-			logger.Error("failed to shutdown http server forcefully")
+			logger.WithError(closeErr).Error("failed to shutdown http server forcefully")
 		}
 	}
 

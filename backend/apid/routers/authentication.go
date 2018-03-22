@@ -42,7 +42,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.WithField(
 			"user", username,
-		).Errorf("invalid username and/or password: %s", err.Error())
+		).WithError(err).Error("invalid username and/or password")
 		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 		return
 	}
