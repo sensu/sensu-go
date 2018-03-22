@@ -83,7 +83,7 @@ build_binary () {
     local goarch=$2
     local cmd=$3
     local cmd_name=$4
-    local ext=$5
+    local ext="${@:5}"
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
