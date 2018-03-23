@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -21,22 +22,43 @@ type typeNames struct {
 	TypeNames []string
 }
 
+func snakeCase(camelCase string) string {
+	result := make([]rune, 0)
+	for i, s := range camelCase {
+		tl := strings.ToLower(string(s))
+		if i == 0 {
+			result = append(result, []rune(tl)...)
+			continue
+		}
+		if string(s) == tl {
+			result = append(result, s)
+			continue
+		}
+		result = append(result, '_')
+		result = append(result, []rune(tl)...)
+	}
+	return string(result)
+}
+
 func main() {
 	flag.Parse()
-	tmpl, err := template.ParseFiles(*tmplPath)
+	tmpl, err := template.New("typemap.tmpl").Funcs(template.FuncMap{
+		"snakeCase": snakeCase,
+	}).ParseFiles(*tmplPath)
+
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("fatal error parsing typemap.tmpl: %s", err)
 	}
 	typeNames, err := discoverTypeNames()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("fatal error discovering types: %s", err)
 	}
 	out, err := os.Create(*output)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("fatal error creating typemap.go: %s", err)
 	}
 	if err := tmpl.Execute(out, typeNames); err != nil {
-		log.Fatal(err)
+		log.Fatalf("fatal error generating typemap.go: %s", err)
 	}
 }
 

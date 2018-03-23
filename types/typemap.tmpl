@@ -9,7 +9,8 @@ var ErrInvalidResource = errors.New("the named type is not a Resource")
 
 // typeMap is used to dynamically look up data types from strings.
 var typeMap = map[string]interface{}{ {{ range $index, $typename := .TypeNames }}
-  "{{ $typename }}": &{{ $typename }}{}, {{ end }}
+  "{{ $typename }}": &{{ $typename }}{},
+  "{{ snakeCase $typename }}": &{{ $typename }}{}, {{ end }}
 }
 
 // ResolveResource returns a zero-valued resource, given a name.
