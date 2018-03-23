@@ -87,8 +87,8 @@ build_binary () {
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-    local version=$(cat version/version.txt)
-    local prerelease=$(cat version/prerelease.txt)
+    local version=$(./version-bin -v)
+    local prerelease=$(./version-bin -p)
     local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
     local build_sha=$(git rev-parse HEAD)
 
@@ -259,14 +259,14 @@ docker_commands () {
         # version/prerelease/iteration files
     elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
-        local version_alpha_iteration=$(echo sensuapp/sensu-go:$(cat version/version.txt)-$(cat version/prerelease.txt).$(cat version/iteration.txt))
+        local version=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t))
+        local version_iteration=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t).$(./version-bin -i))
         docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
         docker push sensuapp/sensu-go:latest
-        docker tag sensuapp/sensu-go:master $version_alpha_iteration
-        docker push $version_alpha_iteration
-        docker tag $version_alpha_iteration $version_alpha
-        docker push $version_alpha
+        docker tag sensuapp/sensu-go:master $version_iteration
+        docker push $version_iteration
+        docker tag $version_iteration $version
+        docker push $version
     fi
 }
 

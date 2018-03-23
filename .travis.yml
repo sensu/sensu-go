@@ -40,6 +40,12 @@ jobs:
       script: "./build.sh deploy"
       on:
         tags: true
+        branch: master
+    - provider: script
+      skip_cleanup: true
+      script: "./build.sh deploy"
+      on:
+        condition: $DEPLOY = true
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint
