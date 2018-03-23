@@ -41,12 +41,17 @@ install_deps () {
     go get honnef.co/go/tools/cmd/megacheck
     go get github.com/golang/lint/golint
     install_golang_dep
+    build_version_bin
 }
 
 install_golang_dep() {
     go get github.com/golang/dep/cmd/dep
     echo "Running dep ensure..."
     dep ensure -v -vendor-only
+}
+
+build_version_bin () {
+    go build -o version-bin ./version/cmd/version/version.go
 }
 
 cmd_name_map() {
