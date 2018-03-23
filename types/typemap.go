@@ -2,10 +2,7 @@ package types
 
 // automatically generated file, do not edit!
 
-import "errors"
-
-var ErrNoType = errors.New("the named type could not be found")
-var ErrInvalidResource = errors.New("the named type is not a Resource")
+import "fmt"
 
 // typeMap is used to dynamically look up data types from strings.
 var typeMap = map[string]interface{}{
@@ -95,11 +92,11 @@ var typeMap = map[string]interface{}{
 func ResolveResource(name string) (Resource, error) {
 	t, ok := typeMap[name]
 	if !ok {
-		return nil, ErrNoType
+		return nil, fmt.Errorf("type could not be found: %q", name)
 	}
 	r, ok := t.(Resource)
 	if !ok {
-		return nil, ErrInvalidResource
+		return nil, fmt.Errorf("%q is not a Resource", name)
 	}
 	return r, nil
 }

@@ -101,7 +101,7 @@ func parseResources(in io.Reader) ([]types.Resource, error) {
 		if rerr := dec.Decode(&w); rerr != nil {
 			// Write out as many errors as possible before bailing,
 			// but cap it at 10.
-			err = errors.New("error parsing resources")
+			err = errors.New("some resources couldn't be parsed")
 			if errCount > 10 {
 				err = errors.New("too many errors")
 				break
@@ -144,7 +144,7 @@ func validateResources(resources []types.Resource, defaultOrg, defaultEnv string
 func describeError(err error) {
 	jsonErr, ok := err.(*json.UnmarshalTypeError)
 	if !ok {
-		fmt.Fprintln(os.Stderr, "error parsing resource:", err)
+		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 	fmt.Fprintf(os.Stderr, "error parsing resource (offset %d): %s\n", jsonErr.Offset, err)
