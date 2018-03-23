@@ -1,4 +1,4 @@
-.PHONY: default version clean
+.PHONY: default clean
 .PHONY: android darwin dragonfly freebsd linux netbsd openbsd plan9 solaris windows
 .PHONY: sensu_agent sensu_backend sensu_cli
 .PHONY: hooks packages rpms debs
@@ -18,6 +18,7 @@ WINDOWS_ARCHITECTURES   := 386 amd64
 # Setup
 ##
 $(shell mkdir -p out)
+VERSION_BIN := $(shell go build -o version-bin ./version/cmd/version/version.go)
 
 ##
 # FPM
@@ -73,10 +74,7 @@ HOOKS_VALUES+= common_files=os-functions,group-functions,user-functions,other-fu
 ##
 default: all
 
-all: version_bin linux
-
-version_bin:
-	go build -o version-bin ./version/cmd/version/version.go
+all: linux
 
 clean:
 	rm -r out/

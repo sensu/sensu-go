@@ -249,6 +249,7 @@ docker_commands () {
         build_binary linux amd64 $cmd $cmd_name
     done
 
+    # build the docker image with master tag
     docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
 
     # push master - tags and pushes latest master docker build only
@@ -257,12 +258,16 @@ docker_commands () {
         docker push sensuapp/sensu-go:master
         # push versioned - tags and pushes with version pulled from
         # version/prerelease/iteration files
-    elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
+    elif [ "$push" == "push" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         local version=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t))
         local version_iteration=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t).$(./version-bin -i))
-        docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
-        docker push sensuapp/sensu-go:latest
+
+        if [ "$release" == "versioned" ]; then
+            docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
+            docker push sensuapp/sensu-go:latest
+        fi
+
         docker tag sensuapp/sensu-go:master $version_iteration
         docker push $version_iteration
         docker tag $version_iteration $version
@@ -320,6 +325,8 @@ check_deploy() {
 }
 
 deploy() {
+    local release=$1
+
     echo "Deploying..."
 
     # Authenticate to Google Cloud and deploy binaries
@@ -336,7 +343,7 @@ deploy() {
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
 
     # Deploy Docker images to the Docker Hub
-    docker_commands push versioned
+    docker_commands push $release
 }
 
 case "$cmd" in
