@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added gRPC extension service definition.
 - Support for nightlies in build/packaging tooling.
 - Added extension regsitry to the store.
+- Add sensuctl create command.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
