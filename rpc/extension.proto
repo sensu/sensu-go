@@ -24,6 +24,15 @@ message MutateEventResponse {
   string error = 2;
 }
 
+message FilterEventRequest {
+  types.Event event = 1;
+}
+
+message FilterEventResponse {
+  bool filtered = 1;
+  string error = 2;
+}
+
 // Extension services can be implemented by third parties. They receive
 // HandleEvent requests and return Handlers. Sensu will dispatch the Handler
 // that is returned.
@@ -33,4 +42,5 @@ message MutateEventResponse {
 service Extension {
 	rpc HandleEvent(HandleEventRequest) returns (HandleEventResponse) {}
 	rpc MutateEvent(MutateEventRequest) returns (MutateEventResponse) {}
+	rpc FilterEvent(FilterEventRequest) returns (FilterEventResponse) {}
 }

@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Support for nightlies in build/packaging tooling.
 - Added extension regsitry to the store.
 - Add sensuctl create command.
+- Add event filtering to extensions.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
