@@ -13,14 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type organizer interface {
-	GetOrganization() string
-}
-
-type environmenter interface {
-	GetEnvironment() string
-}
-
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create [-f FILE]",
@@ -40,8 +32,6 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			_ = cmd.Help()
 			return errors.New("invalid argument(s) received")
 		}
-		defaultOrg, _ := cmd.Flags().GetString("organization")
-		defaultEnv, _ := cmd.Flags().GetString("environment")
 		fp, err := cmd.Flags().GetString("file")
 		if err != nil {
 			return err
@@ -70,7 +60,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		if err := validateResources(resources, defaultOrg, defaultEnv); err != nil {
+		if err := validateResources(resources); err != nil {
 			return err
 		}
 		return putResources(cli.Client, resources)
@@ -114,23 +104,13 @@ func parseResources(in io.Reader) ([]types.Resource, error) {
 	return resources, err
 }
 
-func validateResources(resources []types.Resource, defaultOrg, defaultEnv string) error {
+func validateResources(resources []types.Resource) error {
 	var err error
 	errCount := 0
-	for _, resource := range resources {
-		// Use the default organization and environment if they are not given.
-		// This is obviously a little ugly - it wouldn't hurt to investigate
-		// a cleaner way of doing this. Perhaps the HTTP API could accommodate
-		// this with URL parameters or something.
-		if o, ok := resource.(organizer); ok && o.GetOrganization() == "" {
-			reflectSetField(resource, "Organization", defaultOrg)
-		}
-		if e, ok := resource.(environmenter); ok && e.GetEnvironment() == "" {
-			reflectSetField(resource, "Environment", defaultEnv)
-		}
+	for i, resource := range resources {
 		if verr := resource.Validate(); verr != nil {
 			errCount++
-			fmt.Fprintf(os.Stderr, "error validating resource: %s\n", verr)
+			fmt.Fprintf(os.Stderr, "error validating resource %d (%s): %s\n", i, resource.URIPath(), verr)
 			if errCount >= 10 {
 				err = errors.New("too many errors")
 				break
