@@ -335,7 +335,7 @@ deploy() {
     echo "Deploying..."
 
     # Authenticate to Google Cloud and deploy binaries
-    openssl aes-256-cbc -K $encrypted_d9a31ecd7e9c_key -iv $encrypted_d9a31ecd7e9c_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
+    openssl aes-256-cbc -K $encrypted_abd14401c428_key -iv $encrypted_abd14401c428_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
     gcloud auth activate-service-account --key-file=gcs-service-account.json
     ./build-gcs-release.sh
 
