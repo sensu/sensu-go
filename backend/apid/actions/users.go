@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"context"
+
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 // UserController exposes actions in which a viewer can perform.

@@ -27,6 +27,11 @@ func TestExtensionStorage(t *testing.T) {
 		assert.Equal(t, ext.Name, retrieved.Name)
 		assert.Equal(t, ext.URL, retrieved.URL)
 
+		extensions, err := store.GetExtensions(ctx)
+		require.NoError(t, err)
+		assert.NotEmpty(t, extensions)
+		assert.Equal(t, 1, len(extensions))
+
 		// Updating an ext in a nonexistent org should not work
 		ext.Organization = "missing"
 		err = store.RegisterExtension(ctx, ext)

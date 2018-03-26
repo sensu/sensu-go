@@ -510,16 +510,19 @@ var ErrNoExtension = errors.New("the extension does not exist")
 
 // ExtensionRegistry registers and tracks Sensu extensions.
 type ExtensionRegistry interface {
-	// Register registers an extension. It associates an extension type and
+	// RegisterExtension registers an extension. It associates an extension type and
 	// name with a URL. The registry assumes that the extension provides
 	// a handler and a mutator named 'name'.
 	RegisterExtension(context.Context, *types.Extension) error
 
-	// Deregister deregisters an extension. If the extension does not exist,
+	// DeregisterExtension deregisters an extension. If the extension does not exist,
 	// nil error is returned.
 	DeregisterExtension(ctx context.Context, name string) error
 
-	// Get gets the address of a registered extension. If the extension does
+	// GetExtension gets the address of a registered extension. If the extension does
 	// not exist, ErrNoExtension is returned.
 	GetExtension(ctx context.Context, name string) (*types.Extension, error)
+
+	// GetExtensions gets all the extensions for the organization in ctx.
+	GetExtensions(ctx context.Context) ([]*types.Extension, error)
 }

@@ -24,3 +24,9 @@ func FixtureExtension(name string) *Extension {
 		Organization: "default",
 	}
 }
+
+// GetEnvironment gets the environment for the extension. For extensions,
+// the environment is always '*'.
+func (e *Extension) GetEnvironment() string {
+	return "*"
+}

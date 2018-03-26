@@ -20,3 +20,8 @@ func (s *MockStore) GetExtension(ctx context.Context, name string) (*types.Exten
 	args := s.Called(ctx, name)
 	return args.Get(0).(*types.Extension), args.Error(1)
 }
+
+func (s *MockStore) GetExtensions(ctx context.Context) ([]*types.Extension, error) {
+	args := s.Called(ctx)
+	return args.Get(0).([]*types.Extension), args.Error(1)
+}

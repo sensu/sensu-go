@@ -1,10 +1,11 @@
 package actions
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 // assetUpdateFields whitelists fields allowed to be updated for Assets
