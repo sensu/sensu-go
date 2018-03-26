@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	fmt "fmt"
+	"net/url"
 )
 
 // Validate returns an error if the mutator does not pass validation tests.
@@ -55,5 +56,5 @@ func FixtureMutator(name string) *Mutator {
 
 // URIPath returns the path component of a Mutator URI.
 func (m *Mutator) URIPath() string {
-	return fmt.Sprintf("/mutators/%s", m.Name)
+	return fmt.Sprintf("/mutators/%s", url.PathEscape(m.Name))
 }

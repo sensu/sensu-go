@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"net/url"
 )
 
 // Validate returns an error if the name is not provided.
@@ -23,5 +24,5 @@ func FixtureAdhocRequest(name string, subscriptions []string) *AdhocRequest {
 
 // URIPath is the URI path component to the adhoc request.
 func (a *AdhocRequest) URIPath() string {
-	return fmt.Sprintf("/checks/%s/execute", a.Name)
+	return fmt.Sprintf("/checks/%s/execute", url.PathEscape(a.Name))
 }

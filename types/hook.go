@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	fmt "fmt"
+	"net/url"
 	"regexp"
 	"time"
 )
@@ -146,5 +147,5 @@ func FixtureHookList(hookName string) *HookList {
 
 // URIPath returns the path component of a Hook URI.
 func (h *Hook) URIPath() string {
-	return fmt.Sprintf("/hooks/%s", h.Name)
+	return fmt.Sprintf("/hooks/%s", url.PathEscape(h.Name))
 }

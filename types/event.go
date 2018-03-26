@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	fmt "fmt"
+	"net/url"
 	"sort"
 	"time"
 )
@@ -216,5 +217,5 @@ func (s *eventSorter) Less(i, j int) bool {
 
 // URIPath returns the path component of a Event URI.
 func (e *Event) URIPath() string {
-	return fmt.Sprintf("/%s/%s", e.Entity.ID, e.Check.Name)
+	return fmt.Sprintf("/%s/%s", url.PathEscape(e.Entity.ID), url.PathEscape(e.Check.Name))
 }

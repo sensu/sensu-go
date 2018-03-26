@@ -2,6 +2,7 @@ package types
 
 import (
 	fmt "fmt"
+	"net/url"
 )
 
 // Validate returns an error if the organization does not pass validation tests
@@ -22,5 +23,5 @@ func FixtureOrganization(name string) *Organization {
 
 // URIPath returns the path component of a Organization URI.
 func (o *Organization) URIPath() string {
-	return fmt.Sprintf("/rbac/organizations/%s", o.Name)
+	return fmt.Sprintf("/rbac/organizations/%s", url.PathEscape(o.Name))
 }

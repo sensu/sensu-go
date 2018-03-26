@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/types/dynamic"
 )
@@ -83,5 +84,5 @@ func FixtureEntity(id string) *Entity {
 
 // URIPath returns the path component of a Entity URI.
 func (e *Entity) URIPath() string {
-	return fmt.Sprintf("/entities/%s", e.ID)
+	return fmt.Sprintf("/entities/%s", url.PathEscape(e.ID))
 }

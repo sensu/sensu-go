@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	fmt "fmt"
+	"net/url"
 )
 
 const (
@@ -76,5 +77,5 @@ func FixtureSetHandler(name string, handlers ...string) *Handler {
 
 // URIPath returns the path component of a Handler URI.
 func (h *Handler) URIPath() string {
-	return fmt.Sprintf("/handlers/%s", h.Name)
+	return fmt.Sprintf("/handlers/%s", url.PathEscape(h.Name))
 }

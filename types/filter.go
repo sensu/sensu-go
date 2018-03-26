@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sensu/sensu-go/util/eval"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -96,5 +97,5 @@ func FixtureDenyEventFilter(name string) *EventFilter {
 
 // URIPath returns the path component of a Filter URI.
 func (f *EventFilter) URIPath() string {
-	return fmt.Sprintf("/filters/%s", f.Name)
+	return fmt.Sprintf("/filters/%s", url.PathEscape(f.Name))
 }
