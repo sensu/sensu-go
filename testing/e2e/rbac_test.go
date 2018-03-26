@@ -172,20 +172,14 @@ func TestRBAC(t *testing.T) {
 
 	// Create roles for every environment
 	defaultRole := types.FixtureRole("default", "default", "default")
-	output, err = adminctl.run("role", "create", defaultRole.Name)
-	assert.NoError(t, err, string(output))
-	output, err = adminctl.run("role", "add-rule", defaultRole.Name,
+	output, err = adminctl.run("role", "create", defaultRole.Name,
 		"--type", defaultRole.Rules[0].Type,
-		"--organization", defaultRole.Rules[0].Organization,
-		"--environment", defaultRole.Rules[0].Environment,
 		"-crud",
 	)
 	assert.NoError(t, err, string(output))
 
 	devRole := types.FixtureRole("dev", "acme", "dev")
-	output, err = adminctl.run("role", "create", devRole.Name)
-	assert.NoError(t, err, string(output))
-	output, err = adminctl.run("role", "add-rule", devRole.Name,
+	output, err = adminctl.run("role", "create", devRole.Name,
 		"--type", devRole.Rules[0].Type,
 		"--organization", devRole.Rules[0].Organization,
 		"--environment", devRole.Rules[0].Environment,
@@ -194,9 +188,7 @@ func TestRBAC(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	prodRole := types.FixtureRole("prod", "acme", "prod")
-	output, err = adminctl.run("role", "create", prodRole.Name)
-	assert.NoError(t, err, string(output))
-	output, err = adminctl.run("role", "add-rule", prodRole.Name,
+	output, err = adminctl.run("role", "create", prodRole.Name,
 		"--type", prodRole.Rules[0].Type,
 		"--organization", prodRole.Rules[0].Organization,
 		"--environment", prodRole.Rules[0].Environment,

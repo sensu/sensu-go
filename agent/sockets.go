@@ -36,7 +36,7 @@ func (a *Agent) createListenSockets() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	logger.Infof("starting UDP listener on %s", addr)
+	logger.Info("starting UDP listener on address: ", addr)
 	go a.handleUDPMessages(udpListen)
 
 	// Setup TCP socket listener
@@ -45,7 +45,7 @@ func (a *Agent) createListenSockets() (string, string, error) {
 		return "", "", err
 	}
 
-	logger.Infof("starting TCP listener on %s", addr)
+	logger.Info("starting TCP listener on address: ", addr)
 	tcpListen, err := net.ListenTCP("tcp", TCPServerAddr)
 	if err != nil {
 		return "", "", err
@@ -124,7 +124,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// any remaining partial packets. Any other error type returns.
 		if err != nil {
 			if opError, ok := err.(*net.OpError); ok && !opError.Timeout() {
-				logger.Debugf("error reading message from tcp socket %s", err.Error())
+				logger.WithError(err).Debug("error reading message from tcp socket")
 				return
 			}
 		}

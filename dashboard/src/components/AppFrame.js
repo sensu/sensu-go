@@ -3,31 +3,12 @@ import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 import { createFragmentContainer, graphql } from "react-relay";
 
-import QuickNav from "./QuickNav";
-import Drawer from "./Drawer";
+import AppRoot from "./AppRoot";
 import AppBar from "./Toolbar";
+import Drawer from "./Drawer";
+import QuickNav from "./QuickNav";
 
 const styles = theme => ({
-  "@global": {
-    html: {
-      background: theme.palette.background.default,
-      WebkitFontSmoothing: "antialiased", // Antialiasing.
-      MozOsxFontSmoothing: "grayscale", // Antialiasing.
-      boxSizing: "border-box",
-    },
-    "*, *:before, *:after": {
-      boxSizing: "inherit",
-    },
-    body: {
-      margin: 0,
-    },
-  },
-  root: {
-    display: "flex",
-    alignItems: "stretch",
-    minHeight: "100vh",
-    width: "100%",
-  },
   drawer: {
     [theme.breakpoints.up("lg")]: {
       width: 250,
@@ -59,9 +40,7 @@ const styles = theme => ({
 
 class AppFrame extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    // eslint-disable-next-line react/forbid-prop-types
     viewer: PropTypes.object.isRequired,
     children: PropTypes.element,
   };
@@ -81,7 +60,7 @@ class AppFrame extends React.Component {
     };
 
     return (
-      <div className={classes.root}>
+      <AppRoot>
         <AppBar toggleToolbar={toggleDrawer} />
         <Drawer
           viewer={viewer}
@@ -93,7 +72,7 @@ class AppFrame extends React.Component {
           <QuickNav className={classes.quicknav} />
           {children}
         </div>
-      </div>
+      </AppRoot>
     );
   }
 }

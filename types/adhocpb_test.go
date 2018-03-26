@@ -14,6 +14,7 @@ It is generated from these files:
 	environment.proto
 	error.proto
 	event.proto
+	extension.proto
 	filter.proto
 	handler.proto
 	hook.proto
@@ -45,6 +46,7 @@ It has these top-level messages:
 	Environment
 	Error
 	Event
+	Extension
 	EventFilter
 	Handler
 	HandlerSocket

@@ -32,7 +32,7 @@ Otherwise, see the **for non-C++ users** [instructions here.](https://github.com
 
 ### Quick Start
 
-Once you make a change to any `*.proto` file within the **types** package, you will need to regenerate the associated `*.pb.go` file. To do so, simply run the [genproto.sh](https://github.com/sensu/sensu-go/blob/master/scripts/genproto.sh) script, which will install all required dependencies and launch the code generation (be sure to run the below `./build.sh deps` first though).
+Once you make a change to any `*.proto` file within the **types** package, you will need to regenerate the associated `*.pb.go` file. To do so, simply run `go generate` on the package.
 
 ## Dependencies
 
@@ -71,6 +71,59 @@ dep prune
 
 - [The Saga of Go Dependency Management](https://blog.gopheracademy.com/advent-2016/saga-go-dependency-management/)
 - [`dep` Usage](https://github.com/golang/dep#usage)
+
+## Building
+
+### Docker
+
+The simplest way to the build Sensu is with the `sensu-go-build` image. The
+image contains all the required tools to build the agent, backend and sensuctl.
+
+```sh
+docker pull sensuapp/sensu-go-build
+docker run -it -e GOOS=darwin -v `pwd`:/go/src/github.com/sensu/sensu-go --entrypoint='/go/src/github.com/sensu/sensu-go/build.sh' sensuapp/sensu-go-build
+```
+
+If you would like to build for different platforms and architectures use GOOS
+and GOARCH env variables. See [Optional environment variables](https://golang.org/doc/install/source#environment) for more.
+
+When complete your binaries will be present in the `target` directory.
+
+### Manually
+
+First ensure that you have the required tools installed to build the programs.
+
+* Ensure that you have the Go tools installed and your environment configured.
+  If not follow the official
+  [Install the Go tools](https://golang.org/doc/install#install) guide.
+* When building the Sensu backend you will need NodeJS and Yarn installed so
+  that the web UI may be included in the binary. Follow
+  [Installing Node.js](https://nodejs.org/en/download/package-manager/) and
+  [Yarn Installation](https://yarnpkg.com/en/docs/install) for installation
+  instructions for your platform.
+
+Once all the tools are installed you are now ready to use the build script. To
+build the Sensu backend, agent and sensuctl, run:
+
+```sh
+./build.sh build
+```
+
+Each product can built separately, with one of the following:
+
+```sh
+./build.sh build_agent
+./build.sh build_backend
+./build.sh build_cli
+```
+
+By default the web UI is built along side and bundled into the backend, as this
+can be a time intensive process, we provide an escape hatch. Use the `dev` tag
+to avoid building the web UI.
+
+```sh
+./build.sh build_backend -tags dev
+```
 
 ## Testing
 

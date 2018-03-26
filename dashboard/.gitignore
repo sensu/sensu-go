@@ -20,8 +20,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# b0x
-ab0x.go
+# generated go file
+/assets_vfsgen.go
+/assets_glue.go
 
 # relay
 /**/__generated__/*graph*

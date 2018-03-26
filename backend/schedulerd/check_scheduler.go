@@ -38,11 +38,11 @@ func (s *CheckScheduler) Start() error {
 	toggle:
 		var timer CheckTimer
 		if s.checkCron != "" {
-			s.logger.Infof("starting new cron scheduler")
+			s.logger.Info("starting new cron scheduler")
 			timer = NewCronTimer(s.checkName, s.checkCron)
 		}
 		if timer == nil || s.checkCron == "" {
-			s.logger.Infof("starting new interval scheduler")
+			s.logger.Info("starting new interval scheduler")
 			timer = NewIntervalTimer(s.checkName, uint(s.checkInterval))
 		}
 
@@ -120,7 +120,7 @@ func (s *CheckScheduler) Start() error {
 
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
-	s.logger.Infof("stopping scheduler")
+	s.logger.Info("stopping scheduler")
 	s.cancel()
 
 	return nil

@@ -62,7 +62,10 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 			continue
 		}
 
-		logger.Debugf("sending event: %s to handler: %s", eventData, handler.Name)
+		logger.WithFields(logrus.Fields{
+			"event":   eventData,
+			"handler": handler.Name,
+		}).Debug("sending event to handler")
 
 		switch handler.Type {
 		case "pipe":
@@ -96,9 +99,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 
 		if handler == nil {
 			if err != nil {
-				logger.Error("pipelined failed to retrieve a handler: ", err.Error())
+				logger.WithError(err).Error("pipelined failed to retrieve a handler")
 			} else {
-				logger.Error("pipelined failed to retrieve a handler: name= ", handlerName)
+				logger.WithField("name", handlerName).Error("pipelined failed to retrieve a handler")
 			}
 			continue
 		}
@@ -108,7 +111,7 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 			setHandlers, err := p.expandHandlers(ctx, handler.Handlers, level)
 
 			if err != nil {
-				logger.Error("pipelined failed to expand handler set: ", err.Error())
+				logger.WithError(err).Error("pipelined failed to expand handler set")
 			} else {
 				for name, setHandler := range setHandlers {
 					if _, ok := expanded[name]; !ok {
@@ -140,9 +143,12 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 	result, err := command.ExecuteCommand(context.Background(), handlerExec)
 
 	if err != nil {
-		logger.Error("pipelined failed to execute event pipe handler: ", err.Error())
+		logger.WithError(err).Error("pipelined failed to execute event pipe handler")
 	} else {
-		logger.Infof("pipelined executed event pipe handler: status=%x output=%s", result.Status, result.Output)
+		logger.WithFields(logrus.Fields{
+			"status": result.Status,
+			"output": result.Output,
+		}).Infof("pipelined executed event pipe handler")
 	}
 
 	return result, err
@@ -178,9 +184,12 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 	bytes, err := conn.Write(eventData)
 
 	if err != nil {
-		logger.Errorf("pipelined failed to execute event %s handler: %v", protocol, err.Error())
+		logger.WithError(err).WithField("type", protocol).Error("pipelined failed to execute event handler")
 	} else {
-		logger.Debugf("pipelined executed event %s handler: bytes=%v", protocol, bytes)
+		logger.WithFields(logrus.Fields{
+			"type":  protocol,
+			"bytes": bytes,
+		}).Debug("pipelined executed event handler")
 	}
 
 	return conn, nil

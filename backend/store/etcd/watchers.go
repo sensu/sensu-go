@@ -51,7 +51,7 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 
 				checkConfig = &types.CheckConfig{}
 				if err := json.Unmarshal(event.Kv.Value, checkConfig); err != nil {
-					logger.WithError(err).Error("unable to unmarshal check config from key: ", event.Kv.Key)
+					logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
 				}
 
 				watchEvent = store.WatchEventCheckConfig{
@@ -94,7 +94,7 @@ func (s *Store) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsse
 
 				asset = &types.Asset{}
 				if err := json.Unmarshal(event.Kv.Value, asset); err != nil {
-					logger.WithError(err).Error("unable to unmarshal check config from key: ", event.Kv.Key)
+					logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
 				}
 
 				watchEvent = store.WatchEventAsset{
@@ -137,7 +137,7 @@ func (s *Store) GetHookConfigWatcher(ctx context.Context) <-chan store.WatchEven
 
 				hookCfg = &types.HookConfig{}
 				if err := json.Unmarshal(event.Kv.Value, hookCfg); err != nil {
-					logger.WithError(err).Error("unable to unmarshal check config from key: ", event.Kv.Key)
+					logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
 				}
 
 				watchEvent = store.WatchEventHookConfig{

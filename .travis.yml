@@ -37,9 +37,15 @@ jobs:
         branch: master
     - provider: script
       skip_cleanup: true
-      script: "./build.sh deploy"
+      script: "./build.sh deploy versioned"
       on:
         tags: true
+        branch: master
+    - provider: script
+      skip_cleanup: true
+      script: "./build.sh deploy nightly"
+      on:
+        condition: $DEPLOY = true
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint

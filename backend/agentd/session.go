@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -76,7 +77,10 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 		return nil, fmt.Errorf("the environment '%s:%s' is invalid", cfg.Organization, cfg.Environment)
 	}
 
-	logger.Infof("agent connected: id=%s subscriptions=%s", cfg.AgentID, cfg.Subscriptions)
+	logger.WithFields(logrus.Fields{
+		"id":            cfg.AgentID,
+		"subscriptions": cfg.Subscriptions,
+	}).Info("agent connected")
 
 	s := &Session{
 		ID:            id.String(),
@@ -120,15 +124,18 @@ func (s *Session) recvPump() {
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
-				logger.Warn("stopping session <%s>: recv error: ", s.ID, err.Error())
+				logger.WithFields(logrus.Fields{
+					"session":    s.ID,
+					"recv error": err.Error(),
+				}).Warn("stopping session")
 				return
 			default:
-				logger.Error("recv error: ", err.Error())
+				logger.WithError(err).Error("recv error")
 				continue
 			}
 		}
 		if err := s.handler.Handle(msg.Type, msg.Payload); err != nil {
-			logger.Error("error handling message: ", msg)
+			logger.WithField("message", msg).Error("error handling message")
 		}
 	}
 }
@@ -144,7 +151,7 @@ func (s *Session) subPump() {
 		case c := <-s.checkChannel:
 			request, ok := c.(*types.CheckRequest)
 			if !ok {
-				logger.Errorf("session received non-config over check channel")
+				logger.Error("session received non-config over check channel")
 				continue
 			}
 
@@ -173,14 +180,14 @@ func (s *Session) sendPump() {
 	for {
 		select {
 		case msg := <-s.sendq:
-			logger.Debugf("session - sending message: %s", string(msg.Payload))
+			logger.WithField("message", string(msg.Payload)).Debug("session - sending message")
 			err := s.conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
 				case transport.ConnectionError, transport.ClosedError:
 					return
 				default:
-					logger.Error("send error:", err.Error())
+					logger.WithError(err).Error("send error")
 				}
 			}
 		case <-s.stopping:
@@ -212,7 +219,7 @@ func (s *Session) Start() (err error) {
 
 	for _, sub := range s.cfg.Subscriptions {
 		topic := messaging.SubscriptionTopic(org, env, sub)
-		logger.Debugf("Subscribing to topic %q", topic)
+		logger.WithField("topic", topic).Debug("subscribing to topic")
 		subscription, err := s.bus.Subscribe(topic, agentID, s)
 		if err != nil {
 			logger.WithError(err).Error("error starting subscription")

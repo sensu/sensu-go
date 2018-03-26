@@ -7,7 +7,8 @@ import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
-import ExteriorWrapper from "../components/ExteriorWrapper";
+import AppThemeProvider from "../components/AppThemeProvider";
+import AppRoot from "../components/AppRoot";
 import { authenticate } from "../utils/authentication";
 
 // defaultRoute describe the location where the user will land after a
@@ -79,46 +80,48 @@ class Login extends React.Component {
     const handlePassword = ev => this.setState({ password: ev.target.value });
 
     return (
-      <ExteriorWrapper>
-        <Paper className={classes.loginCard}>
-          <form onSubmit={this.handleSubmit}>
-            <TextField
-              name="username"
-              label="Username"
-              aria-label="Username"
-              autoComplete="username"
-              spellCheck="false"
-              className={classes.textField}
-              fullWidth
-              margin="normal"
-              onChange={handleUsername}
-              disabled={disabled}
-              error={!!authError}
-            />
-            <TextField
-              type="password"
-              name="password"
-              label="Password"
-              aria-label="Password"
-              className={classes.textField}
-              fullWidth
-              onChange={handlePassword}
-              disabled={disabled}
-              error={!!authError}
-              helperText={authError}
-            />
-            <Button
-              type="submit"
-              color="primary"
-              raised
-              disabled={disabled}
-              className={classes.button}
-            >
-              Log in
-            </Button>
-          </form>
-        </Paper>
-      </ExteriorWrapper>
+      <AppThemeProvider>
+        <AppRoot>
+          <Paper className={classes.loginCard}>
+            <form onSubmit={this.handleSubmit}>
+              <TextField
+                name="username"
+                label="Username"
+                aria-label="Username"
+                autoComplete="username"
+                spellCheck="false"
+                className={classes.textField}
+                fullWidth
+                margin="normal"
+                onChange={handleUsername}
+                disabled={disabled}
+                error={!!authError}
+              />
+              <TextField
+                type="password"
+                name="password"
+                label="Password"
+                aria-label="Password"
+                className={classes.textField}
+                fullWidth
+                onChange={handlePassword}
+                disabled={disabled}
+                error={!!authError}
+                helperText={authError}
+              />
+              <Button
+                type="submit"
+                color="primary"
+                variant="raised"
+                disabled={disabled}
+                className={classes.button}
+              >
+                Log in
+              </Button>
+            </form>
+          </Paper>
+        </AppRoot>
+      </AppThemeProvider>
     );
   }
 }

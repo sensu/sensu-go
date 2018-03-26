@@ -95,7 +95,7 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 		return http.StatusUnauthorized
 	}
 
-	logger.WithField("code", code).Errorf("unknown error code")
+	logger.WithField("code", code).Error("unknown error code")
 	return http.StatusInternalServerError
 }
 

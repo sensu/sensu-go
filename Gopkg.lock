@@ -17,6 +17,12 @@
   revision = "04b7f292a41fcb5da32dda536c0807fc13e8351c"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/NYTimes/gziphandler"
+  packages = ["."]
+  revision = "5032c8878b9dd46cfe8c625c0d9b9f258a560ee8"
+
+[[projects]]
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
@@ -496,6 +502,18 @@
   revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/httpfs"
+  packages = ["vfsutil"]
+  revision = "809beceb23714880abc4a382a00c05f89d13b1cc"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/vfsgen"
+  packages = ["."]
+  revision = "ffb13db8def02f545acc58bd288ec6057c2bbfb9"
+
+[[projects]]
   name = "github.com/soheilhy/cmux"
   packages = ["."]
   revision = "bb79a83465015a27a175925ebd155e660f55e9f1"
@@ -610,9 +628,7 @@
     "internal/timeseries",
     "lex/httplex",
     "publicsuffix",
-    "trace",
-    "webdav",
-    "webdav/internal/xml"
+    "trace"
   ]
   revision = "b60f3a92103dfd93dfcb900ec77c6d0643510868"
 
@@ -711,6 +727,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "77eb53019a0b9a5ee6653e3f38ba8b3ad2e39bdf05960f4d022db4ddc331d78b"
+  inputs-digest = "66715a9acd5a94739a58830794a0f656058525e3f540ff787379b1ec4c2790e4"
   solver-name = "gps-cdcl"
   solver-version = 1

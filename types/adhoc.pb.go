@@ -14,6 +14,7 @@
 		environment.proto
 		error.proto
 		event.proto
+		extension.proto
 		filter.proto
 		handler.proto
 		hook.proto
@@ -45,6 +46,7 @@
 		Environment
 		Error
 		Event
+		Extension
 		EventFilter
 		Handler
 		HandlerSocket

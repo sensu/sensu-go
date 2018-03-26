@@ -28,7 +28,6 @@ const (
 	flagAgentPort             = "agent-port"
 	flagAPIHost               = "api-host"
 	flagAPIPort               = "api-port"
-	flagDashboardDir          = "dashboard-dir"
 	flagDashboardHost         = "dashboard-host"
 	flagDashboardPort         = "dashboard-port"
 	flagDeregistrationHandler = "deregistration-handler"
@@ -87,7 +86,6 @@ func newStartCommand() *cobra.Command {
 				AgentPort:             viper.GetInt(flagAgentPort),
 				APIHost:               viper.GetString(flagAPIHost),
 				APIPort:               viper.GetInt(flagAPIPort),
-				DashboardDir:          viper.GetString(flagDashboardDir),
 				DashboardHost:         viper.GetString(flagDashboardHost),
 				DashboardPort:         viper.GetInt(flagDashboardPort),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
@@ -181,7 +179,6 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagAgentPort, 8081)
 	viper.SetDefault(flagAPIHost, "[::]")
 	viper.SetDefault(flagAPIPort, 8080)
-	viper.SetDefault(flagDashboardDir, "")
 	viper.SetDefault(flagDashboardHost, "[::]")
 	viper.SetDefault(flagDashboardPort, 3000)
 	viper.SetDefault(flagDeregistrationHandler, "")
@@ -208,7 +205,6 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "http api listener host")
 	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "http api port")
-	cmd.Flags().String(flagDashboardDir, viper.GetString(flagDashboardDir), "path to sensu dashboard static assets")
 	cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
 	cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")

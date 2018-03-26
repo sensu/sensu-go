@@ -75,12 +75,17 @@ var usageTemplate = `Usage:
 {{- if not .HasSubCommands}}	{{.UseLine}}{{end}}
 {{- if .HasSubCommands}}	{{ .CommandPath}} COMMAND{{end}}
 
-{{ .Short | trim }}
+{{- if .HasAvailableLocalFlags}}
 
-{{- if .HasFlags}}
+Flags:
+{{ wrappedLocalFlagUsages . | trimRightSpace}}
 
-Options:
-{{ wrappedFlagUsages . | trimRightSpace}}
+{{- end}}
+
+{{- if .HasAvailableInheritedFlags}}
+
+Global Flags:
+{{ wrappedInheritedFlagUsages . | trimRightSpace}}
 
 {{- end}}
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -77,7 +78,10 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 			}
 			continue
 		}
-		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
+		logger.WithFields(logrus.Fields{
+			"check": check.Name,
+			"topic": topic,
+		}).Debug("sending check request")
 
 		if pubErr := c.bus.Publish(topic, request); pubErr != nil {
 			logger.WithError(pubErr).Error("error publishing check request")
@@ -232,10 +236,13 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 	var err error
 	for _, sub := range check.Subscriptions {
 		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
-		logger.Debugf("sending check request for %s on topic %s", check.Name, topic)
+		logger.WithFields(logrus.Fields{
+			"check": check.Name,
+			"topic": topic,
+		}).Debug("sending check request")
 
 		if pubErr := a.bus.Publish(topic, request); pubErr != nil {
-			logger.Info("error publishing check request: ", pubErr.Error())
+			logger.WithError(pubErr).Error("error publishing check request")
 			err = pubErr
 		}
 	}

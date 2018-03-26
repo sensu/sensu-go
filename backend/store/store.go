@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -112,6 +113,9 @@ type Store interface {
 
 	// UserStore provides an interface for managing users
 	UserStore
+
+	// ExtensionRegistry tracks third-party extensions.
+	ExtensionRegistry
 
 	// NewInitializer returns the Initializer interfaces, which provides the
 	// required mechanism to verify if a store is initialized
@@ -499,4 +503,23 @@ type Initializer interface {
 
 	// Lock locks a mutex to avoid competing writes
 	Lock() error
+}
+
+// ErrNoExtension is returned when a named extension does not exist.
+var ErrNoExtension = errors.New("the extension does not exist")
+
+// ExtensionRegistry registers and tracks Sensu extensions.
+type ExtensionRegistry interface {
+	// Register registers an extension. It associates an extension type and
+	// name with a URL. The registry assumes that the extension provides
+	// a handler and a mutator named 'name'.
+	RegisterExtension(context.Context, *types.Extension) error
+
+	// Deregister deregisters an extension. If the extension does not exist,
+	// nil error is returned.
+	DeregisterExtension(ctx context.Context, name string) error
+
+	// Get gets the address of a registered extension. If the extension does
+	// not exist, ErrNoExtension is returned.
+	GetExtension(ctx context.Context, name string) (*types.Extension, error)
 }

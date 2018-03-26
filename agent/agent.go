@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent/assetmanager"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
@@ -248,7 +249,10 @@ func (a *Agent) receivePump() {
 				continue
 			}
 
-			logger.Info("message received - type: ", msg.Type, " message: ", string(msg.Payload))
+			logger.WithFields(logrus.Fields{
+				"type":    msg.Type,
+				"message": string(msg.Payload),
+			}).Info("message received")
 			err := a.handler.Handle(msg.Type, msg.Payload)
 			if err != nil {
 				logger.WithError(err).Error("error handling message")
@@ -353,7 +357,7 @@ func (a *Agent) Run() error {
 
 	// Send an immediate keepalive once we've connected.
 	if err := a.sendKeepalive(); err != nil {
-		logger.Error(err)
+		logger.WithError(err).Error("error sending keepalive")
 	}
 
 	go func() {
