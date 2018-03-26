@@ -160,7 +160,7 @@ build_agent:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_agent
 
 build_backend:
-	GOOS=linux GOARCH=amd64 ./build.sh build_dashboard
+	GOOS=linux GOARCH=amd64 ./build.sh dashboard
 	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_backend
 
 build_cli:
