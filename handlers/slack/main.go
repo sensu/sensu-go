@@ -182,9 +182,10 @@ func messageAttachment(event *types.Event) *slack.Attachment {
 func sendMessage(event *types.Event) error {
 	hook := slack.NewWebHook(webhookURL)
 	return hook.PostMessage(&slack.WebHookPostPayload{
-		Text:        "",
-		Channel:     channel,
 		Attachments: []*slack.Attachment{messageAttachment(event)},
+		Channel:     channel,
+		IconUrl:     iconURL,
+		Username:    username,
 	})
 }
 

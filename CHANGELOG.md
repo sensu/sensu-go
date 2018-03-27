@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Made Changelog examples in CONTRIBUTING.md more obvious
 - Added cli support for setting environment variables in mutators and handlers.
 - Added gRPC extension service definition.
+- The slack handler now uses the iconURL & username flag parameters.
 - Support for nightlies in build/packaging tooling.
 - Added extension regsitry to the store.
 - Add sensuctl create command.
