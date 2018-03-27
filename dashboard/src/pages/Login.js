@@ -126,7 +126,9 @@ class Login extends React.Component {
                 label="Username"
                 aria-label="Username"
                 autoComplete="username"
-                spellCheck="false"
+                autoCorrect="false"
+                autoCapitalize="none"
+                spellCheck={false}
                 className={classes.textField}
                 fullWidth
                 margin="normal"
