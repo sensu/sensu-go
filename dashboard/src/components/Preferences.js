@@ -32,8 +32,11 @@ const styles = theme => ({
 
 class Preferences extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
+    theme: PropTypes.shape({
+      theme: PropTypes.string,
+      dark: PropTypes.bool,
+    }).isRequired,
     open: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
     dispatch: PropTypes.func.isRequired,
@@ -64,7 +67,7 @@ class Preferences extends React.Component {
   };
 
   render() {
-    const { classes, open, onClose } = this.props;
+    const { classes, open, onClose, theme } = this.props;
     const { anchorEl } = this.state;
 
     return (
@@ -80,14 +83,14 @@ class Preferences extends React.Component {
                 secondary="Switch to the dark theme..."
               />
               <ListItemSecondaryAction>
-                <Switch onChange={this.handleToggle} />
+                <Switch onChange={this.handleToggle} checked={theme.dark} />
               </ListItemSecondaryAction>
             </ListItem>
             <ListItem button onClick={this.handleThemeClick}>
               <ListItemIcon>
                 <EyeIcon />
               </ListItemIcon>
-              <ListItemText primary="Theme" secondary="Default" />
+              <ListItemText primary="Theme" secondary={theme.theme} />
             </ListItem>
           </List>
           <Menu
@@ -116,4 +119,8 @@ class Preferences extends React.Component {
   }
 }
 
-export default compose(connect(), withStyles(styles))(Preferences);
+const enhancer = compose(
+  connect(st => ({ theme: st.theme })),
+  withStyles(styles),
+);
+export default enhancer(Preferences);

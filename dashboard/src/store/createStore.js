@@ -8,6 +8,7 @@ import createMatchEnhancer from "found/lib/createMatchEnhancer";
 import Matcher from "found/lib/Matcher";
 
 import thunkMiddleware from "redux-thunk";
+import persistToLocalStorage from "./persistToLocalStorage";
 import routeConfig from "../routes";
 
 function createStore(reducer) {
@@ -19,6 +20,7 @@ function createStore(reducer) {
           [require("redux-freeze")]
         : []),
     ),
+    persistToLocalStorage("theme"),
     createHistoryEnhancer({
       protocol: new BrowserProtocol(),
       middlewares: [queryMiddleware],
