@@ -344,7 +344,7 @@ deploy() {
     make clean
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
     docker pull sensuapp/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
+    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
 
     # Deploy Docker images to the Docker Hub
