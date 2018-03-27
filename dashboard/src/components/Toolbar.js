@@ -13,12 +13,17 @@ import logo from "../assets/logo/wordmark/white.svg";
 import NamespaceLabel from "./NamespaceLabel";
 
 const styles = theme => ({
+  container: {
+    paddingTop: "env(safe-area-inset-top)",
+    backgroundColor: theme.palette.primary.dark,
+  },
   appBar: {
     transition: theme.transitions.create("width"),
   },
   toolbar: {
     marginLeft: -12, // Account for button padding to match style guide.
     marginRight: -12,
+    backgroundColor: theme.palette.primary.main,
   },
   title: {
     marginLeft: 20,
@@ -46,21 +51,27 @@ class Toolbar extends React.Component {
 
     return (
       <AppBar className={classes.appBar}>
-        <MaterialToolbar className={classes.toolbar}>
-          <IconButton onClick={toggleToolbar} aria-label="Menu" color="inherit">
-            <MenuIcon />
-          </IconButton>
-          <Typography
-            className={classes.title}
-            variant="title"
-            color="inherit"
-            noWrap
-          >
-            <img alt="sensu logo" src={logo} className={classes.logo} />
-          </Typography>
-          <div className={classes.grow} />
-          <NamespaceLabel />
-        </MaterialToolbar>
+        <div className={classes.container}>
+          <MaterialToolbar className={classes.toolbar}>
+            <IconButton
+              onClick={toggleToolbar}
+              aria-label="Menu"
+              color="inherit"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              className={classes.title}
+              variant="title"
+              color="inherit"
+              noWrap
+            >
+              <img alt="sensu logo" src={logo} className={classes.logo} />
+            </Typography>
+            <div className={classes.grow} />
+            <NamespaceLabel />
+          </MaterialToolbar>
+        </div>
       </AppBar>
     );
   }

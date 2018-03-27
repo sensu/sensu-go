@@ -37,9 +37,12 @@ const styles = theme => ({
     maxWidth: 400,
     backgroundColor: theme.palette.background.paper,
   },
+  headerContainer: {
+    paddingTop: "env(safe-area-inset-top)",
+    backgroundColor: theme.palette.primary.dark,
+  },
   header: {
     height: 172,
-    backgroundColor: theme.palette.primary.dark,
   },
   row: {
     display: "flex",
@@ -97,31 +100,33 @@ class Drawer extends React.Component {
     return (
       <MaterialDrawer variant="temporary" open={open} onClose={onToggle}>
         <div className={classes.paper}>
-          <div className={classes.header}>
-            <div className={classes.row}>
-              <IconButton
-                onClick={onToggle}
-                className={classes.hamburgerButton}
-              >
-                <MenuIcon />
-              </IconButton>
-              <img alt="sensu" src={logo} className={classes.logo} />
-            </div>
-            <div className={classes.row}>
-              {/* TODO update with global variables or whatever when we get them */}
-              <div className={classes.namespaceIcon}>
-                <OrganizationIcon
-                  icon="HalfHeart"
-                  iconColor="#FA8072"
-                  size={36}
+          <div className={classes.headerContainer}>
+            <div className={classes.header}>
+              <div className={classes.row}>
+                <IconButton
+                  onClick={onToggle}
+                  className={classes.hamburgerButton}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <img alt="sensu" src={logo} className={classes.logo} />
+              </div>
+              <div className={classes.row}>
+                {/* TODO update with global variables or whatever when we get them */}
+                <div className={classes.namespaceIcon}>
+                  <OrganizationIcon
+                    icon="HalfHeart"
+                    iconColor="#FA8072"
+                    size={36}
+                  />
+                </div>
+              </div>
+              <div className={classes.row}>
+                <NamespaceSelector
+                  viewer={viewer}
+                  className={classes.namespaceSelector}
                 />
               </div>
-            </div>
-            <div className={classes.row}>
-              <NamespaceSelector
-                viewer={viewer}
-                className={classes.namespaceSelector}
-              />
             </div>
           </div>
           <Divider />

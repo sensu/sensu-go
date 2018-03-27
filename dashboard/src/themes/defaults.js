@@ -5,8 +5,10 @@ const defaults = {
     // ...
   },
   typography: () => {
-    const body = `"SF Pro Text", "Roboto", "Helvetica", "Arial", sans-serif`;
+    // Prefer 'Display' for larger fonts
+    // https://developer.apple.com/ios/human-interface-guidelines/visual-design/typography/
     const title = `"SF Pro Display", "Roboto", "Helvetica", "Arial", sans-serif`;
+    const body = `"SF Pro Text", "Roboto", "Helvetica", "Arial", sans-serif`;
 
     return {
       fontFamily: title,
