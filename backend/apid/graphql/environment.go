@@ -116,14 +116,14 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 	if len(filter) > 0 {
 		predicate, err := eval.NewPredicate(filter)
 		if err != nil {
-			return nil, err
-		}
-
-		for _, event := range records {
-			if matched, err := predicate.Eval(event); err != nil {
-				return nil, err
-			} else if matched {
-				filteredEvents = append(filteredEvents, event)
+			logger.WithError(err).Debug("error with given predicate")
+		} else {
+			for _, event := range records {
+				if matched, err := predicate.Eval(event); err != nil {
+					logger.WithError(err).Debug("unable to filer event")
+				} else if matched {
+					filteredEvents = append(filteredEvents, event)
+				}
 			}
 		}
 	} else {
