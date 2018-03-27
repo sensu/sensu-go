@@ -381,7 +381,7 @@ case "$cmd" in
         ;;
     "deploy")
         check_deploy
-        deploy
+        deploy "${@:2}"
         ;;
     "deps")
         install_deps
