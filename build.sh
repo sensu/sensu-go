@@ -11,6 +11,8 @@ cmd=${1:-"all"}
 
 RACE=""
 
+VERSION_CMD="go run ./version/cmd/version/version.go"
+
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then
         RACE="-race"
@@ -41,17 +43,12 @@ install_deps () {
     go get honnef.co/go/tools/cmd/megacheck
     go get github.com/golang/lint/golint
     install_golang_dep
-    build_version_bin
 }
 
 install_golang_dep() {
     go get github.com/golang/dep/cmd/dep
     echo "Running dep ensure..."
     dep ensure -v -vendor-only
-}
-
-build_version_bin () {
-    go build -o version-bin ./version/cmd/version/version.go
 }
 
 cmd_name_map() {
@@ -92,8 +89,8 @@ build_binary () {
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-    local version=$(./version-bin -v)
-    local prerelease=$(./version-bin -p)
+    local version=$($VERSION_CMD -v)
+    local prerelease=$($VERSION_CMD -p)
     local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
     local build_sha=$(git rev-parse HEAD)
 
@@ -265,8 +262,8 @@ docker_commands () {
         # version/prerelease/iteration files
     elif [ "$push" == "push" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        local version=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t))
-        local version_iteration=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t).$(./version-bin -i))
+        local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
+        local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
 
         if [ "$release" == "versioned" ]; then
             docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
