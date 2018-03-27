@@ -3,8 +3,13 @@
   "name": "Sensu UI",
   "icons": [
     {
-      "src": "touch-icon-iphone.png",
-      "sizes": "192x192",
+      "src": "/app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    },
+    {
+      "src": "/app-icon-sm.png",
+      "sizes": "64x64",
       "type": "image/png"
     }
   ],
