@@ -38,7 +38,6 @@ clean_target_dir() {
 build_supported_binaries() {
   clean_target_dir
 
-  ./build.sh build_dashboard
   GOOS=darwin GOARCH=amd64 ./build.sh build_cli
   GOOS=linux GOARCH=amd64 ./build.sh build_cli
   GOOS=linux GOARCH=386 ./build.sh build_cli
