@@ -26,13 +26,6 @@ func ExecuteCommand(cli *cli.SensuCli) *cobra.Command {
 		Use:          "execute [NAME]",
 		Short:        "request a check execution",
 		SilenceUsage: true,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
-			if !isInteractive {
-				// Mark flags are required for bash-completions
-				_ = cmd.MarkFlagRequired("check")
-			}
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				_ = cmd.Help()
@@ -80,7 +73,6 @@ func ExecuteCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("check", "c", "", "name of the check")
 	cmd.Flags().StringP("reason", "r", "", "optional reason for requesting a check execution")
 	cmd.Flags().StringP("subscriptions", "s", "", "optional comma separated list of subscriptions to override the check configuration")
 

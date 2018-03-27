@@ -33,6 +33,7 @@ and yarn are now dependencies for building the backend.
 - Build protobufs with go generate.
 - Creating roles via sensuctl now supports passing flags for setting permissions
   rules.
+- Removed -c (check) flag in sensuctl check execute command.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.
