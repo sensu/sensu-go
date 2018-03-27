@@ -7,7 +7,7 @@ class ThemeProvider extends React.Component {
   static propTypes = {
     theme: PropTypes.string,
     dark: PropTypes.bool,
-    children: PropTypes.element.isRequired,
+    children: PropTypes.node.isRequired,
   };
 
   static defaultProps = {

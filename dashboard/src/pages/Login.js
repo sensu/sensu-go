@@ -22,12 +22,9 @@ class Login extends React.Component {
     router: routerShape.isRequired,
   };
 
-  // Temp.
   static styles = theme => ({
-    "@global": {
-      html: {
-        background: theme.palette.primary.main,
-      },
+    "@global html": {
+      background: theme.palette.primary.main,
     },
     loginCard: {
       margin: "0 auto",
@@ -135,6 +132,7 @@ class Login extends React.Component {
             name="password"
             label="Password"
             aria-label="Password"
+            autoComplete="current-password"
             className={classes.textField}
             fullWidth
             onChange={handlePassword}

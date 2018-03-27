@@ -3,39 +3,10 @@ import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 import { createFragmentContainer, graphql } from "react-relay";
 
+import AppRoot from "./AppRoot";
 import AppBar from "./Toolbar";
 import Drawer from "./Drawer";
 import QuickNav from "./QuickNav";
-
-const styles = theme => ({
-  drawer: {
-    [theme.breakpoints.up("lg")]: {
-      width: 250,
-    },
-  },
-  quicknav: {
-    position: "fixed",
-    flexDirection: "column",
-    alignItems: "center",
-    top: 80,
-    left: 0,
-    width: 72,
-    display: "none",
-    [theme.breakpoints.up("md")]: {
-      display: "flex",
-    },
-  },
-  maincontainer: {
-    position: "relative",
-    display: "flex",
-    width: "100%",
-    paddingTop: 64,
-    [theme.breakpoints.up("md")]: {
-      paddingLeft: 72,
-      paddingRight: 72,
-    },
-  },
-});
 
 class AppFrame extends React.Component {
   static propTypes = {
@@ -45,6 +16,36 @@ class AppFrame extends React.Component {
   };
 
   static defaultProps = { children: null };
+
+  static styles = theme => ({
+    drawer: {
+      [theme.breakpoints.up("lg")]: {
+        width: 250,
+      },
+    },
+    quicknav: {
+      position: "fixed",
+      flexDirection: "column",
+      alignItems: "center",
+      top: 80,
+      left: 0,
+      width: 72,
+      display: "none",
+      [theme.breakpoints.up("md")]: {
+        display: "flex",
+      },
+    },
+    maincontainer: {
+      position: "relative",
+      display: "flex",
+      width: "100%",
+      paddingTop: 64,
+      [theme.breakpoints.up("md")]: {
+        paddingLeft: 72,
+        paddingRight: 72,
+      },
+    },
+  });
 
   state = {
     drawerOpen: false,
@@ -59,7 +60,7 @@ class AppFrame extends React.Component {
     };
 
     return (
-      <div>
+      <AppRoot>
         <AppBar toggleToolbar={toggleDrawer} />
         <Drawer
           viewer={viewer}
@@ -71,12 +72,14 @@ class AppFrame extends React.Component {
           <QuickNav className={classes.quicknav} />
           {children}
         </div>
-      </div>
+      </AppRoot>
     );
   }
 }
+
+const EnhancedAppFrame = withStyles(AppFrame.styles)(AppFrame);
 export default createFragmentContainer(
-  withStyles(styles)(AppFrame),
+  EnhancedAppFrame,
   graphql`
     fragment AppFrame_viewer on Viewer {
       ...Drawer_viewer
