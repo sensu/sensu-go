@@ -19,6 +19,8 @@ WINDOWS_ARCHITECTURES   := 386 amd64
 ##
 $(shell mkdir -p out)
 VERSION_BIN := $(shell go build -o version-bin ./version/cmd/version/version.go)
+HOST_GOOS := $(shell go env GOOS)
+HOST_GOARCH := $(shell go env GOARCH)
 
 ##
 # FPM

@@ -157,7 +157,7 @@ build_cli() {
 
 build_dashboard() {
     check_for_presence_of_yarn
-    go generate $@ ./dashboard
+    GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
 build_command () {
