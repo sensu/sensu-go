@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 import { createFragmentContainer, graphql } from "react-relay";
 
-import AppRoot from "./AppRoot";
 import AppBar from "./Toolbar";
 import Drawer from "./Drawer";
 import QuickNav from "./QuickNav";
@@ -60,7 +59,7 @@ class AppFrame extends React.Component {
     };
 
     return (
-      <AppRoot>
+      <div>
         <AppBar toggleToolbar={toggleDrawer} />
         <Drawer
           viewer={viewer}
@@ -72,7 +71,7 @@ class AppFrame extends React.Component {
           <QuickNav className={classes.quicknav} />
           {children}
         </div>
-      </AppRoot>
+      </div>
     );
   }
 }
