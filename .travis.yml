@@ -21,6 +21,7 @@ before_install:
 - echo -e "machine github.com\n login $GITHUB_TOKEN" >> ~/.netrc
 - ulimit -s 1082768
 install:
+- "git fetch --tags"
 - "./build.sh deps"
 - "./build.sh build_tools"
 script: "./build.sh $TEST_SUITE"
