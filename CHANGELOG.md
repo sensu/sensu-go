@@ -18,6 +18,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added extension registry support to apid.
 - Added extension registry to the store.
 - Add sensuctl create command.
+- Adds a statsd server to the sensu-agent which runs statsd at a configurable
+flush interval and converts gostatsd metrics to Sensu Metric Format. These
+metrics are logged for the time being.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024

@@ -40,8 +40,11 @@ const (
 	flagDeregistrationHandler = "deregistration-handler"
 	flagEnvironment           = "environment"
 	flagExtendedAttributes    = "custom-attributes"
+	flagFlushInterval         = "flush-interval"
 	flagKeepaliveInterval     = "keepalive-interval"
 	flagKeepaliveTimeout      = "keepalive-timeout"
+	flagMetricsHost           = "metrics-host"
+	flagMetricsPort           = "metrics-port"
 	flagOrganization          = "organization"
 	flagPassword              = "password"
 	flagRedact                = "redact"
@@ -113,8 +116,11 @@ func newStartCommand() *cobra.Command {
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
 			cfg.Environment = viper.GetString(flagEnvironment)
 			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
+			cfg.StatsdServer.FlushInterval = viper.GetInt(flagFlushInterval)
 			cfg.KeepaliveInterval = viper.GetInt(flagKeepaliveInterval)
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
+			cfg.StatsdServer.Host = viper.GetString(flagMetricsHost)
+			cfg.StatsdServer.Port = viper.GetInt(flagMetricsPort)
 			cfg.Organization = viper.GetString(flagOrganization)
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
@@ -209,8 +215,11 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagDeregister, false)
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagEnvironment, agent.DefaultEnvironment)
+	viper.SetDefault(flagFlushInterval, agent.DefaultFlushInterval)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
 	viper.SetDefault(flagKeepaliveTimeout, agent.DefaultKeepaliveTimeout)
+	viper.SetDefault(flagMetricsHost, agent.DefaultMetricsHost)
+	viper.SetDefault(flagMetricsPort, agent.DefaultMetricsPort)
 	viper.SetDefault(flagOrganization, agent.DefaultOrganization)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
 	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)
@@ -236,6 +245,9 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
 	cmd.Flags().String(flagEnvironment, viper.GetString(flagEnvironment), "agent environment")
 	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "custom attributes to include in the agent entity")
+	cmd.Flags().Int(flagFlushInterval, viper.GetInt(flagFlushInterval), "number of seconds between statsd flush")
+	cmd.Flags().String(flagMetricsHost, viper.GetString(flagMetricsHost), "address used for the statsd metrics server")
+	cmd.Flags().String(flagMetricsPort, viper.GetString(flagMetricsPort), "port used for the statsd metrics server")
 	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")

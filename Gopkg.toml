@@ -163,3 +163,7 @@ required = ["github.com/shirou/w32"]
 [[constraint]]
   branch = "master"
   name = "github.com/NYTimes/gziphandler"
+
+[[constraint]]
+  name = "github.com/atlassian/gostatsd"
+  version = "2.3.0"
