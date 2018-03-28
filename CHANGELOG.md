@@ -23,6 +23,7 @@ flush interval and converts gostatsd metrics to Sensu Metric Format. These
 metric events are swallowed for the time being.
 - Add event filtering to extensions.
 - Proper 404 page for web UI.
+- Add sensuctl extension command.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024

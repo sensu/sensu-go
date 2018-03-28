@@ -198,6 +198,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 		routers.NewRolesRouter(store),
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
+		routers.NewExtensionsRouter(store),
 	)
 }
 
