@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 	"time"
 
@@ -305,4 +306,9 @@ func FixtureProxyRequests(splay bool) *ProxyRequests {
 		Splay:         splay,
 		SplayCoverage: splayCoverage,
 	}
+}
+
+// URIPath returns the path component of a Check URI.
+func (c *Check) URIPath() string {
+	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
 }

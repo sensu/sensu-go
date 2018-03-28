@@ -39,6 +39,9 @@ const (
 	// RuleTypeEventFilter access control for filter objects
 	RuleTypeEventFilter = "filters"
 
+	// RuleTypeExtension access control for extension registry
+	RuleTypeExtension = "extensions"
+
 	// RuleTypeHandler access control for handler objects
 	RuleTypeHandler = "handlers"
 

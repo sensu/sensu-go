@@ -1,6 +1,8 @@
 package types
 
-import "time"
+import (
+	"time"
+)
 
 // GetOrganization returns the organization the entity is associated with.
 func (perr *Error) GetOrganization() string {

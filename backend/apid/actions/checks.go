@@ -3,11 +3,12 @@ package actions
 import (
 	"encoding/json"
 
+	"context"
+
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
-	"golang.org/x/net/context"
 )
 
 // checkConfigUpdateFields whitelists fields allowed to be updated for CheckConfigs

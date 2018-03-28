@@ -1,10 +1,11 @@
 package testutil
 
 import (
+	"context"
+
 	"github.com/coreos/etcd/store"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 // SetContextFn take context and return new context

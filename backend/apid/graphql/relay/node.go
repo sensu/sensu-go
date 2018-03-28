@@ -1,10 +1,11 @@
 package relay
 
 import (
+	"context"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/graphql"
-	"golang.org/x/net/context"
 )
 
 // A NodeResolver describes an object that contains a globally unique ID.
