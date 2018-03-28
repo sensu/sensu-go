@@ -18,14 +18,18 @@ WINDOWS_ARCHITECTURES   := 386 amd64
 # Setup
 ##
 $(shell mkdir -p out)
+HOST_GOOS := $(shell go env GOOS)
+HOST_GOARCH := $(shell go env GOARCH)
+VERSION_CMD := go run ./version/cmd/version/version.go
 
 ##
 # FPM
 ##
-VERSION=$(shell cat version/version.txt)
-PRERELEASE=$(shell cat version/prerelease.txt)
-ITERATION=$(shell cat version/iteration.txt)
-ARCHITECTURE=$(GOARCH)
+VERSION := $(shell $(VERSION_CMD) -v)
+BUILD_TYPE := $(shell $(VERSION_CMD) -t)
+PRERELEASE := $(shell $(VERSION_CMD) -p)
+ITERATION := $(shell $(VERSION_CMD) -i)
+ARCHITECTURE := $(GOARCH)
 DESCRIPTION="A monitoring framework that aims to be simple, malleable, and scalable."
 LICENSE=MIT
 VENDOR="Sensu, Inc."
@@ -34,8 +38,18 @@ URL="https://sensuapp.org"
 
 BIN_SOURCE_DIR=target/$(GOOS)-$(GOARCH)
 
+ifeq ($(BUILD_TYPE),stable)
+FPM_VERSION=$(VERSION)
+else ifeq ($(BUILD_TYPE),nightly)
+VERSION=$(shell $(VERSION_CMD) -h)
+DATE=$(shell date "+%Y%m%d")
+FPM_VERSION=$(VERSION)~nightly+$(DATE)
+else
+FPM_VERSION=$(VERSION)~$(PRERELEASE)
+endif
+
 FPM_FLAGS = \
-	--version $(VERSION)~$(subst .,,$(PRERELEASE)) \
+	--version $(FPM_VERSION) \
 	--iteration $(ITERATION) \
 	--url $(URL) \
 	--license $(LICENSE) \
@@ -148,7 +162,7 @@ build_agent:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_agent
 
 build_backend:
-	GOOS=linux GOARCH=amd64 ./build.sh build_dashboard
+	GOOS=linux GOARCH=amd64 ./build.sh dashboard
 	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_backend
 
 build_cli:
@@ -346,6 +360,8 @@ publish_travis:
 	make publish-systemd-packages
 
 PC_PUSH_CMD=package_cloud push --skip-errors
+PC_USER=sensu
+PC_REPOSITORY=$(shell $(VERSION_CMD) -t)
 
 ##
 # publish packages without a service
@@ -353,10 +369,10 @@ PC_PUSH_CMD=package_cloud push --skip-errors
 publish-noservice-packages: $(addprefix publish-noservice-package-,$(ALL_DISTRO_VERSIONS))
 
 $(addprefix publish-noservice-package-,$(DEB_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-noservice-package-,,$@) out/deb/none/*
+	$(PC_PUSH_CMD) $(PC_USER)/$(PC_REPOSITORY)/$(subst publish-noservice-package-,,$@) out/deb/none/*
 
 $(addprefix publish-noservice-package-,$(RPM_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-noservice-package-,,$@) out/rpm/none/*
+	$(PC_PUSH_CMD) $(PC_USER)/$(PC_REPOSITORY)/$(subst publish-noservice-package-,,$@) out/rpm/none/*
 
 ##
 # publish packages with sysvinit
@@ -364,10 +380,10 @@ $(addprefix publish-noservice-package-,$(RPM_DISTRO_VERSIONS)):
 publish-sysvinit-packages: $(addprefix publish-sysvinit-package-,$(SYSVINIT_DISTRO_VERSIONS))
 
 $(addprefix publish-sysvinit-package-,$(DEB_SYSVINIT_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-sysvinit-package-,,$@) out/deb/sysvinit/*
+	$(PC_PUSH_CMD) $(PC_USER)/$(PC_REPOSITORY)/$(subst publish-sysvinit-package-,,$@) out/deb/sysvinit/*
 
 $(addprefix publish-sysvinit-package-,$(RPM_SYSVINIT_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-sysvinit-package-,,$@) out/rpm/sysvinit/*
+	$(PC_PUSH_CMD) $(PC_USER)/$(PC_REPOSITORY)/$(subst publish-sysvinit-package-,,$@) out/rpm/sysvinit/*
 
 ##
 # publish packages with systemd
@@ -375,7 +391,7 @@ $(addprefix publish-sysvinit-package-,$(RPM_SYSVINIT_DISTRO_VERSIONS)):
 publish-systemd-packages: $(addprefix publish-systemd-package-,$(SYSTEMD_DISTRO_VERSIONS))
 
 $(addprefix publish-systemd-package-,$(DEB_SYSTEMD_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-systemd-package-,,$@) out/deb/systemd/*
+	$(PC_PUSH_CMD) $(PC_USER)/$(PC_REPOSITORY)/$(subst publish-systemd-package-,,$@) out/deb/systemd/*
 
 $(addprefix publish-systemd-package-,$(RPM_SYSTEMD_DISTRO_VERSIONS)):
-	$(PC_PUSH_CMD) sensu/prerelease/$(subst publish-systemd-package-,,$@) out/rpm/systemd/*
+	$(PC_PUSH_CMD) $(PC_USER)/$(PC_REPOSITORY)/$(subst publish-systemd-package-,,$@) out/rpm/systemd/*

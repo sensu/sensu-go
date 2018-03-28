@@ -14,7 +14,7 @@ to expose the data to our users you can take a short cut. The script
 the file.
 
 ```shell
-go run scripts/proto2graphql.go ./types/user.proto ./backend/apid/graphql/schema
+go run scripts/proto2graphql/proto2graphql.go ./types/user.proto ./backend/apid/graphql/schema
 ```
 
 It's important to note that the script is only meant to be run once for each
@@ -62,7 +62,7 @@ made to the target file.
     From the project root, run:
 
     ```shell
-    go run ./scripts/gengraphql.go ./backend/apid/graphql/schema
+    go run ./scripts/gengraphql/gengraphql.go ./backend/apid/graphql/schema
     ```
 
 3.  Next we need to tell our service how the types themselves are implemented.

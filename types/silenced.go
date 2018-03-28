@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -71,4 +72,9 @@ func SilencedID(subscription, check string) (string, error) {
 		check = "*"
 	}
 	return fmt.Sprintf("%s:%s", subscription, check), nil
+}
+
+// URIPath returns the path component of a Silenced URI.
+func (s *Silenced) URIPath() string {
+	return fmt.Sprintf("/silenced/%s", url.PathEscape(s.ID))
 }

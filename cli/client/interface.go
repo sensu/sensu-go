@@ -20,6 +20,13 @@ type APIClient interface {
 	RoleAPIClient
 	UserAPIClient
 	SilencedAPIClient
+	GenericClient
+}
+
+// GenericClient exposes generic resource methods.
+type GenericClient interface {
+	// PutResource puts a resource according to its URIPath.
+	PutResource(types.Resource) error
 }
 
 // AuthenticationAPIClient client methods for authenticating

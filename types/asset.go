@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
 	"regexp"
@@ -95,4 +96,9 @@ func FixtureAsset(name string) *Asset {
 		},
 		Organization: "default",
 	}
+}
+
+// URIPath returns the path component of a Asset URI.
+func (a *Asset) URIPath() string {
+	return fmt.Sprintf("/assets/%s", url.PathEscape(a.Name))
 }

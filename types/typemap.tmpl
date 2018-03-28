@@ -1,0 +1,26 @@
+package types
+
+// automatically generated file, do not edit!
+
+import "fmt"
+
+// typeMap is used to dynamically look up data types from strings.
+var typeMap = map[string]interface{}{ {{ range $index, $typename := .TypeNames }}
+  "{{ $typename }}": &{{ $typename }}{},
+  "{{ snakeCase $typename }}": &{{ $typename }}{}, {{ end }}
+}
+
+// ResolveResource returns a zero-valued resource, given a name.
+// If the named type does not exist, or if the type is not a Resource,
+// then an error will be returned.
+func ResolveResource(name string) (Resource, error) {
+  t, ok := typeMap[name]
+  if !ok {
+    return nil, fmt.Errorf("type could not be found: %q", name)
+  }
+  r, ok := t.(Resource)
+  if !ok {
+    return nil, fmt.Errorf("%q is not a Resource", name)
+  }
+  return r, nil
+}

@@ -21,6 +21,7 @@ before_install:
 - echo -e "machine github.com\n login $GITHUB_TOKEN" >> ~/.netrc
 - ulimit -s 1082768
 install:
+- "git fetch --tags"
 - "./build.sh deps"
 - "./build.sh build_tools"
 script: "./build.sh $TEST_SUITE"
@@ -37,9 +38,15 @@ jobs:
         branch: master
     - provider: script
       skip_cleanup: true
-      script: "./build.sh deploy"
+      script: "./build.sh deploy versioned"
       on:
         tags: true
+        branch: master
+    - provider: script
+      skip_cleanup: true
+      script: "./build.sh deploy nightly"
+      on:
+        condition: $TRAVIS_EVENT_TYPE = api
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint
@@ -51,6 +58,7 @@ env:
   - GOARCH=amd64 TEST_SUITE=e2e GOGC=off
   - TEST_SUITE=dashboard-ci GOGC=off
   global:
+  - SENSU_BUILD_ITERATION=1
   # Docker Username (DOCKER_USERNAME)
   - secure: "MFxHUNzPqyYaoQcWtHFi1NdxMEWkoU66xh9J0M9du/uOgFt3URfelPPFAFtjPfhXqMUuNKTopc5H2SiBfazyZw8IswAbbRHn0AKOSux5WuqHwIz4/PoNYnQihmvYo87DdWSeyKaR0da7ks142zatfkUy71ae7RdsAzHtKGdIfEn+lBLkPfVG65faDyWoQvRwJd0uRcvzRSj2eUP9REdTenKDNM8OBeoZAhFm7xhV6d8K54EnMf2JfPgzXNH/LttTpWH0/XtyT1C4Lsz7DWEMWr6z4OavC1M2EysrNCK7g75SHguFZYKjbHmpjSBQcQs8T26UhHVWEPnXwaFuQKuogBM0AzN+7qUWmhqxVQF9Z3GQBdCyhP1Cet1cR8UHYiYkTkPCF/YVXRG6MgKxnW/UOkjOUQCQf1Nr5o2pP7vBrdevMIXfT2268aR60289scQSDMzFuwmYqeJ6mLWJal9rfpl6GumUv7ois7V/gvKRDI6LPTAVv9z42v29ZaQoqDi1Csuyi+ShTmeAQI3flgAb3Wg01nEyaQtQMLwVVMDfPJjhALM7cu7XbPkOTvSQBYdKgqRXs2c4jN4cTN/G2yMiRrGrkxSZR/eygipZXJW2Fb+zc+loo+SrjKB38yiPYjuVA22GVqHHezRzbgNZQKn/RknR5iNd9SUdB/xFrK+ccyY="
   # Docker Password (DOCKER_PASSWORD)

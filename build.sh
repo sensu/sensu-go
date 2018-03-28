@@ -11,6 +11,8 @@ cmd=${1:-"all"}
 
 RACE=""
 
+VERSION_CMD="go run ./version/cmd/version/version.go"
+
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then
         RACE="-race"
@@ -87,8 +89,8 @@ build_binary () {
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-    local version=$(cat version/version.txt)
-    local prerelease=$(cat version/prerelease.txt)
+    local version=$($VERSION_CMD -v)
+    local prerelease=$($VERSION_CMD -p)
     local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
     local build_sha=$(git rev-parse HEAD)
 
@@ -152,7 +154,7 @@ build_cli() {
 
 build_dashboard() {
     echo "Building web UI"
-    go generate $@ ./dashboard
+    GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
 build_command () {
@@ -254,6 +256,7 @@ docker_commands () {
         build_binary linux amd64 $cmd $cmd_name $ext
     done
 
+    # build the docker image with master tag
     docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
 
     # push master - tags and pushes latest master docker build only
@@ -262,16 +265,20 @@ docker_commands () {
         docker push sensuapp/sensu-go:master
         # push versioned - tags and pushes with version pulled from
         # version/prerelease/iteration files
-    elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
+    elif [ "$push" == "push" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        local version_alpha=$(echo sensuapp/sensu-go:$(cat version/version.txt)-alpha)
-        local version_alpha_iteration=$(echo sensuapp/sensu-go:$(cat version/version.txt)-$(cat version/prerelease.txt).$(cat version/iteration.txt))
-        docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
-        docker push sensuapp/sensu-go:latest
-        docker tag sensuapp/sensu-go:master $version_alpha_iteration
-        docker push $version_alpha_iteration
-        docker tag $version_alpha_iteration $version_alpha
-        docker push $version_alpha
+        local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
+        local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
+
+        if [ "$release" == "versioned" ]; then
+            docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
+            docker push sensuapp/sensu-go:latest
+        fi
+
+        docker tag sensuapp/sensu-go:master $version_iteration
+        docker push $version_iteration
+        docker tag $version_iteration $version
+        docker push $version
     fi
 }
 
@@ -326,23 +333,30 @@ check_deploy() {
 }
 
 deploy() {
+    local release=$1
+
     echo "Deploying..."
 
+    echo "Current tags:"
+    git --no-pager tag -l
+
     # Authenticate to Google Cloud and deploy binaries
-    openssl aes-256-cbc -K $encrypted_d9a31ecd7e9c_key -iv $encrypted_d9a31ecd7e9c_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
-    gcloud auth activate-service-account --key-file=gcs-service-account.json
-    ./build-gcs-release.sh
+    if [[ "${release}" != "nightly" ]]; then
+        openssl aes-256-cbc -K $encrypted_abd14401c428_key -iv $encrypted_abd14401c428_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
+        gcloud auth activate-service-account --key-file=gcs-service-account.json
+        ./build-gcs-release.sh
+    fi
 
     # Deploy system packages to PackageCloud
     gem install package_cloud
     make clean
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
     docker pull sensuapp/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
+    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
 
     # Deploy Docker images to the Docker Hub
-    docker_commands push versioned
+    docker_commands push $release
 }
 
 case "$cmd" in
@@ -373,7 +387,7 @@ case "$cmd" in
         ;;
     "deploy")
         check_deploy
-        deploy
+        deploy "${@:2}"
         ;;
     "deps")
         install_deps

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package sensu.types;
+
+option go_package = "types";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Extension is a registered sensu extension.
+message Extension {
+	// Name is the unique identifier for an extension.
+	string name = 1;
+
+	// URL is the URL of the gRPC service that implements the extension.
+	string url = 2 [(gogoproto.customname) = "URL"];
+
+	// Organization indicates which organization an extension belongs to.
+	string organization = 3;
+}

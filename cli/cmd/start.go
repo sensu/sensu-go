@@ -75,8 +75,6 @@ var usageTemplate = `Usage:
 {{- if not .HasSubCommands}}	{{.UseLine}}{{end}}
 {{- if .HasSubCommands}}	{{ .CommandPath}} COMMAND{{end}}
 
-{{ .Short | trim }}
-
 {{- if .HasAvailableLocalFlags}}
 
 Flags:
