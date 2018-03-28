@@ -134,9 +134,9 @@ build_tool () {
 build_commands () {
     echo "Build all commands..."
 
-    build_agent
-    build_backend
-    build_cli
+    build_agent $@
+    build_backend $@
+    build_cli $@
 }
 
 build_agent() {
@@ -153,7 +153,7 @@ build_cli() {
 }
 
 build_dashboard() {
-    check_for_presence_of_yarn
+    echo "Building web UI"
     GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
@@ -232,6 +232,7 @@ docker_commands () {
     local push=$1
     local release=$2
     local build_sha=$(git rev-parse HEAD)
+    local ext=${@:3}
 
     for cmd in cat false sleep true; do
         echo "Building tools/$cmd for linux-amd64"
@@ -243,12 +244,16 @@ docker_commands () {
         build_tool_binary linux amd64 $cmd "handlers"
     done
 
-    build_dashboard
+    # When publishing image, ensure that we can bundle the web UI.
+    if [ "$push" == "push" ]; then
+        bail_unless_yarn_is_present
+    fi
+    build_dashboard $ext
 
     for cmd in agent backend cli; do
         echo "Building $cmd for linux-amd64"
         local cmd_name=$(cmd_name_map $cmd)
-        build_binary linux amd64 $cmd $cmd_name
+        build_binary linux amd64 $cmd $cmd_name $ext
     done
 
     # build the docker image with master tag
@@ -277,12 +282,13 @@ docker_commands () {
     fi
 }
 
-check_for_presence_of_yarn() {
+bail_unless_yarn_is_present() {
     if hash yarn 2>/dev/null; then
-        echo "⚡️  Yarn is installed, continuing."
+        echo "⚡️  Yarn is installed!"
     else
-        echo "🛑  Please install yarn to build dashboard."
+        echo "🛑  You must have Yarn installed to bundle the web UI."
         echo "See https://yarnpkg.com/en/docs/install"
+        exit 1
     fi
 }
 
@@ -291,7 +297,7 @@ install_yarn() {
 }
 
 install_dashboard_deps() {
-    check_for_presence_of_yarn
+    bail_unless_yarn_is_present
     pushd "${DASHBOARD_PATH}"
     yarn install
     yarn precompile
@@ -355,7 +361,7 @@ deploy() {
 
 case "$cmd" in
     "build")
-        build_commands
+        build_commands "${@:2}"
         ;;
     "build_agent")
         build_agent "${@:2}"
@@ -387,7 +393,7 @@ case "$cmd" in
         install_deps
         ;;
     "docker")
-        docker_commands "${@:2}"
+        docker_commands nopush master "${@:2}"
         ;;
     "e2e")
         # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
