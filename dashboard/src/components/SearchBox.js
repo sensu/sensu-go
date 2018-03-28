@@ -38,7 +38,6 @@ const styles = theme => ({
 
 class SearchBox extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     FilterIcon: PropTypes.func.isRequired,
     onUpdateInput: PropTypes.func.isRequired,

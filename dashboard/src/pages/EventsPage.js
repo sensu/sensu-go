@@ -10,31 +10,29 @@ import AppContent from "../components/AppContent";
 import EventsContainer from "../components/EventsContainer";
 import SearchBox from "../components/SearchBox";
 
-const styles = {
-  headline: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignContent: "center",
-  },
-  title: {
-    display: "flex",
-    alignSelf: "flex-end",
-  },
-  container: {
-    marginTop: 10,
-  },
-};
-
+// If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
 
 class EventsPage extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    location: PropTypes.shape({
-      query: PropTypes.object.isRequired,
-    }).isRequired,
     router: routerShape.isRequired,
     match: matchShape.isRequired,
+  };
+
+  static styles = {
+    headline: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignContent: "center",
+    },
+    title: {
+      display: "flex",
+      alignSelf: "flex-end",
+    },
+    container: {
+      marginTop: 10,
+    },
   };
 
   static query = graphql`
@@ -53,7 +51,7 @@ class EventsPage extends React.Component {
   constructor(props) {
     super(props);
 
-    let filterValue = props.location.query.filter;
+    let filterValue = props.match.location.query.filter;
     if (filterValue === undefined) {
       filterValue = defaultExpression;
     }
@@ -86,7 +84,7 @@ class EventsPage extends React.Component {
         <div>
           <div className={classes.headline}>
             <Typography className={classes.title} variant="headline">
-              Recent Events
+              Events
             </Typography>
             <SearchBox
               onUpdateInput={this.requerySearchBox}
@@ -102,4 +100,4 @@ class EventsPage extends React.Component {
   }
 }
 
-export default withStyles(styles)(EventsPage);
+export default withStyles(EventsPage.styles)(EventsPage);

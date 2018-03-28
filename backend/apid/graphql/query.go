@@ -32,10 +32,11 @@ func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
 
 // Environment implements response to request for 'environment' field.
 func (r *queryImpl) Environment(p schema.QueryEnvironmentFieldResolverParams) (interface{}, error) {
-	return types.Environment{
+	env := types.Environment{
 		Name:         p.Args.Environment,
 		Organization: p.Args.Organization,
-	}, nil
+	}
+	return &env, nil
 }
 
 // Node implements response to request for 'node' field.

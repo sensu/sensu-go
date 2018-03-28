@@ -5,6 +5,8 @@ import { withStyles } from "material-ui/styles";
 import DonutSmall from "material-ui-icons/DonutSmall";
 import Explore from "material-ui-icons/Explore";
 import Visibility from "material-ui-icons/Visibility";
+import Emoticon from "material-ui-icons/InsertEmoticon";
+import Briefcase from "../icons/Briefcase";
 import Heart from "../icons/Heart";
 import HalfHeart from "../icons/HalfHeart";
 import HeartMug from "../icons/HeartMug";
@@ -14,14 +16,16 @@ import Poly from "../icons/Poly";
 import EnvironmentIcon from "./EnvironmentIcon";
 
 const icons = {
-  DonutSmall,
-  Explore,
-  Visibility,
-  Heart,
-  HalfHeart,
-  HeartMug,
-  Espresso,
-  Poly,
+  BRIEFCASE: Briefcase,
+  DONUT: DonutSmall,
+  EMOTICON: Emoticon,
+  EXPLORE: Explore,
+  HEART: Heart,
+  HALFHEART: HalfHeart,
+  MUG: HeartMug,
+  ESPRESSO: Espresso,
+  POLYGON: Poly,
+  VISIBILITY: Visibility,
 };
 
 const styles = theme => ({
@@ -42,19 +46,16 @@ const styles = theme => ({
 
 class OrganizationIcon extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     icon: PropTypes.string.isRequired,
-    iconColor: PropTypes.string,
+    iconColour: PropTypes.string.isRequired,
     size: PropTypes.number,
     disableEnvironmentIdicator: PropTypes.bool,
   };
 
   static defaultProps = {
     className: null,
-    iconColor: "#FA8072",
-    icon: "Poly",
     size: 24.0,
     disableEnvironmentIdicator: false,
   };
@@ -64,7 +65,7 @@ class OrganizationIcon extends React.Component {
       classes,
       className,
       icon,
-      iconColor,
+      iconColour,
       size,
       disableEnvironmentIdicator,
     } = this.props;
@@ -89,7 +90,7 @@ class OrganizationIcon extends React.Component {
         {!disableEnvironmentIdicator && (
           <EnvironmentIcon
             className={classes.smallCircle}
-            color={iconColor}
+            colour={iconColour}
             size={size / 3.0}
           />
         )}

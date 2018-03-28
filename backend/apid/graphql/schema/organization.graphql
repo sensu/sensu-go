@@ -13,5 +13,21 @@ type Organization {
 
   "Environments that belong to the organization"
   environments: [Environment!]!
+
+  "IconId. Experimental. Use graphical interfaces as symbolic reference to organization"
+  iconId: Icon!
 }
 
+enum Icon {
+  BRIEFCASE
+  DONUT
+  EMOTICON
+  ESPRESSO
+  EXPLORE
+  FIRE
+  HALFHEART
+  HEART
+  MUG
+  POLYGON
+  VISIBILITY
+}

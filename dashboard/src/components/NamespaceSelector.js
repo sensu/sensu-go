@@ -21,7 +21,6 @@ const styles = {
 
 class NamespaceSelector extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     currentNamespace: namespaceShape.isRequired,
     viewer: PropTypes.objectOf(PropTypes.any).isRequired,

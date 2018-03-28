@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -42,27 +43,53 @@ func (r *envImpl) ID(p graphql.ResolveParams) (interface{}, error) {
 
 // Name implements response to request for 'name' field.
 func (r *envImpl) Name(p graphql.ResolveParams) (string, error) {
-	org := p.Source.(*types.Environment)
-	return org.Name, nil
+	env := p.Source.(*types.Environment)
+	return env.Name, nil
 }
 
 // Description implements response to request for 'description' field.
 func (r *envImpl) Description(p graphql.ResolveParams) (string, error) {
-	org := p.Source.(*types.Environment)
-	return org.Description, nil
+	env := p.Source.(*types.Environment)
+	return env.Description, nil
+}
+
+// ColourID implements response to request for 'colourId' field.
+// Experimental. Value is not persisted in any way at this time and is simply
+// derived from the name.
+func (r *envImpl) ColourID(p graphql.ResolveParams) (schema.MutedColour, error) {
+	env := p.Source.(*types.Environment)
+	num := env.Name[0] % 7
+	logger.WithField("name", env.Name).WithField("num", num).Info("finding colour")
+	switch num {
+	case 0:
+		return schema.MutedColours.BLUE, nil
+	case 1:
+		return schema.MutedColours.GRAY, nil
+	case 2:
+		return schema.MutedColours.GREEN, nil
+	case 3:
+		return schema.MutedColours.ORANGE, nil
+	case 4:
+		return schema.MutedColours.PINK, nil
+	case 5:
+		return schema.MutedColours.PURPLE, nil
+	case 6:
+		return schema.MutedColours.YELLOW, nil
+	}
+	return "", errors.New("exhausted list of colours")
 }
 
 // Organization implements response to request for 'organization' field.
 func (r *envImpl) Organization(p graphql.ResolveParams) (interface{}, error) {
 	env := p.Source.(*types.Environment)
-	org, err := r.orgCtrl.Find(p.Context, env.Name)
+	org, err := r.orgCtrl.Find(p.Context, env.Organization)
 	return handleControllerResults(org, err)
 }
 
 // Checks implements response to request for 'checks' field.
 func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interface{}, error) {
-	env := p.Source.(types.Environment)
-	ctx := types.SetContextFromResource(p.Context, &env)
+	env := p.Source.(*types.Environment)
+	ctx := types.SetContextFromResource(p.Context, env)
 	records, err := r.checksCtrl.Query(ctx)
 	if err != nil {
 		return nil, err
@@ -82,8 +109,8 @@ func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interfa
 
 // Entities implements response to request for 'entities' field.
 func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (interface{}, error) {
-	env := p.Source.(types.Environment)
-	ctx := types.SetContextFromResource(p.Context, &env)
+	env := p.Source.(*types.Environment)
+	ctx := types.SetContextFromResource(p.Context, env)
 	records, err := r.entityCtrl.Query(ctx)
 	if err != nil {
 		return nil, err
@@ -103,8 +130,8 @@ func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (int
 
 // Events implements response to request for 'events' field.
 func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interface{}, error) {
-	env := p.Source.(types.Environment)
-	ctx := types.SetContextFromResource(p.Context, &env)
+	env := p.Source.(*types.Environment)
+	ctx := types.SetContextFromResource(p.Context, env)
 	records, err := r.eventsCtrl.Query(ctx, "", "")
 	if err != nil {
 		return nil, err

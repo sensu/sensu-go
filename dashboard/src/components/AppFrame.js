@@ -4,7 +4,7 @@ import { withStyles } from "material-ui/styles";
 import { createFragmentContainer, graphql } from "react-relay";
 
 import AppRoot from "./AppRoot";
-import AppBar from "./Toolbar";
+import AppBar from "./AppBar";
 import Drawer from "./Drawer";
 import QuickNav from "./QuickNav";
 
@@ -12,6 +12,7 @@ class AppFrame extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.object.isRequired,
+    environment: PropTypes.object.isRequired,
     children: PropTypes.element,
   };
 
@@ -52,7 +53,7 @@ class AppFrame extends React.Component {
   };
 
   render() {
-    const { children, viewer, classes } = this.props;
+    const { children, viewer, environment, classes } = this.props;
     const { drawerOpen } = this.state;
 
     const toggleDrawer = () => {
@@ -61,7 +62,7 @@ class AppFrame extends React.Component {
 
     return (
       <AppRoot>
-        <AppBar toggleToolbar={toggleDrawer} />
+        <AppBar environment={environment} toggleToolbar={toggleDrawer} />
         <Drawer
           viewer={viewer}
           open={drawerOpen}
@@ -77,12 +78,16 @@ class AppFrame extends React.Component {
   }
 }
 
-const EnhancedAppFrame = withStyles(AppFrame.styles)(AppFrame);
+export const EnhancedAppFrame = withStyles(AppFrame.styles)(AppFrame);
 export default createFragmentContainer(
   EnhancedAppFrame,
   graphql`
     fragment AppFrame_viewer on Viewer {
       ...Drawer_viewer
+    }
+
+    fragment AppFrame_environment on Environment {
+      ...AppBar_environment
     }
   `,
 );

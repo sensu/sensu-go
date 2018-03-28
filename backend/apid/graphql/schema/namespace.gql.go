@@ -156,15 +156,15 @@ func RegisterNamespace(svc *graphql.Service, impl NamespaceFieldResolvers) {
 }
 func _ObjTypeNamespaceEnvironmentHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NamespaceEnvironmentFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Environment(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Environment(frp)
 	}
 }
 
 func _ObjTypeNamespaceOrganizationHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NamespaceOrganizationFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Organization(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Organization(frp)
 	}
 }
 

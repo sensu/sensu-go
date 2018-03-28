@@ -23,13 +23,13 @@ import IconButton from "material-ui/IconButton";
 import MenuIcon from "material-ui-icons/Menu";
 import WandIcon from "../icons/Wand";
 import OrganizationIcon from "./OrganizationIcon";
+import Wordmark from "../icons/SensuWordmark";
 
 import { logout } from "../utils/authentication";
 import { makeNamespacedPath } from "./NamespaceLink";
 import DrawerButton from "./DrawerButton";
 import NamespaceSelector from "./NamespaceSelector";
 import Preferences from "./Preferences";
-import logo from "../assets/logo/wordmark/green.svg";
 
 const styles = theme => ({
   paper: {
@@ -50,8 +50,8 @@ const styles = theme => ({
     justifyContent: "space-between",
   },
   logo: {
-    height: 24,
-    margin: "12px 12px 0 0",
+    height: 16,
+    margin: "16px 16px 0 0",
   },
   namespaceSelector: {
     margin: "8px 0 -8px 0",
@@ -67,9 +67,7 @@ const styles = theme => ({
 
 class Drawer extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    // eslint-disable-next-line react/forbid-prop-types
     viewer: PropTypes.object.isRequired,
     onToggle: PropTypes.func.isRequired,
     router: routerShape.isRequired,
@@ -109,14 +107,18 @@ class Drawer extends React.Component {
                 >
                   <MenuIcon />
                 </IconButton>
-                <img alt="sensu" src={logo} className={classes.logo} />
+                <Wordmark
+                  alt="sensu"
+                  className={classes.logo}
+                  color="secondary"
+                />
               </div>
               <div className={classes.row}>
                 {/* TODO update with global variables or whatever when we get them */}
                 <div className={classes.namespaceIcon}>
                   <OrganizationIcon
-                    icon="HalfHeart"
-                    iconColor="#FA8072"
+                    icon="HALFHEART"
+                    iconColour="PINK"
                     size={36}
                   />
                 </div>

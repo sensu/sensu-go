@@ -4,6 +4,16 @@ import PropTypes from "prop-types";
 import { emphasize } from "material-ui/styles/colorManipulator";
 import { withStyles } from "material-ui/styles";
 
+const colours = {
+  BLUE: "#8AB8D0",
+  GRAY: "#9A9EA5",
+  GREEN: "#8AD1AF",
+  ORANGE: "#F4AD5F",
+  PINK: "#FA8072",
+  PURPLE: "#AD8AD1",
+  YELLOW: "#FAD66B",
+};
+
 const styles = () => ({
   root: {
     borderRadius: "100%",
@@ -14,25 +24,24 @@ const styles = () => ({
 
 class EnvironmentIcon extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
-    color: PropTypes.string,
+    colour: PropTypes.string.isRequired,
     size: PropTypes.number,
   };
 
   static defaultProps = {
     className: null,
-    color: "#8AB8D0",
     size: 8.0,
   };
 
   render() {
-    const { classes, className, color, size, ...props } = this.props;
+    const { classes, className, colour, size, ...props } = this.props;
     const borderWidth = Math.floor(size * (1 / 8));
+    const effectiveColour = colours[colour];
     const inlineStyle = {
-      backgroundColor: color,
-      borderColor: emphasize(color, 0.15),
+      backgroundColor: effectiveColour,
+      borderColor: emphasize(effectiveColour, 0.15),
       borderWidth,
       width: size,
       height: size,

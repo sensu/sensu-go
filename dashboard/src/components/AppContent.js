@@ -19,7 +19,6 @@ const styles = theme => ({
 
 class AppContent extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     children: PropTypes.element.isRequired,

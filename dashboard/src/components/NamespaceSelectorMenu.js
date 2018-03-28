@@ -28,7 +28,6 @@ const styles = () => ({
 
 class NamespaceSelectorMenu extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     currentNamespace: namespaceShape.isRequired,
     viewer: PropTypes.objectOf(PropTypes.any).isRequired,
@@ -57,7 +56,7 @@ class NamespaceSelectorMenu extends React.Component {
             <ListItemIcon className={classes.icon}>
               <div className={classes.environmentIconContainer}>
                 <EnvironmentIcon
-                  color="rgb(250, 128, 114)"
+                  colour={environment.colourId}
                   className={classes.environmentIcon}
                   size={10}
                 />
@@ -79,7 +78,10 @@ class NamespaceSelectorMenu extends React.Component {
               onClick={navigateTo(organization.name, environment.name)}
             >
               <ListItemIcon className={classes.icon}>
-                <OrganizationIcon iconColor="#8AB8D0" />
+                <OrganizationIcon
+                  icon={organization.iconId}
+                  iconColour={environment.colourId}
+                />
               </ListItemIcon>
               <ListItemText
                 classes={{ primary: classes.primary }}
@@ -102,8 +104,10 @@ export default createFragmentContainer(
     fragment NamespaceSelectorMenu_viewer on Viewer {
       organizations {
         name
+        iconId
         environments {
           name
+          colourId
         }
       }
     }

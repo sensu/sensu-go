@@ -828,6 +828,22 @@ func genFieldHandlerFn(field *ast.FieldDefinition, i info) jen.Code {
 			fieldResolverName := genFieldResolverName(field, i)
 			g.Id("resolver").Op(":=").Id("impl").Assert(jen.Id(fieldResolverName))
 
+			var callResolver jen.Code
+			if isNonNullableEnum(field.Type, i) {
+				g := newGroup()
+				g.List(jen.Id("val"), jen.Id("err")).
+					Op(":=").
+					Id("resolver." + fieldName).
+					Call(jen.Id("frp"))
+				g.Return(jen.List(
+					jen.Id("string").Call(jen.Id("val")),
+					jen.Id("err"),
+				))
+				callResolver = g
+			} else {
+				callResolver = jen.Return(jen.Id("resolver." + fieldName).Call(jen.Id("frp")))
+			}
+
 			// If field has arguments, use generated parameters type
 			if len(field.Arguments) > 0 {
 				fieldResolverParamsName := genFieldResolverParamsName(field, i)
@@ -848,19 +864,15 @@ func genFieldHandlerFn(field *ast.FieldDefinition, i info) jen.Code {
 								jen.Return(jen.List(jen.Nil(), jen.Id("err"))),
 							),
 							jen.Line(),
-							jen.Return(jen.Id("resolver."+fieldName).Call(jen.Id("frp"))),
+							callResolver,
 						),
 				)
 			} else {
 				g.Return(
 					jen.Func().
-						Params(jen.Id("p").Qual(defsPkg, "ResolveParams")).
+						Params(jen.Id("frp").Qual(defsPkg, "ResolveParams")).
 						Parens(jen.List(jen.Interface(), jen.Error())).
-						Block(
-							jen.Return(
-								jen.Id("resolver." + fieldName).Call(jen.Id("p")),
-							),
-						),
+						Block(callResolver),
 				)
 			}
 		})
