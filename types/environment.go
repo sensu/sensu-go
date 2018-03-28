@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	fmt "fmt"
+	"net/url"
 )
 
 // Validate returns an error if the environment does not pass validation tests.
@@ -42,4 +43,9 @@ func (e *Environment) Update(from *Environment, fields ...string) error {
 		}
 	}
 	return nil
+}
+
+// URIPath returns the path component of a Environment URI.
+func (e *Environment) URIPath() string {
+	return fmt.Sprintf("/%s/environments/%s", url.PathEscape(e.Organization), url.PathEscape(e.Name))
 }

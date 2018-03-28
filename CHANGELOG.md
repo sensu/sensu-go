@@ -13,9 +13,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Made Changelog examples in CONTRIBUTING.md more obvious
 - Added cli support for setting environment variables in mutators and handlers.
 - Added gRPC extension service definition.
+- The slack handler now uses the iconURL & username flag parameters.
 - Support for nightlies in build/packaging tooling.
-- Added extension registry to the store.
 - Added extension registry support to apid.
+- Added extension registry to the store.
+- Add sensuctl create command.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
@@ -38,6 +40,7 @@ and yarn are now dependencies for building the backend.
 - Stopped double-writing events in eventd
 - Agents from different orgs/envs with the same ID connected to the same backend
   no longer overwrite each other's messagebus subscriptions.
+- Fix the manual packaging process.
 
 ### Added
 - Support for managing mutators via sensuctl.

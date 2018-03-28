@@ -18,16 +18,18 @@ WINDOWS_ARCHITECTURES   := 386 amd64
 # Setup
 ##
 $(shell mkdir -p out)
-VERSION_BIN := $(shell go build -o version-bin ./version/cmd/version/version.go)
+HOST_GOOS := $(shell go env GOOS)
+HOST_GOARCH := $(shell go env GOARCH)
+VERSION_CMD := go run ./version/cmd/version/version.go
 
 ##
 # FPM
 ##
-VERSION=$(shell ./version-bin -v)
-BUILD_TYPE=$(shell ./version-bin -t)
-PRERELEASE=$(shell ./version-bin -p)
-ITERATION=$(shell ./version-bin -i)
-ARCHITECTURE=$(GOARCH)
+VERSION := $(shell $(VERSION_CMD) -v)
+BUILD_TYPE := $(shell $(VERSION_CMD) -t)
+PRERELEASE := $(shell $(VERSION_CMD) -p)
+ITERATION := $(shell $(VERSION_CMD) -i)
+ARCHITECTURE := $(GOARCH)
 DESCRIPTION="A monitoring framework that aims to be simple, malleable, and scalable."
 LICENSE=MIT
 VENDOR="Sensu, Inc."
@@ -39,7 +41,7 @@ BIN_SOURCE_DIR=target/$(GOOS)-$(GOARCH)
 ifeq ($(BUILD_TYPE),stable)
 FPM_VERSION=$(VERSION)
 else ifeq ($(BUILD_TYPE),nightly)
-VERSION=$(shell ./version-bin -h)
+VERSION=$(shell $(VERSION_CMD) -h)
 DATE=$(shell date "+%Y%m%d")
 FPM_VERSION=$(VERSION)~nightly+$(DATE)
 else
@@ -160,7 +162,7 @@ build_agent:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_agent
 
 build_backend:
-	GOOS=linux GOARCH=amd64 ./build.sh build_dashboard
+	GOOS=linux GOARCH=amd64 ./build.sh dashboard
 	GOOS=$(GOOS) GOARCH=$(GOARCH) ./build.sh build_backend
 
 build_cli:
@@ -359,7 +361,7 @@ publish_travis:
 
 PC_PUSH_CMD=package_cloud push --skip-errors
 PC_USER=sensu
-PC_REPOSITORY=$(shell version-bin -t)
+PC_REPOSITORY=$(shell $(VERSION_CMD) -t)
 
 ##
 # publish packages without a service

@@ -11,6 +11,8 @@ cmd=${1:-"all"}
 
 RACE=""
 
+VERSION_CMD="go run ./version/cmd/version/version.go"
+
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then
         RACE="-race"
@@ -41,17 +43,12 @@ install_deps () {
     go get honnef.co/go/tools/cmd/megacheck
     go get github.com/golang/lint/golint
     install_golang_dep
-    build_version_bin
 }
 
 install_golang_dep() {
     go get github.com/golang/dep/cmd/dep
     echo "Running dep ensure..."
     dep ensure -v -vendor-only
-}
-
-build_version_bin () {
-    go build -o version-bin ./version/cmd/version/version.go
 }
 
 cmd_name_map() {
@@ -92,8 +89,8 @@ build_binary () {
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-    local version=$(./version-bin -v)
-    local prerelease=$(./version-bin -p)
+    local version=$($VERSION_CMD -v)
+    local prerelease=$($VERSION_CMD -p)
     local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
     local build_sha=$(git rev-parse HEAD)
 
@@ -157,7 +154,7 @@ build_cli() {
 
 build_dashboard() {
     check_for_presence_of_yarn
-    go generate $@ ./dashboard
+    GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
 build_command () {
@@ -265,8 +262,8 @@ docker_commands () {
         # version/prerelease/iteration files
     elif [ "$push" == "push" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        local version=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t))
-        local version_iteration=$(echo sensuapp/sensu-go:$(./version-bin -v)-$(./version-bin -t).$(./version-bin -i))
+        local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
+        local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
 
         if [ "$release" == "versioned" ]; then
             docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
@@ -335,16 +332,18 @@ deploy() {
     echo "Deploying..."
 
     # Authenticate to Google Cloud and deploy binaries
-    openssl aes-256-cbc -K $encrypted_d9a31ecd7e9c_key -iv $encrypted_d9a31ecd7e9c_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
-    gcloud auth activate-service-account --key-file=gcs-service-account.json
-    ./build-gcs-release.sh
+    if [[ "${release}" != "nightly" ]]; then
+        openssl aes-256-cbc -K $encrypted_abd14401c428_key -iv $encrypted_abd14401c428_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
+        gcloud auth activate-service-account --key-file=gcs-service-account.json
+        ./build-gcs-release.sh
+    fi
 
     # Deploy system packages to PackageCloud
     gem install package_cloud
     make clean
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
     docker pull sensuapp/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
+    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
 
     # Deploy Docker images to the Docker Hub
@@ -379,7 +378,7 @@ case "$cmd" in
         ;;
     "deploy")
         check_deploy
-        deploy
+        deploy "${@:2}"
         ;;
     "deps")
         install_deps
