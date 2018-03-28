@@ -29,24 +29,20 @@ jobs:
   include:
   - stage: deploy
     env: GOARCH=amd64 TEST_SUITE=none
-    script: skip
-    deploy:
-    - provider: script
-      skip_cleanup: true
-      script: "./build.sh docker push master"
-      on:
-        branch: master
-    - provider: script
-      skip_cleanup: true
-      script: "./build.sh deploy versioned"
-      on:
-        tags: true
-        branch: master
-    - provider: script
-      skip_cleanup: true
-      script: "./build.sh deploy nightly"
-      on:
-        condition: $TRAVIS_EVENT_TYPE = api
+    script: "./build.sh deploy_binaries"
+    if: tag IS present
+  - stage: deploy
+    env: GOARCH=amd64 TEST_SUITE=none
+    script: "./build.sh deploy_packages"
+    if: tag IS present OR type IS api
+  - stage: deploy
+    env: GOARCH=amd64 TEST_SUITE=none
+    script: "./build.sh deploy_docker master"
+    if: branch IS master AND type NOT api AND tag IS blank
+  - stage: deploy
+    env: GOARCH=amd64 TEST_SUITE=none
+    script: "./build.sh deploy_docker versioned"
+    if: tag IS present OR type IS api
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint

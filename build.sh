@@ -233,6 +233,7 @@ docker_commands () {
     local release=$2
     local build_sha=$(git rev-parse HEAD)
     local ext=${@:3}
+    local build_type=$(go run ./version/cmd/version/version.go -t)
 
     for cmd in cat false sleep true; do
         echo "Building tools/$cmd for linux-amd64"
@@ -263,14 +264,12 @@ docker_commands () {
     if [ "$push" == "push" ] && [ "$release" == "master" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         docker push sensuapp/sensu-go:master
-        # push versioned - tags and pushes with version pulled from
-        # version/prerelease/iteration files
-    elif [ "$push" == "push" ]; then
+    elif [ "$push" == "push" ] && [ "$release" == "versioned" ]; then
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
         local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
 
-        if [ "$release" == "versioned" ]; then
+        if [ "$build_type" != "nightly" ]; then
             docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
             docker push sensuapp/sensu-go:latest
         fi
@@ -332,20 +331,17 @@ check_deploy() {
     fi
 }
 
-deploy() {
-    local release=$1
-
-    echo "Deploying..."
-
-    echo "Current tags:"
-    git --no-pager tag -l
+deploy_binaries() {
+    echo "Deploying binaries..."
 
     # Authenticate to Google Cloud and deploy binaries
-    if [[ "${release}" != "nightly" ]]; then
-        openssl aes-256-cbc -K $encrypted_abd14401c428_key -iv $encrypted_abd14401c428_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
-        gcloud auth activate-service-account --key-file=gcs-service-account.json
-        ./build-gcs-release.sh
-    fi
+    openssl aes-256-cbc -K $encrypted_abd14401c428_key -iv $encrypted_abd14401c428_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
+    gcloud auth activate-service-account --key-file=gcs-service-account.json
+    ./build-gcs-release.sh
+}
+
+deploy_packages() {
+    echo "Deploying packages..."
 
     # Deploy system packages to PackageCloud
     gem install package_cloud
@@ -354,6 +350,12 @@ deploy() {
     docker pull sensuapp/sensu-go-build
     docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
+}
+
+deploy_docker() {
+    local release=$1
+
+    echo "Deploying Docker images..."
 
     # Deploy Docker images to the Docker Hub
     docker_commands push $release
@@ -385,9 +387,17 @@ case "$cmd" in
         test_dashboard
         ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
         ;;
-    "deploy")
+    "deploy_binaries")
         check_deploy
-        deploy "${@:2}"
+        deploy_binaries "${@:2}"
+        ;;
+    "deploy_packages")
+        check_deploy
+        deploy_packages "${@:2}"
+        ;;
+    "deploy_docker")
+        check_deploy
+        deploy_docker "${@:2}"
         ;;
     "deps")
         install_deps
