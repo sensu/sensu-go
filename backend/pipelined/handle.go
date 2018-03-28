@@ -63,7 +63,7 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		}
 
 		logger.WithFields(logrus.Fields{
-			"event":   eventData,
+			"event":   string(eventData),
 			"handler": handler.Name,
 		}).Debug("sending event to handler")
 
