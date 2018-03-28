@@ -41,6 +41,7 @@ and yarn are now dependencies for building the backend.
 - Agents from different orgs/envs with the same ID connected to the same backend
   no longer overwrite each other's messagebus subscriptions.
 - Fix the manual packaging process.
+- Properly log the event being handled in pipelined
 
 ### Added
 - Support for managing mutators via sensuctl.
