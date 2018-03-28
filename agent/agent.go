@@ -42,16 +42,10 @@ const (
 	DefaultBackendURL = "ws://127.0.0.1:8081"
 	// DefaultEnvironment specifies the default environment
 	DefaultEnvironment = "default"
-	// DefaultFlushInterval specifies the default flush interval for statsd
-	DefaultFlushInterval = 10
 	// DefaultKeepaliveInterval specifies the default keepalive interval
 	DefaultKeepaliveInterval = 20
 	// DefaultKeepaliveTimeout specifies the default keepalive timeout
 	DefaultKeepaliveTimeout = 120
-	// DefaultMetricsHost specifies the default metrics host for statsd server
-	DefaultMetricsHost = "127.0.0.1"
-	// DefaultMetricsPort specifies the default metrics port for statsd server
-	DefaultMetricsPort = 8125
 	// DefaultOrganization specifies the default organization
 	DefaultOrganization = "default"
 	// DefaultPassword specifies the default password
@@ -60,6 +54,12 @@ const (
 	DefaultSocketHost = "127.0.0.1"
 	// DefaultSocketPort specifies the default socket port
 	DefaultSocketPort = 3030
+	// DefaultStatsdFlushInterval specifies the default flush interval for statsd
+	DefaultStatsdFlushInterval = 10
+	// DefaultStatsdMetricsHost specifies the default metrics host for statsd server
+	DefaultStatsdMetricsHost = "127.0.0.1"
+	// DefaultStatsdMetricsPort specifies the default metrics port for statsd server
+	DefaultStatsdMetricsPort = 8125
 	// DefaultUser specifies the default user
 	DefaultUser = "agent"
 )
@@ -142,9 +142,9 @@ func FixtureConfig() *Config {
 			Port: DefaultSocketPort,
 		},
 		StatsdServer: &StatsdServerConfig{
-			Host:          DefaultMetricsHost,
-			Port:          DefaultMetricsPort,
-			FlushInterval: DefaultFlushInterval,
+			Host:          DefaultStatsdMetricsHost,
+			Port:          DefaultStatsdMetricsPort,
+			FlushInterval: DefaultStatsdFlushInterval,
 		},
 		User: DefaultUser,
 	}
@@ -205,13 +205,13 @@ func NewAgent(config *Config) *Agent {
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
-		statsdServer:    NewStatsdServer(config.StatsdServer),
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
 		wg:              &sync.WaitGroup{},
 	}
 
+	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(types.CheckRequestType, agent.handleCheck)
 	agent.assetManager = assetmanager.New(config.CacheDir, agent.getAgentEntity())
 

@@ -135,7 +135,9 @@ func (s *Session) recvPump() {
 			}
 		}
 		if err := s.handler.Handle(msg.Type, msg.Payload); err != nil {
-			logger.WithField("message", msg).Error("error handling message")
+			logger.WithError(err).WithFields(logrus.Fields{
+				"type":    msg.Type,
+				"payload": string(msg.Payload)}).Error("error handling message")
 		}
 	}
 }

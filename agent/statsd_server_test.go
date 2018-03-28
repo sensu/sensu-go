@@ -11,16 +11,18 @@ import (
 
 func TestNewStatsdServer(t *testing.T) {
 	c := FixtureConfig()
-	s := NewStatsdServer(c.StatsdServer)
+	a := &Agent{config: c}
+	s := NewStatsdServer(a)
 	assert.NotNil(t, s)
 	assert.Equal(t, BackendName, s.Backends[0].Name())
-	assert.Equal(t, DefaultFlushInterval*time.Second, s.FlushInterval)
+	assert.Equal(t, DefaultStatsdFlushInterval*time.Second, s.FlushInterval)
 	assert.Equal(t, "127.0.0.1:8125", s.MetricsAddr)
 
 	c.StatsdServer.FlushInterval = 20
 	c.StatsdServer.Port = 8126
 	c.StatsdServer.Host = "foo"
-	s = NewStatsdServer(c.StatsdServer)
+	a.config = c
+	s = NewStatsdServer(a)
 	assert.NotNil(t, s)
 	assert.Equal(t, BackendName, s.Backends[0].Name())
 	assert.Equal(t, 20*time.Second, s.FlushInterval)

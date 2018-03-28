@@ -6,6 +6,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -17,11 +18,12 @@ import (
 )
 
 // NewStatsdServer provides a new statsd server for the sensu-agent.
-func NewStatsdServer(c *StatsdServerConfig) *statsd.Server {
+func NewStatsdServer(a *Agent) *statsd.Server {
+	c := a.config.StatsdServer
 	s := statsd.NewServer()
-	backend, err := NewClientFromViper(s.Viper)
+	backend, err := NewClientFromViper(s.Viper, a)
 	if err != nil {
-		logger.WithError(err).Error("failed to create sensu statsd backend")
+		logger.WithError(err).Error("failed to create sensu-statsd backend")
 	}
 	s.Backends = []gostatsd.Backend{backend}
 	s.FlushInterval = time.Duration(c.FlushInterval) * time.Second
@@ -33,25 +35,27 @@ func NewStatsdServer(c *StatsdServerConfig) *statsd.Server {
 const BackendName = "sensu-statsd"
 
 // Client is an object that is used to send messages to sensu-statsd.
-type Client struct{}
+type Client struct {
+	agent *Agent
+}
 
-// NewClientFromViper constructs a sensu statsd backend.
-func NewClientFromViper(v *viper.Viper) (gostatsd.Backend, error) {
-	return NewClient()
+// NewClientFromViper constructs a sensu-statsd backend.
+func NewClientFromViper(v *viper.Viper, a *Agent) (gostatsd.Backend, error) {
+	return NewClient(a)
 }
 
 // NewClient constructs a sensu-statsd backend.
-func NewClient() (*Client, error) {
-	return &Client{}, nil
+func NewClient(a *Agent) (*Client, error) {
+	return &Client{agent: a}, nil
 }
 
 // SendMetricsAsync flushes the metrics to the statsd backend which resides on
 // the sensu-agent, preparing payload synchronously but doing the send asynchronously.
 // Must not read/write MetricMap asynchronously.
-func (client Client) SendMetricsAsync(ctx context.Context, metrics *gostatsd.MetricMap, cb gostatsd.SendCallback) {
+func (c Client) SendMetricsAsync(ctx context.Context, metrics *gostatsd.MetricMap, cb gostatsd.SendCallback) {
 	metricsPoints := prepareMetrics(metrics)
 	go func() {
-		cb([]error{sendMetrics(metricsPoints)})
+		cb([]error{c.sendMetrics(metricsPoints)})
 	}()
 }
 
@@ -93,10 +97,26 @@ func prepareMetrics(metrics *gostatsd.MetricMap) []*types.MetricPoint {
 	return metricsPoints
 }
 
-func sendMetrics(metrics []*types.MetricPoint) (retErr error) {
-	for _, metric := range metrics {
-		logger.WithField("metric", metric).Info("metric received from statsd")
+func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
+	metrics := &types.Metrics{
+		Points: points,
 	}
+	event := &types.Event{
+		Entity:    c.agent.getAgentEntity(),
+		Timestamp: time.Now().Unix(),
+		Metrics:   metrics,
+	}
+
+	_, err := json.Marshal(event)
+	// msg, err := json.Marshal(event)
+	if err != nil {
+		logger.WithError(err).Error("error marshaling metric event")
+		return err
+	}
+
+	// TODO: Swallow the message until we can handle metric events
+	// https://github.com/sensu/sensu-go/issues/1247
+	// c.agent.sendMessage(transport.MessageTypeEvent, msg)
 	return nil
 }
 
