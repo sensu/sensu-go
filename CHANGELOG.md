@@ -15,7 +15,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added gRPC extension service definition.
 - The slack handler now uses the iconURL & username flag parameters.
 - Support for nightlies in build/packaging tooling.
-- Added extension regsitry to the store.
+- Added extension registry support to apid.
+- Added extension registry to the store.
 - Add sensuctl create command.
 
 ### Changed

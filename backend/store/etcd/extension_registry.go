@@ -76,3 +76,25 @@ func (s *Store) GetExtension(ctx context.Context, name string) (*types.Extension
 	var ext types.Extension
 	return &ext, json.Unmarshal(resp.Kvs[0].Value, &ext)
 }
+
+func (s *Store) GetExtensions(ctx context.Context) ([]*types.Extension, error) {
+	resp, err := query(ctx, s, getExtensionPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+
+	extensions := make([]*types.Extension, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		var ext types.Extension
+		if err := json.Unmarshal(kv.Value, &ext); err != nil {
+			return nil, err
+		}
+		extensions[i] = &ext
+	}
+
+	return extensions, nil
+}
