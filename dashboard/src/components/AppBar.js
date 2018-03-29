@@ -75,12 +75,12 @@ class AppBar extends React.Component {
   }
 }
 
-export const EnhancedAppBar = withStyles(AppBar.styles)(AppBar);
-export default createFragmentContainer(
-  EnhancedAppBar,
+const AppBarContainer = createFragmentContainer(
+  AppBar,
   graphql`
     fragment AppBar_environment on Environment {
       ...EnvironmentLabel_environment
     }
   `,
 );
+export default withStyles(AppBar.styles)(AppBarContainer);

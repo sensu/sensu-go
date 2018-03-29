@@ -67,6 +67,7 @@ class AppFrame extends React.Component {
           viewer={viewer}
           open={drawerOpen}
           onToggle={toggleDrawer}
+          environment={environment}
           className={classes.drawer}
         />
         <div className={classes.maincontainer}>
@@ -88,6 +89,7 @@ export default createFragmentContainer(
 
     fragment AppFrame_environment on Environment {
       ...AppBar_environment
+      ...Drawer_environment
     }
   `,
 );

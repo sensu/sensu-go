@@ -10,14 +10,11 @@ import Menu, { MenuItem } from "material-ui/Menu";
 import { ListItemIcon, ListItemText } from "material-ui/List";
 import Divider from "material-ui/Divider";
 import OrganizationIcon from "./OrganizationIcon";
-import EnvironmentIcon from "./EnvironmentIcon";
+import EnvironmentSymbol from "./EnvironmentSymbol";
 import { withNamespace, namespaceShape } from "./NamespaceLink";
 
 const styles = () => ({
-  menuItem: {},
-  primary: {},
-  icon: {},
-  environmentIconContainer: {
+  envIcon: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -49,42 +46,30 @@ class NamespaceSelectorMenu extends React.Component {
       <Menu {...props}>
         {currentOrganization.environments.map(environment => (
           <MenuItem
-            className={classes.menuItem}
             key={environment.name}
             onClick={navigateTo(currentOrganization.name, environment.name)}
           >
-            <ListItemIcon className={classes.icon}>
-              <div className={classes.environmentIconContainer}>
-                <EnvironmentIcon
-                  colour={environment.colourId}
-                  className={classes.environmentIcon}
-                  size={10}
-                />
+            <ListItemIcon>
+              <div className={classes.envIcon}>
+                <EnvironmentSymbol environment={environment} size={12} />
               </div>
             </ListItemIcon>
-            <ListItemText
-              classes={{ primary: classes.primary }}
-              inset
-              primary={environment.name}
-            />
+            <ListItemText inset primary={environment.name} />
           </MenuItem>
         ))}
         <Divider />
         {map(otherOrganizations, (organization, i) => [
           organization.environments.map(environment => (
             <MenuItem
-              className={classes.menuItem}
               key={environment.name}
               onClick={navigateTo(organization.name, environment.name)}
             >
-              <ListItemIcon className={classes.icon}>
-                <OrganizationIcon
-                  icon={organization.iconId}
-                  iconColour={environment.colourId}
-                />
+              <ListItemIcon>
+                <OrganizationIcon organization={organization} size={24}>
+                  <EnvironmentSymbol environment={environment} size={24 / 3} />
+                </OrganizationIcon>
               </ListItemIcon>
               <ListItemText
-                classes={{ primary: classes.primary }}
                 inset
                 primary={organization.name}
                 secondary={environment.name}
@@ -104,10 +89,10 @@ export default createFragmentContainer(
     fragment NamespaceSelectorMenu_viewer on Viewer {
       organizations {
         name
-        iconId
+        ...OrganizationIcon_organization
         environments {
           name
-          colourId
+          ...EnvironmentSymbol_environment
         }
       }
     }

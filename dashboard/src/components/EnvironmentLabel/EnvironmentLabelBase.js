@@ -1,16 +1,17 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
-import OrganizationIcon from "../OrganizationIcon";
+import { withStyles } from "material-ui/styles";
+
+import { EnvironmentIconBase as Icon } from "../EnvironmentIcon";
 
 class EnvironmentLabelBase extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     organization: PropTypes.string.isRequired,
+    organizationIcon: PropTypes.string.isRequired,
     environment: PropTypes.string.isRequired,
-    icon: PropTypes.string.isRequired,
-    iconColour: PropTypes.string.isRequired,
+    environmentColour: PropTypes.string.isRequired,
   };
 
   static styles = theme => ({
@@ -33,7 +34,13 @@ class EnvironmentLabelBase extends React.Component {
   });
 
   render() {
-    const { classes, icon, iconColour, organization, environment } = this.props;
+    const {
+      classes,
+      organizationIcon,
+      environmentColour,
+      organization,
+      environment,
+    } = this.props;
 
     return (
       <div className={classes.container}>
@@ -42,7 +49,11 @@ class EnvironmentLabelBase extends React.Component {
           {" · "}
           <span className={classes.heavier}>{environment}</span>
         </Typography>
-        <OrganizationIcon icon={icon} iconColour={iconColour} />
+
+        <Icon
+          organizationIcon={organizationIcon}
+          environmentColour={environmentColour}
+        />
       </div>
     );
   }

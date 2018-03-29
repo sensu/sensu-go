@@ -22,7 +22,7 @@ import LogoutIcon from "material-ui-icons/ExitToApp";
 import IconButton from "material-ui/IconButton";
 import MenuIcon from "material-ui-icons/Menu";
 import WandIcon from "../icons/Wand";
-import OrganizationIcon from "./OrganizationIcon";
+import EnvironmentIcon from "./EnvironmentIcon";
 import Wordmark from "../icons/SensuWordmark";
 
 import { logout } from "../utils/authentication";
@@ -69,6 +69,7 @@ class Drawer extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.object.isRequired,
+    environment: PropTypes.object.isRequired,
     onToggle: PropTypes.func.isRequired,
     router: routerShape.isRequired,
     match: matchShape.isRequired,
@@ -84,16 +85,18 @@ class Drawer extends React.Component {
     this.props.router.push("/login");
   };
 
-  render() {
-    const { viewer, open, router, match, onToggle, classes } = this.props;
-    const { preferencesOpen } = this.state;
-    const linkTo = path => {
-      const fullPath = makeNamespacedPath(match.params)(path);
-      return () => {
-        router.push(fullPath);
-        onToggle();
-      };
+  linkTo = path => {
+    const { router, match, onToggle } = this.props;
+    const fullPath = makeNamespacedPath(match.params)(path);
+    return () => {
+      router.push(fullPath);
+      onToggle();
     };
+  };
+
+  render() {
+    const { viewer, environment, open, onToggle, classes } = this.props;
+    const { preferencesOpen } = this.state;
 
     return (
       <MaterialDrawer variant="temporary" open={open} onClose={onToggle}>
@@ -116,11 +119,7 @@ class Drawer extends React.Component {
               <div className={classes.row}>
                 {/* TODO update with global variables or whatever when we get them */}
                 <div className={classes.namespaceIcon}>
-                  <OrganizationIcon
-                    icon="HALFHEART"
-                    iconColour="PINK"
-                    size={36}
-                  />
+                  <EnvironmentIcon environment={environment} size={36} />
                 </div>
               </div>
               <div className={classes.row}>
@@ -136,33 +135,33 @@ class Drawer extends React.Component {
             <DrawerButton
               Icon={DashboardIcon}
               primary="Dashboard"
-              onClick={linkTo("")}
+              onClick={this.linkTo("")}
             />
             <DrawerButton
               Icon={EventIcon}
               primary="Events"
-              onClick={linkTo("events")}
+              onClick={this.linkTo("events")}
             />
             <DrawerButton
               Icon={EntityIcon}
               primary="Entities"
-              onClick={linkTo("entities")}
+              onClick={this.linkTo("entities")}
             />
             <DrawerButton
               Icon={CheckIcon}
               primary="Checks"
-              onClick={linkTo("checks")}
+              onClick={this.linkTo("checks")}
             />
             <DrawerButton
               Icon={SilenceIcon}
               primary="Silences"
-              onClick={linkTo("silences")}
+              onClick={this.linkTo("silences")}
             />
             <DrawerButton Icon={HookIcon} primary="Hooks" href="hooks" />
             <DrawerButton
               Icon={HandlerIcon}
               primary="Handlers"
-              onClick={linkTo("handlers")}
+              onClick={this.linkTo("handlers")}
             />
           </List>
           <Divider />
@@ -199,6 +198,10 @@ const DrawerContainer = createFragmentContainer(
   graphql`
     fragment Drawer_viewer on Viewer {
       ...NamespaceSelector_viewer
+    }
+
+    fragment Drawer_environment on Environment {
+      ...EnvironmentIcon_environment
     }
   `,
 );

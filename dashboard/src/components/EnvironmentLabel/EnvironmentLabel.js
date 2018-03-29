@@ -16,15 +16,16 @@ class EnvironmentLabel extends React.Component {
   };
 
   render() {
-    const { environment } = this.props;
+    const { environment, ...props } = this.props;
     const { organization } = environment;
 
     return (
       <Label
         organization={organization.name}
+        organizationIcon={organization.iconId}
         environment={environment.name}
-        icon={organization.iconId}
-        iconColour={environment.colourId}
+        environmentColour={environment.colourId}
+        {...props}
       />
     );
   }

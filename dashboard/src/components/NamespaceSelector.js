@@ -42,11 +42,10 @@ class NamespaceSelector extends React.Component {
     const { viewer, currentNamespace, classes, ...props } = this.props;
     const { anchorEl } = this.state;
 
-    /* TODO use global variables or something for this */
     return (
       <div {...props}>
         <Button
-          aria-owns="test"
+          aria-owns="drawer-selector-menu"
           className={classes.button}
           onClick={this.handleClick}
         >

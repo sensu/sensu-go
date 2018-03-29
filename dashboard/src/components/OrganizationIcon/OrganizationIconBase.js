@@ -1,25 +1,28 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classnames from "classnames";
 import { withStyles } from "material-ui/styles";
 
 import DonutSmall from "material-ui-icons/DonutSmall";
 import Explore from "material-ui-icons/Explore";
 import Visibility from "material-ui-icons/Visibility";
 import Emoticon from "material-ui-icons/InsertEmoticon";
-import Briefcase from "../icons/Briefcase";
-import Heart from "../icons/Heart";
-import HalfHeart from "../icons/HalfHeart";
-import HeartMug from "../icons/HeartMug";
-import Espresso from "../icons/Espresso";
-import Poly from "../icons/Poly";
-
-import EnvironmentIcon from "./EnvironmentIcon";
+import Hot from "../../icons/Hot";
+import Donut from "../../icons/Donut";
+import Briefcase from "../../icons/Briefcase";
+import Heart from "../../icons/Heart";
+import HalfHeart from "../../icons/HalfHeart";
+import HeartMug from "../../icons/HeartMug";
+import Espresso from "../../icons/Espresso";
+import Poly from "../../icons/Poly";
 
 const icons = {
   BRIEFCASE: Briefcase,
-  DONUT: DonutSmall,
+  DONUTSM: DonutSmall,
+  DONUT: Donut,
   EMOTICON: Emoticon,
   EXPLORE: Explore,
+  FIRE: Hot,
   HEART: Heart,
   HALFHEART: HalfHeart,
   MUG: HeartMug,
@@ -29,13 +32,13 @@ const icons = {
 };
 
 const styles = theme => ({
-  circle: {
+  root: {
     display: "inline-flex",
     position: "relative",
     backgroundColor: theme.palette.primary.contrastText,
     color: theme.palette.primary.dark,
   },
-  smallCircle: {
+  child: {
     position: "absolute",
     display: "inline-flex",
     alignSelf: "flex-end",
@@ -44,56 +47,50 @@ const styles = theme => ({
   },
 });
 
-class OrganizationIcon extends React.Component {
+class OrganizationIcon extends React.PureComponent {
   static propTypes = {
+    children: PropTypes.node,
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     icon: PropTypes.string.isRequired,
-    iconColour: PropTypes.string.isRequired,
     size: PropTypes.number,
-    disableEnvironmentIdicator: PropTypes.bool,
   };
 
   static defaultProps = {
+    children: null,
     className: null,
     size: 24.0,
-    disableEnvironmentIdicator: false,
   };
 
   render() {
     const {
+      children,
       classes,
-      className,
+      className: classNameProp,
       icon,
-      iconColour,
       size,
-      disableEnvironmentIdicator,
     } = this.props;
 
-    const mainIcon = {
-      margin: `calc(${size}px * (1/12)`,
-      height: `calc(${size}px * (5/6)`,
-      width: `calc(${size}px * (5/6)`,
-    };
+    // Classes
+    const className = classnames(classNameProp, classes.root);
+    const DisplayIcon = icons[icon];
 
-    const circle = {
+    // Inline styles
+    const iconStyles = {
+      margin: `calc(${size}px * (1/12))`,
+      height: `calc(${size}px * (5/6))`,
+      width: `calc(${size}px * (5/6))`,
+    };
+    const containerStyles = {
       width: size,
       height: size,
       borderRadius: "100%",
     };
 
-    const DisplayIcon = icons[icon];
-
     return (
-      <div className={`${className} ${classes.circle}`} style={circle}>
-        <DisplayIcon style={mainIcon} />
-        {!disableEnvironmentIdicator && (
-          <EnvironmentIcon
-            className={classes.smallCircle}
-            colour={iconColour}
-            size={size / 3.0}
-          />
-        )}
+      <div className={className} style={containerStyles}>
+        <DisplayIcon style={iconStyles} />
+        {children && React.cloneElement(children, { className: classes.child })}
       </div>
     );
   }
