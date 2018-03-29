@@ -1,31 +1,19 @@
 package testutil
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
-var socketChan = make(chan net.Listener, 100)
-
-func init() {
-	// dirty hack to prevent port collisions
-	go func() {
-		for {
-			ln, err := net.Listen("tcp4", "127.0.0.1:0")
-			if err != nil {
-				log.Println(err)
-			}
-			socketChan <- ln
-		}
-	}()
-}
+// dirty hack to prevent port collisions
+var lastPort int64 = 30000
 
 // TempDir provides a test with a temporary directory (under os.TempDir())
 // returning the absolute path to the directory and a remove() function
@@ -40,13 +28,43 @@ func TempDir(t *testing.T) (tmpDir string, remove func()) {
 	return tmpDir, func() { _ = os.RemoveAll(tmpDir) }
 }
 
+// ReservePort reserves a port, as long as this process is the only one
+// on the system opening ports. Introduced to avoid port collisions in
+// our end-to-end tests. A total hack, and will probably need replacing
+// one day.
+func ReservePort() (int, error) {
+	for {
+		port := atomic.AddInt64(&lastPort, 1)
+		if port > 65535 {
+			return 0, errors.New("port allocation failed")
+		}
+		ln, err := net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d", port))
+		if err != nil {
+			if oe, ok := err.(*net.OpError); ok {
+				if oe.Timeout() {
+					return 0, err
+				}
+			}
+			continue
+		}
+		for {
+			err, ok := ln.Close().(*net.OpError)
+			if err == nil {
+				return int(port), nil
+			}
+			if ok && err.Temporary() {
+				continue
+			}
+			return 0, err
+		}
+	}
+}
+
 // RandomPorts reserves len(p) ports and assigns them to elements of p.
 // It calls ReservePort repeatedly.
 func RandomPorts(p []int) (err error) {
 	for i := range p {
-		ln := <-socketChan
-		defer ln.Close()
-		port, err := strconv.Atoi(strings.Split(ln.Addr().String(), ":")[1])
+		port, err := ReservePort()
 		if err != nil {
 			return err
 		}
