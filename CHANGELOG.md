@@ -18,6 +18,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added extension registry support to apid.
 - Added extension registry to the store.
 - Add sensuctl create command.
+- Add event filtering to extensions.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
