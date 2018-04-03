@@ -31,7 +31,6 @@ const styles = theme => ({
 
 class QuickNavButton extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     Icon: PropTypes.func.isRequired,
     caption: PropTypes.string.isRequired,

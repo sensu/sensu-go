@@ -320,99 +320,99 @@ func RegisterCheckConfig(svc *graphql.Service, impl CheckConfigFieldResolvers) {
 }
 func _ObjTypeCheckConfigIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeCheckConfigNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigNamespaceFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Namespace(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeCheckConfigNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigNameFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeCheckConfigCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigCommandFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Command(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Command(frp)
 	}
 }
 
 func _ObjTypeCheckConfigHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigHandlersFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Handlers(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handlers(frp)
 	}
 }
 
 func _ObjTypeCheckConfigHighFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigHighFlapThresholdFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.HighFlapThreshold(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.HighFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckConfigIntervalHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigIntervalFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Interval(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Interval(frp)
 	}
 }
 
 func _ObjTypeCheckConfigLowFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigLowFlapThresholdFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.LowFlapThreshold(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LowFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckConfigPublishHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigPublishFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Publish(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Publish(frp)
 	}
 }
 
 func _ObjTypeCheckConfigSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigSubscriptionsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Subscriptions(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subscriptions(frp)
 	}
 }
 
 func _ObjTypeCheckConfigSourceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigSourceFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Source(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Source(frp)
 	}
 }
 
 func _ObjTypeCheckConfigStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigStdinFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Stdin(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Stdin(frp)
 	}
 }
 
 func _ObjTypeCheckConfigCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigCheckHooksFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.CheckHooks(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CheckHooks(frp)
 	}
 }
 
 func _ObjTypeCheckConfigSubdueHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigSubdueFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Subdue(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subdue(frp)
 	}
 }
 
@@ -714,22 +714,22 @@ func RegisterCheckConfigConnection(svc *graphql.Service, impl CheckConfigConnect
 }
 func _ObjTypeCheckConfigConnectionEdgesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigConnectionEdgesFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Edges(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Edges(frp)
 	}
 }
 
 func _ObjTypeCheckConfigConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigConnectionPageInfoFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.PageInfo(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PageInfo(frp)
 	}
 }
 
 func _ObjTypeCheckConfigConnectionTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigConnectionTotalCountFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.TotalCount(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.TotalCount(frp)
 	}
 }
 
@@ -929,15 +929,15 @@ func RegisterCheckConfigEdge(svc *graphql.Service, impl CheckConfigEdgeFieldReso
 }
 func _ObjTypeCheckConfigEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigEdgeNodeFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Node(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Node(frp)
 	}
 }
 
 func _ObjTypeCheckConfigEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigEdgeCursorFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Cursor(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cursor(frp)
 	}
 }
 
@@ -1381,141 +1381,141 @@ func RegisterCheck(svc *graphql.Service, impl CheckFieldResolvers) {
 }
 func _ObjTypeCheckNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckNameFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeCheckCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckCommandFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Command(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Command(frp)
 	}
 }
 
 func _ObjTypeCheckHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHandlersFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Handlers(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handlers(frp)
 	}
 }
 
 func _ObjTypeCheckHighFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHighFlapThresholdFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.HighFlapThreshold(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.HighFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckIntervalHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckIntervalFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Interval(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Interval(frp)
 	}
 }
 
 func _ObjTypeCheckLowFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckLowFlapThresholdFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.LowFlapThreshold(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LowFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckPublishHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckPublishFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Publish(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Publish(frp)
 	}
 }
 
 func _ObjTypeCheckSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckSubscriptionsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Subscriptions(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subscriptions(frp)
 	}
 }
 
 func _ObjTypeCheckSourceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckSourceFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Source(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Source(frp)
 	}
 }
 
 func _ObjTypeCheckStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckStdinFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Stdin(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Stdin(frp)
 	}
 }
 
 func _ObjTypeCheckCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckCheckHooksFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.CheckHooks(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CheckHooks(frp)
 	}
 }
 
 func _ObjTypeCheckSubdueHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckSubdueFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Subdue(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subdue(frp)
 	}
 }
 
 func _ObjTypeCheckDurationHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckDurationFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Duration(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Duration(frp)
 	}
 }
 
 func _ObjTypeCheckExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckExecutedFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Executed(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Executed(frp)
 	}
 }
 
 func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.History(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.History(frp)
 	}
 }
 
 func _ObjTypeCheckIssuedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckIssuedFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Issued(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Issued(frp)
 	}
 }
 
 func _ObjTypeCheckOutputHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckOutputFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Output(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Output(frp)
 	}
 }
 
 func _ObjTypeCheckStateHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckStateFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.State(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.State(frp)
 	}
 }
 
 func _ObjTypeCheckStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckStatusFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Status(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(frp)
 	}
 }
 
 func _ObjTypeCheckTotalStateChangeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckTotalStateChangeFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.TotalStateChange(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.TotalStateChange(frp)
 	}
 }
 
@@ -1852,15 +1852,15 @@ func RegisterCheckHistory(svc *graphql.Service, impl CheckHistoryFieldResolvers)
 }
 func _ObjTypeCheckHistoryStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryStatusFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Status(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(frp)
 	}
 }
 
 func _ObjTypeCheckHistoryExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryExecutedFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Executed(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Executed(frp)
 	}
 }
 

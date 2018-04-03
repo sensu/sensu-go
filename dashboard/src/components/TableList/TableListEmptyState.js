@@ -6,10 +6,13 @@ import Typography from "material-ui/Typography";
 const styles = theme => ({
   root: {
     textAlign: "center",
-    paddingTop: theme.spacing.unit * 14,
-    paddingBottom: theme.spacing.unit * 14,
-    paddingLeft: theme.spacing.unit * 21,
-    paddingRight: theme.spacing.unit * 21,
+    padding: theme.spacing.unit * 3,
+    maxWidth: 480,
+    margin: "0 auto",
+    [theme.breakpoints.up("md")]: {
+      paddingTop: theme.spacing.unit * 14,
+      paddingBottom: theme.spacing.unit * 14,
+    },
   },
   icon: {
     display: "inline-flex",

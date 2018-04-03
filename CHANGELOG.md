@@ -20,7 +20,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add sensuctl create command.
 - Adds a statsd server to the sensu-agent which runs statsd at a configurable
 flush interval and converts gostatsd metrics to Sensu Metric Format. These
-metrics are logged for the time being.
+metric events are swallowed for the time being.
+- Add event filtering to extensions.
+- Proper 404 page for web UI.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
@@ -36,6 +38,8 @@ and yarn are now dependencies for building the backend.
 - Build protobufs with go generate.
 - Creating roles via sensuctl now supports passing flags for setting permissions
   rules.
+- Removed -c (check) flag in sensuctl check execute command.
+- Events list can properly be viewed on mobile.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.
@@ -44,6 +48,7 @@ and yarn are now dependencies for building the backend.
 - Agents from different orgs/envs with the same ID connected to the same backend
   no longer overwrite each other's messagebus subscriptions.
 - Fix the manual packaging process.
+- Properly log the event being handled in pipelined
 
 ### Added
 - Support for managing mutators via sensuctl.

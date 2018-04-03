@@ -6,7 +6,7 @@ import ThemeProvider from "./ThemeProvider";
 
 class AppThemeProvider extends React.Component {
   static propTypes = {
-    children: PropTypes.element.isRequired,
+    children: PropTypes.node.isRequired,
     theme: PropTypes.shape({
       theme: PropTypes.string,
       dark: PropTypes.bool,

@@ -1,14 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
-import GraphiQL from "graphiql";
+// import GraphiQL from "graphiql";
 import Paper from "material-ui/Paper";
 import Typography from "material-ui/Typography";
 import { withStyles } from "material-ui/styles";
 
 import RestrictUnauthenticated from "../components/RestrictUnauthenticated";
-import { getAccessToken } from "../utils/authentication";
-
-require("graphiql/graphiql.css");
+// import { getAccessToken } from "../utils/authentication";
 
 const styles = theme => ({
   content: {
@@ -23,27 +21,26 @@ const styles = theme => ({
   },
 });
 
-function fetchQuery(params) {
-  const parseJson = response => response.json();
-  const makeRequest = accessToken =>
-    fetch("/graphql", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(params),
-    });
-
-  return getAccessToken()
-    .then(makeRequest)
-    .then(parseJson);
-}
+// function fetchQuery(params) {
+//   const parseJson = response => response.json();
+//   const makeRequest = accessToken =>
+//     fetch("/graphql", {
+//       method: "POST",
+//       headers: {
+//         Accept: "application/json",
+//         Authorization: `Bearer ${accessToken}`,
+//         "content-type": "application/json",
+//       },
+//       body: JSON.stringify(params),
+//     });
+//
+//   return getAccessToken()
+//     .then(makeRequest)
+//     .then(parseJson);
+// }
 
 class QueryPage extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
   };
 
@@ -56,7 +53,11 @@ class QueryPage extends React.Component {
             Sensu GraphQL Explorer
           </Typography>
           <div className={classes.explorer}>
-            <GraphiQL fetcher={fetchQuery} />
+            <p>
+              Due to an incompatible GraphQL version, explorer has been removed
+              for the time being.
+            </p>
+            {/* <GraphiQL fetcher={fetchQuery} /> */}
           </div>
         </Paper>
       </RestrictUnauthenticated>
