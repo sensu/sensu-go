@@ -41,14 +41,21 @@ func (t *wizardTopic) logDroppedMessages() {
 // Send a message to all subscribers to this topic.
 func (t *wizardTopic) Send(msg interface{}) {
 	t.RLock()
-	defer t.RUnlock()
-
-	for _, subscriber := range t.bindings {
+	names := make([]string, 0, len(t.bindings))
+	subscribers := make([]Subscriber, 0, len(t.bindings))
+	for name, subscriber := range t.bindings {
+		names = append(names, name)
+		subscribers = append(subscribers, subscriber)
+	}
+	t.RUnlock()
+	for i, subscriber := range subscribers {
 		select {
 		case subscriber.Receiver() <- msg:
-		default:
-			atomic.AddInt64(&t.droppedMessages, 1)
-			continue
+		case <-time.After(10 * time.Second):
+			logger.WithFields(logrus.Fields{
+				"topic":      t.id,
+				"subscriber": names[i],
+			}).Warn("timed out delivering message to subscriber")
 		}
 	}
 }
@@ -59,15 +66,16 @@ func (t *wizardTopic) SendDirect(msg interface{}) error {
 		return errors.New("no ring for topic: " + t.id)
 	}
 
-	t.RLock()
-	defer t.RUnlock()
-
 	id, err := t.ring.Next(context.Background())
 	if err != nil {
 		return err
 	}
 
-	t.bindings[id].Receiver() <- msg
+	t.RLock()
+	receiver := t.bindings[id].Receiver()
+	t.RUnlock()
+
+	receiver <- msg
 
 	return nil
 }
@@ -75,9 +83,8 @@ func (t *wizardTopic) SendDirect(msg interface{}) error {
 // Subscribe a Subscriber to this topic and receive a Subscription.
 func (t *wizardTopic) Subscribe(id string, sub Subscriber) (Subscription, error) {
 	t.Lock()
-	defer t.Unlock()
-
 	t.bindings[id] = sub
+	t.Unlock()
 
 	if t.ring != nil {
 		if err := t.ring.Add(context.Background(), id); err != nil {

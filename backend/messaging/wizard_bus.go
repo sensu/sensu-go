@@ -147,9 +147,10 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 	}
 
 	b.topicsMu.RLock()
-	defer b.topicsMu.RUnlock()
+	wTopic, ok := b.topics[topic]
+	b.topicsMu.RUnlock()
 
-	if wTopic, ok := b.topics[topic]; ok {
+	if ok {
 		wTopic.Send(msg)
 	}
 
