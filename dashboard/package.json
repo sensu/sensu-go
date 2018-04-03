@@ -39,7 +39,6 @@
     "file-loader": "^1.1.4",
     "found": "^0.3.4",
     "found-relay": "^0.3.0-alpha.11",
-    "graphiql": "^0.11.11",
     "graphql": "^0.13.0",
     "html-webpack-plugin": "^2.29.0",
     "istanbul-reports": "^1.1.0",

@@ -27,6 +27,12 @@ type EnvironmentNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// EnvironmentColourIDFieldResolver implement to resolve requests for the Environment's colourId field.
+type EnvironmentColourIDFieldResolver interface {
+	// ColourID implements response to request for colourId field.
+	ColourID(p graphql.ResolveParams) (MutedColour, error)
+}
+
 // EnvironmentOrganizationFieldResolver implement to resolve requests for the Environment's organization field.
 type EnvironmentOrganizationFieldResolver interface {
 	// Organization implements response to request for organization field.
@@ -160,6 +166,7 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentIDFieldResolver
 	EnvironmentDescriptionFieldResolver
 	EnvironmentNameFieldResolver
+	EnvironmentColourIDFieldResolver
 	EnvironmentOrganizationFieldResolver
 	EnvironmentEntitiesFieldResolver
 	EnvironmentChecksFieldResolver
@@ -233,6 +240,13 @@ func (_ EnvironmentAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// ColourID implements response to request for 'colourId' field.
+func (_ EnvironmentAliases) ColourID(p graphql.ResolveParams) (MutedColour, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := MutedColour(val.(string))
+	return ret, err
+}
+
 // Organization implements response to request for 'organization' field.
 func (_ EnvironmentAliases) Organization(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -266,29 +280,38 @@ func RegisterEnvironment(svc *graphql.Service, impl EnvironmentFieldResolvers) {
 }
 func _ObjTypeEnvironmentIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EnvironmentIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeEnvironmentDescriptionHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EnvironmentDescriptionFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Description(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Description(frp)
 	}
 }
 
 func _ObjTypeEnvironmentNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EnvironmentNameFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjTypeEnvironmentColourIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentColourIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+
+		val, err := resolver.ColourID(frp)
+		return string(val), err
 	}
 }
 
 func _ObjTypeEnvironmentOrganizationHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EnvironmentOrganizationFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Organization(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Organization(frp)
 	}
 }
 
@@ -360,6 +383,13 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 				Description:       "All check configurations associated with the environment.",
 				Name:              "checks",
 				Type:              graphql.OutputType("CheckConfigConnection"),
+			},
+			"colourId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "ColourId. Experimental. Use graphical interfaces as symbolic reference to environment",
+				Name:              "colourId",
+				Type:              graphql1.NewNonNull(graphql.OutputType("MutedColour")),
 			},
 			"description": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -470,6 +500,7 @@ var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEnvironmentConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"checks":       _ObjTypeEnvironmentChecksHandler,
+		"colourId":     _ObjTypeEnvironmentColourIDHandler,
 		"description":  _ObjTypeEnvironmentDescriptionHandler,
 		"entities":     _ObjTypeEnvironmentEntitiesHandler,
 		"events":       _ObjTypeEnvironmentEventsHandler,
@@ -530,4 +561,89 @@ type _EnumTypeEventsListOrderValues struct {
 	NEWEST EventsListOrder
 	// SEVERITY - self descriptive
 	SEVERITY EventsListOrder
+}
+
+// MutedColour self descriptive
+type MutedColour string
+
+// MutedColours holds enum values
+var MutedColours = _EnumTypeMutedColourValues{
+	BLUE:   "BLUE",
+	GRAY:   "GRAY",
+	GREEN:  "GREEN",
+	ORANGE: "ORANGE",
+	PINK:   "PINK",
+	PURPLE: "PURPLE",
+	YELLOW: "YELLOW",
+}
+
+// MutedColourType self descriptive
+var MutedColourType = graphql.NewType("MutedColour", graphql.EnumKind)
+
+// RegisterMutedColour registers MutedColour object type with given service.
+func RegisterMutedColour(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeMutedColourDesc)
+}
+func _EnumTypeMutedColourConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "self descriptive",
+		Name:        "MutedColour",
+		Values: graphql1.EnumValueConfigMap{
+			"BLUE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BLUE",
+			},
+			"GRAY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "GRAY",
+			},
+			"GREEN": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "GREEN",
+			},
+			"ORANGE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ORANGE",
+			},
+			"PINK": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "PINK",
+			},
+			"PURPLE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "PURPLE",
+			},
+			"YELLOW": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "YELLOW",
+			},
+		},
+	}
+}
+
+// describe MutedColour's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeMutedColourDesc = graphql.EnumDesc{Config: _EnumTypeMutedColourConfigFn}
+
+type _EnumTypeMutedColourValues struct {
+	// BLUE - self descriptive
+	BLUE MutedColour
+	// GRAY - self descriptive
+	GRAY MutedColour
+	// GREEN - self descriptive
+	GREEN MutedColour
+	// ORANGE - self descriptive
+	ORANGE MutedColour
+	// PINK - self descriptive
+	PINK MutedColour
+	// PURPLE - self descriptive
+	PURPLE MutedColour
+	// YELLOW - self descriptive
+	YELLOW MutedColour
 }

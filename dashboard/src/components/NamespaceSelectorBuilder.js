@@ -1,16 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-
 import classNames from "classnames";
-import Typography from "material-ui/Typography";
 import { withStyles } from "material-ui/styles";
 
-import arrowIcon from "material-ui-icons/ArrowDropDown";
+import Typography from "material-ui/Typography";
+import ArrowIcon from "material-ui-icons/ArrowDropDown";
 
 const styles = theme => ({
-  default: {
-    // TODO come back to reassess typography
-    fontFamily: "SF Pro Text",
+  label: {
     color: theme.palette.primary.contrastText,
     opacity: 0.9,
     display: "block",
@@ -30,29 +27,25 @@ const styles = theme => ({
 
 class NamespaceSelectorBuilder extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    DropdownArrow: PropTypes.func.isRequired,
     org: PropTypes.string.isRequired,
     env: PropTypes.string.isRequired,
   };
 
-  static defaultProps = { DropdownArrow: arrowIcon };
-
   render() {
-    const { classes, org, env, DropdownArrow } = this.props;
+    const { classes, org, env } = this.props;
 
     return (
       <div className={classes.selectorContainer}>
-        <Typography className={classNames(classes.default, classes.org)}>
+        <Typography className={classNames(classes.label, classes.org)}>
           {org}
         </Typography>
         <div className={classes.envContainer}>
-          <Typography className={classNames(classes.default, classes.env)}>
+          <Typography className={classNames(classes.label, classes.env)}>
             {env}
           </Typography>
           <span className={classes.arrow}>
-            <DropdownArrow />
+            <ArrowIcon />
           </span>
         </div>
       </div>

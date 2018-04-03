@@ -526,15 +526,15 @@ func RegisterDeleteRecordPayload(svc *graphql.Service, impl DeleteRecordPayloadF
 }
 func _ObjTypeDeleteRecordPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(DeleteRecordPayloadClientMutationIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ClientMutationID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeDeleteRecordPayloadDeletedIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(DeleteRecordPayloadDeletedIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.DeletedID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.DeletedID(frp)
 	}
 }
 
@@ -891,15 +891,15 @@ func RegisterCreateCheckPayload(svc *graphql.Service, impl CreateCheckPayloadFie
 }
 func _ObjTypeCreateCheckPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CreateCheckPayloadClientMutationIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ClientMutationID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeCreateCheckPayloadCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CreateCheckPayloadCheckFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Check(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Check(frp)
 	}
 }
 
@@ -1132,15 +1132,15 @@ func RegisterUpdateCheckPayload(svc *graphql.Service, impl UpdateCheckPayloadFie
 }
 func _ObjTypeUpdateCheckPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(UpdateCheckPayloadClientMutationIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ClientMutationID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeUpdateCheckPayloadCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(UpdateCheckPayloadCheckFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Check(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Check(frp)
 	}
 }
 
@@ -1374,15 +1374,15 @@ func RegisterResolveEventPayload(svc *graphql.Service, impl ResolveEventPayloadF
 }
 func _ObjTypeResolveEventPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(ResolveEventPayloadClientMutationIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ClientMutationID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeResolveEventPayloadEventHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(ResolveEventPayloadEventFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Event(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Event(frp)
 	}
 }
 

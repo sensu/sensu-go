@@ -11,6 +11,9 @@ type Environment implements Node {
   "name is the unique identifier for a organization."
   name: String!
 
+  "ColourId. Experimental. Use graphical interfaces as symbolic reference to environment"
+  colourId: MutedColour!
+
   "The organization the environment belongs to."
   organization: Organization!
 
@@ -28,4 +31,14 @@ enum EventsListOrder {
   OLDEST
   NEWEST
   SEVERITY
+}
+
+enum MutedColour {
+  BLUE
+  GRAY
+  GREEN
+  ORANGE
+  PINK
+  PURPLE
+  YELLOW
 }

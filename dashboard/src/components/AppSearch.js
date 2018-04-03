@@ -58,7 +58,6 @@ const styles = theme => ({
 
 class DrawerSearch extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     width: PropTypes.string.isRequired,
     className: PropTypes.string,

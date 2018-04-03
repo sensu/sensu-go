@@ -11,6 +11,9 @@ import createStore from "./store";
 import reducer from "./reducer";
 import registerServiceWorker from "./registerServiceWorker";
 import environment from "./environment";
+import AppThemeProvider from "./components/AppThemeProvider";
+import BrowserOverrides from "./components/BrowserOverrides";
+import NotFoundPage from "./pages/NotFoundPage";
 
 // Fonts
 import "typeface-roboto"; // eslint-disable-line
@@ -23,7 +26,7 @@ const Router = createConnectedRouter({
   render: createRender({
     // eslint-disable-next-line react/prop-types
     renderError: ({ error }) => (
-      <div>{error.status === 404 ? "Not found" : "Error"}</div>
+      <div>{error.status === 404 ? <NotFoundPage /> : "Error"}</div>
     ),
   }),
 });
@@ -35,7 +38,10 @@ store.dispatch(FarceActions.init());
 // Renderer
 ReactDOM.render(
   <Provider store={store}>
-    <Router resolver={new Resolver(environment)} />
+    <AppThemeProvider>
+      <BrowserOverrides />
+      <Router resolver={new Resolver(environment)} />
+    </AppThemeProvider>
   </Provider>,
   document.getElementById("root"),
 );

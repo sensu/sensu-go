@@ -234,15 +234,15 @@ func _ObjTypeViewerChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjTypeViewerOrganizationsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(ViewerOrganizationsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Organizations(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Organizations(frp)
 	}
 }
 
 func _ObjTypeViewerUserHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(ViewerUserFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.User(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.User(frp)
 	}
 }
 

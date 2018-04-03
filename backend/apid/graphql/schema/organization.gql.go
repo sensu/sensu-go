@@ -32,6 +32,12 @@ type OrganizationEnvironmentsFieldResolver interface {
 	Environments(p graphql.ResolveParams) (interface{}, error)
 }
 
+// OrganizationIconIDFieldResolver implement to resolve requests for the Organization's iconId field.
+type OrganizationIconIDFieldResolver interface {
+	// IconID implements response to request for iconId field.
+	IconID(p graphql.ResolveParams) (Icon, error)
+}
+
 //
 // OrganizationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Organization' type.
@@ -98,6 +104,7 @@ type OrganizationFieldResolvers interface {
 	OrganizationDescriptionFieldResolver
 	OrganizationNameFieldResolver
 	OrganizationEnvironmentsFieldResolver
+	OrganizationIconIDFieldResolver
 }
 
 // OrganizationAliases implements all methods on OrganizationFieldResolvers interface by using reflection to
@@ -173,6 +180,13 @@ func (_ OrganizationAliases) Environments(p graphql.ResolveParams) (interface{},
 	return val, err
 }
 
+// IconID implements response to request for 'iconId' field.
+func (_ OrganizationAliases) IconID(p graphql.ResolveParams) (Icon, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := Icon(val.(string))
+	return ret, err
+}
+
 // OrganizationType Organization represents a Sensu organization in RBAC
 var OrganizationType = graphql.NewType("Organization", graphql.ObjectKind)
 
@@ -182,29 +196,38 @@ func RegisterOrganization(svc *graphql.Service, impl OrganizationFieldResolvers)
 }
 func _ObjTypeOrganizationIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(OrganizationIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeOrganizationDescriptionHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(OrganizationDescriptionFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Description(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Description(frp)
 	}
 }
 
 func _ObjTypeOrganizationNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(OrganizationNameFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeOrganizationEnvironmentsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(OrganizationEnvironmentsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Environments(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Environments(frp)
+	}
+}
+
+func _ObjTypeOrganizationIconIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(OrganizationIconIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+
+		val, err := resolver.IconID(frp)
+		return string(val), err
 	}
 }
 
@@ -225,6 +248,13 @@ func _ObjectTypeOrganizationConfigFn() graphql1.ObjectConfig {
 				Description:       "Environments that belong to the organization",
 				Name:              "environments",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Environment")))),
+			},
+			"iconId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "IconId. Experimental. Use graphical interfaces as symbolic reference to organization",
+				Name:              "iconId",
+				Type:              graphql1.NewNonNull(graphql.OutputType("Icon")),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -260,7 +290,125 @@ var _ObjectTypeOrganizationDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"description":  _ObjTypeOrganizationDescriptionHandler,
 		"environments": _ObjTypeOrganizationEnvironmentsHandler,
+		"iconId":       _ObjTypeOrganizationIconIDHandler,
 		"id":           _ObjTypeOrganizationIDHandler,
 		"name":         _ObjTypeOrganizationNameHandler,
 	},
+}
+
+// Icon self descriptive
+type Icon string
+
+// Icons holds enum values
+var Icons = _EnumTypeIconValues{
+	BRIEFCASE:  "BRIEFCASE",
+	DONUT:      "DONUT",
+	EMOTICON:   "EMOTICON",
+	ESPRESSO:   "ESPRESSO",
+	EXPLORE:    "EXPLORE",
+	FIRE:       "FIRE",
+	HALFHEART:  "HALFHEART",
+	HEART:      "HEART",
+	MUG:        "MUG",
+	POLYGON:    "POLYGON",
+	VISIBILITY: "VISIBILITY",
+}
+
+// IconType self descriptive
+var IconType = graphql.NewType("Icon", graphql.EnumKind)
+
+// RegisterIcon registers Icon object type with given service.
+func RegisterIcon(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeIconDesc)
+}
+func _EnumTypeIconConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "self descriptive",
+		Name:        "Icon",
+		Values: graphql1.EnumValueConfigMap{
+			"BRIEFCASE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BRIEFCASE",
+			},
+			"DONUT": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "DONUT",
+			},
+			"EMOTICON": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "EMOTICON",
+			},
+			"ESPRESSO": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ESPRESSO",
+			},
+			"EXPLORE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "EXPLORE",
+			},
+			"FIRE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "FIRE",
+			},
+			"HALFHEART": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "HALFHEART",
+			},
+			"HEART": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "HEART",
+			},
+			"MUG": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "MUG",
+			},
+			"POLYGON": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "POLYGON",
+			},
+			"VISIBILITY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "VISIBILITY",
+			},
+		},
+	}
+}
+
+// describe Icon's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeIconDesc = graphql.EnumDesc{Config: _EnumTypeIconConfigFn}
+
+type _EnumTypeIconValues struct {
+	// BRIEFCASE - self descriptive
+	BRIEFCASE Icon
+	// DONUT - self descriptive
+	DONUT Icon
+	// EMOTICON - self descriptive
+	EMOTICON Icon
+	// ESPRESSO - self descriptive
+	ESPRESSO Icon
+	// EXPLORE - self descriptive
+	EXPLORE Icon
+	// FIRE - self descriptive
+	FIRE Icon
+	// HALFHEART - self descriptive
+	HALFHEART Icon
+	// HEART - self descriptive
+	HEART Icon
+	// MUG - self descriptive
+	MUG Icon
+	// POLYGON - self descriptive
+	POLYGON Icon
+	// VISIBILITY - self descriptive
+	VISIBILITY Icon
 }
