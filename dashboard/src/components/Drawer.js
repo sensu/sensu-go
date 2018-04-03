@@ -114,7 +114,6 @@ class Drawer extends React.Component {
                 />
               </div>
               <div className={classes.row}>
-                {/* TODO update with global variables or whatever when we get them */}
                 <div className={classes.namespaceIcon}>
                   <EnvironmentIcon environment={environment} size={36} />
                 </div>
