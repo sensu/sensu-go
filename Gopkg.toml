@@ -166,4 +166,4 @@ required = ["github.com/shirou/w32"]
 
 [[constraint]]
   name = "github.com/atlassian/gostatsd"
-  version = "2.3.0"
+  version = "5.4.0"

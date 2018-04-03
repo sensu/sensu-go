@@ -36,8 +36,8 @@
 [[projects]]
   name = "github.com/atlassian/gostatsd"
   packages = [".","pkg/statsd","pkg/statser"]
-  revision = "13ad6fb00b8a5d1f40bcb7de749cde87a3b49ae6"
-  version = "2.3.0"
+  revision = "f828bdb72cb3ed3c82f1e6858b299d2a24ef81d6"
+  version = "5.4.0"
 
 [[projects]]
   branch = "master"
