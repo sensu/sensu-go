@@ -28,21 +28,14 @@ script: "./build.sh $TEST_SUITE"
 jobs:
   include:
   - stage: deploy
-    env: GOARCH=amd64 TEST_SUITE=none
-    script: "./build.sh deploy_binaries"
-    if: tag IS present
+    env: GOARCH=amd64
+    script: "./.travis-wrapper.sh deploy_binaries"
   - stage: deploy
-    env: GOARCH=amd64 TEST_SUITE=none
-    script: "./build.sh deploy_packages"
-    if: tag IS present OR type IS api
+    env: GOARCH=amd64
+    script: "./.travis-wrapper.sh deploy_packages"
   - stage: deploy
-    env: GOARCH=amd64 TEST_SUITE=none
-    script: "./build.sh deploy_docker master"
-    if: branch IS master AND type NOT api AND tag IS blank
-  - stage: deploy
-    env: GOARCH=amd64 TEST_SUITE=none
-    script: "./build.sh deploy_docker versioned"
-    if: tag IS present OR type IS api
+    env: GOARCH=amd64
+    script: "./.travis-wrapper.sh deploy_docker"
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint
