@@ -328,6 +328,6 @@ func TestRBAC(t *testing.T) {
 
 	// Make sure we are properly authenticated
 	output, err = adminctl.run("user", "list")
-	assert.NoError(t, err, output)
+	assert.NoError(t, err, string(output))
 
 }
