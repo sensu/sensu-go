@@ -4,9 +4,10 @@ import { makeRouteConfig, Redirect, Route } from "found";
 import AppWrapper from "./components/AppWrapper";
 import RestrictUnauthenticated from "./components/RestrictUnauthenticated";
 
-import LoginPage from "./pages/Login";
-import EventsPage from "./pages/EventsPage";
 import ChecksPage from "./pages/ChecksPage";
+import DashboardPage from "./pages/DashboardPage";
+import EventsPage from "./pages/EventsPage";
+import LoginPage from "./pages/Login";
 import QueryPage from "./pages/GraphQLExplorerPage";
 import RootRedirect from "./pages/RootRedirect";
 
@@ -22,6 +23,8 @@ export default makeRouteConfig(
         Component={AppWrapper}
         query={AppWrapper.query}
       >
+        <Route path="" Component={DashboardPage} />
+        <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
         <Route
           path="events"
           Component={EventsPage}
@@ -31,7 +34,6 @@ export default makeRouteConfig(
             ...route.location.query,
           })}
         />
-        <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
         <Redirect from="dashboard" to="" />
       </Route>
     </Route>

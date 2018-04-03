@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
-// import { lighten } from "material-ui/styles/colorManipulator";
 import Typography from "material-ui/Typography";
 import Grid from "material-ui/Grid";
 import AppRoot from "../components/AppRoot";

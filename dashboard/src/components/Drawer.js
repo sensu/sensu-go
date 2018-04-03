@@ -13,9 +13,6 @@ import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
 import EventIcon from "material-ui-icons/Notifications";
 import DashboardIcon from "material-ui-icons/Dashboard";
-import SilenceIcon from "material-ui-icons/VolumeOff";
-import HookIcon from "material-ui-icons/Link";
-import HandlerIcon from "material-ui-icons/CallSplit";
 import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
@@ -151,17 +148,6 @@ class Drawer extends React.Component {
               Icon={CheckIcon}
               primary="Checks"
               onClick={this.linkTo("checks")}
-            />
-            <DrawerButton
-              Icon={SilenceIcon}
-              primary="Silences"
-              onClick={this.linkTo("silences")}
-            />
-            <DrawerButton Icon={HookIcon} primary="Hooks" href="hooks" />
-            <DrawerButton
-              Icon={HandlerIcon}
-              primary="Handlers"
-              onClick={this.linkTo("handlers")}
             />
           </List>
           <Divider />

@@ -4,7 +4,7 @@ import classnames from "classnames";
 import { withStyles } from "material-ui/styles";
 
 const styles = theme => ({
-  content: theme.mixins.gutters({
+  root: {
     flex: "1 1 100%",
     maxWidth: "100%",
     margin: "0 auto",
@@ -18,12 +18,21 @@ const styles = theme => ({
     paddingLeft: 0,
     paddingRight: 0,
 
-    // keep content from spanning too much space and becoming difficult to
-    // parse.
+    // keep content from spanning too much of the screen and becoming difficult
+    // to parse.
     [theme.breakpoints.up("lg")]: {
       maxWidth: 1080,
     },
+  },
+  gutters: theme.mixins.gutters({
+    paddingLeft: theme.spacing.unit,
+    paddingRight: theme.spacing.unit,
   }),
+  [theme.breakpoints.up("lg")]: {
+    fullWidth: {
+      maxWidth: "initial",
+    },
+  },
 });
 
 class AppContent extends React.Component {
@@ -31,16 +40,29 @@ class AppContent extends React.Component {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     children: PropTypes.element.isRequired,
+    fullWidth: PropTypes.bool,
+    gutters: PropTypes.bool,
   };
 
   static defaultProps = {
     className: "",
+    fullWidth: false,
+    gutters: false,
   };
 
   render() {
-    const { classes, className, children } = this.props;
-    const contentCls = classnames(classes.content, className);
-    return <div className={contentCls}>{children}</div>;
+    const {
+      classes,
+      className: classNameProp,
+      children,
+      fullWidth,
+      gutters,
+    } = this.props;
+    const className = classnames(classes.root, classNameProp, {
+      [classes.fullWidth]: fullWidth,
+      [classes.gutters]: gutters,
+    });
+    return <div className={className}>{children}</div>;
   }
 }
 
