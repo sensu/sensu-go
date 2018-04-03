@@ -28,25 +28,14 @@ script: "./build.sh $TEST_SUITE"
 jobs:
   include:
   - stage: deploy
-    env: GOARCH=amd64 TEST_SUITE=none
-    script: skip
-    deploy:
-    - provider: script
-      skip_cleanup: true
-      script: "./build.sh docker push master"
-      on:
-        branch: master
-    - provider: script
-      skip_cleanup: true
-      script: "./build.sh deploy versioned"
-      on:
-        tags: true
-        branch: master
-    - provider: script
-      skip_cleanup: true
-      script: "./build.sh deploy nightly"
-      on:
-        condition: $TRAVIS_EVENT_TYPE = api
+    env: GOARCH=amd64
+    script: "./.travis-wrapper.sh deploy_binaries"
+  - stage: deploy
+    env: GOARCH=amd64
+    script: "./.travis-wrapper.sh deploy_packages"
+  - stage: deploy
+    env: GOARCH=amd64
+    script: "./.travis-wrapper.sh deploy_docker"
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint
