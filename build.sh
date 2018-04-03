@@ -299,6 +299,7 @@ install_yarn() {
 install_dashboard_deps() {
     bail_unless_yarn_is_present
     pushd "${DASHBOARD_PATH}"
+    rm -rf dashboard/node_modules
     yarn install
     yarn precompile
     popd
@@ -393,7 +394,7 @@ case "$cmd" in
         install_deps
         ;;
     "docker")
-        docker_commands nopush master "${@:2}"
+        docker_commands "${@:2}"
         ;;
     "e2e")
         # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
