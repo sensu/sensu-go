@@ -1,7 +1,6 @@
 import React from "react";
 import { makeRouteConfig, Redirect, Route } from "found";
 
-import AppRoot from "./components/AppRoot";
 import AppWrapper from "./components/AppWrapper";
 import RestrictUnauthenticated from "./components/RestrictUnauthenticated";
 
@@ -12,7 +11,7 @@ import QueryPage from "./pages/GraphQLExplorerPage";
 import RootRedirect from "./pages/RootRedirect";
 
 export default makeRouteConfig(
-  <Route Component={AppRoot}>
+  <Route>
     <Route path="/login" Component={LoginPage} />
     <Route path="query-explorer" Component={QueryPage} />
     <Route path="/" Component={RootRedirect} />

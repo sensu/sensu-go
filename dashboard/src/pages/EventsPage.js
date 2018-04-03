@@ -20,20 +20,32 @@ class EventsPage extends React.Component {
     match: matchShape.isRequired,
   };
 
-  static styles = {
+  static styles = theme => ({
     headline: {
       display: "flex",
       justifyContent: "space-between",
       alignContent: "center",
     },
+    searchBox: {
+      width: "100%",
+      marginLeft: theme.spacing.unit,
+      marginRight: theme.spacing.unit,
+      [theme.breakpoints.up("sm")]: {
+        width: "auto",
+        margin: 0,
+      },
+    },
     title: {
-      display: "flex",
       alignSelf: "flex-end",
+      display: "none",
+      [theme.breakpoints.up("sm")]: {
+        display: "flex",
+      },
     },
     container: {
       marginTop: 10,
     },
-  };
+  });
 
   static query = graphql`
     query EventsPageQuery(
@@ -87,13 +99,16 @@ class EventsPage extends React.Component {
               Events
             </Typography>
             <SearchBox
-              onUpdateInput={this.requerySearchBox}
-              state={this.state.filterValue}
+              className={classes.searchBox}
+              onChange={this.requerySearchBox}
+              value={this.state.filterValue}
             />
           </div>
-          <div className={classes.container}>
-            <EventsContainer onQueryChange={this.changeQuery} {...props} />
-          </div>
+          <EventsContainer
+            className={classes.container}
+            onQueryChange={this.changeQuery}
+            {...props}
+          />
         </div>
       </AppContent>
     );

@@ -8,6 +8,7 @@ import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
 import Typography from "material-ui/Typography";
+import AppRoot from "../components/AppRoot";
 import Logo from "../icons/SensuLogoGraphic";
 import Wordmark from "../icons/SensuWordmark";
 import { authenticate } from "../utils/authentication";
@@ -104,55 +105,59 @@ class Login extends React.Component {
     const handlePassword = ev => this.setState({ password: ev.target.value });
 
     return (
-      <Paper className={classes.loginCard}>
-        <Logo className={classes.icon} />
-        <Wordmark className={classes.wordmark} />
-        <div className={classes.headline}>
-          <Typography variant="headline">Sign in</Typography>
-          <Typography variant="subheading">with your Sensu Account</Typography>
-        </div>
-        <form className={classes.form} onSubmit={this.handleSubmit}>
-          <TextField
-            name="username"
-            label="Username"
-            aria-label="Username"
-            autoComplete="username"
-            autoCorrect="false"
-            autoCapitalize="none"
-            spellCheck={false}
-            className={classes.textField}
-            fullWidth
-            margin="normal"
-            onChange={handleUsername}
-            disabled={disabled}
-            error={!!authError}
-          />
-          <TextField
-            type="password"
-            name="password"
-            label="Password"
-            aria-label="Password"
-            autoComplete="current-password"
-            className={classes.textField}
-            fullWidth
-            onChange={handlePassword}
-            disabled={disabled}
-            error={!!authError}
-            helperText={authError}
-          />
-          <div className={classes.actionsContainer}>
-            <Button
-              type="submit"
-              color="primary"
-              variant="raised"
-              disabled={disabled}
-              className={classes.button}
-            >
-              Log in
-            </Button>
+      <AppRoot>
+        <Paper className={classes.loginCard}>
+          <Logo className={classes.icon} />
+          <Wordmark className={classes.wordmark} />
+          <div className={classes.headline}>
+            <Typography variant="headline">Sign in</Typography>
+            <Typography variant="subheading">
+              with your Sensu Account
+            </Typography>
           </div>
-        </form>
-      </Paper>
+          <form className={classes.form} onSubmit={this.handleSubmit}>
+            <TextField
+              name="username"
+              label="Username"
+              aria-label="Username"
+              autoComplete="username"
+              autoCorrect="false"
+              autoCapitalize="none"
+              spellCheck={false}
+              className={classes.textField}
+              fullWidth
+              margin="normal"
+              onChange={handleUsername}
+              disabled={disabled}
+              error={!!authError}
+            />
+            <TextField
+              type="password"
+              name="password"
+              label="Password"
+              aria-label="Password"
+              autoComplete="current-password"
+              className={classes.textField}
+              fullWidth
+              onChange={handlePassword}
+              disabled={disabled}
+              error={!!authError}
+              helperText={authError}
+            />
+            <div className={classes.actionsContainer}>
+              <Button
+                type="submit"
+                color="primary"
+                variant="raised"
+                disabled={disabled}
+                className={classes.button}
+              >
+                Log in
+              </Button>
+            </div>
+          </form>
+        </Paper>
+      </AppRoot>
     );
   }
 }
