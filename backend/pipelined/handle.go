@@ -100,8 +100,6 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 		if handler == nil {
 			if err != nil {
 				logger.WithError(err).Error("pipelined failed to retrieve a handler")
-			} else {
-				logger.WithField("name", handlerName).Error("pipelined failed to retrieve a handler")
 			}
 			continue
 		}
