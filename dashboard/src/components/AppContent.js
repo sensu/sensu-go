@@ -8,9 +8,18 @@ const styles = theme => ({
     flex: "1 1 100%",
     maxWidth: "100%",
     margin: "0 auto",
+
+    paddingTop: theme.spacing.unit * 2,
     [theme.breakpoints.up("md")]: {
-      paddingTop: theme.spacing.unit * 3,
+      paddingTop: 0,
     },
+
+    // remove gutters on mobile.
+    paddingLeft: 0,
+    paddingRight: 0,
+
+    // keep content from spanning too much space and becoming difficult to
+    // parse.
     [theme.breakpoints.up("lg")]: {
       maxWidth: 1080,
     },

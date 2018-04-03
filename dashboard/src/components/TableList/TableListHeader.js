@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
 import { withStyles } from "material-ui/styles";
+import Typography from "material-ui/Typography";
 
 const styles = theme => ({
   root: {
@@ -11,6 +12,7 @@ const styles = theme => ({
     display: "flex",
     alignItems: "center",
     height: 56,
+    zIndex: theme.zIndex.appBar - 1,
   },
   active: {
     backgroundColor: theme.palette.primary.main,
@@ -36,7 +38,11 @@ export class TableListHeader extends React.Component {
       [classes.active]: active,
     });
 
-    return <div className={className}>{children}</div>;
+    return (
+      <Typography component="div" className={className}>
+        {children}
+      </Typography>
+    );
   }
 }
 

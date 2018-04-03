@@ -18,35 +18,56 @@ class AppFrame extends React.Component {
 
   static defaultProps = { children: null };
 
-  static styles = theme => ({
-    drawer: {
-      [theme.breakpoints.up("lg")]: {
-        width: 250,
+  static styles = theme => {
+    const toolbar = theme.mixins.toolbar;
+    const xsBrk = `${theme.breakpoints.up("xs")} and (orientation: landscape)`;
+    const smBrk = theme.breakpoints.up("sm");
+
+    return {
+      drawer: {
+        [theme.breakpoints.up("lg")]: {
+          width: 250,
+        },
       },
-    },
-    quicknav: {
-      position: "fixed",
-      flexDirection: "column",
-      alignItems: "center",
-      top: 80,
-      left: 0,
-      width: 72,
-      display: "none",
-      [theme.breakpoints.up("md")]: {
+      quicknav: {
+        position: "fixed",
+        flexDirection: "column",
+        alignItems: "center",
+        top: 80,
+        left: 0,
+        width: 72,
+        display: "none",
+        marginTop: "env(safe-area-inset-top)",
+        [theme.breakpoints.up("md")]: {
+          display: "flex",
+        },
+      },
+      maincontainer: {
+        position: "relative",
         display: "flex",
+        width: "100%",
+        marginTop: "env(safe-area-inset-top)",
+
+        // Contend with app bar height.
+        paddingTop: toolbar.minHeight,
+        [xsBrk]: {
+          paddingTop: toolbar[xsBrk].minHeight,
+        },
+        [smBrk]: {
+          paddingTop: toolbar[smBrk].minHeight,
+        },
+
+        [theme.breakpoints.up("md")]: {
+          // add gutters for quick nav and any floating actions.
+          paddingLeft: 72,
+          paddingRight: 72,
+
+          // align content w/ top of quick nav
+          paddingTop: toolbar[smBrk].minHeight + theme.spacing.unit * 3,
+        },
       },
-    },
-    maincontainer: {
-      position: "relative",
-      display: "flex",
-      width: "100%",
-      paddingTop: 64,
-      [theme.breakpoints.up("md")]: {
-        paddingLeft: 72,
-        paddingRight: 72,
-      },
-    },
-  });
+    };
+  };
 
   state = {
     drawerOpen: false,

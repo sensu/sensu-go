@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classnames from "classnames";
 
 import { withRouter } from "found";
-import { every, some, reduce, capitalize } from "lodash";
+import { every, filter, reduce, capitalize } from "lodash";
 import { compose } from "lodash/fp";
 import { map, join } from "ramda";
 import { createFragmentContainer, graphql } from "react-relay";
@@ -18,32 +19,62 @@ import EventStatus from "./EventStatus";
 import ResolveEventMutation from "../mutations/ResolveEventMutation";
 import TableList, {
   TableListHeader,
+  TableListBody,
   TableListSelect,
   TableListEmptyState,
   TableListButton as Button,
 } from "./TableList";
 
-const styles = theme => ({
-  root: {
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  headerButton: {
-    marginLeft: theme.spacing.unit / 2,
-    "&:first-child": {
-      marginLeft: theme.spacing.unit,
+const styles = theme => {
+  const toolbar = theme.mixins.toolbar;
+  const xsBrk = `${theme.breakpoints.up("xs")} and (orientation: landscape)`;
+  const smBrk = theme.breakpoints.up("sm");
+  const calcTopWithFallback = size => ({
+    top: `calc(${size}px + env(safe-area-inset-top))`,
+    fallbacks: [{ top: size }],
+  });
+
+  return {
+    root: {
+      marginTop: 16,
+      marginBottom: 16,
     },
-  },
-  checkbox: {
-    marginTop: -4,
-    width: 24,
-    height: 24,
-    color: theme.palette.primary.contrastText,
-  },
-  hidden: {
-    display: "none",
-  },
-});
+    header: {
+      position: "sticky",
+      ...calcTopWithFallback(toolbar.minHeight),
+      [xsBrk]: {
+        ...calcTopWithFallback(toolbar[xsBrk].minHeight),
+      },
+      [smBrk]: {
+        ...calcTopWithFallback(toolbar[smBrk].minHeight),
+      },
+      color: theme.palette.primary.contrastText,
+    },
+    headerButton: {
+      marginLeft: theme.spacing.unit / 2,
+      "&:first-child": {
+        marginLeft: theme.spacing.unit,
+      },
+    },
+    filterActions: {
+      display: "none",
+      [theme.breakpoints.up("sm")]: {
+        display: "flex",
+      },
+    },
+    // Remove padding from button container
+    checkbox: {
+      marginLeft: -12,
+      color: theme.palette.primary.contrastText,
+    },
+    hidden: {
+      display: "none",
+    },
+    grow: {
+      flex: "1 1 auto",
+    },
+  };
+};
 
 class EventsContainer extends React.Component {
   static propTypes = {
@@ -82,7 +113,8 @@ class EventsContainer extends React.Component {
     this.setState({ rowState: this.state.rowState });
   };
 
-  eventsSelected = () => some(this.state.rowState, Boolean);
+  selectedEvents = () => filter(this.state.rowState, Boolean);
+  eventsSelected = () => this.selectedEvents().length > 0;
 
   allEventsSelected = () => {
     const { rowState } = this.state;
@@ -150,21 +182,25 @@ class EventsContainer extends React.Component {
     ];
 
     const events = (environment.events && environment.events.edges) || [];
-    const someEventsSelected = this.eventsSelected();
+    const eventsSelected = this.selectedEvents();
+    const someEventsSelected = eventsSelected.length > 0;
+    const hiddenIf = hide => classnames({ [classes.hidden]: hide });
 
     return (
       <TableList className={classes.root}>
-        <TableListHeader active={someEventsSelected}>
-          <span className={classes.tableHeaderButton}>
-            <Checkbox
-              color="secondary"
-              className={classes.checkbox}
-              onClick={this.selectAll}
-              checked={false}
-              indeterminate={someEventsSelected}
-            />
-          </span>
-          <div style={someEventsSelected ? {} : { display: "none" }}>
+        <TableListHeader className={classes.header} active={someEventsSelected}>
+          <Checkbox
+            component="button"
+            className={classes.checkbox}
+            onClick={this.selectAll}
+            checked={false}
+            indeterminate={someEventsSelected}
+          />
+          <div className={hiddenIf(!someEventsSelected)}>
+            {eventsSelected.length} Selected
+          </div>
+          <div className={classes.grow} />
+          <div className={hiddenIf(!someEventsSelected)}>
             <Button className={classes.headerButton} onClick={this.silence}>
               <Typography variant="button">Silence</Typography>
             </Button>
@@ -172,7 +208,12 @@ class EventsContainer extends React.Component {
               <Typography variant="button">Resolve</Typography>
             </Button>
           </div>
-          <div style={someEventsSelected ? { display: "none" } : {}}>
+          <div
+            className={classnames(
+              classes.filterActions,
+              hiddenIf(someEventsSelected),
+            )}
+          >
             <TableListSelect
               className={classes.headerButton}
               label="Entity"
@@ -241,22 +282,24 @@ class EventsContainer extends React.Component {
             </TableListSelect>
           </div>
         </TableListHeader>
-        {events.length === 0 && (
-          <TableListEmptyState
-            primary="No results matched your query."
-            secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
-          />
-        )}
-        {/* TODO pass in resolve and silence functions to reuse for single actions
+        <TableListBody>
+          {events.length === 0 && (
+            <TableListEmptyState
+              primary="No results matched your query."
+              secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
+            />
+          )}
+          {/* TODO pass in resolve and silence functions to reuse for single actions
             the silence dialog is the same, just maybe some prefilled options for list */}
-        {events.map(event => (
-          <EventsListItem
-            key={event.node.id}
-            event={event.node}
-            onChange={this.selectCheckbox(event.node.id)}
-            checked={Boolean(rowState[event.node.id])}
-          />
-        ))}
+          {events.map(event => (
+            <EventsListItem
+              key={event.node.id}
+              event={event.node}
+              onChange={this.selectCheckbox(event.node.id)}
+              checked={Boolean(rowState[event.node.id])}
+            />
+          ))}
+        </TableListBody>
       </TableList>
     );
   }
