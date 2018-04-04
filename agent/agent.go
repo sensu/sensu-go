@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/agent/assetmanager"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
@@ -53,6 +54,12 @@ const (
 	DefaultSocketHost = "127.0.0.1"
 	// DefaultSocketPort specifies the default socket port
 	DefaultSocketPort = 3030
+	// DefaultStatsdFlushInterval specifies the default flush interval for statsd
+	DefaultStatsdFlushInterval = 10
+	// DefaultStatsdMetricsHost specifies the default metrics host for statsd server
+	DefaultStatsdMetricsHost = "127.0.0.1"
+	// DefaultStatsdMetricsPort specifies the default metrics port for statsd server
+	DefaultStatsdMetricsPort = 8125
 	// DefaultUser specifies the default user
 	DefaultUser = "agent"
 )
@@ -91,12 +98,21 @@ type Config struct {
 	Redact []string
 	// Socket contains the Sensu client socket configuration
 	Socket *SocketConfig
+	// StatsdServer contains the statsd server configuration
+	StatsdServer *StatsdServerConfig
 	// Subscriptions is an array of subscription names. Default: empty array.
 	Subscriptions []string
 	// TLS sets the TLSConfig for agent TLS options
 	TLS *types.TLSOptions
 	// User sets the Agent's username
 	User string
+}
+
+// StatsdServerConfig contains the statsd server configuration
+type StatsdServerConfig struct {
+	Host          string
+	Port          int
+	FlushInterval int
 }
 
 // SocketConfig contains the Socket configuration
@@ -125,6 +141,11 @@ func FixtureConfig() *Config {
 			Host: DefaultSocketHost,
 			Port: DefaultSocketPort,
 		},
+		StatsdServer: &StatsdServerConfig{
+			Host:          DefaultStatsdMetricsHost,
+			Port:          DefaultStatsdMetricsPort,
+			FlushInterval: DefaultStatsdFlushInterval,
+		},
 		User: DefaultUser,
 	}
 	return c
@@ -133,8 +154,9 @@ func FixtureConfig() *Config {
 // NewConfig provides a new empty Config object
 func NewConfig() *Config {
 	c := &Config{
-		API:    &APIConfig{},
-		Socket: &SocketConfig{},
+		API:          &APIConfig{},
+		Socket:       &SocketConfig{},
+		StatsdServer: &StatsdServerConfig{},
 	}
 	return c
 }
@@ -155,13 +177,16 @@ type Agent struct {
 	api             *http.Server
 	assetManager    *assetmanager.Manager
 	backendSelector BackendSelector
+	cancel          context.CancelFunc
 	config          *Config
 	conn            transport.Transport
+	context         context.Context
 	entity          *types.Entity
 	handler         *handler.MessageHandler
 	header          http.Header
 	inProgress      map[string]*types.CheckConfig
 	inProgressMu    *sync.Mutex
+	statsdServer    *statsd.Server
 	sendq           chan *transport.Message
 	stopped         chan struct{}
 	stopping        chan struct{}
@@ -170,8 +195,12 @@ type Agent struct {
 
 // NewAgent creates a new Agent and returns a pointer to it.
 func NewAgent(config *Config) *Agent {
+	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(ctx)
 	agent := &Agent{
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
+		cancel:          cancel,
+		context:         ctx,
 		config:          config,
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
@@ -182,6 +211,7 @@ func NewAgent(config *Config) *Agent {
 		wg:              &sync.WaitGroup{},
 	}
 
+	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(types.CheckRequestType, agent.handleCheck)
 	agent.assetManager = assetmanager.New(config.CacheDir, agent.getAgentEntity())
 
@@ -332,16 +362,20 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 
 // Run starts the Agent.
 //
-// 1. Connect to the backend, return an error if unsuccessful.
-// 2. Start the socket listeners, return an error if unsuccessful.
-// 3. Start the send/receive pumps.
-// 4. Start sending keepalives.
-// 5. Start the API server, shutdown the agent if doing so fails.
+// 1. Start a statsd server on the agent and logs the received metrics.
+// 2. Connect to the backend, return an error if unsuccessful.
+// 3. Start the socket listeners, return an error if unsuccessful.
+// 4. Start the send/receive pumps.
+// 5. Start sending keepalives.
+// 6. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	a.header = a.buildTransportHeaderMap()
 	a.header.Set("Authorization", "Basic "+userCredentials)
+
+	logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
+	go a.statsdServer.Run(a.context)
 
 	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
 	if err != nil {
@@ -425,6 +459,7 @@ func (a *Agent) StartSocketListeners() {
 // Stop shuts down the agent. It will block until all listening goroutines
 // have returned.
 func (a *Agent) Stop() {
+	a.cancel()
 	close(a.stopping)
 	a.wg.Wait()
 }

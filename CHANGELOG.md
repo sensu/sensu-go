@@ -18,6 +18,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added extension registry support to apid.
 - Added extension registry to the store.
 - Add sensuctl create command.
+- Adds a statsd server to the sensu-agent which runs statsd at a configurable
+flush interval and converts gostatsd metrics to Sensu Metric Format. These
+metric events are swallowed for the time being.
 - Add event filtering to extensions.
 - Proper 404 page for web UI.
 
