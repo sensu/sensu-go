@@ -52,7 +52,7 @@ func main() {
 	}
 
 	// install web ui depedencies
-	mustRunCmd("yarn", "install")
+	mustRunCmd("yarn", "install", "--verbose")
 
 	// install web ui depedencies
 	mustRunCmd("yarn", "build")
