@@ -154,6 +154,7 @@ build_cli() {
 
 build_dashboard() {
     echo "Building web UI"
+    rm -rf dashboard/node_modules
     GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
