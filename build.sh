@@ -154,7 +154,6 @@ build_cli() {
 
 build_dashboard() {
     echo "Building web UI"
-    sudo rm -rf dashboard/node_modules
     GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
@@ -300,7 +299,6 @@ install_yarn() {
 install_dashboard_deps() {
     bail_unless_yarn_is_present
     pushd "${DASHBOARD_PATH}"
-    rm -rf dashboard/node_modules
     yarn install
     yarn precompile
     popd
@@ -356,6 +354,7 @@ deploy() {
     docker pull sensuapp/sensu-go-build
     docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build clean
 
     # Deploy Docker images to the Docker Hub
     docker_commands push $release
