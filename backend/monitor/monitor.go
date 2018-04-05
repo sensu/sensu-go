@@ -95,7 +95,9 @@ func (m *Monitor) start() {
 
 	timerDuration := m.Timeout
 	m.timer = time.NewTimer(timerDuration)
-	m.resetChan = make(chan time.Duration)
+	// resetChan needs a buffer, otherwise we could end up holding onto m's
+	// mutex indefinitely.
+	m.resetChan = make(chan time.Duration, 1)
 	go func() {
 		timer := m.timer
 
