@@ -5,7 +5,6 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -94,20 +93,6 @@ func (b *WizardBus) createTopic(topic string) *wizardTopic {
 		bindings: make(map[string]Subscriber),
 		done:     make(chan struct{}),
 	}
-
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-wTopic.done:
-				return
-			case <-ticker.C:
-				wTopic.logDroppedMessages()
-			}
-		}
-	}()
-
 	return wTopic
 }
 

@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"sync/atomic"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/ring"
 	"github.com/sensu/sensu-go/util/retry"
 
@@ -21,41 +19,22 @@ type wizardTopic struct {
 	bindings map[string]Subscriber
 	ring     types.Ring
 	sync.RWMutex
-	droppedMessages int64
-	done            chan struct{}
-}
-
-func (t *wizardTopic) logDroppedMessages() {
-	dropped := atomic.LoadInt64(&t.droppedMessages)
-	if dropped == 0 {
-		return
-	}
-	// Inexact but avoids contention; good enough for our purposes.
-	atomic.StoreInt64(&t.droppedMessages, 0)
-	logger.WithFields(logrus.Fields{
-		"topic": t.id,
-		"dropped_messages_per_second": dropped}).Warn(
-		"not all messages could be delivered")
+	done chan struct{}
 }
 
 // Send a message to all subscribers to this topic.
 func (t *wizardTopic) Send(msg interface{}) {
 	t.RLock()
-	names := make([]string, 0, len(t.bindings))
 	subscribers := make([]Subscriber, 0, len(t.bindings))
-	for name, subscriber := range t.bindings {
-		names = append(names, name)
+	for _, subscriber := range t.bindings {
 		subscribers = append(subscribers, subscriber)
 	}
 	t.RUnlock()
-	for i, subscriber := range subscribers {
+	for _, subscriber := range subscribers {
 		select {
 		case subscriber.Receiver() <- msg:
-		case <-time.After(10 * time.Second):
-			logger.WithFields(logrus.Fields{
-				"topic":      t.id,
-				"subscriber": names[i],
-			}).Warn("timed out delivering message to subscriber")
+		case <-t.done:
+			return
 		}
 	}
 }
@@ -102,6 +81,13 @@ func (t *wizardTopic) Subscribe(id string, sub Subscriber) (Subscription, error)
 func (t *wizardTopic) unsubscribe(id string) error {
 	t.Lock()
 	delete(t.bindings, id)
+	if len(t.bindings) == 0 {
+		select {
+		case <-t.done:
+		default:
+			close(t.done)
+		}
+	}
 	t.Unlock()
 
 	if t.ring != nil {
@@ -126,8 +112,13 @@ func (t *wizardTopic) unsubscribe(id string) error {
 
 // Close all WizardTopic bindings.
 func (t *wizardTopic) Close() {
-	close(t.done)
 	t.Lock()
+	select {
+	case <-t.done:
+		return
+	default:
+	}
+	close(t.done)
 	for consumer := range t.bindings {
 		delete(t.bindings, consumer)
 	}

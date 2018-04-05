@@ -32,9 +32,7 @@ func TestWizardBus(t *testing.T) {
 
 	sub1 := channelSubscriber{make(chan interface{}, 100)}
 	sub2 := channelSubscriber{make(chan interface{}, 100)}
-
-	// Topic publisher should not be blocked by a channel.
-	sub3 := channelSubscriber{make(chan interface{}, 1)}
+	sub3 := channelSubscriber{make(chan interface{}, 100)}
 
 	// Will unsubscribe from the topic after receiving messages.
 	sub4 := channelSubscriber{make(chan interface{}, 100)}
@@ -61,7 +59,6 @@ func TestWizardBus(t *testing.T) {
 	subscr4.Cancel()
 	close(sub4.Channel)
 
-	require.NoError(t, b.Stop())
 	subscr1.Cancel()
 	close(sub1.Channel)
 
@@ -70,6 +67,8 @@ func TestWizardBus(t *testing.T) {
 
 	subscr3.Cancel()
 	close(sub3.Channel)
+
+	require.NoError(t, b.Stop())
 
 	received := 0
 	messages := []string{}
@@ -87,8 +86,8 @@ func TestWizardBus(t *testing.T) {
 		received++
 		messages = append(messages, m.(string))
 	}
-	assert.Equal(t, 7, len(messages))
-	assert.Equal(t, 7, received)
+	assert.Equal(t, 9, len(messages))
+	assert.Equal(t, 9, received)
 	assert.Equal(t, "message2", messages[0])
 	assert.Equal(t, "message3", messages[1])
 	assert.Equal(t, "message4", messages[2])

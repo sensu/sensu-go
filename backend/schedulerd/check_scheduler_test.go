@@ -99,8 +99,8 @@ func TestCheckSchedulerInterval(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		close(scheduler.channel)
 		sub.Cancel()
+		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -193,8 +193,8 @@ func TestCheckSchedulerCron(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		close(scheduler.channel)
 		subscription.Cancel()
+		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -251,8 +251,8 @@ func TestCheckSubdueCron(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		close(scheduler.channel)
 		subscription.Cancel()
+		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
