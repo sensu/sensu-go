@@ -35,6 +35,8 @@ and yarn are now dependencies for building the backend.
 - Creating roles via sensuctl now supports passing flags for setting permissions
   rules.
 - Removed -c (check) flag in sensuctl check execute command.
+- Fix a deadlock in the monitor.
+- Don't allow the bus to drop messages.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.

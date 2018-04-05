@@ -100,7 +100,6 @@ func TestCheckSchedulerInterval(t *testing.T) {
 	}
 	defer func() {
 		sub.Cancel()
-		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -157,7 +156,6 @@ func TestCheckSubdueInterval(t *testing.T) {
 	}
 	defer func() {
 		subscription.Cancel()
-		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -194,7 +192,6 @@ func TestCheckSchedulerCron(t *testing.T) {
 	}
 	defer func() {
 		subscription.Cancel()
-		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -252,7 +249,6 @@ func TestCheckSubdueCron(t *testing.T) {
 	}
 	defer func() {
 		subscription.Cancel()
-		close(scheduler.channel)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
