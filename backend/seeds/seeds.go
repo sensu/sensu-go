@@ -45,9 +45,21 @@ func SeedInitialData(store store.Store) (err error) {
 		return err
 	}
 
+	// Set read-only role
+	if err := setupReadOnlyRole(store); err != nil {
+		logger.WithError(err).Error("unable to setup read-only role")
+		return err
+	}
+
 	// Admin user
 	if err := setupAdminUser(store); err != nil {
 		logger.WithError(err).Error("unable to setup admin user")
+		return err
+	}
+
+	// Default read-only user (sensu)
+	if err := setupReadOnlyUser(store); err != nil {
+		logger.WithError(err).Error("unable to setup sensu user")
 		return err
 	}
 
@@ -82,6 +94,21 @@ func setupAdminRole(store store.Store) error {
 	)
 }
 
+func setupReadOnlyRole(store store.Store) error {
+	return store.UpdateRole(
+		context.Background(),
+		&types.Role{
+			Name: "read-only",
+			Rules: []types.Rule{{
+				Type:         types.RuleTypeAll,
+				Environment:  "*",
+				Organization: "*",
+				Permissions:  []string{types.RulePermRead},
+			}},
+		},
+	)
+}
+
 func setupDefaultOrganization(store store.Store) error {
 	return store.CreateOrganization(
 		context.Background(),
@@ -92,7 +119,7 @@ func setupDefaultOrganization(store store.Store) error {
 }
 
 func setupAdminUser(store store.Store) error {
-	// Set default user
+	// Setup admin user
 	admin := &types.User{
 		Username: "admin",
 		Password: "P@ssw0rd!",
@@ -100,6 +127,17 @@ func setupAdminUser(store store.Store) error {
 	}
 
 	return store.CreateUser(admin)
+}
+
+func setupReadOnlyUser(store store.Store) error {
+	// Set default read-only user
+	sensu := &types.User{
+		Username: "sensu",
+		Password: "sensu",
+		Roles:    []string{"read-only"},
+	}
+
+	return store.CreateUser(sensu)
 }
 
 func setupDefaultAgentUser(store store.Store) error {
