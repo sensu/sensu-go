@@ -41,8 +41,8 @@ func TestAgentReconnection(t *testing.T) {
 	require.NoError(t, json.Unmarshal(output, &event1))
 	assert.NotNil(t, event1)
 
-	// Now kill the backend
-	require.NoError(t, backend.Kill())
+	// Now terminate the backend
+	require.NoError(t, backend.Terminate())
 
 	// Restart the backend
 	if err := backend.Start(); err != nil {

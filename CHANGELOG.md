@@ -42,6 +42,7 @@ and yarn are now dependencies for building the backend.
 - Events list can properly be viewed on mobile.
 
 ### Fixed
+- Terminate processes gracefully in e2e tests, allowing ports to be reused.
 - Shut down sessions properly when agent connections are disrupted.
 - Fixed shutdown log message in backend
 - Stopped double-writing events in eventd

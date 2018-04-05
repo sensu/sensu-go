@@ -209,11 +209,8 @@ func TestKeepaliveTimeout(t *testing.T) {
 	assert.Equal(t, "passing", event.Check.State)
 	assert.Equal(t, uint32(0), event.Check.Status)
 
-	// Kill the agent, and restart with a new KeepaliveTimeout
-	assert.NoError(t, agent.Kill())
-
-	// Allow time agent connection to be killed
-	time.Sleep(10 * time.Second)
+	// Stop the agent, and restart with a new KeepaliveTimeout
+	assert.NoError(t, agent.Terminate())
 
 	agentConfig.KeepaliveTimeout = 1
 	agentConfig.KeepaliveInterval = 2
