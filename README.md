@@ -2,7 +2,112 @@
 
 [![Build Status](https://travis-ci.org/sensu/sensu-go.svg?branch=master)](https://travis-ci.org/sensu/sensu-go)
 
-## Contributing/Development
+Sensu is an open source monitoring tool for ephemeral infrastructure
+and distributed applications. It is an agent based monitoring system
+with built-in auto-discovery, making it very well-suited for cloud
+environments. Sensu uses service checks to monitor service health and
+collect telemetry data. It also has a number of well defined APIs for
+configuration, external data input, and to provide access to Sensu's
+data. Sensu is extremely extensible and is commonly referred to as
+"the monitoring router".
+
+To learn more about Sensu, [please visit the
+website](https://sensuapp.org/).
+
+## What is Sensu 2.0?
+
+Sensu 2.0 is a complete rewrite of Sensu in Go, with new capabilities
+and reduced operational overhead. It eliminates several sources of
+friction for new and experienced Sensu users.
+
+## Installation
+
+Sensu 2.0 installer packages are available for a number of computing
+platforms (e.g. Debian/Ubuntu, RHEL/Centos, etc), but the easiest way
+to get started is with the official Docker image, sensuapp/sensu.
+
+Please note the following installation steps to get Sensu up and
+running on your local workstation with Docker.
+
+_NOTE: the following instructions are based on Docker Community
+Edition (CE), though they may be easily adapted for other container
+platforms. Please download and install Docker CE before proceeding._
+
+1. Start the Sensu 2.0 Backend process
+
+```
+$ docker run -d --name sensu-backend \
+-p 2380:2380 -p 3000:3000 -p 8080:8080 -p 8081:8081 \
+sensuapp/sensu-go:2.0.0-alpha sensu-backend start
+```
+
+2. Start the Sensu 2.0 Agent process
+
+```
+$ docker run -d --name sensu-agent --link sensu-backend \
+sensuapp/sensu-go:2.0.0-alpha sensu-agent start \
+--backend-url ws://sensu-backend:8081 \
+--subscriptions workstation,docker
+```
+
+3. Download and install the Sensu 2.0 CLI tool
+
+On macOS
+
+```
+$ latest=$(curl -s https://storage.googleapis.com/sensu-binaries/latest.txt)
+
+$ curl -LO https://storage.googleapis.com/sensu-binaries/$latest/darwin/amd64/sensuctl
+
+$ chmod +x sensuctl
+
+$ sudo mv sensuctl /usr/local/bin/
+```
+
+On Debian/Ubuntu Linux
+
+```
+$ curl -s \
+https://packagecloud.io/install/repositories/sensu/nightly/script.deb.sh \
+| sudo bash
+
+$ sudo apt-get install sensu-cli
+```
+
+On RHEL/CentOS Linux
+
+```
+$ curl -s \
+https://packagecloud.io/install/repositories/sensu/nightly/script.rpm.sh \
+| sudo bash
+
+$ sudo yum install sensu-cli
+```
+
+4. Configure the Sensu 2.0 CLI tool
+
+```
+$ sensuctl configure
+? Sensu Backend URL: http://127.0.0.1:8080
+? Username: admin
+? Password: P@ssw0rd!
+? Organization: default
+? Environment: default
+? Preferred output format: tabular
+```
+
+5. List Sensu 2.0 Entities
+
+```
+$ sensuctl entity list
+```
+
+Congratulations! You now have a local Sensu 2.0 deployment!
+
+To learn more about Sensu 2.0 and what you can do with it, please
+check out the [official project documentation](https://docs.sensu.io/sensu-core/2.0/).
+
+## Contributing
 
 To make a good faith effort to ensure the criteria of the MIT License
 are met, Sensu Inc. requires the Developer Certificate of Origin (DCO)
@@ -11,9 +116,11 @@ process to be followed.
 For guidelines on how to contribute to this project and more
 information on the DCO, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Protobuf
+## Development
 
-### Overview
+### Protobuf
+
+#### Overview
 
 We are using the version **proto3** of the protocol buffers language. Here are some useful resources:
 
@@ -21,8 +128,7 @@ We are using the version **proto3** of the protocol buffers language. Here are s
 
 [The proto3 language guide](https://developers.google.com/protocol-buffers/docs/proto3)
 
-
-### Installation
+#### Installation
 
 Install the protobuf compiler since we don't use the one that golang uses.
 ```
@@ -30,16 +136,16 @@ brew install protobuf
 ```
 Otherwise, see the **for non-C++ users** [instructions here.](https://github.com/google/protobuf#protocol-compiler-installation)
 
-### Quick Start
+#### Quick Start
 
 Once you make a change to any `*.proto` file within the **types** package, you will need to regenerate the associated `*.pb.go` file. To do so, simply run `go generate` on the package.
 
-## Dependencies
+### Dependencies
 
 Sensu uses [golang/dep](https://github.com/golang/dep) for managing its
 dependencies.
 
-### Usage
+#### Usage
 
 Running the following will install `dep` (if it is not already) and pull all
 required dependencies.
@@ -67,7 +173,7 @@ then run:
 dep prune
 ```
 
-### Further Reading
+#### Further Reading
 
 - [The Saga of Go Dependency Management](https://blog.gopheracademy.com/advent-2016/saga-go-dependency-management/)
 - [`dep` Usage](https://github.com/golang/dep#usage)
@@ -144,11 +250,11 @@ Run end-to-end tests:
 ```shell
 ./build.sh e2e
 
-# To run a specific test:
+To run a specific test:
 
 ./build.sh e2e -run TestRBAC
 
-# To prevent tests from running in parallel:
+To prevent tests from running in parallel:
 
 ./build.sh e2e -parallel 1
 ```
