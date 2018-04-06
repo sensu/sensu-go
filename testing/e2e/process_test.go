@@ -163,7 +163,7 @@ func (b *backendProcess) Start() error {
 }
 
 func (b *backendProcess) Terminate() error {
-	return terminate_helper(b.cmd.Process)
+	return terminateProcess(b.cmd.Process)
 }
 
 type agentProcess struct {
@@ -299,7 +299,7 @@ func (a *agentProcess) Start(t *testing.T) error {
 }
 
 func (a *agentProcess) Terminate() error {
-	return terminate_helper(a.cmd.Process)
+	return terminateProcess(a.cmd.Process)
 }
 
 type sensuCtl struct {
@@ -355,7 +355,7 @@ func (s *sensuCtl) SetStdin(r io.Reader) {
 // Terminate a Process by sending SIGTERM and waiting for it to exit cleanly.
 // On Windows, there is no way to ask a program to exit cleanly. Instead, it
 // must be killed with SIGKILL.
-func terminate_helper(p *os.Process) error {
+func terminateProcess(p *os.Process) error {
 	signal := syscall.SIGTERM
 	// Windows doesn't support SIGTERM, fall back to SIGKILL
 	if runtime.GOOS == "windows" {
