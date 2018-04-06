@@ -18,7 +18,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added extension registry support to apid.
 - Added extension registry to the store.
 - Add sensuctl create command.
+- Adds a statsd server to the sensu-agent which runs statsd at a configurable
+flush interval and converts gostatsd metrics to Sensu Metric Format. These
+metric events are swallowed for the time being.
 - Add event filtering to extensions.
+- Proper 404 page for web UI.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
@@ -37,6 +41,7 @@ and yarn are now dependencies for building the backend.
 - Removed -c (check) flag in sensuctl check execute command.
 - Fix a deadlock in the monitor.
 - Don't allow the bus to drop messages.
+- Events list can properly be viewed on mobile.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.

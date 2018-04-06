@@ -168,22 +168,24 @@ func RegisterRule(svc *graphql.Service, impl RuleFieldResolvers) {
 }
 func _ObjTypeRuleNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(RuleNamespaceFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Namespace(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeRuleTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(RuleTypeFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Type(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+
+		val, err := resolver.Type(frp)
+		return string(val), err
 	}
 }
 
 func _ObjTypeRulePermissionsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(RulePermissionsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Permissions(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Permissions(frp)
 	}
 }
 
@@ -396,22 +398,22 @@ func RegisterRole(svc *graphql.Service, impl RoleFieldResolvers) {
 }
 func _ObjTypeRoleIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(RoleIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(RoleNameFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(RoleRulesFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Rules(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Rules(frp)
 	}
 }
 

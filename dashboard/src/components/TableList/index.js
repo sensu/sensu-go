@@ -1,5 +1,6 @@
 export { default } from "./TableList";
 export { default as TableListHeader } from "./TableListHeader";
+export { default as TableListBody } from "./TableListBody";
 export { default as TableListItem } from "./TableListItem";
 export { default as TableListSelect } from "./TableListSelect";
 export { default as TableListButton } from "./TableListButton";

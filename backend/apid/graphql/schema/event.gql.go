@@ -250,64 +250,64 @@ func RegisterEvent(svc *graphql.Service, impl EventFieldResolvers) {
 }
 func _ObjTypeEventIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeEventNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventNamespaceFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Namespace(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeEventTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventTimestampFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Timestamp(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeEventEntityHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventEntityFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Entity(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Entity(frp)
 	}
 }
 
 func _ObjTypeEventCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventCheckFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Check(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Check(frp)
 	}
 }
 
 func _ObjTypeEventHooksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventHooksFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Hooks(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Hooks(frp)
 	}
 }
 
 func _ObjTypeEventIsIncidentHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventIsIncidentFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.IsIncident(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.IsIncident(frp)
 	}
 }
 
 func _ObjTypeEventIsResolutionHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventIsResolutionFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.IsResolution(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.IsResolution(frp)
 	}
 }
 
 func _ObjTypeEventIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventIsSilencedFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.IsSilenced(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.IsSilenced(frp)
 	}
 }
 
@@ -569,22 +569,22 @@ func RegisterEventConnection(svc *graphql.Service, impl EventConnectionFieldReso
 }
 func _ObjTypeEventConnectionEdgesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventConnectionEdgesFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Edges(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Edges(frp)
 	}
 }
 
 func _ObjTypeEventConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventConnectionPageInfoFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.PageInfo(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PageInfo(frp)
 	}
 }
 
 func _ObjTypeEventConnectionTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventConnectionTotalCountFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.TotalCount(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.TotalCount(frp)
 	}
 }
 
@@ -784,15 +784,15 @@ func RegisterEventEdge(svc *graphql.Service, impl EventEdgeFieldResolvers) {
 }
 func _ObjTypeEventEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventEdgeNodeFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Node(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Node(frp)
 	}
 }
 
 func _ObjTypeEventEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventEdgeCursorFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Cursor(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cursor(frp)
 	}
 }
 

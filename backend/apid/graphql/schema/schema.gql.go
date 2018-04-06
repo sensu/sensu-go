@@ -208,8 +208,8 @@ func RegisterQuery(svc *graphql.Service, impl QueryFieldResolvers) {
 }
 func _ObjTypeQueryViewerHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryViewerFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Viewer(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Viewer(frp)
 	}
 }
 

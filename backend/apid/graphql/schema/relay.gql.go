@@ -216,29 +216,29 @@ func RegisterPageInfo(svc *graphql.Service, impl PageInfoFieldResolvers) {
 }
 func _ObjTypePageInfoHasNextPageHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(PageInfoHasNextPageFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.HasNextPage(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.HasNextPage(frp)
 	}
 }
 
 func _ObjTypePageInfoHasPreviousPageHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(PageInfoHasPreviousPageFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.HasPreviousPage(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.HasPreviousPage(frp)
 	}
 }
 
 func _ObjTypePageInfoStartCursorHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(PageInfoStartCursorFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.StartCursor(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.StartCursor(frp)
 	}
 }
 
 func _ObjTypePageInfoEndCursorHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(PageInfoEndCursorFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.EndCursor(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.EndCursor(frp)
 	}
 }
 

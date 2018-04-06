@@ -13,23 +13,20 @@ import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
 import EventIcon from "material-ui-icons/Notifications";
 import DashboardIcon from "material-ui-icons/Dashboard";
-import SilenceIcon from "material-ui-icons/VolumeOff";
-import HookIcon from "material-ui-icons/Link";
-import HandlerIcon from "material-ui-icons/CallSplit";
 import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
 import IconButton from "material-ui/IconButton";
 import MenuIcon from "material-ui-icons/Menu";
 import WandIcon from "../icons/Wand";
-import OrganizationIcon from "./OrganizationIcon";
+import EnvironmentIcon from "./EnvironmentIcon";
+import Wordmark from "../icons/SensuWordmark";
 
 import { logout } from "../utils/authentication";
 import { makeNamespacedPath } from "./NamespaceLink";
 import DrawerButton from "./DrawerButton";
 import NamespaceSelector from "./NamespaceSelector";
 import Preferences from "./Preferences";
-import logo from "../assets/logo/wordmark/green.svg";
 
 const styles = theme => ({
   paper: {
@@ -37,9 +34,12 @@ const styles = theme => ({
     maxWidth: 400,
     backgroundColor: theme.palette.background.paper,
   },
+  headerContainer: {
+    paddingTop: "env(safe-area-inset-top)",
+    backgroundColor: theme.palette.primary.dark,
+  },
   header: {
     height: 172,
-    backgroundColor: theme.palette.primary.dark,
   },
   row: {
     display: "flex",
@@ -47,8 +47,8 @@ const styles = theme => ({
     justifyContent: "space-between",
   },
   logo: {
-    height: 24,
-    margin: "12px 12px 0 0",
+    height: 16,
+    margin: "16px 16px 0 0",
   },
   namespaceSelector: {
     margin: "8px 0 -8px 0",
@@ -64,10 +64,9 @@ const styles = theme => ({
 
 class Drawer extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    // eslint-disable-next-line react/forbid-prop-types
     viewer: PropTypes.object.isRequired,
+    environment: PropTypes.object.isRequired,
     onToggle: PropTypes.func.isRequired,
     router: routerShape.isRequired,
     match: matchShape.isRequired,
@@ -83,45 +82,48 @@ class Drawer extends React.Component {
     this.props.router.push("/login");
   };
 
-  render() {
-    const { viewer, open, router, match, onToggle, classes } = this.props;
-    const { preferencesOpen } = this.state;
-    const linkTo = path => {
-      const fullPath = makeNamespacedPath(match.params)(path);
-      return () => {
-        router.push(fullPath);
-        onToggle();
-      };
+  linkTo = path => {
+    const { router, match, onToggle } = this.props;
+    const fullPath = makeNamespacedPath(match.params)(path);
+    return () => {
+      router.push(fullPath);
+      onToggle();
     };
+  };
+
+  render() {
+    const { viewer, environment, open, onToggle, classes } = this.props;
+    const { preferencesOpen } = this.state;
 
     return (
       <MaterialDrawer variant="temporary" open={open} onClose={onToggle}>
         <div className={classes.paper}>
-          <div className={classes.header}>
-            <div className={classes.row}>
-              <IconButton
-                onClick={onToggle}
-                className={classes.hamburgerButton}
-              >
-                <MenuIcon />
-              </IconButton>
-              <img alt="sensu" src={logo} className={classes.logo} />
-            </div>
-            <div className={classes.row}>
-              {/* TODO update with global variables or whatever when we get them */}
-              <div className={classes.namespaceIcon}>
-                <OrganizationIcon
-                  icon="HalfHeart"
-                  iconColor="#FA8072"
-                  size={36}
+          <div className={classes.headerContainer}>
+            <div className={classes.header}>
+              <div className={classes.row}>
+                <IconButton
+                  onClick={onToggle}
+                  className={classes.hamburgerButton}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <Wordmark
+                  alt="sensu"
+                  className={classes.logo}
+                  color="secondary"
                 />
               </div>
-            </div>
-            <div className={classes.row}>
-              <NamespaceSelector
-                viewer={viewer}
-                className={classes.namespaceSelector}
-              />
+              <div className={classes.row}>
+                <div className={classes.namespaceIcon}>
+                  <EnvironmentIcon environment={environment} size={36} />
+                </div>
+              </div>
+              <div className={classes.row}>
+                <NamespaceSelector
+                  viewer={viewer}
+                  className={classes.namespaceSelector}
+                />
+              </div>
             </div>
           </div>
           <Divider />
@@ -129,33 +131,22 @@ class Drawer extends React.Component {
             <DrawerButton
               Icon={DashboardIcon}
               primary="Dashboard"
-              onClick={linkTo("")}
+              onClick={this.linkTo("")}
             />
             <DrawerButton
               Icon={EventIcon}
               primary="Events"
-              onClick={linkTo("events")}
+              onClick={this.linkTo("events")}
             />
             <DrawerButton
               Icon={EntityIcon}
               primary="Entities"
-              onClick={linkTo("entities")}
+              onClick={this.linkTo("entities")}
             />
             <DrawerButton
               Icon={CheckIcon}
               primary="Checks"
-              onClick={linkTo("checks")}
-            />
-            <DrawerButton
-              Icon={SilenceIcon}
-              primary="Silences"
-              onClick={linkTo("silences")}
-            />
-            <DrawerButton Icon={HookIcon} primary="Hooks" href="hooks" />
-            <DrawerButton
-              Icon={HandlerIcon}
-              primary="Handlers"
-              onClick={linkTo("handlers")}
+              onClick={this.linkTo("checks")}
             />
           </List>
           <Divider />
@@ -192,6 +183,10 @@ const DrawerContainer = createFragmentContainer(
   graphql`
     fragment Drawer_viewer on Viewer {
       ...NamespaceSelector_viewer
+    }
+
+    fragment Drawer_environment on Environment {
+      ...EnvironmentIcon_environment
     }
   `,
 );

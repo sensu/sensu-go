@@ -210,43 +210,43 @@ func RegisterMutator(svc *graphql.Service, impl MutatorFieldResolvers) {
 }
 func _ObjTypeMutatorIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutatorIDFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ID(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeMutatorNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutatorNamespaceFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Namespace(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeMutatorNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutatorNameFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeMutatorCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutatorCommandFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Command(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Command(frp)
 	}
 }
 
 func _ObjTypeMutatorTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutatorTimeoutFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Timeout(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Timeout(frp)
 	}
 }
 
 func _ObjTypeMutatorEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutatorEnvVarsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		return resolver.EnvVars(p)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.EnvVars(frp)
 	}
 }
 

@@ -10,32 +10,42 @@ import AppContent from "../components/AppContent";
 import EventsContainer from "../components/EventsContainer";
 import SearchBox from "../components/SearchBox";
 
-const styles = {
-  headline: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignContent: "center",
-  },
-  title: {
-    display: "flex",
-    alignSelf: "flex-end",
-  },
-  container: {
-    marginTop: 10,
-  },
-};
-
+// If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
 
 class EventsPage extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    location: PropTypes.shape({
-      query: PropTypes.object.isRequired,
-    }).isRequired,
     router: routerShape.isRequired,
     match: matchShape.isRequired,
   };
+
+  static styles = theme => ({
+    headline: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignContent: "center",
+    },
+    searchBox: {
+      width: "100%",
+      marginLeft: theme.spacing.unit,
+      marginRight: theme.spacing.unit,
+      [theme.breakpoints.up("sm")]: {
+        width: "auto",
+        margin: 0,
+      },
+    },
+    title: {
+      alignSelf: "flex-end",
+      display: "none",
+      [theme.breakpoints.up("sm")]: {
+        display: "flex",
+      },
+    },
+    container: {
+      marginTop: 10,
+    },
+  });
 
   static query = graphql`
     query EventsPageQuery(
@@ -53,7 +63,7 @@ class EventsPage extends React.Component {
   constructor(props) {
     super(props);
 
-    let filterValue = props.location.query.filter;
+    let filterValue = props.match.location.query.filter;
     if (filterValue === undefined) {
       filterValue = defaultExpression;
     }
@@ -86,20 +96,23 @@ class EventsPage extends React.Component {
         <div>
           <div className={classes.headline}>
             <Typography className={classes.title} variant="headline">
-              Recent Events
+              Events
             </Typography>
             <SearchBox
-              onUpdateInput={this.requerySearchBox}
-              state={this.state.filterValue}
+              className={classes.searchBox}
+              onChange={this.requerySearchBox}
+              value={this.state.filterValue}
             />
           </div>
-          <div className={classes.container}>
-            <EventsContainer onQueryChange={this.changeQuery} {...props} />
-          </div>
+          <EventsContainer
+            className={classes.container}
+            onQueryChange={this.changeQuery}
+            {...props}
+          />
         </div>
       </AppContent>
     );
   }
 }
 
-export default withStyles(styles)(EventsPage);
+export default withStyles(EventsPage.styles)(EventsPage);

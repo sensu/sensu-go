@@ -1,14 +1,19 @@
 {
   "short_name": "Sensu",
-  "name": "Sensu Dashboard",
+  "name": "Sensu UI",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "192x192",
+      "src": "/app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    },
+    {
+      "src": "/app-icon-sm.png",
+      "sizes": "64x64",
       "type": "image/png"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"

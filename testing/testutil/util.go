@@ -3,29 +3,12 @@ package testutil
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"testing"
 )
-
-var socketChan = make(chan net.Listener, 100)
-
-func init() {
-	// dirty hack to prevent port collisions
-	go func() {
-		for {
-			ln, err := net.Listen("tcp4", "127.0.0.1:0")
-			if err != nil {
-				log.Println(err)
-			}
-			socketChan <- ln
-		}
-	}()
-}
 
 // TempDir provides a test with a temporary directory (under os.TempDir())
 // returning the absolute path to the directory and a remove() function
@@ -40,17 +23,25 @@ func TempDir(t *testing.T) (tmpDir string, remove func()) {
 	return tmpDir, func() { _ = os.RemoveAll(tmpDir) }
 }
 
-// RandomPorts reserves len(p) ports and assigns them to elements of p.
-// It calls ReservePort repeatedly.
+// RandomPorts generates len(p) random ports and assigns them to elements of p.
 func RandomPorts(p []int) (err error) {
 	for i := range p {
-		ln := <-socketChan
-		defer ln.Close()
-		port, err := strconv.Atoi(strings.Split(ln.Addr().String(), ":")[1])
+		l, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			return err
 		}
-		p[i] = port
+		defer func() {
+			e := l.Close()
+			if err == nil {
+				err = e
+			}
+		}()
+
+		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
+		if err != nil {
+			return err
+		}
+		p[i] = addr.Port
 	}
 	return nil
 }

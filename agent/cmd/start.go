@@ -47,6 +47,9 @@ const (
 	flagRedact                = "redact"
 	flagSocketHost            = "socket-host"
 	flagSocketPort            = "socket-port"
+	flagStatsdFlushInterval   = "statsd-flush-interval"
+	flagStatsdMetricsHost     = "statsd-metrics-host"
+	flagStatsdMetricsPort     = "statsd-metrics-port"
 	flagSubscriptions         = "subscriptions"
 	flagUser                  = "user"
 	flagDisableAPI            = "disable-api"
@@ -119,6 +122,9 @@ func newStartCommand() *cobra.Command {
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
 			cfg.Socket.Port = viper.GetInt(flagSocketPort)
+			cfg.StatsdServer.FlushInterval = viper.GetInt(flagStatsdFlushInterval)
+			cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
+			cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
 			cfg.User = viper.GetString(flagUser)
 
 			agentID := viper.GetString(flagAgentID)
@@ -216,6 +222,9 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
 	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
+	viper.SetDefault(flagStatsdFlushInterval, agent.DefaultStatsdFlushInterval)
+	viper.SetDefault(flagStatsdMetricsHost, agent.DefaultStatsdMetricsHost)
+	viper.SetDefault(flagStatsdMetricsPort, agent.DefaultStatsdMetricsPort)
 	viper.SetDefault(flagSubscriptions, []string{})
 	viper.SetDefault(flagUser, agent.DefaultUser)
 	viper.SetDefault(flagDisableAPI, false)
@@ -240,6 +249,9 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
+	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
+	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
+	cmd.Flags().String(flagStatsdMetricsPort, viper.GetString(flagStatsdMetricsPort), "port used for the statsd metrics server")
 	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")

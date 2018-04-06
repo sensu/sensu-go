@@ -79,7 +79,9 @@ default: all
 all: linux
 
 clean:
-	rm -r out/
+	rm -rf out/
+	rm -rf dashboard/node_modules/
+	rm -rf target/
 
 ##
 # Operating system targets

@@ -1,13 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classnames from "classnames";
 
 import { withStyles } from "material-ui/styles";
 import Paper from "material-ui/Paper";
 import Typography from "material-ui/Typography";
-import filterIcon from "material-ui-icons/FilterList";
+import Icon from "material-ui-icons/FilterList";
 
 const styles = theme => ({
-  box: {
+  root: {
+    minWidth: 300,
     display: "flex",
     border: "1px solid",
     borderColor: theme.palette.divider,
@@ -20,10 +22,10 @@ const styles = theme => ({
   },
   textField: {
     borderRadius: 3,
-    width: 300,
     height: 36,
     fontSize: 14,
     border: "none",
+    width: "100%",
     backgroundColor: theme.palette.background.paper,
     "&:focus": { outline: "none" },
     color: theme.palette.text.primary,
@@ -38,28 +40,28 @@ const styles = theme => ({
 
 class SearchBox extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
-    FilterIcon: PropTypes.func.isRequired,
-    onUpdateInput: PropTypes.func.isRequired,
-    state: PropTypes.string.isRequired,
+    className: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
+    value: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
-    FilterIcon: filterIcon,
+    className: "",
   };
 
   updateInput = event => {
-    this.props.onUpdateInput(event.currentTarget.value);
+    this.props.onChange(event.currentTarget.value);
   };
 
   render() {
-    const { classes, FilterIcon } = this.props;
+    const { classes, className: classNameProp, value } = this.props;
+    const className = classnames(classNameProp, classes.root);
 
     return (
-      <Paper className={classes.box}>
+      <Paper className={className}>
         <div className={classes.filterIconContainer}>
-          <FilterIcon className={classes.filterIcon} />
+          <Icon className={classes.filterIcon} />
         </div>
         <Typography
           component="input"
@@ -67,7 +69,7 @@ class SearchBox extends React.Component {
           variant="body1"
           placeholder={"Filter all events"}
           className={classes.textField}
-          value={this.props.state}
+          value={value}
           onChange={this.updateInput}
         />
         {/* <Typography className={classes.save} variant="button">

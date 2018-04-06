@@ -4,6 +4,7 @@
 
 <details>
   <summary>Expand</summary>
+
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -28,7 +29,7 @@
   - [`yarn start` doesn’t detect changes](#npm-start-doesnt-detect-changes)
   - [`yarn test` hangs on macOS Sierra](#npm-test-hangs-on-macos-sierra)
   - [`yarn run build` exits too early](#npm-run-build-exits-too-early)
-  - [Moment.js locales are missing](#momentjs-locales-are-missing)
+
 </details>
 
 ## Getting Started
@@ -316,29 +317,3 @@ If you are completely sure that you didn't terminate the process, consider [addi
 
 This may be a problem with case sensitive filenames.
 Please refer to [this section](#resolving-heroku-deployment-errors).
-
-### Moment.js locales are missing
-
-If you use a [Moment.js](https://momentjs.com/), you might notice that only the English locale is available by default. This is because the locale files are large, and you probably only need a subset of [all the locales provided by Moment.js](https://momentjs.com/#multiple-locale-support).
-
-To add a specific Moment.js locale to your bundle, you need to import it explicitly.<br>
-For example:
-
-```js
-import moment from 'moment';
-import 'moment/locale/fr';
-```
-
-If import multiple locales this way, you can later switch between them by calling `moment.locale()` with the locale name:
-
-```js
-import moment from 'moment';
-import 'moment/locale/fr';
-import 'moment/locale/es';
-
-// ...
-
-moment.locale('fr');
-```
-
-This will only work for locales that have been explicitly imported before.

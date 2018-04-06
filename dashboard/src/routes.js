@@ -2,13 +2,14 @@ import React from "react";
 import { makeRouteConfig, Redirect, Route } from "found";
 
 import AppWrapper from "./components/AppWrapper";
-import LoginPage from "./pages/Login";
-import EventsPage from "./pages/EventsPage";
+import RestrictUnauthenticated from "./components/RestrictUnauthenticated";
+
 import ChecksPage from "./pages/ChecksPage";
+import DashboardPage from "./pages/DashboardPage";
+import EventsPage from "./pages/EventsPage";
+import LoginPage from "./pages/Login";
 import QueryPage from "./pages/GraphQLExplorerPage";
 import RootRedirect from "./pages/RootRedirect";
-
-import RestrictUnauthenticated from "./components/RestrictUnauthenticated";
 
 export default makeRouteConfig(
   <Route>
@@ -22,8 +23,10 @@ export default makeRouteConfig(
         Component={AppWrapper}
         query={AppWrapper.query}
       >
+        <Route path="" Component={DashboardPage} />
+        <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
         <Route
-          path="events/"
+          path="events"
           Component={EventsPage}
           query={EventsPage.query}
           prepareVariables={(params, route) => ({
@@ -31,12 +34,6 @@ export default makeRouteConfig(
             ...route.location.query,
           })}
         />
-        <Redirect
-          exact
-          from="events"
-          to="events?filter=HasCheck && HasIncident"
-        />
-        <Route path="checks" Component={ChecksPage} query={ChecksPage.query} />
         <Redirect from="dashboard" to="" />
       </Route>
     </Route>

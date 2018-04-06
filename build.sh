@@ -354,6 +354,7 @@ deploy() {
     docker pull sensuapp/sensu-go-build
     docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build clean
 
     # Deploy Docker images to the Docker Hub
     docker_commands push $release
@@ -393,7 +394,7 @@ case "$cmd" in
         install_deps
         ;;
     "docker")
-        docker_commands nopush master "${@:2}"
+        docker_commands "${@:2}"
         ;;
     "e2e")
         # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives

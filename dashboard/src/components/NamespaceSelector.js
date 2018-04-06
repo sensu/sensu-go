@@ -21,7 +21,6 @@ const styles = {
 
 class NamespaceSelector extends React.Component {
   static propTypes = {
-    // eslint-disable-next-line react/forbid-prop-types
     classes: PropTypes.object.isRequired,
     currentNamespace: namespaceShape.isRequired,
     viewer: PropTypes.objectOf(PropTypes.any).isRequired,
@@ -43,11 +42,10 @@ class NamespaceSelector extends React.Component {
     const { viewer, currentNamespace, classes, ...props } = this.props;
     const { anchorEl } = this.state;
 
-    /* TODO use global variables or something for this */
     return (
       <div {...props}>
         <Button
-          aria-owns="test"
+          aria-owns="drawer-selector-menu"
           className={classes.button}
           onClick={this.handleClick}
         >

@@ -1,22 +1,24 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classnames from "classnames";
 import { withStyles } from "material-ui/styles";
 
 const styles = theme => ({
-  root: {
-    backgroundColor: theme.palette.background.paper,
-    border: 1,
-    borderStyle: "solid",
-    borderColor: theme.palette.divider,
-    borderRadius: 2,
-
-    // Keep content from bleeding out of container
-    overflow: "hidden",
-
-    // Shadow
-    boxShadow: theme.shadows[2],
-    [theme.breakpoints.up("lg")]: {
-      boxShadow: theme.shadows[0],
+  [theme.breakpoints.up("sm")]: {
+    root: {
+      // Shadow
+      borderRadius: 2,
+      boxShadow: theme.shadows[2],
+    },
+    firstChild: {
+      borderTopLeftRadius: 2,
+      borderTopRightRadius: 2,
+      overflow: "hidden",
+    },
+    lastChild: {
+      borderBottomLeftRadius: 2,
+      borderBottomRightRadius: 2,
+      overflow: "hidden",
     },
   },
 });
@@ -33,8 +35,25 @@ export class TableList extends React.Component {
   };
 
   render() {
-    const { classes, className: classNameProp, children } = this.props;
-    const className = `${classes.root} ${classNameProp}`;
+    const {
+      classes,
+      className: classNameProp,
+      children: childrenProp,
+    } = this.props;
+
+    const className = classnames(classes.root, classNameProp);
+    const children = React.Children.map(childrenProp, (child, i) => {
+      if (i === 0) {
+        return React.cloneElement(child, {
+          className: classnames(classes.firstChild, child.props.className),
+        });
+      } else if (childrenProp.length === i + 1) {
+        return React.cloneElement(child, {
+          className: classnames(classes.lastChild, child.props.className),
+        });
+      }
+      return child;
+    });
     return <div className={className}>{children}</div>;
   }
 }
