@@ -80,7 +80,7 @@ func TestFilterEvent(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			client := &mockClient{}
 			client.On("FilterEvent", mock.Anything, mock.Anything).Return(test.resp, test.rpcErr)
-			executor := &ExtensionExecutor{client: client}
+			executor := &GRPCExtensionExecutor{client: client}
 			filtered, err := executor.FilterEvent(types.FixtureEvent("foo", "bar"))
 			if test.err && err == nil {
 				t.Fatal("expected non-nil error")
@@ -144,7 +144,7 @@ func TestMutateEvent(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			client := &mockClient{}
 			client.On("MutateEvent", mock.Anything, mock.Anything).Return(test.resp, test.rpcErr)
-			executor := &ExtensionExecutor{client: client}
+			executor := &GRPCExtensionExecutor{client: client}
 			mutated, err := executor.MutateEvent(types.FixtureEvent("foo", "bar"))
 			if test.err && err == nil {
 				t.Fatal("expected non-nil error")
@@ -199,7 +199,7 @@ func TestHandleEvent(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			client := &mockClient{}
 			client.On("HandleEvent", mock.Anything, mock.Anything, mock.Anything).Return(test.resp, test.rpcErr)
-			executor := &ExtensionExecutor{client: client}
+			executor := &GRPCExtensionExecutor{client: client}
 			err := executor.HandleEvent(types.FixtureEvent("foo", "bar"), nil)
 			if test.err && err == nil {
 				t.Fatal("expected non-nil error")
