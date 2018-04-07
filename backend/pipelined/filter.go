@@ -115,10 +115,34 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 			return false
 		}
 
-		// Evaluated the filter, evaluating each of its
-		// statements against the event. The event is rejected
-		// if the product of all statements is true.
-		filtered := evaluateEventFilter(event, filter)
+		if filter != nil {
+			// Execute the filter, evaluating each of its
+			// statements against the event. The event is rejected
+			// if the product of all statements is true.
+			filtered := evaluateEventFilter(event, filter)
+			if filtered {
+				return true
+			}
+			continue
+		}
+
+		// If the filter didn't exist, it might be an extension filter
+		ext, err := p.store.GetExtension(ctx, filterName)
+		if err != nil {
+			logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
+			continue
+		}
+
+		executor, err := p.extensionExecutor(ext)
+		if err != nil {
+			logger.WithError(err).Errorf("could not execute the filter %s", filterName)
+			continue
+		}
+		filtered, err := executor.FilterEvent(event)
+		if err != nil {
+			logger.WithError(err).Errorf("could not execute the filter %s", filterName)
+			continue
+		}
 		if filtered {
 			return true
 		}

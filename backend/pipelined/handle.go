@@ -8,9 +8,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -18,6 +18,11 @@ const (
 	// timeout in seconds for TCP and UDP handlers.
 	DefaultSocketTimeout uint32 = 60
 )
+
+type handlerExtensionUnion struct {
+	*types.Extension
+	*types.Handler
+}
 
 // handleEvent takes a Sensu event through a Sensu pipeline, filters
 // -> mutator -> handler. An event may have one or more handlers. Most
@@ -43,7 +48,8 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		return err
 	}
 
-	for _, handler := range handlers {
+	for _, u := range handlers {
+		handler := u.Handler
 		filtered := p.filterEvent(handler, event)
 
 		if filtered {
@@ -76,6 +82,10 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 			if _, err := p.socketHandler(handler, eventData); err != nil {
 				logger.Error(err)
 			}
+		case "grpc":
+			if err := p.grpcHandler(u.Extension, event, eventData); err != nil {
+				logger.Error(err)
+			}
 		default:
 			return errors.New("unknown handler type")
 		}
@@ -87,21 +97,31 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 // expandHandlers turns a list of Sensu handler names into a list of
 // handlers, while expanding handler sets with support for some
 // nesting. Handlers are fetched from etcd.
-func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level int) (map[string]*types.Handler, error) {
+func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level int) (map[string]handlerExtensionUnion, error) {
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
 	}
 
-	expanded := map[string]*types.Handler{}
+	expanded := map[string]handlerExtensionUnion{}
 
 	for _, handlerName := range handlers {
 		handler, err := p.store.GetHandlerByName(ctx, handlerName)
+		var extension *types.Extension
 
 		if handler == nil {
 			if err != nil {
 				logger.WithError(err).Error("pipelined failed to retrieve a handler")
+				continue
 			}
-			continue
+			extension, err = p.store.GetExtension(ctx, handlerName)
+			if err != nil {
+				logger.WithError(err).Error("pipelined failed to retrieve a handler")
+				continue
+			}
+			handler = &types.Handler{
+				Name: extension.URL,
+				Type: "grpc",
+			}
 		}
 
 		if handler.Type == "set" {
@@ -111,15 +131,15 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 			if err != nil {
 				logger.WithError(err).Error("pipelined failed to expand handler set")
 			} else {
-				for name, setHandler := range setHandlers {
+				for name, u := range setHandlers {
 					if _, ok := expanded[name]; !ok {
-						expanded[name] = setHandler
+						expanded[name] = handlerExtensionUnion{Handler: u.Handler}
 					}
 				}
 			}
 		} else {
 			if _, ok := expanded[handler.Name]; !ok {
-				expanded[handler.Name] = handler
+				expanded[handler.Name] = handlerExtensionUnion{Handler: handler, Extension: extension}
 			}
 		}
 	}
@@ -191,4 +211,12 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 	}
 
 	return conn, nil
+}
+
+func (p *Pipelined) grpcHandler(ext *types.Extension, evt *types.Event, mutated []byte) error {
+	executor, err := p.extensionExecutor(ext)
+	if err != nil {
+		return err
+	}
+	return executor.HandleEvent(evt, mutated)
 }

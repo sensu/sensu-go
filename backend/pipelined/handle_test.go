@@ -11,12 +11,33 @@ import (
 	"strings"
 	"testing"
 
+	storre "github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+type mockExec struct {
+	mock.Mock
+}
+
+func (m *mockExec) HandleEvent(evt *types.Event, mut []byte) error {
+	args := m.Called(evt, mut)
+	return args.Error(0)
+}
+
+func (m *mockExec) MutateEvent(evt *types.Event) ([]byte, error) {
+	args := m.Called(evt)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *mockExec) FilterEvent(evt *types.Event) (bool, error) {
+	args := m.Called(evt)
+	return args.Get(0).(bool), args.Error(1)
+}
 
 func TestHelperHandlerProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_HANDLER_PROCESS") != "1" {
@@ -51,15 +72,28 @@ func TestPipelinedHandleEvent(t *testing.T) {
 		Entity: entity,
 		Check:  check,
 	}
+	extension := &types.Extension{
+		URL: "http://127.0.0.1",
+	}
 
 	// Currently fire and forget. You may choose to return a map
 	// of handler execution information in the future, don't know
 	// how useful this would be.
 	assert.NoError(t, p.handleEvent(event))
 
-	event.Check.Handlers = []string{"handler1"}
+	event.Check.Handlers = []string{"handler1", "handler2"}
+
 	store.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
+	store.On("GetHandlerByName", mock.Anything, "handler2").Return((*types.Handler)(nil), nil)
+	store.On("GetExtension", mock.Anything, "handler2").Return(extension, nil)
+	m := &mockExec{}
+	m.On("HandleEvent", event, mock.Anything).Return(nil)
+	p.extensionExecutor = func(*types.Extension) (rpc.ExtensionExecutor, error) {
+		return m, nil
+	}
+
 	assert.NoError(t, p.handleEvent(event))
+	m.AssertCalled(t, "HandleEvent", event, mock.Anything)
 }
 
 func TestPipelinedExpandHandlers(t *testing.T) {
@@ -75,7 +109,7 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 	oneLevel, err := p.expandHandlers(ctx, []string{"handler1"}, 1)
 	assert.NoError(t, err)
 
-	expanded := map[string]*types.Handler{"handler1": handler1}
+	expanded := map[string]handlerExtensionUnion{"handler1": {Handler: handler1}}
 	assert.Equal(t, expanded, oneLevel)
 
 	handler2 := types.FixtureHandler("handler2")
@@ -90,6 +124,10 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 	store.On("GetHandlerByName", mock.Anything, "unknown").Return(nilHandler, nil)
 	store.On("GetHandlerByName", mock.Anything, "handler2").Return(handler2, nil)
 	store.On("GetHandlerByName", mock.Anything, "handler3").Return(handler3, nil)
+	store.On("GetExtension", mock.Anything, "unknown").Return(&types.Extension{}, storre.ErrNoExtension)
+	store.On("GetExtension", mock.Anything, "handler2").Return(&types.Extension{URL: "http://localhost"}, nil)
+	store.On("GetExtension", mock.Anything, "handler3").Return(&types.Extension{URL: "http://localhost"}, nil)
+	store.On("GetExtension", mock.Anything, "handler4").Return(&types.Extension{URL: "http://localhost"}, nil)
 
 	twoLevels, err := p.expandHandlers(ctx, []string{"handler3"}, 1)
 	assert.NoError(t, err)
@@ -225,4 +263,20 @@ func TestPipelinedUdpHandler(t *testing.T) {
 
 	assert.NoError(t, err)
 	<-done
+}
+
+func TestPipelinedGRPCHandler(t *testing.T) {
+	extension := &types.Extension{}
+	event := types.FixtureEvent("foo", "bar")
+	execFn := func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
+		mock := &mockExec{}
+		mock.On("HandleEvent", event, []byte(nil)).Return(nil)
+		return mock, nil
+	}
+	p := &Pipelined{
+		extensionExecutor: execFn,
+	}
+	err := p.grpcHandler(extension, event, nil)
+
+	assert.NoError(t, err)
 }
