@@ -29,6 +29,7 @@ func TestHelperMutatorProcess(t *testing.T) {
 	case "cat":
 		fmt.Fprintf(os.Stdout, "%s", stdin)
 	}
+	os.Exit(0)
 }
 
 func TestPipelinedMutate(t *testing.T) {
