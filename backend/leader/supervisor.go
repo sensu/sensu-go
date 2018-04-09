@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"

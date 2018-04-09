@@ -41,6 +41,7 @@ and yarn are now dependencies for building the backend.
   rules.
 - Removed -c (check) flag in sensuctl check execute command.
 - Events list can properly be viewed on mobile.
+- Updated Sirupsen/logrus to sirupsen/logrus and other applicable dependencies using the former.
 
 ### Fixed
 - Shut down sessions properly when agent connections are disrupted.

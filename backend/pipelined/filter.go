@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
 )

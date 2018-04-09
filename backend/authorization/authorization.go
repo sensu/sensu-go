@@ -3,7 +3,7 @@ package authorization
 import (
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/types"
 )
 

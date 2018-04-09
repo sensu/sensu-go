@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/agent/assetmanager"
 	"github.com/sensu/sensu-go/handler"
@@ -23,6 +22,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/retry"
+	"github.com/sirupsen/logrus"
 )
 
 const (

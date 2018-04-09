@@ -15,8 +15,8 @@ required = ["github.com/shirou/w32"]
   branch = "nested-parameters"
 
 [[constraint]]
-  name = "github.com/Sirupsen/logrus"
-  version = "1.0.3"
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.5"
 
 [[constraint]]
   name = "github.com/bluele/slack"
@@ -32,7 +32,7 @@ required = ["github.com/shirou/w32"]
 
 [[constraint]]
   name = "github.com/docker/docker"
-  version = "1.13.1"
+  revision = "cbde00b44273a584bed2ee3513db68924b4a6dba"
 
 [[constraint]]
   name = "github.com/google/uuid"
@@ -166,4 +166,4 @@ required = ["github.com/shirou/w32"]
 
 [[constraint]]
   name = "github.com/atlassian/gostatsd"
-  version = "2.3.0"
+  version = "5.4.0"

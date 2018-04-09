@@ -1,5 +1,5 @@
 package relay
 
-import "github.com/Sirupsen/logrus"
+import "github.com/sirupsen/logrus"
 
 var logger = logrus.WithField("component", "graphql/relay")

@@ -1,6 +1,6 @@
 package schedulerd
 
-import "github.com/Sirupsen/logrus"
+import "github.com/sirupsen/logrus"
 
 var logger = logrus.WithFields(logrus.Fields{
 	"component": "schedulerd",

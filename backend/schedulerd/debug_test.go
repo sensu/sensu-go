@@ -5,7 +5,7 @@ package schedulerd
 import (
 	"io/ioutil"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
