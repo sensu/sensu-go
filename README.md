@@ -35,72 +35,72 @@ platforms. Please download and install Docker CE before proceeding._
 
 1. Start the Sensu 2.0 Backend process
 
-```
-$ docker run -d --name sensu-backend \
--p 2380:2380 -p 3000:3000 -p 8080:8080 -p 8081:8081 \
-sensuapp/sensu-go:2.0.0-alpha sensu-backend start
-```
+   ```
+   $ docker run -d --name sensu-backend \
+   -p 2380:2380 -p 3000:3000 -p 8080:8080 -p 8081:8081 \
+   sensuapp/sensu-go:2.0.0-alpha sensu-backend start
+   ```
 
 2. Start the Sensu 2.0 Agent process
 
-```
-$ docker run -d --name sensu-agent --link sensu-backend \
-sensuapp/sensu-go:2.0.0-alpha sensu-agent start \
---backend-url ws://sensu-backend:8081 \
---subscriptions workstation,docker
-```
+   ```
+   $ docker run -d --name sensu-agent --link sensu-backend \
+   sensuapp/sensu-go:2.0.0-alpha sensu-agent start \
+   --backend-url ws://sensu-backend:8081 \
+   --subscriptions workstation,docker
+   ```
 
 3. Download and install the Sensu 2.0 CLI tool
 
-On macOS
+   **On macOS**
 
-```
-$ latest=$(curl -s https://storage.googleapis.com/sensu-binaries/latest.txt)
+   ```
+   $ latest=$(curl -s https://storage.googleapis.com/sensu-binaries/latest.txt)
 
-$ curl -LO https://storage.googleapis.com/sensu-binaries/$latest/darwin/amd64/sensuctl
+   $ curl -LO https://storage.googleapis.com/sensu-binaries/$latest/darwin/amd64/sensuctl
 
-$ chmod +x sensuctl
+   $ chmod +x sensuctl
 
-$ sudo mv sensuctl /usr/local/bin/
-```
+   $ sudo mv sensuctl /usr/local/bin/
+   ```
 
-On Debian/Ubuntu Linux
+   **On Debian/Ubuntu Linux**
 
-```
-$ curl -s \
-https://packagecloud.io/install/repositories/sensu/nightly/script.deb.sh \
-| sudo bash
+   ```
+   $ curl -s \
+   https://packagecloud.io/install/repositories/sensu/nightly/script.deb.sh \
+   | sudo bash
 
-$ sudo apt-get install sensu-cli
-```
+   $ sudo apt-get install sensu-cli
+   ```
 
-On RHEL/CentOS Linux
+   **On RHEL/CentOS Linux**
 
-```
-$ curl -s \
-https://packagecloud.io/install/repositories/sensu/nightly/script.rpm.sh \
-| sudo bash
+   ```
+   $ curl -s \
+   https://packagecloud.io/install/repositories/sensu/nightly/script.rpm.sh \
+   | sudo bash
 
-$ sudo yum install sensu-cli
-```
+   $ sudo yum install sensu-cli
+   ```
 
 4. Configure the Sensu 2.0 CLI tool
 
-```
-$ sensuctl configure
-? Sensu Backend URL: http://127.0.0.1:8080
-? Username: admin
-? Password: P@ssw0rd!
-? Organization: default
-? Environment: default
-? Preferred output format: tabular
-```
+   ```
+   $ sensuctl configure
+   ? Sensu Backend URL: http://127.0.0.1:8080
+   ? Username: admin
+   ? Password: P@ssw0rd!
+   ? Organization: default
+   ? Environment: default
+   ? Preferred output format: tabular
+   ```
 
 5. List Sensu 2.0 Entities
 
-```
-$ sensuctl entity list
-```
+   ```
+   $ sensuctl entity list
+   ```
 
 Congratulations! You now have a local Sensu 2.0 deployment!
 
