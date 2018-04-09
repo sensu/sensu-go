@@ -317,12 +317,6 @@
   revision = "6a197d5ea61168f2ac821de2b7f011b250904900"
 
 [[projects]]
-  branch = "disable-internal-metrics"
-  name = "github.com/nikkiattea/gostatsd"
-  packages = [".","pkg/statsd"]
-  revision = "989b6f003352ae7296f44fbc6797a321f44506f1"
-
-[[projects]]
   branch = "master"
   name = "github.com/nwaples/rardecode"
   packages = ["."]
@@ -579,6 +573,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "21744be8a3590e89c642919ec9f92547774e435575fd105f1184e58fe3774e2f"
+  inputs-digest = "186716b0ea3e1c11748be8c3afb7766e6487eb5b648af741caf9577e77ab0146"
   solver-name = "gps-cdcl"
   solver-version = 1
