@@ -12,6 +12,7 @@ type APIClient interface {
 	EntityAPIClient
 	EnvironmentAPIClient
 	EventAPIClient
+	ExtensionAPIClient
 	FilterAPIClient
 	HandlerAPIClient
 	HookAPIClient
@@ -91,6 +92,13 @@ type EventAPIClient interface {
 	// DeleteEvent deletes the event identified by entity, check.
 	DeleteEvent(entity, check string) error
 	ResolveEvent(*types.Event) error
+}
+
+// ExtensionAPIClient client methods for extensions
+type ExtensionAPIClient interface {
+	ListExtensions(org string) ([]types.Extension, error)
+	RegisterExtension(*types.Extension) error
+	DeregisterExtension(name, org string) error
 }
 
 // HandlerAPIClient client methods for handlers
