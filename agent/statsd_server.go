@@ -98,6 +98,10 @@ func prepareMetrics(metrics *gostatsd.MetricMap) []*types.MetricPoint {
 }
 
 func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
+	if points == nil {
+		return nil
+	}
+
 	metrics := &types.Metrics{
 		Points: points,
 	}

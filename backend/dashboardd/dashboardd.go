@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/dashboard"
 	"github.com/sensu/sensu-go/types"

@@ -3,7 +3,7 @@ package globalid
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 var defaultLogger = logrus.WithField("component", "graphql/globalid")

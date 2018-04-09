@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 )

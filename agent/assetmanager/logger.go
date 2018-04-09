@@ -1,6 +1,6 @@
 package assetmanager
 
-import "github.com/Sirupsen/logrus"
+import "github.com/sirupsen/logrus"
 
 var logger *logrus.Entry
 

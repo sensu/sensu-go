@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/elements/report"
 	"github.com/sensu/sensu-go/types"
