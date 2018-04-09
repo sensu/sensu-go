@@ -8,8 +8,10 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -63,7 +65,7 @@ func newBackend(t *testing.T) (*backendProcess, func()) {
 
 	return backend, func() {
 		cleanup()
-		if err := backend.Kill(); err != nil {
+		if err := backend.Terminate(); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -160,11 +162,8 @@ func (b *backendProcess) Start() error {
 	return nil
 }
 
-func (b *backendProcess) Kill() error {
-	if err := b.cmd.Process.Kill(); err != nil {
-		return err
-	}
-	return b.cmd.Process.Release()
+func (b *backendProcess) Terminate() error {
+	return terminateProcess(b.cmd.Process)
 }
 
 type agentProcess struct {
@@ -205,7 +204,7 @@ func newAgent(config agentConfig, sensuctl *sensuCtl, t *testing.T) (*agentProce
 	}
 
 	return agent, func() {
-		if err := agent.Kill(); err != nil {
+		if err := agent.Terminate(); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -299,11 +298,8 @@ func (a *agentProcess) Start(t *testing.T) error {
 	return nil
 }
 
-func (a *agentProcess) Kill() error {
-	if err := a.cmd.Process.Kill(); err != nil {
-		return err
-	}
-	return a.cmd.Process.Release()
+func (a *agentProcess) Terminate() error {
+	return terminateProcess(a.cmd.Process)
 }
 
 type sensuCtl struct {
@@ -354,4 +350,22 @@ func (s *sensuCtl) run(args ...string) ([]byte, error) {
 
 func (s *sensuCtl) SetStdin(r io.Reader) {
 	s.stdin = r
+}
+
+// Terminate a Process by sending SIGTERM and waiting for it to exit cleanly.
+// On Windows, there is no way to ask a program to exit cleanly. Instead, it
+// must be killed with SIGKILL.
+func terminateProcess(p *os.Process) error {
+	signal := syscall.SIGTERM
+	// Windows doesn't support SIGTERM, fall back to SIGKILL
+	if runtime.GOOS == "windows" {
+		signal = syscall.SIGKILL
+	}
+
+	if err := p.Signal(signal); err != nil {
+		return err
+	}
+	// allow the process to exit cleanly
+	_, err := p.Wait()
+	return err
 }

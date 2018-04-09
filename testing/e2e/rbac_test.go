@@ -316,7 +316,7 @@ func TestRBAC(t *testing.T) {
 
 	// Now we want to restart the backend to make sure the JWT will continue
 	// to work and prevent an issue like https://github.com/sensu/sensu-go/issues/502
-	require.NoError(t, backend.Kill())
+	require.NoError(t, backend.Terminate())
 	err = backend.Start()
 	if err != nil {
 		log.Panic(err)
@@ -328,6 +328,6 @@ func TestRBAC(t *testing.T) {
 
 	// Make sure we are properly authenticated
 	output, err = adminctl.run("user", "list")
-	assert.NoError(t, err, output)
+	assert.NoError(t, err, string(output))
 
 }
