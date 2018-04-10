@@ -8,14 +8,20 @@ class RootRedirectPage extends React.Component {
   };
 
   componentWillMount() {
-    getAccessToken().then(token => {
+    const handleToken = token => {
       // TODO: Retrieve last environment
       let nextPath = "/default/default";
       if (token === null) {
         nextPath = "/login";
       }
       this.props.router.push(nextPath);
-    });
+    };
+
+    const handleTokenError = () => {
+      this.props.router.push("/login");
+    };
+
+    getAccessToken().then(handleToken, handleTokenError);
   }
 
   render() {
