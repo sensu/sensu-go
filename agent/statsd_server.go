@@ -53,7 +53,8 @@ func NewClient(a *Agent) (*Client, error) {
 // the sensu-agent, preparing payload synchronously but doing the send asynchronously.
 // Must not read/write MetricMap asynchronously.
 func (c Client) SendMetricsAsync(ctx context.Context, metrics *gostatsd.MetricMap, cb gostatsd.SendCallback) {
-	metricsPoints := prepareMetrics(metrics)
+	now := time.Now().UnixNano()
+	metricsPoints := prepareMetrics(now, metrics)
 	go func() {
 		cb([]error{c.sendMetrics(metricsPoints)})
 	}()
@@ -71,8 +72,7 @@ func (Client) Name() string {
 	return BackendName
 }
 
-func prepareMetrics(metrics *gostatsd.MetricMap) []*types.MetricPoint {
-	now := time.Now().Unix()
+func prepareMetrics(now int64, metrics *gostatsd.MetricMap) []*types.MetricPoint {
 	var metricsPoints []*types.MetricPoint
 	metrics.Counters.Each(func(key, tagsKey string, counter gostatsd.Counter) {
 		tags := composeMetricTags(tagsKey)
