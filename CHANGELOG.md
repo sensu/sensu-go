@@ -54,6 +54,7 @@ and yarn are now dependencies for building the backend.
   no longer overwrite each other's messagebus subscriptions.
 - Fix the manual packaging process.
 - Properly log the event being handled in pipelined
+- The http_check.sh example script now hides its output
 
 ### Added
 - Support for managing mutators via sensuctl.
