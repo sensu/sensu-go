@@ -2,7 +2,7 @@
 
 target=$1
 
-curl --connect-timeout 5 $target
+curl --silent --connect-timeout 5 $target > /dev/null
 if [ $? -ne 0 ]; then
   exit 1
 fi
