@@ -40,6 +40,8 @@ and yarn are now dependencies for building the backend.
 - Creating roles via sensuctl now supports passing flags for setting permissions
   rules.
 - Removed -c (check) flag in sensuctl check execute command.
+- Fix a deadlock in the monitor.
+- Don't allow the bus to drop messages.
 - Events list can properly be viewed on mobile.
 - Updated Sirupsen/logrus to sirupsen/logrus and other applicable dependencies using the former.
 

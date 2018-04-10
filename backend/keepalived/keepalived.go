@@ -264,9 +264,10 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 // the monitors map is empty, and then the goroutine stops.
 func (k *Keepalived) startMonitorSweeper() {
 	go func() {
-		timer := time.NewTimer(10 * time.Minute)
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
 		for {
-			<-timer.C
+			<-ticker.C
 			for key, monitor := range k.monitors {
 				if monitor.IsStopped() {
 					k.mu.Lock()
