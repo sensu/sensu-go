@@ -20,6 +20,7 @@ import (
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -271,6 +272,7 @@ func (b *Backend) Run() (derr error) {
 	b.pipelined, err = pipelined.New(pipelined.Config{
 		Store: store,
 		Bus:   bus,
+		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating pipelined: %s", err)

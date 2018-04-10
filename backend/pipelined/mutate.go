@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/sirupsen/logrus"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 // mutateEvent mutates (transforms) a Sensu event into a serialized
@@ -34,14 +35,29 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 	mutator, err := p.store.GetMutatorByName(ctx, handler.Mutator)
+	if err != nil {
+		logger.WithError(err).Error("pipelined failed to retrieve a mutator")
+		return nil, err
+	}
 
 	if mutator == nil {
+		// Check to see if there is an extension matching the mutator
+		extension, err := p.store.GetExtension(ctx, handler.Mutator)
 		if err != nil {
-			logger.WithError(err).Error("pipelined failed to retrieve a mutator")
-		} else {
-			logger.WithField("name", handler.Mutator).Error("pipelined failed to retrieve a mutator")
+			if err == store.ErrNoExtension {
+				return nil, nil
+			}
+			return nil, err
 		}
-		return nil, err
+		executor, err := p.extensionExecutor(extension)
+		if err != nil {
+			return nil, err
+		}
+		eventData, err := executor.MutateEvent(event)
+		if err != nil {
+			return nil, err
+		}
+		return eventData, nil
 	}
 
 	eventData, err := p.pipeMutator(mutator, event)

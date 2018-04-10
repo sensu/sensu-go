@@ -9,8 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sensu/sensu-go/rpc"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -92,6 +95,31 @@ func TestPipelinedOnlyCheckOutputMutate(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, eventData)
+}
+
+func TestPipelinedExtensionMutator(t *testing.T) {
+	m := &mockExec{}
+	ext := &types.Extension{URL: "http://127.0.0.1"}
+	store := &mockstore.MockStore{}
+	store.On("GetExtension", mock.Anything, "extension").Return(ext, nil)
+	store.On("GetMutatorByName", mock.Anything, "extension").Return((*types.Mutator)(nil), nil)
+	event := types.FixtureEvent("foo", "bar")
+
+	m.On("MutateEvent", event).Return([]byte("remote"), nil)
+
+	getter := func(*types.Extension) (rpc.ExtensionExecutor, error) {
+		return m, nil
+	}
+
+	p, err := New(Config{ExtensionExecutorGetter: getter, Store: store})
+	require.NoError(t, err)
+
+	handler := &types.Handler{}
+	handler.Mutator = "extension"
+
+	eventData, err := p.mutateEvent(handler, event)
+	require.NoError(t, err)
+	require.Equal(t, []byte("remote"), eventData)
 }
 
 func TestPipelinedPipeMutator(t *testing.T) {
