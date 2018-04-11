@@ -44,7 +44,7 @@ func main() {
 		return
 	}
 
-	err = ioutil.WriteFile("./data/schema.json", b, os.ModePerm)
+	err = ioutil.WriteFile("./src/schema.json", b, os.ModePerm)
 	if err != nil {
 		log.Fatalf("ERROR: %v", err)
 	}

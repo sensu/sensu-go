@@ -34,4 +34,4 @@ rules:
   graphql/template-strings:
     - "error"
     - env: "relay"
-      schemaJsonFilepath: "./data/schema.json"
+      schemaJsonFilepath: ./src/schema.json

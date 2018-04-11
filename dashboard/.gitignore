@@ -24,6 +24,5 @@ yarn-error.log*
 /assets_vfsgen.go
 /assets_glue.go
 
-# relay
-/**/__generated__/*graph*
-/data/schema.json
+# GraphQL
+/src/schema.json
