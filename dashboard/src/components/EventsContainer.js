@@ -3,10 +3,11 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 
 import { withRouter } from "found";
+import { withApollo } from "react-apollo";
 import { every, filter, reduce, capitalize } from "lodash";
 import { compose } from "lodash/fp";
 import { map, join } from "ramda";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
 
 import Typography from "material-ui/Typography";
@@ -79,13 +80,49 @@ const styles = theme => {
 class EventsContainer extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    relay: PropTypes.shape({ environment: PropTypes.object }).isRequired,
+    client: PropTypes.object.isRequired,
     environment: PropTypes.shape({
       events: PropTypes.object,
       checks: PropTypes.object,
       entities: PropTypes.object,
     }).isRequired,
     onQueryChange: PropTypes.func.isRequired,
+  };
+
+  static fragments = {
+    environment: gql`
+      fragment EventsContainer_environment on Environment {
+        checks(first: 1000) {
+          edges {
+            node {
+              name
+            }
+          }
+        }
+
+        entities(first: 1000) {
+          edges {
+            node {
+              name
+            }
+          }
+        }
+
+        events(first: 100, filter: $filter, orderBy: $order) {
+          edges {
+            node {
+              id
+              ...EventsListItem_event
+            }
+          }
+          pageInfo {
+            hasNextPage
+          }
+        }
+      }
+
+      ${EventsListItem.fragments.event}
+    `,
   };
 
   state = {
@@ -132,13 +169,17 @@ class EventsContainer extends React.Component {
     );
 
     selectedKeys.forEach(key => {
-      ResolveEventMutation.commit(this.props.relay.environment, key, {
-        onCompleted: () => {
+      ResolveEventMutation.commit(this.props.client, key).then(
+        () => {
           this.setState(({ rowState }) =>
             Object.assign(rowState, { [key]: false }),
           );
         },
-      });
+        error => {
+          // eslint-disable-next-line no-console
+          console.error(error);
+        },
+      );
     });
   };
 
@@ -305,38 +346,6 @@ class EventsContainer extends React.Component {
   }
 }
 
-const enhance = compose(withStyles(styles), withRouter);
-export default createFragmentContainer(
-  enhance(EventsContainer),
-  graphql`
-    fragment EventsContainer_environment on Environment {
-      checks(first: 1000) {
-        edges {
-          node {
-            name
-          }
-        }
-      }
-
-      entities(first: 1000) {
-        edges {
-          node {
-            name
-          }
-        }
-      }
-
-      events(first: 100, filter: $filter, orderBy: $order) {
-        edges {
-          node {
-            id
-            ...EventsListItem_event
-          }
-        }
-        pageInfo {
-          hasNextPage
-        }
-      }
-    }
-  `,
+export default compose(withStyles(styles), withRouter, withApollo)(
+  EventsContainer,
 );

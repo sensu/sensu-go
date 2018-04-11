@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import compose from "lodash/fp/compose";
 import { withRouter, routerShape, matchShape } from "found";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List from "material-ui/List";
@@ -65,12 +65,33 @@ const styles = theme => ({
 class Drawer extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.object.isRequired,
-    environment: PropTypes.object.isRequired,
+    viewer: PropTypes.object,
+    environment: PropTypes.object,
     onToggle: PropTypes.func.isRequired,
     router: routerShape.isRequired,
     match: matchShape.isRequired,
     open: PropTypes.bool.isRequired,
+    loaded: PropTypes.bool,
+  };
+
+  static defaultProps = { loaded: false, viewer: null, environment: null };
+
+  static fragments = {
+    viewer: gql`
+      fragment Drawer_viewer on Viewer {
+        ...NamespaceSelector_viewer
+      }
+
+      ${NamespaceSelector.fragments.viewer}
+    `,
+
+    environment: gql`
+      fragment Drawer_environment on Environment {
+        ...EnvironmentIcon_environment
+      }
+
+      ${EnvironmentIcon.fragments.environment}
+    `,
   };
 
   state = {
@@ -92,7 +113,7 @@ class Drawer extends React.Component {
   };
 
   render() {
-    const { viewer, environment, open, onToggle, classes } = this.props;
+    const { loaded, viewer, environment, open, onToggle, classes } = this.props;
     const { preferencesOpen } = this.state;
 
     return (
@@ -115,14 +136,22 @@ class Drawer extends React.Component {
               </div>
               <div className={classes.row}>
                 <div className={classes.namespaceIcon}>
-                  <EnvironmentIcon environment={environment} size={36} />
+                  {loaded ? (
+                    <EnvironmentIcon environment={environment} size={36} />
+                  ) : (
+                    <div>Loading...</div>
+                  )}
                 </div>
               </div>
               <div className={classes.row}>
-                <NamespaceSelector
-                  viewer={viewer}
-                  className={classes.namespaceSelector}
-                />
+                {loaded ? (
+                  <NamespaceSelector
+                    viewer={viewer}
+                    className={classes.namespaceSelector}
+                  />
+                ) : (
+                  <div>Loading...</div>
+                )}
               </div>
             </div>
           </div>
@@ -178,17 +207,4 @@ class Drawer extends React.Component {
   }
 }
 
-const DrawerContainer = createFragmentContainer(
-  Drawer,
-  graphql`
-    fragment Drawer_viewer on Viewer {
-      ...NamespaceSelector_viewer
-    }
-
-    fragment Drawer_environment on Environment {
-      ...EnvironmentIcon_environment
-    }
-  `,
-);
-
-export default compose(withStyles(styles), withRouter)(DrawerContainer);
+export default compose(withStyles(styles), withRouter)(Drawer);

@@ -1,16 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
-import { Resolver } from "found-relay";
+import { ApolloProvider } from "react-apollo";
 import FarceActions from "farce/lib/Actions";
 import createConnectedRouter from "found/lib/createConnectedRouter";
 import createRender from "found/lib/createRender";
+import resolver from "found/lib/resolver";
 import injectTapEventPlugin from "react-tap-event-plugin";
+
+import client from "./apollo/client";
 
 import createStore from "./store";
 import reducer from "./reducer";
 import registerServiceWorker from "./registerServiceWorker";
-import environment from "./environment";
 import AppThemeProvider from "./components/AppThemeProvider";
 import BrowserOverrides from "./components/BrowserOverrides";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -38,10 +40,12 @@ store.dispatch(FarceActions.init());
 // Renderer
 ReactDOM.render(
   <Provider store={store}>
-    <AppThemeProvider>
-      <BrowserOverrides />
-      <Router resolver={new Resolver(environment)} />
-    </AppThemeProvider>
+    <ApolloProvider client={client}>
+      <AppThemeProvider>
+        <BrowserOverrides />
+        <Router resolver={resolver} />
+      </AppThemeProvider>
+    </ApolloProvider>
   </Provider>,
   document.getElementById("root"),
 );

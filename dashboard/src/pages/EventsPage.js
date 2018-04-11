@@ -1,7 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { graphql } from "react-relay";
+import { Query } from "react-apollo";
+import gql from "graphql-tag";
 import { routerShape, matchShape } from "found";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
@@ -47,9 +48,9 @@ class EventsPage extends React.Component {
     },
   });
 
-  static query = graphql`
+  static query = gql`
     query EventsPageQuery(
-      $filter: String = "HasCheck && IsIncident"
+      $filter: String = "${defaultExpression}"
       $order: EventsListOrder = SEVERITY
       $environment: String!
       $organization: String!
@@ -58,6 +59,8 @@ class EventsPage extends React.Component {
         ...EventsContainer_environment
       }
     }
+
+    ${EventsContainer.fragments.environment}
   `;
 
   constructor(props) {
@@ -90,27 +93,46 @@ class EventsPage extends React.Component {
   };
 
   render() {
-    const { classes, ...props } = this.props;
+    const { classes, match, ...props } = this.props;
     return (
-      <AppContent>
-        <div>
-          <div className={classes.headline}>
-            <Typography className={classes.title} variant="headline">
-              Events
-            </Typography>
-            <SearchBox
-              className={classes.searchBox}
-              onChange={this.requerySearchBox}
-              value={this.state.filterValue}
-            />
-          </div>
-          <EventsContainer
-            className={classes.container}
-            onQueryChange={this.changeQuery}
-            {...props}
-          />
-        </div>
-      </AppContent>
+      <Query
+        query={EventsPage.query}
+        variables={{ ...match.params, ...match.location.query }}
+        // TODO: Replace polling with query subscription
+        pollInterval={5000}
+      >
+        {({ data: { environment } = {}, loading, error }) => {
+          // TODO: Connect this error handler to display a blocking error alert
+          if (error) throw error;
+
+          return (
+            <AppContent>
+              <div>
+                <div className={classes.headline}>
+                  <Typography className={classes.title} variant="headline">
+                    Events
+                  </Typography>
+                  <SearchBox
+                    className={classes.searchBox}
+                    onChange={this.requerySearchBox}
+                    value={this.state.filterValue}
+                  />
+                </div>
+                {!loading ? (
+                  <EventsContainer
+                    className={classes.container}
+                    onQueryChange={this.changeQuery}
+                    environment={environment}
+                    {...props}
+                  />
+                ) : (
+                  <div>Loading...</div>
+                )}
+              </div>
+            </AppContent>
+          );
+        }}
+      </Query>
     );
   }
 }

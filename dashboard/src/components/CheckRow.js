@@ -1,11 +1,26 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 
 import { TableRow, TableCell } from "material-ui/Table";
 import Checkbox from "material-ui/Checkbox";
 
 class CheckRow extends React.Component {
+  static fragments = {
+    check: gql`
+      fragment CheckRow_check on CheckConfig {
+        name
+        command
+        subscriptions
+        interval
+        namespace {
+          organization
+          environment
+        }
+      }
+    `,
+  };
+
   render() {
     const { check, ...other } = this.props;
 
@@ -32,18 +47,4 @@ CheckRow.propTypes = {
   }).isRequired,
 };
 
-export default createFragmentContainer(
-  CheckRow,
-  graphql`
-    fragment CheckRow_check on CheckConfig {
-      name
-      command
-      subscriptions
-      interval
-      namespace {
-        organization
-        environment
-      }
-    }
-  `,
-);
+export default CheckRow;

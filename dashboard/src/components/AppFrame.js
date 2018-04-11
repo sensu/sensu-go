@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 
 import AppRoot from "./AppRoot";
 import AppBar from "./AppBar";
@@ -11,12 +11,38 @@ import QuickNav from "./QuickNav";
 class AppFrame extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.object.isRequired,
-    environment: PropTypes.object.isRequired,
+    viewer: PropTypes.object,
+    environment: PropTypes.object,
+    loaded: PropTypes.bool,
     children: PropTypes.element,
   };
 
-  static defaultProps = { children: null };
+  static defaultProps = {
+    children: null,
+    loaded: false,
+    viewer: null,
+    environment: null,
+  };
+
+  static fragments = {
+    viewer: gql`
+      fragment AppFrame_viewer on Viewer {
+        ...Drawer_viewer
+      }
+
+      ${Drawer.fragments.viewer}
+    `,
+
+    environment: gql`
+      fragment AppFrame_environment on Environment {
+        ...AppBar_environment
+        ...Drawer_environment
+      }
+
+      ${AppBar.fragments.environment}
+      ${Drawer.fragments.environment}
+    `,
+  };
 
   static styles = theme => {
     const toolbar = theme.mixins.toolbar;
@@ -74,7 +100,7 @@ class AppFrame extends React.Component {
   };
 
   render() {
-    const { children, viewer, environment, classes } = this.props;
+    const { children, loaded, viewer, environment, classes } = this.props;
     const { drawerOpen } = this.state;
 
     const toggleDrawer = () => {
@@ -83,8 +109,13 @@ class AppFrame extends React.Component {
 
     return (
       <AppRoot>
-        <AppBar environment={environment} toggleToolbar={toggleDrawer} />
+        <AppBar
+          loaded={loaded}
+          environment={environment}
+          toggleToolbar={toggleDrawer}
+        />
         <Drawer
+          loaded={loaded}
           viewer={viewer}
           open={drawerOpen}
           onToggle={toggleDrawer}
@@ -100,17 +131,4 @@ class AppFrame extends React.Component {
   }
 }
 
-export const EnhancedAppFrame = withStyles(AppFrame.styles)(AppFrame);
-export default createFragmentContainer(
-  EnhancedAppFrame,
-  graphql`
-    fragment AppFrame_viewer on Viewer {
-      ...Drawer_viewer
-    }
-
-    fragment AppFrame_environment on Environment {
-      ...AppBar_environment
-      ...Drawer_environment
-    }
-  `,
-);
+export default withStyles(AppFrame.styles)(AppFrame);

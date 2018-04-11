@@ -1,34 +1,49 @@
-import { graphql, commitMutation } from "react-relay";
+import gql from "graphql-tag";
 
-const mutation = graphql`
-  mutation ResolveEventMutation($input: ResolveEventInput!) {
-    resolveEvent(input: $input) {
-      event {
-        timestamp
-        check {
-          status
-          output
-        }
-      }
+const fragment = gql`
+  fragment ResolveEventMutation_event on Event {
+    id
+    timestamp
+    check {
+      status
+      output
     }
   }
 `;
 
-function commit(environment, id, { onCompleted }) {
-  return commitMutation(environment, {
+const mutation = gql`
+  mutation ResolveEventMutation($input: ResolveEventInput!) {
+    resolveEvent(input: $input) {
+      event {
+        ...ResolveEventMutation_event
+      }
+    }
+  }
+
+  ${fragment}
+`;
+
+function commit(client, id) {
+  return client.mutate({
     mutation,
-    onCompleted,
     variables: {
       input: { id, source: "Sensu web UI" },
     },
-    updater: (store, data) => {
-      const result = data.resolveEvent.event;
-      const ev = store.get(id);
-      ev.setValue(result.timestamp, "timestamp");
-
-      const check = ev.getLinkedRecord("check");
-      check.setValue(result.check.output, "output");
-      check.setValue(result.check.status, "status");
+    update: (dataProxy, { data }) => {
+      // Apollo wraps the call to `update` in its own try/catch and swallows any
+      // errors. We must handle any errors ourselves if we don't want them to
+      // be completely silenced.
+      try {
+        dataProxy.writeFragment({
+          id,
+          fragment,
+          data: data.resolveEvent.event,
+        });
+      } catch (error) {
+        // TODO: Connect this error handler to display a blocking error alert
+        // eslint-disable-next-line no-console
+        console.error(error);
+      }
     },
   });
 }

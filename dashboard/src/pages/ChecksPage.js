@@ -1,6 +1,7 @@
 import React from "react";
-import PropTypes from "prop-types";
-import { graphql } from "react-relay";
+import { Query } from "react-apollo";
+import gql from "graphql-tag";
+import { matchShape } from "found";
 
 import Paper from "material-ui/Paper";
 import AppContent from "../components/AppContent";
@@ -8,25 +9,46 @@ import CheckList from "../components/CheckList";
 
 class CheckPage extends React.Component {
   static propTypes = {
-    viewer: PropTypes.objectOf(PropTypes.any).isRequired,
+    match: matchShape.isRequired,
   };
 
-  static query = graphql`
-    query ChecksPageQuery {
-      viewer {
-        ...CheckList_viewer
+  static query = gql`
+    query ChecksPageQuery($environment: String!, $organization: String!) {
+      environment(organization: $organization, environment: $environment) {
+        ...CheckList_environment
       }
     }
+
+    ${CheckList.fragments.environment}
   `;
 
   render() {
-    const { viewer } = this.props;
+    const { match } = this.props;
+
     return (
-      <AppContent>
-        <Paper>
-          <CheckList viewer={viewer} />
-        </Paper>
-      </AppContent>
+      <Query
+        query={CheckPage.query}
+        variables={match.params}
+        // TODO: Replace polling with query subscription
+        pollInterval={5000}
+      >
+        {({ data: { environment } = {}, loading, error }) => {
+          // TODO: Connect this error handler to display a blocking error alert
+          if (error) throw error;
+
+          return (
+            <AppContent>
+              {!loading ? (
+                <Paper>
+                  <CheckList environment={environment} />
+                </Paper>
+              ) : (
+                <div>Loading...</div>
+              )}
+            </AppContent>
+          );
+        }}
+      </Query>
     );
   }
 }

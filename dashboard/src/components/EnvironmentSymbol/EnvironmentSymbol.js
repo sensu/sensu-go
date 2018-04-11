@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 import Symbol from "./EnvironmentSymbolBase";
 
 class EnvironmentSymbol extends React.Component {
@@ -10,17 +10,18 @@ class EnvironmentSymbol extends React.Component {
     }).isRequired,
   };
 
+  static fragments = {
+    environment: gql`
+      fragment EnvironmentSymbol_environment on Environment {
+        colourId
+      }
+    `,
+  };
+
   render() {
     const { environment, ...props } = this.props;
     return <Symbol colour={environment.colourId} {...props} />;
   }
 }
 
-export default createFragmentContainer(
-  EnvironmentSymbol,
-  graphql`
-    fragment EnvironmentSymbol_environment on Environment {
-      colourId
-    }
-  `,
-);
+export default EnvironmentSymbol;
