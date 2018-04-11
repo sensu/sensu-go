@@ -28,6 +28,7 @@ metric events are swallowed for the time being.
 - Add the `--statsd-event-handlers` flag to sensu-agent which configures the
 event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
+- Add end-to-end test for extensions.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
