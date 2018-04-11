@@ -234,7 +234,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagStatsdFlushInterval, agent.DefaultStatsdFlushInterval)
 	viper.SetDefault(flagStatsdMetricsHost, agent.DefaultStatsdMetricsHost)
 	viper.SetDefault(flagStatsdMetricsPort, agent.DefaultStatsdMetricsPort)
-	viper.SetDefault(flagStatsdEventHandlers, "")
+	viper.SetDefault(flagStatsdEventHandlers, []string{})
 	viper.SetDefault(flagSubscriptions, []string{})
 	viper.SetDefault(flagUser, agent.DefaultUser)
 	viper.SetDefault(flagDisableAPI, false)
