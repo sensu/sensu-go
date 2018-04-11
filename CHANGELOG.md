@@ -25,6 +25,8 @@ metric events are swallowed for the time being.
 - Proper 404 page for web UI.
 - Add sensuctl extension command.
 - Add extensions to pipelined.
+- Add the `--statsd-event-handlers` flag to sensu-agent which configures the
+event handlers for statsd metrics.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024

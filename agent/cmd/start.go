@@ -10,12 +10,12 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
 	"github.com/sensu/sensu-go/version"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -47,6 +47,7 @@ const (
 	flagRedact                = "redact"
 	flagSocketHost            = "socket-host"
 	flagSocketPort            = "socket-port"
+	flagStatsdEventHandlers   = "statsd-event-handlers"
 	flagStatsdFlushInterval   = "statsd-flush-interval"
 	flagStatsdMetricsHost     = "statsd-metrics-host"
 	flagStatsdMetricsPort     = "statsd-metrics-port"
@@ -156,6 +157,14 @@ func newStartCommand() *cobra.Command {
 				cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
 			}
 
+			// Get a single or a list of statsd event handlers
+			handlers := viper.GetString(flagStatsdEventHandlers)
+			if handlers != "" {
+				cfg.StatsdServer.Handlers = splitAndTrim(handlers)
+			} else {
+				cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
+			}
+
 			sensuAgent := agent.NewAgent(cfg)
 			if err := sensuAgent.Run(); err != nil {
 				return err
@@ -225,6 +234,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagStatsdFlushInterval, agent.DefaultStatsdFlushInterval)
 	viper.SetDefault(flagStatsdMetricsHost, agent.DefaultStatsdMetricsHost)
 	viper.SetDefault(flagStatsdMetricsPort, agent.DefaultStatsdMetricsPort)
+	viper.SetDefault(flagStatsdEventHandlers, "")
 	viper.SetDefault(flagSubscriptions, []string{})
 	viper.SetDefault(flagUser, agent.DefaultUser)
 	viper.SetDefault(flagDisableAPI, false)
@@ -249,6 +259,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
+	cmd.Flags().String(flagStatsdEventHandlers, viper.GetString(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics")
 	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
 	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
 	cmd.Flags().String(flagStatsdMetricsPort, viper.GetString(flagStatsdMetricsPort), "port used for the statsd metrics server")

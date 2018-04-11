@@ -103,7 +103,8 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 	}
 
 	metrics := &types.Metrics{
-		Points: points,
+		Points:   points,
+		Handlers: c.agent.config.StatsdServer.Handlers,
 	}
 	event := &types.Event{
 		Entity:    c.agent.getAgentEntity(),
