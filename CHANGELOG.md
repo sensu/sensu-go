@@ -25,6 +25,7 @@ metric events are swallowed for the time being.
 - Proper 404 page for web UI.
 - Add sensuctl extension command.
 - Add extensions to pipelined.
+- Add default user with username "sensu" with global, read-only permissions.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
