@@ -43,4 +43,12 @@ func TestSeedInitialData(t *testing.T) {
 	defaultEnv, err := st.GetEnvironment(ctx, "default", "default")
 	require.NoError(t, err)
 	assert.NotEmpty(t, defaultEnv, "default environment should be present after seed process")
+
+	sensu, err := st.GetUser(ctx, "sensu")
+	require.NoError(t, err)
+	assert.NotEmpty(t, sensu, "sensu user should be present after seed process")
+
+	readOnlyRole, err := st.GetRoleByName(ctx, "read-only")
+	require.NoError(t, err)
+	assert.NotEmpty(t, readOnlyRole, "read-only role should be present after seed process")
 }
