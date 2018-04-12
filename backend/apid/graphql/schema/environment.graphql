@@ -24,7 +24,15 @@ type Environment implements Node {
   checks(first: Int = 10, last: Int = 10, before: String, after: String): CheckConfigConnection
 
   "All events associated with the environment."
-  events(first: Int = 10, last: Int = 10, before: String, after: String, filter: String, orderBy: EventsListOrder = SEVERITY): EventConnection
+  events(
+    first: Int = 10,
+    last: Int = 10,
+    before: String,
+    after: String,
+    orderBy: EventsListOrder = SEVERITY
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String,
+  ): EventConnection
 }
 
 enum EventsListOrder {

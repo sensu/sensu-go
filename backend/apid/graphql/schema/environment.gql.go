@@ -85,8 +85,8 @@ type EnvironmentEventsFieldResolverArgs struct {
 	Last    int             // Last - self descriptive
 	Before  string          // Before - self descriptive
 	After   string          // After - self descriptive
-	Filter  string          // Filter - self descriptive
 	OrderBy EventsListOrder // OrderBy - self descriptive
+	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
 }
 
 // EnvironmentEventsFieldResolverParams contains contextual info to resolve events field
@@ -435,7 +435,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 						Type:        graphql1.String,
 					},
 					"filter": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
+						Description: "Filter reduces the set using the given Sensu Query Expression predicate.",
 						Type:        graphql1.String,
 					},
 					"first": &graphql1.ArgumentConfig{
