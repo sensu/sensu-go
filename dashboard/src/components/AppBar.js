@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 import MUIAppBar from "material-ui/AppBar";
 import MaterialToolbar from "material-ui/Toolbar";
 import Typography from "material-ui/Typography";
@@ -13,8 +13,21 @@ import Wordmark from "../icons/SensuWordmark";
 class AppBar extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    environment: PropTypes.object.isRequired,
+    environment: PropTypes.object,
     toggleToolbar: PropTypes.func.isRequired,
+    loaded: PropTypes.bool,
+  };
+
+  static defaultProps = { loaded: false, environment: null };
+
+  static fragments = {
+    environment: gql`
+      fragment AppBar_environment on Environment {
+        ...EnvironmentLabel_environment
+      }
+
+      ${EnvironmentLabel.fragments.environment}
+    `,
   };
 
   static styles = theme => ({
@@ -45,7 +58,7 @@ class AppBar extends React.Component {
   });
 
   render() {
-    const { environment, toggleToolbar, classes } = this.props;
+    const { loaded, environment, toggleToolbar, classes } = this.props;
 
     return (
       <MUIAppBar className={classes.appBar}>
@@ -67,7 +80,11 @@ class AppBar extends React.Component {
               <Wordmark alt="sensu logo" className={classes.logo} />
             </Typography>
             <div className={classes.grow} />
-            <EnvironmentLabel environment={environment} />
+            {loaded ? (
+              <EnvironmentLabel environment={environment} />
+            ) : (
+              <div>Loading...</div>
+            )}
           </MaterialToolbar>
         </div>
       </MUIAppBar>
@@ -75,12 +92,4 @@ class AppBar extends React.Component {
   }
 }
 
-const AppBarContainer = createFragmentContainer(
-  AppBar,
-  graphql`
-    fragment AppBar_environment on Environment {
-      ...EnvironmentLabel_environment
-    }
-  `,
-);
-export default withStyles(AppBar.styles)(AppBarContainer);
+export default withStyles(AppBar.styles)(AppBar);

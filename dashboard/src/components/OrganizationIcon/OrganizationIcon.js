@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 import Icon from "./OrganizationIconBase";
 
 class OrganizationIcon extends React.Component {
@@ -10,17 +10,18 @@ class OrganizationIcon extends React.Component {
     }).isRequired,
   };
 
+  static fragments = {
+    organization: gql`
+      fragment OrganizationIcon_organization on Organization {
+        iconId
+      }
+    `,
+  };
+
   render() {
     const { organization, ...props } = this.props;
     return <Icon icon={organization.iconId} {...props} />;
   }
 }
 
-export default createFragmentContainer(
-  OrganizationIcon,
-  graphql`
-    fragment OrganizationIcon_organization on Organization {
-      iconId
-    }
-  `,
-);
+export default OrganizationIcon;

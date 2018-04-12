@@ -32,6 +32,27 @@ rules:
 
   # https://github.com/apollographql/eslint-plugin-graphql
   graphql/template-strings:
-    - "error"
-    - env: "relay"
-      schemaJsonFilepath: "./data/schema.json"
+    - error
+    -
+      env: apollo
+      schemaJsonFilepath: ./src/schema.json
+      validators:
+        - FieldsOnCorrectType
+        - FragmentsOnCompositeTypes
+        - KnownArgumentNames
+        - KnownDirectives
+        - KnownTypeNames
+        - LoneAnonymousOperation
+        - NoFragmentCycles
+        - NoUndefinedVariables
+        - OverlappingFieldsCanBeMerged
+        - PossibleFragmentSpreads
+        - ProvidedNonNullArguments
+        - ScalarLeafs
+        - UniqueArgumentNames
+        - UniqueFragmentNames
+        - UniqueInputFieldNames
+        - UniqueOperationNames
+        - UniqueVariableNames
+        - VariablesAreInputTypes
+        - VariablesInAllowedPosition

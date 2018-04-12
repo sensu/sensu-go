@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import map from "lodash/map";
 import get from "lodash/get";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 
 import Table, {
   TableBody,
@@ -15,16 +15,36 @@ import Row from "./CheckRow";
 
 class CheckList extends React.Component {
   static propTypes = {
-    viewer: PropTypes.shape({
+    environment: PropTypes.shape({
       checks: PropTypes.shape({
         edges: PropTypes.array.isRequired,
       }),
     }).isRequired,
   };
 
+  static fragments = {
+    environment: gql`
+      fragment CheckList_environment on Environment {
+        checks(first: 1500) {
+          edges {
+            node {
+              ...CheckRow_check
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+          }
+        }
+      }
+
+      ${Row.fragments.check}
+    `,
+  };
+
   render() {
-    const { viewer } = this.props;
-    const checks = get(viewer, "checks.edges", []);
+    const { environment } = this.props;
+    const checks = get(environment, "checks.edges", []);
 
     return (
       <Table>
@@ -47,21 +67,4 @@ class CheckList extends React.Component {
   }
 }
 
-export default createFragmentContainer(
-  CheckList,
-  graphql`
-    fragment CheckList_viewer on Viewer {
-      checks(first: 1500) {
-        edges {
-          node {
-            ...CheckRow_check
-          }
-          cursor
-        }
-        pageInfo {
-          hasNextPage
-        }
-      }
-    }
-  `,
-);
+export default CheckList;

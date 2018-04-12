@@ -4,7 +4,7 @@ import partition from "lodash/partition";
 import { map } from "lodash";
 import { compose } from "recompose";
 import { withStyles } from "material-ui/styles";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 
 import Menu, { MenuItem } from "material-ui/Menu";
 import { ListItemIcon, ListItemText } from "material-ui/List";
@@ -28,6 +28,24 @@ class NamespaceSelectorMenu extends React.Component {
     classes: PropTypes.object.isRequired,
     currentNamespace: namespaceShape.isRequired,
     viewer: PropTypes.objectOf(PropTypes.any).isRequired,
+  };
+
+  static fragments = {
+    viewer: gql`
+      fragment NamespaceSelectorMenu_viewer on Viewer {
+        organizations {
+          name
+          ...OrganizationIcon_organization
+          environments {
+            name
+            ...EnvironmentSymbol_environment
+          }
+        }
+      }
+
+      ${OrganizationIcon.fragments.organization}
+      ${EnvironmentSymbol.fragments.environment}
+    `,
   };
 
   render() {
@@ -83,18 +101,6 @@ class NamespaceSelectorMenu extends React.Component {
   }
 }
 
-export default createFragmentContainer(
-  compose(withStyles(styles), withNamespace)(NamespaceSelectorMenu),
-  graphql`
-    fragment NamespaceSelectorMenu_viewer on Viewer {
-      organizations {
-        name
-        ...OrganizationIcon_organization
-        environments {
-          name
-          ...EnvironmentSymbol_environment
-        }
-      }
-    }
-  `,
+export default compose(withStyles(styles), withNamespace)(
+  NamespaceSelectorMenu,
 );

@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 import Icon from "./EnvironmentIconBase";
 
 class EnvironmentIcon extends React.Component {
@@ -11,6 +11,17 @@ class EnvironmentIcon extends React.Component {
         iconId: PropTypes.string,
       }),
     }).isRequired,
+  };
+
+  static fragments = {
+    environment: gql`
+      fragment EnvironmentIcon_environment on Environment {
+        colourId
+        organization {
+          iconId
+        }
+      }
+    `,
   };
 
   render() {
@@ -25,14 +36,4 @@ class EnvironmentIcon extends React.Component {
   }
 }
 
-export default createFragmentContainer(
-  EnvironmentIcon,
-  graphql`
-    fragment EnvironmentIcon_environment on Environment {
-      colourId
-      organization {
-        iconId
-      }
-    }
-  `,
-);
+export default EnvironmentIcon;

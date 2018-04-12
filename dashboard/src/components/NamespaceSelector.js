@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { compose } from "recompose";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
 import Button from "material-ui/ButtonBase";
 
@@ -24,6 +24,16 @@ class NamespaceSelector extends React.Component {
     classes: PropTypes.object.isRequired,
     currentNamespace: namespaceShape.isRequired,
     viewer: PropTypes.objectOf(PropTypes.any).isRequired,
+  };
+
+  static fragments = {
+    viewer: gql`
+      fragment NamespaceSelector_viewer on Viewer {
+        ...NamespaceSelectorMenu_viewer
+      }
+
+      ${NamespaceSelectorMenu.fragments.viewer}
+    `,
   };
 
   state = {
@@ -66,11 +76,4 @@ class NamespaceSelector extends React.Component {
   }
 }
 
-export default createFragmentContainer(
-  compose(withStyles(styles), withNamespace)(NamespaceSelector),
-  graphql`
-    fragment NamespaceSelector_viewer on Viewer {
-      ...NamespaceSelectorMenu_viewer
-    }
-  `,
-);
+export default compose(withStyles(styles), withNamespace)(NamespaceSelector);

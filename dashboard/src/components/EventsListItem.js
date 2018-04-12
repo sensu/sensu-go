@@ -1,8 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
+import { compose } from "recompose";
 
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
+import { withApollo } from "react-apollo";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 import Menu, { MenuItem } from "material-ui/Menu";
@@ -71,8 +73,7 @@ class EventListItem extends React.Component {
     classes: PropTypes.object.isRequired,
     checked: PropTypes.bool.isRequired,
     onChange: PropTypes.func.isRequired,
-
-    relay: PropTypes.object.isRequired,
+    client: PropTypes.object.isRequired,
     event: PropTypes.shape({
       entity: PropTypes.shape({
         name: PropTypes.string.isRequired,
@@ -83,6 +84,25 @@ class EventListItem extends React.Component {
       }).isRequired,
       timestamp: PropTypes.string.isRequired,
     }).isRequired,
+  };
+
+  static fragments = {
+    event: gql`
+      fragment EventsListItem_event on Event {
+        ... on Event {
+          id
+          timestamp
+          check {
+            status
+            name
+            output
+          }
+          entity {
+            name
+          }
+        }
+      }
+    `,
   };
 
   constructor(props) {
@@ -119,8 +139,8 @@ class EventListItem extends React.Component {
   };
 
   resolve = () => {
-    const { relay, event } = this.props;
-    ResolveEventMutation.commit(relay.environment, event.id, {});
+    const { client, event } = this.props;
+    ResolveEventMutation.commit(client, event.id, {});
     this.setState({ anchorEl: null });
   };
 
@@ -184,22 +204,4 @@ class EventListItem extends React.Component {
   }
 }
 
-export default createFragmentContainer(
-  withStyles(styles)(EventListItem),
-  graphql`
-    fragment EventsListItem_event on Event {
-      ... on Event {
-        id
-        timestamp
-        check {
-          status
-          name
-          output
-        }
-        entity {
-          name
-        }
-      }
-    }
-  `,
-);
+export default compose(withStyles(styles), withApollo)(EventListItem);

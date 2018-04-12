@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { createFragmentContainer, graphql } from "react-relay";
+import gql from "graphql-tag";
 import Label from "./EnvironmentLabelBase";
 
 class EnvironmentLabel extends React.Component {
@@ -13,6 +13,19 @@ class EnvironmentLabel extends React.Component {
         iconId: PropTypes.string,
       }).isRequired,
     }).isRequired,
+  };
+
+  static fragments = {
+    environment: gql`
+      fragment EnvironmentLabel_environment on Environment {
+        name
+        colourId
+        organization {
+          name
+          iconId
+        }
+      }
+    `,
   };
 
   render() {
@@ -31,16 +44,4 @@ class EnvironmentLabel extends React.Component {
   }
 }
 
-export default createFragmentContainer(
-  EnvironmentLabel,
-  graphql`
-    fragment EnvironmentLabel_environment on Environment {
-      name
-      colourId
-      organization {
-        name
-        iconId
-      }
-    }
-  `,
-);
+export default EnvironmentLabel;
