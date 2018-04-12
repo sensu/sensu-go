@@ -39,15 +39,27 @@ func SeedInitialData(store store.Store) (err error) {
 	}
 	logger.Info("seeding etcd store w/ intial data")
 
-	// Set default role
+	// Set admin role
 	if err := setupAdminRole(store); err != nil {
 		logger.WithError(err).Error("unable to setup admin role")
 		return err
 	}
 
-	// Default user
-	if err := setupDefaultUser(store); err != nil {
+	// Set read-only role
+	if err := setupReadOnlyRole(store); err != nil {
+		logger.WithError(err).Error("unable to setup read-only role")
+		return err
+	}
+
+	// Admin user
+	if err := setupAdminUser(store); err != nil {
 		logger.WithError(err).Error("unable to setup admin user")
+		return err
+	}
+
+	// Default read-only user (sensu)
+	if err := setupReadOnlyUser(store); err != nil {
+		logger.WithError(err).Error("unable to setup sensu user")
 		return err
 	}
 
@@ -73,10 +85,25 @@ func setupAdminRole(store store.Store) error {
 		&types.Role{
 			Name: "admin",
 			Rules: []types.Rule{{
-				Type:         "*",
+				Type:         types.RuleTypeAll,
 				Environment:  "*",
 				Organization: "*",
 				Permissions:  types.RuleAllPerms,
+			}},
+		},
+	)
+}
+
+func setupReadOnlyRole(store store.Store) error {
+	return store.UpdateRole(
+		context.Background(),
+		&types.Role{
+			Name: "read-only",
+			Rules: []types.Rule{{
+				Type:         types.RuleTypeAll,
+				Environment:  "*",
+				Organization: "*",
+				Permissions:  []string{types.RulePermRead},
 			}},
 		},
 	)
@@ -91,8 +118,8 @@ func setupDefaultOrganization(store store.Store) error {
 		})
 }
 
-func setupDefaultUser(store store.Store) error {
-	// Set default user
+func setupAdminUser(store store.Store) error {
+	// Setup admin user
 	admin := &types.User{
 		Username: "admin",
 		Password: "P@ssw0rd!",
@@ -100,6 +127,17 @@ func setupDefaultUser(store store.Store) error {
 	}
 
 	return store.CreateUser(admin)
+}
+
+func setupReadOnlyUser(store store.Store) error {
+	// Set default read-only user
+	sensu := &types.User{
+		Username: "sensu",
+		Password: "sensu",
+		Roles:    []string{"read-only"},
+	}
+
+	return store.CreateUser(sensu)
 }
 
 func setupDefaultAgentUser(store store.Store) error {

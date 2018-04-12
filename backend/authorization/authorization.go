@@ -3,8 +3,8 @@ package authorization
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 func hasPermission(rule types.Rule, action string) bool {
@@ -16,10 +16,8 @@ func hasPermission(rule types.Rule, action string) bool {
 	return false
 }
 
-// TODO (JK): this function may end up becoming more complex if
-// we decide to use "*" as more than a way of saying "all resources"
 func matchesRuleType(rule types.Rule, resource string) bool {
-	return rule.Type == resource || rule.Type == "*"
+	return rule.Type == resource || rule.Type == types.RuleTypeAll
 }
 
 func matchesRuleEnvironment(rule types.Rule, environment string) bool {
