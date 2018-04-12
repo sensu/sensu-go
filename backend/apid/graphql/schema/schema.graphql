@@ -19,6 +19,11 @@ type Query {
   environment(environment: String!, organization: String!): Environment
 
   """
+  Event fetches the event associated with the given set of arguments.
+  """
+  event(ns: NamespaceInput!, entity: String! check: String): Event
+
+  """
   Node fetches an object given its ID.
   """
   node(
