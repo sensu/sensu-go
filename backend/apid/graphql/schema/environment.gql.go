@@ -101,6 +101,24 @@ type EnvironmentEventsFieldResolver interface {
 	Events(p EnvironmentEventsFieldResolverParams) (interface{}, error)
 }
 
+// EnvironmentCheckHistoryFieldResolverArgs contains arguments provided to checkHistory when selected
+type EnvironmentCheckHistoryFieldResolverArgs struct {
+	Filter string // Filter reduces the set using the given Sensu Query Expression predicate.
+	Limit  int    // Limit adds optional limit to the number of entries returned.
+}
+
+// EnvironmentCheckHistoryFieldResolverParams contains contextual info to resolve checkHistory field
+type EnvironmentCheckHistoryFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EnvironmentCheckHistoryFieldResolverArgs
+}
+
+// EnvironmentCheckHistoryFieldResolver implement to resolve requests for the Environment's checkHistory field.
+type EnvironmentCheckHistoryFieldResolver interface {
+	// CheckHistory implements response to request for checkHistory field.
+	CheckHistory(p EnvironmentCheckHistoryFieldResolverParams) (interface{}, error)
+}
+
 //
 // EnvironmentFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Environment' type.
@@ -171,6 +189,7 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentEntitiesFieldResolver
 	EnvironmentChecksFieldResolver
 	EnvironmentEventsFieldResolver
+	EnvironmentCheckHistoryFieldResolver
 }
 
 // EnvironmentAliases implements all methods on EnvironmentFieldResolvers interface by using reflection to
@@ -271,6 +290,12 @@ func (_ EnvironmentAliases) Events(p EnvironmentEventsFieldResolverParams) (inte
 	return val, err
 }
 
+// CheckHistory implements response to request for 'checkHistory' field.
+func (_ EnvironmentAliases) CheckHistory(p EnvironmentCheckHistoryFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // EnvironmentType Environment represents a Sensu environment in RBAC
 var EnvironmentType = graphql.NewType("Environment", graphql.ObjectKind)
 
@@ -354,10 +379,40 @@ func _ObjTypeEnvironmentEventsHandler(impl interface{}) graphql1.FieldResolveFn 
 	}
 }
 
+func _ObjTypeEnvironmentCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentCheckHistoryFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EnvironmentCheckHistoryFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.CheckHistory(frp)
+	}
+}
+
 func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Environment represents a Sensu environment in RBAC",
 		Fields: graphql1.Fields{
+			"checkHistory": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						Description: "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:        graphql1.String,
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10000,
+						Description:  "Limit adds optional limit to the number of entries returned.",
+						Type:         graphql1.Int,
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All check history associated with the environment.",
+				Name:              "checkHistory",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
+			},
 			"checks": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"after": &graphql1.ArgumentConfig{
@@ -499,6 +554,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEnvironmentConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"checkHistory": _ObjTypeEnvironmentCheckHistoryHandler,
 		"checks":       _ObjTypeEnvironmentChecksHandler,
 		"colourId":     _ObjTypeEnvironmentColourIDHandler,
 		"description":  _ObjTypeEnvironmentDescriptionHandler,

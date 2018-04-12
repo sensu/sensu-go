@@ -88,13 +88,14 @@ func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface{}, error) {
 	check := p.Source.(*types.Check)
 	history := check.History
-	last := p.Args.Last
-	if last > len(history) {
-		last = len(history)
-	} else if last < 0 {
-		last = 0
+
+	length := p.Args.First
+	if length > len(history) {
+		length = len(history)
+	} else if length < 0 {
+		length = 0
 	}
-	return history[0:last], nil
+	return history[0:length], nil
 }
 
 //

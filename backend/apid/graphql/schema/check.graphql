@@ -125,7 +125,7 @@ type Check {
   executed: DateTime
 
   "History is the check state history."
-  history(last: Int = 21): [CheckHistory]!
+  history(first: Int = 21): [CheckHistory]!
 
   "Issued describes the time in which the check request was issued"
   issued: Int!

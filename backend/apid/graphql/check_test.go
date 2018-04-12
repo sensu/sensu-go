@@ -13,23 +13,23 @@ import (
 func TestCheckTypeHistoryFieldImpl(t *testing.T) {
 	testCases := []struct {
 		expectedLen int
-		lastArg     int
+		firstArg    int
 	}{
 		{
 			expectedLen: 21,
-			lastArg:     50,
+			firstArg:    50,
 		},
 		{
 			expectedLen: 10,
-			lastArg:     10,
+			firstArg:    10,
 		},
 		{
 			expectedLen: 0,
-			lastArg:     0,
+			firstArg:    0,
 		},
 		{
 			expectedLen: 0,
-			lastArg:     -10,
+			firstArg:    -10,
 		},
 	}
 
@@ -38,7 +38,7 @@ func TestCheckTypeHistoryFieldImpl(t *testing.T) {
 		t.Run(fmt.Sprintf("w/ argument of %d", tc.expectedLen), func(t *testing.T) {
 			params := schema.CheckHistoryFieldResolverParams{}
 			params.Source = check
-			params.Args.Last = tc.lastArg
+			params.Args.First = tc.firstArg
 
 			impl := checkImpl{}
 			res, err := impl.History(params)

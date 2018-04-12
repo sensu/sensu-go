@@ -33,6 +33,14 @@ type Environment implements Node {
     "Filter reduces the set using the given Sensu Query Expression predicate."
     filter: String,
   ): EventConnection
+
+  "All check history associated with the environment."
+  checkHistory(
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String
+    "Limit adds optional limit to the number of entries returned."
+    limit: Int = 10000
+  ): [CheckHistory]!
 }
 
 enum EventsListOrder {

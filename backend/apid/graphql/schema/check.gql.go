@@ -1069,7 +1069,7 @@ type CheckExecutedFieldResolver interface {
 
 // CheckHistoryFieldResolverArgs contains arguments provided to history when selected
 type CheckHistoryFieldResolverArgs struct {
-	Last int // Last - self descriptive
+	First int // First - self descriptive
 }
 
 // CheckHistoryFieldResolverParams contains contextual info to resolve history field
@@ -1584,7 +1584,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.Int,
 			},
 			"history": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{"last": &graphql1.ArgumentConfig{
+				Args: graphql1.FieldConfigArgument{"first": &graphql1.ArgumentConfig{
 					DefaultValue: 21,
 					Description:  "self descriptive",
 					Type:         graphql1.Int,
