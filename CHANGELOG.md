@@ -26,6 +26,8 @@ metric events are swallowed for the time being.
 - Add sensuctl extension command.
 - Add extensions to pipelined.
 - Added more tests surrounding the sensu-agent's statsd server and udp port.
+- Add the `--statsd-event-handlers` flag to sensu-agent which configures the
+event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
 
 ### Changed

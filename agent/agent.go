@@ -113,6 +113,7 @@ type StatsdServerConfig struct {
 	Host          string
 	Port          int
 	FlushInterval int
+	Handlers      []string
 }
 
 // SocketConfig contains the Socket configuration
@@ -145,6 +146,7 @@ func FixtureConfig() *Config {
 			Host:          DefaultStatsdMetricsHost,
 			Port:          DefaultStatsdMetricsPort,
 			FlushInterval: DefaultStatsdFlushInterval,
+			Handlers:      []string{},
 		},
 		User: DefaultUser,
 	}
