@@ -126,6 +126,7 @@ func newStartCommand() *cobra.Command {
 			cfg.StatsdServer.FlushInterval = viper.GetInt(flagStatsdFlushInterval)
 			cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
 			cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
+			cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
 			cfg.User = viper.GetString(flagUser)
 
 			agentID := viper.GetString(flagAgentID)
@@ -155,14 +156,6 @@ func newStartCommand() *cobra.Command {
 				cfg.Subscriptions = splitAndTrim(subscriptions)
 			} else {
 				cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
-			}
-
-			// Get a single or a list of statsd event handlers
-			handlers := viper.GetString(flagStatsdEventHandlers)
-			if handlers != "" {
-				cfg.StatsdServer.Handlers = splitAndTrim(handlers)
-			} else {
-				cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
 			}
 
 			sensuAgent := agent.NewAgent(cfg)
@@ -259,7 +252,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
-	cmd.Flags().String(flagStatsdEventHandlers, viper.GetString(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics")
+	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics")
 	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
 	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
 	cmd.Flags().String(flagStatsdMetricsPort, viper.GetString(flagStatsdMetricsPort), "port used for the statsd metrics server")
