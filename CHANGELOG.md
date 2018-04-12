@@ -25,6 +25,8 @@ metric events are swallowed for the time being.
 - Proper 404 page for web UI.
 - Add sensuctl extension command.
 - Add extensions to pipelined.
+- Add the `--statsd-event-handlers` flag to sensu-agent which configures the
+event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
 
 ### Changed
