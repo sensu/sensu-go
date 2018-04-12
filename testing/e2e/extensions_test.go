@@ -1,69 +1,92 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"os/exec"
+	"net"
+	"strings"
+	"sync"
 	"testing"
 
+	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 )
 
-func init() {
-	err := exec.Command("go", "install", "github.com/sensu/sensu-go/testing/e2e/cmd/mockextension").Run()
-	if err != nil {
-		log.Fatal(err)
-	}
+type mockExtension struct {
+	setResponse string
+	setError    string
+
+	response string
+	err      string
+
+	reqType string
+	server  *grpc.Server
+	ln      net.Listener
+	sync.WaitGroup
 }
 
-func newExtension(t *testing.T, port int, env map[string]string) func() (string, error) {
-	cmd := exec.Command("mockextension", "-port", fmt.Sprintf("%d", port))
-
-	// Set up the environment
-	for k, v := range env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+func newMockExtension(ln net.Listener, resp, err string) *mockExtension {
+	ext := &mockExtension{
+		setResponse: resp,
+		setError:    err,
+		ln:          ln,
 	}
+	ext.Add(1)
+	ext.server = grpc.NewServer()
+	rpc.RegisterExtensionServer(ext.server, ext)
+	go ext.server.Serve(ln)
+	return ext
+}
 
-	// Divert stdout to a pipe
-	out, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
+func (e *mockExtension) Stop() {
+	e.server.Stop()
+	e.ln.Close()
+}
 
-	// Start the mock extension
-	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
-	}
-
-	// Wait until the listener is ready
-	ready := make([]byte, len("ready\n"))
-	if _, err := out.Read(ready); err != nil {
-		t.Fatal(err)
-	}
-	if r := string(ready); r != "ready\n" {
-		t.Fatal(errors.New(r))
-	}
-
-	// The cleanup func reads all the remaining standard out
-	// and waits for the command to terminate
-	return func() (string, error) {
-		buf, err := ioutil.ReadAll(out)
+// processEvent processes an incoming event. It is called by the exported
+// extension methods.
+// processEvent uses printing to standard out as a method of one-way
+// communication to the outside world. Users are expected to synchronize on
+// its output.
+func (e *mockExtension) processEvent(ctx context.Context, req interface{}, respVal interface{}) (err error) {
+	defer func() {
 		if err != nil {
-			return "", err
+			e.err = err.Error()
 		}
-		err = cmd.Wait()
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			if len(exitErr.Stderr) != 0 {
-				return string(exitErr.Stderr), err
-			}
-		}
-		return string(buf), err
+	}()
+	defer e.Done()
+
+	if e.setError != "" {
+		return errors.New(e.setError)
 	}
+
+	if err := json.NewDecoder(strings.NewReader(e.setResponse)).Decode(respVal); err != nil {
+		return fmt.Errorf("error decoding response: %s", err)
+	}
+	return nil
+}
+
+func (e *mockExtension) HandleEvent(ctx context.Context, req *rpc.HandleEventRequest) (resp *rpc.HandleEventResponse, err error) {
+	var response rpc.HandleEventResponse
+	e.reqType = "handle"
+	return &response, e.processEvent(ctx, req, &response)
+}
+
+func (e *mockExtension) MutateEvent(ctx context.Context, req *rpc.MutateEventRequest) (resp *rpc.MutateEventResponse, err error) {
+	var response rpc.MutateEventResponse
+	e.reqType = "mutate"
+	return &response, e.processEvent(ctx, req, &response)
+}
+
+func (e *mockExtension) FilterEvent(ctx context.Context, req *rpc.FilterEventRequest) (resp *rpc.FilterEventResponse, err error) {
+	var response rpc.FilterEventResponse
+	e.reqType = "filter"
+	return &response, e.processEvent(ctx, req, &response)
 }
 
 func TestExtensions(t *testing.T) {
@@ -133,106 +156,89 @@ func TestExtensions(t *testing.T) {
 	mutateEvt.Check.Handlers = append(mutateEvt.Check.Handlers, "mutator1")
 
 	tests := []struct {
-		Name   string
-		Type   string
-		Env    map[string]string
-		Event  *types.Event
-		ExpErr bool
+		Name     string
+		Type     string
+		Response string
+		Error    string
+		Event    *types.Event
+		ExpErr   bool
 	}{
 		{
-			Name:  "no error",
-			Type:  "handle",
-			Event: handleEvt,
-			Env: map[string]string{
-				"SENSU_E2E_HANDLE_RESPONSE": "{}",
-			},
+			Name:     "no error",
+			Type:     "handle",
+			Event:    handleEvt,
+			Response: "{}",
 		},
 		{
-			Name:  "RPC error",
-			Type:  "handle",
-			Event: handleEvt,
-			Env: map[string]string{
-				"SENSU_E2E_HANDLE_ERROR":    "i/o timeout",
-				"SENSU_E2E_HANDLE_RESPONSE": "{}",
-			},
+			Name:   "RPC error",
+			Type:   "handle",
+			Event:  handleEvt,
+			Error:  "i/o timeout",
 			ExpErr: true,
 		},
 		{
-			Name:  "logic error",
-			Type:  "handle",
-			Event: handleEvt,
-			Env: map[string]string{
-				"SENSU_E2E_HANDLE_RESPONSE": `{"error": "some error"}`,
-			},
+			Name:     "logic error",
+			Type:     "handle",
+			Event:    handleEvt,
+			Response: `{"error": "some error"}`,
+			ExpErr:   true,
+		},
+		{
+			Name:     "no error and not filtered",
+			Type:     "filter",
+			Event:    filterEvt,
+			Response: "{}",
+		},
+		{
+			Name:     "no error and filtered",
+			Type:     "filter",
+			Event:    filterEvt,
+			Response: `{"filtered": true}`,
+		},
+		{
+			Name:   "RPC error",
+			Type:   "filter",
+			Event:  filterEvt,
+			Error:  "i/o timeout",
 			ExpErr: true,
 		},
 		{
-			Name:  "no error and not filtered",
-			Type:  "filter",
-			Event: filterEvt,
-			Env: map[string]string{
-				"SENSU_E2E_FILTER_RESPONSE": "{}",
-			},
+			Name:     "logic error",
+			Type:     "filter",
+			Event:    filterEvt,
+			Response: `{"error":"internal error"}`,
+			ExpErr:   true,
 		},
 		{
-			Name:  "no error and filtered",
-			Type:  "filter",
-			Event: filterEvt,
-			Env: map[string]string{
-				"SENSU_E2E_FILTER_RESPONSE": `{"filtered": true}`,
-			},
+			Name:     "no error",
+			Type:     "mutate",
+			Event:    mutateEvt,
+			Response: `{"mutatedEvent":"{}"}`,
 		},
 		{
-			Name:  "RPC error",
-			Type:  "filter",
-			Event: filterEvt,
-			Env: map[string]string{
-				"SENSU_E2E_FILTER_ERROR":    "i/o timeout",
-				"SENSU_E2E_FILTER_RESPONSE": "{}",
-			},
+			Name:   "RPC error",
+			Type:   "mutate",
+			Event:  mutateEvt,
+			Error:  "i/o timeout",
 			ExpErr: true,
 		},
 		{
-			Name:  "logic error",
-			Type:  "filter",
-			Event: filterEvt,
-			Env: map[string]string{
-				"SENSU_E2E_FILTER_RESPONSE": `{"error":"internal error"}`,
-			},
-			ExpErr: true,
-		},
-		{
-			Name:  "no error",
-			Type:  "mutate",
-			Event: mutateEvt,
-			Env: map[string]string{
-				"SENSU_E2E_MUTATE_RESPONSE": `{"mutatedEvent":"{}"}`,
-			},
-		},
-		{
-			Name:  "RPC error",
-			Type:  "mutate",
-			Event: mutateEvt,
-			Env: map[string]string{
-				"SENSU_E2E_MUTATE_ERROR":    "i/o timeout",
-				"SENSU_E2E_MUTATE_RESPONSE": "{}",
-			},
-			ExpErr: true,
-		},
-		{
-			Name:  "logic error",
-			Type:  "mutate",
-			Event: mutateEvt,
-			Env: map[string]string{
-				"SENSU_E2E_MUTATE_RESPONSE": `{"error":"internal error"}`,
-			},
-			ExpErr: true,
+			Name:     "logic error",
+			Type:     "mutate",
+			Event:    mutateEvt,
+			Response: `{"error":"internal error"}`,
+			ExpErr:   true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s %s", test.Type, test.Name), func(t *testing.T) {
-			cleanup := newExtension(t, ports[0], test.Env)
+			ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", ports[0]))
+			if err != nil {
+				t.Fatal(err)
+			}
+			ext := newMockExtension(ln, test.Response, test.Error)
+			defer ext.Stop()
 
 			body, _ := json.Marshal(test.Event)
 			resp, err := client.R().SetBody(body).Put(
@@ -244,34 +250,13 @@ func TestExtensions(t *testing.T) {
 				t.Fatalf("bad status: %d", status)
 			}
 
-			out, err := cleanup()
-			if err != nil && !test.ExpErr {
-				fmt.Println(out)
-				t.Fatal(err)
+			ext.Wait()
+			if ext.err != "" && !test.ExpErr {
+				t.Fatal(ext.err)
 			}
 
-			switch test.Type {
-			case "handle":
-				if err == nil {
-					assert.Equal(t, test.Env["SENSU_E2E_HANDLE_RESPONSE"], out)
-				} else {
-					assert.Equal(t, test.Env["SENSU_E2E_HANDLE_ERROR"], out)
-				}
-			case "filter":
-				if err == nil {
-					assert.Equal(t, test.Env["SENSU_E2E_FILTER_RESPONSE"], out)
-				} else {
-					assert.Equal(t, test.Env["SENSU_E2E_FILTER_ERROR"], out)
-				}
-			case "mutate":
-				if err == nil {
-					assert.Equal(t, test.Env["SENSU_E2E_MUTATE_RESPONSE"], out)
-				} else {
-					assert.Equal(t, test.Env["SENSU_E2E_MUTATE_ERROR"], out)
-				}
-			default:
-				t.Fatalf("invalid test type: %q", test.Type)
-			}
+			assert.Equal(t, test.Error, ext.err)
+			assert.Equal(t, test.Type, ext.reqType)
 		})
 	}
 }
