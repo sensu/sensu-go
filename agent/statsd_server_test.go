@@ -1,3 +1,5 @@
+// +build integration
+
 package agent
 
 import (
@@ -156,6 +158,8 @@ func TestReceiveMetrics(t *testing.T) {
 	defer cancel()
 
 	go ta.statsdServer.Run(ctx)
+	// Give the server a second to start up
+	time.Sleep(time.Second * 1)
 
 	udpClient, err := net.Dial("udp", ta.statsdServer.MetricsAddr)
 	if err != nil {
