@@ -409,7 +409,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 					},
 				},
 				DeprecationReason: "",
-				Description:       "All check history associated with the environment.",
+				Description:       "checkHistory includes all persisted check execution results associated with\nthe environment. Unlike the Check type's history this field includes the most\nrecent result.",
 				Name:              "checkHistory",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
 			},

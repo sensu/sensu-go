@@ -34,7 +34,11 @@ type Environment implements Node {
     filter: String,
   ): EventConnection
 
-  "All check history associated with the environment."
+  """
+  checkHistory includes all persisted check execution results associated with
+  the environment. Unlike the Check type's history this field includes the most
+  recent result.
+  """
   checkHistory(
     "Filter reduces the set using the given Sensu Query Expression predicate."
     filter: String

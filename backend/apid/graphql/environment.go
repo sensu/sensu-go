@@ -200,6 +200,11 @@ func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverPara
 		if record.Check == nil {
 			continue
 		}
+		latest := types.CheckHistory{
+			Executed: record.Check.Executed,
+			Status:   record.Check.Status,
+		}
+		history = append(history, latest)
 		history = append(history, record.Check.History...)
 	}
 
