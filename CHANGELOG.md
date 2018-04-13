@@ -30,6 +30,7 @@ metric events are swallowed for the time being.
 event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
 - Add end-to-end test for extensions.
+- Add extension package for building third-party Sensu extensions in Go.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
