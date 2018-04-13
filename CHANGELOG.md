@@ -29,6 +29,7 @@ metric events are swallowed for the time being.
 - Add the `--statsd-event-handlers` flag to sensu-agent which configures the
 event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
+- Add end-to-end test for extensions.
 - Add the `--statsd-disable` flag to sensu-agent which configures the
 statsd listener. The listener is enabled by default.
 
