@@ -114,7 +114,7 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 				(logger.
 					WithFields(logrus.Fields{"handler": handlerName}).
 					WithError(err).
-					Error("pipelined failed to retrieve a handler", handlerName))
+					Error("pipelined failed to retrieve a handler"))
 				continue
 			}
 			extension, err = p.store.GetExtension(ctx, handlerName)
@@ -125,7 +125,7 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 				(logger.
 					WithFields(logrus.Fields{"handler": handlerName}).
 					WithError(err).
-					Error("pipelined failed to retrieve a handler", handlerName))
+					Error("pipelined failed to retrieve a handler"))
 				continue
 			}
 			handler = &types.Handler{
