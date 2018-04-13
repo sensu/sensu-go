@@ -12,38 +12,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type eventFinder struct {
-	collection []*types.Event
-	err        error
+type mockEventQuerier struct {
+	els []*types.Event
+	err error
 }
 
-func (f eventFinder) Query(ctx context.Context, entity, check string) ([]*types.Event, error) {
-	return f.collection, f.err
+func (f mockEventQuerier) Query(ctx context.Context, entity, check string) ([]*types.Event, error) {
+	return f.els, f.err
 }
 
 func TestEnvColourID(t *testing.T) {
-	handler := &envImpl{}
+	impl := &envImpl{}
 	env := types.Environment{Name: "pink"}
 
-	colour, err := handler.ColourID(graphql.ResolveParams{Source: &env})
+	colour, err := impl.ColourID(graphql.ResolveParams{Source: &env})
 	assert.NoError(t, err)
 	assert.Equal(t, string(colour), "BLUE")
 }
 
 func TestEnvironmentTypeCheckHistoryField(t *testing.T) {
-	env := types.Environment{Name: "pink"}
-	events := []*types.Event{
+	mock := mockEventQuerier{els: []*types.Event{
 		types.FixtureEvent("a", "b"),
 		types.FixtureEvent("b", "c"),
 		types.FixtureEvent("c", "d"),
-	}
-
-	finder := eventFinder{collection: events, err: nil}
-	impl := &envImpl{eventsCtrl: finder}
+	}}
+	impl := &envImpl{eventsCtrl: mock}
 
 	// Params
 	params := schema.EnvironmentCheckHistoryFieldResolverParams{}
-	params.Source = &env
+	params.Source = &types.Environment{Name: "pink"}
 
 	// limit: 30
 	params.Args.Limit = 30
@@ -53,7 +50,7 @@ func TestEnvironmentTypeCheckHistoryField(t *testing.T) {
 	assert.Len(t, history, 30)
 
 	// store err
-	impl.eventsCtrl = eventFinder{err: errors.New("test")}
+	impl.eventsCtrl = mockEventQuerier{err: errors.New("test")}
 	history, err = impl.CheckHistory(params)
 	require.NotNil(t, history)
 	assert.Error(t, err)

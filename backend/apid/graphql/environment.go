@@ -17,7 +17,7 @@ import (
 
 var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
 
-type eventQueryable interface {
+type eventQuerier interface {
 	Query(ctx context.Context, entity, check string) ([]*types.Event, error)
 }
 
@@ -29,7 +29,7 @@ type envImpl struct {
 	orgCtrl    actions.OrganizationsController
 	checksCtrl actions.CheckController
 	entityCtrl actions.EntityController
-	eventsCtrl eventQueryable
+	eventsCtrl eventQuerier
 }
 
 func newEnvImpl(store store.Store, getter types.QueueGetter) *envImpl {
