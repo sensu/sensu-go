@@ -62,3 +62,17 @@ func TestRemove(t *testing.T) {
 	array = Remove("bar", array)
 	assert.Equal(t, []string{}, array)
 }
+
+func TestIntersect(t *testing.T) {
+	a, b := []string{"bar", "qux"}, []string{"foo", "bar"}
+	intr := Intersect(a, b)
+	assert.Equal(t, []string{"bar"}, intr)
+
+	a, b = []string{}, []string{}
+	intr = Intersect(a, b)
+	assert.Equal(t, []string{}, intr)
+
+	a, b = []string{"foo", "qux"}, []string{"baz", "bar"}
+	intr = Intersect(a, b)
+	assert.Equal(t, []string{}, intr)
+}

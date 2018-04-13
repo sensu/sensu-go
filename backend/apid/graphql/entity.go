@@ -1,12 +1,16 @@
 package graphql
 
 import (
+	"context"
+	"sort"
+
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/strings"
 )
 
 var _ schema.EntityFieldResolvers = (*entityImpl)(nil)
@@ -15,18 +19,24 @@ var _ schema.NetworkFieldResolvers = (*networkImpl)(nil)
 var _ schema.NetworkInterfaceFieldResolvers = (*networkInterfaceImpl)(nil)
 var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
+type entityQuerier interface {
+	Query(ctx context.Context) ([]*types.Entity, error)
+}
+
 //
 // Implement EntityFieldResolvers
 //
 
 type entityImpl struct {
 	schema.EntityAliases
-	userCtrl actions.UserController
+	userCtrl   actions.UserController
+	entityCtrl entityQuerier
 }
 
 func newEntityImpl(store store.Store) *entityImpl {
 	userCtrl := actions.NewUserController(store)
-	return &entityImpl{userCtrl: userCtrl}
+	entityCtrl := actions.NewEntityController(store)
+	return &entityImpl{userCtrl: userCtrl, entityCtrl: entityCtrl}
 }
 
 // ID implements response to request for 'id' field.
@@ -56,6 +66,38 @@ func (r *entityImpl) Author(p graphql.ResolveParams) (interface{}, error) {
 	entity := p.Source.(*types.Entity)
 	user, err := r.userCtrl.Find(p.Context, entity.User)
 	return handleControllerResults(user, err)
+}
+
+// Related implements response to request for 'related' field.
+func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interface{}, error) {
+	entity := p.Source.(*types.Entity)
+
+	ctx := types.SetContextFromResource(p.Context, entity)
+	entities, err := r.entityCtrl.Query(ctx)
+	if err != nil {
+		return []*types.Entity{}, err
+	}
+
+	scores := map[int]int{}
+	for i, en := range entities {
+		matched := strings.Intersect(
+			append(en.Subscriptions, en.Class, en.System.Platform),
+			append(entity.Subscriptions, entity.Class, entity.System.Platform),
+		)
+		scores[i] = len(matched)
+	}
+	sort.Slice(entities, func(i, j int) bool {
+		return scores[i] < scores[j]
+	})
+
+	limit := p.Args.Limit
+	if limit > len(entities) {
+		limit = len(entities)
+	} else if limit < 0 {
+		limit = 0
+	}
+
+	return entities[0:limit], nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
