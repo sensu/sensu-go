@@ -212,6 +212,6 @@ func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverPara
 	sort.Sort(types.ByExecuted(history))
 
 	// Limit
-	limit := constrainInt(p.Args.Limit, len(history))
+	limit := clampInt(p.Args.Limit, 0, len(history))
 	return history[0:limit], nil
 }

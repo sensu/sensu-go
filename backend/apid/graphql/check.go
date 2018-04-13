@@ -89,7 +89,7 @@ func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface
 	check := p.Source.(*types.Check)
 	history := check.History
 
-	length := constrainInt(p.Args.First, len(history))
+	length := clampInt(p.Args.First, 0, len(history))
 	return history[0:length], nil
 }
 
