@@ -21,8 +21,7 @@ type mockExtension struct {
 	setResponse string
 	setError    string
 
-	response string
-	err      string
+	err string
 
 	reqType string
 	server  *grpc.Server
