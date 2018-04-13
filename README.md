@@ -117,20 +117,20 @@ well as collect & analyze metrics.
 
 1. Register a Sensu 2.0 Asset for the check executable
 
-```
-sensuctl asset create check-plugins \
---url https://github.com/portertech/sensu-plugins-go/releases/download/0.0.1/sensu-check-plugins.tar.gz \
---sha512 4e6f621ebe652d3b0ba5d4dead8ddb2901ea03f846a1cb2e39ddb71b8d0daa83b54742671f179913ed6c350fc32446a22501339f60b8d4e0cdb6ade5ee77af16
-```
+   ```
+   $ sensuctl asset create check-plugins \
+   --url https://github.com/portertech/sensu-plugins-go/releases/download/0.0.1/sensu-check-plugins.tar.gz \
+   --sha512 4e6f621ebe652d3b0ba5d4dead8ddb2901ea03f846a1cb2e39ddb71b8d0daa83b54742671f179913ed6c350fc32446a22501339f60b8d4e0cdb6ade5ee77af16
+   ```
 
 2. Create a check to monitor Google via ICMP from your workstation
 
-```
-sensuctl check create google \
---runtime-assets check-plugins \
---command "check-ping -h google.ca -P 80" \
---subscriptions workstation --interval 10 --timeout 5
-```
+   ```
+   $ sensuctl check create google \
+   --runtime-assets check-plugins \
+   --command "check-ping -h google.ca -P 80" \
+   --subscriptions workstation --interval 10 --timeout 5
+   ```
 
 ## Contributing
 
