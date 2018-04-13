@@ -72,12 +72,14 @@ func (r *entityImpl) Author(p graphql.ResolveParams) (interface{}, error) {
 func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interface{}, error) {
 	entity := p.Source.(*types.Entity)
 
+	// fetch
 	ctx := types.SetContextFromResource(p.Context, entity)
 	entities, err := r.entityCtrl.Query(ctx)
 	if err != nil {
 		return []*types.Entity{}, err
 	}
 
+	// sort
 	scores := map[int]int{}
 	for i, en := range entities {
 		matched := strings.Intersect(
@@ -90,13 +92,8 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 		return scores[i] < scores[j]
 	})
 
-	limit := p.Args.Limit
-	if limit > len(entities) {
-		limit = len(entities)
-	} else if limit < 0 {
-		limit = 0
-	}
-
+	// limit
+	limit := clampInt(p.Args.Limit, 0, len(entities))
 	return entities[0:limit], nil
 }
 
