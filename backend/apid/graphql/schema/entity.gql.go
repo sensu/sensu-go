@@ -5,6 +5,7 @@ package schema
 import (
 	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
@@ -78,6 +79,23 @@ type EntityAuthorIDFieldResolver interface {
 type EntityAuthorFieldResolver interface {
 	// Author implements response to request for author field.
 	Author(p graphql.ResolveParams) (interface{}, error)
+}
+
+// EntityRelatedFieldResolverArgs contains arguments provided to related when selected
+type EntityRelatedFieldResolverArgs struct {
+	Limit int // Limit - self descriptive
+}
+
+// EntityRelatedFieldResolverParams contains contextual info to resolve related field
+type EntityRelatedFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EntityRelatedFieldResolverArgs
+}
+
+// EntityRelatedFieldResolver implement to resolve requests for the Entity's related field.
+type EntityRelatedFieldResolver interface {
+	// Related implements response to request for related field.
+	Related(p EntityRelatedFieldResolverParams) (interface{}, error)
 }
 
 //
@@ -154,6 +172,7 @@ type EntityFieldResolvers interface {
 	EntityKeepaliveTimeoutFieldResolver
 	EntityAuthorIDFieldResolver
 	EntityAuthorFieldResolver
+	EntityRelatedFieldResolver
 }
 
 // EntityAliases implements all methods on EntityFieldResolvers interface by using reflection to
@@ -282,6 +301,12 @@ func (_ EntityAliases) Author(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
+// Related implements response to request for 'related' field.
+func (_ EntityAliases) Related(p EntityRelatedFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 /*
 EntityType Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
@@ -376,6 +401,19 @@ func _ObjTypeEntityAuthorHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityRelatedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityRelatedFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EntityRelatedFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Related(frp)
+	}
+}
+
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
@@ -450,6 +488,17 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
 			},
+			"related": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"limit": &graphql1.ArgumentConfig{
+					DefaultValue: 10,
+					Description:  "self descriptive",
+					Type:         graphql1.Int,
+				}},
+				DeprecationReason: "",
+				Description:       "Related returns a sorted list of like entities from the same environment.",
+				Name:              "related",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Entity"))),
+			},
 			"subscriptions": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -493,6 +542,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"lastSeen":         _ObjTypeEntityLastSeenHandler,
 		"name":             _ObjTypeEntityNameHandler,
 		"namespace":        _ObjTypeEntityNamespaceHandler,
+		"related":          _ObjTypeEntityRelatedHandler,
 		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
 		"system":           _ObjTypeEntitySystemHandler,
 	},
