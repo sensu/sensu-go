@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
@@ -110,12 +111,21 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 
 		if handler == nil {
 			if err != nil {
-				logger.WithError(err).Error("pipelined failed to retrieve a handler")
+				(logger.
+					WithFields(logrus.Fields{"handler": handlerName}).
+					WithError(err).
+					Error("pipelined failed to retrieve a handler"))
 				continue
 			}
 			extension, err = p.store.GetExtension(ctx, handlerName)
+			if err == store.ErrNoExtension {
+				continue
+			}
 			if err != nil {
-				logger.WithError(err).Error("pipelined failed to retrieve a handler")
+				(logger.
+					WithFields(logrus.Fields{"handler": handlerName}).
+					WithError(err).
+					Error("pipelined failed to retrieve a handler"))
 				continue
 			}
 			handler = &types.Handler{

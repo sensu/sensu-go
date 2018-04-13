@@ -5,6 +5,7 @@ package schema
 import (
 	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 	time "time"
 )
@@ -1066,10 +1067,21 @@ type CheckExecutedFieldResolver interface {
 	Executed(p graphql.ResolveParams) (time.Time, error)
 }
 
+// CheckHistoryFieldResolverArgs contains arguments provided to history when selected
+type CheckHistoryFieldResolverArgs struct {
+	First int // First - self descriptive
+}
+
+// CheckHistoryFieldResolverParams contains contextual info to resolve history field
+type CheckHistoryFieldResolverParams struct {
+	graphql.ResolveParams
+	Args CheckHistoryFieldResolverArgs
+}
+
 // CheckHistoryFieldResolver implement to resolve requests for the Check's history field.
 type CheckHistoryFieldResolver interface {
 	// History implements response to request for history field.
-	History(p graphql.ResolveParams) (interface{}, error)
+	History(p CheckHistoryFieldResolverParams) (interface{}, error)
 }
 
 // CheckIssuedFieldResolver implement to resolve requests for the Check's issued field.
@@ -1329,7 +1341,7 @@ func (_ CheckAliases) Executed(p graphql.ResolveParams) (time.Time, error) {
 }
 
 // History implements response to request for 'history' field.
-func (_ CheckAliases) History(p graphql.ResolveParams) (interface{}, error) {
+func (_ CheckAliases) History(p CheckHistoryFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -1479,7 +1491,13 @@ func _ObjTypeCheckExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := CheckHistoryFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
 		return resolver.History(frp)
 	}
 }
@@ -1566,7 +1584,11 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.Int,
 			},
 			"history": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+				Args: graphql1.FieldConfigArgument{"first": &graphql1.ArgumentConfig{
+					DefaultValue: 21,
+					Description:  "self descriptive",
+					Type:         graphql1.Int,
+				}},
 				DeprecationReason: "",
 				Description:       "History is the check state history.",
 				Name:              "history",
@@ -1873,14 +1895,14 @@ func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Executed describes the time in which the check request was executed",
 				Name:              "executed",
-				Type:              graphql1.DateTime,
+				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
 			"status": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Status is the exit status code produced by the check.",
 				Name:              "status",
-				Type:              graphql1.Int,
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},

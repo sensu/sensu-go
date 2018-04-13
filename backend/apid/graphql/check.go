@@ -84,6 +84,15 @@ func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 	return time.Unix(c.Executed, 0), nil
 }
 
+// History implements response to request for 'history' field.
+func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface{}, error) {
+	check := p.Source.(*types.Check)
+	history := check.History
+
+	length := clampInt(p.Args.First, 0, len(history))
+	return history[0:length], nil
+}
+
 //
 // Implement CheckHistoryFieldResolvers
 //
@@ -100,10 +109,4 @@ func (r *checkHistoryImpl) Status(p graphql.ResolveParams) (int, error) {
 func (r *checkHistoryImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 	h := p.Source.(types.CheckHistory)
 	return time.Unix(h.Executed, 0), nil
-}
-
-// IsTypeOf is used to determine if a given value is associated with the type
-func (r *checkHistoryImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.CheckHistory)
-	return ok
 }

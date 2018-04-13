@@ -25,9 +25,11 @@ metric events are swallowed for the time being.
 - Proper 404 page for web UI.
 - Add sensuctl extension command.
 - Add extensions to pipelined.
+- Added more tests surrounding the sensu-agent's statsd server and udp port.
 - Add the `--statsd-event-handlers` flag to sensu-agent which configures the
 event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
+- Add end-to-end test for extensions.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024

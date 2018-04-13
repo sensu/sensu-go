@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"errors"
 	"sort"
 
@@ -16,6 +17,10 @@ import (
 
 var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
 
+type eventQuerier interface {
+	Query(ctx context.Context, entity, check string) ([]*types.Event, error)
+}
+
 //
 // Implement EnvironmentFieldResolvers
 //
@@ -24,15 +29,16 @@ type envImpl struct {
 	orgCtrl    actions.OrganizationsController
 	checksCtrl actions.CheckController
 	entityCtrl actions.EntityController
-	eventsCtrl actions.EventController
+	eventsCtrl eventQuerier
 }
 
 func newEnvImpl(store store.Store, getter types.QueueGetter) *envImpl {
+	eventsCtrl := actions.NewEventController(store, nil)
 	return &envImpl{
 		orgCtrl:    actions.NewOrganizationsController(store),
 		checksCtrl: actions.NewCheckController(store, getter),
 		entityCtrl: actions.NewEntityController(store),
-		eventsCtrl: actions.NewEventController(store, nil),
+		eventsCtrl: eventsCtrl,
 	}
 }
 
@@ -177,4 +183,35 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 		edges[i] = relay.NewArrayConnectionEdge(r, i)
 	}
 	return relay.NewArrayConnection(edges, info), nil
+}
+
+// CheckHistory implements response to request for 'checkHistory' field.
+func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverParams) (interface{}, error) {
+	env := p.Source.(*types.Environment)
+	ctx := types.SetContextFromResource(p.Context, env)
+	records, err := r.eventsCtrl.Query(ctx, "", "")
+	if err != nil {
+		return []types.CheckHistory{}, err
+	}
+
+	// Accumulate history
+	history := []types.CheckHistory{}
+	for _, record := range records {
+		if record.Check == nil {
+			continue
+		}
+		latest := types.CheckHistory{
+			Executed: record.Check.Executed,
+			Status:   record.Check.Status,
+		}
+		history = append(history, latest)
+		history = append(history, record.Check.History...)
+	}
+
+	// Sort
+	sort.Sort(types.ByExecuted(history))
+
+	// Limit
+	limit := clampInt(p.Args.Limit, 0, len(history))
+	return history[0:limit], nil
 }

@@ -12,7 +12,7 @@ data. Sensu is extremely extensible and is commonly referred to as
 "the monitoring router".
 
 To learn more about Sensu, [please visit the
-website](https://sensuapp.org/).
+website](https://sensu.io/).
 
 ## What is Sensu 2.0?
 
