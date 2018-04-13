@@ -125,7 +125,7 @@ type Check {
   executed: DateTime
 
   "History is the check state history."
-  history: [CheckHistory]!
+  history(first: Int = 21): [CheckHistory]!
 
   "Issued describes the time in which the check request was issued"
   issued: Int!
@@ -151,8 +151,8 @@ CheckHistory is a record of a check execution and its status
 """
 type CheckHistory {
   "Status is the exit status code produced by the check."
-  status: Int
+  status: Int!
 
   "Executed describes the time in which the check request was executed"
-  executed: DateTime
+  executed: DateTime!
 }
