@@ -2,19 +2,21 @@ package agentd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
+
+var json = jsoniter.ConfigDefault
 
 // SessionStore specifies the storage requirements of the Session.
 type SessionStore interface {
