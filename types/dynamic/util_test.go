@@ -4,27 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func TestExtractExtendedAttributes(t *testing.T) {
-	require := require.New(t)
-	assert := assert.New(t)
-
-	var m MyType
-
-	// Empty extended attributes
-	msg := []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}]}`)
-	attrs, err := extractExtendedAttributes(m, msg)
-	require.NoError(err)
-	assert.Nil(attrs)
-
-	// Defined extended attributes
-	msg = []byte(`{"foo": "hello, world!","bar":[{"foo":"o hai"}], "extendedattr": "such extended"}`)
-	attrs, err = extractExtendedAttributes(m, msg)
-	require.NoError(err)
-	assert.Equal([]byte(`{"extendedattr":"such extended"}`), attrs)
-}
 
 func TestMapOfExtendedAttributes(t *testing.T) {
 	testCases := []struct {
