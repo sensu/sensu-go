@@ -649,8 +649,8 @@ func TestCheckAdhoc(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		queue := &mockqueue.MockQueue{}
-		getter := &mockqueue.Getter{}
+		queue := &mockqueue.Queue{}
+		getter := &mockqueue.QueueGetter{}
 		getter.On("GetQueue", mock.Anything).Return(queue)
 		actions := NewCheckController(store, getter)
 

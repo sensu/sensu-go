@@ -28,12 +28,12 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	)
 
 	store := &mockstore.MockStore{}
-	queue := &mockqueue.MockQueue{}
+	queue := &mockqueue.Queue{}
 	adhocRequest := types.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"})
 	checkConfig := types.FixtureCheckConfig("check1")
 	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(checkConfig, nil)
 	queue.On("Enqueue", mock.Anything, mock.Anything).Return(nil)
-	getter := &mockqueue.Getter{}
+	getter := &mockqueue.QueueGetter{}
 	getter.On("GetQueue", mock.Anything).Return(queue)
 	checkController := actions.NewCheckController(store, getter)
 	c := &ChecksRouter{controller: checkController}

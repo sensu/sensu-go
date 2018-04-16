@@ -2,6 +2,8 @@ package types
 
 import "context"
 
+//go:generate go run ../scripts/make_mock/main.go -outdir ../testing/mockqueue -outpkg mockqueue Queue QueueGetter
+
 // Queue is the interface of a queue. Queue's methods are atomic
 // and goroutine-safe.
 type Queue interface {
