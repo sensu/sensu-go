@@ -160,7 +160,17 @@ type Check {
   """
   lastOK: Int!
 
+  """
+  Occurrences indicates the number of times an event has occurred for a
+  client/check pair with the same check status.
+  """
+  occurrences: Int!
 
+  """
+  OccurrencesWatermark indicates the high water mark tracking number of
+  occurrences at the current severity.
+  """
+  occurrences_watermark: Int!
 }
 
 """

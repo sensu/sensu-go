@@ -1132,6 +1132,18 @@ type CheckLastOKFieldResolver interface {
 	LastOK(p graphql.ResolveParams) (int, error)
 }
 
+// CheckOccurrencesFieldResolver implement to resolve requests for the Check's occurrences field.
+type CheckOccurrencesFieldResolver interface {
+	// Occurrences implements response to request for occurrences field.
+	Occurrences(p graphql.ResolveParams) (int, error)
+}
+
+// CheckOccurrences_watermarkFieldResolver implement to resolve requests for the Check's occurrences_watermark field.
+type CheckOccurrences_watermarkFieldResolver interface {
+	// Occurrences_watermark implements response to request for occurrences_watermark field.
+	Occurrences_watermark(p graphql.ResolveParams) (int, error)
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -1217,6 +1229,8 @@ type CheckFieldResolvers interface {
 	CheckHooksFieldResolver
 	CheckSilencedFieldResolver
 	CheckLastOKFieldResolver
+	CheckOccurrencesFieldResolver
+	CheckOccurrences_watermarkFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1422,6 +1436,20 @@ func (_ CheckAliases) LastOK(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
+// Occurrences implements response to request for 'occurrences' field.
+func (_ CheckAliases) Occurrences(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// Occurrences_watermark implements response to request for 'occurrences_watermark' field.
+func (_ CheckAliases) Occurrences_watermark(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 /*
 CheckType A Check is a check specification and optionally the results of the check's
 execution.
@@ -1599,6 +1627,20 @@ func _ObjTypeCheckLastOKHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckOccurrencesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckOccurrencesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Occurrences(frp)
+	}
+}
+
+func _ObjTypeCheckOccurrences_watermarkHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckOccurrences_watermarkFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Occurrences_watermark(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -1698,6 +1740,20 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"occurrences": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Occurrences indicates the number of times an event has occurred for a\nclient/check pair with the same check status.",
+				Name:              "occurrences",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"occurrences_watermark": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "OccurrencesWatermark indicates the high water mark tracking number of\noccurrences at the current severity.",
+				Name:              "occurrences_watermark",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 			"output": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1786,29 +1842,31 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeCheckConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checkHooks":        _ObjTypeCheckCheckHooksHandler,
-		"command":           _ObjTypeCheckCommandHandler,
-		"duration":          _ObjTypeCheckDurationHandler,
-		"executed":          _ObjTypeCheckExecutedHandler,
-		"handlers":          _ObjTypeCheckHandlersHandler,
-		"highFlapThreshold": _ObjTypeCheckHighFlapThresholdHandler,
-		"history":           _ObjTypeCheckHistoryHandler,
-		"hooks":             _ObjTypeCheckHooksHandler,
-		"interval":          _ObjTypeCheckIntervalHandler,
-		"issued":            _ObjTypeCheckIssuedHandler,
-		"lastOK":            _ObjTypeCheckLastOKHandler,
-		"lowFlapThreshold":  _ObjTypeCheckLowFlapThresholdHandler,
-		"name":              _ObjTypeCheckNameHandler,
-		"output":            _ObjTypeCheckOutputHandler,
-		"publish":           _ObjTypeCheckPublishHandler,
-		"silenced":          _ObjTypeCheckSilencedHandler,
-		"source":            _ObjTypeCheckSourceHandler,
-		"state":             _ObjTypeCheckStateHandler,
-		"status":            _ObjTypeCheckStatusHandler,
-		"stdin":             _ObjTypeCheckStdinHandler,
-		"subdue":            _ObjTypeCheckSubdueHandler,
-		"subscriptions":     _ObjTypeCheckSubscriptionsHandler,
-		"totalStateChange":  _ObjTypeCheckTotalStateChangeHandler,
+		"checkHooks":            _ObjTypeCheckCheckHooksHandler,
+		"command":               _ObjTypeCheckCommandHandler,
+		"duration":              _ObjTypeCheckDurationHandler,
+		"executed":              _ObjTypeCheckExecutedHandler,
+		"handlers":              _ObjTypeCheckHandlersHandler,
+		"highFlapThreshold":     _ObjTypeCheckHighFlapThresholdHandler,
+		"history":               _ObjTypeCheckHistoryHandler,
+		"hooks":                 _ObjTypeCheckHooksHandler,
+		"interval":              _ObjTypeCheckIntervalHandler,
+		"issued":                _ObjTypeCheckIssuedHandler,
+		"lastOK":                _ObjTypeCheckLastOKHandler,
+		"lowFlapThreshold":      _ObjTypeCheckLowFlapThresholdHandler,
+		"name":                  _ObjTypeCheckNameHandler,
+		"occurrences":           _ObjTypeCheckOccurrencesHandler,
+		"occurrences_watermark": _ObjTypeCheckOccurrences_watermarkHandler,
+		"output":                _ObjTypeCheckOutputHandler,
+		"publish":               _ObjTypeCheckPublishHandler,
+		"silenced":              _ObjTypeCheckSilencedHandler,
+		"source":                _ObjTypeCheckSourceHandler,
+		"state":                 _ObjTypeCheckStateHandler,
+		"status":                _ObjTypeCheckStatusHandler,
+		"stdin":                 _ObjTypeCheckStdinHandler,
+		"subdue":                _ObjTypeCheckSubdueHandler,
+		"subscriptions":         _ObjTypeCheckSubscriptionsHandler,
+		"totalStateChange":      _ObjTypeCheckTotalStateChangeHandler,
 	},
 }
 
