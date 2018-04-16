@@ -170,7 +170,7 @@ type Check {
   OccurrencesWatermark indicates the high water mark tracking number of
   occurrences at the current severity.
   """
-  occurrences_watermark: Int!
+  occurrencesWatermark: Int!
 }
 
 """
