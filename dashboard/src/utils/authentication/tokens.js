@@ -1,8 +1,5 @@
 import moment from "moment";
 
-// Single instance of authentication info.
-let authTokens = null;
-
 // Instantiate new tokens object with defaults.
 export function newTokens(args = {}) {
   return {
@@ -12,6 +9,9 @@ export function newTokens(args = {}) {
     expiresAt: args.expiresAt || moment(),
   };
 }
+
+// Single instance of authentication info.
+let authTokens = newTokens();
 
 // Return single authTokens instance
 export function get() {
