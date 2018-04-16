@@ -11,6 +11,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+//go:generate go run ../scripts/make_mock/main.go -outdir ../testing/mocktransport -outpkg mocktransport Transport
+
 var (
 	sep = []byte("\n")
 )

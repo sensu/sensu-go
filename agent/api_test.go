@@ -84,7 +84,7 @@ func TestHealthz(t *testing.T) {
 
 	for _, tc := range testCases {
 		testName := fmt.Sprintf("test agent %s", tc.desc)
-		transport := &mocktransport.MockTransport{}
+		transport := &mocktransport.Transport{}
 
 		t.Run(testName, func(t *testing.T) {
 			// need to figure out how to pass the mock transport into the agent
