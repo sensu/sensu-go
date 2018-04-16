@@ -153,6 +153,14 @@ type Check {
 
   "Silenced is a list of silenced entry ids (subscription and check name)"
   silenced: [String]!
+
+  """
+  LastOK displays last time this check was ok; if event status is 0 this is set
+  to timestamp.
+  """
+  lastOK: Int!
+
+
 }
 
 """

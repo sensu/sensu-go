@@ -1126,6 +1126,12 @@ type CheckSilencedFieldResolver interface {
 	Silenced(p graphql.ResolveParams) ([]string, error)
 }
 
+// CheckLastOKFieldResolver implement to resolve requests for the Check's lastOK field.
+type CheckLastOKFieldResolver interface {
+	// LastOK implements response to request for lastOK field.
+	LastOK(p graphql.ResolveParams) (int, error)
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -1210,6 +1216,7 @@ type CheckFieldResolvers interface {
 	CheckTotalStateChangeFieldResolver
 	CheckHooksFieldResolver
 	CheckSilencedFieldResolver
+	CheckLastOKFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1408,6 +1415,13 @@ func (_ CheckAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
 	return ret, err
 }
 
+// LastOK implements response to request for 'lastOK' field.
+func (_ CheckAliases) LastOK(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 /*
 CheckType A Check is a check specification and optionally the results of the check's
 execution.
@@ -1578,6 +1592,13 @@ func _ObjTypeCheckSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckLastOKHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckLastOKFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LastOK(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -1654,6 +1675,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Issued describes the time in which the check request was issued",
 				Name:              "issued",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"lastOK": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "LastOK displays last time this check was ok; if event status is 0 this is set\nto timestamp.",
+				Name:              "lastOK",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"lowFlapThreshold": &graphql1.Field{
@@ -1768,6 +1796,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"hooks":             _ObjTypeCheckHooksHandler,
 		"interval":          _ObjTypeCheckIntervalHandler,
 		"issued":            _ObjTypeCheckIssuedHandler,
+		"lastOK":            _ObjTypeCheckLastOKHandler,
 		"lowFlapThreshold":  _ObjTypeCheckLowFlapThresholdHandler,
 		"name":              _ObjTypeCheckNameHandler,
 		"output":            _ObjTypeCheckOutputHandler,
