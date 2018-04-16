@@ -164,10 +164,7 @@ func (s *Session) subPump() {
 				logger.WithError(err).Error("session failed to serialize check request")
 			}
 
-			msg := &transport.Message{
-				Type:    types.CheckRequestType,
-				Payload: configBytes,
-			}
+			msg := transport.NewMessage(types.CheckRequestType, configBytes)
 			s.sendq <- msg
 		case <-s.stopping:
 			return
