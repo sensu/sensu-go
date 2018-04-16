@@ -55,6 +55,7 @@ const (
 	flagUser                  = "user"
 	flagDisableAPI            = "disable-api"
 	flagDisableSockets        = "disable-sockets"
+	flagLogLevel              = "log-level"
 )
 
 func init() {
@@ -108,6 +109,11 @@ func newStartCommand() *cobra.Command {
 			if setupErr != nil {
 				return setupErr
 			}
+			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
+			if err != nil {
+				return err
+			}
+			logrus.SetLevel(level)
 
 			cfg := agent.NewConfig()
 			cfg.API.Host = viper.GetString(flagAPIHost)
@@ -232,6 +238,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagUser, agent.DefaultUser)
 	viper.SetDefault(flagDisableAPI, false)
 	viper.SetDefault(flagDisableSockets, false)
+	viper.SetDefault(flagLogLevel, "warn")
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -262,6 +269,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
+	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err

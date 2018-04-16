@@ -30,6 +30,7 @@ metric events are swallowed for the time being.
 event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
 - Add end-to-end test for extensions.
+- Add configuration setting for backend and agent log level.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
@@ -50,6 +51,7 @@ and yarn are now dependencies for building the backend.
 - Don't allow the bus to drop messages.
 - Events list can properly be viewed on mobile.
 - Updated Sirupsen/logrus to sirupsen/logrus and other applicable dependencies using the former.
+- Set default log level to 'warn'.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
