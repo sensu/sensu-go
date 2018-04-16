@@ -1120,6 +1120,12 @@ type CheckHooksFieldResolver interface {
 	Hooks(p graphql.ResolveParams) (interface{}, error)
 }
 
+// CheckSilencedFieldResolver implement to resolve requests for the Check's silenced field.
+type CheckSilencedFieldResolver interface {
+	// Silenced implements response to request for silenced field.
+	Silenced(p graphql.ResolveParams) ([]string, error)
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -1203,6 +1209,7 @@ type CheckFieldResolvers interface {
 	CheckStatusFieldResolver
 	CheckTotalStateChangeFieldResolver
 	CheckHooksFieldResolver
+	CheckSilencedFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1394,6 +1401,13 @@ func (_ CheckAliases) Hooks(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
+// Silenced implements response to request for 'silenced' field.
+func (_ CheckAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.([]string)
+	return ret, err
+}
+
 /*
 CheckType A Check is a check specification and optionally the results of the check's
 execution.
@@ -1557,6 +1571,13 @@ func _ObjTypeCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckSilencedFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Silenced(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -1617,7 +1638,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 			"hooks": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Hooks describes the results of multiple hooks; if event is associated to hook execution.",
+				Description:       "Hooks describes the results of multiple hooks; if event is associated to hook\nexecution.",
 				Name:              "hooks",
 				Type:              graphql1.NewList(graphql.OutputType("Hook")),
 			},
@@ -1662,6 +1683,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Description:       "Publish indicates if check requests are published for the check",
 				Name:              "publish",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"silenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Silenced is a list of silenced entry ids (subscription and check name)",
+				Name:              "silenced",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
 			"source": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1744,6 +1772,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"name":              _ObjTypeCheckNameHandler,
 		"output":            _ObjTypeCheckOutputHandler,
 		"publish":           _ObjTypeCheckPublishHandler,
+		"silenced":          _ObjTypeCheckSilencedHandler,
 		"source":            _ObjTypeCheckSourceHandler,
 		"state":             _ObjTypeCheckStateHandler,
 		"status":            _ObjTypeCheckStatusHandler,
