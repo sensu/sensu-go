@@ -13,7 +13,7 @@ import (
 func TestRoundRobinScheduler(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	bus := mockbus.MockBus{}
+	bus := mockbus.MessageBus{}
 	bus.On("PublishDirect", "ramen-vending-machine", mock.Anything).Return(nil)
 	sched := newRoundRobinScheduler(ctx, &bus)
 	msg := &roundRobinMessage{

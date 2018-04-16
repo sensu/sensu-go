@@ -15,7 +15,7 @@ func TestDeregister(t *testing.T) {
 	assert := assert.New(t)
 
 	mockStore := &mockstore.MockStore{}
-	mockBus := &mockbus.MockBus{}
+	mockBus := &mockbus.MessageBus{}
 
 	adapter := &Deregistration{
 		Store:      mockStore,
@@ -40,7 +40,7 @@ func TestDeregistrationHandler(t *testing.T) {
 	assert := assert.New(t)
 
 	mockStore := &mockstore.MockStore{}
-	mockBus := &mockbus.MockBus{}
+	mockBus := &mockbus.MessageBus{}
 
 	adapter := &Deregistration{
 		Store:      mockStore,

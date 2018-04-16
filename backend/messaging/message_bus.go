@@ -8,6 +8,8 @@ import (
 	"github.com/sensu/sensu-go/backend/daemon"
 )
 
+//go:generate go run ../../scripts/make_mock/main.go -outdir ../../testing/mockbus -outpkg mockbus MessageBus
+
 const (
 	// TopicEvent is the topic for events that have been written to Etcd and
 	// normalized by eventd.
