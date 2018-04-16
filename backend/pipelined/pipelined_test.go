@@ -15,7 +15,7 @@ import (
 
 func TestPipelined(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())

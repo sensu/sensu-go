@@ -38,7 +38,7 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 	for _, tc := range tt {
 		b.Run(fmt.Sprintf("%d-clients", tc), func(b *testing.B) {
 			bus, _ := NewWizardBus(WizardBusConfig{
-				RingGetter: &mockring.Getter{},
+				RingGetter: &mockring.RingGetter{},
 			})
 			_ = bus.Start()
 

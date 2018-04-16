@@ -2,6 +2,8 @@ package types
 
 import "context"
 
+//go:generate go run ../scripts/make_mock/main.go -outdir ../testing/mockring -outpkg mockring Ring RingGetter
+
 // Ring is the interface of a ring. Ring's methods are atomic and
 // goroutine-safe.
 type Ring interface {

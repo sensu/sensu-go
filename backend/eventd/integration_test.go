@@ -24,7 +24,7 @@ func (r testReceiver) Receiver() chan<- interface{} {
 
 func TestEventdMonitor(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 

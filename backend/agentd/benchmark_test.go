@@ -17,7 +17,7 @@ func BenchmarkSubPump(b *testing.B) {
 	}
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	if err != nil {
 		b.Fatal(err)

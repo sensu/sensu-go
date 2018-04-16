@@ -25,7 +25,7 @@ func (ts testSubscriber) Receiver() chan<- interface{} {
 func TestSchedulerd(t *testing.T) {
 	// Setup wizard bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	if berr := bus.Start(); berr != nil {

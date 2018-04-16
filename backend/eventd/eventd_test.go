@@ -18,7 +18,7 @@ import (
 
 func TestEventHandling(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
@@ -77,7 +77,7 @@ func TestEventHandling(t *testing.T) {
 
 func TestEventMonitor(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())

@@ -44,7 +44,7 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	scheduler.check.Interval = 1
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
