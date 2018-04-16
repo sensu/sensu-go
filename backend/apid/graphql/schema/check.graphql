@@ -44,7 +44,7 @@ type CheckConfig implements Node {
   "STDIN indicates if the check command accepts JSON via stdin from the agent"
   stdin: Boolean!
 
-  "CheckHooks is the list of check hooks for the check"
+  "CheckHooks is the configured list of check hooks for the check"
   checkHooks: HookList
 
   "Subdue represents one or more time windows when the check should be subdued."
@@ -144,6 +144,9 @@ type Check {
   check's history
   """
   totalStateChange: Int
+
+  "Hooks describes the results of multiple hooks; if event is associated to hook execution."
+  hooks: [Hook]
 }
 
 """

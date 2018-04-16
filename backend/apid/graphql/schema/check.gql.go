@@ -424,7 +424,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 			"checkHooks": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "CheckHooks is the list of check hooks for the check",
+				Description:       "CheckHooks is the configured list of check hooks for the check",
 				Name:              "checkHooks",
 				Type:              graphql.OutputType("HookList"),
 			},
@@ -1114,6 +1114,12 @@ type CheckTotalStateChangeFieldResolver interface {
 	TotalStateChange(p graphql.ResolveParams) (int, error)
 }
 
+// CheckHooksFieldResolver implement to resolve requests for the Check's hooks field.
+type CheckHooksFieldResolver interface {
+	// Hooks implements response to request for hooks field.
+	Hooks(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -1196,6 +1202,7 @@ type CheckFieldResolvers interface {
 	CheckStateFieldResolver
 	CheckStatusFieldResolver
 	CheckTotalStateChangeFieldResolver
+	CheckHooksFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1381,6 +1388,12 @@ func (_ CheckAliases) TotalStateChange(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
+// Hooks implements response to request for 'hooks' field.
+func (_ CheckAliases) Hooks(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 /*
 CheckType A Check is a check specification and optionally the results of the check's
 execution.
@@ -1537,6 +1550,13 @@ func _ObjTypeCheckTotalStateChangeHandler(impl interface{}) graphql1.FieldResolv
 	}
 }
 
+func _ObjTypeCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckHooksFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Hooks(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -1593,6 +1613,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Description:       "History is the check state history.",
 				Name:              "history",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
+			},
+			"hooks": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Hooks describes the results of multiple hooks; if event is associated to hook execution.",
+				Name:              "hooks",
+				Type:              graphql1.NewList(graphql.OutputType("Hook")),
 			},
 			"interval": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1710,6 +1737,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"handlers":          _ObjTypeCheckHandlersHandler,
 		"highFlapThreshold": _ObjTypeCheckHighFlapThresholdHandler,
 		"history":           _ObjTypeCheckHistoryHandler,
+		"hooks":             _ObjTypeCheckHooksHandler,
 		"interval":          _ObjTypeCheckIntervalHandler,
 		"issued":            _ObjTypeCheckIssuedHandler,
 		"lowFlapThreshold":  _ObjTypeCheckLowFlapThresholdHandler,
