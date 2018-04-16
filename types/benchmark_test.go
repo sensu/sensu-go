@@ -8,9 +8,11 @@ import (
 func BenchmarkCheckRequestMarshal(b *testing.B) {
 	req := FixtureCheckRequest("cake")
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = json.Marshal(req)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_, _ = json.Marshal(req)
+		}
+	})
 }
 
 func BenchmarkCheckRequestUnmarshal(b *testing.B) {
@@ -31,9 +33,11 @@ func BenchmarkCheckRequestUnmarshal(b *testing.B) {
 func BenchmarkCheckConfigMarshal(b *testing.B) {
 	req := FixtureCheckConfig("cake")
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = json.Marshal(req)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_, _ = json.Marshal(req)
+		}
+	})
 }
 
 func BenchmarkCheckConfigUnmarshal(b *testing.B) {
