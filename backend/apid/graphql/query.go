@@ -16,20 +16,24 @@ type eventFetcher interface {
 	Find(ctx context.Context, entity, check string) (*types.Event, error)
 }
 
+type environmentFetcher interface {
+	Find(ctx context.Context, org, env string) (*types.Environment, error)
+}
+
 //
 // Implement QueryFieldResolvers
 //
 
 type queryImpl struct {
-	store           store.Store
-	eventController eventFetcher
+	eventCtrl       eventFetcher
+	environmentCtrl environmentFetcher
 	nodeResolver    *nodeResolver
 }
 
 func newQueryImpl(store store.Store, resolver *nodeResolver) *queryImpl {
 	return &queryImpl{
-		store:           store,
-		eventController: actions.NewEventController(store, nil),
+		eventCtrl:       actions.NewEventController(store, nil),
+		environmentCtrl: actions.NewEnvironmentController(store),
 		nodeResolver:    resolver,
 	}
 }
@@ -41,17 +45,14 @@ func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
 
 // Environment implements response to request for 'environment' field.
 func (r *queryImpl) Environment(p schema.QueryEnvironmentFieldResolverParams) (interface{}, error) {
-	env := types.Environment{
-		Name:         p.Args.Environment,
-		Organization: p.Args.Organization,
-	}
-	return &env, nil
+	env, err := r.environmentCtrl.Find(p.Context, p.Args.Environment, p.Args.Organization)
+	return handleControllerResults(env, err)
 }
 
 // Event implements response to request for 'event' field.
 func (r *queryImpl) Event(p schema.QueryEventFieldResolverParams) (interface{}, error) {
 	ctx := types.SetContextFromResource(p.Context, p.Args.Ns)
-	event, err := r.eventController.Find(ctx, p.Args.Entity, p.Args.Check)
+	event, err := r.eventCtrl.Find(ctx, p.Args.Entity, p.Args.Check)
 	return handleControllerResults(event, err)
 }
 

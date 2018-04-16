@@ -31,6 +31,8 @@ event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
 - Add end-to-end test for extensions.
 - Add configuration setting for backend and agent log level.
+- Add the `--statsd-disable` flag to sensu-agent which configures the
+statsd listener. The listener is enabled by default.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024

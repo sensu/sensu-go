@@ -54,6 +54,8 @@ const (
 	DefaultSocketHost = "127.0.0.1"
 	// DefaultSocketPort specifies the default socket port
 	DefaultSocketPort = 3030
+	// DefaultStatsdDisable specifies if the statsd listener is disabled
+	DefaultStatsdDisable = false
 	// DefaultStatsdFlushInterval specifies the default flush interval for statsd
 	DefaultStatsdFlushInterval = 10
 	// DefaultStatsdMetricsHost specifies the default metrics host for statsd server
@@ -114,6 +116,7 @@ type StatsdServerConfig struct {
 	Port          int
 	FlushInterval int
 	Handlers      []string
+	Disable       bool
 }
 
 // SocketConfig contains the Socket configuration
@@ -147,6 +150,7 @@ func FixtureConfig() *Config {
 			Port:          DefaultStatsdMetricsPort,
 			FlushInterval: DefaultStatsdFlushInterval,
 			Handlers:      []string{},
+			Disable:       DefaultStatsdDisable,
 		},
 		User: DefaultUser,
 	}
@@ -376,8 +380,10 @@ func (a *Agent) Run() error {
 	a.header = a.buildTransportHeaderMap()
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
-	logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
-	go a.statsdServer.Run(a.context)
+	if !a.config.StatsdServer.Disable {
+		logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
+		go a.statsdServer.Run(a.context)
+	}
 
 	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
 	if err != nil {

@@ -47,6 +47,7 @@ const (
 	flagRedact                = "redact"
 	flagSocketHost            = "socket-host"
 	flagSocketPort            = "socket-port"
+	flagStatsdDisable         = "statsd-disable"
 	flagStatsdEventHandlers   = "statsd-event-handlers"
 	flagStatsdFlushInterval   = "statsd-flush-interval"
 	flagStatsdMetricsHost     = "statsd-metrics-host"
@@ -129,6 +130,7 @@ func newStartCommand() *cobra.Command {
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
 			cfg.Socket.Port = viper.GetInt(flagSocketPort)
+			cfg.StatsdServer.Disable = viper.GetBool(flagStatsdDisable)
 			cfg.StatsdServer.FlushInterval = viper.GetInt(flagStatsdFlushInterval)
 			cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
 			cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
@@ -230,6 +232,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
 	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
+	viper.SetDefault(flagStatsdDisable, agent.DefaultStatsdDisable)
 	viper.SetDefault(flagStatsdFlushInterval, agent.DefaultStatsdFlushInterval)
 	viper.SetDefault(flagStatsdMetricsHost, agent.DefaultStatsdMetricsHost)
 	viper.SetDefault(flagStatsdMetricsPort, agent.DefaultStatsdMetricsPort)
@@ -259,6 +262,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
+	cmd.Flags().Bool(flagStatsdDisable, viper.GetBool(flagStatsdDisable), "disables the statsd listener and metrics server")
 	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics")
 	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
 	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
