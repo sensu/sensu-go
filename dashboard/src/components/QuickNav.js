@@ -17,19 +17,46 @@ class QuickNav extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
+    organization: PropTypes.string.isRequired,
+    environment: PropTypes.string.isRequired,
   };
 
   static defaultProps = { className: "" };
 
   render() {
-    const { classes, className } = this.props;
+    const { classes, className, organization, environment } = this.props;
 
     return (
       <div className={classNames(classes.quickNavContainer, className)}>
-        <QuickNavButton Icon={DashboardIcon} caption="Dashboard" to="" exact />
-        <QuickNavButton Icon={EventIcon} caption="Events" to="events" />
-        <QuickNavButton Icon={EntityIcon} caption="Entities" to="entities" />
-        <QuickNavButton Icon={CheckIcon} caption="Checks" to="checks" />
+        <QuickNavButton
+          organization={organization}
+          environment={environment}
+          Icon={DashboardIcon}
+          caption="Dashboard"
+          to=""
+          exact
+        />
+        <QuickNavButton
+          organization={organization}
+          environment={environment}
+          Icon={EventIcon}
+          caption="Events"
+          to="events"
+        />
+        <QuickNavButton
+          organization={organization}
+          environment={environment}
+          Icon={EntityIcon}
+          caption="Entities"
+          to="entities"
+        />
+        <QuickNavButton
+          organization={organization}
+          environment={environment}
+          Icon={CheckIcon}
+          caption="Checks"
+          to="checks"
+        />
       </div>
     );
   }

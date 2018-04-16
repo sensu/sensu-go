@@ -28,21 +28,24 @@ const styles = theme => ({
 class NamespaceSelectorBuilder extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    org: PropTypes.string.isRequired,
-    env: PropTypes.string.isRequired,
+    environment: PropTypes.object,
+  };
+
+  static defaultProps = {
+    environment: null,
   };
 
   render() {
-    const { classes, org, env } = this.props;
+    const { classes, environment } = this.props;
 
     return (
       <div className={classes.selectorContainer}>
         <Typography className={classNames(classes.label, classes.org)}>
-          {org}
+          {environment && environment.organization.name}
         </Typography>
         <div className={classes.envContainer}>
           <Typography className={classNames(classes.label, classes.env)}>
-            {env}
+            {environment && environment.name}
           </Typography>
           <span className={classes.arrow}>
             <ArrowIcon />

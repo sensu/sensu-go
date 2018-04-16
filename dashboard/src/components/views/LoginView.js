@@ -1,26 +1,19 @@
 import React from "react";
 import PropTypes from "prop-types";
-import compose from "lodash/fp/compose";
-import { withRouter, routerShape } from "found";
 import { withStyles } from "material-ui/styles";
 
 import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
 import Typography from "material-ui/Typography";
-import AppRoot from "../components/AppRoot";
-import Logo from "../icons/SensuLogoGraphic";
-import Wordmark from "../icons/SensuWordmark";
-import { authenticate } from "../utils/authentication";
 
-// defaultRoute describe the location where the user will land after a
-// successful login.
-const defaultRoute = "/";
+import Logo from "../../icons/SensuLogoGraphic";
+import Wordmark from "../../icons/SensuWordmark";
+import { authenticate } from "../../utils/authentication";
 
-class Login extends React.Component {
+class LoginView extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    router: routerShape.isRequired,
   };
 
   static styles = theme => ({
@@ -62,6 +55,12 @@ class Login extends React.Component {
     form: {
       marginTop: theme.spacing.unit * 3,
     },
+    root: {
+      display: "flex",
+      alignItems: "stretch",
+      minHeight: "100vh",
+      width: "100%",
+    },
   });
 
   state = {
@@ -71,9 +70,7 @@ class Login extends React.Component {
 
   handleSubmit = ev => {
     const { username, password } = this.state;
-    const { router } = this.props;
 
-    const handleSuccess = () => router.replace(defaultRoute);
     const handleFailure = () => {
       this.setState({
         disabled: false,
@@ -88,8 +85,7 @@ class Login extends React.Component {
     this.setState({ disabled: true });
 
     // Authenticate user
-    const authPromise = authenticate(username, password);
-    authPromise.then(handleSuccess).catch(handleFailure);
+    authenticate(username, password).catch(handleFailure);
   };
 
   render() {
@@ -105,7 +101,7 @@ class Login extends React.Component {
     const handlePassword = ev => this.setState({ password: ev.target.value });
 
     return (
-      <AppRoot>
+      <div className={classes.root}>
         <Paper className={classes.loginCard}>
           <Logo className={classes.icon} />
           <Wordmark className={classes.wordmark} />
@@ -157,9 +153,9 @@ class Login extends React.Component {
             </div>
           </form>
         </Paper>
-      </AppRoot>
+      </div>
     );
   }
 }
 
-export default compose(withStyles(Login.styles), withRouter)(Login);
+export default withStyles(LoginView.styles)(LoginView);

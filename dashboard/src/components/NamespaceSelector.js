@@ -1,14 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { Route } from "react-router-dom";
 
-import { compose } from "recompose";
 import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
 import Button from "material-ui/ButtonBase";
 
 import NamespaceSelectorBuilder from "./NamespaceSelectorBuilder";
 import NamespaceSelectorMenu from "./NamespaceSelectorMenu";
-import { withNamespace, namespaceShape } from "./NamespaceLink";
 
 const styles = {
   button: {
@@ -22,8 +21,15 @@ const styles = {
 class NamespaceSelector extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    currentNamespace: namespaceShape.isRequired,
-    viewer: PropTypes.objectOf(PropTypes.any).isRequired,
+    viewer: PropTypes.object,
+    environment: PropTypes.object,
+    loading: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    viewer: null,
+    environment: null,
+    loading: false,
   };
 
   static fragments = {
@@ -33,6 +39,15 @@ class NamespaceSelector extends React.Component {
       }
 
       ${NamespaceSelectorMenu.fragments.viewer}
+    `,
+
+    environment: gql`
+      fragment NamespaceSelector_environment on Environment {
+        name
+        organization {
+          name
+        }
+      }
     `,
   };
 
@@ -49,31 +64,34 @@ class NamespaceSelector extends React.Component {
   };
 
   render() {
-    const { viewer, currentNamespace, classes, ...props } = this.props;
+    const { loading, environment, viewer, classes, ...props } = this.props;
     const { anchorEl } = this.state;
 
     return (
-      <div {...props}>
-        <Button
-          aria-owns="drawer-selector-menu"
-          className={classes.button}
-          onClick={this.handleClick}
-        >
-          <NamespaceSelectorBuilder
-            org={currentNamespace.organization}
-            env={currentNamespace.environment}
-          />
-        </Button>
-        <NamespaceSelectorMenu
-          viewer={viewer}
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={this.onClose}
-          id="drawer-selector-menu"
-        />
-      </div>
+      <Route
+        path="/:organization/:environment"
+        render={({ match: { params } }) => (
+          <div {...props}>
+            <Button
+              aria-owns="drawer-selector-menu"
+              className={classes.button}
+              onClick={this.handleClick}
+            >
+              <NamespaceSelectorBuilder environment={environment} />
+            </Button>
+            <NamespaceSelectorMenu
+              viewer={viewer}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={this.onClose}
+              id="drawer-selector-menu"
+              org={params.organization}
+            />
+          </div>
+        )}
+      />
     );
   }
 }
 
-export default compose(withStyles(styles), withNamespace)(NamespaceSelector);
+export default withStyles(styles)(NamespaceSelector);

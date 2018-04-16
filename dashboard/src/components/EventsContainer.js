@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
 
-import { withRouter } from "found";
 import { withApollo } from "react-apollo";
 import { every, filter, reduce, capitalize } from "lodash";
 import { compose } from "lodash/fp";
@@ -346,6 +345,4 @@ class EventsContainer extends React.Component {
   }
 }
 
-export default compose(withStyles(styles), withRouter, withApollo)(
-  EventsContainer,
-);
+export default compose(withStyles(styles), withApollo)(EventsContainer);
