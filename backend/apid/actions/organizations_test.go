@@ -15,7 +15,7 @@ import (
 func TestNewOrganizationsController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewOrganizationsController(store)
 
 	assert.NotNil(actions)
@@ -72,7 +72,7 @@ func TestOrganizationsQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewOrganizationsController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestOrganizationsFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewOrganizationsController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -235,7 +235,7 @@ func TestOrganizationsCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewOrganizationsController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -323,7 +323,7 @@ func TestOrganizationsCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewOrganizationsController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -430,7 +430,7 @@ func TestOrganizationsUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewOrganizationsController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -530,7 +530,7 @@ func TestOrganizationsDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewOrganizationsController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

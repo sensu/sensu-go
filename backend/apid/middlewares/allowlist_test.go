@@ -16,7 +16,7 @@ func TestAllowList(t *testing.T) {
 	token, tokenString, _ := jwt.AccessToken("foo")
 	claims, _ := jwt.GetClaims(token)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetToken", claims.Subject, claims.Id).Return(claims, nil)
 
 	authMware := Authentication{}
@@ -39,7 +39,7 @@ func TestMissingTokenFromAllowList(t *testing.T) {
 	token, tokenString, _ := jwt.AccessToken("foo")
 	claims, _ := jwt.GetClaims(token)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetToken", claims.Subject, claims.Id).Return(claims, fmt.Errorf("error"))
 
 	auth := Authentication{}
@@ -58,7 +58,7 @@ func TestMissingTokenFromAllowList(t *testing.T) {
 }
 
 func TestAllowListNoTokenIntoContext(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 
 	allow := AllowList{Store: store}
 	server := httptest.NewServer(allow.Then(testHandler()))

@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewServiceSmokeTest(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	svc, err := NewService(ServiceConfig{Store: store, QueueGetter: queue.NewMemoryGetter()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, svc)

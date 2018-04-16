@@ -27,7 +27,7 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 		),
 	)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	queue := &mockqueue.Queue{}
 	adhocRequest := types.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"})
 	checkConfig := types.FixtureCheckConfig("check1")

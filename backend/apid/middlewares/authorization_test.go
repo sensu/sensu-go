@@ -71,7 +71,7 @@ func TestAuthorization(t *testing.T) {
 	}
 
 	// store needs to return a user and roles
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetUser", mock.Anything, mock.Anything).Return(user, nil).Once()
 	store.On("GetRoles", mock.Anything).Return(roles, nil).Once()
 

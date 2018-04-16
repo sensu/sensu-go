@@ -7,6 +7,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+//go:generate go run ../../scripts/make_mock/main.go -outdir ../../testing/mockstore -outpkg mockstore Store Initializer
+
 const (
 	// WatchUnknown indicates that we received an unknown watch even tytpe
 	// from etcd.
@@ -283,7 +285,7 @@ type ErrorStore interface {
 	GetErrorsByEntityCheck(ctx context.Context, entity, check string) ([]*types.Error, error)
 
 	// CreateError creates or updates a given error.
-	CreateError(ctx context.Context, error *types.Error) error
+	CreateError(ctx context.Context, err *types.Error) error
 }
 
 // EventStore provides methods for managing events

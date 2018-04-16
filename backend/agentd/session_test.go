@@ -61,7 +61,7 @@ func TestGoodSessionConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
-	st := &mockstore.MockStore{}
+	st := &mockstore.Store{}
 	st.On(
 		"GetEnvironment",
 		mock.Anything,
@@ -91,7 +91,7 @@ func TestBadSessionConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
-	st := &mockstore.MockStore{}
+	st := &mockstore.Store{}
 	st.On(
 		"UpdateEntity",
 		mock.Anything,

@@ -19,7 +19,7 @@ func testHandler() http.HandlerFunc {
 }
 
 func TestEnvironment(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On(
 		"GetEnvironment",
 		mock.Anything,
@@ -58,7 +58,7 @@ func TestEnvironment(t *testing.T) {
 }
 
 func TestEnvironmentNoParameters(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On(
 		"GetEnvironment",
 		mock.Anything,
@@ -78,7 +78,7 @@ func TestEnvironmentNoParameters(t *testing.T) {
 }
 
 func TestValidateWildcard(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On(
 		"GetEnvironment",
 		mock.Anything,

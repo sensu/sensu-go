@@ -23,7 +23,7 @@ func BenchmarkSubPump(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	st := &mockstore.MockStore{}
+	st := &mockstore.Store{}
 	st.On(
 		"GetEnvironment",
 		mock.Anything,

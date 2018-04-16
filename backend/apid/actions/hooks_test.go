@@ -15,7 +15,7 @@ import (
 func TestNewHookController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewHookController(store)
 
 	assert.NotNil(actions)
@@ -81,7 +81,7 @@ func TestHookQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHookController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestHookFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHookController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -245,7 +245,7 @@ func TestHookCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHookController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -351,7 +351,7 @@ func TestHookCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHookController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -462,7 +462,7 @@ func TestHookUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHookController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -562,7 +562,7 @@ func TestHookDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHookController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

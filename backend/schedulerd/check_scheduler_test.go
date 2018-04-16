@@ -50,7 +50,7 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	scheduler.msgBus = bus
 	schedulerState := &SchedulerState{}
 
-	manager := NewStateManager(&mockstore.MockStore{})
+	manager := NewStateManager(&mockstore.Store{})
 	manager.Update(func(state *SchedulerState) {
 		state.SetChecks([]*types.CheckConfig{scheduler.check})
 		state.SetAssets([]*types.Asset{&asset})

@@ -22,7 +22,7 @@ type mockDeregisterer struct {
 type keepalivedTest struct {
 	Keepalived   *Keepalived
 	MessageBus   messaging.MessageBus
-	Store        *mockstore.MockStore
+	Store        *mockstore.Store
 	Deregisterer *mockDeregisterer
 	receiver     chan interface{}
 }
@@ -32,7 +32,7 @@ func (k *keepalivedTest) Receiver() chan<- interface{} {
 }
 
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	deregisterer := &mockDeregisterer{}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.RingGetter{},
@@ -219,7 +219,7 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, messageBus.Start())
 
-			store := &mockstore.MockStore{}
+			store := &mockstore.Store{}
 
 			tsub := testSubscriber{
 				ch: make(chan interface{}, 1),

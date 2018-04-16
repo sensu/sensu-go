@@ -16,7 +16,7 @@ import (
 func TestNewEventController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	bus := &mockbus.MessageBus{}
 	eventController := NewEventController(store, bus)
 
@@ -96,7 +96,7 @@ func TestEventQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		bus := &mockbus.MessageBus{}
 		eventController := NewEventController(store, bus)
 
@@ -183,7 +183,7 @@ func TestEventFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		bus := &mockbus.MessageBus{}
 		eventController := NewEventController(store, bus)
 
@@ -268,7 +268,7 @@ func TestEventDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		bus := &mockbus.MessageBus{}
 		eventController := NewEventController(store, bus)
 
@@ -373,7 +373,7 @@ func TestEventUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		bus := &mockbus.MessageBus{}
 		actions := NewEventController(store, bus)
 
@@ -477,7 +477,7 @@ func TestEventCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		bus := &mockbus.MessageBus{}
 		actions := NewEventController(store, bus)
 
@@ -574,7 +574,7 @@ func TestEventCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		bus := &mockbus.MessageBus{}
 		actions := NewEventController(store, bus)
 

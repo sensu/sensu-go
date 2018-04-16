@@ -15,7 +15,7 @@ import (
 func TestNewMutatorController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	ctl := NewMutatorController(store)
 	assert.NotNil(ctl)
 	assert.Equal(store, ctl.Store)
@@ -82,7 +82,7 @@ func TestMutatorCreateOrReplace(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewMutatorController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestMutatorCreate(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewMutatorController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -270,7 +270,7 @@ func TestMutatorDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewMutatorController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -381,7 +381,7 @@ func TestMutatorUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewMutatorController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -478,7 +478,7 @@ func TestMutatorQuery(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewMutatorController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -538,7 +538,7 @@ func TestMutatorFind(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			store := &mockstore.MockStore{}
+			store := &mockstore.Store{}
 			ctl := NewMutatorController(store)
 
 			// Mock store methods

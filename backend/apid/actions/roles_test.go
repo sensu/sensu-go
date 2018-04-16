@@ -15,7 +15,7 @@ import (
 func TestNewRoleController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewRoleController(store)
 
 	assert.NotNil(actions)
@@ -73,7 +73,7 @@ func TestRoleQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestRoleFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -238,7 +238,7 @@ func TestRoleCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -340,7 +340,7 @@ func TestRoleCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -447,7 +447,7 @@ func TestRoleUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -562,7 +562,7 @@ func TestRoleAddRule(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -673,7 +673,7 @@ func TestRoleRemoveRule(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -769,7 +769,7 @@ func TestRoleDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewRoleController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

@@ -19,7 +19,7 @@ func TestPipelined(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 
 	p, err := New(Config{Bus: bus, Store: store})
 	require.NoError(t, err)

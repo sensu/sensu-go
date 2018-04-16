@@ -17,7 +17,7 @@ import (
 func main() {
 	// use a mock for the store since we need a non-nil store to avoid issues when
 	// trying to create a queue in the service
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	getter := &mockqueue.QueueGetter{}
 	queue := &mockqueue.Queue{}
 	getter.On("GetQueue", mock.Anything).Return(queue)

@@ -15,7 +15,7 @@ import (
 func TestNewHandlerController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	ctl := NewHandlerController(store)
 	assert.NotNil(ctl)
 	assert.Equal(store, ctl.Store)
@@ -88,7 +88,7 @@ func TestHandlerCreate(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewHandlerController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestHandlerCreateOrReplace(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewHandlerController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -270,7 +270,7 @@ func TestHandlerDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHandlerController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -352,7 +352,7 @@ func TestHandlerFind(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			store := &mockstore.MockStore{}
+			store := &mockstore.Store{}
 			ctl := NewHandlerController(store)
 
 			// Mock store methods
@@ -436,7 +436,7 @@ func TestHandlerQuery(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewHandlerController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -532,7 +532,7 @@ func TestHandlerUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewHandlerController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
