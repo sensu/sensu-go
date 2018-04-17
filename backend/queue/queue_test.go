@@ -261,3 +261,29 @@ func TestNackExpired(t *testing.T) {
 
 	require.Equal(t, "test item", item.Value())
 }
+
+// queue.Enqueue should not block indefinitely when the Etcd server is killed
+func TestEtcdKilled(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	client, err := e.NewClient()
+	// Stop Etcd before client gets a chance to connect
+	cleanup()
+	require.NoError(t, err)
+	defer client.Close()
+
+	queue := New("testetcdkilled", client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	errc := make(chan error)
+	go func() {
+		errc <- queue.Enqueue(ctx, "test item")
+	}()
+	select {
+	case err := <-errc:
+		require.Error(t, err)
+	case <-time.After(5 * time.Second):
+		t.Error("queue.Enqueue did not return in time")
+	}
+}
