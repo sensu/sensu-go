@@ -53,6 +53,7 @@ and yarn are now dependencies for building the backend.
 - Don't allow the bus to drop messages.
 - Events list can properly be viewed on mobile.
 - Updated Sirupsen/logrus to sirupsen/logrus and other applicable dependencies using the former.
+- Optimize check marshaling.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
