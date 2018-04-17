@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/eval"
@@ -104,7 +105,21 @@ func (c *Check) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON implements the json.Marshaler interface.
 func (c *Check) MarshalJSON() ([]byte, error) {
-	return dynamic.Marshal(c)
+	if c == nil {
+		return []byte("null"), nil
+	}
+
+	// Only use dynamic marshaling if there are dynamic attributes.
+	// Otherwise, use default json marshaling.
+	if len(c.ExtendedAttributes) > 0 {
+		return dynamic.Marshal(c)
+	}
+
+	type Clone Check
+	clone := &Clone{}
+	*clone = Clone(*c)
+
+	return jsoniter.Marshal(clone)
 }
 
 // SetExtendedAttributes sets the serialized ExtendedAttributes of c.
@@ -124,7 +139,21 @@ func (c *CheckConfig) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON implements the json.Marshaler interface.
 func (c *CheckConfig) MarshalJSON() ([]byte, error) {
-	return dynamic.Marshal(c)
+	if c == nil {
+		return []byte("null"), nil
+	}
+
+	// Only use dynamic marshaling if there are dynamic attributes.
+	// Otherwise, use default json marshaling.
+	if len(c.ExtendedAttributes) > 0 {
+		return dynamic.Marshal(c)
+	}
+
+	type Clone CheckConfig
+	clone := &Clone{}
+	*clone = Clone(*c)
+
+	return jsoniter.Marshal(clone)
 }
 
 // SetExtendedAttributes sets the serialized ExtendedAttributes of c.

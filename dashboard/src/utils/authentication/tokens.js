@@ -1,7 +1,8 @@
 import moment from "moment";
 
-// Single instance of authentication info.
-let authTokens = null;
+import createDispatcher from "../dispatcher";
+
+const { subscribe, unsubscribe, subscribeOnce, dispatch } = createDispatcher();
 
 // Instantiate new tokens object with defaults.
 export function newTokens(args = {}) {
@@ -13,6 +14,9 @@ export function newTokens(args = {}) {
   };
 }
 
+// Single instance of authentication info.
+let authTokens = newTokens();
+
 // Return single authTokens instance
 export function get() {
   return authTokens;
@@ -20,8 +24,11 @@ export function get() {
 
 // Swap single authTokens instance for new one
 export function swap(t) {
-  authTokens = t;
+  if (Object.prototype.toString.call(t) !== "[object Object]" || !t) {
+    throw new TypeError("Expected Object");
+  }
+  authTokens = Object.freeze(t);
+  dispatch(authTokens);
 }
 
-// Initialize authTokens w/ empty instance
-swap(newTokens());
+export { subscribe, unsubscribe, subscribeOnce };

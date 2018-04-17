@@ -31,6 +31,7 @@ event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
 - Add end-to-end test for extensions.
 - Add configuration setting for backend and agent log level.
+- Add extension package for building third-party Sensu extensions in Go.
 - Add the `--statsd-disable` flag to sensu-agent which configures the
 statsd listener. The listener is enabled by default.
 
@@ -54,6 +55,7 @@ and yarn are now dependencies for building the backend.
 - Events list can properly be viewed on mobile.
 - Updated Sirupsen/logrus to sirupsen/logrus and other applicable dependencies using the former.
 - Set default log level to 'warn'.
+- Optimize check marshaling.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
