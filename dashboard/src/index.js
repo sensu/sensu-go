@@ -8,7 +8,7 @@ import createRender from "found/lib/createRender";
 import resolver from "found/lib/resolver";
 import injectTapEventPlugin from "react-tap-event-plugin";
 
-import client from "./apollo/client";
+import createClient from "./apollo/client";
 
 import createStore from "./store";
 import reducer from "./reducer";
@@ -37,6 +37,8 @@ const Router = createConnectedRouter({
 // Configure store
 const store = createStore(reducer, {});
 store.dispatch(FarceActions.init());
+
+const client = createClient();
 
 // Renderer
 ReactDOM.render(
