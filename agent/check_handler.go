@@ -62,6 +62,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	// Instantiate Event
 	check := types.NewCheck(checkConfig)
 	check.Executed = time.Now().Unix()
+	check.Issued = request.Issued
 	event := &types.Event{
 		Check: check,
 	}

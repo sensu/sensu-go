@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -119,6 +119,8 @@ func (c *CheckExecutor) buildRequest(check *types.CheckConfig) *types.CheckReque
 			}
 		}
 	}
+
+	request.Issued = time.Now().Unix()
 
 	return request
 }
@@ -250,7 +252,7 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 }
 
 func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) *types.CheckRequest {
-	return &types.CheckRequest{}
+	return &types.CheckRequest{Issued: time.Now().Unix()}
 }
 
 func (a *AdhocRequestExecutor) setState(state *SchedulerState) {}

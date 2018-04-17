@@ -17,41 +17,45 @@ import { getAccessToken } from "../utils/authentication";
 // see: apollographql.com/docs/react/advanced/fragments.html#fragment-matcher
 import { data as introspectionQueryResultData } from "../schema.json";
 
-const fragmentMatcher = new IntrospectionFragmentMatcher({
-  introspectionQueryResultData,
-});
+const createClient = () => {
+  const fragmentMatcher = new IntrospectionFragmentMatcher({
+    introspectionQueryResultData,
+  });
 
-const cache = new InMemoryCache({
-  fragmentMatcher,
-  dataIdFromObject: object => object.id,
-});
+  const cache = new InMemoryCache({
+    fragmentMatcher,
+    dataIdFromObject: object => object.id,
+  });
 
-const authLink = setContext(() =>
-  getAccessToken().then(token => ({
-    headers: { Authorization: `Bearer ${token}` },
-  })),
-);
+  const authLink = setContext(() =>
+    getAccessToken().then(token => ({
+      headers: { Authorization: `Bearer ${token}` },
+    })),
+  );
 
-const errorLink = onError(({ graphQLErrors, networkError }) => {
-  // TODO: Connect this error handler to display a blocking error alert
-  if (graphQLErrors)
-    graphQLErrors.forEach(error => {
-      // eslint-disable-next-line no-console
-      console.error(error.originalError || error);
-    });
-  // eslint-disable-next-line no-console
-  if (networkError) console.error(networkError);
-});
+  const errorLink = onError(({ graphQLErrors, networkError }) => {
+    // TODO: Connect this error handler to display a blocking error alert
+    if (graphQLErrors)
+      graphQLErrors.forEach(error => {
+        // eslint-disable-next-line no-console
+        console.error(error.originalError || error);
+      });
+    // eslint-disable-next-line no-console
+    if (networkError) console.error(networkError);
+  });
 
-const httpLink = new HttpLink({
-  uri: "/graphql",
-  fetchOptions: {},
-  credentials: "same-origin",
-});
+  const httpLink = new HttpLink({
+    uri: "/graphql",
+    fetchOptions: {},
+    credentials: "same-origin",
+  });
 
-const client = new ApolloClient({
-  cache,
-  link: ApolloLink.from([errorLink, authLink, httpLink]),
-});
+  const client = new ApolloClient({
+    cache,
+    link: ApolloLink.from([errorLink, authLink, httpLink]),
+  });
 
-export default client;
+  return client;
+};
+
+export default createClient;

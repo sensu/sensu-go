@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
@@ -21,7 +22,7 @@ func TestHandleCheck(t *testing.T) {
 	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
 	checkConfig.Command = truePath
 
-	request := &types.CheckRequest{Config: checkConfig}
+	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	payload, err := json.Marshal(request)
 	if err != nil {
 		assert.FailNow("error marshaling check request")
@@ -49,7 +50,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	checkConfig := types.FixtureCheckConfig("check")
-	request := &types.CheckRequest{Config: checkConfig}
+	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	checkConfig.Stdin = true
 
 	config := FixtureConfig()
@@ -81,6 +82,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(1), event.Check.Status)
+	assert.NotZero(event.Check.Issued)
 
 	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep"), "5")
 	checkConfig.Command = sleepPath

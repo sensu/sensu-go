@@ -66,6 +66,7 @@ and yarn are now dependencies for building the backend.
 - The http_check.sh example script now hides its output
 - Events created from the metrics passed to the statsd listener are no longer
 swallowed. The events are sent through the pipeline.
+- Fixed a bug where the Issued field was never populated.
 
 ### Added
 - Support for managing mutators via sensuctl.

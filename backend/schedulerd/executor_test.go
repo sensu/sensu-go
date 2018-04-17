@@ -62,7 +62,10 @@ func TestAdhocExecutor(t *testing.T) {
 	msg := <-ch
 	result, ok := msg.(*types.CheckRequest)
 	assert.True(t, ok)
-	assert.EqualValues(t, goodCheckRequest, result)
+	assert.EqualValues(t, goodCheckRequest.Config, result.Config)
+	assert.EqualValues(t, goodCheckRequest.Assets, result.Assets)
+	assert.EqualValues(t, goodCheckRequest.Hooks, result.Hooks)
+	assert.True(t, result.Issued > 0, "Issued > 0")
 }
 
 func TestPublishProxyCheckRequest(t *testing.T) {
@@ -245,6 +248,7 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 	assert.NotNil(request.Config)
 	assert.Empty(request.Assets)
 	assert.Empty(request.Hooks)
+	assert.True(request.Issued > 0, "Issued > 0")
 
 	assert.NoError(scheduler.msgBus.Stop())
 }
