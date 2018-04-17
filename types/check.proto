@@ -25,6 +25,9 @@ message CheckRequest {
 
   // Hooks are a list of hooks to be executed after a check.
   repeated HookConfig hooks = 3 [(gogoproto.nullable) = false];
+
+  // Issued describes the time in which the check request was issued
+  int64 Issued = 4 [(gogoproto.jsontag) = "issued"];
 }
 
 // A ProxyRequests represents a request to execute a proxy check
@@ -185,7 +188,7 @@ message Check {
   repeated CheckHistory history = 24 [(gogoproto.jsontag) = "history", (gogoproto.nullable) = false];
 
   // Issued describes the time in which the check request was issued
-  int64 issued = 25;
+  int64 issued = 25 [(gogoproto.jsontag) = "issued"];
 
   // Output from the execution of Command
   string output = 26;
