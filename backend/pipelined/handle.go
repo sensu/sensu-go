@@ -53,7 +53,7 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		handler := u.Handler
 		filtered := p.filterEvent(handler, event)
 
-		if filtered {
+		if filtered && event.HasCheck() {
 			logger.WithFields(logrus.Fields{
 				"check":        event.Check.Name,
 				"entity":       event.Entity.ID,

@@ -174,7 +174,7 @@ func TestReceiveMetrics(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, udpClient.Close())
 
-	// TODO: test metric event creation https://github.com/sensu/sensu-go/issues/1247
+	// TODO: test metric event creation https://github.com/sensu/sensu-go/issues/1259
 	// msg := <-ta.sendq
 	// assert.NotEmpty(msg)
 	// assert.Equal("event", msg.Type)
