@@ -14,7 +14,8 @@ import createStore from "./store";
 import reducer from "./reducer";
 import registerServiceWorker from "./registerServiceWorker";
 import AppThemeProvider from "./components/AppThemeProvider";
-import BrowserOverrides from "./components/BrowserOverrides";
+import ResetStyles from "./components/ResetStyles";
+import ThemeStyles from "./components/ThemeStyles";
 import NotFoundPage from "./pages/NotFoundPage";
 
 // Fonts
@@ -42,8 +43,9 @@ ReactDOM.render(
   <Provider store={store}>
     <ApolloProvider client={client}>
       <AppThemeProvider>
-        <BrowserOverrides />
         <Router resolver={resolver} />
+        <ResetStyles />
+        <ThemeStyles />
       </AppThemeProvider>
     </ApolloProvider>
   </Provider>,
