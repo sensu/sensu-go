@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -138,4 +139,20 @@ func TestFixtureProxyRequests(t *testing.T) {
 
 	p.SplayCoverage = 0
 	assert.Error(t, p.Validate())
+}
+
+func TestCheckHasZeroIssuedMarshaled(t *testing.T) {
+	check := FixtureCheck("foo")
+	check.Issued = 0
+	b, err := json.Marshal(check)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := m["issued"]; !ok {
+		t.Error("issued not present")
+	}
 }

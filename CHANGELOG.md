@@ -65,6 +65,7 @@ and yarn are now dependencies for building the backend.
 - Fix the manual packaging process.
 - Properly log the event being handled in pipelined
 - The http_check.sh example script now hides its output
+- Fixed a bug where the Issued field was never populated.
 
 ### Added
 - Support for managing mutators via sensuctl.
