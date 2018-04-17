@@ -19,6 +19,7 @@ func TestEnqueue(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testenq", client)
@@ -32,6 +33,7 @@ func TestDequeueSingleItem(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testdeq", client)
@@ -54,6 +56,7 @@ func TestDequeueFIFO(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testfifo", client)
@@ -80,6 +83,7 @@ func TestDequeueParallel(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testparallel", client)
@@ -153,6 +157,7 @@ func TestNack(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testnack", client)
@@ -177,6 +182,7 @@ func TestAck(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testack", client)
@@ -202,6 +208,7 @@ func TestOnce(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testonce", client)
@@ -227,6 +234,7 @@ func TestNackExpired(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
+	defer client.Close()
 	require.NoError(t, err)
 
 	queue := New("testexpired", client)
@@ -247,6 +255,7 @@ func TestNackExpired(t *testing.T) {
 
 	// create a new client and queue
 	newClient, err := e.NewClient()
+	defer newClient.Close()
 	require.NoError(t, err)
 
 	// wait to make sure the item has timed out
@@ -268,6 +277,7 @@ func TestEtcdKilled(t *testing.T) {
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	client, err := e.NewClient()
+	defer client.Close()
 	// Stop Etcd before client gets a chance to connect
 	cleanup()
 	require.NoError(t, err)
