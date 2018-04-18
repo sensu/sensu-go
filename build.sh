@@ -112,7 +112,7 @@ build_tools () {
         build_tool $cmd "tools"
     done
 
-    for cmd in slack; do
+    for cmd in slack influx-db; do
         build_tool $cmd "handlers"
     done
 }
@@ -239,7 +239,7 @@ docker_commands () {
         build_tool_binary linux amd64 $cmd "tools"
     done
 
-    for cmd in slack; do
+    for cmd in slack influx-db; do
         echo "Building handlers/$cmd for linux-amd64"
         build_tool_binary linux amd64 $cmd "handlers"
     done
