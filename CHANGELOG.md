@@ -19,8 +19,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added extension registry to the store.
 - Add sensuctl create command.
 - Adds a statsd server to the sensu-agent which runs statsd at a configurable
-flush interval and converts gostatsd metrics to Sensu Metric Format. These
-metric events are swallowed for the time being.
+flush interval and converts gostatsd metrics to Sensu Metric Format.
 - Add event filtering to extensions.
 - Proper 404 page for web UI.
 - Add sensuctl extension command.
@@ -67,6 +66,8 @@ and yarn are now dependencies for building the backend.
 - Fix the manual packaging process.
 - Properly log the event being handled in pipelined
 - The http_check.sh example script now hides its output
+- Events created from the metrics passed to the statsd listener are no longer
+swallowed. The events are sent through the pipeline.
 - Fixed a bug where the Issued field was never populated.
 
 ### Added

@@ -13,6 +13,7 @@ import (
 
 	"github.com/atlassian/gostatsd"
 	"github.com/atlassian/gostatsd/pkg/statsd"
+	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/viper"
 )
@@ -112,16 +113,13 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 		Metrics:   metrics,
 	}
 
-	_, err := json.Marshal(event)
-	// msg, err := json.Marshal(event)
+	msg, err := json.Marshal(event)
 	if err != nil {
 		logger.WithError(err).Error("error marshaling metric event")
 		return err
 	}
 
-	// TODO: Swallow the message until we can handle metric events
-	// https://github.com/sensu/sensu-go/issues/1247
-	// c.agent.sendMessage(transport.MessageTypeEvent, msg)
+	c.agent.sendMessage(transport.MessageTypeEvent, msg)
 	return nil
 }
 

@@ -73,16 +73,28 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 
 // Validate returns an error if the event does not pass validation tests.
 func (e *Event) Validate() error {
-	if e.Check == nil || e.Entity == nil {
-		return errors.New("malformed event")
+	if e.Entity == nil {
+		return errors.New("event must contain an entity")
+	}
+
+	if !e.HasCheck() && !e.HasMetrics() {
+		return errors.New("event must contain a check or metrics")
 	}
 
 	if err := e.Entity.Validate(); err != nil {
 		return errors.New("entity " + err.Error())
 	}
 
-	if err := e.Check.Validate(); err != nil {
-		return errors.New("check " + err.Error())
+	if e.HasCheck() {
+		if err := e.Check.Validate(); err != nil {
+			return errors.New("check " + err.Error())
+		}
+	}
+
+	if e.HasMetrics() {
+		if err := e.Metrics.Validate(); err != nil {
+			return errors.New("metrics " + err.Error())
+		}
 	}
 
 	for _, hook := range e.Hooks {
