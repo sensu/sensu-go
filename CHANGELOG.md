@@ -55,6 +55,7 @@ and yarn are now dependencies for building the backend.
 - Updated Sirupsen/logrus to sirupsen/logrus and other applicable dependencies using the former.
 - Set default log level to 'warn'.
 - Optimize check marshaling.
+- Silenced API only accepts 'id' parameter on DELETE requests.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.

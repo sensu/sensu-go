@@ -583,13 +583,6 @@ func TestSilencedDestroy(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
 		},
-		{
-			name:        "Special character in params",
-			ctx:         defaultCtx,
-			params:      QueryParams{"id": "entity:i-424242:%2A"},
-			expectedID:  "entity:i-424242:*",
-			expectedErr: false,
-		},
 	}
 
 	for _, tc := range testCases {
