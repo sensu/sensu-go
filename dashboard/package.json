@@ -57,6 +57,7 @@
     "graphql": "^0.13.0",
     "graphql-tag": "^2.8.0",
     "html-webpack-plugin": "^2.29.0",
+    "intl-relativeformat": "^2.1.0",
     "istanbul-reports": "^1.1.0",
     "jest": "^21.2.1",
     "jest-enzyme": "^4.0.0",

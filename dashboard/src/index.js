@@ -14,9 +14,6 @@ import AppRoot from "/components/AppRoot";
 // Fonts
 import "typeface-roboto"; // eslint-disable-line
 
-// Polyfill
-import "url-search-params-polyfill"; // eslint-disable-line import/first
-
 // Configure store
 const store = createStore(reducer, {});
 
