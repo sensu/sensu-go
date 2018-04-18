@@ -25,6 +25,9 @@ type mockQueryEnvironmentFetcher struct {
 }
 
 func (m mockQueryEnvironmentFetcher) Find(ctx context.Context, org, env string) (*types.Environment, error) {
+	if org != "bobs-burgers" || env != "us-west-2" {
+		return nil, nil
+	}
 	return m.record, m.err
 }
 
@@ -45,8 +48,8 @@ func TestQueryTypeEnvironmentField(t *testing.T) {
 	impl := queryImpl{environmentCtrl: mock}
 
 	params := schema.QueryEnvironmentFieldResolverParams{}
-	params.Args.Environment = "default"
-	params.Args.Organization = "default"
+	params.Args.Environment = "us-west-2"
+	params.Args.Organization = "bobs-burgers"
 
 	res, err := impl.Environment(params)
 	require.NoError(t, err)
