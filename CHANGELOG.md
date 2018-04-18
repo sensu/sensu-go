@@ -7,6 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- Support for managing mutators via sensuctl.
 - Added ability to sort events in web UI.
 - Add PUT support to APId for the various resource types.
 - Added flags to disable the agent's API and Socket listeners
@@ -66,12 +67,11 @@ and yarn are now dependencies for building the backend.
 - Fix the manual packaging process.
 - Properly log the event being handled in pipelined
 - The http_check.sh example script now hides its output
+- Improve json unmarshaling performance.
 - Events created from the metrics passed to the statsd listener are no longer
 swallowed. The events are sent through the pipeline.
 - Fixed a bug where the Issued field was never populated.
 
-### Added
-- Support for managing mutators via sensuctl.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added

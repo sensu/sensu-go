@@ -12,8 +12,15 @@ import (
 )
 
 var (
-	sep = []byte("\n")
+	sep     = []byte("\n")
+	msgPool sync.Pool
 )
+
+func init() {
+	msgPool.New = func() interface{} {
+		return &Message{}
+	}
+}
 
 const (
 	// MessageTypeKeepalive is the message type sent for keepalives--which are just an
@@ -125,6 +132,14 @@ func NewTransport(conn *websocket.Conn) Transport {
 	}
 }
 
+// NewMessage creates a new Message.
+func NewMessage(msgType string, payload []byte) *Message {
+	msg := msgPool.Get().(*Message)
+	msg.Type = msgType
+	msg.Payload = payload
+	return msg
+}
+
 // Close attempts to send a "going away" message over the websocket connection.
 // This will cause a Write over the websocket transport, which can cause a
 // panic. We rescue potential panics and consider the connection closed,
@@ -176,7 +191,10 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 		return nil, err
 	}
 
-	return &Message{msgType, payload}, nil
+	msg := msgPool.Get().(*Message)
+	msg.Type = msgType
+	msg.Payload = payload
+	return msg, nil
 }
 
 // Reconnect attempts to establish a new connection to the websocket backend. If
@@ -213,6 +231,7 @@ func (t *WebSocketTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOpt
 // closed, returns a ClosedError. Returns a ConnectionError if the websocket
 // connection returns an error while sending, but the connection is still open.
 func (t *WebSocketTransport) Send(m *Message) error {
+	defer msgPool.Put(m)
 	t.mutex.RLock()
 	if t.closed {
 		t.mutex.RUnlock()
