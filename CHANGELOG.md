@@ -60,6 +60,7 @@ and yarn are now dependencies for building the backend.
 - Fix the manual packaging process.
 - Properly log the event being handled in pipelined
 - The http_check.sh example script now hides its output
+- Silenced entries using an asterisk can be deleted
 
 ### Added
 - Support for managing mutators via sensuctl.

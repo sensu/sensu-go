@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -215,6 +216,11 @@ func (a SilencedController) Destroy(ctx context.Context, params QueryParams) err
 		if err != nil {
 			return NewError(InvalidArgument, err)
 		}
+	}
+
+	// Unescape the ID parameter, in case we have something like an asterisk (*)
+	if unescapedID, err := url.QueryUnescape(id); err == nil {
+		id = unescapedID
 	}
 
 	if err := a.Store.DeleteSilencedEntryByID(ctx, id); err != nil {

@@ -540,8 +540,8 @@ func TestSilencedDestroy(t *testing.T) {
 		name            string
 		ctx             context.Context
 		params          QueryParams
-		fetchResult     *types.Silenced
 		deleteErr       error
+		expectedID      string
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
@@ -549,39 +549,46 @@ func TestSilencedDestroy(t *testing.T) {
 			name:        "Deleted",
 			ctx:         defaultCtx,
 			params:      QueryParams{"id": "silence1"},
-			fetchResult: types.FixtureSilenced("*:silence1"),
+			expectedID:  "silence1",
 			expectedErr: false,
 		},
 		{
 			name:        "Subscription Params",
 			ctx:         defaultCtx,
 			params:      QueryParams{"subscription": "test"},
-			fetchResult: types.FixtureSilenced("*:silence1"),
+			expectedID:  "test:*",
 			expectedErr: false,
 		},
 		{
 			name:        "Check Param",
 			ctx:         defaultCtx,
 			params:      QueryParams{"check": "test"},
-			fetchResult: types.FixtureSilenced("*:silence1"),
+			expectedID:  "*:test",
 			expectedErr: false,
 		},
 		{
 			name:            "Store Err on Delete",
 			ctx:             defaultCtx,
 			params:          QueryParams{"id": "silence1"},
-			fetchResult:     types.FixtureSilenced("*:silence1"),
 			deleteErr:       errors.New("dunno"),
 			expectedErr:     true,
+			expectedID:      "silence1",
 			expectedErrCode: InternalErr,
 		},
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
 			params:          QueryParams{"id": "silence1"},
-			fetchResult:     types.FixtureSilenced("*:silence1"),
+			expectedID:      "silence1",
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
+		},
+		{
+			name:        "Special character in params",
+			ctx:         defaultCtx,
+			params:      QueryParams{"id": "entity:i-424242:%2A"},
+			expectedID:  "entity:i-424242:*",
+			expectedErr: false,
 		},
 	}
 
@@ -592,15 +599,9 @@ func TestSilencedDestroy(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			// Mock store methods
+			// Mock store method
 			store.
-				On("DeleteSilencedEntryByID", mock.Anything, mock.Anything).
-				Return(tc.deleteErr).Once()
-			store.
-				On("DeleteSilencedEntriesByCheckName", mock.Anything, mock.Anything).
-				Return(tc.deleteErr).Once()
-			store.
-				On("DeleteSilencedEntriesBySubscription", mock.Anything, mock.Anything).
+				On("DeleteSilencedEntryByID", mock.Anything, tc.expectedID).
 				Return(tc.deleteErr).Once()
 
 			// Exec Query
