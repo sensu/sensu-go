@@ -48,8 +48,14 @@ func SetField(v Attributes, path string, value interface{}) error {
 		return fmt.Errorf("invalid type (want struct): %v", kind)
 	}
 	addressOfAttrs := addressOfExtendedAttributes(v)
-	fields := getJSONFields(strukt, addressOfAttrs)
-	f, ok := fields[path]
+	fieldsp := structFieldPool.Get().(*[]structField)
+	defer func() {
+		*fieldsp = (*fieldsp)[:0]
+		structFieldPool.Put(fieldsp)
+	}()
+	getJSONFields(strukt, addressOfAttrs, true, fieldsp)
+	fields := *fieldsp
+	f, ok := lookupField(fields, path)
 	if !ok {
 		return setExtendedAttribute(v, path, value)
 	}
