@@ -45,13 +45,9 @@ class ChecksContent extends React.Component {
 
           return (
             <AppContent>
-              {environment ? (
-                <Paper>
-                  <CheckList environment={environment} />
-                </Paper>
-              ) : (
-                <div>Loading...</div>
-              )}
+              <Paper>
+                <CheckList environment={environment} loading={loading} />
+              </Paper>
             </AppContent>
           );
         }}

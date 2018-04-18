@@ -13,13 +13,21 @@ import Table, {
 import Checkbox from "material-ui/Checkbox";
 import Row from "./CheckRow";
 
+import Loader from "./Loader";
+
 class CheckList extends React.Component {
   static propTypes = {
     environment: PropTypes.shape({
       checks: PropTypes.shape({
         edges: PropTypes.array.isRequired,
       }),
-    }).isRequired,
+    }),
+    loading: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    environment: null,
+    loading: false,
   };
 
   static fragments = {
@@ -43,26 +51,28 @@ class CheckList extends React.Component {
   };
 
   render() {
-    const { environment } = this.props;
+    const { environment, loading } = this.props;
     const checks = get(environment, "checks.edges", []);
 
     return (
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell padding="checkbox">
-              <Checkbox />
-            </TableCell>
-            <TableCell>Check</TableCell>
-            <TableCell>Command</TableCell>
-            <TableCell>Subscribers</TableCell>
-            <TableCell>Interval</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {map(checks, edge => <Row key={edge.cursor} check={edge.node} />)}
-        </TableBody>
-      </Table>
+      <Loader loading={loading}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox />
+              </TableCell>
+              <TableCell>Check</TableCell>
+              <TableCell>Command</TableCell>
+              <TableCell>Subscribers</TableCell>
+              <TableCell>Interval</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody style={{ minHeight: 200 }}>
+            {map(checks, edge => <Row key={edge.cursor} check={edge.node} />)}
+          </TableBody>
+        </Table>
+      </Loader>
     );
   }
 }

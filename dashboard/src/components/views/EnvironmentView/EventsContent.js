@@ -96,7 +96,7 @@ class EventsContent extends React.Component {
   };
 
   render() {
-    const { classes, match, location, ...props } = this.props;
+    const { classes, match, location } = this.props;
     const query = new URLSearchParams(location.search);
     return (
       <Query
@@ -124,16 +124,12 @@ class EventsContent extends React.Component {
                     value={this.state.filterValue}
                   />
                 </div>
-                {environment ? (
-                  <EventsContainer
-                    className={classes.container}
-                    onQueryChange={this.changeQuery}
-                    environment={environment}
-                    {...props}
-                  />
-                ) : (
-                  <div>Loading...</div>
-                )}
+                <EventsContainer
+                  className={classes.container}
+                  onQueryChange={this.changeQuery}
+                  environment={environment}
+                  loading={loading}
+                />
               </div>
             </AppContent>
           );
