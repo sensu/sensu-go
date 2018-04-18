@@ -1,19 +1,24 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
-import { matchShape } from "found";
-
 import Paper from "material-ui/Paper";
-import AppContent from "../components/AppContent";
-import CheckList from "../components/CheckList";
 
-class CheckPage extends React.Component {
+import AppContent from "../../AppContent";
+import CheckList from "../../CheckList";
+
+import NotFoundView from "../../views/NotFoundView";
+
+class ChecksContent extends React.Component {
   static propTypes = {
-    match: matchShape.isRequired,
+    match: PropTypes.object.isRequired,
   };
 
   static query = gql`
-    query ChecksPageQuery($environment: String!, $organization: String!) {
+    query EnvironmentViewChecksContentQuery(
+      $environment: String!
+      $organization: String!
+    ) {
       environment(organization: $organization, environment: $environment) {
         ...CheckList_environment
       }
@@ -27,7 +32,7 @@ class CheckPage extends React.Component {
 
     return (
       <Query
-        query={CheckPage.query}
+        query={ChecksContent.query}
         variables={match.params}
         // TODO: Replace polling with query subscription
         pollInterval={5000}
@@ -36,9 +41,11 @@ class CheckPage extends React.Component {
           // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;
 
+          if (!environment && !loading) return <NotFoundView />;
+
           return (
             <AppContent>
-              {!loading ? (
+              {environment ? (
                 <Paper>
                   <CheckList environment={environment} />
                 </Paper>
@@ -53,4 +60,4 @@ class CheckPage extends React.Component {
   }
 }
 
-export default CheckPage;
+export default ChecksContent;

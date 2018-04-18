@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -151,6 +151,12 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// Validate the received event
 	if err := event.Validate(); err != nil {
 		return err
+	}
+
+	// If the event does not contain a check (rather, it contains metrics)
+	// publish the event without writing to the store
+	if !event.HasCheck() {
+		return e.bus.Publish(messaging.TopicEvent, event)
 	}
 
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)

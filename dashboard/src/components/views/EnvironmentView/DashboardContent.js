@@ -5,7 +5,8 @@ import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 import Grid from "material-ui/Grid";
 import Paper from "material-ui/Paper";
-import AppContent from "../components/AppContent";
+
+import AppContent from "../../AppContent";
 
 const styles = () => ({
   root: {
@@ -22,7 +23,7 @@ const styles = () => ({
   },
 });
 
-class DashboardPage extends React.Component {
+class DashboardContent extends React.Component {
   static propTypes = {
     classes: PropTypes.objectOf(PropTypes.string).isRequired,
   };
@@ -70,4 +71,4 @@ class DashboardPage extends React.Component {
   }
 }
 
-export default withStyles(styles)(DashboardPage);
+export default withStyles(styles)(DashboardContent);

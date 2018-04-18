@@ -34,6 +34,8 @@ var typeMap = map[string]interface{}{
 	"event":                  &Event{},
 	"EventFilter":            &EventFilter{},
 	"event_filter":           &EventFilter{},
+	"Extension":              &Extension{},
+	"extension":              &Extension{},
 	"Handler":                &Handler{},
 	"handler":                &Handler{},
 	"HandlerSocket":          &HandlerSocket{},

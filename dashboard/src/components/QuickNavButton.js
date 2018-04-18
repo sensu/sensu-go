@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
+import { NavLink } from "react-router-dom";
 
 import Typography from "material-ui/Typography";
 import IconButton from "material-ui/IconButton";
-import NamespaceLink from "./NamespaceLink";
 
 const styles = theme => ({
   menuText: {
@@ -35,28 +35,43 @@ class QuickNavButton extends React.Component {
     Icon: PropTypes.func.isRequired,
     caption: PropTypes.string.isRequired,
     to: PropTypes.string.isRequired,
+    organization: PropTypes.string.isRequired,
+    environment: PropTypes.string.isRequired,
+    exact: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    exact: NavLink.defaultProps.exact,
   };
 
   render() {
-    const { classes, Icon, caption, ...props } = this.props;
+    const {
+      classes,
+      Icon,
+      caption,
+      to,
+      organization,
+      environment,
+      exact,
+    } = this.props;
+
     return (
-      <NamespaceLink
-        Component={IconButton}
+      <IconButton
         classes={{
           root: classes.button,
           label: classes.label,
         }}
-        role="button"
-        tabIndex={0}
-        activeClassName={classes.active}
         className={classes.link}
-        {...props}
+        component={NavLink}
+        to={`/${organization}/${environment}/${to}`}
+        activeClassName={classes.active}
+        exact={exact}
       >
         <Icon />
         <Typography variant="caption" classes={{ root: classes.menuText }}>
           {caption}
         </Typography>
-      </NamespaceLink>
+      </IconButton>
     );
   }
 }

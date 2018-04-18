@@ -3,13 +3,13 @@ import PropTypes from "prop-types";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 
-import RestrictUnauthenticated from "./RestrictUnauthenticated";
 import AppFrame from "./AppFrame";
 
 class AppWrapper extends React.Component {
   static propTypes = {
     children: PropTypes.element,
-    match: PropTypes.object.isRequired,
+    environment: PropTypes.string.isRequired,
+    organization: PropTypes.string.isRequired,
   };
 
   static defaultProps = { children: null };
@@ -28,28 +28,30 @@ class AppWrapper extends React.Component {
   `;
 
   render() {
-    const { match, children } = this.props;
-
     return (
-      <RestrictUnauthenticated>
-        <Query query={AppWrapper.query} variables={match.params}>
-          {({ data: { viewer, environment } = {}, loading, error }) => {
-            // TODO: Connect this error handler to display a blocking error
-            // alert
-            if (error) throw error;
+      <Query
+        query={AppWrapper.query}
+        variables={{
+          organization: this.props.organization,
+          environment: this.props.environment,
+        }}
+      >
+        {({ data: { viewer, environment } = {}, loading, error }) => {
+          // TODO: Connect this error handler to display a blocking error
+          // alert
+          if (error) throw error;
 
-            return (
-              <AppFrame
-                loaded={!loading}
-                viewer={viewer}
-                environment={environment}
-              >
-                {children}
-              </AppFrame>
-            );
-          }}
-        </Query>
-      </RestrictUnauthenticated>
+          return (
+            <AppFrame
+              loading={loading}
+              viewer={viewer}
+              environment={environment}
+            >
+              {this.props.children}
+            </AppFrame>
+          );
+        }}
+      </Query>
     );
   }
 }
