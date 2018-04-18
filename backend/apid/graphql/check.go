@@ -84,6 +84,12 @@ func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 	return time.Unix(c.Executed, 0), nil
 }
 
+// LastOK implements response to request for 'lastOK' field.
+func (r *checkImpl) LastOK(p graphql.ResolveParams) (time.Time, error) {
+	c := p.Source.(*types.Check)
+	return time.Unix(c.LastOK, 0), nil
+}
+
 // History implements response to request for 'history' field.
 func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface{}, error) {
 	check := p.Source.(*types.Check)
