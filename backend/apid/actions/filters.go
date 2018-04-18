@@ -10,6 +10,7 @@ import (
 
 var filterUpdateFields = []string{
 	"Action",
+	"When",
 	"Statements",
 }
 
