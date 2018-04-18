@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 import Grid from "material-ui/Grid";
-import AppRoot from "../components/AppRoot";
 
 const styles = theme => ({
   root: {
@@ -57,53 +56,51 @@ const styles = theme => ({
   },
 });
 
-class NotFoundPage extends React.PureComponent {
+class NotFoundView extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.objectOf(PropTypes.string).isRequired,
   };
 
   render() {
     const { classes } = this.props;
+
     return (
-      <AppRoot>
-        <div className={classes.root}>
-          <Grid container spacing={40} className={classes.container}>
-            <Typography
-              component={Grid}
-              item
-              xs={12}
-              sm={6}
-              className={classes.graphic}
-              variant="headline"
-            >
-              <p>
-                <span role="img" aria-label="ship">
-                  🚀
-                </span>
-                {"  ·  "}
-                <span role="img" aria-label="moon">
-                  🌖
-                </span>
-              </p>
+      <div className={classes.root}>
+        <Grid container spacing={40} className={classes.container}>
+          <Typography
+            component={Grid}
+            item
+            xs={12}
+            sm={6}
+            className={classes.graphic}
+            variant="headline"
+          >
+            <p>
+              <span role="img" aria-label="ship">
+                🚀
+              </span>
+              {"  ·  "}
+              <span role="img" aria-label="moon">
+                🌖
+              </span>
+            </p>
+          </Typography>
+          <Grid item xs={12} sm={6}>
+            <Typography className={classes.headline} variant="headline">
+              404
             </Typography>
-            <Grid item xs={12} sm={6}>
-              <Typography className={classes.headline} variant="headline">
-                404
-              </Typography>
-              <Typography className={classes.body} variant="subheading">
-                The page you requested was not found.{" "}
-                <a href="#back" onClick={() => window.history.back()}>
-                  Go back
-                </a>{" "}
-                or <a href="/">return home</a>.
-              </Typography>
-            </Grid>
+            <Typography className={classes.body} variant="subheading">
+              The page you requested was not found.{" "}
+              <a href="#back" onClick={() => window.history.back()}>
+                Go back
+              </a>{" "}
+              or <a href="/">return home</a>.
+            </Typography>
           </Grid>
-        </div>
-      </AppRoot>
+        </Grid>
+      </div>
     );
   }
 }
 
-const EnhancedNotFoundPage = withStyles(styles)(NotFoundPage);
-export default EnhancedNotFoundPage;
+export default withStyles(styles)(NotFoundView);

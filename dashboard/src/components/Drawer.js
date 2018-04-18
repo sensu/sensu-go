@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import compose from "lodash/fp/compose";
-import { withRouter, routerShape, matchShape } from "found";
+import { Route, Link } from "react-router-dom";
 import gql from "graphql-tag";
 
 import MaterialDrawer from "material-ui/Drawer";
@@ -23,10 +22,14 @@ import EnvironmentIcon from "./EnvironmentIcon";
 import Wordmark from "../icons/SensuWordmark";
 
 import { logout } from "../utils/authentication";
-import { makeNamespacedPath } from "./NamespaceLink";
 import DrawerButton from "./DrawerButton";
 import NamespaceSelector from "./NamespaceSelector";
 import Preferences from "./Preferences";
+
+const linkPath = (params, path) => {
+  const { organization, environment } = params;
+  return `/${organization}/${environment}/${path}`;
+};
 
 const styles = theme => ({
   paper: {
@@ -68,13 +71,11 @@ class Drawer extends React.Component {
     viewer: PropTypes.object,
     environment: PropTypes.object,
     onToggle: PropTypes.func.isRequired,
-    router: routerShape.isRequired,
-    match: matchShape.isRequired,
     open: PropTypes.bool.isRequired,
-    loaded: PropTypes.bool,
+    loading: PropTypes.bool,
   };
 
-  static defaultProps = { loaded: false, viewer: null, environment: null };
+  static defaultProps = { loading: false, viewer: null, environment: null };
 
   static fragments = {
     viewer: gql`
@@ -83,13 +84,16 @@ class Drawer extends React.Component {
       }
 
       ${NamespaceSelector.fragments.viewer}
+      ${NamespaceSelector.fragments.environment}
     `,
 
     environment: gql`
       fragment Drawer_environment on Environment {
         ...EnvironmentIcon_environment
+        ...NamespaceSelector_environment
       }
 
+      ${NamespaceSelector.fragments.environment}
       ${EnvironmentIcon.fragments.environment}
     `,
   };
@@ -98,22 +102,15 @@ class Drawer extends React.Component {
     preferencesOpen: false,
   };
 
-  handleLogout = async () => {
-    await logout();
-    this.props.router.push("/login");
-  };
-
-  linkTo = path => {
-    const { router, match, onToggle } = this.props;
-    const fullPath = makeNamespacedPath(match.params)(path);
-    return () => {
-      router.push(fullPath);
-      onToggle();
-    };
-  };
-
   render() {
-    const { loaded, viewer, environment, open, onToggle, classes } = this.props;
+    const {
+      loading,
+      viewer,
+      environment,
+      open,
+      onToggle,
+      classes,
+    } = this.props;
     const { preferencesOpen } = this.state;
 
     return (
@@ -136,65 +133,81 @@ class Drawer extends React.Component {
               </div>
               <div className={classes.row}>
                 <div className={classes.namespaceIcon}>
-                  {loaded ? (
+                  {environment ? (
                     <EnvironmentIcon environment={environment} size={36} />
                   ) : (
-                    <div>Loading...</div>
+                    loading && <div>Loading...</div>
                   )}
                 </div>
               </div>
               <div className={classes.row}>
-                {loaded ? (
-                  <NamespaceSelector
-                    viewer={viewer}
-                    className={classes.namespaceSelector}
-                  />
-                ) : (
-                  <div>Loading...</div>
-                )}
+                <NamespaceSelector
+                  viewer={viewer}
+                  environment={environment}
+                  className={classes.namespaceSelector}
+                />
               </div>
             </div>
           </div>
           <Divider />
-          <List>
-            <DrawerButton
-              Icon={DashboardIcon}
-              primary="Dashboard"
-              onClick={this.linkTo("")}
-            />
-            <DrawerButton
-              Icon={EventIcon}
-              primary="Events"
-              onClick={this.linkTo("events")}
-            />
-            <DrawerButton
-              Icon={EntityIcon}
-              primary="Entities"
-              onClick={this.linkTo("entities")}
-            />
-            <DrawerButton
-              Icon={CheckIcon}
-              primary="Checks"
-              onClick={this.linkTo("checks")}
-            />
-          </List>
+          <Route
+            path="/:organization/:environment"
+            render={({ match: { params } }) => (
+              <List>
+                <DrawerButton
+                  Icon={DashboardIcon}
+                  primary="Dashboard"
+                  component={Link}
+                  onClick={onToggle}
+                  to={linkPath(params, "")}
+                />
+                <DrawerButton
+                  Icon={EventIcon}
+                  primary="Events"
+                  component={Link}
+                  onClick={onToggle}
+                  to={linkPath(params, "events")}
+                />
+                <DrawerButton
+                  Icon={EntityIcon}
+                  primary="Entities"
+                  component={Link}
+                  onClick={onToggle}
+                  to={linkPath(params, "entities")}
+                />
+                <DrawerButton
+                  Icon={CheckIcon}
+                  primary="Checks"
+                  component={Link}
+                  onClick={onToggle}
+                  to={linkPath(params, "checks")}
+                />
+              </List>
+            )}
+          />
           <Divider />
           <List>
             <DrawerButton Icon={SettingsIcon} primary="Settings" />
             <DrawerButton
               Icon={WandIcon}
               primary="Preferences"
-              onClick={() => this.setState({ preferencesOpen: true })}
+              onClick={() => {
+                this.setState({ preferencesOpen: true });
+              }}
             />
             <DrawerButton
               Icon={FeedbackIcon}
               primary="Feedback"
+              component="a"
               href="https://www.sensuapp.org"
             />
             <DrawerButton
               Icon={LogoutIcon}
               primary="Sign out"
-              onClick={this.handleLogout}
+              onClick={() => {
+                onToggle();
+                logout();
+              }}
             />
           </List>
         </div>
@@ -207,4 +220,4 @@ class Drawer extends React.Component {
   }
 }
 
-export default compose(withStyles(styles), withRouter)(Drawer);
+export default withStyles(styles)(Drawer);

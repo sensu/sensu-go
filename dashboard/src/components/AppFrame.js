@@ -2,8 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 import gql from "graphql-tag";
+import { Route } from "react-router-dom";
 
-import AppRoot from "./AppRoot";
 import AppBar from "./AppBar";
 import Drawer from "./Drawer";
 import QuickNav from "./QuickNav";
@@ -13,13 +13,13 @@ class AppFrame extends React.Component {
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.object,
     environment: PropTypes.object,
-    loaded: PropTypes.bool,
+    loading: PropTypes.bool,
     children: PropTypes.element,
   };
 
   static defaultProps = {
     children: null,
-    loaded: false,
+    loading: false,
     viewer: null,
     environment: null,
   };
@@ -92,6 +92,13 @@ class AppFrame extends React.Component {
           paddingTop: toolbar[smBrk].minHeight + theme.spacing.unit * 3,
         },
       },
+
+      appFrame: {
+        display: "flex",
+        alignItems: "stretch",
+        minHeight: "100vh",
+        width: "100%",
+      },
     };
   };
 
@@ -100,7 +107,7 @@ class AppFrame extends React.Component {
   };
 
   render() {
-    const { children, loaded, viewer, environment, classes } = this.props;
+    const { children, loading, viewer, environment, classes } = this.props;
     const { drawerOpen } = this.state;
 
     const toggleDrawer = () => {
@@ -108,14 +115,14 @@ class AppFrame extends React.Component {
     };
 
     return (
-      <AppRoot>
+      <div className={classes.appFrame}>
         <AppBar
-          loaded={loaded}
+          loading={loading}
           environment={environment}
           toggleToolbar={toggleDrawer}
         />
         <Drawer
-          loaded={loaded}
+          loading={loading}
           viewer={viewer}
           open={drawerOpen}
           onToggle={toggleDrawer}
@@ -123,10 +130,19 @@ class AppFrame extends React.Component {
           className={classes.drawer}
         />
         <div className={classes.maincontainer}>
-          <QuickNav className={classes.quicknav} />
+          <Route
+            path="/:organization/:environment"
+            render={({ match: { params } }) => (
+              <QuickNav
+                className={classes.quicknav}
+                organization={params.organization}
+                environment={params.environment}
+              />
+            )}
+          />
           {children}
         </div>
-      </AppRoot>
+      </div>
     );
   }
 }
