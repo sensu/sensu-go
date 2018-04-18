@@ -17,18 +17,13 @@ type clientConnCache struct {
 // Get gets a ClientConn from the cache. ClientConns are safe for concurrent
 // use according to the gRPC issue tracker.
 func (c *clientConnCache) Get(service string) (*grpc.ClientConn, error) {
-	c.Lock()
-	defer c.Unlock()
-	var err error
-	conn, ok := c.clients[service]
-	if !ok {
-		conn, err = grpc.Dial(service)
-		if err != nil {
-			return nil, err
-		}
-		c.clients[service] = conn
-	}
-	return conn, err
+	// TODO: implement gRPC connection caching
+	// The cache needs to monitor its connection flock and make sure that any
+	// connections that get into a bad state are purged from the cache.
+	//
+	// gRPC has an experimental API for this: https://godoc.org/google.golang.org/grpc#ClientConn.WaitForStateChange
+	// And also provides metrics: https://godoc.org/google.golang.org/grpc#Server.ChannelzMetric
+	return grpc.Dial(service, grpc.WithInsecure())
 }
 
 var connCache = clientConnCache{

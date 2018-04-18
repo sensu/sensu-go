@@ -19,7 +19,10 @@ type Entity implements Node {
   deregistration: Deregistration
   keepaliveTimeout: Int
   authorId: String!
-  author: User! # TODO: Implement w/ user type
+  author: User!
+
+  "Related returns a sorted list of like entities from the same environment."
+  related(limit: Int = 10): [Entity]!
 
   # TODO: Use scalar?
   # "ExtendedAttributes store serialized arbitrary JSON-encoded data"

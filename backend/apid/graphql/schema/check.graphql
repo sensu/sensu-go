@@ -44,7 +44,7 @@ type CheckConfig implements Node {
   "STDIN indicates if the check command accepts JSON via stdin from the agent"
   stdin: Boolean!
 
-  "CheckHooks is the list of check hooks for the check"
+  "CheckHooks is the configured list of check hooks for the check"
   checkHooks: HookList
 
   "Subdue represents one or more time windows when the check should be subdued."
@@ -125,7 +125,7 @@ type Check {
   executed: DateTime
 
   "History is the check state history."
-  history: [CheckHistory]!
+  history(first: Int = 21): [CheckHistory]!
 
   "Issued describes the time in which the check request was issued"
   issued: Int!
@@ -144,6 +144,33 @@ type Check {
   check's history
   """
   totalStateChange: Int
+
+  """
+  Hooks describes the results of multiple hooks; if event is associated to hook
+  execution.
+  """
+  hooks: [Hook]
+
+  "Silenced is a list of silenced entry ids (subscription and check name)"
+  silenced: [String]!
+
+  """
+  LastOK displays last time this check was ok; if event status is 0 this is set
+  to timestamp.
+  """
+  lastOK: Int!
+
+  """
+  Occurrences indicates the number of times an event has occurred for a
+  client/check pair with the same check status.
+  """
+  occurrences: Int!
+
+  """
+  OccurrencesWatermark indicates the high water mark tracking number of
+  occurrences at the current severity.
+  """
+  occurrencesWatermark: Int!
 }
 
 """
@@ -151,8 +178,8 @@ CheckHistory is a record of a check execution and its status
 """
 type CheckHistory {
   "Status is the exit status code produced by the check."
-  status: Int
+  status: Int!
 
   "Executed describes the time in which the check request was executed"
-  executed: DateTime
+  executed: DateTime!
 }

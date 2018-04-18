@@ -47,6 +47,7 @@ const (
 	flagRedact                = "redact"
 	flagSocketHost            = "socket-host"
 	flagSocketPort            = "socket-port"
+	flagStatsdDisable         = "statsd-disable"
 	flagStatsdEventHandlers   = "statsd-event-handlers"
 	flagStatsdFlushInterval   = "statsd-flush-interval"
 	flagStatsdMetricsHost     = "statsd-metrics-host"
@@ -55,6 +56,7 @@ const (
 	flagUser                  = "user"
 	flagDisableAPI            = "disable-api"
 	flagDisableSockets        = "disable-sockets"
+	flagLogLevel              = "log-level"
 )
 
 func init() {
@@ -108,6 +110,11 @@ func newStartCommand() *cobra.Command {
 			if setupErr != nil {
 				return setupErr
 			}
+			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
+			if err != nil {
+				return err
+			}
+			logrus.SetLevel(level)
 
 			cfg := agent.NewConfig()
 			cfg.API.Host = viper.GetString(flagAPIHost)
@@ -123,6 +130,7 @@ func newStartCommand() *cobra.Command {
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
 			cfg.Socket.Port = viper.GetInt(flagSocketPort)
+			cfg.StatsdServer.Disable = viper.GetBool(flagStatsdDisable)
 			cfg.StatsdServer.FlushInterval = viper.GetInt(flagStatsdFlushInterval)
 			cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
 			cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
@@ -224,6 +232,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
 	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
+	viper.SetDefault(flagStatsdDisable, agent.DefaultStatsdDisable)
 	viper.SetDefault(flagStatsdFlushInterval, agent.DefaultStatsdFlushInterval)
 	viper.SetDefault(flagStatsdMetricsHost, agent.DefaultStatsdMetricsHost)
 	viper.SetDefault(flagStatsdMetricsPort, agent.DefaultStatsdMetricsPort)
@@ -232,6 +241,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagUser, agent.DefaultUser)
 	viper.SetDefault(flagDisableAPI, false)
 	viper.SetDefault(flagDisableSockets, false)
+	viper.SetDefault(flagLogLevel, "warn")
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -252,6 +262,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
+	cmd.Flags().Bool(flagStatsdDisable, viper.GetBool(flagStatsdDisable), "disables the statsd listener and metrics server")
 	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics")
 	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
 	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
@@ -262,6 +273,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
+	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err

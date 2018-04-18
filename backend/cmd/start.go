@@ -16,6 +16,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/version"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -37,6 +38,7 @@ const (
 	flagTrustedCAFile         = "trusted-ca-file"
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
 	flagDebug                 = "debug"
+	flagLogLevel              = "log-level"
 
 	// Etcd flag constants
 	flagStoreClientURL               = "listen-client-urls"
@@ -80,6 +82,12 @@ func newStartCommand() *cobra.Command {
 			if setupErr != nil {
 				return setupErr
 			}
+
+			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
+			if err != nil {
+				return err
+			}
+			logrus.SetLevel(level)
 
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
@@ -187,6 +195,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagKeyFile, "")
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
+	viper.SetDefault(flagLogLevel, "warn")
 
 	// Etcd defaults
 	viper.SetDefault(flagStoreClientURL, "")
@@ -214,6 +223,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "tls certificate authority")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip ssl verification")
 	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
+	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
 	// Etcd flags
 	cmd.Flags().String(flagStoreClientURL, viper.GetString(flagStoreClientURL), "store listen client URL")

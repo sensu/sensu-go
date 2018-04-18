@@ -58,3 +58,20 @@ func Remove(item string, array []string) []string {
 	}
 	return array
 }
+
+// Intersect finds the intersection between two slices of strings.
+func Intersect(a []string, b []string) []string {
+	set := make([]string, 0, len(a))
+	tab := map[string]bool{}
+
+	for _, e := range a {
+		tab[e] = true
+	}
+
+	for _, e := range b {
+		if _, found := tab[e]; found {
+			set = append(set, e)
+		}
+	}
+	return set
+}

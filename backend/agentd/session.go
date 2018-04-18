@@ -2,19 +2,21 @@ package agentd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
+
+var json = jsoniter.ConfigDefault
 
 // SessionStore specifies the storage requirements of the Session.
 type SessionStore interface {
@@ -283,8 +285,10 @@ func (s *Session) handleEvent(payload []byte) error {
 
 	// Verify if we have a source in the event and if so, use it as the entity by
 	// creating or retrieving it from the store
-	if err := getProxyEntity(event, s.store); err != nil {
-		return err
+	if event.HasCheck() {
+		if err := getProxyEntity(event, s.store); err != nil {
+			return err
+		}
 	}
 
 	// Add the entity subscription to the subscriptions of this entity

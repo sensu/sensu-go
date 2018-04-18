@@ -5,6 +5,7 @@ package schema
 import (
 	fmt "fmt"
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 	time "time"
 )
@@ -423,7 +424,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 			"checkHooks": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "CheckHooks is the list of check hooks for the check",
+				Description:       "CheckHooks is the configured list of check hooks for the check",
 				Name:              "checkHooks",
 				Type:              graphql.OutputType("HookList"),
 			},
@@ -1066,10 +1067,21 @@ type CheckExecutedFieldResolver interface {
 	Executed(p graphql.ResolveParams) (time.Time, error)
 }
 
+// CheckHistoryFieldResolverArgs contains arguments provided to history when selected
+type CheckHistoryFieldResolverArgs struct {
+	First int // First - self descriptive
+}
+
+// CheckHistoryFieldResolverParams contains contextual info to resolve history field
+type CheckHistoryFieldResolverParams struct {
+	graphql.ResolveParams
+	Args CheckHistoryFieldResolverArgs
+}
+
 // CheckHistoryFieldResolver implement to resolve requests for the Check's history field.
 type CheckHistoryFieldResolver interface {
 	// History implements response to request for history field.
-	History(p graphql.ResolveParams) (interface{}, error)
+	History(p CheckHistoryFieldResolverParams) (interface{}, error)
 }
 
 // CheckIssuedFieldResolver implement to resolve requests for the Check's issued field.
@@ -1100,6 +1112,36 @@ type CheckStatusFieldResolver interface {
 type CheckTotalStateChangeFieldResolver interface {
 	// TotalStateChange implements response to request for totalStateChange field.
 	TotalStateChange(p graphql.ResolveParams) (int, error)
+}
+
+// CheckHooksFieldResolver implement to resolve requests for the Check's hooks field.
+type CheckHooksFieldResolver interface {
+	// Hooks implements response to request for hooks field.
+	Hooks(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckSilencedFieldResolver implement to resolve requests for the Check's silenced field.
+type CheckSilencedFieldResolver interface {
+	// Silenced implements response to request for silenced field.
+	Silenced(p graphql.ResolveParams) ([]string, error)
+}
+
+// CheckLastOKFieldResolver implement to resolve requests for the Check's lastOK field.
+type CheckLastOKFieldResolver interface {
+	// LastOK implements response to request for lastOK field.
+	LastOK(p graphql.ResolveParams) (int, error)
+}
+
+// CheckOccurrencesFieldResolver implement to resolve requests for the Check's occurrences field.
+type CheckOccurrencesFieldResolver interface {
+	// Occurrences implements response to request for occurrences field.
+	Occurrences(p graphql.ResolveParams) (int, error)
+}
+
+// CheckOccurrencesWatermarkFieldResolver implement to resolve requests for the Check's occurrencesWatermark field.
+type CheckOccurrencesWatermarkFieldResolver interface {
+	// OccurrencesWatermark implements response to request for occurrencesWatermark field.
+	OccurrencesWatermark(p graphql.ResolveParams) (int, error)
 }
 
 //
@@ -1184,6 +1226,11 @@ type CheckFieldResolvers interface {
 	CheckStateFieldResolver
 	CheckStatusFieldResolver
 	CheckTotalStateChangeFieldResolver
+	CheckHooksFieldResolver
+	CheckSilencedFieldResolver
+	CheckLastOKFieldResolver
+	CheckOccurrencesFieldResolver
+	CheckOccurrencesWatermarkFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1329,7 +1376,7 @@ func (_ CheckAliases) Executed(p graphql.ResolveParams) (time.Time, error) {
 }
 
 // History implements response to request for 'history' field.
-func (_ CheckAliases) History(p graphql.ResolveParams) (interface{}, error) {
+func (_ CheckAliases) History(p CheckHistoryFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -1364,6 +1411,40 @@ func (_ CheckAliases) Status(p graphql.ResolveParams) (int, error) {
 
 // TotalStateChange implements response to request for 'totalStateChange' field.
 func (_ CheckAliases) TotalStateChange(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// Hooks implements response to request for 'hooks' field.
+func (_ CheckAliases) Hooks(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Silenced implements response to request for 'silenced' field.
+func (_ CheckAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.([]string)
+	return ret, err
+}
+
+// LastOK implements response to request for 'lastOK' field.
+func (_ CheckAliases) LastOK(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// Occurrences implements response to request for 'occurrences' field.
+func (_ CheckAliases) Occurrences(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// OccurrencesWatermark implements response to request for 'occurrencesWatermark' field.
+func (_ CheckAliases) OccurrencesWatermark(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
@@ -1479,7 +1560,13 @@ func _ObjTypeCheckExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHistoryFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := CheckHistoryFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
 		return resolver.History(frp)
 	}
 }
@@ -1516,6 +1603,41 @@ func _ObjTypeCheckTotalStateChangeHandler(impl interface{}) graphql1.FieldResolv
 	resolver := impl.(CheckTotalStateChangeFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.TotalStateChange(frp)
+	}
+}
+
+func _ObjTypeCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckHooksFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Hooks(frp)
+	}
+}
+
+func _ObjTypeCheckSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckSilencedFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Silenced(frp)
+	}
+}
+
+func _ObjTypeCheckLastOKHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckLastOKFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LastOK(frp)
+	}
+}
+
+func _ObjTypeCheckOccurrencesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckOccurrencesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Occurrences(frp)
+	}
+}
+
+func _ObjTypeCheckOccurrencesWatermarkHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckOccurrencesWatermarkFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.OccurrencesWatermark(frp)
 	}
 }
 
@@ -1566,11 +1688,22 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.Int,
 			},
 			"history": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+				Args: graphql1.FieldConfigArgument{"first": &graphql1.ArgumentConfig{
+					DefaultValue: 21,
+					Description:  "self descriptive",
+					Type:         graphql1.Int,
+				}},
 				DeprecationReason: "",
 				Description:       "History is the check state history.",
 				Name:              "history",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
+			},
+			"hooks": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Hooks describes the results of multiple hooks; if event is associated to hook\nexecution.",
+				Name:              "hooks",
+				Type:              graphql1.NewList(graphql.OutputType("Hook")),
 			},
 			"interval": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1584,6 +1717,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Issued describes the time in which the check request was issued",
 				Name:              "issued",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"lastOK": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "LastOK displays last time this check was ok; if event status is 0 this is set\nto timestamp.",
+				Name:              "lastOK",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"lowFlapThreshold": &graphql1.Field{
@@ -1600,6 +1740,20 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"occurrences": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Occurrences indicates the number of times an event has occurred for a\nclient/check pair with the same check status.",
+				Name:              "occurrences",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"occurrencesWatermark": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "OccurrencesWatermark indicates the high water mark tracking number of\noccurrences at the current severity.",
+				Name:              "occurrencesWatermark",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 			"output": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1613,6 +1767,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Description:       "Publish indicates if check requests are published for the check",
 				Name:              "publish",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"silenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Silenced is a list of silenced entry ids (subscription and check name)",
+				Name:              "silenced",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
 			"source": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1681,26 +1842,31 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeCheckConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checkHooks":        _ObjTypeCheckCheckHooksHandler,
-		"command":           _ObjTypeCheckCommandHandler,
-		"duration":          _ObjTypeCheckDurationHandler,
-		"executed":          _ObjTypeCheckExecutedHandler,
-		"handlers":          _ObjTypeCheckHandlersHandler,
-		"highFlapThreshold": _ObjTypeCheckHighFlapThresholdHandler,
-		"history":           _ObjTypeCheckHistoryHandler,
-		"interval":          _ObjTypeCheckIntervalHandler,
-		"issued":            _ObjTypeCheckIssuedHandler,
-		"lowFlapThreshold":  _ObjTypeCheckLowFlapThresholdHandler,
-		"name":              _ObjTypeCheckNameHandler,
-		"output":            _ObjTypeCheckOutputHandler,
-		"publish":           _ObjTypeCheckPublishHandler,
-		"source":            _ObjTypeCheckSourceHandler,
-		"state":             _ObjTypeCheckStateHandler,
-		"status":            _ObjTypeCheckStatusHandler,
-		"stdin":             _ObjTypeCheckStdinHandler,
-		"subdue":            _ObjTypeCheckSubdueHandler,
-		"subscriptions":     _ObjTypeCheckSubscriptionsHandler,
-		"totalStateChange":  _ObjTypeCheckTotalStateChangeHandler,
+		"checkHooks":           _ObjTypeCheckCheckHooksHandler,
+		"command":              _ObjTypeCheckCommandHandler,
+		"duration":             _ObjTypeCheckDurationHandler,
+		"executed":             _ObjTypeCheckExecutedHandler,
+		"handlers":             _ObjTypeCheckHandlersHandler,
+		"highFlapThreshold":    _ObjTypeCheckHighFlapThresholdHandler,
+		"history":              _ObjTypeCheckHistoryHandler,
+		"hooks":                _ObjTypeCheckHooksHandler,
+		"interval":             _ObjTypeCheckIntervalHandler,
+		"issued":               _ObjTypeCheckIssuedHandler,
+		"lastOK":               _ObjTypeCheckLastOKHandler,
+		"lowFlapThreshold":     _ObjTypeCheckLowFlapThresholdHandler,
+		"name":                 _ObjTypeCheckNameHandler,
+		"occurrences":          _ObjTypeCheckOccurrencesHandler,
+		"occurrencesWatermark": _ObjTypeCheckOccurrencesWatermarkHandler,
+		"output":               _ObjTypeCheckOutputHandler,
+		"publish":              _ObjTypeCheckPublishHandler,
+		"silenced":             _ObjTypeCheckSilencedHandler,
+		"source":               _ObjTypeCheckSourceHandler,
+		"state":                _ObjTypeCheckStateHandler,
+		"status":               _ObjTypeCheckStatusHandler,
+		"stdin":                _ObjTypeCheckStdinHandler,
+		"subdue":               _ObjTypeCheckSubdueHandler,
+		"subscriptions":        _ObjTypeCheckSubscriptionsHandler,
+		"totalStateChange":     _ObjTypeCheckTotalStateChangeHandler,
 	},
 }
 
@@ -1873,14 +2039,14 @@ func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Executed describes the time in which the check request was executed",
 				Name:              "executed",
-				Type:              graphql1.DateTime,
+				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
 			"status": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Status is the exit status code produced by the check.",
 				Name:              "status",
-				Type:              graphql1.Int,
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},

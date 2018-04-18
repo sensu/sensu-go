@@ -65,3 +65,9 @@ export function logout() {
 
   return invalidatePromise;
 }
+
+// Retrieve any stored tokens during the initial app load.
+const storedTokens = storage.retrieve();
+if (storedTokens) {
+  tokens.swap(storedTokens);
+}

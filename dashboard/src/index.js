@@ -8,13 +8,14 @@ import createRender from "found/lib/createRender";
 import resolver from "found/lib/resolver";
 import injectTapEventPlugin from "react-tap-event-plugin";
 
-import client from "./apollo/client";
+import createClient from "./apollo/client";
 
 import createStore from "./store";
 import reducer from "./reducer";
 import registerServiceWorker from "./registerServiceWorker";
 import AppThemeProvider from "./components/AppThemeProvider";
-import BrowserOverrides from "./components/BrowserOverrides";
+import ResetStyles from "./components/ResetStyles";
+import ThemeStyles from "./components/ThemeStyles";
 import NotFoundPage from "./pages/NotFoundPage";
 
 // Fonts
@@ -37,13 +38,16 @@ const Router = createConnectedRouter({
 const store = createStore(reducer, {});
 store.dispatch(FarceActions.init());
 
+const client = createClient();
+
 // Renderer
 ReactDOM.render(
   <Provider store={store}>
     <ApolloProvider client={client}>
       <AppThemeProvider>
-        <BrowserOverrides />
         <Router resolver={resolver} />
+        <ResetStyles />
+        <ThemeStyles />
       </AppThemeProvider>
     </ApolloProvider>
   </Provider>,

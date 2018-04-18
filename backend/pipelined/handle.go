@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
@@ -53,12 +54,15 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		filtered := p.filterEvent(handler, event)
 
 		if filtered {
-			logger.WithFields(logrus.Fields{
-				"check":        event.Check.Name,
+			fields := logrus.Fields{
 				"entity":       event.Entity.ID,
 				"organization": event.Entity.Organization,
 				"environment":  event.Entity.Environment,
-			}).Debug("event filtered")
+			}
+			if event.HasCheck() {
+				fields["check"] = event.Check.Name
+			}
+			logger.WithFields(fields).Debug("event filtered")
 			continue
 		}
 
@@ -110,12 +114,21 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 
 		if handler == nil {
 			if err != nil {
-				logger.WithError(err).Error("pipelined failed to retrieve a handler")
+				(logger.
+					WithFields(logrus.Fields{"handler": handlerName}).
+					WithError(err).
+					Error("pipelined failed to retrieve a handler"))
 				continue
 			}
 			extension, err = p.store.GetExtension(ctx, handlerName)
+			if err == store.ErrNoExtension {
+				continue
+			}
 			if err != nil {
-				logger.WithError(err).Error("pipelined failed to retrieve a handler")
+				(logger.
+					WithFields(logrus.Fields{"handler": handlerName}).
+					WithError(err).
+					Error("pipelined failed to retrieve a handler"))
 				continue
 			}
 			handler = &types.Handler{
