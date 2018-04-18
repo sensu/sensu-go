@@ -94,6 +94,12 @@ type CheckConfigSubdueFieldResolver interface {
 	Subdue(p graphql.ResolveParams) (interface{}, error)
 }
 
+// CheckConfigTimeoutFieldResolver implement to resolve requests for the CheckConfig's timeout field.
+type CheckConfigTimeoutFieldResolver interface {
+	// Timeout implements response to request for timeout field.
+	Timeout(p graphql.ResolveParams) (int, error)
+}
+
 //
 // CheckConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckConfig' type.
@@ -170,6 +176,7 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigStdinFieldResolver
 	CheckConfigCheckHooksFieldResolver
 	CheckConfigSubdueFieldResolver
+	CheckConfigTimeoutFieldResolver
 }
 
 // CheckConfigAliases implements all methods on CheckConfigFieldResolvers interface by using reflection to
@@ -312,6 +319,13 @@ func (_ CheckConfigAliases) Subdue(p graphql.ResolveParams) (interface{}, error)
 	return val, err
 }
 
+// Timeout implements response to request for 'timeout' field.
+func (_ CheckConfigAliases) Timeout(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 // CheckConfigType CheckConfig is the specification of a check.
 var CheckConfigType = graphql.NewType("CheckConfig", graphql.ObjectKind)
 
@@ -417,6 +431,13 @@ func _ObjTypeCheckConfigSubdueHandler(impl interface{}) graphql1.FieldResolveFn 
 	}
 }
 
+func _ObjTypeCheckConfigTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigTimeoutFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Timeout(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "CheckConfig is the specification of a check.",
@@ -519,6 +540,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "subscriptions",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
+			"timeout": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Timeout is the timeout, in seconds, at which the check has to run.",
+				Name:              "timeout",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node")},
@@ -552,6 +580,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"stdin":             _ObjTypeCheckConfigStdinHandler,
 		"subdue":            _ObjTypeCheckConfigSubdueHandler,
 		"subscriptions":     _ObjTypeCheckConfigSubscriptionsHandler,
+		"timeout":           _ObjTypeCheckConfigTimeoutHandler,
 	},
 }
 
@@ -1144,6 +1173,12 @@ type CheckOccurrencesWatermarkFieldResolver interface {
 	OccurrencesWatermark(p graphql.ResolveParams) (int, error)
 }
 
+// CheckTimeoutFieldResolver implement to resolve requests for the Check's timeout field.
+type CheckTimeoutFieldResolver interface {
+	// Timeout implements response to request for timeout field.
+	Timeout(p graphql.ResolveParams) (int, error)
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -1231,6 +1266,7 @@ type CheckFieldResolvers interface {
 	CheckLastOKFieldResolver
 	CheckOccurrencesFieldResolver
 	CheckOccurrencesWatermarkFieldResolver
+	CheckTimeoutFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1450,6 +1486,13 @@ func (_ CheckAliases) OccurrencesWatermark(p graphql.ResolveParams) (int, error)
 	return ret, err
 }
 
+// Timeout implements response to request for 'timeout' field.
+func (_ CheckAliases) Timeout(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 /*
 CheckType A Check is a check specification and optionally the results of the check's
 execution.
@@ -1641,6 +1684,13 @@ func _ObjTypeCheckOccurrencesWatermarkHandler(impl interface{}) graphql1.FieldRe
 	}
 }
 
+func _ObjTypeCheckTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckTimeoutFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Timeout(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -1817,6 +1867,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "subscriptions",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
+			"timeout": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Timeout is the timeout, in seconds, at which the check has to run.",
+				Name:              "timeout",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 			"totalStateChange": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1866,6 +1923,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"stdin":                _ObjTypeCheckStdinHandler,
 		"subdue":               _ObjTypeCheckSubdueHandler,
 		"subscriptions":        _ObjTypeCheckSubscriptionsHandler,
+		"timeout":              _ObjTypeCheckTimeoutHandler,
 		"totalStateChange":     _ObjTypeCheckTotalStateChangeHandler,
 	},
 }

@@ -50,6 +50,11 @@ type CheckConfig implements Node {
   "Subdue represents one or more time windows when the check should be subdued."
   subdue: TimeWindowWhen
 
+  """
+  Timeout is the timeout, in seconds, at which the check has to run.
+  """
+  timeout: Int!
+
   # TODO: Create scalar to handle extended attributes
   # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
   # extendedAttributes: String
@@ -171,6 +176,11 @@ type Check {
   occurrences at the current severity.
   """
   occurrencesWatermark: Int!
+
+  """
+  Timeout is the timeout, in seconds, at which the check has to run.
+  """
+  timeout: Int!
 }
 
 """
