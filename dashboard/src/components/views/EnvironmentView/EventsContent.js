@@ -1,24 +1,25 @@
 import React from "react";
 import PropTypes from "prop-types";
-
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
-import { routerShape, matchShape } from "found";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 
-import AppContent from "../components/AppContent";
-import EventsContainer from "../components/EventsContainer";
-import SearchBox from "../components/SearchBox";
+import AppContent from "../../AppContent";
+import EventsContainer from "../../EventsContainer";
+import SearchBox from "../../SearchBox";
+
+import NotFoundView from "../../views/NotFoundView";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
 
-class EventsPage extends React.Component {
+class EventsContent extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    router: routerShape.isRequired,
-    match: matchShape.isRequired,
+    history: PropTypes.object.isRequired,
+    match: PropTypes.object.isRequired,
+    location: PropTypes.object.isRequired,
   };
 
   static styles = theme => ({
@@ -49,7 +50,7 @@ class EventsPage extends React.Component {
   });
 
   static query = gql`
-    query EventsPageQuery(
+    query EnvironmentViewEventsContentQuery(
       $filter: String = "${defaultExpression}"
       $order: EventsListOrder = SEVERITY
       $environment: String!
@@ -66,7 +67,9 @@ class EventsPage extends React.Component {
   constructor(props) {
     super(props);
 
-    let filterValue = props.match.location.query.filter;
+    const query = new URLSearchParams(props.location.search);
+
+    let filterValue = query.filter;
     if (filterValue === undefined) {
       filterValue = defaultExpression;
     }
@@ -74,15 +77,15 @@ class EventsPage extends React.Component {
   }
 
   changeQuery = (key, val) => {
-    const { match, router } = this.props;
-    const query = new URLSearchParams(match.location.query);
+    const { location, history } = this.props;
+    const query = new URLSearchParams(location.search);
 
     if (key === "filter") {
       this.setState({ filterValue: val });
     }
     query.set(key, val);
 
-    router.push(`${match.location.pathname}?${query.toString()}`);
+    history.push(`${location.pathname}?${query.toString()}`);
   };
 
   requerySearchBox = filterValue => {
@@ -93,17 +96,20 @@ class EventsPage extends React.Component {
   };
 
   render() {
-    const { classes, match, ...props } = this.props;
+    const { classes, match, location, ...props } = this.props;
+    const query = new URLSearchParams(location.search);
     return (
       <Query
-        query={EventsPage.query}
-        variables={{ ...match.params, ...match.location.query }}
+        query={EventsContent.query}
+        variables={{ ...match.params, filter: query.get("filter") }}
         // TODO: Replace polling with query subscription
         pollInterval={5000}
       >
         {({ data: { environment } = {}, loading, error }) => {
           // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;
+
+          if (!environment && !loading) return <NotFoundView />;
 
           return (
             <AppContent>
@@ -118,7 +124,7 @@ class EventsPage extends React.Component {
                     value={this.state.filterValue}
                   />
                 </div>
-                {!loading ? (
+                {environment ? (
                   <EventsContainer
                     className={classes.container}
                     onQueryChange={this.changeQuery}
@@ -137,4 +143,4 @@ class EventsPage extends React.Component {
   }
 }
 
-export default withStyles(EventsPage.styles)(EventsPage);
+export default withStyles(EventsContent.styles)(EventsContent);

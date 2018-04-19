@@ -15,10 +15,10 @@ class AppBar extends React.Component {
     classes: PropTypes.object.isRequired,
     environment: PropTypes.object,
     toggleToolbar: PropTypes.func.isRequired,
-    loaded: PropTypes.bool,
+    loading: PropTypes.bool,
   };
 
-  static defaultProps = { loaded: false, environment: null };
+  static defaultProps = { loading: false, environment: null };
 
   static fragments = {
     environment: gql`
@@ -58,7 +58,7 @@ class AppBar extends React.Component {
   });
 
   render() {
-    const { loaded, environment, toggleToolbar, classes } = this.props;
+    const { loading, environment, toggleToolbar, classes } = this.props;
 
     return (
       <MUIAppBar className={classes.appBar}>
@@ -80,10 +80,10 @@ class AppBar extends React.Component {
               <Wordmark alt="sensu logo" className={classes.logo} />
             </Typography>
             <div className={classes.grow} />
-            {loaded ? (
+            {environment ? (
               <EnvironmentLabel environment={environment} />
             ) : (
-              <div>Loading...</div>
+              loading && <div>Loading...</div>
             )}
           </MaterialToolbar>
         </div>

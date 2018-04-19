@@ -12,9 +12,11 @@ import (
 func BenchmarkUnmarshal(b *testing.B) {
 	data := []byte(`{"bar":null,"foo":"hello","a":10,"b":"c"}`)
 	var m MyType
-	for i := 0; i < b.N; i++ {
-		_ = json.Unmarshal(data, &m)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = json.Unmarshal(data, &m)
+		}
+	})
 }
 
 func BenchmarkMarshal(b *testing.B) {
@@ -24,9 +26,11 @@ func BenchmarkMarshal(b *testing.B) {
 		b.Fatal(err)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = json.Marshal(&m)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_, _ = json.Marshal(&m)
+		}
+	})
 }
 
 func TestMarshal(t *testing.T) {
@@ -133,16 +137,18 @@ func TestGetJSONStructField(t *testing.T) {
 		Attributes:        []byte(`"hello!"`),
 	}
 
-	fields := getJSONFields(reflect.ValueOf(test), &test.Attributes[0])
+	fieldsp := structFieldPool.Get().(*[]structField)
+	getJSONFields(reflect.ValueOf(test), &test.Attributes[0], true, fieldsp)
+	fields := *fieldsp
 	require.Equal(2, len(fields))
 
-	field, ok := fields["valid"]
+	field, ok := lookupField(fields, "valid")
 	require.Equal(true, ok)
 	assert.Equal(field.Value.Interface(), 5)
 	assert.Equal("valid", field.JSONName)
 	assert.Equal(false, field.OmitEmpty)
 
-	field = fields["validEmpty"]
+	field, _ = lookupField(fields, "validEmpty")
 	assert.Equal(field.Value.Interface(), 0)
 	assert.Equal("validEmpty", field.JSONName)
 	assert.Equal(false, field.OmitEmpty)

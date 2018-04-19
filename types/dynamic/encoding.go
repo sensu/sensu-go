@@ -6,9 +6,27 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"sync"
 
 	jsoniter "github.com/json-iterator/go"
 )
+
+var (
+	fastjson        = jsoniter.ConfigCompatibleWithStandardLibrary
+	structFieldPool sync.Pool
+	wrapperPool     sync.Pool
+)
+
+func init() {
+	structFieldPool.New = func() interface{} {
+		s := make([]structField, 0, 16)
+		return &s
+	}
+	wrapperPool.New = func() interface{} {
+		w := make(map[string]*json.RawMessage, 32)
+		return &w
+	}
+}
 
 // Marshal encodes the struct fields in v that are valid to encode.
 // It also encodes any extended attributes that are defined. Marshal
@@ -39,46 +57,55 @@ func Marshal(v AttrGetter) ([]byte, error) {
 
 // Unmarshal decodes msg into v, storing what fields it can into the basic
 // fields of the struct, and storing the rest into its extended attributes.
-func Unmarshal(msg []byte, v AttrSetter) error {
-	if _, ok := v.(json.Unmarshaler); ok {
-		// Can't safely call UnmarshalJSON here without potentially causing an
-		// infinite recursion. Copy the struct into a new type that doesn't
-		// implement the method.
-		oldVal := reflect.Indirect(reflect.ValueOf(v))
-		if !oldVal.IsValid() {
-			return errors.New("Unmarshal called with nil AttrSetter")
+func Unmarshal(msg []byte, v Attributes) error {
+	val := reflect.Indirect(reflect.ValueOf(v))
+	if !val.IsValid() {
+		return errors.New("Unmarshal called with nil AttrSetter")
+	}
+	wrapperp := wrapperPool.Get().(*map[string]*json.RawMessage)
+	wrapper := *wrapperp
+	defer func() {
+		for k := range wrapper {
+			delete(wrapper, k)
 		}
-		typ := oldVal.Type()
-		numField := typ.NumField()
-		fields := make([]reflect.StructField, 0, numField)
-		for i := 0; i < numField; i++ {
-			field := typ.Field(i)
-			if len(field.PkgPath) == 0 {
-				fields = append(fields, field)
-			}
+		wrapperPool.Put(wrapperp)
+	}()
+	if err := jsoniter.Unmarshal(msg, wrapperp); err != nil {
+		return err
+	}
+
+	fieldsp := structFieldPool.Get().(*[]structField)
+	defer func() {
+		*fieldsp = (*fieldsp)[:0]
+		structFieldPool.Put(fieldsp)
+	}()
+
+	getJSONFields(val, nil, false, fieldsp)
+	jsonFields := *fieldsp
+
+	for _, field := range jsonFields {
+		k := field.JSONName
+		v, ok := wrapper[k]
+		if !ok {
+			continue
 		}
-		newType := reflect.StructOf(fields)
-		newPtr := reflect.New(newType)
-		newVal := reflect.Indirect(newPtr)
-		if err := json.Unmarshal(msg, newPtr.Interface()); err != nil {
-			return err
+		delete(wrapper, k)
+		if v == nil {
+			continue
 		}
-		for _, field := range fields {
-			oldVal.FieldByName(field.Name).Set(newVal.FieldByName(field.Name))
-		}
-	} else {
-		if err := json.Unmarshal(msg, v); err != nil {
+		if err := fastjson.Unmarshal([]byte(*v), field.Value.Addr().Interface()); err != nil {
 			return err
 		}
 	}
 
-	attrs, err := extractExtendedAttributes(v, msg)
-	if err != nil {
-		return err
-	}
-	if len(attrs) > 0 {
+	if len(wrapper) > 0 {
+		attrs, err := fastjson.Marshal(wrapper)
+		if err != nil {
+			return err
+		}
 		v.SetExtendedAttributes(attrs)
 	}
+
 	return nil
 }
 
@@ -107,11 +134,17 @@ func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 
 	extendedAttributesAddress := addressOfExtendedAttributes(v)
 
-	m := getJSONFields(strukt, extendedAttributesAddress)
-	fields := make([]structField, 0, len(m))
-	for _, s := range m {
-		fields = append(fields, s)
-	}
+	fieldsp := structFieldPool.Get().(*[]structField)
+	defer func() {
+		*fieldsp = (*fieldsp)[:0]
+		structFieldPool.Put(fieldsp)
+	}()
+
+	// populate fieldsp with structFields
+	getJSONFields(strukt, extendedAttributesAddress, true, fieldsp)
+
+	fields := *fieldsp
+
 	sort.Slice(fields, func(i, j int) bool {
 		return fields[i].JSONName < fields[j].JSONName
 	})
@@ -125,30 +158,42 @@ func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 	return nil
 }
 
-func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField {
+func lookupField(fields []structField, name string) (structField, bool) {
+	for i := range fields {
+		if fields[i].JSONName == name {
+			return fields[i], true
+		}
+	}
+	return structField{}, false
+}
+
+// getJSONFields finds all of the valid JSON fields in v. It uses the address
+// of the extended attributes in order to avoid listing the extended attributes
+// as a valid json field, and also has a flag to control omitEmpty behaviour.
+// getJSONFields populates resulp with all of the fields it finds.
+// The function uses resultp as a parameter in order to support sync pooling.
+func getJSONFields(v reflect.Value, addressOfAttrs *byte, omitEmpty bool, resultp *[]structField) {
 	typ := v.Type()
 	numField := v.NumField()
-	result := make(map[string]structField, numField)
+	result := *resultp
+	var sf structField
 	for i := 0; i < numField; i++ {
-		field := typ.Field(i)
-		if len(field.PkgPath) != 0 {
+		sf.Field = typ.Field(i)
+		if len(sf.Field.PkgPath) != 0 {
 			// unexported
 			continue
 		}
-		value := v.Field(i)
-		elem := reflect.Indirect(value)
-		sf := structField{Field: field, Value: value}
+		sf.Value = v.Field(i)
+		elem := reflect.Indirect(sf.Value)
 		sf.JSONName, sf.OmitEmpty = sf.jsonFieldName()
 		if sf.JSONName == "-" {
 			continue
 		}
-		if sf.OmitEmpty && isEmpty(sf.Value) {
+		if omitEmpty && sf.OmitEmpty && isEmpty(sf.Value) {
 			continue
 		}
-		if elem.IsValid() {
-			if isExtendedAttributes(addressOfAttrs, value) {
-				continue
-			}
+		if elem.IsValid() && isExtendedAttributes(addressOfAttrs, sf.Value) {
+			continue
 		}
 		// if the field is embedded, flatten it out
 		if sf.Field.Anonymous {
@@ -159,14 +204,15 @@ func getJSONFields(v reflect.Value, addressOfAttrs *byte) map[string]structField
 					attrAddr = &attrs[0]
 				}
 			}
-			fields := getJSONFields(sf.Value, attrAddr)
-			for k, v := range fields {
-				result[k] = v
-			}
+			fieldsp := structFieldPool.Get().(*[]structField)
+			getJSONFields(sf.Value, attrAddr, omitEmpty, fieldsp)
+			result = append(result, *fieldsp...)
+			*fieldsp = (*fieldsp)[:0]
+			structFieldPool.Put(fieldsp)
 			continue
 		}
 		// sf is a valid JSON field.
-		result[sf.JSONName] = sf
+		result = append(result, sf)
 	}
-	return result
+	*resultp = result
 }

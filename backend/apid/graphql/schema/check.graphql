@@ -128,7 +128,7 @@ type Check {
   history(first: Int = 21): [CheckHistory]!
 
   "Issued describes the time in which the check request was issued"
-  issued: Int!
+  issued: DateTime!
 
   "Output from the execution of Command"
   output: String!
@@ -158,7 +158,7 @@ type Check {
   LastOK displays last time this check was ok; if event status is 0 this is set
   to timestamp.
   """
-  lastOK: Int!
+  lastOK: DateTime!
 
   """
   Occurrences indicates the number of times an event has occurred for a

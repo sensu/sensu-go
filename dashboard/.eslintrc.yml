@@ -30,6 +30,9 @@ rules:
   # https://github.com/prettier/prettier#eslint
   prettier/prettier: error
 
+  # We use underscores to prefix "private" class methods
+  no-underscore-dangle: 0
+
   # https://github.com/apollographql/eslint-plugin-graphql
   graphql/template-strings:
     - error

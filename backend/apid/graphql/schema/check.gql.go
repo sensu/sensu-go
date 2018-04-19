@@ -1087,7 +1087,7 @@ type CheckHistoryFieldResolver interface {
 // CheckIssuedFieldResolver implement to resolve requests for the Check's issued field.
 type CheckIssuedFieldResolver interface {
 	// Issued implements response to request for issued field.
-	Issued(p graphql.ResolveParams) (int, error)
+	Issued(p graphql.ResolveParams) (time.Time, error)
 }
 
 // CheckOutputFieldResolver implement to resolve requests for the Check's output field.
@@ -1129,7 +1129,7 @@ type CheckSilencedFieldResolver interface {
 // CheckLastOKFieldResolver implement to resolve requests for the Check's lastOK field.
 type CheckLastOKFieldResolver interface {
 	// LastOK implements response to request for lastOK field.
-	LastOK(p graphql.ResolveParams) (int, error)
+	LastOK(p graphql.ResolveParams) (time.Time, error)
 }
 
 // CheckOccurrencesFieldResolver implement to resolve requests for the Check's occurrences field.
@@ -1382,9 +1382,9 @@ func (_ CheckAliases) History(p CheckHistoryFieldResolverParams) (interface{}, e
 }
 
 // Issued implements response to request for 'issued' field.
-func (_ CheckAliases) Issued(p graphql.ResolveParams) (int, error) {
+func (_ CheckAliases) Issued(p graphql.ResolveParams) (time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret := val.(time.Time)
 	return ret, err
 }
 
@@ -1430,9 +1430,9 @@ func (_ CheckAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
 }
 
 // LastOK implements response to request for 'lastOK' field.
-func (_ CheckAliases) LastOK(p graphql.ResolveParams) (int, error) {
+func (_ CheckAliases) LastOK(p graphql.ResolveParams) (time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret := val.(time.Time)
 	return ret, err
 }
 
@@ -1717,14 +1717,14 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Issued describes the time in which the check request was issued",
 				Name:              "issued",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
 			"lastOK": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "LastOK displays last time this check was ok; if event status is 0 this is set\nto timestamp.",
 				Name:              "lastOK",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
 			"lowFlapThreshold": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
