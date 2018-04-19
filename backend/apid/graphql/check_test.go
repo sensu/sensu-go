@@ -50,6 +50,19 @@ func TestCheckTypeHistoryFieldImpl(t *testing.T) {
 	}
 }
 
+func TestCheckTypeLastOKFieldImpl(t *testing.T) {
+	now := time.Now()
+	check := types.FixtureCheck("test")
+	check.LastOK = now.Unix()
+  
+	impl := checkImpl{}
+	params := graphql.ResolveParams{Source: check}
+  
+	res, err := impl.LastOK(params)
+	require.NoError(t, err)
+	assert.Equal(t, now.Unix(), res.Unix())
+}
+
 func TestCheckTypeIssuedFieldImpl(t *testing.T) {
 	now := time.Now()
 	check := types.FixtureCheck("test")
@@ -57,7 +70,7 @@ func TestCheckTypeIssuedFieldImpl(t *testing.T) {
 
 	impl := checkImpl{}
 	params := graphql.ResolveParams{Source: check}
-
+  
 	res, err := impl.Issued(params)
 	require.NoError(t, err)
 	assert.Equal(t, now.Unix(), res.Unix())
