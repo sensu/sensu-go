@@ -51,6 +51,11 @@ type CheckConfig implements Node {
   subdue: TimeWindowWhen
 
   """
+  Timeout is the timeout, in seconds, at which the check has to run.
+  """
+  timeout: Int!
+
+  """
   TTL represents the length of time in seconds for which a check result is valid.
   """
   ttl: Int!
@@ -176,6 +181,11 @@ type Check {
   occurrences at the current severity.
   """
   occurrencesWatermark: Int!
+
+  """
+  Timeout is the timeout, in seconds, at which the check has to run.
+  """
+  timeout: Int!
 
   """
   TTL represents the length of time in seconds for which a check result is valid.
