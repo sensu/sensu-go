@@ -3,8 +3,10 @@ package graphql
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,4 +48,30 @@ func TestCheckTypeHistoryFieldImpl(t *testing.T) {
 			assert.Len(t, res, tc.expectedLen)
 		})
 	}
+}
+
+func TestCheckTypeLastOKFieldImpl(t *testing.T) {
+	now := time.Now()
+	check := types.FixtureCheck("test")
+	check.LastOK = now.Unix()
+  
+	impl := checkImpl{}
+	params := graphql.ResolveParams{Source: check}
+  
+	res, err := impl.LastOK(params)
+	require.NoError(t, err)
+	assert.Equal(t, now.Unix(), res.Unix())
+}
+
+func TestCheckTypeIssuedFieldImpl(t *testing.T) {
+	now := time.Now()
+	check := types.FixtureCheck("test")
+	check.Issued = now.Unix()
+
+	impl := checkImpl{}
+	params := graphql.ResolveParams{Source: check}
+  
+	res, err := impl.Issued(params)
+	require.NoError(t, err)
+	assert.Equal(t, now.Unix(), res.Unix())
 }

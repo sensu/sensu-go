@@ -1,12 +1,13 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	fmt "fmt"
 	"net/url"
 	"regexp"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // CheckHookRegexStr used to validate type of check hook
@@ -89,20 +90,19 @@ func isSeverity(name string) bool {
 
 // MarshalJSON implements the json.Marshaler interface.
 func (h *HookList) MarshalJSON() ([]byte, error) {
-	result := make(map[string][]string)
-	result[h.Type] = append(result[h.Type], h.Hooks...)
-	return json.Marshal(result)
+	result := map[string][]string{h.Type: h.Hooks}
+	return jsoniter.Marshal(result)
 }
 
 // UnmarshalJSON implements the json.Marshaler interface.
 func (h *HookList) UnmarshalJSON(b []byte) error {
 	result := map[string][]string{}
-	if err := json.Unmarshal(b, &result); err != nil {
+	if err := jsoniter.Unmarshal(b, &result); err != nil {
 		return err
 	}
-	for key := range result {
-		h.Type = key
-		h.Hooks = result[key]
+	for k, v := range result {
+		h.Type = k
+		h.Hooks = v
 	}
 
 	return nil

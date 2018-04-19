@@ -12,7 +12,8 @@ yarn-error.log*
 
 # misc
 .DS_Store
-debug.test
+*.test
+*.prof
 
 # packaging
 *.log

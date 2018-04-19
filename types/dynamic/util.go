@@ -1,8 +1,6 @@
 package dynamic
 
 import (
-	"errors"
-	"fmt"
 	"reflect"
 	"sort"
 	"strings"
@@ -17,49 +15,6 @@ func addressOfExtendedAttributes(v AttrGetter) *byte {
 	}
 
 	return &attrs[0]
-}
-
-// extractExtendedAttributes selects only extended attributes from msg. It will
-// ignore any fields in msg that correspond to fields in v. v must be of kind
-// reflect.Struct.
-func extractExtendedAttributes(v interface{}, msg []byte) ([]byte, error) {
-	strukt := reflect.Indirect(reflect.ValueOf(v))
-	if !strukt.IsValid() {
-		return nil, errors.New("dynamic: nil attributes")
-	}
-	if kind := strukt.Kind(); kind != reflect.Struct {
-		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
-	}
-	fields := getJSONFields(strukt, nil)
-	stream := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 4096)
-	var anys map[string]jsoniter.Any
-	if err := jsoniter.Unmarshal(msg, &anys); err != nil {
-		return nil, err
-	}
-	j := 0
-	for _, any := range sortAnys(anys) {
-		_, ok := fields[any.Name]
-		if ok {
-			// Not a extended attribute
-			continue
-		}
-		if j > 0 {
-			stream.WriteMore()
-		} else {
-			stream.WriteObjectStart()
-		}
-		j++
-		stream.WriteObjectField(any.Name)
-		any.WriteTo(stream)
-	}
-	if j > 0 {
-		stream.WriteObjectEnd()
-	}
-	buf := stream.Buffer()
-	if len(buf) == 0 {
-		buf = nil
-	}
-	return buf, nil
 }
 
 // extractNonPathValues finds all the values in any that do not correspond to
@@ -77,6 +32,9 @@ func extractNonPathValues(any jsoniter.Any, parts []string) map[string]interface
 // isExtendedAttributes determines if the provided value correspond to the
 // provided extended attributes address
 func isExtendedAttributes(address *byte, value reflect.Value) bool {
+	if address == nil {
+		return false
+	}
 	if value.Kind() != reflect.Slice {
 		return false
 	}
@@ -197,7 +155,7 @@ type structField struct {
 	OmitEmpty bool
 }
 
-func (s structField) jsonFieldName() (string, bool) {
+func (s *structField) jsonFieldName() (string, bool) {
 	fieldName := s.Field.Name
 	tag, ok := s.Field.Tag.Lookup("json")
 	omitEmpty := false

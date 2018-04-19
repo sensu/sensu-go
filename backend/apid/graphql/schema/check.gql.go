@@ -100,6 +100,12 @@ type CheckConfigTimeoutFieldResolver interface {
 	Timeout(p graphql.ResolveParams) (int, error)
 }
 
+// CheckConfigTtlFieldResolver implement to resolve requests for the CheckConfig's ttl field.
+type CheckConfigTtlFieldResolver interface {
+	// Ttl implements response to request for ttl field.
+	Ttl(p graphql.ResolveParams) (int, error)
+}
+
 //
 // CheckConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckConfig' type.
@@ -177,6 +183,7 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigCheckHooksFieldResolver
 	CheckConfigSubdueFieldResolver
 	CheckConfigTimeoutFieldResolver
+	CheckConfigTtlFieldResolver
 }
 
 // CheckConfigAliases implements all methods on CheckConfigFieldResolvers interface by using reflection to
@@ -326,6 +333,13 @@ func (_ CheckConfigAliases) Timeout(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
+// Ttl implements response to request for 'ttl' field.
+func (_ CheckConfigAliases) Ttl(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 // CheckConfigType CheckConfig is the specification of a check.
 var CheckConfigType = graphql.NewType("CheckConfig", graphql.ObjectKind)
 
@@ -438,6 +452,13 @@ func _ObjTypeCheckConfigTimeoutHandler(impl interface{}) graphql1.FieldResolveFn
 	}
 }
 
+func _ObjTypeCheckConfigTtlHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigTtlFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Ttl(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "CheckConfig is the specification of a check.",
@@ -547,6 +568,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "timeout",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
+			"ttl": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "TTL represents the length of time in seconds for which a check result is valid.",
+				Name:              "ttl",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node")},
@@ -581,6 +609,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"subdue":            _ObjTypeCheckConfigSubdueHandler,
 		"subscriptions":     _ObjTypeCheckConfigSubscriptionsHandler,
 		"timeout":           _ObjTypeCheckConfigTimeoutHandler,
+		"ttl":               _ObjTypeCheckConfigTtlHandler,
 	},
 }
 
@@ -1116,7 +1145,7 @@ type CheckHistoryFieldResolver interface {
 // CheckIssuedFieldResolver implement to resolve requests for the Check's issued field.
 type CheckIssuedFieldResolver interface {
 	// Issued implements response to request for issued field.
-	Issued(p graphql.ResolveParams) (int, error)
+	Issued(p graphql.ResolveParams) (time.Time, error)
 }
 
 // CheckOutputFieldResolver implement to resolve requests for the Check's output field.
@@ -1158,7 +1187,7 @@ type CheckSilencedFieldResolver interface {
 // CheckLastOKFieldResolver implement to resolve requests for the Check's lastOK field.
 type CheckLastOKFieldResolver interface {
 	// LastOK implements response to request for lastOK field.
-	LastOK(p graphql.ResolveParams) (int, error)
+	LastOK(p graphql.ResolveParams) (time.Time, error)
 }
 
 // CheckOccurrencesFieldResolver implement to resolve requests for the Check's occurrences field.
@@ -1177,6 +1206,12 @@ type CheckOccurrencesWatermarkFieldResolver interface {
 type CheckTimeoutFieldResolver interface {
 	// Timeout implements response to request for timeout field.
 	Timeout(p graphql.ResolveParams) (int, error)
+}
+
+// CheckTtlFieldResolver implement to resolve requests for the Check's ttl field.
+type CheckTtlFieldResolver interface {
+	// Ttl implements response to request for ttl field.
+	Ttl(p graphql.ResolveParams) (int, error)
 }
 
 //
@@ -1267,6 +1302,7 @@ type CheckFieldResolvers interface {
 	CheckOccurrencesFieldResolver
 	CheckOccurrencesWatermarkFieldResolver
 	CheckTimeoutFieldResolver
+	CheckTtlFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1418,9 +1454,9 @@ func (_ CheckAliases) History(p CheckHistoryFieldResolverParams) (interface{}, e
 }
 
 // Issued implements response to request for 'issued' field.
-func (_ CheckAliases) Issued(p graphql.ResolveParams) (int, error) {
+func (_ CheckAliases) Issued(p graphql.ResolveParams) (time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret := val.(time.Time)
 	return ret, err
 }
 
@@ -1466,9 +1502,9 @@ func (_ CheckAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
 }
 
 // LastOK implements response to request for 'lastOK' field.
-func (_ CheckAliases) LastOK(p graphql.ResolveParams) (int, error) {
+func (_ CheckAliases) LastOK(p graphql.ResolveParams) (time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret := val.(time.Time)
 	return ret, err
 }
 
@@ -1488,6 +1524,13 @@ func (_ CheckAliases) OccurrencesWatermark(p graphql.ResolveParams) (int, error)
 
 // Timeout implements response to request for 'timeout' field.
 func (_ CheckAliases) Timeout(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// Ttl implements response to request for 'ttl' field.
+func (_ CheckAliases) Ttl(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret := graphql1.Int.ParseValue(val).(int)
 	return ret, err
@@ -1691,6 +1734,13 @@ func _ObjTypeCheckTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckTtlHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckTtlFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Ttl(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -1767,14 +1817,14 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Issued describes the time in which the check request was issued",
 				Name:              "issued",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
 			"lastOK": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "LastOK displays last time this check was ok; if event status is 0 this is set\nto timestamp.",
 				Name:              "lastOK",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
 			"lowFlapThreshold": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1881,6 +1931,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "totalStateChange",
 				Type:              graphql1.Int,
 			},
+			"ttl": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "TTL represents the length of time in seconds for which a check result is valid.",
+				Name:              "ttl",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
@@ -1925,6 +1982,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"subscriptions":        _ObjTypeCheckSubscriptionsHandler,
 		"timeout":              _ObjTypeCheckTimeoutHandler,
 		"totalStateChange":     _ObjTypeCheckTotalStateChangeHandler,
+		"ttl":                  _ObjTypeCheckTtlHandler,
 	},
 }
 

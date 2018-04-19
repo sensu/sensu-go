@@ -55,6 +55,11 @@ type CheckConfig implements Node {
   """
   timeout: Int!
 
+  """
+  TTL represents the length of time in seconds for which a check result is valid.
+  """
+  ttl: Int!
+
   # TODO: Create scalar to handle extended attributes
   # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
   # extendedAttributes: String
@@ -133,7 +138,7 @@ type Check {
   history(first: Int = 21): [CheckHistory]!
 
   "Issued describes the time in which the check request was issued"
-  issued: Int!
+  issued: DateTime!
 
   "Output from the execution of Command"
   output: String!
@@ -163,7 +168,7 @@ type Check {
   LastOK displays last time this check was ok; if event status is 0 this is set
   to timestamp.
   """
-  lastOK: Int!
+  lastOK: DateTime!
 
   """
   Occurrences indicates the number of times an event has occurred for a
@@ -181,6 +186,11 @@ type Check {
   Timeout is the timeout, in seconds, at which the check has to run.
   """
   timeout: Int!
+
+  """
+  TTL represents the length of time in seconds for which a check result is valid.
+  """
+  ttl: Int!
 }
 
 """
