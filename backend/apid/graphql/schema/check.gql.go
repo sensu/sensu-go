@@ -94,6 +94,12 @@ type CheckConfigSubdueFieldResolver interface {
 	Subdue(p graphql.ResolveParams) (interface{}, error)
 }
 
+// CheckConfigTtlFieldResolver implement to resolve requests for the CheckConfig's ttl field.
+type CheckConfigTtlFieldResolver interface {
+	// Ttl implements response to request for ttl field.
+	Ttl(p graphql.ResolveParams) (int, error)
+}
+
 //
 // CheckConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckConfig' type.
@@ -170,6 +176,7 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigStdinFieldResolver
 	CheckConfigCheckHooksFieldResolver
 	CheckConfigSubdueFieldResolver
+	CheckConfigTtlFieldResolver
 }
 
 // CheckConfigAliases implements all methods on CheckConfigFieldResolvers interface by using reflection to
@@ -312,6 +319,13 @@ func (_ CheckConfigAliases) Subdue(p graphql.ResolveParams) (interface{}, error)
 	return val, err
 }
 
+// Ttl implements response to request for 'ttl' field.
+func (_ CheckConfigAliases) Ttl(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 // CheckConfigType CheckConfig is the specification of a check.
 var CheckConfigType = graphql.NewType("CheckConfig", graphql.ObjectKind)
 
@@ -417,6 +431,13 @@ func _ObjTypeCheckConfigSubdueHandler(impl interface{}) graphql1.FieldResolveFn 
 	}
 }
 
+func _ObjTypeCheckConfigTtlHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigTtlFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Ttl(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "CheckConfig is the specification of a check.",
@@ -519,6 +540,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "subscriptions",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
+			"ttl": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "TTL represents the length of time in seconds for which a check result is valid.",
+				Name:              "ttl",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node")},
@@ -552,6 +580,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"stdin":             _ObjTypeCheckConfigStdinHandler,
 		"subdue":            _ObjTypeCheckConfigSubdueHandler,
 		"subscriptions":     _ObjTypeCheckConfigSubscriptionsHandler,
+		"ttl":               _ObjTypeCheckConfigTtlHandler,
 	},
 }
 
@@ -1144,6 +1173,12 @@ type CheckOccurrencesWatermarkFieldResolver interface {
 	OccurrencesWatermark(p graphql.ResolveParams) (int, error)
 }
 
+// CheckTtlFieldResolver implement to resolve requests for the Check's ttl field.
+type CheckTtlFieldResolver interface {
+	// Ttl implements response to request for ttl field.
+	Ttl(p graphql.ResolveParams) (int, error)
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -1231,6 +1266,7 @@ type CheckFieldResolvers interface {
 	CheckLastOKFieldResolver
 	CheckOccurrencesFieldResolver
 	CheckOccurrencesWatermarkFieldResolver
+	CheckTtlFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1450,6 +1486,13 @@ func (_ CheckAliases) OccurrencesWatermark(p graphql.ResolveParams) (int, error)
 	return ret, err
 }
 
+// Ttl implements response to request for 'ttl' field.
+func (_ CheckAliases) Ttl(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 /*
 CheckType A Check is a check specification and optionally the results of the check's
 execution.
@@ -1641,6 +1684,13 @@ func _ObjTypeCheckOccurrencesWatermarkHandler(impl interface{}) graphql1.FieldRe
 	}
 }
 
+func _ObjTypeCheckTtlHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckTtlFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Ttl(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -1824,6 +1874,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "totalStateChange",
 				Type:              graphql1.Int,
 			},
+			"ttl": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "TTL represents the length of time in seconds for which a check result is valid.",
+				Name:              "ttl",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
@@ -1867,6 +1924,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"subdue":               _ObjTypeCheckSubdueHandler,
 		"subscriptions":        _ObjTypeCheckSubscriptionsHandler,
 		"totalStateChange":     _ObjTypeCheckTotalStateChangeHandler,
+		"ttl":                  _ObjTypeCheckTtlHandler,
 	},
 }
 
