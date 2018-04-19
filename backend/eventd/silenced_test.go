@@ -34,15 +34,17 @@ func TestGetSilenced(t *testing.T) {
 			ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
 			ctx = context.WithValue(ctx, types.EnvironmentKey, "default")
 
-			mockStore := &mockstore.MockStore{}
+			mockStore := &mockstore.Store{}
 			mockStore.On(
 				"GetSilencedEntriesBySubscription",
 				mock.Anything,
+				mock.AnythingOfType("string"),
 			).Return(tc.silencedSubscriptions, nil)
 
 			mockStore.On(
 				"GetSilencedEntriesByCheckName",
 				mock.Anything,
+				mock.AnythingOfType("string"),
 			).Return(tc.silencedChecks, nil)
 
 			result := getSilenced(ctx, tc.event, mockStore)
@@ -229,7 +231,7 @@ func TestHandleExpireOnResolveEntries(t *testing.T) {
 			ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
 			ctx = context.WithValue(ctx, types.EnvironmentKey, "default")
 
-			mockStore := &mockstore.MockStore{}
+			mockStore := &mockstore.Store{}
 
 			mockStore.On(
 				"GetSilencedEntryByID",

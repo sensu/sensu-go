@@ -57,7 +57,7 @@ func TestHelperHandlerProcess(t *testing.T) {
 func TestPipelinedHandleEvent(t *testing.T) {
 	p := &Pipelined{}
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	p.store = store
 
 	entity := types.FixtureEntity("entity1")
@@ -98,7 +98,7 @@ func TestPipelinedHandleEvent(t *testing.T) {
 
 func TestPipelinedExpandHandlers(t *testing.T) {
 	p := &Pipelined{}
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	p.store = store
 
 	handler1 := types.FixtureHandler("handler1")

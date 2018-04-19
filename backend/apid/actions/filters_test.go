@@ -15,7 +15,7 @@ import (
 func TestNewEventFilterController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	ctl := NewEventFilterController(store)
 	assert.NotNil(ctl)
 	assert.Equal(store, ctl.Store)
@@ -82,7 +82,7 @@ func TestEventFilterCreateOrReplace(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewEventFilterController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestEventFilterCreate(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewEventFilterController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -270,7 +270,7 @@ func TestEventFilterDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEventFilterController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -381,7 +381,7 @@ func TestEventFilterUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEventFilterController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -468,7 +468,7 @@ func TestEventFilterQuery(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewEventFilterController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -534,7 +534,7 @@ func TestEventFilterFind(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			store := &mockstore.MockStore{}
+			store := &mockstore.Store{}
 			ctl := NewEventFilterController(store)
 
 			// Mock store methods

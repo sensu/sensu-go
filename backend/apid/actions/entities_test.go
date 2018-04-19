@@ -15,7 +15,7 @@ import (
 func TestNewEntityController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewEntityController(store)
 
 	assert.NotNil(actions)
@@ -91,7 +91,7 @@ func TestEntityDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEntityController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestEntityFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEntityController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -258,7 +258,7 @@ func TestEntityQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEntityController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -356,7 +356,7 @@ func TestEntityUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEntityController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

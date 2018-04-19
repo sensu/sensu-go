@@ -167,3 +167,7 @@ required = ["github.com/shirou/w32"]
 [[constraint]]
   name = "github.com/atlassian/gostatsd"
   version = "2.4.0"
+
+[[constraint]]
+  name = "github.com/vektra/mockery"
+  revision = "c03f6b0c2fb19f0f12eebb29c7c8274bf96ca72b"

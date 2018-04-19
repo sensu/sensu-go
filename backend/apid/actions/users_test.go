@@ -15,7 +15,7 @@ import (
 func TestNewUserController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewUserController(store)
 
 	assert.NotNil(actions)
@@ -77,7 +77,7 @@ func TestUserQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestUserFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -251,7 +251,7 @@ func TestUserCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -357,7 +357,7 @@ func TestUserCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -476,7 +476,7 @@ func TestUserUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -577,7 +577,7 @@ func TestUserDisable(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -679,7 +679,7 @@ func TestUserEnable(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -785,7 +785,7 @@ func TestUserAddRole(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -886,7 +886,7 @@ func TestUserRemoveRole(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

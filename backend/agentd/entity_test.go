@@ -14,7 +14,7 @@ import (
 func TestGetProxyEntity(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetEntityByID", mock.Anything, "bar").Return(types.FixtureEntity("bar"), nil)
 
 	var nilEntity *types.Entity

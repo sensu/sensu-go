@@ -14,8 +14,8 @@ import (
 func TestDeregister(t *testing.T) {
 	assert := assert.New(t)
 
-	mockStore := &mockstore.MockStore{}
-	mockBus := &mockbus.MockBus{}
+	mockStore := &mockstore.Store{}
+	mockBus := &mockbus.MessageBus{}
 
 	adapter := &Deregistration{
 		Store:      mockStore,
@@ -39,8 +39,8 @@ func TestDeregister(t *testing.T) {
 func TestDeregistrationHandler(t *testing.T) {
 	assert := assert.New(t)
 
-	mockStore := &mockstore.MockStore{}
-	mockBus := &mockbus.MockBus{}
+	mockStore := &mockstore.Store{}
+	mockBus := &mockbus.MessageBus{}
 
 	adapter := &Deregistration{
 		Store:      mockStore,

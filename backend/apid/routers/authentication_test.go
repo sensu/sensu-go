@@ -18,7 +18,7 @@ import (
 )
 
 func TestLoginNoCredentials(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
@@ -28,7 +28,7 @@ func TestLoginNoCredentials(t *testing.T) {
 }
 
 func TestLoginInvalidCredentials(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	user := types.FixtureUser("foo")
@@ -44,7 +44,7 @@ func TestLoginInvalidCredentials(t *testing.T) {
 }
 
 func TestLoginSuccessful(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	user := types.FixtureUser("foo")
@@ -71,7 +71,7 @@ func TestLoginSuccessful(t *testing.T) {
 }
 
 func TestLogoutNotWhitelisted(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
@@ -94,7 +94,7 @@ func TestLogoutNotWhitelisted(t *testing.T) {
 }
 
 func TestLogoutSuccess(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
@@ -117,7 +117,7 @@ func TestLogoutSuccess(t *testing.T) {
 }
 
 func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
@@ -140,7 +140,7 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 }
 
 func TestTokenCannotWhitelistAccessToken(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store
@@ -169,7 +169,7 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 }
 
 func TestTokenSuccess(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	a := &AuthenticationRouter{store}
 
 	// Mock calls to the store

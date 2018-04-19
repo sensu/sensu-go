@@ -15,7 +15,7 @@ import (
 func TestNewExtensionController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewExtensionController(store)
 
 	assert.NotNil(actions)
@@ -81,7 +81,7 @@ func TestExtensionQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewExtensionController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestExtensionFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewExtensionController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -248,7 +248,7 @@ func TestExtensionRegister(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewExtensionController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -348,7 +348,7 @@ func TestExtensionCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewExtensionController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

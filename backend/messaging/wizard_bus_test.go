@@ -22,7 +22,7 @@ func (c channelSubscriber) Receiver() chan<- interface{} {
 
 func TestWizardBus(t *testing.T) {
 	b, err := NewWizardBus(WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	require.NoError(t, b.Start())
@@ -102,7 +102,7 @@ func BenchmarkSubscribe(b *testing.B) {
 
 	for _, tc := range testCases {
 		bus, _ := NewWizardBus(WizardBusConfig{
-			RingGetter: &mockring.Getter{},
+			RingGetter: &mockring.RingGetter{},
 		})
 		_ = bus.Start()
 		b.Run(fmt.Sprintf("%d subscribers", tc), func(b *testing.B) {
@@ -124,7 +124,7 @@ func TestPublishDirect(t *testing.T) {
 	ring := &mockring.Ring{}
 	ring.On("Add", mock.Anything, mock.Anything).Return(nil)
 	ring.On("Next", mock.Anything).Return("a", nil)
-	getter := &mockring.Getter{"topic": ring}
+	getter := &mockring.RingGetter{"topic": ring}
 	bus, err := NewWizardBus(WizardBusConfig{
 		RingGetter: getter,
 	})

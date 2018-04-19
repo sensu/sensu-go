@@ -17,7 +17,7 @@ import (
 func TestNewCheckController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewCheckController(store, queue.NewMemoryGetter())
 
 	assert.NotNil(actions)
@@ -83,7 +83,7 @@ func TestCheckQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -154,7 +154,7 @@ func TestCheckFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -253,7 +253,7 @@ func TestCheckCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -353,7 +353,7 @@ func TestCheckCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -464,7 +464,7 @@ func TestCheckUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -564,7 +564,7 @@ func TestCheckDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewCheckController(store, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -648,9 +648,9 @@ func TestCheckAdhoc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		queue := &mockqueue.MockQueue{}
-		getter := &mockqueue.Getter{}
+		store := &mockstore.Store{}
+		queue := &mockqueue.Queue{}
+		getter := &mockqueue.QueueGetter{}
 		getter.On("GetQueue", mock.Anything).Return(queue)
 		actions := NewCheckController(store, getter)
 

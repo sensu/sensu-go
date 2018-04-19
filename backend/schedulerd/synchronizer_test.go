@@ -15,7 +15,7 @@ func TestSynchronizeChecks(t *testing.T) {
 	assert := assert.New(t)
 
 	check1 := types.FixtureCheckConfig("check1")
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetCheckConfigs", mock.AnythingOfType("*context.emptyCtx")).Return([]*types.CheckConfig{check1}, nil)
 
 	sync := SynchronizeChecks{
@@ -32,7 +32,7 @@ func TestSynchronizeAssets(t *testing.T) {
 	assert := assert.New(t)
 
 	asset := types.FixtureAsset("asset1")
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetAssets", mock.AnythingOfType("*context.emptyCtx")).Return([]*types.Asset{asset}, nil)
 
 	sync := SynchronizeAssets{
@@ -49,7 +49,7 @@ func TestSynchronizeHooks(t *testing.T) {
 	assert := assert.New(t)
 
 	hook := types.FixtureHookConfig("hook1")
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetHookConfigs", mock.AnythingOfType("*context.emptyCtx")).Return([]*types.HookConfig{hook}, nil)
 
 	sync := SynchronizeHooks{
@@ -66,7 +66,7 @@ func TestSynchronizeEntities(t *testing.T) {
 	assert := assert.New(t)
 
 	entity := types.FixtureEntity("entity1")
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetEntities", mock.AnythingOfType("*context.emptyCtx")).Return([]*types.Entity{entity}, nil)
 
 	sync := SynchronizeEntities{

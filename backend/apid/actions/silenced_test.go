@@ -16,7 +16,7 @@ import (
 func TestNewSilencedController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewSilencedController(store)
 
 	assert.NotNil(actions)
@@ -104,15 +104,15 @@ func TestSilencedQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewSilencedController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetSilencedEntriesBySubscription", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
-			store.On("GetSilencedEntriesByCheckName", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
+			store.On("GetSilencedEntriesBySubscription", tc.ctx, mock.AnythingOfType("string")).Return(tc.storeRecords, tc.storeErr).Once()
+			store.On("GetSilencedEntriesByCheckName", tc.ctx, mock.AnythingOfType("string")).Return(tc.storeRecords, tc.storeErr).Once()
 			store.On("GetSilencedEntries", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
 
 			// Exec Query
@@ -175,7 +175,7 @@ func TestSilencedFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewSilencedController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -274,7 +274,7 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewSilencedController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -393,7 +393,7 @@ func TestSilencedCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewSilencedController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -496,7 +496,7 @@ func TestSilencedUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewSilencedController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -586,7 +586,7 @@ func TestSilencedDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewSilencedController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

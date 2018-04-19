@@ -44,13 +44,13 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	scheduler.check.Interval = 1
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
 	schedulerState := &SchedulerState{}
 
-	manager := NewStateManager(&mockstore.MockStore{})
+	manager := NewStateManager(&mockstore.Store{})
 	manager.Update(func(state *SchedulerState) {
 		state.SetChecks([]*types.CheckConfig{scheduler.check})
 		state.SetAssets([]*types.Asset{&asset})

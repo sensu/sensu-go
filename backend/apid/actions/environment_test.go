@@ -15,7 +15,7 @@ import (
 func TestNewEnvironmentController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	ctl := NewEnvironmentController(store)
 	assert.NotNil(ctl)
 	assert.Equal(store, ctl.Store)
@@ -85,7 +85,7 @@ func TestEnvironmentCreateOrReplace(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewEnvironmentController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -178,7 +178,7 @@ func TestEnvironmentCreate(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewEnvironmentController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -273,7 +273,7 @@ func TestEnvironmentDestroy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEnvironmentController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -383,7 +383,7 @@ func TestEnvironmentUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewEnvironmentController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -470,7 +470,7 @@ func TestEnvironmentQuery(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		ctl := NewEnvironmentController(store)
 
 		t.Run(test.name, func(t *testing.T) {
@@ -536,7 +536,7 @@ func TestEnvironmentFind(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			store := &mockstore.MockStore{}
+			store := &mockstore.Store{}
 			ctl := NewEnvironmentController(store)
 
 			// Mock store methods

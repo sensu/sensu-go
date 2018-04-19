@@ -24,7 +24,7 @@ func TestAdhocExecutor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
+		RingGetter: &mockring.RingGetter{},
 	})
 	require.NoError(t, err)
 	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus)

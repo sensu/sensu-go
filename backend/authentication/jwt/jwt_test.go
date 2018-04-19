@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestAccessToken(t *testing.T) {
@@ -66,8 +67,8 @@ func TestExtractBearerToken(t *testing.T) {
 
 func TestInitSecret(t *testing.T) {
 	secret = nil
-	store := &mockstore.MockStore{}
-	store.On("GetJWTSecret").Return("foo", nil)
+	store := &mockstore.Store{}
+	store.On("GetJWTSecret").Return([]byte("foo"), nil)
 
 	err := InitSecret(store)
 	assert.NoError(t, err)
@@ -76,9 +77,9 @@ func TestInitSecret(t *testing.T) {
 
 func TestInitSecretMissingSecret(t *testing.T) {
 	secret = nil
-	store := &mockstore.MockStore{}
-	store.On("GetJWTSecret").Return("", fmt.Errorf(""))
-	store.On("CreateJWTSecret").Return(nil)
+	store := &mockstore.Store{}
+	store.On("GetJWTSecret").Return([]byte{}, fmt.Errorf(""))
+	store.On("CreateJWTSecret", mock.Anything).Return(nil)
 
 	err := InitSecret(store)
 	assert.NoError(t, err)
@@ -87,9 +88,9 @@ func TestInitSecretMissingSecret(t *testing.T) {
 
 func TestInitSecretEtcdError(t *testing.T) {
 	secret = nil
-	store := &mockstore.MockStore{}
-	store.On("GetJWTSecret").Return("", fmt.Errorf(""))
-	store.On("CreateJWTSecret").Return(fmt.Errorf(""))
+	store := &mockstore.Store{}
+	store.On("GetJWTSecret").Return([]byte(""), fmt.Errorf(""))
+	store.On("CreateJWTSecret", mock.Anything).Return(fmt.Errorf(""))
 
 	err := InitSecret(store)
 	assert.Error(t, err)

@@ -15,7 +15,7 @@ import (
 func TestNewAssetController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	actions := NewAssetController(store)
 
 	assert.NotNil(actions)
@@ -81,7 +81,7 @@ func TestAssetQuery(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewAssetController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestAssetFind(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewAssetController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -248,7 +248,7 @@ func TestAssetCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewAssetController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -354,7 +354,7 @@ func TestAssetCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewAssetController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -465,7 +465,7 @@ func TestAssetUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.Store{}
 		actions := NewAssetController(store)
 
 		t.Run(tc.name, func(t *testing.T) {

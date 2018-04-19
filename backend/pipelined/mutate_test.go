@@ -100,7 +100,7 @@ func TestPipelinedOnlyCheckOutputMutate(t *testing.T) {
 func TestPipelinedExtensionMutator(t *testing.T) {
 	m := &mockExec{}
 	ext := &types.Extension{URL: "http://127.0.0.1"}
-	store := &mockstore.MockStore{}
+	store := &mockstore.Store{}
 	store.On("GetExtension", mock.Anything, "extension").Return(ext, nil)
 	store.On("GetMutatorByName", mock.Anything, "extension").Return((*types.Mutator)(nil), nil)
 	event := types.FixtureEvent("foo", "bar")
