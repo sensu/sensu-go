@@ -25,6 +25,9 @@ const styles = theme => ({
   red: {
     color: theme.palette.red,
   },
+  muted: {
+    color: theme.palette.grey[500],
+  },
 });
 
 const componentMap = {
@@ -38,12 +41,14 @@ class Icon extends React.PureComponent {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     status: PropTypes.oneOf(["ok", "warning", "error"]).isRequired,
+    mutedOK: PropTypes.bool,
     inline: PropTypes.bool,
   };
 
   static defaultProps = {
     className: "",
     inline: false,
+    mutedOK: false,
   };
 
   render() {
@@ -51,6 +56,7 @@ class Icon extends React.PureComponent {
       classes,
       className: classNameProp,
       inline,
+      mutedOK,
       status,
       ...props
     } = this.props;
@@ -58,6 +64,7 @@ class Icon extends React.PureComponent {
     const Component = componentMap[status];
     const color = statusToColor(status);
     const className = classnames(classNameProp, classes[color], {
+      [classes.muted]: status === "ok" && mutedOK,
       [classes.inline]: inline,
     });
 

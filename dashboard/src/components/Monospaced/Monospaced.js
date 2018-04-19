@@ -13,7 +13,7 @@ const styles = theme => ({
     userSelect: "text",
   },
   background: {
-    backgroundColor: emphasize(theme.palette.background.paper, 0.0125),
+    backgroundColor: emphasize(theme.palette.background.paper, 0.01875),
   },
   scaleFont: {
     // Browsers tend to render monospaced fonts a little larger than intended.
