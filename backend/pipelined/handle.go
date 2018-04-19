@@ -11,6 +11,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
+	utilcontext "github.com/sensu/sensu-go/util/context"
+	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
 
@@ -53,15 +55,11 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 		handler := u.Handler
 		filtered := p.filterEvent(handler, event)
 
+		// Prepare log entry
+		fields := utillogging.EventFields(event)
+		fields["handler"] = handler.Name
+
 		if filtered {
-			fields := logrus.Fields{
-				"entity":       event.Entity.ID,
-				"organization": event.Entity.Organization,
-				"environment":  event.Entity.Environment,
-			}
-			if event.HasCheck() {
-				fields["check"] = event.Check.Name
-			}
 			logger.WithFields(fields).Debug("event filtered")
 			continue
 		}
@@ -72,23 +70,20 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 			continue
 		}
 
-		logger.WithFields(logrus.Fields{
-			"event":   string(eventData),
-			"handler": handler.Name,
-		}).Debug("sending event to handler")
+		logger.WithFields(fields).Debug("sending event to handler")
 
 		switch handler.Type {
 		case "pipe":
 			if _, err := p.pipeHandler(handler, eventData); err != nil {
-				logger.Error(err)
+				logger.WithFields(fields).Error(err)
 			}
 		case "tcp", "udp":
 			if _, err := p.socketHandler(handler, eventData); err != nil {
-				logger.Error(err)
+				logger.WithFields(fields).Error(err)
 			}
 		case "grpc":
 			if err := p.grpcHandler(u.Extension, event, eventData); err != nil {
-				logger.Error(err)
+				logger.WithFields(fields).Error(err)
 			}
 		default:
 			return errors.New("unknown handler type")
@@ -108,16 +103,27 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 
 	expanded := map[string]handlerExtensionUnion{}
 
+	// Prepare log entry
+	env := utilcontext.Environment(ctx)
+	org := utilcontext.Organization(ctx)
+	fields := logrus.Fields{
+		"environment":  env,
+		"organization": org,
+	}
+
 	for _, handlerName := range handlers {
 		handler, err := p.store.GetHandlerByName(ctx, handlerName)
 		var extension *types.Extension
 
+		// Add handler name to log entry
+		fields["handler"] = handlerName
+
 		if handler == nil {
 			if err != nil {
 				(logger.
-					WithFields(logrus.Fields{"handler": handlerName}).
+					WithFields(fields).
 					WithError(err).
-					Error("pipelined failed to retrieve a handler"))
+					Error("failed to retrieve a handler"))
 				continue
 			}
 			extension, err = p.store.GetExtension(ctx, handlerName)
@@ -126,9 +132,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 			}
 			if err != nil {
 				(logger.
-					WithFields(logrus.Fields{"handler": handlerName}).
+					WithFields(fields).
 					WithError(err).
-					Error("pipelined failed to retrieve a handler"))
+					Error("failed to retrieve an extension"))
 				continue
 			}
 			handler = &types.Handler{
@@ -142,7 +148,10 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 			setHandlers, err := p.expandHandlers(ctx, handler.Handlers, level)
 
 			if err != nil {
-				logger.WithError(err).Error("pipelined failed to expand handler set")
+				logger.
+					WithFields(fields).
+					WithError(err).
+					Error("failed to expand handler set")
 			} else {
 				for name, u := range setHandlers {
 					if _, ok := expanded[name]; !ok {
@@ -164,22 +173,26 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 // command and writes the mutated eventData to it via STDIN.
 func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.Execution, error) {
 	handlerExec := &command.Execution{}
-
 	handlerExec.Command = handler.Command
 	handlerExec.Timeout = int(handler.Timeout)
 	handlerExec.Env = handler.EnvVars
-
 	handlerExec.Input = string(eventData[:])
+
+	// Prepare log entry
+	fields := logrus.Fields{
+		"environment":  handler.Environment,
+		"organization": handler.Organization,
+		"handler":      handler.Name,
+	}
 
 	result, err := command.ExecuteCommand(context.Background(), handlerExec)
 
 	if err != nil {
-		logger.WithError(err).Error("pipelined failed to execute event pipe handler")
+		logger.WithError(err).Error("failed to execute event pipe handler")
 	} else {
-		logger.WithFields(logrus.Fields{
-			"status": result.Status,
-			"output": result.Output,
-		}).Infof("pipelined executed event pipe handler")
+		fields["status"] = result.Status
+		fields["output"] = result.Output
+		logger.WithFields(fields).Info("event pipe handler executed")
 	}
 
 	return result, err
@@ -192,6 +205,14 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 	host := handler.Socket.Host
 	port := handler.Socket.Port
 	timeout := handler.Timeout
+
+	// Prepare log entry
+	fields := logrus.Fields{
+		"environment":  handler.Environment,
+		"organization": handler.Organization,
+		"handler":      handler.Name,
+		"protocol":     protocol,
+	}
 
 	// If Timeout is not specified, use the default.
 	if timeout == 0 {
@@ -215,12 +236,10 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 	bytes, err := conn.Write(eventData)
 
 	if err != nil {
-		logger.WithError(err).WithField("type", protocol).Error("pipelined failed to execute event handler")
+		logger.WithFields(fields).WithError(err).Error("failed to execute event handler")
 	} else {
-		logger.WithFields(logrus.Fields{
-			"type":  protocol,
-			"bytes": bytes,
-		}).Debug("pipelined executed event handler")
+		fields["bytes"] = bytes
+		logger.WithFields(fields).Debug("event socket handler executed")
 	}
 
 	return conn, nil

@@ -10,6 +10,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	utilcontext "github.com/sensu/sensu-go/util/context"
 )
 
 const (
@@ -32,8 +33,8 @@ func getEventPath(event *types.Event) string {
 }
 
 func getEventWithCheckPath(ctx context.Context, entity, check string) string {
-	env := environment(ctx)
-	org := organization(ctx)
+	env := utilcontext.Environment(ctx)
+	org := utilcontext.Organization(ctx)
 
 	return path.Join(EtcdRoot, eventsPathPrefix, org, env, entity, check)
 }
@@ -66,7 +67,7 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 
 	// Support "*" as a wildcard for filtering environments
 	var env string
-	if env = environment(ctx); env == "*" {
+	if env = utilcontext.Environment(ctx); env == "*" {
 		env = ""
 	}
 
