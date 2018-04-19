@@ -12,18 +12,6 @@ func (s *MockStore) DeleteSilencedEntryByID(ctx context.Context, silencedID stri
 	return args.Error(0)
 }
 
-// DeleteSilencedEntriesBySubscription ...
-func (s *MockStore) DeleteSilencedEntriesBySubscription(ctx context.Context, subscription string) error {
-	args := s.Called(ctx, subscription)
-	return args.Error(0)
-}
-
-// DeleteSilencedEntriesByCheckName ...
-func (s *MockStore) DeleteSilencedEntriesByCheckName(ctx context.Context, checkName string) error {
-	args := s.Called(ctx, checkName)
-	return args.Error(0)
-}
-
 // GetSilencedEntries ...
 func (s *MockStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
 	args := s.Called(ctx)

@@ -56,6 +56,7 @@ and yarn are now dependencies for building the backend.
 - Updated Sirupsen/logrus to sirupsen/logrus and other applicable dependencies using the former.
 - Set default log level to 'warn'.
 - Optimize check marshaling.
+- Silenced API only accepts 'id' parameter on DELETE requests.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
@@ -67,6 +68,7 @@ and yarn are now dependencies for building the backend.
 - Fix the manual packaging process.
 - Properly log the event being handled in pipelined
 - The http_check.sh example script now hides its output
+- Silenced entries using an asterisk can be deleted
 - Improve json unmarshaling performance.
 - Events created from the metrics passed to the statsd listener are no longer
 swallowed. The events are sent through the pipeline.

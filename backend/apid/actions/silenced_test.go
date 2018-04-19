@@ -539,47 +539,49 @@ func TestSilencedDestroy(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		params          QueryParams
-		fetchResult     *types.Silenced
+		id              string
 		deleteErr       error
+		fetchErr        error
+		fetchResult     *types.Silenced
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
 		{
 			name:        "Deleted",
 			ctx:         defaultCtx,
-			params:      QueryParams{"id": "silence1"},
-			fetchResult: types.FixtureSilenced("*:silence1"),
+			id:          "i-424242:*",
+			fetchResult: types.FixtureSilenced("i-424242:*"),
 			expectedErr: false,
 		},
 		{
-			name:        "Subscription Params",
-			ctx:         defaultCtx,
-			params:      QueryParams{"subscription": "test"},
-			fetchResult: types.FixtureSilenced("*:silence1"),
-			expectedErr: false,
+			name:            "Does Not Exist",
+			ctx:             defaultCtx,
+			id:              "missing:*",
+			fetchResult:     nil,
+			expectedErr:     true,
+			expectedErrCode: NotFound,
 		},
 		{
-			name:        "Check Param",
-			ctx:         defaultCtx,
-			params:      QueryParams{"check": "test"},
-			fetchResult: types.FixtureSilenced("*:silence1"),
-			expectedErr: false,
+			name:            "Store Err on Fetch",
+			ctx:             defaultCtx,
+			id:              "i-424242:*",
+			fetchErr:        errors.New("dunno"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
 		},
 		{
 			name:            "Store Err on Delete",
 			ctx:             defaultCtx,
-			params:          QueryParams{"id": "silence1"},
-			fetchResult:     types.FixtureSilenced("*:silence1"),
+			id:              "i-424242:*",
 			deleteErr:       errors.New("dunno"),
+			fetchResult:     types.FixtureSilenced("i-424242:*"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
 		{
 			name:            "No Permission",
 			ctx:             wrongPermsCtx,
-			params:          QueryParams{"id": "silence1"},
-			fetchResult:     types.FixtureSilenced("*:silence1"),
+			id:              "i-424242:*",
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
 		},
@@ -594,17 +596,14 @@ func TestSilencedDestroy(t *testing.T) {
 
 			// Mock store methods
 			store.
+				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				Return(tc.fetchResult, tc.fetchErr)
+			store.
 				On("DeleteSilencedEntryByID", mock.Anything, mock.Anything).
-				Return(tc.deleteErr).Once()
-			store.
-				On("DeleteSilencedEntriesByCheckName", mock.Anything, mock.Anything).
-				Return(tc.deleteErr).Once()
-			store.
-				On("DeleteSilencedEntriesBySubscription", mock.Anything, mock.Anything).
 				Return(tc.deleteErr).Once()
 
 			// Exec Query
-			err := actions.Destroy(tc.ctx, tc.params)
+			err := actions.Destroy(tc.ctx, tc.id)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

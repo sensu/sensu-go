@@ -116,8 +116,6 @@ func TestSilencing(t *testing.T) {
 	assert.NotEmpty(t, event.Check.Silenced)
 
 	// Make sure the keepalive event is not silenced by our silenced entry
-	// N.B. This is currently broken, see
-	// https://github.com/sensu/sensu-go/issues/707
 	output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
 	assert.NoError(t, err, string(output))
 	event = types.Event{}
