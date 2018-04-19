@@ -6,9 +6,13 @@ import Typography from "material-ui/Typography";
 
 const styles = theme => ({
   root: {
-    width: "50%",
+    width: "40%",
+    display: "table-cell",
     paddingRight: theme.spacing.unit,
     textOverflow: "ellipsis",
+  },
+  container: {
+    minHeight: theme.spacing.unit * 3,
   },
 });
 
@@ -28,9 +32,9 @@ class DictionaryKey extends React.Component {
     const className = classnames(classes.root, classNameProp);
 
     return (
-      <td className={className}>
-        <Typography color="textSecondary">{children}</Typography>
-      </td>
+      <Typography component="td" color="textSecondary" className={className}>
+        <div className={classes.container}>{children}</div>
+      </Typography>
     );
   }
 }

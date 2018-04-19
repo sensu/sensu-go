@@ -6,8 +6,12 @@ import Typography from "material-ui/Typography";
 
 const styles = theme => ({
   root: {
-    width: "50%",
+    display: "table-cell",
     paddingLeft: theme.spacing.unit,
+    userSelect: "text",
+  },
+  limit: {
+    maxWidth: "60%",
   },
 });
 
@@ -16,20 +20,35 @@ class DictionaryValue extends React.Component {
     children: PropTypes.node.isRequired,
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
+    constrain: PropTypes.bool,
   };
 
   static defaultProps = {
     className: null,
+    constrain: false,
   };
 
   render() {
-    const { className: classNameProp, classes, children } = this.props;
-    const className = classnames(classes.root, classNameProp);
+    const {
+      className: classNameProp,
+      classes,
+      children,
+      constrain,
+      ...props
+    } = this.props;
+    const className = classnames(classes.root, classNameProp, {
+      [classes.limit]: constrain,
+    });
 
     return (
-      <td className={className}>
-        <Typography>{children}</Typography>
-      </td>
+      <Typography
+        component="td"
+        variant="body1"
+        className={className}
+        {...props}
+      >
+        {children}
+      </Typography>
     );
   }
 }

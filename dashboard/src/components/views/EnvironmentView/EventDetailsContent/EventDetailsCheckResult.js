@@ -56,7 +56,7 @@ class EventDetailsCheckResult extends React.PureComponent {
       <Card>
         <CardHighlight color={color} />
         <CardContent>
-          <Typography variant="headline" gutterBottom>
+          <Typography variant="headline" paragraph>
             Check Result
           </Typography>
           <Grid container spacing={0}>
@@ -83,7 +83,7 @@ class EventDetailsCheckResult extends React.PureComponent {
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
-                  <DictionaryKey>Occurrences Watermark</DictionaryKey>
+                  <DictionaryKey>Max Occurrences</DictionaryKey>
                   <DictionaryValue>
                     {formatter.format(check.occurrencesWatermark)}
                   </DictionaryValue>

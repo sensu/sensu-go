@@ -1,11 +1,27 @@
 import React from "react";
+import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Placeholder from "../../../PlaceholderCard";
+import Card, { CardContent } from "material-ui/Card";
+import Typography from "material-ui/Typography";
+import Divider from "material-ui/Divider";
+import Dictionary, {
+  DictionaryKey,
+  DictionaryValue,
+  DictionaryEntry,
+} from "../../../Dictionary";
+import RelativeDate from "../../../RelativeDate";
+import Monospaced from "../../../Monospaced";
 
 class EventDetailsConfiguration extends React.Component {
+  static propTypes = {
+    check: PropTypes.object.isRequired,
+    entity: PropTypes.object.isRequired,
+  };
+
   static fragments = {
     entity: gql`
       fragment EventDetailsConfiguration_entity on Entity {
+        name
         class
         system {
           platform
@@ -16,17 +32,78 @@ class EventDetailsConfiguration extends React.Component {
     `,
     check: gql`
       fragment EventDetailsConfiguration_check on Check {
+        name
         command
         interval
         subscriptions
-        # timeout
-        # TTL
+        timeout
+        ttl
       }
     `,
   };
 
   render() {
-    return <Placeholder tall />;
+    const { entity, check } = this.props;
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="headline" paragraph>
+            Configuration
+          </Typography>
+          <Dictionary>
+            <DictionaryEntry>
+              <DictionaryKey>Entity</DictionaryKey>
+              <DictionaryValue>{entity.name}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Class</DictionaryKey>
+              <DictionaryValue>{entity.class}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Platform</DictionaryKey>
+              <DictionaryValue>{entity.system.platform}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Last Seen</DictionaryKey>
+              <DictionaryValue>
+                <RelativeDate dateTime={entity.lastSeen} />
+              </DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Subscriptions</DictionaryKey>
+              <DictionaryValue>
+                {entity.subscriptions.join(", ")}
+              </DictionaryValue>
+            </DictionaryEntry>
+          </Dictionary>
+        </CardContent>
+        <Divider />
+        <CardContent>
+          <Dictionary>
+            <DictionaryEntry>
+              <DictionaryKey>Check</DictionaryKey>
+              <DictionaryValue>{check.name}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Interval</DictionaryKey>
+              <DictionaryValue>{check.interval}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Timeout</DictionaryKey>
+              <DictionaryValue>{check.timeout}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>TTL</DictionaryKey>
+              <DictionaryValue>{check.ttl}</DictionaryValue>
+            </DictionaryEntry>
+          </Dictionary>
+        </CardContent>
+        <Divider />
+        <Monospaced background>
+          <CardContent>{`# Executed command\n$ ${check.command}`}</CardContent>
+        </Monospaced>
+      </Card>
+    );
   }
 }
 
