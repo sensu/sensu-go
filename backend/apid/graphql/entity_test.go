@@ -20,18 +20,20 @@ func (e mockEntityQuerier) Query(ctx context.Context) ([]*types.Entity, error) {
 }
 
 func TestEntityTypeRelatedField(t *testing.T) {
-	mock := mockEntityQuerier{els: []*types.Entity{
+	source := types.FixtureEntity("c")
+	mockCtrl := mockEntityQuerier{els: []*types.Entity{
+		source,
 		types.FixtureEntity("a"),
 		types.FixtureEntity("b"),
 	}}
-	impl := entityImpl{entityCtrl: mock}
 
 	params := schema.EntityRelatedFieldResolverParams{}
-	params.Source = types.FixtureEntity("c")
+	params.Source = source
 	params.Args.Limit = 10
 
+	impl := entityImpl{entityCtrl: mockCtrl}
 	res, err := impl.Related(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
-
+	assert.Len(t, res, 2)
 }

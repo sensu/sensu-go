@@ -79,6 +79,17 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 		return []*types.Entity{}, err
 	}
 
+	// omit source
+	for i, en := range entities {
+		if en.ID != entity.ID {
+			continue
+		}
+		entities[i] = entities[len(entities)-1]
+		entities[len(entities)-1] = nil
+		entities = entities[:len(entities)-1]
+		break
+	}
+
 	// sort
 	scores := map[int]int{}
 	for i, en := range entities {
@@ -89,7 +100,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 		scores[i] = len(matched)
 	}
 	sort.Slice(entities, func(i, j int) bool {
-		return scores[i] < scores[j]
+		return scores[i] > scores[j]
 	})
 
 	// limit
