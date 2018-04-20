@@ -73,6 +73,7 @@ and yarn are now dependencies for building the backend.
 - Events created from the metrics passed to the statsd listener are no longer
 swallowed. The events are sent through the pipeline.
 - Fixed a bug where the Issued field was never populated.
+- When creating a new statsd server, use the default flush interval if given 0.
 
 
 ## [2.0.0-nightly.1] - 2018-03-07
