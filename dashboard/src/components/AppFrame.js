@@ -7,6 +7,7 @@ import { Route } from "react-router-dom";
 import AppBar from "./AppBar";
 import Drawer from "./Drawer";
 import QuickNav from "./QuickNav";
+import Loader from "./Loader";
 
 class AppFrame extends React.Component {
   static propTypes = {
@@ -72,6 +73,7 @@ class AppFrame extends React.Component {
         position: "relative",
         display: "flex",
         width: "100%",
+        flex: 1,
         marginTop: "env(safe-area-inset-top)",
 
         // Contend with app bar height.
@@ -94,8 +96,6 @@ class AppFrame extends React.Component {
       },
 
       appFrame: {
-        display: "flex",
-        alignItems: "stretch",
         minHeight: "100vh",
         width: "100%",
       },
@@ -115,12 +115,8 @@ class AppFrame extends React.Component {
     };
 
     return (
-      <div className={classes.appFrame}>
-        <AppBar
-          loading={loading}
-          environment={environment}
-          toggleToolbar={toggleDrawer}
-        />
+      <Loader className={classes.appFrame} loading={loading}>
+        <AppBar environment={environment} toggleToolbar={toggleDrawer} />
         <Drawer
           loading={loading}
           viewer={viewer}
@@ -142,7 +138,7 @@ class AppFrame extends React.Component {
           />
           {children}
         </div>
-      </div>
+      </Loader>
     );
   }
 }
