@@ -1,19 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
+import { compose } from "recompose";
+import { withApollo } from "react-apollo";
 
 import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
 import Typography from "material-ui/Typography";
 
+import createTokens from "/mutations/createTokens";
+
 import Logo from "/icons/SensuLogoGraphic";
 import Wordmark from "/icons/SensuWordmark";
-import { authenticate } from "/utils/authentication";
 
 class LoginView extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
+    client: PropTypes.object.isRequired,
   };
 
   static styles = theme => ({
@@ -66,17 +70,12 @@ class LoginView extends React.Component {
   state = {
     username: null,
     password: null,
+    authError: null,
   };
 
   handleSubmit = ev => {
+    const { client } = this.props;
     const { username, password } = this.state;
-
-    const handleFailure = () => {
-      this.setState({
-        disabled: false,
-        authError: "Bad username or password.",
-      });
-    };
 
     // Stop default form behaviour
     ev.preventDefault();
@@ -84,8 +83,14 @@ class LoginView extends React.Component {
     // Disable form
     this.setState({ disabled: true });
 
-    // Authenticate user
-    authenticate(username, password).catch(handleFailure);
+    createTokens(client, { username, password }).catch(error => {
+      // eslint-disable-next-line no-console
+      console.error(error);
+      this.setState({
+        disabled: false,
+        authError: "Bad username or password.",
+      });
+    });
   };
 
   render() {
@@ -158,4 +163,4 @@ class LoginView extends React.Component {
   }
 }
 
-export default withStyles(LoginView.styles)(LoginView);
+export default compose(withApollo, withStyles(LoginView.styles))(LoginView);
