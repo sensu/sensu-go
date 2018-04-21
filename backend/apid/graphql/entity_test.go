@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,5 +34,34 @@ func TestEntityTypeRelatedField(t *testing.T) {
 	res, err := impl.Related(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
+}
 
+func TestEntityTypeStatusField(t *testing.T) {
+	entity := types.FixtureEntity("en")
+	mock := mockEventQuerier{els: []*types.Event{
+		types.FixtureEvent("a", entity.ID),
+		types.FixtureEvent("b", entity.ID),
+		types.FixtureEvent("c", entity.ID),
+	}}
+
+	// params
+	params := graphql.ResolveParams{}
+	params.Source = entity
+
+	// exit status: 0
+	impl := &entityImpl{eventCtrl: mock}
+	st, err := impl.Status(params)
+	require.NoError(t, err)
+	assert.Equal(t, 0, st)
+
+	// Add failing event
+	failingEv := types.FixtureEvent("a", entity.ID)
+	failingEv.Check.Status = 2
+	mock.els = append(mock.els, failingEv)
+
+	// exit status: 2
+	impl = &entityImpl{eventCtrl: mock}
+	st, err = impl.Status(params)
+	require.NoError(t, err)
+	assert.Equal(t, 2, st)
 }
