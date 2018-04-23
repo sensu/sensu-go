@@ -4,10 +4,10 @@ import { withStyles } from "material-ui/styles";
 import gql from "graphql-tag";
 import { Route } from "react-router-dom";
 
-import AppBar from "./AppBar";
-import Drawer from "./Drawer";
-import QuickNav from "./QuickNav";
-import Loader from "./Loader";
+import AppBar from "/components/AppBar";
+import Drawer from "/components/Drawer";
+import QuickNav from "/components/QuickNav";
+import Loader from "/components/Loader";
 
 class AppFrame extends React.Component {
   static propTypes = {

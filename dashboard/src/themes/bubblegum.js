@@ -1,5 +1,5 @@
-import createTheme from "./createTheme";
-import colors from "../colors";
+import createTheme from "/themes/createTheme";
+import colors from "/colors";
 
 const theme = (type = "dark") =>
   createTheme({

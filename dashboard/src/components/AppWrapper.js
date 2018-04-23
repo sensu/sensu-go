@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 
-import AppFrame from "./AppFrame";
+import AppFrame from "/components/AppFrame";
 
 class AppWrapper extends React.Component {
   static propTypes = {

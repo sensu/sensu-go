@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import TagOrb from "../TagOrb";
+import TagOrb from "/components/TagOrb";
 
 const colours = {
   BLUE: "#8AB8D0",

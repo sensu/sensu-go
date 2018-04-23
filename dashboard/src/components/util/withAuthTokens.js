@@ -1,7 +1,7 @@
 import React from "react";
 import { hoistStatics } from "recompose";
 
-import * as tokenStore from "../../utils/authentication/tokens";
+import * as tokenStore from "/utils/authentication/tokens";
 
 const withAuthTokens = hoistStatics(Component => {
   class WithAuthTokens extends React.PureComponent {

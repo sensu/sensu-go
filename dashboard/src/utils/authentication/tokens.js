@@ -1,6 +1,6 @@
 import moment from "moment";
 
-import createDispatcher from "../dispatcher";
+import createDispatcher from "/utils/dispatcher";
 
 const { subscribe, unsubscribe, subscribeOnce, dispatch } = createDispatcher();
 

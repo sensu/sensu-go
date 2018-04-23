@@ -8,8 +8,8 @@ import gql from "graphql-tag";
 import Menu, { MenuItem } from "material-ui/Menu";
 import { ListItemIcon, ListItemText } from "material-ui/List";
 import Divider from "material-ui/Divider";
-import OrganizationIcon from "./OrganizationIcon";
-import EnvironmentSymbol from "./EnvironmentSymbol";
+import OrganizationIcon from "/components/OrganizationIcon";
+import EnvironmentSymbol from "/components/EnvironmentSymbol";
 
 const styles = () => ({
   envIcon: {

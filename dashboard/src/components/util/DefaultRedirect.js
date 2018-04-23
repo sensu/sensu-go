@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Redirect } from "react-router-dom";
 
-import withAuthTokens from "./withAuthTokens";
+import withAuthTokens from "/components/util/withAuthTokens";
 
 class DefaultRedirect extends React.PureComponent {
   static propTypes = {

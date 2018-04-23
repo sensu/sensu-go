@@ -13,8 +13,7 @@ env:
   browser: true
 settings:
   import/resolver:
-    webpack:
-      config: 'config/webpack.config.dev.js'
+    babel-module:
 rules:
   # While I personally prefer stateless functional components, since not every
   # component can be one, I'd rather be consistent and extend React.Component.
@@ -32,6 +31,9 @@ rules:
 
   # We use underscores to prefix "private" class methods
   no-underscore-dangle: 0
+
+  # babel-plugin-module-resolver aliases absolute paths to the src directory
+  import/no-absolute-path: 0
 
   # https://github.com/apollographql/eslint-plugin-graphql
   graphql/template-strings:

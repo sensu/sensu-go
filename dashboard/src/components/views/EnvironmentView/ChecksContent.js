@@ -4,10 +4,10 @@ import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import Paper from "material-ui/Paper";
 
-import AppContent from "../../AppContent";
-import CheckList from "../../CheckList";
+import AppContent from "/components/AppContent";
+import CheckList from "/components/CheckList";
 
-import NotFoundView from "../../views/NotFoundView";
+import NotFoundView from "/components/views/NotFoundView";
 
 class ChecksContent extends React.Component {
   static propTypes = {

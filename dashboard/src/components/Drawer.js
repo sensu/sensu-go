@@ -17,15 +17,16 @@ import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
 import IconButton from "material-ui/IconButton";
 import MenuIcon from "material-ui-icons/Menu";
-import WandIcon from "../icons/Wand";
-import EnvironmentIcon from "./EnvironmentIcon";
-import Wordmark from "../icons/SensuWordmark";
 
-import { logout } from "../utils/authentication";
-import DrawerButton from "./DrawerButton";
-import NamespaceSelector from "./NamespaceSelector";
-import Preferences from "./Preferences";
-import Loader from "./Loader";
+import WandIcon from "/icons/Wand";
+import Wordmark from "/icons/SensuWordmark";
+import { logout } from "/utils/authentication";
+
+import EnvironmentIcon from "/components/EnvironmentIcon";
+import DrawerButton from "/components/DrawerButton";
+import NamespaceSelector from "/components/NamespaceSelector";
+import Preferences from "/components/Preferences";
+import Loader from "/components/Loader";
 
 const linkPath = (params, path) => {
   const { organization, environment } = params;
