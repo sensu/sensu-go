@@ -108,6 +108,12 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	if c == nil {
 		return []byte("null"), nil
 	}
+	if c.Subscriptions == nil {
+		c.Subscriptions = []string{}
+	}
+	if c.Handlers == nil {
+		c.Handlers = []string{}
+	}
 
 	// Only use dynamic marshaling if there are dynamic attributes.
 	// Otherwise, use default json marshaling.
@@ -141,6 +147,12 @@ func (c *CheckConfig) UnmarshalJSON(b []byte) error {
 func (c *CheckConfig) MarshalJSON() ([]byte, error) {
 	if c == nil {
 		return []byte("null"), nil
+	}
+	if c.Subscriptions == nil {
+		c.Subscriptions = []string{}
+	}
+	if c.Handlers == nil {
+		c.Handlers = []string{}
 	}
 
 	// Only use dynamic marshaling if there are dynamic attributes.
