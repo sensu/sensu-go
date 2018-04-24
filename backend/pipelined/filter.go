@@ -7,14 +7,16 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
-	"github.com/sirupsen/logrus"
+	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
 func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	parameters := map[string]interface{}{"event": event}
 	result, err := eval.EvaluatePredicate(statement, parameters)
 	if err != nil {
-		logger.WithError(err).Errorf("statement '%s' is invalid", statement)
+		fields := utillogging.EventFields(event)
+		logger.WithError(err).WithFields(fields).
+			Errorf("statement '%s' is invalid", statement)
 		return false
 	}
 
@@ -26,7 +28,9 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 	if filter.When != nil {
 		inWindows, err := filter.When.InWindows(time.Now().UTC())
 		if err != nil {
-			logger.WithField("filter", filter.Name).Error(err)
+			fields := utillogging.EventFields(event)
+			fields["filter"] = filter.Name
+			logger.WithFields(fields).Error(err)
 			return false
 		}
 
@@ -64,11 +68,10 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 	}
 
 	// Something weird happened, let's not filter the event and log a warning message
-	logger.WithFields(logrus.Fields{
-		"filter":       filter.GetName(),
-		"organization": filter.GetOrganization(),
-		"environment":  filter.GetEnvironment(),
-	}).Warn("pipelined not filtering event due to unhandled case")
+	fields := utillogging.EventFields(event)
+	fields["filter"] = filter.Name
+	logger.WithFields(fields).
+		Warn("pipelined not filtering event due to unhandled case")
 
 	return false
 }
@@ -76,6 +79,10 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 // filterEvent filters a Sensu event, determining if it will continue
 // through the Sensu pipeline.
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
+	// Prepare the logging
+	fields := utillogging.EventFields(event)
+	fields["handler"] = handler.Name
+
 	// Iterate through all event filters, the event is filtered if
 	// a filter returns true.
 	for _, filterName := range handler.Filters {
@@ -111,7 +118,8 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 		ctx := types.SetContextFromResource(context.Background(), event.Entity)
 		filter, err := p.store.GetEventFilterByName(ctx, filterName)
 		if err != nil {
-			logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
+			logger.WithFields(fields).WithError(err).
+				Warningf("could not retrieve the filter %s", filterName)
 			return false
 		}
 
@@ -129,18 +137,21 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 		// If the filter didn't exist, it might be an extension filter
 		ext, err := p.store.GetExtension(ctx, filterName)
 		if err != nil {
-			logger.WithError(err).Warningf("could not retrieve the filter %s", filterName)
+			logger.WithFields(fields).WithError(err).
+				Warningf("could not retrieve the filter %s", filterName)
 			continue
 		}
 
 		executor, err := p.extensionExecutor(ext)
 		if err != nil {
-			logger.WithError(err).Errorf("could not execute the filter %s", filterName)
+			logger.WithFields(fields).WithError(err).
+				Errorf("could not execute the filter %s", filterName)
 			continue
 		}
 		filtered, err := executor.FilterEvent(event)
 		if err != nil {
-			logger.WithError(err).Errorf("could not execute the filter %s", filterName)
+			logger.WithFields(fields).WithError(err).
+				Errorf("could not execute the filter %s", filterName)
 			continue
 		}
 		if filtered {
