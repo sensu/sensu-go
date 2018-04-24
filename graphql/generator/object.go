@@ -263,7 +263,7 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 		name := field.Name.Value
 		titleizedName := toFieldName(field.Name.Value)
 		resolverFnSignature := genFieldResolverSignature(field, i)
-		coerceType := genFieldResolverTypeCoercion(field.Type, i)
+		coerceType := genFieldResolverTypeCoercion(field.Type, i, true)
 
 		code.Commentf("%s implements response to request for '%s' field.", titleizedName, name)
 		code.
@@ -647,7 +647,7 @@ func genFieldResolverSignature(field *ast.FieldDefinition, i info) jen.Code {
 	}
 
 	// return type
-	retType := genFieldResolverReturnType(field.Type, i)
+	retType := genFieldResolverReturnType(field.Type, i, true)
 	return jen.Id(fieldName).Params(params).Parens(jen.List(retType, jen.Error()))
 }
 
@@ -656,19 +656,22 @@ func genFieldResolverSignature(field *ast.FieldDefinition, i info) jen.Code {
 //
 //   GraphQL => Go
 //
-//   String  => string
-//   [String]=> []string
-//   [Int]   => []int
-//   [Int!]  => []int
-//   [Int!]! => []int
-//   Int     => int
-//   Int!    => int
-//   Bool    => bool
-//   MyObj   => interface{}
-//   [MyObj] => interface{}
-//   MyObj!  => interface{}
+//   String     => string
+//   [String]   => []string
+//   [Int]      => []int
+//   [Int!]     => []int
+//   [Int!]!    => []int
+//   Int        => int
+//   Int!       => int
+//   Bool       => bool
+//   DateTime   => *time.Time
+//   DateTime!  => time.Time
+//   [DateTime] => []*time.Time
+//   MyObj      => interface{}
+//   [MyObj]    => interface{}
+//   MyObj!     => interface{}
 //
-func genFieldResolverReturnType(t ast.Type, i info) jen.Code {
+func genFieldResolverReturnType(t ast.Type, i info, nullable bool) jen.Code {
 	var namedType *ast.Named
 	switch ttype := t.(type) {
 	case *ast.List:
@@ -691,7 +694,7 @@ func genFieldResolverReturnType(t ast.Type, i info) jen.Code {
 		}
 		return jen.Interface()
 	case *ast.NonNull:
-		return genFieldResolverReturnType(ttype.Type, i)
+		return genFieldResolverReturnType(ttype.Type, i, false)
 	case *ast.Named:
 		namedType = ttype
 	default:
@@ -711,13 +714,18 @@ func genFieldResolverReturnType(t ast.Type, i info) jen.Code {
 
 	// Handle as built-in type if it doesn't match any user defined type.
 	if code := genBuiltinTypeReference(namedType); code != nil {
+		// If we are handling a DateTime type allow the output of the resolver to
+		// be nil.
+		if nullable && namedType.Name.Value == graphql.DateTime.Name() {
+			return jen.Op("*").Add(code)
+		}
 		return code
 	}
 	return jen.Interface()
 }
 
 // Super crufty.
-func genFieldResolverTypeCoercion(t ast.Type, i info) jen.Code {
+func genFieldResolverTypeCoercion(t ast.Type, i info, nullable bool) jen.Code {
 	mkAssert := func(t jen.Code) jen.Code {
 		return jen.Id("val").Assert(t)
 	}
@@ -743,7 +751,7 @@ func genFieldResolverTypeCoercion(t ast.Type, i info) jen.Code {
 		}
 		return nil
 	case *ast.NonNull:
-		return genFieldResolverTypeCoercion(ttype.Type, i)
+		return genFieldResolverTypeCoercion(ttype.Type, i, false)
 	case *ast.Named:
 		namedType = ttype
 	default:
@@ -767,6 +775,9 @@ func genFieldResolverTypeCoercion(t ast.Type, i info) jen.Code {
 	case graphql.Boolean.Name():
 		return mkAssert(jen.Id("bool"))
 	case graphql.DateTime.Name():
+		if nullable {
+			return mkAssert(jen.Op("*").Qual("time", "Time"))
+		}
 		return mkAssert(jen.Qual("time", "Time"))
 	}
 	return nil

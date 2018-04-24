@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"sort"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
@@ -59,6 +60,16 @@ func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
 func (*entityImpl) AuthorID(p graphql.ResolveParams) (string, error) {
 	entity := p.Source.(*types.Entity)
 	return entity.User, nil
+}
+
+// LastSeen implements response to request for 'executed' field.
+func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
+	c := p.Source.(*types.Entity)
+	if c.LastSeen == 0 {
+		return nil, nil
+	}
+	t := time.Unix(c.LastSeen, 0)
+	return &t, nil
 }
 
 // Author implements response to request for 'author' field.
