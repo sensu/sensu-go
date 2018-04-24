@@ -6,7 +6,7 @@ import Typography from "material-ui/Typography";
 import Grid from "material-ui/Grid";
 import Paper from "material-ui/Paper";
 
-import AppContent from "../../AppContent";
+import AppContent from "/components/AppContent";
 
 const styles = () => ({
   root: {

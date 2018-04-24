@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { OrganizationIconBase as Icon } from "../OrganizationIcon";
-import { EnvironmentSymbolBase as Symbol } from "../EnvironmentSymbol";
+import { OrganizationIconBase as Icon } from "/components/OrganizationIcon";
+import { EnvironmentSymbolBase as Symbol } from "/components/EnvironmentSymbol";
 
 class EnvironmentIcon extends React.Component {
   static propTypes = {

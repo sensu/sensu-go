@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import ConditionalRoute from "./ConditionalRoute";
-import withAuthTokens from "./withAuthTokens";
+import ConditionalRoute from "/components/util/ConditionalRoute";
+import withAuthTokens from "/components/util/withAuthTokens";
 
 class UnauthenticatedRoute extends React.PureComponent {
   static propTypes = {

@@ -9,13 +9,13 @@ import {
 } from "apollo-cache-inmemory";
 import ApolloClient from "apollo-client";
 
-import { getAccessToken } from "../utils/authentication";
+import { getAccessToken } from "/utils/authentication";
 
 // TODO: Filter out out any type information unrelated to unions or interfaces
 // prior to importing `schema.json`. IntrospectionFragmentMatcher only needs
 // a subset of the schema.
 // see: apollographql.com/docs/react/advanced/fragments.html#fragment-matcher
-import { data as introspectionQueryResultData } from "../schema.json";
+import { data as introspectionQueryResultData } from "/schema.json";
 
 const createClient = () => {
   const fragmentMatcher = new IntrospectionFragmentMatcher({

@@ -6,18 +6,18 @@ import { ApolloProvider } from "react-apollo";
 import { withStyles } from "material-ui/styles";
 import { Switch, Route, withRouter } from "react-router-dom";
 
-import AppThemeProvider from "./AppThemeProvider";
-import ResetStyles from "./ResetStyles";
-import ThemeStyles from "./ThemeStyles";
+import AppThemeProvider from "/components/AppThemeProvider";
+import ResetStyles from "/components/ResetStyles";
+import ThemeStyles from "/components/ThemeStyles";
 
-import AuthenticatedRoute from "./util/AuthenticatedRoute";
-import UnauthenticatedRoute from "./util/UnauthenticatedRoute";
+import AuthenticatedRoute from "/components/util/AuthenticatedRoute";
+import UnauthenticatedRoute from "/components/util/UnauthenticatedRoute";
 
-import DefaultRedirect from "./util/DefaultRedirect";
+import DefaultRedirect from "/components/util/DefaultRedirect";
 
-import EnvironmentView from "./views/EnvironmentView";
-import LoginView from "./views/LoginView";
-import NotFoundView from "./views/NotFoundView";
+import EnvironmentView from "/components/views/EnvironmentView";
+import LoginView from "/components/views/LoginView";
+import NotFoundView from "/components/views/NotFoundView";
 
 class AppRoot extends React.PureComponent {
   static propTypes = {

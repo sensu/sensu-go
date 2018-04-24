@@ -7,8 +7,8 @@ import Typography from "material-ui/Typography";
 import IconButton from "material-ui/IconButton";
 import { withStyles } from "material-ui/styles";
 import MenuIcon from "material-ui-icons/Menu";
-import EnvironmentLabel from "./EnvironmentLabel";
-import Wordmark from "../icons/SensuWordmark";
+import EnvironmentLabel from "/components/EnvironmentLabel";
+import Wordmark from "/icons/SensuWordmark";
 
 class AppBar extends React.Component {
   static propTypes = {

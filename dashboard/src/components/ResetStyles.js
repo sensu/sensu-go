@@ -1,7 +1,7 @@
 import React from "react";
 import { withStyles } from "material-ui/styles";
 
-import reset from "../reset.css";
+import reset from "/reset.css";
 
 class ResetStyles extends React.PureComponent {
   render() {

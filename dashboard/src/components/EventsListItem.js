@@ -13,9 +13,9 @@ import Button from "material-ui/ButtonBase";
 import Checkbox from "material-ui/Checkbox";
 import Disclosure from "material-ui-icons/MoreVert";
 
-import ResolveEventMutation from "../mutations/ResolveEventMutation";
-import EventStatus from "./EventStatus";
-import { TableListItem } from "./TableList";
+import ResolveEventMutation from "/mutations/ResolveEventMutation";
+import EventStatus from "/components/EventStatus";
+import { TableListItem } from "/components/TableList";
 
 const styles = theme => ({
   root: {

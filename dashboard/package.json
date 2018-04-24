@@ -18,7 +18,18 @@
     "babel-eslint": "^7.2.3",
     "babel-jest": "^22.1",
     "babel-loader": "^7.1.1",
-    "babel-preset-react-app": "^3.1",
+    "babel-plugin-module-resolver": "^3.1.1",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-plugin-transform-react-jsx-self": "^6.22.0",
+    "babel-plugin-transform-react-jsx-source": "^6.22.0",
+    "babel-plugin-transform-react-remove-prop-types": "^0.4.13",
+    "babel-plugin-transform-regenerator": "^6.26.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
     "babel-runtime": "^6.23.0",
     "brcast": "^3.0.1",
     "case-sensitive-paths-webpack-plugin": "^2.1.1",
@@ -33,6 +44,7 @@
     "eslint-config-airbnb": "^15.1.0",
     "eslint-config-prettier": "^2.6.0",
     "eslint-config-react-app": "^2.1",
+    "eslint-import-resolver-babel-module": "^4.0.0",
     "eslint-loader": "^1.9.0",
     "eslint-plugin-flowtype": "^2.35.0",
     "eslint-plugin-graphql": "^1.5.0",
@@ -136,11 +148,6 @@
       "web.jsx",
       "jsx",
       "node"
-    ]
-  },
-  "babel": {
-    "presets": [
-      "react-app"
     ]
   },
   "proxy": {

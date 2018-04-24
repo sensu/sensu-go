@@ -5,11 +5,11 @@ import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
 
-import AppContent from "../../AppContent";
-import EventsContainer from "../../EventsContainer";
-import SearchBox from "../../SearchBox";
+import AppContent from "/components/AppContent";
+import EventsContainer from "/components/EventsContainer";
+import SearchBox from "/components/SearchBox";
 
-import NotFoundView from "../../views/NotFoundView";
+import NotFoundView from "/components/views/NotFoundView";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";

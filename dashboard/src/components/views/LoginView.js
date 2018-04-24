@@ -7,9 +7,9 @@ import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
 import Typography from "material-ui/Typography";
 
-import Logo from "../../icons/SensuLogoGraphic";
-import Wordmark from "../../icons/SensuWordmark";
-import { authenticate } from "../../utils/authentication";
+import Logo from "/icons/SensuLogoGraphic";
+import Wordmark from "/icons/SensuWordmark";
+import { authenticate } from "/utils/authentication";
 
 class LoginView extends React.Component {
   static propTypes = {
