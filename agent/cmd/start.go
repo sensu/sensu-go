@@ -266,7 +266,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics")
 	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
 	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
-	cmd.Flags().String(flagStatsdMetricsPort, viper.GetString(flagStatsdMetricsPort), "port used for the statsd metrics server")
+	cmd.Flags().Int(flagStatsdMetricsPort, viper.GetInt(flagStatsdMetricsPort), "port used for the statsd metrics server")
 	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")

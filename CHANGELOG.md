@@ -34,6 +34,7 @@ event handlers for statsd metrics.
 - Add extension package for building third-party Sensu extensions in Go.
 - Add the `--statsd-disable` flag to sensu-agent which configures the
 statsd listener. The listener is enabled by default.
+- Add 'remove-when' and 'set-when' subcommands to sensuctl filter command.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
@@ -74,6 +75,7 @@ and yarn are now dependencies for building the backend.
 - Events created from the metrics passed to the statsd listener are no longer
 swallowed. The events are sent through the pipeline.
 - Fixed a bug where the Issued field was never populated.
+- When creating a new statsd server, use the default flush interval if given 0.
 
 
 ## [2.0.0-nightly.1] - 2018-03-07

@@ -25,6 +25,8 @@ import TableList, {
   TableListButton as Button,
 } from "./TableList";
 
+import Loader from "./Loader";
+
 const styles = theme => {
   const toolbar = theme.mixins.toolbar;
   const xsBrk = `${theme.breakpoints.up("xs")} and (orientation: landscape)`;
@@ -73,6 +75,10 @@ const styles = theme => {
     grow: {
       flex: "1 1 auto",
     },
+
+    tableBody: {
+      minHeight: 200,
+    },
   };
 };
 
@@ -84,8 +90,14 @@ class EventsContainer extends React.Component {
       events: PropTypes.object,
       checks: PropTypes.object,
       entities: PropTypes.object,
-    }).isRequired,
+    }),
     onQueryChange: PropTypes.func.isRequired,
+    loading: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    loading: false,
+    environment: null,
   };
 
   static fragments = {
@@ -131,7 +143,12 @@ class EventsContainer extends React.Component {
 
   // click checkbox for all items in list
   selectAll = () => {
-    const keys = map(edge => edge.node.id, this.props.environment.events.edges);
+    const { environment } = this.props;
+
+    const keys = map(
+      edge => edge.node.id,
+      environment ? environment.events.edges : [],
+    );
     // if every state is false or undefined, switch the header
     const newState = !this.eventsSelected();
     this.setState({
@@ -153,9 +170,11 @@ class EventsContainer extends React.Component {
   eventsSelected = () => this.selectedEvents().length > 0;
 
   allEventsSelected = () => {
+    const { environment } = this.props;
+
     const { rowState } = this.state;
     return (
-      this.props.environment.events.edges.length ===
+      (environment ? environment.events.edges : []).length ===
         Object.keys(rowState).length && every(rowState, Boolean)
     );
   };
@@ -212,16 +231,22 @@ class EventsContainer extends React.Component {
   };
 
   render() {
-    const { classes, environment } = this.props;
+    const { classes, environment, loading } = this.props;
     const { rowState } = this.state;
 
-    const entityNames = map(edge => edge.node.name, environment.entities.edges);
+    const entityNames = environment
+      ? map(edge => edge.node.name, environment.entities.edges)
+      : [];
+
     const checkNames = [
-      ...map(edge => edge.node.name, environment.checks.edges),
+      ...(environment
+        ? map(edge => edge.node.name, environment.checks.edges)
+        : []),
       "keepalive",
     ];
 
-    const events = (environment.events && environment.events.edges) || [];
+    const events =
+      (environment && environment.events && environment.events.edges) || [];
     const eventsSelected = this.selectedEvents();
     const someEventsSelected = eventsSelected.length > 0;
     const hiddenIf = hide => classnames({ [classes.hidden]: hide });
@@ -322,24 +347,27 @@ class EventsContainer extends React.Component {
             </TableListSelect>
           </div>
         </TableListHeader>
-        <TableListBody>
-          {events.length === 0 && (
-            <TableListEmptyState
-              primary="No results matched your query."
-              secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
-            />
-          )}
-          {/* TODO pass in resolve and silence functions to reuse for single actions
-            the silence dialog is the same, just maybe some prefilled options for list */}
-          {events.map(event => (
-            <EventsListItem
-              key={event.node.id}
-              event={event.node}
-              onChange={this.selectCheckbox(event.node.id)}
-              checked={Boolean(rowState[event.node.id])}
-            />
-          ))}
-        </TableListBody>
+        <Loader loading={loading}>
+          <TableListBody className={classes.tableBody}>
+            {!loading &&
+              events.length === 0 && (
+                <TableListEmptyState
+                  primary="No results matched your query."
+                  secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
+                />
+              )}
+            {/* TODO pass in resolve and silence functions to reuse for single actions
+              the silence dialog is the same, just maybe some prefilled options for list */}
+            {events.map(event => (
+              <EventsListItem
+                key={event.node.id}
+                event={event.node}
+                onChange={this.selectCheckbox(event.node.id)}
+                checked={Boolean(rowState[event.node.id])}
+              />
+            ))}
+          </TableListBody>
+        </Loader>
       </TableList>
     );
   }
