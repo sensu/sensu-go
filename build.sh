@@ -41,11 +41,7 @@ install_deps () {
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
     go get honnef.co/go/tools/cmd/megacheck
-    #go get github.com/golang/lint/golint
-    mkdir -p $GOPATH/src/golang.org/x \
-        && git clone https://github.com/golang/lint.git $GOPATH/src/golang.org/x/lint \
-        && go get -u golang.org/x/lint/golint
-    install_golang_dep
+    go get github.com/golang/lint/golint
 }
 
 install_golang_dep() {
