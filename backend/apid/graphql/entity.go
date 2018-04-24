@@ -63,9 +63,13 @@ func (*entityImpl) AuthorID(p graphql.ResolveParams) (string, error) {
 }
 
 // LastSeen implements response to request for 'executed' field.
-func (r *entityImpl) LastSeen(p graphql.ResolveParams) (time.Time, error) {
+func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	c := p.Source.(*types.Entity)
-	return time.Unix(c.LastSeen, 0), nil
+	if c.LastSeen == 0 {
+		return nil, nil
+	}
+	t := time.Unix(c.LastSeen, 0)
+	return &t, nil
 }
 
 // Author implements response to request for 'author' field.

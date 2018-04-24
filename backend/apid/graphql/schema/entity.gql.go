@@ -49,7 +49,7 @@ type EntitySubscriptionsFieldResolver interface {
 // EntityLastSeenFieldResolver implement to resolve requests for the Entity's lastSeen field.
 type EntityLastSeenFieldResolver interface {
 	// LastSeen implements response to request for lastSeen field.
-	LastSeen(p graphql.ResolveParams) (time.Time, error)
+	LastSeen(p graphql.ResolveParams) (*time.Time, error)
 }
 
 // EntityDeregisterFieldResolver implement to resolve requests for the Entity's deregister field.
@@ -263,9 +263,9 @@ func (_ EntityAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) 
 }
 
 // LastSeen implements response to request for 'lastSeen' field.
-func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (time.Time, error) {
+func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(time.Time)
+	ret := val.(*time.Time)
 	return ret, err
 }
 
