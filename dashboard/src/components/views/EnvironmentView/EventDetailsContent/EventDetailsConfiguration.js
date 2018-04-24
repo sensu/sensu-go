@@ -8,9 +8,10 @@ import Dictionary, {
   DictionaryKey,
   DictionaryValue,
   DictionaryEntry,
-} from "../../../Dictionary";
-import RelativeDate from "../../../RelativeDate";
-import Monospaced from "../../../Monospaced";
+} from "/components/Dictionary";
+import RelativeDate from "/components/RelativeDate";
+import Monospaced from "/components/Monospaced";
+import Maybe from "/components/Maybe";
 
 class EventDetailsConfiguration extends React.Component {
   static propTypes = {
@@ -66,7 +67,9 @@ class EventDetailsConfiguration extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>Last Seen</DictionaryKey>
               <DictionaryValue>
-                <RelativeDate dateTime={entity.lastSeen} />
+                <Maybe value={entity.lastSeen} fallback="unknown">
+                  {val => <RelativeDate dateTime={val} />}
+                </Maybe>
               </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>

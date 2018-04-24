@@ -4,18 +4,13 @@ import DateFormatter from "./DateFormatter";
 
 class KitchenTime extends React.PureComponent {
   static propTypes = {
-    dateTime: PropTypes.string.isRequired,
+    value: PropTypes.instanceOf(Date).isRequired,
   };
 
   render() {
-    const { dateTime, ...props } = this.props;
+    const { value, ...props } = this.props;
     return (
-      <DateFormatter
-        dateTime={dateTime}
-        hour="numeric"
-        minute="numeric"
-        {...props}
-      />
+      <DateFormatter value={value} hour="numeric" minute="numeric" {...props} />
     );
   }
 }

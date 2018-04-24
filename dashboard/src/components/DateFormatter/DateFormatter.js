@@ -5,7 +5,7 @@ const LOCALE = "en-US";
 
 class DateFormatter extends React.PureComponent {
   static propTypes = {
-    dateTime: PropTypes.string.isRequired,
+    value: PropTypes.instanceOf(Date).isRequired,
     hour12: PropTypes.bool,
     weekday: PropTypes.string,
     era: PropTypes.string,
@@ -31,7 +31,7 @@ class DateFormatter extends React.PureComponent {
 
   render() {
     const {
-      dateTime,
+      value,
       weekday,
       era,
       year,
@@ -44,7 +44,6 @@ class DateFormatter extends React.PureComponent {
       ...props
     } = this.props;
 
-    const date = new Date(dateTime);
     const formatter = Intl.DateTimeFormat(LOCALE, {
       weekday,
       era,
@@ -58,8 +57,8 @@ class DateFormatter extends React.PureComponent {
     });
 
     return (
-      <time dateTime={dateTime} {...props}>
-        {formatter.format(date)}
+      <time dateTime={value.toString()} {...props}>
+        {formatter.format(value)}
       </time>
     );
   }

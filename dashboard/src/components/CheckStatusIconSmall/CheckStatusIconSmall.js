@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import { withStyles } from "material-ui/styles";
 
-import { statusToColor } from "../../utils/checkStatus";
-import OKIcon from "../../icons/SmallCheck";
-import WarnIcon from "../../icons/WarnHollow";
-import ErrIcon from "../../icons/ErrorHollow";
+import { statusToColor } from "/utils/checkStatus";
+import OKIcon from "/icons/SmallCheck";
+import WarnIcon from "/icons/WarnHollow";
+import ErrIcon from "/icons/ErrorHollow";
 
 const styles = theme => ({
   inline: {

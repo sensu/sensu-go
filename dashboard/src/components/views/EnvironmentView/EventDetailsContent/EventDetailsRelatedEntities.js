@@ -4,12 +4,12 @@ import gql from "graphql-tag";
 import Card, { CardContent } from "material-ui/Card";
 import Typography from "material-ui/Typography";
 import List from "material-ui/List";
-import RelativeDate from "../../../RelativeDate";
+import RelativeDate from "/components/RelativeDate";
+import StatusIcon from "/components/CheckStatusIconSmall";
 import ListItem, {
   ListItemTitle,
   ListItemSubtitle,
-} from "../../../DetailedListItem";
-import StatusIcon from "../../../CheckStatusIconSmall";
+} from "/components/DetailedListItem";
 
 class EventDetailsRelatedEntities extends React.Component {
   static propTypes = {

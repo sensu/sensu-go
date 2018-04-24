@@ -4,7 +4,7 @@ import DateFormatter from "./DateFormatter";
 
 class DateTime extends React.PureComponent {
   static propTypes = {
-    dateTime: PropTypes.string.isRequired,
+    value: PropTypes.instanceOf(Date).isRequired,
     short: PropTypes.bool,
   };
 
@@ -13,7 +13,8 @@ class DateTime extends React.PureComponent {
   };
 
   render() {
-    const { dateTime, short, ...props } = this.props;
+    const { value, short, ...props } = this.props;
+
     if (short) {
       return (
         <DateFormatter
@@ -21,12 +22,11 @@ class DateTime extends React.PureComponent {
           day="numeric"
           hour="numeric"
           minute="numeric"
-          dateTime={dateTime}
+          value={value}
           {...props}
         />
       );
     }
-
     return (
       <DateFormatter
         year="numeric"
@@ -35,7 +35,7 @@ class DateTime extends React.PureComponent {
         day="numeric"
         hour="numeric"
         minute="numeric"
-        dateTime={dateTime}
+        value={value}
         {...props}
       />
     );

@@ -4,13 +4,13 @@ import gql from "graphql-tag";
 import { Query } from "react-apollo";
 import Grid from "material-ui/Grid";
 
-import AppContent from "../../../AppContent";
-import Content from "../../../Content";
-import NotFoundView from "../../NotFoundView";
+import AppContent from "/components/AppContent";
+import Content from "/components/Content";
+import NotFoundView from "/components/views/NotFoundView";
+import Loader from "/components/Loader";
 import EventDetailsCheckResult from "./EventDetailsCheckResult";
 import EventDetailsRelatedEntities from "./EventDetailsRelatedEntities";
 import EventDetailsConfiguration from "./EventDetailsConfiguration";
-import Loader from "../../../Loader";
 
 const query = gql`
   query EventDetailsContentQuery(
@@ -54,7 +54,11 @@ class EventDetailsContent extends React.PureComponent {
     };
 
     return (
-      <Query query={query} variables={{ ...match.params, ns }}>
+      <Query
+        query={query}
+        fetchPolicy="cache-and-network"
+        variables={{ ...match.params, ns }}
+      >
         {({ data: { event } = {}, loading }) => {
           if (!loading && !event) return <NotFoundView />;
 

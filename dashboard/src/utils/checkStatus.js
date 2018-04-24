@@ -1,5 +1,3 @@
-import { compose } from "ramda";
-
 const ok = "ok";
 const warning = "warning";
 const error = "error";
@@ -24,6 +22,3 @@ export function statusCodeToId(st) {
 export function statusToColor(st) {
   return colorMap[st];
 }
-
-// Given exit status return associated color.
-export const statusCodeToColor = compose(statusToColor, statusCodeToId);

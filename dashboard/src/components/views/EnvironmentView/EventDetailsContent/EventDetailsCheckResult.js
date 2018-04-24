@@ -5,19 +5,23 @@ import Card, { CardContent } from "material-ui/Card";
 import Divider from "material-ui/Divider";
 import Typography from "material-ui/Typography";
 import Grid from "material-ui/Grid";
-
-import { statusCodeToId, statusToColor } from "../../../../utils/checkStatus";
+import { statusCodeToId, statusToColor } from "/utils/checkStatus";
 import Dictionary, {
   DictionaryKey,
   DictionaryValue,
   DictionaryEntry,
-} from "../../../Dictionary";
-import CardHighlight from "../../../CardHighlight";
-import RelativeDate from "../../../RelativeDate";
-import { DateTime, KitchenTime } from "../../../DateFormatter";
-import Duration from "../../../Duration";
-import StatusIcon from "../../../CheckStatusIconSmall";
-import Monospaced from "../../../Monospaced";
+} from "/components/Dictionary";
+import CardHighlight from "/components/CardHighlight";
+import RelativeDate from "/components/RelativeDate";
+import {
+  DateStringFormatter,
+  DateTime,
+  KitchenTime,
+} from "/components/DateFormatter";
+import Duration from "/components/Duration";
+import StatusIcon from "/components/CheckStatusIconSmall";
+import Monospaced from "/components/Monospaced";
+import Maybe from "/components/Maybe";
 
 class EventDetailsCheckResult extends React.PureComponent {
   static propTypes = {
@@ -73,7 +77,9 @@ class EventDetailsCheckResult extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Last OK</DictionaryKey>
                   <DictionaryValue>
-                    <RelativeDate dateTime={check.lastOK} capitalize />
+                    <Maybe value={check.lastOK} fallback="Never">
+                      {val => <RelativeDate dateTime={val} capitalize />}
+                    </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
@@ -103,13 +109,20 @@ class EventDetailsCheckResult extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Issued at</DictionaryKey>
                   <DictionaryValue>
-                    <DateTime dateTime={check.issued} short />
+                    <DateStringFormatter
+                      component={DateTime}
+                      dateTime={check.issued}
+                      short
+                    />
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Ran at</DictionaryKey>
                   <DictionaryValue>
-                    <KitchenTime dateTime={check.executed} />
+                    <DateStringFormatter
+                      component={KitchenTime}
+                      dateTime={check.executed}
+                    />
                     {" for "}
                     <Duration duration={check.duration * 1000} />
                   </DictionaryValue>
