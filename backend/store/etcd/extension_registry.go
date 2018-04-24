@@ -9,7 +9,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	utilcontext "github.com/sensu/sensu-go/util/context"
 )
 
 const (
@@ -21,7 +20,7 @@ var (
 )
 
 func getExtensionPath(ctx context.Context, name string) string {
-	org := utilcontext.Organization(ctx)
+	org := types.ContextOrganization(ctx)
 
 	return extKeyBuilder.WithOrg(org).Build(name)
 }

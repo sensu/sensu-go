@@ -9,7 +9,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	utilcontext "github.com/sensu/sensu-go/util/context"
 )
 
 const (
@@ -25,7 +24,7 @@ func getAssetPath(asset *types.Asset) string {
 }
 
 func getAssetsPath(ctx context.Context, name string) string {
-	org := utilcontext.Organization(ctx)
+	org := types.ContextOrganization(ctx)
 
 	return assetKeyBuilder.WithOrg(org).Build(name)
 }

@@ -1,5 +1,7 @@
 package types
 
+import "context"
+
 // Define the key type to avoid key collisions in context
 type key int
 
@@ -25,3 +27,19 @@ const (
 	// StoreKey contains the key name to retrieve the etcd store from within a context
 	StoreKey
 )
+
+// ContextEnvironment returns the environment name injected in the context
+func ContextEnvironment(ctx context.Context) string {
+	if value := ctx.Value(EnvironmentKey); value != nil {
+		return value.(string)
+	}
+	return ""
+}
+
+// ContextOrganization returns the organization name injected in the context
+func ContextOrganization(ctx context.Context) string {
+	if value := ctx.Value(OrganizationKey); value != nil {
+		return value.(string)
+	}
+	return ""
+}

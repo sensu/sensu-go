@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
-	utilcontext "github.com/sensu/sensu-go/util/context"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
@@ -104,8 +103,8 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 	expanded := map[string]handlerExtensionUnion{}
 
 	// Prepare log entry
-	env := utilcontext.Environment(ctx)
-	org := utilcontext.Organization(ctx)
+	env := types.ContextEnvironment(ctx)
+	org := types.ContextOrganization(ctx)
 	fields := logrus.Fields{
 		"environment":  env,
 		"organization": org,

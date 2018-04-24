@@ -6,7 +6,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
-	utilcontext "github.com/sensu/sensu-go/util/context"
 )
 
 // getObjectsPath functions take a context and an object name and return
@@ -21,10 +20,10 @@ type getObjectsPath func(context.Context, string) string
 func query(ctx context.Context, store *Store, fn getObjectsPath) (*clientv3.GetResponse, error) {
 	// Support "*" as a wildcard
 	var org, env string
-	if org = utilcontext.Organization(ctx); org == "*" {
+	if org = types.ContextOrganization(ctx); org == "*" {
 		org = ""
 	}
-	if env = utilcontext.Environment(ctx); env == "*" {
+	if env = types.ContextEnvironment(ctx); env == "*" {
 		env = ""
 	}
 
