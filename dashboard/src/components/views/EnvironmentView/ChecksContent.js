@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import Paper from "material-ui/Paper";
+import Button from "material-ui/Button";
 
 import AppContent from "/components/AppContent";
 import CheckList from "/components/CheckList";
@@ -31,13 +32,8 @@ class ChecksContent extends React.Component {
     const { match } = this.props;
 
     return (
-      <Query
-        query={ChecksContent.query}
-        variables={match.params}
-        // TODO: Replace polling with query subscription
-        pollInterval={5000}
-      >
-        {({ data: { environment } = {}, loading, error }) => {
+      <Query query={ChecksContent.query} variables={match.params}>
+        {({ data: { environment } = {}, loading, error, refetch }) => {
           // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;
 
@@ -45,8 +41,13 @@ class ChecksContent extends React.Component {
 
           return (
             <AppContent>
+              <Button onClick={() => refetch()}>reload</Button>
               <Paper>
-                <CheckList environment={environment} loading={loading} />
+                <CheckList
+                  environment={environment}
+                  loading={loading}
+                  refetch={refetch}
+                />
               </Paper>
             </AppContent>
           );

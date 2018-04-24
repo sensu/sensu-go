@@ -4,6 +4,7 @@ import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
+import Button from "material-ui/Button";
 
 import AppContent from "/components/AppContent";
 import EventsContainer from "/components/EventsContainer";
@@ -25,21 +26,25 @@ class EventsContent extends React.Component {
   static styles = theme => ({
     headline: {
       display: "flex",
-      justifyContent: "space-between",
       alignContent: "center",
+      paddingLeft: theme.spacing.unit,
+      paddingRight: theme.spacing.unit,
+      [theme.breakpoints.up("sm")]: {
+        paddingLeft: 0,
+        paddingRight: 0,
+      },
     },
     searchBox: {
       width: "100%",
       marginLeft: theme.spacing.unit,
-      marginRight: theme.spacing.unit,
       [theme.breakpoints.up("sm")]: {
         width: "auto",
-        margin: 0,
       },
     },
     title: {
       alignSelf: "flex-end",
       display: "none",
+      flexGrow: 1,
       [theme.breakpoints.up("sm")]: {
         display: "flex",
       },
@@ -102,10 +107,8 @@ class EventsContent extends React.Component {
       <Query
         query={EventsContent.query}
         variables={{ ...match.params, filter: query.get("filter") }}
-        // TODO: Replace polling with query subscription
-        pollInterval={5000}
       >
-        {({ data: { environment } = {}, loading, error }) => {
+        {({ data: { environment } = {}, loading, error, refetch }) => {
           // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;
 
@@ -118,6 +121,7 @@ class EventsContent extends React.Component {
                   <Typography className={classes.title} variant="headline">
                     Events
                   </Typography>
+                  <Button onClick={() => refetch()}>reload</Button>
                   <SearchBox
                     className={classes.searchBox}
                     onChange={this.requerySearchBox}
