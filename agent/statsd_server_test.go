@@ -152,6 +152,7 @@ func TestReceiveMetrics(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := FixtureConfig()
+	cfg.StatsdServer.FlushInterval = 1
 	ta := NewAgent(cfg)
 
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -166,31 +167,26 @@ func TestReceiveMetrics(t *testing.T) {
 		assert.FailNow("failed to create UDP connection")
 	}
 
-	now := time.Now().UnixNano()
-	metrics := FixtureMetricMap(now)
-	bytes, _ := json.Marshal(metrics)
-
-	_, err = udpClient.Write(bytes)
+	_, err = udpClient.Write([]byte("foo:1|c"))
 	require.NoError(t, err)
 	require.NoError(t, udpClient.Close())
 
-	// TODO: test metric event creation https://github.com/sensu/sensu-go/issues/1259
-	// msg := <-ta.sendq
-	// assert.NotEmpty(msg)
-	// assert.Equal("event", msg.Type)
-	//
-	// var event types.Event
-	// err = json.Unmarshal(msg.Payload, &event)
-	// if err != nil {
-	// 	assert.FailNow("failed to unmarshal event json")
-	// }
-	//
-	// assert.NotNil(event.Entity)
-	// assert.NotNil(event.Metrics)
-	// assert.Nil(event.Check)
-	// for _, point := range event.Metrics.Points {
-	// 	assert.Equal(now, point.Timestamp)
-	// }
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotNil(event.Entity)
+	assert.NotNil(event.Metrics)
+	assert.Nil(event.Check)
+	for _, point := range event.Metrics.Points {
+		assert.Contains(point.Name, "foo")
+	}
 }
 
 func FixtureCounter(now int64) gostatsd.Counter {
