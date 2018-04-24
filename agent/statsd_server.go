@@ -16,12 +16,13 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 )
 
 // NewStatsdServer provides a new statsd server for the sensu-agent.
 func NewStatsdServer(a *Agent) *statsd.Server {
 	c := a.config.StatsdServer
-	s := statsd.NewServer()
+	s := NewServer()
 	backend, err := NewClientFromViper(s.Viper, a)
 	if err != nil {
 		logger.WithError(err).Error("failed to create sensu-statsd backend")
@@ -33,7 +34,40 @@ func NewStatsdServer(a *Agent) *statsd.Server {
 	}
 	s.FlushInterval = time.Duration(c.FlushInterval) * time.Second
 	s.MetricsAddr = fmt.Sprintf("%s:%d", c.Host, c.Port)
+	s.StatserType = statsd.StatserNull
 	return s
+}
+
+// NewServer will create a new statsd Server with the default configuration.
+func NewServer() *statsd.Server {
+	return &statsd.Server{
+		Backends:            []gostatsd.Backend{},
+		Limiter:             rate.NewLimiter(statsd.DefaultMaxCloudRequests, statsd.DefaultBurstCloudRequests),
+		InternalTags:        statsd.DefaultInternalTags,
+		InternalNamespace:   statsd.DefaultInternalNamespace,
+		DefaultTags:         statsd.DefaultTags,
+		ExpiryInterval:      statsd.DefaultExpiryInterval,
+		FlushInterval:       statsd.DefaultFlushInterval,
+		MaxReaders:          statsd.DefaultMaxReaders,
+		MaxParsers:          statsd.DefaultMaxParsers,
+		MaxWorkers:          statsd.DefaultMaxWorkers,
+		MaxQueueSize:        statsd.DefaultMaxQueueSize,
+		MaxConcurrentEvents: statsd.DefaultMaxConcurrentEvents,
+		EstimatedTags:       statsd.DefaultEstimatedTags,
+		MetricsAddr:         statsd.DefaultMetricsAddr,
+		PercentThreshold:    statsd.DefaultPercentThreshold,
+		IgnoreHost:          statsd.DefaultIgnoreHost,
+		ConnPerReader:       statsd.DefaultConnPerReader,
+		HeartbeatEnabled:    statsd.DefaultHeartbeatEnabled,
+		ReceiveBatchSize:    statsd.DefaultReceiveBatchSize,
+		CacheOptions: statsd.CacheOptions{
+			CacheRefreshPeriod:        statsd.DefaultCacheRefreshPeriod,
+			CacheEvictAfterIdlePeriod: statsd.DefaultCacheEvictAfterIdlePeriod,
+			CacheTTL:                  statsd.DefaultCacheTTL,
+			CacheNegativeTTL:          statsd.DefaultCacheNegativeTTL,
+		},
+		Viper: viper.New(),
+	}
 }
 
 // BackendName is the name of this statsd backend.
