@@ -13,6 +13,8 @@ RACE=""
 
 VERSION_CMD="go run ./version/cmd/version/version.go"
 
+HANDLERS=(slack influx-db)
+
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then
         RACE="-race"
@@ -112,7 +114,7 @@ build_tools () {
         build_tool $cmd "tools"
     done
 
-    for cmd in slack; do
+    for cmd in ${HANDLERS[@]}; do
         build_tool $cmd "handlers"
     done
 }
@@ -239,7 +241,7 @@ docker_commands () {
         build_tool_binary linux amd64 $cmd "tools"
     done
 
-    for cmd in slack; do
+    for cmd in ${HANDLERS[@]}; do
         echo "Building handlers/$cmd for linux-amd64"
         build_tool_binary linux amd64 $cmd "handlers"
     done
