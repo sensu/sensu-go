@@ -32,7 +32,7 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 				// code and severity (ex. 0, ok)
 				in := hookInList(hookConfig.Name, executedHooks)
 				if !in {
-					hook := a.executeHook(hookConfig)
+					hook := a.executeHook(hookConfig, request.Config.Name)
 					executedHooks = append(executedHooks, hook)
 				}
 			}
@@ -41,7 +41,7 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 	return executedHooks
 }
 
-func (a *Agent) executeHook(hookConfig *types.HookConfig) *types.Hook {
+func (a *Agent) executeHook(hookConfig *types.HookConfig, check string) *types.Hook {
 	// Instantiate Event and Hook
 	event := &types.Event{
 		Check: &types.Check{},
@@ -54,8 +54,11 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig) *types.Hook {
 
 	// Instantiate the execution command
 	ex := &command.Execution{
-		Command: hookConfig.Command,
-		Timeout: int(hookConfig.Timeout),
+		Command:      hookConfig.Command,
+		Timeout:      int(hookConfig.Timeout),
+		InProgress:   a.inProgress,
+		InProgressMu: a.inProgressMu,
+		Name:         check,
 	}
 
 	// If stdin is true, add JSON event data to command execution.

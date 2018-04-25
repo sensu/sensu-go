@@ -14,14 +14,17 @@ const styles = theme => ({
       paddingTop: 0,
     },
 
-    // remove gutters on mobile.
+    // remove gutters when least screen real estate is available, giving content
+    // ability- if need be- to reach the edge of the screen.
     paddingLeft: 0,
     paddingRight: 0,
 
     // keep content from spanning too much of the screen and becoming difficult
     // to parse.
-    [theme.breakpoints.up("lg")]: {
+    [theme.breakpoints.up("sm")]: {
       maxWidth: 1080,
+      paddingLeft: theme.spacing.unit,
+      paddingRight: theme.spacing.unit,
     },
   },
   gutters: theme.mixins.gutters({
@@ -39,7 +42,7 @@ class AppContent extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
-    children: PropTypes.element.isRequired,
+    children: PropTypes.node.isRequired,
     fullWidth: PropTypes.bool,
     gutters: PropTypes.bool,
   };

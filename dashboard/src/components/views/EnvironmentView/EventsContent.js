@@ -9,7 +9,7 @@ import Button from "material-ui/Button";
 import AppContent from "/components/AppContent";
 import EventsContainer from "/components/EventsContainer";
 import SearchBox from "/components/SearchBox";
-
+import Content from "/components/Content";
 import NotFoundView from "/components/views/NotFoundView";
 
 // If none given default expression is used.
@@ -116,25 +116,23 @@ class EventsContent extends React.Component {
 
           return (
             <AppContent>
-              <div>
-                <div className={classes.headline}>
-                  <Typography className={classes.title} variant="headline">
-                    Events
-                  </Typography>
-                  <Button onClick={() => refetch()}>reload</Button>
-                  <SearchBox
-                    className={classes.searchBox}
-                    onChange={this.requerySearchBox}
-                    value={this.state.filterValue}
-                  />
-                </div>
-                <EventsContainer
-                  className={classes.container}
-                  onQueryChange={this.changeQuery}
-                  environment={environment}
-                  loading={loading}
+              <Content className={classes.headline}>
+                <Typography className={classes.title} variant="headline">
+                  Events
+                </Typography>
+                <Button onClick={() => refetch()}>reload</Button>
+                <SearchBox
+                  className={classes.searchBox}
+                  onChange={this.requerySearchBox}
+                  value={this.state.filterValue}
                 />
-              </div>
+              </Content>
+              <EventsContainer
+                className={classes.container}
+                onQueryChange={this.changeQuery}
+                environment={environment}
+                loading={loading}
+              />
             </AppContent>
           );
         }}

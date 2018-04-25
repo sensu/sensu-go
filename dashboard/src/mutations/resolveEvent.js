@@ -23,8 +23,8 @@ const mutation = gql`
   ${fragment}
 `;
 
-function commit(client, id) {
-  return client.mutate({
+export default (client, { id }) =>
+  client.mutate({
     mutation,
     variables: {
       input: { id, source: "Sensu web UI" },
@@ -46,6 +46,3 @@ function commit(client, id) {
       }
     },
   });
-}
-
-export default { commit };

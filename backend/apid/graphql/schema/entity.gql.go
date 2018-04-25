@@ -82,6 +82,12 @@ type EntityAuthorFieldResolver interface {
 	Author(p graphql.ResolveParams) (interface{}, error)
 }
 
+// EntityStatusFieldResolver implement to resolve requests for the Entity's status field.
+type EntityStatusFieldResolver interface {
+	// Status implements response to request for status field.
+	Status(p graphql.ResolveParams) (int, error)
+}
+
 // EntityRelatedFieldResolverArgs contains arguments provided to related when selected
 type EntityRelatedFieldResolverArgs struct {
 	Limit int // Limit - self descriptive
@@ -173,6 +179,7 @@ type EntityFieldResolvers interface {
 	EntityKeepaliveTimeoutFieldResolver
 	EntityAuthorIDFieldResolver
 	EntityAuthorFieldResolver
+	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
 }
 
@@ -302,6 +309,13 @@ func (_ EntityAliases) Author(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
+// Status implements response to request for 'status' field.
+func (_ EntityAliases) Status(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
 // Related implements response to request for 'related' field.
 func (_ EntityAliases) Related(p EntityRelatedFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -399,6 +413,13 @@ func _ObjTypeEntityAuthorHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityAuthorFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Author(frp)
+	}
+}
+
+func _ObjTypeEntityStatusHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityStatusFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(frp)
 	}
 }
 
@@ -500,6 +521,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "related",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Entity"))),
 			},
+			"status": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Status represents the MAX status of all events associated with the entity. If\nno events are present value is 0.",
+				Name:              "status",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
 			"subscriptions": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -544,6 +572,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"name":             _ObjTypeEntityNameHandler,
 		"namespace":        _ObjTypeEntityNamespaceHandler,
 		"related":          _ObjTypeEntityRelatedHandler,
+		"status":           _ObjTypeEntityStatusHandler,
 		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
 		"system":           _ObjTypeEntitySystemHandler,
 	},
