@@ -72,6 +72,11 @@ func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error)
 
 func (r *SilencedRouter) destroy(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
-	err := r.controller.Destroy(req.Context(), params)
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.controller.Destroy(req.Context(), id)
 	return nil, err
 }

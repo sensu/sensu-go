@@ -27,6 +27,10 @@ func NewStatsdServer(a *Agent) *statsd.Server {
 		logger.WithError(err).Error("failed to create sensu-statsd backend")
 	}
 	s.Backends = []gostatsd.Backend{backend}
+	if c.FlushInterval == 0 {
+		logger.Error("invalid statsd flush interval of 0, using the default 10s")
+		c.FlushInterval = DefaultStatsdFlushInterval
+	}
 	s.FlushInterval = time.Duration(c.FlushInterval) * time.Second
 	s.MetricsAddr = fmt.Sprintf("%s:%d", c.Host, c.Port)
 	return s

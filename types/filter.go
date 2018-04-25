@@ -64,6 +64,8 @@ func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
 		switch field {
 		case "Action":
 			f.Action = from.Action
+		case "When":
+			f.When = from.When
 		case "Statements":
 			f.Statements = append(f.Statements[0:0], from.Statements...)
 		default:

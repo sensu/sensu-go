@@ -194,7 +194,7 @@ func (a SilencedController) Update(ctx context.Context, given types.Silenced) er
 }
 
 // Destroy removes a resource if viewer has access.
-func (a SilencedController) Destroy(ctx context.Context, params QueryParams) error {
+func (a SilencedController) Destroy(ctx context.Context, id string) error {
 	abilities := a.Policy.WithContext(ctx)
 
 	// Verify user has permission
@@ -202,19 +202,12 @@ func (a SilencedController) Destroy(ctx context.Context, params QueryParams) err
 		return NewErrorf(PermissionDenied)
 	}
 
-	// Check for ID first
-	id := params["id"]
-
-	if id == "" {
-		// Form ID from subscription and check
-		var err error
-		sub := params["subscription"]
-		check := params["check"]
-
-		id, err = types.SilencedID(sub, check)
-		if err != nil {
-			return NewError(InvalidArgument, err)
-		}
+	// Fetch from store
+	result, serr := a.Store.GetSilencedEntryByID(ctx, id)
+	if serr != nil {
+		return NewError(InternalErr, serr)
+	} else if result == nil {
+		return NewErrorf(NotFound)
 	}
 
 	if err := a.Store.DeleteSilencedEntryByID(ctx, id); err != nil {

@@ -7,6 +7,7 @@ import (
 	graphql1 "github.com/graphql-go/graphql"
 	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
+	time "time"
 )
 
 // EntityIDFieldResolver implement to resolve requests for the Entity's id field.
@@ -48,7 +49,7 @@ type EntitySubscriptionsFieldResolver interface {
 // EntityLastSeenFieldResolver implement to resolve requests for the Entity's lastSeen field.
 type EntityLastSeenFieldResolver interface {
 	// LastSeen implements response to request for lastSeen field.
-	LastSeen(p graphql.ResolveParams) (int, error)
+	LastSeen(p graphql.ResolveParams) (*time.Time, error)
 }
 
 // EntityDeregisterFieldResolver implement to resolve requests for the Entity's deregister field.
@@ -79,6 +80,12 @@ type EntityAuthorIDFieldResolver interface {
 type EntityAuthorFieldResolver interface {
 	// Author implements response to request for author field.
 	Author(p graphql.ResolveParams) (interface{}, error)
+}
+
+// EntityStatusFieldResolver implement to resolve requests for the Entity's status field.
+type EntityStatusFieldResolver interface {
+	// Status implements response to request for status field.
+	Status(p graphql.ResolveParams) (int, error)
 }
 
 // EntityRelatedFieldResolverArgs contains arguments provided to related when selected
@@ -172,6 +179,7 @@ type EntityFieldResolvers interface {
 	EntityKeepaliveTimeoutFieldResolver
 	EntityAuthorIDFieldResolver
 	EntityAuthorFieldResolver
+	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
 }
 
@@ -262,9 +270,9 @@ func (_ EntityAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) 
 }
 
 // LastSeen implements response to request for 'lastSeen' field.
-func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (int, error) {
+func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret := val.(*time.Time)
 	return ret, err
 }
 
@@ -299,6 +307,13 @@ func (_ EntityAliases) AuthorID(p graphql.ResolveParams) (string, error) {
 func (_ EntityAliases) Author(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
+}
+
+// Status implements response to request for 'status' field.
+func (_ EntityAliases) Status(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
 }
 
 // Related implements response to request for 'related' field.
@@ -401,6 +416,13 @@ func _ObjTypeEntityAuthorHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityStatusHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityStatusFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(frp)
+	}
+}
+
 func _ObjTypeEntityRelatedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityRelatedFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -472,7 +494,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "lastSeen",
-				Type:              graphql1.Int,
+				Type:              graphql1.DateTime,
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -498,6 +520,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "Related returns a sorted list of like entities from the same environment.",
 				Name:              "related",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Entity"))),
+			},
+			"status": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Status represents the MAX status of all events associated with the entity. If\nno events are present value is 0.",
+				Name:              "status",
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"subscriptions": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -543,6 +572,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"name":             _ObjTypeEntityNameHandler,
 		"namespace":        _ObjTypeEntityNamespaceHandler,
 		"related":          _ObjTypeEntityRelatedHandler,
+		"status":           _ObjTypeEntityStatusHandler,
 		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
 		"system":           _ObjTypeEntitySystemHandler,
 	},

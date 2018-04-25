@@ -7,18 +7,17 @@ import Typography from "material-ui/Typography";
 import IconButton from "material-ui/IconButton";
 import { withStyles } from "material-ui/styles";
 import MenuIcon from "material-ui-icons/Menu";
-import EnvironmentLabel from "./EnvironmentLabel";
-import Wordmark from "../icons/SensuWordmark";
+import EnvironmentLabel from "/components/EnvironmentLabel";
+import Wordmark from "/icons/SensuWordmark";
 
 class AppBar extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     environment: PropTypes.object,
     toggleToolbar: PropTypes.func.isRequired,
-    loading: PropTypes.bool,
   };
 
-  static defaultProps = { loading: false, environment: null };
+  static defaultProps = { environment: null };
 
   static fragments = {
     environment: gql`
@@ -58,7 +57,7 @@ class AppBar extends React.Component {
   });
 
   render() {
-    const { loading, environment, toggleToolbar, classes } = this.props;
+    const { environment, toggleToolbar, classes } = this.props;
 
     return (
       <MUIAppBar className={classes.appBar}>
@@ -80,11 +79,7 @@ class AppBar extends React.Component {
               <Wordmark alt="sensu logo" className={classes.logo} />
             </Typography>
             <div className={classes.grow} />
-            {environment ? (
-              <EnvironmentLabel environment={environment} />
-            ) : (
-              loading && <div>Loading...</div>
-            )}
+            {environment && <EnvironmentLabel environment={environment} />}
           </MaterialToolbar>
         </div>
       </MUIAppBar>

@@ -50,9 +50,12 @@ func BenchmarkSubPump(b *testing.B) {
 	session.wg.Add(1)
 	go session.subPump()
 
-	b.ResetTimer()
+	check := types.FixtureCheckRequest("checkity-check-check")
 
-	for i := 0; i < b.N; i++ {
-		session.checkChannel <- types.FixtureCheckRequest("checkity-check-check")
-	}
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			session.checkChannel <- check
+		}
+	})
 }

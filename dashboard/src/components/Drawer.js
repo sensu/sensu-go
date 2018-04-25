@@ -2,6 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Route, Link } from "react-router-dom";
 import gql from "graphql-tag";
+import { withApollo } from "react-apollo";
+import { compose } from "recompose";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List from "material-ui/List";
@@ -17,14 +19,17 @@ import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
 import IconButton from "material-ui/IconButton";
 import MenuIcon from "material-ui-icons/Menu";
-import WandIcon from "../icons/Wand";
-import EnvironmentIcon from "./EnvironmentIcon";
-import Wordmark from "../icons/SensuWordmark";
 
-import { logout } from "../utils/authentication";
-import DrawerButton from "./DrawerButton";
-import NamespaceSelector from "./NamespaceSelector";
-import Preferences from "./Preferences";
+import WandIcon from "/icons/Wand";
+import Wordmark from "/icons/SensuWordmark";
+
+import EnvironmentIcon from "/components/EnvironmentIcon";
+import DrawerButton from "/components/DrawerButton";
+import NamespaceSelector from "/components/NamespaceSelector";
+import Preferences from "/components/Preferences";
+import Loader from "/components/Loader";
+
+import invalidateTokens from "/mutations/invalidateTokens";
 
 const linkPath = (params, path) => {
   const { organization, environment } = params;
@@ -63,10 +68,15 @@ const styles = theme => ({
   hamburgerButton: {
     color: theme.palette.primary.contrastText,
   },
+
+  drawer: {
+    display: "block",
+  },
 });
 
 class Drawer extends React.Component {
   static propTypes = {
+    client: PropTypes.object.isRequired,
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.object,
     environment: PropTypes.object,
@@ -104,6 +114,7 @@ class Drawer extends React.Component {
 
   render() {
     const {
+      client,
       loading,
       viewer,
       environment,
@@ -114,103 +125,108 @@ class Drawer extends React.Component {
     const { preferencesOpen } = this.state;
 
     return (
-      <MaterialDrawer variant="temporary" open={open} onClose={onToggle}>
-        <div className={classes.paper}>
-          <div className={classes.headerContainer}>
-            <div className={classes.header}>
-              <div className={classes.row}>
-                <IconButton
-                  onClick={onToggle}
-                  className={classes.hamburgerButton}
-                >
-                  <MenuIcon />
-                </IconButton>
-                <Wordmark
-                  alt="sensu"
-                  className={classes.logo}
-                  color="secondary"
-                />
-              </div>
-              <div className={classes.row}>
-                <div className={classes.namespaceIcon}>
-                  {environment ? (
-                    <EnvironmentIcon environment={environment} size={36} />
-                  ) : (
-                    loading && <div>Loading...</div>
-                  )}
+      <MaterialDrawer
+        variant="temporary"
+        className={classes.drawer}
+        open={open}
+        onClose={onToggle}
+      >
+        <Loader passhrough loading={loading}>
+          <div className={classes.paper}>
+            <div className={classes.headerContainer}>
+              <div className={classes.header}>
+                <div className={classes.row}>
+                  <IconButton
+                    onClick={onToggle}
+                    className={classes.hamburgerButton}
+                  >
+                    <MenuIcon />
+                  </IconButton>
+                  <Wordmark
+                    alt="sensu"
+                    className={classes.logo}
+                    color="secondary"
+                  />
+                </div>
+                <div className={classes.row}>
+                  <div className={classes.namespaceIcon}>
+                    {environment && (
+                      <EnvironmentIcon environment={environment} size={36} />
+                    )}
+                  </div>
+                </div>
+                <div className={classes.row}>
+                  <NamespaceSelector
+                    viewer={viewer}
+                    environment={environment}
+                    className={classes.namespaceSelector}
+                  />
                 </div>
               </div>
-              <div className={classes.row}>
-                <NamespaceSelector
-                  viewer={viewer}
-                  environment={environment}
-                  className={classes.namespaceSelector}
-                />
-              </div>
             </div>
+            <Divider />
+            <Route
+              path="/:organization/:environment"
+              render={({ match: { params } }) => (
+                <List>
+                  <DrawerButton
+                    Icon={DashboardIcon}
+                    primary="Dashboard"
+                    component={Link}
+                    onClick={onToggle}
+                    to={linkPath(params, "")}
+                  />
+                  <DrawerButton
+                    Icon={EventIcon}
+                    primary="Events"
+                    component={Link}
+                    onClick={onToggle}
+                    to={linkPath(params, "events")}
+                  />
+                  <DrawerButton
+                    Icon={EntityIcon}
+                    primary="Entities"
+                    component={Link}
+                    onClick={onToggle}
+                    to={linkPath(params, "entities")}
+                  />
+                  <DrawerButton
+                    Icon={CheckIcon}
+                    primary="Checks"
+                    component={Link}
+                    onClick={onToggle}
+                    to={linkPath(params, "checks")}
+                  />
+                </List>
+              )}
+            />
+            <Divider />
+            <List>
+              <DrawerButton Icon={SettingsIcon} primary="Settings" />
+              <DrawerButton
+                Icon={WandIcon}
+                primary="Preferences"
+                onClick={() => {
+                  this.setState({ preferencesOpen: true });
+                }}
+              />
+              <DrawerButton
+                Icon={FeedbackIcon}
+                primary="Feedback"
+                component="a"
+                href="https://www.sensuapp.org"
+              />
+              <DrawerButton
+                Icon={LogoutIcon}
+                primary="Sign out"
+                onClick={() => {
+                  onToggle();
+                  invalidateTokens(client);
+                }}
+              />
+            </List>
           </div>
-          <Divider />
-          <Route
-            path="/:organization/:environment"
-            render={({ match: { params } }) => (
-              <List>
-                <DrawerButton
-                  Icon={DashboardIcon}
-                  primary="Dashboard"
-                  component={Link}
-                  onClick={onToggle}
-                  to={linkPath(params, "")}
-                />
-                <DrawerButton
-                  Icon={EventIcon}
-                  primary="Events"
-                  component={Link}
-                  onClick={onToggle}
-                  to={linkPath(params, "events")}
-                />
-                <DrawerButton
-                  Icon={EntityIcon}
-                  primary="Entities"
-                  component={Link}
-                  onClick={onToggle}
-                  to={linkPath(params, "entities")}
-                />
-                <DrawerButton
-                  Icon={CheckIcon}
-                  primary="Checks"
-                  component={Link}
-                  onClick={onToggle}
-                  to={linkPath(params, "checks")}
-                />
-              </List>
-            )}
-          />
-          <Divider />
-          <List>
-            <DrawerButton Icon={SettingsIcon} primary="Settings" />
-            <DrawerButton
-              Icon={WandIcon}
-              primary="Preferences"
-              onClick={() => {
-                this.setState({ preferencesOpen: true });
-              }}
-            />
-            <DrawerButton
-              Icon={FeedbackIcon}
-              primary="Feedback"
-              component="a"
-              href="https://www.sensuapp.org"
-            />
-            <DrawerButton
-              Icon={LogoutIcon}
-              primary="Sign out"
-              onClick={() => {
-                onToggle();
-                logout();
-              }}
-            />
-          </List>
-        </div>
+        </Loader>
         <Preferences
           open={preferencesOpen}
           onClose={() => this.setState({ preferencesOpen: false })}
@@ -220,4 +236,4 @@ class Drawer extends React.Component {
   }
 }
 
-export default withStyles(styles)(Drawer);
+export default compose(withStyles(styles), withApollo)(Drawer);

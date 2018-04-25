@@ -7,7 +7,8 @@ import DashboardIcon from "material-ui-icons/Dashboard";
 import EventIcon from "material-ui-icons/Notifications";
 import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
-import QuickNavButton from "./QuickNavButton";
+
+import QuickNavButton from "/components/QuickNavButton";
 
 const styles = {
   quickNavContainer: {},

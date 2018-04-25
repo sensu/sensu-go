@@ -7,14 +7,14 @@ import DonutSmall from "material-ui-icons/DonutSmall";
 import Explore from "material-ui-icons/Explore";
 import Visibility from "material-ui-icons/Visibility";
 import Emoticon from "material-ui-icons/InsertEmoticon";
-import Hot from "../../icons/Hot";
-import Donut from "../../icons/Donut";
-import Briefcase from "../../icons/Briefcase";
-import Heart from "../../icons/Heart";
-import HalfHeart from "../../icons/HalfHeart";
-import HeartMug from "../../icons/HeartMug";
-import Espresso from "../../icons/Espresso";
-import Poly from "../../icons/Poly";
+import Hot from "/icons/Hot";
+import Donut from "/icons/Donut";
+import Briefcase from "/icons/Briefcase";
+import Heart from "/icons/Heart";
+import HalfHeart from "/icons/HalfHeart";
+import HeartMug from "/icons/HeartMug";
+import Espresso from "/icons/Espresso";
+import Poly from "/icons/Poly";
 
 const icons = {
   BRIEFCASE: Briefcase,

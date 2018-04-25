@@ -3,19 +3,16 @@ import ReactDOM from "react-dom";
 import { BrowserRouter } from "react-router-dom";
 import injectTapEventPlugin from "react-tap-event-plugin";
 
-import createClient from "./apollo/client";
+import createClient from "/apollo/client";
 
-import createStore from "./store";
-import reducer from "./reducer";
-import registerServiceWorker from "./registerServiceWorker";
+import createStore from "/store";
+import reducer from "/reducer";
+import registerServiceWorker from "/registerServiceWorker";
 
-import AppRoot from "./components/AppRoot";
+import AppRoot from "/components/AppRoot";
 
 // Fonts
 import "typeface-roboto"; // eslint-disable-line
-
-// Polyfill
-import "url-search-params-polyfill"; // eslint-disable-line import/first
 
 // Configure store
 const store = createStore(reducer, {});

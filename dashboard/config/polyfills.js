@@ -17,3 +17,10 @@ Object.assign = require("object-assign");
 
 // http://facebook.github.io/regenerator/
 require("regenerator-runtime/runtime");
+
+// URLSearch
+require("url-search-params-polyfill");
+
+// Intl.RelativeTimeFormat
+window.IntlRelativeFormat = require("intl-relativeformat"); // eslint-disable-line no-unused-vars
+require("intl-relativeformat/dist/locale-data/en.js");

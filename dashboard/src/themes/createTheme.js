@@ -2,6 +2,7 @@ import deepmerge from "deepmerge";
 import createMuiTheme from "material-ui/styles/createMuiTheme";
 import createPalette from "material-ui/styles/createPalette";
 import createTypography from "material-ui/styles/createTypography";
+
 import defaults from "./defaults";
 
 function getTypography(typography, palette) {

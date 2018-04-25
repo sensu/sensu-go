@@ -6,9 +6,11 @@ import (
 	"context"
 	"os/exec"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,6 +58,16 @@ type Execution struct {
 
 	// Duration provides command execution time in seconds.
 	Duration float64
+
+	// Name is the name of the resource that is invoking the execution.
+	Name string
+
+	// InProgress is a map of checks that are still in execution, this is
+	// necessary for a check or hook to escape zombie processes.
+	InProgress map[string]*types.CheckConfig
+
+	// InProgressMu is the mutex for the InProgress map.
+	InProgressMu *sync.Mutex
 }
 
 // ExecuteCommand executes a system command (fork/exec) with a
@@ -110,7 +122,8 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		timer = time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
 			timeout()
 			if err := KillProcess(cmd); err != nil {
-				logger.WithError(err).Error("error when attempting to kill process")
+				logger.WithError(err).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
+				escapeZombie(execution)
 			}
 		})
 	}
@@ -151,4 +164,16 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	}
 
 	return execution, nil
+}
+
+func escapeZombie(ex *Execution) {
+	logger := logrus.WithFields(logrus.Fields{"component": "command"})
+	if ex.InProgress != nil && ex.InProgressMu != nil && ex.Name != "" {
+		logger.WithField("check", ex.Name).Warn("check or hook execution created zombie process - escaping in order for the check to execute again")
+		ex.InProgressMu.Lock()
+		delete(ex.InProgress, ex.Name)
+		ex.InProgressMu.Unlock()
+	} else {
+		logger.Error("unable to escape zombie process created from command execution")
+	}
 }

@@ -9,3 +9,11 @@ func clampInt(num, min, max int) int {
 	}
 	return num
 }
+
+// maxUint32 returns larger of x or y.
+func maxUint32(x, y uint32) uint32 {
+	if x > y {
+		return x
+	}
+	return y
+}

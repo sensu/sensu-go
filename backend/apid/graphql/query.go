@@ -45,7 +45,7 @@ func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
 
 // Environment implements response to request for 'environment' field.
 func (r *queryImpl) Environment(p schema.QueryEnvironmentFieldResolverParams) (interface{}, error) {
-	env, err := r.environmentCtrl.Find(p.Context, p.Args.Environment, p.Args.Organization)
+	env, err := r.environmentCtrl.Find(p.Context, p.Args.Organization, p.Args.Environment)
 	return handleControllerResults(env, err)
 }
 

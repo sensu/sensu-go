@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 
-import ThemeProvider from "./ThemeProvider";
+import ThemeProvider from "/components/ThemeProvider";
 
 class AppThemeProvider extends React.Component {
   static propTypes = {
