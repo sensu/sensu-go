@@ -53,8 +53,12 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.ProxyEntityID = check.ProxyEntityID
 	opts.Stdin = stdinDefault
 	opts.Timeout = strconv.Itoa(int(check.Timeout))
-	opts.HighFlapThreshold = strconv.Itoa(int(check.HighFlapThreshold))
-	opts.LowFlapThreshold = strconv.Itoa(int(check.LowFlapThreshold))
+	if check.HighFlapThreshold != nil {
+		opts.HighFlapThreshold = strconv.Itoa(int(check.HighFlapThreshold.Value))
+	}
+	if check.LowFlapThreshold != nil {
+		opts.LowFlapThreshold = strconv.Itoa(int(check.LowFlapThreshold.Value))
+	}
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -236,8 +240,14 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)
 	ttl, _ := strconv.ParseInt(opts.TTL, 10, 64)
-	highFlap, _ := strconv.ParseUint(opts.HighFlapThreshold, 10, 32)
-	lowFlap, _ := strconv.ParseUint(opts.LowFlapThreshold, 10, 32)
+	var highFlap *types.FlapThreshold
+	if val, err := strconv.ParseUint(opts.HighFlapThreshold, 10, 32); err != nil {
+		highFlap = &types.FlapThreshold{Value: uint32(val)}
+	}
+	var lowFlap *types.FlapThreshold
+	if val, err := strconv.ParseUint(opts.LowFlapThreshold, 10, 32); err != nil {
+		lowFlap = &types.FlapThreshold{Value: uint32(val)}
+	}
 
 	check.Name = opts.Name
 	check.Environment = opts.Env
@@ -253,6 +263,6 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Stdin = stdin
 	check.Timeout = uint32(timeout)
 	check.Ttl = int64(ttl)
-	check.HighFlapThreshold = uint32(highFlap)
-	check.LowFlapThreshold = uint32(lowFlap)
+	check.HighFlapThreshold = highFlap
+	check.LowFlapThreshold = lowFlap
 }

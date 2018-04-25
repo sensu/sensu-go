@@ -36,6 +36,8 @@ var typeMap = map[string]interface{}{
 	"event_filter":           &EventFilter{},
 	"Extension":              &Extension{},
 	"extension":              &Extension{},
+	"FlapThreshold":          &FlapThreshold{},
+	"flap_threshold":         &FlapThreshold{},
 	"Handler":                &Handler{},
 	"handler":                &Handler{},
 	"HandlerSocket":          &HandlerSocket{},

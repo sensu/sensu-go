@@ -26,7 +26,7 @@ func RemoveLowFlapThresholdCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			check.LowFlapThreshold = 0
+			check.LowFlapThreshold = nil
 
 			if err := check.Validate(); err != nil {
 				return err

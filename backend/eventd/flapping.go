@@ -5,17 +5,17 @@ import "github.com/sensu/sensu-go/types"
 // isFlapping determines if the check is flapping, based on the TotalStateChange
 // and configured thresholds
 func isFlapping(event *types.Event) bool {
-	if event.Check.LowFlapThreshold == 0 || event.Check.HighFlapThreshold == 0 {
+	if event.Check.LowFlapThreshold == nil || event.Check.HighFlapThreshold == nil {
 		return false
 	}
 
 	// Is the check already flapping?
 	if event.Check.State == types.EventFlappingState {
-		return event.Check.TotalStateChange > event.Check.LowFlapThreshold
+		return event.Check.TotalStateChange > event.Check.LowFlapThreshold.Value
 	}
 
 	// The check was not flapping, now determine if it does now
-	return event.Check.TotalStateChange >= event.Check.HighFlapThreshold
+	return event.Check.TotalStateChange >= event.Check.HighFlapThreshold.Value
 }
 
 // state determines the check state based on whether the check is flapping and

@@ -1,6 +1,8 @@
 package types
 
 import (
+	bytes "bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -352,4 +354,23 @@ func FixtureProxyRequests(splay bool) *ProxyRequests {
 // URIPath returns the path component of a Check URI.
 func (c *Check) URIPath() string {
 	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
+}
+
+func (f *FlapThreshold) MarshalJSON() ([]byte, error) {
+	if f == nil {
+		return []byte("null"), nil
+	}
+	return json.Marshal(f.Value)
+}
+
+func (f *FlapThreshold) UnmarshalJSON(p []byte) error {
+	if bytes.Equal(p, []byte("null")) {
+		return nil
+	}
+	var v uint32
+	if err := json.Unmarshal(p, &v); err != nil {
+		return err
+	}
+	f.Value = v
+	return nil
 }
