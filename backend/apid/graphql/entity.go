@@ -32,12 +32,19 @@ type entityImpl struct {
 	schema.EntityAliases
 	userCtrl   actions.UserController
 	entityCtrl entityQuerier
+	eventCtrl  eventQuerier
 }
 
 func newEntityImpl(store store.Store) *entityImpl {
 	userCtrl := actions.NewUserController(store)
 	entityCtrl := actions.NewEntityController(store)
-	return &entityImpl{userCtrl: userCtrl, entityCtrl: entityCtrl}
+	eventCtrl := actions.NewEventController(store, nil)
+
+	return &entityImpl{
+		userCtrl:   userCtrl,
+		entityCtrl: entityCtrl,
+		eventCtrl:  eventCtrl,
+	}
 }
 
 // ID implements response to request for 'id' field.
@@ -106,6 +113,28 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 	// limit
 	limit := clampInt(p.Args.Limit, 0, len(entities))
 	return entities[0:limit], nil
+}
+
+// Status implements response to request for 'related' field.
+func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
+	entity := p.Source.(*types.Entity)
+
+	// fetch
+	ctx := types.SetContextFromResource(p.Context, entity)
+	evs, err := r.eventCtrl.Query(ctx, entity.ID, "")
+	if err != nil {
+		return 0, err
+	}
+
+	// find MAX value
+	var st uint32
+	for _, ev := range evs {
+		if ev.Check == nil {
+			continue
+		}
+		st = maxUint32(ev.Check.Status, st)
+	}
+	return int(st), nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
