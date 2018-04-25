@@ -1,21 +1,20 @@
 import React from "react";
 import PropTypes from "prop-types";
-import moment from "moment";
 import { compose } from "recompose";
-
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
 import { withStyles } from "material-ui/styles";
+import { Route, Link } from "react-router-dom";
 import Typography from "material-ui/Typography";
 import Menu, { MenuItem } from "material-ui/Menu";
 import Button from "material-ui/ButtonBase";
-
 import Checkbox from "material-ui/Checkbox";
 import Disclosure from "material-ui-icons/MoreVert";
 
 import resolveEvent from "/mutations/resolveEvent";
-import EventStatus from "/components/EventStatus";
+import CheckStatusIcon from "/components/CheckStatusIcon";
 import { TableListItem } from "/components/TableList";
+import RelativeDate from "/components/RelativeDate";
 
 const styles = theme => ({
   root: {
@@ -60,14 +59,6 @@ const styles = theme => ({
   pipe: { marginTop: -4 },
 });
 
-function fromNow(date) {
-  const delta = new Date(date) - new Date();
-  if (delta < 0) {
-    return moment.duration(delta).humanize(true);
-  }
-  return "just now";
-}
-
 class EventListItem extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
@@ -105,18 +96,7 @@ class EventListItem extends React.Component {
     `,
   };
 
-  constructor(props) {
-    super(props);
-    this.fromNow = fromNow(props.event.timestamp);
-  }
-
   state = { anchorEl: null };
-
-  componentWillReceiveProps(nextProps) {
-    if (this.props.event.timestamp !== nextProps.event.timestamp) {
-      this.fromNow = fromNow(nextProps.event.timestamp);
-    }
-  }
 
   onClose = () => {
     this.setState({ anchorEl: null });
@@ -145,9 +125,9 @@ class EventListItem extends React.Component {
   };
 
   render() {
-    const { checked, classes, event: { entity, check }, onChange } = this.props;
+    const { checked, classes, event, onChange } = this.props;
+    const { entity, check, timestamp } = event;
     const { anchorEl } = this.state;
-    const time = this.fromNow;
 
     return (
       <TableListItem className={classes.root} selected={checked}>
@@ -155,17 +135,29 @@ class EventListItem extends React.Component {
           <Checkbox color="primary" onChange={onChange} checked={checked} />
         </div>
         <div className={classes.status}>
-          <EventStatus status={check.status} />
+          <CheckStatusIcon statusCode={check.status} />
         </div>
         <div className={classes.content}>
-          <span className={classes.caption}>
-            <strong>
-              {entity.name} › {check.name}
-            </strong>
-          </span>
+          <Route
+            path="/:organization/:environment"
+            render={({ match: { params } }) => (
+              <Link
+                to={`/${params.organization}/${params.environment}/events/${
+                  entity.name
+                }/${check.name}`}
+              >
+                <strong>
+                  {entity.name} › {check.name}
+                </strong>
+              </Link>
+            )}
+          />
           <div className={classes.timeHolder}>
-            Last occurred <strong>&nbsp;{time}&nbsp;</strong> and exited with
-            status <strong>&nbsp;{check.status}.</strong>
+            Last occurred{" "}
+            <strong>
+              &nbsp;<RelativeDate dateTime={timestamp} />&nbsp;
+            </strong>{" "}
+            and exited with status <strong>&nbsp;{check.status}.</strong>
           </div>
           <Typography variant="caption" className={classes.command}>
             {check.output}
