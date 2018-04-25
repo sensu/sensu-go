@@ -20,10 +20,10 @@ type getObjectsPath func(context.Context, string) string
 func query(ctx context.Context, store *Store, fn getObjectsPath) (*clientv3.GetResponse, error) {
 	// Support "*" as a wildcard
 	var org, env string
-	if org = organization(ctx); org == "*" {
+	if org = types.ContextOrganization(ctx); org == "*" {
 		org = ""
 	}
-	if env = environment(ctx); env == "*" {
+	if env = types.ContextEnvironment(ctx); env == "*" {
 		env = ""
 	}
 
@@ -67,20 +67,4 @@ func query(ctx context.Context, store *Store, fn getObjectsPath) (*clientv3.GetR
 	}
 
 	return resp, err
-}
-
-// environment returns the environment name injected in the context
-func environment(ctx context.Context) string {
-	if value := ctx.Value(types.EnvironmentKey); value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// organization returns the organization name injected in the context
-func organization(ctx context.Context) string {
-	if value := ctx.Value(types.OrganizationKey); value != nil {
-		return value.(string)
-	}
-	return ""
 }

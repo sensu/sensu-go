@@ -32,8 +32,8 @@ func getEventPath(event *types.Event) string {
 }
 
 func getEventWithCheckPath(ctx context.Context, entity, check string) string {
-	env := environment(ctx)
-	org := organization(ctx)
+	env := types.ContextEnvironment(ctx)
+	org := types.ContextOrganization(ctx)
 
 	return path.Join(EtcdRoot, eventsPathPrefix, org, env, entity, check)
 }
@@ -66,7 +66,7 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 
 	// Support "*" as a wildcard for filtering environments
 	var env string
-	if env = environment(ctx); env == "*" {
+	if env = types.ContextEnvironment(ctx); env == "*" {
 		env = ""
 	}
 

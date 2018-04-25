@@ -2,9 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Switch, Route, Redirect } from "react-router-dom";
 
-import AppWrapper from "../../AppWrapper";
-
-import NotFoundView from "../../views/NotFoundView";
+import AppWrapper from "/components/AppWrapper";
+import NotFoundView from "/components/views/NotFoundView";
 
 import DashboardContent from "./DashboardContent";
 import ChecksContent from "./ChecksContent";

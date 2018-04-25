@@ -1,5 +1,5 @@
-import createTheme from "./createTheme";
-import colors from "../colors";
+import createTheme from "/themes/createTheme";
+import colors from "/colors";
 
 const shadowKeyUmbraOpacity = 0.2;
 const shadowKeyPenumbraOpacity = 0.14;

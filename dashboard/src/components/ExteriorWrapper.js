@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
-import ThemeProvider from "../components/ThemeProvider";
+import ThemeProvider from "/components/ThemeProvider";
 
 class ExteriorWrapper extends React.Component {
   static propTypes = {
