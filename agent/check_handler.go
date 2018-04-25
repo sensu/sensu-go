@@ -74,9 +74,12 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
 	// availabe when when the command is executed.
 	ex := &command.Execution{
-		Env:     assets.Env(),
-		Command: checkConfig.Command,
-		Timeout: int(checkConfig.Timeout),
+		Env:          assets.Env(),
+		Command:      checkConfig.Command,
+		Timeout:      int(checkConfig.Timeout),
+		InProgress:   a.inProgress,
+		InProgressMu: a.inProgressMu,
+		Name:         checkConfig.Name,
 	}
 
 	// If stdin is true, add JSON event data to command execution.

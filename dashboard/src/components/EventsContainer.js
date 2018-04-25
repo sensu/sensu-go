@@ -14,18 +14,18 @@ import { MenuItem } from "material-ui/Menu";
 import { ListItemText, ListItemIcon } from "material-ui/List";
 import Checkbox from "material-ui/Checkbox";
 
-import EventsListItem from "./EventsListItem";
-import EventStatus from "./EventStatus";
-import ResolveEventMutation from "../mutations/ResolveEventMutation";
+import EventsListItem from "/components/EventsListItem";
+import CheckStatusIcon from "/components/CheckStatusIcon";
+import resolveEvent from "/mutations/resolveEvent";
 import TableList, {
   TableListHeader,
   TableListBody,
   TableListSelect,
   TableListEmptyState,
   TableListButton as Button,
-} from "./TableList";
+} from "/components/TableList";
 
-import Loader from "./Loader";
+import Loader from "/components/Loader";
 
 const styles = theme => {
   const toolbar = theme.mixins.toolbar;
@@ -187,7 +187,7 @@ class EventsContainer extends React.Component {
     );
 
     selectedKeys.forEach(key => {
-      ResolveEventMutation.commit(this.props.client, key).then(
+      resolveEvent(this.props.client, { id: key }).then(
         () => {
           this.setState(({ rowState }) =>
             Object.assign(rowState, { [key]: false }),
@@ -311,25 +311,25 @@ class EventsContainer extends React.Component {
               </MenuItem>
               <MenuItem key="warning" value={[1]}>
                 <ListItemIcon>
-                  <EventStatus status={1} />
+                  <CheckStatusIcon statusCode={1} />
                 </ListItemIcon>
                 <ListItemText primary="Warning" />
               </MenuItem>
               <MenuItem key="critical" value={[2]}>
                 <ListItemIcon>
-                  <EventStatus status={2} />
+                  <CheckStatusIcon statusCode={2} />
                 </ListItemIcon>
                 <ListItemText primary="Critical" />
               </MenuItem>
               <MenuItem key="unknown" value={[3]}>
                 <ListItemIcon>
-                  <EventStatus status={3} />
+                  <CheckStatusIcon statusCode={3} />
                 </ListItemIcon>
                 <ListItemText primary="Unknown" />
               </MenuItem>
               <MenuItem key="passing" value={[0]}>
                 <ListItemIcon>
-                  <EventStatus status={0} />
+                  <CheckStatusIcon statusCode={0} />
                 </ListItemIcon>
                 <ListItemText primary="Passing" />
               </MenuItem>

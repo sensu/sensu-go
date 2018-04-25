@@ -2,6 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Route, Link } from "react-router-dom";
 import gql from "graphql-tag";
+import { withApollo } from "react-apollo";
+import { compose } from "recompose";
 
 import MaterialDrawer from "material-ui/Drawer";
 import List from "material-ui/List";
@@ -17,15 +19,17 @@ import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
 import IconButton from "material-ui/IconButton";
 import MenuIcon from "material-ui-icons/Menu";
-import WandIcon from "../icons/Wand";
-import EnvironmentIcon from "./EnvironmentIcon";
-import Wordmark from "../icons/SensuWordmark";
 
-import { logout } from "../utils/authentication";
-import DrawerButton from "./DrawerButton";
-import NamespaceSelector from "./NamespaceSelector";
-import Preferences from "./Preferences";
-import Loader from "./Loader";
+import WandIcon from "/icons/Wand";
+import Wordmark from "/icons/SensuWordmark";
+
+import EnvironmentIcon from "/components/EnvironmentIcon";
+import DrawerButton from "/components/DrawerButton";
+import NamespaceSelector from "/components/NamespaceSelector";
+import Preferences from "/components/Preferences";
+import Loader from "/components/Loader";
+
+import invalidateTokens from "/mutations/invalidateTokens";
 
 const linkPath = (params, path) => {
   const { organization, environment } = params;
@@ -72,6 +76,7 @@ const styles = theme => ({
 
 class Drawer extends React.Component {
   static propTypes = {
+    client: PropTypes.object.isRequired,
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.object,
     environment: PropTypes.object,
@@ -109,6 +114,7 @@ class Drawer extends React.Component {
 
   render() {
     const {
+      client,
       loading,
       viewer,
       environment,
@@ -215,7 +221,7 @@ class Drawer extends React.Component {
                 primary="Sign out"
                 onClick={() => {
                   onToggle();
-                  logout();
+                  invalidateTokens(client);
                 }}
               />
             </List>
@@ -230,4 +236,4 @@ class Drawer extends React.Component {
   }
 }
 
-export default withStyles(styles)(Drawer);
+export default compose(withStyles(styles), withApollo)(Drawer);

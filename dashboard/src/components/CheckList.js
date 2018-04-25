@@ -11,9 +11,9 @@ import Table, {
   TableRow,
 } from "material-ui/Table";
 import Checkbox from "material-ui/Checkbox";
-import Row from "./CheckRow";
+import Row from "/components/CheckRow";
 
-import Loader from "./Loader";
+import Loader from "/components/Loader";
 
 class CheckList extends React.Component {
   static propTypes = {

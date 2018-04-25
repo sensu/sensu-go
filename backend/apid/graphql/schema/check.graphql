@@ -132,7 +132,7 @@ type Check {
   duration: Float
 
   "Executed describes the time in which the check request was executed"
-  executed: DateTime
+  executed: DateTime!
 
   "History is the check state history."
   history(first: Int = 21): [CheckHistory]!
@@ -165,10 +165,9 @@ type Check {
   silenced: [String]!
 
   """
-  LastOK displays last time this check was ok; if event status is 0 this is set
-  to timestamp.
+  LastOK displays last time this check's status was set to zero.
   """
-  lastOK: DateTime!
+  lastOK: DateTime
 
   """
   Occurrences indicates the number of times an event has occurred for a

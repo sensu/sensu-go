@@ -4,12 +4,13 @@ import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
 import Typography from "material-ui/Typography";
+import Button from "material-ui/Button";
 
-import AppContent from "../../AppContent";
-import EventsContainer from "../../EventsContainer";
-import SearchBox from "../../SearchBox";
-
-import NotFoundView from "../../views/NotFoundView";
+import AppContent from "/components/AppContent";
+import EventsContainer from "/components/EventsContainer";
+import SearchBox from "/components/SearchBox";
+import Content from "/components/Content";
+import NotFoundView from "/components/views/NotFoundView";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
@@ -25,21 +26,25 @@ class EventsContent extends React.Component {
   static styles = theme => ({
     headline: {
       display: "flex",
-      justifyContent: "space-between",
       alignContent: "center",
+      paddingLeft: theme.spacing.unit,
+      paddingRight: theme.spacing.unit,
+      [theme.breakpoints.up("sm")]: {
+        paddingLeft: 0,
+        paddingRight: 0,
+      },
     },
     searchBox: {
       width: "100%",
       marginLeft: theme.spacing.unit,
-      marginRight: theme.spacing.unit,
       [theme.breakpoints.up("sm")]: {
         width: "auto",
-        margin: 0,
       },
     },
     title: {
       alignSelf: "flex-end",
       display: "none",
+      flexGrow: 1,
       [theme.breakpoints.up("sm")]: {
         display: "flex",
       },
@@ -102,10 +107,8 @@ class EventsContent extends React.Component {
       <Query
         query={EventsContent.query}
         variables={{ ...match.params, filter: query.get("filter") }}
-        // TODO: Replace polling with query subscription
-        pollInterval={5000}
       >
-        {({ data: { environment } = {}, loading, error }) => {
+        {({ data: { environment } = {}, loading, error, refetch }) => {
           // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;
 
@@ -113,24 +116,23 @@ class EventsContent extends React.Component {
 
           return (
             <AppContent>
-              <div>
-                <div className={classes.headline}>
-                  <Typography className={classes.title} variant="headline">
-                    Events
-                  </Typography>
-                  <SearchBox
-                    className={classes.searchBox}
-                    onChange={this.requerySearchBox}
-                    value={this.state.filterValue}
-                  />
-                </div>
-                <EventsContainer
-                  className={classes.container}
-                  onQueryChange={this.changeQuery}
-                  environment={environment}
-                  loading={loading}
+              <Content className={classes.headline}>
+                <Typography className={classes.title} variant="headline">
+                  Events
+                </Typography>
+                <Button onClick={() => refetch()}>reload</Button>
+                <SearchBox
+                  className={classes.searchBox}
+                  onChange={this.requerySearchBox}
+                  value={this.state.filterValue}
                 />
-              </div>
+              </Content>
+              <EventsContainer
+                className={classes.container}
+                onQueryChange={this.changeQuery}
+                environment={environment}
+                loading={loading}
+              />
             </AppContent>
           );
         }}

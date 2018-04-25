@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import Typography from "material-ui/Typography";
 import { withStyles } from "material-ui/styles";
 
-import { EnvironmentIconBase as Icon } from "../EnvironmentIcon";
+import { EnvironmentIconBase as Icon } from "/components/EnvironmentIcon";
 
 class EnvironmentLabelBase extends React.Component {
   static propTypes = {
