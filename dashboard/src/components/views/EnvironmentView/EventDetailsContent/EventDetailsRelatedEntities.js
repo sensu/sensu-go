@@ -5,7 +5,7 @@ import Card, { CardContent } from "material-ui/Card";
 import Typography from "material-ui/Typography";
 import List from "material-ui/List";
 import RelativeDate from "/components/RelativeDate";
-import StatusIcon from "/components/CheckStatusIconSmall";
+import StatusIcon from "/components/CheckStatusIcon";
 import ListItem, {
   ListItemTitle,
   ListItemSubtitle,
@@ -38,7 +38,7 @@ class EventDetailsRelatedEntities extends React.Component {
             component="span"
             style={{ position: "absolute", left: 0 }}
           >
-            <StatusIcon status="error" inline mutedOK />
+            <StatusIcon statusCode={2} inline mutedOK small />
           </Typography>
           {entity.name}
         </ListItemTitle>

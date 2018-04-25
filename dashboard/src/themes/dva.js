@@ -26,12 +26,6 @@ const dva = (type = "dark") =>
         ? {
             type,
 
-            // secondary: {
-            //   light: colors.cyberGrape[300],
-            //   main: colors.cyberGrape[500],
-            //   dark: colors.cyberGrape[600],
-            //   contrastText: "#F1F9FD",
-            // },
             secondary: {
               light: "#01EC8F",
               main: "#01EC8F",
@@ -39,14 +33,15 @@ const dva = (type = "dark") =>
               contrastText: "#F1F9FD",
             },
             primary: {
-              light: colors.persianPink[300],
+              light: colors.persianPink[500],
               main: colors.persianPink[500],
               dark: colors.persianPink[700],
               contrastText: "#F1F9FD",
             },
 
             background: {
-              default: colors.cyberGrape[500],
+              default: colors.cyberGrape[800],
+              paper: colors.cyberGrape[600],
             },
           }
         : {

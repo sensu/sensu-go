@@ -2,10 +2,10 @@
 const defaults = {
   direction: "ltr",
   palette: {
-    green: "rgb(151, 198, 115)",
-    yellow: "rgb(213, 171, 59)",
-    orange: "rgb(211, 97, 53)",
-    red: "rgb(204, 62, 100)",
+    success: "rgb(151, 198, 115)",
+    warning: "rgb(213, 171, 59)",
+    critical: "rgb(204, 62, 100)",
+    unknown: "rgb(211, 97, 53)",
   },
   typography: () => {
     // Prefer 'Display' for larger fonts

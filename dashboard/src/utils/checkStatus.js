@@ -1,24 +1,17 @@
-const ok = "ok";
+const success = "success";
 const warning = "warning";
-const error = "error";
-
-const colorMap = {
-  [ok]: "green",
-  [warning]: "yellow",
-  [error]: "red",
-};
+const critical = "critical";
+const unknown = "unknown";
 
 // Given exit status return identifier.
 // 0 == ok
 // 1 == warning
-// > 1 == error
+// 2 == error
+// > 2 == unknown
+// eslint-disable-next-line import/prefer-default-export
 export function statusCodeToId(st) {
-  if (st === 0) return ok;
+  if (st === 0) return success;
   else if (st === 1) return warning;
-  return error;
-}
-
-// Given identifier return associated color.
-export function statusToColor(st) {
-  return colorMap[st];
+  else if (st === 2) return critical;
+  return unknown;
 }

@@ -5,7 +5,7 @@ import Card, { CardContent } from "material-ui/Card";
 import Divider from "material-ui/Divider";
 import Typography from "material-ui/Typography";
 import Grid from "material-ui/Grid";
-import { statusCodeToId, statusToColor } from "/utils/checkStatus";
+import { statusCodeToId } from "/utils/checkStatus";
 import Dictionary, {
   DictionaryKey,
   DictionaryValue,
@@ -19,7 +19,7 @@ import {
   KitchenTime,
 } from "/components/DateFormatter";
 import Duration from "/components/Duration";
-import StatusIcon from "/components/CheckStatusIconSmall";
+import StatusIcon from "/components/CheckStatusIcon";
 import Monospaced from "/components/Monospaced";
 import Maybe from "/components/Maybe";
 
@@ -52,13 +52,13 @@ class EventDetailsCheckResult extends React.PureComponent {
 
   render() {
     const { check, entity } = this.props;
-    const statusText = statusCodeToId(check.status);
-    const color = statusToColor(statusText);
+    const statusCode = check.status;
+    const status = statusCodeToId(check.status);
     const formatter = new Intl.NumberFormat("en-US");
 
     return (
       <Card>
-        <CardHighlight color={color} />
+        <CardHighlight color={status} />
         <CardContent>
           <Typography variant="headline" paragraph>
             Check Result
@@ -69,9 +69,9 @@ class EventDetailsCheckResult extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Status</DictionaryKey>
                   <DictionaryValue>
-                    <StatusIcon status={statusText} inline /> {statusText} ({
-                      check.status
-                    })
+                    <StatusIcon inline small statusCode={statusCode} />{" "}
+                    {`${status} `}
+                    ({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>

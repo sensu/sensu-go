@@ -135,7 +135,7 @@ class EventListItem extends React.Component {
           <Checkbox color="primary" onChange={onChange} checked={checked} />
         </div>
         <div className={classes.status}>
-          <CheckStatusIcon status={check.status} />
+          <CheckStatusIcon statusCode={check.status} />
         </div>
         <div className={classes.content}>
           <Route

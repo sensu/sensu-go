@@ -10,28 +10,37 @@ const styles = theme => ({
     border: "none",
     margin: "0 0 -2px 0",
   },
-  green: {
-    backgroundColor: theme.palette.green,
+  primary: {
+    backgroundColor: theme.palette.primary,
   },
-  yellow: {
-    backgroundColor: theme.palette.yellow,
+  secondary: {
+    backgroundColor: theme.palette.secondary,
   },
-  orange: {
-    backgroundColor: theme.palette.orange,
+  success: {
+    backgroundColor: theme.palette.success,
   },
-  red: {
-    backgroundColor: theme.palette.red,
+  warning: {
+    backgroundColor: theme.palette.warning,
+  },
+  critical: {
+    backgroundColor: theme.palette.critical,
+  },
+  unknown: {
+    backgroundColor: theme.palette.unknown,
   },
 });
 
 class CardHighlight extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    color: PropTypes.oneOf(["green", "yellow", "orange", "red"]),
-  };
-
-  static defaultProps = {
-    color: "green",
+    color: PropTypes.oneOf([
+      "primary",
+      "secondary",
+      "success",
+      "warning",
+      "critical",
+      "unknown",
+    ]).isRequired,
   };
 
   render() {
