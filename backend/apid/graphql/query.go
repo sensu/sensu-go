@@ -1,8 +1,6 @@
 package graphql
 
 import (
-	"context"
-
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
@@ -12,21 +10,13 @@ import (
 
 var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
 
-type eventFetcher interface {
-	Find(ctx context.Context, entity, check string) (*types.Event, error)
-}
-
-type environmentFetcher interface {
-	Find(ctx context.Context, org, env string) (*types.Environment, error)
-}
-
 //
 // Implement QueryFieldResolvers
 //
 
 type queryImpl struct {
-	eventCtrl       eventFetcher
-	environmentCtrl environmentFetcher
+	eventCtrl       eventFinder
+	environmentCtrl environmentFinder
 	nodeResolver    *nodeResolver
 }
 

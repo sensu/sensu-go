@@ -20,14 +20,21 @@ var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
 //
 
 type mutationsImpl struct {
-	checkController actions.CheckController
-	eventController actions.EventController
+	checkCtrl      actions.CheckController
+	eventFinder    eventFinder
+	eventReplacer  eventReplacer
+	eventDestroyer eventDestroyer
 }
 
 func newMutationImpl(store store.Store, getter types.QueueGetter, bus messaging.MessageBus) *mutationsImpl {
+	eventCtrl := actions.NewEventController(store, bus)
+	checkCtrl := actions.NewCheckController(store, getter)
+
 	return &mutationsImpl{
-		checkController: actions.NewCheckController(store, getter),
-		eventController: actions.NewEventController(store, bus),
+		checkCtrl:      checkCtrl,
+		eventFinder:    eventCtrl,
+		eventReplacer:  eventCtrl,
+		eventDestroyer: eventCtrl,
 	}
 }
 
@@ -49,7 +56,7 @@ func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverPar
 	check.Environment = inputs.Ns.Environment
 	copyCheckInputs(&check, inputs.Props)
 
-	err := r.checkController.Create(p.Context, check)
+	err := r.checkCtrl.Create(p.Context, check)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +77,7 @@ func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverPar
 	check.Environment = components.Environment()
 	copyCheckInputs(&check, inputs.Props)
 
-	err := r.checkController.Update(p.Context, check)
+	err := r.checkCtrl.Update(p.Context, check)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +92,7 @@ func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverPar
 	components, _ := globalid.Decode(p.Args.Input.ID.(string))
 	ctx := setContextFromComponents(p.Context, components)
 
-	err := r.checkController.Destroy(ctx, components.UniqueComponent())
+	err := r.checkCtrl.Destroy(ctx, components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
@@ -121,15 +128,13 @@ func (*mutationsImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 // ResolveEvent implements response to request for the 'resolveEvent' field.
 func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverParams) (interface{}, error) {
-	components, _ := globalid.Decode(p.Args.Input.ID.(string))
-	ctx := setContextFromComponents(p.Context, components)
-
-	evComponents, ok := components.(globalid.EventComponents)
-	if !ok {
-		return nil, errors.New("given id does not appear to reference event")
+	components, err := decodeEventGID(p.Args.Input.ID.(string))
+	if err != nil {
+		return nil, err
 	}
 
-	event, err := r.eventController.Find(ctx, evComponents.EntityName(), evComponents.CheckName())
+	ctx := setContextFromComponents(p.Context, components)
+	event, err := r.eventFinder.Find(ctx, components.EntityName(), components.CheckName())
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +144,7 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 		event.Check.Output = "Resolved manually with " + p.Args.Input.Source
 		event.Timestamp = int64(time.Now().Unix())
 
-		err = r.eventController.CreateOrReplace(ctx, *event)
+		err = r.eventReplacer.CreateOrReplace(ctx, *event)
 		if err != nil {
 			return nil, err
 		}
@@ -149,4 +154,39 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 		"clientMutationId": p.Args.Input.ClientMutationID,
 		"event":            event,
 	}, nil
+}
+
+// DeleteEvent implements response to request for the 'deleteEvent' field.
+func (r *mutationsImpl) DeleteEvent(p schema.MutationDeleteEventFieldResolverParams) (interface{}, error) {
+	gid := p.Args.Input.ID.(string)
+	components, err := decodeEventGID(gid)
+	if err != nil {
+		return nil, errors.New("given id does not appear to reference event")
+	}
+
+	ctx := setContextFromComponents(p.Context, components)
+	err = r.eventDestroyer.Destroy(ctx, components.EntityName(), components.CheckName())
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"deletedId":        gid,
+	}, nil
+}
+
+func decodeEventGID(gid string) (globalid.EventComponents, error) {
+	components := globalid.EventComponents{}
+	parsedComponents, err := globalid.Parse(gid)
+	if err != nil {
+		return components, err
+	}
+
+	if parsedComponents.Resource() != globalid.EventTranslator.ForResourceNamed() {
+		return components, errors.New("given id does not appear to reference event")
+	}
+
+	components = globalid.NewEventComponents(parsedComponents)
+	return components, nil
 }

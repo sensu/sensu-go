@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"sort"
 	"time"
 
@@ -19,10 +18,6 @@ var _ schema.SystemFieldResolvers = (*systemImpl)(nil)
 var _ schema.NetworkFieldResolvers = (*networkImpl)(nil)
 var _ schema.NetworkInterfaceFieldResolvers = (*networkInterfaceImpl)(nil)
 var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
-
-type entityQuerier interface {
-	Query(ctx context.Context) ([]*types.Entity, error)
-}
 
 //
 // Implement EntityFieldResolvers

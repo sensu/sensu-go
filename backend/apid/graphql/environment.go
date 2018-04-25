@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"errors"
 	"sort"
 
@@ -16,10 +15,6 @@ import (
 )
 
 var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
-
-type eventQuerier interface {
-	Query(ctx context.Context, entity, check string) ([]*types.Event, error)
-}
 
 //
 // Implement EnvironmentFieldResolvers
