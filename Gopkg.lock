@@ -32,9 +32,8 @@
 
 [[projects]]
   name = "github.com/atlassian/gostatsd"
-  packages = [".","pkg/statsd","pkg/statser"]
-  revision = "790cb45a9c72226565f4c9946a0f17edbb65e88b"
-  version = "2.4.2"
+  packages = [".","pkg/fakesocket","pkg/pool","pkg/statsd","pkg/statser"]
+  revision = "99f7a39855fc860055264fcec1cbae28bdc2deeb"
 
 [[projects]]
   branch = "master"
@@ -199,6 +198,18 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/gxed/GoEndian"
+  packages = ["."]
+  revision = "0f5c6873267e5abf306ffcdfcfa4bf77517ef4a7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gxed/eventfd"
+  packages = ["."]
+  revision = "80a92cca79a8041496ccc9dd773fcb52a57ec6f9"
+
+[[projects]]
+  branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [".","hcl/ast","hcl/parser","hcl/scanner","hcl/strconv","hcl/token","json/parser","json/scanner","json/token"]
   revision = "68e816d1c783414e79bc65b3994d9ab6b0a722ab"
@@ -216,6 +227,18 @@
   version = "v1.5.2"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/ipfs/go-log"
+  packages = ["."]
+  revision = "7ecd3df29a4a648fd3ecd1e78d19d1bfcaacee0f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jbenet/go-reuseport"
+  packages = ["."]
+  revision = "15a1cd37f0502f3b2eccb6d71a7958edda314633"
+
+[[projects]]
   name = "github.com/jonboulle/clockwork"
   packages = ["."]
   revision = "2eee05ed794112d45db504eb05aa693efd2b8b09"
@@ -225,6 +248,18 @@
   name = "github.com/json-iterator/go"
   packages = ["."]
   revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-reuseport"
+  packages = ["poll","singlepoll"]
+  revision = "15a1cd37f0502f3b2eccb6d71a7958edda314633"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/libp2p/go-sockaddr"
+  packages = ["net"]
+  revision = "f3e9f73a53d14d8257cb9da3d83dda07bbd8b2fe"
 
 [[projects]]
   name = "github.com/magiconair/properties"
@@ -297,6 +332,12 @@
   name = "github.com/olekukonko/tablewriter"
   packages = ["."]
   revision = "0fd34425a5aee40ff3f260b34e6c3b0d59f58c66"
+
+[[projects]]
+  name = "github.com/opentracing/opentracing-go"
+  packages = [".","ext","log"]
+  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
+  version = "v1.0.2"
 
 [[projects]]
   name = "github.com/pelletier/go-buffruneio"
@@ -459,6 +500,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/whyrusleeping/go-logging"
+  packages = ["."]
+  revision = "0457bb6b88fc1973573aaf6b5145d8d3ae972390"
+
+[[projects]]
+  branch = "master"
   name = "github.com/willf/pad"
   packages = ["utf8"]
   revision = "b3d7806010228b1a954b4d9c4ee4cf6cb476b063"
@@ -478,7 +525,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","http2","http2/hpack","idna","internal/timeseries","lex/httplex","publicsuffix","trace"]
+  packages = ["bpf","context","http2","http2/hpack","idna","internal/iana","internal/socket","internal/timeseries","ipv6","lex/httplex","publicsuffix","trace"]
   revision = "b60f3a92103dfd93dfcb900ec77c6d0643510868"
 
 [[projects]]
@@ -531,6 +578,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d44947b60540c1ef94c403688d17a80c31838e867517b07559868c8b7e0525cc"
+  inputs-digest = "6c3bca44d8193db91c4d0324c958f34f22c503744c5068fde88cc17b8c9616ac"
   solver-name = "gps-cdcl"
   solver-version = 1

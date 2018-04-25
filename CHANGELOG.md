@@ -59,6 +59,7 @@ and yarn are now dependencies for building the backend.
 - Set default log level to 'warn'.
 - Optimize check marshaling.
 - Silenced API only accepts 'id' parameter on DELETE requests.
+- Disable gostatsd internal metric collection.
 - Improved log entries produced by pipelined.
 
 ### Fixed

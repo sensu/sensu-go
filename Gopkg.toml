@@ -166,7 +166,7 @@ required = ["github.com/shirou/w32"]
 
 [[constraint]]
   name = "github.com/atlassian/gostatsd"
-  version = "2.4.0"
+  revision = "99f7a39855fc860055264fcec1cbae28bdc2deeb"
 
 [[constraint]]
   name = "github.com/influxdata/influxdb"
