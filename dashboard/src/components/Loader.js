@@ -5,7 +5,7 @@ import ResizeObserver from "react-resize-observer";
 import { Motion, spring, presets } from "react-motion";
 import classnames from "classnames";
 
-import AnimatedLogo from "./AnimatedLogo";
+import AnimatedLogo from "/components/AnimatedLogo";
 
 const LOADER_OPACITY = 1;
 const OVERLAY_OPACITY = 0.8;

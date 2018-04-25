@@ -9,17 +9,21 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sirupsen/logrus"
+	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
 // mutateEvent mutates (transforms) a Sensu event into a serialized
 // format (byte slice) to be provided to a Sensu event handler.
 func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]byte, error) {
+	// Prepare log entry
+	fields := utillogging.EventFields(event)
+	fields["handler"] = handler.Name
+
 	if handler.Mutator == "" {
 		eventData, err := p.jsonMutator(event)
 
 		if err != nil {
-			logger.WithError(err).Error("pipelined failed to mutate an event")
+			logger.WithFields(fields).WithError(err).Error("failed to mutate event")
 			return nil, err
 		}
 
@@ -34,9 +38,11 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+	fields["mutator"] = handler.Mutator
+
 	mutator, err := p.store.GetMutatorByName(ctx, handler.Mutator)
 	if err != nil {
-		logger.WithError(err).Error("pipelined failed to retrieve a mutator")
+		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")
 		return nil, err
 	}
 
@@ -63,7 +69,7 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 	eventData, err := p.pipeMutator(mutator, event)
 
 	if err != nil {
-		logger.WithError(err).Error("pipelined failed to mutate an event")
+		logger.WithFields(fields).WithError(err).Error("failed to mutate the event")
 		return nil, err
 	}
 
@@ -97,13 +103,11 @@ func (p *Pipelined) onlyCheckOutputMutator(event *types.Event) []byte {
 // the mutated event data for a Sensu event handler.
 func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]byte, error) {
 	mutatorExec := &command.Execution{}
-
 	mutatorExec.Command = mutator.Command
 	mutatorExec.Timeout = int(mutator.Timeout)
 	mutatorExec.Env = mutator.EnvVars
 
 	eventData, err := json.Marshal(event)
-
 	if err != nil {
 		return nil, err
 	}
@@ -118,10 +122,9 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
 	}
 
-	logger.WithFields(logrus.Fields{
-		"status": result.Status,
-		"output": result.Output,
-	}).Debug("pipelined executed event pipe mutator")
+	fields := utillogging.EventFields(event)
+	fields["mutator"] = mutator.Name
+	logger.WithFields(fields).Debug("event pipe mutator executed")
 
 	return []byte(result.Output), nil
 }

@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -64,4 +65,19 @@ func TestEntityTypeStatusField(t *testing.T) {
 	st, err = impl.Status(params)
 	require.NoError(t, err)
 	assert.Equal(t, 2, st)
+}
+
+func TestEntityTypeLastSeenField(t *testing.T) {
+	now := time.Now()
+
+	entity := types.FixtureEntity("id")
+	entity.LastSeen = now.Unix()
+	params := graphql.ResolveParams{}
+	params.Source = entity
+
+	impl := entityImpl{}
+	res, err := impl.LastSeen(params)
+	require.NoError(t, err)
+	require.NotEmpty(t, res)
+	assert.Equal(t, res.Unix(), now.Unix())
 }

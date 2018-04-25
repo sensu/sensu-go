@@ -20,7 +20,7 @@ var (
 )
 
 func getExtensionPath(ctx context.Context, name string) string {
-	org := organization(ctx)
+	org := types.ContextOrganization(ctx)
 
 	return extKeyBuilder.WithOrg(org).Build(name)
 }

@@ -24,7 +24,7 @@ func getAssetPath(asset *types.Asset) string {
 }
 
 func getAssetsPath(ctx context.Context, name string) string {
-	org := organization(ctx)
+	org := types.ContextOrganization(ctx)
 
 	return assetKeyBuilder.WithOrg(org).Build(name)
 }

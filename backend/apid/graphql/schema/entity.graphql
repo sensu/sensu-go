@@ -14,7 +14,7 @@ type Entity implements Node {
   class: String
   system: System
   subscriptions: [String!]
-  lastSeen: Int
+  lastSeen: DateTime
   deregister: Boolean!
   deregistration: Deregistration
   keepaliveTimeout: Int

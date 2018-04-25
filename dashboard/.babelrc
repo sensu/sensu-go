@@ -1,0 +1,70 @@
+{
+  "presets": [
+    ["babel-preset-env", {
+      "targets": {
+        // React parses on ie 9, so we should too.
+        "ie": 9,
+      },
+      // Disable polyfill transforms.
+      "useBuiltIns": false,
+      // Do not transform es6 modules, required for webpack "tree shaking".
+      "modules": false,
+    }],
+    "babel-preset-react",
+  ],
+  "plugins": [
+    "transform-es2015-destructuring",
+    ["transform-class-properties", {
+      "loose": true,
+    }],
+    ["transform-object-rest-spread", {
+      "useBuiltIns": true,
+    }],
+    ["transform-react-jsx", {
+      "useBuiltIns": true,
+    }],
+    ["transform-runtime", {
+      "helpers": false,
+      "polyfill": false,
+      "regenerator": true,
+    }],
+    ["transform-regenerator", {
+      "async": false,
+    }],
+    ["module-resolver", {
+      "alias": {
+        "": "./src",
+      },
+    }],
+  ],
+  "env": {
+    "development": {
+      "plugins": [
+        // These plugins can be removed after migrating to @babel/preset-react 7
+        // with the `development` option set.
+        "transform-react-jsx-source",
+        "transform-react-jsx-self",
+      ],
+    },
+    "test": {
+      "presets": [
+        ["babel-preset-env", {
+          "targets": {
+            "node": "current",
+          },
+          // Disable polyfill transforms.
+          "useBuiltIns": false,
+          // Transform modules to CJS for node runtime.
+          "modules": "commonjs",
+        }]
+      ],
+    },
+    "production": {
+      "plugins": [
+        ["transform-react-remove-prop-types", {
+          "removeImport": true,
+        }],
+      ],
+    },
+  }
+}

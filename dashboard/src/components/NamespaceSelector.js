@@ -6,8 +6,8 @@ import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
 import Button from "material-ui/ButtonBase";
 
-import NamespaceSelectorBuilder from "./NamespaceSelectorBuilder";
-import NamespaceSelectorMenu from "./NamespaceSelectorMenu";
+import NamespaceSelectorBuilder from "/components/NamespaceSelectorBuilder";
+import NamespaceSelectorMenu from "/components/NamespaceSelectorMenu";
 
 const styles = {
   button: {
