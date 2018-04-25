@@ -219,7 +219,7 @@
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
-  
+
 [[projects]]
   name = "github.com/influxdata/influxdb"
   packages = ["client/v2","models","pkg/escape"]
@@ -578,6 +578,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb0d2a6ab00adb8766ef64db0d0e398944cc092723a4496592e2f06e51cb1b59"
+  inputs-digest = "6c3bca44d8193db91c4d0324c958f34f22c503744c5068fde88cc17b8c9616ac"
   solver-name = "gps-cdcl"
   solver-version = 1
