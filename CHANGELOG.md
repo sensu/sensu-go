@@ -60,7 +60,6 @@ and yarn are now dependencies for building the backend.
 - Silenced API only accepts 'id' parameter on DELETE requests.
 - Disable gostatsd internal metric collection.
 - Improved log entries produced by pipelined.
-- Disable gostatsd internal metric collection.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
