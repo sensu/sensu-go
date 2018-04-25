@@ -26,6 +26,11 @@ const dva = (type = "dark") =>
         ? {
             type,
 
+            success: "#56E39F",
+            warning: "#F2DC5D",
+            critical: "#C10702",
+            unknown: "#F44708",
+
             secondary: {
               light: "#01EC8F",
               main: "#01EC8F",

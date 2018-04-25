@@ -23,6 +23,7 @@ class EventDetailsRelatedEntities extends React.Component {
           id
           name
           lastSeen
+          status
         }
       }
     `,
@@ -38,7 +39,7 @@ class EventDetailsRelatedEntities extends React.Component {
             component="span"
             style={{ position: "absolute", left: 0 }}
           >
-            <StatusIcon statusCode={2} inline mutedOK small />
+            <StatusIcon statusCode={entity.status} inline mutedOK small />
           </Typography>
           {entity.name}
         </ListItemTitle>
