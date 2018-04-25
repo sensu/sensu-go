@@ -38,14 +38,7 @@ function install_deps
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
     go get github.com/golang/lint/golint
-    install_golang_dep
-}
-
-function install_golang_dep
-{
-    go get github.com/golang/dep/cmd/dep
-    echo "Running dep ensure..."
-    dep ensure -v -vendor-only
+    C:\gopath\bin\dep.exe ensure -v -vendor-only
 }
 
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)

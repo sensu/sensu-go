@@ -143,6 +143,11 @@ information on the DCO, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Development
 
+Sensu is written in Go, and targets the latest stable release of the Go
+compiler. To work on Sensu, you will need the latest release of Go.
+
+[Go installation instructions](https://golang.org/doc/install)
+
 ### Protobuf
 
 #### Overview
@@ -168,12 +173,15 @@ Once you make a change to any `*.proto` file within the **types** package, you w
 ### Dependencies
 
 Sensu uses [golang/dep](https://github.com/golang/dep) for managing its
-dependencies.
+dependencies. You will need to install the latest stable version of dep in
+order to install Sensu's dependencies.
+
+[Dep releases](https://github.com/golang/dep/releases)
 
 #### Usage
 
-Running the following will install `dep` (if it is not already) and pull all
-required dependencies.
+Running the following will pull all required dependencies, including static
+analysis and linter tools.
 
 ```shell
 ./build.sh deps

@@ -44,12 +44,6 @@ install_deps () {
     go get github.com/jgautheron/goconst/cmd/goconst
     go get honnef.co/go/tools/cmd/megacheck
     go get github.com/golang/lint/golint
-    install_golang_dep
-}
-
-install_golang_dep() {
-    go get github.com/golang/dep/cmd/dep
-    echo "Running dep ensure..."
     dep ensure -v -vendor-only
 }
 
