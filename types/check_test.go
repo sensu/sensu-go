@@ -156,3 +156,35 @@ func TestCheckHasZeroIssuedMarshaled(t *testing.T) {
 		t.Error("issued not present")
 	}
 }
+
+func TestCheckHasNonNilSubscriptions(t *testing.T) {
+	var c Check
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	require.NotNil(t, c.Subscriptions)
+}
+
+func TestCheckHasNonNilHandlers(t *testing.T) {
+	var c Check
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	require.NotNil(t, c.Handlers)
+}
+
+func TestCheckConfigHasNonNilSubscriptions(t *testing.T) {
+	var c CheckConfig
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	require.NotNil(t, c.Subscriptions)
+}
+
+func TestCheckConfigHasNonNilHandlers(t *testing.T) {
+	var c CheckConfig
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	require.NotNil(t, c.Handlers)
+}

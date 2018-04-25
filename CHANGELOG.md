@@ -34,6 +34,7 @@ event handlers for statsd metrics.
 - Add extension package for building third-party Sensu extensions in Go.
 - Add the `--statsd-disable` flag to sensu-agent which configures the
 statsd listener. The listener is enabled by default.
+- Added an influx-db handler for events containing metrics.
 - Add 'remove-when' and 'set-when' subcommands to sensuctl filter command.
 
 ### Changed
@@ -77,6 +78,7 @@ and yarn are now dependencies for building the backend.
 swallowed. The events are sent through the pipeline.
 - Fixed a bug where the Issued field was never populated.
 - When creating a new statsd server, use the default flush interval if given 0.
+- Fixed a bug where check and checkconfig handlers and subscriptions are null in rendered JSON.
 - Allow checks and hooks to escape zombie processes that have timed out.
 - Install all dependencies with `dep ensure` in build.sh.
 
