@@ -76,6 +76,7 @@ and yarn are now dependencies for building the backend.
 swallowed. The events are sent through the pipeline.
 - Fixed a bug where the Issued field was never populated.
 - When creating a new statsd server, use the default flush interval if given 0.
+- Allow checks and hooks to escape zombie processes that have timed out.
 
 
 ## [2.0.0-nightly.1] - 2018-03-07

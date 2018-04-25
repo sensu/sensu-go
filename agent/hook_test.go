@@ -24,7 +24,7 @@ func TestExecuteHook(t *testing.T) {
 	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
 	hookConfig.Command = truePath
 
-	hook := agent.executeHook(hookConfig)
+	hook := agent.executeHook(hookConfig, "check")
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(hook.Status, int32(0))
@@ -32,7 +32,7 @@ func TestExecuteHook(t *testing.T) {
 
 	hookConfig.Command = "printf hello"
 
-	hook = agent.executeHook(hookConfig)
+	hook = agent.executeHook(hookConfig, "check")
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(hook.Status, int32(0))
