@@ -1,20 +1,27 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { graphql } from "react-apollo";
+import gql from "graphql-tag";
 
 import ConditionalRoute from "/components/util/ConditionalRoute";
-import withAuthTokens from "/components/util/withAuthTokens";
 
 class AuthenticatedRoute extends React.PureComponent {
   static propTypes = {
     ...ConditionalRoute.propTypes,
-    authTokens: PropTypes.object.isRequired,
+    data: PropTypes.object.isRequired,
   };
 
   render() {
-    const { authTokens, ...props } = this.props;
+    const { data, ...props } = this.props;
 
-    return <ConditionalRoute {...props} active={!!authTokens.accessToken} />;
+    return <ConditionalRoute {...props} active={!!data.auth.accessToken} />;
   }
 }
 
-export default withAuthTokens(AuthenticatedRoute);
+export default graphql(gql`
+  query AuthenticatedRouteQuery {
+    auth @client {
+      accessToken
+    }
+  }
+`)(AuthenticatedRoute);

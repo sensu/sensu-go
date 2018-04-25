@@ -35,6 +35,8 @@ rules:
   # babel-plugin-module-resolver aliases absolute paths to the src directory
   import/no-absolute-path: 0
 
+  import/prefer-default-export: 0
+
   # https://github.com/apollographql/eslint-plugin-graphql
   graphql/template-strings:
     - error
@@ -42,10 +44,10 @@ rules:
       env: apollo
       schemaJsonFilepath: ./src/schema.json
       validators:
-        - FieldsOnCorrectType
+        # FieldsOnCorrectType and KnownDirectives are disabled to allow local
+        # @client queries and mutations that do not conform to the remote schema
         - FragmentsOnCompositeTypes
         - KnownArgumentNames
-        - KnownDirectives
         - KnownTypeNames
         - LoneAnonymousOperation
         - NoFragmentCycles

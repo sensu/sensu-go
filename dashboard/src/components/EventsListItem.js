@@ -13,7 +13,7 @@ import Button from "material-ui/ButtonBase";
 import Checkbox from "material-ui/Checkbox";
 import Disclosure from "material-ui-icons/MoreVert";
 
-import ResolveEventMutation from "/mutations/ResolveEventMutation";
+import resolveEvent from "/mutations/resolveEvent";
 import EventStatus from "/components/EventStatus";
 import { TableListItem } from "/components/TableList";
 
@@ -140,7 +140,7 @@ class EventListItem extends React.Component {
 
   resolve = () => {
     const { client, event } = this.props;
-    ResolveEventMutation.commit(client, event.id, {});
+    resolveEvent(client, event.id);
     this.setState({ anchorEl: null });
   };
 

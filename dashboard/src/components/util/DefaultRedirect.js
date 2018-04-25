@@ -1,24 +1,30 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Redirect } from "react-router-dom";
-
-import withAuthTokens from "/components/util/withAuthTokens";
+import { graphql } from "react-apollo";
+import gql from "graphql-tag";
 
 class DefaultRedirect extends React.PureComponent {
   static propTypes = {
-    authTokens: PropTypes.object.isRequired,
+    data: PropTypes.object.isRequired,
   };
 
   render() {
-    const { authTokens } = this.props;
+    const { data } = this.props;
 
     // TODO: Store and retrieve last viewed environment.
     const lastEnvironment = "/default/default";
 
-    const nextPath = authTokens.accessToken ? lastEnvironment : "/login";
+    const nextPath = data.auth.accessToken ? lastEnvironment : "/login";
 
     return <Redirect to={nextPath} />;
   }
 }
 
-export default withAuthTokens(DefaultRedirect);
+export default graphql(gql`
+  query {
+    auth @client {
+      accessToken
+    }
+  }
+`)(DefaultRedirect);
