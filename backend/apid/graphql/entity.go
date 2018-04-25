@@ -84,6 +84,15 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 		if en.ID != entity.ID {
 			continue
 		}
+
+		//
+		// - As we sort the result set in the next step we can safely remove the
+		//   source from the slice without preserving it's order.
+		// - Since we are dealing with a slice of pointers we explicilty set the
+		//   reference to the last element to nil to ensure it can be GC'd.
+		//
+		// https://github.com/golang/go/wiki/SliceTricks#delete-without-preserving-order
+		//
 		entities[i] = entities[len(entities)-1]
 		entities[len(entities)-1] = nil
 		entities = entities[:len(entities)-1]
