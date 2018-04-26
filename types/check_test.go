@@ -203,3 +203,41 @@ func TestCheckConfigHasNonNilHandlers(t *testing.T) {
 	require.NoError(t, json.Unmarshal(b, &c))
 	require.NotNil(t, c.Handlers)
 }
+
+func TestCheckFlapThresholdValidation(t *testing.T) {
+	c := FixtureCheck("foo")
+	// zero-valued flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 0, 0
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold < high flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 5, 10
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold = high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 10, 10
+	assert.Error(t, c.Validate())
+
+	// low flap threshold > high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 11, 10
+	assert.Error(t, c.Validate())
+}
+
+func TestCheckConfigFlapThresholdValidation(t *testing.T) {
+	c := FixtureCheckConfig("foo")
+	// zero-valued flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 0, 0
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold < high flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 5, 10
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold = high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 10, 10
+	assert.Error(t, c.Validate())
+
+	// low flap threshold > high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 11, 10
+	assert.Error(t, c.Validate())
+}

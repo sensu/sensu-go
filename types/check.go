@@ -123,6 +123,10 @@ func (c *Check) Validate() error {
 		}
 	}
 
+	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
+		return errors.New("invalid flap thresholds")
+	}
+
 	return c.Subdue.Validate()
 }
 
@@ -262,6 +266,10 @@ func (c *CheckConfig) Validate() error {
 		if err := ValidateMetricFormat(c.MetricFormat); err != nil {
 			return err
 		}
+	}
+
+	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
+		return errors.New("invalid flap thresholds")
 	}
 
 	return c.Subdue.Validate()
