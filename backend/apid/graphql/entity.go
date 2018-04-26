@@ -48,7 +48,7 @@ func newEntityImpl(store store.Store) *entityImpl {
 }
 
 // ID implements response to request for 'id' field.
-func (*entityImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EntityTranslator.EncodeToString(p.Source), nil
 }
 

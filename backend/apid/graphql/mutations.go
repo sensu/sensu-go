@@ -62,7 +62,7 @@ func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverPar
 // UpdateCheck implements response to request for the 'updateCheck' field.
 func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverParams) (interface{}, error) {
 	inputs := p.Args.Input
-	components, _ := globalid.Decode(inputs.ID.(string))
+	components, _ := globalid.Decode(inputs.ID)
 
 	var check types.CheckConfig
 	check.Name = components.UniqueComponent()
@@ -82,7 +82,7 @@ func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverPar
 
 // DeleteCheck implements response to request for the 'deleteCheck' field.
 func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverParams) (interface{}, error) {
-	components, _ := globalid.Decode(p.Args.Input.ID.(string))
+	components, _ := globalid.Decode(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
 	err := r.checkController.Destroy(ctx, components.UniqueComponent())
@@ -121,7 +121,7 @@ func (*mutationsImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 // ResolveEvent implements response to request for the 'resolveEvent' field.
 func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverParams) (interface{}, error) {
-	components, _ := globalid.Decode(p.Args.Input.ID.(string))
+	components, _ := globalid.Decode(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
 	evComponents, ok := components.(globalid.EventComponents)

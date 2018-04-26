@@ -13,7 +13,7 @@ import (
 // EntityIDFieldResolver implement to resolve requests for the Entity's id field.
 type EntityIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // EntityNamespaceFieldResolver implement to resolve requests for the Entity's namespace field.
@@ -231,9 +231,10 @@ type EntityFieldResolvers interface {
 type EntityAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ EntityAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ EntityAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.
