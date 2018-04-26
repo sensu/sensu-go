@@ -53,13 +53,13 @@ jobs:
 env:
   matrix:
   - GOARCH=amd64 TEST_SUITE=lint
-  - GOARCH=386 TEST_SUITE=unit GOGC=off
-  - GOARCH=amd64 TEST_SUITE=unit GOGC=off
-  - GOARCH=386 TEST_SUITE=integration GOGC=off
-  - GOARCH=amd64 TEST_SUITE=integration GOGC=off
-  - GOARCH=386 TEST_SUITE=e2e GOGC=off
-  - GOARCH=amd64 TEST_SUITE=e2e GOGC=off
-  - TEST_SUITE=dashboard-ci GOGC=off
+  - GOARCH=386 TEST_SUITE=unit GOGC=on
+  - GOARCH=amd64 TEST_SUITE=unit GOGC=on
+  - GOARCH=386 TEST_SUITE=integration GOGC=on
+  - GOARCH=amd64 TEST_SUITE=integration GOGC=on
+  - GOARCH=386 TEST_SUITE=e2e GOGC=on
+  - GOARCH=amd64 TEST_SUITE=e2e GOGC=on
+  - TEST_SUITE=dashboard-ci GOGC=on
   global:
   - SENSU_BUILD_ITERATION=1
   # Docker Username (DOCKER_USERNAME)
