@@ -90,6 +90,20 @@ func genConcreteTypeReference(t ast.Type, i info) jen.Code {
 
 func genBuiltinTypeReference(t *ast.Named) jen.Code {
 	switch t.Name.Value {
+	//
+	// The `ID` scalar type represents a unique identifier, often used to
+	// refetch an object or as key for a cache. The ID type appears in a JSON
+	// response as a String; however, it is not intended to be human-readable.
+	// When expected as an input type, any string (such as `\"4\"`) or integer
+	// (such as `4`) input value will be accepted as an ID.
+	//
+	// As such, when resolving a field we can safely assume the value encountered
+	// will always be a string value.
+	//
+	// Spec: http://facebook.github.io/graphql/October2016/#sec-ID
+	//
+	case "ID":
+		return jen.String()
 	case "Int":
 		return jen.Int()
 	case "Float":
