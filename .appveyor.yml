@@ -16,25 +16,25 @@ environment:
     - GOARCH: 386
       TEST_SUITE: unit
       MSI_BUILDER: true
-      GOGC: on
+      GOGC: off
       TIME_OUT_MINS: 30
       APPVEYOR_API_TOKEN:
         secure: rkeQYUjyfquA6N33QIUU46tWQMgnxZfHvn1Y6WiZm6o=
     - GOARCH: amd64
       TEST_SUITE: unit
-      GOGC: on
+      GOGC: off
     - GOARCH: 386
       TEST_SUITE: integration
-      GOGC: on
+      GOGC: off
     - GOARCH: amd64
       TEST_SUITE: integration
-      GOGC: on
+      GOGC: off
     - GOARCH: 386
       TEST_SUITE: e2e
-      GOGC: on
+      GOGC: off
     - GOARCH: amd64
       TEST_SUITE: e2e
-      GOGC: on
+      GOGC: off
 
 install:
   - rmdir c:\go /s /q
