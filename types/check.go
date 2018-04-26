@@ -11,6 +11,7 @@ import (
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/eval"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
 // CheckRequestType is the message type string for check request.
@@ -18,6 +19,25 @@ const CheckRequestType = "check_request"
 
 // DefaultSplayCoverage is the default splay coverage for proxy check requests
 const DefaultSplayCoverage = 90.0
+
+// NagiosMetricFormat is the accepted string to represent the metric format of
+// Nagios Perf Data
+const NagiosMetricFormat = "nagios_perfdata"
+
+// GraphiteMetricFormat is the accepted string to represent the metric format of
+// Graphite Plain Text
+const GraphiteMetricFormat = "graphite_plaintext"
+
+// OpenTSDBMetricFormat is the accepted string to represent the metric format of
+// OpenTSDB Line
+const OpenTSDBMetricFormat = "opentsdb_line"
+
+// InfluxDBMetricFormat is the accepted string to represent the metric format of
+// InfluxDB Line
+const InfluxDBMetricFormat = "influxdb_line"
+
+// MetricFormats represents all the accepted metric_format's a check can have
+var MetricFormats = []string{NagiosMetricFormat, GraphiteMetricFormat, OpenTSDBMetricFormat, InfluxDBMetricFormat}
 
 // NewCheck creates a new Check. It copies the fields from CheckConfig that
 // match with Check's fields.
@@ -48,6 +68,8 @@ func NewCheck(c *CheckConfig) *Check {
 		Timeout:            c.Timeout,
 		ProxyRequests:      c.ProxyRequests,
 		RoundRobin:         c.RoundRobin,
+		MetricFormat:       c.MetricFormat,
+		MetricHandlers:     c.MetricHandlers,
 	}
 	return check
 }
@@ -91,6 +113,12 @@ func (c *Check) Validate() error {
 
 	if c.ProxyRequests != nil {
 		if err := c.ProxyRequests.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if c.MetricFormat != "" {
+		if err := ValidateMetricFormat(c.MetricFormat); err != nil {
 			return err
 		}
 	}
@@ -230,6 +258,12 @@ func (c *CheckConfig) Validate() error {
 		}
 	}
 
+	if c.MetricFormat != "" {
+		if err := ValidateMetricFormat(c.MetricFormat); err != nil {
+			return err
+		}
+	}
+
 	return c.Subdue.Validate()
 }
 
@@ -244,6 +278,15 @@ func (p *ProxyRequests) Validate() error {
 	}
 
 	return eval.ValidateStatements(p.EntityAttributes, false)
+}
+
+// ValidateMetricFormat returns an error if the string is not a valid metric
+// format
+func ValidateMetricFormat(format string) error {
+	if utilstrings.InArray(format, MetricFormats) {
+		return nil
+	}
+	return errors.New("metric format is not valid")
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the

@@ -36,6 +36,8 @@ event handlers for statsd metrics.
 statsd listener. The listener is enabled by default.
 - Added an influx-db handler for events containing metrics.
 - Add 'remove-when' and 'set-when' subcommands to sensuctl filter command.
+- Add support for `metric_format` and `metric_handlers` fields in the Check and
+CheckConfig structs.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
