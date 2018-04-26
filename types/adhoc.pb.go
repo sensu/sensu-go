@@ -33,6 +33,7 @@
 		Any
 		Asset
 		Tokens
+		FlapThreshold
 		CheckRequest
 		ProxyRequests
 		CheckConfig

@@ -9,10 +9,10 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/elements/report"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -128,8 +128,8 @@ func TestLegacyCheckImporter(t *testing.T) {
 				Name:              "my-check",
 				Command:           "true",
 				Interval:          30,
-				LowFlapThreshold:  10,
-				HighFlapThreshold: 50,
+				LowFlapThreshold:  &types.FlapThreshold{Value: 10},
+				HighFlapThreshold: &types.FlapThreshold{Value: 50},
 				Publish:           true,
 			}),
 		},

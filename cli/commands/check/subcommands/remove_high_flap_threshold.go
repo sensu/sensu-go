@@ -26,7 +26,7 @@ func RemoveHighFlapThresholdCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			check.HighFlapThreshold = 0
+			check.HighFlapThreshold = nil
 
 			if err := check.Validate(); err != nil {
 				return err

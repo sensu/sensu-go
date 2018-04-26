@@ -81,6 +81,7 @@ swallowed. The events are sent through the pipeline.
 - Fixed a bug where check and checkconfig handlers and subscriptions are null in rendered JSON.
 - Allow checks and hooks to escape zombie processes that have timed out.
 - Install all dependencies with `dep ensure` in build.sh.
+- Flap thresholds of '0' are now distinct from unset flap thresholds.
 
 
 ## [2.0.0-nightly.1] - 2018-03-07

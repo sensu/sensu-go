@@ -33,6 +33,7 @@ It has these top-level messages:
 	Any
 	Asset
 	Tokens
+	FlapThreshold
 	CheckRequest
 	ProxyRequests
 	CheckConfig

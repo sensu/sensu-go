@@ -429,11 +429,11 @@ func (i *LegacyCheckImporter) applyCfg(check *types.CheckConfig, cfg map[string]
 	}
 
 	if val, ok := cfg["low_flap_threshold"].(float64); ok {
-		check.LowFlapThreshold = uint32(val)
+		check.LowFlapThreshold = &types.FlapThreshold{Value: uint32(val)}
 	}
 
 	if val, ok := cfg["high_flap_threshold"].(float64); ok {
-		check.HighFlapThreshold = uint32(val)
+		check.HighFlapThreshold = &types.FlapThreshold{Value: uint32(val)}
 	}
 }
 

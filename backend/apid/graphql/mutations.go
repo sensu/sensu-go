@@ -100,8 +100,16 @@ func copyCheckInputs(r *types.CheckConfig, ins *schema.CheckConfigInputs) {
 	r.Command = ins.Command
 	r.Handlers = ins.Handlers
 	r.Interval = uint32(ins.Interval)
-	r.HighFlapThreshold = uint32(ins.HighFlapThreshold)
-	r.LowFlapThreshold = uint32(ins.LowFlapThreshold)
+	if ins.HighFlapThreshold >= 0 {
+		r.HighFlapThreshold = &types.FlapThreshold{Value: uint32(ins.HighFlapThreshold)}
+	} else {
+		r.HighFlapThreshold = nil
+	}
+	if ins.LowFlapThreshold >= 0 {
+		r.LowFlapThreshold = &types.FlapThreshold{Value: uint32(ins.LowFlapThreshold)}
+	} else {
+		r.HighFlapThreshold = nil
+	}
 	r.Subscriptions = ins.Subscriptions
 	r.Publish = ins.Publish
 }

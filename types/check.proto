@@ -15,6 +15,11 @@ option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 option (gogoproto.testgen_all) = true;
 
+// FlapThreshold is a wrapper type for nullability.
+message FlapThreshold {
+	uint32 Value = 1;
+}
+
 // A CheckRequest represents a request to execute a check
 message CheckRequest {
   // Config is the specification of a check.
@@ -58,14 +63,14 @@ message CheckConfig {
 
   // HighFlapThreshold is the flap detection high threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 high_flap_threshold = 4;
+  FlapThreshold high_flap_threshold = 4;
 
   // Interval is the interval, in seconds, at which the check should be run.
   uint32 interval = 5;
 
   // LowFlapThreshold is the flap detection low threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 low_flap_threshold = 6;
+  FlapThreshold low_flap_threshold = 6;
 
   // Name is the unique identifier for a check.
   string name = 7;
@@ -127,14 +132,14 @@ message Check {
 
   // HighFlapThreshold is the flap detection high threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 high_flap_threshold = 4;
+  FlapThreshold high_flap_threshold = 4;
 
   // Interval is the interval, in seconds, at which the check should be run.
   uint32 interval = 5;
 
   // LowFlapThreshold is the flap detection low threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 low_flap_threshold = 6;
+  FlapThreshold low_flap_threshold = 6;
 
   // Name is the unique identifier for a check.
   string name = 7;

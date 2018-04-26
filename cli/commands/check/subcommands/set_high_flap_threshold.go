@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -29,11 +30,10 @@ func SetHighFlapThresholdCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 			highFlapThreshold, err := strconv.ParseUint(value, 10, 32)
-			check.HighFlapThreshold = uint32(highFlapThreshold)
-
 			if err != nil {
 				return err
 			}
+			check.HighFlapThreshold = &types.FlapThreshold{Value: uint32(highFlapThreshold)}
 			if err := check.Validate(); err != nil {
 				return err
 			}
