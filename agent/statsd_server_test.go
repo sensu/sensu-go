@@ -1,4 +1,6 @@
 // +build integration,!windows
+// Due to unknown reasons from https://github.com/sensu/sensu-go/issues/1392
+// Appveyor in unfit to run these tests, so we'll skip windows tests for now
 
 package agent
 
