@@ -1,7 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { compose } from "recompose";
-import { withApollo } from "react-apollo";
 import { withStyles } from "material-ui/styles";
 import Button from "material-ui/ButtonBase";
 import Checkbox from "material-ui/Checkbox";
@@ -134,4 +132,4 @@ class StatusListItem extends React.Component {
   }
 }
 
-export default compose(withStyles(styles), withApollo)(StatusListItem);
+export default withStyles(styles)(StatusListItem);

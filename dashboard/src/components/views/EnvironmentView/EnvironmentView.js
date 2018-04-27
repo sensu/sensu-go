@@ -7,6 +7,7 @@ import NotFoundView from "/components/views/NotFoundView";
 
 import DashboardContent from "./DashboardContent";
 import ChecksContent from "./ChecksContent";
+import EntitiesContent from "./EntitiesContent";
 import EventsContent from "./EventsContent";
 import EventDetailsContent from "./EventDetailsContent";
 
@@ -29,6 +30,11 @@ class EnvironmentView extends React.PureComponent {
             exact
             path={`${match.path}/checks`}
             component={ChecksContent}
+          />
+          <Route
+            exact
+            path={`${match.path}/entities`}
+            component={EntitiesContent}
           />
           <Route
             exact
