@@ -61,10 +61,10 @@ type EnvironmentChecksFieldResolver interface {
 
 // EnvironmentEntitiesFieldResolverArgs contains arguments provided to entities when selected
 type EnvironmentEntitiesFieldResolverArgs struct {
-	Offset  int            // Offset - self descriptive
-	Limit   int            // Limit - self descriptive
-	OrderBy CheckListOrder // OrderBy - self descriptive
-	Filter  string         // Filter reduces the set using the given Sensu Query Expression predicate.
+	Offset  int             // Offset - self descriptive
+	Limit   int             // Limit - self descriptive
+	OrderBy EntityListOrder // OrderBy - self descriptive
+	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
 }
 
 // EnvironmentEntitiesFieldResolverParams contains contextual info to resolve entities field
@@ -472,9 +472,9 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 						Type:         graphql1.Int,
 					},
 					"orderBy": &graphql1.ArgumentConfig{
-						DefaultValue: "SEVERITY",
+						DefaultValue: "ID_DESC",
 						Description:  "self descriptive",
-						Type:         graphql.InputType("CheckListOrder"),
+						Type:         graphql.InputType("EntityListOrder"),
 					},
 				},
 				DeprecationReason: "",
@@ -612,10 +612,9 @@ type EntityListOrder string
 
 // EntityListOrders holds enum values
 var EntityListOrders = _EnumTypeEntityListOrderValues{
-	LASTSEEN:  "LASTSEEN",
-	NAME:      "NAME",
-	NAME_DESC: "NAME_DESC",
-	SEVERITY:  "SEVERITY",
+	ID:       "ID",
+	ID_DESC:  "ID_DESC",
+	LASTSEEN: "LASTSEEN",
 }
 
 // EntityListOrderType self descriptive
@@ -630,25 +629,20 @@ func _EnumTypeEntityListOrderConfigFn() graphql1.EnumConfig {
 		Description: "self descriptive",
 		Name:        "EntityListOrder",
 		Values: graphql1.EnumValueConfigMap{
+			"ID": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID",
+			},
+			"ID_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID_DESC",
+			},
 			"LASTSEEN": &graphql1.EnumValueConfig{
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Value:             "LASTSEEN",
-			},
-			"NAME": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "NAME",
-			},
-			"NAME_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "NAME_DESC",
-			},
-			"SEVERITY": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "SEVERITY",
 			},
 		},
 	}
@@ -658,12 +652,10 @@ func _EnumTypeEntityListOrderConfigFn() graphql1.EnumConfig {
 var _EnumTypeEntityListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEntityListOrderConfigFn}
 
 type _EnumTypeEntityListOrderValues struct {
-	// NAME - self descriptive
-	NAME EntityListOrder
-	// NAME_DESC - self descriptive
-	NAME_DESC EntityListOrder
-	// SEVERITY - self descriptive
-	SEVERITY EntityListOrder
+	// ID - self descriptive
+	ID EntityListOrder
+	// ID_DESC - self descriptive
+	ID_DESC EntityListOrder
 	// LASTSEEN - self descriptive
 	LASTSEEN EntityListOrder
 }

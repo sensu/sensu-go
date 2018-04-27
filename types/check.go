@@ -396,3 +396,47 @@ func FixtureProxyRequests(splay bool) *ProxyRequests {
 func (c *Check) URIPath() string {
 	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
 }
+
+//
+// Sorting
+
+type cmpCheckConfig func(a, b *CheckConfig) bool
+
+// SortCheckConfigsByPredicate can be used to sort a given collection using a given
+// predicate.
+func SortCheckConfigsByPredicate(cs []*CheckConfig, fn cmpCheckConfig) sort.Interface {
+	return &checkSorter{checks: cs, byFn: fn}
+}
+
+// SortCheckConfigsByName can be used to sort a given collection of checks by their
+// names.
+func SortCheckConfigsByName(es []*CheckConfig, asc bool) sort.Interface {
+	if asc {
+		return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
+			return a.Name < a.Name
+		})
+	}
+	return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
+		return a.Name > a.Name
+	})
+}
+
+type checkSorter struct {
+	checks []*CheckConfig
+	byFn   cmpCheckConfig
+}
+
+// Len implements sort.Interface.
+func (s *checkSorter) Len() int {
+	return len(s.checks)
+}
+
+// Swap implements sort.Interface.
+func (s *checkSorter) Swap(i, j int) {
+	s.checks[i], s.checks[j] = s.checks[j], s.checks[i]
+}
+
+// Less implements sort.Interface.
+func (s *checkSorter) Less(i, j int) bool {
+	return s.byFn(s.checks[i], s.checks[j])
+}

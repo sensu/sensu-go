@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"sort"
 
 	"github.com/sensu/sensu-go/types/dynamic"
 )
@@ -85,4 +86,54 @@ func FixtureEntity(id string) *Entity {
 // URIPath returns the path component of a Entity URI.
 func (e *Entity) URIPath() string {
 	return fmt.Sprintf("/entities/%s", url.PathEscape(e.ID))
+}
+
+//
+// Sorting
+
+// SortEntitiesByPredicate can be used to sort a given collection using a given
+// predicate.
+func SortEntitiesByPredicate(es []*Entity, fn func(a, b *Entity) bool) sort.Interface {
+	return &entitySorter{entities: es, byFn: fn}
+}
+
+// SortEntitiesByID can be used to sort a given collection of entities by their
+// IDs.
+func SortEntitiesByID(es []*Entity, asc bool) sort.Interface {
+	if asc {
+		return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
+			return a.ID < a.ID
+		})
+	}
+	return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
+		return a.ID > a.ID
+	})
+}
+
+// SortEntitiesByLastSeen can be used to sort a given collection of entities by
+// last time each was seen.
+func SortEntitiesByLastSeen(es []*Entity) sort.Interface {
+	return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
+		return a.LastSeen > a.LastSeen
+	})
+}
+
+type entitySorter struct {
+	entities []*Entity
+	byFn     func(a, b *Entity) bool
+}
+
+// Len implements sort.Interface.
+func (s *entitySorter) Len() int {
+	return len(s.entities)
+}
+
+// Swap implements sort.Interface.
+func (s *entitySorter) Swap(i, j int) {
+	s.entities[i], s.entities[j] = s.entities[j], s.entities[i]
+}
+
+// Less implements sort.Interface.
+func (s *entitySorter) Less(i, j int) bool {
+	return s.byFn(s.entities[i], s.entities[j])
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
@@ -101,16 +100,40 @@ func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interfa
 		return nil, err
 	}
 
-	// pagination
-	info := relay.NewArrayConnectionInfo(
-		0, len(records),
-		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
-	)
-	edges := make([]*relay.Edge, info.End-info.Begin)
-	for i, r := range records[info.Begin:info.End] {
-		edges[i] = relay.NewArrayConnectionEdge(r, i)
+	// apply filters
+	var filteredChecks []*types.CheckConfig
+	filter := p.Args.Filter
+	if len(filter) > 0 {
+		predicate, err := eval.NewPredicate(filter)
+		if err != nil {
+			logger.WithError(err).Debug("error with given predicate")
+		} else {
+			for _, record := range records {
+				if matched, err := predicate.Eval(record); err != nil {
+					logger.WithError(err).Debug("unable to filter record")
+				} else if matched {
+					filteredChecks = append(filteredChecks, record)
+				}
+			}
+		}
+	} else {
+		filteredChecks = records
 	}
-	return relay.NewArrayConnection(edges, info), nil
+
+	// sort records
+	sort.Sort(types.SortCheckConfigsByName(
+		filteredChecks,
+		p.Args.OrderBy == schema.CheckListOrders.NAME,
+	))
+
+	// paginate
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredChecks))
+	return newOffsetContainer(
+		filteredChecks[l:h],
+		len(filteredChecks),
+		p.Args.Offset,
+		p.Args.Limit,
+	), nil
 }
 
 // Entities implements response to request for 'entities' field.
@@ -122,16 +145,45 @@ func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (int
 		return nil, err
 	}
 
-	info := relay.NewArrayConnectionInfo(
-		0, len(records),
-		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
-	)
-
-	edges := make([]*relay.Edge, info.End-info.Begin)
-	for i, r := range records[info.Begin:info.End] {
-		edges[i] = relay.NewArrayConnectionEdge(r, i)
+	// apply filters
+	var filteredEntities []*types.Entity
+	filter := p.Args.Filter
+	if len(filter) > 0 {
+		predicate, err := eval.NewPredicate(filter)
+		if err != nil {
+			logger.WithError(err).Debug("error with given predicate")
+		} else {
+			for _, event := range records {
+				if matched, err := predicate.Eval(event); err != nil {
+					logger.WithError(err).Debug("unable to filer event")
+				} else if matched {
+					filteredEntities = append(filteredEntities, event)
+				}
+			}
+		}
+	} else {
+		filteredEntities = records
 	}
-	return relay.NewArrayConnection(edges, info), nil
+
+	// sort records
+	switch p.Args.OrderBy {
+	case schema.EntityListOrders.LASTSEEN:
+		sort.Sort(types.SortEntitiesByLastSeen(filteredEntities))
+	default:
+		sort.Sort(types.SortEntitiesByID(
+			filteredEntities,
+			p.Args.OrderBy == schema.EntityListOrders.ID,
+		))
+	}
+
+	// paginate
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredEntities))
+	return newOffsetContainer(
+		filteredEntities[l:h],
+		len(filteredEntities),
+		p.Args.Offset,
+		p.Args.Limit,
+	), nil
 }
 
 // Events implements response to request for 'events' field.
@@ -174,15 +226,13 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 	}
 
 	// pagination
-	info := relay.NewArrayConnectionInfo(
-		0, len(filteredEvents),
-		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
-	)
-	edges := make([]*relay.Edge, info.End-info.Begin)
-	for i, r := range filteredEvents[info.Begin:info.End] {
-		edges[i] = relay.NewArrayConnectionEdge(r, i)
-	}
-	return relay.NewArrayConnection(edges, info), nil
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredEvents))
+	return newOffsetContainer(
+		filteredEvents[l:h],
+		len(filteredEvents),
+		p.Args.Offset,
+		p.Args.Limit,
+	), nil
 }
 
 // CheckHistory implements response to request for 'checkHistory' field.

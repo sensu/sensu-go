@@ -30,7 +30,7 @@ type Environment implements Node {
   entities(
     offset: Int = 0,
     limit: Int = 10,
-    orderBy: CheckListOrder = SEVERITY
+    orderBy: EntityListOrder = ID_DESC
     "Filter reduces the set using the given Sensu Query Expression predicate."
     filter: String = "",
   ): EntityConnection!
@@ -63,9 +63,8 @@ enum CheckListOrder {
 }
 
 enum EntityListOrder {
-  NAME
-  NAME_DESC
-  SEVERITY
+  ID
+  ID_DESC
   LASTSEEN
 }
 
