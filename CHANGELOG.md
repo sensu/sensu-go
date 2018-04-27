@@ -36,6 +36,8 @@ event handlers for statsd metrics.
 statsd listener. The listener is enabled by default.
 - Added an influx-db handler for events containing metrics.
 - Add 'remove-when' and 'set-when' subcommands to sensuctl filter command.
+- Added the Transformer interface.
+- Added a Graphite Plain Text transformer.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
