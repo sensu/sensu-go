@@ -17,22 +17,32 @@ type Environment implements Node {
   "The organization the environment belongs to."
   organization: Organization!
 
-  "All entities associated with the environment."
-  entities(first: Int = 10, last: Int = 10, before: String, after: String): EntityConnection
-
   "All check configurations associated with the environment."
-  checks(first: Int = 10, last: Int = 10, before: String, after: String): CheckConfigConnection
+  checks(
+    offset: Int = 0,
+    limit: Int = 10,
+    orderBy: CheckListOrder = NAME_DESC
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = "",
+  ): CheckConfigConnection!
+
+  "All entities associated with the environment."
+  entities(
+    offset: Int = 0,
+    limit: Int = 10,
+    orderBy: CheckListOrder = SEVERITY
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = "",
+  ): EntityConnection!
 
   "All events associated with the environment."
   events(
-    first: Int = 10,
-    last: Int = 10,
-    before: String,
-    after: String,
+    offset: Int = 0,
+    limit: Int = 10,
     orderBy: EventsListOrder = SEVERITY
     "Filter reduces the set using the given Sensu Query Expression predicate."
-    filter: String,
-  ): EventConnection
+    filter: String = "",
+  ): EventConnection!
 
   """
   checkHistory includes all persisted check execution results associated with
@@ -41,10 +51,22 @@ type Environment implements Node {
   """
   checkHistory(
     "Filter reduces the set using the given Sensu Query Expression predicate."
-    filter: String
+    filter: String = ""
     "Limit adds optional limit to the number of entries returned."
     limit: Int = 10000
   ): [CheckHistory]!
+}
+
+enum CheckListOrder {
+  NAME
+  NAME_DESC
+}
+
+enum EntityListOrder {
+  NAME
+  NAME_DESC
+  SEVERITY
+  LASTSEEN
 }
 
 enum EventsListOrder {

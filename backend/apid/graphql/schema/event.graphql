@@ -42,13 +42,6 @@ type Event implements Node {
 
 "A connection to a sequence of records."
 type EventConnection {
-  edges: [EventEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-"An edge in a connection."
-type EventEdge {
-  node: Event
-  cursor: String!
+  nodes: [Event!]!
+  pageInfo: OffsetPageInfo!
 }
