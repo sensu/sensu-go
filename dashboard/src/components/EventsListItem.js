@@ -4,7 +4,6 @@ import { compose } from "recompose";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
 import { withStyles } from "material-ui/styles";
-import { Route, Link } from "react-router-dom";
 import Typography from "material-ui/Typography";
 import Menu, { MenuItem } from "material-ui/Menu";
 import Button from "material-ui/ButtonBase";
@@ -15,6 +14,8 @@ import resolveEvent from "/mutations/resolveEvent";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 import { TableListItem } from "/components/TableList";
 import RelativeDate from "/components/RelativeDate";
+
+import NamespaceLink from "/components/util/NamespaceLink";
 
 const styles = theme => ({
   root: {
@@ -93,6 +94,10 @@ class EventListItem extends React.Component {
           entity {
             name
           }
+          namespace {
+            organization
+            environment
+          }
         }
       }
     `,
@@ -145,20 +150,14 @@ class EventListItem extends React.Component {
           <CheckStatusIcon statusCode={check.status} />
         </div>
         <div className={classes.content}>
-          <Route
-            path="/:organization/:environment"
-            render={({ match: { params } }) => (
-              <Link
-                to={`/${params.organization}/${params.environment}/events/${
-                  entity.name
-                }/${check.name}`}
-              >
-                <strong>
-                  {entity.name} › {check.name}
-                </strong>
-              </Link>
-            )}
-          />
+          <NamespaceLink
+            namespace={event.namespace}
+            to={`/events/${entity.name}/${check.name}`}
+          >
+            <strong>
+              {entity.name} › {check.name}
+            </strong>
+          </NamespaceLink>
           <div className={classes.timeHolder}>
             Last occurred{" "}
             <strong>
