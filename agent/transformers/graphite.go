@@ -17,14 +17,14 @@ type Graphite struct {
 
 // Transform transforms a metric in graphite plain text format to Sensu Metric
 // Format
-func (g Graphite) Transform() []types.MetricPoint {
-	mp := types.MetricPoint{
+func (g Graphite) Transform() []*types.MetricPoint {
+	mp := &types.MetricPoint{
 		Name:      g.Path,
 		Value:     g.Value,
 		Timestamp: g.Timestamp,
 		Tags:      []*types.MetricTag{},
 	}
-	return []types.MetricPoint{mp}
+	return []*types.MetricPoint{mp}
 }
 
 // ParseGraphite parses a graphite plain text string into a Graphite struct

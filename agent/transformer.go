@@ -6,5 +6,5 @@ import "github.com/sensu/sensu-go/types"
 type Transformer interface {
 	// Transform transforms a metric in a different metric format to Sensu Metric
 	// Format
-	Transform() []types.MetricPoint
+	Transform() []*types.MetricPoint
 }

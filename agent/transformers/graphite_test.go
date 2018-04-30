@@ -59,7 +59,7 @@ func TestTransformGraphite(t *testing.T) {
 
 	testCases := []struct {
 		metric         Graphite
-		expectedFormat []types.MetricPoint
+		expectedFormat []*types.MetricPoint
 	}{
 		{
 			metric: Graphite{
@@ -67,7 +67,7 @@ func TestTransformGraphite(t *testing.T) {
 				Value:     1,
 				Timestamp: 123456789,
 			},
-			expectedFormat: []types.MetricPoint{
+			expectedFormat: []*types.MetricPoint{
 				{
 					Name:      "metric.value",
 					Value:     1,
@@ -82,7 +82,7 @@ func TestTransformGraphite(t *testing.T) {
 				Value:     0,
 				Timestamp: 0,
 			},
-			expectedFormat: []types.MetricPoint{
+			expectedFormat: []*types.MetricPoint{
 				{
 					Name:      "",
 					Value:     0,
@@ -106,12 +106,12 @@ func TestParseAndTransformGraphite(t *testing.T) {
 
 	testCases := []struct {
 		metric         string
-		expectedFormat []types.MetricPoint
+		expectedFormat []*types.MetricPoint
 		expectedErr    bool
 	}{
 		{
 			metric: "metric.value 1 123456789",
-			expectedFormat: []types.MetricPoint{
+			expectedFormat: []*types.MetricPoint{
 				{
 					Name:      "metric.value",
 					Value:     1,
@@ -123,7 +123,7 @@ func TestParseAndTransformGraphite(t *testing.T) {
 		},
 		{
 			metric: "metric.value 0 0",
-			expectedFormat: []types.MetricPoint{
+			expectedFormat: []*types.MetricPoint{
 				{
 					Name:      "metric.value",
 					Value:     0,
