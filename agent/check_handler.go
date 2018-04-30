@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sensu/sensu-go/agent/transformers"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -114,6 +115,11 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		event.Check.Hooks = a.ExecuteHooks(request, ex.Status)
 	}
 
+	if check.MetricFormat != "" {
+		event.Metrics.Points = extractMetrics(event)
+	}
+	event.Metrics.Handlers = check.MetricHandlers
+
 	msg, err := json.Marshal(event)
 	if err != nil {
 		logger.WithError(err).Error("error marshaling check result")
@@ -178,4 +184,23 @@ func (a *Agent) sendFailure(event *types.Event, err error) {
 	} else {
 		a.sendMessage(transport.MessageTypeEvent, msg)
 	}
+}
+
+func extractMetrics(event *types.Event) []*types.MetricPoint {
+	var transformer Transformer
+	var err error
+	switch event.Check.MetricFormat {
+	case types.GraphiteMetricFormat:
+		transformer, err = transformers.ParseGraphite(event.Check.Output)
+	}
+	if err != nil {
+		logger.WithError(err).Error("unable to extract metric from check output")
+		return nil
+	}
+	if transformer == nil {
+		logger.WithField("format", event.Check.MetricFormat).Error("metric format is not supported")
+		return nil
+	}
+
+	return transformer.Transform()
 }

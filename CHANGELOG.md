@@ -40,6 +40,8 @@ statsd listener. The listener is enabled by default.
 - Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
 CheckConfig structs.
+- Add support for metric extraction from check output for `graphite_plaintext`
+transformer.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
