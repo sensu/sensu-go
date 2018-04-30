@@ -36,6 +36,8 @@ event handlers for statsd metrics.
 statsd listener. The listener is enabled by default.
 - Added an influx-db handler for events containing metrics.
 - Add 'remove-when' and 'set-when' subcommands to sensuctl filter command.
+- Added the Transformer interface.
+- Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
 CheckConfig structs.
 
