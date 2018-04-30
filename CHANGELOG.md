@@ -38,6 +38,8 @@ statsd listener. The listener is enabled by default.
 - Add 'remove-when' and 'set-when' subcommands to sensuctl filter command.
 - Added the Transformer interface.
 - Added a Graphite Plain Text transformer.
+- Add support for `metric_format` and `metric_handlers` fields in the Check and
+CheckConfig structs.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024

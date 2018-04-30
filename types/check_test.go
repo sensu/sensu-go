@@ -48,6 +48,11 @@ func TestCheckConfig(t *testing.T) {
 	c.Ttl = 10
 	assert.Error(t, c.Validate())
 
+	// Invalid metric format
+	c.MetricFormat = "foo"
+	assert.Error(t, c.Validate())
+	c.MetricFormat = ""
+
 	// Valid check
 	c.Ttl = 90
 	assert.NoError(t, c.Validate())
@@ -128,6 +133,16 @@ func TestProxyRequestsValidate(t *testing.T) {
 
 	// Valid proxy request
 	assert.NoError(t, p.Validate())
+}
+
+func TestMetricFormatValidate(t *testing.T) {
+	assert.NoError(t, ValidateMetricFormat("nagios_perfdata"))
+	assert.NoError(t, ValidateMetricFormat(NagiosMetricFormat))
+	assert.NoError(t, ValidateMetricFormat(GraphiteMetricFormat))
+	assert.NoError(t, ValidateMetricFormat(InfluxDBMetricFormat))
+	assert.NoError(t, ValidateMetricFormat(OpenTSDBMetricFormat))
+	assert.Error(t, ValidateMetricFormat("anything_else"))
+	assert.Error(t, ValidateMetricFormat("NAGIOS_PERFDATA"))
 }
 
 func TestFixtureProxyRequests(t *testing.T) {

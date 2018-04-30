@@ -78,13 +78,11 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
     $env:GOARCH = $goarch
 
     $version = (cat version/version.txt) | Out-String
-    $iteration = (cat version/iteration.txt) | Out-String
     $build_date = Get-Date -format "yyyy'-'MM'-'dd'T'T'-'Z"
     $build_sha = (git rev-parse HEAD) | Out-String
 
     $version_pkg = "github.com/sensu/sensu-go/version"
     $ldflags = "-X $version_pkg.Version=$version"
-    $ldflags = $ldflags + " -X $version_pkg.Iteration=$iteration"
     $ldflags = $ldflags + " -X $version_pkg.BuildDate=$build_date"
     $ldflags = $ldflags + " -X $version_pkg.BuildSHA=$build_sha"
 
