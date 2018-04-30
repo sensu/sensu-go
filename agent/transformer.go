@@ -1,4 +1,4 @@
-package transformers
+package agent
 
 import "github.com/sensu/sensu-go/types"
 
