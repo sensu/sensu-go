@@ -155,7 +155,7 @@ func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (int
 		} else {
 			for _, event := range records {
 				if matched, err := predicate.Eval(event); err != nil {
-					logger.WithError(err).Debug("unable to filer event")
+					logger.WithError(err).Debug("unable to filter record")
 				} else if matched {
 					filteredEntities = append(filteredEntities, event)
 				}
@@ -205,7 +205,7 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 		} else {
 			for _, event := range records {
 				if matched, err := predicate.Eval(event); err != nil {
-					logger.WithError(err).Debug("unable to filer event")
+					logger.WithError(err).Debug("unable to filter event")
 				} else if matched {
 					filteredEvents = append(filteredEvents, event)
 				}
