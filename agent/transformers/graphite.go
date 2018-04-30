@@ -28,7 +28,7 @@ func (g Graphite) Transform() []types.MetricPoint {
 }
 
 // ParseGraphite parses a graphite plain text string into a Graphite struct
-func ParseGraphite(metric string) (Transformer, error) {
+func ParseGraphite(metric string) (Graphite, error) {
 	g := Graphite{}
 	args := strings.Split(metric, " ")
 	if len(args) != 3 {
