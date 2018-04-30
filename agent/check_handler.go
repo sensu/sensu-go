@@ -118,7 +118,10 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	if check.MetricFormat != "" {
 		event.Metrics.Points = extractMetrics(event)
 	}
-	event.Metrics.Handlers = check.MetricHandlers
+
+	if check.MetricHandlers != nil {
+		event.Metrics.Handlers = check.MetricHandlers
+	}
 
 	msg, err := json.Marshal(event)
 	if err != nil {
