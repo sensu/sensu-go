@@ -37,6 +37,7 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 // ParseGraphite parses a graphite plain text string into a Graphite struct
 func ParseGraphite(metric string) (GraphiteList, error) {
 	var graphites GraphiteList
+	metric = strings.TrimSpace(metric)
 	lines := strings.Split(metric, "\n")
 	for _, line := range lines {
 		g := Graphite{}

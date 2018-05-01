@@ -27,6 +27,17 @@ func TestParseGraphite(t *testing.T) {
 			expectedErr: false,
 		},
 		{
+			metric: "metric.value 1 123456789\n",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
+			},
+			expectedErr: false,
+		},
+		{
 			metric: "metric.value 1 123456789\nmetric.value 0 0",
 			expectedFormat: GraphiteList{
 				{
@@ -194,7 +205,7 @@ func TestParseAndTransformGraphite(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			metric: "metric.value 0 0",
+			metric: "metric.value 0 0\n",
 			expectedFormat: []*types.MetricPoint{
 				{
 					Name:      "metric.value",
