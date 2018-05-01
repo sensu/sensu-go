@@ -116,11 +116,18 @@ func (b *WizardBus) Subscribe(topic string, consumer string, sub Subscriber) (Su
 	b.topicsMu.Lock()
 	defer b.topicsMu.Unlock()
 
-	if _, ok := b.topics[topic]; !ok {
-		b.topics[topic] = b.createTopic(topic)
+	t, ok := b.topics[topic]
+	if !ok {
+		t = b.createTopic(topic)
+		b.topics[topic] = t
 	}
 
-	subscription, err := b.topics[topic].Subscribe(consumer, sub)
+	if t.IsClosed() {
+		t = b.createTopic(topic)
+		b.topics[topic] = t
+	}
+
+	subscription, err := t.Subscribe(consumer, sub)
 	return subscription, err
 }
 
