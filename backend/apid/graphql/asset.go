@@ -12,7 +12,7 @@ type assetImpl struct {
 }
 
 // ID implements response to request for 'id' field.
-func (*assetImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (*assetImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.AssetTranslator.EncodeToString(p.Source), nil
 }
 
