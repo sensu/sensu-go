@@ -117,12 +117,7 @@ func (b *WizardBus) Subscribe(topic string, consumer string, sub Subscriber) (Su
 	defer b.topicsMu.Unlock()
 
 	t, ok := b.topics[topic]
-	if !ok {
-		t = b.createTopic(topic)
-		b.topics[topic] = t
-	}
-
-	if t.IsClosed() {
+	if !ok || t.IsClosed() {
 		t = b.createTopic(topic)
 		b.topics[topic] = t
 	}
