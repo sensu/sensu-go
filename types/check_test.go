@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -202,4 +203,38 @@ func TestCheckConfigHasNonNilHandlers(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(b, &c))
 	require.NotNil(t, c.Handlers)
+}
+
+func TestSortCheckConfigsByName(t *testing.T) {
+	a := FixtureCheckConfig("Abernathy")
+	b := FixtureCheckConfig("Bernard")
+	c := FixtureCheckConfig("Clementine")
+	d := FixtureCheckConfig("Dolores")
+
+	testCases := []struct {
+		name     string
+		inDir    bool
+		inChecks []*CheckConfig
+		expected []*CheckConfig
+	}{
+		{
+			name:     "Sorts ascending",
+			inDir:    true,
+			inChecks: []*CheckConfig{d, c, a, b},
+			expected: []*CheckConfig{a, b, c, d},
+		},
+		{
+			name:     "Sorts descending",
+			inDir:    false,
+			inChecks: []*CheckConfig{d, a, c, b},
+			expected: []*CheckConfig{d, c, b, a},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Sort(SortCheckConfigsByName(tc.inChecks, tc.inDir))
+			assert.EqualValues(t, tc.expected, tc.inChecks)
+		})
+	}
 }

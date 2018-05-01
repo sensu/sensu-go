@@ -102,11 +102,11 @@ func SortEntitiesByPredicate(es []*Entity, fn func(a, b *Entity) bool) sort.Inte
 func SortEntitiesByID(es []*Entity, asc bool) sort.Interface {
 	if asc {
 		return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
-			return a.ID < a.ID
+			return a.ID < b.ID
 		})
 	}
 	return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
-		return a.ID > a.ID
+		return a.ID > b.ID
 	})
 }
 
@@ -114,7 +114,7 @@ func SortEntitiesByID(es []*Entity, asc bool) sort.Interface {
 // last time each was seen.
 func SortEntitiesByLastSeen(es []*Entity) sort.Interface {
 	return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
-		return a.LastSeen > a.LastSeen
+		return a.LastSeen > b.LastSeen
 	})
 }
 

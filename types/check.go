@@ -413,11 +413,11 @@ func SortCheckConfigsByPredicate(cs []*CheckConfig, fn cmpCheckConfig) sort.Inte
 func SortCheckConfigsByName(es []*CheckConfig, asc bool) sort.Interface {
 	if asc {
 		return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
-			return a.Name < a.Name
+			return a.Name < b.Name
 		})
 	}
 	return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
-		return a.Name > a.Name
+		return a.Name > b.Name
 	})
 }
 
