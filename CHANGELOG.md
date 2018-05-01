@@ -43,6 +43,9 @@ CheckConfig structs.
 - Add CLI support for `metric_format` and `metric_handlers` fields in `sensuctl`.
 - Add support for metric extraction from check output for `graphite_plaintext`
 transformer.
+- Added an InfluxDB Line transformer.
+- Add support for metric extraction from check output for `influxdb_line`
+transformer.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
@@ -68,6 +71,8 @@ and yarn are now dependencies for building the backend.
 - Silenced API only accepts 'id' parameter on DELETE requests.
 - Disable gostatsd internal metric collection.
 - Improved log entries produced by pipelined.
+- Allow the InfluxDB handler to parse the Sensu metric for an InfluxDB field tag
+and measurement.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
