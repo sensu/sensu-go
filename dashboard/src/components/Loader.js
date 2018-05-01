@@ -117,6 +117,7 @@ class Loader extends React.PureComponent {
   _setHidden() {
     if (this._timeout) {
       clearTimeout(this._timeout);
+      this._timeout = null;
     }
 
     if (this.state.visible) {

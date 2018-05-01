@@ -74,6 +74,7 @@ class EventListItem extends React.Component {
         output: PropTypes.string.isRequired,
       }).isRequired,
       timestamp: PropTypes.string.isRequired,
+      deleted: PropTypes.bool.isRequired,
     }).isRequired,
   };
 
@@ -83,6 +84,7 @@ class EventListItem extends React.Component {
         ... on Event {
           id
           timestamp
+          deleted @client
           check {
             status
             name
@@ -132,7 +134,12 @@ class EventListItem extends React.Component {
     return (
       <TableListItem className={classes.root} selected={checked}>
         <div className={classes.checkbox}>
-          <Checkbox color="primary" onChange={onChange} checked={checked} />
+          <Checkbox
+            color="primary"
+            onChange={onChange}
+            checked={checked}
+            disabled={event.deleted}
+          />
         </div>
         <div className={classes.status}>
           <CheckStatusIcon statusCode={check.status} />
@@ -164,32 +171,35 @@ class EventListItem extends React.Component {
           </Typography>
         </div>
         <div className={classes.disclosure}>
-          <Button onClick={this.handleClick}>
-            <Disclosure />
-          </Button>
-          {/* TODO give these functionality, pass correct value */}
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={this.onClose}
-            id="silenceButton"
-          >
-            <MenuItem
-              key={"silence-Entity"}
-              onClick={this.silenceEntity("entity")}
-            >
-              Silence Entity
-            </MenuItem>
-            <MenuItem
-              key={"silence-Check"}
-              onClick={this.silenceCheck("entity")}
-            >
-              Silence Check
-            </MenuItem>
-            <MenuItem key={"resolve"} onClick={this.resolve}>
-              Resolve
-            </MenuItem>
-          </Menu>
+          {!event.deleted && (
+            <React.Fragment>
+              <Button onClick={this.handleClick}>
+                <Disclosure />
+              </Button>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={this.onClose}
+                id="silenceButton"
+              >
+                <MenuItem
+                  key={"silence-Entity"}
+                  onClick={this.silenceEntity("entity")}
+                >
+                  Silence Entity
+                </MenuItem>
+                <MenuItem
+                  key={"silence-Check"}
+                  onClick={this.silenceCheck("entity")}
+                >
+                  Silence Check
+                </MenuItem>
+                <MenuItem key={"resolve"} onClick={this.resolve}>
+                  Resolve
+                </MenuItem>
+              </Menu>
+            </React.Fragment>
+          )}
         </div>
       </TableListItem>
     );
