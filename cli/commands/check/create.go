@@ -95,6 +95,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().String("ttl", "", "time to live in seconds for which a check result is valid")
 	cmd.Flags().String("high-flap-threshold", "", "flap detection high threshold (percent state change) for the check")
 	cmd.Flags().String("low-flap-threshold", "", "flap detection low threshold (percent state change) for the check")
+	cmd.Flags().String("metric-handlers", "", "comma separated list of handlers to invoke for check output metric extraction")
+	cmd.Flags().String("metric-format", "", "the metric format to be used to parse check output for metric extraction")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd

@@ -40,6 +40,7 @@ statsd listener. The listener is enabled by default.
 - Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
 CheckConfig structs.
+- Add CLI support for `metric_format` and `metric_handlers` fields in `sensuctl`.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
