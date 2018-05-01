@@ -43,20 +43,20 @@ func ParseGraphite(metric string) (GraphiteList, error) {
 		g := Graphite{}
 		args := strings.Split(line, " ")
 		if len(args) != 3 {
-			return []Graphite{}, errors.New("graphite plain text format requires exactly 3 arguments")
+			return GraphiteList{}, errors.New("graphite plain text format requires exactly 3 arguments")
 		}
 
 		g.Path = args[0]
 
 		f, err := strconv.ParseFloat(args[1], 64)
 		if err != nil {
-			return []Graphite{}, errors.New("metric value is invalid, second argument must be a float")
+			return GraphiteList{}, errors.New("metric value is invalid, second argument must be a float")
 		}
 		g.Value = f
 
 		i, err := strconv.ParseInt(args[2], 10, 64)
 		if err != nil {
-			return []Graphite{}, errors.New("metric timestamp is invalid, third argument must be an int")
+			return GraphiteList{}, errors.New("metric timestamp is invalid, third argument must be an int")
 		}
 		g.Timestamp = i
 		graphites = append(graphites, g)
