@@ -11,7 +11,7 @@ import (
 // HookConfigIDFieldResolver implement to resolve requests for the HookConfig's id field.
 type HookConfigIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // HookConfigNamespaceFieldResolver implement to resolve requests for the HookConfig's namespace field.
@@ -162,9 +162,10 @@ type HookConfigFieldResolvers interface {
 type HookConfigAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ HookConfigAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ HookConfigAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.

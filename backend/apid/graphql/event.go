@@ -20,7 +20,7 @@ type eventImpl struct {
 }
 
 // ID implements response to request for 'id' field.
-func (r *eventImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (r *eventImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EventTranslator.EncodeToString(p.Source), nil
 }
 

@@ -11,7 +11,7 @@ import (
 // OrganizationIDFieldResolver implement to resolve requests for the Organization's id field.
 type OrganizationIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // OrganizationDescriptionFieldResolver implement to resolve requests for the Organization's description field.
@@ -155,9 +155,10 @@ type OrganizationFieldResolvers interface {
 type OrganizationAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ OrganizationAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ OrganizationAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Description implements response to request for 'description' field.

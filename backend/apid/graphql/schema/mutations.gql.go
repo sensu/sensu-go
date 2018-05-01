@@ -436,7 +436,7 @@ type DeleteRecordPayloadClientMutationIDFieldResolver interface {
 // DeleteRecordPayloadDeletedIDFieldResolver implement to resolve requests for the DeleteRecordPayload's deletedId field.
 type DeleteRecordPayloadDeletedIDFieldResolver interface {
 	// DeletedID implements response to request for deletedId field.
-	DeletedID(p graphql.ResolveParams) (interface{}, error)
+	DeletedID(p graphql.ResolveParams) (string, error)
 }
 
 //
@@ -560,9 +560,10 @@ func (_ DeleteRecordPayloadAliases) ClientMutationID(p graphql.ResolveParams) (s
 }
 
 // DeletedID implements response to request for 'deletedId' field.
-func (_ DeleteRecordPayloadAliases) DeletedID(p graphql.ResolveParams) (interface{}, error) {
+func (_ DeleteRecordPayloadAliases) DeletedID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // DeleteRecordPayloadType Generic container for deleted record payload.
@@ -632,7 +633,7 @@ type DeleteRecordInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
 	// ID - Global ID of the check to update.
-	ID interface{}
+	ID string
 }
 
 // DeleteRecordInputType Generic input used when deleting records.
@@ -997,7 +998,7 @@ type UpdateCheckInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
 	// ID - Global ID of the check to update.
-	ID interface{}
+	ID string
 	// Props - properties of the check
 	Props *CheckConfigInputs
 }
@@ -1238,7 +1239,7 @@ type ResolveEventInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
 	// ID - Global ID of the event to resolve.
-	ID interface{}
+	ID string
 	// Source - The source of the resolve request
 	Source string
 }

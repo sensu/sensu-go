@@ -49,8 +49,7 @@ func (r *queryImpl) Event(p schema.QueryEventFieldResolverParams) (interface{}, 
 // Node implements response to request for 'node' field.
 func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, error) {
 	resolver := r.nodeResolver
-	id := p.Args.ID.(string)
-	return resolver.Find(p.Context, id, p.Info)
+	return resolver.Find(p.Context, p.Args.ID, p.Info)
 }
 
 //

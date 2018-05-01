@@ -38,7 +38,7 @@ func newEnvImpl(store store.Store, getter types.QueueGetter) *envImpl {
 }
 
 // ID implements response to request for 'id' field.
-func (r *envImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (r *envImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EnvironmentTranslator.EncodeToString(p.Source), nil
 }
 

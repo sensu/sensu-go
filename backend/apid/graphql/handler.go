@@ -31,7 +31,7 @@ func newHandlerImpl(store store.Store) *handlerImpl {
 }
 
 // ID implements response to request for 'id' field.
-func (*handlerImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (*handlerImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.HandlerTranslator.EncodeToString(p.Source), nil
 }
 

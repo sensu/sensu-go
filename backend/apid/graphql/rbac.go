@@ -38,7 +38,7 @@ type roleImpl struct {
 }
 
 // ID implements response to request for 'id' field.
-func (*roleImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (*roleImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.RoleTranslator.EncodeToString(p.Source), nil
 }
 
