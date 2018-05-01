@@ -113,3 +113,50 @@ func TestPrepareCheck(t *testing.T) {
 	check.Interval = 60
 	assert.True(agent.prepareCheck(check))
 }
+
+func TestExtractMetrics(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name            string
+		checkOutput     string
+		metricFormat    string
+		expectedMetrics []*types.MetricPoint
+	}{
+		{
+			name:            "invalid metric format",
+			checkOutput:     "metric.value 1 123456789",
+			metricFormat:    "not_a_format",
+			expectedMetrics: nil,
+		},
+		{
+			name:         "valid extraction graphite",
+			checkOutput:  "metric.value 1 123456789",
+			metricFormat: types.GraphiteMetricFormat,
+			expectedMetrics: []*types.MetricPoint{
+				{
+					Name:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{},
+				},
+			},
+		},
+		{
+			name:            "invalid extraction graphite",
+			checkOutput:     "metric.value 1 foo",
+			metricFormat:    types.GraphiteMetricFormat,
+			expectedMetrics: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := types.FixtureEvent("entity", "check")
+			event.Check.Output = tc.checkOutput
+			event.Check.MetricFormat = tc.metricFormat
+			metrics := extractMetrics(event)
+			assert.Equal(tc.expectedMetrics, metrics)
+		})
+	}
+}
