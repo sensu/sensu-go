@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"errors"
 	"sort"
 
@@ -15,10 +14,6 @@ import (
 )
 
 var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
-
-type eventQuerier interface {
-	Query(ctx context.Context, entity, check string) ([]*types.Event, error)
-}
 
 //
 // Implement EnvironmentFieldResolvers
@@ -42,7 +37,7 @@ func newEnvImpl(store store.Store, getter types.QueueGetter) *envImpl {
 }
 
 // ID implements response to request for 'id' field.
-func (r *envImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (r *envImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EnvironmentTranslator.EncodeToString(p.Source), nil
 }
 

@@ -20,6 +20,9 @@ type Mutation {
 
   "Resolves an event."
   resolveEvent(input: ResolveEventInput!): ResolveEventPayload
+
+  "Deletes an event."
+  deleteEvent(input: DeleteRecordInput!): DeleteRecordPayload
 }
 
 """

@@ -11,7 +11,7 @@ import (
 // HandlerIDFieldResolver implement to resolve requests for the Handler's id field.
 type HandlerIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // HandlerNamespaceFieldResolver implement to resolve requests for the Handler's namespace field.
@@ -197,9 +197,10 @@ type HandlerFieldResolvers interface {
 type HandlerAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ HandlerAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ HandlerAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.

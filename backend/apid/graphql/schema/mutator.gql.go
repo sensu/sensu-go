@@ -11,7 +11,7 @@ import (
 // MutatorIDFieldResolver implement to resolve requests for the Mutator's id field.
 type MutatorIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // MutatorNamespaceFieldResolver implement to resolve requests for the Mutator's namespace field.
@@ -162,9 +162,10 @@ type MutatorFieldResolvers interface {
 type MutatorAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ MutatorAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ MutatorAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.

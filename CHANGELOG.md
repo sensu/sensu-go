@@ -40,6 +40,8 @@ statsd listener. The listener is enabled by default.
 - Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
 CheckConfig structs.
+- Add support for metric extraction from check output for `graphite_plaintext`
+transformer.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
@@ -85,7 +87,7 @@ swallowed. The events are sent through the pipeline.
 - Fixed a bug where check and checkconfig handlers and subscriptions are null in rendered JSON.
 - Allow checks and hooks to escape zombie processes that have timed out.
 - Install all dependencies with `dep ensure` in build.sh.
-
+- Fixed an issue in which some agents intermittently miss check requests.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added

@@ -77,6 +77,23 @@ type MutationResolveEventFieldResolver interface {
 	ResolveEvent(p MutationResolveEventFieldResolverParams) (interface{}, error)
 }
 
+// MutationDeleteEventFieldResolverArgs contains arguments provided to deleteEvent when selected
+type MutationDeleteEventFieldResolverArgs struct {
+	Input *DeleteRecordInput // Input - self descriptive
+}
+
+// MutationDeleteEventFieldResolverParams contains contextual info to resolve deleteEvent field
+type MutationDeleteEventFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationDeleteEventFieldResolverArgs
+}
+
+// MutationDeleteEventFieldResolver implement to resolve requests for the Mutation's deleteEvent field.
+type MutationDeleteEventFieldResolver interface {
+	// DeleteEvent implements response to request for deleteEvent field.
+	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
+}
+
 //
 // MutationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutation' type.
@@ -143,6 +160,7 @@ type MutationFieldResolvers interface {
 	MutationUpdateCheckFieldResolver
 	MutationDeleteCheckFieldResolver
 	MutationResolveEventFieldResolver
+	MutationDeleteEventFieldResolver
 }
 
 // MutationAliases implements all methods on MutationFieldResolvers interface by using reflection to
@@ -216,6 +234,12 @@ func (_ MutationAliases) ResolveEvent(p MutationResolveEventFieldResolverParams)
 	return val, err
 }
 
+// DeleteEvent implements response to request for 'deleteEvent' field.
+func (_ MutationAliases) DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // MutationType The root query for implementing GraphQL mutations.
 var MutationType = graphql.NewType("Mutation", graphql.ObjectKind)
 
@@ -275,6 +299,19 @@ func _ObjTypeMutationResolveEventHandler(impl interface{}) graphql1.FieldResolve
 	}
 }
 
+func _ObjTypeMutationDeleteEventHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationDeleteEventFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationDeleteEventFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.DeleteEvent(frp)
+	}
+}
+
 func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The root query for implementing GraphQL mutations.",
@@ -297,6 +334,16 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Removes given check.",
 				Name:              "deleteCheck",
+				Type:              graphql.OutputType("DeleteRecordPayload"),
+			},
+			"deleteEvent": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("DeleteRecordInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Deletes an event.",
+				Name:              "deleteEvent",
 				Type:              graphql.OutputType("DeleteRecordPayload"),
 			},
 			"resolveEvent": &graphql1.Field{
@@ -339,6 +386,7 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"createCheck":  _ObjTypeMutationCreateCheckHandler,
 		"deleteCheck":  _ObjTypeMutationDeleteCheckHandler,
+		"deleteEvent":  _ObjTypeMutationDeleteEventHandler,
 		"resolveEvent": _ObjTypeMutationResolveEventHandler,
 		"updateCheck":  _ObjTypeMutationUpdateCheckHandler,
 	},
@@ -388,7 +436,7 @@ type DeleteRecordPayloadClientMutationIDFieldResolver interface {
 // DeleteRecordPayloadDeletedIDFieldResolver implement to resolve requests for the DeleteRecordPayload's deletedId field.
 type DeleteRecordPayloadDeletedIDFieldResolver interface {
 	// DeletedID implements response to request for deletedId field.
-	DeletedID(p graphql.ResolveParams) (interface{}, error)
+	DeletedID(p graphql.ResolveParams) (string, error)
 }
 
 //
@@ -512,9 +560,10 @@ func (_ DeleteRecordPayloadAliases) ClientMutationID(p graphql.ResolveParams) (s
 }
 
 // DeletedID implements response to request for 'deletedId' field.
-func (_ DeleteRecordPayloadAliases) DeletedID(p graphql.ResolveParams) (interface{}, error) {
+func (_ DeleteRecordPayloadAliases) DeletedID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // DeleteRecordPayloadType Generic container for deleted record payload.
@@ -584,7 +633,7 @@ type DeleteRecordInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
 	// ID - Global ID of the check to update.
-	ID interface{}
+	ID string
 }
 
 // DeleteRecordInputType Generic input used when deleting records.
@@ -949,7 +998,7 @@ type UpdateCheckInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
 	// ID - Global ID of the check to update.
-	ID interface{}
+	ID string
 	// Props - properties of the check
 	Props *CheckConfigInputs
 }
@@ -1190,7 +1239,7 @@ type ResolveEventInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
 	// ID - Global ID of the event to resolve.
-	ID interface{}
+	ID string
 	// Source - The source of the resolve request
 	Source string
 }

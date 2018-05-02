@@ -71,7 +71,7 @@ type QueryEventFieldResolver interface {
 
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
 type QueryNodeFieldResolverArgs struct {
-	ID interface{} // ID - The ID of an object.
+	ID string // ID - The ID of an object.
 }
 
 // QueryNodeFieldResolverParams contains contextual info to resolve node field

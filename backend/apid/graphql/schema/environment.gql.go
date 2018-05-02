@@ -12,7 +12,7 @@ import (
 // EnvironmentIDFieldResolver implement to resolve requests for the Environment's id field.
 type EnvironmentIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // EnvironmentDescriptionFieldResolver implement to resolve requests for the Environment's description field.
@@ -238,9 +238,10 @@ type EnvironmentFieldResolvers interface {
 type EnvironmentAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ EnvironmentAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ EnvironmentAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Description implements response to request for 'description' field.

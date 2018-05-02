@@ -241,7 +241,7 @@ var _ObjectTypeRuleDesc = graphql.ObjectDesc{
 // RoleIDFieldResolver implement to resolve requests for the Role's id field.
 type RoleIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // RoleNameFieldResolver implement to resolve requests for the Role's name field.
@@ -371,9 +371,10 @@ type RoleFieldResolvers interface {
 type RoleAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ RoleAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ RoleAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Name implements response to request for 'name' field.

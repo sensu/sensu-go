@@ -27,11 +27,11 @@ func TestEncodeEvent(t *testing.T) {
 
 func TestEventComponents(t *testing.T) {
 	assert := assert.New(t)
-	components := newEventComponents(StandardComponents{
+	components := NewEventComponents(StandardComponents{
 		resource:        "events",
 		resourceType:    "check",
 		uniqueComponent: "WyJvbmUiLCJ0d28iLCIxMjM0Il0K",
-	}).(EventComponents)
+	})
 
 	assert.Equal("one", components.EntityName())
 	assert.Equal("two", components.CheckName())

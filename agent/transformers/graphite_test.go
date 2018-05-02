@@ -12,31 +12,65 @@ func TestParseGraphite(t *testing.T) {
 
 	testCases := []struct {
 		metric         string
-		expectedFormat Graphite
+		expectedFormat GraphiteList
 		expectedErr    bool
 	}{
 		{
 			metric: "metric.value 1 123456789",
-			expectedFormat: Graphite{
-				Path:      "metric.value",
-				Value:     1,
-				Timestamp: 123456789,
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
 			},
 			expectedErr: false,
 		},
 		{
+			metric: "metric.value 1 123456789\n",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
+			},
+			expectedErr: false,
+		},
+		{
+			metric: "metric.value 1 123456789\nmetric.value 0 0",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
+				{
+					Path:      "metric.value",
+					Value:     0,
+					Timestamp: 0,
+				},
+			},
+			expectedErr: false,
+		},
+		{
+			metric:         "",
+			expectedFormat: GraphiteList{},
+			expectedErr:    true,
+		},
+		{
 			metric:         "foo bar",
-			expectedFormat: Graphite{},
+			expectedFormat: GraphiteList{},
 			expectedErr:    true,
 		},
 		{
 			metric:         "metric.value one 123456789",
-			expectedFormat: Graphite{},
+			expectedFormat: GraphiteList{},
 			expectedErr:    true,
 		},
 		{
 			metric:         "metric.value 1 noon",
-			expectedFormat: Graphite{},
+			expectedFormat: GraphiteList{},
 			expectedErr:    true,
 		},
 	}
@@ -58,14 +92,16 @@ func TestTransformGraphite(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		metric         Graphite
+		metric         GraphiteList
 		expectedFormat []*types.MetricPoint
 	}{
 		{
-			metric: Graphite{
-				Path:      "metric.value",
-				Value:     1,
-				Timestamp: 123456789,
+			metric: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
 			},
 			expectedFormat: []*types.MetricPoint{
 				{
@@ -77,10 +113,57 @@ func TestTransformGraphite(t *testing.T) {
 			},
 		},
 		{
-			metric: Graphite{
-				Path:      "",
-				Value:     0,
-				Timestamp: 0,
+			metric: GraphiteList{
+				{
+					Path:      "",
+					Value:     0,
+					Timestamp: 0,
+				},
+			},
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "",
+					Value:     0,
+					Timestamp: 0,
+					Tags:      []*types.MetricTag{},
+				},
+			},
+		},
+		{
+			metric: GraphiteList{
+				{
+					Path:      "",
+					Value:     0,
+					Timestamp: 0,
+				},
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
+			},
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "",
+					Value:     0,
+					Timestamp: 0,
+					Tags:      []*types.MetricTag{},
+				},
+				{
+					Name:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{},
+				},
+			},
+		},
+		{
+			metric: GraphiteList{
+				{
+					Path:      "",
+					Value:     0,
+					Timestamp: 0,
+				},
 			},
 			expectedFormat: []*types.MetricPoint{
 				{
@@ -122,7 +205,7 @@ func TestParseAndTransformGraphite(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			metric: "metric.value 0 0",
+			metric: "metric.value 0 0\n",
 			expectedFormat: []*types.MetricPoint{
 				{
 					Name:      "metric.value",
@@ -132,6 +215,28 @@ func TestParseAndTransformGraphite(t *testing.T) {
 				},
 			},
 			expectedErr: false,
+		},
+		{
+			metric: "metric.value 1 123456789\nmetric.value 0 0",
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{},
+				},
+				{
+					Name:      "metric.value",
+					Value:     0,
+					Timestamp: 0,
+					Tags:      []*types.MetricTag{},
+				},
+			},
+			expectedErr: false,
+		},
+		{
+			metric:      "",
+			expectedErr: true,
 		},
 		{
 			metric:      "foo bar",

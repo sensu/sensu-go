@@ -11,7 +11,7 @@ import (
 // EventIDFieldResolver implement to resolve requests for the Event's id field.
 type EventIDFieldResolver interface {
 	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (interface{}, error)
+	ID(p graphql.ResolveParams) (string, error)
 }
 
 // EventNamespaceFieldResolver implement to resolve requests for the Event's namespace field.
@@ -183,9 +183,10 @@ type EventFieldResolvers interface {
 type EventAliases struct{}
 
 // ID implements response to request for 'id' field.
-func (_ EventAliases) ID(p graphql.ResolveParams) (interface{}, error) {
+func (_ EventAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 // Namespace implements response to request for 'namespace' field.

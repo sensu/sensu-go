@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"sort"
 	"time"
 
@@ -19,10 +18,6 @@ var _ schema.SystemFieldResolvers = (*systemImpl)(nil)
 var _ schema.NetworkFieldResolvers = (*networkImpl)(nil)
 var _ schema.NetworkInterfaceFieldResolvers = (*networkInterfaceImpl)(nil)
 var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
-
-type entityQuerier interface {
-	Query(ctx context.Context) ([]*types.Entity, error)
-}
 
 //
 // Implement EntityFieldResolvers
@@ -48,7 +43,7 @@ func newEntityImpl(store store.Store) *entityImpl {
 }
 
 // ID implements response to request for 'id' field.
-func (*entityImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EntityTranslator.EncodeToString(p.Source), nil
 }
 

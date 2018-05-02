@@ -29,7 +29,7 @@ func newCheckCfgImpl(store store.Store) *checkCfgImpl {
 }
 
 // ID implements response to request for 'id' field.
-func (r *checkCfgImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (r *checkCfgImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.CheckTranslator.EncodeToString(p.Source), nil
 }
 

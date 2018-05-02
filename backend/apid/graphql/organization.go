@@ -28,7 +28,7 @@ func newOrgImpl(store store.EnvironmentStore) *orgImpl {
 }
 
 // ID implements response to request for 'id' field.
-func (r *orgImpl) ID(p graphql.ResolveParams) (interface{}, error) {
+func (r *orgImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.OrganizationTranslator.EncodeToString(p.Source), nil
 }
 

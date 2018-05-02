@@ -656,6 +656,9 @@ func genFieldResolverSignature(field *ast.FieldDefinition, i info) jen.Code {
 //
 //   GraphQL => Go
 //
+//   ID         => string
+//   ID!        => string
+//   [ID]       => []string
 //   String     => string
 //   [String]   => []string
 //   [Int]      => []int
@@ -770,7 +773,7 @@ func genFieldResolverTypeCoercion(t ast.Type, i info, nullable bool) jen.Code {
 		return jen.Qual(defsPkg, "Int").Op(".").Id("ParseValue").Call(jen.Id("val")).Assert(jen.Int())
 	case graphql.Float.Name():
 		return jen.Qual(defsPkg, "Float").Op(".").Id("ParseValue").Call(jen.Id("val")).Assert(jen.Float64())
-	case graphql.String.Name():
+	case graphql.String.Name(), graphql.ID.Name():
 		return jen.Qual("fmt", "Sprint").Call(jen.Id("val"))
 	case graphql.Boolean.Name():
 		return mkAssert(jen.Id("bool"))
