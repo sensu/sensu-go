@@ -166,6 +166,11 @@ brew install protobuf
 ```
 Otherwise, see the **for non-C++ users** [instructions here.](https://github.com/google/protobuf#protocol-compiler-installation)
 
+Install protoc-gen-go.
+```
+go get -u github.com/golang/protobuf/protoc-gen-go
+```
+
 #### Quick Start
 
 Once you make a change to any `*.proto` file within the **types** package, you will need to regenerate the associated `*.pb.go` file. To do so, simply run `go generate` on the package.
