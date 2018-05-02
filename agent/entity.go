@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
@@ -16,6 +17,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			Environment:      a.config.Environment,
 			ID:               a.config.AgentID,
 			KeepaliveTimeout: a.config.KeepaliveTimeout,
+			LastSeen:         time.Now().Unix(),
 			Organization:     a.config.Organization,
 			Redact:           a.config.Redact,
 			Subscriptions:    a.config.Subscriptions,
