@@ -195,7 +195,10 @@ func extractMetrics(event *types.Event) []*types.MetricPoint {
 	switch event.Check.MetricFormat {
 	case types.GraphiteMetricFormat:
 		transformer, err = transformers.ParseGraphite(event.Check.Output)
+	case types.OpenTSDBMetricFormat:
+		transformer, err = transformers.ParseOpenTSDB(event.Check.Output)
 	}
+
 	if err != nil {
 		logger.WithError(err).Error("unable to extract metric from check output")
 		return nil

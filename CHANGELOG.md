@@ -42,6 +42,9 @@ statsd listener. The listener is enabled by default.
 CheckConfig structs.
 - Add support for metric extraction from check output for `graphite_plaintext`
 transformer.
+- Added a OpenTSDB transformer.
+- Add support for metric extraction from check output for `opentsdb_line`
+transformer.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
