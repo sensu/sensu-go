@@ -65,7 +65,8 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	check.Executed = time.Now().Unix()
 	check.Issued = request.Issued
 	event := &types.Event{
-		Check: check,
+		Check:   check,
+		Metrics: &types.Metrics{},
 	}
 
 	// Ensure that the asset manager is aware of all the assets required to
