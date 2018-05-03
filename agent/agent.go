@@ -385,7 +385,7 @@ func (a *Agent) Run() error {
 	if !a.config.StatsdServer.Disable {
 		logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
 
-		// We need to force a IPv4 connection for Windows. See
+		// We need to force a TCP connection for Windows. See
 		// https://github.com/sensu/sensu-go/issues/1402
 		if runtime.GOOS == "windows" {
 			conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
