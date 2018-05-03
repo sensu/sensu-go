@@ -130,7 +130,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 	return entities[0:limit], nil
 }
 
-// Status implements response to request for 'related' field.
+// Status implements response to request for 'status' field.
 func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 	entity := p.Source.(*types.Entity)
 
@@ -164,6 +164,12 @@ func (*entityImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 type systemImpl struct {
 	schema.SystemAliases
+}
+
+// Os implements response to request for 'os' field.
+func (r *systemImpl) Os(p graphql.ResolveParams) (string, error) {
+	sys := p.Source.(types.System)
+	return sys.OS, nil
 }
 
 //
