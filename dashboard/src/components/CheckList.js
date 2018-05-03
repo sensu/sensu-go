@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import map from "lodash/map";
-import get from "lodash/get";
 import gql from "graphql-tag";
 
 import Table, {
@@ -19,7 +18,7 @@ class CheckList extends React.Component {
   static propTypes = {
     environment: PropTypes.shape({
       checks: PropTypes.shape({
-        edges: PropTypes.array.isRequired,
+        nodes: PropTypes.array.isRequired,
       }),
     }),
     loading: PropTypes.bool,
@@ -33,15 +32,10 @@ class CheckList extends React.Component {
   static fragments = {
     environment: gql`
       fragment CheckList_environment on Environment {
-        checks(first: 1500) {
-          edges {
-            node {
-              ...CheckRow_check
-            }
-            cursor
-          }
-          pageInfo {
-            hasNextPage
+        checks(limit: $limit) {
+          nodes {
+            id
+            ...CheckRow_check
           }
         }
       }
@@ -52,7 +46,7 @@ class CheckList extends React.Component {
 
   render() {
     const { environment, loading } = this.props;
-    const checks = get(environment, "checks.edges", []);
+    const checks = environment && (environment.checks.nodes || []);
 
     return (
       <Loader loading={loading}>
@@ -69,7 +63,7 @@ class CheckList extends React.Component {
             </TableRow>
           </TableHead>
           <TableBody style={{ minHeight: 200 }}>
-            {map(checks, edge => <Row key={edge.cursor} check={edge.node} />)}
+            {map(checks, node => <Row key={node.id} check={node} />)}
           </TableBody>
         </Table>
       </Loader>
