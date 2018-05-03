@@ -33,6 +33,8 @@ type checkOpts struct {
 	TTL               string `survey:"ttl"`
 	HighFlapThreshold string `survey:"high-flap-threshold"`
 	LowFlapThreshold  string `survey:"low-flap-threshold"`
+	MetricFormat      string `survey:"metric-format"`
+	MetricHandlers    string `survey:"metric-handlers"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -55,6 +57,8 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Timeout = strconv.Itoa(int(check.Timeout))
 	opts.HighFlapThreshold = strconv.Itoa(int(check.HighFlapThreshold))
 	opts.LowFlapThreshold = strconv.Itoa(int(check.LowFlapThreshold))
+	opts.MetricFormat = check.MetricFormat
+	opts.MetricHandlers = strings.Join(check.MetricHandlers, ",")
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -72,6 +76,8 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.TTL, _ = flags.GetString("ttl")
 	opts.HighFlapThreshold, _ = flags.GetString("high-flap-threshold")
 	opts.LowFlapThreshold, _ = flags.GetString("low-flap-threshold")
+	opts.MetricFormat, _ = flags.GetString("metric-format")
+	opts.MetricHandlers, _ = flags.GetString("metric-handlers")
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -226,6 +232,29 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.LowFlapThreshold,
 			},
 		},
+		{
+			Name: "metric-format",
+			Prompt: &survey.Input{
+				Message: "Metric Format:",
+				Help:    "Optional metric format used to parse check output for metric extraction. Valid formats include: nagios_perfdata, graphite_plaintext, opentsdb_line, and influxdb_line",
+				Default: opts.MetricFormat,
+			},
+			Validate: func(val interface{}) error {
+				if val.(string) != "" {
+					if err := types.ValidateMetricFormat(val.(string)); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
+		{
+			Name: "metric-handlers",
+			Prompt: &survey.Input{
+				Message: "Metric Handlers:",
+				Default: opts.MetricHandlers,
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -255,4 +284,6 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Ttl = int64(ttl)
 	check.HighFlapThreshold = uint32(highFlap)
 	check.LowFlapThreshold = uint32(lowFlap)
+	check.MetricFormat = opts.MetricFormat
+	check.MetricHandlers = helpers.SafeSplitCSV(opts.MetricHandlers)
 }

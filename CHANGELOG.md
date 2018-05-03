@@ -40,6 +40,7 @@ statsd listener. The listener is enabled by default.
 - Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
 CheckConfig structs.
+- Add CLI support for `metric_format` and `metric_handlers` fields in `sensuctl`.
 - Add support for metric extraction from check output for `graphite_plaintext`
 transformer.
 
