@@ -163,3 +163,27 @@ func TestPublishDirect(t *testing.T) {
 	default:
 	}
 }
+
+func TestBug1407(t *testing.T) {
+	ring := &mockring.Ring{}
+	ring.On("Add", mock.Anything, mock.Anything).Return(nil)
+	ring.On("Next", mock.Anything).Return("a", nil)
+	getter := &mockring.Getter{"topic": ring}
+	bus, err := NewWizardBus(WizardBusConfig{
+		RingGetter: getter,
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, bus.Start())
+	defer bus.Stop()
+
+	subscriber := channelSubscriber{make(chan interface{}, 1)}
+	subscription, err := bus.Subscribe("topic", "a", subscriber)
+	require.NoError(t, err)
+	require.NoError(t, subscription.Cancel())
+	subscription, err = bus.Subscribe("topic", "a", subscriber)
+	require.NoError(t, err)
+	closed := bus.topics["topic"].IsClosed()
+	assert.False(t, closed)
+
+}

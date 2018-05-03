@@ -39,7 +39,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
 	schema.RegisterNamespaceInput(svc)
 	schema.RegisterOrganization(svc, newOrgImpl(store))
-	schema.RegisterPageInfo(svc, &pageInfoImpl{})
+	schema.RegisterOffsetPageInfo(svc, &offsetPageInfoImpl{})
 	schema.RegisterResolveEventInput(svc)
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
 	schema.RegisterSchema(svc)
@@ -49,9 +49,9 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterCheck(svc, &checkImpl{})
 	schema.RegisterCheckConfig(svc, newCheckCfgImpl(store))
 	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
-	schema.RegisterCheckConfigEdge(svc, &schema.CheckConfigEdgeAliases{})
-	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterCheckConfigInputs(svc)
+	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
+	schema.RegisterCheckListOrder(svc)
 	schema.RegisterCreateCheckInput(svc)
 	schema.RegisterCreateCheckPayload(svc, &checkMutationPayload{})
 	schema.RegisterUpdateCheckInput(svc)
@@ -60,7 +60,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	// Register entity types
 	schema.RegisterEntity(svc, newEntityImpl(store))
 	schema.RegisterEntityConnection(svc, &schema.EntityConnectionAliases{})
-	schema.RegisterEntityEdge(svc, &schema.EntityEdgeAliases{})
+	schema.RegisterEntityListOrder(svc)
 	schema.RegisterDeregistration(svc, &deregistrationImpl{})
 	schema.RegisterNetwork(svc, &networkImpl{})
 	schema.RegisterNetworkInterface(svc, &networkInterfaceImpl{})
@@ -69,7 +69,6 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	// Register event types
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventConnection(svc, &schema.EventConnectionAliases{})
-	schema.RegisterEventEdge(svc, &schema.EventEdgeAliases{})
 
 	// Register hook types
 	schema.RegisterHook(svc, &hookImpl{})

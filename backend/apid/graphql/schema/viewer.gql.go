@@ -4,49 +4,8 @@ package schema
 
 import (
 	graphql1 "github.com/graphql-go/graphql"
-	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
-
-// ViewerEntitiesFieldResolverArgs contains arguments provided to entities when selected
-type ViewerEntitiesFieldResolverArgs struct {
-	First  int    // First - self descriptive
-	Last   int    // Last - self descriptive
-	Before string // Before - self descriptive
-	After  string // After - self descriptive
-}
-
-// ViewerEntitiesFieldResolverParams contains contextual info to resolve entities field
-type ViewerEntitiesFieldResolverParams struct {
-	graphql.ResolveParams
-	Args ViewerEntitiesFieldResolverArgs
-}
-
-// ViewerEntitiesFieldResolver implement to resolve requests for the Viewer's entities field.
-type ViewerEntitiesFieldResolver interface {
-	// Entities implements response to request for entities field.
-	Entities(p ViewerEntitiesFieldResolverParams) (interface{}, error)
-}
-
-// ViewerChecksFieldResolverArgs contains arguments provided to checks when selected
-type ViewerChecksFieldResolverArgs struct {
-	First  int    // First - self descriptive
-	Last   int    // Last - self descriptive
-	Before string // Before - self descriptive
-	After  string // After - self descriptive
-}
-
-// ViewerChecksFieldResolverParams contains contextual info to resolve checks field
-type ViewerChecksFieldResolverParams struct {
-	graphql.ResolveParams
-	Args ViewerChecksFieldResolverArgs
-}
-
-// ViewerChecksFieldResolver implement to resolve requests for the Viewer's checks field.
-type ViewerChecksFieldResolver interface {
-	// Checks implements response to request for checks field.
-	Checks(p ViewerChecksFieldResolverParams) (interface{}, error)
-}
 
 // ViewerOrganizationsFieldResolver implement to resolve requests for the Viewer's organizations field.
 type ViewerOrganizationsFieldResolver interface {
@@ -122,8 +81,6 @@ type ViewerUserFieldResolver interface {
 //   }
 //
 type ViewerFieldResolvers interface {
-	ViewerEntitiesFieldResolver
-	ViewerChecksFieldResolver
 	ViewerOrganizationsFieldResolver
 	ViewerUserFieldResolver
 }
@@ -175,18 +132,6 @@ type ViewerFieldResolvers interface {
 //
 type ViewerAliases struct{}
 
-// Entities implements response to request for 'entities' field.
-func (_ ViewerAliases) Entities(p ViewerEntitiesFieldResolverParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// Checks implements response to request for 'checks' field.
-func (_ ViewerAliases) Checks(p ViewerChecksFieldResolverParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
 // Organizations implements response to request for 'organizations' field.
 func (_ ViewerAliases) Organizations(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -206,32 +151,6 @@ var ViewerType = graphql.NewType("Viewer", graphql.ObjectKind)
 func RegisterViewer(svc *graphql.Service, impl ViewerFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeViewerDesc, impl)
 }
-func _ObjTypeViewerEntitiesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ViewerEntitiesFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := ViewerEntitiesFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
-		if err != nil {
-			return nil, err
-		}
-
-		return resolver.Entities(frp)
-	}
-}
-
-func _ObjTypeViewerChecksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ViewerChecksFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := ViewerChecksFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
-		if err != nil {
-			return nil, err
-		}
-
-		return resolver.Checks(frp)
-	}
-}
-
 func _ObjTypeViewerOrganizationsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(ViewerOrganizationsFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -250,58 +169,6 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Describes a viewer of the system; generally an authenticated user.",
 		Fields: graphql1.Fields{
-			"checks": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{
-					"after": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"before": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"first": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
-						Description:  "self descriptive",
-						Type:         graphql1.Int,
-					},
-					"last": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
-						Description:  "self descriptive",
-						Type:         graphql1.Int,
-					},
-				},
-				DeprecationReason: "",
-				Description:       "All check configurations the viewer has access to view.",
-				Name:              "checks",
-				Type:              graphql.OutputType("CheckConfigConnection"),
-			},
-			"entities": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{
-					"after": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"before": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"first": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
-						Description:  "self descriptive",
-						Type:         graphql1.Int,
-					},
-					"last": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
-						Description:  "self descriptive",
-						Type:         graphql1.Int,
-					},
-				},
-				DeprecationReason: "",
-				Description:       "All entities the viewer has access to view.",
-				Name:              "entities",
-				Type:              graphql.OutputType("EntityConnection"),
-			},
 			"organizations": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -334,8 +201,6 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeViewerDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeViewerConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checks":        _ObjTypeViewerChecksHandler,
-		"entities":      _ObjTypeViewerEntitiesHandler,
 		"organizations": _ObjTypeViewerOrganizationsHandler,
 		"user":          _ObjTypeViewerUserHandler,
 	},

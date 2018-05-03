@@ -70,9 +70,8 @@ type CheckConfig implements Node {
 
 "A connection to a sequence of records."
 type CheckConfigConnection {
-  edges: [CheckConfigEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
+  nodes: [CheckConfig!]!
+  pageInfo: OffsetPageInfo!
 }
 
 "An edge in a connection."

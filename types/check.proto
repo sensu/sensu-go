@@ -42,7 +42,7 @@ message ProxyRequests {
 
 	// SplayCoverage is the percentage used for proxy check request splay
 	// calculation.
-	uint32 splay_coverage = 3;
+	uint32 splay_coverage = 3 [(gogoproto.jsontag) = "splay_coverage"];
 }
 
 // CheckConfig is the specification of a check.
@@ -58,14 +58,14 @@ message CheckConfig {
 
   // HighFlapThreshold is the flap detection high threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 high_flap_threshold = 4;
+  uint32 high_flap_threshold = 4 [(gogoproto.jsontag) = "high_flap_threshold"];
 
   // Interval is the interval, in seconds, at which the check should be run.
-  uint32 interval = 5;
+  uint32 interval = 5 [(gogoproto.jsontag) = "interval"];
 
   // LowFlapThreshold is the flap detection low threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 low_flap_threshold = 6;
+  uint32 low_flap_threshold = 6 [(gogoproto.jsontag) = "low_flap_threshold"];
 
   // Name is the unique identifier for a check.
   string name = 7;
@@ -101,10 +101,10 @@ message CheckConfig {
   string cron = 17;
 
   // TTL represents the length of time in seconds for which a check result is valid.
-  int64 ttl = 18;
+  int64 ttl = 18 [(gogoproto.jsontag) = "ttl"];
 
   // Timeout is the timeout, in seconds, at which the check has to run
-  uint32 timeout = 19;
+  uint32 timeout = 19 [(gogoproto.jsontag) = "timeout"];
 
   // ProxyRequests represents a request to execute a proxy check
   ProxyRequests proxy_requests = 20;
@@ -135,14 +135,14 @@ message Check {
 
   // HighFlapThreshold is the flap detection high threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 high_flap_threshold = 4;
+  uint32 high_flap_threshold = 4 [(gogoproto.jsontag) = "high_flap_threshold"];
 
   // Interval is the interval, in seconds, at which the check should be run.
-  uint32 interval = 5;
+  uint32 interval = 5 [(gogoproto.jsontag) = "interval"];
 
   // LowFlapThreshold is the flap detection low threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 low_flap_threshold = 6;
+  uint32 low_flap_threshold = 6 [(gogoproto.jsontag) = "low_flap_threshold"];
 
   // Name is the unique identifier for a check.
   string name = 7;
@@ -175,10 +175,10 @@ message Check {
   string cron = 17;
 
   // TTL represents the length of time in seconds for which a check result is valid.
-  int64 ttl = 18;
+  int64 ttl = 18 [(gogoproto.jsontag) = "ttl"];
 
   // Timeout is the timeout, in seconds, at which the check has to run
-  uint32 timeout = 19;
+  uint32 timeout = 19 [(gogoproto.jsontag) = "timeout"];
 
   // ProxyRequests represents a request to execute a proxy check
   ProxyRequests proxy_requests = 20;
@@ -190,7 +190,7 @@ message Check {
   double duration = 22;
 
   // Executed describes the time in which the check request was executed
-  int64 executed = 23;
+  int64 executed = 23 [(gogoproto.jsontag) = "executed"];
 
   // History is the check state history.
   repeated CheckHistory history = 24 [(gogoproto.jsontag) = "history", (gogoproto.nullable) = false];
@@ -205,20 +205,20 @@ message Check {
   string state = 27;
 
   // Status is the exit status code produced by the check
-  uint32 status = 28;
+  uint32 status = 28 [(gogoproto.jsontag) = "status"];
 
   // TotalStateChange indicates the total state change percentage for the
   // check's history
-  uint32 total_state_change = 29;
+  uint32 total_state_change = 29 [(gogoproto.jsontag) = "total_state-change"];
 
   // LastOK displays last time this check was ok; if event status is 0 this is set to timestamp
-  int64 last_ok = 30 [(gogoproto.customname) = "LastOK"];
+  int64 last_ok = 30 [(gogoproto.customname) = "LastOK", (gogoproto.jsontag) = "last_ok"];
 
   // Occurrences indicates the number of times an event has occurred for a client/check pair with the same check status
-  int64 occurrences = 31;
+  int64 occurrences = 31 [(gogoproto.jsontag) = "occurrences"];
 
   // OccurrencesWatermark indicates the high water mark tracking number of occurrences at the current severity
-  int64 occurrences_watermark = 32;
+  int64 occurrences_watermark = 32 [(gogoproto.jsontag) = "occurrences_watermark"];
 
   // Silenced is a list of silenced entry ids (subscription and check name)
   repeated string silenced = 33 [(gogoproto.nullable) = true];
@@ -241,8 +241,8 @@ message Check {
 // CheckHistory is a record of a check execution and its status
 message CheckHistory {
   // Status is the exit status code produced by the check.
-  uint32 status = 1;
+  uint32 status = 1 [(gogoproto.jsontag) = "status"];
 
   // Executed describes the time in which the check request was executed
-  int64 executed = 2;
+  int64 executed = 2 [(gogoproto.jsontag) = "executed"];
 }

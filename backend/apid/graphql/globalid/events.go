@@ -22,8 +22,8 @@ type EventComponents struct {
 	uniqueComponents []string
 }
 
-// newEventComponents instantiates new EventComponents composite.
-func newEventComponents(components StandardComponents) Components {
+// NewEventComponents instantiates new EventComponents composite.
+func NewEventComponents(components StandardComponents) EventComponents {
 	return EventComponents{components, []string{}}
 }
 
@@ -67,8 +67,10 @@ func (n *EventComponents) getUniqueComponents(i int) string {
 
 // EventTranslator global ID resource
 var EventTranslator = commonTranslator{
-	name:       eventName,
-	decodeFunc: newEventComponents,
+	name: eventName,
+	decodeFunc: func(c StandardComponents) Components {
+		return NewEventComponents(c)
+	},
 	encodeFunc: func(record interface{}) Components {
 		event := record.(*types.Event)
 		components := encodeEvent(event)

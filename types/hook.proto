@@ -21,7 +21,7 @@ message HookConfig {
   string command = 2;
 
   // Timeout is the timeout, in seconds, at which the hook has to run
-  uint32 timeout = 3;
+  uint32 timeout = 3 [(gogoproto.jsontag) = "timeout"];
 
   // Stdin indicates if hook requests have stdin enabled
   bool stdin = 4;
@@ -43,16 +43,16 @@ message Hook {
   double duration = 2;
 
   // Executed describes the time in which the hook request was executed
-  int64 executed = 3;
+  int64 executed = 3 [(gogoproto.jsontag) = "executed"];
 
   // Issued describes the time in which the hook request was issued
-  int64 issued = 4;
+  int64 issued = 4 [(gogoproto.jsontag) = "issued"];
 
   // Output from the execution of Command
   string output = 5;
 
   // Status is the exit status code produced by the hook
-  int32 status = 6;
+  int32 status = 6 [(gogoproto.jsontag) = "status"];
 }
 
 message HookList {
