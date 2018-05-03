@@ -188,6 +188,12 @@ type networkInterfaceImpl struct {
 	schema.NetworkInterfaceAliases
 }
 
+// Mac implements response to request for 'mac' field.
+func (r *networkInterfaceImpl) Mac(p graphql.ResolveParams) (string, error) {
+	i := p.Source.(types.NetworkInterface)
+	return i.MAC, nil
+}
+
 //
 // Implement DeregistrationFieldResolvers
 //

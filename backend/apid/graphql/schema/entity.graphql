@@ -68,8 +68,13 @@ NetworkInterface contains information about a system network
 interface.
 """
 type NetworkInterface {
+  "Name given to the network interface; en0, wi0, tunnel0, etc."
   name: String!
+
+  "MAC address associated with the network interface"
   mac: String!
+
+  "IP address(es) associated with the network interface"
   addresses: [String!]!
 }
 
