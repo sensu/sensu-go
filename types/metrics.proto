@@ -30,7 +30,7 @@ message MetricPoint {
   double value = 2;
 
   // The metric point timestamp, time in nanoseconds since the Epoch.
-  int64 timestamp = 3;
+  int64 timestamp = 3 [(gogoproto.jsontag) = "timestamp"];
 
   // Tags is a list of metric tags (dimensions).
   repeated MetricTag tags = 4 [(gogoproto.jsontag) = "tags"];

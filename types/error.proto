@@ -26,7 +26,7 @@ message Error {
   string component = 3;
 
   // Timestamp refers to the instant in-which the error occurred.
-  int64 timestamp = 4;
+  int64 timestamp = 4 [(gogoproto.jsontag) = "timestamp"];
 
   // Event refers to the event that was being processed when the error occurred.
   Event event = 5 [(gogoproto.nullable) = false];
