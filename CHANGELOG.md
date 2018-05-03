@@ -89,6 +89,7 @@ swallowed. The events are sent through the pipeline.
 - Install all dependencies with `dep ensure` in build.sh.
 - Fixed an issue in which some agents intermittently miss check requests.
 - Agent statsd daemon listens on IPv4 for Windows.
+- Check event entities now have a last_seen timestamp.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
