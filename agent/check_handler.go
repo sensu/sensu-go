@@ -115,11 +115,16 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		event.Check.Hooks = a.ExecuteHooks(request, ex.Status)
 	}
 
+	// Instantiate metrics in the event if the check is attempting to extract metrics
+	if check.MetricFormat != "" || len(check.MetricHandlers) != 0 {
+		event.Metrics = &types.Metrics{}
+	}
+
 	if check.MetricFormat != "" {
 		event.Metrics.Points = extractMetrics(event)
 	}
 
-	if check.MetricHandlers != nil {
+	if len(check.MetricHandlers) != 0 {
 		event.Metrics.Handlers = check.MetricHandlers
 	}
 

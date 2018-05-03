@@ -70,6 +70,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
+	assert.False(event.HasMetrics())
 
 	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
 	checkConfig.Command = falsePath
@@ -96,6 +97,30 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(2), event.Check.Status)
+
+	checkConfig.Command = truePath
+	checkConfig.MetricHandlers = nil
+	checkConfig.MetricFormat = ""
+
+	agent.executeCheck(request)
+
+	msg = <-ch
+
+	event = &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.False(event.HasMetrics())
+
+	checkConfig.MetricFormat = types.GraphiteMetricFormat
+
+	agent.executeCheck(request)
+
+	msg = <-ch
+
+	event = &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.True(event.HasMetrics())
 }
 
 func TestPrepareCheck(t *testing.T) {
