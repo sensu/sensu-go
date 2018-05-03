@@ -182,6 +182,12 @@ func TestParseAndTransformOpenTSDB(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:    "invalid metric",
+			output:  "sys.cpu.user 1356998400 42.5",
+			want:    []*types.MetricPoint(nil),
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range testCases {

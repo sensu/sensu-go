@@ -47,7 +47,7 @@ func ParseOpenTSDB(output string) (OpenTSDBList, error) {
 		// Ensure we have all the required components. A single metric requires a
 		// name, timestamp, value and at least one tag.
 		if len(parts) < 4 {
-			return nil, fmt.Errorf("invalid opentsdb metric: %s", metric)
+			return nil, fmt.Errorf("invalid opentsdb metric, at least 4 arguments are required: %s", metric)
 		}
 
 		name := parts[0]
