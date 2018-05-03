@@ -88,6 +88,7 @@ swallowed. The events are sent through the pipeline.
 - Allow checks and hooks to escape zombie processes that have timed out.
 - Install all dependencies with `dep ensure` in build.sh.
 - Fixed an issue in which some agents intermittently miss check requests.
+- Check event entities now have a last_seen timestamp.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
