@@ -9,8 +9,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -382,7 +384,19 @@ func (a *Agent) Run() error {
 
 	if !a.config.StatsdServer.Disable {
 		logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
-		go a.statsdServer.Run(a.context)
+
+		// We need to force a TCP connection for Windows. See
+		// https://github.com/sensu/sensu-go/issues/1402
+		if runtime.GOOS == "windows" {
+			conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
+			socketFactory := func() (net.PacketConn, error) {
+				return conn, err
+			}
+
+			go a.statsdServer.RunWithCustomSocket(a.context, socketFactory)
+		} else {
+			go a.statsdServer.Run(a.context)
+		}
 	}
 
 	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)

@@ -89,6 +89,7 @@ swallowed. The events are sent through the pipeline.
 - Allow checks and hooks to escape zombie processes that have timed out.
 - Install all dependencies with `dep ensure` in build.sh.
 - Fixed an issue in which some agents intermittently miss check requests.
+- Agent statsd daemon listens on IPv4 for Windows.
 - Include zero-valued integers in JSON output for all types.
 - Check event entities now have a last_seen timestamp.
 
