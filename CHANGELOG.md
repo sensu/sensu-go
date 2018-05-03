@@ -40,6 +40,7 @@ statsd listener. The listener is enabled by default.
 - Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
 CheckConfig structs.
+- Add CLI support for `metric_format` and `metric_handlers` fields in `sensuctl`.
 - Add support for metric extraction from check output for `graphite_plaintext`
 transformer.
 
@@ -89,6 +90,7 @@ swallowed. The events are sent through the pipeline.
 - Install all dependencies with `dep ensure` in build.sh.
 - Fixed an issue in which some agents intermittently miss check requests.
 - Agent statsd daemon listens on IPv4 for Windows.
+- Include zero-valued integers in JSON output for all types.
 - Check event entities now have a last_seen timestamp.
 
 ## [2.0.0-nightly.1] - 2018-03-07

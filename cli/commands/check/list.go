@@ -138,6 +138,20 @@ func printToTable(results interface{}, writer io.Writer) {
 				return strconv.FormatBool(check.Stdin)
 			},
 		},
+		{
+			Title: "Metric Format",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				return check.MetricFormat
+			},
+		},
+		{
+			Title: "Metric Handlers",
+			CellTransformer: func(data interface{}) string {
+				check, _ := data.(types.CheckConfig)
+				return strings.Join(check.MetricHandlers, ",")
+			},
+		},
 	})
 
 	table.Render(writer, results)

@@ -18,7 +18,7 @@ message Silenced {
   string id = 1 [(gogoproto.customname) = "ID"];
 
   // Expire is the number of seconds the entry will live
-  int64 expire = 2 [(gogoproto.nullable) = true];
+  int64 expire = 2 [(gogoproto.nullable) = true, (gogoproto.jsontag) = "expire"];
 
   // ExpireOnResolve defaults to false, clears the entry on resolution when set
   // to true
@@ -43,6 +43,6 @@ message Silenced {
   string environment = 9;
 
   // Begin is a timestamp at which the silenced entry takes effect.
-  int64 begin = 10;
+  int64 begin = 10 [(gogoproto.jsontag) = "begin"];
 }
 
