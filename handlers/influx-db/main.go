@@ -125,8 +125,8 @@ func sendMetrics(event *types.Event) error {
 		var tagKey string
 		nameField := strings.Split(point.Name, ".")
 		name := nameField[0]
-		if len(name) == 2 {
-			tagKey = nameField[1]
+		if len(name) > 1 {
+			tagKey = strings.Join(nameField[1:], ".")
 		} else {
 			tagKey = "value"
 		}
