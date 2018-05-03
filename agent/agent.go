@@ -388,8 +388,6 @@ func (a *Agent) Run() error {
 		// We need to force a IPv4 connection for Windows. See
 		// https://github.com/sensu/sensu-go/issues/1402
 		if runtime.GOOS == "windows" {
-			fmt.Println(a.statsdServer.MetricsAddr)
-			return nil
 			conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
 			socketFactory := func() (net.PacketConn, error) {
 				return conn, err
