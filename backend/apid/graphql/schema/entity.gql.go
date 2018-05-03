@@ -1283,7 +1283,7 @@ type NetworkInterfaceMacFieldResolver interface {
 // NetworkInterfaceAddressesFieldResolver implement to resolve requests for the NetworkInterface's addresses field.
 type NetworkInterfaceAddressesFieldResolver interface {
 	// Addresses implements response to request for addresses field.
-	Addresses(p graphql.ResolveParams) (string, error)
+	Addresses(p graphql.ResolveParams) ([]string, error)
 }
 
 //
@@ -1415,9 +1415,9 @@ func (_ NetworkInterfaceAliases) Mac(p graphql.ResolveParams) (string, error) {
 }
 
 // Addresses implements response to request for 'addresses' field.
-func (_ NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) (string, error) {
+func (_ NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret := val.([]string)
 	return ret, err
 }
 
@@ -1461,7 +1461,7 @@ func _ObjectTypeNetworkInterfaceConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "addresses",
-				Type:              graphql1.NewNonNull(graphql1.String),
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 			"mac": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

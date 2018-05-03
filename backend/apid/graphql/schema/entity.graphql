@@ -70,7 +70,7 @@ interface.
 type NetworkInterface {
   name: String!
   mac: String!
-  addresses: String!
+  addresses: [String!]!
 }
 
 """
