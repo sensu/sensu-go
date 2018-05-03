@@ -54,7 +54,6 @@ func (*offsetPageInfoImpl) NextOffset(p graphql.ResolveParams) (int, error) {
 	if nextOffset < page.totalCount {
 		return nextOffset, nil
 	}
-	// TODO: nil
 	return 0, nil
 }
 
@@ -65,7 +64,6 @@ func (*offsetPageInfoImpl) PreviousOffset(p graphql.ResolveParams) (int, error) 
 		prevOffset := page.offset - page.limit
 		return clampInt(prevOffset, 0, math.MaxInt32), nil
 	}
-	// TODO: nil
 	return 0, nil
 }
 
