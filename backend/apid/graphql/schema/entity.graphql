@@ -11,13 +11,13 @@ type Entity implements Node {
 
   "unique identifier for the entity"
   name: String!
-  class: String
-  system: System
+  class: String!
+  system: System!
   subscriptions: [String!]
   lastSeen: DateTime
   deregister: Boolean!
-  deregistration: Deregistration
-  keepaliveTimeout: Int
+  deregistration: Deregistration!
+  keepaliveTimeout: Int!
   authorId: String!
   author: User!
 
@@ -46,12 +46,12 @@ System contains information about the system that the Agent process
 is running on, used for additional Entity context.
 """
 type System {
-  hostname: String
-  os: String
-  platform: String
-  platformFamily: String
-  platformVersion: String
-  network: Network
+  hostname: String!
+  os: String!
+  platform: String!
+  platformFamily: String!
+  platformVersion: String!
+  network: Network!
 }
 
 """
@@ -60,7 +60,7 @@ that the Agent process is running on, used for additional Entity
 context.
 """
 type Network {
-  interfaces: [NetworkInterface]
+  interfaces: [NetworkInterface!]!
 }
 
 """
@@ -68,14 +68,14 @@ NetworkInterface contains information about a system network
 interface.
 """
 type NetworkInterface {
-  name: String
-  mac: String
-  addresses: String
+  name: String!
+  mac: String!
+  addresses: String!
 }
 
 """
 Deregistration contains configuration for Sensu entity de-registration.
 """
 type Deregistration {
-  handler: String
+  handler: String!
 }
