@@ -166,24 +166,12 @@ type systemImpl struct {
 	schema.SystemAliases
 }
 
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*systemImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.System)
-	return ok
-}
-
 //
 // Implement NetworkFieldResolvers
 //
 
 type networkImpl struct {
 	schema.NetworkAliases
-}
-
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*networkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.Network)
-	return ok
 }
 
 //
@@ -194,22 +182,10 @@ type networkInterfaceImpl struct {
 	schema.NetworkInterfaceAliases
 }
 
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*networkInterfaceImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.NetworkInterface)
-	return ok
-}
-
 //
 // Implement DeregistrationFieldResolvers
 //
 
 type deregistrationImpl struct {
 	schema.DeregistrationAliases
-}
-
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*deregistrationImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.Deregistration)
-	return ok
 }
