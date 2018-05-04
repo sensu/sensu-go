@@ -60,9 +60,8 @@ type CheckConfig implements Node {
   """
   ttl: Int!
 
-  # TODO: Create scalar to handle extended attributes
   # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
-  # extendedAttributes: String
+  # extendedAttributes: JSON
 
   # "RuntimeAssets are a list of assets required to execute check."
   # runtimeAssets: String

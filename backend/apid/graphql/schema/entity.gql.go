@@ -70,16 +70,16 @@ type EntityKeepaliveTimeoutFieldResolver interface {
 	KeepaliveTimeout(p graphql.ResolveParams) (int, error)
 }
 
-// EntityAuthorIDFieldResolver implement to resolve requests for the Entity's authorId field.
-type EntityAuthorIDFieldResolver interface {
-	// AuthorID implements response to request for authorId field.
-	AuthorID(p graphql.ResolveParams) (string, error)
+// EntityUserFieldResolver implement to resolve requests for the Entity's user field.
+type EntityUserFieldResolver interface {
+	// User implements response to request for user field.
+	User(p graphql.ResolveParams) (string, error)
 }
 
-// EntityAuthorFieldResolver implement to resolve requests for the Entity's author field.
-type EntityAuthorFieldResolver interface {
-	// Author implements response to request for author field.
-	Author(p graphql.ResolveParams) (interface{}, error)
+// EntityRedactFieldResolver implement to resolve requests for the Entity's redact field.
+type EntityRedactFieldResolver interface {
+	// Redact implements response to request for redact field.
+	Redact(p graphql.ResolveParams) ([]string, error)
 }
 
 // EntityStatusFieldResolver implement to resolve requests for the Entity's status field.
@@ -103,6 +103,12 @@ type EntityRelatedFieldResolverParams struct {
 type EntityRelatedFieldResolver interface {
 	// Related implements response to request for related field.
 	Related(p EntityRelatedFieldResolverParams) (interface{}, error)
+}
+
+// EntityExtendedAttributesFieldResolver implement to resolve requests for the Entity's extendedAttributes field.
+type EntityExtendedAttributesFieldResolver interface {
+	// ExtendedAttributes implements response to request for extendedAttributes field.
+	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
 }
 
 //
@@ -177,10 +183,11 @@ type EntityFieldResolvers interface {
 	EntityDeregisterFieldResolver
 	EntityDeregistrationFieldResolver
 	EntityKeepaliveTimeoutFieldResolver
-	EntityAuthorIDFieldResolver
-	EntityAuthorFieldResolver
+	EntityUserFieldResolver
+	EntityRedactFieldResolver
 	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
+	EntityExtendedAttributesFieldResolver
 }
 
 // EntityAliases implements all methods on EntityFieldResolvers interface by using reflection to
@@ -297,17 +304,18 @@ func (_ EntityAliases) KeepaliveTimeout(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
-// AuthorID implements response to request for 'authorId' field.
-func (_ EntityAliases) AuthorID(p graphql.ResolveParams) (string, error) {
+// User implements response to request for 'user' field.
+func (_ EntityAliases) User(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret := fmt.Sprint(val)
 	return ret, err
 }
 
-// Author implements response to request for 'author' field.
-func (_ EntityAliases) Author(p graphql.ResolveParams) (interface{}, error) {
+// Redact implements response to request for 'redact' field.
+func (_ EntityAliases) Redact(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := val.([]string)
+	return ret, err
 }
 
 // Status implements response to request for 'status' field.
@@ -319,6 +327,12 @@ func (_ EntityAliases) Status(p graphql.ResolveParams) (int, error) {
 
 // Related implements response to request for 'related' field.
 func (_ EntityAliases) Related(p EntityRelatedFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (_ EntityAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -403,17 +417,17 @@ func _ObjTypeEntityKeepaliveTimeoutHandler(impl interface{}) graphql1.FieldResol
 	}
 }
 
-func _ObjTypeEntityAuthorIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityAuthorIDFieldResolver)
+func _ObjTypeEntityUserHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityUserFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.AuthorID(frp)
+		return resolver.User(frp)
 	}
 }
 
-func _ObjTypeEntityAuthorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityAuthorFieldResolver)
+func _ObjTypeEntityRedactHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityRedactFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Author(frp)
+		return resolver.Redact(frp)
 	}
 }
 
@@ -437,30 +451,23 @@ func _ObjTypeEntityRelatedHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityExtendedAttributesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ExtendedAttributes(frp)
+	}
+}
+
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
 		Fields: graphql1.Fields{
-			"author": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "author",
-				Type:              graphql1.NewNonNull(graphql.OutputType("User")),
-			},
-			"authorId": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "authorId",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
 			"class": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "class",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"deregister": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -474,7 +481,14 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "deregistration",
-				Type:              graphql.OutputType("Deregistration"),
+				Type:              graphql1.NewNonNull(graphql.OutputType("Deregistration")),
+			},
+			"extendedAttributes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Extended attributes includes arbitrary user-defined data",
+				Name:              "extendedAttributes",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -488,7 +502,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "keepaliveTimeout",
-				Type:              graphql1.Int,
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"lastSeen": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -510,6 +524,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "Namespace in which this record resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
+			},
+			"redact": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Redact contains the fields to redact on the agent.",
+				Name:              "redact",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 			"related": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"limit": &graphql1.ArgumentConfig{
@@ -541,7 +562,14 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "system",
-				Type:              graphql.OutputType("System"),
+				Type:              graphql1.NewNonNull(graphql.OutputType("System")),
+			},
+			"user": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "user",
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 		},
 		Interfaces: []*graphql1.Interface{
@@ -562,20 +590,21 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"author":           _ObjTypeEntityAuthorHandler,
-		"authorId":         _ObjTypeEntityAuthorIDHandler,
-		"class":            _ObjTypeEntityClassHandler,
-		"deregister":       _ObjTypeEntityDeregisterHandler,
-		"deregistration":   _ObjTypeEntityDeregistrationHandler,
-		"id":               _ObjTypeEntityIDHandler,
-		"keepaliveTimeout": _ObjTypeEntityKeepaliveTimeoutHandler,
-		"lastSeen":         _ObjTypeEntityLastSeenHandler,
-		"name":             _ObjTypeEntityNameHandler,
-		"namespace":        _ObjTypeEntityNamespaceHandler,
-		"related":          _ObjTypeEntityRelatedHandler,
-		"status":           _ObjTypeEntityStatusHandler,
-		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
-		"system":           _ObjTypeEntitySystemHandler,
+		"class":              _ObjTypeEntityClassHandler,
+		"deregister":         _ObjTypeEntityDeregisterHandler,
+		"deregistration":     _ObjTypeEntityDeregistrationHandler,
+		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
+		"id":                 _ObjTypeEntityIDHandler,
+		"keepaliveTimeout":   _ObjTypeEntityKeepaliveTimeoutHandler,
+		"lastSeen":           _ObjTypeEntityLastSeenHandler,
+		"name":               _ObjTypeEntityNameHandler,
+		"namespace":          _ObjTypeEntityNamespaceHandler,
+		"redact":             _ObjTypeEntityRedactHandler,
+		"related":            _ObjTypeEntityRelatedHandler,
+		"status":             _ObjTypeEntityStatusHandler,
+		"subscriptions":      _ObjTypeEntitySubscriptionsHandler,
+		"system":             _ObjTypeEntitySystemHandler,
+		"user":               _ObjTypeEntityUserHandler,
 	},
 }
 
@@ -784,6 +813,12 @@ type SystemHostnameFieldResolver interface {
 	Hostname(p graphql.ResolveParams) (string, error)
 }
 
+// SystemNetworkFieldResolver implement to resolve requests for the System's network field.
+type SystemNetworkFieldResolver interface {
+	// Network implements response to request for network field.
+	Network(p graphql.ResolveParams) (interface{}, error)
+}
+
 // SystemOsFieldResolver implement to resolve requests for the System's os field.
 type SystemOsFieldResolver interface {
 	// Os implements response to request for os field.
@@ -808,10 +843,10 @@ type SystemPlatformVersionFieldResolver interface {
 	PlatformVersion(p graphql.ResolveParams) (string, error)
 }
 
-// SystemNetworkFieldResolver implement to resolve requests for the System's network field.
-type SystemNetworkFieldResolver interface {
-	// Network implements response to request for network field.
-	Network(p graphql.ResolveParams) (interface{}, error)
+// SystemArchFieldResolver implement to resolve requests for the System's arch field.
+type SystemArchFieldResolver interface {
+	// Arch implements response to request for arch field.
+	Arch(p graphql.ResolveParams) (string, error)
 }
 
 //
@@ -877,11 +912,12 @@ type SystemNetworkFieldResolver interface {
 //
 type SystemFieldResolvers interface {
 	SystemHostnameFieldResolver
+	SystemNetworkFieldResolver
 	SystemOsFieldResolver
 	SystemPlatformFieldResolver
 	SystemPlatformFamilyFieldResolver
 	SystemPlatformVersionFieldResolver
-	SystemNetworkFieldResolver
+	SystemArchFieldResolver
 }
 
 // SystemAliases implements all methods on SystemFieldResolvers interface by using reflection to
@@ -938,6 +974,12 @@ func (_ SystemAliases) Hostname(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// Network implements response to request for 'network' field.
+func (_ SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Os implements response to request for 'os' field.
 func (_ SystemAliases) Os(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -966,10 +1008,11 @@ func (_ SystemAliases) PlatformVersion(p graphql.ResolveParams) (string, error) 
 	return ret, err
 }
 
-// Network implements response to request for 'network' field.
-func (_ SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
+// Arch implements response to request for 'arch' field.
+func (_ SystemAliases) Arch(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 /*
@@ -986,6 +1029,13 @@ func _ObjTypeSystemHostnameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemHostnameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Hostname(frp)
+	}
+}
+
+func _ObjTypeSystemNetworkHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemNetworkFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Network(frp)
 	}
 }
 
@@ -1017,10 +1067,10 @@ func _ObjTypeSystemPlatformVersionHandler(impl interface{}) graphql1.FieldResolv
 	}
 }
 
-func _ObjTypeSystemNetworkHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SystemNetworkFieldResolver)
+func _ObjTypeSystemArchHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemArchFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Network(frp)
+		return resolver.Arch(frp)
 	}
 }
 
@@ -1028,47 +1078,54 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "System contains information about the system that the Agent process\nis running on, used for additional Entity context.",
 		Fields: graphql1.Fields{
+			"arch": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Architecture; eg. 386, amd64, arm, ...",
+				Name:              "arch",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"hostname": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "hostname",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"network": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "network",
-				Type:              graphql.OutputType("Network"),
+				Type:              graphql1.NewNonNull(graphql.OutputType("Network")),
 			},
 			"os": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Operating system; eg. freebsd, linux, ...",
 				Name:              "os",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"platform": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Operating system platform; eg. ubuntu, linuxmint, ...",
 				Name:              "platform",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"platformFamily": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Operating system family; eg. debian, rhel, ...",
 				Name:              "platformFamily",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"platformVersion": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Version of complete operating system; eg. 10.12.2, ...",
 				Name:              "platformVersion",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
@@ -1088,6 +1145,7 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeSystemDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeSystemConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"arch":            _ObjTypeSystemArchHandler,
 		"hostname":        _ObjTypeSystemHostnameHandler,
 		"network":         _ObjTypeSystemNetworkHandler,
 		"os":              _ObjTypeSystemOsHandler,
@@ -1247,7 +1305,7 @@ func _ObjectTypeNetworkConfigFn() graphql1.ObjectConfig {
 			DeprecationReason: "",
 			Description:       "self descriptive",
 			Name:              "interfaces",
-			Type:              graphql1.NewList(graphql.OutputType("NetworkInterface")),
+			Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("NetworkInterface")))),
 		}},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
@@ -1283,7 +1341,7 @@ type NetworkInterfaceMacFieldResolver interface {
 // NetworkInterfaceAddressesFieldResolver implement to resolve requests for the NetworkInterface's addresses field.
 type NetworkInterfaceAddressesFieldResolver interface {
 	// Addresses implements response to request for addresses field.
-	Addresses(p graphql.ResolveParams) (string, error)
+	Addresses(p graphql.ResolveParams) ([]string, error)
 }
 
 //
@@ -1415,9 +1473,9 @@ func (_ NetworkInterfaceAliases) Mac(p graphql.ResolveParams) (string, error) {
 }
 
 // Addresses implements response to request for 'addresses' field.
-func (_ NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) (string, error) {
+func (_ NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret := val.([]string)
 	return ret, err
 }
 
@@ -1459,23 +1517,23 @@ func _ObjectTypeNetworkInterfaceConfigFn() graphql1.ObjectConfig {
 			"addresses": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "IP address(es) associated with the network interface",
 				Name:              "addresses",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 			"mac": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "MAC address associated with the network interface",
 				Name:              "mac",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Name given to the network interface; en0, wi0, tunnel0, etc.",
 				Name:              "name",
-				Type:              graphql1.String,
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
@@ -1648,7 +1706,7 @@ func _ObjectTypeDeregistrationConfigFn() graphql1.ObjectConfig {
 			DeprecationReason: "",
 			Description:       "self descriptive",
 			Name:              "handler",
-			Type:              graphql1.String,
+			Type:              graphql1.NewNonNull(graphql1.String),
 		}},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {

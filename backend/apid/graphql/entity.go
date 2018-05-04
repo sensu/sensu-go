@@ -25,18 +25,15 @@ var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 type entityImpl struct {
 	schema.EntityAliases
-	userCtrl   actions.UserController
 	entityCtrl entityQuerier
 	eventCtrl  eventQuerier
 }
 
 func newEntityImpl(store store.Store) *entityImpl {
-	userCtrl := actions.NewUserController(store)
 	entityCtrl := actions.NewEntityController(store)
 	eventCtrl := actions.NewEventController(store, nil)
 
 	return &entityImpl{
-		userCtrl:   userCtrl,
 		entityCtrl: entityCtrl,
 		eventCtrl:  eventCtrl,
 	}
@@ -58,10 +55,10 @@ func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
 	return entity.ID, nil
 }
 
-// AuthorId implements response to request for 'authorId' field.
-func (*entityImpl) AuthorID(p graphql.ResolveParams) (string, error) {
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (*entityImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
 	entity := p.Source.(*types.Entity)
-	return entity.User, nil
+	return wrapExtendedAttributes(entity.ExtendedAttributes), nil
 }
 
 // LastSeen implements response to request for 'executed' field.
@@ -72,13 +69,6 @@ func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	}
 	t := time.Unix(c.LastSeen, 0)
 	return &t, nil
-}
-
-// Author implements response to request for 'author' field.
-func (r *entityImpl) Author(p graphql.ResolveParams) (interface{}, error) {
-	entity := p.Source.(*types.Entity)
-	user, err := r.userCtrl.Find(p.Context, entity.User)
-	return handleControllerResults(user, err)
 }
 
 // Related implements response to request for 'related' field.
@@ -130,7 +120,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 	return entities[0:limit], nil
 }
 
-// Status implements response to request for 'related' field.
+// Status implements response to request for 'status' field.
 func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 	entity := p.Source.(*types.Entity)
 
@@ -166,10 +156,10 @@ type systemImpl struct {
 	schema.SystemAliases
 }
 
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*systemImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.System)
-	return ok
+// Os implements response to request for 'os' field.
+func (r *systemImpl) Os(p graphql.ResolveParams) (string, error) {
+	sys := p.Source.(types.System)
+	return sys.OS, nil
 }
 
 //
@@ -180,12 +170,6 @@ type networkImpl struct {
 	schema.NetworkAliases
 }
 
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*networkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.Network)
-	return ok
-}
-
 //
 // Implement NetworkInterfaceFieldResolvers
 //
@@ -194,10 +178,10 @@ type networkInterfaceImpl struct {
 	schema.NetworkInterfaceAliases
 }
 
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*networkInterfaceImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.NetworkInterface)
-	return ok
+// Mac implements response to request for 'mac' field.
+func (r *networkInterfaceImpl) Mac(p graphql.ResolveParams) (string, error) {
+	i := p.Source.(types.NetworkInterface)
+	return i.MAC, nil
 }
 
 //
@@ -206,10 +190,4 @@ func (*networkInterfaceImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) b
 
 type deregistrationImpl struct {
 	schema.DeregistrationAliases
-}
-
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*deregistrationImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.Deregistration)
-	return ok
 }

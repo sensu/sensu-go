@@ -11,15 +11,17 @@ type Entity implements Node {
 
   "unique identifier for the entity"
   name: String!
-  class: String
-  system: System
+  class: String!
+  system: System!
   subscriptions: [String!]
   lastSeen: DateTime
   deregister: Boolean!
-  deregistration: Deregistration
-  keepaliveTimeout: Int
-  authorId: String!
-  author: User!
+  deregistration: Deregistration!
+  keepaliveTimeout: Int!
+  user: String!
+
+  "Redact contains the fields to redact on the agent."
+  redact: [String!]!
 
   """
   Status represents the MAX status of all events associated with the entity. If
@@ -30,9 +32,8 @@ type Entity implements Node {
   "Related returns a sorted list of like entities from the same environment."
   related(limit: Int = 10): [Entity]!
 
-  # TODO: Use scalar?
-  # "ExtendedAttributes store serialized arbitrary JSON-encoded data"
-  # extendedAttributes: String
+  "Extended attributes includes arbitrary user-defined data"
+  extendedAttributes: JSON!
 }
 
 "A connection to a sequence of records."
@@ -46,12 +47,23 @@ System contains information about the system that the Agent process
 is running on, used for additional Entity context.
 """
 type System {
-  hostname: String
-  os: String
-  platform: String
-  platformFamily: String
-  platformVersion: String
-  network: Network
+  hostname: String!
+  network: Network!
+
+  "Operating system; eg. freebsd, linux, ..."
+  os: String!
+
+  "Operating system platform; eg. ubuntu, linuxmint, ..."
+  platform: String!
+
+  "Operating system family; eg. debian, rhel, ..."
+  platformFamily: String!
+
+  "Version of complete operating system; eg. 10.12.2, ..."
+  platformVersion: String!
+
+  "Architecture; eg. 386, amd64, arm, ..."
+  arch: String!
 }
 
 """
@@ -60,7 +72,7 @@ that the Agent process is running on, used for additional Entity
 context.
 """
 type Network {
-  interfaces: [NetworkInterface]
+  interfaces: [NetworkInterface!]!
 }
 
 """
@@ -68,14 +80,19 @@ NetworkInterface contains information about a system network
 interface.
 """
 type NetworkInterface {
-  name: String
-  mac: String
-  addresses: String
+  "Name given to the network interface; en0, wi0, tunnel0, etc."
+  name: String!
+
+  "MAC address associated with the network interface"
+  mac: String!
+
+  "IP address(es) associated with the network interface"
+  addresses: [String!]!
 }
 
 """
 Deregistration contains configuration for Sensu entity de-registration.
 """
 type Deregistration {
-  handler: String
+  handler: String!
 }
