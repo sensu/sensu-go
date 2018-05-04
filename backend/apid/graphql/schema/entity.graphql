@@ -32,8 +32,8 @@ type Entity implements Node {
   "Related returns a sorted list of like entities from the same environment."
   related(limit: Int = 10): [Entity]!
 
-  # "Extended attributes includes arbitrary user-defined data"
-  # extendedAttributes: JSON!
+  "Extended attributes includes arbitrary user-defined data"
+  extendedAttributes: JSON!
 }
 
 "A connection to a sequence of records."

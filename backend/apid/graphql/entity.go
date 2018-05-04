@@ -55,6 +55,12 @@ func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
 	return entity.ID, nil
 }
 
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (*entityImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
+	entity := p.Source.(*types.Entity)
+	return wrapExtendedAttributes(entity.ExtendedAttributes), nil
+}
+
 // LastSeen implements response to request for 'executed' field.
 func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	c := p.Source.(*types.Entity)

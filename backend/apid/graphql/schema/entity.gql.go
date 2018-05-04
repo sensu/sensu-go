@@ -105,6 +105,12 @@ type EntityRelatedFieldResolver interface {
 	Related(p EntityRelatedFieldResolverParams) (interface{}, error)
 }
 
+// EntityExtendedAttributesFieldResolver implement to resolve requests for the Entity's extendedAttributes field.
+type EntityExtendedAttributesFieldResolver interface {
+	// ExtendedAttributes implements response to request for extendedAttributes field.
+	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // EntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Entity' type.
@@ -181,6 +187,7 @@ type EntityFieldResolvers interface {
 	EntityRedactFieldResolver
 	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
+	EntityExtendedAttributesFieldResolver
 }
 
 // EntityAliases implements all methods on EntityFieldResolvers interface by using reflection to
@@ -324,6 +331,12 @@ func (_ EntityAliases) Related(p EntityRelatedFieldResolverParams) (interface{},
 	return val, err
 }
 
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (_ EntityAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 /*
 EntityType Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
@@ -438,6 +451,13 @@ func _ObjTypeEntityRelatedHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityExtendedAttributesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ExtendedAttributes(frp)
+	}
+}
+
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
@@ -462,6 +482,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "self descriptive",
 				Name:              "deregistration",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Deregistration")),
+			},
+			"extendedAttributes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Extended attributes includes arbitrary user-defined data",
+				Name:              "extendedAttributes",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -563,20 +590,21 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"class":            _ObjTypeEntityClassHandler,
-		"deregister":       _ObjTypeEntityDeregisterHandler,
-		"deregistration":   _ObjTypeEntityDeregistrationHandler,
-		"id":               _ObjTypeEntityIDHandler,
-		"keepaliveTimeout": _ObjTypeEntityKeepaliveTimeoutHandler,
-		"lastSeen":         _ObjTypeEntityLastSeenHandler,
-		"name":             _ObjTypeEntityNameHandler,
-		"namespace":        _ObjTypeEntityNamespaceHandler,
-		"redact":           _ObjTypeEntityRedactHandler,
-		"related":          _ObjTypeEntityRelatedHandler,
-		"status":           _ObjTypeEntityStatusHandler,
-		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
-		"system":           _ObjTypeEntitySystemHandler,
-		"user":             _ObjTypeEntityUserHandler,
+		"class":              _ObjTypeEntityClassHandler,
+		"deregister":         _ObjTypeEntityDeregisterHandler,
+		"deregistration":     _ObjTypeEntityDeregistrationHandler,
+		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
+		"id":                 _ObjTypeEntityIDHandler,
+		"keepaliveTimeout":   _ObjTypeEntityKeepaliveTimeoutHandler,
+		"lastSeen":           _ObjTypeEntityLastSeenHandler,
+		"name":               _ObjTypeEntityNameHandler,
+		"namespace":          _ObjTypeEntityNamespaceHandler,
+		"redact":             _ObjTypeEntityRedactHandler,
+		"related":            _ObjTypeEntityRelatedHandler,
+		"status":             _ObjTypeEntityStatusHandler,
+		"subscriptions":      _ObjTypeEntitySubscriptionsHandler,
+		"system":             _ObjTypeEntitySystemHandler,
+		"user":               _ObjTypeEntityUserHandler,
 	},
 }
 
