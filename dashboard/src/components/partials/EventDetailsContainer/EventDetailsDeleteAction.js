@@ -9,15 +9,17 @@ import Dialog, {
   DialogContent,
   DialogTitle,
 } from "material-ui/Dialog";
+import ButtonSet from "/components/ButtonSet";
 import deleteEvent from "/mutations/deleteEvent";
 
-class EventDetailsDeleteButton extends React.PureComponent {
+class EventDetailsDeleteAction extends React.PureComponent {
   static propTypes = {
     client: PropTypes.object.isRequired,
     disabled: PropTypes.bool,
     event: PropTypes.object,
     history: PropTypes.object.isRequired,
-    onProcessing: PropTypes.func.isRequired,
+    onRequestStart: PropTypes.func.isRequired,
+    onRequestEnd: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -27,7 +29,7 @@ class EventDetailsDeleteButton extends React.PureComponent {
 
   static fragments = {
     event: gql`
-      fragment EventDetailsDeleteButton_event on Event {
+      fragment EventDetailsDeleteAction_event on Event {
         id
         ns: namespace {
           org: organization
@@ -39,10 +41,17 @@ class EventDetailsDeleteButton extends React.PureComponent {
 
   state = {
     dialogOpen: false,
+    locked: false,
   };
 
-  setProcessingTo(newVal) {
-    this.props.onProcessing(newVal);
+  requestStart() {
+    this.props.onRequestStart();
+    this.setState({ locked: true });
+  }
+
+  requestEnd() {
+    this.props.onRequestEnd();
+    this.setState({ locked: false });
   }
 
   openDialog = () => {
@@ -54,21 +63,25 @@ class EventDetailsDeleteButton extends React.PureComponent {
   };
 
   deleteEvent = () => {
-    const { event, history } = this.props;
+    const { client, event: { id, ns }, history } = this.props;
+    if (this.state.locked) return;
 
     // Cleanup
     this.closeDialog();
-    this.setProcessingTo(true);
+    this.requestStart();
 
     // Send request
-    const result = deleteEvent(this.props.client, { id: event.id });
-    result.then(
+    deleteEvent(client, { id }).then(
       () => {
-        this.setProcessingTo(false);
-        history.replace(`/${event.ns.org}/${event.ns.env}/events`);
+        this.requestEnd();
+        history.replace(`/${ns.org}/${ns.env}/events`);
       },
-      // eslint-disable-next-line no-console
-      err => console.error("error occurred while deleting event", err),
+      err => {
+        this.requestEnd();
+        // TODO: re-raise
+        // eslint-disable-next-line no-console
+        console.error("error occurred while deleting event", err);
+      },
     );
   };
 
@@ -89,12 +102,14 @@ class EventDetailsDeleteButton extends React.PureComponent {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={this.closeDialog} color="primary">
-            Cancel
-          </Button>
-          <Button variant="raised" onClick={this.deleteEvent} color="primary">
-            Delete
-          </Button>
+          <ButtonSet>
+            <Button onClick={this.closeDialog} color="primary">
+              Cancel
+            </Button>
+            <Button variant="raised" onClick={this.deleteEvent} color="primary">
+              Delete
+            </Button>
+          </ButtonSet>
         </DialogActions>
       </Dialog>
     );
@@ -119,4 +134,4 @@ class EventDetailsDeleteButton extends React.PureComponent {
   }
 }
 
-export default withRouter(EventDetailsDeleteButton);
+export default withRouter(EventDetailsDeleteAction);

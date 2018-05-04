@@ -5,10 +5,12 @@ import Grid from "material-ui/Grid";
 
 import Content from "/components/Content";
 import Loader from "/components/Loader";
+import ButtonSet from "/components/ButtonSet";
 import CheckResult from "./EventDetailsCheckResult";
 import RelatedEntities from "./EventDetailsRelatedEntities";
 import Configuration from "./EventDetailsConfiguration";
-import Actions from "./EventDetailsActions";
+import DeleteAction from "./EventDetailsDeleteAction";
+import ResolveAction from "./EventDetailsResolveAction";
 
 class EventDetailsContainer extends React.PureComponent {
   static propTypes = {
@@ -27,7 +29,8 @@ class EventDetailsContainer extends React.PureComponent {
         id
         timestamp
         deleted @client
-        ...EventDetailsActions_event
+        ...EventDetailsDeleteAction_event
+        ...EventDetailsResolveAction_event
 
         check {
           ...EventDetailsCheckResult_check
@@ -45,31 +48,48 @@ class EventDetailsContainer extends React.PureComponent {
       ${RelatedEntities.fragments.entity}
       ${Configuration.fragments.check}
       ${Configuration.fragments.entity}
-      ${Actions.fragments.event}
+      ${DeleteAction.fragments.event}
+      ${ResolveAction.fragments.event}
     `,
   };
 
   state = {
-    processing: false,
+    pendingRequests: 0,
   };
 
-  handleProcessing = newVal => {
-    this.setState({ processing: newVal });
+  handleRequestStart = () => {
+    this.setState(({ pendingRequests }) => ({
+      pendingRequests: pendingRequests + 1,
+    }));
+  };
+
+  handleRequestEnd = () => {
+    this.setState(({ pendingRequests }) => ({
+      pendingRequests: pendingRequests - 1,
+    }));
   };
 
   render() {
     const { client, event, loading } = this.props;
-    const { processing } = this.state;
+    const { pendingRequests } = this.state;
+    const hasPendingRequests = pendingRequests > 0;
 
     return (
-      <Loader loading={loading || processing} passthrough>
+      <Loader loading={loading || hasPendingRequests} passthrough>
         {event && (
           <React.Fragment>
-            <Actions
-              client={client}
-              event={event}
-              onProcessing={this.handleProcessing}
-            />
+            <Content marginBottom>
+              <div style={{ flexGrow: 1 }} />
+              <ButtonSet>
+                <ResolveAction client={client} event={event} />
+                <DeleteAction
+                  client={client}
+                  event={event}
+                  onRequestStart={this.handleRequestStart}
+                  onRequestEnd={this.handleRequestEnd}
+                />
+              </ButtonSet>
+            </Content>
             <Content>
               <Grid container>
                 <Grid item xs={12}>
