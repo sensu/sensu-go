@@ -52,6 +52,12 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		extension.HelpCommand(cli),
 	)
 
+	createCmd, _, err := rootCmd.Find([]string{"create"})
+	if err == nil {
+		_ = createCmd.InheritedFlags().MarkHidden("environment")
+		_ = createCmd.InheritedFlags().MarkHidden("organization")
+	}
+
 	for _, cmd := range rootCmd.Commands() {
 		rootCmd.ValidArgs = append(rootCmd.ValidArgs, cmd.Use)
 	}
