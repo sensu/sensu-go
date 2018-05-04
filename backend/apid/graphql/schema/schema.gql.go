@@ -69,6 +69,24 @@ type QueryEventFieldResolver interface {
 	Event(p QueryEventFieldResolverParams) (interface{}, error)
 }
 
+// QueryEntityFieldResolverArgs contains arguments provided to entity when selected
+type QueryEntityFieldResolverArgs struct {
+	Ns   *NamespaceInput // Ns - self descriptive
+	Name string          // Name - self descriptive
+}
+
+// QueryEntityFieldResolverParams contains contextual info to resolve entity field
+type QueryEntityFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryEntityFieldResolverArgs
+}
+
+// QueryEntityFieldResolver implement to resolve requests for the Query's entity field.
+type QueryEntityFieldResolver interface {
+	// Entity implements response to request for entity field.
+	Entity(p QueryEntityFieldResolverParams) (interface{}, error)
+}
+
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
 type QueryNodeFieldResolverArgs struct {
 	ID string // ID - The ID of an object.
@@ -151,6 +169,7 @@ type QueryFieldResolvers interface {
 	QueryViewerFieldResolver
 	QueryEnvironmentFieldResolver
 	QueryEventFieldResolver
+	QueryEntityFieldResolver
 	QueryNodeFieldResolver
 }
 
@@ -219,6 +238,12 @@ func (_ QueryAliases) Event(p QueryEventFieldResolverParams) (interface{}, error
 	return val, err
 }
 
+// Entity implements response to request for 'entity' field.
+func (_ QueryAliases) Entity(p QueryEntityFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Node implements response to request for 'node' field.
 func (_ QueryAliases) Node(p QueryNodeFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -265,6 +290,19 @@ func _ObjTypeQueryEventHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeQueryEntityHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryEntityFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryEntityFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Entity(frp)
+	}
+}
+
 func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryNodeFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -282,6 +320,22 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The query root of Sensu's GraphQL interface.",
 		Fields: graphql1.Fields{
+			"entity": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"name": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+					"ns": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql.InputType("NamespaceInput")),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "Entity fetches the entity associated with the given set of arguments.",
+				Name:              "entity",
+				Type:              graphql.OutputType("Entity"),
+			},
 			"environment": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"environment": &graphql1.ArgumentConfig{
@@ -353,6 +407,7 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeQueryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"entity":      _ObjTypeQueryEntityHandler,
 		"environment": _ObjTypeQueryEnvironmentHandler,
 		"event":       _ObjTypeQueryEventHandler,
 		"node":        _ObjTypeQueryNodeHandler,

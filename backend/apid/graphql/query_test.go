@@ -24,7 +24,7 @@ type mockQueryEnvironmentFetcher struct {
 	err    error
 }
 
-func (m mockQueryEnvironmentFetcher) Find(ctx context.Context, org, env string) (*types.Environment, error) {
+func (m mockQueryEnvironmentFetcher) Find(_ context.Context, org, env string) (*types.Environment, error) {
 	if org != "bobs-burgers" || env != "us-west-2" {
 		return nil, nil
 	}
@@ -33,7 +33,7 @@ func (m mockQueryEnvironmentFetcher) Find(ctx context.Context, org, env string) 
 
 func TestQueryTypeEventField(t *testing.T) {
 	mock := mockQueryEventFetcher{&types.Event{}, nil}
-	impl := queryImpl{eventCtrl: mock}
+	impl := queryImpl{eventFinder: mock}
 
 	args := schema.QueryEventFieldResolverArgs{Ns: schema.NewNamespaceInput("a", "b")}
 	params := schema.QueryEventFieldResolverParams{Args: args}
@@ -45,13 +45,26 @@ func TestQueryTypeEventField(t *testing.T) {
 
 func TestQueryTypeEnvironmentField(t *testing.T) {
 	mock := mockQueryEnvironmentFetcher{&types.Environment{}, nil}
-	impl := queryImpl{environmentCtrl: mock}
+	impl := queryImpl{envFinder: mock}
 
 	params := schema.QueryEnvironmentFieldResolverParams{}
 	params.Args.Environment = "us-west-2"
 	params.Args.Organization = "bobs-burgers"
 
 	res, err := impl.Environment(params)
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
+
+func TestQueryTypeEntityField(t *testing.T) {
+	mock := mockEntityFetcher{types.FixtureEntity("abc"), nil}
+	impl := queryImpl{entityFinder: mock}
+
+	params := schema.QueryEntityFieldResolverParams{}
+	params.Args.Ns = schema.NewNamespaceInput("org", "env")
+	params.Args.Name = "abc"
+
+	res, err := impl.Entity(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

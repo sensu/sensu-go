@@ -12,6 +12,12 @@ type entityQuerier interface {
 	Query(ctx context.Context) ([]*types.Entity, error)
 }
 
+// entities
+
+type entityFinder interface {
+	Find(ctx context.Context, name string) (*types.Entity, error)
+}
+
 // events
 
 type eventDestroyer interface {
