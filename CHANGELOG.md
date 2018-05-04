@@ -75,6 +75,7 @@ and yarn are now dependencies for building the backend.
 - Improved log entries produced by pipelined.
 - Allow the InfluxDB handler to parse the Sensu metric for an InfluxDB field tag
 and measurement.
+- Removed organization and environment flags from create command.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
