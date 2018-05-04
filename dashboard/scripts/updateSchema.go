@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -38,14 +37,20 @@ func main() {
 		return
 	}
 
-	b, err := json.MarshalIndent(result, "", "  ")
+	f, err := os.Create("./src/schema.json")
 	if err != nil {
-		log.Fatalf("ERROR: %v", err)
-		return
+		log.Fatalf("couldn't write schema.json: %s", err)
 	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	err = ioutil.WriteFile("./src/schema.json", b, os.ModePerm)
-	if err != nil {
-		log.Fatalf("ERROR: %v", err)
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+
+	if err := enc.Encode(result); err != nil {
+		log.Fatalf("couldn't encode schema: %s", err)
 	}
 }
