@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -89,16 +90,13 @@ func main() {
 }
 
 func mustRunCmd(pro string, args ...string) {
-	buf := bytes.Buffer{}
 	cmd := exec.Command(pro, args...)
-	cmd.Stdout = &buf
-
 	cmdStr := strings.Join(append([]string{pro}, args...), " ")
-	fmt.Printf("Running '%s'\n", cmdStr)
-	if err := cmd.Run(); err != nil {
 
+	fmt.Printf("Running '%s'\n", cmdStr)
+	if buf, err := cmd.CombinedOutput(); err != nil {
 		fmt.Println("")
-		fmt.Fprint(os.Stderr, buf.String())
+		io.Copy(os.Stderr, bytes.NewReader(buf))
 		fmt.Fprintf(os.Stderr, "🛑  %s %s '%s'\n", red("Error"), "failed to run", white(cmdStr))
 		os.Exit(1)
 	}
