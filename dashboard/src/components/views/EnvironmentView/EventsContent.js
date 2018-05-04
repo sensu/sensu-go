@@ -106,6 +106,7 @@ class EventsContent extends React.Component {
     return (
       <Query
         query={EventsContent.query}
+        fetchPolicy="cache-and-network"
         variables={{ ...match.params, filter: query.get("filter") }}
       >
         {({ data: { environment } = {}, loading, error, refetch }) => {
