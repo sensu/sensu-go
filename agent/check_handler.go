@@ -200,6 +200,8 @@ func extractMetrics(event *types.Event) []*types.MetricPoint {
 	switch event.Check.MetricFormat {
 	case types.GraphiteMetricFormat:
 		transformer, err = transformers.ParseGraphite(event.Check.Output)
+	case types.InfluxDBMetricFormat:
+		transformer, err = transformers.ParseInflux(event.Check.Output)
 	}
 	if err != nil {
 		logger.WithError(err).Error("unable to extract metric from check output")
