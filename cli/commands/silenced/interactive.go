@@ -120,7 +120,7 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 			Name: "begin",
 			Prompt: &survey.Input{
 				Message: "Begin time:",
-				Default: o.Begin,
+				Default: "now",
 				Help:    "Start silencing events at this time. Format: Jan 02 2006 3:04PM MST",
 			},
 			Validate: func(val interface{}) error {
