@@ -202,6 +202,8 @@ func extractMetrics(event *types.Event) []*types.MetricPoint {
 		transformer, err = transformers.ParseGraphite(event.Check.Output)
 	case types.InfluxDBMetricFormat:
 		transformer, err = transformers.ParseInflux(event.Check.Output)
+	case types.NagiosMetricFormat:
+		transformer, err = transformers.ParseNagios(event)
 	case types.OpenTSDBMetricFormat:
 		transformer, err = transformers.ParseOpenTSDB(event.Check.Output)
 	}

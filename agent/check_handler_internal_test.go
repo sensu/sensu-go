@@ -144,19 +144,27 @@ func TestExtractMetrics(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		checkOutput     string
+		event           *types.Event
 		metricFormat    string
 		expectedMetrics []*types.MetricPoint
 	}{
 		{
-			name:            "invalid metric format",
-			checkOutput:     "metric.value 1 123456789",
+			name: "invalid metric format",
+			event: &types.Event{
+				Check: &types.Check{
+					Output: "metric.value 1 123456789",
+				},
+			},
 			metricFormat:    "not_a_format",
 			expectedMetrics: nil,
 		},
 		{
-			name:         "valid extraction graphite",
-			checkOutput:  "metric.value 1 123456789",
+			name: "valid extraction graphite",
+			event: &types.Event{
+				Check: &types.Check{
+					Output: "metric.value 1 123456789",
+				},
+			},
 			metricFormat: types.GraphiteMetricFormat,
 			expectedMetrics: []*types.MetricPoint{
 				{
@@ -168,19 +176,49 @@ func TestExtractMetrics(t *testing.T) {
 			},
 		},
 		{
-			name:            "invalid extraction graphite",
-			checkOutput:     "metric.value 1 foo",
+			name: "invalid extraction graphite",
+			event: &types.Event{
+				Check: &types.Check{
+					Output: "metric.value 1 foo",
+				},
+			},
 			metricFormat:    types.GraphiteMetricFormat,
+			expectedMetrics: nil,
+		},
+		{
+			name: "valid nagios extraction",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed: 123456789,
+					Output:   "PING ok - Packet loss = 0% | percent_packet_loss=0",
+				},
+			},
+			metricFormat: types.NagiosMetricFormat,
+			expectedMetrics: []*types.MetricPoint{
+				{
+					Name:      "percent_packet_loss",
+					Value:     0,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{},
+				},
+			},
+		},
+		{
+			name: "invalid nagios extraction",
+			event: &types.Event{
+				Check: &types.Check{
+					Output: "PING ok - Packet loss = 0%",
+				},
+			},
+			metricFormat:    types.NagiosMetricFormat,
 			expectedMetrics: nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := types.FixtureEvent("entity", "check")
-			event.Check.Output = tc.checkOutput
-			event.Check.MetricFormat = tc.metricFormat
-			metrics := extractMetrics(event)
+			tc.event.Check.MetricFormat = tc.metricFormat
+			metrics := extractMetrics(tc.event)
 			assert.Equal(tc.expectedMetrics, metrics)
 		})
 	}

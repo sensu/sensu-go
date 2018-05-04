@@ -45,6 +45,8 @@ CheckConfig structs.
 transformer.
 - Added a OpenTSDB transformer.
 - Add support for metric extraction from check output for `opentsdb_line`
+- Added a Nagios performance data transformer.
+- Add support for metric extraction from check output for `nagios_perfdata`
 - Added an InfluxDB Line transformer.
 - Add support for metric extraction from check output for `influxdb_line`
 transformer.
