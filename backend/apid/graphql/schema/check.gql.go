@@ -614,22 +614,16 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 	},
 }
 
-// CheckConfigConnectionEdgesFieldResolver implement to resolve requests for the CheckConfigConnection's edges field.
-type CheckConfigConnectionEdgesFieldResolver interface {
-	// Edges implements response to request for edges field.
-	Edges(p graphql.ResolveParams) (interface{}, error)
+// CheckConfigConnectionNodesFieldResolver implement to resolve requests for the CheckConfigConnection's nodes field.
+type CheckConfigConnectionNodesFieldResolver interface {
+	// Nodes implements response to request for nodes field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckConfigConnectionPageInfoFieldResolver implement to resolve requests for the CheckConfigConnection's pageInfo field.
 type CheckConfigConnectionPageInfoFieldResolver interface {
 	// PageInfo implements response to request for pageInfo field.
 	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigConnectionTotalCountFieldResolver implement to resolve requests for the CheckConfigConnection's totalCount field.
-type CheckConfigConnectionTotalCountFieldResolver interface {
-	// TotalCount implements response to request for totalCount field.
-	TotalCount(p graphql.ResolveParams) (int, error)
 }
 
 //
@@ -694,9 +688,8 @@ type CheckConfigConnectionTotalCountFieldResolver interface {
 //   }
 //
 type CheckConfigConnectionFieldResolvers interface {
-	CheckConfigConnectionEdgesFieldResolver
+	CheckConfigConnectionNodesFieldResolver
 	CheckConfigConnectionPageInfoFieldResolver
-	CheckConfigConnectionTotalCountFieldResolver
 }
 
 // CheckConfigConnectionAliases implements all methods on CheckConfigConnectionFieldResolvers interface by using reflection to
@@ -746,8 +739,8 @@ type CheckConfigConnectionFieldResolvers interface {
 //
 type CheckConfigConnectionAliases struct{}
 
-// Edges implements response to request for 'edges' field.
-func (_ CheckConfigConnectionAliases) Edges(p graphql.ResolveParams) (interface{}, error) {
+// Nodes implements response to request for 'nodes' field.
+func (_ CheckConfigConnectionAliases) Nodes(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -758,13 +751,6 @@ func (_ CheckConfigConnectionAliases) PageInfo(p graphql.ResolveParams) (interfa
 	return val, err
 }
 
-// TotalCount implements response to request for 'totalCount' field.
-func (_ CheckConfigConnectionAliases) TotalCount(p graphql.ResolveParams) (int, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
-	return ret, err
-}
-
 // CheckConfigConnectionType A connection to a sequence of records.
 var CheckConfigConnectionType = graphql.NewType("CheckConfigConnection", graphql.ObjectKind)
 
@@ -772,10 +758,10 @@ var CheckConfigConnectionType = graphql.NewType("CheckConfigConnection", graphql
 func RegisterCheckConfigConnection(svc *graphql.Service, impl CheckConfigConnectionFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeCheckConfigConnectionDesc, impl)
 }
-func _ObjTypeCheckConfigConnectionEdgesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigConnectionEdgesFieldResolver)
+func _ObjTypeCheckConfigConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigConnectionNodesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Edges(frp)
+		return resolver.Nodes(frp)
 	}
 }
 
@@ -786,37 +772,23 @@ func _ObjTypeCheckConfigConnectionPageInfoHandler(impl interface{}) graphql1.Fie
 	}
 }
 
-func _ObjTypeCheckConfigConnectionTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigConnectionTotalCountFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.TotalCount(frp)
-	}
-}
-
 func _ObjectTypeCheckConfigConnectionConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A connection to a sequence of records.",
 		Fields: graphql1.Fields{
-			"edges": &graphql1.Field{
+			"nodes": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
-				Name:              "edges",
-				Type:              graphql1.NewList(graphql.OutputType("CheckConfigEdge")),
+				Name:              "nodes",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("CheckConfig")))),
 			},
 			"pageInfo": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "pageInfo",
-				Type:              graphql1.NewNonNull(graphql.OutputType("PageInfo")),
-			},
-			"totalCount": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "totalCount",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql.OutputType("OffsetPageInfo")),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
@@ -836,9 +808,8 @@ func _ObjectTypeCheckConfigConnectionConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeCheckConfigConnectionDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeCheckConfigConnectionConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"edges":      _ObjTypeCheckConfigConnectionEdgesHandler,
-		"pageInfo":   _ObjTypeCheckConfigConnectionPageInfoHandler,
-		"totalCount": _ObjTypeCheckConfigConnectionTotalCountHandler,
+		"nodes":    _ObjTypeCheckConfigConnectionNodesHandler,
+		"pageInfo": _ObjTypeCheckConfigConnectionPageInfoHandler,
 	},
 }
 

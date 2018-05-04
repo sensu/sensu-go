@@ -1,0 +1,19 @@
+"""
+Information about the current page.
+"""
+type OffsetPageInfo {
+  "When paginating forward, are there more items?"
+  hasNextPage: Boolean!
+
+  "When paginating backward, are there more items?"
+  hasPreviousPage: Boolean!
+
+  "Next offset to use when paginating forward; null if there are no more items."
+  nextOffset: Int
+
+  "Previous offset to use when paginating backward; null if at terminal."
+  previousOffset: Int
+
+  "Total count of records in relationship."
+  totalCount: Int!
+}

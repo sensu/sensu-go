@@ -103,31 +103,22 @@ class EventsContainer extends React.Component {
   static fragments = {
     environment: gql`
       fragment EventsContainer_environment on Environment {
-        checks(first: 1000) {
-          edges {
-            node {
-              name
-            }
+        checks(limit: 1000) {
+          nodes {
+            name
           }
         }
 
-        entities(first: 1000) {
-          edges {
-            node {
-              name
-            }
+        entities(limit: 1000) {
+          nodes {
+            name
           }
         }
 
-        events(first: 100, filter: $filter, orderBy: $order) {
-          edges {
-            node {
-              id
-              ...EventsListItem_event
-            }
-          }
-          pageInfo {
-            hasNextPage
+        events(limit: 100, filter: $filter, orderBy: $order) {
+          nodes {
+            id
+            ...EventsListItem_event
           }
         }
       }
@@ -146,8 +137,8 @@ class EventsContainer extends React.Component {
     const { environment } = this.props;
 
     const keys = map(
-      edge => edge.node.id,
-      environment ? environment.events.edges : [],
+      node => node.id,
+      environment ? environment.events.nodes : [],
     );
     // if every state is false or undefined, switch the header
     const newState = !this.eventsSelected();
@@ -174,7 +165,7 @@ class EventsContainer extends React.Component {
 
     const { rowState } = this.state;
     return (
-      (environment ? environment.events.edges : []).length ===
+      (environment ? environment.events.nodes : []).length ===
         Object.keys(rowState).length && every(rowState, Boolean)
     );
   };
@@ -235,18 +226,15 @@ class EventsContainer extends React.Component {
     const { rowState } = this.state;
 
     const entityNames = environment
-      ? map(edge => edge.node.name, environment.entities.edges)
+      ? environment.entities.nodes.map(node => node.name)
       : [];
 
     const checkNames = [
-      ...(environment
-        ? map(edge => edge.node.name, environment.checks.edges)
-        : []),
+      ...(environment ? environment.checks.nodes.map(node => node.name) : []),
       "keepalive",
     ];
 
-    const events =
-      (environment && environment.events && environment.events.edges) || [];
+    const events = (environment && environment.events.nodes) || [];
     const eventsSelected = this.selectedEvents();
     const someEventsSelected = eventsSelected.length > 0;
     const hiddenIf = hide => classnames({ [classes.hidden]: hide });
@@ -360,10 +348,10 @@ class EventsContainer extends React.Component {
               the silence dialog is the same, just maybe some prefilled options for list */}
             {events.map(event => (
               <EventsListItem
-                key={event.node.id}
-                event={event.node}
-                onChange={this.selectCheckbox(event.node.id)}
-                checked={Boolean(rowState[event.node.id])}
+                key={event.id}
+                event={event}
+                onChange={this.selectCheckbox(event.id)}
+                checked={Boolean(rowState[event.id])}
               />
             ))}
           </TableListBody>

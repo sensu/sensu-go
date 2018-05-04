@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -33,44 +32,6 @@ func newViewerImpl(store store.Store, getter types.QueueGetter, bus messaging.Me
 		usersCtrl:  actions.NewUserController(store),
 		orgsCtrl:   actions.NewOrganizationsController(store),
 	}
-}
-
-// Entities implements response to request for 'entities' field.
-func (r *viewerImpl) Entities(p schema.ViewerEntitiesFieldResolverParams) (interface{}, error) {
-	records, err := r.entityCtrl.Query(p.Context)
-	if err != nil {
-		return nil, err
-	}
-
-	info := relay.NewArrayConnectionInfo(
-		0, len(records),
-		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
-	)
-
-	edges := make([]*relay.Edge, info.End-info.Begin)
-	for i, r := range records[info.Begin:info.End] {
-		edges[i] = relay.NewArrayConnectionEdge(r, i)
-	}
-	return relay.NewArrayConnection(edges, info), nil
-}
-
-// Checks implements response to request for 'checks' field.
-func (r *viewerImpl) Checks(p schema.ViewerChecksFieldResolverParams) (interface{}, error) {
-	records, err := r.checksCtrl.Query(p.Context)
-	if err != nil {
-		return nil, err
-	}
-
-	info := relay.NewArrayConnectionInfo(
-		0, len(records),
-		p.Args.First, p.Args.Last, p.Args.Before, p.Args.After,
-	)
-
-	edges := make([]*relay.Edge, info.End-info.Begin)
-	for i, r := range records[info.Begin:info.End] {
-		edges[i] = relay.NewArrayConnectionEdge(r, i)
-	}
-	return relay.NewArrayConnection(edges, info), nil
 }
 
 // Organizations implements response to request for 'organizations' field.

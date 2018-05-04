@@ -10,6 +10,9 @@ import CheckList from "/components/CheckList";
 
 import NotFoundView from "/components/views/NotFoundView";
 
+// Hardcoded page size
+const fetchLimit = 100;
+
 class ChecksContent extends React.Component {
   static propTypes = {
     match: PropTypes.object.isRequired,
@@ -19,6 +22,7 @@ class ChecksContent extends React.Component {
     query EnvironmentViewChecksContentQuery(
       $environment: String!
       $organization: String!
+      $limit: Int!
     ) {
       environment(organization: $organization, environment: $environment) {
         ...CheckList_environment
@@ -30,9 +34,10 @@ class ChecksContent extends React.Component {
 
   render() {
     const { match } = this.props;
+    const variables = { limit: fetchLimit, ...match.params };
 
     return (
-      <Query query={ChecksContent.query} variables={match.params}>
+      <Query query={ChecksContent.query} variables={variables}>
         {({ data: { environment } = {}, loading, error, refetch }) => {
           // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;

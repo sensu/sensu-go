@@ -162,6 +162,7 @@ func (s *Session) subPump() {
 			configBytes, err := json.Marshal(request)
 			if err != nil {
 				logger.WithError(err).Error("session failed to serialize check request")
+				continue
 			}
 
 			msg := transport.NewMessage(types.CheckRequestType, configBytes)

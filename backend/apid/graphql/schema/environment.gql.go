@@ -39,32 +39,12 @@ type EnvironmentOrganizationFieldResolver interface {
 	Organization(p graphql.ResolveParams) (interface{}, error)
 }
 
-// EnvironmentEntitiesFieldResolverArgs contains arguments provided to entities when selected
-type EnvironmentEntitiesFieldResolverArgs struct {
-	First  int    // First - self descriptive
-	Last   int    // Last - self descriptive
-	Before string // Before - self descriptive
-	After  string // After - self descriptive
-}
-
-// EnvironmentEntitiesFieldResolverParams contains contextual info to resolve entities field
-type EnvironmentEntitiesFieldResolverParams struct {
-	graphql.ResolveParams
-	Args EnvironmentEntitiesFieldResolverArgs
-}
-
-// EnvironmentEntitiesFieldResolver implement to resolve requests for the Environment's entities field.
-type EnvironmentEntitiesFieldResolver interface {
-	// Entities implements response to request for entities field.
-	Entities(p EnvironmentEntitiesFieldResolverParams) (interface{}, error)
-}
-
 // EnvironmentChecksFieldResolverArgs contains arguments provided to checks when selected
 type EnvironmentChecksFieldResolverArgs struct {
-	First  int    // First - self descriptive
-	Last   int    // Last - self descriptive
-	Before string // Before - self descriptive
-	After  string // After - self descriptive
+	Offset  int            // Offset - self descriptive
+	Limit   int            // Limit - self descriptive
+	OrderBy CheckListOrder // OrderBy - self descriptive
+	Filter  string         // Filter reduces the set using the given Sensu Query Expression predicate.
 }
 
 // EnvironmentChecksFieldResolverParams contains contextual info to resolve checks field
@@ -79,12 +59,30 @@ type EnvironmentChecksFieldResolver interface {
 	Checks(p EnvironmentChecksFieldResolverParams) (interface{}, error)
 }
 
+// EnvironmentEntitiesFieldResolverArgs contains arguments provided to entities when selected
+type EnvironmentEntitiesFieldResolverArgs struct {
+	Offset  int             // Offset - self descriptive
+	Limit   int             // Limit - self descriptive
+	OrderBy EntityListOrder // OrderBy - self descriptive
+	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
+}
+
+// EnvironmentEntitiesFieldResolverParams contains contextual info to resolve entities field
+type EnvironmentEntitiesFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EnvironmentEntitiesFieldResolverArgs
+}
+
+// EnvironmentEntitiesFieldResolver implement to resolve requests for the Environment's entities field.
+type EnvironmentEntitiesFieldResolver interface {
+	// Entities implements response to request for entities field.
+	Entities(p EnvironmentEntitiesFieldResolverParams) (interface{}, error)
+}
+
 // EnvironmentEventsFieldResolverArgs contains arguments provided to events when selected
 type EnvironmentEventsFieldResolverArgs struct {
-	First   int             // First - self descriptive
-	Last    int             // Last - self descriptive
-	Before  string          // Before - self descriptive
-	After   string          // After - self descriptive
+	Offset  int             // Offset - self descriptive
+	Limit   int             // Limit - self descriptive
 	OrderBy EventsListOrder // OrderBy - self descriptive
 	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
 }
@@ -186,8 +184,8 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentNameFieldResolver
 	EnvironmentColourIDFieldResolver
 	EnvironmentOrganizationFieldResolver
-	EnvironmentEntitiesFieldResolver
 	EnvironmentChecksFieldResolver
+	EnvironmentEntitiesFieldResolver
 	EnvironmentEventsFieldResolver
 	EnvironmentCheckHistoryFieldResolver
 }
@@ -273,14 +271,14 @@ func (_ EnvironmentAliases) Organization(p graphql.ResolveParams) (interface{}, 
 	return val, err
 }
 
-// Entities implements response to request for 'entities' field.
-func (_ EnvironmentAliases) Entities(p EnvironmentEntitiesFieldResolverParams) (interface{}, error) {
+// Checks implements response to request for 'checks' field.
+func (_ EnvironmentAliases) Checks(p EnvironmentChecksFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
 
-// Checks implements response to request for 'checks' field.
-func (_ EnvironmentAliases) Checks(p EnvironmentChecksFieldResolverParams) (interface{}, error) {
+// Entities implements response to request for 'entities' field.
+func (_ EnvironmentAliases) Entities(p EnvironmentEntitiesFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -341,19 +339,6 @@ func _ObjTypeEnvironmentOrganizationHandler(impl interface{}) graphql1.FieldReso
 	}
 }
 
-func _ObjTypeEnvironmentEntitiesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EnvironmentEntitiesFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := EnvironmentEntitiesFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
-		if err != nil {
-			return nil, err
-		}
-
-		return resolver.Entities(frp)
-	}
-}
-
 func _ObjTypeEnvironmentChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EnvironmentChecksFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -364,6 +349,19 @@ func _ObjTypeEnvironmentChecksHandler(impl interface{}) graphql1.FieldResolveFn 
 		}
 
 		return resolver.Checks(frp)
+	}
+}
+
+func _ObjTypeEnvironmentEntitiesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentEntitiesFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EnvironmentEntitiesFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Entities(frp)
 	}
 }
 
@@ -400,8 +398,9 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 			"checkHistory": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"filter": &graphql1.ArgumentConfig{
-						Description: "Filter reduces the set using the given Sensu Query Expression predicate.",
-						Type:        graphql1.String,
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10000,
@@ -416,29 +415,31 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 			},
 			"checks": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
-					"after": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
 					},
-					"before": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"first": &graphql1.ArgumentConfig{
+					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
-					"last": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "NAME_DESC",
+						Description:  "self descriptive",
+						Type:         graphql.InputType("CheckListOrder"),
 					},
 				},
 				DeprecationReason: "",
 				Description:       "All check configurations associated with the environment.",
 				Name:              "checks",
-				Type:              graphql.OutputType("CheckConfigConnection"),
+				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfigConnection")),
 			},
 			"colourId": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -456,51 +457,46 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 			},
 			"entities": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
-					"after": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
 					},
-					"before": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"first": &graphql1.ArgumentConfig{
+					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
-					"last": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "ID_DESC",
+						Description:  "self descriptive",
+						Type:         graphql.InputType("EntityListOrder"),
 					},
 				},
 				DeprecationReason: "",
 				Description:       "All entities associated with the environment.",
 				Name:              "entities",
-				Type:              graphql.OutputType("EntityConnection"),
+				Type:              graphql1.NewNonNull(graphql.OutputType("EntityConnection")),
 			},
 			"events": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
-					"after": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
-					"before": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.String,
-					},
 					"filter": &graphql1.ArgumentConfig{
-						Description: "Filter reduces the set using the given Sensu Query Expression predicate.",
-						Type:        graphql1.String,
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
 					},
-					"first": &graphql1.ArgumentConfig{
+					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
-					"last": &graphql1.ArgumentConfig{
-						DefaultValue: 10,
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
 					},
@@ -513,7 +509,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "All events associated with the environment.",
 				Name:              "events",
-				Type:              graphql.OutputType("EventConnection"),
+				Type:              graphql1.NewNonNull(graphql.OutputType("EventConnection")),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -565,6 +561,104 @@ var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 		"name":         _ObjTypeEnvironmentNameHandler,
 		"organization": _ObjTypeEnvironmentOrganizationHandler,
 	},
+}
+
+// CheckListOrder self descriptive
+type CheckListOrder string
+
+// CheckListOrders holds enum values
+var CheckListOrders = _EnumTypeCheckListOrderValues{
+	NAME:      "NAME",
+	NAME_DESC: "NAME_DESC",
+}
+
+// CheckListOrderType self descriptive
+var CheckListOrderType = graphql.NewType("CheckListOrder", graphql.EnumKind)
+
+// RegisterCheckListOrder registers CheckListOrder object type with given service.
+func RegisterCheckListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeCheckListOrderDesc)
+}
+func _EnumTypeCheckListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "self descriptive",
+		Name:        "CheckListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"NAME": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME",
+			},
+			"NAME_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME_DESC",
+			},
+		},
+	}
+}
+
+// describe CheckListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeCheckListOrderDesc = graphql.EnumDesc{Config: _EnumTypeCheckListOrderConfigFn}
+
+type _EnumTypeCheckListOrderValues struct {
+	// NAME - self descriptive
+	NAME CheckListOrder
+	// NAME_DESC - self descriptive
+	NAME_DESC CheckListOrder
+}
+
+// EntityListOrder self descriptive
+type EntityListOrder string
+
+// EntityListOrders holds enum values
+var EntityListOrders = _EnumTypeEntityListOrderValues{
+	ID:       "ID",
+	ID_DESC:  "ID_DESC",
+	LASTSEEN: "LASTSEEN",
+}
+
+// EntityListOrderType self descriptive
+var EntityListOrderType = graphql.NewType("EntityListOrder", graphql.EnumKind)
+
+// RegisterEntityListOrder registers EntityListOrder object type with given service.
+func RegisterEntityListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeEntityListOrderDesc)
+}
+func _EnumTypeEntityListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "self descriptive",
+		Name:        "EntityListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"ID": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID",
+			},
+			"ID_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID_DESC",
+			},
+			"LASTSEEN": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "LASTSEEN",
+			},
+		},
+	}
+}
+
+// describe EntityListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeEntityListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEntityListOrderConfigFn}
+
+type _EnumTypeEntityListOrderValues struct {
+	// ID - self descriptive
+	ID EntityListOrder
+	// ID_DESC - self descriptive
+	ID_DESC EntityListOrder
+	// LASTSEEN - self descriptive
+	LASTSEEN EntityListOrder
 }
 
 // EventsListOrder self descriptive

@@ -410,22 +410,16 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 	},
 }
 
-// EventConnectionEdgesFieldResolver implement to resolve requests for the EventConnection's edges field.
-type EventConnectionEdgesFieldResolver interface {
-	// Edges implements response to request for edges field.
-	Edges(p graphql.ResolveParams) (interface{}, error)
+// EventConnectionNodesFieldResolver implement to resolve requests for the EventConnection's nodes field.
+type EventConnectionNodesFieldResolver interface {
+	// Nodes implements response to request for nodes field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EventConnectionPageInfoFieldResolver implement to resolve requests for the EventConnection's pageInfo field.
 type EventConnectionPageInfoFieldResolver interface {
 	// PageInfo implements response to request for pageInfo field.
 	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventConnectionTotalCountFieldResolver implement to resolve requests for the EventConnection's totalCount field.
-type EventConnectionTotalCountFieldResolver interface {
-	// TotalCount implements response to request for totalCount field.
-	TotalCount(p graphql.ResolveParams) (int, error)
 }
 
 //
@@ -490,9 +484,8 @@ type EventConnectionTotalCountFieldResolver interface {
 //   }
 //
 type EventConnectionFieldResolvers interface {
-	EventConnectionEdgesFieldResolver
+	EventConnectionNodesFieldResolver
 	EventConnectionPageInfoFieldResolver
-	EventConnectionTotalCountFieldResolver
 }
 
 // EventConnectionAliases implements all methods on EventConnectionFieldResolvers interface by using reflection to
@@ -542,8 +535,8 @@ type EventConnectionFieldResolvers interface {
 //
 type EventConnectionAliases struct{}
 
-// Edges implements response to request for 'edges' field.
-func (_ EventConnectionAliases) Edges(p graphql.ResolveParams) (interface{}, error) {
+// Nodes implements response to request for 'nodes' field.
+func (_ EventConnectionAliases) Nodes(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -554,13 +547,6 @@ func (_ EventConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, 
 	return val, err
 }
 
-// TotalCount implements response to request for 'totalCount' field.
-func (_ EventConnectionAliases) TotalCount(p graphql.ResolveParams) (int, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
-	return ret, err
-}
-
 // EventConnectionType A connection to a sequence of records.
 var EventConnectionType = graphql.NewType("EventConnection", graphql.ObjectKind)
 
@@ -568,10 +554,10 @@ var EventConnectionType = graphql.NewType("EventConnection", graphql.ObjectKind)
 func RegisterEventConnection(svc *graphql.Service, impl EventConnectionFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeEventConnectionDesc, impl)
 }
-func _ObjTypeEventConnectionEdgesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventConnectionEdgesFieldResolver)
+func _ObjTypeEventConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EventConnectionNodesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Edges(frp)
+		return resolver.Nodes(frp)
 	}
 }
 
@@ -582,37 +568,23 @@ func _ObjTypeEventConnectionPageInfoHandler(impl interface{}) graphql1.FieldReso
 	}
 }
 
-func _ObjTypeEventConnectionTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventConnectionTotalCountFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.TotalCount(frp)
-	}
-}
-
 func _ObjectTypeEventConnectionConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A connection to a sequence of records.",
 		Fields: graphql1.Fields{
-			"edges": &graphql1.Field{
+			"nodes": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
-				Name:              "edges",
-				Type:              graphql1.NewList(graphql.OutputType("EventEdge")),
+				Name:              "nodes",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Event")))),
 			},
 			"pageInfo": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "pageInfo",
-				Type:              graphql1.NewNonNull(graphql.OutputType("PageInfo")),
-			},
-			"totalCount": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "totalCount",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql.OutputType("OffsetPageInfo")),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
@@ -632,208 +604,7 @@ func _ObjectTypeEventConnectionConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEventConnectionDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEventConnectionConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"edges":      _ObjTypeEventConnectionEdgesHandler,
-		"pageInfo":   _ObjTypeEventConnectionPageInfoHandler,
-		"totalCount": _ObjTypeEventConnectionTotalCountHandler,
-	},
-}
-
-// EventEdgeNodeFieldResolver implement to resolve requests for the EventEdge's node field.
-type EventEdgeNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventEdgeCursorFieldResolver implement to resolve requests for the EventEdge's cursor field.
-type EventEdgeCursorFieldResolver interface {
-	// Cursor implements response to request for cursor field.
-	Cursor(p graphql.ResolveParams) (string, error)
-}
-
-//
-// EventEdgeFieldResolvers represents a collection of methods whose products represent the
-// response values of the 'EventEdge' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
-type EventEdgeFieldResolvers interface {
-	EventEdgeNodeFieldResolver
-	EventEdgeCursorFieldResolver
-}
-
-// EventEdgeAliases implements all methods on EventEdgeFieldResolvers interface by using reflection to
-// match name of field to a field on the given value. Intent is reduce friction
-// of writing new resolvers by removing all the instances where you would simply
-// have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
-type EventEdgeAliases struct{}
-
-// Node implements response to request for 'node' field.
-func (_ EventEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// Cursor implements response to request for 'cursor' field.
-func (_ EventEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
-	return ret, err
-}
-
-// EventEdgeType An edge in a connection.
-var EventEdgeType = graphql.NewType("EventEdge", graphql.ObjectKind)
-
-// RegisterEventEdge registers EventEdge object type with given service.
-func RegisterEventEdge(svc *graphql.Service, impl EventEdgeFieldResolvers) {
-	svc.RegisterObject(_ObjectTypeEventEdgeDesc, impl)
-}
-func _ObjTypeEventEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventEdgeNodeFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Node(frp)
-	}
-}
-
-func _ObjTypeEventEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventEdgeCursorFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Cursor(frp)
-	}
-}
-
-func _ObjectTypeEventEdgeConfigFn() graphql1.ObjectConfig {
-	return graphql1.ObjectConfig{
-		Description: "An edge in a connection.",
-		Fields: graphql1.Fields{
-			"cursor": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "cursor",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
-			"node": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "node",
-				Type:              graphql.OutputType("Event"),
-			},
-		},
-		Interfaces: []*graphql1.Interface{},
-		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see EventEdgeFieldResolvers.")
-		},
-		Name: "EventEdge",
-	}
-}
-
-// describe EventEdge's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjectTypeEventEdgeDesc = graphql.ObjectDesc{
-	Config: _ObjectTypeEventEdgeConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{
-		"cursor": _ObjTypeEventEdgeCursorHandler,
-		"node":   _ObjTypeEventEdgeNodeHandler,
+		"nodes":    _ObjTypeEventConnectionNodesHandler,
+		"pageInfo": _ObjTypeEventConnectionPageInfoHandler,
 	},
 }

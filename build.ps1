@@ -4,6 +4,8 @@ param (
 
 $REPO_PATH = "github.com/sensu/sensu-go"
 
+$VERSION_CMD = "go run ./version/cmd/version/version.go"
+
 $env_commands = go env
 ForEach ($env_cmd in $env_commands) {
     $env_str = $env_cmd -replace "set " -replace ""
@@ -77,7 +79,9 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
     $env:GOOS = $goos
     $env:GOARCH = $goarch
 
-    $version = (cat version/version.txt) | Out-String
+    $build_type = &"go" "run" "./version/cmd/version/version.go" "-t" | Out-String
+    $build_type = $build_type -replace "`n","" -replace "`r",""
+    $version = &"go" "run" "./version/cmd/version/version.go" "-v" | Out-String
     $build_date = Get-Date -format "yyyy'-'MM'-'dd'T'T'-'Z"
     $build_sha = (git rev-parse HEAD) | Out-String
 
@@ -85,6 +89,11 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
     $ldflags = "-X $version_pkg.Version=$version"
     $ldflags = $ldflags + " -X $version_pkg.BuildDate=$build_date"
     $ldflags = $ldflags + " -X $version_pkg.BuildSHA=$build_sha"
+
+    If ($build_type -ne "nightly" -And $build_type -ne "stable") {
+        $prerelease = &"go" "run" "./version/cmd/version/version.go" "-p" | Out-String
+        $ldflags = $ldflags + " -X $version_pkg.PreReleaseIdentifier=$prerelease"
+    }
 
     go build -ldflags "$ldflags" -o $outfile "$REPO_PATH/$bin/cmd/..."
     If ($LASTEXITCODE -ne 0) {
@@ -251,8 +260,8 @@ function build_package([string]$package, [string]$arch)
         $package_base_name = "sensuctl"
     }
 
-    $version = ($appveyor_repo_tag_name -split '.*(\d+\.\d+\.\d+).*')[1]
-    $iteration = ($appveyor_repo_tag_name -split '.*-(\d+)$')[1]
+    $version = &"go" "run" "./version/cmd/version/version.go" "-v" | Out-String
+    $iteration = &"go" "run" "./version/cmd/version/version.go" "-i" | Out-String
     $full_version = "${version}.${iteration}"
     $msi_filename = "${package_base_name}_${full_version}_${arch}.msi"
 

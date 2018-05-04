@@ -40,10 +40,13 @@ statsd listener. The listener is enabled by default.
 - Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
 CheckConfig structs.
+- Add CLI support for `metric_format` and `metric_handlers` fields in `sensuctl`.
 - Add support for metric extraction from check output for `graphite_plaintext`
 transformer.
 - Added a Nagios performance data transformer.
 - Add support for metric extraction from check output for `nagios_perfdata`
+- Added an InfluxDB Line transformer.
+- Add support for metric extraction from check output for `influxdb_line`
 transformer.
 
 ### Changed
@@ -70,6 +73,8 @@ and yarn are now dependencies for building the backend.
 - Silenced API only accepts 'id' parameter on DELETE requests.
 - Disable gostatsd internal metric collection.
 - Improved log entries produced by pipelined.
+- Allow the InfluxDB handler to parse the Sensu metric for an InfluxDB field tag
+and measurement.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
@@ -90,7 +95,10 @@ swallowed. The events are sent through the pipeline.
 - Fixed a bug where check and checkconfig handlers and subscriptions are null in rendered JSON.
 - Allow checks and hooks to escape zombie processes that have timed out.
 - Install all dependencies with `dep ensure` in build.sh.
-
+- Fixed an issue in which some agents intermittently miss check requests.
+- Agent statsd daemon listens on IPv4 for Windows.
+- Include zero-valued integers in JSON output for all types.
+- Check event entities now have a last_seen timestamp.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added

@@ -115,6 +115,14 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) error {
 				Label: "Environment",
 				Value: r.Environment,
 			},
+			{
+				Label: "Metric Format",
+				Value: r.MetricFormat,
+			},
+			{
+				Label: "Metric Handlers",
+				Value: strings.Join(r.MetricHandlers, ", "),
+			},
 		},
 	}
 

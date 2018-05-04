@@ -124,3 +124,12 @@ func (t *wizardTopic) Close() {
 	}
 	t.Unlock()
 }
+
+func (t *wizardTopic) IsClosed() bool {
+	select {
+	case <-t.done:
+		return true
+	default:
+		return false
+	}
+}
