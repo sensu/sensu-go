@@ -27,7 +27,7 @@ message Handler {
   string command = 4;
 
   // Timeout is the handler timeout in seconds.
-  uint32 timeout = 5;
+  uint32 timeout = 5 [(gogoproto.jsontag) = "timeout"];
 
   // Socket contains configuration for a TCP or UDP handler.
   HandlerSocket socket = 6 [(gogoproto.nullable) = true];
@@ -54,5 +54,5 @@ message HandlerSocket {
   string host = 1;
 
   // Port is the socket peer port.
-  uint32 port = 2;
+  uint32 port = 2 [(gogoproto.jsontag) = "port"];
 }

@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -202,4 +203,76 @@ func TestCheckConfigHasNonNilHandlers(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(b, &c))
 	require.NotNil(t, c.Handlers)
+}
+
+func TestCheckFlapThresholdValidation(t *testing.T) {
+	c := FixtureCheck("foo")
+	// zero-valued flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 0, 0
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold < high flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 5, 10
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold = high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 10, 10
+	assert.Error(t, c.Validate())
+
+	// low flap threshold > high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 11, 10
+	assert.Error(t, c.Validate())
+}
+
+func TestCheckConfigFlapThresholdValidation(t *testing.T) {
+	c := FixtureCheckConfig("foo")
+	// zero-valued flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 0, 0
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold < high flap threshold is valid
+	c.LowFlapThreshold, c.HighFlapThreshold = 5, 10
+	assert.NoError(t, c.Validate())
+
+	// low flap threshold = high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 10, 10
+	assert.Error(t, c.Validate())
+
+	// low flap threshold > high flap threshold is invalid
+	c.LowFlapThreshold, c.HighFlapThreshold = 11, 10
+	assert.Error(t, c.Validate())
+}
+
+func TestSortCheckConfigsByName(t *testing.T) {
+	a := FixtureCheckConfig("Abernathy")
+	b := FixtureCheckConfig("Bernard")
+	c := FixtureCheckConfig("Clementine")
+	d := FixtureCheckConfig("Dolores")
+
+	testCases := []struct {
+		name     string
+		inDir    bool
+		inChecks []*CheckConfig
+		expected []*CheckConfig
+	}{
+		{
+			name:     "Sorts ascending",
+			inDir:    true,
+			inChecks: []*CheckConfig{d, c, a, b},
+			expected: []*CheckConfig{a, b, c, d},
+		},
+		{
+			name:     "Sorts descending",
+			inDir:    false,
+			inChecks: []*CheckConfig{d, a, c, b},
+			expected: []*CheckConfig{d, c, b, a},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Sort(SortCheckConfigsByName(tc.inChecks, tc.inDir))
+			assert.EqualValues(t, tc.expected, tc.inChecks)
+		})
+	}
 }

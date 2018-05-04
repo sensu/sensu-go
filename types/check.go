@@ -123,6 +123,10 @@ func (c *Check) Validate() error {
 		}
 	}
 
+	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
+		return errors.New("invalid flap thresholds")
+	}
+
 	return c.Subdue.Validate()
 }
 
@@ -264,6 +268,10 @@ func (c *CheckConfig) Validate() error {
 		}
 	}
 
+	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
+		return errors.New("invalid flap thresholds")
+	}
+
 	return c.Subdue.Validate()
 }
 
@@ -343,19 +351,21 @@ func FixtureCheckConfig(id string) *CheckConfig {
 	timeout := uint32(0)
 
 	return &CheckConfig{
-		Name:          id,
-		Interval:      interval,
-		Subscriptions: []string{"linux"},
-		Command:       "command",
-		Handlers:      []string{},
-		RuntimeAssets: []string{"ruby-2-4-2"},
-		CheckHooks:    []HookList{*FixtureHookList("hook1")},
-		Environment:   "default",
-		Organization:  "default",
-		Publish:       true,
-		Cron:          "",
-		Ttl:           0,
-		Timeout:       timeout,
+		Name:           id,
+		Interval:       interval,
+		Subscriptions:  []string{"linux"},
+		Command:        "command",
+		Handlers:       []string{},
+		RuntimeAssets:  []string{"ruby-2-4-2"},
+		CheckHooks:     []HookList{*FixtureHookList("hook1")},
+		Environment:    "default",
+		Organization:   "default",
+		Publish:        true,
+		Cron:           "",
+		Ttl:            0,
+		Timeout:        timeout,
+		MetricHandlers: []string{},
+		MetricFormat:   "",
 	}
 }
 
@@ -395,4 +405,48 @@ func FixtureProxyRequests(splay bool) *ProxyRequests {
 // URIPath returns the path component of a Check URI.
 func (c *Check) URIPath() string {
 	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
+}
+
+//
+// Sorting
+
+type cmpCheckConfig func(a, b *CheckConfig) bool
+
+// SortCheckConfigsByPredicate can be used to sort a given collection using a given
+// predicate.
+func SortCheckConfigsByPredicate(cs []*CheckConfig, fn cmpCheckConfig) sort.Interface {
+	return &checkSorter{checks: cs, byFn: fn}
+}
+
+// SortCheckConfigsByName can be used to sort a given collection of checks by their
+// names.
+func SortCheckConfigsByName(es []*CheckConfig, asc bool) sort.Interface {
+	if asc {
+		return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
+			return a.Name < b.Name
+		})
+	}
+	return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
+		return a.Name > b.Name
+	})
+}
+
+type checkSorter struct {
+	checks []*CheckConfig
+	byFn   cmpCheckConfig
+}
+
+// Len implements sort.Interface.
+func (s *checkSorter) Len() int {
+	return len(s.checks)
+}
+
+// Swap implements sort.Interface.
+func (s *checkSorter) Swap(i, j int) {
+	s.checks[i], s.checks[j] = s.checks[j], s.checks[i]
+}
+
+// Less implements sort.Interface.
+func (s *checkSorter) Less(i, j int) bool {
+	return s.byFn(s.checks[i], s.checks[j])
 }

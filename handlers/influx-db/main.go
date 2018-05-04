@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
@@ -121,9 +122,16 @@ func sendMetrics(event *types.Event) error {
 	}
 
 	for _, point := range event.Metrics.Points {
-		name := point.Name
+		var tagKey string
+		nameField := strings.Split(point.Name, ".")
+		name := nameField[0]
+		if len(nameField) > 1 {
+			tagKey = strings.Join(nameField[1:], ".")
+		} else {
+			tagKey = "value"
+		}
+		fields := map[string]interface{}{tagKey: point.Value}
 		timestamp := time.Unix(0, point.Timestamp)
-		fields := map[string]interface{}{"value": point.Value}
 		tags := make(map[string]string)
 		for _, tag := range point.Tags {
 			tags[tag.Name] = tag.Value

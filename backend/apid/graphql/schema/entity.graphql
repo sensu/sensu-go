@@ -37,15 +37,8 @@ type Entity implements Node {
 
 "A connection to a sequence of records."
 type EntityConnection {
-  edges: [EntityEdge]
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-"An edge in a connection."
-type EntityEdge {
-  node: Entity
-  cursor: String!
+  nodes: [Entity!]!
+  pageInfo: OffsetPageInfo!
 }
 
 """

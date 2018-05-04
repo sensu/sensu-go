@@ -115,11 +115,16 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		event.Check.Hooks = a.ExecuteHooks(request, ex.Status)
 	}
 
+	// Instantiate metrics in the event if the check is attempting to extract metrics
+	if check.MetricFormat != "" || len(check.MetricHandlers) != 0 {
+		event.Metrics = &types.Metrics{}
+	}
+
 	if check.MetricFormat != "" {
 		event.Metrics.Points = extractMetrics(event)
 	}
 
-	if check.MetricHandlers != nil {
+	if len(check.MetricHandlers) != 0 {
 		event.Metrics.Handlers = check.MetricHandlers
 	}
 
@@ -195,6 +200,8 @@ func extractMetrics(event *types.Event) []*types.MetricPoint {
 	switch event.Check.MetricFormat {
 	case types.GraphiteMetricFormat:
 		transformer, err = transformers.ParseGraphite(event.Check.Output)
+	case types.InfluxDBMetricFormat:
+		transformer, err = transformers.ParseInflux(event.Check.Output)
 	case types.OpenTSDBMetricFormat:
 		transformer, err = transformers.ParseOpenTSDB(event.Check.Output)
 	}

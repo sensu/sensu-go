@@ -18,5 +18,5 @@ message KeepaliveRecord {
   string environment = 1;
   string organization = 2;
   string entity_id = 3 [(gogoproto.customname) = "EntityID"];
-  int64 time = 4;
+  int64 time = 4 [(gogoproto.jsontag) = "time"];
 }
