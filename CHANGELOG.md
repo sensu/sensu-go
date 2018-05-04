@@ -50,6 +50,7 @@ transformer.
 - Added an InfluxDB Line transformer.
 - Add support for metric extraction from check output for `influxdb_line`
 transformer.
+- Add e2e test for metric extraction.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
