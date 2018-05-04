@@ -43,6 +43,8 @@ CheckConfig structs.
 - Add CLI support for `metric_format` and `metric_handlers` fields in `sensuctl`.
 - Add support for metric extraction from check output for `graphite_plaintext`
 transformer.
+- Added a OpenTSDB transformer.
+- Add support for metric extraction from check output for `opentsdb_line`
 - Added a Nagios performance data transformer.
 - Add support for metric extraction from check output for `nagios_perfdata`
 - Added an InfluxDB Line transformer.
