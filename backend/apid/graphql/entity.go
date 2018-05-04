@@ -25,18 +25,15 @@ var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 type entityImpl struct {
 	schema.EntityAliases
-	userCtrl   actions.UserController
 	entityCtrl entityQuerier
 	eventCtrl  eventQuerier
 }
 
 func newEntityImpl(store store.Store) *entityImpl {
-	userCtrl := actions.NewUserController(store)
 	entityCtrl := actions.NewEntityController(store)
 	eventCtrl := actions.NewEventController(store, nil)
 
 	return &entityImpl{
-		userCtrl:   userCtrl,
 		entityCtrl: entityCtrl,
 		eventCtrl:  eventCtrl,
 	}
@@ -58,12 +55,6 @@ func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
 	return entity.ID, nil
 }
 
-// AuthorId implements response to request for 'authorId' field.
-func (*entityImpl) AuthorID(p graphql.ResolveParams) (string, error) {
-	entity := p.Source.(*types.Entity)
-	return entity.User, nil
-}
-
 // LastSeen implements response to request for 'executed' field.
 func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	c := p.Source.(*types.Entity)
@@ -72,13 +63,6 @@ func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	}
 	t := time.Unix(c.LastSeen, 0)
 	return &t, nil
-}
-
-// Author implements response to request for 'author' field.
-func (r *entityImpl) Author(p graphql.ResolveParams) (interface{}, error) {
-	entity := p.Source.(*types.Entity)
-	user, err := r.userCtrl.Find(p.Context, entity.User)
-	return handleControllerResults(user, err)
 }
 
 // Related implements response to request for 'related' field.

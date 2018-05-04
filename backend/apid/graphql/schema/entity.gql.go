@@ -70,16 +70,10 @@ type EntityKeepaliveTimeoutFieldResolver interface {
 	KeepaliveTimeout(p graphql.ResolveParams) (int, error)
 }
 
-// EntityAuthorIDFieldResolver implement to resolve requests for the Entity's authorId field.
-type EntityAuthorIDFieldResolver interface {
-	// AuthorID implements response to request for authorId field.
-	AuthorID(p graphql.ResolveParams) (string, error)
-}
-
-// EntityAuthorFieldResolver implement to resolve requests for the Entity's author field.
-type EntityAuthorFieldResolver interface {
-	// Author implements response to request for author field.
-	Author(p graphql.ResolveParams) (interface{}, error)
+// EntityUserFieldResolver implement to resolve requests for the Entity's user field.
+type EntityUserFieldResolver interface {
+	// User implements response to request for user field.
+	User(p graphql.ResolveParams) (string, error)
 }
 
 // EntityStatusFieldResolver implement to resolve requests for the Entity's status field.
@@ -177,8 +171,7 @@ type EntityFieldResolvers interface {
 	EntityDeregisterFieldResolver
 	EntityDeregistrationFieldResolver
 	EntityKeepaliveTimeoutFieldResolver
-	EntityAuthorIDFieldResolver
-	EntityAuthorFieldResolver
+	EntityUserFieldResolver
 	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
 }
@@ -297,17 +290,11 @@ func (_ EntityAliases) KeepaliveTimeout(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
-// AuthorID implements response to request for 'authorId' field.
-func (_ EntityAliases) AuthorID(p graphql.ResolveParams) (string, error) {
+// User implements response to request for 'user' field.
+func (_ EntityAliases) User(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret := fmt.Sprint(val)
 	return ret, err
-}
-
-// Author implements response to request for 'author' field.
-func (_ EntityAliases) Author(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
 }
 
 // Status implements response to request for 'status' field.
@@ -403,17 +390,10 @@ func _ObjTypeEntityKeepaliveTimeoutHandler(impl interface{}) graphql1.FieldResol
 	}
 }
 
-func _ObjTypeEntityAuthorIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityAuthorIDFieldResolver)
+func _ObjTypeEntityUserHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityUserFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.AuthorID(frp)
-	}
-}
-
-func _ObjTypeEntityAuthorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityAuthorFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Author(frp)
+		return resolver.User(frp)
 	}
 }
 
@@ -441,20 +421,6 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
 		Fields: graphql1.Fields{
-			"author": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "author",
-				Type:              graphql1.NewNonNull(graphql.OutputType("User")),
-			},
-			"authorId": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "authorId",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
 			"class": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -543,6 +509,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "system",
 				Type:              graphql1.NewNonNull(graphql.OutputType("System")),
 			},
+			"user": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "user",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node")},
@@ -562,8 +535,6 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"author":           _ObjTypeEntityAuthorHandler,
-		"authorId":         _ObjTypeEntityAuthorIDHandler,
 		"class":            _ObjTypeEntityClassHandler,
 		"deregister":       _ObjTypeEntityDeregisterHandler,
 		"deregistration":   _ObjTypeEntityDeregistrationHandler,
@@ -576,6 +547,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"status":           _ObjTypeEntityStatusHandler,
 		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
 		"system":           _ObjTypeEntitySystemHandler,
+		"user":             _ObjTypeEntityUserHandler,
 	},
 }
 
@@ -784,6 +756,12 @@ type SystemHostnameFieldResolver interface {
 	Hostname(p graphql.ResolveParams) (string, error)
 }
 
+// SystemNetworkFieldResolver implement to resolve requests for the System's network field.
+type SystemNetworkFieldResolver interface {
+	// Network implements response to request for network field.
+	Network(p graphql.ResolveParams) (interface{}, error)
+}
+
 // SystemOsFieldResolver implement to resolve requests for the System's os field.
 type SystemOsFieldResolver interface {
 	// Os implements response to request for os field.
@@ -808,10 +786,10 @@ type SystemPlatformVersionFieldResolver interface {
 	PlatformVersion(p graphql.ResolveParams) (string, error)
 }
 
-// SystemNetworkFieldResolver implement to resolve requests for the System's network field.
-type SystemNetworkFieldResolver interface {
-	// Network implements response to request for network field.
-	Network(p graphql.ResolveParams) (interface{}, error)
+// SystemArchFieldResolver implement to resolve requests for the System's arch field.
+type SystemArchFieldResolver interface {
+	// Arch implements response to request for arch field.
+	Arch(p graphql.ResolveParams) (string, error)
 }
 
 //
@@ -877,11 +855,12 @@ type SystemNetworkFieldResolver interface {
 //
 type SystemFieldResolvers interface {
 	SystemHostnameFieldResolver
+	SystemNetworkFieldResolver
 	SystemOsFieldResolver
 	SystemPlatformFieldResolver
 	SystemPlatformFamilyFieldResolver
 	SystemPlatformVersionFieldResolver
-	SystemNetworkFieldResolver
+	SystemArchFieldResolver
 }
 
 // SystemAliases implements all methods on SystemFieldResolvers interface by using reflection to
@@ -938,6 +917,12 @@ func (_ SystemAliases) Hostname(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// Network implements response to request for 'network' field.
+func (_ SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Os implements response to request for 'os' field.
 func (_ SystemAliases) Os(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -966,10 +951,11 @@ func (_ SystemAliases) PlatformVersion(p graphql.ResolveParams) (string, error) 
 	return ret, err
 }
 
-// Network implements response to request for 'network' field.
-func (_ SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
+// Arch implements response to request for 'arch' field.
+func (_ SystemAliases) Arch(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret := fmt.Sprint(val)
+	return ret, err
 }
 
 /*
@@ -986,6 +972,13 @@ func _ObjTypeSystemHostnameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SystemHostnameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Hostname(frp)
+	}
+}
+
+func _ObjTypeSystemNetworkHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemNetworkFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Network(frp)
 	}
 }
 
@@ -1017,10 +1010,10 @@ func _ObjTypeSystemPlatformVersionHandler(impl interface{}) graphql1.FieldResolv
 	}
 }
 
-func _ObjTypeSystemNetworkHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SystemNetworkFieldResolver)
+func _ObjTypeSystemArchHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemArchFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Network(frp)
+		return resolver.Arch(frp)
 	}
 }
 
@@ -1028,6 +1021,13 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "System contains information about the system that the Agent process\nis running on, used for additional Entity context.",
 		Fields: graphql1.Fields{
+			"arch": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Architecture; eg. 386, amd64, arm, ...",
+				Name:              "arch",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"hostname": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1045,28 +1045,28 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 			"os": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Operating system; eg. freebsd, linux, ...",
 				Name:              "os",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"platform": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Operating system platform; eg. ubuntu, linuxmint, ...",
 				Name:              "platform",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"platformFamily": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Operating system family; eg. debian, rhel, ...",
 				Name:              "platformFamily",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"platformVersion": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Version of complete operating system; eg. 10.12.2, ...",
 				Name:              "platformVersion",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
@@ -1088,6 +1088,7 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeSystemDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeSystemConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"arch":            _ObjTypeSystemArchHandler,
 		"hostname":        _ObjTypeSystemHostnameHandler,
 		"network":         _ObjTypeSystemNetworkHandler,
 		"os":              _ObjTypeSystemOsHandler,
