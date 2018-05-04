@@ -26,7 +26,7 @@ type Query {
   """
   Entity fetches the entity associated with the given set of arguments.
   """
-  entity(ns: NamespaceInput!, name: String!): Event
+  entity(ns: NamespaceInput!, name: String!): Entity
 
   """
   Node fetches an object given its ID.

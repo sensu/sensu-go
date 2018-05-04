@@ -334,7 +334,7 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Entity fetches the entity associated with the given set of arguments.",
 				Name:              "entity",
-				Type:              graphql.OutputType("Event"),
+				Type:              graphql.OutputType("Entity"),
 			},
 			"environment": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
