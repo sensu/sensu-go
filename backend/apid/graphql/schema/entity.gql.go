@@ -105,6 +105,23 @@ type EntityRelatedFieldResolver interface {
 	Related(p EntityRelatedFieldResolverParams) (interface{}, error)
 }
 
+// EntityEventsFieldResolverArgs contains arguments provided to events when selected
+type EntityEventsFieldResolverArgs struct {
+	OrderBy EventsListOrder // OrderBy - self descriptive
+}
+
+// EntityEventsFieldResolverParams contains contextual info to resolve events field
+type EntityEventsFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EntityEventsFieldResolverArgs
+}
+
+// EntityEventsFieldResolver implement to resolve requests for the Entity's events field.
+type EntityEventsFieldResolver interface {
+	// Events implements response to request for events field.
+	Events(p EntityEventsFieldResolverParams) (interface{}, error)
+}
+
 // EntityExtendedAttributesFieldResolver implement to resolve requests for the Entity's extendedAttributes field.
 type EntityExtendedAttributesFieldResolver interface {
 	// ExtendedAttributes implements response to request for extendedAttributes field.
@@ -187,6 +204,7 @@ type EntityFieldResolvers interface {
 	EntityRedactFieldResolver
 	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
+	EntityEventsFieldResolver
 	EntityExtendedAttributesFieldResolver
 }
 
@@ -331,6 +349,12 @@ func (_ EntityAliases) Related(p EntityRelatedFieldResolverParams) (interface{},
 	return val, err
 }
 
+// Events implements response to request for 'events' field.
+func (_ EntityAliases) Events(p EntityEventsFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // ExtendedAttributes implements response to request for 'extendedAttributes' field.
 func (_ EntityAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -451,6 +475,19 @@ func _ObjTypeEntityRelatedHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityEventsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityEventsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EntityEventsFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Events(frp)
+	}
+}
+
 func _ObjTypeEntityExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityExtendedAttributesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -482,6 +519,17 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "self descriptive",
 				Name:              "deregistration",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Deregistration")),
+			},
+			"events": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"orderBy": &graphql1.ArgumentConfig{
+					DefaultValue: "SEVERITY",
+					Description:  "self descriptive",
+					Type:         graphql.InputType("EventsListOrder"),
+				}},
+				DeprecationReason: "",
+				Description:       "All events associated with the entity.",
+				Name:              "events",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Event")))),
 			},
 			"extendedAttributes": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -593,6 +641,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"class":              _ObjTypeEntityClassHandler,
 		"deregister":         _ObjTypeEntityDeregisterHandler,
 		"deregistration":     _ObjTypeEntityDeregistrationHandler,
+		"events":             _ObjTypeEntityEventsHandler,
 		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
 		"id":                 _ObjTypeEntityIDHandler,
 		"keepaliveTimeout":   _ObjTypeEntityKeepaliveTimeoutHandler,

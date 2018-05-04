@@ -11,6 +11,7 @@ const styles = theme => ({
     fontFamily: `"SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace`,
     overflowX: "scroll",
     userSelect: "text",
+    tabSize: 2,
   },
   background: {
     backgroundColor: emphasize(theme.palette.background.paper, 0.01875),

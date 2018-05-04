@@ -2,12 +2,11 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import Grid from "material-ui/Grid";
-
 import Content from "/components/Content";
 import Loader from "/components/Loader";
 import ButtonSet from "/components/ButtonSet";
+import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
 import CheckResult from "./EventDetailsCheckResult";
-import RelatedEntities from "./EventDetailsRelatedEntities";
 import Configuration from "./EventDetailsConfiguration";
 import DeleteAction from "./EventDetailsDeleteAction";
 import ResolveAction from "./EventDetailsResolveAction";
@@ -38,14 +37,14 @@ class EventDetailsContainer extends React.PureComponent {
         }
         entity {
           ...EventDetailsCheckResult_entity
-          ...EventDetailsRelatedEntities_entity
+          ...RelatedEntitiesCard_entity
           ...EventDetailsConfiguration_entity
         }
       }
 
       ${CheckResult.fragments.check}
       ${CheckResult.fragments.entity}
-      ${RelatedEntities.fragments.entity}
+      ${RelatedEntitiesCard.fragments.entity}
       ${Configuration.fragments.check}
       ${Configuration.fragments.entity}
       ${DeleteAction.fragments.event}
@@ -96,7 +95,7 @@ class EventDetailsContainer extends React.PureComponent {
                   <CheckResult check={event.check} entity={event.entity} />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <RelatedEntities entity={event.entity} />
+                  <RelatedEntitiesCard entity={event.entity} />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Configuration check={event.check} entity={event.entity} />

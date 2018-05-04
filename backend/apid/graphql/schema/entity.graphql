@@ -32,6 +32,9 @@ type Entity implements Node {
   "Related returns a sorted list of like entities from the same environment."
   related(limit: Int = 10): [Entity]!
 
+  "All events associated with the entity."
+  events(orderBy: EventsListOrder = SEVERITY): [Event!]!
+
   "Extended attributes includes arbitrary user-defined data"
   extendedAttributes: JSON!
 }

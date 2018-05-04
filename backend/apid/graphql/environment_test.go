@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -11,15 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type mockEventQuerier struct {
-	els []*types.Event
-	err error
-}
-
-func (f mockEventQuerier) Query(ctx context.Context, entity, check string) ([]*types.Event, error) {
-	return f.els, f.err
-}
 
 func TestEnvColourID(t *testing.T) {
 	impl := &envImpl{}
