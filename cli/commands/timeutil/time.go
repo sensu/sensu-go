@@ -42,8 +42,8 @@ func ConvertToUTC(t *types.TimeWindowTimeRange) error {
 // ConvertToUnixUTC takes a string formatted as dateFormat and converts it to
 // UTC in unix epoch form
 func ConvertToUnixUTC(begin string) (int64, error) {
-	if begin == "0" {
-		return 0, nil
+	if begin == "0" || begin == "now" {
+		return time.Now().Unix(), nil
 	}
 	utc, err := offsetTime(begin, dateFormat, dateFormatTZRE)
 	if err != nil {

@@ -85,10 +85,17 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "Begin",
+			CellTransformer: func(data interface{}) string {
+				s, _ := data.(types.Silenced)
+				return time.Unix(s.Begin, 0).Format(time.RFC822)
+			},
+		},
+		{
 			Title: "Expire",
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
-				return (time.Duration(silenced.Expire) * time.Second).String()
+				s, _ := data.(types.Silenced)
+				return expireTime(s.Begin, s.Expire).String()
 			},
 		},
 		{

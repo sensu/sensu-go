@@ -55,13 +55,22 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 
 }
 
+func expireTime(beginTS, expireSeconds int64) time.Duration {
+	begin := time.Unix(beginTS, 0)
+	expire := time.Duration(expireSeconds) * time.Second
+	if time.Now().Before(begin) {
+		return (expire - time.Until(begin)).Truncate(time.Second)
+	}
+	return time.Duration(expireSeconds) * time.Second
+}
+
 func printToList(r *types.Silenced, writer io.Writer) error {
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{
 			{
 				Label: "Expire",
-				Value: (time.Duration(r.Expire) * time.Second).String(),
+				Value: expireTime(r.Begin, r.Expire).String(),
 			},
 			{
 				Label: "ExpireOnResolve",
@@ -92,6 +101,14 @@ func printToList(r *types.Silenced, writer io.Writer) error {
 				Value: r.Environment,
 			},
 		},
+	}
+
+	if time.Now().Before(time.Unix(r.Begin, 0)) {
+		extraRows := []*list.Row{{
+			Label: "Begin",
+			Value: time.Unix(r.Begin, 0).Format(time.RFC822),
+		}}
+		cfg.Rows = append(extraRows, cfg.Rows...)
 	}
 
 	return list.Print(writer, cfg)

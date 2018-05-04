@@ -103,6 +103,7 @@ swallowed. The events are sent through the pipeline.
 - Agent statsd daemon listens on IPv4 for Windows.
 - Include zero-valued integers in JSON output for all types.
 - Check event entities now have a last_seen timestamp.
+- Improved silenced entry display and UX.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
