@@ -20,8 +20,8 @@ type Entity implements Node {
   keepaliveTimeout: Int!
   user: String!
 
-  # "Redact contains the fields to redact on the agent."
-  # redact: [String!]!
+  "Redact contains the fields to redact on the agent."
+  redact: [String!]!
 
   """
   Status represents the MAX status of all events associated with the entity. If

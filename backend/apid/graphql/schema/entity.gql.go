@@ -76,6 +76,12 @@ type EntityUserFieldResolver interface {
 	User(p graphql.ResolveParams) (string, error)
 }
 
+// EntityRedactFieldResolver implement to resolve requests for the Entity's redact field.
+type EntityRedactFieldResolver interface {
+	// Redact implements response to request for redact field.
+	Redact(p graphql.ResolveParams) ([]string, error)
+}
+
 // EntityStatusFieldResolver implement to resolve requests for the Entity's status field.
 type EntityStatusFieldResolver interface {
 	// Status implements response to request for status field.
@@ -172,6 +178,7 @@ type EntityFieldResolvers interface {
 	EntityDeregistrationFieldResolver
 	EntityKeepaliveTimeoutFieldResolver
 	EntityUserFieldResolver
+	EntityRedactFieldResolver
 	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
 }
@@ -297,6 +304,13 @@ func (_ EntityAliases) User(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// Redact implements response to request for 'redact' field.
+func (_ EntityAliases) Redact(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.([]string)
+	return ret, err
+}
+
 // Status implements response to request for 'status' field.
 func (_ EntityAliases) Status(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -397,6 +411,13 @@ func _ObjTypeEntityUserHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityRedactHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityRedactFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Redact(frp)
+	}
+}
+
 func _ObjTypeEntityStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityStatusFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -477,6 +498,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
 			},
+			"redact": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Redact contains the fields to redact on the agent.",
+				Name:              "redact",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
 			"related": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"limit": &graphql1.ArgumentConfig{
 					DefaultValue: 10,
@@ -543,6 +571,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"lastSeen":         _ObjTypeEntityLastSeenHandler,
 		"name":             _ObjTypeEntityNameHandler,
 		"namespace":        _ObjTypeEntityNamespaceHandler,
+		"redact":           _ObjTypeEntityRedactHandler,
 		"related":          _ObjTypeEntityRelatedHandler,
 		"status":           _ObjTypeEntityStatusHandler,
 		"subscriptions":    _ObjTypeEntitySubscriptionsHandler,
