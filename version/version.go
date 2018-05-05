@@ -9,11 +9,14 @@ import (
 	"strings"
 )
 
+// These values are baked into the sensu-agent and sensu-backend binaries
+// during compilation, and are accessed using the Semver() function
 var (
 	// Version stores the version of the current build (e.g. 2.0.0)
-	Version = "dev"
+	Version = ""
 
-	// PreReleaseIdentifier stores the pre-release identifier of the current build (eg. beta-2)
+	// PreReleaseIdentifier stores the pre-release identifier of the current
+	// build (eg. the 2 in beta-2)
 	PreReleaseIdentifier string
 
 	// BuildDate stores the timestamp of the build (e.g. 2017-07-31T13:11:15-0700)
@@ -37,6 +40,7 @@ var (
 type BuildType string
 
 const (
+	Dev     BuildType = "dev"
 	Nightly BuildType = "nightly"
 	Alpha   BuildType = "alpha"
 	Beta    BuildType = "beta"
@@ -60,19 +64,33 @@ func Semver() string {
 	return version + "#" + gitSHA
 }
 
-// BuildTypeFromTag discovers the BuildType of the git tag.
-func BuildTypeFromTag(tag string) BuildType {
-	if tag == "" {
-		return Nightly
+// BuildEnv provides methods for determining version info from the current env.
+type BuildEnv interface {
+	IsCI() bool
+	IsNightly() bool
+	GetMostRecentTag() string
+}
+
+// ParseBuildEnv discovers the most recent tag and BuildType using the current
+// build environment
+func ParseBuildEnv(env BuildEnv) (string, BuildType) {
+	tag := env.GetMostRecentTag()
+	// if building outside of CI, this is a dev build, regardless of tag
+	if !env.IsCI() {
+		return tag, Dev
 	}
-	// String matching gives us the type of build tag
+	// if building from CI from a non-release commit, this is a nightly build
+	if env.IsNightly() {
+		return tag, Nightly
+	}
+	// detect build type via string comparison on current tag
 	for _, bt := range []BuildType{Alpha, Beta, RC, Stable} {
 		if strings.Contains(tag, string(bt)) {
-			return bt
+			return tag, bt
 		}
 	}
-	// tag exists but does not contain any of the above, this is a stable build
-	return Stable
+	// tag doesn't match any other condition, default to stable build
+	return tag, Stable
 }
 
 // HighestVersion will output the highest sorted version from passed slice of
@@ -105,8 +123,8 @@ func HighestVersion(tags []string) (string, error) {
 
 // Iteration will output an iteration number based on what type of build the git
 // sha represents and the ci platform it is running on.
-func Iteration(tag string) (string, error) {
-	bt := BuildTypeFromTag(tag)
+// (ex: the 1 in 2.0.0-alpha.17-1)
+func Iteration(tag string, bt BuildType) (string, error) {
 	if bt == Nightly {
 		if bi := os.Getenv("SENSU_BUILD_ITERATION"); bi != "" {
 			return bi, nil
@@ -122,8 +140,8 @@ func Iteration(tag string) (string, error) {
 }
 
 // GetPrereleaseVersion will output the version of a prerelease from its tag
-func GetPrereleaseVersion(tag string) (string, error) {
-	bt := BuildTypeFromTag(tag)
+// (ex: "17" from tag "2.0.0-alpha.17")
+func GetPrereleaseVersion(tag string, bt BuildType) (string, error) {
 	switch bt {
 	case Alpha, Beta, RC:
 		matches := prereleaseVersionRE.FindStringSubmatch(tag)
@@ -137,25 +155,26 @@ func GetPrereleaseVersion(tag string) (string, error) {
 		}
 		return bt, err
 	default:
-		return "", fmt.Errorf("build type not supported for prerelease: %q", bt)
+		// prerelease version does not apply to dev or nightly builds
+		return "", nil
 	}
 }
 
 // GetVersion will output the version of the build (without iteration)
-func GetVersion(tag string) (string, error) {
-	bt := BuildTypeFromTag(tag)
+// (ex: "2.0.0-alpha.17")
+func GetVersion(tag string, bt BuildType) (string, error) {
 	baseVersion := versionRE.FindString(tag)
 	if baseVersion == "" {
-		baseVersion = "dev"
+		return "", fmt.Errorf("Could not determine base version from %q", tag)
 	}
 	switch bt {
-	case Nightly:
+	case Dev, Nightly:
 		return fmt.Sprintf("%s-%s", baseVersion, bt), nil
 	case Alpha, Beta, RC:
 		if baseVersion == "" {
 			return "", fmt.Errorf("invalid tag: %q", tag)
 		}
-		pre, err := GetPrereleaseVersion(tag)
+		pre, err := GetPrereleaseVersion(tag, bt)
 		if err != nil {
 			return "", err
 		}
@@ -171,12 +190,13 @@ func GetVersion(tag string) (string, error) {
 }
 
 // FullVersion will output the version of the build (with iteration)
-func FullVersion(tag string) (string, error) {
-	it, err := Iteration(tag)
+// (ex: "2.0.0-alpha.17-1")
+func FullVersion(tag string, bt BuildType) (string, error) {
+	it, err := Iteration(tag, bt)
 	if err != nil {
 		return "", err
 	}
-	ver, err := GetVersion(tag)
+	ver, err := GetVersion(tag, bt)
 	if err != nil {
 		return "", err
 	}
