@@ -13,7 +13,7 @@ import (
 
 var (
 	fFullVersion = flag.Bool("f", false, "output the version of the build with iteration (ex: 2.0.0-alpha.17-1)")
-	fHighest     = flag.Bool("h", false, "output the highest tagged version (ex: 2.0.1)")
+	fBaseVersion = flag.Bool("b", false, "output the base version (ex: 2.0.1)")
 	fIteration   = flag.Bool("i", false, "output the iteration of the build (ex: the 1 in 2.0.0-alpha.17-1)")
 	fPrerelease  = flag.Bool("p", false, "output the prerelease version of the build (ex: 17 from tag 2.0.0-alpha.17)")
 	fBuildType   = flag.Bool("t", false, "output the type of build this is (alpha|beta|rc|dev|nightly|stable)")
@@ -26,17 +26,8 @@ func main() {
 	var fn func(string, version.BuildType) (string, error)
 	if *fFullVersion {
 		fn = version.FullVersion
-	} else if *fHighest {
-		tags, err := getTags()
-		if err != nil {
-			log.Fatal(err)
-		}
-		result, err := version.HighestVersion(tags)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(result)
-		return
+	} else if *fBaseVersion {
+		fn = version.GetBaseVersion
 	} else if *fIteration {
 		fn = version.Iteration
 	} else if *fPrerelease {
@@ -100,17 +91,4 @@ func (b *BuildEnv) GetMostRecentTag() string {
 	}
 	tag := strings.Trim(string(out), "\n")
 	return tag
-}
-
-func getTags() ([]string, error) {
-	cmd := exec.Command("git", "tag", "-l")
-	out, err := cmd.Output()
-	if err != nil {
-		if _, ok := err.(*exec.ExitError); !ok {
-			return nil, err
-		}
-	}
-	output := strings.Trim(string(out), "\n")
-	tags := strings.Split(output, "\n")
-	return tags, nil
 }

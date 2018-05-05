@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"sort"
 	"strings"
 )
 
@@ -93,34 +92,6 @@ func ParseBuildEnv(env BuildEnv) (string, BuildType) {
 	return tag, Stable
 }
 
-// HighestVersion will output the highest sorted version from passed slice of
-// git tags.
-func HighestVersion(tags []string) (string, error) {
-	uniqueTags := make(map[string]struct{})
-	for _, tag := range tags {
-		re1, err := regexp.Compile("[a-zA-Z]+")
-		if err != nil {
-			return "", err
-		}
-		strReplaced := re1.ReplaceAllString(tag, "")
-
-		re2, err := regexp.Compile("^([0-9]+.)([0-9]+.)([0-9]+)")
-		if err != nil {
-			return "", err
-		}
-		vers := re2.FindStringSubmatch(strReplaced)[0]
-		uniqueTags[vers] = struct{}{}
-	}
-
-	sortedTags := make([]string, 0, len(uniqueTags))
-	for tag := range uniqueTags {
-		sortedTags = append(sortedTags, tag)
-	}
-	sort.Sort(byVersion(sortedTags))
-
-	return sortedTags[0], nil
-}
-
 // Iteration will output an iteration number based on what type of build the git
 // sha represents and the ci platform it is running on.
 // (ex: the 1 in 2.0.0-alpha.17-1)
@@ -160,12 +131,22 @@ func GetPrereleaseVersion(tag string, bt BuildType) (string, error) {
 	}
 }
 
-// GetVersion will output the version of the build (without iteration)
-// (ex: "2.0.0-alpha.17")
-func GetVersion(tag string, bt BuildType) (string, error) {
+// GetBaseVersion will output only the major, minor, and patch #s with dots.
+// (ex: "2.0.1")
+func GetBaseVersion(tag string, bt BuildType) (string, error) {
 	baseVersion := versionRE.FindString(tag)
 	if baseVersion == "" {
 		return "", fmt.Errorf("Could not determine base version from %q", tag)
+	}
+	return baseVersion, nil
+}
+
+// GetVersion will output the version of the build (without iteration)
+// (ex: "2.0.0-alpha.17")
+func GetVersion(tag string, bt BuildType) (string, error) {
+	baseVersion, err := GetBaseVersion(tag, bt)
+	if err != nil {
+		return "", err
 	}
 	switch bt {
 	case Dev, Nightly:

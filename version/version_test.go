@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type tagTest struct {
@@ -291,17 +289,4 @@ func TestFullVersion(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestHighestVersion(t *testing.T) {
-	tags := []string{
-		"v2.10.0-5",
-		"2.3.0-6",
-		"2.2.0-alpha.6-4",
-		"2.9.0-nightly+20180321-1",
-	}
-
-	tag, err := HighestVersion(tags)
-	assert.NoError(t, err)
-	assert.Equal(t, tag, "2.10.0")
 }
