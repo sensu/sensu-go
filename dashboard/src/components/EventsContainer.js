@@ -172,10 +172,6 @@ class EventsContainer extends React.Component {
     });
   };
 
-  silence = () => {
-    // silence each item that is true in rowState
-  };
-
   requeryEntity = newValue => {
     this.props.onQueryChange("filter", `Entity.ID=='${newValue}'`);
   };
@@ -234,9 +230,6 @@ class EventsContainer extends React.Component {
           </div>
           <div className={classes.grow} />
           <div className={hiddenIf(!someEventsSelected)}>
-            <Button className={classes.headerButton} onClick={this.silence}>
-              <Typography variant="button">Silence</Typography>
-            </Button>
             <Button className={classes.headerButton} onClick={this.resolve}>
               <Typography variant="button">Resolve</Typography>
             </Button>

@@ -76,24 +76,6 @@ class EventListItem extends React.Component {
 
     return (
       <Menu open={open} onClose={onClose} anchorEl={anchorEl}>
-        <MenuItem
-          onClick={() => {
-            // eslint-disable-next-line no-console
-            console.info("TODO: Implement entity silencing!");
-            onClose();
-          }}
-        >
-          Silence Entity
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            // eslint-disable-next-line no-console
-            console.info("TODO: Implement check silencing!");
-            onClose();
-          }}
-        >
-          Silence Check
-        </MenuItem>
         {event.check &&
           event.check.status !== 0 && (
             <MenuItem
