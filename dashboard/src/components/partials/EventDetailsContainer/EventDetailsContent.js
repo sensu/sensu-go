@@ -7,7 +7,7 @@ import Loader from "/components/Loader";
 import ButtonSet from "/components/ButtonSet";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
 import CheckResult from "./EventDetailsCheckResult";
-import Configuration from "./EventDetailsConfiguration";
+import Summary from "./EventDetailsSummary";
 import DeleteAction from "./EventDetailsDeleteAction";
 import ResolveAction from "./EventDetailsResolveAction";
 
@@ -33,20 +33,20 @@ class EventDetailsContainer extends React.PureComponent {
 
         check {
           ...EventDetailsCheckResult_check
-          ...EventDetailsConfiguration_check
+          ...EventDetailsSummary_check
         }
         entity {
           ...EventDetailsCheckResult_entity
           ...RelatedEntitiesCard_entity
-          ...EventDetailsConfiguration_entity
+          ...EventDetailsSummary_entity
         }
       }
 
       ${CheckResult.fragments.check}
       ${CheckResult.fragments.entity}
       ${RelatedEntitiesCard.fragments.entity}
-      ${Configuration.fragments.check}
-      ${Configuration.fragments.entity}
+      ${Summary.fragments.check}
+      ${Summary.fragments.entity}
       ${DeleteAction.fragments.event}
       ${ResolveAction.fragments.event}
     `,
@@ -98,7 +98,7 @@ class EventDetailsContainer extends React.PureComponent {
                   <RelatedEntitiesCard entity={event.entity} />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Configuration check={event.check} entity={event.entity} />
+                  <Summary check={event.check} entity={event.entity} />
                 </Grid>
               </Grid>
             </Content>
