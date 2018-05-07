@@ -25,17 +25,17 @@ var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 type entityImpl struct {
 	schema.EntityAliases
-	entityCtrl entityQuerier
-	eventCtrl  eventQuerier
+	entityQuerier entityQuerier
+	eventQuerier  eventQuerier
 }
 
 func newEntityImpl(store store.Store) *entityImpl {
-	entityCtrl := actions.NewEntityController(store)
-	eventCtrl := actions.NewEventController(store, nil)
+	entityQuerier := actions.NewEntityController(store)
+	eventQuerier := actions.NewEventController(store, nil)
 
 	return &entityImpl{
-		entityCtrl: entityCtrl,
-		eventCtrl:  eventCtrl,
+		entityQuerier: entityQuerier,
+		eventQuerier:  eventQuerier,
 	}
 }
 
@@ -71,13 +71,37 @@ func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	return &t, nil
 }
 
+// Events implements response to request for 'events' field.
+func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface{}, error) {
+	entity := p.Source.(*types.Entity)
+
+	// fetch
+	ctx := types.SetContextFromResource(p.Context, entity)
+	evs, err := r.eventQuerier.Query(ctx, entity.ID, "")
+	if err != nil {
+		return 0, err
+	}
+
+	// sort records
+	if p.Args.OrderBy == schema.EventsListOrders.SEVERITY {
+		sort.Sort(types.EventsBySeverity(evs))
+	} else {
+		sort.Sort(types.EventsByTimestamp(
+			evs,
+			p.Args.OrderBy == schema.EventsListOrders.NEWEST,
+		))
+	}
+
+	return evs, nil
+}
+
 // Related implements response to request for 'related' field.
 func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interface{}, error) {
 	entity := p.Source.(*types.Entity)
 
 	// fetch
 	ctx := types.SetContextFromResource(p.Context, entity)
-	entities, err := r.entityCtrl.Query(ctx)
+	entities, err := r.entityQuerier.Query(ctx)
 	if err != nil {
 		return []*types.Entity{}, err
 	}
@@ -126,7 +150,7 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 
 	// fetch
 	ctx := types.SetContextFromResource(p.Context, entity)
-	evs, err := r.eventCtrl.Query(ctx, entity.ID, "")
+	evs, err := r.eventQuerier.Query(ctx, entity.ID, "")
 	if err != nil {
 		return 0, err
 	}
