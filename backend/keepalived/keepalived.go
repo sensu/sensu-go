@@ -160,8 +160,10 @@ func (k *Keepalived) initFromStore() error {
 		}
 
 		// if another backend picked it up, it will be passing.
-		if event.Check.Status == 0 {
-			continue
+		if event.HasCheck() {
+			if event.Check.Status == 0 {
+				continue
+			}
 		}
 
 		// Recreate the monitor with a time offset calculated from the keepalive
