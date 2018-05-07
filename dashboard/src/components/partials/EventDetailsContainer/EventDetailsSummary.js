@@ -12,6 +12,7 @@ import Dictionary, {
 import RelativeDate from "/components/RelativeDate";
 import Monospaced from "/components/Monospaced";
 import Maybe from "/components/Maybe";
+import InlineLink from "/components/InlineLink";
 
 class EventDetailsSummary extends React.Component {
   static propTypes = {
@@ -22,11 +23,16 @@ class EventDetailsSummary extends React.Component {
   static fragments = {
     entity: gql`
       fragment EventDetailsSummary_entity on Entity {
-        name
-        class
+        ns: namespace {
+          org: organization
+          env: environment
+        }
         system {
           platform
         }
+
+        name
+        class
         lastSeen
         subscriptions
       }
@@ -44,7 +50,9 @@ class EventDetailsSummary extends React.Component {
   };
 
   render() {
-    const { entity, check } = this.props;
+    const { entity: entityProp, check } = this.props;
+    const { ns, ...entity } = entityProp;
+
     return (
       <Card>
         <CardContent>
@@ -75,7 +83,11 @@ class EventDetailsSummary extends React.Component {
           <Dictionary>
             <DictionaryEntry>
               <DictionaryKey>Entity</DictionaryKey>
-              <DictionaryValue>{entity.name}</DictionaryValue>
+              <DictionaryValue>
+                <InlineLink to={`/${ns.org}/${ns.env}/entities/${entity.name}`}>
+                  {entity.name}
+                </InlineLink>
+              </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Class</DictionaryKey>
