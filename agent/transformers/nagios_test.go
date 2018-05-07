@@ -43,6 +43,23 @@ func TestParseNagios(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "single perfdata metric with newline",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed: 12345,
+					Output:   "PING ok - Packet loss = 0% | percent_packet_loss=0\n",
+				},
+			},
+			want: NagiosList{
+				Nagios{
+					Label:     "percent_packet_loss",
+					Value:     0.0,
+					Timestamp: 12345,
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "multiple perfdata metrics",
 			event: &types.Event{
 				Check: &types.Check{

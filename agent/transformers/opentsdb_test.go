@@ -34,6 +34,28 @@ func TestParseOpenTSDB(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:   "standard opentsdb metric with whitespace",
+			output: "sys.cpu.user 1356998400 42.5 host=webserver01 cpu=0\n",
+			want: OpenTSDBList{
+				OpenTSDB{
+					Name: "sys.cpu.user",
+					TagSet: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "host",
+							Value: "webserver01",
+						},
+						&types.MetricTag{
+							Name:  "cpu",
+							Value: "0",
+						},
+					},
+					Timestamp: 1356998400,
+					Value:     42.5,
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name:   "timestamp with millisecond precision",
 			output: "sys.cpu.user 1356998400000 42.5 host=webserver01",
 			want: OpenTSDBList{
