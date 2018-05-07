@@ -108,9 +108,6 @@ class Preferences extends React.Component {
             <MenuItem onClick={this.handleThemeSelect("uchiwa")}>
               Uchiwa
             </MenuItem>
-            <MenuItem onClick={this.handleThemeSelect("bubblegum")}>
-              Bubblegum
-            </MenuItem>
             <MenuItem onClick={this.handleThemeSelect("dva")}>DVA</MenuItem>
           </Menu>
         </Paper>
