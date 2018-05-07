@@ -79,6 +79,8 @@ and yarn are now dependencies for building the backend.
 - Allow the InfluxDB handler to parse the Sensu metric for an InfluxDB field tag
 and measurement.
 - Removed organization and environment flags from create command.
+- Changed `metric_format` to `output_metric_format`.
+- Changed `metric_handlers` to `output_metric_handlers`.
 
 ### Fixed
 - Terminate processes gracefully in e2e tests, allowing ports to be reused.
