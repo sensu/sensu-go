@@ -24,6 +24,9 @@ func addToSilencedBy(id string, ids []string) []string {
 // supporting wildcard silenced entries (e.g. subscription:*)
 func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 	entries := []*types.Silenced{}
+	if !event.HasCheck() {
+		return nil
+	}
 
 	// Retrieve silenced entries using the entity subscription
 	entitySubscription := types.GetEntitySubscription(event.Entity.ID)
@@ -62,6 +65,9 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 // event and return a list of silenced entry IDs
 func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string {
 	silencedBy := []string{}
+	if !event.HasCheck() {
+		return silencedBy
+	}
 
 	// Loop through every silenced entries in order to determine if it applies to
 	// the given event
@@ -112,7 +118,7 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 }
 
 func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store store.Store) error {
-	if !event.IsResolution() {
+	if !event.HasCheck() || !event.IsResolution() {
 		return nil
 	}
 

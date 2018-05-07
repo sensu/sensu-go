@@ -16,6 +16,10 @@ func prepareEvent(a *Agent, event *types.Event) error {
 		return fmt.Errorf("an event must be provided")
 	}
 
+	if !event.HasCheck() {
+		return fmt.Errorf("check has not been instantiated for this event")
+	}
+
 	if event.Timestamp == 0 {
 		event.Timestamp = time.Now().Unix()
 	}
