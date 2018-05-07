@@ -32,14 +32,6 @@ class QuickNav extends React.Component {
         <QuickNavButton
           organization={organization}
           environment={environment}
-          Icon={DashboardIcon}
-          caption="Dashboard"
-          to=""
-          exact
-        />
-        <QuickNavButton
-          organization={organization}
-          environment={environment}
           Icon={EventIcon}
           caption="Events"
           to="events"
