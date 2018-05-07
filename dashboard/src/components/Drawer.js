@@ -170,13 +170,6 @@ class Drawer extends React.Component {
               render={({ match: { params } }) => (
                 <List>
                   <DrawerButton
-                    Icon={DashboardIcon}
-                    primary="Dashboard"
-                    component={Link}
-                    onClick={onToggle}
-                    to={linkPath(params, "")}
-                  />
-                  <DrawerButton
                     Icon={EventIcon}
                     primary="Events"
                     component={Link}
@@ -202,7 +195,6 @@ class Drawer extends React.Component {
             />
             <Divider />
             <List>
-              <DrawerButton Icon={SettingsIcon} primary="Settings" />
               <DrawerButton
                 Icon={WandIcon}
                 primary="Preferences"
@@ -214,7 +206,7 @@ class Drawer extends React.Component {
                 Icon={FeedbackIcon}
                 primary="Feedback"
                 component="a"
-                href="https://www.sensuapp.org"
+                href="https://github.com/sensu/sensu-go/issues"
               />
               <DrawerButton
                 Icon={LogoutIcon}
