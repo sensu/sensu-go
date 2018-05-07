@@ -25,7 +25,7 @@ import EnvironmentIcon from "/components/EnvironmentIcon";
 import DrawerButton from "/components/DrawerButton";
 import NamespaceSelector from "/components/NamespaceSelector";
 import Preferences from "/components/Preferences";
-import Loader from "/components/Loader";
+import Loader from "/components/util/Loader";
 
 import invalidateTokens from "/mutations/invalidateTokens";
 

@@ -24,9 +24,13 @@ import TableList, {
   TableListButton as Button,
 } from "/components/TableList";
 
+<<<<<<< HEAD
 import StatusMenu from "/components/partial/StatusMenu";
 
 import Loader from "/components/Loader";
+=======
+import Loader from "/components/util/Loader";
+>>>>>>> babba7c0... Move Loader component to src/components/util
 
 const styles = theme => ({
   root: {
