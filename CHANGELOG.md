@@ -7,6 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 ### Added
+- Add Ubuntu 18.04 repository
 - Support for managing mutators via sensuctl.
 - Added ability to sort events in web UI.
 - Add PUT support to APId for the various resource types.
