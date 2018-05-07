@@ -31,9 +31,10 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 	}
 
 	if handler.Mutator == "only_check_output" {
-		eventData := p.onlyCheckOutputMutator(event)
-
-		return eventData, nil
+		if event.HasCheck() {
+			eventData := p.onlyCheckOutputMutator(event)
+			return eventData, nil
+		}
 	}
 
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
