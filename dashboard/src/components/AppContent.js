@@ -9,6 +9,9 @@ const styles = theme => ({
     maxWidth: "100%",
     margin: "0 auto",
 
+    // Set a min-width to fix issues with `overflow: hidden` on child elements.
+    minWidth: 0,
+
     paddingTop: theme.spacing.unit * 2,
     [theme.breakpoints.up("md")]: {
       paddingTop: 0,

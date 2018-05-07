@@ -11,11 +11,10 @@ import { withStyles } from "material-ui/styles";
 
 import Typography from "material-ui/Typography";
 import { MenuItem } from "material-ui/Menu";
-import { ListItemText, ListItemIcon } from "material-ui/List";
+import { ListItemText } from "material-ui/List";
 import Checkbox from "material-ui/Checkbox";
 
 import EventsListItem from "/components/EventsListItem";
-import CheckStatusIcon from "/components/CheckStatusIcon";
 import resolveEvent from "/mutations/resolveEvent";
 import TableList, {
   TableListHeader,
@@ -25,62 +24,43 @@ import TableList, {
   TableListButton as Button,
 } from "/components/TableList";
 
+import StatusMenu from "/components/partial/StatusMenu";
+
 import Loader from "/components/Loader";
 
-const styles = theme => {
-  const toolbar = theme.mixins.toolbar;
-  const xsBrk = `${theme.breakpoints.up("xs")} and (orientation: landscape)`;
-  const smBrk = theme.breakpoints.up("sm");
-  const calcTopWithFallback = size => ({
-    top: `calc(${size}px + env(safe-area-inset-top))`,
-    fallbacks: [{ top: size }],
-  });
+const styles = theme => ({
+  root: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  headerButton: {
+    marginLeft: theme.spacing.unit / 2,
+    "&:first-child": {
+      marginLeft: theme.spacing.unit,
+    },
+  },
+  filterActions: {
+    display: "none",
+    [theme.breakpoints.up("sm")]: {
+      display: "flex",
+    },
+  },
+  // Remove padding from button container
+  checkbox: {
+    marginLeft: -11,
+    color: theme.palette.primary.contrastText,
+  },
+  hidden: {
+    display: "none",
+  },
+  grow: {
+    flex: "1 1 auto",
+  },
 
-  return {
-    root: {
-      marginTop: 16,
-      marginBottom: 16,
-    },
-    header: {
-      position: "sticky",
-      ...calcTopWithFallback(toolbar.minHeight),
-      [xsBrk]: {
-        ...calcTopWithFallback(toolbar[xsBrk].minHeight),
-      },
-      [smBrk]: {
-        ...calcTopWithFallback(toolbar[smBrk].minHeight),
-      },
-      color: theme.palette.primary.contrastText,
-    },
-    headerButton: {
-      marginLeft: theme.spacing.unit / 2,
-      "&:first-child": {
-        marginLeft: theme.spacing.unit,
-      },
-    },
-    filterActions: {
-      display: "none",
-      [theme.breakpoints.up("sm")]: {
-        display: "flex",
-      },
-    },
-    // Remove padding from button container
-    checkbox: {
-      marginLeft: -12,
-      color: theme.palette.primary.contrastText,
-    },
-    hidden: {
-      display: "none",
-    },
-    grow: {
-      flex: "1 1 auto",
-    },
-
-    tableBody: {
-      minHeight: 200,
-    },
-  };
-};
+  tableBody: {
+    minHeight: 200,
+  },
+});
 
 class EventsContainer extends React.Component {
   static propTypes = {
@@ -241,7 +221,7 @@ class EventsContainer extends React.Component {
 
     return (
       <TableList className={classes.root}>
-        <TableListHeader className={classes.header} active={someEventsSelected}>
+        <TableListHeader sticky active={someEventsSelected}>
           <Checkbox
             component="button"
             className={classes.checkbox}
@@ -289,39 +269,10 @@ class EventsContainer extends React.Component {
                 </MenuItem>
               ))}
             </TableListSelect>
-            <TableListSelect
+            <StatusMenu
               className={classes.headerButton}
-              label="Status"
               onChange={this.requeryStatus}
-            >
-              <MenuItem key="incident" value={"HasCheck && IsIncident"}>
-                <ListItemText primary="Incident" style={{ paddingLeft: 40 }} />
-              </MenuItem>
-              <MenuItem key="warning" value={[1]}>
-                <ListItemIcon>
-                  <CheckStatusIcon statusCode={1} />
-                </ListItemIcon>
-                <ListItemText primary="Warning" />
-              </MenuItem>
-              <MenuItem key="critical" value={[2]}>
-                <ListItemIcon>
-                  <CheckStatusIcon statusCode={2} />
-                </ListItemIcon>
-                <ListItemText primary="Critical" />
-              </MenuItem>
-              <MenuItem key="unknown" value={[3]}>
-                <ListItemIcon>
-                  <CheckStatusIcon statusCode={3} />
-                </ListItemIcon>
-                <ListItemText primary="Unknown" />
-              </MenuItem>
-              <MenuItem key="passing" value={[0]}>
-                <ListItemIcon>
-                  <CheckStatusIcon statusCode={0} />
-                </ListItemIcon>
-                <ListItemText primary="Passing" />
-              </MenuItem>
-            </TableListSelect>
+            />
             <TableListSelect
               className={classes.headerButton}
               label="Sort"
@@ -350,7 +301,7 @@ class EventsContainer extends React.Component {
               <EventsListItem
                 key={event.id}
                 event={event}
-                onChange={this.selectCheckbox(event.id)}
+                onClickSelect={this.selectCheckbox(event.id)}
                 checked={Boolean(rowState[event.id])}
               />
             ))}
