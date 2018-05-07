@@ -68,7 +68,7 @@ class EventListItem extends React.Component {
 
   resolve = () => {
     const { client, event } = this.props;
-    resolveEvent(client, event.id);
+    resolveEvent(client, event);
   };
 
   renderMenu = ({ open, onClose, anchorEl }) => {
