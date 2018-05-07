@@ -5,7 +5,6 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import AppWrapper from "/components/AppWrapper";
 import NotFoundView from "/components/views/NotFoundView";
 
-import DashboardContent from "./DashboardContent";
 import ChecksContent from "./ChecksContent";
 import EntitiesContent from "./EntitiesContent";
 import EventsContent from "./EventsContent";
@@ -26,7 +25,6 @@ class EnvironmentView extends React.PureComponent {
         environment={match.params.environment}
       >
         <Switch>
-          <Route exact path={match.path} component={DashboardContent} />
           <Route
             exact
             path={`${match.path}/checks`}
@@ -50,7 +48,7 @@ class EnvironmentView extends React.PureComponent {
             path={`${match.path}/entities/:name`}
             component={EntityDetailsContent}
           />
-          <Redirect exact from={`${match.path}/dashboard`} to={match.path} />
+          <Redirect exact from={match.path} to={`${match.url}/events`} />
           <Route component={NotFoundView} />
         </Switch>
       </AppWrapper>
