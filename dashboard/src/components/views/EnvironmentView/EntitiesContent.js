@@ -48,6 +48,7 @@ class EntitiesContent extends React.PureComponent {
     query EnvironmentViewEntitiesContentQuery(
       $environment: String!
       $organization: String!
+      $sort: EntityListOrder = ID
     ) {
       environment(organization: $organization, environment: $environment) {
         ...EntitiesList_environment
