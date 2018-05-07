@@ -36,15 +36,11 @@ class EntitiesList extends React.PureComponent {
     // eslint-disable-next-line react/no-unused-prop-types
     environment: PropTypes.object,
     loading: PropTypes.bool,
-    onChangeParams: PropTypes.func,
-    params: PropTypes.object,
   };
 
   static defaultProps = {
     environment: null,
     loading: false,
-    onChangeParams: () => {},
-    params: {},
   };
 
   static fragments = {
@@ -54,13 +50,10 @@ class EntitiesList extends React.PureComponent {
           nodes {
             ...EntitiesListItem_entity
           }
-
-          ...EntitiesListHeader_entityConnection
         }
       }
 
       ${EntitiesListItem.fragments.entity}
-      ${EntitiesListHeader.fragments.entityConnection}
     `,
   };
 
@@ -98,18 +91,13 @@ class EntitiesList extends React.PureComponent {
     });
 
   render() {
-    const { onChangeParams, params } = this.props;
-
     const entities = getEntities(this.props);
 
     return (
       <TableList>
         <EntitiesListHeader
-          entities={entities}
           onClickSelect={this._handleClickHeaderSelect}
           selectedCount={this.state.selectedIds.length}
-          params={params}
-          onChangeParams={onChangeParams}
         />
         <TableListBody>
           {!this.props.loading &&

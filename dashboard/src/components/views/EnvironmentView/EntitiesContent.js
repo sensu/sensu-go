@@ -38,63 +38,10 @@ const Title = withStyles(theme => ({
   },
 }))(props => <Typography {...props} variant="headline" />);
 
-const queryVars = props => {
-  const { match, location } = props;
-  const query = new URLSearchParams(location.search);
-  const { environment, organization } = match.params;
-
-  const before = query.get("before");
-  const after = query.get("after");
-  const count = query.get("count") || 3;
-
-  const variables = { environment, organization };
-
-  if (before) {
-    variables.before = before;
-    variables.last = count;
-  } else {
-    variables.after = after;
-    variables.first = count;
-  }
-
-  return variables;
-};
-
 class EntitiesContent extends React.PureComponent {
   static propTypes = {
     // eslint-disable-next-line react/no-unused-prop-types
     match: PropTypes.object.isRequired,
-    location: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired,
-  };
-
-  static query = gql`
-    query EnvironmentViewEntitiesContentQuery(
-      $environment: String!
-      $organization: String!
-    ) {
-      environment(organization: $organization, environment: $environment) {
-        ...EntitiesList_environment
-      }
-    }
-
-    ${EntitiesList.fragments.environment}
-  `;
-
-  _handleChangeParams = params => {
-    const { location, history } = this.props;
-    const search = new URLSearchParams(location.search);
-
-    Object.keys(params).forEach(key => {
-      const val = params[key];
-      if (val === undefined) {
-        search.delete(key);
-      } else {
-        search.set(key, val);
-      }
-    });
-
-    history.push(`${location.pathname}?${search.toString()}`);
   };
 
   static query = gql`
@@ -112,7 +59,7 @@ class EntitiesContent extends React.PureComponent {
 
   render() {
     return (
-      <Query query={EntitiesContent.query} variables={queryVars(this.props)}>
+      <Query query={EntitiesContent.query} variables={this.props.match.params}>
         {({ data: { environment } = {}, loading, error, refetch }) => {
           // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;
@@ -128,7 +75,6 @@ class EntitiesContent extends React.PureComponent {
                 loading={loading}
                 environment={environment}
                 refetch={refetch}
-                onChangeParams={this._handleChangeParams}
               />
             </AppContent>
           );
