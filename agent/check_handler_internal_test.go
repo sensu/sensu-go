@@ -99,8 +99,8 @@ func TestExecuteCheck(t *testing.T) {
 	assert.EqualValues(int32(2), event.Check.Status)
 
 	checkConfig.Command = truePath
-	checkConfig.MetricHandlers = nil
-	checkConfig.MetricFormat = ""
+	checkConfig.OutputMetricHandlers = nil
+	checkConfig.OutputMetricFormat = ""
 
 	agent.executeCheck(request)
 
@@ -111,7 +111,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
 
-	checkConfig.MetricFormat = types.GraphiteMetricFormat
+	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
 
 	agent.executeCheck(request)
 
@@ -149,7 +149,7 @@ func TestExtractMetrics(t *testing.T) {
 		expectedMetrics []*types.MetricPoint
 	}{
 		{
-			name: "invalid metric format",
+			name: "invalid output metric format",
 			event: &types.Event{
 				Check: &types.Check{
 					Output: "metric.value 1 123456789",
@@ -165,7 +165,7 @@ func TestExtractMetrics(t *testing.T) {
 					Output: "metric.value 1 123456789",
 				},
 			},
-			metricFormat: types.GraphiteMetricFormat,
+			metricFormat: types.GraphiteOutputMetricFormat,
 			expectedMetrics: []*types.MetricPoint{
 				{
 					Name:      "metric.value",
@@ -182,7 +182,7 @@ func TestExtractMetrics(t *testing.T) {
 					Output: "metric.value 1 foo",
 				},
 			},
-			metricFormat:    types.GraphiteMetricFormat,
+			metricFormat:    types.GraphiteOutputMetricFormat,
 			expectedMetrics: nil,
 		},
 		{
@@ -193,7 +193,7 @@ func TestExtractMetrics(t *testing.T) {
 					Output:   "PING ok - Packet loss = 0% | percent_packet_loss=0",
 				},
 			},
-			metricFormat: types.NagiosMetricFormat,
+			metricFormat: types.NagiosOutputMetricFormat,
 			expectedMetrics: []*types.MetricPoint{
 				{
 					Name:      "percent_packet_loss",
@@ -210,14 +210,14 @@ func TestExtractMetrics(t *testing.T) {
 					Output: "PING ok - Packet loss = 0%",
 				},
 			},
-			metricFormat:    types.NagiosMetricFormat,
+			metricFormat:    types.NagiosOutputMetricFormat,
 			expectedMetrics: nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.event.Check.MetricFormat = tc.metricFormat
+			tc.event.Check.OutputMetricFormat = tc.metricFormat
 			metrics := extractMetrics(tc.event)
 			assert.Equal(tc.expectedMetrics, metrics)
 		})

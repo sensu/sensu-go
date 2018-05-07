@@ -11,7 +11,7 @@ import (
 // GraphiteList contains a list of Graphite values
 type GraphiteList []Graphite
 
-// Graphite contains values of graphite plain text metric format
+// Graphite contains values of graphite plain text output metric format
 type Graphite struct {
 	Path      string
 	Value     float64

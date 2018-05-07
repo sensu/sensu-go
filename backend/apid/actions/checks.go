@@ -29,8 +29,8 @@ var checkConfigUpdateFields = []string{
 	"Timeout",
 	"Ttl",
 	"ProxyRequests",
-	"MetricFormat",
-	"MetricHandlers",
+	"OutputMetricFormat",
+	"OutputMetricHandlers",
 }
 
 var (

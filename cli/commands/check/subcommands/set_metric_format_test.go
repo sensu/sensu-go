@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestSetMetricFormatCommand(t *testing.T) {
+func TestSetOutputMetricFormatCommand(t *testing.T) {
 	testCases := []struct {
 		testName       string
 		args           []string
@@ -24,7 +24,7 @@ func TestSetMetricFormatCommand(t *testing.T) {
 		{"fetch error", []string{"checky", "foo"}, fmt.Errorf("error"), nil, "", true},
 		{"update error", []string{"checky", "bar"}, nil, fmt.Errorf("error"), "", true},
 		{"invalid input", []string{"checky"}, nil, nil, "", true},
-		{"valid input", []string{"checky", types.GraphiteMetricFormat}, nil, nil, "Updated", false},
+		{"valid input", []string{"checky", types.GraphiteOutputMetricFormat}, nil, nil, "Updated", false},
 	}
 
 	for _, tc := range testCases {
@@ -48,7 +48,7 @@ func TestSetMetricFormatCommand(t *testing.T) {
 				mock.Anything,
 			).Return(tc.updateResponse)
 
-			cmd := SetMetricFormatCommand(cli)
+			cmd := SetOutputMetricFormatCommand(cli)
 			out, err := test.RunCmd(cmd, tc.args)
 			if tc.expectError {
 				assert.Error(t, err)

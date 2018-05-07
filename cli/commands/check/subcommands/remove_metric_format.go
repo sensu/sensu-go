@@ -8,12 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RemoveMetricFormatCommand adds a command that allows a user to remove the
-// metric format of a check
-func RemoveMetricFormatCommand(cli *cli.SensuCli) *cobra.Command {
+// RemoveOutputMetricFormatCommand adds a command that allows a user to remove the
+// output metric format of a check
+func RemoveOutputMetricFormatCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "remove-metric-format [NAME]",
-		Short:        "removes metric format from a check",
+		Use:          "remove-output-metric-format [NAME]",
+		Short:        "removes output metric format from a check",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
@@ -26,7 +26,7 @@ func RemoveMetricFormatCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			check.MetricFormat = ""
+			check.OutputMetricFormat = ""
 
 			if err := check.Validate(); err != nil {
 				return err

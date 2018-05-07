@@ -11,7 +11,7 @@ import (
 // InfluxList contains a list of Influx values
 type InfluxList []Influx
 
-// Influx contains values of influx db line metric format
+// Influx contains values of influx db line output metric format
 type Influx struct {
 	Measurement string
 	TagSet      []*types.MetricTag

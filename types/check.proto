@@ -112,13 +112,13 @@ message CheckConfig {
   // RoundRobin enables round-robin scheduling if set true.
   bool round_robin = 21;
 
-  // MetricFormat is the metric protocol that the check's output will be
+  // OutputOutputMetricFormat is the metric protocol that the check's output will be
   // expected to follow in order to be extracted.
-  string metric_format = 22;
+  string output_metric_format = 22 [(gogoproto.jsontag) = "output_metric_format"];
 
-  // MetricHandlers is the list of event handlers that will respond to metrics
+  // OutputOutputMetricHandlers is the list of event handlers that will respond to metrics
   // that have been extracted from the check.
-  repeated string metric_handlers = 23 [(gogoproto.jsontag) = "metric_handlers"];
+  repeated string output_metric_handlers = 23 [(gogoproto.jsontag) = "output_metric_handlers"];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -226,13 +226,13 @@ message Check {
   // Hooks describes the results of multiple hooks; if event is associated to hook execution.
   repeated Hook hooks = 34 [(gogoproto.nullable) = true];
 
-  // MetricFormat is the metric protocol that the check's output will be
+  // OutputOutputMetricFormat is the metric protocol that the check's output will be
   // expected to follow in order to be extracted.
-  string metric_format = 35;
+  string output_metric_format = 35 [(gogoproto.jsontag) = "output_metric_format"];
 
-  // MetricHandlers is the list of event handlers that will respond to metrics
+  // OutputOutputMetricHandlers is the list of event handlers that will respond to metrics
   // that have been extracted from the check.
-  repeated string metric_handlers = 36 [(gogoproto.jsontag) = "metric_handlers"];
+  repeated string output_metric_handlers = 36 [(gogoproto.jsontag) = "output_metric_handlers"];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];

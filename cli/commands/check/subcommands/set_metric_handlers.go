@@ -9,11 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// SetMetricHandlersCommand updates the metric handlers of a check
-func SetMetricHandlersCommand(cli *cli.SensuCli) *cobra.Command {
+// SetOutputMetricHandlersCommand updates the output metric handlers of a check
+func SetOutputMetricHandlersCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "set-metric-handlers [NAME] [VALUE]",
-		Short:        "set metric handlers of a check",
+		Use:          "set-output-metric-handlers [NAME] [VALUE]",
+		Short:        "set output metric handlers of a check",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
@@ -28,7 +28,7 @@ func SetMetricHandlersCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			check.MetricHandlers = helpers.SafeSplitCSV(value)
+			check.OutputMetricHandlers = helpers.SafeSplitCSV(value)
 
 			if err := check.Validate(); err != nil {
 				return err

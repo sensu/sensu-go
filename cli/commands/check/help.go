@@ -40,8 +40,8 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		// cannot remove subscriptions, required field
 		subcommands.RemoveTTLCommand(cli),
 		subcommands.RemoveTimeoutCommand(cli),
-		subcommands.RemoveMetricHandlersCommand(cli),
-		subcommands.RemoveMetricFormatCommand(cli),
+		subcommands.RemoveOutputMetricHandlersCommand(cli),
+		subcommands.RemoveOutputMetricFormatCommand(cli),
 
 		// Set commands (update fields)
 		subcommands.SetCheckHooksCommand(cli),
@@ -60,8 +60,8 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		subcommands.SetSubscriptionsCommand(cli),
 		subcommands.SetTTLCommand(cli),
 		subcommands.SetTimeoutCommand(cli),
-		subcommands.SetMetricHandlersCommand(cli),
-		subcommands.SetMetricFormatCommand(cli),
+		subcommands.SetOutputMetricHandlersCommand(cli),
+		subcommands.SetOutputMetricFormatCommand(cli),
 	)
 
 	return cmd

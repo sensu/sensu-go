@@ -116,16 +116,16 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics
-	if check.MetricFormat != "" || len(check.MetricHandlers) != 0 {
+	if check.OutputMetricFormat != "" || len(check.OutputMetricHandlers) != 0 {
 		event.Metrics = &types.Metrics{}
 	}
 
-	if check.MetricFormat != "" {
+	if check.OutputMetricFormat != "" {
 		event.Metrics.Points = extractMetrics(event)
 	}
 
-	if len(check.MetricHandlers) != 0 {
-		event.Metrics.Handlers = check.MetricHandlers
+	if len(check.OutputMetricHandlers) != 0 {
+		event.Metrics.Handlers = check.OutputMetricHandlers
 	}
 
 	msg, err := json.Marshal(event)
@@ -197,14 +197,14 @@ func (a *Agent) sendFailure(event *types.Event, err error) {
 func extractMetrics(event *types.Event) []*types.MetricPoint {
 	var transformer Transformer
 	var err error
-	switch event.Check.MetricFormat {
-	case types.GraphiteMetricFormat:
+	switch event.Check.OutputMetricFormat {
+	case types.GraphiteOutputMetricFormat:
 		transformer, err = transformers.ParseGraphite(event.Check.Output)
-	case types.InfluxDBMetricFormat:
+	case types.InfluxDBOutputMetricFormat:
 		transformer, err = transformers.ParseInflux(event.Check.Output)
-	case types.NagiosMetricFormat:
+	case types.NagiosOutputMetricFormat:
 		transformer, err = transformers.ParseNagios(event)
-	case types.OpenTSDBMetricFormat:
+	case types.OpenTSDBOutputMetricFormat:
 		transformer, err = transformers.ParseOpenTSDB(event.Check.Output)
 	}
 
@@ -213,7 +213,7 @@ func extractMetrics(event *types.Event) []*types.MetricPoint {
 		return nil
 	}
 	if transformer == nil {
-		logger.WithField("format", event.Check.MetricFormat).Error("metric format is not supported")
+		logger.WithField("format", event.Check.OutputMetricFormat).Error("output metric format is not supported")
 		return nil
 	}
 
