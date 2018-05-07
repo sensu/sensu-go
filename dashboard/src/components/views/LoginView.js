@@ -22,7 +22,7 @@ class LoginView extends React.Component {
 
   static styles = theme => ({
     "@global html": {
-      background: theme.palette.primary.main,
+      background: theme.palette.background.main,
     },
     loginCard: {
       margin: "0 auto",

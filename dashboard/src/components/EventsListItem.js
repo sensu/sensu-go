@@ -76,24 +76,6 @@ class EventListItem extends React.Component {
 
     return (
       <Menu open={open} onClose={onClose} anchorEl={anchorEl}>
-        <MenuItem
-          onClick={() => {
-            // eslint-disable-next-line no-console
-            console.info("TODO: Implement entity silencing!");
-            onClose();
-          }}
-        >
-          Silence Entity
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            // eslint-disable-next-line no-console
-            console.info("TODO: Implement check silencing!");
-            onClose();
-          }}
-        >
-          Silence Check
-        </MenuItem>
         {event.check &&
           event.check.status !== 0 && (
             <MenuItem
@@ -132,11 +114,13 @@ class EventListItem extends React.Component {
         renderMenu={this.renderMenu}
       >
         <div className={classes.timeHolder}>
-          Last occurred{" "}
-          <strong>
-            &nbsp;<RelativeDate dateTime={timestamp} />&nbsp;
-          </strong>{" "}
-          and exited with status <strong>&nbsp;{check.status}</strong>.
+          <p>
+            Last occurred{" "}
+            <strong>
+              <RelativeDate dateTime={timestamp} />
+            </strong>{" "}
+            and exited with status <strong>{check.status}</strong>.
+          </p>
         </div>
         <Typography
           component="div"

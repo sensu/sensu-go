@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import classNames from "classnames";
 
 import { withStyles } from "material-ui/styles";
-import DashboardIcon from "material-ui-icons/Dashboard";
 import EventIcon from "material-ui-icons/Notifications";
 import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
@@ -29,14 +28,6 @@ class QuickNav extends React.Component {
 
     return (
       <div className={classNames(classes.quickNavContainer, className)}>
-        <QuickNavButton
-          organization={organization}
-          environment={environment}
-          Icon={DashboardIcon}
-          caption="Dashboard"
-          to=""
-          exact
-        />
         <QuickNavButton
           organization={organization}
           environment={environment}
