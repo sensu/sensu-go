@@ -13,8 +13,6 @@ import { withStyles } from "material-ui/styles";
 import EntityIcon from "material-ui-icons/DesktopMac";
 import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
 import EventIcon from "material-ui-icons/Notifications";
-import DashboardIcon from "material-ui-icons/Dashboard";
-import SettingsIcon from "material-ui-icons/Settings";
 import FeedbackIcon from "material-ui-icons/Feedback";
 import LogoutIcon from "material-ui-icons/ExitToApp";
 import IconButton from "material-ui/IconButton";
