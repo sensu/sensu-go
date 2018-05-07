@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classnames from "classnames";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import { withStyles } from "material-ui/styles";
@@ -36,21 +37,23 @@ class EventsContent extends React.Component {
     },
     searchBox: {
       width: "100%",
-      marginLeft: theme.spacing.unit,
       [theme.breakpoints.up("sm")]: {
+        marginLeft: theme.spacing.unit,
         width: "auto",
       },
     },
     title: {
       alignSelf: "flex-end",
-      display: "none",
       flexGrow: 1,
-      [theme.breakpoints.up("sm")]: {
-        display: "flex",
-      },
     },
     container: {
       marginTop: 10,
+    },
+    hiddenSmall: {
+      display: "none",
+      [theme.breakpoints.up("sm")]: {
+        display: "flex",
+      },
     },
   });
 
@@ -118,10 +121,18 @@ class EventsContent extends React.Component {
           return (
             <AppContent>
               <Content className={classes.headline}>
-                <Typography className={classes.title} variant="headline">
+                <Typography
+                  className={classnames(classes.title, classes.hiddenSmall)}
+                  variant="headline"
+                >
                   Events
                 </Typography>
-                <Button onClick={() => refetch()}>reload</Button>
+                <Button
+                  className={classes.hiddenSmall}
+                  onClick={() => refetch()}
+                >
+                  reload
+                </Button>
                 <SearchBox
                   className={classes.searchBox}
                   onChange={this.requerySearchBox}

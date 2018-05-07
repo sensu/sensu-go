@@ -114,11 +114,13 @@ class EventListItem extends React.Component {
         renderMenu={this.renderMenu}
       >
         <div className={classes.timeHolder}>
-          Last occurred{" "}
-          <strong>
-            &nbsp;<RelativeDate dateTime={timestamp} />&nbsp;
-          </strong>{" "}
-          and exited with status <strong>&nbsp;{check.status}</strong>.
+          <p>
+            Last occurred{" "}
+            <strong>
+              <RelativeDate dateTime={timestamp} />
+            </strong>{" "}
+            and exited with status <strong>{check.status}</strong>.
+          </p>
         </div>
         <Typography
           component="div"
