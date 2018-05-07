@@ -6,6 +6,8 @@
     "node": ">= 8"
   },
   "dependencies": {
+    "@10xjs/date-input-controller": "^0.1.5",
+    "@10xjs/form": "^0.1.5",
     "apollo-cache-inmemory": "^1.1.12",
     "apollo-client": "^2.2.8",
     "apollo-link": "^1.2.1",

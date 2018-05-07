@@ -1,0 +1,31 @@
+import * as React from "react";
+import PropTypes from "prop-types";
+import { withStyles } from "material-ui/styles";
+
+const styles = theme => ({
+  root: {
+    whiteSpace: "nowrap",
+    margin: "0 1px",
+    padding: `${2 / 16}em ${4 / 16}em`,
+    borderRadius: `${5 / 16}em`,
+    fontSize: `${14 / 16}em`,
+    fontFamily: theme.typography.monospace.fontFamily,
+    fontWeight: 500,
+    userSelect: "text",
+    backgroundColor: theme.palette.divider,
+    color: theme.palette.secondary.dark,
+  },
+});
+
+class Code extends React.PureComponent {
+  static propTypes = {
+    classes: PropTypes.object.isRequired,
+  };
+
+  render() {
+    const { classes, ...props } = this.props;
+    return <code {...props} className={classes.root} />;
+  }
+}
+
+export default withStyles(styles)(Code);

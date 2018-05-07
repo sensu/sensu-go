@@ -12,6 +12,7 @@ const defaults = {
     // https://developer.apple.com/ios/human-interface-guidelines/visual-design/typography/
     const title = `"SF Pro Display", "Roboto", "Helvetica", "Arial", sans-serif`;
     const body = `"SF Pro Text", "Roboto", "Helvetica", "Arial", sans-serif`;
+    const mono = `"SFMono-Regular", Consolas, "Liberation Mono", Menlo,Courier, monospace`;
 
     return {
       fontFamily: title,
@@ -24,6 +25,9 @@ const defaults = {
       button: {
         fontFamily: title,
         fontWeight: "bold",
+      },
+      monospace: {
+        fontFamily: mono,
       },
     };
   },
