@@ -1,7 +1,6 @@
 package check
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -13,7 +12,8 @@ import (
 )
 
 const (
-	stdinDefault = "false"
+	stdinDefault      = "false"
+	roundRobinDefault = "false"
 )
 
 type checkOpts struct {
@@ -35,6 +35,7 @@ type checkOpts struct {
 	LowFlapThreshold     string `survey:"low-flap-threshold"`
 	OutputMetricFormat   string `survey:"output-metric-format"`
 	OutputMetricHandlers string `survey:"output-metric-handlers"`
+	RoundRobin           string `survey:"round-robin"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -59,6 +60,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.LowFlapThreshold = strconv.Itoa(int(check.LowFlapThreshold))
 	opts.OutputMetricFormat = check.OutputMetricFormat
 	opts.OutputMetricHandlers = strings.Join(check.OutputMetricHandlers, ",")
+	opts.RoundRobin = roundRobinDefault
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -78,6 +80,8 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.LowFlapThreshold, _ = flags.GetString("low-flap-threshold")
 	opts.OutputMetricFormat, _ = flags.GetString("output-metric-format")
 	opts.OutputMetricHandlers, _ = flags.GetString("output-metric-handlers")
+	roundRobinBool, _ := flags.GetBool("round-robin")
+	opts.RoundRobin = strconv.FormatBool(roundRobinBool)
 
 	if org, _ := flags.GetString("organization"); org != "" {
 		opts.Org = org
@@ -196,10 +200,8 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Default: "true",
 			},
 			Validate: func(val interface{}) error {
-				if str := val.(string); str != "false" && str != "true" {
-					return fmt.Errorf("Please enter either true or false")
-				}
-				return nil
+				_, err := strconv.ParseBool(val.(string))
+				return err
 			},
 		},
 		{
@@ -255,6 +257,18 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.OutputMetricHandlers,
 			},
 		},
+		{
+			Name: "round-robin",
+			Prompt: &survey.Input{
+				Message: "Round Robin",
+				Default: opts.RoundRobin,
+				Help:    "if true, schedule this check in a round-robin fashion",
+			},
+			Validate: func(val interface{}) error {
+				_, err := strconv.ParseBool(val.(string))
+				return err
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -277,7 +291,7 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
-	check.Publish = opts.Publish == "true"
+	check.Publish, _ = strconv.ParseBool(opts.Publish)
 	check.ProxyEntityID = opts.ProxyEntityID
 	check.Stdin = stdin
 	check.Timeout = uint32(timeout)
@@ -286,4 +300,5 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.LowFlapThreshold = uint32(lowFlap)
 	check.OutputMetricFormat = opts.OutputMetricFormat
 	check.OutputMetricHandlers = helpers.SafeSplitCSV(opts.OutputMetricHandlers)
+	check.RoundRobin, _ = strconv.ParseBool(opts.RoundRobin)
 }

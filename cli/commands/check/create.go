@@ -97,6 +97,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().String("low-flap-threshold", "", "flap detection low threshold (percent state change) for the check")
 	cmd.Flags().String("output-metric-handlers", "", "comma separated list of handlers to set on output check metrics")
 	cmd.Flags().String("output-metric-format", "", "the output metric format to be used to parse check output for metric extraction")
+	cmd.Flags().Bool("round-robin", false, "enable round-robin scheduling")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
