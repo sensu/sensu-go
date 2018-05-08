@@ -14,7 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add logging around the Sensu event pipeline
 
 ### Fixed
-
+- Fix handler validation routine
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
