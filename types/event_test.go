@@ -187,9 +187,10 @@ func TestEventIsSilenced(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := FixtureEvent("entity1", "check1")
-			tc.event.Check.Silenced = tc.silenced
-			silenced := event.IsSilenced()
+			if tc.event.Check != nil {
+				tc.event.Check.Silenced = tc.silenced
+			}
+			silenced := tc.event.IsSilenced()
 			assert.Equal(t, tc.expected, silenced)
 		})
 	}
