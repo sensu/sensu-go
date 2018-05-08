@@ -7,6 +7,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+
+### Changed
+- Add logging around the Sensu event pipeline
+
+### Fixed
+
+
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
 - Add Ubuntu 18.04 repository
