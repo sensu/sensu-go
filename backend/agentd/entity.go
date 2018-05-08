@@ -23,7 +23,7 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
 	// Verify if a proxy entity id, representing a proxy entity, is defined in the check
-	if event.Check.ProxyEntityID != "" {
+	if event.HasCheck() && event.Check.ProxyEntityID != "" {
 		// Query the store for an entity using the given proxy entity ID
 		entity, err := s.GetEntityByID(ctx, event.Check.ProxyEntityID)
 		if err != nil {

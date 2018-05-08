@@ -39,6 +39,10 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 func ParseNagios(event *types.Event) (NagiosList, error) {
 	nagiosList := NagiosList{}
 
+	if !event.HasCheck() {
+		return nil, errors.New("event must contain a check to parse and extract metrics")
+	}
+
 	// Ensure we have some perfdata metrics and not only human-readable text
 	output := strings.Split(event.Check.Output, "|")
 	if len(output) != 2 {

@@ -95,7 +95,10 @@ func (p *Pipelined) jsonMutator(event *types.Event) ([]byte, error) {
 // mutator can probably be removed/replaced when 2.0 has extension
 // support.
 func (p *Pipelined) onlyCheckOutputMutator(event *types.Event) []byte {
-	return []byte(event.Check.Output)
+	if event.HasCheck() {
+		return []byte(event.Check.Output)
+	}
+	return nil
 }
 
 // pipeMutator fork/executes a child process for a Sensu mutator
