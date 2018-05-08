@@ -11,10 +11,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 
 ### Changed
-- Add logging around the Sensu event pipeline
+- Add logging around the Sensu event pipeline.
 
 ### Fixed
-
+- Prevent panic when verifying if a metric event is silenced.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added

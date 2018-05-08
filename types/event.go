@@ -134,6 +134,10 @@ func (e *Event) IsResolution() bool {
 
 // IsSilenced determines if an event has any silenced entries
 func (e *Event) IsSilenced() bool {
+	if e.Check == nil {
+		return false
+	}
+
 	return len(e.Check.Silenced) > 0
 }
 
