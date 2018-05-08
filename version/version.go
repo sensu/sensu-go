@@ -15,13 +15,15 @@ var (
 	Version = ""
 
 	// PreReleaseIdentifier stores the pre-release identifier of the current
-	// build (eg. the 2 in beta-2)
+	// build (e.g. the 2 in beta-2)
 	PreReleaseIdentifier string
 
-	// BuildDate stores the timestamp of the build (e.g. 2017-07-31T13:11:15-0700)
+	// BuildDate stores the timestamp of the build
+	// (e.g. 2017-07-31T13:11:15-0700)
 	BuildDate string
 
-	// BuildSHA stores the git sha of the build (e.g. 8673bed0a9705083987b9ecbbc1cc0758df13dd2)
+	// BuildSHA stores the git sha of the build
+	// (e.g. 8673bed0a9705083987b9ecbbc1cc0758df13dd2)
 	BuildSHA string
 )
 
@@ -94,7 +96,7 @@ func ParseBuildEnv(env BuildEnv) (string, BuildType) {
 
 // Iteration will output an iteration number based on what type of build the git
 // sha represents and the ci platform it is running on.
-// (ex: the 1 in 2.0.0-alpha.17-1)
+// (e.g. the 1 in 2.0.0-alpha.17-1)
 func Iteration(tag string, bt BuildType) (string, error) {
 	if bt == Nightly {
 		if bi := os.Getenv("SENSU_BUILD_ITERATION"); bi != "" {
@@ -111,7 +113,7 @@ func Iteration(tag string, bt BuildType) (string, error) {
 }
 
 // GetPrereleaseVersion will output the version of a prerelease from its tag
-// (ex: "17" from tag "2.0.0-alpha.17")
+// (e.g. "17" from tag "2.0.0-alpha.17")
 func GetPrereleaseVersion(tag string, bt BuildType) (string, error) {
 	switch bt {
 	case Alpha, Beta, RC:
@@ -131,8 +133,8 @@ func GetPrereleaseVersion(tag string, bt BuildType) (string, error) {
 	}
 }
 
-// GetBaseVersion will output only the major, minor, and patch #s with dots.
-// (ex: "2.0.1")
+// GetBaseVersion will output the major, minor, and patch #s with dots.
+// (e.g. "2.0.1")
 func GetBaseVersion(tag string, bt BuildType) (string, error) {
 	baseVersion := versionRE.FindString(tag)
 	if baseVersion == "" {
@@ -142,7 +144,7 @@ func GetBaseVersion(tag string, bt BuildType) (string, error) {
 }
 
 // GetVersion will output the version of the build (without iteration)
-// (ex: "2.0.0-alpha.17")
+// (e.g. "2.0.0-alpha.17")
 func GetVersion(tag string, bt BuildType) (string, error) {
 	baseVersion, err := GetBaseVersion(tag, bt)
 	if err != nil {
@@ -171,7 +173,7 @@ func GetVersion(tag string, bt BuildType) (string, error) {
 }
 
 // FullVersion will output the version of the build (with iteration)
-// (ex: "2.0.0-alpha.17-1")
+// (e.g. "2.0.0-alpha.17-1")
 func FullVersion(tag string, bt BuildType) (string, error) {
 	it, err := Iteration(tag, bt)
 	if err != nil {

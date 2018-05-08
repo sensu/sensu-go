@@ -204,27 +204,6 @@ func TestGetVersion(t *testing.T) {
 			bt:  Nightly,
 			exp: "2.0.0-nightly",
 		},
-		{
-			// nightly build with env var tag
-			tag: "2.0.0",
-			bt:  Stable,
-			// TODO the env is not being parsed anywhere
-			env: map[string]string{
-				"TRAVIS":              "true",
-				"TRAVIS_BUILD_NUMBER": "42",
-			},
-			exp: "2.0.0",
-		},
-		{
-			tag: "2.0.0",
-			bt:  Stable,
-			// TODO the env is not being parsed anywhere
-			env: map[string]string{
-				"APPVEYOR":              "true",
-				"APPVEYOR_BUILD_NUMBER": "666",
-			},
-			exp: "2.0.0",
-		},
 	}
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {

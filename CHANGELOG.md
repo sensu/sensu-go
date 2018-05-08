@@ -34,6 +34,7 @@ invalid address or is stopped due to any other error.
 - Fix a bug where environments could not be created with sensuctl create
 - StatsD listener on Windows is functional
 - Add version output for dev and nightly builds (#1320).
+- Improve git version detection by directly querying for the most recent tag.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
@@ -139,8 +140,6 @@ swallowed. The events are sent through the pipeline.
 - Improved silenced entry display and UX.
 - Fixed a small bug in the opentsdb transformer so that it trims trailing
 whitespace characters.
-- Add version output for dev and nightly builds (#1320).
-- Improve git version detection by directly querying for the most recent tag.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added

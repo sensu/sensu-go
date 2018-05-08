@@ -71,8 +71,7 @@ func (b *BuildEnv) IsNightly() bool {
 	if err == nil {
 		return false
 	}
-	// if the command exited with a nonzero status, tag is not an exact match,
-	// and this is a nightly build
+	// if the command exited with a nonzero status, this is a nightly build
 	if _, ok := err.(*exec.ExitError); ok {
 		return true
 	}
@@ -83,7 +82,7 @@ func (b *BuildEnv) IsNightly() bool {
 
 // Returns the most recent tag belonging to the current commit
 func (b *BuildEnv) GetMostRecentTag() string {
-	// --abbrev=0 turns off tag annotation, returning just the most recent tag
+	// --abbrev=0 disables tag annotation, returning unmodified most recent tag
 	cmd := exec.Command("git", "describe", "--abbrev=0", "--tags", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
