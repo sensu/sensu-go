@@ -12,8 +12,9 @@ import Dictionary, {
 import RelativeDate from "/components/RelativeDate";
 import Monospaced from "/components/Monospaced";
 import Maybe from "/components/Maybe";
+import InlineLink from "/components/InlineLink";
 
-class EventDetailsConfiguration extends React.Component {
+class EventDetailsSummary extends React.Component {
   static propTypes = {
     check: PropTypes.object.isRequired,
     entity: PropTypes.object.isRequired,
@@ -21,18 +22,23 @@ class EventDetailsConfiguration extends React.Component {
 
   static fragments = {
     entity: gql`
-      fragment EventDetailsConfiguration_entity on Entity {
-        name
-        class
+      fragment EventDetailsSummary_entity on Entity {
+        ns: namespace {
+          org: organization
+          env: environment
+        }
         system {
           platform
         }
+
+        name
+        class
         lastSeen
         subscriptions
       }
     `,
     check: gql`
-      fragment EventDetailsConfiguration_check on Check {
+      fragment EventDetailsSummary_check on Check {
         name
         command
         interval
@@ -44,17 +50,44 @@ class EventDetailsConfiguration extends React.Component {
   };
 
   render() {
-    const { entity, check } = this.props;
+    const { entity: entityProp, check } = this.props;
+    const { ns, ...entity } = entityProp;
+
     return (
       <Card>
         <CardContent>
           <Typography variant="headline" paragraph>
-            Configuration
+            Check Summary
           </Typography>
           <Dictionary>
             <DictionaryEntry>
+              <DictionaryKey>Check</DictionaryKey>
+              <DictionaryValue>{check.name}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Interval</DictionaryKey>
+              <DictionaryValue>{check.interval}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Timeout</DictionaryKey>
+              <DictionaryValue>{check.timeout}</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>TTL</DictionaryKey>
+              <DictionaryValue>{check.ttl}</DictionaryValue>
+            </DictionaryEntry>
+          </Dictionary>
+        </CardContent>
+        <Divider />
+        <CardContent>
+          <Dictionary>
+            <DictionaryEntry>
               <DictionaryKey>Entity</DictionaryKey>
-              <DictionaryValue>{entity.name}</DictionaryValue>
+              <DictionaryValue>
+                <InlineLink to={`/${ns.org}/${ns.env}/entities/${entity.name}`}>
+                  {entity.name}
+                </InlineLink>
+              </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Class</DictionaryKey>
@@ -80,34 +113,19 @@ class EventDetailsConfiguration extends React.Component {
             </DictionaryEntry>
           </Dictionary>
         </CardContent>
-        <Divider />
-        <CardContent>
-          <Dictionary>
-            <DictionaryEntry>
-              <DictionaryKey>Check</DictionaryKey>
-              <DictionaryValue>{check.name}</DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>Interval</DictionaryKey>
-              <DictionaryValue>{check.interval}</DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>Timeout</DictionaryKey>
-              <DictionaryValue>{check.timeout}</DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>TTL</DictionaryKey>
-              <DictionaryValue>{check.ttl}</DictionaryValue>
-            </DictionaryEntry>
-          </Dictionary>
-        </CardContent>
-        <Divider />
-        <Monospaced background>
-          <CardContent>{`# Executed command\n$ ${check.command}`}</CardContent>
-        </Monospaced>
+        {check.command && (
+          <React.Fragment>
+            <Divider />
+            <Monospaced background>
+              <CardContent>
+                {`# Executed command\n$ ${check.command}`}
+              </CardContent>
+            </Monospaced>
+          </React.Fragment>
+        )}
       </Card>
     );
   }
 }
 
-export default EventDetailsConfiguration;
+export default EventDetailsSummary;
