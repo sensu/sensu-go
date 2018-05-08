@@ -117,11 +117,11 @@ func printCheckToList(r *types.CheckConfig, writer io.Writer) error {
 			},
 			{
 				Label: "Metric Format",
-				Value: r.MetricFormat,
+				Value: r.OutputMetricFormat,
 			},
 			{
 				Label: "Metric Handlers",
-				Value: strings.Join(r.MetricHandlers, ", "),
+				Value: strings.Join(r.OutputMetricHandlers, ", "),
 			},
 		},
 	}

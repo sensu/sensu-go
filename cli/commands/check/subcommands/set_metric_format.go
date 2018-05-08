@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// SetMetricFormatCommand updates the metric format of a check
-func SetMetricFormatCommand(cli *cli.SensuCli) *cobra.Command {
+// SetOutputMetricFormatCommand updates the output metric format of a check
+func SetOutputMetricFormatCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "set-metric-format [NAME] [VALUE]",
-		Short:        "set metric-format of a check",
+		Use:          "set-output-metric-format [NAME] [VALUE]",
+		Short:        "set output-metric-format of a check",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
@@ -27,7 +27,7 @@ func SetMetricFormatCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			check.MetricFormat = value
+			check.OutputMetricFormat = value
 
 			if err := check.Validate(); err != nil {
 				return err

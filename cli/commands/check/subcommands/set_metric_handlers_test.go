@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestSetMetricHandlersCommand(t *testing.T) {
+func TestSetOutputMetricHandlersCommand(t *testing.T) {
 	testCases := []struct {
 		testName       string
 		args           []string
@@ -48,7 +48,7 @@ func TestSetMetricHandlersCommand(t *testing.T) {
 				mock.Anything,
 			).Return(tc.updateResponse)
 
-			cmd := SetMetricHandlersCommand(cli)
+			cmd := SetOutputMetricHandlersCommand(cli)
 			out, err := test.RunCmd(cmd, tc.args)
 			if tc.expectError {
 				assert.Error(t, err)

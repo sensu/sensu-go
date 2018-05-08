@@ -20,24 +20,24 @@ const CheckRequestType = "check_request"
 // DefaultSplayCoverage is the default splay coverage for proxy check requests
 const DefaultSplayCoverage = 90.0
 
-// NagiosMetricFormat is the accepted string to represent the metric format of
+// NagiosOutputMetricFormat is the accepted string to represent the output metric format of
 // Nagios Perf Data
-const NagiosMetricFormat = "nagios_perfdata"
+const NagiosOutputMetricFormat = "nagios_perfdata"
 
-// GraphiteMetricFormat is the accepted string to represent the metric format of
+// GraphiteOutputMetricFormat is the accepted string to represent the output metric format of
 // Graphite Plain Text
-const GraphiteMetricFormat = "graphite_plaintext"
+const GraphiteOutputMetricFormat = "graphite_plaintext"
 
-// OpenTSDBMetricFormat is the accepted string to represent the metric format of
+// OpenTSDBOutputMetricFormat is the accepted string to represent the output metric format of
 // OpenTSDB Line
-const OpenTSDBMetricFormat = "opentsdb_line"
+const OpenTSDBOutputMetricFormat = "opentsdb_line"
 
-// InfluxDBMetricFormat is the accepted string to represent the metric format of
+// InfluxDBOutputMetricFormat is the accepted string to represent the output metric format of
 // InfluxDB Line
-const InfluxDBMetricFormat = "influxdb_line"
+const InfluxDBOutputMetricFormat = "influxdb_line"
 
-// MetricFormats represents all the accepted metric_format's a check can have
-var MetricFormats = []string{NagiosMetricFormat, GraphiteMetricFormat, OpenTSDBMetricFormat, InfluxDBMetricFormat}
+// OutputMetricFormats represents all the accepted output_metric_format's a check can have
+var OutputMetricFormats = []string{NagiosOutputMetricFormat, GraphiteOutputMetricFormat, OpenTSDBOutputMetricFormat, InfluxDBOutputMetricFormat}
 
 // NewCheck creates a new Check. It copies the fields from CheckConfig that
 // match with Check's fields.
@@ -47,29 +47,29 @@ var MetricFormats = []string{NagiosMetricFormat, GraphiteMetricFormat, OpenTSDBM
 // and encoding/json.
 func NewCheck(c *CheckConfig) *Check {
 	check := &Check{
-		Command:            c.Command,
-		Environment:        c.Environment,
-		Handlers:           c.Handlers,
-		HighFlapThreshold:  c.HighFlapThreshold,
-		Interval:           c.Interval,
-		LowFlapThreshold:   c.LowFlapThreshold,
-		Name:               c.Name,
-		Organization:       c.Organization,
-		Publish:            c.Publish,
-		RuntimeAssets:      c.RuntimeAssets,
-		Subscriptions:      c.Subscriptions,
-		ExtendedAttributes: c.ExtendedAttributes,
-		ProxyEntityID:      c.ProxyEntityID,
-		CheckHooks:         c.CheckHooks,
-		Stdin:              c.Stdin,
-		Subdue:             c.Subdue,
-		Cron:               c.Cron,
-		Ttl:                c.Ttl,
-		Timeout:            c.Timeout,
-		ProxyRequests:      c.ProxyRequests,
-		RoundRobin:         c.RoundRobin,
-		MetricFormat:       c.MetricFormat,
-		MetricHandlers:     c.MetricHandlers,
+		Command:              c.Command,
+		Environment:          c.Environment,
+		Handlers:             c.Handlers,
+		HighFlapThreshold:    c.HighFlapThreshold,
+		Interval:             c.Interval,
+		LowFlapThreshold:     c.LowFlapThreshold,
+		Name:                 c.Name,
+		Organization:         c.Organization,
+		Publish:              c.Publish,
+		RuntimeAssets:        c.RuntimeAssets,
+		Subscriptions:        c.Subscriptions,
+		ExtendedAttributes:   c.ExtendedAttributes,
+		ProxyEntityID:        c.ProxyEntityID,
+		CheckHooks:           c.CheckHooks,
+		Stdin:                c.Stdin,
+		Subdue:               c.Subdue,
+		Cron:                 c.Cron,
+		Ttl:                  c.Ttl,
+		Timeout:              c.Timeout,
+		ProxyRequests:        c.ProxyRequests,
+		RoundRobin:           c.RoundRobin,
+		OutputMetricFormat:   c.OutputMetricFormat,
+		OutputMetricHandlers: c.OutputMetricHandlers,
 	}
 	return check
 }
@@ -117,8 +117,8 @@ func (c *Check) Validate() error {
 		}
 	}
 
-	if c.MetricFormat != "" {
-		if err := ValidateMetricFormat(c.MetricFormat); err != nil {
+	if c.OutputMetricFormat != "" {
+		if err := ValidateOutputMetricFormat(c.OutputMetricFormat); err != nil {
 			return err
 		}
 	}
@@ -262,8 +262,8 @@ func (c *CheckConfig) Validate() error {
 		}
 	}
 
-	if c.MetricFormat != "" {
-		if err := ValidateMetricFormat(c.MetricFormat); err != nil {
+	if c.OutputMetricFormat != "" {
+		if err := ValidateOutputMetricFormat(c.OutputMetricFormat); err != nil {
 			return err
 		}
 	}
@@ -288,13 +288,13 @@ func (p *ProxyRequests) Validate() error {
 	return eval.ValidateStatements(p.EntityAttributes, false)
 }
 
-// ValidateMetricFormat returns an error if the string is not a valid metric
+// ValidateOutputMetricFormat returns an error if the string is not a valid metric
 // format
-func ValidateMetricFormat(format string) error {
-	if utilstrings.InArray(format, MetricFormats) {
+func ValidateOutputMetricFormat(format string) error {
+	if utilstrings.InArray(format, OutputMetricFormats) {
 		return nil
 	}
-	return errors.New("metric format is not valid")
+	return errors.New("output metric format is not valid")
 }
 
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
@@ -351,21 +351,21 @@ func FixtureCheckConfig(id string) *CheckConfig {
 	timeout := uint32(0)
 
 	return &CheckConfig{
-		Name:           id,
-		Interval:       interval,
-		Subscriptions:  []string{"linux"},
-		Command:        "command",
-		Handlers:       []string{},
-		RuntimeAssets:  []string{"ruby-2-4-2"},
-		CheckHooks:     []HookList{*FixtureHookList("hook1")},
-		Environment:    "default",
-		Organization:   "default",
-		Publish:        true,
-		Cron:           "",
-		Ttl:            0,
-		Timeout:        timeout,
-		MetricHandlers: []string{},
-		MetricFormat:   "",
+		Name:                 id,
+		Interval:             interval,
+		Subscriptions:        []string{"linux"},
+		Command:              "command",
+		Handlers:             []string{},
+		RuntimeAssets:        []string{"ruby-2-4-2"},
+		CheckHooks:           []HookList{*FixtureHookList("hook1")},
+		Environment:          "default",
+		Organization:         "default",
+		Publish:              true,
+		Cron:                 "",
+		Ttl:                  0,
+		Timeout:              timeout,
+		OutputMetricHandlers: []string{},
+		OutputMetricFormat:   "",
 	}
 }
 

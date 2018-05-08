@@ -8,12 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RemoveMetricHandlersCommand adds a command that allows a user to remove the
-// metric handlers of a check
-func RemoveMetricHandlersCommand(cli *cli.SensuCli) *cobra.Command {
+// RemoveOutputMetricHandlersCommand adds a command that allows a user to remove the
+// output metric handlers of a check
+func RemoveOutputMetricHandlersCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "remove-metric-handlers [NAME]",
-		Short:        "removes metric handlers from a check",
+		Use:          "remove-output-metric-handlers [NAME]",
+		Short:        "removes output metric handlers from a check",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
@@ -26,7 +26,7 @@ func RemoveMetricHandlersCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			check.MetricHandlers = nil
+			check.OutputMetricHandlers = nil
 
 			if err := check.Validate(); err != nil {
 				return err

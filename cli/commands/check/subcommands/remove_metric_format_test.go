@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestRemoveMetricFormatCommand(t *testing.T) {
+func TestRemoveOutputMetricFormatCommand(t *testing.T) {
 	tests := []struct {
 		args           []string
 		fetchResponse  error
@@ -37,7 +37,7 @@ func TestRemoveMetricFormatCommand(t *testing.T) {
 			client := cli.Client.(*client.MockClient)
 			client.On("FetchCheck", name).Return(check, test.fetchResponse)
 			client.On("UpdateCheck", mock.Anything).Return(test.updateResponse)
-			cmd := RemoveMetricFormatCommand(cli)
+			cmd := RemoveOutputMetricFormatCommand(cli)
 			out, err := stest.RunCmd(cmd, test.args)
 			if test.expectError {
 				assert.Error(t, err)

@@ -36,7 +36,7 @@ func TestMetricExtraction(t *testing.T) {
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--command", `echo "PING ok - Packet loss = 0% | percent_packet_loss=0"`,
-		"--metric-format", "nagios_perfdata",
+		"--output-metric-format", "nagios_perfdata",
 	)
 	require.NoError(t, err, string(out))
 

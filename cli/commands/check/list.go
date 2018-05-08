@@ -142,14 +142,14 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title: "Metric Format",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)
-				return check.MetricFormat
+				return check.OutputMetricFormat
 			},
 		},
 		{
 			Title: "Metric Handlers",
 			CellTransformer: func(data interface{}) string {
 				check, _ := data.(types.CheckConfig)
-				return strings.Join(check.MetricHandlers, ",")
+				return strings.Join(check.OutputMetricHandlers, ",")
 			},
 		},
 	})
