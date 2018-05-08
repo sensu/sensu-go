@@ -158,6 +158,7 @@ class Drawer extends React.Component {
                     viewer={viewer}
                     environment={environment}
                     className={classes.namespaceSelector}
+                    onChange={onToggle}
                   />
                 </div>
               </div>
