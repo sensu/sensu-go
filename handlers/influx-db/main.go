@@ -94,7 +94,7 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to validate event: %s", err.Error())
 	}
 
-	if event.Metrics == nil {
+	if !event.HasMetrics() {
 		return fmt.Errorf("event does not contain metrics")
 	}
 
