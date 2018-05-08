@@ -41,11 +41,7 @@ func state(event *types.Event) {
 // totalStateChange calculates the total state change percentage for the
 // history, which is later used for check state flap detection.
 func totalStateChange(event *types.Event) uint32 {
-	if !event.HasCheck() {
-		return 0
-	}
-
-	if len(event.Check.History) < 21 {
+	if !event.HasCheck() || len(event.Check.History) < 21 {
 		return 0
 	}
 
