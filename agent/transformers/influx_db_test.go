@@ -46,7 +46,7 @@ func TestParseInflux(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200\nweather temperature=82 1465839830100400200",
+			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200\nweather temperature=82 1465839830100400200\n",
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",

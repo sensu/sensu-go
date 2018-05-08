@@ -39,6 +39,7 @@ func ParseOpenTSDB(output string) (OpenTSDBList, error) {
 	openTSDBList := OpenTSDBList{}
 
 	// Split each line of the output into its own metric
+	output = strings.TrimSpace(output)
 	metrics := strings.Split(output, "\n")
 
 	for _, metric := range metrics {

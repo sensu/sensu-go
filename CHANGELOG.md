@@ -109,6 +109,8 @@ swallowed. The events are sent through the pipeline.
 - Include zero-valued integers in JSON output for all types.
 - Check event entities now have a last_seen timestamp.
 - Improved silenced entry display and UX.
+- Fixed a small bug in the opentsdb transformer so that it trims trailing
+whitespace characters.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
