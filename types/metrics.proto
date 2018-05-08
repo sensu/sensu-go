@@ -27,7 +27,7 @@ message MetricPoint {
   string name = 1;
 
   // The metric point value.
-  double value = 2;
+  double value = 2 [(gogoproto.jsontag) = "value"];
 
   // The metric point timestamp, time in nanoseconds since the Epoch.
   int64 timestamp = 3 [(gogoproto.jsontag) = "timestamp"];
