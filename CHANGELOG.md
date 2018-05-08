@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Add logging around the Sensu event pipeline
+- Marked silenced and hooks fields in event as deprecated
 
 ### Fixed
 
