@@ -1,4 +1,5 @@
-"use strict";
+/* eslint-disable import/no-dynamic-require */
+/* eslint-disable global-require */
 
 if (typeof Promise === "undefined") {
   // Rejection tracking prevents a common issue where React gets into an
