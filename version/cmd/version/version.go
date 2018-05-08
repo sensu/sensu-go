@@ -71,7 +71,8 @@ func getTag() (string, error) {
 			return "", err
 		}
 	}
-	return string(out), nil
+	tag := strings.Trim(string(out), "\n")
+	return tag, nil
 }
 
 func getTags() ([]string, error) {
