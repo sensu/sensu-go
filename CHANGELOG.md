@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [2.0.0-beta.1] - 2018-05-07
 ### Added
 - Add Ubuntu 18.04 repository
 - Support for managing mutators via sensuctl.
