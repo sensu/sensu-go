@@ -23,6 +23,8 @@ func EventFields(event *types.Event) map[string]interface{} {
 	// adding the check name
 	if event.HasCheck() {
 		fields["check"] = event.Check.Name
+	} else if event.HasMetrics() {
+		fields["metric"] = true
 	}
 
 	return fields

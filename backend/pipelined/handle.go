@@ -34,6 +34,9 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
+	// Prepare log entry
+	fields := utillogging.EventFields(event)
+
 	var handlerList []string
 
 	if event.HasCheck() {
@@ -45,31 +48,30 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	}
 
 	handlers, err := p.expandHandlers(ctx, handlerList, 1)
-
 	if err != nil {
 		return err
 	}
 
+	if len(handlers) == 0 {
+		logger.WithFields(fields).Info("no handlers available")
+		return nil
+	}
+
 	for _, u := range handlers {
 		handler := u.Handler
-		filtered := p.filterEvent(handler, event)
-
-		// Prepare log entry
-		fields := utillogging.EventFields(event)
 		fields["handler"] = handler.Name
 
-		if filtered {
-			logger.WithFields(fields).Debug("event filtered")
+		if filtered := p.filterEvent(handler, event); filtered {
+			logger.WithFields(fields).Info("event filtered")
 			continue
 		}
 
 		eventData, err := p.mutateEvent(handler, event)
-
 		if err != nil {
 			continue
 		}
 
-		logger.WithFields(fields).Debug("sending event to handler")
+		logger.WithFields(fields).Info("sending event to handler")
 
 		switch handler.Type {
 		case "pipe":
