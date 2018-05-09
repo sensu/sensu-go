@@ -31,9 +31,10 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 	}
 
 	if handler.Mutator == "only_check_output" {
-		eventData := p.onlyCheckOutputMutator(event)
-
-		return eventData, nil
+		if event.HasCheck() {
+			eventData := p.onlyCheckOutputMutator(event)
+			return eventData, nil
+		}
 	}
 
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
@@ -94,7 +95,10 @@ func (p *Pipelined) jsonMutator(event *types.Event) ([]byte, error) {
 // mutator can probably be removed/replaced when 2.0 has extension
 // support.
 func (p *Pipelined) onlyCheckOutputMutator(event *types.Event) []byte {
-	return []byte(event.Check.Output)
+	if event.HasCheck() {
+		return []byte(event.Check.Output)
+	}
+	return nil
 }
 
 // pipeMutator fork/executes a child process for a Sensu mutator

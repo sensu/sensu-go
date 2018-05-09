@@ -198,7 +198,7 @@ func validateEvent(event *types.Event) error {
 		return errors.New("entity is missing from event")
 	}
 
-	if event.Check == nil {
+	if !event.HasCheck() {
 		return errors.New("check is missing from event")
 	}
 

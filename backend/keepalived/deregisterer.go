@@ -39,6 +39,10 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 	}
 
 	for _, event := range events {
+		if !event.HasCheck() {
+			return fmt.Errorf("error deleting event without check")
+		}
+
 		if err := adapterPtr.Store.DeleteEventByEntityCheck(
 			ctx, entity.ID, event.Check.Name,
 		); err != nil {
