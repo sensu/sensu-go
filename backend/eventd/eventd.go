@@ -171,7 +171,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	// Maintain check history.
 	if prevEvent != nil {
-		if prevEvent.Check == nil {
+		if !prevEvent.HasCheck() {
 			return errors.New("invalid previous event")
 		}
 
@@ -225,6 +225,9 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 }
 
 func updateOccurrences(event *types.Event) {
+	if !event.HasCheck() {
+		return
+	}
 	if len(event.Check.History) > 1 && (event.IsIncident() || isFlapping(event)) {
 		historyLen := len(event.Check.History)
 		if event.Check.History[historyLen-1].Status == event.Check.History[historyLen-2].Status {
@@ -273,6 +276,10 @@ func (e *Eventd) HandleFailure(entity *types.Entity, event *types.Event) error {
 }
 
 func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event) (*types.Event, error) {
+	if !event.HasCheck() {
+		return nil, errors.New("event does not contain a check")
+	}
+
 	lastCheckResult, err := e.store.GetEventByEntityCheck(
 		ctx, event.Entity.ID, event.Check.Name,
 	)

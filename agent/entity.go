@@ -60,7 +60,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 func (a *Agent) getEntities(event *types.Event) {
 	// Verify if we have an entity in the event, and that it is different from the
 	// agent's entity
-	if event.Entity != nil && event.Entity.ID != a.config.AgentID {
+	if event.Entity != nil && event.HasCheck() && event.Entity.ID != a.config.AgentID {
 		// Identify the event's source as the provided entity so it can be properly
 		// handled by the backend
 		event.Check.ProxyEntityID = event.Entity.ID
