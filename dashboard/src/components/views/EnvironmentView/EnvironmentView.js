@@ -11,8 +11,6 @@ import EventsContent from "./EventsContent";
 import EventDetailsContent from "./EventDetailsContent";
 import EntityDetailsContent from "./EntityDetailsContent";
 
-// import Dialog from "/components/partial/SilenceEntryDialog";
-
 class EnvironmentView extends React.PureComponent {
   static propTypes = {
     match: PropTypes.object.isRequired,

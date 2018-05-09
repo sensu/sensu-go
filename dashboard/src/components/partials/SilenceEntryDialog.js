@@ -13,7 +13,7 @@ import Dialog, {
 
 import Loader from "/components/util/Loader";
 
-import SilenceEntryForm from "/components/partial/SilenceEntryForm";
+import SilenceEntryForm from "/components/partials/SilenceEntryForm";
 
 const StyledDialogContentText = withStyles(() => ({
   root: { marginBottom: "2rem" },

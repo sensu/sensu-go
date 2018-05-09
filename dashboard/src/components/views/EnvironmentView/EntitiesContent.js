@@ -9,7 +9,7 @@ import Content from "/components/Content";
 import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 
-import EntitiesList from "/components/partial/EntitiesList";
+import EntitiesList from "/components/partials/EntitiesList";
 
 // TODO: Abstract Headline component into the shared page layout component
 const Headline = withStyles(theme => ({
