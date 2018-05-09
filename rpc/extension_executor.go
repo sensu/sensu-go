@@ -40,7 +40,7 @@ type ExtensionExecutor interface {
 
 	// HandleEvent handles an event. It is passed both the original event
 	// and the mutated event, if the event was mutated.
-	HandleEvent(*types.Event, []byte) error
+	HandleEvent(*types.Event, []byte) (HandleEventResponse, error)
 }
 
 // GRPCExtensionExecutor executes extension rpc methods.
@@ -86,14 +86,14 @@ func (e *GRPCExtensionExecutor) MutateEvent(evt *types.Event) ([]byte, error) {
 }
 
 // HandleEvent handles an event.
-func (e *GRPCExtensionExecutor) HandleEvent(evt *types.Event, mutatedEvt []byte) error {
+func (e *GRPCExtensionExecutor) HandleEvent(evt *types.Event, mutatedEvt []byte) (HandleEventResponse, error) {
 	req := &HandleEventRequest{Event: evt, MutatedEvent: mutatedEvt}
 	resp, err := e.client.HandleEvent(context.Background(), req)
-	if err != nil {
-		return err
+	if err != nil && resp == nil {
+		return HandleEventResponse{}, err
 	}
-	if resp.Error != "" {
+	if err == nil && resp.Error != "" {
 		err = errors.New(resp.Error)
 	}
-	return err
+	return *resp, err
 }

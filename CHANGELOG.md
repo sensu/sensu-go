@@ -11,6 +11,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Performed an audit of events and checks. Added `event.HasCheck()` nil checks
 prior to assuming the existence of said check.
 - Added the ability to set round robin scheduling in sensuctl
+- Added Output field to GRPC handlers
+- Additional logging around handlers
 
 ### Changed
 - Add logging around the Sensu event pipeline.
@@ -19,8 +21,6 @@ prior to assuming the existence of said check.
 - Prevent panic when verifying if a metric event is silenced.
 - Add logging around the Sensu event pipeline
 - Marked silenced and hooks fields in event as deprecated
-
-### Fixed
 - Metrics with zero-values are now displayed correctly
 - Fix handler validation routine
 - Fixed a small bug in the opentsdb transformer so that it trims trailing
