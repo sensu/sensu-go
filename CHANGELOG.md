@@ -13,6 +13,7 @@ prior to assuming the existence of said check.
 
 ### Changed
 - Add logging around the Sensu event pipeline
+- Marked silenced and hooks fields in event as deprecated
 
 ### Fixed
 - Metrics with zero-values are now displayed correctly
