@@ -20,7 +20,7 @@ var (
 )
 
 func LastCheckStatusZero(event *types.Event) (bool, error) {
-	if event.Check == nil {
+	if !event.HasCheck() {
 		// Filter metrics events as well.
 		return true, nil
 	}
@@ -28,6 +28,9 @@ func LastCheckStatusZero(event *types.Event) (bool, error) {
 }
 
 func FailingCheck(event *types.Event, mutated []byte) error {
+	if !event.HasCheck() {
+		log.Print("event does not contain check")
+	}
 	log.Printf("entity %q: %s is failing", event.Entity.ID, event.Check.Name)
 	return nil
 }
