@@ -15,6 +15,7 @@ prior to assuming the existence of said check.
 - Add logging around the Sensu event pipeline
 
 ### Fixed
+- Metrics with zero-values are now displayed correctly
 - Fix handler validation routine
 - Fixed a small bug in the opentsdb transformer so that it trims trailing
 whitespace characters.
