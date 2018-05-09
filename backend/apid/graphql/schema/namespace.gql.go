@@ -208,3 +208,44 @@ var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 		"organization": _ObjTypeNamespaceOrganizationHandler,
 	},
 }
+
+// EnvironmentNodeType Describes a node in an environment.
+var EnvironmentNodeType = graphql.NewType("EnvironmentNode", graphql.InterfaceKind)
+
+// RegisterEnvironmentNode registers EnvironmentNode object type with given service.
+func RegisterEnvironmentNode(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
+	svc.RegisterInterface(_InterfaceTypeEnvironmentNodeDesc, impl)
+}
+func _InterfaceTypeEnvironmentNodeConfigFn() graphql1.InterfaceConfig {
+	return graphql1.InterfaceConfig{
+		Description: "Describes a node in an environment.",
+		Fields: graphql1.Fields{
+			"environment": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Environment indicates which env a silenced entry belongs to.",
+				Name:              "environment",
+				Type:              graphql.OutputType("Environment"),
+			},
+			"organization": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Organization indicates to which org a silenced entry belongs to.",
+				Name:              "organization",
+				Type:              graphql1.NewNonNull(graphql.OutputType("Organization")),
+			},
+		},
+		Name: "EnvironmentNode",
+		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see InterfaceTypeResolver.")
+		},
+	}
+}
+
+// describe EnvironmentNode's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InterfaceTypeEnvironmentNodeDesc = graphql.InterfaceDesc{Config: _InterfaceTypeEnvironmentNodeConfigFn}

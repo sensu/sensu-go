@@ -6,6 +6,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// checks
+
+type checkFinder interface {
+	Find(ctx context.Context, name string) (*types.CheckConfig, error)
+}
+
 // entities
 
 type entityQuerier interface {
@@ -40,4 +46,34 @@ type eventReplacer interface {
 
 type environmentFinder interface {
 	Find(ctx context.Context, org, env string) (*types.Environment, error)
+}
+
+// organizations
+
+type organizationFinder interface {
+	Find(ctx context.Context, name string) (*types.Organization, error)
+}
+
+// silences
+
+type silenceCreator interface {
+	Create(context.Context, *types.Silenced) error
+}
+
+type silenceDestroyer interface {
+	Destroy(context.Context, string) error
+}
+
+type silenceQuerier interface {
+	Query(context.Context, string, string) ([]*types.Silenced, error)
+}
+
+type silenceUpdater interface {
+	Update(context.Context, types.Silenced) error
+}
+
+// users
+
+type userFinder interface {
+	Find(ctx context.Context, name string) (*types.User, error)
 }

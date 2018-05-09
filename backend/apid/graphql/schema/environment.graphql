@@ -44,6 +44,9 @@ type Environment implements Node {
     filter: String = "",
   ): EventConnection!
 
+  "All silences associated with the environment."
+  silences(offset: Int = 0, limit: Int = 10): SilencedConnection!
+
   """
   checkHistory includes all persisted check execution results associated with
   the environment. Unlike the Check type's history this field includes the most
