@@ -31,9 +31,11 @@ class NamespaceLink extends React.PureComponent {
     return (
       <Route
         path="/:organization/:environment"
-        render={({ match: { params: { organization, environment } } }) =>
-          this.renderLink(organization, environment)
-        }
+        render={({
+          match: {
+            params: { organization, environment },
+          },
+        }) => this.renderLink(organization, environment)}
       />
     );
   }

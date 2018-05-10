@@ -69,7 +69,10 @@ class EntityDetailsInformation extends React.PureComponent {
   };
 
   render() {
-    const { entity, entity: { system } } = this.props;
+    const {
+      entity,
+      entity: { system },
+    } = this.props;
     const statusCode = entity.status;
     const status = statusCodeToId(statusCode);
 

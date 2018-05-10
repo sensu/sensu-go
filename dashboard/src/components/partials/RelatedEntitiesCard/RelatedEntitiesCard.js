@@ -59,7 +59,9 @@ class RelatedEntitiesCard extends React.Component {
   };
 
   _renderItems = () => {
-    const { entity: { related } } = this.props;
+    const {
+      entity: { related },
+    } = this.props;
     if (related.length === 0) {
       return <Typography>None found.</Typography>;
     }
