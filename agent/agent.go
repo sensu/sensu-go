@@ -481,46 +481,32 @@ func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFun
 // StartStatsd starts up a StatsD listener on the agent, logs an error for any
 // failures.
 func (a *Agent) StartStatsd() {
-	statsdErr := make(chan error, 1)
+	var runStatsd func() error
 	logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
 
 	// We need to force a TCP connection for Windows. See
 	// https://github.com/sensu/sensu-go/issues/1402
 	if runtime.GOOS == "windows" {
-		// TODO: https://github.com/sensu/sensu-go/issues/1498
-		conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
-		if err != nil {
-			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
-			return
-		}
-		socketFactory := func() (net.PacketConn, error) {
-			return conn, err
-		}
-
-		go func() {
-			defer close(statsdErr)
-			statsdErr <- a.statsdServer.RunWithCustomSocket(a.context, socketFactory)
-			select {
-			case err := <-statsdErr:
-				if err != nil {
-					logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
-				}
-				return
-			default:
+		runStatsd = func() error {
+			// TODO: https://github.com/sensu/sensu-go/issues/1498
+			conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
+			if err != nil {
+				return err
 			}
-		}()
+			socketFactory := func() (net.PacketConn, error) {
+				return conn, err
+			}
+			return a.statsdServer.RunWithCustomSocket(a.context, socketFactory)
+		}
 	} else {
-		go func() {
-			defer close(statsdErr)
-			statsdErr <- a.statsdServer.Run(a.context)
-			select {
-			case err := <-statsdErr:
-				if err != nil {
-					logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
-				}
-				return
-			default:
-			}
-		}()
+		runStatsd = func() error {
+			return a.statsdServer.Run(a.context)
+		}
 	}
+
+	go func() {
+		if err := runStatsd(); err != nil {
+			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
+		}
+	}()
 }
