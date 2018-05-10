@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -105,7 +104,6 @@ func (c EntityController) Create(ctx context.Context, entity types.Entity) error
 	if e, err := c.Store.GetEntityByID(ctx, entity.ID); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
-		fmt.Println("e in entity fetch", e)
 		return NewErrorf(AlreadyExistsErr)
 	}
 
