@@ -487,6 +487,7 @@ func (a *Agent) StartStatsd() {
 	// We need to force a TCP connection for Windows. See
 	// https://github.com/sensu/sensu-go/issues/1402
 	if runtime.GOOS == "windows" {
+		// TODO: https://github.com/sensu/sensu-go/issues/1498
 		conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
 		socketFactory := func() (net.PacketConn, error) {
 			return conn, err
