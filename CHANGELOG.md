@@ -12,6 +12,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 prior to assuming the existence of said check.
 
 ### Changed
+- Add logging around the Sensu event pipeline.
+
+### Fixed
+- Prevent panic when verifying if a metric event is silenced.
 - Add logging around the Sensu event pipeline
 - Marked silenced and hooks fields in event as deprecated
 
