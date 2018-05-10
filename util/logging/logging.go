@@ -27,5 +27,13 @@ func EventFields(event *types.Event) map[string]interface{} {
 		fields["metric"] = true
 	}
 
+	if event.HasMetrics() {
+		fields["metrics"] = true
+	}
+
+	if event.HasMetrics() {
+		fields["metrics"] = true
+	}
+
 	return fields
 }

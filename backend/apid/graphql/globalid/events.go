@@ -97,14 +97,14 @@ func encodeEvent(event *types.Event) StandardComponents {
 	addMultitenantFields(&components, event.Entity)
 
 	timestamp := strconv.FormatInt(event.Timestamp, 10)
-	if event.Check != nil {
+	if event.HasCheck() {
 		components.resourceType = eventCheckType
 		components.uniqueComponent = encodeUniqueComponents(
 			event.Entity.ID,
 			event.Check.Name,
 			timestamp,
 		)
-	} else if event.Metrics != nil {
+	} else if event.HasMetrics() {
 		components.resourceType = eventMetricType
 		components.uniqueComponent = encodeUniqueComponents(
 			event.Entity.ID,
