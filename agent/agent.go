@@ -489,6 +489,9 @@ func (a *Agent) StartStatsd() {
 	if runtime.GOOS == "windows" {
 		// TODO: https://github.com/sensu/sensu-go/issues/1498
 		conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
+		if err != nil {
+			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
+		}
 		socketFactory := func() (net.PacketConn, error) {
 			return conn, err
 		}
