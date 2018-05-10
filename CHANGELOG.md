@@ -25,6 +25,8 @@ prior to assuming the existence of said check.
 - Fix handler validation routine
 - Fixed a small bug in the opentsdb transformer so that it trims trailing
 whitespace characters.
+- Sensu-agent logs an error if the statsd listener is unable to start due to an
+invalid address or is stopped due to any other error.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
