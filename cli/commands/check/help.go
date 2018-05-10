@@ -62,6 +62,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		subcommands.SetTimeoutCommand(cli),
 		subcommands.SetOutputMetricHandlersCommand(cli),
 		subcommands.SetOutputMetricFormatCommand(cli),
+		subcommands.SetRoundRobinCommand(cli),
 	)
 
 	return cmd
