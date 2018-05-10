@@ -1,13 +1,11 @@
-// +build integration,!windows
-// Due to unknown reasons from https://github.com/sensu/sensu-go/issues/1392
-// Appveyor in unfit to run these tests, so we'll skip windows tests for now
+// +build integration
 
 package agent
 
 import (
-	"context"
 	"encoding/json"
 	"net"
+	"runtime"
 	"testing"
 	"time"
 
@@ -157,21 +155,26 @@ func TestReceiveMetrics(t *testing.T) {
 	cfg.StatsdServer.FlushInterval = 1
 	ta := NewAgent(cfg)
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
+	var clientType string
 
-	go ta.statsdServer.Run(ctx)
+	if runtime.GOOS == "windows" {
+		clientType = "tcp"
+	} else {
+		clientType = "udp"
+	}
+	go ta.StartStatsd()
+
 	// Give the server a second to start up
 	time.Sleep(time.Second * 1)
 
-	udpClient, err := net.Dial("udp", ta.statsdServer.MetricsAddr)
+	client, err := net.Dial(clientType, ta.statsdServer.MetricsAddr)
 	if err != nil {
-		assert.FailNow("failed to create UDP connection")
+		assert.FailNow("failed to create connection using " + clientType)
 	}
 
-	_, err = udpClient.Write([]byte("foo:1|c"))
+	_, err = client.Write([]byte("foo:1|c"))
 	require.NoError(t, err)
-	require.NoError(t, udpClient.Close())
+	require.NoError(t, client.Close())
 
 	msg := <-ta.sendq
 	assert.NotEmpty(msg)
