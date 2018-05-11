@@ -382,21 +382,9 @@ func (a *Agent) Run() error {
 	a.header = a.buildTransportHeaderMap()
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
+	// Start the statsd listener only if the agent configuration has it enabled
 	if !a.config.StatsdServer.Disable {
-		logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
-
-		// We need to force a TCP connection for Windows. See
-		// https://github.com/sensu/sensu-go/issues/1402
-		if runtime.GOOS == "windows" {
-			conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
-			socketFactory := func() (net.PacketConn, error) {
-				return conn, err
-			}
-
-			go a.statsdServer.RunWithCustomSocket(a.context, socketFactory)
-		} else {
-			go a.statsdServer.Run(a.context)
-		}
+		a.StartStatsd()
 	}
 
 	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
@@ -488,4 +476,37 @@ func (a *Agent) Stop() {
 
 func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFunc) {
 	a.handler.AddHandler(msgType, handlerFunc)
+}
+
+// StartStatsd starts up a StatsD listener on the agent, logs an error for any
+// failures.
+func (a *Agent) StartStatsd() {
+	var runStatsd func() error
+	logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
+
+	// We need to force a TCP connection for Windows. See
+	// https://github.com/sensu/sensu-go/issues/1402
+	if runtime.GOOS == "windows" {
+		runStatsd = func() error {
+			// TODO: https://github.com/sensu/sensu-go/issues/1498
+			conn, err := net.ListenPacket("tcp", a.statsdServer.MetricsAddr)
+			if err != nil {
+				return err
+			}
+			socketFactory := func() (net.PacketConn, error) {
+				return conn, err
+			}
+			return a.statsdServer.RunWithCustomSocket(a.context, socketFactory)
+		}
+	} else {
+		runStatsd = func() error {
+			return a.statsdServer.Run(a.context)
+		}
+	}
+
+	go func() {
+		if err := runStatsd(); err != nil {
+			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
+		}
+	}()
 }

@@ -123,6 +123,10 @@ func (e *Event) IsIncident() bool {
 
 // IsResolution returns true if an event has just transitionned from an incident
 func (e *Event) IsResolution() bool {
+	if !e.HasCheck() {
+		return false
+	}
+
 	// Try to retrieve the previous status in the check history and verify if it
 	// was a non-zero status, therefore indicating a resolution
 	isResolution := (len(e.Check.History) > 0 &&
@@ -134,6 +138,10 @@ func (e *Event) IsResolution() bool {
 
 // IsSilenced determines if an event has any silenced entries
 func (e *Event) IsSilenced() bool {
+	if !e.HasCheck() {
+		return false
+	}
+
 	return len(e.Check.Silenced) > 0
 }
 
@@ -201,7 +209,7 @@ func cmpBySeverity(a, b *Event) bool {
 // and Ok (0) so we shift the check's status. If event is not a check sort to
 // very end.
 func deriveSeverity(e *Event) uint32 {
-	if e.Check != nil {
+	if e.HasCheck() {
 		return (e.Check.Status + 3) % 4
 	}
 	return 4
@@ -229,5 +237,8 @@ func (s *eventSorter) Less(i, j int) bool {
 
 // URIPath returns the path component of a Event URI.
 func (e *Event) URIPath() string {
+	if !e.HasCheck() {
+		return ""
+	}
 	return fmt.Sprintf("/%s/%s", url.PathEscape(e.Entity.ID), url.PathEscape(e.Check.Name))
 }

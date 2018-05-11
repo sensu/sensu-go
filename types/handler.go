@@ -31,8 +31,8 @@ func (h *Handler) Validate() error {
 		return errors.New("handler name " + err.Error())
 	}
 
-	if err := validateHandlerType(h.Type); err != nil {
-		return errors.New("handler type " + err.Error())
+	if err := h.validateType(); err != nil {
+		return err
 	}
 
 	if h.Environment == "" {
@@ -43,6 +43,34 @@ func (h *Handler) Validate() error {
 		return errors.New("organization must be set")
 	}
 
+	return nil
+}
+
+func (h *Handler) validateType() error {
+	if h.Type == "" {
+		return errors.New("empty handler type")
+	}
+
+	switch h.Type {
+	case "pipe", "set", "grpc":
+		return nil
+	case "tcp", "udp":
+		return h.Socket.Validate()
+	}
+
+	return fmt.Errorf("unknown handler type: %s", h.Type)
+}
+
+func (s *HandlerSocket) Validate() error {
+	if s == nil {
+		return errors.New("tcp and udp handlers need a valid socket")
+	}
+	if len(s.Host) == 0 {
+		return errors.New("socket host undefined")
+	}
+	if s.Port == 0 {
+		return errors.New("socket port undefined")
+	}
 	return nil
 }
 

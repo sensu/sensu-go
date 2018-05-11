@@ -8,13 +8,25 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
-
+- Performed an audit of events and checks. Added `event.HasCheck()` nil checks
+prior to assuming the existence of said check.
+- Added the ability to set round robin scheduling in sensuctl
 
 ### Changed
-- Add logging around the Sensu event pipeline
+- Add logging around the Sensu event pipeline.
 
 ### Fixed
+- Prevent panic when verifying if a metric event is silenced.
+- Add logging around the Sensu event pipeline
+- Marked silenced and hooks fields in event as deprecated
 
+### Fixed
+- Metrics with zero-values are now displayed correctly
+- Fix handler validation routine
+- Fixed a small bug in the opentsdb transformer so that it trims trailing
+whitespace characters.
+- Sensu-agent logs an error if the statsd listener is unable to start due to an
+invalid address or is stopped due to any other error.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
@@ -118,8 +130,6 @@ swallowed. The events are sent through the pipeline.
 - Include zero-valued integers in JSON output for all types.
 - Check event entities now have a last_seen timestamp.
 - Improved silenced entry display and UX.
-- Fixed a small bug in the opentsdb transformer so that it trims trailing
-whitespace characters.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added

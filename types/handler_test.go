@@ -1,9 +1,11 @@
 package types
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFixtureHandler(t *testing.T) {
@@ -28,24 +30,170 @@ func TestFixtureSocketHandler(t *testing.T) {
 }
 
 func TestHandlerValidate(t *testing.T) {
-	var h Handler
+	tests := []struct {
+		Handler Handler
+		Error   string
+	}{
+		{
+			Handler: Handler{},
+			Error:   "handler name must not be empty",
+		},
+		{
+			Handler: Handler{
+				Name: "foo",
+			},
+			Error: "empty handler type",
+		},
+		{
+			Handler: Handler{
+				Name: "foo",
+				Type: "pipe",
+			},
+			Error: "environment must be set",
+		},
+		{
+			Handler: Handler{
+				Name:        "foo",
+				Type:        "pipe",
+				Environment: "default",
+			},
+			Error: "organization must be set",
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "pipe",
+				Organization: "default",
+				Environment:  "default",
+			},
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "grpc",
+				Organization: "default",
+				Environment:  "default",
+			},
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "grpc",
+				Organization: "default",
+				Environment:  "default",
+			},
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "set",
+				Organization: "default",
+				Environment:  "default",
+			},
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "tcp",
+				Organization: "default",
+				Environment:  "default",
+			},
+			Error: "tcp and udp handlers need a valid socket",
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "tcp",
+				Organization: "default",
+				Environment:  "default",
+				Socket: &HandlerSocket{
+					Host: "localhost",
+				},
+			},
+			Error: "socket port undefined",
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "tcp",
+				Organization: "default",
+				Environment:  "default",
+				Socket: &HandlerSocket{
+					Port: 1234,
+				},
+			},
+			Error: "socket host undefined",
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "tcp",
+				Organization: "default",
+				Environment:  "default",
+				Socket: &HandlerSocket{
+					Host: "localhost",
+					Port: 1234,
+				},
+			},
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "udp",
+				Organization: "default",
+				Environment:  "default",
+				Socket: &HandlerSocket{
+					Host: "localhost",
+				},
+			},
+			Error: "socket port undefined",
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "udp",
+				Organization: "default",
+				Environment:  "default",
+				Socket: &HandlerSocket{
+					Port: 1234,
+				},
+			},
+			Error: "socket host undefined",
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "udp",
+				Organization: "default",
+				Environment:  "default",
+				Socket: &HandlerSocket{
+					Host: "localhost",
+					Port: 1234,
+				},
+			},
+		},
+		{
+			Handler: Handler{
+				Name:         "foo",
+				Type:         "magic",
+				Organization: "default",
+				Environment:  "default",
+			},
+			Error: "unknown handler type: magic",
+		},
+	}
 
-	// Invalid name
-	assert.Error(t, h.Validate())
-	h.Name = "foo"
-
-	// Invalid type
-	assert.Error(t, h.Validate())
-	h.Type = "pipe"
-
-	// Invalid organization
-	assert.Error(t, h.Validate())
-	h.Organization = "default"
-
-	// Invalid environment
-	assert.Error(t, h.Validate())
-	h.Environment = "default"
-
-	// Valid handler
-	assert.NoError(t, h.Validate())
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%v", test.Handler), func(t *testing.T) {
+			if err := test.Handler.Validate(); err != nil {
+				if len(test.Error) > 0 {
+					require.Equal(t, test.Error, err.Error())
+				} else {
+					t.Fatal(err)
+				}
+			} else if len(test.Error) > 0 {
+				t.Fatal("expected error, got none")
+			}
+		})
+	}
 }
