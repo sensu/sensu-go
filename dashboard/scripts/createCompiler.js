@@ -10,6 +10,10 @@ export default config => {
 
   const compiler = webpack(config);
 
+  compiler.hooks.failed.tap("createCompiler", error => {
+    throw error;
+  });
+
   compiler.hooks.invalid.tap("createCompiler", file => {
     console.log();
     loading.start(
