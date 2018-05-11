@@ -179,6 +179,7 @@ export default () => {
             dontCacheBustUrlsMatching: /\.\w{8}\./,
             filename: "service-worker.js",
             minify: true,
+            logger: () => {},
             // For unknown URLs, fallback to the index page
             navigateFallback: `/index.html`,
             // Don't precache sourcemaps (they're large) and build asset manifest:
