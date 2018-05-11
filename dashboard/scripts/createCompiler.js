@@ -21,8 +21,6 @@ export default config => {
     loading.stop();
     const messages = formatWebpackMessages(stats.toJson({}, true));
 
-    console.log(stats.toJson({}).errors[0]);
-
     if (!messages.errors.length && !messages.warnings.length) {
       console.log();
       console.log(success(), chalk.green("Compiled successfully!"));
