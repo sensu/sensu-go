@@ -59,17 +59,6 @@ func (m mockEnvironmentFinder) Find(_ context.Context, org, env string) (*types.
 	return m.record, m.err
 }
 
-// organizations
-
-type mockOrganizationFinder struct {
-	record *types.Organization
-	err    error
-}
-
-func (m mockOrganizationFinder) Find(_ context.Context, name string) (*types.Organization, error) {
-	return m.record, m.err
-}
-
 // silences
 
 type mockSilenceCreator struct {

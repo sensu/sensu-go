@@ -68,10 +68,6 @@ type silenceQuerier interface {
 	Query(context.Context, string, string) ([]*types.Silenced, error)
 }
 
-type silenceUpdater interface {
-	Update(context.Context, types.Silenced) error
-}
-
 // users
 
 type userFinder interface {
