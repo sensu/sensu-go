@@ -348,6 +348,7 @@ class EventsContainer extends React.Component {
             onClose={() => this.setState({ silence: null })}
             onSave={result => {
               this.setState({ silence: null });
+              // eslint-disable-next-line no-console
               console.log("persist silence entry", result);
             }}
           />
