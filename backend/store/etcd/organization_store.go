@@ -35,7 +35,7 @@ func (s *Store) CreateOrganization(ctx context.Context, org *types.Organization)
 	// Define a default environment for this new organization
 	env := types.Environment{
 		Name:         "default",
-		Description:  "Default organization",
+		Description:  "Default environment",
 		Organization: org.Name,
 	}
 
