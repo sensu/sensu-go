@@ -37,7 +37,7 @@ jobs:
     deploy:
     - provider: script
       skip_cleanup: true
-      script: "./build.sh docker push master"
+      script: "./build.sh docker deploy master"
       on:
         branch: master
         condition: $TRAVIS_EVENT_TYPE != api
