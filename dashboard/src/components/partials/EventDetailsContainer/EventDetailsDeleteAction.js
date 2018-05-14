@@ -63,7 +63,11 @@ class EventDetailsDeleteAction extends React.PureComponent {
   };
 
   deleteEvent = () => {
-    const { client, event: { id, ns }, history } = this.props;
+    const {
+      client,
+      event: { id, ns },
+      history,
+    } = this.props;
     if (this.state.locked) return;
 
     // Cleanup

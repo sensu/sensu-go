@@ -25,7 +25,10 @@ class EnvironmentIcon extends React.Component {
   };
 
   render() {
-    const { environment: { organization, colourId }, ...props } = this.props;
+    const {
+      environment: { organization, colourId },
+      ...props
+    } = this.props;
     return (
       <Icon
         organizationIcon={organization.iconId}
