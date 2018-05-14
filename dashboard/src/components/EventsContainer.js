@@ -24,9 +24,10 @@ import TableList, {
   TableListButton as Button,
 } from "/components/TableList";
 
-import StatusMenu from "/components/partial/StatusMenu";
+import Loader from "/components/util/Loader";
 
-import Loader from "/components/Loader";
+import StatusMenu from "/components/partials/StatusMenu";
+import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 
 const styles = theme => ({
   root: {
@@ -172,6 +173,23 @@ class EventsContainer extends React.Component {
     });
   };
 
+  silenceSelectedEvents = () => {
+    const events = this.props.environment.events.nodes.filter(
+      node => this.state.rowState[node.id],
+    );
+
+    const targets = events.map(event => ({
+      subscription: `entity:${event.entity.name}`,
+      check: event.check.name,
+    }));
+
+    if (targets.length === 1) {
+      this.setState({ silence: targets[0] });
+    } else {
+      this.setState({ silence: { targets } });
+    }
+  };
+
   requeryEntity = newValue => {
     this.props.onQueryChange("filter", `Entity.ID=='${newValue}'`);
   };
@@ -197,7 +215,7 @@ class EventsContainer extends React.Component {
     this.props.onQueryChange("order", newValue);
   };
 
-  render() {
+  renderTable() {
     const { classes, environment, loading } = this.props;
     const { rowState } = this.state;
 
@@ -230,6 +248,12 @@ class EventsContainer extends React.Component {
           </div>
           <div className={classes.grow} />
           <div className={hiddenIf(!someEventsSelected)}>
+            <Button
+              className={classes.headerButton}
+              onClick={this.silenceSelectedEvents}
+            >
+              <Typography variant="button">Silence</Typography>
+            </Button>
             <Button className={classes.headerButton} onClick={this.resolve}>
               <Typography variant="button">Resolve</Typography>
             </Button>
@@ -295,12 +319,41 @@ class EventsContainer extends React.Component {
                 key={event.id}
                 event={event}
                 onClickSelect={this.selectCheckbox(event.id)}
+                onClickSilenceEntity={() => {
+                  this.setState({
+                    silence: {
+                      subscription: `entity:${event.entity.name}`,
+                    },
+                  });
+                }}
+                onClickSilenceCheck={() => {
+                  this.setState({ silence: { check: event.check.name } });
+                }}
                 checked={Boolean(rowState[event.id])}
               />
             ))}
           </TableListBody>
         </Loader>
       </TableList>
+    );
+  }
+
+  render() {
+    return (
+      <React.Fragment>
+        {this.renderTable()}
+        {this.state.silence && (
+          <SilenceEntryDialog
+            values={this.state.silence}
+            onClose={() => this.setState({ silence: null })}
+            onSave={result => {
+              this.setState({ silence: null });
+              // eslint-disable-next-line no-console
+              console.log("persist silence entry", result);
+            }}
+          />
+        )}
+      </React.Fragment>
     );
   }
 }
