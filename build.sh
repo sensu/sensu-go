@@ -287,10 +287,6 @@ bail_unless_yarn_is_present() {
     fi
 }
 
-install_yarn() {
-    npm install --global yarn
-}
-
 install_dashboard_deps() {
     bail_unless_yarn_is_present
     pushd "${DASHBOARD_PATH}"
@@ -375,7 +371,6 @@ case "$cmd" in
         test_dashboard
         ;;
     "dashboard-ci")
-        install_yarn
         install_dashboard_deps
         test_dashboard
         ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
