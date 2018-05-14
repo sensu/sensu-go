@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
@@ -167,28 +168,32 @@ func TestHandleEvent(t *testing.T) {
 	}{
 		{
 			resp: &HandleEventResponse{
-				Error: "",
+				Error:  "",
+				Output: "foo",
 			},
 			rpcErr: nil,
 			err:    false,
 		},
 		{
 			resp: &HandleEventResponse{
-				Error: "",
+				Error:  "",
+				Output: "foo",
 			},
 			rpcErr: nil,
 			err:    false,
 		},
 		{
 			resp: &HandleEventResponse{
-				Error: "error",
+				Error:  "error",
+				Output: "error",
 			},
 			rpcErr: nil,
 			err:    true,
 		},
 		{
 			resp: &HandleEventResponse{
-				Error: "",
+				Error:  "",
+				Output: "error",
 			},
 			rpcErr: errors.New("an error"),
 			err:    true,
@@ -200,13 +205,15 @@ func TestHandleEvent(t *testing.T) {
 			client := &mockClient{}
 			client.On("HandleEvent", mock.Anything, mock.Anything, mock.Anything).Return(test.resp, test.rpcErr)
 			executor := &GRPCExtensionExecutor{client: client}
-			err := executor.HandleEvent(types.FixtureEvent("foo", "bar"), nil)
+			handlerResp, err := executor.HandleEvent(types.FixtureEvent("foo", "bar"), nil)
 			if test.err && err == nil {
 				t.Fatal("expected non-nil error")
 			}
 			if !test.err && err != nil {
 				t.Fatal(err)
 			}
+			assert.Equal(t, test.resp.Output, handlerResp.Output)
+			assert.Equal(t, test.resp.Error, handlerResp.Error)
 		})
 	}
 }
