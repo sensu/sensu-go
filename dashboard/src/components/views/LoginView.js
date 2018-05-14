@@ -84,12 +84,12 @@ class LoginView extends React.Component {
     this.setState({ disabled: true });
 
     createTokens(client, { username, password }).catch(error => {
-      // eslint-disable-next-line no-console
-      console.error(error);
       this.setState({
         disabled: false,
         authError: "Bad username or password.",
       });
+
+      throw error;
     });
   };
 

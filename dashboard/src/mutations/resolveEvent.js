@@ -1,5 +1,7 @@
 import gql from "graphql-tag";
 
+import handle from "/exceptionHandler";
+
 const fragment = gql`
   fragment ResolveEventMutation_event on Event {
     timestamp
@@ -45,9 +47,7 @@ export default (client, { id }) =>
           data: data.resolveEvent.event,
         });
       } catch (error) {
-        // TODO: Connect this error handler to display a blocking error alert
-        // eslint-disable-next-line no-console
-        console.error(error);
+        handle(error);
       }
     },
     optimisticResponse: {
