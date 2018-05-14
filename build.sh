@@ -302,8 +302,7 @@ install_dashboard_deps() {
 
 test_dashboard() {
     pushd "${DASHBOARD_PATH}"
-    yarn lint
-    yarn test --coverage
+    yarn test
     popd
 }
 
