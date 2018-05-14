@@ -22,6 +22,7 @@ prior to assuming the existence of said check.
 - Prevent panic when verifying if a metric event is silenced.
 - Add logging around the Sensu event pipeline
 - Marked silenced and hooks fields in event as deprecated
+- Fixed a bug where hooks could not be created with `create -f`
 - Metrics with zero-values are now displayed correctly
 - Fix handler validation routine
 - Fixed a small bug in the opentsdb transformer so that it trims trailing

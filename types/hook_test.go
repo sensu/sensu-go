@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -85,4 +86,27 @@ func TestFixtureHookIsValid(t *testing.T) {
 
 	assert.Equal(t, "hook", config.Name)
 	assert.NoError(t, config.Validate())
+}
+
+func TestHookUnmarshal_GH1520(t *testing.T) {
+	b := []byte(`{"name":"foo","command":"ps aux","timeout":60,"environment":"default","organization":"default"}`)
+	var h Hook
+	var err error
+	if err := json.Unmarshal(b, &h); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	b, err = json.Marshal(&h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var hc HookConfig
+	if err := json.Unmarshal(b, &hc); err != nil {
+		t.Fatal(err)
+	}
+	if err := hc.Validate(); err != nil {
+		t.Fatal(err)
+	}
 }
