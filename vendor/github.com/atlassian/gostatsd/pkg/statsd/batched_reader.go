@@ -2,6 +2,7 @@ package statsd
 
 import (
 	"net"
+	"runtime"
 
 	"golang.org/x/net/ipv6"
 )
@@ -25,6 +26,11 @@ type GenericBatchReader struct {
 }
 
 func NewBatchReader(conn net.PacketConn) BatchReader {
+	if runtime.GOOS == "windows" {
+		return &GenericBatchReader{
+			conn: conn,
+		}
+	}
 	switch c := conn.(type) {
 	case *net.UDPConn:
 		return &V6BatchReader{
