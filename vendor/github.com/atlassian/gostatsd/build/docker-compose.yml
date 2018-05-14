@@ -1,0 +1,33 @@
+gostatsd:
+  build: .
+  command: gostatsd --backends=graphite --config-path=/etc/gostatsd/docker-compose.toml
+  environment:
+    PWD:
+  links:
+    - graphite
+  ports:
+    - "8125:8125/udp"
+    - "8126:8126"
+    - "8181:8181"
+  volumes:
+    - ${PWD}/example:/etc/gostatsd:ro
+graphite:
+  image: sitespeedio/graphite
+  ports:
+    - "8080:80"
+    - "8000:8000"
+    - "2003:2003"
+    - "2004:2004"
+    - "7002:7002"
+  volumes:
+    - ./dev/data/graphite:/opt/graphite/storage/whisper
+grafana:
+  image: grafana/grafana
+  ports:
+    - "3000:3000"
+#  volumes:
+#    - ./dev/data/grafana:/var/lib/grafana
+  links:
+    - graphite
+  environment:
+    - GF_SECURITY_ADMIN_PASSWORD=admin

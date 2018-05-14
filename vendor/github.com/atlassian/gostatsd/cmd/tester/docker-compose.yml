@@ -1,0 +1,14 @@
+statsd-tester:
+  build: .
+  command: statsd-tester --metrics-addr=gostatsd:8125 --verbose
+  links:
+    - gostatsd
+  ports:
+    - "8080:8080"
+gostatsd:
+  command: gostatsd --backends=stdout
+  image: atlassianlabs/gostatsd
+  ports:
+    - 8181
+    - 8125/udp
+    - 8126

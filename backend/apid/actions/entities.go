@@ -90,6 +90,35 @@ func (c EntityController) Query(ctx context.Context) ([]*types.Entity, error) {
 	return results, nil
 }
 
+// Create instatiates, validates and persists new resource if viewer has access.
+func (c EntityController) Create(ctx context.Context, entity types.Entity) error {
+	ctx = addOrgEnvToContext(ctx, &entity)
+	abilities := c.Policy.WithContext(ctx)
+
+	// Verify viewer can create the resource
+	if yes := abilities.CanCreate(&entity); !yes {
+		return NewErrorf(PermissionDenied)
+	}
+
+	// Check for an already existing resource
+	if e, err := c.Store.GetEntityByID(ctx, entity.ID); err != nil {
+		return NewError(InternalErr, err)
+	} else if e != nil {
+		return NewErrorf(AlreadyExistsErr)
+	}
+
+	// Validate the resource
+	if err := entity.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist the resource in the store
+	if err := c.Store.UpdateEntity(ctx, &entity); err != nil {
+		return NewError(InternalErr, err)
+	}
+	return nil
+}
+
 // Update validates and persists changes to a resource if viewer has access.
 func (c EntityController) Update(ctx context.Context, given types.Entity) error {
 	// Adjust context

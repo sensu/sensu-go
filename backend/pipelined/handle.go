@@ -10,6 +10,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
@@ -83,7 +84,7 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 				logger.WithFields(fields).Error(err)
 			}
 		case "grpc":
-			if err := p.grpcHandler(u.Extension, event, eventData); err != nil {
+			if _, err := p.grpcHandler(u.Extension, event, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
 			}
 		default:
@@ -189,7 +190,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 	result, err := command.ExecuteCommand(context.Background(), handlerExec)
 
 	if err != nil {
-		logger.WithError(err).Error("failed to execute event pipe handler")
+		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe handler")
 	} else {
 		fields["status"] = result.Status
 		fields["output"] = result.Output
@@ -223,6 +224,8 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 	address := fmt.Sprintf("%s:%d", host, port)
 	timeoutDuration := time.Duration(timeout) * time.Second
 
+	logger.WithFields(fields).Debug("sending event to socket handler")
+
 	conn, err = net.DialTimeout(protocol, address, timeoutDuration)
 	if err != nil {
 		return nil, err
@@ -240,16 +243,35 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 		logger.WithFields(fields).WithError(err).Error("failed to execute event handler")
 	} else {
 		fields["bytes"] = bytes
-		logger.WithFields(fields).Debug("event socket handler executed")
+		logger.WithFields(fields).Info("event socket handler executed")
 	}
 
 	return conn, nil
 }
 
-func (p *Pipelined) grpcHandler(ext *types.Extension, evt *types.Event, mutated []byte) error {
+func (p *Pipelined) grpcHandler(ext *types.Extension, evt *types.Event, mutated []byte) (rpc.HandleEventResponse, error) {
+	// Prepare log entry
+	fields := logrus.Fields{
+		"environment":  ext.GetEnvironment(),
+		"organization": ext.GetOrganization(),
+		"handler":      ext.GetName(),
+	}
+
+	logger.WithFields(fields).Debug("sending event to handler extension")
+
 	executor, err := p.extensionExecutor(ext)
 	if err != nil {
-		return err
+		logger.WithFields(fields).WithError(err).Error("failed to execute event handler extension")
+		return rpc.HandleEventResponse{}, err
 	}
-	return executor.HandleEvent(evt, mutated)
+
+	result, err := executor.HandleEvent(evt, mutated)
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to execute event handler extension")
+	} else {
+		fields["output"] = result.Output
+		logger.WithFields(fields).Info("event handler extension executed")
+	}
+
+	return result, err
 }

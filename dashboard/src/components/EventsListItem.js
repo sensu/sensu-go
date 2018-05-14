@@ -28,6 +28,8 @@ class EventListItem extends React.Component {
     classes: PropTypes.object.isRequired,
     checked: PropTypes.bool.isRequired,
     onClickSelect: PropTypes.func.isRequired,
+    onClickSilenceEntity: PropTypes.func.isRequired,
+    onClickSilenceCheck: PropTypes.func.isRequired,
     client: PropTypes.object.isRequired,
     event: PropTypes.shape({
       entity: PropTypes.shape({
@@ -68,7 +70,7 @@ class EventListItem extends React.Component {
 
   resolve = () => {
     const { client, event } = this.props;
-    resolveEvent(client, event);
+    resolveEvent(client, event.id);
   };
 
   renderMenu = ({ open, onClose, anchorEl }) => {
@@ -76,6 +78,24 @@ class EventListItem extends React.Component {
 
     return (
       <Menu open={open} onClose={onClose} anchorEl={anchorEl}>
+        <MenuItem
+          key={"silence-Entity"}
+          onClick={() => {
+            this.props.onClickSilenceEntity();
+            onClose();
+          }}
+        >
+          Silence Entity
+        </MenuItem>
+        <MenuItem
+          key={"silence-Check"}
+          onClick={() => {
+            this.props.onClickSilenceCheck();
+            onClose();
+          }}
+        >
+          Silence Check
+        </MenuItem>
         {event.check &&
           event.check.status !== 0 && (
             <MenuItem

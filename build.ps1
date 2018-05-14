@@ -40,7 +40,6 @@ function install_deps
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
     go get github.com/golang/lint/golint
-    C:\gopath\bin\dep.exe ensure -v -vendor-only
 }
 
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)

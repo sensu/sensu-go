@@ -13,6 +13,7 @@ message HandleEventRequest {
 
 message HandleEventResponse {
   string error = 1;
+  string output = 2;
 }
 
 message MutateEventRequest {
