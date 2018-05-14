@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Performed an audit of events and checks. Added `event.HasCheck()` nil checks
 prior to assuming the existence of said check.
+- Added a Create method to the entities api.
 - Added the ability to set round robin scheduling in sensuctl
 
 ### Changed
