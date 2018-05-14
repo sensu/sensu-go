@@ -38,14 +38,14 @@ platforms. Please download and install Docker CE before proceeding._
    ```
    $ docker run -d --name sensu-backend \
    -p 2380:2380 -p 3000:3000 -p 8080:8080 -p 8081:8081 \
-   sensuapp/sensu-go:2.0.0-alpha sensu-backend start
+   sensuapp/sensu-go:2.0.0-beta.1 sensu-backend start
    ```
 
 2. Start the Sensu 2.0 Agent process
 
    ```
    $ docker run -d --name sensu-agent --link sensu-backend \
-   sensuapp/sensu-go:2.0.0-alpha sensu-agent start \
+   sensuapp/sensu-go:2.0.0-beta.1 sensu-agent start \
    --backend-url ws://sensu-backend:8081 \
    --subscriptions workstation,docker
    ```
