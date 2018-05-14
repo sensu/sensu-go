@@ -44,7 +44,6 @@ install_deps () {
     go get github.com/jgautheron/goconst/cmd/goconst
     go get honnef.co/go/tools/cmd/megacheck
     go get github.com/golang/lint/golint
-    dep ensure -v -vendor-only
 }
 
 cmd_name_map() {
