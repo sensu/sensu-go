@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"testing"
 	"time"
@@ -14,76 +15,75 @@ import (
 func TestRoundRobinScheduling(t *testing.T) {
 	t.Parallel()
 
-	// Create two backends
-	backendA, cleanup := newBackend(t)
-	defer cleanup()
-
-	sensuctlA, cleanup := newSensuCtl(backendA.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
-	defer cleanup()
-
-	// TODO(echlebek): make this test work with multiple backends
-	//backendB, cleanup := newBackend(t)
-	//defer cleanup()
-
-	sensuctlB, cleanup := newSensuCtl(backendA.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Two agents belong to backend A, one belongs to backend B
 	agentCfgA := agentConfig{
-		ID:          "agentA",
-		BackendURLs: []string{backendA.WSURL},
+		ID: "agentA",
 	}
 	agentCfgB := agentConfig{
-		ID:          "agentB",
-		BackendURLs: []string{backendA.WSURL},
+		ID: "agentB",
 	}
 	agentCfgC := agentConfig{
-		ID:          "agentC",
-		BackendURLs: []string{backendA.WSURL},
+		ID: "agentC",
 	}
 
-	agentA, cleanup := newAgent(agentCfgA, sensuctlA, t)
+	agentA, cleanup := newAgent(agentCfgA, sensuctl, t)
 	defer cleanup()
 
-	agentB, cleanup := newAgent(agentCfgB, sensuctlA, t)
+	agentB, cleanup := newAgent(agentCfgB, sensuctl, t)
 	defer cleanup()
 
-	agentC, cleanup := newAgent(agentCfgC, sensuctlB, t)
+	agentC, cleanup := newAgent(agentCfgC, sensuctl, t)
 	defer cleanup()
-
-	// Create an authenticated HTTP Sensu client. newSensuClient is deprecated but
-	// sensuctl does not currently support objects updates with flag parameters
-	clientA := newSensuClient(backendA.HTTPURL)
-	clientB := newSensuClient(backendA.HTTPURL)
-	clientC := newSensuClient(backendA.HTTPURL)
 
 	// Create a check that publish check requests
-	check := types.FixtureCheckConfig("TestCheckScheduling")
-	check.Publish = true
-	check.Interval = 1
-	check.Subscriptions = []string{"test"}
-	check.RoundRobin = true
-	check.Command = testutil.CommandPath(filepath.Join(toolsDir, "true"))
-
-	err := clientA.CreateCheck(check)
+	_, err := sensuctl.run("check", "create", t.Name(),
+		"--command", testutil.CommandPath(filepath.Join(toolsDir, "true")),
+		"--interval", "1",
+		"--subscriptions", "test",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+		"--round-robin",
+		"--publish",
+	)
 	require.NoError(t, err)
-	check, err = clientA.FetchCheck(check.Name)
+	_, err = sensuctl.run(
+		"check", "info", t.Name(),
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	require.NoError(t, err)
 
 	// Allow checks to be published
 	time.Sleep(20 * time.Second)
 
-	eventA, err := clientA.FetchEvent(agentA.ID, check.Name)
+	out, err := sensuctl.run(
+		"event", "info", agentA.ID, t.Name(),
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	require.NoError(t, err)
-	require.NotNil(t, eventA)
+	var eventA types.Event
+	require.NoError(t, json.Unmarshal(out, &eventA))
 
-	eventB, err := clientB.FetchEvent(agentB.ID, check.Name)
+	out, err = sensuctl.run(
+		"event", "info", agentB.ID, t.Name(),
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	require.NoError(t, err)
-	require.NotNil(t, eventB)
+	var eventB types.Event
+	require.NoError(t, json.Unmarshal(out, &eventB))
 
-	eventC, err := clientC.FetchEvent(agentC.ID, check.Name)
+	out, err = sensuctl.run("event", "info", agentC.ID, t.Name(),
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	require.NoError(t, err)
-	require.NotNil(t, eventC)
+	var eventC types.Event
+	require.NoError(t, json.Unmarshal(out, &eventC))
 
 	histories := append(eventA.Check.History, eventB.Check.History...)
 	histories = append(histories, eventC.Check.History...)

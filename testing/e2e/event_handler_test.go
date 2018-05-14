@@ -18,18 +18,13 @@ import (
 func TestEventHandler(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestEventHandler",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestEventHandler",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
@@ -41,8 +36,8 @@ func TestEventHandler(t *testing.T) {
 		Name:         "test",
 		Type:         "pipe",
 		Command:      fmt.Sprintf("cat > %s", handlerJSONFile),
-		Environment:  "default",
-		Organization: "default",
+		Environment:  agent.Environment,
+		Organization: agent.Organization,
 	}
 	output, err := sensuctl.run("handler", "create", handler.Name,
 		"--type", handler.Type,
@@ -59,8 +54,8 @@ func TestEventHandler(t *testing.T) {
 		Interval:      1,
 		Subscriptions: []string{"test"},
 		Handlers:      []string{"test"},
-		Environment:   "default",
-		Organization:  "default",
+		Environment:   agent.Environment,
+		Organization:  agent.Organization,
 	}
 	output, err = sensuctl.run("check", "create", check.Name,
 		"--command", check.Command,
@@ -76,7 +71,10 @@ func TestEventHandler(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// There should be a stored event
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
+	output, err = sensuctl.run("event", "info", agent.ID, check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.NoError(t, err, string(output))
 
 	event := types.Event{}

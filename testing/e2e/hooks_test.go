@@ -15,24 +15,21 @@ import (
 func TestCheckHooks(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestCheckHooks",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestCheckHooks",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
 	// Create a check that contains a hook with status non-zero
 	check := types.FixtureCheckConfig("TestCheckHooks")
+	check.Organization = sensuctl.Organization
+	check.Environment = sensuctl.Environment
 	check.Command = "foo"
 	check.Publish = true
 	check.Interval = 5
@@ -70,15 +67,22 @@ func TestCheckHooks(t *testing.T) {
 
 	// Create a hook with hook name hook1
 	hook := types.FixtureHookConfig("hook1")
+	hook.Organization = sensuctl.Organization
+	hook.Environment = sensuctl.Environment
 	hook.Command = "echo {{ .ID }}"
 
 	output, err = sensuctl.run("hook", "create", hook.Name,
 		"--command", hook.Command,
+		"--organization", hook.Organization,
+		"--environment", hook.Environment,
 	)
 	assert.NoError(t, err, string(output))
 
-	output, err = sensuctl.run("hook", "info", hook.Name)
-	assert.NoError(t, err, string(output))
+	output, err = sensuctl.run("hook", "info", hook.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
+	require.NoError(t, err, string(output))
 
 	// Add hook with hook name hook1 to check
 	checkHook := types.FixtureHookList("hook1")
@@ -94,14 +98,19 @@ func TestCheckHooks(t *testing.T) {
 	time.Sleep(20 * time.Second)
 
 	// There should be a stored event
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
-	assert.NoError(t, err, string(output))
+	output, err = sensuctl.run(
+		"event", "info", agent.ID, check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
+	require.NoError(t, err, string(output))
 
 	// Retrieve a new event
 	event = types.Event{}
 	require.NoError(t, json.Unmarshal(output, &event))
-	assert.NoError(t, err)
-	assert.NotNil(t, event)
+	require.NotNil(t, event)
+	require.NotNil(t, event.Check)
+	require.NotNil(t, event.Check.Hooks)
 
 	// Ensure the token substitution has been applied for the hook's command
 	assert.Contains(t, event.Check.Hooks[0].Output, agent.ID)

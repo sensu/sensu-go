@@ -12,6 +12,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestSilencing ensures that the silencing functionality works as expected, by
@@ -23,18 +24,13 @@ import (
 func TestSilencing(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestSilencing",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestSilencing",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
@@ -52,8 +48,8 @@ func TestSilencing(t *testing.T) {
 	}()
 
 	output, err := sensuctl.run("handler", "create", "touch",
-		"--organization", "default",
-		"--environment", "default",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
 		"--timeout", "10",
 		"--type", "pipe",
 		"--command", fmt.Sprintf("touch %s/$(date +%%s)", tmpDir),
@@ -68,8 +64,8 @@ func TestSilencing(t *testing.T) {
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--handlers", "touch",
-		"--organization", "default",
-		"--environment", "default",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
 		"--publish",
 	)
 	assert.NoError(t, err, string(output))
@@ -79,11 +75,16 @@ func TestSilencing(t *testing.T) {
 
 	// We should have an event for that agent and check combinaison and it should
 	// not be silenced
-	output, err = sensuctl.run("event", "info", agent.ID, "check_silencing")
+	output, err = sensuctl.run(
+		"event", "info", agent.ID, "check_silencing",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.NoError(t, err, string(output))
 	event := types.Event{}
 	_ = json.Unmarshal(output, &event)
-	assert.NotNil(t, event)
+	require.NotNil(t, event)
+	require.NotNil(t, event.Check)
 	assert.Empty(t, event.Check.Silenced)
 
 	// Create a silencing entry for that particular entity and check
@@ -91,6 +92,8 @@ func TestSilencing(t *testing.T) {
 		"--subscription", "entity:TestSilencing",
 		"--check", "check_silencing",
 		"--reason", "to test silencing",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
 	)
 	assert.NoError(t, err, string(output))
 
@@ -108,15 +111,23 @@ func TestSilencing(t *testing.T) {
 	count1 := len(files)
 
 	// Make sure the event is marked as silenced now
-	output, err = sensuctl.run("event", "info", agent.ID, "check_silencing")
+	output, err = sensuctl.run(
+		"event", "info", agent.ID, "check_silencing",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.NoError(t, err, string(output))
 	event = types.Event{}
 	_ = json.Unmarshal(output, &event)
-	assert.NotNil(t, event)
+	require.NotNil(t, event)
 	assert.NotEmpty(t, event.Check.Silenced)
 
 	// Make sure the keepalive event is not silenced by our silenced entry
-	output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
+	output, err = sensuctl.run(
+		"event", "info", agent.ID, "keepalive",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.NoError(t, err, string(output))
 	event = types.Event{}
 	json.Unmarshal(output, &event)
@@ -138,6 +149,8 @@ func TestSilencing(t *testing.T) {
 		"delete",
 		fmt.Sprintf("entity:%s:check_silencing", agent.ID),
 		"--skip-confirm",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
 	)
 	assert.NoError(t, err, string(output))
 

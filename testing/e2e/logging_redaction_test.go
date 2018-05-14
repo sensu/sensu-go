@@ -13,18 +13,13 @@ import (
 func TestLoggingRedaction(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
 		ID:               "TestLoggingRedaction",
-		BackendURLs:      []string{backend.WSURL},
 		CustomAttributes: `{"ec2_access_key": "P@ssw0rd!","secret": "P@ssw0rd!"}`,
 		Redact:           []string{"ec2_access_key"},
 	}
@@ -36,7 +31,10 @@ func TestLoggingRedaction(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// Retrieve the entitites
-	output, err := sensuctl.run("entity", "info", agent.ID)
+	output, err := sensuctl.run("entity", "info", agent.ID,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.NoError(t, err)
 
 	entity := types.Entity{}

@@ -14,18 +14,13 @@ import (
 func TestTokenSubstitution(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:               "TestCheckScheduling",
-		BackendURLs:      []string{backend.WSURL},
+		ID:               "TestTokenSubstitution",
 		CustomAttributes: `{"team":"devops"}`,
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
@@ -33,6 +28,8 @@ func TestTokenSubstitution(t *testing.T) {
 
 	// Create a check that take advantage of token substitution
 	check := types.FixtureCheckConfig("check_tokenSubstitution")
+	check.Organization = sensuctl.Organization
+	check.Environment = sensuctl.Environment
 	output, err := sensuctl.run("check", "create", check.Name,
 		"--command", `echo {{ .ID }} {{ .Team }} {{ .Missing | default "defaultValue" }}`,
 		"--interval", "1",
@@ -42,23 +39,25 @@ func TestTokenSubstitution(t *testing.T) {
 		"--environment", check.Environment,
 		"--publish",
 	)
-	assert.NoError(t, err, string(output))
+	require.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
 	time.Sleep(10 * time.Second)
 
 	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
-	assert.NoError(t, err, string(output))
+	require.NoError(t, err, string(output))
 
 	event := types.Event{}
 	require.NoError(t, json.Unmarshal(output, &event))
 	assert.NotNil(t, event)
 	// {{ .ID }} should have been replaced by the entity ID and {{ .Team }} by the
 	// custom attribute of the same name on the entity
-	assert.Contains(t, event.Check.Output, "TestCheckScheduling devops defaultValue")
+	assert.Contains(t, event.Check.Output, "TestTokenSubstitution devops defaultValue")
 
 	// Create a check that take advantage of token substitution
 	checkUnmatchedToken := types.FixtureCheckConfig("check_unmatchedToken")
+	checkUnmatchedToken.Organization = sensuctl.Organization
+	checkUnmatchedToken.Environment = sensuctl.Environment
 	output, err = sensuctl.run("check", "create", checkUnmatchedToken.Name,
 		"--command", "{{ .Foo }}",
 		"--interval", "1",
@@ -68,13 +67,13 @@ func TestTokenSubstitution(t *testing.T) {
 		"--environment", checkUnmatchedToken.Environment,
 		"--publish",
 	)
-	assert.NoError(t, err, string(output))
+	require.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
 	time.Sleep(10 * time.Second)
 
 	output, err = sensuctl.run("event", "info", agent.ID, checkUnmatchedToken.Name)
-	assert.NoError(t, err, string(output))
+	require.NoError(t, err, string(output))
 
 	event = types.Event{}
 	require.NoError(t, json.Unmarshal(output, &event))

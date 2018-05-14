@@ -18,18 +18,13 @@ const timeWindow = `{"days":{"all":[{"begin":"12:00AM UTC","end":"11:59PM UTC"},
 func TestCheckSubdue(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	ctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	ctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestCheckSubdue",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestCheckSubdue",
 	}
 	_, cleanup = newAgent(agentConfig, ctl, t)
 	defer cleanup()
@@ -84,6 +79,8 @@ func createCheck(t *testing.T, ctl *sensuCtl) {
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--command", "true",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
 	)
 	require.NoError(t, err, string(out))
 }
@@ -94,6 +91,8 @@ func getCheck(t *testing.T, ctl *sensuCtl) *types.Check {
 	out, err := ctl.run(
 		"check", "info", "mycheck",
 		"--format", "json",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
 	)
 
 	require.NoError(t, err, string(out))
@@ -113,6 +112,8 @@ func getEvent(t *testing.T, ctl *sensuCtl) *types.Event {
 	out, err := ctl.run(
 		"event", "info", "TestCheckSubdue", "mycheck",
 		"--format", "json",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
 	)
 
 	require.NoError(t, err, string(out))
@@ -131,6 +132,9 @@ func subdueCheck(t *testing.T, ctl *sensuCtl, data string) {
 	defer func() {
 		ctl.SetStdin(os.Stdin)
 	}()
-	_, err := ctl.run("check", "set-subdue", "mycheck")
+	_, err := ctl.run("check", "set-subdue", "mycheck",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
+	)
 	require.NoError(t, err)
 }

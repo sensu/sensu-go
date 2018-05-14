@@ -16,34 +16,28 @@ import (
 )
 
 type eventsTest struct {
-	bep      *backendProcess
 	cleanup  func()
 	ap       *agentProcess
 	sensuctl *sensuCtl
 }
 
 func newEventsTest(t *testing.T) *eventsTest {
+	t.Parallel()
 	test := &eventsTest{}
 
-	// Start the backend
-	backend, backendCleanup := newBackend(t)
-
 	// Initializes sensuctl
-	sensuctl, sensuctlCleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, sensuctlCleanup := newSensuCtl(t)
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestKeepalives",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestKeepalives",
 	}
 	agent, agentCleanup := newAgent(agentConfig, sensuctl, t)
 
 	test.ap = agent
-	test.bep = backend
 	test.sensuctl = sensuctl
 
 	test.cleanup = func() {
-		backendCleanup()
 		agentCleanup()
 		sensuctlCleanup()
 	}
@@ -58,11 +52,14 @@ func newEventsTest(t *testing.T) *eventsTest {
 func TestKeepaliveEvent(t *testing.T) {
 	test := newEventsTest(t)
 	defer test.cleanup()
-	t.Parallel()
 
 	assert := assert.New(t)
 
-	output, err := test.sensuctl.run("event", "list")
+	output, err := test.sensuctl.run(
+		"event", "list",
+		"--organization", test.sensuctl.Organization,
+		"--environment", test.sensuctl.Environment,
+	)
 	assert.NoError(err)
 
 	events := []types.Event{}
@@ -86,10 +83,13 @@ func TestEntity(t *testing.T) {
 	test := newEventsTest(t)
 	defer test.cleanup()
 	assert := assert.New(t)
-	t.Parallel()
 
 	// Retrieve the entitites
-	output, err := test.sensuctl.run("entity", "list")
+	output, err := test.sensuctl.run(
+		"entity", "list",
+		"--organization", test.sensuctl.Organization,
+		"--environment", test.sensuctl.Environment,
+	)
 	require.NoError(t, err)
 
 	entities := []types.Entity{}
@@ -106,7 +106,6 @@ func TestCheck(t *testing.T) {
 	test := newEventsTest(t)
 	defer test.cleanup()
 	assert := assert.New(t)
-	t.Parallel()
 
 	falsePath := testutil.CommandPath(filepath.Join(binDir, "false"))
 	falseAbsPath, err := filepath.Abs(falsePath)
@@ -120,11 +119,17 @@ func TestCheck(t *testing.T) {
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--publish",
+		"--organization", test.sensuctl.Organization,
+		"--environment", test.sensuctl.Environment,
 	)
 	assert.NoError(err)
 
 	// Make sure the check has been properly created
-	output, err := test.sensuctl.run("check", "info", checkName)
+	output, err := test.sensuctl.run(
+		"check", "info", checkName,
+		"--organization", test.sensuctl.Organization,
+		"--environment", test.sensuctl.Environment,
+	)
 	require.NoError(t, err)
 
 	result := types.CheckConfig{}
@@ -133,7 +138,11 @@ func TestCheck(t *testing.T) {
 
 	// Allow enough time for the check to run.
 	time.Sleep(20 * time.Second)
-	output, err = test.sensuctl.run("event", "info", test.ap.ID, checkName)
+	output, err = test.sensuctl.run(
+		"event", "info", test.ap.ID, checkName,
+		"--organization", test.sensuctl.Organization,
+		"--environment", test.sensuctl.Environment,
+	)
 	require.NoError(t, err)
 
 	event := types.Event{}
@@ -149,9 +158,10 @@ func TestHTTPAPI(t *testing.T) {
 	test := newEventsTest(t)
 	defer test.cleanup()
 	assert := assert.New(t)
-	t.Parallel()
 
 	newEvent := types.FixtureEvent(test.ap.ID, "proxy-check")
+	newEvent.Check.Organization = test.sensuctl.Organization
+	newEvent.Check.Environment = test.sensuctl.Environment
 	encoded, _ := json.Marshal(newEvent)
 	url := fmt.Sprintf("http://127.0.0.1:%d/events", test.ap.APIPort)
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(encoded))
@@ -167,28 +177,27 @@ func TestHTTPAPI(t *testing.T) {
 	time.Sleep(5 * time.Second)
 
 	// Make sure the new event has been received
-	output, err := test.sensuctl.run("event", "info", test.ap.ID, "proxy-check")
+	output, err := test.sensuctl.run(
+		"event", "info", test.ap.ID, "proxy-check",
+		"--organization", test.sensuctl.Organization,
+		"--environment", test.sensuctl.Environment,
+	)
 	assert.NoError(err, string(output))
 	assert.NotNil(output)
 }
 
 func TestKeepaliveTimeout(t *testing.T) {
-	// Start the backend
-	backend, backendCleanup := newBackend(t)
-
 	// Initializes sensuctl
-	sensuctl, sensuctlCleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, sensuctlCleanup := newSensuCtl(t)
 
 	// Start the agent
 	agentConfig := agentConfig{
 		ID:               "TestKeepalives",
-		BackendURLs:      []string{backend.WSURL},
 		KeepaliveTimeout: 5,
 	}
 	agent, agentCleanup := newAgent(agentConfig, sensuctl, t)
 
 	defer func() {
-		backendCleanup()
 		agentCleanup()
 		sensuctlCleanup()
 	}()
@@ -197,7 +206,11 @@ func TestKeepaliveTimeout(t *testing.T) {
 	// keepalive to be sent, etc.
 	time.Sleep(10 * time.Second)
 
-	output, err := sensuctl.run("event", "info", agent.ID, "keepalive")
+	output, err := sensuctl.run(
+		"event", "info", agent.ID, "keepalive",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.NoError(t, err)
 
 	event := types.Event{}
@@ -220,7 +233,11 @@ func TestKeepaliveTimeout(t *testing.T) {
 	// keepalive to be sent, etc.
 	time.Sleep(10 * time.Second)
 
-	output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
+	output, err = sensuctl.run(
+		"event", "info", agent.ID, "keepalive",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.NoError(t, err)
 
 	event = types.Event{}

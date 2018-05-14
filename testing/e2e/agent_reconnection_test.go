@@ -7,25 +7,32 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAgentReconnection(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
+	backend, cleanup, err := newBackendProcess(40005, 40006, 40007, 40008, 40009)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	defer cleanup()
 
+	require.NoError(t, backend.Start())
+
+	if !waitForBackend(backend.HTTPURL) {
+		t.Fatal("backend not ready")
+	}
+
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newCustomSensuctl(t, backend.WSURL, backend.HTTPURL, "default", "default")
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestAgentReconnection",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestAgentReconnection",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
@@ -34,32 +41,40 @@ func TestAgentReconnection(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// Retrieve the event for keepalive
-	output, err := sensuctl.run("event", "info", agent.ID, "keepalive")
-	assert.NoError(t, err, string(output))
+	output, err := sensuctl.run(
+		"event", "info", agent.ID, "keepalive",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
+	require.NoError(t, err, string(output))
 
 	event1 := types.Event{}
 	require.NoError(t, json.Unmarshal(output, &event1))
-	assert.NotNil(t, event1)
+	require.NotNil(t, event1)
 
 	// Now terminate the backend
 	require.NoError(t, backend.Terminate())
 
 	// Restart the backend
 	if err := backend.Start(); err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 
 	// Give it few seconds to make sure the agent sent a keepalive
 	time.Sleep(10 * time.Second)
 
 	// Retrieve the the latest event for keepalive
-	output, err = sensuctl.run("event", "info", agent.ID, "keepalive")
-	assert.NoError(t, err, string(output))
+	output, err = sensuctl.run(
+		"event", "info", agent.ID, "keepalive",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
+	require.NoError(t, err, string(output))
 
 	event2 := types.Event{}
 	require.NoError(t, json.Unmarshal(output, &event2))
-	assert.NotNil(t, event2)
+	require.NotNil(t, event2)
 
 	// Ensure we received a new keepalive message from the agent
-	assert.NotEqual(t, event1.Timestamp, event2.Timestamp)
+	require.NotEqual(t, event1.Timestamp, event2.Timestamp)
 }

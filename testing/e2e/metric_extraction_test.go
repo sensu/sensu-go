@@ -13,18 +13,13 @@ import (
 func TestMetricExtraction(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestMetricExtraction",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestMetricExtraction",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
@@ -37,6 +32,8 @@ func TestMetricExtraction(t *testing.T) {
 		"--subscriptions", "test",
 		"--command", `echo "PING ok - Packet loss = 0% | percent_packet_loss=0"`,
 		"--output-metric-format", "nagios_perfdata",
+		"--environment", sensuctl.Environment,
+		"--organization", sensuctl.Organization,
 	)
 	require.NoError(t, err, string(out))
 
@@ -44,7 +41,10 @@ func TestMetricExtraction(t *testing.T) {
 	time.Sleep(15 * time.Second)
 
 	// There should be a stored event for our metric
-	out, err = sensuctl.run("event", "info", agent.ID, "nagios-metric")
+	out, err = sensuctl.run("event", "info", agent.ID, "nagios-metric",
+		"--environment", sensuctl.Environment,
+		"--organization", sensuctl.Organization,
+	)
 	assert.NoError(t, err, string(out))
 
 	event := types.Event{}
