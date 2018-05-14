@@ -1,5 +1,4 @@
-// +build integration,!windows
-// TODO: https://github.com/sensu/sensu-go/issues/1498
+// +build integration
 
 package agent
 
