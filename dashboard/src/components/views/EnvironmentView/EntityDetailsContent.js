@@ -3,10 +3,11 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { Query } from "react-apollo";
 
+import Loader from "/components/util/Loader";
+
 import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 import EntityDetailsContainer from "/components/partials/EntityDetailsContainer";
-import Loader from "/components/Loader";
 
 const query = gql`
   query EntityDetailsContentQuery($ns: NamespaceInput!, $name: String!) {

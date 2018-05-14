@@ -1,11 +1,9 @@
 // +build integration,!windows
-// Due to unknown reasons from https://github.com/sensu/sensu-go/issues/1392
-// Appveyor in unfit to run these tests, so we'll skip windows tests for now
+// TODO: https://github.com/sensu/sensu-go/issues/1498
 
 package agent
 
 import (
-	"context"
 	"encoding/json"
 	"net"
 	"testing"
@@ -157,10 +155,7 @@ func TestReceiveMetrics(t *testing.T) {
 	cfg.StatsdServer.FlushInterval = 1
 	ta := NewAgent(cfg)
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
-	go ta.statsdServer.Run(ctx)
+	go ta.StartStatsd()
 	// Give the server a second to start up
 	time.Sleep(time.Second * 1)
 

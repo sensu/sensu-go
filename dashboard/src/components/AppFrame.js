@@ -7,7 +7,7 @@ import { Route } from "react-router-dom";
 import AppBar from "/components/AppBar";
 import Drawer from "/components/Drawer";
 import QuickNav from "/components/QuickNav";
-import Loader from "/components/Loader";
+import Loader from "/components/util/Loader";
 
 class AppFrame extends React.Component {
   static propTypes = {

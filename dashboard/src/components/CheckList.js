@@ -12,7 +12,7 @@ import Table, {
 import Checkbox from "material-ui/Checkbox";
 import Row from "/components/CheckRow";
 
-import Loader from "/components/Loader";
+import Loader from "/components/util/Loader";
 
 class CheckList extends React.Component {
   static propTypes = {

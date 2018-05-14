@@ -1,10 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import partition from "lodash/partition";
-import { map } from "lodash";
-import { withStyles } from "material-ui/styles";
 import gql from "graphql-tag";
-
+import partition from "lodash/partition";
+import { withStyles } from "material-ui/styles";
+import { Link } from "react-router-dom";
 import Menu, { MenuItem } from "material-ui/Menu";
 import { ListItemIcon, ListItemText } from "material-ui/List";
 import Divider from "material-ui/Divider";
@@ -24,8 +23,9 @@ const styles = () => ({
 class NamespaceSelectorMenu extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.object,
     org: PropTypes.string.isRequired,
+    onClick: PropTypes.func.isRequired,
+    viewer: PropTypes.object,
   };
 
   static defaultProps = {
@@ -51,14 +51,11 @@ class NamespaceSelectorMenu extends React.Component {
   };
 
   render() {
-    const { viewer, classes, org, ...props } = this.props;
+    const { viewer, classes, org, onClick, ...props } = this.props;
 
     if (!viewer) {
       return null;
     }
-
-    const navigateTo = (organization, environment) => () =>
-      window.location.assign(`/${organization}/${environment}/`);
 
     const [[currentOrganization], otherOrganizations] = partition(
       viewer.organizations,
@@ -69,36 +66,43 @@ class NamespaceSelectorMenu extends React.Component {
       <Menu {...props}>
         {currentOrganization &&
           currentOrganization.environments.map(environment => (
-            <MenuItem
-              key={environment.name}
-              onClick={navigateTo(currentOrganization.name, environment.name)}
+            <Link
+              to={`/${currentOrganization.name}/${environment.name}`}
+              onClick={onClick}
             >
-              <ListItemIcon>
-                <div className={classes.envIcon}>
-                  <EnvironmentSymbol environment={environment} size={12} />
-                </div>
-              </ListItemIcon>
-              <ListItemText inset primary={environment.name} />
-            </MenuItem>
+              <MenuItem key={environment.name}>
+                <ListItemIcon>
+                  <div className={classes.envIcon}>
+                    <EnvironmentSymbol environment={environment} size={12} />
+                  </div>
+                </ListItemIcon>
+                <ListItemText inset primary={environment.name} />
+              </MenuItem>
+            </Link>
           ))}
         <Divider />
-        {map(otherOrganizations, (organization, i) => [
+        {otherOrganizations.map((organization, i) => [
           organization.environments.map(environment => (
-            <MenuItem
-              key={environment.name}
-              onClick={navigateTo(organization.name, environment.name)}
+            <Link
+              to={`/${organization.name}/${environment.name}`}
+              onClick={onClick}
             >
-              <ListItemIcon>
-                <OrganizationIcon organization={organization} size={24}>
-                  <EnvironmentSymbol environment={environment} size={24 / 3} />
-                </OrganizationIcon>
-              </ListItemIcon>
-              <ListItemText
-                inset
-                primary={organization.name}
-                secondary={environment.name}
-              />
-            </MenuItem>
+              <MenuItem key={`${organization.name}${environment.name}`}>
+                <ListItemIcon>
+                  <OrganizationIcon organization={organization} size={24}>
+                    <EnvironmentSymbol
+                      environment={environment}
+                      size={24 / 3}
+                    />
+                  </OrganizationIcon>
+                </ListItemIcon>
+                <ListItemText
+                  inset
+                  primary={organization.name}
+                  secondary={environment.name}
+                />
+              </MenuItem>
+            </Link>
           )),
           i + 1 < otherOrganizations.length ? <Divider /> : null,
         ])}

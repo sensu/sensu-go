@@ -21,9 +21,10 @@ const styles = {
 class NamespaceSelector extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    viewer: PropTypes.object,
     environment: PropTypes.object,
     loading: PropTypes.bool,
+    onChange: PropTypes.func.isRequired,
+    viewer: PropTypes.object,
   };
 
   static defaultProps = {
@@ -64,7 +65,14 @@ class NamespaceSelector extends React.Component {
   };
 
   render() {
-    const { loading, environment, viewer, classes, ...props } = this.props;
+    const {
+      classes,
+      environment,
+      loading,
+      onChange,
+      viewer,
+      ...props
+    } = this.props;
     const { anchorEl } = this.state;
 
     return (
@@ -80,12 +88,16 @@ class NamespaceSelector extends React.Component {
               <NamespaceSelectorBuilder environment={environment} />
             </Button>
             <NamespaceSelectorMenu
-              viewer={viewer}
               anchorEl={anchorEl}
+              id="drawer-selector-menu"
+              viewer={viewer}
+              org={params.organization}
               open={Boolean(anchorEl)}
               onClose={this.onClose}
-              id="drawer-selector-menu"
-              org={params.organization}
+              onClick={ev => {
+                this.onClose();
+                onChange(ev);
+              }}
             />
           </div>
         )}
