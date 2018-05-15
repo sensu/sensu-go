@@ -6,18 +6,9 @@ export default function(content) {
     emitFile(outputPath, fileContent) {
       context.emitFile(outputPath, fileContent);
 
-      // return `module.exports = __webpack_public_path__ + ${JSON.stringify(
-      //   outputPath,
-      // )};
-
-      // ¯\(°_o)/¯
-      // ¯\(°_o)/¯
-      // ¯\(°_o)/¯
-      // ¯\(°_o)/¯
-      // ¯\(°_o)/¯
-      // ¯\(°_o)/¯
-      // ¯\(°_o)/¯
-      return `module.exports = ${fileContent}`;
+      return `module.exports = __webpack_public_path__ + ${JSON.stringify(
+        outputPath,
+      )}`;
     },
   });
 }

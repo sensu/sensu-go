@@ -3,7 +3,7 @@
 import { buildSchema, execute, parse } from "graphql";
 import rawSchema from "!!raw-loader!./combined.graphql";
 
-export default ({ emitFile }) => {
+export default () => {
   //
   // Apollo only needs to be aware of the possible types unions and interfaces
   // may contain. So instead of retrieving the entire schema, we simply retrieve
@@ -35,5 +35,5 @@ export default ({ emitFile }) => {
     type => type.kind === "UNION" || type.kind === "INTERFACE",
   );
   result.data.__schema.types = filteredTypes;
-  return emitFile("combinedTypes.json", JSON.stringify(result));
+  return `module.exports = ${JSON.stringify(result)}`;
 };
