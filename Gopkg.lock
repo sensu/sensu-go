@@ -357,16 +357,6 @@
   version = "v1.0"
 
 [[projects]]
-  name = "github.com/influxdata/influxdb"
-  packages = [
-    "client/v2",
-    "models",
-    "pkg/escape"
-  ]
-  revision = "02d7d4f043b34ecb4e9b2dbec298c6f9450c2a32"
-  version = "v1.5.2"
-
-[[projects]]
   branch = "master"
   name = "github.com/ipfs/go-log"
   packages = ["."]
@@ -558,10 +548,8 @@
 [[projects]]
   name = "github.com/shirou/gopsutil"
   packages = [
-    "cpu",
     "host",
     "internal/common",
-    "mem",
     "net",
     "process"
   ]
@@ -816,6 +804,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fe9df91eb1adb48ac7a87dacf048e938299dc34ed255aac0474f44a791827be1"
+  inputs-digest = "1d4fc58445f0bb9f7479cb8c8fd24a7cc6386ec78324b55a54a08c01ed61cdcf"
   solver-name = "gps-cdcl"
   solver-version = 1
