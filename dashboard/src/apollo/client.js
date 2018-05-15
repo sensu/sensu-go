@@ -14,6 +14,7 @@ import authLink from "./authLink";
 import errorLink from "./errorLink";
 import stateLink from "./stateLink";
 import httpLink from "./httpLink";
+import introspectionLink from "./introspectionLink";
 import localStorageSync from "./localStorageSync";
 
 const createClient = () => {
@@ -36,6 +37,7 @@ const createClient = () => {
     cache,
     link: ApolloLink.from([
       errorLink(),
+      introspectionLink(),
       stateLink({ cache }),
       authLink({ getClient }),
       httpLink(),
