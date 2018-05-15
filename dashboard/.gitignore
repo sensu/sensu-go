@@ -24,6 +24,3 @@ yarn-error.log*
 # generated go file
 /assets_vfsgen.go
 /assets_glue.go
-
-# GraphQL
-/src/schema.json
