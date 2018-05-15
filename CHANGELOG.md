@@ -31,6 +31,8 @@ github.com/nikkiki/sensu-influxdb-handler
 whitespace characters.
 - Sensu-agent logs an error if the statsd listener is unable to start due to an
 invalid address or is stopped due to any other error.
+- Fixed a bug where --organization and --environment flags were hidden for all
+commands
 - Fix a bug where environments could not be created with sensuctl create
 - StatsD listener on Windows is functional
 
