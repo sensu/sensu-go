@@ -68,30 +68,37 @@ func Semver() string {
 // BuildEnv provides methods for determining version info from the current env.
 type BuildEnv interface {
 	IsCI() bool
-	IsNightly() bool
-	GetMostRecentTag() string
+	IsNightly() (bool, error)
+	GetMostRecentTag() (string, error)
 }
 
 // FindVersionInfo discovers the most recent tag and BuildType using the
 // current build environment
-func FindVersionInfo(env BuildEnv) (string, BuildType) {
-	tag := env.GetMostRecentTag()
+func FindVersionInfo(env BuildEnv) (string, BuildType, error) {
+	tag, err := env.GetMostRecentTag()
+	if err != nil {
+		return "", "", err
+	}
 	// if building outside of CI, this is a dev build, regardless of tag
 	if !env.IsCI() {
-		return tag, Dev
+		return tag, Dev, nil
 	}
 	// if building from CI from a non-release commit, this is a nightly build
-	if env.IsNightly() {
-		return tag, Nightly
+	isNightly, err := env.IsNightly()
+	if err != nil {
+		return "", "", err
+	}
+	if isNightly {
+		return tag, Nightly, nil
 	}
 	// detect build type via string comparison on current tag
 	for _, bt := range []BuildType{Alpha, Beta, RC, Stable} {
 		if strings.Contains(tag, string(bt)) {
-			return tag, bt
+			return tag, bt, nil
 		}
 	}
 	// tag doesn't match any other condition, default to stable build
-	return tag, Stable
+	return tag, Stable, nil
 }
 
 // Iteration will output an iteration number based on what type of build the git

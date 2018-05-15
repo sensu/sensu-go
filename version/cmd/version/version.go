@@ -22,7 +22,10 @@ var (
 
 func main() {
 	flag.Parse()
-	tag, bt := version.FindVersionInfo(&BuildEnv{})
+	tag, bt, err := version.FindVersionInfo(&BuildEnv{})
+	if err != nil {
+		log.Fatal(err)
+	}
 	var fn func(string, version.BuildType) (string, error)
 	if *fFullVersion {
 		fn = version.FullVersion
@@ -64,30 +67,29 @@ func (BuildEnv) IsCI() bool {
 
 // Returns true if this is a nightly release by checking whether the current
 // HEAD is one or more commits ahead of the latest tag.
-func (BuildEnv) IsNightly() bool {
+func (BuildEnv) IsNightly() (bool, error) {
 	cmd := exec.Command("git", "describe", "--exact-match", "--tags", "HEAD")
 	err := cmd.Run()
 	// if the tag is an exact match for current HEAD, this is not a nightly
 	if err == nil {
-		return false
+		return false, nil
 	}
 	// if the command exited with a nonzero status, this is a nightly build
 	if _, ok := err.(*exec.ExitError); ok {
-		return true
+		return true, nil
 	}
-	// if the command somehow failed to execute, it is a fatal error
-	log.Fatal(err)
-	return false
+	// if the command somehow failed to execute, it's an error
+	return false, err
 }
 
 // Returns the most recent tag belonging to the current commit
-func (BuildEnv) GetMostRecentTag() string {
+func (BuildEnv) GetMostRecentTag() (string, error) {
 	// --abbrev=0 disables tag annotation, returning unmodified most recent tag
 	cmd := exec.Command("git", "describe", "--abbrev=0", "--tags", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	tag := strings.Trim(string(out), "\n")
-	return tag
+	return tag, nil
 }

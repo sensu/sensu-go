@@ -1,6 +1,7 @@
 package version
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -16,26 +17,30 @@ type tagTest struct {
 
 // Mock out the build environment so we can test environment-dependent version info.
 type mockBuildEnv struct {
-	ci, nightly bool
-	tag         string
+	ci, nightly        bool
+	tag                string
+	nightlyErr, tagErr error
 }
 
 func (m *mockBuildEnv) IsCI() bool {
 	return m.ci
 }
 
-func (m *mockBuildEnv) IsNightly() bool {
-	return m.nightly
+func (m *mockBuildEnv) IsNightly() (bool, error) {
+	return m.nightly, m.nightlyErr
 }
 
-func (m *mockBuildEnv) GetMostRecentTag() string {
-	return m.tag
+func (m *mockBuildEnv) GetMostRecentTag() (string, error) {
+	return m.tag, m.tagErr
 }
 
 func TestBuildTypeFromEnv(t *testing.T) {
+	nightlyErr := errors.New("nightly")
+	tagErr := errors.New("tag")
 	tests := []struct {
 		buildEnv BuildEnv
 		exp      BuildType
+		err      error
 	}{
 		// if building outside of CI, this is a dev build
 		{
@@ -65,11 +70,24 @@ func TestBuildTypeFromEnv(t *testing.T) {
 			buildEnv: &mockBuildEnv{tag: "2.0.1", ci: true},
 			exp:      Stable,
 		},
+		// test error cases
+		{
+			buildEnv: &mockBuildEnv{ci: true, nightlyErr: nightlyErr},
+			err:      nightlyErr,
+		},
+		{
+			buildEnv: &mockBuildEnv{tagErr: tagErr},
+			err:      tagErr,
+		},
 	}
 
 	for _, test := range tests {
-		_, got := FindVersionInfo(test.buildEnv)
-		if got != test.exp {
+		_, got, err := FindVersionInfo(test.buildEnv)
+		if err == nil && test.err != nil {
+			t.Errorf("expected error: %q", test.err)
+		} else if err != nil && test.err == nil {
+			t.Errorf("unexpected error: %q", err)
+		} else if got != test.exp {
 			t.Errorf("bad build type: got %q, want %q", got, test.exp)
 		}
 	}
