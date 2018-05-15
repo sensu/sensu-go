@@ -1,9 +1,11 @@
 import { HttpLink } from "apollo-link-http";
 
+import doFetch from "/utils/fetch";
+
 const httpLink = () =>
   new HttpLink({
     uri: "/graphql",
-    fetchOptions: {},
+    fetch: doFetch,
     credentials: "same-origin",
   });
 

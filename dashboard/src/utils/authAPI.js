@@ -1,16 +1,7 @@
-import { parseUNIX } from "./date";
+import FetchError from "/errors/FetchError";
 
-const doFetch = async (path, config) => {
-  const response = await fetch(path, config);
-
-  if (response.status < 200 || response.status >= 300) {
-    const error = new Error(response.status);
-    error.response = response;
-    throw error;
-  }
-
-  return response;
-};
+import { parseUNIX } from "/utils/date";
+import doFetch from "/utils/fetch";
 
 const parseTokenResponse = body => ({
   accessToken: body.access_token,

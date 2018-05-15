@@ -3,11 +3,15 @@ import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 import { compose } from "recompose";
 import { withApollo } from "react-apollo";
+import { ApolloError } from "apollo-client";
 
 import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
 import Typography from "material-ui/Typography";
+
+import { when } from "/utils/promise";
+import { UnauthorizedError } from "/errors/FetchError";
 
 import createTokens from "/mutations/createTokens";
 
@@ -83,14 +87,16 @@ class LoginView extends React.Component {
     // Disable form
     this.setState({ disabled: true });
 
-    createTokens(client, { username, password }).catch(error => {
-      this.setState({
-        disabled: false,
-        authError: "Bad username or password.",
-      });
-
-      throw error;
-    });
+    createTokens(client, { username, password }).catch(
+      when(UnauthorizedError, error => {
+        this.setState({
+          disabled: false,
+          authError: "Bad username or password.",
+        });
+        // TODO: Handle other fetch error cases to show an inline error state
+        // instead of triggering global error modal.
+      }),
+    );
   };
 
   render() {
