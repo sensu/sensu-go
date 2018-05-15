@@ -60,6 +60,7 @@ type CheckAPIClient interface {
 
 // EntityAPIClient client methods for entities
 type EntityAPIClient interface {
+	CreateEntity(entity *types.Entity) error
 	DeleteEntity(entity *types.Entity) error
 	FetchEntity(ID string) (*types.Entity, error)
 	ListEntities(string) ([]types.Entity, error)
