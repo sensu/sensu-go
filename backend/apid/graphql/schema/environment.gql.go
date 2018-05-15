@@ -99,6 +99,24 @@ type EnvironmentEventsFieldResolver interface {
 	Events(p EnvironmentEventsFieldResolverParams) (interface{}, error)
 }
 
+// EnvironmentSilencesFieldResolverArgs contains arguments provided to silences when selected
+type EnvironmentSilencesFieldResolverArgs struct {
+	Offset int // Offset - self descriptive
+	Limit  int // Limit - self descriptive
+}
+
+// EnvironmentSilencesFieldResolverParams contains contextual info to resolve silences field
+type EnvironmentSilencesFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EnvironmentSilencesFieldResolverArgs
+}
+
+// EnvironmentSilencesFieldResolver implement to resolve requests for the Environment's silences field.
+type EnvironmentSilencesFieldResolver interface {
+	// Silences implements response to request for silences field.
+	Silences(p EnvironmentSilencesFieldResolverParams) (interface{}, error)
+}
+
 // EnvironmentCheckHistoryFieldResolverArgs contains arguments provided to checkHistory when selected
 type EnvironmentCheckHistoryFieldResolverArgs struct {
 	Filter string // Filter reduces the set using the given Sensu Query Expression predicate.
@@ -187,6 +205,7 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentChecksFieldResolver
 	EnvironmentEntitiesFieldResolver
 	EnvironmentEventsFieldResolver
+	EnvironmentSilencesFieldResolver
 	EnvironmentCheckHistoryFieldResolver
 }
 
@@ -289,6 +308,12 @@ func (_ EnvironmentAliases) Events(p EnvironmentEventsFieldResolverParams) (inte
 	return val, err
 }
 
+// Silences implements response to request for 'silences' field.
+func (_ EnvironmentAliases) Silences(p EnvironmentSilencesFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // CheckHistory implements response to request for 'checkHistory' field.
 func (_ EnvironmentAliases) CheckHistory(p EnvironmentCheckHistoryFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -375,6 +400,19 @@ func _ObjTypeEnvironmentEventsHandler(impl interface{}) graphql1.FieldResolveFn 
 		}
 
 		return resolver.Events(frp)
+	}
+}
+
+func _ObjTypeEnvironmentSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentSilencesFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EnvironmentSilencesFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Silences(frp)
 	}
 }
 
@@ -532,6 +570,24 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 				Name:              "organization",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Organization")),
 			},
+			"silences": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All silences associated with the environment.",
+				Name:              "silences",
+				Type:              graphql1.NewNonNull(graphql.OutputType("SilencedConnection")),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node")},
@@ -560,6 +616,7 @@ var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 		"id":           _ObjTypeEnvironmentIDHandler,
 		"name":         _ObjTypeEnvironmentNameHandler,
 		"organization": _ObjTypeEnvironmentOrganizationHandler,
+		"silences":     _ObjTypeEnvironmentSilencesHandler,
 	},
 }
 

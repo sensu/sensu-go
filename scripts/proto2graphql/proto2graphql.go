@@ -91,7 +91,10 @@ func main() { // nolint
 			}
 
 			if field.Repeated {
-				t = fmt.Sprintf("[%s]", t)
+				t = fmt.Sprintf("[%s!]", t)
+			}
+			if !isNullable(field.Field) {
+				t = fmt.Sprintf("%s!", t)
 			}
 
 			out += genComment(field.Comment, false, 2)
@@ -157,6 +160,15 @@ func genComment(comment *proto.Comment, forceMulti bool, indentLvl int) string {
 		indent,
 		strings.TrimSpace(comment.Message()),
 	)
+}
+
+func isNullable(field *proto.Field) bool {
+	for _, opt := range field.Options {
+		if opt.Name == "(gogoproto.nullable)" || opt.Constant.Source == "true" {
+			return true
+		}
+	}
+	return false
 }
 
 func indentStr(len int) string {

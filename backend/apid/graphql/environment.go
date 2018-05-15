@@ -20,19 +20,22 @@ var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
 //
 
 type envImpl struct {
-	orgCtrl    actions.OrganizationsController
-	checksCtrl actions.CheckController
-	entityCtrl actions.EntityController
-	eventsCtrl eventQuerier
+	orgFinder      organizationFinder
+	checksCtrl     actions.CheckController
+	entityCtrl     actions.EntityController
+	eventQuerier   eventQuerier
+	silenceQuerier silenceQuerier
 }
 
 func newEnvImpl(store store.Store, getter types.QueueGetter) *envImpl {
 	eventsCtrl := actions.NewEventController(store, nil)
+	silenceCtrl := actions.NewSilencedController(store)
 	return &envImpl{
-		orgCtrl:    actions.NewOrganizationsController(store),
-		checksCtrl: actions.NewCheckController(store, getter),
-		entityCtrl: actions.NewEntityController(store),
-		eventsCtrl: eventsCtrl,
+		orgFinder:      actions.NewOrganizationsController(store),
+		checksCtrl:     actions.NewCheckController(store, getter),
+		entityCtrl:     actions.NewEntityController(store),
+		eventQuerier:   eventsCtrl,
+		silenceQuerier: silenceCtrl,
 	}
 }
 
@@ -81,9 +84,8 @@ func (r *envImpl) ColourID(p graphql.ResolveParams) (schema.MutedColour, error) 
 
 // Organization implements response to request for 'organization' field.
 func (r *envImpl) Organization(p graphql.ResolveParams) (interface{}, error) {
-	env := p.Source.(*types.Environment)
-	org, err := r.orgCtrl.Find(p.Context, env.Organization)
-	return handleControllerResults(org, err)
+	env := p.Source.(types.MultitenantResource)
+	return findOrganization(p.Context, r.orgFinder, env)
 }
 
 // Checks implements response to request for 'checks' field.
@@ -126,6 +128,27 @@ func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interfa
 	return newOffsetContainer(
 		filteredChecks[l:h],
 		len(filteredChecks),
+		p.Args.Offset,
+		p.Args.Limit,
+	), nil
+}
+
+// Silences implements response to request for 'silences' field.
+func (r *envImpl) Silences(p schema.EnvironmentSilencesFieldResolverParams) (interface{}, error) {
+	env := p.Source.(*types.Environment)
+
+	// finds all records
+	ctx := types.SetContextFromResource(p.Context, env)
+	records, err := r.silenceQuerier.Query(ctx, "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	// paginate
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
+	return newOffsetContainer(
+		records[l:h],
+		len(records),
 		p.Args.Offset,
 		p.Args.Limit,
 	), nil
@@ -185,7 +208,7 @@ func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (int
 func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interface{}, error) {
 	env := p.Source.(*types.Environment)
 	ctx := types.SetContextFromResource(p.Context, env)
-	records, err := r.eventsCtrl.Query(ctx, "", "")
+	records, err := r.eventQuerier.Query(ctx, "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +257,7 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverParams) (interface{}, error) {
 	env := p.Source.(*types.Environment)
 	ctx := types.SetContextFromResource(p.Context, env)
-	records, err := r.eventsCtrl.Query(ctx, "", "")
+	records, err := r.eventQuerier.Query(ctx, "", "")
 	if err != nil {
 		return []types.CheckHistory{}, err
 	}

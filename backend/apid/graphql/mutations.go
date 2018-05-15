@@ -20,21 +20,30 @@ var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
 //
 
 type mutationsImpl struct {
-	checkCtrl      actions.CheckController
+	checkCtrl actions.CheckController
+
 	eventFinder    eventFinder
 	eventReplacer  eventReplacer
 	eventDestroyer eventDestroyer
+
+	silenceCreator   silenceCreator
+	silenceDestroyer silenceDestroyer
 }
 
 func newMutationImpl(store store.Store, getter types.QueueGetter, bus messaging.MessageBus) *mutationsImpl {
 	eventCtrl := actions.NewEventController(store, bus)
 	checkCtrl := actions.NewCheckController(store, getter)
+	silenceCtrl := actions.NewSilencedController(store)
 
 	return &mutationsImpl{
-		checkCtrl:      checkCtrl,
+		checkCtrl: checkCtrl,
+
 		eventFinder:    eventCtrl,
 		eventReplacer:  eventCtrl,
 		eventDestroyer: eventCtrl,
+
+		silenceCreator:   silenceCtrl,
+		silenceDestroyer: silenceCtrl,
 	}
 }
 
@@ -188,4 +197,51 @@ func decodeEventGID(gid string) (globalid.EventComponents, error) {
 
 	components = globalid.NewEventComponents(parsedComponents)
 	return components, nil
+}
+
+//
+// Implement silenced mutations
+//
+
+// CreateSilence implements response to request for the 'createSilence' field.
+func (r *mutationsImpl) CreateSilence(p schema.MutationCreateSilenceFieldResolverParams) (interface{}, error) {
+	inputs := p.Args.Input
+
+	var silence types.Silenced
+	silence.Check = inputs.Check
+	silence.Subscription = inputs.Subscription
+	silence.Organization = inputs.Ns.Organization
+	silence.Environment = inputs.Ns.Environment
+	copySilenceInputs(&silence, inputs.Props)
+
+	err := r.silenceCreator.Create(p.Context, &silence)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"clientMutationId": inputs.ClientMutationID,
+		"silence":          &silence,
+	}, nil
+}
+
+// DeleteSilence implements response to request for the 'deleteSilence' field.
+func (r *mutationsImpl) DeleteSilence(p schema.MutationDeleteSilenceFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Parse(p.Args.Input.ID)
+	ctx := setContextFromComponents(p.Context, components)
+
+	err := r.silenceDestroyer.Destroy(ctx, components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"deletedId":        p.Args.Input.ID,
+	}, nil
+}
+
+func copySilenceInputs(r *types.Silenced, ins *schema.SilenceInputs) {
+	r.Reason = ins.Reason
+	r.Begin = ins.Begin.Unix()
+	r.Expire = int64(ins.Expire)
+	r.ExpireOnResolve = ins.ExpireOnResolve
 }

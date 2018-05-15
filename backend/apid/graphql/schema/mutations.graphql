@@ -9,8 +9,10 @@ type Mutation {
 
   "Creates a new check."
   createCheck(input: CreateCheckInput!): CreateCheckPayload
+
   "Updates given check."
   updateCheck(input: UpdateCheckInput!): UpdateCheckPayload
+
   "Removes given check."
   deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
 
@@ -23,6 +25,16 @@ type Mutation {
 
   "Deletes an event."
   deleteEvent(input: DeleteRecordInput!): DeleteRecordPayload
+
+  #
+  # Silences
+  #
+
+  "Creates a silence."
+  createSilence(input: CreateSilenceInput!): CreateSilencePayload
+
+  "Removes given silence."
+  deleteSilence(input: DeleteRecordInput!): DeleteRecordPayload
 }
 
 """
@@ -111,9 +123,13 @@ type CreateCheckPayload {
   "A unique identifier for the client performing the mutation."
   clientMutationId: String
 
-  "The name of the new check."
+  "The newly created check."
   check: CheckConfig!
 }
+
+#
+# UpdateCheckMutation
+#
 
 input UpdateCheckInput {
   "A unique identifier for the client performing the mutation."
@@ -130,7 +146,7 @@ type UpdateCheckPayload {
   "A unique identifier for the client performing the mutation."
   clientMutationId: String
 
-  "The name of the new check."
+  "The updated check."
   check: CheckConfig!
 }
 
@@ -155,4 +171,50 @@ type ResolveEventPayload {
 
   "The event that was resolved."
   event: Event!
+}
+
+#
+# CreateSilenceMutation
+#
+
+input CreateSilenceInput {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "namespace the resulting resource will belong to."
+  ns: NamespaceInput = {organization: "default", environment: "default"}
+
+  "check associated with the silenced entry; optional."
+  check: String
+
+  "subscription associated with the silenced entry; optional."
+  subscription: String
+
+  "properties of the silence"
+  props: SilenceInputs!
+}
+
+input SilenceInputs {
+  "Reason is used to provide context to the entry"
+  reason: String
+
+  "Begin is a timestamp at which the silenced entry takes effect."
+  begin: DateTime
+
+  """
+  ExpireOnResolve defaults to false, clears the entry on resolution when set
+  to true
+  """
+  expireOnResolve: Boolean = true
+
+  "Expire is the number of seconds the entry will live"
+  expire: Int = -1
+}
+
+type CreateSilencePayload {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "The newly created silence."
+  silence: Silenced!
 }
