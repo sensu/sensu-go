@@ -37,8 +37,8 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 }
 
 func (r *SilencedRouter) list(req *http.Request) (interface{}, error) {
-	params := actions.QueryParams(mux.Vars(req))
-	return r.controller.Query(req.Context(), params)
+	params := mux.Vars(req)
+	return r.controller.Query(req.Context(), params["subscription"], params["check"])
 }
 
 func (r *SilencedRouter) find(req *http.Request) (interface{}, error) {
@@ -56,7 +56,7 @@ func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	err := r.controller.Create(req.Context(), cfg)
+	err := r.controller.Create(req.Context(), &cfg)
 	return cfg, err
 }
 

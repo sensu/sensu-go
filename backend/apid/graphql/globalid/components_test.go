@@ -27,6 +27,7 @@ func TestParse(t *testing.T) {
 		{"srn:users:123", wants{res: "users", id: "123"}},
 		{"srn:u:org:1", wants{res: "u", org: "org", id: "1"}},
 		{"srn:users:cat/123", wants{res: "users", resType: "cat", id: "123"}},
+		{"srn:cats:x:y:*:z", wants{res: "cats", org: "x", env: "y", id: "*:z"}},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.gid, func(t *testing.T) {
@@ -87,6 +88,15 @@ func TestStandardComponentsString(t *testing.T) {
 				uniqueComponent: "123",
 			},
 			"srn:users:default:cat/123",
+		},
+		{
+			StandardComponents{
+				resource:        "silences",
+				organization:    "default",
+				environment:     "default",
+				uniqueComponent: "123:456",
+			},
+			"srn:silences:default:default:123:456",
 		},
 	}
 	for _, tc := range testCases {

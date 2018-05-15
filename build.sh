@@ -13,7 +13,7 @@ RACE=""
 
 VERSION_CMD="go run ./version/cmd/version/version.go"
 
-HANDLERS=(slack influx-db)
+HANDLERS=(slack)
 
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then

@@ -8,7 +8,7 @@
     "yarn": ">= 1.5.0"
   },
   "scripts": {
-    "prettier": "npx prettier --write **/*.js",
+    "prettier": "npx prettier --write '**/*.js'",
     "start": "node scripts serve",
     "build": "node scripts build",
     "analyze": "npx webpack-bundle-analyzer stats.json -s gzip",

@@ -23,9 +23,8 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
-	schema.RegisterDeleteRecordInput(svc)
-	schema.RegisterDeleteRecordPayload(svc, &deleteRecordPayload{})
 	schema.RegisterEnvironment(svc, newEnvImpl(store, cfg.QueueGetter))
+	schema.RegisterEnvironmentNode(svc, envNodeImpl{})
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
 	schema.RegisterHandler(svc, newHandlerImpl(store))
@@ -33,7 +32,6 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
 	schema.RegisterQuery(svc, newQueryImpl(store, nodeResolver))
-	schema.RegisterMutation(svc, newMutationImpl(store, cfg.QueueGetter, cfg.Bus))
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterMutedColour(svc)
 	schema.RegisterNamespace(svc, &namespaceImpl{})
@@ -41,22 +39,18 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterNamespaceInput(svc)
 	schema.RegisterOrganization(svc, newOrgImpl(store))
 	schema.RegisterOffsetPageInfo(svc, &offsetPageInfoImpl{})
-	schema.RegisterResolveEventInput(svc)
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
 	schema.RegisterSchema(svc)
+	schema.RegisterSilenced(svc, newSilencedImpl(store, cfg.QueueGetter))
+	schema.RegisterSilencedConnection(svc, &schema.SilencedConnectionAliases{})
 	schema.RegisterViewer(svc, newViewerImpl(store, cfg.QueueGetter, cfg.Bus))
 
 	// Register check types
 	schema.RegisterCheck(svc, &checkImpl{})
 	schema.RegisterCheckConfig(svc, newCheckCfgImpl(store))
 	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
-	schema.RegisterCheckConfigInputs(svc)
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterCheckListOrder(svc)
-	schema.RegisterCreateCheckInput(svc)
-	schema.RegisterCreateCheckPayload(svc, &checkMutationPayload{})
-	schema.RegisterUpdateCheckInput(svc)
-	schema.RegisterUpdateCheckPayload(svc, &checkMutationPayload{})
 
 	// Register entity types
 	schema.RegisterEntity(svc, newEntityImpl(store))
@@ -87,6 +81,20 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterRuleResource(svc)
 	schema.RegisterRulePermission(svc)
 	schema.RegisterUser(svc, &userImpl{})
+
+	// Register mutations
+	schema.RegisterMutation(svc, newMutationImpl(store, cfg.QueueGetter, cfg.Bus))
+	schema.RegisterCheckConfigInputs(svc)
+	schema.RegisterCreateCheckInput(svc)
+	schema.RegisterCreateCheckPayload(svc, &checkMutationPayload{})
+	schema.RegisterCreateSilenceInput(svc)
+	schema.RegisterCreateSilencePayload(svc, &schema.CreateSilencePayloadAliases{})
+	schema.RegisterDeleteRecordInput(svc)
+	schema.RegisterDeleteRecordPayload(svc, &deleteRecordPayload{})
+	schema.RegisterResolveEventInput(svc)
+	schema.RegisterSilenceInputs(svc)
+	schema.RegisterUpdateCheckInput(svc)
+	schema.RegisterUpdateCheckPayload(svc, &checkMutationPayload{})
 
 	err := svc.Regenerate()
 	return svc, err

@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -31,12 +32,12 @@ func NewSilencedController(store store.SilencedStore) SilencedController {
 }
 
 // Query returns resources available to the viewer.
-func (a SilencedController) Query(ctx context.Context, params QueryParams) ([]*types.Silenced, error) {
+func (a SilencedController) Query(ctx context.Context, sub, check string) ([]*types.Silenced, error) {
 	var results []*types.Silenced
 	var serr error
-	if sub := params["subscription"]; sub != "" {
+	if sub != "" {
 		results, serr = a.Store.GetSilencedEntriesBySubscription(ctx, sub)
-	} else if check := params["check"]; check != "" {
+	} else if check != "" {
 		results, serr = a.Store.GetSilencedEntriesByCheckName(ctx, check)
 	} else {
 		results, serr = a.Store.GetSilencedEntries(ctx)
@@ -76,20 +77,19 @@ func (a SilencedController) Find(ctx context.Context, id string) (*types.Silence
 }
 
 // Create creates a new silenced entry. It returns an error if the entry already exists.
-func (a SilencedController) Create(ctx context.Context, newSilence types.Silenced) error {
+func (a SilencedController) Create(ctx context.Context, newSilence *types.Silenced) error {
 	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &newSilence)
+	ctx = addOrgEnvToContext(ctx, newSilence)
 	abilities := a.Policy.WithContext(ctx)
 
 	// Populate newSilence.ID with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the
 	// validator will return an error when attempting to update it in the store.
-	if newSilence.Subscription != "" && newSilence.Check != "" {
-		newSilence.ID = newSilence.Subscription + ":" + newSilence.Check
-	} else if newSilence.Check == "" && newSilence.Subscription != "" {
-		newSilence.ID = newSilence.Subscription + ":" + "*"
-	} else if newSilence.Subscription == "" && newSilence.Check != "" {
-		newSilence.ID = "*" + ":" + newSilence.Check
+	newSilence.ID, _ = types.SilencedID(newSilence.Subscription, newSilence.Check)
+
+	// If begin timestamp was not already provided set it to the current time.
+	if newSilence.Begin == 0 {
+		newSilence.Begin = time.Now().Unix()
 	}
 
 	// Retrieve the subject of the JWT, which represents the logged on user, in
@@ -106,7 +106,7 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 	}
 
 	// Verify viewer can make change
-	if yes := abilities.CanCreate(&newSilence); !yes {
+	if yes := abilities.CanCreate(newSilence); !yes {
 		return NewErrorf(PermissionDenied)
 	}
 
@@ -116,7 +116,7 @@ func (a SilencedController) Create(ctx context.Context, newSilence types.Silence
 	}
 
 	// Persist
-	if err := a.Store.UpdateSilencedEntry(ctx, &newSilence); err != nil {
+	if err := a.Store.UpdateSilencedEntry(ctx, newSilence); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -132,12 +132,11 @@ func (a SilencedController) CreateOrReplace(ctx context.Context, newSilence type
 	// Populate newSilence.ID with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the
 	// validator will return an error when attempting to update it in the store.
-	if newSilence.Subscription != "" && newSilence.Check != "" {
-		newSilence.ID = newSilence.Subscription + ":" + newSilence.Check
-	} else if newSilence.Check == "" && newSilence.Subscription != "" {
-		newSilence.ID = newSilence.Subscription + ":" + "*"
-	} else if newSilence.Subscription == "" && newSilence.Check != "" {
-		newSilence.ID = "*" + ":" + newSilence.Check
+	newSilence.ID, _ = types.SilencedID(newSilence.Subscription, newSilence.Check)
+
+	// If begin timestamp was not already provided set it to the current time.
+	if newSilence.Begin == 0 {
+		newSilence.Begin = time.Now().Unix()
 	}
 
 	// Retrieve the subject of the JWT, which represents the logged on user, in
