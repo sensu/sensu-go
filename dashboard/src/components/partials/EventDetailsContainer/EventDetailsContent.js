@@ -2,8 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import Grid from "material-ui/Grid";
+
+import Loader from "/components/util/Loader";
+
 import Content from "/components/Content";
-import Loader from "/components/Loader";
 import ButtonSet from "/components/ButtonSet";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
 import CheckResult from "./EventDetailsCheckResult";

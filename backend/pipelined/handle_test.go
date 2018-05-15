@@ -24,9 +24,9 @@ type mockExec struct {
 	mock.Mock
 }
 
-func (m *mockExec) HandleEvent(evt *types.Event, mut []byte) error {
+func (m *mockExec) HandleEvent(evt *types.Event, mut []byte) (rpc.HandleEventResponse, error) {
 	args := m.Called(evt, mut)
-	return args.Error(0)
+	return args.Get(0).(rpc.HandleEventResponse), args.Error(1)
 }
 
 func (m *mockExec) MutateEvent(evt *types.Event) ([]byte, error) {
@@ -87,7 +87,10 @@ func TestPipelinedHandleEvent(t *testing.T) {
 	store.On("GetHandlerByName", mock.Anything, "handler2").Return((*types.Handler)(nil), nil)
 	store.On("GetExtension", mock.Anything, "handler2").Return(extension, nil)
 	m := &mockExec{}
-	m.On("HandleEvent", event, mock.Anything).Return(nil)
+	m.On("HandleEvent", event, mock.Anything).Return(rpc.HandleEventResponse{
+		Output: "ok",
+		Error:  "",
+	}, nil)
 	p.extensionExecutor = func(*types.Extension) (rpc.ExtensionExecutor, error) {
 		return m, nil
 	}
@@ -270,13 +273,18 @@ func TestPipelinedGRPCHandler(t *testing.T) {
 	event := types.FixtureEvent("foo", "bar")
 	execFn := func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
 		mock := &mockExec{}
-		mock.On("HandleEvent", event, []byte(nil)).Return(nil)
+		mock.On("HandleEvent", event, []byte(nil)).Return(rpc.HandleEventResponse{
+			Output: "ok",
+			Error:  "",
+		}, nil)
 		return mock, nil
 	}
 	p := &Pipelined{
 		extensionExecutor: execFn,
 	}
-	err := p.grpcHandler(extension, event, nil)
+	result, err := p.grpcHandler(extension, event, nil)
 
 	assert.NoError(t, err)
+	assert.Equal(t, "ok", result.Output)
+	assert.Equal(t, "", result.Error)
 }

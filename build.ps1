@@ -40,7 +40,6 @@ function install_deps
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
     go get github.com/golang/lint/golint
-    C:\gopath\bin\dep.exe ensure -v -vendor-only
 }
 
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)
@@ -112,7 +111,7 @@ function build_tools
         build_tool $bin "tools"
     }
 
-    ForEach ($bin in "slack","influx-db") {
+    ForEach ($bin in "slack") {
         build_tool $bin "handlers"
     }
 }

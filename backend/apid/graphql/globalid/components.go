@@ -99,7 +99,7 @@ func (id StandardComponents) UniqueComponent() string {
 // Parse takes a global ID string, decodes it and returns it's components.
 func Parse(gid string) (StandardComponents, error) {
 	id := StandardComponents{}
-	pathComponents := strings.Split(gid, ":")
+	pathComponents := strings.SplitN(gid, ":", 5)
 
 	// Should be at least srn:resource:name
 	if len(pathComponents) < 3 {

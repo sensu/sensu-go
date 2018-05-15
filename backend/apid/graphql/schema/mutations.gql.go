@@ -7,6 +7,7 @@ import (
 	graphql1 "github.com/graphql-go/graphql"
 	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
+	time "time"
 )
 
 // MutationCreateCheckFieldResolverArgs contains arguments provided to createCheck when selected
@@ -94,6 +95,40 @@ type MutationDeleteEventFieldResolver interface {
 	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
 }
 
+// MutationCreateSilenceFieldResolverArgs contains arguments provided to createSilence when selected
+type MutationCreateSilenceFieldResolverArgs struct {
+	Input *CreateSilenceInput // Input - self descriptive
+}
+
+// MutationCreateSilenceFieldResolverParams contains contextual info to resolve createSilence field
+type MutationCreateSilenceFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationCreateSilenceFieldResolverArgs
+}
+
+// MutationCreateSilenceFieldResolver implement to resolve requests for the Mutation's createSilence field.
+type MutationCreateSilenceFieldResolver interface {
+	// CreateSilence implements response to request for createSilence field.
+	CreateSilence(p MutationCreateSilenceFieldResolverParams) (interface{}, error)
+}
+
+// MutationDeleteSilenceFieldResolverArgs contains arguments provided to deleteSilence when selected
+type MutationDeleteSilenceFieldResolverArgs struct {
+	Input *DeleteRecordInput // Input - self descriptive
+}
+
+// MutationDeleteSilenceFieldResolverParams contains contextual info to resolve deleteSilence field
+type MutationDeleteSilenceFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationDeleteSilenceFieldResolverArgs
+}
+
+// MutationDeleteSilenceFieldResolver implement to resolve requests for the Mutation's deleteSilence field.
+type MutationDeleteSilenceFieldResolver interface {
+	// DeleteSilence implements response to request for deleteSilence field.
+	DeleteSilence(p MutationDeleteSilenceFieldResolverParams) (interface{}, error)
+}
+
 //
 // MutationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutation' type.
@@ -161,6 +196,8 @@ type MutationFieldResolvers interface {
 	MutationDeleteCheckFieldResolver
 	MutationResolveEventFieldResolver
 	MutationDeleteEventFieldResolver
+	MutationCreateSilenceFieldResolver
+	MutationDeleteSilenceFieldResolver
 }
 
 // MutationAliases implements all methods on MutationFieldResolvers interface by using reflection to
@@ -240,6 +277,18 @@ func (_ MutationAliases) DeleteEvent(p MutationDeleteEventFieldResolverParams) (
 	return val, err
 }
 
+// CreateSilence implements response to request for 'createSilence' field.
+func (_ MutationAliases) CreateSilence(p MutationCreateSilenceFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// DeleteSilence implements response to request for 'deleteSilence' field.
+func (_ MutationAliases) DeleteSilence(p MutationDeleteSilenceFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // MutationType The root query for implementing GraphQL mutations.
 var MutationType = graphql.NewType("Mutation", graphql.ObjectKind)
 
@@ -312,6 +361,32 @@ func _ObjTypeMutationDeleteEventHandler(impl interface{}) graphql1.FieldResolveF
 	}
 }
 
+func _ObjTypeMutationCreateSilenceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationCreateSilenceFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationCreateSilenceFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.CreateSilence(frp)
+	}
+}
+
+func _ObjTypeMutationDeleteSilenceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationDeleteSilenceFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationDeleteSilenceFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.DeleteSilence(frp)
+	}
+}
+
 func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The root query for implementing GraphQL mutations.",
@@ -325,6 +400,16 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				Description:       "Creates a new check.",
 				Name:              "createCheck",
 				Type:              graphql.OutputType("CreateCheckPayload"),
+			},
+			"createSilence": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("CreateSilenceInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Creates a silence.",
+				Name:              "createSilence",
+				Type:              graphql.OutputType("CreateSilencePayload"),
 			},
 			"deleteCheck": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
@@ -344,6 +429,16 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Deletes an event.",
 				Name:              "deleteEvent",
+				Type:              graphql.OutputType("DeleteRecordPayload"),
+			},
+			"deleteSilence": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("DeleteRecordInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Removes given silence.",
+				Name:              "deleteSilence",
 				Type:              graphql.OutputType("DeleteRecordPayload"),
 			},
 			"resolveEvent": &graphql1.Field{
@@ -384,11 +479,13 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeMutationConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"createCheck":  _ObjTypeMutationCreateCheckHandler,
-		"deleteCheck":  _ObjTypeMutationDeleteCheckHandler,
-		"deleteEvent":  _ObjTypeMutationDeleteEventHandler,
-		"resolveEvent": _ObjTypeMutationResolveEventHandler,
-		"updateCheck":  _ObjTypeMutationUpdateCheckHandler,
+		"createCheck":   _ObjTypeMutationCreateCheckHandler,
+		"createSilence": _ObjTypeMutationCreateSilenceHandler,
+		"deleteCheck":   _ObjTypeMutationDeleteCheckHandler,
+		"deleteEvent":   _ObjTypeMutationDeleteEventHandler,
+		"deleteSilence": _ObjTypeMutationDeleteSilenceHandler,
+		"resolveEvent":  _ObjTypeMutationResolveEventHandler,
+		"updateCheck":   _ObjTypeMutationUpdateCheckHandler,
 	},
 }
 
@@ -959,7 +1056,7 @@ func _ObjectTypeCreateCheckPayloadConfigFn() graphql1.ObjectConfig {
 			"check": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "The name of the new check.",
+				Description:       "The newly created check.",
 				Name:              "check",
 				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfig")),
 			},
@@ -1200,7 +1297,7 @@ func _ObjectTypeUpdateCheckPayloadConfigFn() graphql1.ObjectConfig {
 			"check": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "The name of the new check.",
+				Description:       "The updated check.",
 				Name:              "check",
 				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfig")),
 			},
@@ -1473,5 +1570,314 @@ var _ObjectTypeResolveEventPayloadDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"clientMutationId": _ObjTypeResolveEventPayloadClientMutationIDHandler,
 		"event":            _ObjTypeResolveEventPayloadEventHandler,
+	},
+}
+
+// CreateSilenceInput self descriptive
+type CreateSilenceInput struct {
+	// ClientMutationID - A unique identifier for the client performing the mutation.
+	ClientMutationID string
+	// Ns - namespace the resulting resource will belong to.
+	Ns *NamespaceInput
+	// Check - check associated with the silenced entry; optional.
+	Check string
+	// Subscription - subscription associated with the silenced entry; optional.
+	Subscription string
+	// Props - properties of the silence
+	Props *SilenceInputs
+}
+
+// CreateSilenceInputType self descriptive
+var CreateSilenceInputType = graphql.NewType("CreateSilenceInput", graphql.InputKind)
+
+// RegisterCreateSilenceInput registers CreateSilenceInput object type with given service.
+func RegisterCreateSilenceInput(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeCreateSilenceInputDesc)
+}
+func _InputTypeCreateSilenceInputConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"check": &graphql1.InputObjectFieldConfig{
+				Description: "check associated with the silenced entry; optional.",
+				Type:        graphql1.String,
+			},
+			"clientMutationId": &graphql1.InputObjectFieldConfig{
+				Description: "A unique identifier for the client performing the mutation.",
+				Type:        graphql1.String,
+			},
+			"ns": &graphql1.InputObjectFieldConfig{
+				DefaultValue: map[string]interface{}{
+					"environment":  "default",
+					"organization": "default",
+				},
+				Description: "namespace the resulting resource will belong to.",
+				Type:        graphql.InputType("NamespaceInput"),
+			},
+			"props": &graphql1.InputObjectFieldConfig{
+				Description: "properties of the silence",
+				Type:        graphql1.NewNonNull(graphql.InputType("SilenceInputs")),
+			},
+			"subscription": &graphql1.InputObjectFieldConfig{
+				Description: "subscription associated with the silenced entry; optional.",
+				Type:        graphql1.String,
+			},
+		},
+		Name: "CreateSilenceInput",
+	}
+}
+
+// describe CreateSilenceInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeCreateSilenceInputDesc = graphql.InputDesc{Config: _InputTypeCreateSilenceInputConfigFn}
+
+// SilenceInputs self descriptive
+type SilenceInputs struct {
+	// Reason is used to provide context to the entry
+	Reason string
+	// Begin is a timestamp at which the silenced entry takes effect.
+	Begin time.Time
+	/*
+	   ExpireOnResolve defaults to false, clears the entry on resolution when set
+	   to true
+	*/
+	ExpireOnResolve bool
+	// Expire is the number of seconds the entry will live
+	Expire int
+}
+
+// SilenceInputsType self descriptive
+var SilenceInputsType = graphql.NewType("SilenceInputs", graphql.InputKind)
+
+// RegisterSilenceInputs registers SilenceInputs object type with given service.
+func RegisterSilenceInputs(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeSilenceInputsDesc)
+}
+func _InputTypeSilenceInputsConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"begin": &graphql1.InputObjectFieldConfig{
+				Description: "Begin is a timestamp at which the silenced entry takes effect.",
+				Type:        graphql1.DateTime,
+			},
+			"expire": &graphql1.InputObjectFieldConfig{
+				DefaultValue: -1,
+				Description:  "Expire is the number of seconds the entry will live",
+				Type:         graphql1.Int,
+			},
+			"expireOnResolve": &graphql1.InputObjectFieldConfig{
+				DefaultValue: true,
+				Description:  "ExpireOnResolve defaults to false, clears the entry on resolution when set\nto true",
+				Type:         graphql1.Boolean,
+			},
+			"reason": &graphql1.InputObjectFieldConfig{
+				Description: "Reason is used to provide context to the entry",
+				Type:        graphql1.String,
+			},
+		},
+		Name: "SilenceInputs",
+	}
+}
+
+// describe SilenceInputs's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeSilenceInputsDesc = graphql.InputDesc{Config: _InputTypeSilenceInputsConfigFn}
+
+// CreateSilencePayloadClientMutationIDFieldResolver implement to resolve requests for the CreateSilencePayload's clientMutationId field.
+type CreateSilencePayloadClientMutationIDFieldResolver interface {
+	// ClientMutationID implements response to request for clientMutationId field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+}
+
+// CreateSilencePayloadSilenceFieldResolver implement to resolve requests for the CreateSilencePayload's silence field.
+type CreateSilencePayloadSilenceFieldResolver interface {
+	// Silence implements response to request for silence field.
+	Silence(p graphql.ResolveParams) (interface{}, error)
+}
+
+//
+// CreateSilencePayloadFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CreateSilencePayload' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type CreateSilencePayloadFieldResolvers interface {
+	CreateSilencePayloadClientMutationIDFieldResolver
+	CreateSilencePayloadSilenceFieldResolver
+}
+
+// CreateSilencePayloadAliases implements all methods on CreateSilencePayloadFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type CreateSilencePayloadAliases struct{}
+
+// ClientMutationID implements response to request for 'clientMutationId' field.
+func (_ CreateSilencePayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
+// Silence implements response to request for 'silence' field.
+func (_ CreateSilencePayloadAliases) Silence(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// CreateSilencePayloadType self descriptive
+var CreateSilencePayloadType = graphql.NewType("CreateSilencePayload", graphql.ObjectKind)
+
+// RegisterCreateSilencePayload registers CreateSilencePayload object type with given service.
+func RegisterCreateSilencePayload(svc *graphql.Service, impl CreateSilencePayloadFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCreateSilencePayloadDesc, impl)
+}
+func _ObjTypeCreateSilencePayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CreateSilencePayloadClientMutationIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ClientMutationID(frp)
+	}
+}
+
+func _ObjTypeCreateSilencePayloadSilenceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CreateSilencePayloadSilenceFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Silence(frp)
+	}
+}
+
+func _ObjectTypeCreateSilencePayloadConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.Fields{
+			"clientMutationId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "A unique identifier for the client performing the mutation.",
+				Name:              "clientMutationId",
+				Type:              graphql1.String,
+			},
+			"silence": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "The newly created silence.",
+				Name:              "silence",
+				Type:              graphql1.NewNonNull(graphql.OutputType("Silenced")),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CreateSilencePayloadFieldResolvers.")
+		},
+		Name: "CreateSilencePayload",
+	}
+}
+
+// describe CreateSilencePayload's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCreateSilencePayloadDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCreateSilencePayloadConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"clientMutationId": _ObjTypeCreateSilencePayloadClientMutationIDHandler,
+		"silence":          _ObjTypeCreateSilencePayloadSilenceHandler,
 	},
 }

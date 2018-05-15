@@ -13,7 +13,7 @@ RACE=""
 
 VERSION_CMD="go run ./version/cmd/version/version.go"
 
-HANDLERS=(slack influx-db)
+HANDLERS=(slack)
 
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then
@@ -44,7 +44,6 @@ install_deps () {
     go get github.com/jgautheron/goconst/cmd/goconst
     go get honnef.co/go/tools/cmd/megacheck
     go get github.com/golang/lint/golint
-    dep ensure -v -vendor-only
 }
 
 cmd_name_map() {
@@ -288,10 +287,6 @@ bail_unless_yarn_is_present() {
     fi
 }
 
-install_yarn() {
-    npm install --global yarn
-}
-
 install_dashboard_deps() {
     bail_unless_yarn_is_present
     pushd "${DASHBOARD_PATH}"
@@ -302,8 +297,7 @@ install_dashboard_deps() {
 
 test_dashboard() {
     pushd "${DASHBOARD_PATH}"
-    yarn lint
-    yarn test --coverage
+    yarn test
     popd
 }
 
@@ -377,7 +371,6 @@ case "$cmd" in
         test_dashboard
         ;;
     "dashboard-ci")
-        install_yarn
         install_dashboard_deps
         test_dashboard
         ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard

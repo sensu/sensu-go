@@ -40,7 +40,10 @@ class EventDetailsResolveAction extends React.PureComponent {
   }
 
   resolveEvent = () => {
-    const { client, event: { id } } = this.props;
+    const {
+      client,
+      event: { id },
+    } = this.props;
     if (this.state.locked) return;
 
     this.resolveStart();

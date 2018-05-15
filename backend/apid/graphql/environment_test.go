@@ -26,7 +26,7 @@ func TestEnvironmentTypeCheckHistoryField(t *testing.T) {
 		types.FixtureEvent("b", "c"),
 		types.FixtureEvent("c", "d"),
 	}}
-	impl := &envImpl{eventsCtrl: mock}
+	impl := &envImpl{eventQuerier: mock}
 
 	// Params
 	params := schema.EnvironmentCheckHistoryFieldResolverParams{}
@@ -40,9 +40,33 @@ func TestEnvironmentTypeCheckHistoryField(t *testing.T) {
 	assert.Len(t, history, 30)
 
 	// store err
-	impl.eventsCtrl = mockEventQuerier{err: errors.New("test")}
+	impl.eventQuerier = mockEventQuerier{err: errors.New("test")}
 	history, err = impl.CheckHistory(params)
 	require.NotNil(t, history)
 	assert.Error(t, err)
 	assert.Empty(t, history)
+}
+
+func TestEnvironmentTypeSilencesField(t *testing.T) {
+	mock := mockSilenceQuerier{els: []*types.Silenced{
+		types.FixtureSilenced("a:b"),
+		types.FixtureSilenced("b:c"),
+		types.FixtureSilenced("c:d"),
+	}}
+	impl := &envImpl{silenceQuerier: mock}
+
+	// Params
+	params := schema.EnvironmentSilencesFieldResolverParams{}
+	params.Source = types.FixtureEnvironment("xxx")
+
+	// Success
+	res, err := impl.Silences(params)
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+
+	// Store err
+	impl.silenceQuerier = mockSilenceQuerier{err: errors.New("test")}
+	res, err = impl.Silences(params)
+	assert.Empty(t, res)
+	assert.Error(t, err)
 }

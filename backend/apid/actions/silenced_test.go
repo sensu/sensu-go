@@ -116,7 +116,7 @@ func TestSilencedQuery(t *testing.T) {
 			store.On("GetSilencedEntries", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx, tc.params)
+			results, err := actions.Query(tc.ctx, tc.params["subscription"], tc.params["check"])
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
@@ -338,12 +338,14 @@ func TestSilencedCreate(t *testing.T) {
 		expectedErr     bool
 		expectedErrCode ErrCode
 		expectedCreator string
+		expectedId      string
 	}{
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
 			argument:    types.FixtureSilenced("*:silence1"),
 			expectedErr: false,
+			expectedId:  "*:silence1",
 		},
 		{
 			name:            "Already Exists",
@@ -352,6 +354,7 @@ func TestSilencedCreate(t *testing.T) {
 			fetchResult:     types.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
+			expectedId:      "*:silence1",
 		},
 		{
 			name:            "Store Err on Create",
@@ -360,6 +363,7 @@ func TestSilencedCreate(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
+			expectedId:      "*:silence1",
 		},
 		{
 			name:            "Store Err on Fetch",
@@ -368,6 +372,7 @@ func TestSilencedCreate(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
+			expectedId:      "*:silence1",
 		},
 		{
 			name:            "No Permission",
@@ -375,6 +380,7 @@ func TestSilencedCreate(t *testing.T) {
 			argument:        types.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: PermissionDenied,
+			expectedId:      "*:silence1",
 		},
 		{
 			name:            "Validation Error",
@@ -382,6 +388,7 @@ func TestSilencedCreate(t *testing.T) {
 			argument:        badSilence,
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
+			expectedId:      "*:silence1",
 		},
 		{
 			name:            "Creator",
@@ -389,6 +396,15 @@ func TestSilencedCreate(t *testing.T) {
 			argument:        types.FixtureSilenced("*:silence1"),
 			expectedErr:     false,
 			expectedCreator: "actorID",
+			expectedId:      "*:silence1",
+		},
+		{
+			name:            "Other Id",
+			ctx:             actorCtx,
+			argument:        types.FixtureSilenced("unix:*"),
+			expectedErr:     false,
+			expectedCreator: "actorID",
+			expectedId:      "unix:*",
 		},
 	}
 
@@ -413,11 +429,12 @@ func TestSilencedCreate(t *testing.T) {
 						_ = json.Unmarshal(bytes, &entry)
 
 						assert.Equal(tc.expectedCreator, entry.Creator)
+						assert.Equal(tc.expectedId, entry.ID)
 					}
 				})
 
 			// Exec Query
-			err := actions.Create(tc.ctx, *tc.argument)
+			err := actions.Create(tc.ctx, tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

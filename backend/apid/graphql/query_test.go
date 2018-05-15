@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
@@ -10,29 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type mockQueryEventFetcher struct {
-	record *types.Event
-	err    error
-}
-
-func (m mockQueryEventFetcher) Find(ctx context.Context, entity, check string) (*types.Event, error) {
-	return m.record, m.err
-}
-
-type mockQueryEnvironmentFetcher struct {
-	record *types.Environment
-	err    error
-}
-
-func (m mockQueryEnvironmentFetcher) Find(_ context.Context, org, env string) (*types.Environment, error) {
-	if org != "bobs-burgers" || env != "us-west-2" {
-		return nil, nil
-	}
-	return m.record, m.err
-}
-
 func TestQueryTypeEventField(t *testing.T) {
-	mock := mockQueryEventFetcher{&types.Event{}, nil}
+	mock := mockEventFetcher{&types.Event{}, nil}
 	impl := queryImpl{eventFinder: mock}
 
 	args := schema.QueryEventFieldResolverArgs{Ns: schema.NewNamespaceInput("a", "b")}
@@ -44,7 +22,7 @@ func TestQueryTypeEventField(t *testing.T) {
 }
 
 func TestQueryTypeEnvironmentField(t *testing.T) {
-	mock := mockQueryEnvironmentFetcher{&types.Environment{}, nil}
+	mock := mockEnvironmentFinder{&types.Environment{}, nil}
 	impl := queryImpl{envFinder: mock}
 
 	params := schema.QueryEnvironmentFieldResolverParams{}

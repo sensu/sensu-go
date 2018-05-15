@@ -87,11 +87,7 @@ func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 // LastOK implements response to request for 'lastOK' field.
 func (r *checkImpl) LastOK(p graphql.ResolveParams) (*time.Time, error) {
 	c := p.Source.(*types.Check)
-	if c.LastOK == 0 {
-		return nil, nil
-	}
-	t := time.Unix(c.LastOK, 0)
-	return &t, nil
+	return convertTs(c.LastOK), nil
 }
 
 // Issued implements response to request for 'issued' field.

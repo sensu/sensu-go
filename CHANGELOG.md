@@ -10,17 +10,21 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Performed an audit of events and checks. Added `event.HasCheck()` nil checks
 prior to assuming the existence of said check.
+- Added a Create method to the entities api.
 - Added the ability to set round robin scheduling in sensuctl
+- Added Output field to GRPC handlers
+- Additional logging around handlers
 
 ### Changed
 - Add logging around the Sensu event pipeline.
+- Migrated the InfluxDB handler from the sensu-go repository to
+github.com/nikkiki/sensu-influxdb-handler
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
 - Add logging around the Sensu event pipeline
 - Marked silenced and hooks fields in event as deprecated
-
-### Fixed
+- Fixed a bug where hooks could not be created with `create -f`
 - Metrics with zero-values are now displayed correctly
 - Fix handler validation routine
 - Fixed a small bug in the opentsdb transformer so that it trims trailing
@@ -29,6 +33,8 @@ whitespace characters.
 invalid address or is stopped due to any other error.
 - Fixed a bug where --organization and --environment flags were hidden for all
 commands
+- Fix a bug where environments could not be created with sensuctl create
+- StatsD listener on Windows is functional
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
