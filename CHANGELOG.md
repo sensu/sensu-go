@@ -14,6 +14,7 @@ prior to assuming the existence of said check.
 - Added the ability to set round robin scheduling in sensuctl
 - Added Output field to GRPC handlers
 - Additional logging around handlers
+- Accept additional time formats in sensuctl
 
 ### Changed
 - Add logging around the Sensu event pipeline.
