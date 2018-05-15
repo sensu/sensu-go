@@ -1,0 +1,38 @@
+extend type Event {
+  "Describes whether the event has been deleted from the system"
+  deleted: Boolean!
+}
+
+extend type Query {
+  "Describes state of authorization tokens"
+  auth: Auth
+}
+
+extend type Mutation {
+  createTokens(username: String!, password: String!): Boolean
+  refreshTokens(notBefore: DateTime): RefreshTokensPayload!
+  invalidateTokens: Boolean
+}
+
+type Auth {
+  "Token used to access the system."
+  accessToken: String
+
+  "Long lived token that can be used to obtain a new access token after it has expired."
+  refreshToken: String
+
+  "Time at which the access token will expire."
+  expiresAt: DateTime
+}
+
+type RefreshTokensPayload {
+  auth: Auth!
+}
+
+"""
+If present signifies that the field is only present on the client. Directive is
+used by apollo-state-link to catch fields it is responsible for resolving.
+
+More: https://www.apollographql.com/docs/link/links/state.html#directive
+"""
+directive @client on FIELD

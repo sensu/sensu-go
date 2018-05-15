@@ -8,9 +8,6 @@
     "yarn": ">= 1.5.0"
   },
   "scripts": {
-    "postinstall": "yarn run precompile",
-    "prestart": "yarn precompile",
-    "pretest": "yarn precompile",
     "prettier": "npx prettier --write **/*.js",
     "start": "node scripts serve",
     "build": "node scripts build",
@@ -18,8 +15,7 @@
     "lint": "npx eslint .",
     "spec": "node scripts test.js --env=jsdom",
     "test": "yarn lint && yarn spec --coverage",
-    "update-schema": "go run scripts/updateSchema.go",
-    "precompile": "npm run update-schema"
+    "update-schema": "node scripts updateSchema"
   },
   "dependencies": {
     "@10xjs/date-input-controller": "^0.1.5",
@@ -70,6 +66,9 @@
     "eslint-plugin-react": "^7.7.0",
     "esm": "3.0.31",
     "file-loader": "^1.1.11",
+    "glob": "^7.1.2",
+    "graphql": "^0.13.2",
+    "graphql-config": "^2.0.1",
     "graphql-tag": "^2.9.2",
     "html-webpack-plugin": "^3.2.0",
     "http-proxy-middleware": "^0.18.0",
