@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"testing"
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
@@ -48,4 +49,21 @@ func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
 	assert.Regexp("OK", out)
 	assert.Nil(err)
 
+}
+
+func TestCreateCommandRunEClosureWithAPIErr(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateEntity", mock.AnythingOfType("*types.Entity")).Return(errors.New("whoops"))
+
+	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("class", "agent"))
+	require.NoError(t, cmd.Flags().Set("subscriptions", "test"))
+	out, err := test.RunCmd(cmd, []string{"test-handler"})
+
+	assert.Empty(out)
+	assert.NotNil(err)
+	assert.Equal("whoops", err.Error())
 }

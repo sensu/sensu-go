@@ -34,7 +34,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			opts := newEntityOpts()
 
 			if len(args) > 0 {
-				fmt.Println("entity id is", args[0])
 				opts.ID = args[0]
 			}
 

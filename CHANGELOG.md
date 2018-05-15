@@ -15,6 +15,7 @@ prior to assuming the existence of said check.
 - Added Output field to GRPC handlers
 - Additional logging around handlers
 - Accept additional time formats in sensuctl
+- Entities can now be created via sensuctl.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
