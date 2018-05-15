@@ -27,6 +27,8 @@ prior to assuming the existence of said check.
 whitespace characters.
 - Sensu-agent logs an error if the statsd listener is unable to start due to an
 invalid address or is stopped due to any other error.
+- Fixed a bug where --organization and --environment flags were hidden for all
+commands
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
