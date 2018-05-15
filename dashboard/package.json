@@ -28,7 +28,6 @@
     "apollo-client": "^2.2.8",
     "apollo-link": "^1.2.1",
     "apollo-link-context": "^1.0.7",
-    "apollo-link-error": "^1.0.7",
     "apollo-link-http": "^1.5.3",
     "apollo-link-state": "^0.4.1",
     "autoprefixer": "^7.1.2",
