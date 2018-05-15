@@ -45,7 +45,8 @@
     "pkg/statsd",
     "pkg/statser"
   ]
-  revision = "99f7a39855fc860055264fcec1cbae28bdc2deeb"
+  revision = "af796620006e1d43fa05a44ec8ad77ed8154d7e1"
+  version = "6.1.1"
 
 [[projects]]
   branch = "master"
@@ -547,8 +548,10 @@
 [[projects]]
   name = "github.com/shirou/gopsutil"
   packages = [
+    "cpu",
     "host",
     "internal/common",
+    "mem",
     "net",
     "process"
   ]
