@@ -68,7 +68,7 @@ func TestBuildTypeFromEnv(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, got := ParseBuildEnv(test.buildEnv)
+		_, got := FindVersionInfo(test.buildEnv)
 		if got != test.exp {
 			t.Errorf("bad build type: got %q, want %q", got, test.exp)
 		}

@@ -22,7 +22,7 @@ var (
 
 func main() {
 	flag.Parse()
-	tag, bt := version.ParseBuildEnv(&BuildEnv{})
+	tag, bt := version.FindVersionInfo(&BuildEnv{})
 	var fn func(string, version.BuildType) (string, error)
 	if *fFullVersion {
 		fn = version.FullVersion
@@ -56,7 +56,7 @@ func buildType(_ string, bt version.BuildType) (string, error) {
 type BuildEnv struct{}
 
 // Returns true if we are building from a CI (rather than a local or dev build)
-func (b *BuildEnv) IsCI() bool {
+func (BuildEnv) IsCI() bool {
 	// Travis, AppVeyor, CircleCI, and many others all set CI=true in their
 	// environment by default.
 	return os.Getenv("CI") == "true"
@@ -64,7 +64,7 @@ func (b *BuildEnv) IsCI() bool {
 
 // Returns true if this is a nightly release by checking whether the current
 // HEAD is one or more commits ahead of the latest tag.
-func (b *BuildEnv) IsNightly() bool {
+func (BuildEnv) IsNightly() bool {
 	cmd := exec.Command("git", "describe", "--exact-match", "--tags", "HEAD")
 	err := cmd.Run()
 	// if the tag is an exact match for current HEAD, this is not a nightly
@@ -81,7 +81,7 @@ func (b *BuildEnv) IsNightly() bool {
 }
 
 // Returns the most recent tag belonging to the current commit
-func (b *BuildEnv) GetMostRecentTag() string {
+func (BuildEnv) GetMostRecentTag() string {
 	// --abbrev=0 disables tag annotation, returning unmodified most recent tag
 	cmd := exec.Command("git", "describe", "--abbrev=0", "--tags", "HEAD")
 	out, err := cmd.Output()

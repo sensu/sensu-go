@@ -72,9 +72,9 @@ type BuildEnv interface {
 	GetMostRecentTag() string
 }
 
-// ParseBuildEnv discovers the most recent tag and BuildType using the current
-// build environment
-func ParseBuildEnv(env BuildEnv) (string, BuildType) {
+// FindVersionInfo discovers the most recent tag and BuildType using the
+// current build environment
+func FindVersionInfo(env BuildEnv) (string, BuildType) {
 	tag := env.GetMostRecentTag()
 	// if building outside of CI, this is a dev build, regardless of tag
 	if !env.IsCI() {
