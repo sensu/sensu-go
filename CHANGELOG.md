@@ -36,6 +36,8 @@ commands
 - Fix a bug where environments could not be created with sensuctl create
 - StatsD listener on Windows is functional
 - Fixed `sensuctl create -f` for `Role`
+- Added validation for asset SHA512 checksum, requiring that it be at least 128
+characters and therefore fixing a bug in sensuctl
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
