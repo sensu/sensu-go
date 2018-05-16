@@ -40,8 +40,6 @@ install:
   - go version
   - go env
   - mkdir %GOPATH%\bin
-  - appveyor DownloadFile https://github.com/golang/dep/releases/download/v0.4.1/dep-windows-amd64.exe
-  - move dep-windows-amd64.exe %GOPATH%\bin\dep.exe
   - ps: .\build.ps1 deps
   - ps: .\build.ps1 build_tools
 
