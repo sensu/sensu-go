@@ -1,3 +1,5 @@
+import handle from "/exceptionHandler";
+
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter } from "react-router-dom";
@@ -14,6 +16,7 @@ import reducer from "/reducer";
 import registerServiceWorker from "/registerServiceWorker";
 
 import AppRoot from "/components/AppRoot";
+import ErrorBoundary from "/components/util/ErrorBoundary";
 
 // Configure store
 const store = createStore(reducer, {});
@@ -22,9 +25,11 @@ const client = createClient();
 
 // Renderer
 ReactDOM.render(
-  <BrowserRouter>
-    <AppRoot reduxStore={store} apolloClient={client} />
-  </BrowserRouter>,
+  <ErrorBoundary handle={handle}>
+    <BrowserRouter>
+      <AppRoot reduxStore={store} apolloClient={client} />
+    </BrowserRouter>
+  </ErrorBoundary>,
   document.getElementById("root"),
 );
 

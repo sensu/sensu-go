@@ -9,6 +9,9 @@ import Button from "material-ui/Button";
 import TextField from "material-ui/TextField";
 import Typography from "material-ui/Typography";
 
+import { when } from "/utils/promise";
+import { UnauthorizedError } from "/errors/FetchError";
+
 import createTokens from "/mutations/createTokens";
 
 import Logo from "/icons/SensuLogoGraphic";
@@ -83,14 +86,16 @@ class LoginView extends React.Component {
     // Disable form
     this.setState({ disabled: true });
 
-    createTokens(client, { username, password }).catch(error => {
-      // eslint-disable-next-line no-console
-      console.error(error);
-      this.setState({
-        disabled: false,
-        authError: "Bad username or password.",
-      });
-    });
+    createTokens(client, { username, password }).catch(
+      when(UnauthorizedError, () => {
+        this.setState({
+          disabled: false,
+          authError: "Bad username or password.",
+        });
+        // TODO: Handle other fetch error cases to show an inline error state
+        // instead of triggering global error modal.
+      }),
+    );
   };
 
   render() {

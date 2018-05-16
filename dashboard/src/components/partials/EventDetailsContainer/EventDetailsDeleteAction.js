@@ -80,11 +80,9 @@ class EventDetailsDeleteAction extends React.PureComponent {
         this.requestEnd();
         history.replace(`/${ns.org}/${ns.env}/events`);
       },
-      err => {
+      error => {
         this.requestEnd();
-        // TODO: re-raise
-        // eslint-disable-next-line no-console
-        console.error("error occurred while deleting event", err);
+        throw error;
       },
     );
   };

@@ -7,4 +7,8 @@ const mutation = gql`
 `;
 
 export default (client, { username, password } = {}) =>
-  client.mutate({ mutation, variables: { username, password } });
+  client
+    .mutate({ mutation, variables: { username, password } })
+    .catch(error => {
+      throw error.networkError || error;
+    });
