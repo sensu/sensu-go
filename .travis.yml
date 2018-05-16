@@ -7,11 +7,12 @@ go:
 branches:
   only:
   - master
+  - bugfix/fix-schema-writing
   - /\d+\.\d+(\.\d+)?(-\S*)?$/
 stages:
 - name: test
 - name: deploy
-  if: branch = master OR tag IS present
+  if: branch = master OR branch = bugfix/fix-schema-writing OR tag IS present
 cache:
   yarn: true
   directories:
