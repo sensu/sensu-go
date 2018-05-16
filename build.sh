@@ -287,16 +287,9 @@ bail_unless_yarn_is_present() {
     fi
 }
 
-install_dashboard_deps() {
-    bail_unless_yarn_is_present
-    pushd "${DASHBOARD_PATH}"
-    yarn install
-    yarn precompile
-    popd
-}
-
 test_dashboard() {
     pushd "${DASHBOARD_PATH}"
+    yarn install
     yarn test
     popd
 }
@@ -367,11 +360,9 @@ case "$cmd" in
         build_tools
         ;;
     "dashboard")
-        install_dashboard_deps
         test_dashboard
         ;;
     "dashboard-ci")
-        install_dashboard_deps
         test_dashboard
         ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
         ;;
