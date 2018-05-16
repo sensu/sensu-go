@@ -324,8 +324,33 @@ type CreateCheckPayload {
   """A unique identifier for the client performing the mutation."""
   clientMutationId: String
 
-  """The name of the new check."""
+  """The newly created check."""
   check: CheckConfig!
+}
+
+input CreateSilenceInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """namespace the resulting resource will belong to."""
+  ns: NamespaceInput = {organization: "default", environment: "default"}
+
+  """check associated with the silenced entry; optional."""
+  check: String
+
+  """subscription associated with the silenced entry; optional."""
+  subscription: String
+
+  """properties of the silence"""
+  props: SilenceInputs!
+}
+
+type CreateSilencePayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """The newly created silence."""
+  silence: Silenced!
 }
 
 """
@@ -469,6 +494,9 @@ type Environment implements Node {
     filter: String = ""
   ): EventConnection!
 
+  """All silences associated with the environment."""
+  silences(offset: Int = 0, limit: Int = 10): SilencedConnection!
+
   """
   checkHistory includes all persisted check execution results associated with
   the environment. Unlike the Check type's history this field includes the most
@@ -483,6 +511,15 @@ type Environment implements Node {
     """Limit adds optional limit to the number of entries returned."""
     limit: Int = 10000
   ): [CheckHistory]!
+}
+
+"""Describes a node in an environment."""
+interface EnvironmentNode {
+  """Organization indicates to which org a silenced entry belongs to."""
+  organization: Organization!
+
+  """Environment indicates which env a silenced entry belongs to."""
+  environment: Environment
 }
 
 """
@@ -681,6 +718,12 @@ type Mutation {
 
   """Deletes an event."""
   deleteEvent(input: DeleteRecordInput!): DeleteRecordPayload
+
+  """Creates a silence."""
+  createSilence(input: CreateSilenceInput!): CreateSilencePayload
+
+  """Removes given silence."""
+  deleteSilence(input: DeleteRecordInput!): DeleteRecordPayload
   createTokens(username: String!, password: String!): Boolean
   refreshTokens(notBefore: DateTime): RefreshTokensPayload!
   invalidateTokens: Boolean
@@ -893,6 +936,75 @@ enum RuleResource {
   USERS
 }
 
+"""Silenced is the representation of a silence entry."""
+type Silenced implements Node & EnvironmentNode {
+  """The globally unique identifier for the record."""
+  id: ID!
+
+  """
+  ID is the combination of subscription and check name (subscription:checkname)
+  """
+  storeId: String!
+
+  """Expire is the number of seconds the entry will live"""
+  expire: Int!
+
+  """Exact time at which the silenced entry will expire"""
+  expires: DateTime
+
+  """
+  ExpireOnResolve defaults to false, clears the entry on resolution when set
+  to true
+  """
+  expireOnResolve: Boolean!
+
+  """Creator is the author of the silenced entry"""
+  creator: User!
+
+  """Check is the name of the check event to be silenced."""
+  check: CheckConfig
+
+  """Reason is used to provide context to the entry"""
+  reason: String
+
+  """
+  Subscription is the name of the subscription to which the entry applies.
+  """
+  subscription: String
+
+  """Organization indicates to which org a silenced entry belongs to."""
+  organization: Organization!
+
+  """Environment indicates which env a silenced entry belongs to."""
+  environment: Environment
+
+  """Begin is a timestamp at which the silenced entry takes effect."""
+  begin: DateTime
+}
+
+"""A connection to a sequence of records."""
+type SilencedConnection {
+  nodes: [Silenced!]!
+  pageInfo: OffsetPageInfo!
+}
+
+input SilenceInputs {
+  """Reason is used to provide context to the entry"""
+  reason: String
+
+  """Begin is a timestamp at which the silenced entry takes effect."""
+  begin: DateTime
+
+  """
+  ExpireOnResolve defaults to false, clears the entry on resolution when set
+  to true
+  """
+  expireOnResolve: Boolean = true
+
+  """Expire is the number of seconds the entry will live"""
+  expire: Int = -1
+}
+
 """
 System contains information about the system that the Agent process
 is running on, used for additional Entity context.
@@ -965,7 +1077,7 @@ type UpdateCheckPayload {
   """A unique identifier for the client performing the mutation."""
   clientMutationId: String
 
-  """The name of the new check."""
+  """The updated check."""
   check: CheckConfig!
 }
 
