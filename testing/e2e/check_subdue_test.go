@@ -12,7 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const timeWindow = `{"days":{"all":[{"begin":"12:00 AM","end":"11:59 PM"},{"begin":"11:00 PM","end":"1:00 AM"}]}}`
+const timeWindow = `{"days":{"all":[{"begin":"12:00AM UTC","end":"11:59PM UTC"},` +
+	`{"begin":"11:00PM UTC","end":"1:00AM UTC"}]}}`
 
 func TestCheckSubdue(t *testing.T) {
 	t.Parallel()
