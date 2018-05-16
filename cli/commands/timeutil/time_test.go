@@ -58,7 +58,7 @@ func TestDateToTime(t *testing.T) {
 }
 
 func TestKitchenToTime(t *testing.T) {
-	baseTime, _ := time.Parse(time.Kitchen, "3:04PM")
+	baseTime, _ := time.ParseInLocation(time.Kitchen, "3:04PM", time.UTC)
 
 	// Our test cases
 	tests := []struct {
@@ -176,9 +176,9 @@ func TestConvertToUnix(t *testing.T) {
 }
 
 func TestConvertToUTC(t *testing.T) {
-	b, _ := time.Parse(time.Kitchen, "3:04PM")
+	b, _ := time.ParseInLocation(time.Kitchen, "3:04PM", time.UTC)
 	begin := b.Format(time.Kitchen)
-	e, _ := time.Parse(time.Kitchen, "4:04PM")
+	e, _ := time.ParseInLocation(time.Kitchen, "4:04PM", time.UTC)
 	end := e.Format(time.Kitchen)
 
 	tests := []struct {
