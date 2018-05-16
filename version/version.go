@@ -5,21 +5,25 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"sort"
 	"strings"
 )
 
+// These values are baked into the sensu-agent and sensu-backend binaries
+// during compilation, and are accessed using the Semver() function
 var (
 	// Version stores the version of the current build (e.g. 2.0.0)
-	Version = "dev"
+	Version = ""
 
-	// PreReleaseIdentifier stores the pre-release identifier of the current build (eg. beta-2)
+	// PreReleaseIdentifier stores the pre-release identifier of the current
+	// build (e.g. the 2 in beta-2)
 	PreReleaseIdentifier string
 
-	// BuildDate stores the timestamp of the build (e.g. 2017-07-31T13:11:15-0700)
+	// BuildDate stores the timestamp of the build
+	// (e.g. 2017-07-31T13:11:15-0700)
 	BuildDate string
 
-	// BuildSHA stores the git sha of the build (e.g. 8673bed0a9705083987b9ecbbc1cc0758df13dd2)
+	// BuildSHA stores the git sha of the build
+	// (e.g. 8673bed0a9705083987b9ecbbc1cc0758df13dd2)
 	BuildSHA string
 )
 
@@ -37,6 +41,7 @@ var (
 type BuildType string
 
 const (
+	Dev     BuildType = "dev"
 	Nightly BuildType = "nightly"
 	Alpha   BuildType = "alpha"
 	Beta    BuildType = "beta"
@@ -60,53 +65,46 @@ func Semver() string {
 	return version + "#" + gitSHA
 }
 
-// BuildTypeFromTag discovers the BuildType of the git tag.
-func BuildTypeFromTag(tag string) BuildType {
-	if tag == "" {
-		return Nightly
-	}
-	// String matching gives us the type of build tag
-	for _, bt := range []BuildType{Alpha, Beta, RC, Stable} {
-		if strings.Contains(tag, string(bt)) {
-			return bt
-		}
-	}
-	// tag exists but does not contain any of the above, this is a stable build
-	return Stable
+// BuildEnv provides methods for determining version info from the current env.
+type BuildEnv interface {
+	IsCI() bool
+	IsNightly() (bool, error)
+	GetMostRecentTag() (string, error)
 }
 
-// HighestVersion will output the highest sorted version from passed slice of
-// git tags.
-func HighestVersion(tags []string) (string, error) {
-	uniqueTags := make(map[string]struct{})
-	for _, tag := range tags {
-		re1, err := regexp.Compile("[a-zA-Z]+")
-		if err != nil {
-			return "", err
-		}
-		strReplaced := re1.ReplaceAllString(tag, "")
-
-		re2, err := regexp.Compile("^([0-9]+.)([0-9]+.)([0-9]+)")
-		if err != nil {
-			return "", err
-		}
-		vers := re2.FindStringSubmatch(strReplaced)[0]
-		uniqueTags[vers] = struct{}{}
+// FindVersionInfo discovers the most recent tag and BuildType using the
+// current build environment
+func FindVersionInfo(env BuildEnv) (string, BuildType, error) {
+	tag, err := env.GetMostRecentTag()
+	if err != nil {
+		return "", "", err
 	}
-
-	sortedTags := make([]string, 0, len(uniqueTags))
-	for tag := range uniqueTags {
-		sortedTags = append(sortedTags, tag)
+	// if building outside of CI, this is a dev build, regardless of tag
+	if !env.IsCI() {
+		return tag, Dev, nil
 	}
-	sort.Sort(byVersion(sortedTags))
-
-	return sortedTags[0], nil
+	// if building from CI from a non-release commit, this is a nightly build
+	isNightly, err := env.IsNightly()
+	if err != nil {
+		return "", "", err
+	}
+	if isNightly {
+		return tag, Nightly, nil
+	}
+	// detect build type via string comparison on current tag
+	for _, bt := range []BuildType{Alpha, Beta, RC, Stable} {
+		if strings.Contains(tag, string(bt)) {
+			return tag, bt, nil
+		}
+	}
+	// tag doesn't match any other condition, default to stable build
+	return tag, Stable, nil
 }
 
 // Iteration will output an iteration number based on what type of build the git
 // sha represents and the ci platform it is running on.
-func Iteration(tag string) (string, error) {
-	bt := BuildTypeFromTag(tag)
+// (e.g. the 1 in 2.0.0-alpha.17-1)
+func Iteration(tag string, bt BuildType) (string, error) {
 	if bt == Nightly {
 		if bi := os.Getenv("SENSU_BUILD_ITERATION"); bi != "" {
 			return bi, nil
@@ -122,8 +120,8 @@ func Iteration(tag string) (string, error) {
 }
 
 // GetPrereleaseVersion will output the version of a prerelease from its tag
-func GetPrereleaseVersion(tag string) (string, error) {
-	bt := BuildTypeFromTag(tag)
+// (e.g. "17" from tag "2.0.0-alpha.17")
+func GetPrereleaseVersion(tag string, bt BuildType) (string, error) {
 	switch bt {
 	case Alpha, Beta, RC:
 		matches := prereleaseVersionRE.FindStringSubmatch(tag)
@@ -137,25 +135,36 @@ func GetPrereleaseVersion(tag string) (string, error) {
 		}
 		return bt, err
 	default:
-		return "", fmt.Errorf("build type not supported for prerelease: %q", bt)
+		// prerelease version does not apply to dev or nightly builds
+		return "", nil
 	}
 }
 
-// GetVersion will output the version of the build (without iteration)
-func GetVersion(tag string) (string, error) {
-	bt := BuildTypeFromTag(tag)
+// GetBaseVersion will output the major, minor, and patch #s with dots.
+// (e.g. "2.0.1")
+func GetBaseVersion(tag string, bt BuildType) (string, error) {
 	baseVersion := versionRE.FindString(tag)
 	if baseVersion == "" {
-		baseVersion = "dev"
+		return "", fmt.Errorf("Could not determine base version from %q", tag)
+	}
+	return baseVersion, nil
+}
+
+// GetVersion will output the version of the build (without iteration)
+// (e.g. "2.0.0-alpha.17")
+func GetVersion(tag string, bt BuildType) (string, error) {
+	baseVersion, err := GetBaseVersion(tag, bt)
+	if err != nil {
+		return "", err
 	}
 	switch bt {
-	case Nightly:
+	case Dev, Nightly:
 		return fmt.Sprintf("%s-%s", baseVersion, bt), nil
 	case Alpha, Beta, RC:
 		if baseVersion == "" {
 			return "", fmt.Errorf("invalid tag: %q", tag)
 		}
-		pre, err := GetPrereleaseVersion(tag)
+		pre, err := GetPrereleaseVersion(tag, bt)
 		if err != nil {
 			return "", err
 		}
@@ -171,12 +180,13 @@ func GetVersion(tag string) (string, error) {
 }
 
 // FullVersion will output the version of the build (with iteration)
-func FullVersion(tag string) (string, error) {
-	it, err := Iteration(tag)
+// (e.g. "2.0.0-alpha.17-1")
+func FullVersion(tag string, bt BuildType) (string, error) {
+	it, err := Iteration(tag, bt)
 	if err != nil {
 		return "", err
 	}
-	ver, err := GetVersion(tag)
+	ver, err := GetVersion(tag, bt)
 	if err != nil {
 		return "", err
 	}
