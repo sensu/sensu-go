@@ -14,7 +14,7 @@
     "analyze": "npx webpack-bundle-analyzer stats.json -s gzip",
     "lint": "npx eslint .",
     "spec": "node scripts test.js --env=jsdom",
-    "test": "yarn lint && yarn spec --coverage",
+    "test": "yarn build && yarn lint && yarn spec --coverage",
     "update-schema": "node scripts updateSchema"
   },
   "dependencies": {
