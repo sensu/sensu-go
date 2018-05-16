@@ -1,6 +1,7 @@
 package timeutil
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -62,10 +63,11 @@ func TestKitchenToTime(t *testing.T) {
 
 	// Our test cases
 	tests := []struct {
-		name    string
-		str     string
-		want    time.Time
-		wantErr bool
+		name        string
+		str         string
+		skipWindows bool // Canonical timezones are not supported on Windows
+		want        time.Time
+		wantErr     bool
 	}{
 		{
 			name: "24-hour kitchen UTC",
@@ -73,9 +75,10 @@ func TestKitchenToTime(t *testing.T) {
 			want: baseTime,
 		},
 		{
-			name: "24-hour kitchen with canonical timezone",
-			str:  "07:04 America/Vancouver",
-			want: baseTime,
+			name:        "24-hour kitchen with canonical timezone",
+			str:         "07:04 America/Vancouver",
+			skipWindows: true,
+			want:        baseTime,
 		},
 		{
 			name: "24-hour kitchen with numeric zone offset",
@@ -93,9 +96,10 @@ func TestKitchenToTime(t *testing.T) {
 			want: baseTime,
 		},
 		{
-			name: "12-hour kitchen with canonical timezone",
-			str:  "10:04AM America/Montreal",
-			want: baseTime,
+			name:        "12-hour kitchen with canonical timezone",
+			str:         "10:04AM America/Montreal",
+			skipWindows: true,
+			want:        baseTime,
 		},
 		{
 			name:    "12-hour kitchen with unknown location",
@@ -110,6 +114,10 @@ func TestKitchenToTime(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if runtime.GOOS == "windows" && tt.skipWindows {
+				return
+			}
+
 			got, err := kitchenToTime(tt.str)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("kitchenToTime() error = %v, wantErr %v", err, tt.wantErr)
@@ -182,11 +190,12 @@ func TestConvertToUTC(t *testing.T) {
 	end := e.Format(time.Kitchen)
 
 	tests := []struct {
-		name      string
-		window    *types.TimeWindowTimeRange
-		wantBegin string
-		wantEnd   string
-		wantErr   bool
+		name        string
+		window      *types.TimeWindowTimeRange
+		skipWindows bool // Canonical timezones are not supported on Windows
+		wantBegin   string
+		wantEnd     string
+		wantErr     bool
 	}{
 		{
 			name: "12-hour kitchen UTC",
@@ -203,8 +212,9 @@ func TestConvertToUTC(t *testing.T) {
 				Begin: "7:04AM America/Vancouver",
 				End:   "8:04AM America/Vancouver",
 			},
-			wantBegin: begin,
-			wantEnd:   end,
+			skipWindows: true,
+			wantBegin:   begin,
+			wantEnd:     end,
 		},
 		{
 			name: "24-hour kitchen numeric timezone",
@@ -238,6 +248,10 @@ func TestConvertToUTC(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			if runtime.GOOS == "windows" && tc.skipWindows {
+				return
+			}
+
 			if err := ConvertToUTC(tc.window); (err != nil) != tc.wantErr {
 				t.Errorf("ConvertToUTC() error = %v, wantErr %v", err, tc.wantErr)
 				return
