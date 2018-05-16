@@ -1,5 +1,7 @@
 import gql from "graphql-tag";
 
+import handle from "/exceptionHandler";
+
 const fragment = gql`
   fragment DeleteEventMutation_event on Event {
     deleted @client
@@ -26,9 +28,7 @@ export default (client, { id }) =>
         const data = { ...ev, deleted: true };
         cache.writeFragment({ fragment, id, data });
       } catch (error) {
-        // TODO: Connect this error handler to display a blocking error alert
-        // eslint-disable-next-line no-console
-        console.error(error);
+        handle(error);
       }
     },
   });

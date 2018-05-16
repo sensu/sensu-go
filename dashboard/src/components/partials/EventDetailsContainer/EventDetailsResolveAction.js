@@ -49,11 +49,9 @@ class EventDetailsResolveAction extends React.PureComponent {
     this.resolveStart();
     resolveEvent(client, { id }).then(
       () => this.resolveEnd(),
-      err => {
+      error => {
         this.resolveEnd();
-
-        // eslint-disable-next-line no-console
-        console.error("error occurred while resolving event", err);
+        throw error;
       },
     );
   };

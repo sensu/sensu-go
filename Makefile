@@ -41,7 +41,7 @@ BIN_SOURCE_DIR=target/$(GOOS)-$(GOARCH)
 ifeq ($(BUILD_TYPE),stable)
 FPM_VERSION=$(VERSION)
 else ifeq ($(BUILD_TYPE),nightly)
-VERSION=$(shell $(VERSION_CMD) -h)
+VERSION=$(shell $(VERSION_CMD) -b)
 DATE=$(shell date "+%Y%m%d")
 FPM_VERSION=$(VERSION)~nightly+$(DATE)
 else

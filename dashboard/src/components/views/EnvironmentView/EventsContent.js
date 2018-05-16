@@ -113,7 +113,6 @@ class EventsContent extends React.Component {
         variables={{ ...match.params, filter: query.get("filter") }}
       >
         {({ data: { environment } = {}, loading, error, refetch }) => {
-          // TODO: Connect this error handler to display a blocking error alert
           if (error) throw error;
 
           if (!environment && !loading) return <NotFoundView />;

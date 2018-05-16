@@ -37,8 +37,6 @@ class AppWrapper extends React.Component {
         }}
       >
         {({ data: { viewer, environment } = {}, loading, error }) => {
-          // TODO: Connect this error handler to display a blocking error
-          // alert
           if (error) throw error;
 
           return (

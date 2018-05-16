@@ -11,7 +11,6 @@ import ApolloClient from "apollo-client";
 import { data as introspectionQueryResultData } from "./schema/combinedTypes.macro";
 
 import authLink from "./authLink";
-import errorLink from "./errorLink";
 import stateLink from "./stateLink";
 import httpLink from "./httpLink";
 import introspectionLink from "./introspectionLink";
@@ -36,7 +35,6 @@ const createClient = () => {
   client = new ApolloClient({
     cache,
     link: ApolloLink.from([
-      errorLink(),
       introspectionLink(),
       stateLink({ cache }),
       authLink({ getClient }),

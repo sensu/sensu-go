@@ -14,4 +14,6 @@ const mutation = gql`
 `;
 
 export default (client, { notBefore } = {}) =>
-  client.mutate({ mutation, variables: { notBefore } });
+  client.mutate({ mutation, variables: { notBefore } }).catch(error => {
+    throw error.networkError || error;
+  });
