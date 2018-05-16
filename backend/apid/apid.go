@@ -69,7 +69,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	}
 
 	router := mux.NewRouter().UseEncodedPath()
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.backendStatus)
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus)
