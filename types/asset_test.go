@@ -58,4 +58,14 @@ func TestValidator(t *testing.T) {
 	asset = FixtureAsset("name")
 	asset.Filters = []string{`entity.OS in ("macos", "linux")`}
 	assert.NoError(asset.Validate())
+
+	// Given asset without a Sha512 it should not pass
+	asset = FixtureAsset("name")
+	asset.Sha512 = ""
+	assert.Error(asset.Validate())
+
+	// Given asset with an invalid Sha512 it should not pass
+	asset = FixtureAsset("name")
+	asset.Sha512 = "nope"
+	assert.Error(asset.Validate())
 }
