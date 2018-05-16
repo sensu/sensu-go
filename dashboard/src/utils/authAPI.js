@@ -1,5 +1,3 @@
-import FetchError from "/errors/FetchError";
-
 import { parseUNIX } from "/utils/date";
 import doFetch from "/utils/fetch";
 

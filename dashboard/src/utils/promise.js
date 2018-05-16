@@ -20,9 +20,9 @@ export const when = (...args) => {
   }, []);
 
   return error => {
-    for (let i = 0; i < handlers.length; i++) {
+    for (let i = 0; i < handlers.length; i += 1) {
       const types = handlers[i][0];
-      for (let j = 0; j < types.length; j++) {
+      for (let j = 0; j < types.length; j += 1) {
         if (error instanceof types[j]) {
           return handlers[i][1](error);
         }

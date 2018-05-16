@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { withStyles } from "material-ui/styles";
 import { compose } from "recompose";
 import { withApollo } from "react-apollo";
-import { ApolloError } from "apollo-client";
 
 import Paper from "material-ui/Paper";
 import Button from "material-ui/Button";
@@ -88,7 +87,7 @@ class LoginView extends React.Component {
     this.setState({ disabled: true });
 
     createTokens(client, { username, password }).catch(
-      when(UnauthorizedError, error => {
+      when(UnauthorizedError, () => {
         this.setState({
           disabled: false,
           authError: "Bad username or password.",

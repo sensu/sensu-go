@@ -23,6 +23,7 @@ const authLink = ({ getClient }) =>
       };
     } catch (error) {
       handle(error);
+      return {};
     }
   });
 
