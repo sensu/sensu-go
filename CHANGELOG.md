@@ -14,6 +14,7 @@ prior to assuming the existence of said check.
 - Added the ability to set round robin scheduling in sensuctl
 - Added Output field to GRPC handlers
 - Additional logging around handlers
+- Accept additional time formats in sensuctl
 
 ### Changed
 - Add logging around the Sensu event pipeline.
@@ -31,10 +32,13 @@ github.com/nikkiki/sensu-influxdb-handler
 whitespace characters.
 - Sensu-agent logs an error if the statsd listener is unable to start due to an
 invalid address or is stopped due to any other error.
+- Fixed a bug where --organization and --environment flags were hidden for all
+commands
 - Fix a bug where environments could not be created with sensuctl create
 - StatsD listener on Windows is functional
 - Add version output for dev and nightly builds (#1320).
 - Improve git version detection by directly querying for the most recent tag.
+- Fixed `sensuctl create -f` for `Role`
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added

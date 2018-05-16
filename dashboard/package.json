@@ -11,7 +11,7 @@
     "postinstall": "yarn run precompile",
     "prestart": "yarn precompile",
     "pretest": "yarn precompile",
-    "prettier": "npx prettier --write **/*.js",
+    "prettier": "npx prettier --write '**/*.js'",
     "start": "node scripts serve",
     "build": "node scripts build",
     "analyze": "npx webpack-bundle-analyzer stats.json -s gzip",
