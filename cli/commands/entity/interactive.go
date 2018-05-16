@@ -51,5 +51,9 @@ func (opts *entityOpts) copy(entity *types.Entity) {
 }
 
 func (opts *entityOpts) withEntity(entity *types.Entity) {
+	opts.ID = entity.ID
+	opts.Class = entity.Class
 	opts.Subscriptions = strings.Join(entity.Subscriptions, ",")
+	opts.Env = entity.Environment
+	opts.Org = entity.Organization
 }
