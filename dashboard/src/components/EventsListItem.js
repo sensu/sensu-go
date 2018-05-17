@@ -3,9 +3,10 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
-import { withStyles } from "material-ui/styles";
-import Typography from "material-ui/Typography";
-import Menu, { MenuItem } from "material-ui/Menu";
+import { withStyles } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
 
 import resolveEvent from "/mutations/resolveEvent";
 import RelativeDate from "/components/RelativeDate";

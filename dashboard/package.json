@@ -20,6 +20,8 @@
   "dependencies": {
     "@10xjs/date-input-controller": "^0.1.5",
     "@10xjs/form": "^0.1.5",
+    "@material-ui/core": "^1.0.0-rc.1",
+    "@material-ui/icons": "^1.0.0-rc.0",
     "apollo-cache-inmemory": "^1.1.12",
     "apollo-client": "^2.2.8",
     "apollo-link": "^1.2.2",
@@ -86,8 +88,6 @@
     "koa-connect": "^2.0.1",
     "koa-webpack": "^3.0.2",
     "lodash": "^4.17.0",
-    "material-ui": "^1.0.0-beta.36",
-    "material-ui-icons": "^1.0.0-beta.36",
     "object-assign": "^4.1.1",
     "prettier": "^1.12.1",
     "promise": "^8.0.1",

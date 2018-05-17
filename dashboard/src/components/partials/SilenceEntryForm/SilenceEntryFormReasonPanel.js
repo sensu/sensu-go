@@ -1,8 +1,8 @@
 import React from "react";
 import { Field } from "@10xjs/form";
 
-import Typography from "material-ui/Typography";
-import TextField from "material-ui/TextField";
+import Typography from "@material-ui/core/Typography";
+import TextField from "@material-ui/core/TextField";
 
 import Panel from "./SilenceEntryFormPanel";
 

@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { Route } from "react-router-dom";
 
 import gql from "graphql-tag";
-import { withStyles } from "material-ui/styles";
-import Button from "material-ui/ButtonBase";
+import { withStyles } from "@material-ui/core/styles";
+import Button from "@material-ui/core/ButtonBase";
 
 import NamespaceSelectorBuilder from "/components/NamespaceSelectorBuilder";
 import NamespaceSelectorMenu from "/components/NamespaceSelectorMenu";

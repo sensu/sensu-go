@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { MenuItem } from "material-ui/Menu";
-import { ListItemText, ListItemIcon } from "material-ui/List";
+import MenuItem from "@material-ui/core/MenuItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
 
 import CheckStatusIcon from "/components/CheckStatusIcon";
 import { TableListSelect } from "/components/TableList";

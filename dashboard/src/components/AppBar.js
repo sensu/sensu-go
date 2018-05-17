@@ -1,12 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import MUIAppBar from "material-ui/AppBar";
-import MaterialToolbar from "material-ui/Toolbar";
-import Typography from "material-ui/Typography";
-import IconButton from "material-ui/IconButton";
-import { withStyles } from "material-ui/styles";
-import MenuIcon from "material-ui-icons/Menu";
+import MUIAppBar from "@material-ui/core/AppBar";
+import MaterialToolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
+import IconButton from "@material-ui/core/IconButton";
+import { withStyles } from "@material-ui/core/styles";
+import MenuIcon from "@material-ui/icons/Menu";
 import EnvironmentLabel from "/components/EnvironmentLabel";
 import Wordmark from "/icons/SensuWordmark";
 

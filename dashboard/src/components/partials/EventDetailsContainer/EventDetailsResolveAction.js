@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Button from "material-ui/Button";
+import Button from "@material-ui/core/Button";
 import resolveEvent from "/mutations/resolveEvent";
 
 class EventDetailsResolveAction extends React.PureComponent {

@@ -2,10 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import classNames from "classnames";
 
-import { withStyles } from "material-ui/styles";
-import EventIcon from "material-ui-icons/Notifications";
-import EntityIcon from "material-ui-icons/DesktopMac";
-import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
+import { withStyles } from "@material-ui/core/styles";
+import EventIcon from "@material-ui/icons/Notifications";
+import EntityIcon from "@material-ui/icons/DesktopMac";
+import CheckIcon from "@material-ui/icons/AssignmentTurnedIn";
 
 import QuickNavButton from "/components/QuickNavButton";
 

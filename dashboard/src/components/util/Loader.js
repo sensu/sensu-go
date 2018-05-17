@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@material-ui/core/styles";
 import ResizeObserver from "react-resize-observer";
 import { Motion, spring, presets } from "react-motion";
 import classnames from "classnames";

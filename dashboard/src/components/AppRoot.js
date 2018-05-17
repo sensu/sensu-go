@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { Provider } from "react-redux";
 import { ApolloProvider } from "react-apollo";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@material-ui/core/styles";
 import { Switch, Route, withRouter } from "react-router-dom";
 
 import AppThemeProvider from "/components/AppThemeProvider";

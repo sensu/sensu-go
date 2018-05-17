@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Grid from "material-ui/Grid";
+import Grid from "@material-ui/core/Grid";
 import Content from "/components/Content";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
 import EntityDetailsEvents from "./EntityDetailsEvents";
@@ -34,7 +34,7 @@ class EntityDetailsContainer extends React.PureComponent {
     const { entity } = this.props;
     return (
       <Content>
-        <Grid container>
+        <Grid container spacing={16}>
           <Grid item xs={12}>
             <EntityDetailsInformation entity={entity} />
           </Grid>

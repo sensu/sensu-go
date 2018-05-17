@@ -2,8 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import { TableRow, TableCell } from "material-ui/Table";
-import Checkbox from "material-ui/Checkbox";
+import TableRow from "@material-ui/core/TableRow";
+import TableCell from "@material-ui/core/TableCell";
+import Checkbox from "@material-ui/core/Checkbox";
 
 class CheckRow extends React.Component {
   static fragments = {
