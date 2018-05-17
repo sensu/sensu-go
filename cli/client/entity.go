@@ -64,3 +64,22 @@ func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
 
 	return nil
 }
+
+// CreateEntity creates a new entity
+func (client *RestClient) CreateEntity(entity *types.Entity) (err error) {
+	bytes, err := json.Marshal(entity)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.R().SetBody(bytes).Post("/entities")
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return unmarshalError(res)
+	}
+
+	return nil
+}
