@@ -111,7 +111,7 @@ function build_tools
         build_tool $bin "tools"
     }
 
-    ForEach ($bin in "slack","influx-db") {
+    ForEach ($bin in "slack") {
         build_tool $bin "handlers"
     }
 }

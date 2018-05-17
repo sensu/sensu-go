@@ -44,7 +44,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("url", "http://lol"))
-	require.NoError(t, cmd.Flags().Set("sha512", "12345qwerty"))
+	require.NoError(t, cmd.Flags().Set("sha512", "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17"))
 	out, err := test.RunCmd(cmd, []string{"ruby22"})
 	require.NoError(t, err)
 
@@ -59,7 +59,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 	client.On("CreateAsset", mock.AnythingOfType("*types.Asset")).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
-	require.NoError(t, cmd.Flags().Set("sha512", "12345qwerty"))
+	require.NoError(t, cmd.Flags().Set("sha512", "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17"))
 	require.NoError(t, cmd.Flags().Set("url", "http://lol"))
 	out, err := test.RunCmd(cmd, []string{"ruby22"})
 
@@ -86,7 +86,7 @@ func TestConfigureAsset(t *testing.T) {
 	flags := &pflag.FlagSet{}
 	flags.StringSlice("metadata", []string{}, "")
 	flags.StringSlice("filter", []string{}, "")
-	flags.String("sha512", "12345qwerty", "")
+	flags.String("sha512", "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17", "")
 	flags.String("url", "http://lol", "")
 
 	// Too many args

@@ -90,7 +90,7 @@ export default function register() {
 
     window.addEventListener("load", () => {
       // eslint-disable-next-line camelcase
-      const swUrl = `${__webpack_public_path__}/service-worker.js`;
+      const swUrl = `${__webpack_public_path__}service-worker.js`;
 
       if (!isLocalhost) {
         // Is not local host. Just register service worker

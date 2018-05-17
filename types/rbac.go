@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"net/url"
 )
 
 const (
@@ -132,6 +133,11 @@ func (r *Role) Validate() error {
 	}
 
 	return nil
+}
+
+// URIPath returns the path component of a Role URI.
+func (r *Role) URIPath() string {
+	return fmt.Sprintf("/rbac/roles/%s", url.PathEscape(r.Name))
 }
 
 //

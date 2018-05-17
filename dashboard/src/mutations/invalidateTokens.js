@@ -6,4 +6,7 @@ const mutation = gql`
   }
 `;
 
-export default client => client.mutate({ mutation });
+export default client =>
+  client.mutate({ mutation }).catch(error => {
+    throw error.networkError || error;
+  });

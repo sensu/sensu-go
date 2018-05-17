@@ -7,16 +7,13 @@ import {
 } from "apollo-cache-inmemory";
 import ApolloClient from "apollo-client";
 
-// TODO: Filter out out any type information unrelated to unions or interfaces
-// prior to importing `schema.json`. IntrospectionFragmentMatcher only needs
-// a subset of the schema.
-// see: apollographql.com/docs/react/advanced/fragments.html#fragment-matcher
-import { data as introspectionQueryResultData } from "/schema.json";
+// https://www.apollographql.com/docs/react/advanced/fragments.html#fragment-matcher
+import { data as introspectionQueryResultData } from "./schema/combinedTypes.macro";
 
 import authLink from "./authLink";
-import errorLink from "./errorLink";
 import stateLink from "./stateLink";
 import httpLink from "./httpLink";
+import introspectionLink from "./introspectionLink";
 import localStorageSync from "./localStorageSync";
 
 const createClient = () => {
@@ -38,7 +35,7 @@ const createClient = () => {
   client = new ApolloClient({
     cache,
     link: ApolloLink.from([
-      errorLink(),
+      introspectionLink(),
       stateLink({ cache }),
       authLink({ getClient }),
       httpLink(),

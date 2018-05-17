@@ -14,11 +14,15 @@ prior to assuming the existence of said check.
 - Added the ability to set round robin scheduling in sensuctl
 - Added Output field to GRPC handlers
 - Additional logging around handlers
+- Accept additional time formats in sensuctl
+- Entities can now be created via sensuctl.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
 - Split out the docker commands in build script so that building images and
   pushing can be done separately.
+- Migrated the InfluxDB handler from the sensu-go repository to
+github.com/nikkiki/sensu-influxdb-handler
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -31,8 +35,15 @@ prior to assuming the existence of said check.
 whitespace characters.
 - Sensu-agent logs an error if the statsd listener is unable to start due to an
 invalid address or is stopped due to any other error.
+- Fixed a bug where --organization and --environment flags were hidden for all
+commands
 - Fix a bug where environments could not be created with sensuctl create
 - StatsD listener on Windows is functional
+- Add version output for dev and nightly builds (#1320).
+- Improve git version detection by directly querying for the most recent tag.
+- Fixed `sensuctl create -f` for `Role`
+- Added validation for asset SHA512 checksum, requiring that it be at least 128
+characters and therefore fixing a bug in sensuctl
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
@@ -136,6 +147,8 @@ swallowed. The events are sent through the pipeline.
 - Include zero-valued integers in JSON output for all types.
 - Check event entities now have a last_seen timestamp.
 - Improved silenced entry display and UX.
+- Fixed a small bug in the opentsdb transformer so that it trims trailing
+whitespace characters.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added

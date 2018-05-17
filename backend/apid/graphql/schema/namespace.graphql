@@ -8,3 +8,14 @@ type Namespace {
   "organization indicates to which org a check belongs to."
   organization: String!
 }
+
+"""
+Describes a node in an environment.
+"""
+interface EnvironmentNode {
+  "Organization indicates to which org a silenced entry belongs to."
+  organization: Organization!
+
+  "Environment indicates which env a silenced entry belongs to."
+  environment: Environment
+}

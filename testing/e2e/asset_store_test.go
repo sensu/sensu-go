@@ -37,7 +37,7 @@ func TestAssetStore(t *testing.T) {
 		Name:         "asset1",
 		Organization: "default",
 		URL:          "http:foo.com",
-		Sha512:       "12345678",
+		Sha512:       "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
 	}
 	output, err := sensuctl.run("asset", "create", asset.Name,
 		"--organization", asset.Organization,

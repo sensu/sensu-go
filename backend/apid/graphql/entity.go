@@ -63,12 +63,8 @@ func (*entityImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, err
 
 // LastSeen implements response to request for 'executed' field.
 func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
-	c := p.Source.(*types.Entity)
-	if c.LastSeen == 0 {
-		return nil, nil
-	}
-	t := time.Unix(c.LastSeen, 0)
-	return &t, nil
+	e := p.Source.(*types.Entity)
+	return convertTs(e.LastSeen), nil
 }
 
 // Events implements response to request for 'events' field.

@@ -32,6 +32,10 @@ func (a *Asset) Validate() error {
 		return errors.New("SHA-512 checksum cannot be empty")
 	}
 
+	if len(a.Sha512) < 128 {
+		return errors.New("SHA-512 checksum must be at least 128 characters")
+	}
+
 	if a.URL == "" {
 		return errors.New("URL cannot be empty")
 	}

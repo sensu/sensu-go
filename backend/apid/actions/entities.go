@@ -119,6 +119,32 @@ func (c EntityController) Create(ctx context.Context, entity types.Entity) error
 	return nil
 }
 
+// CreateOrReplace creates or replaces an entity. It returns an error if the
+// provided entity is invalid, the user doesn't have permissions to create or
+// update the entity, or if an internal error is returned from the store.
+func (c EntityController) CreateOrReplace(ctx context.Context, entity types.Entity) error {
+	// Adjust context
+	ctx = addOrgEnvToContext(ctx, &entity)
+	abilities := c.Policy.WithContext(ctx)
+
+	// Verify user permissions
+	if !(abilities.CanCreate(&entity) && abilities.CanUpdate(&entity)) {
+		return NewErrorf(PermissionDenied, "create/update")
+	}
+
+	// Validate
+	if err := entity.Validate(); err != nil {
+		return NewError(InvalidArgument, err)
+	}
+
+	// Persist Changes
+	if serr := c.Store.UpdateEntity(ctx, &entity); serr != nil {
+		return NewError(InternalErr, serr)
+	}
+
+	return nil
+}
+
 // Update validates and persists changes to a resource if viewer has access.
 func (c EntityController) Update(ctx context.Context, given types.Entity) error {
 	// Adjust context

@@ -1,5 +1,7 @@
 import { ApolloError } from "apollo-client";
 
+import handle from "/exceptionHandler";
+
 const getQueryName = document => document.definitions[0].name.value;
 
 const localStorageSync = (client, query) => {
@@ -9,8 +11,7 @@ const localStorageSync = (client, query) => {
     try {
       client.writeData({ data: JSON.parse(data) });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn(error);
+      handle(error);
     }
   };
 

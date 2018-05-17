@@ -29,6 +29,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.get(r.find)
 	routes.del(r.destroy)
 	routes.post(r.create)
+	routes.put(r.createOrReplace)
 }
 
 func (r *EntitiesRouter) destroy(req *http.Request) (interface{}, error) {
@@ -63,4 +64,13 @@ func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {
 	}
 	err := r.controller.Create(req.Context(), entity)
 	return entity, err
+}
+
+func (r *EntitiesRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	entity := types.Entity{}
+	if err := unmarshalBody(req, &entity); err != nil {
+		return nil, err
+	}
+
+	return entity, r.controller.CreateOrReplace(req.Context(), entity)
 }

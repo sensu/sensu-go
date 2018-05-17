@@ -9,6 +9,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,10 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if len(args) > 1 {
 			_ = cmd.Help()
 			return errors.New("invalid argument(s) received")
+		}
+		if cli.Config.Organization() != config.DefaultOrganization ||
+			cli.Config.Environment() != config.DefaultEnvironment {
+			cli.Logger.Warn("--organization and --environment flags have no effect for this command")
 		}
 		fp, err := cmd.Flags().GetString("file")
 		if err != nil {

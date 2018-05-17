@@ -13,7 +13,7 @@ RACE=""
 
 VERSION_CMD="go run ./version/cmd/version/version.go"
 
-HANDLERS=(slack influx-db)
+HANDLERS=(slack)
 
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ]; then
@@ -293,15 +293,9 @@ docker_push() {
     docker push $version
 }
 
-install_dashboard_deps() {
-    pushd "${DASHBOARD_PATH}"
-    yarn install
-    yarn precompile
-    popd
-}
-
 test_dashboard() {
     pushd "${DASHBOARD_PATH}"
+    yarn install
     yarn test
     popd
 }
@@ -373,11 +367,9 @@ case "$cmd" in
         build_tools
         ;;
     "dashboard")
-        install_dashboard_deps
         test_dashboard
         ;;
     "dashboard-ci")
-        install_dashboard_deps
         test_dashboard
         ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
         ;;

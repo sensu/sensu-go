@@ -159,17 +159,11 @@ class EventsContainer extends React.Component {
     );
 
     selectedKeys.forEach(key => {
-      resolveEvent(this.props.client, { id: key }).then(
-        () => {
-          this.setState(({ rowState }) =>
-            Object.assign(rowState, { [key]: false }),
-          );
-        },
-        error => {
-          // eslint-disable-next-line no-console
-          console.error(error);
-        },
-      );
+      resolveEvent(this.props.client, { id: key }).then(() => {
+        this.setState(({ rowState }) =>
+          Object.assign(rowState, { [key]: false }),
+        );
+      });
     });
   };
 

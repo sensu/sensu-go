@@ -20,8 +20,6 @@ cache:
 before_install:
   - echo -e "machine github.com\n login $GITHUB_TOKEN" >> ~/.netrc
   - ulimit -s 1082768
-  - curl -L -s https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 -o $GOPATH/bin/dep
-  - chmod +x $GOPATH/bin/dep
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.6.0
   - export PATH="$HOME/.yarn/bin:$PATH"
 install:

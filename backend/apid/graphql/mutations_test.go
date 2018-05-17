@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -10,14 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
-
-type mockEventDestroyer struct {
-	err error
-}
-
-func (m mockEventDestroyer) Destroy(ctx context.Context, a, b string) error {
-	return m.err
-}
 
 func TestMutationTypeDeleteEventField(t *testing.T) {
 	evt := types.FixtureEvent("a", "b")
@@ -43,6 +34,47 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 	// Destroy failed
 	impl.eventDestroyer = mockEventDestroyer{err: errors.New("test")}
 	body, err = impl.DeleteEvent(params)
+	assert.Error(t, err)
+	assert.Nil(t, body)
+}
+
+func TestMutationTypeCreateSilenceField(t *testing.T) {
+	inputs := schema.CreateSilenceInput{
+		Ns:    schema.NewNamespaceInput("a", "b"),
+		Props: &schema.SilenceInputs{},
+	}
+	params := schema.MutationCreateSilenceFieldResolverParams{}
+	params.Args.Input = &inputs
+
+	// Success
+	impl := mutationsImpl{}
+	impl.silenceCreator = mockSilenceCreator{}
+	body, err := impl.CreateSilence(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	impl.silenceCreator = mockSilenceCreator{err: errors.New("wow")}
+	body, err = impl.CreateSilence(params)
+	assert.Error(t, err)
+	assert.Nil(t, body)
+}
+
+func TestMutationTypeDeleteSilenceField(t *testing.T) {
+	inputs := schema.DeleteRecordInput{}
+	params := schema.MutationDeleteSilenceFieldResolverParams{}
+	params.Args.Input = &inputs
+
+	// Success
+	impl := mutationsImpl{}
+	impl.silenceDestroyer = mockSilenceDestroyer{}
+	body, err := impl.DeleteSilence(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	impl.silenceDestroyer = mockSilenceDestroyer{err: errors.New("wow")}
+	body, err = impl.DeleteSilence(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
 }
