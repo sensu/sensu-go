@@ -17,6 +17,8 @@ prior to assuming the existence of said check.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
+- Split out the docker commands in build script so that building images and
+  pushing can be done separately.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
