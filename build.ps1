@@ -94,7 +94,12 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
         $ldflags = $ldflags + " -X $version_pkg.PreReleaseIdentifier=$prerelease"
     }
 
-    go build -ldflags "$ldflags" -o $outfile "$REPO_PATH/$bin/cmd/..."
+    $main_pkg = "cmd/..."
+    If ($bin -eq "backend") {
+        $main_pkg = ""
+    }
+
+    go build -ldflags "$ldflags" -o $outfile "$REPO_PATH/$bin/$main_pkg"
     If ($LASTEXITCODE -ne 0) {
         echo "Failed to build $outfile..."
         exit 1
