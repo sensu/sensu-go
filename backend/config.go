@@ -1,9 +1,20 @@
-package config
+package backend
 
 import "github.com/sensu/sensu-go/types"
 
+const (
+	// DefaultEtcdName is the default etcd member node name (single-node cluster only)
+	DefaultEtcdName = "default"
+
+	// DefaultEtcdClientURL is the default URL to listen for Etcd clients
+	DefaultEtcdClientURL = "http://127.0.0.1:2379"
+
+	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
+	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
+)
+
 // Config specifies a Backend configuration.
-type Backend struct {
+type Config struct {
 	// Backend Configuration
 	StateDir string
 

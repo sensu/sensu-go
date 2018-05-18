@@ -1,4 +1,4 @@
-package core
+package backend
 
 import (
 	"crypto/tls"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
-	"github.com/sensu/sensu-go/backend/config"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -25,21 +24,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
-	// DefaultEtcdName is the default etcd member node name (single-node cluster only)
-	DefaultEtcdName = "default"
-
-	// DefaultEtcdClientURL is the default URL to listen for Etcd clients
-	DefaultEtcdClientURL = "http://127.0.0.1:2379"
-
-	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
-	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
-)
-
 // Backend is a Sensu Backend server responsible for handling incoming
 // HTTP requests and upgrading them
 type Backend struct {
-	Config *config.Backend
+	Config *Config
 
 	shutdownChan chan struct{}
 	done         chan struct{}
@@ -55,9 +43,8 @@ type Backend struct {
 	keepalived daemon.Daemon
 }
 
-// NewBackend will, given a Config, create an initialized Backend and return a
-// pointer to it.
-func (b *Backend) NewBackend(config *config.Backend) error {
+// LoadConfig initializes the backend with the provided config
+func (b *Backend) LoadConfig(config *Config) error {
 	// In other places we have a NewConfig() method, but I think that doing it
 	// this way is more safe, because it doesn't require "trust" in callers.
 	if config.EtcdListenClientURL == "" {
