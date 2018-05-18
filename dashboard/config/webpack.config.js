@@ -173,6 +173,7 @@ export default () => {
       }),
       // Remove moment locales.
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+      new webpack.HashedModuleIdsPlugin(),
     ]
       .concat(
         isDevelopment && [
