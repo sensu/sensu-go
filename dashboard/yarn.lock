@@ -443,7 +443,7 @@ apollo-link-state@^0.4.1:
     apollo-utilities "^1.0.8"
     graphql-anywhere "^4.1.0-alpha.0"
 
-apollo-link@^1.0.0, apollo-link@^1.2.1, apollo-link@^1.2.2:
+apollo-link@^1.0.0, apollo-link@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/apollo-link/-/apollo-link-1.2.2.tgz#54c84199b18ac1af8d63553a68ca389c05217a03"
   dependencies:

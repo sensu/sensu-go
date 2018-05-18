@@ -32,3 +32,33 @@ export const when = (...args) => {
     throw error;
   };
 };
+
+// TODO: Ensure WeakMap is polyfilled
+const cache = new WeakMap();
+
+export const memoize = (promiseCreator, keyCreator) => (...args) => {
+  let map = cache.get(promiseCreator);
+  const key = keyCreator(...args);
+
+  if (!map) {
+    map = new Map();
+    cache.set(promiseCreator, map);
+  } else if (map.has(key)) {
+    return map.get(key);
+  }
+
+  const promise = promiseCreator(...args).then(
+    result => {
+      map.delete(key);
+      return result;
+    },
+    error => {
+      map.delete(key);
+      throw error;
+    },
+  );
+
+  map.set(key, promise);
+
+  return promise;
+};

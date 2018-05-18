@@ -1,5 +1,9 @@
 import gql from "graphql-tag";
+
+import { when } from "/utils/promise";
 import { createTokens, invalidateTokens, refreshTokens } from "/utils/authAPI";
+
+import { UnauthorizedError } from "/errors/FetchError";
 
 const query = gql`
   query AuthQuery {
@@ -72,7 +76,13 @@ export default {
 
       invalidateTokens: async (_, vars, { cache }) => {
         const result = cache.readQuery({ query });
-        const tokens = await invalidateTokens(result.auth);
+        const tokens = await invalidateTokens(result.auth).catch(
+          when(UnauthorizedError, () => ({
+            accessToken: null,
+            refreshToken: null,
+            expiresAt: null,
+          })),
+        );
 
         const { accessToken, refreshToken, expiresAt } = tokens;
         const data = {
