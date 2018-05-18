@@ -21,6 +21,8 @@ prior to assuming the existence of said check.
 - Add logging around the Sensu event pipeline.
 - Migrated the InfluxDB handler from the sensu-go repository to
 github.com/nikkiki/sensu-influxdb-handler
+- Entry point for sensu-backend has been changed to
+  `github.com/sensu/sensu-go/cmd/sensu-backend`
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
