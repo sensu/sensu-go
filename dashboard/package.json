@@ -86,7 +86,6 @@
     "lodash": "^4.17.0",
     "material-ui": "^1.0.0-beta.36",
     "material-ui-icons": "^1.0.0-beta.36",
-    "object-assign": "^4.1.1",
     "prettier": "^1.12.1",
     "promise": "^8.0.1",
     "prop-types": "^15.6.0",
