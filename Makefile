@@ -79,7 +79,9 @@ default: all
 all: linux
 
 clean:
-	git clean -dXf .
+	rm -rf out/
+	rm -rf target/
+	git clean -dXf dashboard
 
 ##
 # Operating system targets
