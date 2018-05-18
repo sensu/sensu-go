@@ -23,14 +23,6 @@
     ["transform-react-jsx", {
       "useBuiltIns": true,
     }],
-    ["transform-runtime", {
-      "helpers": false,
-      "polyfill": false,
-      "regenerator": true,
-    }],
-    ["transform-regenerator", {
-      "async": false,
-    }],
     ["module-resolver", {
       "alias": {
         "": "./src",

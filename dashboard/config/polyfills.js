@@ -16,9 +16,6 @@ require("whatwg-fetch");
 // It will use the native implementation if it's present and isn't buggy.
 Object.assign = require("object-assign");
 
-// http://facebook.github.io/regenerator/
-require("regenerator-runtime/runtime");
-
 // URLSearch
 require("url-search-params-polyfill");
 
