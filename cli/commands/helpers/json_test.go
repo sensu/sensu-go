@@ -23,8 +23,7 @@ func TestPrintJSON(t *testing.T) {
 	}
 
 	buf := new(bytes.Buffer)
-	writer := io.Writer(buf)
-	require.NoError(t, PrintJSON(testInput, writer))
+	require.NoError(t, PrintJSON(testInput, buf))
 	assert.Equal("{\n  \"commandAnd\": \"echo bar && exit 1\",\n  \"commandLessThan\": \"echo foo >> output.txt\"\n}\n\n", buf.String())
 }
 
@@ -42,8 +41,7 @@ func TestPrintWrappedJSON(t *testing.T) {
 	assert.NoError(err)
 
 	buf := new(bytes.Buffer)
-	writer := io.Writer(buf)
-	require.NoError(t, PrintWrappedJSON(check, writer))
+	require.NoError(t, PrintWrappedJSON(check, buf))
 	assert.JSONEq(string(output), buf.String())
 }
 
@@ -67,9 +65,8 @@ func TestPrintWrappedJSONList(t *testing.T) {
 	assert.NoError(err)
 
 	buf := new(bytes.Buffer)
-	writer := io.Writer(buf)
 
-	require.NoError(t, PrintWrappedJSONList([]types.Resource{check1, check2}, writer))
+	require.NoError(t, PrintWrappedJSONList([]types.Resource{check1, check2}, buf))
 	// trim \n and white space for equal comparison
 	output3 := strings.Replace(buf.String(), "\n", "", -1)
 	output3 = strings.Replace(output3, " ", "", -1)
@@ -91,9 +88,8 @@ func TestPrintFormatted(t *testing.T) {
 	assert.NoError(err)
 
 	buf := new(bytes.Buffer)
-	writer := io.Writer(buf)
 
-	require.NoError(t, PrintFormatted("", config.FormatWrappedJSON, check, writer, printToList))
+	require.NoError(t, PrintFormatted("", config.FormatWrappedJSON, check, buf, printToList))
 	assert.JSONEq(string(output), buf.String())
 
 	// test json format
@@ -101,23 +97,20 @@ func TestPrintFormatted(t *testing.T) {
 	assert.NoError(err)
 
 	buf = new(bytes.Buffer)
-	writer = io.Writer(buf)
 
-	require.NoError(t, PrintFormatted("", config.FormatJSON, check, writer, printToList))
+	require.NoError(t, PrintFormatted("", config.FormatJSON, check, buf, printToList))
 	assert.JSONEq(string(output), buf.String())
 
 	// test tabular format
 	buf = new(bytes.Buffer)
-	writer = io.Writer(buf)
 
-	require.NoError(t, PrintFormatted("", config.FormatTabular, check, writer, printToList))
+	require.NoError(t, PrintFormatted("", config.FormatTabular, check, buf, printToList))
 	assert.Equal("=== \n", buf.String()) // empty table
 
 	// test default format
 	buf = new(bytes.Buffer)
-	writer = io.Writer(buf)
 
-	require.NoError(t, PrintFormatted("none", config.DefaultFormat, check, writer, printToList))
+	require.NoError(t, PrintFormatted("none", config.DefaultFormat, check, buf, printToList))
 	assert.Equal("=== \n", buf.String()) // empty table
 
 	// test flag override (json format)
@@ -125,9 +118,8 @@ func TestPrintFormatted(t *testing.T) {
 	assert.NoError(err)
 
 	buf = new(bytes.Buffer)
-	writer = io.Writer(buf)
 
-	require.NoError(t, PrintFormatted(config.FormatJSON, config.FormatWrappedJSON, check, writer, printToList))
+	require.NoError(t, PrintFormatted(config.FormatJSON, config.FormatWrappedJSON, check, buf, printToList))
 	assert.JSONEq(string(output), buf.String())
 }
 

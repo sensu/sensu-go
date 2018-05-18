@@ -31,11 +31,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			resources := []types.Resource{}
-			for i := range results {
-				resources = append(resources, &results[i])
-			}
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
+			// User is not a Resource (does not implement URIPath()) so wrapped-json format is not supported
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, []types.Resource{}, results)
 		},
 	}
 

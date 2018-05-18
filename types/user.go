@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	fmt "fmt"
-	"net/url"
 )
 
 // FixtureUser returns a testing fixture for an Entity object.
@@ -22,11 +21,6 @@ func (u *User) Validate() error {
 	}
 
 	return nil
-}
-
-// URIPath returns the path component of a User URI.
-func (u *User) URIPath() string {
-	return fmt.Sprintf("/rbac/users/%s", url.PathEscape(u.Username))
 }
 
 // ValidatePassword returns an error if the entity is invalid.

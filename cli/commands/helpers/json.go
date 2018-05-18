@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/sensu/sensu-go/cli/client/config"
@@ -32,18 +31,12 @@ func PrintJSON(r interface{}, io io.Writer) error {
 	return err
 }
 
-// PrintWrappedJSON takes a record(s) and an io.Writer, converts the record to
+// PrintWrappedJSON takes a record(s) and Resource, converts the record to
 // human-readable JSON (pretty-prints), wraps that JSON using types.Wrapper, and
 // then prints the result to the given writer. Unescapes any &, <, or >
 // characters it finds.
-func PrintWrappedJSON(r types.Resource, io io.Writer) error {
-	v := reflect.ValueOf(r)
-	i := reflect.Indirect(v)
-	t := i.Type()
-	w := types.Wrapper{
-		Type:  t.Name(),
-		Value: r,
-	}
+func PrintWrappedJSON(r types.Resource, wr io.Writer) error {
+	w := types.WrapResource(r)
 
 	buf := new(bytes.Buffer)
 	encoder := json.NewEncoder(buf)
@@ -55,14 +48,14 @@ func PrintWrappedJSON(r types.Resource, io io.Writer) error {
 	}
 
 	s := htmlReplacer.Replace(buf.String())
-	_, err := fmt.Fprint(io, s)
+	_, err := fmt.Fprint(wr, s)
 	return err
 }
 
-// PrintWrappedJSONList takes a record(s) and an io.Writer, converts the record to
-// human-readable JSON (pretty-prints), wraps that JSON using types.Wrapper, and
-// then prints the result to the given writer. Unescapes any &, <, or >
-// characters it finds.
+// PrintWrappedJSONList takes a resource list and an io.Writer, converts the
+// record to human-readable JSON (pretty-prints), wraps that JSON using
+// types.Wrapper, and then prints the result to the given writer. Unescapes
+// any &, <, or > characters it finds.
 func PrintWrappedJSONList(r []types.Resource, io io.Writer) error {
 	for _, res := range r {
 		err := PrintWrappedJSON(res, io)

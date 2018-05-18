@@ -18,7 +18,7 @@ func Print(cmd *cobra.Command, format string, printTable printTableFunc, objects
 	}
 	switch format {
 	case config.FormatJSON:
-		if err := PrintJSON(objects, cmd.OutOrStdout()); err != nil {
+		if err := PrintJSON(v, cmd.OutOrStdout()); err != nil {
 			return err
 		}
 	case config.FormatWrappedJSON:
