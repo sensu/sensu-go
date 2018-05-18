@@ -14,9 +14,7 @@ var (
 )
 
 // Execute ...
-func Execute(b *backend.Backend) {
+func Execute(b *backend.Backend) error {
 	sensuBackend = b
-	if err := rootCmd.Execute(); err != nil {
-		logger.Fatal(err.Error())
-	}
+	return rootCmd.Execute()
 }
