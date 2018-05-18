@@ -23,6 +23,8 @@ prior to assuming the existence of said check.
 github.com/nikkiki/sensu-influxdb-handler
 - Entry point for sensu-backend has been changed to
   `github.com/sensu/sensu-go/cmd/sensu-backend`
+- Don't allow unknown fields in types that do not support custom attributes
+when creating resources with `sensuctl create`.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.

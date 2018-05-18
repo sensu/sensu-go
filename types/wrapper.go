@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -37,7 +38,9 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if wrapper.Value == nil {
 		return fmt.Errorf("no spec provided")
 	}
-	if err := json.Unmarshal(*wrapper.Value, &resource); err != nil {
+	dec := json.NewDecoder(bytes.NewReader(*wrapper.Value))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&resource); err != nil {
 		return err
 	}
 	w.Value = resource
