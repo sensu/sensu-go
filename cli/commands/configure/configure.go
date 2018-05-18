@@ -192,7 +192,7 @@ func askForDefaultFormat(c config.Config) *survey.Question {
 		Name: "format",
 		Prompt: &survey.Select{
 			Message: "Preferred output format:",
-			Options: []string{"none", "json"},
+			Options: []string{"none", config.FormatJSON, config.FormatWrappedJSON},
 			Default: format,
 		},
 	}

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -34,15 +35,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
-				format = cli.Config.Format()
-			}
-
-			if format == "json" {
-				return helpers.PrintJSON(r, cmd.OutOrStdout())
-			}
-			return printEntityToList(r, cmd.OutOrStdout())
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, r, cmd.OutOrStdout(), printToList)
 		},
 	}
 
@@ -51,7 +46,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEntityToList(r *types.Entity, writer io.Writer) error {
+func printToList(v interface{}, writer io.Writer) error {
+	r, ok := v.(*types.Entity)
+	if !ok {
+		return fmt.Errorf("%t is not an Entity", v)
+	}
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{

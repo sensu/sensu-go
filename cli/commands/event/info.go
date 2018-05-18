@@ -36,15 +36,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
-				format = cli.Config.Format()
-			}
-
-			if format == "json" {
-				return helpers.PrintJSON(event, cmd.OutOrStdout())
-			}
-			return printEntityToList(event, cmd.OutOrStdout())
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, event, cmd.OutOrStdout(), printToList)
 		},
 	}
 
@@ -53,7 +47,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printEntityToList(event *types.Event, writer io.Writer) error {
+func printToList(v interface{}, writer io.Writer) error {
+	event, ok := v.(*types.Event)
+	if !ok {
+		return fmt.Errorf("%t is not an Event", v)
+	}
 	statusHistory := []string{}
 	for _, entry := range event.Check.History {
 		statusHistory = append(statusHistory, fmt.Sprint(entry.Status))
