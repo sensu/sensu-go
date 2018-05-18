@@ -21,6 +21,8 @@ prior to assuming the existence of said check.
 - Add logging around the Sensu event pipeline.
 - Migrated the InfluxDB handler from the sensu-go repository to
 github.com/nikkiki/sensu-influxdb-handler
+- Don't allow unknown fields in types that do not support custom attributes
+when creating resources with `sensuctl create`.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
