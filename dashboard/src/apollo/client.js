@@ -6,6 +6,7 @@ import {
   IntrospectionFragmentMatcher,
 } from "apollo-cache-inmemory";
 import ApolloClient from "apollo-client";
+import { DedupLink } from "apollo-link-dedup";
 
 // https://www.apollographql.com/docs/react/advanced/fragments.html#fragment-matcher
 import { data as introspectionQueryResultData } from "./schema/combinedTypes.macro";
@@ -26,6 +27,8 @@ const createClient = () => {
     dataIdFromObject: object => object.id,
   });
 
+  const dedupLink = new DedupLink();
+
   let client = null;
   const getClient = () => {
     if (!client) throw new Error("apollo client is not initialized");
@@ -38,6 +41,7 @@ const createClient = () => {
       introspectionLink(),
       stateLink({ cache }),
       authLink({ getClient }),
+      dedupLink,
       httpLink(),
     ]),
   });
