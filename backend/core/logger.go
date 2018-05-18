@@ -1,7 +1,7 @@
-package backend
+package core
 
 import "github.com/sirupsen/logrus"
 
 var logger = logrus.WithFields(logrus.Fields{
-	"component": "backend",
+	"component": "core",
 })

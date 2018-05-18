@@ -1,6 +1,6 @@
 // +build integration,race
 
-package backend
+package core
 
 import (
 	"encoding/base64"
@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/config"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
@@ -45,9 +46,9 @@ func TestBackendHTTPListener(t *testing.T) {
 	}{
 		{"HTTP", "http", "ws", nil},
 		{"HTTPS", "https", "wss", &types.TLSOptions{
-			CertFile:           "../util/ssl/etcd1.pem",
-			KeyFile:            "../util/ssl/etcd1-key.pem",
-			TrustedCAFile:      "../util/ssl/ca.pem",
+			CertFile:           "../../util/ssl/etcd1.pem",
+			KeyFile:            "../../util/ssl/etcd1-key.pem",
+			TrustedCAFile:      "../../util/ssl/ca.pem",
 			InsecureSkipVerify: false}},
 	}
 	// tc = Test Case
@@ -70,7 +71,9 @@ func TestBackendHTTPListener(t *testing.T) {
 
 			tlsOpts := tc.tls
 
-			b, err := NewBackend(&Config{
+			b := &Backend{}
+
+			err = b.NewBackend(&config.Backend{
 				AgentHost:                   "127.0.0.1",
 				AgentPort:                   agentPort,
 				APIHost:                     "127.0.0.1",

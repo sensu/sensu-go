@@ -1,18 +1,16 @@
-package main
+package cmd
 
 import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 
-	"net/http"
-	_ "net/http/pprof"
-
-	"github.com/sensu/sensu-go/backend"
+	"github.com/sensu/sensu-go/backend/config"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/version"
@@ -89,7 +87,7 @@ func newStartCommand() *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
-			cfg := &backend.Config{
+			cfg := &config.Backend{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
 				APIHost:               viper.GetString(flagAPIHost),
@@ -135,7 +133,7 @@ func newStartCommand() *cobra.Command {
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
 			}
 
-			sensuBackend, err := backend.NewBackend(cfg)
+			err = backend.NewBackend(cfg)
 			if err != nil {
 				return err
 			}
@@ -146,11 +144,11 @@ func newStartCommand() *cobra.Command {
 			go func() {
 				sig := <-sigs
 				logger.Info("signal received: ", sig)
-				sensuBackend.Stop()
+				backend.Stop()
 			}()
 
 			if len(args) == 1 && args[0] == "migration" {
-				return sensuBackend.Migration()
+				return backend.Migration()
 			}
 
 			if viper.GetBool(flagDebug) {
@@ -159,7 +157,7 @@ func newStartCommand() *cobra.Command {
 				}()
 			}
 
-			return sensuBackend.Run()
+			return backend.Run()
 		},
 	}
 

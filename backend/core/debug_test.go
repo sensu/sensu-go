@@ -1,6 +1,6 @@
 // +build !debug
 
-package backend
+package core
 
 import (
 	"io/ioutil"
