@@ -79,9 +79,7 @@ default: all
 all: linux
 
 clean:
-	rm -rf out/
-	rm -rf dashboard/node_modules/
-	rm -rf target/
+	git clean -dXf .
 
 ##
 # Operating system targets
