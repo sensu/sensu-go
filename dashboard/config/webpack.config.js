@@ -32,10 +32,7 @@ export default () => {
 
     devtool,
 
-    entry: [
-      require.resolve("./polyfills"),
-      path.resolve(root, "src/index.js"),
-    ].filter(Boolean),
+    entry: [path.resolve(root, "src/index.js")],
 
     output: {
       path: outputPath,
@@ -57,6 +54,10 @@ export default () => {
         path
           .relative(path.resolve(root, "src"), absoluteResourcePath)
           .replace(/\\/g, "/"),
+    },
+
+    optimization: {
+      splitChunks: { minChunks: 2 },
     },
 
     resolve: {

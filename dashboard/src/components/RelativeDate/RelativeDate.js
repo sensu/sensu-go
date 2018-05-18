@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import capitalizeStr from "lodash/capitalize";
-import IntlRelativeFormat from "intl-relativeformat";
 
 // time interval in which delta is recalculated
 const recalcInterval = 30000;
