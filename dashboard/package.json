@@ -41,6 +41,7 @@
     "babel-plugin-transform-react-remove-prop-types": "^0.4.13",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
+    "bluebird": "^3.5.1",
     "bugnet": "^0.1.1",
     "case-sensitive-paths-webpack-plugin": "^2.1.2",
     "chalk": "^2.4.1",
