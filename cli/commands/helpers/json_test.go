@@ -67,10 +67,10 @@ func TestPrintWrappedJSONList(t *testing.T) {
 	buf := new(bytes.Buffer)
 
 	require.NoError(t, PrintWrappedJSONList([]types.Resource{check1, check2}, buf))
-	// trim \n and white space for equal comparison
-	output3 := strings.Replace(buf.String(), "\n", "", -1)
-	output3 = strings.Replace(output3, " ", "", -1)
-	assert.Equal(string(output1)+string(output2), output3)
+	// compare each string individually
+	output3 := strings.Split(buf.String(), "}\n{")
+	assert.JSONEq(string(output1), output3[0]+"}")
+	assert.JSONEq(string(output2), "{"+output3[1])
 }
 
 func TestPrintFormatted(t *testing.T) {
