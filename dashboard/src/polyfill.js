@@ -7,6 +7,27 @@ Promise.config({
   },
 });
 
+const polyfillCollections = () =>
+  new Promise(resolve =>
+    modernizr.on("es6collections", result => {
+      if (result) {
+        return resolve();
+      }
+
+      return Promise.all([
+        import(/* webpackChunkName: "collections" */ "core-js/es6/map"),
+        import(/* webpackChunkName: "collections" */ "core-js/es6/weak-map"),
+        import(/* webpackChunkName: "collections" */ "core-js/es6/set"),
+        import(/* webpackChunkName: "collections" */ "core-js/es6/weak-set"),
+      ]).then(([map, weakMap, set, weakSet]) => {
+        window.Map = window.Map || map.default;
+        window.WeakMap = window.WeakMap || weakMap.default;
+        window.Set = window.Set || set.default;
+        window.WeakSet = window.WeakSet || weakSet.default;
+      });
+    }),
+  );
+
 const polyfillFetch = () =>
   new Promise(resolve =>
     modernizr.on("fetch", result => {
@@ -57,6 +78,7 @@ const polyfillIntlRelativeFormat = () =>
 
 export default () =>
   Promise.all([
+    polyfillCollections(),
     polyfillFetch(),
     polyfillURLSearchParams(),
     polyfillIntl(),

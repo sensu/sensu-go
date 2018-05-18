@@ -1,4 +1,9 @@
-const detectFeatures = ["network/fetch", "url/urlsearchparams", "intl"];
+const detectFeatures = [
+  "es6/collections",
+  "network/fetch",
+  "url/urlsearchparams",
+  "intl",
+];
 
 const minify = process.env.NODE_ENV === "production";
 
