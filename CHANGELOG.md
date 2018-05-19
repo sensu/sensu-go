@@ -45,6 +45,8 @@ commands
 - Fixed `sensuctl create -f` for `Event`
 - Added validation for asset SHA512 checksum, requiring that it be at least 128
 characters and therefore fixing a bug in sensuctl
+- Fixed a bug where only a single resource could be created with
+`sensuctl create` at a time.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
