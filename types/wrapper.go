@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 // Wrapper is a generic wrapper, with a type field for distinguishing its
@@ -45,4 +46,13 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	}
 	w.Value = resource
 	return nil
+}
+
+// WrapResource uses reflection on a Resource to wrap it in a Wrapper
+func WrapResource(r Resource) Wrapper {
+	name := reflect.Indirect(reflect.ValueOf(r)).Type().Name()
+	return Wrapper{
+		Type:  name,
+		Value: r,
+	}
 }

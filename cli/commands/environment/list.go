@@ -35,7 +35,11 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, results)
+			resources := []types.Resource{}
+			for i := range results {
+				resources = append(resources, &results[i])
+			}
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
 		},
 	}
 

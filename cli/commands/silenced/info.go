@@ -35,15 +35,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
-				format = cli.Config.Format()
-			}
-
-			if format == "json" {
-				return helpers.PrintJSON(r, cmd.OutOrStdout())
-			}
-			return printToList(r, cmd.OutOrStdout())
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, r, cmd.OutOrStdout(), printToList)
 		},
 	}
 
@@ -64,7 +58,11 @@ func expireTime(beginTS, expireSeconds int64) time.Duration {
 	return time.Duration(expireSeconds) * time.Second
 }
 
-func printToList(r *types.Silenced, writer io.Writer) error {
+func printToList(v interface{}, writer io.Writer) error {
+	r, ok := v.(*types.Silenced)
+	if !ok {
+		return fmt.Errorf("%t is not a Silenced", v)
+	}
 	cfg := &list.Config{
 		Title: r.ID,
 		Rows: []*list.Row{

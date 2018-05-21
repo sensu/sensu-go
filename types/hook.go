@@ -60,6 +60,11 @@ func (c *HookConfig) Validate() error {
 	return nil
 }
 
+// URIPath returns the path component of a HookConfig URI.
+func (c *HookConfig) URIPath() string {
+	return fmt.Sprintf("/hooks/%s", url.PathEscape(c.Name))
+}
+
 // Validate returns an error if the check hook does not pass validation tests.
 func (h *HookList) Validate() error {
 	if h.Type == "" {
