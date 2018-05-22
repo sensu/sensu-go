@@ -8,7 +8,7 @@ export default class FetchError extends ExtendableError {
       throw new TypeError("Can't initiate an abstract class.");
     }
 
-    this.status = status;
+    this.statusCode = status;
     this.url = url;
     this.response = response;
     this.original = error;

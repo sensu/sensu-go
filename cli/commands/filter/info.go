@@ -2,6 +2,7 @@ package filter
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -19,8 +20,6 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "show detailed filter information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			format, _ := cmd.Flags().GetString("format")
-
 			if len(args) != 1 {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
@@ -33,10 +32,10 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if format == "json" {
-				return helpers.PrintJSON(r, cmd.OutOrStdout())
-			}
-			return printToList(r, cmd.OutOrStdout())
+			// Determine the format to use to output the data
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, r, cmd.OutOrStdout(), printToList)
 		},
 	}
 
@@ -45,7 +44,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printToList(filter *types.EventFilter, writer io.Writer) error {
+func printToList(v interface{}, writer io.Writer) error {
+	filter, ok := v.(*types.EventFilter)
+	if !ok {
+		return fmt.Errorf("%t is not an EventFilter", v)
+	}
 	cfg := &list.Config{
 		Title: filter.Name,
 		Rows: []*list.Row{

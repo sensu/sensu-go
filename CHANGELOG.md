@@ -15,11 +15,16 @@ prior to assuming the existence of said check.
 - Added Output field to GRPC handlers
 - Additional logging around handlers
 - Accept additional time formats in sensuctl
+- Entities can now be created via sensuctl.
+- Added the format `wrapped-json` to sensuctl `configure`, `list` and `info`
+commands, which is compatible with `sensuctl create`.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
 - Migrated the InfluxDB handler from the sensu-go repository to
 github.com/nikkiki/sensu-influxdb-handler
+- Don't allow unknown fields in types that do not support custom attributes
+when creating resources with `sensuctl create`.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -39,10 +44,13 @@ commands
 - Add version output for dev and nightly builds (#1320).
 - Improve git version detection by directly querying for the most recent tag.
 - Fixed `sensuctl create -f` for `Role`
+- Fixed `sensuctl create -f` for `Event`
 - Added validation for asset SHA512 checksum, requiring that it be at least 128
 characters and therefore fixing a bug in sensuctl
 - Silenced IDs are now generated when not set in `create -f` resources
 - API requests that result in a 404 response are now logged
+- Fixed a bug where only a single resource could be created with
+`sensuctl create` at a time.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added

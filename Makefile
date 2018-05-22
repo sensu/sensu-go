@@ -80,8 +80,8 @@ all: linux
 
 clean:
 	rm -rf out/
-	rm -rf dashboard/node_modules/
 	rm -rf target/
+	git clean -dXf dashboard
 
 ##
 # Operating system targets

@@ -2,6 +2,7 @@ package role
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -31,20 +32,9 @@ func ListRulesCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
-				format = cli.Config.Format()
-			}
-
-			if format == "json" {
-				if err := helpers.PrintJSON(r, cmd.OutOrStdout()); err != nil {
-					return err
-				}
-			} else {
-				printRulesToTable(r, cmd.OutOrStdout())
-			}
-
-			return nil
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, r, cmd.OutOrStdout(), printRulesToTable)
 		},
 	}
 
@@ -53,7 +43,11 @@ func ListRulesCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printRulesToTable(queryResults *types.Role, io io.Writer) {
+func printRulesToTable(v interface{}, io io.Writer) error {
+	queryResults, ok := v.(*types.Role)
+	if !ok {
+		return fmt.Errorf("%t is not a Role", v)
+	}
 	table := table.New([]*table.Column{
 		{
 			Title:       "Type",
@@ -87,4 +81,5 @@ func printRulesToTable(queryResults *types.Role, io io.Writer) {
 	})
 
 	table.Render(io, queryResults.Rules)
+	return nil
 }

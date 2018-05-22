@@ -407,6 +407,11 @@ func (c *Check) URIPath() string {
 	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
 }
 
+// URIPath returns the path component of a CheckConfig URI.
+func (c *CheckConfig) URIPath() string {
+	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
+}
+
 //
 // Sorting
 

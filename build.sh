@@ -287,16 +287,9 @@ bail_unless_yarn_is_present() {
     fi
 }
 
-install_dashboard_deps() {
-    bail_unless_yarn_is_present
-    pushd "${DASHBOARD_PATH}"
-    yarn install
-    yarn precompile
-    popd
-}
-
 test_dashboard() {
     pushd "${DASHBOARD_PATH}"
+    yarn install
     yarn test
     popd
 }
@@ -342,8 +335,8 @@ deploy() {
     make clean
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
     docker pull sensuapp/sensu-go-build
-    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" sensuapp/sensu-go-build publish_travis
+    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e CI=$CI sensuapp/sensu-go-build publish_travis
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build clean
 
     # Deploy Docker images to the Docker Hub
@@ -367,11 +360,9 @@ case "$cmd" in
         build_tools
         ;;
     "dashboard")
-        install_dashboard_deps
         test_dashboard
         ;;
     "dashboard-ci")
-        install_dashboard_deps
         test_dashboard
         ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
         ;;

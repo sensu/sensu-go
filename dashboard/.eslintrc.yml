@@ -42,10 +42,9 @@ rules:
     - error
     -
       env: apollo
-      schemaJsonFilepath: ./src/schema.json
       validators:
-        # FieldsOnCorrectType and KnownDirectives are disabled to allow local
-        # @client queries and mutations that do not conform to the remote schema
+        - FieldsOnCorrectType
+        - KnownDirectives
         - FragmentsOnCompositeTypes
         - KnownArgumentNames
         - KnownTypeNames
