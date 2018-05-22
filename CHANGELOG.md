@@ -47,6 +47,8 @@ commands
 - Fixed `sensuctl create -f` for `Event`
 - Added validation for asset SHA512 checksum, requiring that it be at least 128
 characters and therefore fixing a bug in sensuctl
+- Silenced IDs are now generated when not set in `create -f` resources
+- API requests that result in a 404 response are now logged
 - Fixed a bug where only a single resource could be created with
 `sensuctl create` at a time.
 
