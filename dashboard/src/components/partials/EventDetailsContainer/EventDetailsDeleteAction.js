@@ -2,13 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { withRouter } from "react-router-dom";
-import Button from "material-ui/Button";
-import Typography from "material-ui/Typography";
-import Dialog, {
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-} from "material-ui/Dialog";
+import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
 import ButtonSet from "/components/ButtonSet";
 import deleteEvent from "/mutations/deleteEvent";
 

@@ -2,21 +2,21 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { compose } from "lodash/fp";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@material-ui/core/styles";
 
-import Modal from "material-ui/Modal";
-import Paper from "material-ui/Paper";
-import List, {
-  ListItem,
-  ListItemIcon,
-  ListItemSecondaryAction,
-  ListItemText,
-  ListSubheader,
-} from "material-ui/List";
-import Menu, { MenuItem } from "material-ui/Menu";
-import Switch from "material-ui/Switch";
-import BulbIcon from "material-ui-icons/LightbulbOutline";
-import EyeIcon from "material-ui-icons/RemoveRedEye";
+import Modal from "@material-ui/core/Modal";
+import Paper from "@material-ui/core/Paper";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListSubheader from "@material-ui/core/ListSubheader";
+import MenuItem from "@material-ui/core/MenuItem";
+import Menu from "@material-ui/core/Menu";
+import Switch from "@material-ui/core/Switch";
+import BulbIcon from "@material-ui/icons/LightbulbOutline";
+import EyeIcon from "@material-ui/icons/RemoveRedEye";
 
 const styles = theme => ({
   root: {

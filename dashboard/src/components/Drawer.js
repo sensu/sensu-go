@@ -5,18 +5,18 @@ import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
 import { compose } from "recompose";
 
-import MaterialDrawer from "material-ui/Drawer";
-import List from "material-ui/List";
-import Divider from "material-ui/Divider";
-import { withStyles } from "material-ui/styles";
+import MaterialDrawer from "@material-ui/core/Drawer";
+import List from "@material-ui/core/List";
+import Divider from "@material-ui/core/Divider";
+import { withStyles } from "@material-ui/core/styles";
 
-import EntityIcon from "material-ui-icons/DesktopMac";
-import CheckIcon from "material-ui-icons/AssignmentTurnedIn";
-import EventIcon from "material-ui-icons/Notifications";
-import FeedbackIcon from "material-ui-icons/Feedback";
-import LogoutIcon from "material-ui-icons/ExitToApp";
-import IconButton from "material-ui/IconButton";
-import MenuIcon from "material-ui-icons/Menu";
+import EntityIcon from "@material-ui/icons/DesktopMac";
+import CheckIcon from "@material-ui/icons/AssignmentTurnedIn";
+import EventIcon from "@material-ui/icons/Notifications";
+import FeedbackIcon from "@material-ui/icons/Feedback";
+import LogoutIcon from "@material-ui/icons/ExitToApp";
+import IconButton from "@material-ui/core/IconButton";
+import MenuIcon from "@material-ui/icons/Menu";
 
 import WandIcon from "/icons/Wand";
 import Wordmark from "/icons/SensuWordmark";

@@ -2,8 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
-import Paper from "material-ui/Paper";
-import Button from "material-ui/Button";
+import Paper from "@material-ui/core/Paper";
+import Button from "@material-ui/core/Button";
 
 import AppContent from "/components/AppContent";
 import CheckList from "/components/CheckList";

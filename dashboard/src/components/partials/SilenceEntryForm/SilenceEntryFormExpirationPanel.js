@@ -3,11 +3,12 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { withField } from "@10xjs/form";
 
-import { FormControl, FormControlLabel } from "material-ui/Form";
-import TextField from "material-ui/TextField";
-import Switch from "material-ui/Switch";
-import { InputAdornment } from "material-ui/Input";
-import Typography from "material-ui/Typography";
+import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import TextField from "@material-ui/core/TextField";
+import Switch from "@material-ui/core/Switch";
+import InputAdornment from "@material-ui/core/InputAdornment";
+import Typography from "@material-ui/core/Typography";
 
 import Panel from "./SilenceEntryFormPanel";
 

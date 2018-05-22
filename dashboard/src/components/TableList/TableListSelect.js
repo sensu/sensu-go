@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import warning from "warning";
 
-import { withStyles } from "material-ui/styles";
-import Typography from "material-ui/Typography";
-import Menu from "material-ui/Menu";
-import DropdownArrow from "material-ui-icons/ArrowDropDown";
+import { withStyles } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
+import Menu from "@material-ui/core/Menu";
+import DropdownArrow from "@material-ui/icons/ArrowDropDown";
 import Button from "./TableListButton";
 
 const styles = {

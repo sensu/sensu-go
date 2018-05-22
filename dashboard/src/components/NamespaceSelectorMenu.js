@@ -2,11 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import partition from "lodash/partition";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@material-ui/core/styles";
 import { Link } from "react-router-dom";
-import Menu, { MenuItem } from "material-ui/Menu";
-import { ListItemIcon, ListItemText } from "material-ui/List";
-import Divider from "material-ui/Divider";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import Divider from "@material-ui/core/Divider";
 import OrganizationIcon from "/components/OrganizationIcon";
 import EnvironmentSymbol from "/components/EnvironmentSymbol";
 
@@ -69,8 +71,9 @@ class NamespaceSelectorMenu extends React.Component {
             <Link
               to={`/${currentOrganization.name}/${environment.name}`}
               onClick={onClick}
+              key={environment.name}
             >
-              <MenuItem key={environment.name}>
+              <MenuItem>
                 <ListItemIcon>
                   <div className={classes.envIcon}>
                     <EnvironmentSymbol environment={environment} size={12} />
@@ -85,9 +88,10 @@ class NamespaceSelectorMenu extends React.Component {
           organization.environments.map(environment => (
             <Link
               to={`/${organization.name}/${environment.name}`}
+              key={`${organization.name}/${environment.name}`}
               onClick={onClick}
             >
-              <MenuItem key={`${organization.name}${environment.name}`}>
+              <MenuItem>
                 <ListItemIcon>
                   <OrganizationIcon organization={organization} size={24}>
                     <EnvironmentSymbol

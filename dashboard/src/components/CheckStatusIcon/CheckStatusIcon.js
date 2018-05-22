@@ -2,11 +2,11 @@ import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
 
-import { withStyles } from "material-ui/styles";
-import OKIcon from "material-ui-icons/CheckCircle";
-import WarnIcon from "material-ui-icons/Warning";
-import ErrIcon from "material-ui-icons/Error";
-import UnknownIcon from "material-ui-icons/Help";
+import { withStyles } from "@material-ui/core/styles";
+import OKIcon from "@material-ui/icons/CheckCircle";
+import WarnIcon from "@material-ui/icons/Warning";
+import ErrIcon from "@material-ui/icons/Error";
+import UnknownIcon from "@material-ui/icons/Help";
 
 import { statusCodeToId } from "/utils/checkStatus";
 import OKIconSm from "/icons/SmallCheck";

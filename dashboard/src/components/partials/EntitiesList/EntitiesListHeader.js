@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import Checkbox from "material-ui/Checkbox";
-import { withStyles } from "material-ui/styles";
+import Checkbox from "@material-ui/core/Checkbox";
+import { withStyles } from "@material-ui/core/styles";
 
 import { TableListHeader } from "/components/TableList";
 

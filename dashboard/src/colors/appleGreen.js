@@ -1,4 +1,4 @@
-import { darken, lighten } from "material-ui/styles/colorManipulator";
+import { darken, lighten } from "@material-ui/core/styles/colorManipulator";
 
 const appleGreenColor = "#82C023";
 const appleGreen = {

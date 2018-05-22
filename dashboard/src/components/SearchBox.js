@@ -2,10 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
 
-import { withStyles } from "material-ui/styles";
-import Paper from "material-ui/Paper";
-import Typography from "material-ui/Typography";
-import Icon from "material-ui-icons/FilterList";
+import { withStyles } from "@material-ui/core/styles";
+import Paper from "@material-ui/core/Paper";
+import Typography from "@material-ui/core/Typography";
+import Icon from "@material-ui/icons/FilterList";
 
 const styles = theme => ({
   root: {

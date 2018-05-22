@@ -1,4 +1,4 @@
-import { darken, lighten } from "material-ui/styles/colorManipulator";
+import { darken, lighten } from "@material-ui/core/styles/colorManipulator";
 
 // TODO: Don't use lighten / darken
 const slateBlueColor = "#717CE5";

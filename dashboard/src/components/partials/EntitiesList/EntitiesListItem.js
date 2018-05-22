@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import Typography from "material-ui/Typography";
+import Typography from "@material-ui/core/Typography";
 
 import RelativeDate from "/components/RelativeDate";
 import StatusListItem from "/components/StatusListItem";
