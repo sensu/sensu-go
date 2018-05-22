@@ -73,8 +73,9 @@ func newStartCommand() *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
-		Use:   "start",
-		Short: "start the sensu backend",
+		Use:           "start",
+		Short:         "start the sensu backend",
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_ = viper.BindPFlags(cmd.Flags())
 			if setupErr != nil {
