@@ -7,12 +7,12 @@ import { every, filter, reduce, capitalize } from "lodash";
 import { compose } from "lodash/fp";
 import { map, join } from "ramda";
 import gql from "graphql-tag";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@material-ui/core/styles";
 
-import Typography from "material-ui/Typography";
-import { MenuItem } from "material-ui/Menu";
-import { ListItemText } from "material-ui/List";
-import Checkbox from "material-ui/Checkbox";
+import Typography from "@material-ui/core/Typography";
+import MenuItem from "@material-ui/core/MenuItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import Checkbox from "@material-ui/core/Checkbox";
 
 import EventsListItem from "/components/EventsListItem";
 import resolveEvent from "/mutations/resolveEvent";

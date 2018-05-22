@@ -1,11 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import { withStyles } from "material-ui/styles";
-import Card, { CardContent } from "material-ui/Card";
-import Divider from "material-ui/Divider";
-import Grid from "material-ui/Grid";
-import Typography from "material-ui/Typography";
+import { withStyles } from "@material-ui/core/styles";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import Divider from "@material-ui/core/Divider";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
 import { statusCodeToId } from "/utils/checkStatus";
 import CardHighlight from "/components/CardHighlight";
 import Dictionary, {

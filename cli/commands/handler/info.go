@@ -35,15 +35,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
-				format = cli.Config.Format()
-			}
-
-			if format == "json" {
-				return helpers.PrintJSON(r, cmd.OutOrStdout())
-			}
-			return printCheckToList(r, cmd.OutOrStdout())
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, r, cmd.OutOrStdout(), printToList)
 		},
 	}
 
@@ -52,7 +46,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printCheckToList(handler *types.Handler, writer io.Writer) error {
+func printToList(v interface{}, writer io.Writer) error {
+	handler, ok := v.(*types.Handler)
+	if !ok {
+		return fmt.Errorf("%t is not a Handler", v)
+	}
 	// Determine what will be executed based on the type
 	var execute string
 	switch handler.Type {

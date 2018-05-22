@@ -1,8 +1,10 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 // Wrapper is a generic wrapper, with a type field for distinguishing its
@@ -37,9 +39,20 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if wrapper.Value == nil {
 		return fmt.Errorf("no spec provided")
 	}
-	if err := json.Unmarshal(*wrapper.Value, &resource); err != nil {
+	dec := json.NewDecoder(bytes.NewReader(*wrapper.Value))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&resource); err != nil {
 		return err
 	}
 	w.Value = resource
 	return nil
+}
+
+// WrapResource uses reflection on a Resource to wrap it in a Wrapper
+func WrapResource(r Resource) Wrapper {
+	name := reflect.Indirect(reflect.ValueOf(r)).Type().Name()
+	return Wrapper{
+		Type:  name,
+		Value: r,
+	}
 }

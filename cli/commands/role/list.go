@@ -29,7 +29,11 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			return helpers.Print(cmd, cli.Config.Format(), printRolesToTable, results)
+			resources := []types.Resource{}
+			for i := range results {
+				resources = append(resources, &results[i])
+			}
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
 		},
 	}
 
@@ -38,7 +42,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printRolesToTable(results interface{}, writer io.Writer) {
+func printToTable(results interface{}, writer io.Writer) {
 	table := table.New([]*table.Column{
 		{
 			Title:       "Name",

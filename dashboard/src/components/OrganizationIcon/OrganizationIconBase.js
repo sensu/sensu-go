@@ -1,12 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@material-ui/core/styles";
 
-import DonutSmall from "material-ui-icons/DonutSmall";
-import Explore from "material-ui-icons/Explore";
-import Visibility from "material-ui-icons/Visibility";
-import Emoticon from "material-ui-icons/InsertEmoticon";
+import DonutSmall from "@material-ui/icons/DonutSmall";
+import Explore from "@material-ui/icons/Explore";
+import Visibility from "@material-ui/icons/Visibility";
+import Emoticon from "@material-ui/icons/InsertEmoticon";
 import Hot from "/icons/Hot";
 import Donut from "/icons/Donut";
 import Briefcase from "/icons/Briefcase";

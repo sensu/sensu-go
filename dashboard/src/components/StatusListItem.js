@@ -1,9 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { withStyles } from "material-ui/styles";
-import Button from "material-ui/ButtonBase";
-import Checkbox from "material-ui/Checkbox";
-import Disclosure from "material-ui-icons/MoreVert";
+import { withStyles } from "@material-ui/core/styles";
+import Button from "@material-ui/core/ButtonBase";
+import Checkbox from "@material-ui/core/Checkbox";
+import Disclosure from "@material-ui/icons/MoreVert";
 
 import CheckStatusIcon from "/components/CheckStatusIcon";
 import { TableListItem } from "/components/TableList";

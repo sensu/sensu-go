@@ -1,9 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Card, { CardContent } from "material-ui/Card";
-import Typography from "material-ui/Typography";
-import Divider from "material-ui/Divider";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import Typography from "@material-ui/core/Typography";
+import Divider from "@material-ui/core/Divider";
 import Dictionary, {
   DictionaryKey,
   DictionaryValue,

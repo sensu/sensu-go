@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Grid from "material-ui/Grid";
+import Grid from "@material-ui/core/Grid";
 
 import Loader from "/components/util/Loader";
 
@@ -92,7 +92,7 @@ class EventDetailsContainer extends React.PureComponent {
               </ButtonSet>
             </Content>
             <Content>
-              <Grid container>
+              <Grid container spacing={16}>
                 <Grid item xs={12}>
                   <CheckResult check={event.check} entity={event.entity} />
                 </Grid>

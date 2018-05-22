@@ -3,13 +3,12 @@ import PropTypes from "prop-types";
 import map from "lodash/map";
 import gql from "graphql-tag";
 
-import Table, {
-  TableBody,
-  TableHead,
-  TableCell,
-  TableRow,
-} from "material-ui/Table";
-import Checkbox from "material-ui/Checkbox";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableHead from "@material-ui/core/TableHead";
+import TableCell from "@material-ui/core/TableCell";
+import TableRow from "@material-ui/core/TableRow";
+import Checkbox from "@material-ui/core/Checkbox";
 import Row from "/components/CheckRow";
 
 import Loader from "/components/util/Loader";

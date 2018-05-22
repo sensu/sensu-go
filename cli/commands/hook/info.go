@@ -2,6 +2,7 @@ package hook
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 
@@ -33,15 +34,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
-				format = cli.Config.Format()
-			}
-
-			if format == "json" {
-				return helpers.PrintJSON(r, cmd.OutOrStdout())
-			}
-			return printHookToList(r, cmd.OutOrStdout())
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, r, cmd.OutOrStdout(), printToList)
 		},
 	}
 
@@ -50,7 +45,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printHookToList(r *types.HookConfig, writer io.Writer) error {
+func printToList(v interface{}, writer io.Writer) error {
+	r, ok := v.(*types.HookConfig)
+	if !ok {
+		return fmt.Errorf("%t is not a HookConfig", v)
+	}
 	cfg := &list.Config{
 		Title: r.Name,
 		Rows: []*list.Row{

@@ -2,6 +2,7 @@ package asset
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -32,15 +33,9 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
-				format = cli.Config.Format()
-			}
-
-			if format == "json" {
-				return helpers.PrintJSON(r, cmd.OutOrStdout())
-			}
-			return printAssetToList(r, cmd.OutOrStdout())
+			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			format := cli.Config.Format()
+			return helpers.PrintFormatted(flag, format, r, cmd.OutOrStdout(), printToList)
 		},
 	}
 
@@ -49,7 +44,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printAssetToList(r *types.Asset, writer io.Writer) error {
+func printToList(v interface{}, writer io.Writer) error {
+	r, ok := v.(*types.Asset)
+	if !ok {
+		return fmt.Errorf("%t is not an Asset", v)
+	}
 	var metadata []string
 	for k, v := range r.Metadata {
 		metadata = append(metadata, k+"="+v)

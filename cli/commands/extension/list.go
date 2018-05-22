@@ -16,14 +16,16 @@ import (
 )
 
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "list extensions",
-		RunE:  runList(cli.Client, cli.Config.Organization(), cli.Config.Format()),
+		RunE:  runList(cli.Config.Format(), cli.Client, cli.Config.Organization(), cli.Config.Format()),
 	}
+	helpers.AddFormatFlag(cmd.Flags())
+	return cmd
 }
 
-func runList(client client.APIClient, org, format string) func(*cobra.Command, []string) error {
+func runList(config string, client client.APIClient, org, format string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			_ = cmd.Help()
@@ -34,7 +36,12 @@ func runList(client client.APIClient, org, format string) func(*cobra.Command, [
 			return err
 		}
 
-		return helpers.Print(cmd, format, printToTable, extensions)
+		// Print the results based on the user preferences
+		resources := []types.Resource{}
+		for i := range extensions {
+			resources = append(resources, &extensions[i])
+		}
+		return helpers.Print(cmd, config, printToTable, resources, extensions)
 	}
 }
 

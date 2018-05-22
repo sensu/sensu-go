@@ -3,9 +3,9 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
-import { withStyles } from "material-ui/styles";
-import Typography from "material-ui/Typography";
-import Button from "material-ui/Button";
+import { withStyles } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
 
 import AppContent from "/components/AppContent";
 import EventsContainer from "/components/EventsContainer";

@@ -1,6 +1,8 @@
 package config
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/types"
+)
 
 const (
 	// DefaultEnvironment represents the default environment
@@ -9,6 +11,12 @@ const (
 	DefaultFormat = "tabular"
 	// DefaultOrganization represents the default organization
 	DefaultOrganization = "default"
+	// FormatTabular represents the string for tabular format
+	FormatTabular = "tabular"
+	// FormatJSON represents the string for JSON format
+	FormatJSON = "json"
+	// FormatWrappedJSON represents the string for wrapped JSON format
+	FormatWrappedJSON = "wrapped-json"
 )
 
 // Config represents an abstracted configuration

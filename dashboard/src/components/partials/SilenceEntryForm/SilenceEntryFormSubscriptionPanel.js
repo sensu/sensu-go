@@ -1,9 +1,9 @@
 import React from "react";
 import { Field } from "@10xjs/form";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@material-ui/core/styles";
 
-import Typography from "material-ui/Typography";
-import TextField from "material-ui/TextField";
+import Typography from "@material-ui/core/Typography";
+import TextField from "@material-ui/core/TextField";
 
 import Code from "/components/Code";
 

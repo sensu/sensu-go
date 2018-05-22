@@ -1,7 +1,7 @@
 import deepmerge from "deepmerge";
-import createMuiTheme from "material-ui/styles/createMuiTheme";
-import createPalette from "material-ui/styles/createPalette";
-import createTypography from "material-ui/styles/createTypography";
+import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
+import createPalette from "@material-ui/core/styles/createPalette";
+import createTypography from "@material-ui/core/styles/createTypography";
 
 import defaults from "./defaults";
 
