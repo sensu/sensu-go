@@ -1,6 +1,7 @@
 import { parseUNIX } from "/utils/date";
 import doFetch from "/utils/fetch";
-import { memoize } from "/utils/promise";
+import { memoize, when } from "/utils/promise";
+import { UnauthorizedError } from "/errors/FetchError";
 
 const parseTokenResponse = body => ({
   accessToken: body.access_token,
@@ -9,7 +10,7 @@ const parseTokenResponse = body => ({
 });
 
 export const createTokens = memoize(
-  async ({ username, password }) => {
+  ({ username, password }) => {
     const path = "/auth";
     const config = {
       method: "GET",
@@ -19,8 +20,9 @@ export const createTokens = memoize(
       },
     };
 
-    const response = await doFetch(path, config);
-    return parseTokenResponse(await response.json());
+    return doFetch(path, config)
+      .then(response => response.json())
+      .then(parseTokenResponse);
   },
   ({ username, password }) => JSON.stringify({ username, password }),
 );
@@ -28,7 +30,7 @@ export const createTokens = memoize(
 export default createTokens;
 
 export const refreshTokens = memoize(
-  async ({ accessToken, refreshToken }) => {
+  ({ accessToken, refreshToken }) => {
     const path = "/auth/token";
     const config = {
       method: "POST",
@@ -42,15 +44,16 @@ export const refreshTokens = memoize(
       }),
     };
 
-    const response = await doFetch(path, config);
-    return parseTokenResponse(await response.json());
+    return doFetch(path, config)
+      .then(response => response.json())
+      .then(parseTokenResponse);
   },
   ({ accessToken, refreshToken }) =>
     JSON.stringify({ accessToken, refreshToken }),
 );
 
 export const invalidateTokens = memoize(
-  async ({ accessToken, refreshToken }) => {
+  ({ accessToken, refreshToken }) => {
     const path = "/auth/logout";
     const config = {
       method: "POST",
@@ -63,14 +66,13 @@ export const invalidateTokens = memoize(
         refresh_token: refreshToken,
       }),
     };
-
-    await doFetch(path, config);
-
-    return {
-      accessToken: null,
-      refreshToken: null,
-      expiresAt: null,
-    };
+    return doFetch(path, config)
+      .catch(when(UnauthorizedError, () => {}))
+      .then(() => ({
+        accessToken: null,
+        refreshToken: null,
+        expiresAt: null,
+      }));
   },
   ({ accessToken, refreshToken }) =>
     JSON.stringify({ accessToken, refreshToken }),

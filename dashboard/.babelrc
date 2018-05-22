@@ -13,6 +13,7 @@
     "babel-preset-react",
   ],
   "plugins": [
+    "syntax-dynamic-import",
     "transform-es2015-destructuring",
     ["transform-class-properties", {
       "loose": true,
@@ -22,14 +23,6 @@
     }],
     ["transform-react-jsx", {
       "useBuiltIns": true,
-    }],
-    ["transform-runtime", {
-      "helpers": false,
-      "polyfill": false,
-      "regenerator": true,
-    }],
-    ["transform-regenerator", {
-      "async": false,
     }],
     ["module-resolver", {
       "alias": {

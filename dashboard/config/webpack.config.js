@@ -32,10 +32,7 @@ export default () => {
 
     devtool,
 
-    entry: [
-      require.resolve("./polyfills"),
-      path.resolve(root, "src/index.js"),
-    ].filter(Boolean),
+    entry: [path.resolve(root, "src/index.js")],
 
     output: {
       path: outputPath,
@@ -59,8 +56,17 @@ export default () => {
           .replace(/\\/g, "/"),
     },
 
+    optimization: {
+      splitChunks: { minChunks: 2 },
+    },
+
     resolve: {
       extensions: [".web.js", ".js", ".json", ".web.jsx", ".jsx"],
+      alias: {
+        // Alias any reference to babel runtime Promise to bluebird. This
+        // prevents duplicate promise polyfills in the build.
+        "babel-runtime/core-js/promise": "bluebird/js/browser/bluebird.core.js",
+      },
     },
 
     module: {
@@ -144,6 +150,10 @@ export default () => {
       new webpack.DefinePlugin({
         NODE_ENV: JSON.stringify(process.env.NODE_ENV),
       }),
+      new webpack.ProvidePlugin({
+        // Alias any reference to global Promise object to bluebird.
+        Promise: require.resolve("bluebird/js/browser/bluebird.core.js"),
+      }),
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin({
         inject: true,
@@ -163,6 +173,7 @@ export default () => {
       }),
       // Remove moment locales.
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+      new webpack.HashedModuleIdsPlugin(),
     ]
       .concat(
         isDevelopment && [

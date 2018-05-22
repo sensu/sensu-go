@@ -11,6 +11,8 @@ plugins:
   - react
 env:
   browser: true
+globals:
+  IntlRelativeFormat: false
 settings:
   import/resolver:
     babel-module:

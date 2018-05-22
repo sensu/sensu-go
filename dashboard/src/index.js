@@ -9,6 +9,8 @@ import injectTapEventPlugin from "react-tap-event-plugin";
 import "typeface-roboto";
 import "/static";
 
+import polyfill from "/polyfill";
+
 import createClient from "/apollo/client";
 
 import createStore from "/store";
@@ -18,20 +20,22 @@ import registerServiceWorker from "/registerServiceWorker";
 import AppRoot from "/components/AppRoot";
 import ErrorBoundary from "/components/util/ErrorBoundary";
 
-// Configure store
-const store = createStore(reducer, {});
+polyfill().then(() => {
+  // Configure store
+  const store = createStore(reducer, {});
 
-const client = createClient();
+  const client = createClient();
 
-// Renderer
-ReactDOM.render(
-  <ErrorBoundary handle={handle}>
-    <BrowserRouter>
-      <AppRoot reduxStore={store} apolloClient={client} />
-    </BrowserRouter>
-  </ErrorBoundary>,
-  document.getElementById("root"),
-);
+  // Renderer
+  ReactDOM.render(
+    <ErrorBoundary handle={handle}>
+      <BrowserRouter>
+        <AppRoot reduxStore={store} apolloClient={client} />
+      </BrowserRouter>
+    </ErrorBoundary>,
+    document.getElementById("root"),
+  );
+});
 
 // Register React Tap event plugin
 injectTapEventPlugin();

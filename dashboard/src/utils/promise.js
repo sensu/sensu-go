@@ -33,10 +33,13 @@ export const when = (...args) => {
   };
 };
 
-// TODO: Ensure WeakMap is polyfilled
-const cache = new WeakMap();
+let cache;
 
 export const memoize = (promiseCreator, keyCreator) => (...args) => {
+  if (!cache) {
+    cache = new WeakMap();
+  }
+
   let map = cache.get(promiseCreator);
   const key = keyCreator(...args);
 

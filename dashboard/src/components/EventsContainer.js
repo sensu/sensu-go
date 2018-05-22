@@ -126,7 +126,7 @@ class EventsContainer extends React.Component {
     this.setState({
       rowState: reduce(
         keys,
-        (acc, key) => Object.assign(acc, { [key]: newState }),
+        (acc, key) => ({ ...acc, [key]: newState }),
         this.state.rowState,
       ),
     });
@@ -160,9 +160,7 @@ class EventsContainer extends React.Component {
 
     selectedKeys.forEach(key => {
       resolveEvent(this.props.client, { id: key }).then(() => {
-        this.setState(({ rowState }) =>
-          Object.assign(rowState, { [key]: false }),
-        );
+        this.setState(({ rowState }) => ({ ...rowState, [key]: false }));
       });
     });
   };
