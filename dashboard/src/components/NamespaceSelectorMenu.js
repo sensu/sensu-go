@@ -88,7 +88,7 @@ class NamespaceSelectorMenu extends React.Component {
           organization.environments.map(environment => (
             <Link
               to={`/${organization.name}/${environment.name}`}
-              key={`${organization.name}${environment.name}`}
+              key={`${organization.name}/${environment.name}`}
               onClick={onClick}
             >
               <MenuItem>
