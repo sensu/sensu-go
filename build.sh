@@ -95,7 +95,13 @@ build_binary () {
     local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
     local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
 
-    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $ext -o $outfile ${REPO_PATH}/${cmd}/cmd/...
+    # sensu-agent & sensuctl main packages are still in a subdirectoy cmd package
+    local main_pkg="${cmd}/cmd/..."
+    if [ "$cmd" == "backend" ]; then
+        main_pkg="cmd/${cmd_name}"
+    fi
+
+    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $ext -o $outfile ${REPO_PATH}/${main_pkg}
 
     echo $outfile
 }

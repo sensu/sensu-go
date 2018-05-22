@@ -1,16 +1,14 @@
-package main
+package cmd
 
 import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
-
-	"net/http"
-	_ "net/http/pprof"
 
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/types"
@@ -75,8 +73,9 @@ func newStartCommand() *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
-		Use:   "start",
-		Short: "start the sensu backend",
+		Use:           "start",
+		Short:         "start the sensu backend",
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_ = viper.BindPFlags(cmd.Flags())
 			if setupErr != nil {
@@ -135,7 +134,7 @@ func newStartCommand() *cobra.Command {
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
 			}
 
-			sensuBackend, err := backend.NewBackend(cfg)
+			err = sensuBackend.LoadConfig(cfg)
 			if err != nil {
 				return err
 			}

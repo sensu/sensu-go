@@ -23,6 +23,8 @@ commands, which is compatible with `sensuctl create`.
 - Add logging around the Sensu event pipeline.
 - Migrated the InfluxDB handler from the sensu-go repository to
 github.com/nikkiki/sensu-influxdb-handler
+- Entry point for sensu-backend has been changed to
+  `github.com/sensu/sensu-go/cmd/sensu-backend`
 - Don't allow unknown fields in types that do not support custom attributes
 when creating resources with `sensuctl create`.
 

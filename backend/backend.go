@@ -24,50 +24,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
-	// DefaultEtcdName is the default etcd member node name (single-node cluster only)
-	DefaultEtcdName = "default"
-
-	// DefaultEtcdClientURL is the default URL to listen for Etcd clients
-	DefaultEtcdClientURL = "http://127.0.0.1:2379"
-
-	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
-	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
-)
-
-// Config specifies a Backend configuration.
-type Config struct {
-	// Backend Configuration
-	StateDir string
-
-	// Agentd Configuration
-	AgentHost string
-	AgentPort int
-
-	// Apid Configuration
-	APIHost string
-	APIPort int
-
-	// Dashboardd Configuration
-	DashboardHost string
-	DashboardPort int
-
-	// Pipelined Configuration
-	DeregistrationHandler string
-
-	// Etcd configuration
-	EtcdInitialAdvertisePeerURL string
-	EtcdInitialClusterToken     string
-	EtcdInitialClusterState     string
-	EtcdInitialCluster          string
-	EtcdListenClientURL         string
-	EtcdListenPeerURL           string
-	EtcdName                    string
-
-	TLS *types.TLSOptions
-}
-
-// A Backend is a Sensu Backend server responsible for handling incoming
+// Backend is a Sensu Backend server responsible for handling incoming
 // HTTP requests and upgrading them
 type Backend struct {
 	Config *Config
@@ -86,9 +43,8 @@ type Backend struct {
 	keepalived daemon.Daemon
 }
 
-// NewBackend will, given a Config, create an initialized Backend and return a
-// pointer to it.
-func NewBackend(config *Config) (*Backend, error) {
+// LoadConfig initializes the backend with the provided config
+func (b *Backend) LoadConfig(config *Config) error {
 	// In other places we have a NewConfig() method, but I think that doing it
 	// this way is more safe, because it doesn't require "trust" in callers.
 	if config.EtcdListenClientURL == "" {
@@ -131,16 +87,13 @@ func NewBackend(config *Config) (*Backend, error) {
 	if config.TLS != nil {
 		tlsConfig, err = config.TLS.ToTLSConfig()
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	b := &Backend{
-		Config: config,
-
-		done:         make(chan struct{}),
-		shutdownChan: make(chan struct{}),
-	}
+	b.Config = config
+	b.done = make(chan struct{})
+	b.shutdownChan = make(chan struct{})
 
 	// we go ahead and setup and start etcd here, because we'll have to pass
 	// a store along to the API.
@@ -166,24 +119,24 @@ func NewBackend(config *Config) (*Backend, error) {
 
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("error starting etcd: %s", err.Error())
+		return fmt.Errorf("error starting etcd: %s", err.Error())
 	}
 	b.etcd = e
 
 	client, err := e.NewClient()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: ring.EtcdGetter{Client: client},
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	b.messageBus = bus
 
-	return b, nil
+	return nil
 }
 
 type stopper interface {
