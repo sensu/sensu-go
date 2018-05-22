@@ -96,7 +96,8 @@ class EventsContainer extends React.Component {
           }
         }
 
-        events(limit: 100, filter: $filter, orderBy: $order) {
+        events(limit: 100, filter: $filter, orderBy: $order)
+          @connection(key: "events", filter: ["filter", "orderBy"]) {
           nodes {
             id
             ...EventsListItem_event
