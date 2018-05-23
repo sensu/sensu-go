@@ -92,6 +92,16 @@ export default () => {
           ],
         },
         {
+          enforce: "pre",
+          test: /\.js$/,
+          include: path.resolve(root, "node_modules"),
+          exclude: [path.resolve(root, "node_modules/apollo-client")],
+          loader: require.resolve("source-map-loader"),
+          options: {
+            includeModulePaths: true,
+          },
+        },
+        {
           oneOf: [
             {
               test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],

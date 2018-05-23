@@ -110,6 +110,7 @@
     "redux-freeze": "^0.1.5",
     "redux-thunk": "^2.2.0",
     "regenerator-runtime": "^0.11.1",
+    "source-map-loader": "bryanforbes/source-map-loader#module-context",
     "sw-precache-webpack-plugin": "^0.11.5",
     "typeface-roboto": "^0.0.54",
     "uglifyjs-webpack-plugin": "^1.2.5",
