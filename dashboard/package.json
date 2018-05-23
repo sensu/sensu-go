@@ -112,6 +112,7 @@
     "regenerator-runtime": "^0.11.1",
     "sw-precache-webpack-plugin": "^0.11.5",
     "typeface-roboto": "^0.0.54",
+    "uglifyjs-webpack-plugin": "^1.2.5",
     "url-loader": "^1.0.1",
     "url-search-params-polyfill": "^2.0.3",
     "value-loader": "^0.1.4",

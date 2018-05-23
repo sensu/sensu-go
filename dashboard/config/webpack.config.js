@@ -7,6 +7,7 @@ import eslintFormatter from "react-dev-utils/eslintFormatter";
 import CaseSensitivePathsPlugin from "case-sensitive-paths-webpack-plugin";
 import CleanPlugin from "clean-webpack-plugin";
 import { StatsWriterPlugin } from "webpack-stats-plugin";
+import UglifyJsPlugin from "uglifyjs-webpack-plugin";
 
 export default () => {
   // Make sure any symlinks in the project folder are resolved:
@@ -58,6 +59,17 @@ export default () => {
 
     optimization: {
       splitChunks: { minChunks: 2 },
+      minimizer: [
+        new UglifyJsPlugin({
+          sourceMap: true,
+          uglifyOptions: {
+            // Disable function name minification in order to preserve class
+            // names. This makes tracking down bugs in production builds far
+            // more manageable.
+            keep_fnames: true,
+          },
+        }),
+      ],
     },
 
     resolve: {
