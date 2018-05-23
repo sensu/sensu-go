@@ -27,10 +27,10 @@ func EventFields(event *types.Event) map[string]interface{} {
 
 	if event.HasMetrics() {
 		count := len(event.Metrics.Points)
-		fields["metric count"] = count
+		fields["metric_count"] = count
 		if count > 0 {
-			fields["first metric name"] = event.Metrics.Points[0].Name
-			fields["first metric value"] = event.Metrics.Points[0].Value
+			fields["first_metric_name"] = event.Metrics.Points[0].Name
+			fields["first_metric_value"] = event.Metrics.Points[0].Value
 		}
 	}
 
