@@ -53,19 +53,3 @@ func TestInitialOffset(t *testing.T) {
 		assert.Condition(t, func() bool { return executionTime.Before(now.Add(time.Duration(intervalSeconds) * time.Second)) })
 	}
 }
-
-func TestStopIntervalTimer(t *testing.T) {
-	timer := NewIntervalTimer("check1", 10)
-	timer.Start()
-
-	result := timer.Stop()
-	assert.True(t, result)
-}
-
-func TestStopCronTimer(t *testing.T) {
-	timer := NewCronTimer("check1", "* * * * *")
-	timer.Start()
-
-	result := timer.Stop()
-	assert.True(t, result)
-}

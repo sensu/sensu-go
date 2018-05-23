@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	sensutime "github.com/sensu/sensu-go/util/time"
+	"github.com/sirupsen/logrus"
 )
 
 // A CheckScheduler schedules checks to be executed on a timer
@@ -24,6 +24,7 @@ type CheckScheduler struct {
 	logger        *logrus.Entry
 	ctx           context.Context
 	cancel        context.CancelFunc
+	interrupt     chan struct{}
 }
 
 // Start starts the CheckScheduler. It always returns nil error.
@@ -56,66 +57,73 @@ func (s *CheckScheduler) Start() error {
 			select {
 			case <-s.ctx.Done():
 				return
+			case <-s.interrupt:
 			case <-timer.C():
-				// Fetch check from scheduler's state
-				state := s.stateManager.State()
-				check := state.GetCheck(s.checkName, s.checkOrg, s.checkEnv)
+			}
 
-				// The check has been deleted
-				if check == nil {
-					s.logger.Info("check is no longer in state")
-					return
-				}
+			// Fetch check from scheduler's state
+			state := s.stateManager.State()
+			check := state.GetCheck(s.checkName, s.checkOrg, s.checkEnv)
 
-				// Indicates a state change from cron to interval or interval to cron
-				if (s.lastCronState != "" && check.Cron == "") ||
-					(s.lastCronState == "" && check.Cron != "") {
-					s.logger.Info("check schedule type has changed")
-					// Update the CheckScheduler with current check state and last cron state
-					s.lastCronState = check.Cron
-					s.checkCron = check.Cron
-					s.checkInterval = check.Interval
-					timer.Stop()
-					goto toggle
-				}
+			// The check has been deleted
+			if check == nil {
+				s.logger.Info("check is no longer in state")
+				return
+			}
 
-				// Update the CheckScheduler with the last cron state
+			// Indicates a state change from cron to interval or interval to cron
+			if (s.lastCronState != "" && check.Cron == "") ||
+				(s.lastCronState == "" && check.Cron != "") {
+				s.logger.Info("check schedule type has changed")
+				// Update the CheckScheduler with current check state and last cron state
 				s.lastCronState = check.Cron
+				s.checkCron = check.Cron
+				s.checkInterval = check.Interval
+				timer.Stop()
+				goto toggle
+			}
 
-				if subdue := check.GetSubdue(); subdue != nil {
-					isSubdued, err := sensutime.InWindows(time.Now(), *subdue)
-					if err == nil && isSubdued {
-						// Check is subdued at this time
-						s.logger.Debug("check is not scheduled to be executed")
-					}
-					if err != nil {
-						s.logger.WithError(err).Print("unexpected error with time windows")
-					}
+			// Update the CheckScheduler with the last cron state
+			s.lastCronState = check.Cron
 
-					if err != nil || isSubdued {
-						// Reset the timer so the check is scheduled again for the next
-						// interval, since it might no longer be subdued
-						timer.SetDuration(check.Cron, uint(check.Interval))
-						timer.Next()
-						continue
-					}
+			if subdue := check.GetSubdue(); subdue != nil {
+				isSubdued, err := sensutime.InWindows(time.Now(), *subdue)
+				if err == nil && isSubdued {
+					// Check is subdued at this time
+					s.logger.Debug("check is not scheduled to be executed")
+				}
+				if err != nil {
+					s.logger.WithError(err).Print("unexpected error with time windows")
 				}
 
-				// Reset timer
-				timer.SetDuration(check.Cron, uint(check.Interval))
-				timer.Next()
-
-				// Point executor to lastest copy of the scheduler state
-				executor.setState(state)
-
-				if err := executor.processCheck(s.ctx, check); err != nil {
-					logger.Error(err)
+				if err != nil || isSubdued {
+					// Reset the timer so the check is scheduled again for the next
+					// interval, since it might no longer be subdued
+					timer.SetDuration(check.Cron, uint(check.Interval))
+					timer.Next()
+					continue
 				}
+			}
+
+			// Reset timer
+			timer.SetDuration(check.Cron, uint(check.Interval))
+			timer.Next()
+
+			// Point executor to lastest copy of the scheduler state
+			executor.setState(state)
+
+			if err := executor.processCheck(s.ctx, check); err != nil {
+				logger.Error(err)
 			}
 		}
 	}()
 
 	return nil
+}
+
+// Interrupt causes the scheduler to immediately fire and ignore the timer.
+func (s *CheckScheduler) Interrupt() {
+	s.interrupt <- struct{}{}
 }
 
 // Stop stops the CheckScheduler

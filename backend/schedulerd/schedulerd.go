@@ -15,8 +15,9 @@ type Schedulerd struct {
 	queueGetter          types.QueueGetter
 	bus                  messaging.MessageBus
 	stateManager         *StateManager
-	schedulerManager     *ScheduleManager
+	schedulerManager     *CheckSchedulerManager
 	adhocRequestExecutor *AdhocRequestExecutor
+	cancelContextFn      context.CancelFunc
 	errChan              chan error
 }
 
@@ -39,7 +40,9 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 		errChan:      make(chan error, 1),
 		stateManager: NewStateManager(c.Store),
 	}
-	s.schedulerManager = NewScheduleManager(s.bus, s.stateManager)
+
+	s.schedulerManager = NewCheckSchedulerManager(c.Bus, c.Store)
+
 	for _, o := range opts {
 		if err := o(s); err != nil {
 			return nil, err
@@ -50,14 +53,14 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 
 // Start the Scheduler daemon.
 func (s *Schedulerd) Start() error {
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancelContextFn = cancel
 
 	// Adhoc Request Executor
 	s.adhocRequestExecutor = NewAdhocRequestExecutor(ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus)
 
 	// Start
-	s.schedulerManager.Start()
-	s.stateManager.Start(ctx)
+	s.schedulerManager.Start(ctx)
 
 	return nil
 }
@@ -67,6 +70,7 @@ func (s *Schedulerd) Stop() error {
 	err := s.stateManager.Stop()
 	s.schedulerManager.Stop()
 	s.adhocRequestExecutor.Stop()
+	s.cancelContextFn()
 
 	close(s.errChan)
 	return err

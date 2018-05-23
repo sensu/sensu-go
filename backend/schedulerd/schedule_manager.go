@@ -1,17 +1,22 @@
 package schedulerd
 
 import (
+	"context"
+	"strings"
 	"sync"
 	"sync/atomic"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
-// ScheduleManager manages all the check schedulers
-type ScheduleManager struct {
+// CheckSchedulerManager manages all the check schedulers
+type CheckSchedulerManager struct {
 	items map[string]*CheckScheduler
+	store store.Store
 	mutex *sync.Mutex
+	ctx   context.Context
 
 	stopped *atomic.Value
 	wg      *sync.WaitGroup
@@ -19,8 +24,8 @@ type ScheduleManager struct {
 	newSchedulerFn func(check *types.CheckConfig) *CheckScheduler
 }
 
-// NewScheduleManager creates a new ScheduleManager.
-func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *ScheduleManager {
+// NewCheckSchedulerManager creates a new ScheduleManager.
+func NewCheckSchedulerManager(msgBus messaging.MessageBus, store store.Store) *CheckSchedulerManager {
 	wg := &sync.WaitGroup{}
 	stopped := &atomic.Value{}
 
@@ -34,11 +39,10 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 			lastCronState: check.Cron,
 			bus:           msgBus,
 			wg:            wg,
-			stateManager:  stateMngr,
 		}
 	}
 
-	manager := &ScheduleManager{
+	manager := &CheckSchedulerManager{
 		newSchedulerFn: newSchedulerFn,
 		items:          map[string]*CheckScheduler{},
 		mutex:          &sync.Mutex{},
@@ -46,20 +50,11 @@ func NewScheduleManager(msgBus messaging.MessageBus, stateMngr *StateManager) *S
 		wg:             wg,
 	}
 
-	// Listen to state updates and add schedulers if necassarily
-	stateMngr.OnChecksChange = func(state *SchedulerState) {
-		for _, check := range state.checks {
-			if err := manager.Run(check); err != nil {
-				logger.Error(err)
-			}
-		}
-	}
-
 	return manager
 }
 
 // Run starts a new scheduler for the given check
-func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
+func (mngrPtr *CheckSchedulerManager) run(check *types.CheckConfig) error {
 	// Guard against updates while the daemon is shutting down
 	if mngrPtr.stopped.Load().(bool) {
 		return nil
@@ -90,23 +85,57 @@ func (mngrPtr *ScheduleManager) Run(check *types.CheckConfig) error {
 }
 
 // Start ...
-func (mngrPtr *ScheduleManager) Start() {
+func (mngrPtr *CheckSchedulerManager) Start(ctx context.Context) {
 	logger.Info("starting scheduler manager")
 	mngrPtr.stopped.Store(false)
+
+	// for each check
+	store.GetAllChecks()
+	// Run(check)
+
+	go mngrPtr.startWatcher()
+}
+
+func (mngrPtr *CheckSchedulerManager) startWatcher() {
+	watchChan := mngrPtr.store.GetCheckConfigWatcher(context.Background())
+	for {
+		select {
+		case watchEvent := <-watchChan:
+			mngrPtr.handleWatchEvent(watchEvent)
+		case <-mngrPtr.ctx.Done():
+			for _, scheduler := range mngrPtr.items {
+				if err := scheduler.Stop(); err != nil {
+					logger.Debug(err)
+				}
+			}
+			return
+		}
+	}
+}
+
+func (mngrPtr *CheckSchedulerManager) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
+	check := watchEvent.CheckConfig
+	key := strings.Join([]string{check.Organization, check.Environment, check.Name}, ":")
+
+	switch watchEvent.Action {
+	case store.WatchCreate:
+		// we need to spin up a new CheckScheduler for the newly created check
+		if err := mngrPtr.run(check); err != nil {
+			logger.WithError(err).Error("unable to start check scheduler")
+		}
+
+	case store.WatchUpdate:
+		// Interrupt the check scheduler, causing the check to execute and the timer to be reset.
+		mngrPtr.items[key].Interrupt()
+
+	case store.WatchDelete:
+		// Call stop on the scheduler.
+		mngrPtr.items[key].Stop()
+	}
 }
 
 // Stop closes all the schedulers
-func (mngrPtr *ScheduleManager) Stop() {
-	// Await any pending updates before shutting down
-	mngrPtr.mutex.Lock()
+func (mngrPtr *CheckSchedulerManager) Stop() {
 	mngrPtr.stopped.Store(true)
-
-	for n, scheduler := range mngrPtr.items {
-		delete(mngrPtr.items, n)
-		if err := scheduler.Stop(); err != nil {
-			logger.Debug(err)
-		}
-	}
-
 	mngrPtr.wg.Wait()
 }

@@ -19,7 +19,7 @@ type CheckTimer interface {
 	// Next reset's timer using interval
 	Next()
 	// Stop ends the timer
-	Stop() bool
+	Stop()
 }
 
 // A IntervalTimer handles starting a stopping timers for a given check
@@ -59,12 +59,16 @@ func (timerPtr *IntervalTimer) Start() {
 
 // Next reset's timer using interval
 func (timerPtr *IntervalTimer) Next() {
-	timerPtr.timer.Reset(timerPtr.interval)
+	if !timerPtr.timer.Reset(timerPtr.interval) {
+		<-timerPtr.timer.C
+	}
 }
 
 // Stop ends the timer
-func (timerPtr *IntervalTimer) Stop() bool {
-	return timerPtr.timer.Stop()
+func (timerPtr *IntervalTimer) Stop() {
+	if !timerPtr.timer.Stop() {
+		<-timerPtr.timer.C
+	}
 }
 
 // Calculate the first execution time using splay & interval
@@ -117,12 +121,16 @@ func (timerPtr *CronTimer) Start() {
 
 // Next reset's timer using interval
 func (timerPtr *CronTimer) Next() {
-	timerPtr.timer.Reset(timerPtr.next)
+	if !timerPtr.timer.Reset(timerPtr.next) {
+		<-timerPtr.timer.C
+	}
 }
 
 // Stop ends the timer
-func (timerPtr *CronTimer) Stop() bool {
-	return timerPtr.timer.Stop()
+func (timerPtr *CronTimer) Stop() {
+	if !timerPtr.timer.Stop() {
+		<-timerPtr.timer.C
+	}
 }
 
 // NextCronTime calculates how much time is between the current time and the
