@@ -17,21 +17,13 @@ export default () => {
   const isDevelopment = process.env.NODE_ENV === "development";
   const isProduction = process.env.NODE_ENV === "production";
 
-  let devtool = false;
-
-  if (process.env.GENERATE_SOURCEMAP === "true") {
-    devtool = "source-map";
-  } else if (!isProduction) {
-    devtool = "cheap-module-source-map";
-  }
-
   const outputPath = path.resolve(root, "build");
 
   return {
     bail: true,
     mode: process.env.NODE_ENV,
 
-    devtool,
+    devtool: "source-map",
 
     entry: [path.resolve(root, "src/index.js")],
 
@@ -50,10 +42,9 @@ export default () => {
         ? "static/js/[name].[chunkhash:8].chunk.js"
         : "static/js/[name].chunk.js",
 
-      // Point sourcemap entries to original disk location (format as URL on Windows)
       devtoolModuleFilenameTemplate: ({ absoluteResourcePath }) =>
         path
-          .relative(path.resolve(root, "src"), absoluteResourcePath)
+          .relative(path.resolve(root), absoluteResourcePath)
           .replace(/\\/g, "/"),
     },
 
