@@ -302,8 +302,7 @@
     "language/printer",
     "language/source",
     "language/typeInfo",
-    "language/visitor",
-    "testutil"
+    "language/visitor"
   ]
   revision = "1c504cfe6f6391d1ed5bc24b6c926965baf6015d"
 
@@ -548,8 +547,10 @@
 [[projects]]
   name = "github.com/shirou/gopsutil"
   packages = [
+    "cpu",
     "host",
     "internal/common",
+    "mem",
     "net",
     "process"
   ]
@@ -804,6 +805,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1d4fc58445f0bb9f7479cb8c8fd24a7cc6386ec78324b55a54a08c01ed61cdcf"
+  inputs-digest = "f539eff44315e747a6b6bdff85d89f2458adb44eaa58c0c05b05aaad180d2c1a"
   solver-name = "gps-cdcl"
   solver-version = 1
