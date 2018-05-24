@@ -23,16 +23,15 @@ func EventFields(event *types.Event) map[string]interface{} {
 	// adding the check name
 	if event.HasCheck() {
 		fields["check"] = event.Check.Name
-	} else if event.HasMetrics() {
-		fields["metric"] = true
 	}
 
 	if event.HasMetrics() {
-		fields["metrics"] = true
-	}
-
-	if event.HasMetrics() {
-		fields["metrics"] = true
+		count := len(event.Metrics.Points)
+		fields["metric_count"] = count
+		if count > 0 {
+			fields["first_metric_name"] = event.Metrics.Points[0].Name
+			fields["first_metric_value"] = event.Metrics.Points[0].Value
+		}
 	}
 
 	return fields

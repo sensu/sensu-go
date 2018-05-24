@@ -27,6 +27,7 @@ github.com/nikkiki/sensu-influxdb-handler
   `github.com/sensu/sensu-go/cmd/sensu-backend`
 - Don't allow unknown fields in types that do not support custom attributes
 when creating resources with `sensuctl create`.
+- Provided additional context to metric event logs.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
