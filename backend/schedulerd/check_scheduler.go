@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 	sensutime "github.com/sensu/sensu-go/util/time"
 	"github.com/sirupsen/logrus"
 )
@@ -18,7 +20,7 @@ type CheckScheduler struct {
 	checkInterval uint32
 	checkCron     string
 	lastCronState string
-	stateManager  *StateManager
+	store         store.Store
 	bus           messaging.MessageBus
 	wg            *sync.WaitGroup
 	logger        *logrus.Entry
@@ -29,7 +31,14 @@ type CheckScheduler struct {
 
 // Start starts the CheckScheduler. It always returns nil error.
 func (s *CheckScheduler) Start() error {
-	s.ctx, s.cancel = context.WithCancel(context.Background())
+	check := &types.CheckConfig{
+		Organization: s.checkOrg,
+		Environment:  s.checkEnv,
+		Name:         s.checkName,
+	}
+	ctx := types.SetContextFromResource(context.Background(), check)
+	s.ctx, s.cancel = context.WithCancel(ctx)
+
 	s.wg.Add(1)
 	defer s.wg.Done()
 
@@ -47,7 +56,7 @@ func (s *CheckScheduler) Start() error {
 			timer = NewIntervalTimer(s.checkName, uint(s.checkInterval))
 		}
 
-		executor := NewCheckExecutor(s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkOrg, s.checkEnv)
+		executor := NewCheckExecutor(s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkOrg, s.checkEnv, s.store)
 
 		// TODO(greg): Refactor this part to make the code more easily tested.
 		timer.Start()
@@ -61,9 +70,11 @@ func (s *CheckScheduler) Start() error {
 			case <-timer.C():
 			}
 
-			// Fetch check from scheduler's state
-			state := s.stateManager.State()
-			check := state.GetCheck(s.checkName, s.checkOrg, s.checkEnv)
+			check, err := s.store.GetCheckConfigByName(s.ctx, s.checkName)
+			if err != nil {
+				s.logger.WithError(err).Error("unable to retrieve check in check scheduler")
+				continue
+			}
 
 			// The check has been deleted
 			if check == nil {
@@ -109,9 +120,6 @@ func (s *CheckScheduler) Start() error {
 			timer.SetDuration(check.Cron, uint(check.Interval))
 			timer.Next()
 
-			// Point executor to lastest copy of the scheduler state
-			executor.setState(state)
-
 			if err := executor.processCheck(s.ctx, check); err != nil {
 				logger.Error(err)
 			}
@@ -128,7 +136,7 @@ func (s *CheckScheduler) Interrupt() {
 
 // Stop stops the CheckScheduler
 func (s *CheckScheduler) Stop() error {
-	s.logger.Info("stopping scheduler")
+	logger.Info("stopping scheduler")
 	s.cancel()
 
 	return nil

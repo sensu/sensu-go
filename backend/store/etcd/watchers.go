@@ -3,6 +3,8 @@ package etcd
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -36,22 +38,36 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 		watcherChan := watcher.Watch(ctx, checkKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
 		defer close(ch)
 
-		var (
-			watchEvent  store.WatchEventCheckConfig
-			action      store.WatchActionType
-			checkConfig *types.CheckConfig
-		)
-
 		for watchResponse := range watcherChan {
 			for _, event := range watchResponse.Events {
+				var (
+					watchEvent  store.WatchEventCheckConfig
+					action      store.WatchActionType
+					checkConfig *types.CheckConfig
+				)
+
 				action = getWatcherAction(event)
 				if action == store.WatchUnknown {
 					logger.Error("unknown etcd watch action: ", event.Type.String())
 				}
 
-				checkConfig = &types.CheckConfig{}
-				if err := json.Unmarshal(event.Kv.Value, checkConfig); err != nil {
-					logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
+				if action == store.WatchDelete {
+					key := string(event.Kv.Key)
+					fmt.Println("event's key is: ", key)
+					parts := strings.Split(key, "/")
+					// TODO(eric): add key splitter
+					//  /sensu.io/checks/org/environment/check_name
+					// 0/   1    / 2    / 3 / 4         / 5
+					checkConfig = &types.CheckConfig{
+						Organization: parts[3],
+						Environment:  parts[4],
+						Name:         parts[5],
+					}
+				} else {
+					checkConfig = &types.CheckConfig{}
+					if err := json.Unmarshal(event.Kv.Value, checkConfig); err != nil {
+						logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
+					}
 				}
 
 				watchEvent = store.WatchEventCheckConfig{

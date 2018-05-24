@@ -23,22 +23,21 @@ type Executor interface {
 	getEntities(ctx context.Context) ([]*types.Entity, error)
 	publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error
 	execute(check *types.CheckConfig) error
-	buildRequest(check *types.CheckConfig) *types.CheckRequest
-	setState(state *SchedulerState)
+	buildRequest(check *types.CheckConfig) (*types.CheckRequest, error)
 }
 
 // CheckExecutor executes scheduled checks in the check scheduler
 type CheckExecutor struct {
 	bus          messaging.MessageBus
-	state        *SchedulerState
+	store        store.Store
 	roundRobin   *roundRobinScheduler
 	organization string
 	environment  string
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, roundRobin *roundRobinScheduler, org string, env string) *CheckExecutor {
-	return &CheckExecutor{bus: bus, roundRobin: roundRobin, organization: org, environment: env}
+func NewCheckExecutor(bus messaging.MessageBus, roundRobin *roundRobinScheduler, org string, env string, store store.Store) *CheckExecutor {
+	return &CheckExecutor{bus: bus, roundRobin: roundRobin, organization: org, environment: env, store: store}
 }
 
 // ProcessCheck processes a check by publishing its proxy requests (if any)
@@ -48,7 +47,7 @@ func (c *CheckExecutor) processCheck(ctx context.Context, check *types.CheckConf
 }
 
 func (c *CheckExecutor) getEntities(ctx context.Context) ([]*types.Entity, error) {
-	return c.state.GetEntitiesInNamespace(c.organization, c.environment), nil
+	return c.store.GetEntities(ctx)
 }
 
 func (c *CheckExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
@@ -62,7 +61,10 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 	}
 
 	var err error
-	request := c.buildRequest(check)
+	request, err := c.buildRequest(check)
+	if err != nil {
+		return err
+	}
 
 	for _, sub := range check.Subscriptions {
 		org, env := check.Organization, check.Environment
@@ -92,16 +94,22 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 	return err
 }
 
-func (c *CheckExecutor) buildRequest(check *types.CheckConfig) *types.CheckRequest {
+func (c *CheckExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
 	request := &types.CheckRequest{}
 	request.Config = check
+
+	ctx := types.SetContextFromResource(context.Background(), check)
 
 	// Guard against iterating over assets if there are no assets associated with
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
 		// Explode assets; get assets & filter out those that are irrelevant
-		allAssets := c.state.GetAssetsInNamespace(check.Organization)
-		for _, asset := range allAssets {
+		assets, err := c.store.GetAssets(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, asset := range assets {
 			if assetIsRelevant(asset, check) {
 				request.Assets = append(request.Assets, *asset)
 			}
@@ -112,8 +120,12 @@ func (c *CheckExecutor) buildRequest(check *types.CheckConfig) *types.CheckReque
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		allHooks := c.state.GetHooksInNamespace(check.Organization, check.Environment)
-		for _, hook := range allHooks {
+		hooks, err := c.store.GetHookConfigs(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, hook := range hooks {
 			if hookIsRelevant(hook, check) {
 				request.Hooks = append(request.Hooks, *hook)
 			}
@@ -122,7 +134,7 @@ func (c *CheckExecutor) buildRequest(check *types.CheckConfig) *types.CheckReque
 
 	request.Issued = time.Now().Unix()
 
-	return request
+	return request, nil
 }
 
 func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
@@ -147,15 +159,11 @@ func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
 	return false
 }
 
-func (c *CheckExecutor) setState(state *SchedulerState) {
-	c.state = state
-}
-
 // AdhocRequestExecutor takes new check requests from the adhoc queue and runs
 // them
 type AdhocRequestExecutor struct {
 	adhocQueue     types.Queue
-	store          StateManagerStore
+	store          store.Store
 	bus            messaging.MessageBus
 	ctx            context.Context
 	cancel         context.CancelFunc
@@ -233,7 +241,7 @@ func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*types.Entit
 }
 
 func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
-	request := a.buildRequest(check)
+	request, _ := a.buildRequest(check)
 	request.Config = check
 	var err error
 	for _, sub := range check.Subscriptions {
@@ -251,11 +259,9 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 	return err
 }
 
-func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) *types.CheckRequest {
-	return &types.CheckRequest{Issued: time.Now().Unix()}
+func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
+	return &types.CheckRequest{Issued: time.Now().Unix()}, nil
 }
-
-func (a *AdhocRequestExecutor) setState(state *SchedulerState) {}
 
 func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *types.CheckConfig) error {
 	var err error

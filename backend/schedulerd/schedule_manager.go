@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -16,7 +17,6 @@ type CheckSchedulerManager struct {
 	items map[string]*CheckScheduler
 	store store.Store
 	mutex *sync.Mutex
-	ctx   context.Context
 
 	stopped *atomic.Value
 	wg      *sync.WaitGroup
@@ -37,6 +37,7 @@ func NewCheckSchedulerManager(msgBus messaging.MessageBus, store store.Store) *C
 			checkInterval: check.Interval,
 			checkCron:     check.Cron,
 			lastCronState: check.Cron,
+			store:         store,
 			bus:           msgBus,
 			wg:            wg,
 		}
@@ -44,6 +45,7 @@ func NewCheckSchedulerManager(msgBus messaging.MessageBus, store store.Store) *C
 
 	manager := &CheckSchedulerManager{
 		newSchedulerFn: newSchedulerFn,
+		store:          store,
 		items:          map[string]*CheckScheduler{},
 		mutex:          &sync.Mutex{},
 		stopped:        stopped,
@@ -85,24 +87,34 @@ func (mngrPtr *CheckSchedulerManager) run(check *types.CheckConfig) error {
 }
 
 // Start ...
-func (mngrPtr *CheckSchedulerManager) Start(ctx context.Context) {
+func (mngrPtr *CheckSchedulerManager) Start(ctx context.Context) error {
 	logger.Info("starting scheduler manager")
 	mngrPtr.stopped.Store(false)
 
 	// for each check
-	store.GetAllChecks()
-	// Run(check)
+	checkConfigs, err := mngrPtr.store.GetCheckConfigs(ctx)
+	if err != nil {
+		return err
+	}
 
-	go mngrPtr.startWatcher()
+	for _, cfg := range checkConfigs {
+		if err := mngrPtr.run(cfg); err != nil {
+			return err
+		}
+	}
+
+	go mngrPtr.startWatcher(ctx)
+
+	return nil
 }
 
-func (mngrPtr *CheckSchedulerManager) startWatcher() {
+func (mngrPtr *CheckSchedulerManager) startWatcher(ctx context.Context) {
 	watchChan := mngrPtr.store.GetCheckConfigWatcher(context.Background())
 	for {
 		select {
 		case watchEvent := <-watchChan:
 			mngrPtr.handleWatchEvent(watchEvent)
-		case <-mngrPtr.ctx.Done():
+		case <-ctx.Done():
 			for _, scheduler := range mngrPtr.items {
 				if err := scheduler.Stop(); err != nil {
 					logger.Debug(err)
@@ -115,7 +127,9 @@ func (mngrPtr *CheckSchedulerManager) startWatcher() {
 
 func (mngrPtr *CheckSchedulerManager) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
 	check := watchEvent.CheckConfig
-	key := strings.Join([]string{check.Organization, check.Environment, check.Name}, ":")
+	fmt.Println(check)
+	key := concatUniqueKey(check.Name, check.Organization, check.Environment)
+	fmt.Println("first: ", key)
 
 	switch watchEvent.Action {
 	case store.WatchCreate:
@@ -130,6 +144,8 @@ func (mngrPtr *CheckSchedulerManager) handleWatchEvent(watchEvent store.WatchEve
 
 	case store.WatchDelete:
 		// Call stop on the scheduler.
+		fmt.Println(mngrPtr.items)
+		fmt.Println(key)
 		mngrPtr.items[key].Stop()
 	}
 }
@@ -138,4 +154,8 @@ func (mngrPtr *CheckSchedulerManager) handleWatchEvent(watchEvent store.WatchEve
 func (mngrPtr *CheckSchedulerManager) Stop() {
 	mngrPtr.stopped.Store(true)
 	mngrPtr.wg.Wait()
+}
+
+func concatUniqueKey(args ...string) string {
+	return strings.Join(args, "-")
 }
