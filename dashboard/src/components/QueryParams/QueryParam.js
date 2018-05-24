@@ -1,9 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withRouter } from "react-router-dom";
-import WithQueryParams from "./WithQueryParams";
+import QueryParams from "./QueryParams";
 
-class WithQueryParam extends React.PureComponent {
+class QueryParam extends React.PureComponent {
   static propTypes = {
     children: PropTypes.func.isRequired,
     name: PropTypes.string.isRequired,
@@ -12,11 +12,11 @@ class WithQueryParam extends React.PureComponent {
   render() {
     const { name, children } = this.props;
     return (
-      <WithQueryParams>
+      <QueryParams keys={[name]}>
         {(params, set) => children(params.get(name), val => set(name, val))}
-      </WithQueryParams>
+      </QueryParams>
     );
   }
 }
 
-export default withRouter(WithQueryParam);
+export default withRouter(QueryParam);

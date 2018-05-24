@@ -2,11 +2,34 @@ import React from "react";
 import PropTypes from "prop-types";
 import { withRouter } from "react-router-dom";
 
-class WithQueryParams extends React.Component {
+function expandParams(params, keys) {
+  return Array.from(params).reduce((acc, entry) => {
+    const [key, val] = entry;
+    if (keys && keys.indexOf(key) === -1) return acc;
+
+    const prevVal = acc[key];
+    if (Array.isArray(prevVal)) {
+      acc[key] = [val, ...prevVal];
+    } else if (prevVal) {
+      acc[key] = [val, prevVal];
+    } else {
+      acc[key] = val;
+    }
+
+    return acc;
+  }, {});
+}
+
+class QueryParams extends React.Component {
   static propTypes = {
     children: PropTypes.func.isRequired,
     location: PropTypes.object.isRequired,
     history: PropTypes.object.isRequired,
+    keys: PropTypes.arrayOf(PropTypes.string),
+  };
+
+  static defaultProps = {
+    keys: null,
   };
 
   constructor(props) {
@@ -37,8 +60,9 @@ class WithQueryParams extends React.Component {
   };
 
   render() {
-    return this.props.children(this.params, this.changeQuery);
+    const params = expandParams(this.params, this.props.keys);
+    return this.props.children(params, this.changeQuery);
   }
 }
 
-export default withRouter(WithQueryParams);
+export default withRouter(QueryParams);

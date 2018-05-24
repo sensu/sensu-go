@@ -8,7 +8,7 @@ import SearchBox from "/components/SearchBox";
 import Content from "/components/Content";
 import NotFoundView from "/components/views/NotFoundView";
 import RefreshIcon from "@material-ui/icons/Refresh";
-import WithQueryParams from "/components/WithQueryParams";
+import QueryParams from "/components/QueryParams";
 import ListToolbar from "/components/partials/ListToolbar";
 import { CollapsingMenuItem } from "/components/CollapsingMenu";
 
@@ -17,13 +17,12 @@ const defaultExpression = "HasCheck && IsIncident";
 
 class EventsContent extends React.Component {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
     match: PropTypes.object.isRequired,
   };
 
   static query = gql`
     query EnvironmentViewEventsContentQuery(
-      $filter: String!
+      $filter: String = "${defaultExpression}"
       $order: EventsListOrder = SEVERITY
       $environment: String!
       $organization: String!
@@ -37,19 +36,13 @@ class EventsContent extends React.Component {
   `;
 
   render() {
-    const { classes, match } = this.props;
-
     return (
-      <WithQueryParams>
+      <QueryParams>
         {(query, setQuery) => (
           <Query
             query={EventsContent.query}
             fetchPolicy="cache-and-network"
-            variables={{
-              ...match.params,
-              filter: query.get("filter") || defaultExpression,
-              order: query.get("order"),
-            }}
+            variables={{ ...this.props.match.params, ...query }}
           >
             {({ data: { environment } = {}, loading, error, refetch }) => {
               if (error) throw error;
@@ -62,7 +55,7 @@ class EventsContent extends React.Component {
                       renderSearch={
                         <SearchBox
                           onSearch={val => setQuery("filter", val)}
-                          initialValue={query.get("filter")}
+                          initialValue={query.filter}
                           placeholder="Filter events…"
                         />
                       }
@@ -85,7 +78,7 @@ class EventsContent extends React.Component {
             }}
           </Query>
         )}
-      </WithQueryParams>
+      </QueryParams>
     );
   }
 }
