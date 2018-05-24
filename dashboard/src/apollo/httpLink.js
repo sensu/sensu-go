@@ -6,8 +6,8 @@ const httpLink = () =>
     uri: "/graphql",
     fetch: doFetch,
     credentials: "same-origin",
-    batchMax: 500,
-    batchInterval: 5,
+    batchMax: 25,
+    batchInterval: 3,
   });
 
 export default httpLink;
