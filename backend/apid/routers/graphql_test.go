@@ -3,7 +3,6 @@ package routers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
