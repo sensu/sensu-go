@@ -21,6 +21,8 @@ commands, which is compatible with `sensuctl create`.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
+- Split out the docker commands in build script so that building images and
+  pushing can be done separately.
 - Migrated the InfluxDB handler from the sensu-go repository to
 github.com/nikkiki/sensu-influxdb-handler
 - Entry point for sensu-backend has been changed to

@@ -229,26 +229,37 @@ e2e_commands () {
 }
 
 docker_commands () {
-    # make this one var (push or release - master or versioned)
-    local push=$1
-    local release=$2
-    local build_sha=$(git rev-parse HEAD)
-    local ext=${@:3}
+    local cmd=$1
 
+    if [ "$cmd" == "build" ]; then
+        docker_build ${@:2}
+    elif [ "$cmd" == "push" ]; then
+        docker_push ${@:2}
+    elif [ "$cmd" == "deploy" ]; then
+        docker_build
+        docker_push ${@:2}
+    else
+        docker_commands build $@
+    fi
+}
+
+docker_build() {
+    local build_sha=$(git rev-parse HEAD)
+    local ext=$@
+
+    # build Sensu binaries for amd64 platform
     for cmd in cat false sleep true; do
         echo "Building tools/$cmd for linux-amd64"
         build_tool_binary linux amd64 $cmd "tools"
     done
 
+    # build built-in handlers for amd64 platform
     for cmd in ${HANDLERS[@]}; do
         echo "Building handlers/$cmd for linux-amd64"
         build_tool_binary linux amd64 $cmd "handlers"
     done
 
     # When publishing image, ensure that we can bundle the web UI.
-    if [ "$push" == "push" ]; then
-        bail_unless_yarn_is_present
-    fi
     build_dashboard $ext
 
     for cmd in agent backend cli; do
@@ -259,38 +270,33 @@ docker_commands () {
 
     # build the docker image with master tag
     docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
-
-    # push master - tags and pushes latest master docker build only
-    if [ "$push" == "push" ] && [ "$release" == "master" ]; then
-        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        docker push sensuapp/sensu-go:master
-        # push versioned - tags and pushes with version pulled from
-        # version/prerelease/iteration files
-    elif [ "$push" == "push" ]; then
-        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
-        local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
-
-        if [ "$release" == "versioned" ]; then
-            docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
-            docker push sensuapp/sensu-go:latest
-        fi
-
-        docker tag sensuapp/sensu-go:master $version_iteration
-        docker push $version_iteration
-        docker tag $version_iteration $version
-        docker push $version
-    fi
 }
 
-bail_unless_yarn_is_present() {
-    if hash yarn 2>/dev/null; then
-        echo "⚡️  Yarn is installed!"
-    else
-        echo "🛑  You must have Yarn installed to bundle the web UI."
-        echo "See https://yarnpkg.com/en/docs/install"
-        exit 1
+docker_push() {
+    local release=$1
+    local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
+    local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
+
+    # ensure we are authenticated
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+
+    # push master - tags and pushes latest master docker build only
+    if [ "$release" == "master" ]; then
+        docker push sensuapp/sensu-go:master
+        exit 0
     fi
+
+    # if versioned release push to 'latest' tag
+    if [ "$release" == "versioned" ]; then
+        docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
+        docker push sensuapp/sensu-go:latest
+    fi
+
+    # push current revision
+    docker tag sensuapp/sensu-go:master $version_iteration
+    docker push $version_iteration
+    docker tag $version_iteration $version
+    docker push $version
 }
 
 test_dashboard() {
@@ -346,7 +352,8 @@ deploy() {
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build clean
 
     # Deploy Docker images to the Docker Hub
-    docker_commands push $release
+    docker_build
+    docker_push $release
 }
 
 case "$cmd" in
