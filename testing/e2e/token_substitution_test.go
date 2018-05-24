@@ -101,17 +101,4 @@ func TestTokenSubstitution(t *testing.T) {
 	}); err != nil {
 		t.Errorf("no check event was received: %s", string(output))
 	}
-
-	// time.Sleep(10 * time.Second)
-
-	// output, err = sensuctl.run("event", "info", agent.ID, checkUnmatchedToken.Name)
-	// require.NoError(t, err, string(output))
-
-	// event = types.Event{}
-	// require.NoError(t, json.Unmarshal(output, &event))
-	// assert.NotNil(t, event)
-	// // {{ .Foo }} should not have been replaced and an error should have been
-	// // immediated returned
-	// assert.Contains(t, event.Check.Output, "has no entry for key")
-
 }
