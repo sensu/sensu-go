@@ -14,8 +14,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-type jsonObject map[string]interface{}
-
 // GraphQLRouter handles requests for /events
 type GraphQLRouter struct {
 	service *graphqlservice.Service
@@ -53,7 +51,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	}
 
 	var receivedList bool
-	var ops []jsonObject
+	var ops []map[string]interface{}
 	switch reqBody := reqBody.(type) {
 	case []interface{}:
 		receivedList = true
@@ -62,7 +60,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 				ops = append(ops, r)
 			}
 		}
-	case jsonObject:
+	case map[string]interface{}:
 		ops = append(ops, reqBody)
 	default:
 		return nil, errors.New("received unexpected request body")
