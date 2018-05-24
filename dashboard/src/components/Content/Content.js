@@ -6,19 +6,18 @@ import { withStyles } from "@material-ui/core/styles";
 const styles = theme => ({
   root: {
     display: "flex",
+    alignItems: "center",
   },
   gutters: {
-    marginLeft: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
-    [theme.breakpoints.up("md")]: {
-      margin: 0,
+    paddingLeft: theme.spacing.unit,
+    paddingRight: theme.spacing.unit,
+    [theme.breakpoints.up("sm")]: {
+      paddingLeft: 0,
+      paddingRight: 0,
     },
   },
-  marginBottom: {
-    marginBottom: theme.spacing.unit,
-    [theme.breakpoints.up("xs")]: {
-      marginBottom: theme.spacing.unit * 2,
-    },
+  bottomMargin: {
+    marginBottom: theme.spacing.unit * 2,
   },
 });
 
@@ -27,12 +26,14 @@ class Content extends React.PureComponent {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     children: PropTypes.node.isRequired,
-    marginBottom: PropTypes.bool,
+    bottomMargin: PropTypes.bool,
+    gutters: PropTypes.bool,
   };
 
   static defaultProps = {
     className: "",
-    marginBottom: false,
+    bottomMargin: false,
+    gutters: false,
   };
 
   render() {
@@ -40,11 +41,13 @@ class Content extends React.PureComponent {
       classes,
       className: classNameProp,
       children,
-      marginBottom,
+      bottomMargin,
+      gutters,
     } = this.props;
 
-    const className = classnames(classes.root, classes.gutter, classNameProp, {
-      [classes.marginBottom]: marginBottom,
+    const className = classnames(classes.root, classNameProp, {
+      [classes.bottomMargin]: bottomMargin,
+      [classes.gutters]: gutters,
     });
     return <div className={className}>{children}</div>;
   }

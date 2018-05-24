@@ -2,41 +2,15 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
-import { withStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
-
 import Content from "/components/Content";
 import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
-
 import EntitiesList from "/components/partials/EntitiesList";
-
-// TODO: Abstract Headline component into the shared page layout component
-const Headline = withStyles(theme => ({
-  root: {
-    display: "flex",
-    alignContent: "center",
-    paddingLeft: theme.spacing.unit,
-    paddingRight: theme.spacing.unit,
-    [theme.breakpoints.up("sm")]: {
-      paddingLeft: 0,
-      paddingRight: 0,
-    },
-    marginBottom: 16,
-  },
-}))(({ classes, ...props }) => <Content {...props} className={classes.root} />);
-
-// TODO: Abstract Title component into the shared page layout component
-const Title = withStyles(theme => ({
-  root: {
-    alignSelf: "flex-end",
-    display: "none",
-    flexGrow: 1,
-    [theme.breakpoints.up("sm")]: {
-      display: "flex",
-    },
-  },
-}))(props => <Typography {...props} variant="headline" />);
+import WithQueryParams from "/components/WithQueryParams";
+import SearchBox from "/components/SearchBox";
+import ListToolbar from "/components/partials/ListToolbar";
+import RefreshIcon from "@material-ui/icons/Refresh";
+import { CollapsingMenuItem } from "/components/CollapsingMenu";
 
 class EntitiesContent extends React.PureComponent {
   static propTypes = {
@@ -49,6 +23,7 @@ class EntitiesContent extends React.PureComponent {
       $environment: String!
       $organization: String!
       $sort: EntityListOrder = ID
+      $filter: String
     ) {
       environment(organization: $organization, environment: $environment) {
         ...EntitiesList_environment
@@ -60,27 +35,54 @@ class EntitiesContent extends React.PureComponent {
 
   render() {
     return (
-      <Query query={EntitiesContent.query} variables={this.props.match.params}>
-        {({ data: { environment } = {}, loading, error, refetch }) => {
-          // TODO: Connect this error handler to display a blocking error alert
-          if (error) throw error;
+      <WithQueryParams>
+        {(query, setQuery) => (
+          <Query
+            query={EntitiesContent.query}
+            fetchPolicy="cache-and-network"
+            variables={{
+              ...this.props.match.params,
+              filter: query.get("filter"),
+              order: query.get("order"),
+            }}
+          >
+            {({ data: { environment } = {}, loading, error, refetch }) => {
+              // TODO: Connect this error handler to display a blocking error alert
+              if (error) throw error;
 
-          if (!environment && !loading) return <NotFoundView />;
+              if (!environment && !loading) return <NotFoundView />;
 
-          return (
-            <AppContent>
-              <Headline>
-                <Title>Entities</Title>
-              </Headline>
-              <EntitiesList
-                loading={loading}
-                environment={environment}
-                refetch={refetch}
-              />
-            </AppContent>
-          );
-        }}
-      </Query>
+              return (
+                <AppContent>
+                  <Content gutters bottomMargin>
+                    <ListToolbar
+                      renderSearch={
+                        <SearchBox
+                          onSearch={val => setQuery("filter", val)}
+                          initialValue={query.get("filter")}
+                          placeholder="Filter entities…"
+                        />
+                      }
+                      renderMenuItems={
+                        <CollapsingMenuItem
+                          title="Reload"
+                          icon={<RefreshIcon />}
+                          onClick={() => refetch()}
+                        />
+                      }
+                    />
+                  </Content>
+                  <EntitiesList
+                    loading={loading}
+                    environment={environment}
+                    refetch={refetch}
+                  />
+                </AppContent>
+              );
+            }}
+          </Query>
+        )}
+      </WithQueryParams>
     );
   }
 }

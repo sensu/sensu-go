@@ -8,8 +8,8 @@ import Disclosure from "@material-ui/icons/MoreVert";
 const styles = theme => ({
   root: {
     minWidth: 0,
-    paddingLeft: theme.spacing.unit,
-    paddingRight: theme.spacing.unit,
+    paddingLeft: theme.spacing.unit / 2,
+    paddingRight: theme.spacing.unit / 2,
   },
 });
 

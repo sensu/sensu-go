@@ -2,8 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
-import { withStyles } from "@material-ui/core/styles";
-import Button from "@material-ui/core/Button";
 import AppContent from "/components/AppContent";
 import EventsContainer from "/components/EventsContainer";
 import SearchBox from "/components/SearchBox";
@@ -11,37 +9,8 @@ import Content from "/components/Content";
 import NotFoundView from "/components/views/NotFoundView";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import WithQueryParams from "/components/WithQueryParams";
-
-const styles = theme => ({
-  headline: {
-    display: "flex",
-    alignContent: "center",
-    paddingLeft: theme.spacing.unit,
-    paddingRight: theme.spacing.unit,
-    [theme.breakpoints.up("sm")]: {
-      paddingLeft: 0,
-      paddingRight: 0,
-    },
-  },
-  searchBox: {
-    width: "100%",
-    [theme.breakpoints.up("sm")]: {
-      width: "50%",
-    },
-  },
-  container: {
-    marginTop: 10,
-  },
-  grow: {
-    flex: "1 1 auto",
-  },
-  hiddenSmall: {
-    display: "none",
-    [theme.breakpoints.up("sm")]: {
-      display: "flex",
-    },
-  },
-});
+import ListToolbar from "/components/partials/ListToolbar";
+import { CollapsingMenuItem } from "/components/CollapsingMenu";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
@@ -88,24 +57,25 @@ class EventsContent extends React.Component {
 
               return (
                 <AppContent>
-                  <Content className={classes.headline}>
-                    <SearchBox
-                      className={classes.searchBox}
-                      onSearch={val => setQuery("filter", val)}
-                      initialValue={query.get("filter")}
-                      placeholder="Filter events…"
+                  <Content gutters bottomMargin>
+                    <ListToolbar
+                      renderSearch={
+                        <SearchBox
+                          onSearch={val => setQuery("filter", val)}
+                          initialValue={query.get("filter")}
+                          placeholder="Filter events…"
+                        />
+                      }
+                      renderMenuItems={
+                        <CollapsingMenuItem
+                          title="Reload"
+                          icon={<RefreshIcon />}
+                          onClick={() => refetch()}
+                        />
+                      }
                     />
-                    <div className={classes.grow} />
-                    <Button
-                      className={classes.hiddenSmall}
-                      onClick={() => refetch()}
-                    >
-                      <RefreshIcon />
-                      reload
-                    </Button>
                   </Content>
                   <EventsContainer
-                    className={classes.container}
                     onQueryChange={setQuery}
                     environment={environment}
                     loading={loading}
@@ -120,4 +90,4 @@ class EventsContent extends React.Component {
   }
 }
 
-export default withStyles(styles)(EventsContent);
+export default EventsContent;

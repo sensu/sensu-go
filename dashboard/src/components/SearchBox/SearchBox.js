@@ -101,13 +101,15 @@ class SearchBox extends React.Component {
   }
 
   handleChange = ev => {
-    this.setState({ value: ev.currentTarget.value });
+    this.setState({ value: ev.currentTarget.value || "" });
   };
 
   handleKeyPress = ev => {
     if (ev.key === "Enter") {
-      this.props.onSearch(this.state.value || "");
-      this.resetState();
+      if (this.state.value !== null) {
+        this.props.onSearch(this.state.value);
+        this.resetState();
+      }
 
       ev.currentTarget.blur();
     }
