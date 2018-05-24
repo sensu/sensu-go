@@ -7,6 +7,7 @@ import eslintFormatter from "react-dev-utils/eslintFormatter";
 import CaseSensitivePathsPlugin from "case-sensitive-paths-webpack-plugin";
 import CleanPlugin from "clean-webpack-plugin";
 import { StatsWriterPlugin } from "webpack-stats-plugin";
+import UglifyJsPlugin from "uglifyjs-webpack-plugin";
 
 export default () => {
   // Make sure any symlinks in the project folder are resolved:
@@ -16,21 +17,13 @@ export default () => {
   const isDevelopment = process.env.NODE_ENV === "development";
   const isProduction = process.env.NODE_ENV === "production";
 
-  let devtool = false;
-
-  if (process.env.GENERATE_SOURCEMAP === "true") {
-    devtool = "source-map";
-  } else if (!isProduction) {
-    devtool = "cheap-module-source-map";
-  }
-
   const outputPath = path.resolve(root, "build");
 
   return {
     bail: true,
     mode: process.env.NODE_ENV,
 
-    devtool,
+    devtool: "source-map",
 
     entry: [path.resolve(root, "src/index.js")],
 
@@ -49,15 +42,25 @@ export default () => {
         ? "static/js/[name].[chunkhash:8].chunk.js"
         : "static/js/[name].chunk.js",
 
-      // Point sourcemap entries to original disk location (format as URL on Windows)
       devtoolModuleFilenameTemplate: ({ absoluteResourcePath }) =>
         path
-          .relative(path.resolve(root, "src"), absoluteResourcePath)
+          .relative(path.resolve(root), absoluteResourcePath)
           .replace(/\\/g, "/"),
     },
 
     optimization: {
       splitChunks: { minChunks: 2 },
+      minimizer: [
+        new UglifyJsPlugin({
+          sourceMap: true,
+          uglifyOptions: {
+            // Disable function name minification in order to preserve class
+            // names. This makes tracking down bugs in production builds far
+            // more manageable.
+            keep_fnames: true,
+          },
+        }),
+      ],
     },
 
     resolve: {
@@ -87,6 +90,16 @@ export default () => {
               },
             },
           ],
+        },
+        {
+          enforce: "pre",
+          test: /\.js$/,
+          include: path.resolve(root, "node_modules"),
+          exclude: [path.resolve(root, "node_modules/apollo-client")],
+          loader: require.resolve("source-map-loader"),
+          options: {
+            includeModulePaths: true,
+          },
         },
         {
           oneOf: [
