@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -49,12 +48,19 @@ func TestCheckHooks(t *testing.T) {
 	output, err = sensuctl.run("check", "info", check.Name)
 	assert.NoError(t, err, string(output))
 
-	// Give it few seconds to make sure we've published a check request
-	time.Sleep(20 * time.Second)
+	getCheckEventCmd := []string{"event", "info", agent.ID, check.Name}
 
-	// There should be a stored event
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
-	assert.NoError(t, err, string(output))
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
 
 	// Retrieve a new event
 	event := types.Event{}
@@ -94,27 +100,29 @@ func TestCheckHooks(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	// Give it a few seconds for the check to execute with the check hook
-	time.Sleep(20 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// There should be a stored event
-	output, err = sensuctl.run(
-		"event", "info", agent.ID, check.Name,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	require.NoError(t, err, string(output))
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
 
-	// Retrieve a new event
-	event = types.Event{}
-	require.NoError(t, json.Unmarshal(output, &event))
-	require.NotNil(t, event)
-	require.NotNil(t, event.Check)
-	require.NotNil(t, event.Check.Hooks)
+		if len(event.Check.Hooks) == 0 {
+			return false, nil
+		}
 
-	// Ensure the token substitution has been applied for the hook's command
-	assert.Contains(t, event.Check.Hooks[0].Output, agent.ID)
+		// Ensure the event's assets are present
+		if !strings.Contains(event.Check.Hooks[0].Output, agent.ID) {
+			return false, nil
+		}
 
-	// Hook hook1 now exists, a check hook should be written to the event
-	assert.NotEmpty(t, event.Check.Hooks)
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no new event with hooks received: %s", string(output))
+	}
 }

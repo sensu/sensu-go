@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,17 +40,28 @@ func TestTokenSubstitution(t *testing.T) {
 	require.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, check.Name); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
-	require.NoError(t, err, string(output))
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
 
-	event := types.Event{}
-	require.NoError(t, json.Unmarshal(output, &event))
-	assert.NotNil(t, event)
-	// {{ .ID }} should have been replaced by the entity ID and {{ .Team }} by the
-	// custom attribute of the same name on the entity
-	assert.Contains(t, event.Check.Output, "TestTokenSubstitution devops defaultValue")
+		// {{ .ID }} should have been replaced by the entity ID and {{ .Team }} by
+		// the custom attribute of the same name on the entity
+		if !strings.Contains(event.Check.Output, "TestTokenSubstitution devops defaultValue") {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no check event was received: %s", string(output))
+	}
 
 	// Create a check that take advantage of token substitution
 	checkUnmatchedToken := types.FixtureCheckConfig("check_unmatchedToken")
@@ -70,16 +79,39 @@ func TestTokenSubstitution(t *testing.T) {
 	require.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, checkUnmatchedToken.Name); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	output, err = sensuctl.run("event", "info", agent.ID, checkUnmatchedToken.Name)
-	require.NoError(t, err, string(output))
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
 
-	event = types.Event{}
-	require.NoError(t, json.Unmarshal(output, &event))
-	assert.NotNil(t, event)
-	// {{ .Foo }} should not have been replaced and an error should have been
-	// immediated returned
-	assert.Contains(t, event.Check.Output, "has no entry for key")
+		// {{ .Foo }} should not have been replaced and an error should have been
+		// // immediated returned
+		if !strings.Contains(event.Check.Output, "has no entry for key") {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no check event was received: %s", string(output))
+	}
+
+	// time.Sleep(10 * time.Second)
+
+	// output, err = sensuctl.run("event", "info", agent.ID, checkUnmatchedToken.Name)
+	// require.NoError(t, err, string(output))
+
+	// event = types.Event{}
+	// require.NoError(t, json.Unmarshal(output, &event))
+	// assert.NotNil(t, event)
+	// // {{ .Foo }} should not have been replaced and an error should have been
+	// // immediated returned
+	// assert.Contains(t, event.Check.Output, "has no entry for key")
 
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,6 +35,11 @@ func TestCheckScheduling(t *testing.T) {
 	check.Organization = sensuctl.Organization
 	check.Environment = sensuctl.Environment
 
+	getCheckEventCmd := []string{"event", "info", agent.ID, check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	}
+
 	out, err := sensuctl.run("check", "create", check.Name,
 		"--command", check.Command,
 		"--interval", strconv.FormatUint(uint64(check.Interval), 10),
@@ -43,13 +49,26 @@ func TestCheckScheduling(t *testing.T) {
 		"--environment", sensuctl.Environment)
 
 	require.NoError(t, err, string(out))
+
 	out, err = sensuctl.run("check", "info", check.Name,
 		"--organization", sensuctl.Organization,
 		"--environment", sensuctl.Environment)
+
 	require.NoError(t, err, string(out))
 
-	// Give it few seconds to make sure we've published a check request
-	time.Sleep(10 * time.Second)
+	// Make sure we have at least an event for this check
+	var output []byte
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
 
 	// Stop publishing check requests
 	out, err = sensuctl.run("check", "set-publish", check.Name, "false",
@@ -101,21 +120,28 @@ func TestCheckScheduling(t *testing.T) {
 		"--environment", sensuctl.Environment)
 	require.NoError(t, err, string(out))
 
-	// Give it few seconds to make sure it picks up the change
-	time.Sleep(10 * time.Second)
+	var count3 int
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// Retrieve (again) the number of check results sent
-	out, err = sensuctl.run("event", "info", agent.ID, check.Name,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment)
-	require.NoError(t, err, string(out))
-	if err := json.Unmarshal(out, &event); err != nil {
-		t.Fatal(err)
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
+		count3 = len(event.Check.History)
+
+		if count2 == count3 {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no new event received since publish set to true again: %s", string(output))
 	}
-	count3 := len(event.Check.History)
-
-	// Make sure new check results were sent
-	assert.NotEqual(t, count2, count3)
 
 	// Change the check schedule to cron
 	out, err = sensuctl.run("check", "set-cron", check.Name, "* * * * *",
@@ -123,17 +149,34 @@ func TestCheckScheduling(t *testing.T) {
 		"--environment", sensuctl.Environment)
 	require.NoError(t, err, string(out))
 
-	// Give it few seconds to make sure it picks up the change
-	time.Sleep(60 * time.Second)
+	// Since the cronjob runs every minute, we'll need a longer backoff strategy
+	longBackoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 10 * time.Second,
+		MaxDelayInterval:     90 * time.Second,
+		MaxRetryAttempts:     0, // Unlimited attempts
+		Multiplier:           1.1,
+	}
 
-	// Retrieve (again) the number of check results sent
-	out, err = sensuctl.run("event", "info", agent.ID, check.Name,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment)
-	require.NoError(t, err, string(out))
-	require.NoError(t, json.Unmarshal(out, &event))
-	count4 := len(event.Check.History)
+	var count4 int
+	if err := longBackoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// Make sure new check results were sent
-	assert.NotEqual(t, count3, count4)
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
+		count4 = len(event.Check.History)
+
+		if count3 == count4 {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received since schedule was set to cron: %s", string(output))
+	}
 }

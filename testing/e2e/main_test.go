@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/coreos/etcd/pkg/fileutil"
 	"github.com/sensu/sensu-go/testing/testutil"
+	"github.com/sensu/sensu-go/util/retry"
 )
 
 var (
@@ -18,6 +20,12 @@ var (
 	agentPath, backendPath, sensuctlPath string
 	binDir                               = filepath.Join("..", "..", "bin")
 	toolsDir                             = filepath.Join(binDir, "tools")
+	backoff                              = retry.ExponentialBackoff{
+		InitialDelayInterval: 500 * time.Millisecond,
+		MaxDelayInterval:     20 * time.Second,
+		MaxRetryAttempts:     0, // Unlimited attempts
+		Multiplier:           1.5,
+	}
 )
 
 func TestMain(m *testing.M) {

@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -68,17 +67,22 @@ func TestEventHandler(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, check.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// There should be a stored event
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err, string(output))
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
 
-	event := types.Event{}
-	require.NoError(t, json.Unmarshal(output, &event))
+	event := &types.Event{}
+	require.NoError(t, json.Unmarshal(output, event))
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)

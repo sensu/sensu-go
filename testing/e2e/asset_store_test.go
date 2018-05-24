@@ -5,11 +5,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // Test asset creation -> check creation with runtime_dependency
@@ -64,21 +62,27 @@ func TestAssetStore(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, check.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// There should be a stored event
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err, string(output))
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
 
-	event := types.Event{}
-	require.NoError(t, json.Unmarshal(output, &event))
-	assert.NotNil(t, event)
-	assert.NotNil(t, event.Check)
-	assert.NotNil(t, event.Entity)
-	assert.Equal(t, "TestAssetStore", event.Entity.ID)
-	assert.Equal(t, "test", event.Check.Name)
-	assert.Equal(t, "asset", strings.Join(event.Check.RuntimeAssets, ","))
+		// Ensure the event's assets are present
+		if strings.Join(event.Check.RuntimeAssets, ",") != "asset" {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
 }

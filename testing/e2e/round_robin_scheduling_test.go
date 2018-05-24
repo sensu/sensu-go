@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -57,33 +56,47 @@ func TestRoundRobinScheduling(t *testing.T) {
 	require.NoError(t, err)
 
 	// Allow checks to be published
-	time.Sleep(20 * time.Second)
+	var output []byte
+	eventA := &types.Event{}
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agentA.ID, t.Name(),
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	out, err := sensuctl.run(
-		"event", "info", agentA.ID, t.Name(),
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	require.NoError(t, err)
-	var eventA types.Event
-	require.NoError(t, json.Unmarshal(out, &eventA))
+		if err := json.Unmarshal(output, eventA); err != nil || eventA == nil {
+			return false, nil
+		}
 
-	out, err = sensuctl.run(
+		// Make sure we have multiple history points
+		if len(eventA.Check.History) < 2 {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no keepalive received: %s", string(output))
+	}
+
+	output, err = sensuctl.run(
 		"event", "info", agentB.ID, t.Name(),
 		"--organization", sensuctl.Organization,
 		"--environment", sensuctl.Environment,
 	)
-	require.NoError(t, err)
+	require.NoError(t, err, string(output))
 	var eventB types.Event
-	require.NoError(t, json.Unmarshal(out, &eventB))
+	require.NoError(t, json.Unmarshal(output, &eventB))
 
-	out, err = sensuctl.run("event", "info", agentC.ID, t.Name(),
+	output, err = sensuctl.run("event", "info", agentC.ID, t.Name(),
 		"--organization", sensuctl.Organization,
 		"--environment", sensuctl.Environment,
 	)
-	require.NoError(t, err)
+	require.NoError(t, err, string(output))
 	var eventC types.Event
-	require.NoError(t, json.Unmarshal(out, &eventC))
+	require.NoError(t, json.Unmarshal(output, &eventC))
 
 	histories := append(eventA.Check.History, eventB.Check.History...)
 	histories = append(histories, eventC.Check.History...)

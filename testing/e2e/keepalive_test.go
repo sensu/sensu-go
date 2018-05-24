@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -44,7 +43,20 @@ func newEventsTest(t *testing.T) *eventsTest {
 
 	// Allow time agent connection to be established, etcd to start,
 	// keepalive to be sent, etc.
-	time.Sleep(10 * time.Second)
+	var output []byte
+	var err error
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info",
+			agent.ID, "keepalive"); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no keepalive received: %s", string(output))
+	}
 
 	return test
 }
@@ -137,21 +149,24 @@ func TestCheck(t *testing.T) {
 	assert.Equal(result.Name, checkName)
 
 	// Allow enough time for the check to run.
-	time.Sleep(20 * time.Second)
-	output, err = test.sensuctl.run(
-		"event", "info", test.ap.ID, checkName,
-		"--organization", test.sensuctl.Organization,
-		"--environment", test.sensuctl.Environment,
-	)
-	require.NoError(t, err)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = test.sensuctl.run("event", "info", test.ap.ID, checkName,
+			"--organization", test.sensuctl.Organization,
+			"--environment", test.sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	event := types.Event{}
-	assert.NoError(json.Unmarshal(output, &event))
-	assert.NotNil(event)
-	assert.NotNil(event.Check)
-	assert.NotNil(event.Entity)
-	assert.Equal("TestKeepalives", event.Entity.ID)
-	assert.Equal(checkName, event.Check.Name)
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no keepalive received: %s", string(output))
+	}
 }
 
 func TestHTTPAPI(t *testing.T) {
@@ -174,16 +189,20 @@ func TestHTTPAPI(t *testing.T) {
 	}()
 
 	// Give it a second to receive the new event
-	time.Sleep(5 * time.Second)
+	var output []byte
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = test.sensuctl.run("event", "info", test.ap.ID, "proxy-check",
+			"--organization", test.sensuctl.Organization,
+			"--environment", test.sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// Make sure the new event has been received
-	output, err := test.sensuctl.run(
-		"event", "info", test.ap.ID, "proxy-check",
-		"--organization", test.sensuctl.Organization,
-		"--environment", test.sensuctl.Environment,
-	)
-	assert.NoError(err, string(output))
-	assert.NotNil(output)
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no events received: %s", string(output))
+	}
 }
 
 func TestKeepaliveTimeout(t *testing.T) {
@@ -204,17 +223,24 @@ func TestKeepaliveTimeout(t *testing.T) {
 
 	// Allow time for agent connection to be established, etcd to start,
 	// keepalive to be sent, etc.
-	time.Sleep(10 * time.Second)
+	var output []byte
+	var err error
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, "keepalive",
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	output, err := sensuctl.run(
-		"event", "info", agent.ID, "keepalive",
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err)
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no keepalive received: %s", string(output))
+	}
 
-	event := types.Event{}
-	assert.NoError(t, json.Unmarshal(output, &event))
+	event := &types.Event{}
+	assert.NoError(t, json.Unmarshal(output, event))
 
 	assert.NotNil(t, event)
 	assert.Equal(t, "TestKeepalives", event.Entity.ID)
@@ -231,21 +257,26 @@ func TestKeepaliveTimeout(t *testing.T) {
 
 	// Allow time for agent connection to be established, etcd to start,
 	// keepalive to be sent, etc.
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, "keepalive",
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	output, err = sensuctl.run(
-		"event", "info", agent.ID, "keepalive",
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err)
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
 
-	event = types.Event{}
-	assert.NoError(t, json.Unmarshal(output, &event))
+		if event.Timestamp == 0 || event.Check.State != "failing" || event.Check.Status != uint32(1) {
+			return false, nil
+		}
 
-	assert.NotNil(t, event)
-	assert.Equal(t, "TestKeepalives", event.Entity.ID)
-	assert.NotZero(t, event.Timestamp)
-	assert.Equal(t, "failing", event.Check.State)
-	assert.Equal(t, uint32(1), event.Check.Status)
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no failing keepalive received: %s", string(output))
+	}
 }

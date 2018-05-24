@@ -3,7 +3,6 @@ package e2e
 import (
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -45,26 +44,19 @@ func TestProxyChecks(t *testing.T) {
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
-	// Give it few seconds to make sure we've published a check request and that
-	// the proxy entity is created
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", source, checkRouter.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// We should now have an entity that represents the proxy entity specified in
-	// this check
-	output, err = sensuctl.run(
-		"entity", "info", source,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err, string(output))
-
-	// We should also have an event listed under that proxy entity with the check
-	output, err = sensuctl.run(
-		"event", "info", source, checkRouter.Name,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err, string(output))
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no check event received: %s", string(output))
+	}
 
 	// Create a proxy check request that will specifically target this proxy
 	// entity
@@ -95,16 +87,19 @@ func TestProxyChecks(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", source, checkProxy.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// We should now have an event for our proxy check requests under that proxy
-	// entity
-	output, err = sensuctl.run(
-		"event", "info", source, checkProxy.Name,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err, string(output))
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event for the proxy request received: %s", string(output))
+	}
 
 	// Make sure the agent's entity did not produce an event for our proxy check
 	// request, because it shouldn't have matched the entity_attributes

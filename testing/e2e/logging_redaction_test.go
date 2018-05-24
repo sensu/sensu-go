@@ -3,7 +3,6 @@ package e2e
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
@@ -28,17 +27,24 @@ func TestLoggingRedaction(t *testing.T) {
 
 	// Allow time agent connection to be established, etcd to start,
 	// keepalive to be sent, etc.
-	time.Sleep(10 * time.Second)
+	var output []byte
+	var err error
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("entity", "info", agent.ID,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// Retrieve the entitites
-	output, err := sensuctl.run("entity", "info", agent.ID,
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err)
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no keepalive received: %s", string(output))
+	}
 
-	entity := types.Entity{}
-	assert.NoError(t, json.Unmarshal(output, &entity))
+	entity := &types.Entity{}
+	assert.NoError(t, json.Unmarshal(output, entity))
 
 	// Make sure the ec2_access_key attribute is redacted, which indicates it was
 	// received as such in keepalives
