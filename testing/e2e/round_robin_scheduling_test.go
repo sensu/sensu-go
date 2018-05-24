@@ -57,7 +57,6 @@ func TestRoundRobinScheduling(t *testing.T) {
 
 	// Allow checks to be published
 	var output []byte
-	eventA := &types.Event{}
 	if err := backoff.Retry(func(retry int) (bool, error) {
 		if output, err = sensuctl.run("event", "info", agentA.ID, t.Name(),
 			"--organization", sensuctl.Organization,
@@ -66,12 +65,13 @@ func TestRoundRobinScheduling(t *testing.T) {
 			return false, nil
 		}
 
-		if err := json.Unmarshal(output, eventA); err != nil || eventA == nil {
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
 			return false, nil
 		}
 
 		// Make sure we have multiple history points
-		if len(eventA.Check.History) < 2 {
+		if len(event.Check.History) < 2 {
 			return false, nil
 		}
 
@@ -80,6 +80,23 @@ func TestRoundRobinScheduling(t *testing.T) {
 	}); err != nil {
 		t.Errorf("no keepalive received: %s", string(output))
 	}
+
+	// Un-publish our check
+	_, err = sensuctl.run(
+		"check", "set-publish", t.Name(), "false",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
+	require.NoError(t, err)
+
+	output, err = sensuctl.run(
+		"event", "info", agentA.ID, t.Name(),
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
+	require.NoError(t, err, string(output))
+	var eventA types.Event
+	require.NoError(t, json.Unmarshal(output, &eventA))
 
 	output, err = sensuctl.run(
 		"event", "info", agentB.ID, t.Name(),
