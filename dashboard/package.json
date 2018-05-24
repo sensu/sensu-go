@@ -27,7 +27,6 @@
     "apollo-link": "^1.2.2",
     "apollo-link-batch-http": "^1.2.2",
     "apollo-link-context": "^1.0.7",
-    "apollo-link-dedup": "^1.0.9",
     "apollo-link-http": "^1.5.3",
     "apollo-link-state": "^0.4.1",
     "autoprefixer": "^7.1.2",

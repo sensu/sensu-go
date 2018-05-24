@@ -469,7 +469,7 @@ apollo-link-context@^1.0.7:
   dependencies:
     apollo-link "^1.2.2"
 
-apollo-link-dedup@^1.0.0, apollo-link-dedup@^1.0.9:
+apollo-link-dedup@^1.0.0:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/apollo-link-dedup/-/apollo-link-dedup-1.0.9.tgz#3c4e4af88ef027cbddfdb857c043fd0574051dad"
   dependencies:
