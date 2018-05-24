@@ -48,7 +48,8 @@ class EntitiesList extends React.PureComponent {
   static fragments = {
     environment: gql`
       fragment EntitiesList_environment on Environment {
-        entities(limit: 1000, filter: $filter, orderBy: $sort) {
+        entities(limit: 1000, filter: $filter, orderBy: $sort)
+          @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
             ...EntitiesListItem_entity
           }
