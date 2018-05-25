@@ -24,7 +24,7 @@ var (
 		InitialDelayInterval: 500 * time.Millisecond,
 		MaxDelayInterval:     20 * time.Second,
 		MaxRetryAttempts:     0, // Unlimited attempts
-		Multiplier:           1.5,
+		Multiplier:           1.3,
 	}
 )
 

@@ -12,7 +12,6 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // TestSilencing ensures that the silencing functionality works as expected, by
@@ -53,6 +52,7 @@ func TestSilencing(t *testing.T) {
 		"--timeout", "10",
 		"--type", "pipe",
 		"--command", fmt.Sprintf("touch %s/$(date +%%s)", tmpDir),
+		"--filters", "not_silenced",
 	)
 	assert.NoError(t, err, string(output))
 
@@ -70,22 +70,35 @@ func TestSilencing(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	// Wait for the agent to send a check result
-	time.Sleep(10 * time.Second)
-
-	// We should have an event for that agent and check combinaison and it should
-	// not be silenced
-	output, err = sensuctl.run(
-		"event", "info", agent.ID, "check_silencing",
+	getCheckEventCmd := []string{"event", "info", agent.ID, "check_silencing",
 		"--organization", sensuctl.Organization,
 		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err, string(output))
-	event := types.Event{}
-	_ = json.Unmarshal(output, &event)
-	require.NotNil(t, event)
-	require.NotNil(t, event.Check)
-	assert.Empty(t, event.Check.Silenced)
+	}
+
+	// Wait for the agent to send a check result
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
+
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			// Let's retry
+			return false, nil
+		}
+
+		// Ensure we received a new keepalive message from the agent
+		if event.Check == nil || len(event.Check.Silenced) != 0 {
+			// Let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no new keepalive received: %s", string(output))
+	}
 
 	// Create a silencing entry for that particular entity and check
 	output, err = sensuctl.run("silenced", "create",
@@ -99,7 +112,28 @@ func TestSilencing(t *testing.T) {
 
 	// Wait for new check results so the event gets updated with this new
 	// silenced entry
-	time.Sleep(2 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
+
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
+
+		// Ensure we received a new keepalive message from the agent
+		if event.Check == nil || !event.IsSilenced() {
+			// Let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received since the check was silenced: %s", string(output))
+	}
 
 	// Retrieve the number of files created by our handler, representing the
 	// number of times our handler was ran. Since the check is silenced, this
@@ -108,19 +142,6 @@ func TestSilencing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	count1 := len(files)
-
-	// Make sure the event is marked as silenced now
-	output, err = sensuctl.run(
-		"event", "info", agent.ID, "check_silencing",
-		"--organization", sensuctl.Organization,
-		"--environment", sensuctl.Environment,
-	)
-	assert.NoError(t, err, string(output))
-	event = types.Event{}
-	_ = json.Unmarshal(output, &event)
-	require.NotNil(t, event)
-	assert.NotEmpty(t, event.Check.Silenced)
 
 	// Make sure the keepalive event is not silenced by our silenced entry
 	output, err = sensuctl.run(
@@ -129,13 +150,15 @@ func TestSilencing(t *testing.T) {
 		"--environment", sensuctl.Environment,
 	)
 	assert.NoError(t, err, string(output))
-	event = types.Event{}
-	json.Unmarshal(output, &event)
+
+	event := types.Event{}
+	_ = json.Unmarshal(output, &event)
 	assert.NotNil(t, event)
 	assert.Empty(t, event.Check.Silenced)
 
 	// The number of files created by the handler should not have increased since
 	// the silenced entry was created
+	time.Sleep(5 * time.Second)
 	files, err = ioutil.ReadDir(tmpDir)
 	if err != nil {
 		t.Fatal(err)
@@ -155,20 +178,17 @@ func TestSilencing(t *testing.T) {
 	assert.NoError(t, err, string(output))
 
 	// Wait for new check results so the event gets updated
-	time.Sleep(2 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		f, e := ioutil.ReadDir(tmpDir)
 
-	// The number of files created by the handler should have increased
-	files, err = ioutil.ReadDir(tmpDir)
-	if err != nil {
-		t.Fatal(err)
+		// The number of files created by the handler should have increased
+		if files, err := ioutil.ReadDir(tmpDir); err != nil || len(files) == count2 {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("the 'touch' handler did not created new files as expected")
 	}
-	count3 := len(files)
-	assert.Condition(
-		t,
-		assert.Comparison(func() bool {
-			return count3 > count2
-		}),
-		"the 'touch' handler did not created new files as expected",
-	)
-
 }
