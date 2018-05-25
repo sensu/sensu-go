@@ -57,6 +57,9 @@ characters and therefore fixing a bug in sensuctl
 - Fixed a bug where only a single resource could be created with
 `sensuctl create` at a time.
 
+### Removed
+- Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
 - Add Ubuntu 18.04 repository
