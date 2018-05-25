@@ -142,6 +142,7 @@ func TestSilencing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	count1 := len(files)
 
 	// Make sure the keepalive event is not silenced by our silenced entry
 	output, err = sensuctl.run(
@@ -179,8 +180,6 @@ func TestSilencing(t *testing.T) {
 
 	// Wait for new check results so the event gets updated
 	if err := backoff.Retry(func(retry int) (bool, error) {
-		f, e := ioutil.ReadDir(tmpDir)
-
 		// The number of files created by the handler should have increased
 		if files, err := ioutil.ReadDir(tmpDir); err != nil || len(files) == count2 {
 			return false, nil
