@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"strings"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -51,15 +50,11 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 				}
 
 				if action == store.WatchDelete {
-					key := string(event.Kv.Key)
-					parts := strings.Split(key, "/")
-					// TODO(eric): add key splitter
-					//  /sensu.io/checks/org/environment/check_name
-					// 0/   1    / 2    / 3 / 4         / 5
+					key := store.ParseResourceKey(string(event.Kv.Key))
 					checkConfig = &types.CheckConfig{
-						Organization: parts[3],
-						Environment:  parts[4],
-						Name:         parts[5],
+						Organization: key.Organization,
+						Environment:  key.Environment,
+						Name:         key.ResourceName,
 					}
 				} else {
 					checkConfig = &types.CheckConfig{}

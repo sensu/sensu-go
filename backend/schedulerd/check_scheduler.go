@@ -127,11 +127,11 @@ func (s *CheckScheduler) mode() schedulerMode {
 func (s *CheckScheduler) start() {
 	var timer CheckTimer
 
-	// cron scheduling mode
-	if s.checkCron != "" {
+	switch s.mode() {
+	case cronMode:
 		s.logger.Info("starting new cron scheduler")
 		timer = NewCronTimer(s.checkName, s.checkCron)
-	} else { // interval scheduling mode
+	default:
 		s.logger.Info("starting new interval scheduler")
 		timer = NewIntervalTimer(s.checkName, uint(s.checkInterval))
 	}
