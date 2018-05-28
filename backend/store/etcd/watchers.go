@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/coreos/etcd/clientv3"
@@ -53,7 +52,6 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 
 				if action == store.WatchDelete {
 					key := string(event.Kv.Key)
-					fmt.Println("event's key is: ", key)
 					parts := strings.Split(key, "/")
 					// TODO(eric): add key splitter
 					//  /sensu.io/checks/org/environment/check_name

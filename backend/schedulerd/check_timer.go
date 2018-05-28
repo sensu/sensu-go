@@ -60,14 +60,20 @@ func (timerPtr *IntervalTimer) Start() {
 // Next reset's timer using interval
 func (timerPtr *IntervalTimer) Next() {
 	if !timerPtr.timer.Reset(timerPtr.interval) {
-		<-timerPtr.timer.C
+		select {
+		case <-timerPtr.timer.C:
+		default:
+		}
 	}
 }
 
 // Stop ends the timer
 func (timerPtr *IntervalTimer) Stop() {
 	if !timerPtr.timer.Stop() {
-		<-timerPtr.timer.C
+		select {
+		case <-timerPtr.timer.C:
+		default:
+		}
 	}
 }
 
@@ -122,14 +128,20 @@ func (timerPtr *CronTimer) Start() {
 // Next reset's timer using interval
 func (timerPtr *CronTimer) Next() {
 	if !timerPtr.timer.Reset(timerPtr.next) {
-		<-timerPtr.timer.C
+		select {
+		case <-timerPtr.timer.C:
+		default:
+		}
 	}
 }
 
 // Stop ends the timer
 func (timerPtr *CronTimer) Stop() {
 	if !timerPtr.timer.Stop() {
-		<-timerPtr.timer.C
+		select {
+		case <-timerPtr.timer.C:
+		default:
+		}
 	}
 }
 

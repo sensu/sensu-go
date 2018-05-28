@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -72,10 +71,13 @@ func TestCheckSubdue(t *testing.T) {
 	time.Sleep(10 * time.Second)
 	event3 := getEvent(t, ctl)
 
-	assert.Equal(t, event2.Check.History, event3.Check.History)
+	require.Equal(t, event2.Check.History, event3.Check.History)
 
 	// Un-subdue the check
-	subdueCheck(t, ctl, "{}")
+	out, err := ctl.run("check", "remove-subdue", "mycheck")
+	if err != nil {
+		t.Fatal(err, string(out))
+	}
 
 	if err := backoff.Retry(func(retry int) (bool, error) {
 		if output, err = ctl.run(getCheckEventCmd...); err != nil {
