@@ -1,115 +1,182 @@
 package e2e
 
 import (
+	"encoding/json"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/retry"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCheckScheduling(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestCheckScheduling",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestCheckScheduling",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
-
-	// Create an authenticated HTTP Sensu client. newSensuClient is deprecated but
-	// sensuctl does not currently support objects updates with flag parameters
-	sensuClient := newSensuClient(backend.HTTPURL)
 
 	// Create a check that publish check requests
 	check := types.FixtureCheckConfig("TestCheckScheduling")
 	check.Publish = true
 	check.Interval = 1
 	check.Subscriptions = []string{"test"}
+	check.Organization = sensuctl.Organization
+	check.Environment = sensuctl.Environment
 
-	err := sensuClient.CreateCheck(check)
-	assert.NoError(t, err)
-	_, err = sensuClient.FetchCheck(check.Name)
-	assert.NoError(t, err)
+	getCheckEventCmd := []string{"event", "info", agent.ID, check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	}
 
-	// Give it few seconds to make sure we've published a check request
-	time.Sleep(10 * time.Second)
+	out, err := sensuctl.run("check", "create", check.Name,
+		"--command", check.Command,
+		"--interval", strconv.FormatUint(uint64(check.Interval), 10),
+		"--runtime-assets", strings.Join(check.RuntimeAssets, ","),
+		"--subscriptions", strings.Join(check.Subscriptions, ","),
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
+
+	require.NoError(t, err, string(out))
+
+	out, err = sensuctl.run("check", "info", check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
+
+	require.NoError(t, err, string(out))
+
+	// Make sure we have at least an event for this check
+	var output []byte
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
 
 	// Stop publishing check requests
-	check.Publish = false
-	err = sensuClient.UpdateCheck(check)
-	assert.NoError(t, err)
+	out, err = sensuctl.run("check", "set-publish", check.Name, "false",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
 
-	_, err = sensuClient.FetchCheck(check.Name)
-	assert.NoError(t, err)
+	require.NoError(t, err, string(out))
+
+	out, err = sensuctl.run("check", "info", check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
+	require.NoError(t, err, string(out))
 
 	// Give it few seconds to make sure we are not publishing check requests
 	time.Sleep(20 * time.Second)
 
 	// Retrieve the number of check results sent
-	event, err := sensuClient.FetchEvent(agent.ID, check.Name)
-	assert.NoError(t, err)
-	assert.NotNil(t, event)
-
-	if event == nil {
-		assert.FailNow(t, "no event was returned from the client.")
+	out, err = sensuctl.run("event", "info", agent.ID, check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
+	require.NoError(t, err, string(out))
+	var event types.Event
+	if err := json.Unmarshal(out, &event); err != nil {
+		t.Fatal(err)
 	}
+
 	count1 := len(event.Check.History)
 
 	// Give it few seconds to make sure we did not published additional check requests
 	time.Sleep(10 * time.Second)
 
 	// Retrieve (again) the number of check results sent
-	event, err = sensuClient.FetchEvent(agent.ID, check.Name)
-	assert.NoError(t, err)
-	assert.NotNil(t, event)
+	out, err = sensuctl.run("event", "info", agent.ID, check.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
+	require.NoError(t, err, string(out))
+	if err := json.Unmarshal(out, &event); err != nil {
+		t.Fatal(err)
+	}
+
 	count2 := len(event.Check.History)
 
 	// Make sure no new check results were sent
 	assert.Equal(t, count1, count2)
 
 	// Start publishing check requests again
-	check.Publish = true
-	err = sensuClient.UpdateCheck(check)
-	assert.NoError(t, err)
+	out, err = sensuctl.run("check", "set-publish", check.Name, "true",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
+	require.NoError(t, err, string(out))
 
-	// Give it few seconds to make sure it picks up the change
-	time.Sleep(10 * time.Second)
+	var count3 int
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// Retrieve (again) the number of check results sent
-	event, err = sensuClient.FetchEvent(agent.ID, check.Name)
-	assert.NoError(t, err)
-	assert.NotNil(t, event)
-	count3 := len(event.Check.History)
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
+		count3 = len(event.Check.History)
 
-	// Make sure new check results were sent
-	assert.NotEqual(t, count2, count3)
+		if count2 == count3 {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no new event received since publish set to true again: %s", string(output))
+	}
 
 	// Change the check schedule to cron
-	check.Interval = 0
-	check.Cron = "* * * * *"
-	err = sensuClient.UpdateCheck(check)
-	assert.NoError(t, err)
+	out, err = sensuctl.run("check", "set-cron", check.Name, "* * * * *",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment)
+	require.NoError(t, err, string(out))
 
-	// Give it few seconds to make sure it picks up the change
-	time.Sleep(60 * time.Second)
+	// Since the cronjob runs every minute, we'll need a longer backoff strategy
+	longBackoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 10 * time.Second,
+		MaxDelayInterval:     90 * time.Second,
+		MaxRetryAttempts:     0, // Unlimited attempts
+		Multiplier:           1.1,
+	}
 
-	// Retrieve (again) the number of check results sent
-	event, err = sensuClient.FetchEvent(agent.ID, check.Name)
-	assert.NoError(t, err)
-	assert.NotNil(t, event)
-	count4 := len(event.Check.History)
+	var count4 int
+	if err := longBackoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// Make sure new check results were sent
-	assert.NotEqual(t, count3, count4)
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
+		count4 = len(event.Check.History)
+
+		if count3 == count4 {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received since schedule was set to cron: %s", string(output))
+	}
 }

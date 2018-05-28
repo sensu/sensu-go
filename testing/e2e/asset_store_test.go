@@ -5,29 +5,22 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // Test asset creation -> check creation with runtime_dependency
 func TestAssetStore(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestAssetStore",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestAssetStore",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
@@ -35,7 +28,7 @@ func TestAssetStore(t *testing.T) {
 	// Create an asset
 	asset := &types.Asset{
 		Name:         "asset1",
-		Organization: "default",
+		Organization: agent.Organization,
 		URL:          "http:foo.com",
 		Sha512:       "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
 	}
@@ -53,8 +46,8 @@ func TestAssetStore(t *testing.T) {
 		Interval:      1,
 		Subscriptions: []string{"test"},
 		Handlers:      []string{"test"},
-		Environment:   "default",
-		Organization:  "default",
+		Environment:   agent.Environment,
+		Organization:  agent.Organization,
 		RuntimeAssets: []string{"asset"},
 	}
 	output, err = sensuctl.run("check", "create", check.Name,
@@ -69,18 +62,27 @@ func TestAssetStore(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, check.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// There should be a stored event
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
-	assert.NoError(t, err, string(output))
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
 
-	event := types.Event{}
-	require.NoError(t, json.Unmarshal(output, &event))
-	assert.NotNil(t, event)
-	assert.NotNil(t, event.Check)
-	assert.NotNil(t, event.Entity)
-	assert.Equal(t, "TestAssetStore", event.Entity.ID)
-	assert.Equal(t, "test", event.Check.Name)
-	assert.Equal(t, "asset", strings.Join(event.Check.RuntimeAssets, ","))
+		// Ensure the event's assets are present
+		if strings.Join(event.Check.RuntimeAssets, ",") != "asset" {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
 }

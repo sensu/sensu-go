@@ -3,7 +3,6 @@ package e2e
 import (
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -15,18 +14,16 @@ import (
 func TestProxyChecks(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Create a check that specifies a source. This check will create a new proxy
 	// entity using the "proxy-entity-id" as its ID.
 	source := "router"
 	checkRouter := types.FixtureCheckConfig("check_router")
+	checkRouter.Organization = sensuctl.Organization
+	checkRouter.Environment = sensuctl.Environment
 	output, err := sensuctl.run("check", "create", checkRouter.Name,
 		"--command", checkRouter.Command,
 		"--interval", "1",
@@ -42,28 +39,30 @@ func TestProxyChecks(t *testing.T) {
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestProxyChecks",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestProxyChecks",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
-	// Give it few seconds to make sure we've published a check request and that
-	// the proxy entity is created
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", source, checkRouter.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// We should now have an entity that represents the proxy entity specified in
-	// this check
-	output, err = sensuctl.run("entity", "info", source)
-	assert.NoError(t, err, string(output))
-
-	// We should also have an event listed under that proxy entity with the check
-	output, err = sensuctl.run("event", "info", source, checkRouter.Name)
-	assert.NoError(t, err, string(output))
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no check event received: %s", string(output))
+	}
 
 	// Create a proxy check request that will specifically target this proxy
 	// entity
 	checkProxy := types.FixtureCheckConfig("check_proxy")
+	checkProxy.Organization = sensuctl.Organization
+	checkProxy.Environment = sensuctl.Environment
 	output, err = sensuctl.run("check", "create", checkProxy.Name,
 		"--command", checkProxy.Command,
 		"--interval", "1",
@@ -82,19 +81,32 @@ func TestProxyChecks(t *testing.T) {
 	defer cleanup()
 	output, err = sensuctl.run("check", "set-proxy-requests", checkProxy.Name,
 		"-f", path,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
 	)
 	assert.NoError(t, err, string(output))
 
 	// Give it few seconds to make sure we've published a check request
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", source, checkProxy.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// We should now have an event for our proxy check requests under that proxy
-	// entity
-	output, err = sensuctl.run("event", "info", source, checkProxy.Name)
-	assert.NoError(t, err, string(output))
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event for the proxy request received: %s", string(output))
+	}
 
 	// Make sure the agent's entity did not produce an event for our proxy check
 	// request, because it shouldn't have matched the entity_attributes
-	output, err = sensuctl.run("event", "info", agent.ID, checkProxy.Name)
+	output, err = sensuctl.run(
+		"event", "info", agent.ID, checkProxy.Name,
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	assert.Error(t, err, string(output))
 }

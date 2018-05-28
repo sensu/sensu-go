@@ -2,19 +2,26 @@ package e2e
 
 import (
 	"bufio"
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
+	"time"
 
-	"github.com/sensu/sensu-go/testing/testutil"
+	"github.com/google/uuid"
+	"github.com/sensu/sensu-go/types"
 )
 
 type backendProcess struct {
@@ -38,57 +45,23 @@ type backendProcess struct {
 	Stdout io.Reader
 	Stderr io.Reader
 
-	cmd *exec.Cmd
+	cmd    *exec.Cmd
+	cancel context.CancelFunc
 }
 
-// newBackend abstracts the initialization of a backend process and returns a
-// ready-to-use backend or exit with a fatal error if an error occurred while
-// initializing it
-func newBackend(t *testing.T) (*backendProcess, func()) {
-	backend, cleanup := newBackendProcess(t)
-
-	if err := backend.Start(); err != nil {
-		cleanup()
-		t.Fatal(err)
-	}
-
-	// Set the HTTP & WS URLs
-	backend.HTTPURL = fmt.Sprintf("http://127.0.0.1:%d", backend.APIPort)
-	backend.WSURL = fmt.Sprintf("ws://127.0.0.1:%d/", backend.AgentPort)
-
-	// Make sure the backend is ready
-	isOnline := waitForBackend(backend.HTTPURL)
-	if !isOnline {
-		cleanup()
-		t.Fatal("the backend never became ready in a timely fashion")
-	}
-
-	return backend, func() {
-		cleanup()
-		if err := backend.Terminate(); err != nil {
-			t.Fatal(err)
-		}
-	}
+func newDefaultBackend() (*backendProcess, func(), error) {
+	return newBackendProcess(40000, 40001, 40002, 40003, 40004)
 }
 
 // newBackendProcess initializes a backendProcess struct
-func newBackendProcess(t *testing.T) (*backendProcess, func()) {
-	ports := make([]int, 5)
-	err := testutil.RandomPorts(ports)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+func newBackendProcess(etcdClientPort, etcdPeerPort, agentPort, apiPort, dashboardPort int) (*backendProcess, func(), error) {
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
 	if err != nil {
-		t.Fatal(err)
+		return nil, nil, err
 	}
 
-	etcdClientURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
-	etcdPeerURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
-	apiPort := ports[2]
-	agentPort := ports[3]
-	dashboardPort := ports[4]
+	etcdClientURL := fmt.Sprintf("http://127.0.0.1:%d", etcdClientPort)
+	etcdPeerURL := fmt.Sprintf("http://127.0.0.1:%d", etcdPeerPort)
 	initialCluster := fmt.Sprintf("default=%s", etcdPeerURL)
 
 	bep := &backendProcess{
@@ -104,19 +77,30 @@ func newBackendProcess(t *testing.T) (*backendProcess, func()) {
 		EtcdInitialCluster:      initialCluster,
 		EtcdInitialClusterState: "new",
 		EtcdName:                "default",
+		HTTPURL:                 fmt.Sprintf("http://127.0.0.1:%d", apiPort),
+		WSURL:                   fmt.Sprintf("ws://127.0.0.1:%d", agentPort),
 	}
 
-	return bep, func() { _ = os.RemoveAll(tmpDir) }
+	cleanup := func() {
+		if err := bep.Terminate(); err != nil {
+			log.Println(err)
+		}
+		_ = os.RemoveAll(tmpDir)
+	}
+	return bep, cleanup, nil
 }
 
 // Start starts a backend process as configured. All exported variables in
 // backendProcess must be configured.
 func (b *backendProcess) Start() error {
-	cmd := exec.Command(
+	ctx, cancel := context.WithCancel(context.Background())
+	b.cancel = cancel
+	cmd := exec.CommandContext(
+		ctx,
 		backendPath, "start",
 		"-d", b.StateDir,
 		"--agent-host", b.AgentHost,
-		"--agent-port", strconv.FormatInt(int64(b.AgentPort), 10),
+		"--agent-port", fmt.Sprintf("%d", b.AgentPort),
 		"--api-host", b.APIHost,
 		"--api-port", strconv.FormatInt(int64(b.APIPort), 10),
 		"--dashboard-host", b.DashboardHost,
@@ -128,6 +112,7 @@ func (b *backendProcess) Start() error {
 		"--name", b.EtcdName,
 		"--initial-advertise-peer-urls", b.EtcdPeerURL,
 		"--initial-cluster-token", b.EtcdInitialClusterToken,
+		"--log-level", "warn",
 	)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -168,6 +153,9 @@ func (b *backendProcess) Terminate() error {
 
 type agentProcess struct {
 	agentConfig
+	backendURL string
+	APIPort    int
+	SocketPort int
 
 	Stdout io.Reader
 	Stderr io.Reader
@@ -176,21 +164,28 @@ type agentProcess struct {
 }
 
 type agentConfig struct {
-	APIPort           int
-	BackendURLs       []string
 	CustomAttributes  string
 	ID                string
 	Redact            []string
-	SocketPort        int
 	KeepaliveTimeout  int
 	KeepaliveInterval int
+	Organization      string
+	Environment       string
 }
 
 // newAgent abstracts the initialization of an agent process and returns a
 // ready-to-use agent or exit with a fatal error if an error occurred while
 // initializing it
 func newAgent(config agentConfig, sensuctl *sensuCtl, t *testing.T) (*agentProcess, func()) {
-	agent := &agentProcess{agentConfig: config}
+	agent := &agentProcess{agentConfig: config, backendURL: sensuctl.wsURL}
+	agent.APIPort = int(atomic.AddInt64(&agentPortCounter, 1))
+	agent.SocketPort = int(atomic.AddInt64(&agentPortCounter, 1))
+	if agent.Organization == "" {
+		agent.Organization = sensuctl.Organization
+	}
+	if agent.Environment == "" {
+		agent.Environment = sensuctl.Environment
+	}
 
 	// Start the agent
 	if err := agent.Start(t); err != nil {
@@ -211,14 +206,6 @@ func newAgent(config agentConfig, sensuctl *sensuCtl, t *testing.T) (*agentProce
 }
 
 func (a *agentProcess) Start(t *testing.T) error {
-	port := make([]int, 2)
-	err := testutil.RandomPorts(port)
-	if err != nil {
-		t.Fatal(err)
-	}
-	a.APIPort = port[0]
-	a.SocketPort = port[1]
-
 	var interval string
 	if a.agentConfig.KeepaliveInterval == 0 {
 		interval = "1"
@@ -237,19 +224,14 @@ func (a *agentProcess) Start(t *testing.T) error {
 		"start",
 		"--id", a.ID,
 		"--subscriptions", "test",
-		"--environment", "default",
-		"--organization", "default",
-		"--api-port", strconv.Itoa(port[0]),
-		"--socket-port", strconv.Itoa(port[1]),
+		"--environment", a.Environment,
+		"--organization", a.Organization,
+		"--api-port", strconv.Itoa(a.APIPort),
+		"--socket-port", strconv.Itoa(a.SocketPort),
 		"--keepalive-interval", interval,
 		"--keepalive-timeout", timeout,
-	}
-
-	// Support a single or multiple backend URLs
-	// backendURLs := []string{}
-	for _, url := range a.BackendURLs {
-		args = append(args, "--backend-url")
-		args = append(args, url)
+		"--backend-url", a.backendURL,
+		"--statsd-disable",
 	}
 
 	// Support custom attributes
@@ -303,37 +285,91 @@ func (a *agentProcess) Terminate() error {
 }
 
 type sensuCtl struct {
-	ConfigDir string
-	stdin     io.Reader
+	ConfigDir    string
+	Organization string
+	Environment  string
+	wsURL        string
+	httpURL      string
+	stdin        io.Reader
 }
 
-// newSensuCtl initializes a sensuctl
-func newSensuCtl(apiURL, org, env, user, pass string) (*sensuCtl, func()) {
+func newCustomSensuctl(t *testing.T, wsURL, httpURL, org, env string) (*sensuCtl, func()) {
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensuctl")
 	if err != nil {
-		log.Panic(err)
+		t.Fatal(err)
 	}
 
 	ctl := &sensuCtl{
-		ConfigDir: tmpDir,
-		stdin:     os.Stdin,
+		Organization: org,
+		Environment:  env,
+		ConfigDir:    tmpDir,
+		stdin:        os.Stdin,
+		wsURL:        wsURL,
+		httpURL:      httpURL,
 	}
 
 	// Authenticate sensuctl
+	out, err := ctl.run("configure",
+		"-n",
+		"--url", httpURL,
+		"--username", "admin",
+		"--password", "P@ssw0rd!",
+		"--format", "json",
+		"--organization", "default",
+		"--environment", "default",
+	)
+	if err != nil {
+		t.Fatal(err, string(out))
+	}
+	if org != "default" {
+		out, err = ctl.run("organization", "create", org)
+		if err != nil {
+			t.Fatal(err, string(out))
+		}
+	}
+	if env != "default" {
+		b, err := json.Marshal(types.Wrapper{
+			Value: &types.Environment{
+				Name:         env,
+				Organization: org,
+				Description:  t.Name(),
+			},
+			Type: "Environment",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		ctl.stdin = bytes.NewReader(b)
+		// creates the environment. have to do it this way due to #1514
+		out, err = ctl.run("create")
+		if err != nil {
+			t.Fatal(err, string(out))
+		}
+	}
+
+	// Set default environment to newly created org and env
 	_, err = ctl.run("configure",
 		"-n",
-		"--url", apiURL,
-		"--username", user,
-		"--password", pass,
+		"--url", httpURL,
+		"--username", "admin",
+		"--password", "P@ssw0rd!",
 		"--format", "json",
 		"--organization", org,
 		"--environment", env,
 	)
 	if err != nil {
-		log.Panic(err)
+		t.Fatal(err)
 	}
 
 	return ctl, func() { _ = os.RemoveAll(tmpDir) }
+}
+
+// newSensuCtl initializes a sensuctl
+func newSensuCtl(t *testing.T) (*sensuCtl, func()) {
+	org := uuid.New().String()
+	env := uuid.New().String()
+
+	return newCustomSensuctl(t, backend.WSURL, backend.HTTPURL, org, env)
 }
 
 // run executes the sensuctl binary with the provided arguments
@@ -368,4 +404,70 @@ func terminateProcess(p *os.Process) error {
 	// allow the process to exit cleanly
 	_, err := p.Wait()
 	return err
+}
+
+func waitForAgent(id string, sensuctl *sensuCtl) bool {
+	fmt.Println("WAITING....", id, sensuctl.Organization, sensuctl.Environment)
+	for i := 0; i < 5; i++ {
+		_, err := sensuctl.run(
+			"event", "info", id, "keepalive",
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment,
+		)
+		if err != nil {
+			log.Println("keepalive not received, sleeping...")
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+
+		log.Println("agent ready")
+		return true
+	}
+	out, err := sensuctl.run("entity", "list")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("ENTITY LIST", string(out))
+	return false
+}
+
+func waitForBackend(url string) bool {
+	for i := 0; i < 5; i++ {
+		resp, getErr := http.Get(fmt.Sprintf("%s/health", url))
+		if getErr != nil {
+			log.Println("backend not ready, sleeping...")
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+		_ = resp.Body.Close()
+
+		if resp.StatusCode != 200 && resp.StatusCode != 401 {
+			log.Printf("backend returned non-200/401 status code: %d\n", resp.StatusCode)
+			time.Sleep(time.Duration(i+1) * time.Second)
+			continue
+		}
+
+		log.Println("backend ready")
+		return true
+	}
+	return false
+}
+
+func writeTempFile(t *testing.T, content []byte, filename string) (string, func()) {
+	file, err := ioutil.TempFile("", filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := file.Write(content); err != nil {
+		_ = os.Remove(file.Name())
+		t.Fatal(err)
+	}
+
+	if err := file.Close(); err != nil {
+		_ = os.Remove(file.Name())
+		t.Fatal(err)
+	}
+
+	return file.Name(), func() { _ = os.Remove(file.Name()) }
 }

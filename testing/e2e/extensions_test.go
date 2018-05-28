@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,10 +9,10 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -91,67 +92,70 @@ func (e *mockExtension) FilterEvent(ctx context.Context, req *rpc.FilterEventReq
 func TestExtensions(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
-	// Initializes client & sensuctl
-	client := newSensuClient(backend.HTTPURL)
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	// Initializes sensuctl
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestExtensions",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestExtensions",
 	}
 	_, cleanup = newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
 	// Register the extension service
-	ports := make([]int, 1)
-	err := testutil.RandomPorts(ports)
+	port := atomic.AddInt64(&agentPortCounter, 1)
+	out, err := sensuctl.run(
+		"extension", "register", "extension1", fmt.Sprintf("127.0.0.1:%d", port),
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	if err != nil {
-		t.Fatal(err)
-	}
-	out, err := sensuctl.run("extension", "register", "extension1", fmt.Sprintf("127.0.0.1:%d", ports[0]))
-	if err != nil {
-		fmt.Println(string(out))
-		t.Fatal(err)
+		t.Fatal(err, string(out))
 	}
 
 	// create a filter handler
-	out, err = sensuctl.run("handler", "create", "filter1", "--filters", "extension1")
+	out, err = sensuctl.run(
+		"handler", "create", "filter1", "--filters", "extension1",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	if err != nil {
-		fmt.Println(string(out))
-		t.Fatal(err)
+		t.Fatal(err, string(out))
 	}
 
 	// create a mutator handler
-	out, err = sensuctl.run("handler", "create", "mutator1", "-m", "extension1")
+	out, err = sensuctl.run(
+		"handler", "create", "mutator1", "-m", "extension1",
+		"--organization", sensuctl.Organization,
+		"--environment", sensuctl.Environment,
+	)
 	if err != nil {
-		fmt.Println(string(out))
-		t.Fatal(err)
-	}
-
-	// Create a check
-	check := types.FixtureCheckConfig("check1")
-	check.Publish = false
-	check.Interval = 1
-	if err := client.CreateCheck(check); err != nil {
-		t.Fatal(err)
+		t.Fatal(err, string(out))
 	}
 
 	// This event is meant to test HandleEvent
 	handleEvt := types.FixtureEvent("TestExtensions", "check1")
+	handleEvt.Check.Organization = sensuctl.Organization
+	handleEvt.Check.Environment = sensuctl.Environment
+	handleEvt.Entity.Organization = sensuctl.Organization
+	handleEvt.Entity.Environment = sensuctl.Environment
 	handleEvt.Check.Handlers = append(handleEvt.Check.Handlers, "extension1")
 
 	// This event is meant to test FilterEvent
 	filterEvt := types.FixtureEvent("TestExtensions", "check1")
+	filterEvt.Check.Organization = sensuctl.Organization
+	filterEvt.Check.Environment = sensuctl.Environment
+	filterEvt.Entity.Organization = sensuctl.Organization
+	filterEvt.Entity.Environment = sensuctl.Environment
 	filterEvt.Check.Handlers = append(filterEvt.Check.Handlers, "filter1")
 
 	// This event is meant to test MutateEvent
 	mutateEvt := types.FixtureEvent("TestExtensions", "check1")
+	mutateEvt.Check.Organization = sensuctl.Organization
+	mutateEvt.Check.Environment = sensuctl.Environment
+	mutateEvt.Entity.Organization = sensuctl.Organization
+	mutateEvt.Entity.Environment = sensuctl.Environment
 	mutateEvt.Check.Handlers = append(mutateEvt.Check.Handlers, "mutator1")
 
 	tests := []struct {
@@ -232,21 +236,18 @@ func TestExtensions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s %s", test.Type, test.Name), func(t *testing.T) {
-			ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", ports[0]))
+			ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 			if err != nil {
 				t.Fatal(err)
 			}
 			ext := newMockExtension(ln, test.Response, test.Error)
 			defer ext.Stop()
 
-			body, _ := json.Marshal(test.Event)
-			resp, err := client.R().SetBody(body).Put(
-				fmt.Sprintf("/events/%s/%s", test.Event.Entity.ID, test.Event.Check.Name))
+			body, _ := json.Marshal(&types.Wrapper{Type: "Event", Value: test.Event})
+			sensuctl.stdin = bytes.NewReader(body)
+			out, err := sensuctl.run("create")
 			if err != nil {
-				t.Fatal(err)
-			}
-			if status := resp.StatusCode(); status >= 400 {
-				t.Fatalf("bad status: %d", status)
+				t.Fatal(err, string(out))
 			}
 
 			ext.Wait()
