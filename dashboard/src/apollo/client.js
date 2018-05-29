@@ -47,6 +47,7 @@ const createClient = () => {
     gql`
       query SyncAuthQuery {
         auth @client {
+          invalid
           accessToken
           refreshToken
           expiresAt
