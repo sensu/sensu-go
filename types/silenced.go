@@ -56,6 +56,8 @@ func FixtureSilenced(id string) *Silenced {
 		ID:           id,
 		Check:        check,
 		Subscription: subscription,
+		Organization: "default",
+		Environment:  "default",
 	}
 }
 
