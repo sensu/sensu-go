@@ -1,11 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
-import { Query } from "react-apollo";
 import gql from "graphql-tag";
+
 import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
+
+import Query from "/components/util/Query";
 
 import AppContent from "/components/AppContent";
 import EventsContainer from "/components/EventsContainer";
@@ -112,10 +114,8 @@ class EventsContent extends React.Component {
         fetchPolicy="cache-and-network"
         variables={{ ...match.params, filter: query.get("filter") }}
       >
-        {({ data: { environment } = {}, loading, error, refetch }) => {
-          if (error) throw error;
-
-          if (!environment && !loading) return <NotFoundView />;
+        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+          if (!environment && !loading && !aborted) return <NotFoundView />;
 
           return (
             <AppContent>
@@ -142,7 +142,7 @@ class EventsContent extends React.Component {
                 className={classes.container}
                 onQueryChange={this.changeQuery}
                 environment={environment}
-                loading={loading}
+                loading={loading || aborted}
               />
             </AppContent>
           );

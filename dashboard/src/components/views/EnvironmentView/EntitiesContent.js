@@ -1,9 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
+
+import Query from "/components/util/Query";
 
 import Content from "/components/Content";
 import AppContent from "/components/AppContent";
@@ -61,11 +62,8 @@ class EntitiesContent extends React.PureComponent {
   render() {
     return (
       <Query query={EntitiesContent.query} variables={this.props.match.params}>
-        {({ data: { environment } = {}, loading, error, refetch }) => {
-          // TODO: Connect this error handler to display a blocking error alert
-          if (error) throw error;
-
-          if (!environment && !loading) return <NotFoundView />;
+        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+          if (!environment && !loading && !aborted) return <NotFoundView />;
 
           return (
             <AppContent>
@@ -73,7 +71,7 @@ class EntitiesContent extends React.PureComponent {
                 <Title>Entities</Title>
               </Headline>
               <EntitiesList
-                loading={loading}
+                loading={loading || aborted}
                 environment={environment}
                 refetch={refetch}
               />

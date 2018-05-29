@@ -1,9 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
+
+import Query from "/components/util/Query";
 
 import AppContent from "/components/AppContent";
 import CheckList from "/components/CheckList";
@@ -38,11 +39,8 @@ class ChecksContent extends React.Component {
 
     return (
       <Query query={ChecksContent.query} variables={variables}>
-        {({ data: { environment } = {}, loading, error, refetch }) => {
-          // TODO: Connect this error handler to display a blocking error alert
-          if (error) throw error;
-
-          if (!environment && !loading) return <NotFoundView />;
+        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+          if (!environment && !loading && !aborted) return <NotFoundView />;
 
           return (
             <AppContent>
@@ -50,7 +48,7 @@ class ChecksContent extends React.Component {
               <Paper>
                 <CheckList
                   environment={environment}
-                  loading={loading}
+                  loading={loading || aborted}
                   refetch={refetch}
                 />
               </Paper>
