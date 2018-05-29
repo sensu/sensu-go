@@ -16,7 +16,7 @@ import UnauthenticatedRoute from "/components/util/UnauthenticatedRoute";
 import DefaultRedirect from "/components/util/DefaultRedirect";
 
 import EnvironmentView from "/components/views/EnvironmentView";
-import LoginView from "/components/views/LoginView";
+import SignInView from "/components/views/SignInView";
 import NotFoundView from "/components/views/NotFoundView";
 
 class AppRoot extends React.PureComponent {
@@ -38,8 +38,8 @@ class AppRoot extends React.PureComponent {
               <Route exact path="/" component={DefaultRedirect} />
               <UnauthenticatedRoute
                 exact
-                path="/login"
-                component={LoginView}
+                path="/signin"
+                component={SignInView}
                 fallbackComponent={DefaultRedirect}
               />
               <AuthenticatedRoute
