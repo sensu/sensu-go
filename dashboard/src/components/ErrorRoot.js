@@ -92,7 +92,7 @@ ${frames
     )
     .join("\n")}
 ${
-    componentStack instanceof ReactError
+    componentStack
       ? `
 
 
