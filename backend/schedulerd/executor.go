@@ -174,7 +174,6 @@ type AdhocRequestExecutor struct {
 func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
-		//adhocQueue: store.NewQueue(adhocQueueName),
 		adhocQueue: queue,
 		store:      store,
 		bus:        bus,
@@ -192,10 +191,8 @@ func (a *AdhocRequestExecutor) Stop() {
 
 func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 	for {
-		select {
-		case <-a.ctx.Done():
+		if err := a.ctx.Err(); err != nil {
 			return
-		default:
 		}
 		// listen to the queue, unmarshal value into a check request, and execute it
 		item, err := a.adhocQueue.Dequeue(ctx)

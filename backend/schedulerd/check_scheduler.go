@@ -136,7 +136,8 @@ func (s *CheckScheduler) start() {
 		timer = NewIntervalTimer(s.checkName, uint(s.checkInterval))
 	}
 
-	executor := NewCheckExecutor(s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkOrg, s.checkEnv, s.store)
+	executor := NewCheckExecutor(
+		s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkOrg, s.checkEnv, s.store)
 
 	timer.Start()
 
