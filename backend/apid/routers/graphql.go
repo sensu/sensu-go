@@ -3,6 +3,7 @@ package routers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -44,22 +45,45 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	ctx = context.WithValue(ctx, types.EnvironmentKey, "")
 
 	// Parse request body
-	rBody := map[string]interface{}{}
-	if err := json.NewDecoder(req.Body).Decode(&rBody); err != nil {
+	var reqBody interface{}
+	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
 		return nil, err
 	}
 
-	// Extract query and variables
-	query, _ := rBody["query"].(string)
-	queryVars, _ := rBody["variables"].(map[string]interface{})
-
-	// Execute given query
-	result := r.service.Do(ctx, query, queryVars)
-	if len(result.Errors) > 0 {
-		logger.
-			WithField("errors", result.Errors).
-			Error("error(s) occurred while executing GraphQL operation")
+	var receivedList bool
+	var ops []map[string]interface{}
+	switch reqBody := reqBody.(type) {
+	case []interface{}:
+		receivedList = true
+		for _, r := range reqBody {
+			if r, ok := r.(map[string]interface{}); ok {
+				ops = append(ops, r)
+			}
+		}
+	case map[string]interface{}:
+		ops = append(ops, reqBody)
+	default:
+		return nil, errors.New("received unexpected request body")
 	}
 
-	return result, nil
+	results := make([]interface{}, 0, len(ops))
+	for _, op := range ops {
+		// Extract query and variables
+		query, _ := op["query"].(string)
+		queryVars, _ := op["variables"].(map[string]interface{})
+
+		// Execute given query
+		result := r.service.Do(ctx, query, queryVars)
+		results = append(results, result)
+		if len(result.Errors) > 0 {
+			logger.
+				WithField("errors", result.Errors).
+				Error("error(s) occurred while executing GraphQL operation")
+		}
+	}
+
+	if receivedList {
+		return results, nil
+	}
+	return results[0], nil
 }
