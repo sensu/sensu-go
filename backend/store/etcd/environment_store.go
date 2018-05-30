@@ -36,7 +36,6 @@ func (s *Store) DeleteEnvironment(ctx context.Context, env *types.Environment) e
 	getresp, err := s.client.Txn(ctx).Then(
 		v3.OpGet(checkKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 		v3.OpGet(entityKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(assetKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 		v3.OpGet(handlerKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 		v3.OpGet(mutatorKeyBuilder.WithContext(ctx).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 	).Commit()
@@ -45,7 +44,7 @@ func (s *Store) DeleteEnvironment(ctx context.Context, env *types.Environment) e
 	}
 	for _, r := range getresp.Responses {
 		if r.GetResponseRange().Count > 0 {
-			return errors.New("environment is not empty") // TODO
+			return errors.New("environment is not empty")
 		}
 	}
 
@@ -62,16 +61,8 @@ func (s *Store) DeleteEnvironment(ctx context.Context, env *types.Environment) e
 		}
 	}
 
-	resp, err := s.client.Delete(ctx, getEnvironmentsPath(org, env.Name), v3.WithPrefix())
-	if err != nil {
-		return err
-	}
-
-	if resp.Deleted != 1 {
-		return fmt.Errorf("environment %s/%s does not exist", org, env.Name)
-	}
-
-	return nil
+	_, err = s.client.Delete(ctx, getEnvironmentsPath(org, env.Name), v3.WithPrefix())
+	return err
 }
 
 // GetEnvironment returns a single environment
