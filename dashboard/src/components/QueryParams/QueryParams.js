@@ -32,14 +32,13 @@ class QueryParams extends React.Component {
     keys: null,
   };
 
-  constructor(props) {
-    super(props);
-    this.params = new URLSearchParams(props.location.search);
+  static getDerivedStateFromProps(nextProps) {
+    return {
+      params: new URLSearchParams(nextProps.location.search),
+    };
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.params = new URLSearchParams(nextProps.location.search);
-  }
+  state = {};
 
   shouldComponentUpdate(nextProps) {
     if (this.props.children !== nextProps.children) {
@@ -52,15 +51,21 @@ class QueryParams extends React.Component {
     return false;
   }
 
-  changeQuery = (key, val) => {
-    this.params.set(key, val);
-    this.props.history.push(
-      `${this.props.location.pathname}?${this.params.toString()}`,
-    );
+  changeQuery = fnOrObj => {
+    const params = Object.assign(this.state.params, {});
+
+    if (typeof fnOrObj === "function") {
+      fnOrObj(params);
+    } else {
+      Object.keys(fnOrObj).forEach(key => params.set(key, fnOrObj[key]));
+    }
+
+    const newPath = `${this.props.location.pathname}?${params.toString()}`;
+    this.props.history.push(newPath);
   };
 
   render() {
-    const params = expandParams(this.params, this.props.keys);
+    const params = expandParams(this.state.params, this.props.keys);
     return this.props.children(params, this.changeQuery);
   }
 }

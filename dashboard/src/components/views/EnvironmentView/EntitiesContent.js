@@ -9,15 +9,15 @@ import EntitiesList from "/components/partials/EntitiesList";
 import SearchBox from "/components/SearchBox";
 import ListToolbar from "/components/partials/ListToolbar";
 import RefreshIcon from "@material-ui/icons/Refresh";
+import CollapsingMenu from "/components/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
-import { CollapsingMenuItem } from "/components/CollapsingMenu";
 
 class EntitiesContent extends React.PureComponent {
   static propTypes = {
     match: PropTypes.object.isRequired,
     queryParams: PropTypes.shape({
       filter: PropTypes.string,
-      sort: PropTypes.sort,
+      order: PropTypes.string,
     }).isRequired,
     setQueryParams: PropTypes.func.isRequired,
   };
@@ -26,7 +26,7 @@ class EntitiesContent extends React.PureComponent {
     query EnvironmentViewEntitiesContentQuery(
       $environment: String!
       $organization: String!
-      $sort: EntityListOrder = ID
+      $order: EntityListOrder = ID
       $filter: String
     ) {
       environment(organization: $organization, environment: $environment) {
@@ -56,13 +56,13 @@ class EntitiesContent extends React.PureComponent {
                 <ListToolbar
                   renderSearch={
                     <SearchBox
-                      onSearch={val => this.props.setQueryParams("filter", val)}
-                      initialValue={this.props.queryParams.filter}
                       placeholder="Filter entities…"
+                      initialValue={this.props.queryParams.filter}
+                      onSearch={filter => this.props.setQueryParams({ filter })}
                     />
                   }
                   renderMenuItems={
-                    <CollapsingMenuItem
+                    <CollapsingMenu.Button
                       title="Reload"
                       icon={<RefreshIcon />}
                       onClick={() => refetch()}
@@ -83,4 +83,4 @@ class EntitiesContent extends React.PureComponent {
   }
 }
 
-export default withQueryParams(["sort", "filter"])(EntitiesContent);
+export default withQueryParams(["filter", "order"])(EntitiesContent);

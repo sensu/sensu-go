@@ -8,9 +8,9 @@ import SearchBox from "/components/SearchBox";
 import Content from "/components/Content";
 import NotFoundView from "/components/views/NotFoundView";
 import RefreshIcon from "@material-ui/icons/Refresh";
-import QueryParams from "/components/QueryParams";
 import ListToolbar from "/components/partials/ListToolbar";
-import { CollapsingMenuItem } from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/CollapsingMenu";
+import { withQueryParams } from "/components/QueryParams";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
@@ -18,6 +18,11 @@ const defaultExpression = "HasCheck && IsIncident";
 class EventsContent extends React.Component {
   static propTypes = {
     match: PropTypes.object.isRequired,
+    queryParams: PropTypes.shape({
+      filter: PropTypes.string,
+      order: PropTypes.string,
+    }).isRequired,
+    setQueryParams: PropTypes.func.isRequired,
   };
 
   static query = gql`
@@ -37,50 +42,46 @@ class EventsContent extends React.Component {
 
   render() {
     return (
-      <QueryParams>
-        {(query, setQuery) => (
-          <Query
-            query={EventsContent.query}
-            fetchPolicy="cache-and-network"
-            variables={{ ...this.props.match.params, ...query }}
-          >
-            {({ data: { environment } = {}, loading, error, refetch }) => {
-              if (error) throw error;
-              if (!environment && !loading) return <NotFoundView />;
+      <Query
+        query={EventsContent.query}
+        fetchPolicy="cache-and-network"
+        variables={{ ...this.props.match.params, ...this.props.queryParams }}
+      >
+        {({ data: { environment } = {}, loading, error, refetch }) => {
+          if (error) throw error;
+          if (!environment && !loading) return <NotFoundView />;
 
-              return (
-                <AppContent>
-                  <Content gutters bottomMargin>
-                    <ListToolbar
-                      renderSearch={
-                        <SearchBox
-                          onSearch={val => setQuery("filter", val)}
-                          initialValue={query.filter}
-                          placeholder="Filter events…"
-                        />
-                      }
-                      renderMenuItems={
-                        <CollapsingMenuItem
-                          title="Reload"
-                          icon={<RefreshIcon />}
-                          onClick={() => refetch()}
-                        />
-                      }
+          return (
+            <AppContent>
+              <Content gutters bottomMargin>
+                <ListToolbar
+                  renderSearch={
+                    <SearchBox
+                      placeholder="Filter events…"
+                      initialValue={this.props.queryParams.filter}
+                      onSearch={filter => this.props.setQueryParams({ filter })}
                     />
-                  </Content>
-                  <EventsContainer
-                    onQueryChange={setQuery}
-                    environment={environment}
-                    loading={loading}
-                  />
-                </AppContent>
-              );
-            }}
-          </Query>
-        )}
-      </QueryParams>
+                  }
+                  renderMenuItems={
+                    <CollapsingMenu.Button
+                      title="Reload"
+                      icon={<RefreshIcon />}
+                      onClick={() => refetch()}
+                    />
+                  }
+                />
+              </Content>
+              <EventsContainer
+                onQueryChange={this.props.setQueryParams}
+                environment={environment}
+                loading={loading}
+              />
+            </AppContent>
+          );
+        }}
+      </Query>
     );
   }
 }
 
-export default EventsContent;
+export default withQueryParams(["filter", "order"])(EventsContent);
