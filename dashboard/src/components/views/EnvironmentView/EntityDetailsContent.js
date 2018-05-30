@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import { Query } from "react-apollo";
 
+import Query from "/components/util/Query";
 import Loader from "/components/util/Loader";
 
 import AppContent from "/components/AppContent";
@@ -35,12 +35,12 @@ class EntityDetailsContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         variables={{ ...params, ns }}
       >
-        {({ data: { entity } = {}, loading }) => {
-          if (!loading && !entity) return <NotFoundView />;
+        {({ data: { entity } = {}, loading, aborted }) => {
+          if (!loading && !entity && !aborted) return <NotFoundView />;
 
           return (
             <AppContent>
-              <Loader loading={loading} passthrough>
+              <Loader loading={loading || aborted} passthrough>
                 {entity && <EntityDetailsContainer entity={entity} />}
               </Loader>
             </AppContent>
