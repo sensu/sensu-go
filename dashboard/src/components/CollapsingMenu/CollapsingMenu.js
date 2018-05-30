@@ -4,6 +4,10 @@ import Hidden from "@material-ui/core/Hidden";
 import Menu from "@material-ui/core/Menu";
 import ButtonSet from "/components/ButtonSet";
 import VerticalDisclosureButton from "/components/VerticalDisclosureButton";
+import MenuItem from "./MenuItem";
+import Button from "./Button";
+
+const Context = React.createContext();
 
 let id = 0;
 const getNextId = () => {
@@ -23,6 +27,9 @@ class CollapsingMenu extends React.PureComponent {
     breakpoint: "sm",
   };
 
+  static MenuItem = MenuItem;
+  static Button = Button;
+
   constructor(props) {
     super(props);
     this._id = getNextId();
@@ -35,27 +42,19 @@ class CollapsingMenu extends React.PureComponent {
   render() {
     const { breakpoint, children } = this.props;
 
-    const buttons = React.Children.map(children, child =>
-      React.cloneElement(child, { renderAs: "button" }),
-    );
     const menuId = `collapsed-menu-${this._id}`;
-    const menuItems = React.Children.map(children, child =>
-      React.cloneElement(child, {
-        renderAs: "menu-item",
-        onClick: ev => {
-          if (child.props.onClick) child.props.onClick(ev);
-          this.setState({ anchorEl: null });
-        },
-      }),
-    );
+    const close = () => this.setState({ anchorEl: null });
 
+    // find the previous breakpoint; clamp if we are already on the boundary.
     const breakpointIdx = breakpoints.indexOf(breakpoint);
     const prevBreakpoint = breakpoints[breakpointIdx ? breakpointIdx - 1 : 0];
 
     return (
       <React.Fragment>
         <Hidden {...{ [`${prevBreakpoint}Down`]: true }}>
-          <ButtonSet>{buttons}</ButtonSet>
+          <Context.Provider value={{ collapsed: false, close }}>
+            <ButtonSet>{children}</ButtonSet>
+          </Context.Provider>
         </Hidden>
         <Hidden {...{ [`${breakpoint}Up`]: true }}>
           <VerticalDisclosureButton
@@ -68,9 +67,11 @@ class CollapsingMenu extends React.PureComponent {
             id={menuId}
             anchorEl={this.state.anchorEl}
             open={Boolean(this.state.anchorEl)}
-            onClose={() => this.setState({ anchorEl: null })}
+            onClose={close}
           >
-            {menuItems}
+            <Context.Provider value={{ collapsed: true, close }}>
+              {children}
+            </Context.Provider>
           </Menu>
         </Hidden>
       </React.Fragment>
@@ -78,4 +79,4 @@ class CollapsingMenu extends React.PureComponent {
   }
 }
 
-export default CollapsingMenu;
+export { CollapsingMenu as default, Context };

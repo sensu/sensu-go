@@ -1,46 +1,17 @@
 import React from "react";
 import PropTypes from "prop-types";
-import MenuItem from "@material-ui/core/MenuItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import Button from "@material-ui/core/Button";
-import ButtonIcon from "/components/ButtonIcon";
-import BaseItem from "./MenuItemBase";
+import { Context } from "./CollapsingMenu";
 
-class CollapsingMenuItem extends React.PureComponent {
+class MenuItem extends React.PureComponent {
+  static displayName = "CollapsingMenu.MenuItem";
+
   static propTypes = {
-    icon: PropTypes.node,
-    title: PropTypes.string.isRequired,
-    subtitle: PropTypes.string,
-    onClick: PropTypes.func.isRequired,
-  };
-
-  static defaultProps = {
-    icon: null,
-    subtitle: null,
+    children: PropTypes.func.isRequired,
   };
 
   render() {
-    const { icon, title, subtitle, onClick, ...props } = this.props;
-
-    return (
-      <BaseItem
-        renderMenuItem={
-          <MenuItem onClick={onClick}>
-            <ListItemIcon>{icon}</ListItemIcon>
-            <ListItemText inset primary={title} secondary={subtitle} />
-          </MenuItem>
-        }
-        renderButton={
-          <Button onClick={onClick}>
-            <ButtonIcon>{icon}</ButtonIcon>
-            {title}
-          </Button>
-        }
-        {...props}
-      />
-    );
+    return <Context.Consumer>{this.props.children}</Context.Consumer>;
   }
 }
 
-export default CollapsingMenuItem;
+export default MenuItem;
