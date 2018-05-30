@@ -115,7 +115,9 @@ class EventsContent extends React.Component {
         variables={{ ...match.params, filter: query.get("filter") }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
-          if (!environment && !loading && !aborted) return <NotFoundView />;
+          if (!environment && !loading && !aborted) {
+            return <NotFoundView />;
+          }
 
           return (
             <AppContent>

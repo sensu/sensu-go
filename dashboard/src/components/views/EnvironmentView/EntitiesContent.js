@@ -63,7 +63,9 @@ class EntitiesContent extends React.PureComponent {
     return (
       <Query query={EntitiesContent.query} variables={this.props.match.params}>
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
-          if (!environment && !loading && !aborted) return <NotFoundView />;
+          if (!environment && !loading && !aborted) {
+            return <NotFoundView />;
+          }
 
           return (
             <AppContent>
