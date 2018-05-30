@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import warning from "warning";
 
 class CollapsingMenuItemBase extends React.PureComponent {
   static propTypes = {
@@ -15,15 +14,16 @@ class CollapsingMenuItemBase extends React.PureComponent {
 
   render() {
     const { renderMenuItem, renderButton, renderAs } = this.props;
-    warning(
-      `
-      CollapsingMenu.MenuItem component's renderAs prop was not set. This has
-      likely occurred because the component was used outside of the scope of the
-      CollapsingMenu component.
-    `,
-      renderAs === null,
-    );
 
+    if (process.env.NODE_ENV !== "production" && !renderAs) {
+      throw new Error(
+        `
+        CollapsingMenu.MenuItemBase component's renderAs prop was not set. This
+        likely occurred because the component was used outside of the scope of
+        the CollapsingMenu component.
+        `,
+      );
+    }
     return renderAs === "menu-item" ? renderMenuItem : renderButton;
   }
 }
