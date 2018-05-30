@@ -15,7 +15,7 @@ class DefaultRedirect extends React.PureComponent {
     // TODO: Store and retrieve last viewed environment.
     const lastEnvironment = "/default/default";
 
-    const nextPath = data.auth.accessToken ? lastEnvironment : "/login";
+    const nextPath = data.auth.accessToken ? lastEnvironment : "/signin";
 
     return <Redirect to={nextPath} />;
   }
