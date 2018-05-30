@@ -10,8 +10,12 @@ const unknown = "unknown";
 // > 2 == unknown
 // eslint-disable-next-line import/prefer-default-export
 export function statusCodeToId(st) {
-  if (st === 0) return success;
-  else if (st === 1) return warning;
-  else if (st === 2) return critical;
+  if (st === 0) {
+    return success;
+  } else if (st === 1) {
+    return warning;
+  } else if (st === 2) {
+    return critical;
+  }
   return unknown;
 }

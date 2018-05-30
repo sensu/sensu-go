@@ -1,6 +1,8 @@
 import capture from "bugnet";
 import ErrorStackParser from "error-stack-parser";
 
+import renderError from "/renderError";
+
 let a;
 const absolute = path => {
   a = a || document.createElement("a");
@@ -38,7 +40,7 @@ const handle = error => {
     // Ignore vendor script error.
   } else {
     // eslint-disable-next-line no-console
-    console.log("exceptionHandler.js", error);
+    renderError(error);
   }
 };
 

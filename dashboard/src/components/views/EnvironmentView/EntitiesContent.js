@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Query } from "react-apollo";
 import gql from "graphql-tag";
+import Query from "/components/util/Query";
 import Content from "/components/Content";
 import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
@@ -44,11 +44,10 @@ class EntitiesContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         variables={{ ...this.props.match.params, ...this.props.queryParams }}
       >
-        {({ data: { environment } = {}, loading, error, refetch }) => {
-          // TODO: Connect this error handler to display a blocking error alert
-          if (error) throw error;
-
-          if (!environment && !loading) return <NotFoundView />;
+        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+          if (!environment && !loading && !aborted) {
+            return <NotFoundView />;
+          }
 
           return (
             <AppContent>
@@ -71,7 +70,7 @@ class EntitiesContent extends React.PureComponent {
                 />
               </Content>
               <EntitiesList
-                loading={loading}
+                loading={loading || aborted}
                 environment={environment}
                 refetch={refetch}
               />

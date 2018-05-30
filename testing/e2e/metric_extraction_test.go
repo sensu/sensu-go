@@ -3,54 +3,58 @@ package e2e
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMetricExtraction(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestMetricExtraction",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestMetricExtraction",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
 
 	// Create a check that publish check requests
-	out, err := sensuctl.run(
+	output, err := sensuctl.run(
 		"check", "create", "nagios-metric",
 		"--publish",
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--command", `echo "PING ok - Packet loss = 0% | percent_packet_loss=0"`,
 		"--output-metric-format", "nagios_perfdata",
+		"--environment", sensuctl.Environment,
+		"--organization", sensuctl.Organization,
 	)
-	require.NoError(t, err, string(out))
+	require.NoError(t, err, string(output))
 
-	// FIXME: Give it few seconds to make sure we're not publishing check requests.
-	time.Sleep(15 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, "nagios-metric",
+			"--environment", sensuctl.Environment,
+			"--organization", sensuctl.Organization); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// There should be a stored event for our metric
-	out, err = sensuctl.run("event", "info", agent.ID, "nagios-metric")
-	assert.NoError(t, err, string(out))
+		event := &types.Event{}
+		if err := json.Unmarshal(output, event); err != nil || event == nil {
+			return false, nil
+		}
 
-	event := types.Event{}
-	require.NoError(t, json.Unmarshal(out, &event))
-	assert.NotNil(t, event)
-	assert.NotZero(t, len(event.Metrics.Points))
-	assert.Equal(t, "percent_packet_loss", event.Metrics.Points[0].Name)
-	assert.Equal(t, 0.0, event.Metrics.Points[0].Value)
+		if len(event.Metrics.Points) == 0 || event.Metrics.Points[0].Name != "percent_packet_loss" || event.Metrics.Points[0].Value != 0.0 {
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no metric event received: %s", string(output))
+	}
 }

@@ -1,7 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import { Query } from "react-apollo";
+
+import Query from "/components/util/Query";
+
 import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 import Container from "/components/partials/EventDetailsContainer";
@@ -39,11 +41,18 @@ class EventDetailsContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         variables={{ ...match.params, ns }}
       >
-        {({ client, data: { event } = {}, loading }) => {
-          if (!loading && (!event || event.deleted)) return <NotFoundView />;
+        {({ client, data: { event } = {}, loading, aborted }) => {
+          if (!loading && !aborted && (!event || event.deleted)) {
+            return <NotFoundView />;
+          }
+
           return (
             <AppContent>
-              <Container client={client} event={event} loading={loading} />
+              <Container
+                client={client}
+                event={event}
+                loading={loading || aborted}
+              />
             </AppContent>
           );
         }}

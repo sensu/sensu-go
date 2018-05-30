@@ -17,7 +17,7 @@ import createTokens from "/mutations/createTokens";
 import Logo from "/icons/SensuLogoGraphic";
 import Wordmark from "/icons/SensuWordmark";
 
-class LoginView extends React.Component {
+class SignInView extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     client: PropTypes.object.isRequired,
@@ -27,7 +27,7 @@ class LoginView extends React.Component {
     "@global html": {
       background: theme.palette.background.main,
     },
-    loginCard: {
+    signInCard: {
       margin: "0 auto",
       padding: 48,
       maxWidth: 450,
@@ -112,7 +112,7 @@ class LoginView extends React.Component {
 
     return (
       <div className={classes.root}>
-        <Paper className={classes.loginCard}>
+        <Paper className={classes.signInCard}>
           <Logo className={classes.icon} />
           <Wordmark className={classes.wordmark} />
           <div className={classes.headline}>
@@ -158,7 +158,7 @@ class LoginView extends React.Component {
                 disabled={disabled}
                 className={classes.button}
               >
-                Log in
+                Sign in
               </Button>
             </div>
           </form>
@@ -168,4 +168,4 @@ class LoginView extends React.Component {
   }
 }
 
-export default compose(withApollo, withStyles(LoginView.styles))(LoginView);
+export default compose(withApollo, withStyles(SignInView.styles))(SignInView);

@@ -21,12 +21,15 @@ commands, which is compatible with `sensuctl create`.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
+- Split out the docker commands in build script so that building images and
+  pushing can be done separately.
 - Migrated the InfluxDB handler from the sensu-go repository to
 github.com/nikkiki/sensu-influxdb-handler
 - Entry point for sensu-backend has been changed to
   `github.com/sensu/sensu-go/cmd/sensu-backend`
 - Don't allow unknown fields in types that do not support custom attributes
 when creating resources with `sensuctl create`.
+- Provided additional context to metric event logs.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -53,6 +56,9 @@ characters and therefore fixing a bug in sensuctl
 - API requests that result in a 404 response are now logged
 - Fixed a bug where only a single resource could be created with
 `sensuctl create` at a time.
+
+### Removed
+- Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added

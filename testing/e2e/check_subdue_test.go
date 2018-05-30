@@ -18,18 +18,13 @@ const timeWindow = `{"days":{"all":[{"begin":"12:00AM UTC","end":"11:59PM UTC"},
 func TestCheckSubdue(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	ctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	ctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestCheckSubdue",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestCheckSubdue",
 	}
 	_, cleanup = newAgent(agentConfig, ctl, t)
 	defer cleanup()
@@ -41,15 +36,29 @@ func TestCheckSubdue(t *testing.T) {
 	check := getCheck(t, ctl)
 	require.NotNil(t, check)
 
-	// FIXME: Give it few seconds to make sure we're not publishing check requests.
-	time.Sleep(15 * time.Second)
-
-	event1 := getEvent(t, ctl)
-	require.NotNil(t, event1)
-
-	if len(event1.Check.History) == 0 {
-		t.Error("missing check history")
+	getCheckEventCmd := []string{"event", "info", "TestCheckSubdue", "mycheck",
+		"--format", "json",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
 	}
+
+	var output []byte
+	var err error
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = ctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
+
+	event1 := &types.Event{}
+	require.NoError(t, json.Unmarshal(output, event1))
+	require.NotNil(t, event1)
 
 	// Subdue the check
 	subdueCheck(t, ctl, timeWindow)
@@ -68,12 +77,27 @@ func TestCheckSubdue(t *testing.T) {
 	// Un-subdue the check
 	subdueCheck(t, ctl, "{}")
 
-	// FIXME: Give it a few seconds to pick up the change
-	time.Sleep(15 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = ctl.run(getCheckEventCmd...); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	event4 := getEvent(t, ctl)
-	if len(event4.Check.History) <= len(event3.Check.History) {
-		t.Error("check did not start executing again")
+		event4 := &types.Event{}
+		if err := json.Unmarshal(output, event4); err != nil || event4 == nil {
+			return false, nil
+		}
+
+		// Ensure we received a new keepalive message from the agent
+		if event3.Timestamp == event4.Timestamp {
+			// Let's retry
+			return false, nil
+		}
+
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no new event received since check was un-subdue %s", string(output))
 	}
 }
 
@@ -84,6 +108,8 @@ func createCheck(t *testing.T, ctl *sensuCtl) {
 		"--interval", "1",
 		"--subscriptions", "test",
 		"--command", "true",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
 	)
 	require.NoError(t, err, string(out))
 }
@@ -94,6 +120,8 @@ func getCheck(t *testing.T, ctl *sensuCtl) *types.Check {
 	out, err := ctl.run(
 		"check", "info", "mycheck",
 		"--format", "json",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
 	)
 
 	require.NoError(t, err, string(out))
@@ -113,6 +141,8 @@ func getEvent(t *testing.T, ctl *sensuCtl) *types.Event {
 	out, err := ctl.run(
 		"event", "info", "TestCheckSubdue", "mycheck",
 		"--format", "json",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
 	)
 
 	require.NoError(t, err, string(out))
@@ -131,6 +161,9 @@ func subdueCheck(t *testing.T, ctl *sensuCtl, data string) {
 	defer func() {
 		ctl.SetStdin(os.Stdin)
 	}()
-	_, err := ctl.run("check", "set-subdue", "mycheck")
+	_, err := ctl.run("check", "set-subdue", "mycheck",
+		"--organization", ctl.Organization,
+		"--environment", ctl.Environment,
+	)
 	require.NoError(t, err)
 }

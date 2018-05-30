@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -18,18 +17,13 @@ import (
 func TestEventHandler(t *testing.T) {
 	t.Parallel()
 
-	// Start the backend
-	backend, cleanup := newBackend(t)
-	defer cleanup()
-
 	// Initializes sensuctl
-	sensuctl, cleanup := newSensuCtl(backend.HTTPURL, "default", "default", "admin", "P@ssw0rd!")
+	sensuctl, cleanup := newSensuCtl(t)
 	defer cleanup()
 
 	// Start the agent
 	agentConfig := agentConfig{
-		ID:          "TestEventHandler",
-		BackendURLs: []string{backend.WSURL},
+		ID: "TestEventHandler",
 	}
 	agent, cleanup := newAgent(agentConfig, sensuctl, t)
 	defer cleanup()
@@ -41,8 +35,8 @@ func TestEventHandler(t *testing.T) {
 		Name:         "test",
 		Type:         "pipe",
 		Command:      fmt.Sprintf("cat > %s", handlerJSONFile),
-		Environment:  "default",
-		Organization: "default",
+		Environment:  agent.Environment,
+		Organization: agent.Organization,
 	}
 	output, err := sensuctl.run("handler", "create", handler.Name,
 		"--type", handler.Type,
@@ -59,8 +53,8 @@ func TestEventHandler(t *testing.T) {
 		Interval:      1,
 		Subscriptions: []string{"test"},
 		Handlers:      []string{"test"},
-		Environment:   "default",
-		Organization:  "default",
+		Environment:   agent.Environment,
+		Organization:  agent.Organization,
 	}
 	output, err = sensuctl.run("check", "create", check.Name,
 		"--command", check.Command,
@@ -73,14 +67,22 @@ func TestEventHandler(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	time.Sleep(10 * time.Second)
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		if output, err = sensuctl.run("event", "info", agent.ID, check.Name,
+			"--organization", sensuctl.Organization,
+			"--environment", sensuctl.Environment); err != nil {
+			// The command returned an error, let's retry
+			return false, nil
+		}
 
-	// There should be a stored event
-	output, err = sensuctl.run("event", "info", agent.ID, check.Name)
-	assert.NoError(t, err, string(output))
+		// At this point the attempt was successful
+		return true, nil
+	}); err != nil {
+		t.Errorf("no event received: %s", string(output))
+	}
 
-	event := types.Event{}
-	require.NoError(t, json.Unmarshal(output, &event))
+	event := &types.Event{}
+	require.NoError(t, json.Unmarshal(output, event))
 	assert.NotNil(t, event)
 	assert.NotNil(t, event.Check)
 	assert.NotNil(t, event.Entity)

@@ -28,7 +28,9 @@ const createClient = () => {
 
   let client = null;
   const getClient = () => {
-    if (!client) throw new Error("apollo client is not initialized");
+    if (!client) {
+      throw new Error("apollo client is not initialized");
+    }
     return client;
   };
 

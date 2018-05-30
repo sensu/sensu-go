@@ -13,7 +13,9 @@ const createDispatcher = () => {
   };
 
   const subscribe = listener => {
-    if (listeners.indexOf(listener) !== -1) return () => {};
+    if (listeners.indexOf(listener) !== -1) {
+      return () => {};
+    }
     listeners.push(listener);
 
     return () => unsubscribe(listener);

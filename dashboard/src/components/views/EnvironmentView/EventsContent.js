@@ -1,7 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Query } from "react-apollo";
 import gql from "graphql-tag";
+
+import Query from "/components/util/Query";
 import AppContent from "/components/AppContent";
 import EventsContainer from "/components/EventsContainer";
 import SearchBox from "/components/SearchBox";
@@ -47,9 +48,10 @@ class EventsContent extends React.Component {
         fetchPolicy="cache-and-network"
         variables={{ ...this.props.match.params, ...this.props.queryParams }}
       >
-        {({ data: { environment } = {}, loading, error, refetch }) => {
-          if (error) throw error;
-          if (!environment && !loading) return <NotFoundView />;
+        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+          if (!environment && !loading && !aborted) {
+            return <NotFoundView />;
+          }
 
           return (
             <AppContent>
@@ -74,7 +76,7 @@ class EventsContent extends React.Component {
               <EventsContainer
                 onQueryChange={this.props.setQueryParams}
                 environment={environment}
-                loading={loading}
+                loading={loading || aborted}
               />
             </AppContent>
           );
