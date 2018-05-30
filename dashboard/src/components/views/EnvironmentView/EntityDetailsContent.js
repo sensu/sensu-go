@@ -36,7 +36,9 @@ class EntityDetailsContent extends React.PureComponent {
         variables={{ ...params, ns }}
       >
         {({ data: { entity } = {}, loading, aborted }) => {
-          if (!loading && !entity && !aborted) return <NotFoundView />;
+          if (!loading && !entity && !aborted) {
+            return <NotFoundView />;
+          }
 
           return (
             <AppContent>

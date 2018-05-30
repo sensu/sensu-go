@@ -40,7 +40,9 @@ class ChecksContent extends React.Component {
     return (
       <Query query={ChecksContent.query} variables={variables}>
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
-          if (!environment && !loading && !aborted) return <NotFoundView />;
+          if (!environment && !loading && !aborted) {
+            return <NotFoundView />;
+          }
 
           return (
             <AppContent>
