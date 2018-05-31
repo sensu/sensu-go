@@ -57,6 +57,7 @@ characters and therefore fixing a bug in sensuctl
 - Fixed a bug where only a single resource could be created with
 `sensuctl create` at a time.
 - Dashboard's backend reverse proxy now works with TLS certs are configured.
+- Fixed a bug with the IN operator in query statements.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor

@@ -540,10 +540,10 @@
   revision = "2315d5715e36303a941d907f038da7f7c44c773b"
 
 [[projects]]
-  branch = "nested-parameters"
   name = "github.com/sensu/govaluate"
   packages = ["."]
-  revision = "8f7cba01497bd9fba915e5a310cbc3b1a98ff77a"
+  revision = "43cb04169dc67512be53aafaad8fbacf9fa3af9f"
+  version = "v3.1.0"
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
@@ -804,6 +804,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d55f632f7bd0a3ba73b6ec57b8fc1a334cab1543fd97245d1dee2c1c9c68ad61"
+  inputs-digest = "6797d51548bb5f6d1c8d7b602a4886c6c1b04a7f72e2d25f13744464c14ad47b"
   solver-name = "gps-cdcl"
   solver-version = 1
