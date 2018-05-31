@@ -3,6 +3,7 @@ package dashboardd
 import (
 	"compress/gzip"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -12,15 +13,15 @@ import (
 	"time"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/dashboard"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 const (
-	// API represents the Sensu API url
-	API = "http://127.0.0.1:8080"
+	// APIHost represents the Sensu API's host
+	APIHost = "127.0.0.1"
 )
 
 // Config represents the dashboard configuration
@@ -28,6 +29,8 @@ type Config struct {
 	Host string
 	Port int
 	TLS  *types.TLSOptions
+
+	APIPort int
 }
 
 // Dashboardd represents the dashboard daemon
@@ -128,15 +131,14 @@ func (d *Dashboardd) Err() <-chan error {
 func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
 
-	// API gateway to Sensu API
-	target, err := url.Parse(API)
+	backendProxy, err := newBackendProxy(d.Config.APIPort, d.Config.TLS)
 	if err != nil {
-		logger.Fatal(err)
+		d.errChan <- err
 	}
 
 	// Proxy endpoints
-	r.PathPrefix("/auth").Handler(httputil.NewSingleHostReverseProxy(target))
-	r.PathPrefix("/graphql").Handler(httputil.NewSingleHostReverseProxy(target))
+	r.PathPrefix("/auth").Handler(backendProxy)
+	r.PathPrefix("/graphql").Handler(backendProxy)
 
 	// Serve assets
 	r.PathPrefix("/").Handler(assetsHandler())
@@ -198,4 +200,40 @@ func noCacheHandler(next http.Handler) http.Handler {
 		w.Header().Set("expires", "0")
 		next.ServeHTTP(w, r)
 	})
+}
+
+func newBackendProxy(port int, TLS *types.TLSOptions) (*httputil.ReverseProxy, error) {
+	// API gateway to Sensu API
+	target := &url.URL{
+		Host:   fmt.Sprintf("%s:%d", APIHost, port),
+		Scheme: "http",
+	}
+
+	// Copy of values from http.DefaultTransport
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	// Configure TLS
+	if TLS != nil {
+		cfg, err := TLS.ToTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+		target.Scheme = "https"
+		transport.TLSClientConfig = cfg
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy.Transport = transport
+	return proxy, nil
 }

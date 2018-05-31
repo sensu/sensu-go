@@ -269,9 +269,10 @@ func (b *Backend) Run() (derr error) {
 	}
 
 	dashCfg := dashboardd.Config{
-		Host: b.Config.DashboardHost,
-		Port: b.Config.DashboardPort,
-		TLS:  b.Config.TLS,
+		Host:    b.Config.DashboardHost,
+		Port:    b.Config.DashboardPort,
+		TLS:     b.Config.TLS,
+		APIPort: b.Config.APIPort,
 	}
 	b.dashboardd, err = dashboardd.New(dashCfg)
 	if err != nil {
