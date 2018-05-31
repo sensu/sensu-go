@@ -116,12 +116,15 @@ class EventListItem extends React.Component {
     const { checked, classes, event, onClickSelect } = this.props;
     const { entity, check, timestamp } = event;
 
+    if (event.deleted) {
+      return null;
+    }
+
     return (
       <StatusListItem
         selected={checked}
         onClickSelect={onClickSelect}
         status={event.check && event.check.status}
-        deleted={event.deleted}
         title={
           <NamespaceLink
             namespace={event.namespace}

@@ -1,21 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
-
-import { withApollo } from "react-apollo";
-import { every, filter, reduce, capitalize } from "lodash";
-import { compose } from "lodash/fp";
-import { map, join } from "ramda";
 import gql from "graphql-tag";
+import { withApollo } from "react-apollo";
+import { reduce, capitalize } from "lodash";
+import { compose } from "lodash/fp";
 import { withStyles } from "@material-ui/core/styles";
-
-import Typography from "@material-ui/core/Typography";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import Checkbox from "@material-ui/core/Checkbox";
-
 import EventsListItem from "/components/EventsListItem";
-import resolveEvent from "/mutations/resolveEvent";
 import TableList, {
   TableListHeader,
   TableListBody,
@@ -23,22 +17,27 @@ import TableList, {
   TableListEmptyState,
   TableListButton as Button,
 } from "/components/TableList";
-
+import ButtonSet from "/components/ButtonSet";
 import Loader from "/components/util/Loader";
-
 import StatusMenu from "/components/partials/StatusMenu";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
+import Typography from "@material-ui/core/Typography";
+import ConfirmDelete from "/components/partials/ConfirmDelete";
+import resolveEvent from "/mutations/resolveEvent";
+import deleteEvent from "/mutations/deleteEvent";
+
+// Event ID includes timestamp and cannot be reliably used to identify an event
+// between refreshes, subscriptions and mutations.
+const makeKey = ev => `${ev.check.name}:::${ev.entity.name}`;
+
+// Safely retrieve the events from component's props;
+const getEvents = props =>
+  (props.environment && props.environment.events.nodes) || [];
 
 const styles = theme => ({
   root: {
     marginTop: 16,
     marginBottom: 16,
-  },
-  headerButton: {
-    marginLeft: theme.spacing.unit / 2,
-    "&:first-child": {
-      marginLeft: theme.spacing.unit,
-    },
   },
   filterActions: {
     display: "none",
@@ -100,6 +99,13 @@ class EventsContainer extends React.Component {
           @connection(key: "events", filter: ["filter", "orderBy"]) {
           nodes {
             id
+            entity {
+              name
+            }
+            check {
+              name
+            }
+
             ...EventsListItem_event
           }
         }
@@ -109,21 +115,36 @@ class EventsContainer extends React.Component {
     `,
   };
 
+  static getDerivedStateFromProps(props, state) {
+    const events = getEvents(props);
+    const rowState = events.reduce((acc, ev) => {
+      const key = makeKey(ev);
+      return { ...acc, [key]: state.rowState[key] };
+    }, {});
+
+    return {
+      rowState,
+    };
+  }
+
   state = {
     rowState: {},
-    filters: [],
+    silence: null,
+  };
+
+  // Retrieve those events associated with the current selection set.
+  selectedEvents = () => {
+    const events = getEvents(this.props);
+    return events.filter(ev => this.state.rowState[makeKey(ev)]);
   };
 
   // click checkbox for all items in list
   selectAll = () => {
-    const { environment } = this.props;
+    const keys = getEvents(this.props).map(makeKey);
+    const events = this.selectedEvents();
 
-    const keys = map(
-      node => node.id,
-      environment ? environment.events.nodes : [],
-    );
     // if every state is false or undefined, switch the header
-    const newState = !this.eventsSelected();
+    const newState = events.length === 0;
     this.setState({
       rowState: reduce(
         keys,
@@ -133,47 +154,40 @@ class EventsContainer extends React.Component {
     });
   };
 
+  clearSelectionSet = () => this.setState({ rowState: {} });
+
   // click single checkbox
-  selectCheckbox = id => () => {
-    this.state.rowState[id] = !this.state.rowState[id];
-    this.setState({ rowState: this.state.rowState });
-  };
-
-  selectedEvents = () => filter(this.state.rowState, Boolean);
-  eventsSelected = () => this.selectedEvents().length > 0;
-
-  allEventsSelected = () => {
-    const { environment } = this.props;
-
-    const { rowState } = this.state;
-    return (
-      (environment ? environment.events.nodes : []).length ===
-        Object.keys(rowState).length && every(rowState, Boolean)
-    );
-  };
-
-  resolve = () => {
-    const selectedKeys = reduce(
-      this.state.rowState,
-      (selected, val, key) => (val ? [...selected, key] : selected),
-      [],
-    );
-
-    selectedKeys.forEach(key => {
-      resolveEvent(this.props.client, { id: key }).then(() => {
-        this.setState(({ rowState }) => ({ ...rowState, [key]: false }));
-      });
+  selectCheckbox = key => () => {
+    this.setState(state => {
+      const curValue = state.rowState[key];
+      const rowState = { ...state.rowState, [key]: !curValue };
+      return { rowState };
     });
   };
 
-  silenceSelectedEvents = () => {
-    const events = this.props.environment.events.nodes.filter(
-      node => this.state.rowState[node.id],
-    );
+  _handleBulkResolve = () => {
+    // Delete selected events
+    const events = this.selectedEvents();
+    events.forEach(ev => resolveEvent(this.props.client, ev));
 
-    const targets = events.map(event => ({
-      subscription: `entity:${event.entity.name}`,
-      check: event.check.name,
+    // Clear selection set
+    this.clearSelectionSet();
+  };
+
+  _handleBulkDelete = () => {
+    // Delete selected events
+    const events = this.selectedEvents();
+    events.forEach(ev => deleteEvent(this.props.client, ev));
+
+    // Clear selection set
+    this.clearSelectionSet();
+  };
+
+  silenceSelectedEvents = () => {
+    const events = this.selectedEvents();
+    const targets = events.map(ev => ({
+      subscription: `entity:${ev.entity.name}`,
+      check: ev.check.name,
     }));
 
     if (targets.length === 1) {
@@ -196,7 +210,7 @@ class EventsContainer extends React.Component {
       if (newValue.length === 1) {
         this.props.onQueryChange({ filter: `Check.Status == ${newValue}` });
       } else {
-        const val = join(",", newValue);
+        const val = newValue.join(",");
         this.props.onQueryChange({ filter: `Check.Status IN (${val})` });
       }
     } else {
@@ -241,15 +255,24 @@ class EventsContainer extends React.Component {
           </div>
           <div className={classes.grow} />
           <div className={hiddenIf(!someEventsSelected)}>
-            <Button
-              className={classes.headerButton}
-              onClick={this.silenceSelectedEvents}
-            >
-              <Typography variant="button">Silence</Typography>
-            </Button>
-            <Button className={classes.headerButton} onClick={this.resolve}>
-              <Typography variant="button">Resolve</Typography>
-            </Button>
+            <ButtonSet>
+              <ConfirmDelete
+                identifier={`${eventsSelected.length} events`}
+                onSubmit={this._handleBulkDelete}
+              >
+                {confirm => (
+                  <Button onClick={confirm.open}>
+                    <Typography variant="button">Delete</Typography>
+                  </Button>
+                )}
+              </ConfirmDelete>
+              <Button onClick={this.silenceSelectedEvents}>
+                <Typography variant="button">Silence</Typography>
+              </Button>
+              <Button onClick={this._handleBulkResolve}>
+                <Typography variant="button">Resolve</Typography>
+              </Button>
+            </ButtonSet>
           </div>
           <div
             className={classnames(
@@ -311,7 +334,7 @@ class EventsContainer extends React.Component {
               <EventsListItem
                 key={event.id}
                 event={event}
-                onClickSelect={this.selectCheckbox(event.id)}
+                onClickSelect={this.selectCheckbox(makeKey(event))}
                 onClickSilenceEntity={() => {
                   this.setState({
                     silence: {
@@ -322,7 +345,7 @@ class EventsContainer extends React.Component {
                 onClickSilenceCheck={() => {
                   this.setState({ silence: { check: event.check.name } });
                 }}
-                checked={Boolean(rowState[event.id])}
+                checked={Boolean(rowState[makeKey(event)])}
               />
             ))}
           </TableListBody>
