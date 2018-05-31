@@ -3,6 +3,7 @@
 package schedulerd
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +31,7 @@ func (tcs *TestCheckScheduler) Receiver() chan<- interface{} {
 	return tcs.channel
 }
 
-func newScheduler(t *testing.T) *TestCheckScheduler {
+func newScheduler(t *testing.T, ctx context.Context) *TestCheckScheduler {
 	t.Helper()
 
 	assert := assert.New(t)
@@ -42,40 +44,23 @@ func newScheduler(t *testing.T) *TestCheckScheduler {
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
+	store := &mockstore.MockStore{}
+	store.On("GetAssets", mock.Anything).Return([]*types.Asset{&asset}, nil)
+	store.On("GetHookConfigs", mock.Anything).Return([]*types.HookConfig{&hook}, nil)
+	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
 	})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
-	schedulerState := &SchedulerState{}
 
-	manager := NewStateManager(&mockstore.MockStore{})
-	manager.Update(func(state *SchedulerState) {
-		state.SetChecks([]*types.CheckConfig{scheduler.check})
-		state.SetAssets([]*types.Asset{&asset})
-		state.SetHooks([]*types.HookConfig{&hook})
-		schedulerState = state
-	})
-
-	scheduler.scheduler = &CheckScheduler{
-		checkName:     scheduler.check.Name,
-		checkEnv:      scheduler.check.Environment,
-		checkOrg:      scheduler.check.Organization,
-		checkInterval: scheduler.check.Interval,
-		checkCron:     scheduler.check.Cron,
-		lastCronState: scheduler.check.Cron,
-		stateManager:  manager,
-		bus:           scheduler.msgBus,
-		wg:            &sync.WaitGroup{},
-	}
+	scheduler.scheduler = NewCheckScheduler(store, scheduler.msgBus, scheduler.check, ctx)
 
 	assert.NoError(scheduler.msgBus.Start())
 
-	scheduler.exec = &CheckExecutor{
-		state: schedulerState,
-		bus:   scheduler.msgBus,
-	}
+	roundRobin := newRoundRobinScheduler(ctx, scheduler.msgBus)
+	scheduler.exec = NewCheckExecutor(scheduler.msgBus, roundRobin, "default", "default", store)
 
 	return scheduler
 }
@@ -86,7 +71,9 @@ func TestCheckSchedulerInterval(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -103,17 +90,20 @@ func TestCheckSchedulerInterval(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
 		select {
 		case msg := <-scheduler.channel:
 			res, ok := msg.(*types.CheckRequest)
 			assert.True(ok)
 			assert.Equal("check1", res.Config.Name)
+			wg.Done()
 		}
 	}()
 
 	assert.NoError(scheduler.scheduler.Start())
-	time.Sleep(5 * time.Second)
+	wg.Wait()
 	assert.NoError(scheduler.scheduler.Stop())
 }
 
@@ -123,7 +113,9 @@ func TestCheckSubdueInterval(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -173,10 +165,13 @@ func TestCheckSchedulerCron(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	// Set interval to smallest valid value
 	check := scheduler.check
+	check.Cron = "* * * * *"
 	check.Subscriptions = []string{"subscription1"}
 
 	topic := fmt.Sprintf(
@@ -195,17 +190,20 @@ func TestCheckSchedulerCron(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
 		select {
 		case msg := <-scheduler.channel:
 			res, ok := msg.(*types.CheckRequest)
 			assert.True(ok)
 			assert.Equal("check1", res.Config.Name)
+			wg.Done()
 		}
 	}()
 
 	assert.NoError(scheduler.scheduler.Start())
-	time.Sleep(60 * time.Second)
+	wg.Wait()
 	assert.NoError(scheduler.scheduler.Stop())
 }
 
@@ -215,7 +213,9 @@ func TestCheckSubdueCron(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -253,7 +253,7 @@ func TestCheckSubdueCron(t *testing.T) {
 	}()
 
 	assert.NoError(scheduler.scheduler.Start())
-	time.Sleep(60 * time.Second)
+	time.Sleep(5 * time.Second)
 	assert.NoError(scheduler.scheduler.Stop())
 
 	// We should have no element in our channel

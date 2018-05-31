@@ -36,22 +36,31 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 		watcherChan := watcher.Watch(ctx, checkKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
 		defer close(ch)
 
-		var (
-			watchEvent  store.WatchEventCheckConfig
-			action      store.WatchActionType
-			checkConfig *types.CheckConfig
-		)
-
 		for watchResponse := range watcherChan {
 			for _, event := range watchResponse.Events {
+				var (
+					watchEvent  store.WatchEventCheckConfig
+					action      store.WatchActionType
+					checkConfig *types.CheckConfig
+				)
+
 				action = getWatcherAction(event)
 				if action == store.WatchUnknown {
 					logger.Error("unknown etcd watch action: ", event.Type.String())
 				}
 
-				checkConfig = &types.CheckConfig{}
-				if err := json.Unmarshal(event.Kv.Value, checkConfig); err != nil {
-					logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
+				if action == store.WatchDelete {
+					key := store.ParseResourceKey(string(event.Kv.Key))
+					checkConfig = &types.CheckConfig{
+						Organization: key.Organization,
+						Environment:  key.Environment,
+						Name:         key.ResourceName,
+					}
+				} else {
+					checkConfig = &types.CheckConfig{}
+					if err := json.Unmarshal(event.Kv.Value, checkConfig); err != nil {
+						logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
+					}
 				}
 
 				watchEvent = store.WatchEventCheckConfig{

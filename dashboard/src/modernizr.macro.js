@@ -1,5 +1,6 @@
 const detectFeatures = [
   "es6/collections",
+  "es6/array",
   "network/fetch",
   "url/urlsearchparams",
   "intl",

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sort"
 	"testing"
+	time "time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -273,6 +274,70 @@ func TestSortCheckConfigsByName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sort.Sort(SortCheckConfigsByName(tc.inChecks, tc.inDir))
 			assert.EqualValues(t, tc.expected, tc.inChecks)
+		})
+	}
+}
+
+func TestIsSubdued(t *testing.T) {
+	now := time.Now().UTC()
+	tests := []struct {
+		Name   string
+		Subdue *TimeWindowWhen
+		Want   bool
+	}{
+		{
+			Name: "nil subdue",
+			Want: false,
+		},
+		{
+			Name: "valid subdue, outside of window",
+			Subdue: &TimeWindowWhen{
+				Days: TimeWindowDays{
+					All: []*TimeWindowTimeRange{
+						{
+							Begin: now.Add(time.Hour).Format(time.Kitchen),
+							End:   now.Add(time.Hour * 2).Format(time.Kitchen),
+						},
+					},
+				},
+			},
+			Want: false,
+		},
+		{
+			Name: "valid subdue",
+			Subdue: &TimeWindowWhen{
+				Days: TimeWindowDays{
+					All: []*TimeWindowTimeRange{
+						{
+							Begin: now.Add(-time.Hour).Format(time.Kitchen),
+							End:   now.Add(time.Hour).Format(time.Kitchen),
+						},
+					},
+				},
+			},
+			Want: true,
+		},
+		{
+			Name: "invalid subdue",
+			Subdue: &TimeWindowWhen{
+				Days: TimeWindowDays{
+					All: []*TimeWindowTimeRange{
+						{
+							Begin: "calvin",
+							End:   "hobbes",
+						},
+					},
+				},
+			},
+			Want: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			check := FixtureCheckConfig("foo")
+			check.Subdue = test.Subdue
+			require.Equal(t, test.Want, check.IsSubdued())
 		})
 	}
 }

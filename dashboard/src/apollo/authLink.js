@@ -44,7 +44,9 @@ const authLink = ({ getClient }) =>
           .catch(observer.error.bind(observer));
 
         return () => {
-          if (sub) sub.unsubscribe();
+          if (sub) {
+            sub.unsubscribe();
+          }
         };
       }),
   );

@@ -58,6 +58,7 @@ characters and therefore fixing a bug in sensuctl
 `sensuctl create` at a time.
 - Fixed a bug where environments couldn't be deleted if there was an asset in
 the organization they reside in.
+- Dashboard's backend reverse proxy now works with TLS certs are configured.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor

@@ -67,7 +67,9 @@ class EventDetailsDeleteAction extends React.PureComponent {
       event: { id, ns },
       history,
     } = this.props;
-    if (this.state.locked) return;
+    if (this.state.locked) {
+      return;
+    }
 
     // Cleanup
     this.closeDialog();

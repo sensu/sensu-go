@@ -96,7 +96,8 @@ class EventsContainer extends React.Component {
           }
         }
 
-        events(limit: 100, filter: $filter, orderBy: $order) {
+        events(limit: 100, filter: $filter, orderBy: $order)
+          @connection(key: "events", filter: ["filter", "orderBy"]) {
           nodes {
             id
             ...EventsListItem_event
@@ -183,28 +184,28 @@ class EventsContainer extends React.Component {
   };
 
   requeryEntity = newValue => {
-    this.props.onQueryChange("filter", `Entity.ID=='${newValue}'`);
+    this.props.onQueryChange({ filter: `Entity.ID == '${newValue}'` });
   };
 
   requeryCheck = newValue => {
-    this.props.onQueryChange("filter", `Check.Name=='${newValue}'`);
+    this.props.onQueryChange({ filter: `Check.Name == '${newValue}'` });
   };
 
   requeryStatus = newValue => {
     if (Array.isArray(newValue)) {
       if (newValue.length === 1) {
-        this.props.onQueryChange("filter", `Check.Status==${newValue}`);
+        this.props.onQueryChange({ filter: `Check.Status == ${newValue}` });
       } else {
         const val = join(",", newValue);
-        this.props.onQueryChange("filter", `Check.Status IN (${val})`);
+        this.props.onQueryChange({ filter: `Check.Status IN (${val})` });
       }
     } else {
-      this.props.onQueryChange("filter", newValue);
+      this.props.onQueryChange(query => query.delete("filter"));
     }
   };
 
   requerySort = newValue => {
-    this.props.onQueryChange("order", newValue);
+    this.props.onQueryChange({ order: newValue });
   };
 
   renderTable() {

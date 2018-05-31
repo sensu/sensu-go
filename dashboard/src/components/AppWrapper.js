@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Query } from "react-apollo";
 import gql from "graphql-tag";
 
+import Query from "/components/util/Query";
 import AppFrame from "/components/AppFrame";
 
 class AppWrapper extends React.Component {
@@ -36,19 +36,15 @@ class AppWrapper extends React.Component {
           environment: this.props.environment,
         }}
       >
-        {({ data: { viewer, environment } = {}, loading, error }) => {
-          if (error) throw error;
-
-          return (
-            <AppFrame
-              loading={loading}
-              viewer={viewer}
-              environment={environment}
-            >
-              {this.props.children}
-            </AppFrame>
-          );
-        }}
+        {({ data: { viewer, environment } = {}, loading, aborted }) => (
+          <AppFrame
+            loading={loading || aborted}
+            viewer={viewer}
+            environment={environment}
+          >
+            {this.props.children}
+          </AppFrame>
+        )}
       </Query>
     );
   }

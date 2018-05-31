@@ -32,7 +32,9 @@ export default () => {
     `,
   );
   const result = execute(schema, queryAST);
-  if (result.errors) throw result.errors;
+  if (result.errors) {
+    throw result.errors;
+  }
 
   // https://github.com/apollographql/apollo-client/blob/2701b0acb89711864bde28341cb5cfcf909d2caf/packages/apollo-cache-inmemory/src/fragmentMatcher.ts#L149-L155
   const filteredTypes = result.data.__schema.types.filter(

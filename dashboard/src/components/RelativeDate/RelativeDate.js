@@ -54,7 +54,9 @@ class RelativeDate extends React.PureComponent {
     const formatter = new IntlRelativeFormat("en", { style });
 
     let relativeDate = formatter.format(dateValue, unit);
-    if (capitalize) relativeDate = capitalizeStr(relativeDate);
+    if (capitalize) {
+      relativeDate = capitalizeStr(relativeDate);
+    }
     return (
       <time dateTime={dateTime} {...props}>
         {relativeDate}

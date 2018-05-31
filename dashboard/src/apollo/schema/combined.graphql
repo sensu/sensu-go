@@ -15,6 +15,12 @@ More: https://www.apollographql.com/docs/link/links/state.html#directive
 directive @client on FIELD
 
 """
+TODO
+https://www.apollographql.com/docs/react/features/pagination.html#connection-directive
+"""
+directive @connection(key: String!, filter: [String!]) on FIELD
+
+"""
 Asset defines an archive, an agent will install as a dependency for a check.
 """
 type Asset implements Node {

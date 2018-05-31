@@ -15,7 +15,7 @@ stages:
 cache:
   yarn: true
   directories:
-  - backend/dashboardd/node_modules
+  - dashboard/node_modules
   - vendor
 before_install:
   - echo -e "machine github.com\n login $GITHUB_TOKEN" >> ~/.netrc

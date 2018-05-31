@@ -74,7 +74,9 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	entity := types.FixtureEntity("entity1")
 	check := scheduler.check
@@ -121,7 +123,9 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -175,7 +179,9 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -228,10 +234,13 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	check := scheduler.check
-	request := scheduler.exec.buildRequest(check)
+	request, err := scheduler.exec.buildRequest(check)
+	require.NoError(t, err)
 	assert.NotNil(request)
 	assert.NotNil(request.Config)
 	assert.NotNil(request.Assets)
@@ -243,7 +252,8 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 
 	check.RuntimeAssets = []string{}
 	check.CheckHooks = []types.HookList{}
-	request = scheduler.exec.buildRequest(check)
+	request, err = scheduler.exec.buildRequest(check)
+	require.NoError(t, err)
 	assert.NotNil(request)
 	assert.NotNil(request.Config)
 	assert.Empty(request.Assets)
@@ -259,12 +269,15 @@ func TestCheckBuildRequestCron(t *testing.T) {
 	assert := assert.New(t)
 
 	// Start a scheduler
-	scheduler := newScheduler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx)
 
 	check := scheduler.check
 	check.Cron = "* * * * *"
 
-	request := scheduler.exec.buildRequest(check)
+	request, err := scheduler.exec.buildRequest(check)
+	require.NoError(t, err)
 	assert.NotNil(request)
 	assert.NotNil(request.Config)
 	assert.NotNil(request.Assets)
@@ -276,7 +289,8 @@ func TestCheckBuildRequestCron(t *testing.T) {
 
 	check.RuntimeAssets = []string{}
 	check.CheckHooks = []types.HookList{}
-	request = scheduler.exec.buildRequest(check)
+	request, err = scheduler.exec.buildRequest(check)
+	require.NoError(t, err)
 	assert.NotNil(request)
 	assert.NotNil(request.Config)
 	assert.Empty(request.Assets)

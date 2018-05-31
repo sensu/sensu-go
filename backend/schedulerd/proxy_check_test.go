@@ -128,8 +128,6 @@ func TestMatchEntities(t *testing.T) {
 }
 
 func TestSplayCalculation(t *testing.T) {
-	t.Parallel()
-
 	assert := assert.New(t)
 
 	check := types.FixtureCheckConfig("check1")
@@ -164,8 +162,6 @@ func TestSplayCalculation(t *testing.T) {
 }
 
 func TestSubstituteProxyEntityTokens(t *testing.T) {
-	t.Parallel()
-
 	assert := assert.New(t)
 
 	entity := types.FixtureEntity("entity1")
