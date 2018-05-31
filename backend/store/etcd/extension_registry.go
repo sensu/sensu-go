@@ -25,6 +25,7 @@ func getExtensionPath(ctx context.Context, name string) string {
 	return extKeyBuilder.WithOrg(org).Build(name)
 }
 
+// RegisterExtension registers an extension.
 func (s *Store) RegisterExtension(ctx context.Context, ext *types.Extension) error {
 	if err := ext.Validate(); err != nil {
 		return err
@@ -51,6 +52,7 @@ func (s *Store) RegisterExtension(ctx context.Context, ext *types.Extension) err
 	return nil
 }
 
+// DeregisterExtension deregisters an extension
 func (s *Store) DeregisterExtension(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("no extension name specified")
@@ -60,6 +62,7 @@ func (s *Store) DeregisterExtension(ctx context.Context, name string) error {
 	return err
 }
 
+// GetExtension gets an extension
 func (s *Store) GetExtension(ctx context.Context, name string) (*types.Extension, error) {
 	if name == "" {
 		return nil, errors.New("no extension name specified")
@@ -77,6 +80,7 @@ func (s *Store) GetExtension(ctx context.Context, name string) (*types.Extension
 	return &ext, json.Unmarshal(resp.Kvs[0].Value, &ext)
 }
 
+// GetExtensions gets an extension
 func (s *Store) GetExtensions(ctx context.Context) ([]*types.Extension, error) {
 	resp, err := query(ctx, s, getExtensionPath)
 	if err != nil {

@@ -40,28 +40,31 @@ func query(ctx context.Context, store *Store, fn getObjectsPath) (*clientv3.GetR
 		return resp, err
 	}
 
-	// Return all elements if all environments were requested
+	// Return all elements if all environments or assets were requested
 	if env == "" {
 		return resp, nil
 	}
 
 	// Filter elements based on their environment
-	var value map[string]interface{}
+	var value struct {
+		Environment *string `json:"environment"`
+	}
+
 	for i, kv := range resp.Kvs {
 		if err := json.Unmarshal(kv.Value, &value); err != nil {
 			// We are dealing with unexpected data, just return the raw data
 			return resp, nil
 		}
 
-		environment, ok := value["environment"].(string)
-		if !ok {
+		// Check for the existence of the environment key
+		if value.Environment == nil {
 			// We are dealing with an unconvential type of objects (e.g. events)
 			// so just return all elements
 			return resp, nil
 		}
 
 		// Make sure we only keep the elements that are member of the specified env
-		if environment != env {
+		if *value.Environment != env {
 			resp.Kvs = append(resp.Kvs[:i], resp.Kvs[i+1:]...)
 		}
 	}

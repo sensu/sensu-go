@@ -42,13 +42,13 @@ func TestSchedulerd(t *testing.T) {
 	// Mock a default organization & environment
 	require.NoError(t, st.CreateOrganization(context.Background(), types.FixtureOrganization("default")))
 
-	checker, err := New(Config{
+	schedulerd, err := New(Config{
 		Store:       st,
 		QueueGetter: queue.NewMemoryGetter(),
 		Bus:         bus,
 	})
 	require.NoError(t, err)
-	require.NoError(t, checker.Start())
+	require.NoError(t, schedulerd.Start())
 
 	tsub := testSubscriber{
 		ch: make(chan interface{}, 10),
@@ -73,7 +73,7 @@ func TestSchedulerd(t *testing.T) {
 	sub.Cancel()
 	close(tsub.ch)
 
-	assert.NoError(t, checker.Stop())
+	assert.NoError(t, schedulerd.Stop())
 	assert.NoError(t, bus.Stop())
 
 	for msg := range tsub.ch {

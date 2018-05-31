@@ -14,9 +14,10 @@ type Schedulerd struct {
 	store                store.Store
 	queueGetter          types.QueueGetter
 	bus                  messaging.MessageBus
-	stateManager         *StateManager
-	schedulerManager     *ScheduleManager
+	checkWatcher         *CheckWatcher
 	adhocRequestExecutor *AdhocRequestExecutor
+	ctx                  context.Context
+	cancel               context.CancelFunc
 	errChan              chan error
 }
 
@@ -33,13 +34,15 @@ type Config struct {
 // New creates a new Schedulerd.
 func New(c Config, opts ...Option) (*Schedulerd, error) {
 	s := &Schedulerd{
-		store:        c.Store,
-		queueGetter:  c.QueueGetter,
-		bus:          c.Bus,
-		errChan:      make(chan error, 1),
-		stateManager: NewStateManager(c.Store),
+		store:       c.Store,
+		queueGetter: c.QueueGetter,
+		bus:         c.Bus,
+		errChan:     make(chan error, 1),
 	}
-	s.schedulerManager = NewScheduleManager(s.bus, s.stateManager)
+	s.ctx, s.cancel = context.WithCancel(context.Background())
+	s.checkWatcher = NewCheckWatcher(c.Bus, c.Store, s.ctx)
+	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus)
+
 	for _, o := range opts {
 		if err := o(s); err != nil {
 			return nil, err
@@ -50,26 +53,14 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 
 // Start the Scheduler daemon.
 func (s *Schedulerd) Start() error {
-	ctx := context.TODO()
-
-	// Adhoc Request Executor
-	s.adhocRequestExecutor = NewAdhocRequestExecutor(ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus)
-
-	// Start
-	s.schedulerManager.Start()
-	s.stateManager.Start(ctx)
-
-	return nil
+	return s.checkWatcher.Start()
 }
 
 // Stop the scheduler daemon.
 func (s *Schedulerd) Stop() error {
-	err := s.stateManager.Stop()
-	s.schedulerManager.Stop()
-	s.adhocRequestExecutor.Stop()
-
+	s.cancel()
 	close(s.errChan)
-	return err
+	return nil
 }
 
 // Status returns the health of the scheduler daemon.
