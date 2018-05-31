@@ -30,4 +30,11 @@ export default (client, { id }) =>
         handle(error);
       }
     },
+    optimisticResponse: {
+      deleteEntity: {
+        deletedId: id,
+        __typename: "DeleteRecordPayload",
+      },
+      __typename: "Mutation",
+    },
   });

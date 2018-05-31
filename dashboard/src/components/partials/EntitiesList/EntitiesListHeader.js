@@ -1,18 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-
 import Checkbox from "@material-ui/core/Checkbox";
 import { withStyles } from "@material-ui/core/styles";
-
 import { TableListHeader } from "/components/TableList";
 
 const styles = theme => ({
-  headerButton: {
-    marginLeft: theme.spacing.unit / 2,
-    "&:first-child": {
-      marginLeft: theme.spacing.unit,
-    },
-  },
   filterActions: {
     display: "none",
     [theme.breakpoints.up("sm")]: {
@@ -31,9 +23,11 @@ const styles = theme => ({
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
+    actions: PropTypes.node.isRequired,
+    bulkActions: PropTypes.node.isRequired,
+    classes: PropTypes.object.isRequired,
     onClickSelect: PropTypes.func,
     selectedCount: PropTypes.number,
-    classes: PropTypes.object.isRequired,
   };
 
   static defaultProps = {
@@ -42,7 +36,13 @@ class EntitiesListHeader extends React.PureComponent {
   };
 
   render() {
-    const { selectedCount, classes, onClickSelect } = this.props;
+    const {
+      actions,
+      bulkActions,
+      classes,
+      selectedCount,
+      onClickSelect,
+    } = this.props;
 
     return (
       <TableListHeader sticky active={selectedCount > 0}>
@@ -55,6 +55,7 @@ class EntitiesListHeader extends React.PureComponent {
         />
         {selectedCount > 0 && <div>{selectedCount} Selected</div>}
         <div className={classes.grow} />
+        {selectedCount > 0 ? bulkActions : actions}
       </TableListHeader>
     );
   }

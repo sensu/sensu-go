@@ -28,6 +28,7 @@ class EntitiesListItem extends React.PureComponent {
         lastSeen
         class
         status
+        deleted @client
         system {
           platform
           platformVersion
@@ -38,6 +39,10 @@ class EntitiesListItem extends React.PureComponent {
 
   render() {
     const { entity, selected, onClickSelect } = this.props;
+
+    if (entity.deleted) {
+      return null;
+    }
 
     return (
       <StatusListItem
