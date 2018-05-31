@@ -431,13 +431,61 @@ func separatorStage(left interface{}, right interface{}, parameters Parameters) 
 }
 
 func inStage(left interface{}, right interface{}, parameters Parameters) (interface{}, error) {
-
-	for _, value := range right.([]interface{}) {
-		if left == value {
+	v := reflect.ValueOf(right)
+	for i := 0; i < v.Len(); i++ {
+		value := reflect.Indirect(v.Index(i)).Interface()
+		if valuesEqual(left, value) {
 			return true, nil
 		}
 	}
 	return false, nil
+}
+
+func coerceFloat(v reflect.Value, kind reflect.Kind) float64 {
+	switch kind {
+	case reflect.Float32, reflect.Float64:
+		return v.Float()
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return float64(v.Uint())
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(v.Int())
+	default:
+		panic(fmt.Sprintf("not a number: %s", kind))
+	}
+}
+
+func isNumber(k reflect.Kind) bool {
+	switch k {
+	case reflect.Int:
+	case reflect.Int8:
+	case reflect.Int16:
+	case reflect.Int32:
+	case reflect.Int64:
+	case reflect.Uint:
+	case reflect.Uint8:
+	case reflect.Uint16:
+	case reflect.Uint32:
+	case reflect.Uint64:
+	case reflect.Float32:
+	case reflect.Float64:
+	default:
+		return false
+	}
+	return true
+}
+
+func valuesEqual(x, y interface{}) bool {
+	v1 := reflect.ValueOf(x)
+	v2 := reflect.ValueOf(y)
+	v1Kind := v1.Kind()
+	v2Kind := v2.Kind()
+	if v1Kind == v2Kind {
+		return reflect.DeepEqual(x, y)
+	}
+	if isNumber(v1Kind) && isNumber(v2Kind) {
+		return coerceFloat(v1, v1Kind) == coerceFloat(v2, v2Kind)
+	}
+	return false
 }
 
 //
@@ -509,11 +557,7 @@ func comparatorTypeCheck(left interface{}, right interface{}) bool {
 }
 
 func isArray(value interface{}) bool {
-	switch value.(type) {
-	case []interface{}:
-		return true
-	}
-	return false
+	return reflect.ValueOf(value).Kind() == reflect.Slice
 }
 
 /*
