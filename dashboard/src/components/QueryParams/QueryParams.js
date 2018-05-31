@@ -5,7 +5,9 @@ import { withRouter } from "react-router-dom";
 function expandParams(params, keys) {
   return Array.from(params).reduce((acc, entry) => {
     const [key, val] = entry;
-    if (keys && keys.indexOf(key) === -1) return acc;
+    if (keys && keys.indexOf(key) === -1) {
+      return acc;
+    }
 
     const prevVal = acc[key];
     if (Array.isArray(prevVal)) {
