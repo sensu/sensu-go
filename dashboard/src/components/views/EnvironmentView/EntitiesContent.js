@@ -1,55 +1,33 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import { withStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
-
 import Query from "/components/util/Query";
-
 import Content from "/components/Content";
 import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
-
 import EntitiesList from "/components/partials/EntitiesList";
-
-// TODO: Abstract Headline component into the shared page layout component
-const Headline = withStyles(theme => ({
-  root: {
-    display: "flex",
-    alignContent: "center",
-    paddingLeft: theme.spacing.unit,
-    paddingRight: theme.spacing.unit,
-    [theme.breakpoints.up("sm")]: {
-      paddingLeft: 0,
-      paddingRight: 0,
-    },
-    marginBottom: 16,
-  },
-}))(({ classes, ...props }) => <Content {...props} className={classes.root} />);
-
-// TODO: Abstract Title component into the shared page layout component
-const Title = withStyles(theme => ({
-  root: {
-    alignSelf: "flex-end",
-    display: "none",
-    flexGrow: 1,
-    [theme.breakpoints.up("sm")]: {
-      display: "flex",
-    },
-  },
-}))(props => <Typography {...props} variant="headline" />);
+import SearchBox from "/components/SearchBox";
+import ListToolbar from "/components/partials/ListToolbar";
+import RefreshIcon from "@material-ui/icons/Refresh";
+import CollapsingMenu from "/components/CollapsingMenu";
+import { withQueryParams } from "/components/QueryParams";
 
 class EntitiesContent extends React.PureComponent {
   static propTypes = {
-    // eslint-disable-next-line react/no-unused-prop-types
     match: PropTypes.object.isRequired,
+    queryParams: PropTypes.shape({
+      filter: PropTypes.string,
+      order: PropTypes.string,
+    }).isRequired,
+    setQueryParams: PropTypes.func.isRequired,
   };
 
   static query = gql`
     query EnvironmentViewEntitiesContentQuery(
       $environment: String!
       $organization: String!
-      $sort: EntityListOrder = ID
+      $order: EntityListOrder = ID
+      $filter: String
     ) {
       environment(organization: $organization, environment: $environment) {
         ...EntitiesList_environment
@@ -61,7 +39,11 @@ class EntitiesContent extends React.PureComponent {
 
   render() {
     return (
-      <Query query={EntitiesContent.query} variables={this.props.match.params}>
+      <Query
+        query={EntitiesContent.query}
+        fetchPolicy="cache-and-network"
+        variables={{ ...this.props.match.params, ...this.props.queryParams }}
+      >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
@@ -69,9 +51,24 @@ class EntitiesContent extends React.PureComponent {
 
           return (
             <AppContent>
-              <Headline>
-                <Title>Entities</Title>
-              </Headline>
+              <Content gutters bottomMargin>
+                <ListToolbar
+                  renderSearch={
+                    <SearchBox
+                      placeholder="Filter entities…"
+                      initialValue={this.props.queryParams.filter}
+                      onSearch={filter => this.props.setQueryParams({ filter })}
+                    />
+                  }
+                  renderMenuItems={
+                    <CollapsingMenu.Button
+                      title="Reload"
+                      icon={<RefreshIcon />}
+                      onClick={() => refetch()}
+                    />
+                  }
+                />
+              </Content>
               <EntitiesList
                 loading={loading || aborted}
                 environment={environment}
@@ -85,4 +82,4 @@ class EntitiesContent extends React.PureComponent {
   }
 }
 
-export default EntitiesContent;
+export default withQueryParams(["filter", "order"])(EntitiesContent);

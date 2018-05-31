@@ -28,6 +28,19 @@ const polyfillCollections = () =>
     }),
   );
 
+const polyfillArray = () =>
+  new Promise(resolve =>
+    modernizr.on("es6array", result => {
+      if (result) {
+        resolve();
+      }
+
+      return import(/* webpackChunkName: "es6-array" */ "core-js/es6/array").then(
+        resolve,
+      );
+    }),
+  );
+
 const polyfillFetch = () =>
   new Promise(resolve =>
     modernizr.on("fetch", result => {
@@ -79,6 +92,7 @@ const polyfillIntlRelativeFormat = () =>
 export default () =>
   Promise.all([
     polyfillCollections(),
+    polyfillArray(),
     polyfillFetch(),
     polyfillURLSearchParams(),
     polyfillIntl(),

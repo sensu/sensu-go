@@ -1,63 +1,30 @@
 import React from "react";
 import PropTypes from "prop-types";
-import classnames from "classnames";
 import gql from "graphql-tag";
 
-import { withStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-
 import Query from "/components/util/Query";
-
 import AppContent from "/components/AppContent";
 import EventsContainer from "/components/EventsContainer";
 import SearchBox from "/components/SearchBox";
 import Content from "/components/Content";
 import NotFoundView from "/components/views/NotFoundView";
+import RefreshIcon from "@material-ui/icons/Refresh";
+import ListToolbar from "/components/partials/ListToolbar";
+import CollapsingMenu from "/components/CollapsingMenu";
+import { withQueryParams } from "/components/QueryParams";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
 
 class EventsContent extends React.Component {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired,
     match: PropTypes.object.isRequired,
-    location: PropTypes.object.isRequired,
+    queryParams: PropTypes.shape({
+      filter: PropTypes.string,
+      order: PropTypes.string,
+    }).isRequired,
+    setQueryParams: PropTypes.func.isRequired,
   };
-
-  static styles = theme => ({
-    headline: {
-      display: "flex",
-      alignContent: "center",
-      paddingLeft: theme.spacing.unit,
-      paddingRight: theme.spacing.unit,
-      [theme.breakpoints.up("sm")]: {
-        paddingLeft: 0,
-        paddingRight: 0,
-      },
-    },
-    searchBox: {
-      width: "100%",
-      [theme.breakpoints.up("sm")]: {
-        marginLeft: theme.spacing.unit,
-        width: "auto",
-      },
-    },
-    title: {
-      alignSelf: "flex-end",
-      flexGrow: 1,
-    },
-    container: {
-      marginTop: 10,
-    },
-    hiddenSmall: {
-      display: "none",
-      [theme.breakpoints.up("sm")]: {
-        display: "flex",
-      },
-    },
-  });
 
   static query = gql`
     query EnvironmentViewEventsContentQuery(
@@ -74,45 +41,12 @@ class EventsContent extends React.Component {
     ${EventsContainer.fragments.environment}
   `;
 
-  constructor(props) {
-    super(props);
-
-    const query = new URLSearchParams(props.location.search);
-
-    let filterValue = query.filter;
-    if (filterValue === undefined) {
-      filterValue = defaultExpression;
-    }
-    this.state = { filterValue };
-  }
-
-  changeQuery = (key, val) => {
-    const { location, history } = this.props;
-    const query = new URLSearchParams(location.search);
-
-    if (key === "filter") {
-      this.setState({ filterValue: val });
-    }
-    query.set(key, val);
-
-    history.push(`${location.pathname}?${query.toString()}`);
-  };
-
-  requerySearchBox = filterValue => {
-    if (filterValue.length >= 10) {
-      this.changeQuery("filter", filterValue);
-    }
-    this.setState({ filterValue });
-  };
-
   render() {
-    const { classes, match, location } = this.props;
-    const query = new URLSearchParams(location.search);
     return (
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
-        variables={{ ...match.params, filter: query.get("filter") }}
+        variables={{ ...this.props.match.params, ...this.props.queryParams }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -121,28 +55,26 @@ class EventsContent extends React.Component {
 
           return (
             <AppContent>
-              <Content className={classes.headline}>
-                <Typography
-                  className={classnames(classes.title, classes.hiddenSmall)}
-                  variant="headline"
-                >
-                  Events
-                </Typography>
-                <Button
-                  className={classes.hiddenSmall}
-                  onClick={() => refetch()}
-                >
-                  reload
-                </Button>
-                <SearchBox
-                  className={classes.searchBox}
-                  onChange={this.requerySearchBox}
-                  value={this.state.filterValue}
+              <Content gutters bottomMargin>
+                <ListToolbar
+                  renderSearch={
+                    <SearchBox
+                      placeholder="Filter events…"
+                      initialValue={this.props.queryParams.filter}
+                      onSearch={filter => this.props.setQueryParams({ filter })}
+                    />
+                  }
+                  renderMenuItems={
+                    <CollapsingMenu.Button
+                      title="Reload"
+                      icon={<RefreshIcon />}
+                      onClick={() => refetch()}
+                    />
+                  }
                 />
               </Content>
               <EventsContainer
-                className={classes.container}
-                onQueryChange={this.changeQuery}
+                onQueryChange={this.props.setQueryParams}
                 environment={environment}
                 loading={loading || aborted}
               />
@@ -154,4 +86,4 @@ class EventsContent extends React.Component {
   }
 }
 
-export default withStyles(EventsContent.styles)(EventsContent);
+export default withQueryParams(["filter", "order"])(EventsContent);

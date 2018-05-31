@@ -7,6 +7,8 @@ import TableList, {
   TableListEmptyState,
 } from "/components/TableList";
 
+import Loader from "/components/util/Loader";
+
 import EntitiesListHeader from "./EntitiesListHeader";
 import EntitiesListItem from "./EntitiesListItem";
 
@@ -46,7 +48,8 @@ class EntitiesList extends React.PureComponent {
   static fragments = {
     environment: gql`
       fragment EntitiesList_environment on Environment {
-        entities(limit: 1000, orderBy: $sort) {
+        entities(limit: 1000, filter: $filter, orderBy: $order)
+          @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
             ...EntitiesListItem_entity
           }
@@ -99,27 +102,29 @@ class EntitiesList extends React.PureComponent {
           onClickSelect={this._handleClickHeaderSelect}
           selectedCount={this.state.selectedIds.length}
         />
-        <TableListBody>
-          {!this.props.loading &&
-            entities.nodes.length === 0 && (
-              <TableListEmptyState
-                primary="No results matched your query."
-                secondary="
+        <Loader loading={this.props.loading}>
+          <TableListBody>
+            {!this.props.loading &&
+              entities.nodes.length === 0 && (
+                <TableListEmptyState
+                  primary="No results matched your query."
+                  secondary="
                   Try refining your search query in the search box. The filter
                   buttons above are also a helpful way of quickly finding
                   entities.
                 "
+                />
+              )}
+            {entities.nodes.map(node => (
+              <EntitiesListItem
+                key={node.id}
+                entity={node}
+                selected={this.state.selectedIds.indexOf(node.id) !== -1}
+                onClickSelect={this._handleClickItemSelect(node.id)}
               />
-            )}
-          {entities.nodes.map(node => (
-            <EntitiesListItem
-              key={node.id}
-              entity={node}
-              selected={this.state.selectedIds.indexOf(node.id) !== -1}
-              onClickSelect={this._handleClickItemSelect(node.id)}
-            />
-          ))}
-        </TableListBody>
+            ))}
+          </TableListBody>
+        </Loader>
       </TableList>
     );
   }

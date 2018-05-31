@@ -79,7 +79,7 @@ class EventDetailsContainer extends React.PureComponent {
       <Loader loading={loading || hasPendingRequests} passthrough>
         {event && (
           <React.Fragment>
-            <Content marginBottom>
+            <Content bottomMargin>
               <div style={{ flexGrow: 1 }} />
               <ButtonSet>
                 <ResolveAction client={client} event={event} />

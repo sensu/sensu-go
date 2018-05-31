@@ -36,3 +36,9 @@ used by apollo-state-link to catch fields it is responsible for resolving.
 More: https://www.apollographql.com/docs/link/links/state.html#directive
 """
 directive @client on FIELD
+
+"""
+TODO
+https://www.apollographql.com/docs/react/features/pagination.html#connection-directive
+"""
+directive @connection(key: String!, filter: [String!]) on FIELD
