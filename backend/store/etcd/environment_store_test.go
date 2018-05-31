@@ -56,10 +56,6 @@ func TestEnvStorage(t *testing.T) {
 		err = store.DeleteEnvironment(ctx, env)
 		assert.NoError(t, err)
 
-		// Delete a missing org
-		err = store.DeleteEnvironment(ctx, &types.Environment{Organization: org, Name: "missing"})
-		assert.Error(t, err)
-
 		// Create a environment within a missing org
 		env.Organization = "missing"
 		err = store.UpdateEnvironment(ctx, env)
@@ -69,5 +65,40 @@ func TestEnvStorage(t *testing.T) {
 		envs, err = store.GetEnvironments(ctx, org)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(envs))
+	})
+}
+
+func TestDeleteEnvironment_GH1567(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, types.OrganizationKey, "default")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, "foo")
+
+		org := "default"
+		env := types.FixtureEnvironment("foo")
+		require.NoError(t, store.UpdateEnvironment(ctx, env))
+
+		asset := types.FixtureAsset("foo")
+		asset.Organization = org
+
+		require.NoError(t, store.UpdateAsset(ctx, asset))
+
+		// Assets do not apply to environments
+		require.NoError(t, store.DeleteEnvironment(ctx, env))
+	})
+}
+
+func TestDoubleDelete(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, types.OrganizationKey, "default")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, "foo")
+
+		env := types.FixtureEnvironment("foo")
+		require.NoError(t, store.UpdateEnvironment(ctx, env))
+
+		// Second delete should succeed
+		require.NoError(t, store.DeleteEnvironment(ctx, env))
+		require.NoError(t, store.DeleteEnvironment(ctx, env))
 	})
 }

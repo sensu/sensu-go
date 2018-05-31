@@ -56,6 +56,8 @@ characters and therefore fixing a bug in sensuctl
 - API requests that result in a 404 response are now logged
 - Fixed a bug where only a single resource could be created with
 `sensuctl create` at a time.
+- Fixed a bug where environments couldn't be deleted if there was an asset in
+the organization they reside in.
 - Dashboard's backend reverse proxy now works with TLS certs are configured.
 
 ### Removed
