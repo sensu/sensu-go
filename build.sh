@@ -332,8 +332,8 @@ deploy() {
 
     echo "Deploying..."
 
-    echo "Current tags:"
-    git --no-pager tag -l
+    echo "Current tag:"
+    git describe --abbrev=0 --tags HEAD
 
     # Authenticate to Google Cloud and deploy binaries
     if [[ "${release}" != "nightly" ]]; then
@@ -343,12 +343,11 @@ deploy() {
     fi
 
     # Deploy system packages to PackageCloud
-    gem install package_cloud
     make clean
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
     docker pull sensuapp/sensu-go-build
     docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e CI=$CI sensuapp/sensu-go-build publish_travis
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI sensuapp/sensu-go-build publish_travis
     docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build clean
 
     # Deploy Docker images to the Docker Hub
