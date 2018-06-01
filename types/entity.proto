@@ -20,7 +20,7 @@ message Entity {
   System system = 3 [(gogoproto.nullable) = false];
   repeated string subscriptions = 4 [(gogoproto.jsontag) = "subscriptions"];
   int64 last_seen = 5 [(gogoproto.jsontag) = "last_seen"];
-  bool deregister = 6;
+  bool deregister = 6 [(gogoproto.jsontag) = "deregister"];
   Deregistration deregistration = 7 [(gogoproto.nullable) = false];
   uint32 keepalive_timeout = 8 [(gogoproto.jsontag) = "keepalive_timeout"];
   string environment = 9;

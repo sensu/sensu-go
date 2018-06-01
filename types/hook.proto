@@ -24,7 +24,7 @@ message HookConfig {
   uint32 timeout = 3 [(gogoproto.jsontag) = "timeout"];
 
   // Stdin indicates if hook requests have stdin enabled
-  bool stdin = 4;
+  bool stdin = 4 [(gogoproto.jsontag) = "stdin"];
 
   // Environment indicates to which env a hook belongs to
   string environment = 5;
