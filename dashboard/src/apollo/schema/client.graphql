@@ -15,6 +15,12 @@ extend type Mutation {
 }
 
 type Auth {
+  """
+  Indicates that the current access token has been rejected by the API and
+  cannot be automatically refreshed. The user must re-authenticate to continue.
+  """
+  invalid: Boolean!
+
   "Token used to access the system."
   accessToken: String
 

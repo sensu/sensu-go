@@ -2,9 +2,9 @@ import { ApolloLink, Observable } from "apollo-link";
 
 import { when } from "/utils/promise";
 import { UnauthorizedError } from "/errors/FetchError";
+import QueryAbortedError from "/errors/QueryAbortedError";
 
 import refreshTokens from "/mutations/refreshTokens";
-import invalidateTokens from "/mutations/invalidateTokens";
 
 const EXPIRY_THRESHOLD_MS = 13 * 60 * 1000;
 
@@ -28,17 +28,7 @@ const authLink = ({ getClient }) =>
               sub = forward(operation).subscribe(observer);
             },
             when(UnauthorizedError, error => {
-              // Remove the current stored tokens if the token refresh attempt
-              // fails. This will redirect the user back to the login screen.
-              // We could potentially introduce a less disruptive behavior here,
-              // maybe show a modal allowing the user to re-enter credentials
-              // without loosing the current app state.
-              invalidateTokens(getClient());
-
-              // re-throw the UnauthorizedError instance to ensure later error
-              // handling (likely a <Query> instance) can deal with it
-              // appropriately.
-              throw error;
+              throw new QueryAbortedError(error);
             }),
           )
           .catch(observer.error.bind(observer));
