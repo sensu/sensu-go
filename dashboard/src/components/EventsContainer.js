@@ -25,6 +25,7 @@ import Typography from "@material-ui/core/Typography";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import resolveEvent from "/mutations/resolveEvent";
 import deleteEvent from "/mutations/deleteEvent";
+import { toPlural } from "/utils/pluralize";
 
 // Event ID includes timestamp and cannot be reliably used to identify an event
 // between refreshes, subscriptions and mutations.
@@ -236,28 +237,27 @@ class EventsContainer extends React.Component {
     ];
 
     const events = (environment && environment.events.nodes) || [];
-    const eventsSelected = this.selectedEvents();
-    const someEventsSelected = eventsSelected.length > 0;
+    const selected = this.selectedEvents();
+    const selectedLen = selected.length;
+    const someSelected = selectedLen > 0;
     const hiddenIf = hide => classnames({ [classes.hidden]: hide });
 
     return (
       <TableList className={classes.root}>
-        <TableListHeader sticky active={someEventsSelected}>
+        <TableListHeader sticky active={someSelected}>
           <Checkbox
             component="button"
             className={classes.checkbox}
             onClick={this.selectAll}
             checked={false}
-            indeterminate={someEventsSelected}
+            indeterminate={someSelected}
           />
-          <div className={hiddenIf(!someEventsSelected)}>
-            {eventsSelected.length} Selected
-          </div>
+          <div className={hiddenIf(!someSelected)}>{selectedLen} Selected</div>
           <div className={classes.grow} />
-          <div className={hiddenIf(!someEventsSelected)}>
+          <div className={hiddenIf(!someSelected)}>
             <ButtonSet>
               <ConfirmDelete
-                identifier={`${eventsSelected.length} events`}
+                identifier={`${selectedLen} ${toPlural("events", selectedLen)}`}
                 onSubmit={this._handleBulkDelete}
               >
                 {confirm => (
@@ -277,7 +277,7 @@ class EventsContainer extends React.Component {
           <div
             className={classnames(
               classes.filterActions,
-              hiddenIf(someEventsSelected),
+              hiddenIf(someSelected),
             )}
           >
             <TableListSelect
