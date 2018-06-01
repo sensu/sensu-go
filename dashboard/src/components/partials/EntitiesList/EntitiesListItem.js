@@ -40,6 +40,7 @@ class EntitiesListItem extends React.PureComponent {
   render() {
     const { entity, selected, onClickSelect } = this.props;
 
+    // NOTE: Replace this when we add pagination to lists.
     if (entity.deleted) {
       return null;
     }

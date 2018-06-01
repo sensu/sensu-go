@@ -116,6 +116,7 @@ class EventListItem extends React.Component {
     const { checked, classes, event, onClickSelect } = this.props;
     const { entity, check, timestamp } = event;
 
+    // NOTE: Replace this when we add pagination to lists.
     if (event.deleted) {
       return null;
     }
