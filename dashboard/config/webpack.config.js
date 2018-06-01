@@ -143,17 +143,20 @@ export default () => {
       new StatsWriterPlugin({
         filename: "../stats.json",
         fields: [
-          "version",
-          "hash",
-          "time",
-          "builtAt",
-          "assetsByChunkName",
           "assets",
-          "filteredAssets",
-          "entrypoints",
-          "modules",
-          "filteredModules",
+          "assetsByChunkName",
+          "builtAt",
           "children",
+          "chunks",
+          "entrypoints",
+          "errors",
+          "filteredAssets",
+          "filteredModules",
+          "hash",
+          "modules",
+          "time",
+          "version",
+          "warnings",
         ],
       }),
       new CleanPlugin([outputPath, path.resolve(outputPath, "../stats.json")], {
@@ -170,7 +173,7 @@ export default () => {
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin({
         inject: true,
-        template: path.resolve(root, "src/static/index.html"),
+        template: "!!raw-loader!./src/static/index.html",
         minify: isProduction && {
           removeComments: true,
           collapseWhitespace: true,

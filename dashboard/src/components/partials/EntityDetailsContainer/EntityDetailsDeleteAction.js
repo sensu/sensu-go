@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import { compose } from "lodash/fp";
+import { compose } from "recompose";
 import { withApollo } from "react-apollo";
 import { withRouter } from "react-router-dom";
 import Button from "@material-ui/core/Button";
