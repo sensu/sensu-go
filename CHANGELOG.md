@@ -60,6 +60,8 @@ characters and therefore fixing a bug in sensuctl
 the organization they reside in.
 - Dashboard's backend reverse proxy now works with TLS certs are configured.
 - Fixed a bug with the IN operator in query statements.
+- Boolean fields with a value of `false` now appear in json format (removed
+`omitempty` from protobufs).
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
