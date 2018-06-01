@@ -332,9 +332,6 @@ deploy() {
 
     echo "Deploying..."
 
-    echo "Current tag:"
-    git describe --abbrev=0 --tags HEAD
-
     # Authenticate to Google Cloud and deploy binaries
     if [[ "${release}" != "nightly" ]]; then
         openssl aes-256-cbc -K $encrypted_abd14401c428_key -iv $encrypted_abd14401c428_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
