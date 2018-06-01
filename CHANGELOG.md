@@ -63,6 +63,8 @@ the organization they reside in.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed check output metric extraction e2e test, in favor of more detailed
+integration coverage.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
