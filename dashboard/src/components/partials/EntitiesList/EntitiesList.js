@@ -118,6 +118,10 @@ class EntitiesList extends React.PureComponent {
     this.setState({ selectedIds: [] });
   };
 
+  _handleDeleteItem = id => () => {
+    deleteEntity(this.props.client, { id });
+  };
+
   _handleSort = val => {
     let newVal = val;
     this.props.onQueryChange(query => {
@@ -183,6 +187,7 @@ class EntitiesList extends React.PureComponent {
                 entity={node}
                 selected={this.state.selectedIds.indexOf(node.id) !== -1}
                 onClickSelect={this._handleClickItemSelect(node.id)}
+                onClickDelete={this._handleDeleteItem(node.id)}
               />
             ))}
           </TableListBody>
