@@ -135,6 +135,10 @@ export default () => {
                 name: "static/media/[name].[hash:8].[ext]",
               },
             },
+            {
+              test: /\.html$/,
+              loader: require.resolve("raw-loader"),
+            },
           ],
         },
       ],
@@ -173,7 +177,7 @@ export default () => {
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin({
         inject: true,
-        template: "!!raw-loader!./src/static/index.html",
+        template: require.resolve("src/static/index.html"),
         minify: isProduction && {
           removeComments: true,
           collapseWhitespace: true,
