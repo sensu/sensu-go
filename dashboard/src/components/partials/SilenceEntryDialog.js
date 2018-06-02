@@ -1,6 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
+import { withApollo } from "react-apollo";
+import { compose } from "recompose";
 
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
@@ -10,9 +12,14 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import withMobileDialog from "@material-ui/core/withMobileDialog";
 
+import createSilence from "/mutations/createSilence";
+
 import Loader from "/components/util/Loader";
 
-import SilenceEntryForm from "/components/partials/SilenceEntryForm";
+import {
+  SilenceEntryForm,
+  SilenceEntryFormFields,
+} from "/components/partials/SilenceEntryForm";
 
 const StyledDialogContentText = withStyles(() => ({
   root: { marginBottom: "2rem" },
@@ -23,65 +30,83 @@ class SilenceEntryDialog extends React.PureComponent {
     // fullScreen prop is controlled by the `withMobileDialog` enhancer.
     fullScreen: PropTypes.bool.isRequired,
     onClose: PropTypes.func,
-    onSave: PropTypes.func,
-    loading: PropTypes.bool,
     values: PropTypes.object,
+    client: PropTypes.object.isRequired,
   };
 
   static defaultProps = {
     onClose: undefined,
-    onSave: undefined,
-    loading: undefined,
+    onSubmit: undefined,
+    onSubmitSuccess: undefined,
     values: {},
   };
 
-  formRef = React.createRef();
-
   render() {
-    const { fullScreen, loading, onClose, onSave, values } = this.props;
+    const { fullScreen, onClose, values, client } = this.props;
 
     return (
-      <Dialog open fullScreen={fullScreen} onClose={onClose}>
-        <Loader loading={loading} passthrough>
-          <DialogTitle>
-            {values.id ? "Edit Silencing Entry" : "New Silencing Entry"}
-          </DialogTitle>
-          <DialogContent>
-            <StyledDialogContentText>
-              Create a silencing entry to temporarily prevent check result
-              handlers from being triggered. A full reference to check silencing
-              is available on the Sensu docs site.<br />
-              <a
-                href="https://docs.sensu.io/sensu-core/2.0/reference/silencing/"
-                target="_docs"
-              >
-                Learn more
-              </a>
-            </StyledDialogContentText>
-            <SilenceEntryForm
-              ref={this.formRef}
-              values={values}
-              onSubmit={onSave}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={onClose} color="primary">
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                this.formRef.current.submit();
-              }}
-              color="primary"
-              variant="raised"
-              autoFocus
-            >
-              {values.id ? "Save" : "Create"}
-            </Button>
-          </DialogActions>
-        </Loader>
-      </Dialog>
+      <SilenceEntryForm
+        values={values}
+        onSubmitSuccess={onClose}
+        onCreateSilence={input => createSilence(client, input)}
+        onCreateSilenceSuccess={silences => {
+          // TODO: Show success banner or toast notification
+          // eslint-disable-next-line no-console
+          console.log("Created silencing entries", silences);
+        }}
+      >
+        {({ submit, hasErrors, submitting }) => {
+          const close = () => {
+            if (!submitting) {
+              onClose();
+            }
+          };
+
+          return (
+            <Dialog open fullScreen={fullScreen} onClose={close}>
+              <Loader loading={submitting} passthrough>
+                <DialogTitle>New Silencing Entry</DialogTitle>
+                <DialogContent>
+                  <StyledDialogContentText>
+                    Create a silencing entry to temporarily prevent check result
+                    handlers from being triggered. A full reference to check
+                    silencing is available on the Sensu docs site.<br />
+                    <a
+                      href="https://docs.sensu.io/sensu-core/2.0/reference/silencing/"
+                      target="_docs"
+                    >
+                      Learn more
+                    </a>
+                  </StyledDialogContentText>
+                  <div>
+                    <SilenceEntryFormFields />
+                  </div>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={close} color="primary">
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      submit();
+                    }}
+                    color="primary"
+                    variant="raised"
+                    autoFocus
+                    disabled={hasErrors || submitting}
+                  >
+                    Create
+                  </Button>
+                </DialogActions>
+              </Loader>
+            </Dialog>
+          );
+        }}
+      </SilenceEntryForm>
     );
   }
 }
-export default withMobileDialog({ breakpoint: "xs" })(SilenceEntryDialog);
+
+export default compose(withApollo, withMobileDialog({ breakpoint: "xs" }))(
+  SilenceEntryDialog,
+);
