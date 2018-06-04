@@ -158,7 +158,7 @@ class EntitiesList extends React.PureComponent {
             <ButtonSet>
               <ConfirmDelete
                 identifier={`${selectLen} ${
-                  selectedLen === 1 ? "entity" : "entities"
+                  selectLen === 1 ? "entity" : "entities"
                 }`}
                 onSubmit={() => this._handleDeleteItems()}
               >
