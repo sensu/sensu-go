@@ -18,6 +18,7 @@ prior to assuming the existence of said check.
 - Entities can now be created via sensuctl.
 - Added the format `wrapped-json` to sensuctl `configure`, `list` and `info`
 commands, which is compatible with `sensuctl create`.
+- Added debug event log with all event data.
 
 ### Changed
 - Add logging around the Sensu event pipeline.

@@ -14,7 +14,7 @@ func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	parameters := map[string]interface{}{"event": event}
 	result, err := eval.EvaluatePredicate(statement, parameters)
 	if err != nil {
-		fields := utillogging.EventFields(event)
+		fields := utillogging.EventFields(event, false)
 		logger.WithError(err).WithFields(fields).
 			Errorf("statement '%s' is invalid", statement)
 		return false
@@ -28,7 +28,7 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 	if filter.When != nil {
 		inWindows, err := filter.When.InWindows(time.Now().UTC())
 		if err != nil {
-			fields := utillogging.EventFields(event)
+			fields := utillogging.EventFields(event, false)
 			fields["filter"] = filter.Name
 			logger.WithFields(fields).Error(err)
 			return false
@@ -68,7 +68,7 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 	}
 
 	// Something weird happened, let's not filter the event and log a warning message
-	fields := utillogging.EventFields(event)
+	fields := utillogging.EventFields(event, false)
 	fields["filter"] = filter.Name
 	logger.WithFields(fields).
 		Warn("pipelined not filtering event due to unhandled case")
@@ -80,7 +80,7 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 // through the Sensu pipeline.
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
 	// Prepare the logging
-	fields := utillogging.EventFields(event)
+	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
 
 	// Iterate through all event filters, the event is filtered if
