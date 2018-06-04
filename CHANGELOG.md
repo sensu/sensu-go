@@ -59,9 +59,14 @@ characters and therefore fixing a bug in sensuctl
 - Fixed a bug where environments couldn't be deleted if there was an asset in
 the organization they reside in.
 - Dashboard's backend reverse proxy now works with TLS certs are configured.
+- Fixed a bug with the IN operator in query statements.
+- Boolean fields with a value of `false` now appear in json format (removed
+`omitempty` from protobufs).
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed check output metric extraction e2e test, in favor of more detailed
+integration coverage.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added

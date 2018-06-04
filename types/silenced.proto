@@ -22,7 +22,7 @@ message Silenced {
 
   // ExpireOnResolve defaults to false, clears the entry on resolution when set
   // to true
-  bool expire_on_resolve = 3 [(gogoproto.nullable) = true];
+  bool expire_on_resolve = 3 [(gogoproto.nullable) = true, (gogoproto.jsontag) = "expire_on_resolve"];
 
   // Creator is the author of the silenced entry
   string creator = 4 [(gogoproto.nullable) = true];
@@ -45,4 +45,3 @@ message Silenced {
   // Begin is a timestamp at which the silenced entry takes effect.
   int64 begin = 10 [(gogoproto.jsontag) = "begin"];
 }
-

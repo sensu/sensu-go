@@ -38,7 +38,7 @@ message ProxyRequests {
 
 	// Splay indicates if proxy check requests should be splayed, published evenly
 	// over a window of time.
-	bool splay = 2;
+	bool splay = 2 [(gogoproto.jsontag) = "splay"];
 
 	// SplayCoverage is the percentage used for proxy check request splay
 	// calculation.
@@ -74,7 +74,7 @@ message CheckConfig {
   string organization = 8;
 
   // Publish indicates if check requests are published for the check
-  bool publish = 9;
+  bool publish = 9 [(gogoproto.jsontag) = "publish"];
 
   // RuntimeAssets are a list of assets required to execute check.
   repeated string runtime_assets = 10 [(gogoproto.jsontag) = "runtime_assets"];
@@ -92,7 +92,7 @@ message CheckConfig {
   repeated HookList check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
 
   // STDIN indicates if the check command accepts JSON via stdin from the agent
-  bool stdin = 15;
+  bool stdin = 15 [(gogoproto.jsontag) = "stdin"];
 
   // Subdue represents one or more time windows when the check should be subdued.
   TimeWindowWhen subdue = 16 [(gogoproto.jsontag) = "subdue"];
@@ -110,7 +110,7 @@ message CheckConfig {
   ProxyRequests proxy_requests = 20;
 
   // RoundRobin enables round-robin scheduling if set true.
-  bool round_robin = 21;
+  bool round_robin = 21 [(gogoproto.jsontag) = "round_robin"];
 
   // OutputOutputMetricFormat is the metric protocol that the check's output will be
   // expected to follow in order to be extracted.
@@ -151,7 +151,7 @@ message Check {
   string organization = 8;
 
   // Publish indicates if check requests are published for the check
-  bool publish = 9;
+  bool publish = 9 [(gogoproto.jsontag) = "publish"];
 
   // RuntimeAssets are a list of assets required to execute check.
   repeated string runtime_assets = 10 [(gogoproto.jsontag) = "runtime_assets"];
@@ -166,7 +166,7 @@ message Check {
   repeated HookList check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
 
   // STDIN indicates if the check command accepts JSON via stdin from the agent
-  bool stdin = 15;
+  bool stdin = 15 [(gogoproto.jsontag) = "stdin"];
 
   // Subdue represents one or more time windows when the check should be subdued.
   TimeWindowWhen subdue = 16 [(gogoproto.jsontag) = "subdue"];
@@ -184,7 +184,7 @@ message Check {
   ProxyRequests proxy_requests = 20;
 
   // RoundRobin enables round-robin scheduling if set true.
-  bool round_robin = 21;
+  bool round_robin = 21 [(gogoproto.jsontag) = "round_robin"];
 
   // Duration of execution
   double duration = 22;

@@ -12,12 +12,14 @@ import ThemeStyles from "/components/ThemeStyles";
 
 import AuthenticatedRoute from "/components/util/AuthenticatedRoute";
 import UnauthenticatedRoute from "/components/util/UnauthenticatedRoute";
-
+import AuthInvalidRoute from "/components/util/AuthInvalidRoute";
 import DefaultRedirect from "/components/util/DefaultRedirect";
 
 import EnvironmentView from "/components/views/EnvironmentView";
 import SignInView from "/components/views/SignInView";
 import NotFoundView from "/components/views/NotFoundView";
+
+import AuthInvalidDialog from "/components/partials/AuthInvalidDialog";
 
 class AppRoot extends React.PureComponent {
   static propTypes = {
@@ -48,6 +50,10 @@ class AppRoot extends React.PureComponent {
                 fallbackComponent={DefaultRedirect}
               />
               <Route component={NotFoundView} />
+            </Switch>
+            <Switch>
+              <UnauthenticatedRoute exact path="/signin" />
+              <AuthInvalidRoute component={AuthInvalidDialog} />
             </Switch>
             <ResetStyles />
             <ThemeStyles />

@@ -1,6 +1,8 @@
 import gql from "graphql-tag";
 
 import { createTokens, invalidateTokens, refreshTokens } from "/utils/authAPI";
+import { when } from "/utils/promise";
+import { UnauthorizedError } from "/errors/FetchError";
 
 const query = gql`
   query AuthQuery {
@@ -12,10 +14,44 @@ const query = gql`
   }
 `;
 
+const handleTokens = (cache, typename) => tokens => {
+  const { accessToken, refreshToken, expiresAt } = tokens;
+  const data = {
+    __typename: typename,
+    auth: {
+      __typename: "Auth",
+      invalid: false,
+      accessToken,
+      refreshToken,
+      expiresAt,
+    },
+  };
+
+  cache.writeData({ data });
+
+  return data;
+};
+
+const handleError = (cache, typename) =>
+  when(UnauthorizedError, error => {
+    const data = {
+      __typename: typename,
+      auth: {
+        __typename: "Auth",
+        invalid: true,
+      },
+    };
+
+    cache.writeData({ data });
+
+    throw error;
+  });
+
 export default {
   defaults: {
     auth: {
       __typename: "Auth",
+      invalid: false,
       accessToken: null,
       refreshToken: null,
       expiresAt: null,
@@ -24,17 +60,11 @@ export default {
   resolvers: {
     Mutation: {
       createTokens: (_, { username, password }, { cache }) =>
-        createTokens({ username, password }).then(tokens => {
-          const { accessToken, refreshToken, expiresAt } = tokens;
-          const data = {
-            __typename: "CreateTokensMutation",
-            auth: { __typename: "Auth", accessToken, refreshToken, expiresAt },
-          };
+        createTokens({ username, password }).then(
+          handleTokens(cache, "CreateTokensMutation"),
 
-          cache.writeData({ data });
-
-          return data;
-        }),
+          handleError(cache, "CreateTokensMutation"),
+        ),
 
       refreshTokens: (_, { notBefore = null }, { cache }) => {
         const result = cache.readQuery({ query });
@@ -57,32 +87,17 @@ export default {
           };
         }
 
-        return refreshTokens(result.auth).then(tokens => {
-          const { accessToken, refreshToken, expiresAt } = tokens;
-          const data = {
-            __typename: "RefreshTokensMutation",
-            auth: { __typename: "Auth", accessToken, refreshToken, expiresAt },
-          };
-
-          cache.writeData({ data });
-
-          return data;
-        });
+        return refreshTokens(result.auth).then(
+          handleTokens(cache, "RefreshTokensMutation"),
+          handleError(cache, "RefreshTokensMutation"),
+        );
       },
 
       invalidateTokens: (_, vars, { cache }) => {
         const result = cache.readQuery({ query });
-        return invalidateTokens(result.auth).then(tokens => {
-          const { accessToken, refreshToken, expiresAt } = tokens;
-          const data = {
-            __typename: "InvalidateTokensMutation",
-            auth: { __typename: "Auth", accessToken, refreshToken, expiresAt },
-          };
-
-          cache.writeData({ data });
-
-          return data;
-        });
+        return invalidateTokens(result.auth).then(
+          handleTokens(cache, "InvalidateTokensMutation"),
+        );
       },
     },
   },
