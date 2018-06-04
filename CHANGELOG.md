@@ -31,6 +31,7 @@ github.com/nikkiki/sensu-influxdb-handler
 - Don't allow unknown fields in types that do not support custom attributes
 when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
+- Updated goversion in the appveyor configuration for minor releases.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
