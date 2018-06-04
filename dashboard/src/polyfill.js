@@ -70,7 +70,7 @@ const polyfillURLSearchParams = () =>
 const polyfillIntl = () =>
   new Promise(resolve =>
     modernizr.on("intl", result => {
-      if (typeof Intl.PluralRules !== "undefined" && result) {
+      if (result) {
         return resolve();
       }
 
@@ -80,17 +80,6 @@ const polyfillIntl = () =>
       ]).then(resolve);
     }),
   );
-
-const polyfillIntlPluralRules = () =>
-  new Promise(resolve => {
-    if (typeof Intl.PluralRules !== "undefined") {
-      resolve();
-    }
-
-    return import(/* webpackChunkName: "intl-pluralrules" */ "intl-pluralrules").then(
-      resolve,
-    );
-  });
 
 const polyfillIntlRelativeFormat = () =>
   import(/* webpackChunkName: "intl-relative-format" */ "intl-relativeformat").then(
@@ -107,6 +96,5 @@ export default () =>
     polyfillFetch(),
     polyfillURLSearchParams(),
     polyfillIntl(),
-    polyfillIntlPluralRules(),
     polyfillIntlRelativeFormat(),
   ]).then(() => {});

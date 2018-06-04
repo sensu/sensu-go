@@ -16,7 +16,6 @@ import ListItemText from "@material-ui/core/ListItemText";
 
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import deleteEntity from "/mutations/deleteEntity";
-import { toPlural } from "/utils/pluralize";
 
 import Loader from "/components/util/Loader";
 
@@ -158,7 +157,9 @@ class EntitiesList extends React.PureComponent {
           bulkActions={
             <ButtonSet>
               <ConfirmDelete
-                identifier={`${selectLen} ${toPlural("entity", selectLen)}`}
+                identifier={`${selectLen} ${
+                  selectedLen === 1 ? "entity" : "entities"
+                }`}
                 onSubmit={() => this._handleDeleteItems()}
               >
                 {confirm => (

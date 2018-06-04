@@ -25,7 +25,6 @@ import Typography from "@material-ui/core/Typography";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import resolveEvent from "/mutations/resolveEvent";
 import deleteEvent from "/mutations/deleteEvent";
-import { toPlural } from "/utils/pluralize";
 
 // Event ID includes timestamp and cannot be reliably used to identify an event
 // between refreshes, subscriptions and mutations.
@@ -257,7 +256,9 @@ class EventsContainer extends React.Component {
           <div className={hiddenIf(!someSelected)}>
             <ButtonSet>
               <ConfirmDelete
-                identifier={`${selectedLen} ${toPlural("events", selectedLen)}`}
+                identifier={`${selectedLen} ${
+                  selectedLen === 1 ? "event" : "events"
+                }`}
                 onSubmit={this._handleBulkDelete}
               >
                 {confirm => (
