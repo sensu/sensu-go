@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -136,14 +136,26 @@ type NamespaceAliases struct{}
 // Environment implements response to request for 'environment' field.
 func (_ NamespaceAliases) Environment(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'environment'")
+	}
 	return ret, err
 }
 
 // Organization implements response to request for 'organization' field.
 func (_ NamespaceAliases) Organization(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'organization'")
+	}
 	return ret, err
 }
 

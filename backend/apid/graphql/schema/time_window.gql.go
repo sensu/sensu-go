@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -670,14 +670,26 @@ type TimeWindowTimeRangeAliases struct{}
 // Begin implements response to request for 'begin' field.
 func (_ TimeWindowTimeRangeAliases) Begin(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'begin'")
+	}
 	return ret, err
 }
 
 // End implements response to request for 'end' field.
 func (_ TimeWindowTimeRangeAliases) End(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'end'")
+	}
 	return ret, err
 }
 

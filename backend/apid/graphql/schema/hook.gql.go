@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -164,7 +164,13 @@ type HookConfigAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ HookConfigAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
 	return ret, err
 }
 
@@ -177,28 +183,52 @@ func (_ HookConfigAliases) Namespace(p graphql.ResolveParams) (interface{}, erro
 // Name implements response to request for 'name' field.
 func (_ HookConfigAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
 	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ HookConfigAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'command'")
+	}
 	return ret, err
 }
 
 // Timeout implements response to request for 'timeout' field.
 func (_ HookConfigAliases) Timeout(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'timeout'")
+	}
 	return ret, err
 }
 
 // Stdin implements response to request for 'stdin' field.
 func (_ HookConfigAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'stdin'")
+	}
 	return ret, err
 }
 
@@ -487,35 +517,65 @@ func (_ HookAliases) Config(p graphql.ResolveParams) (interface{}, error) {
 // Duration implements response to request for 'duration' field.
 func (_ HookAliases) Duration(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'duration'")
+	}
 	return ret, err
 }
 
 // Executed implements response to request for 'executed' field.
 func (_ HookAliases) Executed(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'executed'")
+	}
 	return ret, err
 }
 
 // Issued implements response to request for 'issued' field.
 func (_ HookAliases) Issued(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'issued'")
+	}
 	return ret, err
 }
 
 // Output implements response to request for 'output' field.
 func (_ HookAliases) Output(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'output'")
+	}
 	return ret, err
 }
 
 // Status implements response to request for 'status' field.
 func (_ HookAliases) Status(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'status'")
+	}
 	return ret, err
 }
 
@@ -772,14 +832,26 @@ type HookListAliases struct{}
 // Hooks implements response to request for 'hooks' field.
 func (_ HookListAliases) Hooks(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'hooks'")
+	}
 	return ret, err
 }
 
 // Type implements response to request for 'type' field.
 func (_ HookListAliases) Type(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
 	return ret, err
 }
 

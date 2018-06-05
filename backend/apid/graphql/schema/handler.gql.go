@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -199,7 +199,13 @@ type HandlerAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ HandlerAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
 	return ret, err
 }
 
@@ -212,28 +218,52 @@ func (_ HandlerAliases) Namespace(p graphql.ResolveParams) (interface{}, error) 
 // Name implements response to request for 'name' field.
 func (_ HandlerAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
 	return ret, err
 }
 
 // Type implements response to request for 'type' field.
 func (_ HandlerAliases) Type(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
 	return ret, err
 }
 
 // Command implements response to request for 'command' field.
 func (_ HandlerAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'command'")
+	}
 	return ret, err
 }
 
 // Timeout implements response to request for 'timeout' field.
 func (_ HandlerAliases) Timeout(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'timeout'")
+	}
 	return ret, err
 }
 
@@ -258,14 +288,26 @@ func (_ HandlerAliases) Handlers(p graphql.ResolveParams) (interface{}, error) {
 // Filters implements response to request for 'filters' field.
 func (_ HandlerAliases) Filters(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'filters'")
+	}
 	return ret, err
 }
 
 // EnvVars implements response to request for 'envVars' field.
 func (_ HandlerAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'envVars'")
+	}
 	return ret, err
 }
 
@@ -595,14 +637,26 @@ type HandlerSocketAliases struct{}
 // Host implements response to request for 'host' field.
 func (_ HandlerSocketAliases) Host(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'host'")
+	}
 	return ret, err
 }
 
 // Port implements response to request for 'port' field.
 func (_ HandlerSocketAliases) Port(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'port'")
+	}
 	return ret, err
 }
 

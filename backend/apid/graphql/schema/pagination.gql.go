@@ -3,6 +3,7 @@
 package schema
 
 import (
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -156,35 +157,65 @@ type OffsetPageInfoAliases struct{}
 // HasNextPage implements response to request for 'hasNextPage' field.
 func (_ OffsetPageInfoAliases) HasNextPage(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'hasNextPage'")
+	}
 	return ret, err
 }
 
 // HasPreviousPage implements response to request for 'hasPreviousPage' field.
 func (_ OffsetPageInfoAliases) HasPreviousPage(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'hasPreviousPage'")
+	}
 	return ret, err
 }
 
 // NextOffset implements response to request for 'nextOffset' field.
 func (_ OffsetPageInfoAliases) NextOffset(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'nextOffset'")
+	}
 	return ret, err
 }
 
 // PreviousOffset implements response to request for 'previousOffset' field.
 func (_ OffsetPageInfoAliases) PreviousOffset(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'previousOffset'")
+	}
 	return ret, err
 }
 
 // TotalCount implements response to request for 'totalCount' field.
 func (_ OffsetPageInfoAliases) TotalCount(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'totalCount'")
+	}
 	return ret, err
 }
 

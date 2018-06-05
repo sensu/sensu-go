@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -149,7 +149,13 @@ func (_ RuleAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 // Type implements response to request for 'type' field.
 func (_ RuleAliases) Type(p graphql.ResolveParams) (RuleResource, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := RuleResource(val.(string))
+	ret, ok := RuleResource(val.(string)), true
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
 	return ret, err
 }
 
@@ -373,14 +379,26 @@ type RoleAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ RoleAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
 	return ret, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ RoleAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
 	return ret, err
 }
 

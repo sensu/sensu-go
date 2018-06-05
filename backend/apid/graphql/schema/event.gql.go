@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 	time "time"
@@ -186,7 +186,13 @@ type EventAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ EventAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
 	return ret, err
 }
 
@@ -199,7 +205,13 @@ func (_ EventAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 // Timestamp implements response to request for 'timestamp' field.
 func (_ EventAliases) Timestamp(p graphql.ResolveParams) (time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(time.Time)
+	ret, ok := val.(time.Time)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'timestamp'")
+	}
 	return ret, err
 }
 
@@ -224,21 +236,39 @@ func (_ EventAliases) Hooks(p graphql.ResolveParams) (interface{}, error) {
 // IsIncident implements response to request for 'isIncident' field.
 func (_ EventAliases) IsIncident(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'isIncident'")
+	}
 	return ret, err
 }
 
 // IsResolution implements response to request for 'isResolution' field.
 func (_ EventAliases) IsResolution(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'isResolution'")
+	}
 	return ret, err
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
 func (_ EventAliases) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'isSilenced'")
+	}
 	return ret, err
 }
 

@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -150,7 +150,13 @@ type UserAliases struct{}
 // Username implements response to request for 'username' field.
 func (_ UserAliases) Username(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'username'")
+	}
 	return ret, err
 }
 
@@ -163,14 +169,26 @@ func (_ UserAliases) Roles(p graphql.ResolveParams) (interface{}, error) {
 // Disabled implements response to request for 'disabled' field.
 func (_ UserAliases) Disabled(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'disabled'")
+	}
 	return ret, err
 }
 
 // HasPassword implements response to request for 'hasPassword' field.
 func (_ UserAliases) HasPassword(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'hasPassword'")
+	}
 	return ret, err
 }
 

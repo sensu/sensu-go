@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
@@ -652,14 +652,26 @@ type DeleteRecordPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ DeleteRecordPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'clientMutationId'")
+	}
 	return ret, err
 }
 
 // DeletedID implements response to request for 'deletedId' field.
 func (_ DeleteRecordPayloadAliases) DeletedID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'deletedId'")
+	}
 	return ret, err
 }
 
@@ -1018,7 +1030,13 @@ type CreateCheckPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ CreateCheckPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'clientMutationId'")
+	}
 	return ret, err
 }
 
@@ -1259,7 +1277,13 @@ type UpdateCheckPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ UpdateCheckPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'clientMutationId'")
+	}
 	return ret, err
 }
 
@@ -1501,7 +1525,13 @@ type ResolveEventPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ ResolveEventPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'clientMutationId'")
+	}
 	return ret, err
 }
 
@@ -1810,7 +1840,13 @@ type CreateSilencePayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ CreateSilencePayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'clientMutationId'")
+	}
 	return ret, err
 }
 
