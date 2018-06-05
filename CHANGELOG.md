@@ -66,6 +66,7 @@ the organization they reside in.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed the `leader` package
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
