@@ -11,7 +11,7 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
-const defaultHostname = "Hostname-Not-Found"
+const defaultHostname = "unidentified-hostname"
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.

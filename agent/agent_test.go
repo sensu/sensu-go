@@ -32,7 +32,6 @@ func TestSendLoop(t *testing.T) {
 		assert.NotNil(t, event.Entity)
 		assert.Equal(t, "agent", event.Entity.Class)
 		assert.NotEmpty(t, event.Entity.System)
-		assert.NotEmpty(t, event.Entity.System.Hostname)
 		done <- struct{}{}
 	}))
 	defer ts.Close()
