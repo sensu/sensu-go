@@ -2,12 +2,13 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
+
 jobs:
   build:
     docker:
       # specify the version
       - image: circleci/golang:1.10
-      
+
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -22,4 +23,14 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: ./build.sh
+      - run: ./build.sh deps
+      - run: ./build.sh lint
+      - run: ./build.sh build_tools
+      - run: ./build.sh unit
+      - run: ./build.sh integration
+      - run: ./build.sh build
+
+    # While we're spinning CircleCI up, only build "build/" branches
+    branches:
+      only:
+        - /build\/.+/
