@@ -31,6 +31,7 @@ func TestSendLoop(t *testing.T) {
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
 		assert.NotNil(t, event.Entity)
 		assert.Equal(t, "agent", event.Entity.Class)
+		assert.NotEmpty(t, event.Entity.System)
 		assert.NotEmpty(t, event.Entity.System.Hostname)
 		done <- struct{}{}
 	}))
