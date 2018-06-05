@@ -16,7 +16,7 @@ import (
 // format (byte slice) to be provided to a Sensu event handler.
 func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]byte, error) {
 	// Prepare log entry
-	fields := utillogging.EventFields(event)
+	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
 
 	if handler.Mutator == "" {
@@ -126,7 +126,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
 	}
 
-	fields := utillogging.EventFields(event)
+	fields := utillogging.EventFields(event, false)
 	fields["mutator"] = mutator.Name
 	logger.WithFields(fields).Debug("event pipe mutator executed")
 

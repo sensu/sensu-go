@@ -35,8 +35,12 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
 
+	// Prepare debug log entry
+	debugFields := utillogging.EventFields(event, true)
+	logger.WithFields(debugFields).Debug("received event")
+
 	// Prepare log entry
-	fields := utillogging.EventFields(event)
+	fields := utillogging.EventFields(event, false)
 
 	var handlerList []string
 

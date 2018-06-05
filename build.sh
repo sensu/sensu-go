@@ -2,6 +2,9 @@
 set -o pipefail
 set -e
 
+# On CircleCI, we want to see what commands are being run, at least for now
+test -n "$CIRCLECI" && set -x
+
 REPO_PATH="github.com/sensu/sensu-go"
 DASHBOARD_PATH="dashboard"
 
