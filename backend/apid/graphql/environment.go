@@ -62,7 +62,6 @@ func (r *envImpl) Description(p graphql.ResolveParams) (string, error) {
 func (r *envImpl) ColourID(p graphql.ResolveParams) (schema.MutedColour, error) {
 	env := p.Source.(*types.Environment)
 	num := env.Name[0] % 7
-	logger.WithField("name", env.Name).WithField("num", num).Info("finding colour")
 	switch num {
 	case 0:
 		return schema.MutedColours.BLUE, nil
@@ -90,11 +89,12 @@ func (r *envImpl) Organization(p graphql.ResolveParams) (interface{}, error) {
 
 // Checks implements response to request for 'checks' field.
 func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	env := p.Source.(*types.Environment)
 	ctx := types.SetContextFromResource(p.Context, env)
 	records, err := r.checksCtrl.Query(ctx)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
 	// apply filters
@@ -125,16 +125,14 @@ func (r *envImpl) Checks(p schema.EnvironmentChecksFieldResolverParams) (interfa
 
 	// paginate
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredChecks))
-	return newOffsetContainer(
-		filteredChecks[l:h],
-		len(filteredChecks),
-		p.Args.Offset,
-		p.Args.Limit,
-	), nil
+	res.Nodes = filteredChecks[l:h]
+	res.PageInfo.totalCount = len(filteredChecks)
+	return res, nil
 }
 
 // Silences implements response to request for 'silences' field.
 func (r *envImpl) Silences(p schema.EnvironmentSilencesFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	env := p.Source.(*types.Environment)
 
 	// finds all records
@@ -146,16 +144,14 @@ func (r *envImpl) Silences(p schema.EnvironmentSilencesFieldResolverParams) (int
 
 	// paginate
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	return newOffsetContainer(
-		records[l:h],
-		len(records),
-		p.Args.Offset,
-		p.Args.Limit,
-	), nil
+	res.Nodes = records[l:h]
+	res.PageInfo.totalCount = len(records)
+	return res, nil
 }
 
 // Entities implements response to request for 'entities' field.
 func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	env := p.Source.(*types.Environment)
 	ctx := types.SetContextFromResource(p.Context, env)
 	records, err := r.entityCtrl.Query(ctx)
@@ -196,21 +192,19 @@ func (r *envImpl) Entities(p schema.EnvironmentEntitiesFieldResolverParams) (int
 
 	// paginate
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredEntities))
-	return newOffsetContainer(
-		filteredEntities[l:h],
-		len(filteredEntities),
-		p.Args.Offset,
-		p.Args.Limit,
-	), nil
+	res.Nodes = filteredEntities[l:h]
+	res.PageInfo.totalCount = len(filteredEntities)
+	return res, nil
 }
 
 // Events implements response to request for 'events' field.
 func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	env := p.Source.(*types.Environment)
 	ctx := types.SetContextFromResource(p.Context, env)
 	records, err := r.eventQuerier.Query(ctx, "", "")
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
 	// apply filters
@@ -245,12 +239,9 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 
 	// pagination
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredEvents))
-	return newOffsetContainer(
-		filteredEvents[l:h],
-		len(filteredEvents),
-		p.Args.Offset,
-		p.Args.Limit,
-	), nil
+	res.Nodes = filteredEvents[l:h]
+	res.PageInfo.totalCount = len(filteredEvents)
+	return res, nil
 }
 
 // CheckHistory implements response to request for 'checkHistory' field.
