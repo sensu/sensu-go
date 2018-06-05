@@ -23,7 +23,12 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: ./build.sh
+      - run: ./build.sh deps
+      - run: ./build.sh lint
+      - run: ./build.sh build_tools
+      - run: ./build.sh unit
+      - run: ./build.sh integration
+      - run: ./build.sh build
 
     # While we're spinning CircleCI up, only build "build/" branches
     branches:
