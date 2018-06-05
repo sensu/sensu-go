@@ -8,6 +8,7 @@ import TableList, {
 } from "/components/TableList";
 
 import Loader from "/components/util/Loader";
+import Pagination from "/components/partials/Pagination";
 
 import EntitiesListHeader from "./EntitiesListHeader";
 import EntitiesListItem from "./EntitiesListItem";
@@ -38,25 +39,39 @@ class EntitiesList extends React.PureComponent {
     // eslint-disable-next-line react/no-unused-prop-types
     environment: PropTypes.object,
     loading: PropTypes.bool,
+    onChangeParams: PropTypes.func.isRequired,
+    limit: PropTypes.number,
+    offset: PropTypes.number,
   };
 
   static defaultProps = {
     environment: null,
     loading: false,
+    limit: undefined,
+    offset: undefined,
   };
 
   static fragments = {
     environment: gql`
       fragment EntitiesList_environment on Environment {
-        entities(limit: 1000, filter: $filter, orderBy: $order)
-          @connection(key: "entities", filter: ["filter", "orderBy"]) {
+        entities(
+          limit: $limit
+          offset: $offset
+          filter: $filter
+          orderBy: $order
+        ) @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
             ...EntitiesListItem_entity
+          }
+
+          pageInfo {
+            ...Pagination_pageInfo
           }
         }
       }
 
       ${EntitiesListItem.fragments.entity}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
@@ -94,6 +109,7 @@ class EntitiesList extends React.PureComponent {
     });
 
   render() {
+    const { environment, limit, offset, onChangeParams } = this.props;
     const entities = getEntities(this.props);
 
     return (
@@ -125,6 +141,12 @@ class EntitiesList extends React.PureComponent {
             ))}
           </TableListBody>
         </Loader>
+        <Pagination
+          limit={limit}
+          offset={offset}
+          pageInfo={environment && environment.entities.pageInfo}
+          onChangeParams={onChangeParams}
+        />
       </TableList>
     );
   }

@@ -12,6 +12,7 @@ import Checkbox from "@material-ui/core/Checkbox";
 import Row from "/components/CheckRow";
 
 import Loader from "/components/util/Loader";
+import Pagination from "/components/partials/Pagination";
 
 class CheckList extends React.Component {
   static propTypes = {
@@ -21,30 +22,40 @@ class CheckList extends React.Component {
       }),
     }),
     loading: PropTypes.bool,
+    onChangeParams: PropTypes.func.isRequired,
+    limit: PropTypes.number,
+    offset: PropTypes.number,
   };
 
   static defaultProps = {
     environment: null,
     loading: false,
+    limit: undefined,
+    offset: undefined,
   };
 
   static fragments = {
     environment: gql`
       fragment CheckList_environment on Environment {
-        checks(limit: $limit) {
+        checks(limit: $limit, offset: $offset) {
           nodes {
             id
             ...CheckRow_check
+          }
+
+          pageInfo {
+            ...Pagination_pageInfo
           }
         }
       }
 
       ${Row.fragments.check}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
   render() {
-    const { environment, loading } = this.props;
+    const { environment, loading, limit, offset, onChangeParams } = this.props;
     const checks = environment && (environment.checks.nodes || []);
 
     return (
@@ -65,6 +76,13 @@ class CheckList extends React.Component {
             {map(checks, node => <Row key={node.id} check={node} />)}
           </TableBody>
         </Table>
+
+        <Pagination
+          limit={limit}
+          offset={offset}
+          pageInfo={environment && environment.checks.pageInfo}
+          onChangeParams={onChangeParams}
+        />
       </Loader>
     );
   }

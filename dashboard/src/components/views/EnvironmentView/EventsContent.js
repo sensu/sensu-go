@@ -22,6 +22,8 @@ class EventsContent extends React.Component {
     queryParams: PropTypes.shape({
       filter: PropTypes.string,
       order: PropTypes.string,
+      offset: PropTypes.string,
+      limit: PropTypes.string,
     }).isRequired,
     setQueryParams: PropTypes.func.isRequired,
   };
@@ -30,6 +32,8 @@ class EventsContent extends React.Component {
     query EnvironmentViewEventsContentQuery(
       $filter: String = "${defaultExpression}"
       $order: EventsListOrder = SEVERITY
+      $limit: Int,
+      $offset: Int,
       $environment: String!
       $organization: String!
     ) {
@@ -42,11 +46,13 @@ class EventsContent extends React.Component {
   `;
 
   render() {
+    const { queryParams, setQueryParams, match } = this.props;
+
     return (
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
-        variables={{ ...this.props.match.params, ...this.props.queryParams }}
+        variables={{ ...match.params, ...queryParams }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -60,8 +66,8 @@ class EventsContent extends React.Component {
                   renderSearch={
                     <SearchBox
                       placeholder="Filter events…"
-                      initialValue={this.props.queryParams.filter}
-                      onSearch={filter => this.props.setQueryParams({ filter })}
+                      initialValue={queryParams.filter}
+                      onSearch={filter => setQueryParams({ filter })}
                     />
                   }
                   renderMenuItems={
@@ -74,7 +80,9 @@ class EventsContent extends React.Component {
                 />
               </Content>
               <EventsContainer
-                onQueryChange={this.props.setQueryParams}
+                limit={queryParams.limit}
+                offset={queryParams.offset}
+                onChangeParams={setQueryParams}
                 environment={environment}
                 loading={loading || aborted}
               />
@@ -86,4 +94,6 @@ class EventsContent extends React.Component {
   }
 }
 
-export default withQueryParams(["filter", "order"])(EventsContent);
+export default withQueryParams(["filter", "order", "offset", "limit"])(
+  EventsContent,
+);

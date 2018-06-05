@@ -24,6 +24,8 @@ import TableList, {
   TableListButton as Button,
 } from "/components/TableList";
 
+import Pagination from "/components/partials/Pagination";
+
 import Loader from "/components/util/Loader";
 
 import StatusMenu from "/components/partials/StatusMenu";
@@ -72,13 +74,17 @@ class EventsContainer extends React.Component {
       checks: PropTypes.object,
       entities: PropTypes.object,
     }),
-    onQueryChange: PropTypes.func.isRequired,
+    onChangeParams: PropTypes.func.isRequired,
+    limit: PropTypes.number,
+    offset: PropTypes.number,
     loading: PropTypes.bool,
   };
 
   static defaultProps = {
     loading: false,
     environment: null,
+    limit: undefined,
+    offset: undefined,
   };
 
   static fragments = {
@@ -96,16 +102,25 @@ class EventsContainer extends React.Component {
           }
         }
 
-        events(limit: 100, filter: $filter, orderBy: $order)
-          @connection(key: "events", filter: ["filter", "orderBy"]) {
+        events(
+          limit: $limit
+          offset: $offset
+          filter: $filter
+          orderBy: $order
+        ) @connection(key: "events", filter: ["filter", "orderBy"]) {
           nodes {
             id
             ...EventsListItem_event
+          }
+
+          pageInfo {
+            ...Pagination_pageInfo
           }
         }
       }
 
       ${EventsListItem.fragments.event}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
@@ -184,32 +199,40 @@ class EventsContainer extends React.Component {
   };
 
   requeryEntity = newValue => {
-    this.props.onQueryChange({ filter: `Entity.ID == '${newValue}'` });
+    this.props.onChangeParams({ filter: `Entity.ID == '${newValue}'` });
   };
 
   requeryCheck = newValue => {
-    this.props.onQueryChange({ filter: `Check.Name == '${newValue}'` });
+    this.props.onChangeParams({ filter: `Check.Name == '${newValue}'` });
   };
 
   requeryStatus = newValue => {
     if (Array.isArray(newValue)) {
       if (newValue.length === 1) {
-        this.props.onQueryChange({ filter: `Check.Status == ${newValue}` });
+        this.props.onChangeParams({ filter: `Check.Status == ${newValue}` });
       } else {
         const val = join(",", newValue);
-        this.props.onQueryChange({ filter: `Check.Status IN (${val})` });
+        this.props.onChangeParams({ filter: `Check.Status IN (${val})` });
       }
     } else {
-      this.props.onQueryChange(query => query.delete("filter"));
+      this.props.onChangeParams(query => query.delete("filter"));
     }
   };
 
   requerySort = newValue => {
-    this.props.onQueryChange({ order: newValue });
+    this.props.onChangeParams({ order: newValue });
   };
 
   renderTable() {
-    const { classes, environment, loading } = this.props;
+    const {
+      classes,
+      environment,
+      loading,
+      limit,
+      offset,
+      onChangeParams,
+    } = this.props;
+
     const { rowState } = this.state;
 
     const entityNames = environment
@@ -327,6 +350,12 @@ class EventsContainer extends React.Component {
             ))}
           </TableListBody>
         </Loader>
+        <Pagination
+          limit={limit}
+          offset={offset}
+          pageInfo={environment && environment.events.pageInfo}
+          onChangeParams={onChangeParams}
+        />
       </TableList>
     );
   }
