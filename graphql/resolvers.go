@@ -150,8 +150,11 @@ func DefaultResolver(source interface{}, fieldName string) (interface{}, error) 
 		for i := 0; i < sourceVal.NumField(); i++ {
 			valueField := sourceVal.Field(i)
 			typeField := sourceVal.Type().Field(i)
-			// try matching the field name first
 			if typeField.Name == fieldName {
+				// If ptr and value is nil return nil
+				if valueField.Type().Kind() == reflect.Ptr && valueField.IsNil() {
+					return nil, nil
+				}
 				return valueField.Interface(), nil
 			}
 			tag := typeField.Tag
