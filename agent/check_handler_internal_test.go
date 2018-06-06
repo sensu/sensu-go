@@ -2,8 +2,8 @@ package agent
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 
@@ -112,13 +112,15 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
 
+	metrics := "metric.foo 1 123456789\nmetric.bar 2 987654321"
+	f, err := ioutil.TempFile("", "metric")
+	assert.NoError(err)
+	err = ioutil.WriteFile(f.Name(), []byte(metrics), 0644)
+	assert.NoError(err)
+	defer f.Close()
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
-	catPath := testutil.CommandPath(filepath.Join(toolsDir, "cat"))
-	command := "echo 'metric.foo 1 123456789' | " + catPath + "; echo 'metric.bar 2 987654321' | " + catPath
-	if runtime.GOOS == "windows" {
-		command = "echo 'metric.foo 1 123456789' | " + catPath + " & echo 'metric.bar 2 987654321' | " + catPath
-	}
-	checkConfig.Command = command
+	catPath := testutil.CommandPath(filepath.Join(toolsDir, "cat"), f.Name())
+	checkConfig.Command = catPath
 
 	agent.executeCheck(request)
 
