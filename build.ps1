@@ -113,7 +113,7 @@ function build_tools
 {
     echo "Running tool & plugin builds..."
 
-    ForEach ($bin in "cat","false","sleep","true") {
+    ForEach ($bin in "cat","false","sleep","true","echo") {
         build_tool $bin "tools"
     }
 
