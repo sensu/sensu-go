@@ -64,6 +64,8 @@ the organization they reside in.
 - Fixed a bug with the IN operator in query statements.
 - Boolean fields with a value of `false` now appear in json format (removed
 `omitempty` from protobufs).
+- The sensuctl create command no longer prints a spurious warning when
+non-default organizations or environments are configured.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor

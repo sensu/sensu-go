@@ -26,6 +26,20 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
+// returns true iff --organization or --environment are specified to be
+// anything other than "default"
+func namespaceFlagsSet(cmd *cobra.Command) bool {
+	org, err := cmd.Flags().GetString("organization")
+	if err == nil && org != config.DefaultOrganization {
+		return true
+	}
+	env, err := cmd.Flags().GetString("environment")
+	if err == nil && env != config.DefaultEnvironment {
+		return true
+	}
+	return false
+}
+
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var in io.Reader
@@ -33,9 +47,8 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			_ = cmd.Help()
 			return errors.New("invalid argument(s) received")
 		}
-		if cli.Config.Organization() != config.DefaultOrganization ||
-			cli.Config.Environment() != config.DefaultEnvironment {
-			cli.Logger.Warn("--organization and --environment flags have no effect for this command")
+		if namespaceFlagsSet(cmd) {
+			cli.Logger.Warn("namespace flags have no effect for create command")
 		}
 		fp, err := cmd.Flags().GetString("file")
 		if err != nil {
