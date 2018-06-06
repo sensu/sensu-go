@@ -3,6 +3,7 @@ package agent
 import (
 	"encoding/json"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -113,7 +114,11 @@ func TestExecuteCheck(t *testing.T) {
 
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
 	catPath := testutil.CommandPath(filepath.Join(toolsDir, "cat"))
-	checkConfig.Command = "echo 'metric.foo 1 123456789' | " + catPath + "; echo 'metric.bar 2 987654321' | " + catPath
+	command := "echo 'metric.foo 1 123456789' | " + catPath + "; echo 'metric.bar 2 987654321' | " + catPath
+	if runtime.GOOS == "windows" {
+		command = "echo 'metric.foo 1 123456789' | " + catPath + " & echo 'metric.bar 2 987654321' | " + catPath
+	}
+	checkConfig.Command = command
 
 	agent.executeCheck(request)
 
