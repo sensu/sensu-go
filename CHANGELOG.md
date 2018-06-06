@@ -32,6 +32,7 @@ github.com/nikkiki/sensu-influxdb-handler
 when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
 - Updated goversion in the appveyor configuration for minor releases.
+- Use a default hostname if one cannot be retrieved.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -67,6 +68,7 @@ the organization they reside in.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed the `leader` package
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
