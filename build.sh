@@ -112,7 +112,7 @@ build_binary () {
 build_tools () {
     echo "Running tool & plugin builds..."
 
-    for cmd in cat false sleep true echo; do
+    for cmd in cat false sleep true; do
         build_tool $cmd "tools"
     done
 
@@ -251,7 +251,7 @@ docker_build() {
     local ext=$@
 
     # build Sensu binaries for amd64 platform
-    for cmd in cat false sleep true echo; do
+    for cmd in cat false sleep true; do
         echo "Building tools/$cmd for linux-amd64"
         build_tool_binary linux amd64 $cmd "tools"
     done
