@@ -70,6 +70,8 @@ non-default organizations or environments are configured.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed check output metric extraction e2e test, in favor of more detailed
+integration coverage.
 - Removed the `leader` package
 
 ## [2.0.0-beta.1] - 2018-05-07
