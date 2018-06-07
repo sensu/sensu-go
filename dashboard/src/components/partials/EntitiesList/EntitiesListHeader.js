@@ -3,8 +3,10 @@ import PropTypes from "prop-types";
 
 import Checkbox from "@material-ui/core/Checkbox";
 import { withStyles } from "@material-ui/core/styles";
-
-import { TableListHeader } from "/components/TableList";
+import { TableListHeader, TableListSelect } from "/components/TableList";
+import ButtonSet from "/components/ButtonSet";
+import MenuItem from "@material-ui/core/MenuItem";
+import ListItemText from "@material-ui/core/ListItemText";
 
 const styles = theme => ({
   headerButton: {
@@ -32,17 +34,24 @@ const styles = theme => ({
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
     onClickSelect: PropTypes.func,
+    onChangeFilter: PropTypes.func,
     selectedCount: PropTypes.number,
     classes: PropTypes.object.isRequired,
   };
 
   static defaultProps = {
     onClickSelect: () => {},
+    onChangeFilter: () => {},
     selectedCount: 0,
   };
 
   render() {
-    const { selectedCount, classes, onClickSelect } = this.props;
+    const {
+      selectedCount,
+      classes,
+      onClickSelect,
+      onChangeFilter,
+    } = this.props;
 
     return (
       <TableListHeader sticky active={selectedCount > 0}>
@@ -55,6 +64,16 @@ class EntitiesListHeader extends React.PureComponent {
         />
         {selectedCount > 0 && <div>{selectedCount} Selected</div>}
         <div className={classes.grow} />
+        <ButtonSet>
+          <TableListSelect
+            label="subscription"
+            onChange={val => onChangeFilter("subscription", val)}
+          >
+            <MenuItem value="unix">
+              <ListItemText primary="unix" />
+            </MenuItem>
+          </TableListSelect>
+        </ButtonSet>
       </TableListHeader>
     );
   }
