@@ -206,7 +206,7 @@ class EventsContainer extends React.Component {
         silence: { ns: { environment, organization }, props: {}, targets },
       });
     }
-  }
+  };
 
   requeryEntity = newValue => {
     this.props.onQueryChange({ filter: `Entity.ID == '${newValue}'` });
