@@ -283,3 +283,30 @@ func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverPara
 	limit := clampInt(p.Args.Limit, 0, len(history))
 	return history[0:limit], nil
 }
+
+// Subscriptions implements response to request for 'subscriptions' field.
+func (r *envImpl) Subscriptions(p schema.EnvironmentSubscriptionsFieldResolverParams) (interface{}, error) {
+	set := subscriptionSet{}
+	env := p.Source.(*types.Environment)
+	ctx := types.SetContextFromResource(p.Context, env)
+
+	entities, err := r.entityCtrl.Query(ctx)
+	if err != nil {
+		return set, err
+	}
+	for _, entity := range entities {
+		newSet := newSubscriptionSet(entity)
+		set.merge(newSet)
+	}
+
+	checks, err := r.checksCtrl.Query(ctx)
+	if err != nil {
+		return set, err
+	}
+	for _, check := range checks {
+		newSet := newSubscriptionSet(check)
+		set.merge(newSet)
+	}
+
+	return set, nil
+}
