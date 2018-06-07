@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"path/filepath"
 	"testing"
 	"time"
@@ -111,7 +112,15 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
 
+	metrics := "metric.foo 1 123456789\nmetric.bar 2 987654321"
+	f, err := ioutil.TempFile("", "metric")
+	assert.NoError(err)
+	err = ioutil.WriteFile(f.Name(), []byte(metrics), 0644)
+	assert.NoError(err)
+	defer f.Close()
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
+	catPath := testutil.CommandPath(filepath.Join(toolsDir, "cat"), f.Name())
+	checkConfig.Command = catPath
 
 	agent.executeCheck(request)
 
@@ -121,6 +130,15 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.True(event.HasMetrics())
+	assert.Equal(2, len(event.Metrics.Points))
+	metric0 := event.Metrics.Points[0]
+	assert.Equal(float64(1), metric0.Value)
+	assert.Equal("metric.foo", metric0.Name)
+	assert.Equal(int64(123456789), metric0.Timestamp)
+	metric1 := event.Metrics.Points[1]
+	assert.Equal(float64(2), metric1.Value)
+	assert.Equal("metric.bar", metric1.Name)
+	assert.Equal(int64(987654321), metric1.Timestamp)
 }
 
 func TestPrepareCheck(t *testing.T) {

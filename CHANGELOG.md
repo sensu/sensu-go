@@ -31,6 +31,8 @@ github.com/nikkiki/sensu-influxdb-handler
 - Don't allow unknown fields in types that do not support custom attributes
 when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
+- Updated goversion in the appveyor configuration for minor releases.
+- Use a default hostname if one cannot be retrieved.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -63,9 +65,14 @@ the organization they reside in.
 - Fixed a bug with the IN operator in query statements.
 - Boolean fields with a value of `false` now appear in json format (removed
 `omitempty` from protobufs).
+- The sensuctl create command no longer prints a spurious warning when
+non-default organizations or environments are configured.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed check output metric extraction e2e test, in favor of more detailed
+integration coverage.
+- Removed the `leader` package
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added

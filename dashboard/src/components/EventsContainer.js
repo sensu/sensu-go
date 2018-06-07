@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
+import { Route } from "react-router-dom";
 
 import { withApollo } from "react-apollo";
 import { every, filter, reduce, capitalize } from "lodash";
@@ -14,8 +15,9 @@ import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import Checkbox from "@material-ui/core/Checkbox";
 
-import EventsListItem from "/components/EventsListItem";
 import resolveEvent from "/mutations/resolveEvent";
+
+import EventsListItem from "/components/EventsListItem";
 import TableList, {
   TableListHeader,
   TableListBody,
@@ -181,7 +183,7 @@ class EventsContainer extends React.Component {
     });
   };
 
-  silenceSelectedEvents = () => {
+  silenceSelectedEvents({ environment, organization }) {
     const events = this.props.environment.events.nodes.filter(
       node => this.state.rowState[node.id],
     );
@@ -192,11 +194,19 @@ class EventsContainer extends React.Component {
     }));
 
     if (targets.length === 1) {
-      this.setState({ silence: targets[0] });
+      this.setState({
+        silence: {
+          ns: { environment, organization },
+          props: {},
+          ...targets[0],
+        },
+      });
     } else {
-      this.setState({ silence: { targets } });
+      this.setState({
+        silence: { ns: { environment, organization }, props: {}, targets },
+      });
     }
-  };
+  }
 
   requeryEntity = newValue => {
     this.props.onChangeParams({ filter: `Entity.ID == '${newValue}'` });
@@ -223,7 +233,7 @@ class EventsContainer extends React.Component {
     this.props.onChangeParams({ order: newValue });
   };
 
-  renderTable() {
+  renderTable(params) {
     const {
       classes,
       environment,
@@ -266,7 +276,7 @@ class EventsContainer extends React.Component {
           <div className={hiddenIf(!someEventsSelected)}>
             <Button
               className={classes.headerButton}
-              onClick={this.silenceSelectedEvents}
+              onClick={() => this.silenceSelectedEvents(params)}
             >
               <Typography variant="button">Silence</Typography>
             </Button>
@@ -325,11 +335,13 @@ class EventsContainer extends React.Component {
               events.length === 0 && (
                 <TableListEmptyState
                   primary="No results matched your query."
-                  secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
+                  secondary="
+                    Try refining your search query in the search box.
+                    The filter buttons above are also a helpful way of quickly
+                    finding events.
+                  "
                 />
               )}
-            {/* TODO pass in resolve and silence functions to reuse for single actions
-              the silence dialog is the same, just maybe some prefilled options for list */}
             {events.map(event => (
               <EventsListItem
                 key={event.id}
@@ -362,20 +374,20 @@ class EventsContainer extends React.Component {
 
   render() {
     return (
-      <React.Fragment>
-        {this.renderTable()}
-        {this.state.silence && (
-          <SilenceEntryDialog
-            values={this.state.silence}
-            onClose={() => this.setState({ silence: null })}
-            onSave={result => {
-              this.setState({ silence: null });
-              // eslint-disable-next-line no-console
-              console.log("persist silence entry", result);
-            }}
-          />
+      <Route
+        path="/:organization/:environment"
+        render={({ match: { params } }) => (
+          <React.Fragment>
+            {this.renderTable(params)}
+            {this.state.silence && (
+              <SilenceEntryDialog
+                values={this.state.silence}
+                onClose={() => this.setState({ silence: null })}
+              />
+            )}
+          </React.Fragment>
         )}
-      </React.Fragment>
+      />
     );
   }
 }

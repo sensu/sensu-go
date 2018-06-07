@@ -11,6 +11,8 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
+const defaultHostname = "unidentified-hostname"
+
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
 func Info() (types.System, error) {
@@ -27,6 +29,10 @@ func Info() (types.System, error) {
 		Platform:        info.Platform,
 		PlatformFamily:  info.PlatformFamily,
 		PlatformVersion: info.PlatformVersion,
+	}
+
+	if system.Hostname == "" {
+		system.Hostname = defaultHostname
 	}
 
 	network, err := NetworkInfo()

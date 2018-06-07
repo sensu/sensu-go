@@ -3,6 +3,7 @@ import { Field } from "@10xjs/form";
 import DateInputController from "@10xjs/date-input-controller";
 import { withStyles } from "@material-ui/core/styles";
 
+import Collapse from "@material-ui/core/Collapse";
 import FormControl from "@material-ui/core/FormControl";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
@@ -67,19 +68,19 @@ class SilenceEntryFormSchedulePanel extends React.PureComponent {
   render() {
     return (
       <Field
-        path="begin"
+        path="props.begin"
         format={value =>
           value === null || value === undefined ? null : new Date(value)
         }
         parse={value =>
-          value === null || value === undefined ? null : value.getTime()
+          value === null || value === undefined ? null : value.toISOString()
         }
       >
-        {({ setValue, props, composeProps }) => (
+        {({ setValue, input, composeInput }) => (
           <Panel
             title={"Schedule"}
             summary={
-              props.value === null ? (
+              input.value === null ? (
                 "begin immediately"
               ) : (
                 <React.Fragment>
@@ -88,24 +89,24 @@ class SilenceEntryFormSchedulePanel extends React.PureComponent {
                     month="short"
                     day="numeric"
                     year={
-                      props.value.getFullYear() !==
+                      input.value.getFullYear() !==
                       this._currentDate.getFullYear()
                         ? "numeric"
                         : undefined
                     }
-                    value={props.value}
+                    value={input.value}
                   />{" "}
                   at{" "}
                   <DateFormatter
                     hour="numeric"
                     minute="numeric"
                     timeZoneName="short"
-                    value={props.value}
+                    value={input.value}
                   />
                 </React.Fragment>
               )
             }
-            hasDefaultValue={props.value === null}
+            hasDefaultValue={input.value === null}
           >
             <Typography color="textSecondary">
               Silencing will begin immediately when the entry is created, or can
@@ -116,7 +117,7 @@ class SilenceEntryFormSchedulePanel extends React.PureComponent {
               <FormControlLabel
                 control={
                   <Switch
-                    checked={props.value !== null}
+                    checked={input.value !== null}
                     onChange={event => {
                       const checked = event.target.checked;
                       setValue(checked ? this._lastBeginValue : null);
@@ -126,15 +127,16 @@ class SilenceEntryFormSchedulePanel extends React.PureComponent {
                 label="Schedule silencing at a later date and time"
               />
             </StyledFormControl>
-            {props.value !== null && (
+            <Collapse in={input.value !== null}>
               <DateInputController
                 min={this._minBeginDate}
                 max={this._maxBeginDate}
-                {...composeProps({
+                {...composeInput({
                   onChange: value => {
                     this._lastBeginValue = value;
                   },
                 })}
+                value={input.value || this._lastBeginValue}
               >
                 {date => (
                   <Typography component="div">
@@ -267,12 +269,12 @@ class SilenceEntryFormSchedulePanel extends React.PureComponent {
                           ))}
                         </Select>
                       </StyledFormControl>{" "}
-                      {getDayperiod(props.value)} {getTimeZoneName(props.value)}
+                      {getDayperiod(input.value)} {getTimeZoneName(input.value)}
                     </div>
                   </Typography>
                 )}
               </DateInputController>
-            )}
+            </Collapse>
           </Panel>
         )}
       </Field>
