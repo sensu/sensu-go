@@ -58,7 +58,7 @@ type Environment implements Node {
   ): SilencedConnection!
 
   "All subscriptions in use in the environment."
-  subscriptions: SubsctiptionSet
+  subscriptions: SubscriptionSet
 
   """
   checkHistory includes all persisted check execution results associated with

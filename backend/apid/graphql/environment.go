@@ -285,7 +285,7 @@ func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverPara
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
-func (r *envImpl) Subscriptions(p schema.EnvironmentSubscriptionsFieldResolverParams) (interface{}, error) {
+func (r *envImpl) Subscriptions(p graphql.ResolveParams) (interface{}, error) {
 	set := subscriptionSet{}
 	env := p.Source.(*types.Environment)
 	ctx := types.SetContextFromResource(p.Context, env)

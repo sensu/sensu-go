@@ -613,7 +613,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "All subscriptions in use in the environment.",
 				Name:              "subscriptions",
-				Type:              graphql.OutputType("SubsctiptionSet"),
+				Type:              graphql.OutputType("SubscriptionSet"),
 			},
 		},
 		Interfaces: []*graphql1.Interface{

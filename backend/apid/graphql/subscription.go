@@ -1,6 +1,8 @@
 package graphql
 
 import (
+	"sort"
+
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 )
@@ -23,7 +25,9 @@ func (subscriptionSetImpl) Entries(p schema.SubscriptionSetEntriesFieldResolverP
 	} else if p.Args.OrderBy == schema.SubscriptionSetOrders.ALPHA_ASC {
 		sort.Sort(sort.Reverse(sort.StringSlice(entries)))
 	} else if p.Args.OrderBy == schema.SubscriptionSetOrders.FREQUENCY {
-		sort.Sort(entries, func(i, j int) bool { set[entries[i]] < set[entries[j]] })
+		sort.Slice(entries, func(i, j int) bool {
+			return set[entries[i]] > set[entries[j]]
+		})
 	}
 
 	return entries, nil
@@ -35,13 +39,15 @@ func (subscriptionSetImpl) Size(p graphql.ResolveParams) (int, error) {
 	return set.size(), nil
 }
 
+// SubscriptionSet
+
 type subscribable interface {
 	GetSubscriptions() []string
 }
 
 type subscriptionSet map[string]int
 
-func newSubscriptionSet(record subscribable) {
+func newSubscriptionSet(record subscribable) subscriptionSet {
 	set := subscriptionSet{}
 	for _, name := range record.GetSubscriptions() {
 		set.add(name)
