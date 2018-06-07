@@ -4,14 +4,15 @@ import gql from "graphql-tag";
 
 import Query from "/components/util/Query";
 import AppContent from "/components/AppContent";
-import EventsContainer from "/components/EventsContainer";
 import SearchBox from "/components/SearchBox";
 import Content from "/components/Content";
 import NotFoundView from "/components/views/NotFoundView";
 import RefreshIcon from "@material-ui/icons/Refresh";
-import ListToolbar from "/components/partials/ListToolbar";
 import CollapsingMenu from "/components/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
+
+import ListToolbar from "/components/partials/ListToolbar";
+import EventsList from "/components/partials/EventsList";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
@@ -34,11 +35,11 @@ class EventsContent extends React.Component {
       $organization: String!
     ) {
       environment(organization: $organization, environment: $environment) {
-        ...EventsContainer_environment
+        ...EventsList_environment
       }
     }
 
-    ${EventsContainer.fragments.environment}
+    ${EventsList.fragments.environment}
   `;
 
   render() {
@@ -73,7 +74,7 @@ class EventsContent extends React.Component {
                   }
                 />
               </Content>
-              <EventsContainer
+              <EventsList
                 onQueryChange={this.props.setQueryParams}
                 environment={environment}
                 loading={loading || aborted}

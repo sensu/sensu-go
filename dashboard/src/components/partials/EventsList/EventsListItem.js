@@ -27,7 +27,7 @@ const styles = () => ({
 class EventListItem extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    checked: PropTypes.bool.isRequired,
+    selected: PropTypes.bool.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickSilenceEntity: PropTypes.func.isRequired,
     onClickSilenceCheck: PropTypes.func.isRequired,
@@ -113,12 +113,12 @@ class EventListItem extends React.Component {
   };
 
   render() {
-    const { checked, classes, event, onClickSelect } = this.props;
+    const { selected, classes, event, onClickSelect } = this.props;
     const { entity, check, timestamp } = event;
 
     return (
       <StatusListItem
-        selected={checked}
+        selected={selected}
         onClickSelect={onClickSelect}
         status={event.check && event.check.status}
         deleted={event.deleted}

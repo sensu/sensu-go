@@ -8,30 +8,10 @@ import TableList, {
 } from "/components/TableList";
 
 import Loader from "/components/util/Loader";
+import ListController from "/components/util/ListController";
 
 import EntitiesListHeader from "./EntitiesListHeader";
 import EntitiesListItem from "./EntitiesListItem";
-
-const arrayRemove = (arr, val) => {
-  const index = arr.indexOf(val);
-  return index === -1 ? arr : arr.slice(0, index).concat(arr.slice(index + 1));
-};
-
-const arrayAdd = (arr, val) =>
-  arr.indexOf(val) === -1 ? arr.concat([val]) : arr;
-
-const arrayIntersect = (arr1, arr2) =>
-  arr1.filter(val => arr2.indexOf(val) !== -1);
-
-const getEntities = props => {
-  const { environment } = props;
-  return environment ? environment.entities : { nodes: [] };
-};
-
-const trimIds = (selectedIds, props) => {
-  const ids = getEntities(props).nodes.map(node => node.id);
-  return arrayIntersect(selectedIds, ids);
-};
 
 class EntitiesList extends React.PureComponent {
   static propTypes = {
@@ -60,72 +40,46 @@ class EntitiesList extends React.PureComponent {
     `,
   };
 
-  state = {
-    selectedIds: [],
-  };
-
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      selectedIds: trimIds(this.state.selectedIds, nextProps),
-    });
-  }
-
-  _handleClickHeaderSelect = () => {
-    const entities = getEntities(this.props);
-
-    if (this.state.selectedIds.length < entities.nodes.length) {
-      const ids = entities.nodes.map(node => node.id);
-
-      this.setState({ selectedIds: ids });
-    } else {
-      this.setState({ selectedIds: [] });
-    }
-  };
-
-  _handleClickItemSelect = id => (event, selected) =>
-    this.setState((previousState, props) => {
-      const nextSelectedIds = selected
-        ? arrayAdd(previousState.selectedIds, id)
-        : arrayRemove(previousState.selectedIds, id);
-
-      return {
-        selectedIds: trimIds(nextSelectedIds, props),
-      };
-    });
-
   render() {
-    const entities = getEntities(this.props);
+    const { environment, loading } = this.props;
 
     return (
-      <TableList>
-        <EntitiesListHeader
-          onClickSelect={this._handleClickHeaderSelect}
-          selectedCount={this.state.selectedIds.length}
-        />
-        <Loader loading={this.props.loading}>
-          <TableListBody>
-            {!this.props.loading &&
-              entities.nodes.length === 0 && (
-                <TableListEmptyState
-                  primary="No results matched your query."
-                  secondary="
-                  Try refining your search query in the search box. The filter
-                  buttons above are also a helpful way of quickly finding
-                  entities.
-                "
-                />
-              )}
-            {entities.nodes.map(node => (
-              <EntitiesListItem
-                key={node.id}
-                entity={node}
-                selected={this.state.selectedIds.indexOf(node.id) !== -1}
-                onClickSelect={this._handleClickItemSelect(node.id)}
-              />
-            ))}
-          </TableListBody>
-        </Loader>
-      </TableList>
+      <ListController
+        items={environment ? environment.entities.nodes : []}
+        getItemKey={item => item.id}
+        renderEmptyState={() =>
+          !loading && (
+            <TableListEmptyState
+              primary="No results matched your query."
+              secondary="
+                Try refining your search query in the search box. The filter
+                buttons above are also a helpful way of quickly finding
+                entities.
+              "
+            />
+          )
+        }
+        renderItem={({ key, item, selected, setSelected }) => (
+          <EntitiesListItem
+            key={key}
+            entity={item}
+            selected={selected}
+            onClickSelect={() => setSelected(!selected)}
+          />
+        )}
+      >
+        {({ children, selectedItems, toggleSelectedItems }) => (
+          <TableList>
+            <EntitiesListHeader
+              onClickSelect={toggleSelectedItems}
+              selectedCount={selectedItems.length}
+            />
+            <Loader loading={loading}>
+              <TableListBody>{children}</TableListBody>
+            </Loader>
+          </TableList>
+        )}
+      </ListController>
     );
   }
 }
