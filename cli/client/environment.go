@@ -83,7 +83,7 @@ func (client *RestClient) FetchEnvironment(envName string) (*types.Environment, 
 	}
 
 	if res.StatusCode() >= 400 {
-		return env, fmt.Errorf("%v", res.String())
+		return env, fmt.Errorf("error getting environment: %v", res.String())
 	}
 
 	err = json.Unmarshal(res.Body(), &env)
