@@ -16,7 +16,6 @@ cache:
   yarn: true
   directories:
   - dashboard/node_modules
-  - vendor
 before_install:
   - echo -e "machine github.com\n login $GITHUB_TOKEN" >> ~/.netrc
   - ulimit -s 1082768
