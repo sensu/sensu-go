@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import gql from "graphql-tag";
 
 import Checkbox from "@material-ui/core/Checkbox";
 import { withStyles } from "@material-ui/core/styles";
@@ -33,24 +34,35 @@ const styles = theme => ({
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
+    classes: PropTypes.object.isRequired,
     onClickSelect: PropTypes.func,
     onChangeFilter: PropTypes.func,
     selectedCount: PropTypes.number,
-    classes: PropTypes.object.isRequired,
+    subscriptions: PropTypes.shape({ entries: PropTypes.array }),
   };
 
   static defaultProps = {
     onClickSelect: () => {},
     onChangeFilter: () => {},
     selectedCount: 0,
+    subscriptions: { entries: [] },
+  };
+
+  static fragments = {
+    subscriptions: gql`
+      fragment EntitiesListHeader_subscriptions on SubscriptionSet {
+        entries(orderBy: FREQUENCY)
+      }
+    `,
   };
 
   render() {
     const {
-      selectedCount,
       classes,
+      subscriptions,
       onClickSelect,
       onChangeFilter,
+      selectedCount,
     } = this.props;
 
     return (
@@ -69,9 +81,12 @@ class EntitiesListHeader extends React.PureComponent {
             label="subscription"
             onChange={val => onChangeFilter("subscription", val)}
           >
-            <MenuItem value="unix">
-              <ListItemText primary="unix" />
-            </MenuItem>
+            {subscriptions &&
+              subscriptions.entries.map(entry => (
+                <MenuItem key={entry} value={entry}>
+                  <ListItemText primary={entry} />
+                </MenuItem>
+              ))}
           </TableListSelect>
         </ButtonSet>
       </TableListHeader>

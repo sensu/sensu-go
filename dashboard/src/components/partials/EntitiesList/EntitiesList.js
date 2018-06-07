@@ -38,6 +38,7 @@ class EntitiesList extends React.PureComponent {
     // eslint-disable-next-line react/no-unused-prop-types
     environment: PropTypes.object,
     loading: PropTypes.bool,
+    onQueryChange: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -54,9 +55,13 @@ class EntitiesList extends React.PureComponent {
             ...EntitiesListItem_entity
           }
         }
+        subscriptions {
+          ...EntitiesListHeader_subscriptions
+        }
       }
 
       ${EntitiesListItem.fragments.entity}
+      ${EntitiesListHeader.fragments.subscriptions}
     `,
   };
 
@@ -93,13 +98,28 @@ class EntitiesList extends React.PureComponent {
       };
     });
 
+  _handleChangeFilter = (filter, val) => {
+    switch (filter) {
+      case "subscription":
+        this.props.onQueryChange({ filter: `'${val}' IN Subscriptions` });
+        break;
+      default:
+        throw new Error(`unexpected filter '${filter}'`);
+    }
+  };
+
+  subscriptions = () =>
+    this.props.environment && this.props.environment.subscriptions;
+
   render() {
     const entities = getEntities(this.props);
 
     return (
       <TableList>
         <EntitiesListHeader
+          subscriptions={this.subscriptions()}
           onClickSelect={this._handleClickHeaderSelect}
+          onChangeFilter={this._handleChangeFilter}
           selectedCount={this.state.selectedIds.length}
         />
         <Loader loading={this.props.loading}>
