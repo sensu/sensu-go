@@ -2,6 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
 import gql from "graphql-tag";
+
+import { Route } from "react-router-dom";
 import { withApollo } from "react-apollo";
 import { reduce, capitalize } from "lodash";
 import { compose } from "lodash/fp";
@@ -9,6 +11,7 @@ import { withStyles } from "@material-ui/core/styles";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import Checkbox from "@material-ui/core/Checkbox";
+
 import EventsListItem from "/components/EventsListItem";
 import TableList, {
   TableListHeader,
@@ -183,7 +186,7 @@ class EventsContainer extends React.Component {
     this.clearSelectionSet();
   };
 
-  silenceSelectedEvents = () => {
+  silenceSelectedEvents = ({ environment, organization }) => {
     const events = this.selectedEvents();
     const targets = events.map(ev => ({
       subscription: `entity:${ev.entity.name}`,
@@ -191,11 +194,19 @@ class EventsContainer extends React.Component {
     }));
 
     if (targets.length === 1) {
-      this.setState({ silence: targets[0] });
+      this.setState({
+        silence: {
+          ns: { environment, organization },
+          props: {},
+          ...targets[0],
+        },
+      });
     } else {
-      this.setState({ silence: { targets } });
+      this.setState({
+        silence: { ns: { environment, organization }, props: {}, targets },
+      });
     }
-  };
+  }
 
   requeryEntity = newValue => {
     this.props.onQueryChange({ filter: `Entity.ID == '${newValue}'` });
@@ -222,7 +233,7 @@ class EventsContainer extends React.Component {
     this.props.onQueryChange({ order: newValue });
   };
 
-  renderTable() {
+  renderTable(params) {
     const { classes, environment, loading } = this.props;
     const { rowState } = this.state;
 
@@ -267,7 +278,7 @@ class EventsContainer extends React.Component {
                   </Button>
                 )}
               </ConfirmDelete>
-              <Button onClick={this.silenceSelectedEvents}>
+              <Button onClick={this.silenceSelectedEvents(params)}>
                 <Typography variant="button">Silence</Typography>
               </Button>
               <Button onClick={this._handleBulkResolve}>
@@ -326,11 +337,13 @@ class EventsContainer extends React.Component {
               events.length === 0 && (
                 <TableListEmptyState
                   primary="No results matched your query."
-                  secondary="Try refining your search query in the search box. The filter buttons above are also a helpful way of quickly finding events."
+                  secondary="
+                    Try refining your search query in the search box.
+                    The filter buttons above are also a helpful way of quickly
+                    finding events.
+                  "
                 />
               )}
-            {/* TODO pass in resolve and silence functions to reuse for single actions
-              the silence dialog is the same, just maybe some prefilled options for list */}
             {events.map(event => (
               <EventsListItem
                 key={event.id}
@@ -357,20 +370,20 @@ class EventsContainer extends React.Component {
 
   render() {
     return (
-      <React.Fragment>
-        {this.renderTable()}
-        {this.state.silence && (
-          <SilenceEntryDialog
-            values={this.state.silence}
-            onClose={() => this.setState({ silence: null })}
-            onSave={result => {
-              this.setState({ silence: null });
-              // eslint-disable-next-line no-console
-              console.log("persist silence entry", result);
-            }}
-          />
+      <Route
+        path="/:organization/:environment"
+        render={({ match: { params } }) => (
+          <React.Fragment>
+            {this.renderTable(params)}
+            {this.state.silence && (
+              <SilenceEntryDialog
+                values={this.state.silence}
+                onClose={() => this.setState({ silence: null })}
+              />
+            )}
+          </React.Fragment>
         )}
-      </React.Fragment>
+      />
     );
   }
 }

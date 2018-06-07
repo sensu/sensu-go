@@ -18,6 +18,7 @@ prior to assuming the existence of said check.
 - Entities can now be created via sensuctl.
 - Added the format `wrapped-json` to sensuctl `configure`, `list` and `info`
 commands, which is compatible with `sensuctl create`.
+- Added debug event log with all event data.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
@@ -30,6 +31,8 @@ github.com/nikkiki/sensu-influxdb-handler
 - Don't allow unknown fields in types that do not support custom attributes
 when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
+- Updated goversion in the appveyor configuration for minor releases.
+- Use a default hostname if one cannot be retrieved.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -60,9 +63,16 @@ characters and therefore fixing a bug in sensuctl
 the organization they reside in.
 - Dashboard's backend reverse proxy now works with TLS certs are configured.
 - Fixed a bug with the IN operator in query statements.
+- Boolean fields with a value of `false` now appear in json format (removed
+`omitempty` from protobufs).
+- The sensuctl create command no longer prints a spurious warning when
+non-default organizations or environments are configured.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed check output metric extraction e2e test, in favor of more detailed
+integration coverage.
+- Removed the `leader` package
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
