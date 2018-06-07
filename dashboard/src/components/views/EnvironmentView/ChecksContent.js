@@ -12,9 +12,6 @@ import Query from "/components/util/Query";
 
 import NotFoundView from "/components/views/NotFoundView";
 
-// Hardcoded page size
-const fetchLimit = 100;
-
 class ChecksContent extends React.Component {
   static propTypes = {
     match: PropTypes.object.isRequired,
@@ -43,10 +40,12 @@ class ChecksContent extends React.Component {
   render() {
     const { match, queryParams, setQueryParams } = this.props;
 
+    const { limit = "50", offset = "0" } = queryParams;
+
     return (
       <Query
         query={ChecksContent.query}
-        variables={{ ...match.params, ...queryParams }}
+        variables={{ ...match.params, limit, offset }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -58,8 +57,8 @@ class ChecksContent extends React.Component {
               <Button onClick={() => refetch()}>reload</Button>
               <Paper>
                 <CheckList
-                  limit={queryParams.limit}
-                  offset={queryParams.offset}
+                  limit={limit}
+                  offset={offset}
                   onChangeParams={setQueryParams}
                   environment={environment}
                   loading={loading || aborted}

@@ -26,7 +26,6 @@ class Pagination extends React.PureComponent {
   };
 
   static defaultProps = {
-    colSpan: 1,
     pageInfo: undefined,
     limit: undefined,
     offset: undefined,
@@ -56,8 +55,16 @@ class Pagination extends React.PureComponent {
   render() {
     const { limit: rawLimit, offset: rawOffset, pageInfo } = this.props;
 
-    const limit = parseInt(rawLimit, 10) || 50;
-    const offset = parseInt(rawOffset, 10) || 0;
+    const limit = parseInt(rawLimit, 10);
+    const offset = parseInt(rawOffset, 10);
+
+    if (isNaN(limit)) {
+      throw new TypeError(`Expected numeric limit. Received ${rawLimit}`);
+    }
+
+    if (isNaN(offset)) {
+      throw new TypeError(`Expected numeric offset. Received ${rawOffset}`);
+    }
 
     // Fall back to a placeholder total count value (equal to page size) while
     // pageInfo is undefined during load.

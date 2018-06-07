@@ -48,11 +48,13 @@ class EventsContent extends React.Component {
   render() {
     const { queryParams, setQueryParams, match } = this.props;
 
+    const { filter, order, limit = "50", offset = "0" } = queryParams;
+
     return (
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
-        variables={{ ...match.params, ...queryParams }}
+        variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -66,8 +68,8 @@ class EventsContent extends React.Component {
                   renderSearch={
                     <SearchBox
                       placeholder="Filter events…"
-                      initialValue={queryParams.filter}
-                      onSearch={filter => setQueryParams({ filter })}
+                      initialValue={filter}
+                      onSearch={value => setQueryParams({ filter: value })}
                     />
                   }
                   renderMenuItems={
@@ -80,8 +82,8 @@ class EventsContent extends React.Component {
                 />
               </Content>
               <EventsContainer
-                limit={queryParams.limit}
-                offset={queryParams.offset}
+                limit={limit}
+                offset={offset}
                 onChangeParams={setQueryParams}
                 environment={environment}
                 loading={loading || aborted}

@@ -44,11 +44,13 @@ class EntitiesContent extends React.PureComponent {
   render() {
     const { queryParams, setQueryParams, match } = this.props;
 
+    const { filter, order, limit = "50", offset = "0" } = queryParams;
+
     return (
       <Query
         query={EntitiesContent.query}
         fetchPolicy="cache-and-network"
-        variables={{ ...match.params, ...queryParams }}
+        variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -62,8 +64,8 @@ class EntitiesContent extends React.PureComponent {
                   renderSearch={
                     <SearchBox
                       placeholder="Filter entities…"
-                      initialValue={queryParams.filter}
-                      onSearch={filter => setQueryParams({ filter })}
+                      initialValue={filter}
+                      onSearch={value => setQueryParams({ filter: value })}
                     />
                   }
                   renderMenuItems={
@@ -76,8 +78,8 @@ class EntitiesContent extends React.PureComponent {
                 />
               </Content>
               <EntitiesList
-                limit={queryParams.limit}
-                offset={queryParams.offset}
+                limit={limit}
+                offset={offset}
                 onChangeParams={setQueryParams}
                 loading={loading || aborted}
                 environment={environment}

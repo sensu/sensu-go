@@ -40,8 +40,8 @@ class EntitiesList extends React.PureComponent {
     environment: PropTypes.object,
     loading: PropTypes.bool,
     onChangeParams: PropTypes.func.isRequired,
-    limit: PropTypes.number,
-    offset: PropTypes.number,
+    limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   };
 
   static defaultProps = {
