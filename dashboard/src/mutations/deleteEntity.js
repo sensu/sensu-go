@@ -1,16 +1,15 @@
 import gql from "graphql-tag";
-
 import handle from "/exceptionHandler";
 
 const fragment = gql`
-  fragment DeleteEventMutation_event on Event {
+  fragment DeleteEntityMutation_entity on Entity {
     deleted @client
   }
 `;
 
 const mutation = gql`
-  mutation DeleteEventMutation($input: DeleteRecordInput!) {
-    deleteEvent(input: $input) {
+  mutation DeleteEntityMutation($input: DeleteRecordInput!) {
+    deleteEntity(input: $input) {
       deletedId
     }
   }
@@ -32,7 +31,7 @@ export default (client, { id }) =>
       }
     },
     optimisticResponse: {
-      deleteEvent: {
+      deleteEntity: {
         deletedId: id,
         __typename: "DeleteRecordPayload",
       },

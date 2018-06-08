@@ -12,6 +12,7 @@ import EntityDetailsContainer from "/components/partials/EntityDetailsContainer"
 const query = gql`
   query EntityDetailsContentQuery($ns: NamespaceInput!, $name: String!) {
     entity(ns: $ns, name: $name) {
+      deleted @client
       ...EntityDetailsContainer_entity
     }
   }
@@ -36,7 +37,7 @@ class EntityDetailsContent extends React.PureComponent {
         variables={{ ...params, ns }}
       >
         {({ data: { entity } = {}, loading, aborted }) => {
-          if (!loading && !entity && !aborted) {
+          if (!loading && !aborted && (!entity || entity.deleted)) {
             return <NotFoundView />;
           }
 
