@@ -48,7 +48,7 @@ class EntitiesListItem extends React.PureComponent {
 
     return (
       <Menu keepMounted open={open} onClose={onClose} anchorEl={anchorEl}>
-        <ConfirmDelete key="delete" onSubmit={ev => onClickDelete(ev)}>
+        <ConfirmDelete key="delete" onSubmit={onClickDelete}>
           {confirm => (
             <MenuItem
               onClick={() => {
