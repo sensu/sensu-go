@@ -10,6 +10,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMutationTypeDeleteEntityField(t *testing.T) {
+	inputs := schema.DeleteRecordInput{}
+	params := schema.MutationDeleteEntityFieldResolverParams{}
+	params.Args.Input = &inputs
+
+	// Success
+	impl := mutationsImpl{}
+	impl.entityDestroyer = mockEntityDestroyer{}
+	body, err := impl.DeleteEntity(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	impl.entityDestroyer = mockEntityDestroyer{err: errors.New("wow")}
+	body, err = impl.DeleteEntity(params)
+	assert.Error(t, err)
+	assert.Nil(t, body)
+}
+
 func TestMutationTypeDeleteEventField(t *testing.T) {
 	evt := types.FixtureEvent("a", "b")
 	gid := globalid.EventTranslator.EncodeToString(evt)

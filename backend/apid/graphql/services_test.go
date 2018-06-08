@@ -17,6 +17,14 @@ func (m mockEntityFetcher) Find(_ context.Context, _ string) (*types.Entity, err
 	return m.record, m.err
 }
 
+type mockEntityDestroyer struct {
+	err error
+}
+
+func (m mockEntityDestroyer) Destroy(_ context.Context, _ string) error {
+	return m.err
+}
+
 // events
 
 type mockEventQuerier struct {

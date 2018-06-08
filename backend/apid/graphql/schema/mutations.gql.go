@@ -61,6 +61,23 @@ type MutationDeleteCheckFieldResolver interface {
 	DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error)
 }
 
+// MutationDeleteEntityFieldResolverArgs contains arguments provided to deleteEntity when selected
+type MutationDeleteEntityFieldResolverArgs struct {
+	Input *DeleteRecordInput // Input - self descriptive
+}
+
+// MutationDeleteEntityFieldResolverParams contains contextual info to resolve deleteEntity field
+type MutationDeleteEntityFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationDeleteEntityFieldResolverArgs
+}
+
+// MutationDeleteEntityFieldResolver implement to resolve requests for the Mutation's deleteEntity field.
+type MutationDeleteEntityFieldResolver interface {
+	// DeleteEntity implements response to request for deleteEntity field.
+	DeleteEntity(p MutationDeleteEntityFieldResolverParams) (interface{}, error)
+}
+
 // MutationResolveEventFieldResolverArgs contains arguments provided to resolveEvent when selected
 type MutationResolveEventFieldResolverArgs struct {
 	Input *ResolveEventInput // Input - self descriptive
@@ -194,6 +211,7 @@ type MutationFieldResolvers interface {
 	MutationCreateCheckFieldResolver
 	MutationUpdateCheckFieldResolver
 	MutationDeleteCheckFieldResolver
+	MutationDeleteEntityFieldResolver
 	MutationResolveEventFieldResolver
 	MutationDeleteEventFieldResolver
 	MutationCreateSilenceFieldResolver
@@ -265,6 +283,12 @@ func (_ MutationAliases) DeleteCheck(p MutationDeleteCheckFieldResolverParams) (
 	return val, err
 }
 
+// DeleteEntity implements response to request for 'deleteEntity' field.
+func (_ MutationAliases) DeleteEntity(p MutationDeleteEntityFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // ResolveEvent implements response to request for 'resolveEvent' field.
 func (_ MutationAliases) ResolveEvent(p MutationResolveEventFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -332,6 +356,19 @@ func _ObjTypeMutationDeleteCheckHandler(impl interface{}) graphql1.FieldResolveF
 		}
 
 		return resolver.DeleteCheck(frp)
+	}
+}
+
+func _ObjTypeMutationDeleteEntityHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationDeleteEntityFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationDeleteEntityFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.DeleteEntity(frp)
 	}
 }
 
@@ -421,6 +458,16 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				Name:              "deleteCheck",
 				Type:              graphql.OutputType("DeleteRecordPayload"),
 			},
+			"deleteEntity": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("DeleteRecordInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Removes a given entity.",
+				Name:              "deleteEntity",
+				Type:              graphql.OutputType("DeleteRecordPayload"),
+			},
 			"deleteEvent": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
 					Description: "self descriptive",
@@ -482,6 +529,7 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 		"createCheck":   _ObjTypeMutationCreateCheckHandler,
 		"createSilence": _ObjTypeMutationCreateSilenceHandler,
 		"deleteCheck":   _ObjTypeMutationDeleteCheckHandler,
+		"deleteEntity":  _ObjTypeMutationDeleteEntityHandler,
 		"deleteEvent":   _ObjTypeMutationDeleteEventHandler,
 		"deleteSilence": _ObjTypeMutationDeleteSilenceHandler,
 		"resolveEvent":  _ObjTypeMutationResolveEventHandler,

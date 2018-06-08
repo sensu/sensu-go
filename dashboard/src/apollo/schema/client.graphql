@@ -3,6 +3,11 @@ extend type Event {
   deleted: Boolean!
 }
 
+extend type Entity {
+  "Describes whether the event has been deleted from the system"
+  deleted: Boolean!
+}
+
 extend type Query {
   "Describes state of authorization tokens"
   auth: Auth

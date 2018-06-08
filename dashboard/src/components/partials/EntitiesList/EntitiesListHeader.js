@@ -10,12 +10,6 @@ import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
 const styles = theme => ({
-  headerButton: {
-    marginLeft: theme.spacing.unit / 2,
-    "&:first-child": {
-      marginLeft: theme.spacing.unit,
-    },
-  },
   filterActions: {
     display: "none",
     [theme.breakpoints.up("sm")]: {
@@ -34,6 +28,8 @@ const styles = theme => ({
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
+    actions: PropTypes.node.isRequired,
+    bulkActions: PropTypes.node.isRequired,
     classes: PropTypes.object.isRequired,
     onClickSelect: PropTypes.func,
     onChangeFilter: PropTypes.func,
@@ -61,6 +57,8 @@ class EntitiesListHeader extends React.PureComponent {
 
   render() {
     const {
+      actions,
+      bulkActions,
       classes,
       onClickSelect,
       onChangeFilter,
@@ -90,6 +88,7 @@ class EntitiesListHeader extends React.PureComponent {
             ))}
           </TableListSelect>
         </ButtonSet>
+        {selectedCount > 0 ? bulkActions : actions}
       </TableListHeader>
     );
   }
