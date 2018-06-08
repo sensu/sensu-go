@@ -238,6 +238,10 @@ message Check {
   // that have been extracted from the check.
   repeated string output_metric_handlers = 36 [(gogoproto.jsontag) = "output_metric_handlers"];
 
+  // EnvVars is the list of environment variables to set for the check's
+  // execution environment.
+  repeated string env_vars = 37 [(gogoproto.jsontag) = "env_vars"];
+
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];
 }
