@@ -35,7 +35,6 @@ const trimIds = (selectedIds, props) => {
 
 class EntitiesList extends React.PureComponent {
   static propTypes = {
-    // eslint-disable-next-line react/no-unused-prop-types
     environment: PropTypes.object,
     loading: PropTypes.bool,
     onQueryChange: PropTypes.func.isRequired,
@@ -55,7 +54,7 @@ class EntitiesList extends React.PureComponent {
             ...EntitiesListItem_entity
           }
         }
-        subscriptions {
+        subscriptions(orderBy: OCCURRENCES, omitEntity: true) {
           ...EntitiesListHeader_subscriptions
         }
       }

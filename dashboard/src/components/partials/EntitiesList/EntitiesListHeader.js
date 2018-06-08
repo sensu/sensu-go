@@ -38,28 +38,30 @@ class EntitiesListHeader extends React.PureComponent {
     onClickSelect: PropTypes.func,
     onChangeFilter: PropTypes.func,
     selectedCount: PropTypes.number,
-    subscriptions: PropTypes.shape({ entries: PropTypes.array }),
+    subscriptions: PropTypes.shape({ values: PropTypes.array }),
   };
 
   static defaultProps = {
     onClickSelect: () => {},
     onChangeFilter: () => {},
     selectedCount: 0,
-    subscriptions: { entries: [] },
+    subscriptions: undefined,
   };
 
   static fragments = {
     subscriptions: gql`
       fragment EntitiesListHeader_subscriptions on SubscriptionSet {
-        entries(orderBy: FREQUENCY)
+        values(limit: 25)
       }
     `,
   };
 
+  getSubscriptions = () =>
+    this.props.subscriptions ? this.props.subscriptions.values : [];
+
   render() {
     const {
       classes,
-      subscriptions,
       onClickSelect,
       onChangeFilter,
       selectedCount,
@@ -81,12 +83,11 @@ class EntitiesListHeader extends React.PureComponent {
             label="subscription"
             onChange={val => onChangeFilter("subscription", val)}
           >
-            {subscriptions &&
-              subscriptions.entries.map(entry => (
-                <MenuItem key={entry} value={entry}>
-                  <ListItemText primary={entry} />
-                </MenuItem>
-              ))}
+            {this.getSubscriptions().map(entry => (
+              <MenuItem key={entry} value={entry}>
+                <ListItemText primary={entry} />
+              </MenuItem>
+            ))}
           </TableListSelect>
         </ButtonSet>
       </TableListHeader>
