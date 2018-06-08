@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 
 import Checkbox from "@material-ui/core/Checkbox";
 import { withStyles } from "@material-ui/core/styles";
-import { capitalize } from "lodash";
+import capitalize from "lodash/capitalize";
 
 import Typography from "@material-ui/core/Typography";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -15,7 +15,9 @@ import {
   TableListSelect,
   TableListButton as Button,
 } from "/components/TableList";
+import ButtonSet from "/components/ButtonSet";
 
+import ConfirmDelete from "/components/partials/ConfirmDelete";
 import StatusMenu from "/components/partials/StatusMenu";
 
 const styles = theme => ({
@@ -47,12 +49,13 @@ class EntitiesListHeader extends React.PureComponent {
     onClickSelect: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
+    onClickDelete: PropTypes.func.isRequired,
     selectedCount: PropTypes.number.isRequired,
     environment: PropTypes.shape({
       checks: PropTypes.object,
       entities: PropTypes.object,
     }),
-    onQueryChange: PropTypes.func.isRequired,
+    onChangeQuery: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -78,28 +81,28 @@ class EntitiesListHeader extends React.PureComponent {
   };
 
   requeryEntity = newValue => {
-    this.props.onQueryChange({ filter: `Entity.ID == '${newValue}'` });
+    this.props.onChangeQuery({ filter: `Entity.ID == '${newValue}'` });
   };
 
   requeryCheck = newValue => {
-    this.props.onQueryChange({ filter: `Check.Name == '${newValue}'` });
+    this.props.onChangeQuery({ filter: `Check.Name == '${newValue}'` });
   };
 
   requeryStatus = newValue => {
     if (Array.isArray(newValue)) {
       if (newValue.length === 1) {
-        this.props.onQueryChange({ filter: `Check.Status == ${newValue}` });
+        this.props.onChangeQuery({ filter: `Check.Status == ${newValue}` });
       } else {
         const val = newValue.join(",");
-        this.props.onQueryChange({ filter: `Check.Status IN (${val})` });
+        this.props.onChangeQuery({ filter: `Check.Status IN (${val})` });
       }
     } else {
-      this.props.onQueryChange(query => query.delete("filter"));
+      this.props.onChangeQuery(query => query.delete("filter"));
     }
   };
 
-  requerySort = newValue => {
-    this.props.onQueryChange({ order: newValue });
+  _handleChangeSort = newValue => {
+    this.props.onChangeQuery({ order: newValue });
   };
 
   render() {
@@ -109,6 +112,7 @@ class EntitiesListHeader extends React.PureComponent {
       onClickSelect,
       onClickSilence,
       onClickResolve,
+      onClickDelete,
       environment,
     } = this.props;
 
@@ -132,17 +136,28 @@ class EntitiesListHeader extends React.PureComponent {
         />
         {selectedCount > 0 && <div>{selectedCount} Selected</div>}
         <div className={classes.grow} />
-        {selectedCount > 0 && (
-          <div>
-            <Button className={classes.headerButton} onClick={onClickSilence}>
+        {selectedCount > 0 ? (
+          <ButtonSet>
+            <ConfirmDelete
+              identifier={`${selectedCount} ${
+                selectedCount === 1 ? "event" : "events"
+              }`}
+              onSubmit={onClickDelete}
+            >
+              {confirm => (
+                <Button onClick={confirm.open}>
+                  <Typography variant="button">Delete</Typography>
+                </Button>
+              )}
+            </ConfirmDelete>
+            <Button onClick={onClickSilence}>
               <Typography variant="button">Silence</Typography>
             </Button>
-            <Button className={classes.headerButton} onClick={onClickResolve}>
+            <Button onClick={onClickResolve}>
               <Typography variant="button">Resolve</Typography>
             </Button>
-          </div>
-        )}
-        {selectedCount > 0 && (
+          </ButtonSet>
+        ) : (
           <div className={classes.filterActions}>
             <TableListSelect
               className={classes.headerButton}
@@ -173,7 +188,7 @@ class EntitiesListHeader extends React.PureComponent {
             <TableListSelect
               className={classes.headerButton}
               label="Sort"
-              onChange={this.requerySort}
+              onChange={this._handleChangeSort}
             >
               {["SEVERITY", "NEWEST", "OLDEST"].map(name => (
                 <MenuItem key={name} value={name}>

@@ -1,11 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import { withApollo } from "react-apollo";
 
 import TableList, {
   TableListBody,
   TableListEmptyState,
 } from "/components/TableList";
+
+import deleteEntity from "/mutations/deleteEntity";
 
 import Loader from "/components/util/Loader";
 import ListController from "/components/util/ListController";
@@ -15,9 +18,10 @@ import EntitiesListItem from "./EntitiesListItem";
 
 class EntitiesList extends React.PureComponent {
   static propTypes = {
-    // eslint-disable-next-line react/no-unused-prop-types
+    client: PropTypes.object.isRequired,
     environment: PropTypes.object,
     loading: PropTypes.bool,
+    onChangeQuery: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -31,6 +35,8 @@ class EntitiesList extends React.PureComponent {
         entities(limit: 1000, filter: $filter, orderBy: $order)
           @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
+            id
+            deleted @client
             ...EntitiesListItem_entity
           }
         }
@@ -40,39 +46,57 @@ class EntitiesList extends React.PureComponent {
     `,
   };
 
+  deleteEntities = entities => {
+    const { client } = this.props;
+    entities.forEach(entity => deleteEntity(client, { id: entity.id }));
+  };
+
+  renderEmptyState = () => {
+    const { loading } = this.props;
+
+    return (
+      <TableListEmptyState
+        loading={loading}
+        primary="No results matched your query."
+        secondary="
+          Try refining your search query in the search box. The filter buttons
+          above are also a helpful way of quickly finding entities.
+        "
+      />
+    );
+  };
+
+  renderEntity = ({ key, item: entity, selected, setSelected }) => (
+    <EntitiesListItem
+      key={key}
+      entity={entity}
+      selected={selected}
+      onClickSelect={() => setSelected(!selected)}
+      onClickDelete={() => this.deleteEntities([entity])}
+    />
+  );
+
   render() {
-    const { environment, loading } = this.props;
+    const { environment, loading, onChangeQuery } = this.props;
+
+    const items = environment
+      ? environment.entities.nodes.filter(entity => !entity.deleted)
+      : [];
 
     return (
       <ListController
-        items={environment ? environment.entities.nodes : []}
-        getItemKey={item => item.id}
-        renderEmptyState={() =>
-          !loading && (
-            <TableListEmptyState
-              primary="No results matched your query."
-              secondary="
-                Try refining your search query in the search box. The filter
-                buttons above are also a helpful way of quickly finding
-                entities.
-              "
-            />
-          )
-        }
-        renderItem={({ key, item, selected, setSelected }) => (
-          <EntitiesListItem
-            key={key}
-            entity={item}
-            selected={selected}
-            onClickSelect={() => setSelected(!selected)}
-          />
-        )}
+        items={items}
+        getItemKey={entity => entity.id}
+        renderEmptyState={this.renderEmptyState}
+        renderItem={this.renderEntity}
       >
         {({ children, selectedItems, toggleSelectedItems }) => (
           <TableList>
             <EntitiesListHeader
-              onClickSelect={toggleSelectedItems}
               selectedCount={selectedItems.length}
+              onClickSelect={toggleSelectedItems}
+              onClickDelete={() => this.deleteEntities(selectedItems)}
+              onChangeQuery={onChangeQuery}
             />
             <Loader loading={loading}>
               <TableListBody>{children}</TableListBody>
@@ -84,4 +108,4 @@ class EntitiesList extends React.PureComponent {
   }
 }
 
-export default EntitiesList;
+export default withApollo(EntitiesList);

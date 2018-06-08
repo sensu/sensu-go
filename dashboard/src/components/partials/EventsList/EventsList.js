@@ -2,11 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { withApollo } from "react-apollo";
-import { compose } from "lodash/fp";
+import { compose } from "recompose";
 import gql from "graphql-tag";
 import { withStyles } from "@material-ui/core/styles";
 
 import resolveEvent from "/mutations/resolveEvent";
+import deleteEvent from "/mutations/deleteEvent";
 
 import TableList, {
   TableListBody,
@@ -49,10 +50,6 @@ const styles = theme => ({
   grow: {
     flex: "1 1 auto",
   },
-
-  tableBody: {
-    minHeight: 200,
-  },
 });
 
 class EventsContainer extends React.Component {
@@ -62,7 +59,7 @@ class EventsContainer extends React.Component {
     environment: PropTypes.shape({
       events: PropTypes.object,
     }),
-    onQueryChange: PropTypes.func.isRequired,
+    onChangeQuery: PropTypes.func.isRequired,
     loading: PropTypes.bool,
   };
 
@@ -90,6 +87,14 @@ class EventsContainer extends React.Component {
           @connection(key: "events", filter: ["filter", "orderBy"]) {
           nodes {
             id
+            deleted @client
+            entity {
+              name
+            }
+            check {
+              name
+            }
+
             namespace {
               environment
               organization
@@ -107,17 +112,25 @@ class EventsContainer extends React.Component {
   };
 
   state = {
-    filters: [],
+    silence: null,
   };
 
-  resolveEvents = events =>
-    events.forEach(event => {
-      resolveEvent(this.props.client, { id: event.id });
-    });
+  resolveEvents = events => {
+    const { client } = this.props;
+    events.forEach(event => resolveEvent(client, { id: event.id }));
+  };
+
+  deleteEvents = events => {
+    const { client } = this.props;
+    events.forEach(event => deleteEvent(client, { id: event.id }));
+  };
 
   silenceEvents = events => {
     const targets = events.map(event => ({
-      ns: event.namespace,
+      ns: {
+        environment: event.namespace.environment,
+        organization: event.namespace.organization,
+      },
       subscription: `entity:${event.entity.name}`,
       check: event.check.name,
     }));
@@ -136,76 +149,86 @@ class EventsContainer extends React.Component {
     }
   };
 
-  renderTable() {
-    const { classes, environment, loading, onQueryChange } = this.props;
+  silenceEntity = entity => {
+    this.setState({
+      silence: {
+        subscription: `entity:${entity.name}`,
+      },
+    });
+  };
+
+  silenceCheck = check => {
+    this.setState({ silence: { check: check.name } });
+  };
+
+  renderEmptyState = () => {
+    const { loading } = this.props;
+
+    return (
+      <TableListEmptyState
+        loading={loading}
+        primary="No results matched your query."
+        secondary="
+          Try refining your search query in the search box. The filter buttons
+          above are also a helpful way of quickly finding events.
+        "
+      />
+    );
+  };
+
+  renderEvent = ({ key, item: event, selected, toggleSelected }) => (
+    <EventsListItem
+      key={key}
+      event={event}
+      selected={selected}
+      onClickSelect={toggleSelected}
+      onClickSilenceEntity={() => this.silenceEntity(event.entity)}
+      onClickSilenceCheck={() => this.silenceCheck(event.check)}
+    />
+  );
+
+  render() {
+    const { classes, environment, loading, onChangeQuery } = this.props;
+
+    const items = environment
+      ? environment.events.nodes.filter(event => !event.deleted)
+      : [];
 
     return (
       <ListController
-        items={environment ? environment.events.nodes : []}
-        getItemKey={item => item.id}
-        renderEmptyState={() =>
-          !loading && (
-            <TableListEmptyState
-              primary="No results matched your query."
-              secondary="
-                Try refining your search query in the search box.
-                The filter buttons above are also a helpful way of quickly
-                finding events.
-              "
-            />
-          )
-        }
-        renderItem={({ key, item, selected, toggleSelected }) => (
-          <EventsListItem
-            key={key}
-            event={item}
-            selected={selected}
-            onClickSelect={toggleSelected}
-            onClickSilenceEntity={() => {
-              this.setState({
-                silence: {
-                  subscription: `entity:${item.entity.name}`,
-                },
-              });
-            }}
-            onClickSilenceCheck={() => {
-              this.setState({ silence: { check: item.check.name } });
-            }}
-          />
-        )}
+        items={items}
+        // Event ID includes timestamp and cannot be reliably used to identify
+        // an event between refreshes, subscriptions and mutations.
+        getItemKey={event => `${event.check.name}:::${event.entity.name}`}
+        renderEmptyState={this.renderEmptyState}
+        renderItem={this.renderEvent}
       >
         {({ children, selectedItems, toggleSelectedItems }) => (
-          <TableList className={classes.root}>
-            <EventsListHeader
-              selectedCount={selectedItems.length}
-              onClickSelect={toggleSelectedItems}
-              onClickSilence={() => this.silenceEvents(selectedItems)}
-              onClickResolve={() => this.resolveEvents(selectedItems)}
-              environment={environment}
-              onQueryChange={onQueryChange}
-            />
-            <Loader loading={loading}>
-              <TableListBody className={classes.tableBody}>
-                {children}
-              </TableListBody>
-            </Loader>
-          </TableList>
+          <React.Fragment>
+            <TableList className={classes.root}>
+              <EventsListHeader
+                selectedCount={selectedItems.length}
+                onClickSelect={toggleSelectedItems}
+                onClickSilence={() => this.silenceEvents(selectedItems)}
+                onClickResolve={() => this.resolveEvents(selectedItems)}
+                onClickDelete={() => this.deleteEvents(selectedItems)}
+                environment={environment}
+                onChangeQuery={onChangeQuery}
+              />
+              <Loader loading={loading}>
+                <TableListBody>{children}</TableListBody>
+              </Loader>
+            </TableList>
+
+            {this.state.silence && (
+              <SilenceEntryDialog
+                values={this.state.silence}
+                onClose={() => this.setState({ silence: null })}
+              />
+            )}
+          </React.Fragment>
         )}
       </ListController>
-    );
-  }
-
-  render() {
-    return (
-      <React.Fragment>
-        {this.renderTable()}
-        {this.state.silence && (
-          <SilenceEntryDialog
-            values={this.state.silence}
-            onClose={() => this.setState({ silence: null })}
-          />
-        )}
-      </React.Fragment>
     );
   }
 }

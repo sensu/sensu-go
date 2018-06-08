@@ -17,15 +17,16 @@ const styles = theme => ({
   },
 });
 
-export class TableList extends React.Component {
+export class TableListBody extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
-    children: PropTypes.node.isRequired,
+    children: PropTypes.node,
   };
 
   static defaultProps = {
     className: "",
+    children: null,
   };
 
   render() {
@@ -35,4 +36,4 @@ export class TableList extends React.Component {
   }
 }
 
-export default withStyles(styles)(TableList);
+export default withStyles(styles)(TableListBody);

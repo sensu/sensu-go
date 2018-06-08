@@ -1,18 +1,22 @@
 import React from "react";
 import PropTypes from "prop-types";
-
 import Checkbox from "@material-ui/core/Checkbox";
 import { withStyles } from "@material-ui/core/styles";
 
-import { TableListHeader } from "/components/TableList";
+import Typography from "@material-ui/core/Typography";
+import MenuItem from "@material-ui/core/MenuItem";
+import ListItemText from "@material-ui/core/ListItemText";
+
+import {
+  TableListHeader,
+  TableListButton as Button,
+  TableListSelect as Select,
+} from "/components/TableList";
+import ButtonSet from "/components/ButtonSet";
+
+import ConfirmDelete from "/components/partials/ConfirmDelete";
 
 const styles = theme => ({
-  headerButton: {
-    marginLeft: theme.spacing.unit / 2,
-    "&:first-child": {
-      marginLeft: theme.spacing.unit,
-    },
-  },
   filterActions: {
     display: "none",
     [theme.breakpoints.up("sm")]: {
@@ -31,18 +35,27 @@ const styles = theme => ({
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
-    onClickSelect: PropTypes.func,
-    selectedCount: PropTypes.number,
     classes: PropTypes.object.isRequired,
+    onClickSelect: PropTypes.func.isRequired,
+    onClickDelete: PropTypes.func.isRequired,
+    selectedCount: PropTypes.number.isRequired,
+    onChangeQuery: PropTypes.func.isRequired,
   };
 
-  static defaultProps = {
-    onClickSelect: () => {},
-    selectedCount: 0,
+  _handleChangeSort = val => {
+    let newVal = val;
+    this.props.onChangeQuery(query => {
+      // Toggle between ASC & DESC
+      const curVal = query.get("order");
+      if (curVal === "ID" && newVal === "ID") {
+        newVal = "ID_DESC";
+      }
+      query.set("order", newVal);
+    });
   };
 
   render() {
-    const { selectedCount, classes, onClickSelect } = this.props;
+    const { classes, selectedCount, onClickSelect, onClickDelete } = this.props;
 
     return (
       <TableListHeader sticky active={selectedCount > 0}>
@@ -55,6 +68,33 @@ class EntitiesListHeader extends React.PureComponent {
         />
         {selectedCount > 0 && <div>{selectedCount} Selected</div>}
         <div className={classes.grow} />
+        {selectedCount > 0 ? (
+          <ButtonSet>
+            <ConfirmDelete
+              identifier={`${selectedCount} ${
+                selectedCount === 1 ? "entity" : "entities"
+              }`}
+              onSubmit={onClickDelete}
+            >
+              {confirm => (
+                <Button onClick={confirm.open}>
+                  <Typography variant="button">Delete</Typography>
+                </Button>
+              )}
+            </ConfirmDelete>
+          </ButtonSet>
+        ) : (
+          <ButtonSet>
+            <Select label="Sort" onChange={this._handleChangeSort}>
+              <MenuItem key="ID" value="ID">
+                <ListItemText>Name</ListItemText>
+              </MenuItem>
+              <MenuItem key="LASTSEEN" value="LASTSEEN">
+                <ListItemText>Last Seen</ListItemText>
+              </MenuItem>
+            </Select>
+          </ButtonSet>
+        )}
       </TableListHeader>
     );
   }

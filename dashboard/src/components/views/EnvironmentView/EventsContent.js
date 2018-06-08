@@ -75,7 +75,7 @@ class EventsContent extends React.Component {
                 />
               </Content>
               <EventsList
-                onQueryChange={this.props.setQueryParams}
+                onChangeQuery={this.props.setQueryParams}
                 environment={environment}
                 loading={loading || aborted}
               />

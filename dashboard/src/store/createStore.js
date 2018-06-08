@@ -1,5 +1,5 @@
 import { createStore as create, applyMiddleware } from "redux";
-import { compose } from "lodash/fp";
+import { compose } from "recompose";
 import { devToolsEnhancer } from "redux-devtools-extension/logOnlyInProduction";
 
 import thunkMiddleware from "redux-thunk";

@@ -437,6 +437,9 @@ type Entity implements Node {
 
   """Extended attributes includes arbitrary user-defined data"""
   extendedAttributes: JSON!
+
+  """Describes whether the event has been deleted from the system"""
+  deleted: Boolean!
 }
 
 """A connection to a sequence of records."""
@@ -724,6 +727,9 @@ type Mutation {
 
   """Removes given check."""
   deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
+
+  """Removes a given entity."""
+  deleteEntity(input: DeleteRecordInput!): DeleteRecordPayload
 
   """Resolves an event."""
   resolveEvent(input: ResolveEventInput!): ResolveEventPayload

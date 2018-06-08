@@ -41,7 +41,6 @@ class EventListItem extends React.Component {
         output: PropTypes.string.isRequired,
       }).isRequired,
       timestamp: PropTypes.string.isRequired,
-      deleted: PropTypes.bool.isRequired,
     }).isRequired,
   };
 
@@ -51,7 +50,6 @@ class EventListItem extends React.Component {
         ... on Event {
           id
           timestamp
-          deleted @client
           check {
             status
             name
@@ -121,7 +119,6 @@ class EventListItem extends React.Component {
         selected={selected}
         onClickSelect={onClickSelect}
         status={event.check && event.check.status}
-        deleted={event.deleted}
         title={
           <NamespaceLink
             namespace={event.namespace}

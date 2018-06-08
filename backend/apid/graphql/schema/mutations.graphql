@@ -17,6 +17,13 @@ type Mutation {
   deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
 
   #
+  # Entities
+  #
+
+  "Removes a given entity."
+  deleteEntity(input: DeleteRecordInput!): DeleteRecordPayload
+
+  #
   # Events
   #
 

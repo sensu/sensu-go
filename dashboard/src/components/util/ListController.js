@@ -1,6 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 
+const arrayIntersect = (a, b) => a.filter(val => b.includes(val));
+
 const setKeySelected = (key, keySelected) => state => {
   if (
     keySelected &&
@@ -26,6 +28,10 @@ const setKeySelected = (key, keySelected) => state => {
 
   return null;
 };
+
+const setSelectedKeys = selectedKeys => state => ({
+  selectedKeys: arrayIntersect(state.keys, selectedKeys),
+});
 
 class ListController extends React.PureComponent {
   static defaultProps = {
@@ -57,7 +63,7 @@ class ListController extends React.PureComponent {
 
     if (state.items !== items || state.getItemKey !== getItemKey) {
       const keys = props.items.map(item => getItemKey(item));
-      const selectedKeys = state.selectedKeys.filter(key => keys.includes(key));
+      const selectedKeys = arrayIntersect(state.selectedKeys, keys);
       state = { ...state, selectedKeys, items, keys, getItemKey };
     }
 
@@ -91,10 +97,15 @@ class ListController extends React.PureComponent {
     this.setState(setKeySelected(key, keySelected));
   };
 
+  setSelectedItems = selectedItems => {
+    this.setState(state => {
+      const keys = selectedItems.map(state.getItemKey);
+      return setSelectedKeys(keys)(state);
+    });
+  };
+
   setSelectedKeys = selectedKeys => {
-    this.setState(state => ({
-      selectedKeys: state.keys.filter(key => selectedKeys.includes(key)),
-    }));
+    this.setState(setSelectedKeys(selectedKeys));
   };
 
   render() {
@@ -131,6 +142,7 @@ class ListController extends React.PureComponent {
       setKeySelected: this.setKeySelected,
       setItemSelected: this.setItemSelected,
       setSelectedKeys: this.setSelectedKeys,
+      setSelectedItems: this.setSelectedItems,
       toggleSelectedItems: () =>
         selectedKeys.length === keys.length
           ? this.setSelectedKeys([])
