@@ -37,7 +37,7 @@ class EntitiesList extends React.PureComponent {
   static propTypes = {
     environment: PropTypes.object,
     loading: PropTypes.bool,
-    onQueryChange: PropTypes.func.isRequired,
+    onChangeQuery: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -100,7 +100,7 @@ class EntitiesList extends React.PureComponent {
   _handleChangeFilter = (filter, val) => {
     switch (filter) {
       case "subscription":
-        this.props.onQueryChange({ filter: `'${val}' IN Subscriptions` });
+        this.props.onChangeQuery({ filter: `'${val}' IN Subscriptions` });
         break;
       default:
         throw new Error(`unexpected filter '${filter}'`);

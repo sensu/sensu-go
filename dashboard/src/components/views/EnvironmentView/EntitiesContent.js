@@ -72,7 +72,7 @@ class EntitiesContent extends React.PureComponent {
               <EntitiesList
                 environment={environment}
                 loading={loading || aborted}
-                onQueryChange={this.props.setQueryParams}
+                onChangeQuery={this.props.setQueryParams}
                 refetch={refetch}
               />
             </AppContent>
