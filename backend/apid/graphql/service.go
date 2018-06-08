@@ -45,6 +45,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterSilencedConnection(svc, &schema.SilencedConnectionAliases{})
 	schema.RegisterSubscriptionSet(svc, subscriptionSetImpl{})
 	schema.RegisterSubscriptionSetOrder(svc)
+	schema.RegisterSubscriptionOccurences(svc, &schema.SubscriptionOccurencesAliases{})
 	schema.RegisterViewer(svc, newViewerImpl(store, cfg.QueueGetter, cfg.Bus))
 
 	// Register check types

@@ -58,7 +58,12 @@ type Environment implements Node {
   ): SilencedConnection!
 
   "All subscriptions in use in the environment."
-  subscriptions: SubscriptionSet
+  subscriptions(
+    "Omit entity subscriptions from set."
+    omitEntity: Boolean = false
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: SubscriptionSetOrder = OCCURRENCES
+  ): SubscriptionSet!
 
   """
   checkHistory includes all persisted check execution results associated with
@@ -73,21 +78,11 @@ type Environment implements Node {
   ): [CheckHistory]!
 }
 
-"""
-SubscriptionSet describes a set of subscriptions.
-"""
-type SubscriptionSet {
-  "Returns all subscriptions in the set. Optinally sorted."
-  entries(orderBy: SubscriptionSetOrder = ALPHA_DESC): [String!]!
-  "Returns the number of values in the set."
-  size: Int
-}
-
 "Describes ways in which a set of subscriptions can be ordered."
 enum SubscriptionSetOrder {
   ALPHA_ASC
   ALPHA_DESC
-  FREQUENCY
+  OCCURRENCES
 }
 
 enum CheckListOrder {

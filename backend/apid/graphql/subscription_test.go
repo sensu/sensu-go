@@ -4,32 +4,47 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/strings"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSubscriptionSet(t *testing.T) {
+func TestOccurrencesOfSubscription(t *testing.T) {
 	assert := assert.New(t)
 
 	entity := types.FixtureEntity("test")
 	entity.Subscriptions = []string{"one", "two"}
 
+	set := occurrencesOfSubscriptions(entity)
+	assert.Equal(set.Size(), 2)
+	assert.Equal(set.Get("one"), 1)
+	assert.Equal(set.Get("two"), 1)
+	assert.Equal(set.Get("three"), 0)
+}
+
+func TestSubscriptionSet(t *testing.T) {
+	assert := assert.New(t)
+
 	// new
-	setA := newSubscriptionSet(entity)
-	assert.Equal(setA.size(), 2)
-	assert.Contains(setA.entries(), "one")
-	assert.Contains(setA.entries(), "two")
+	set := newSubscriptionSet(strings.NewOccurrenceSet("one", "one", "two"))
+	assert.Equal(set.size(), 2)
 
-	// add
-	setB := setA
-	setB.add("three")
-	setB.add("four")
-	assert.Equal(setB.size(), 4)
-	assert.Contains(setB.entries(), "three")
-	assert.Contains(setB.entries(), "four")
+	// sort alpha desc
+	set.sortByAlpha(false)
+	assert.EqualValues(set.values(), []string{"one", "two"})
 
-	// merge
-	setA.merge(setB)
-	assert.Equal(setA.size(), 4)
-	assert.Contains(setA.entries(), "three")
-	assert.Contains(setA.entries(), "four")
+	// sort alpha asc
+	set.sortByAlpha(true)
+	assert.EqualValues(set.values(), []string{"two", "one"})
+
+	// sort by occurrence
+	set.sortByOccurrence()
+	assert.EqualValues(set.values(), []string{"one", "two"})
+
+	// entries
+	entries := set.entries()
+	assert.Len(entries, 2)
+	assert.EqualValues(entries, []subscriptionOccurrences{
+		subscriptionOccurrences{"one", 2},
+		subscriptionOccurrences{"two", 1},
+	})
 }
