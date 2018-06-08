@@ -2,12 +2,11 @@ import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
 import gql from "graphql-tag";
-
+import { compose } from "recompose";
 import { Route } from "react-router-dom";
 import { withApollo } from "react-apollo";
-import { reduce, capitalize } from "lodash";
-import { compose } from "lodash/fp";
 import { withStyles } from "@material-ui/core/styles";
+import capitalize from "lodash/capitalize";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import Checkbox from "@material-ui/core/Checkbox";
@@ -149,8 +148,7 @@ class EventsContainer extends React.Component {
     // if every state is false or undefined, switch the header
     const newState = events.length === 0;
     this.setState({
-      rowState: reduce(
-        keys,
+      rowState: keys.reduce(
         (acc, key) => ({ ...acc, [key]: newState }),
         this.state.rowState,
       ),
@@ -278,7 +276,7 @@ class EventsContainer extends React.Component {
                   </Button>
                 )}
               </ConfirmDelete>
-              <Button onClick={this.silenceSelectedEvents(params)}>
+              <Button onClick={() => this.silenceSelectedEvents(params)}>
                 <Typography variant="button">Silence</Typography>
               </Button>
               <Button onClick={this._handleBulkResolve}>
