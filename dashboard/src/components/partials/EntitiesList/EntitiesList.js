@@ -2,23 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
-
+import deleteEntity from "/mutations/deleteEntity";
+import Loader from "/components/util/Loader";
 import TableList, {
   TableListBody,
   TableListEmptyState,
-  TableListSelect as Select,
 } from "/components/TableList";
-
-import Button from "@material-ui/core/Button";
-import ButtonSet from "/components/ButtonSet";
-import MenuItem from "@material-ui/core/MenuItem";
-import ListItemText from "@material-ui/core/ListItemText";
-
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import deleteEntity from "/mutations/deleteEntity";
-
-import Loader from "/components/util/Loader";
-
 import EntitiesListHeader from "./EntitiesListHeader";
 import EntitiesListItem from "./EntitiesListItem";
 
@@ -151,41 +140,16 @@ class EntitiesList extends React.PureComponent {
 
   render() {
     const entities = getEntities(this.props);
-    const selectLen = this.state.selectedIds.length;
 
     return (
       <TableList>
         <EntitiesListHeader
-          subscriptions={this._getSubscriptions()}
-          onClickSelect={this._handleClickHeaderSelect}
           onChangeFilter={this._handleChangeFilter}
+          onClickSelect={this._handleClickHeaderSelect}
+          onChangeSort={this._handleSort}
+          onSubmitDelete={this._handleDeleteItems}
           selectedCount={this.state.selectedIds.length}
-          actions={
-            <ButtonSet>
-              <Select label="Sort" onChange={this._handleSort}>
-                <MenuItem key="ID" value="ID">
-                  <ListItemText>Name</ListItemText>
-                </MenuItem>
-                <MenuItem key="LASTSEEN" value="LASTSEEN">
-                  <ListItemText>Last Seen</ListItemText>
-                </MenuItem>
-              </Select>
-            </ButtonSet>
-          }
-          bulkActions={
-            <ButtonSet>
-              <ConfirmDelete
-                identifier={`${selectLen} ${
-                  selectLen === 1 ? "entity" : "entities"
-                }`}
-                onSubmit={() => this._handleDeleteItems()}
-              >
-                {confirm => (
-                  <Button onClick={() => confirm.open()}>Delete</Button>
-                )}
-              </ConfirmDelete>
-            </ButtonSet>
-          }
+          subscriptions={this._getSubscriptions()}
         />
         <Loader loading={this.props.loading}>
           <TableListBody>
