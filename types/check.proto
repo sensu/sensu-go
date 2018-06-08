@@ -119,6 +119,10 @@ message CheckConfig {
   // OutputOutputMetricHandlers is the list of event handlers that will respond to metrics
   // that have been extracted from the check.
   repeated string output_metric_handlers = 23 [(gogoproto.jsontag) = "output_metric_handlers"];
+
+  // EnvVars is the list of environment variables to set for the check's
+  // execution environment.
+  repeated string env_vars = 24 [(gogoproto.jsontag) = "env_vars"];
 }
 
 // A Check is a check specification and optionally the results of the check's
