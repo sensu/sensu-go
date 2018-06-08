@@ -272,6 +272,10 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("invalid flap thresholds")
 	}
 
+	if err := ValidateEnvVars(c.EnvVars); err != nil {
+		return err
+	}
+
 	return c.Subdue.Validate()
 }
 
