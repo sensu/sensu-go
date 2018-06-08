@@ -177,7 +177,7 @@ export default () => {
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin({
         inject: true,
-        template: require.resolve("src/static/index.html"),
+        template: path.resolve(root, "src/static/index.html"),
         minify: isProduction && {
           removeComments: true,
           collapseWhitespace: true,
