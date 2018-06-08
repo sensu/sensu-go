@@ -276,7 +276,7 @@ class EventsContainer extends React.Component {
                   </Button>
                 )}
               </ConfirmDelete>
-              <Button onClick={this.silenceSelectedEvents(params)}>
+              <Button onClick={() => this.silenceSelectedEvents(params)}>
                 <Typography variant="button">Silence</Typography>
               </Button>
               <Button onClick={this._handleBulkResolve}>
