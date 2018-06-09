@@ -70,6 +70,7 @@ func NewCheck(c *CheckConfig) *Check {
 		RoundRobin:           c.RoundRobin,
 		OutputMetricFormat:   c.OutputMetricFormat,
 		OutputMetricHandlers: c.OutputMetricHandlers,
+		EnvVars:              c.EnvVars,
 	}
 	return check
 }
