@@ -91,7 +91,7 @@ func (client *RestClient) FetchOrganization(orgName string) (*types.Organization
 	}
 
 	if res.StatusCode() >= 400 {
-		return org, fmt.Errorf("%v", res.String())
+		return org, fmt.Errorf("error getting organization: %v", res.String())
 	}
 
 	err = json.Unmarshal(res.Body(), &org)

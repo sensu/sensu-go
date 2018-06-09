@@ -33,6 +33,8 @@ when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
 - Updated goversion in the appveyor configuration for minor releases.
 - Use a default hostname if one cannot be retrieved.
+- Return an error from `sensuctl configure` when the configured organization
+or environment does not exist.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.

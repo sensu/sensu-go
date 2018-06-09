@@ -89,14 +89,6 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
-			if err = cli.Config.SaveEnvironment(answers.Environment); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf(
-					"unable to write new configuration file with error: %s",
-					err,
-				)
-			}
-
 			// Write CLI preferences to disk
 			if err = cli.Config.SaveFormat(answers.Format); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
@@ -106,7 +98,23 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
+			if _, err := cli.Client.FetchOrganization(answers.Organization); err != nil {
+				return err
+			}
+
 			if err = cli.Config.SaveOrganization(answers.Organization); err != nil {
+				fmt.Fprintln(cmd.OutOrStderr())
+				return fmt.Errorf(
+					"unable to write new configuration file with error: %s",
+					err,
+				)
+			}
+
+			if _, err := cli.Client.FetchEnvironment(answers.Environment); err != nil {
+				return err
+			}
+
+			if err = cli.Config.SaveEnvironment(answers.Environment); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
 				return fmt.Errorf(
 					"unable to write new configuration file with error: %s",
