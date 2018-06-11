@@ -4,8 +4,10 @@ package archiver
 
 import (
 	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -22,8 +24,44 @@ func init() {
 type zipFormat struct{}
 
 func (zipFormat) Match(filename string) bool {
-	// TODO: read file header to identify the format
-	return strings.HasSuffix(strings.ToLower(filename), ".zip")
+	return strings.HasSuffix(strings.ToLower(filename), ".zip") || isZip(filename)
+}
+
+// isZip checks the file has the Zip format signature by reading its beginning
+// bytes and matching it against "PK\x03\x04"
+func isZip(zipPath string) bool {
+	f, err := os.Open(zipPath)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	buf := make([]byte, 4)
+	if n, err := f.Read(buf); err != nil || n < 4 {
+		return false
+	}
+
+	return bytes.Equal(buf, []byte("PK\x03\x04"))
+}
+
+// Write outputs a .zip file to the given writer with
+// the contents of files listed in filePaths. File paths
+// can be those of regular files or directories. Regular
+// files are stored at the 'root' of the archive, and
+// directories are recursively added.
+//
+// Files with an extension for formats that are already
+// compressed will be stored only, not compressed.
+func (zipFormat) Write(output io.Writer, filePaths []string) error {
+	w := zip.NewWriter(output)
+	for _, fpath := range filePaths {
+		if err := zipFile(w, fpath); err != nil {
+			w.Close()
+			return err
+		}
+	}
+
+	return w.Close()
 }
 
 // Make creates a .zip file in the location zipPath containing
@@ -41,16 +79,7 @@ func (zipFormat) Make(zipPath string, filePaths []string) error {
 	}
 	defer out.Close()
 
-	w := zip.NewWriter(out)
-	for _, fpath := range filePaths {
-		err = zipFile(w, fpath)
-		if err != nil {
-			w.Close()
-			return err
-		}
-	}
-
-	return w.Close()
+	return Zip.Write(out, filePaths)
 }
 
 func zipFile(w *zip.Writer, source string) error {
@@ -75,7 +104,11 @@ func zipFile(w *zip.Writer, source string) error {
 		}
 
 		if baseDir != "" {
-			header.Name = path.Join(baseDir, strings.TrimPrefix(fpath, source))
+			name, err := filepath.Rel(source, fpath)
+			if err != nil {
+				return err
+			}
+			header.Name = path.Join(baseDir, filepath.ToSlash(name))
 		}
 
 		if info.IsDir() {
@@ -116,6 +149,22 @@ func zipFile(w *zip.Writer, source string) error {
 	})
 }
 
+// Read unzips the .zip file read from the input Reader into destination.
+func (zipFormat) Read(input io.Reader, destination string) error {
+	buf, err := ioutil.ReadAll(input)
+	if err != nil {
+		return err
+	}
+
+	rdr := bytes.NewReader(buf)
+	r, err := zip.NewReader(rdr, rdr.Size())
+	if err != nil {
+		return err
+	}
+
+	return unzipAll(r, destination)
+}
+
 // Open unzips the .zip file at source into destination.
 func (zipFormat) Open(source, destination string) error {
 	r, err := zip.OpenReader(source)
@@ -124,6 +173,10 @@ func (zipFormat) Open(source, destination string) error {
 	}
 	defer r.Close()
 
+	return unzipAll(&r.Reader, destination)
+}
+
+func unzipAll(r *zip.Reader, destination string) error {
 	for _, zf := range r.File {
 		if err := unzipFile(zf, destination); err != nil {
 			return err
@@ -134,6 +187,11 @@ func (zipFormat) Open(source, destination string) error {
 }
 
 func unzipFile(zf *zip.File, destination string) error {
+	err := sanitizeExtractPath(zf.Name, destination)
+	if err != nil {
+		return err
+	}
+
 	if strings.HasSuffix(zf.Name, "/") {
 		return mkdir(filepath.Join(destination, zf.Name))
 	}

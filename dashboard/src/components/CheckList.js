@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import map from "lodash/map";
 import gql from "graphql-tag";
 
 import Table from "@material-ui/core/Table";
@@ -56,7 +55,7 @@ class CheckList extends React.Component {
 
   render() {
     const { environment, loading, limit, offset, onChangeParams } = this.props;
-    const checks = environment && (environment.checks.nodes || []);
+    const checks = environment ? environment.checks.nodes : [];
 
     return (
       <Loader loading={loading}>
@@ -73,7 +72,7 @@ class CheckList extends React.Component {
             </TableRow>
           </TableHead>
           <TableBody style={{ minHeight: 200 }}>
-            {map(checks, node => <Row key={node.id} check={node} />)}
+            {checks.map(node => <Row key={node.id} check={node} />)}
           </TableBody>
         </Table>
 

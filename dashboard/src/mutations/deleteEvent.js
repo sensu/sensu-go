@@ -31,4 +31,11 @@ export default (client, { id }) =>
         handle(error);
       }
     },
+    optimisticResponse: {
+      deleteEvent: {
+        deletedId: id,
+        __typename: "DeleteRecordPayload",
+      },
+      __typename: "Mutation",
+    },
   });
