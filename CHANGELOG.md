@@ -35,6 +35,7 @@ when creating resources with `sensuctl create`.
 - Use a default hostname if one cannot be retrieved.
 - Return an error from `sensuctl configure` when the configured organization
 or environment does not exist.
+- Remove an unnecessary parameter from sensuctl environment create.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
