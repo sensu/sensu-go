@@ -29,3 +29,11 @@ If anything went awry while working on this change or if you ran into systemic i
 
 Feel free to edit this portion of the PR once the review is complete to add any comments about the review process itself.
 -->
+
+## Have you reviewed and updated the documentation for this change? Is new documentation required?
+
+<!--
+Read any documentation that relates to the change you're making. If it needs
+updating, update it and file a PR. The PR should be linked to this PR
+or the original issue.
+-->
