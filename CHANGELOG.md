@@ -33,6 +33,8 @@ when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
 - Updated goversion in the appveyor configuration for minor releases.
 - Use a default hostname if one cannot be retrieved.
+- Return an error from `sensuctl configure` when the configured organization
+or environment does not exist.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -67,6 +69,9 @@ the organization they reside in.
 `omitempty` from protobufs).
 - The sensuctl create command no longer prints a spurious warning when
 non-default organizations or environments are configured.
+- When installing assets, errors no longer cause file descriptors to leak, or
+lockfiles to not be cleaned up.
+- Fixed a bug where the CLI default for round robin checks was not appearing.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
