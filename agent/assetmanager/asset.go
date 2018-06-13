@@ -16,7 +16,9 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
 	"github.com/sensu/sensu-go/util/retry"
+	"github.com/sirupsen/logrus"
 	filetype "gopkg.in/h2non/filetype.v1"
+	filetype_types "gopkg.in/h2non/filetype.v1/types"
 )
 
 const (
@@ -25,6 +27,9 @@ const (
 
 	// dependencies cache path
 	depsCachePath = "deps"
+
+	// Size of file header for sniffing type
+	headerSize = 262
 )
 
 // A RuntimeAsset refers to an asset that is currently in use by the agent.
@@ -79,13 +84,16 @@ func (d *RuntimeAsset) markAsInstalled() error {
 		return err
 	}
 
-	_, err = file.Write([]byte{}) // empty file
-	return err
+	// empty file
+	return file.Close()
 }
 
 // Avoid competing installation of assets
 func (d *RuntimeAsset) awaitLock() (*lockfile.Lockfile, error) {
-	lockfile, _ := lockfile.New(filepath.Join(d.path, ".lock"))
+	lockfile, err := lockfile.New(filepath.Join(d.path, ".lock"))
+	if err != nil {
+		return nil, err
+	}
 
 	// Try to lock the asset directory for purpose of writing
 	if err := lockfile.TryLock(); err == nil {
@@ -130,15 +138,73 @@ func (d *RuntimeAsset) fetch() (*http.Response, error) {
 	return r, err
 }
 
-// Downloads the given depdencies asset to the cache directory.
-// TODO(james): ugly; too many responsibilities
-// nolint
-func (d *RuntimeAsset) install() error {
+// binDir creates the asset's bin directory and returns the path
+func (d *RuntimeAsset) binDir() (string, error) {
 	// Ensure that cache directory exists before we attempt to write the contents
 	// of our asset to it.
 	binDir := filepath.Join(d.path, "bin")
-	if err := os.MkdirAll(binDir, 0755); err != nil {
-		return fmt.Errorf("unable to create cache directory '%s': %s", d.path, err.Error())
+	err := os.MkdirAll(binDir, os.ModeDir|0700)
+	if err != nil {
+		err = fmt.Errorf("error creating directory %q: %s", binDir, err)
+	}
+	return binDir, err
+}
+
+func (d *RuntimeAsset) download() (*os.File, error) {
+	// Download the asset
+	r, err := d.fetch()
+	if err != nil {
+		return nil, err
+	}
+
+	// Write response to tmp
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-asset")
+	if err != nil {
+		return nil, fmt.Errorf("can't open tmp file for asset %q", d.asset.Name)
+	}
+
+	if _, err = io.Copy(tmpFile, r.Body); err != nil {
+		return nil, fmt.Errorf("error downloading asset %q", d.asset.Name)
+	}
+
+	return tmpFile, resetFile(tmpFile)
+}
+
+func hashFile(f *os.File) (string, error) {
+	// Generate checksum for downloaded file
+	h := sha512.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", fmt.Errorf("generating checksum for asset failed: %s", err)
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), resetFile(f)
+}
+
+func sniffType(f *os.File) (filetype_types.Type, error) {
+	header := make([]byte, headerSize)
+	if _, err := f.Read(header); err != nil {
+		return filetype_types.Type{}, fmt.Errorf("unable to read asset header: %s", err)
+	}
+	ft, err := filetype.Match(header)
+	if err != nil {
+		return ft, err
+	}
+	return ft, resetFile(f)
+}
+
+func resetFile(f *os.File) error {
+	// Ensure file contents are synced and rewound
+	if err := f.Sync(); err != nil {
+		return err
+	}
+	_, err := f.Seek(0, 0)
+	return err
+}
+
+// Downloads the given depdencies asset to the cache directory.
+func (d *RuntimeAsset) install() (err error) {
+	if _, err := d.binDir(); err != nil {
+		return err
 	}
 
 	// Obtain a lock to avoid clobbering competing installs
@@ -153,80 +219,59 @@ func (d *RuntimeAsset) install() error {
 		return err
 	}
 
-	// logger.WithFields(logrus.Fields{
-	//	"asset_name": d.asset.Name,
-	// }).Info("new dependency encountered; downloading")
+	logger.WithFields(logrus.Fields{
+		"asset": d.asset.Name,
+	}).Info("downloading asset")
 
 	// Download the asset
-	r, err := d.fetch()
+	tmpFile, err := d.download()
+	if err != nil {
+		return err
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	// Generate checksum for downloaded file
+	checksum, err := hashFile(tmpFile)
 	if err != nil {
 		return err
 	}
 
-	// Write response to tmp
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-asset")
+	// validate checksum
+	if d.asset.Sha512 != checksum {
+		return fmt.Errorf("asset checksum does not match: %q != %q", d.asset.Sha512, checksum)
+	}
+
+	// detect the type of archive the asset is
+	ft, err := sniffType(tmpFile)
 	if err != nil {
-		return fmt.Errorf("unable to obtain tmp file for asset '%s'", d.asset.Name)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	if _, err = io.Copy(tmpFile, r.Body); err != nil {
-		return fmt.Errorf("unable to write asset '%s' to tmp", d.asset.Name)
+		return err
 	}
 
-	// Ensure file contents are synced and rewound
-	tmpFile.Sync()
-	tmpFile.Seek(0, 0)
+	var ar archiver.Archiver
 
-	// Generate checksum for downloaded file
-	h := sha512.New()
-	if _, err = io.Copy(h, tmpFile); err != nil {
-		return fmt.Errorf("generating checksum for asset failed: %s", err.Error())
-	}
-
-	// Check that fetched file's checksum matches given
-	responseBodySum := hex.EncodeToString(h.Sum(nil))
-	if d.asset.Sha512 != responseBodySum {
-		return fmt.Errorf(
-			"fetched asset checksum did not match '%s' '%s'",
-			d.asset.Sha512,
-			responseBodySum,
-		)
-	}
-
-	// Read header
-	header := make([]byte, 262)
-	tmpFile.Seek(0, 0)
-	if _, err = tmpFile.Read(header); err != nil {
-		return fmt.Errorf("unable to read asset header: %s", err)
-	}
-
-	// Close tempfile to avoid deadlock
-	tmpFile.Close()
-
-	// If file is an archive attempt to extract it
-	fileKind, _ := filetype.Match(header)
-	switch fileKind.MIME.Value {
+	// If the file is not an archive, exit with an error.
+	switch ft.MIME.Value {
 	case "application/x-tar":
-		if err = archiver.Tar.Open(tmpFile.Name(), d.path); err != nil {
-			return fmt.Errorf("unable to extract asset to cache directory w/ err %s", err)
-		}
+		ar = archiver.Tar
 	case "application/gzip":
-		if err = archiver.TarGz.Open(tmpFile.Name(), d.path); err != nil {
-			return fmt.Errorf("unable to extract asset to cache directory w/ err %s", err)
-		}
+		ar = archiver.TarGz
 	default:
 		return fmt.Errorf(
 			"given file of format '%s' does not appear valid",
-			fileKind.MIME.Value,
+			ft.MIME.Value,
 		)
 	}
 
-	// Write .completed file
-	d.markAsInstalled()
+	// Extract the archive to the desired path
+	if err := ar.Read(tmpFile, d.path); err != nil {
+		return fmt.Errorf("error extracting asset: %s", err)
+	}
 
-	// Unlock directory so we allow others others to write again
-	lockfile.Unlock()
+	// Write .completed file
+	if err := d.markAsInstalled(); err != nil {
+		return fmt.Errorf("error finalizing asset installation: %s", err)
+	}
 
 	return nil
 }

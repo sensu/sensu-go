@@ -261,7 +261,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "round-robin",
 			Prompt: &survey.Input{
 				Message: "Round Robin",
-				Default: opts.RoundRobin,
+				Default: roundRobinDefault,
 				Help:    "if true, schedule this check in a round-robin fashion",
 			},
 			Validate: func(val interface{}) error {

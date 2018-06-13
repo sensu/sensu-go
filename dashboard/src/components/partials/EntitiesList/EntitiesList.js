@@ -8,6 +8,9 @@ import TableList, {
   TableListBody,
   TableListEmptyState,
 } from "/components/TableList";
+
+import Pagination from "/components/partials/Pagination";
+
 import EntitiesListHeader from "./EntitiesListHeader";
 import EntitiesListItem from "./EntitiesListItem";
 
@@ -37,21 +40,33 @@ class EntitiesList extends React.PureComponent {
     client: PropTypes.object.isRequired,
     environment: PropTypes.object,
     loading: PropTypes.bool,
-    onChangeQuery: PropTypes.func.isRequired,
+    onChangeParams: PropTypes.func.isRequired,
+    limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   };
 
   static defaultProps = {
     environment: null,
     loading: false,
+    limit: undefined,
+    offset: undefined,
   };
 
   static fragments = {
     environment: gql`
       fragment EntitiesList_environment on Environment {
-        entities(limit: 1000, filter: $filter, orderBy: $order)
-          @connection(key: "entities", filter: ["filter", "orderBy"]) {
+        entities(
+          limit: $limit
+          offset: $offset
+          filter: $filter
+          orderBy: $order
+        ) @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
             ...EntitiesListItem_entity
+          }
+
+          pageInfo {
+            ...Pagination_pageInfo
           }
         }
         subscriptions(orderBy: OCCURRENCES, omitEntity: true) {
@@ -61,6 +76,7 @@ class EntitiesList extends React.PureComponent {
 
       ${EntitiesListItem.fragments.entity}
       ${EntitiesListHeader.fragments.subscriptions}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
@@ -101,7 +117,7 @@ class EntitiesList extends React.PureComponent {
   _handleChangeFilter = (filter, val) => {
     switch (filter) {
       case "subscription":
-        this.props.onChangeQuery({ filter: `'${val}' IN Subscriptions` });
+        this.props.onChangeParams({ filter: `'${val}' IN Subscriptions` });
         break;
       default:
         throw new Error(`unexpected filter '${filter}'`);
@@ -125,7 +141,7 @@ class EntitiesList extends React.PureComponent {
 
   _handleSort = val => {
     let newVal = val;
-    this.props.onChangeQuery(query => {
+    this.props.onChangeParams(query => {
       // Toggle between ASC & DESC
       const curVal = query.get("order");
       if (curVal === "ID" && newVal === "ID") {
@@ -139,6 +155,7 @@ class EntitiesList extends React.PureComponent {
     this.props.environment && this.props.environment.subscriptions;
 
   render() {
+    const { environment, limit, offset, onChangeParams } = this.props;
     const entities = getEntities(this.props);
 
     return (
@@ -175,6 +192,12 @@ class EntitiesList extends React.PureComponent {
             ))}
           </TableListBody>
         </Loader>
+        <Pagination
+          limit={limit}
+          offset={offset}
+          pageInfo={environment && environment.entities.pageInfo}
+          onChangeParams={onChangeParams}
+        />
       </TableList>
     );
   }
