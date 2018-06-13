@@ -6,6 +6,16 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// checks
+
+type mockCheckExecutor struct {
+	err error
+}
+
+func (m mockCheckExecutor) QueueAdhocRequest(_ context.Context, _ string, _ *types.AdhocRequest) error {
+	return m.err
+}
+
 // entities
 
 type mockEntityFetcher struct {

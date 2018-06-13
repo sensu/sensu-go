@@ -13,6 +13,9 @@ type Mutation {
   "Updates given check."
   updateCheck(input: UpdateCheckInput!): UpdateCheckPayload
 
+  "Updates given check."
+  executeCheck(input: ExecuteCheckInput!): ExecuteCheckPayload
+
   "Removes given check."
   deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
 
@@ -155,6 +158,35 @@ type UpdateCheckPayload {
 
   "The updated check."
   check: CheckConfig!
+}
+
+#
+# ExecuteCheckMutation
+#
+
+input ExecuteCheckInput {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  "Global ID of the check to update."
+  id: ID!
+
+  "Subscriptions is an optional list of subscriptions to target."
+  subscriptions: [String!]!
+
+  "Reason is used to provide context to the adho request."
+  reason: String = ""
+}
+
+type ExecuteCheckPayload {
+  "A unique identifier for the client performing the mutation."
+  clientMutationId: String
+
+  """
+  Any calidation or unrecoverable errors that occurred while executing the
+  mutation.
+  """
+  errors: [Error!]!
 }
 
 #
