@@ -4,26 +4,30 @@ import gql from "graphql-tag";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
 
-import Query from "/components/util/Query";
-
+import { withQueryParams } from "/components/QueryParams";
 import AppContent from "/components/AppContent";
 import CheckList from "/components/CheckList";
 
-import NotFoundView from "/components/views/NotFoundView";
+import Query from "/components/util/Query";
 
-// Hardcoded page size
-const fetchLimit = 100;
+import NotFoundView from "/components/views/NotFoundView";
 
 class ChecksContent extends React.Component {
   static propTypes = {
     match: PropTypes.object.isRequired,
+    queryParams: PropTypes.shape({
+      offset: PropTypes.string,
+      limit: PropTypes.string,
+    }).isRequired,
+    setQueryParams: PropTypes.func.isRequired,
   };
 
   static query = gql`
     query EnvironmentViewChecksContentQuery(
       $environment: String!
       $organization: String!
-      $limit: Int!
+      $limit: Int
+      $offset: Int
     ) {
       environment(organization: $organization, environment: $environment) {
         ...CheckList_environment
@@ -34,11 +38,15 @@ class ChecksContent extends React.Component {
   `;
 
   render() {
-    const { match } = this.props;
-    const variables = { limit: fetchLimit, ...match.params };
+    const { match, queryParams, setQueryParams } = this.props;
+
+    const { limit = "50", offset = "0" } = queryParams;
 
     return (
-      <Query query={ChecksContent.query} variables={variables}>
+      <Query
+        query={ChecksContent.query}
+        variables={{ ...match.params, limit, offset }}
+      >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
@@ -49,6 +57,9 @@ class ChecksContent extends React.Component {
               <Button onClick={() => refetch()}>reload</Button>
               <Paper>
                 <CheckList
+                  limit={limit}
+                  offset={offset}
+                  onChangeParams={setQueryParams}
                   environment={environment}
                   loading={loading || aborted}
                   refetch={refetch}
@@ -62,4 +73,4 @@ class ChecksContent extends React.Component {
   }
 }
 
-export default ChecksContent;
+export default withQueryParams(["offset", "limit"])(ChecksContent);
