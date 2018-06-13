@@ -19,6 +19,7 @@ prior to assuming the existence of said check.
 - Added the format `wrapped-json` to sensuctl `configure`, `list` and `info`
 commands, which is compatible with `sensuctl create`.
 - Added debug event log with all event data.
+- Added test resources in `testing/config/resources.json` to be used in staging.
 
 ### Changed
 - Add logging around the Sensu event pipeline.

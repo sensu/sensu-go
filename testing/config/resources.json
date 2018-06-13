@@ -1,0 +1,557 @@
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo $(hostname).cpu 41 $(date +%s)",
+    "environment": "default",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "extract-graphite",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "metrics"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "graphite_plaintext",
+    "output_metric_handlers": [
+      "cat"
+    ]
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo $(hostname)'.cpu:41|c' | nc -u -w1 127.0.0.1 8125",
+    "environment": "default",
+    "handlers": [
+      "cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "feed-statsd",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "metrics"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo asset",
+    "environment": "default",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "check-with-asset",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [
+      "foo"
+    ],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo subdued",
+    "environment": "default",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "subdued-check",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": {
+      "days": {
+        "all": [
+          {
+            "begin": "12:00AM",
+            "end": "11:59PM"
+          },
+          {
+            "begin": "11:00PM",
+            "end": "1:00AM"
+          }
+        ]
+      }
+    },
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo silenced",
+    "environment": "default",
+    "handlers": [
+      "cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "silenced-check",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo not published",
+    "environment": "default",
+    "handlers": [
+      "cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "silenced-check",
+    "organization": "default",
+    "publish": false,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo proxy",
+    "environment": "default",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "proxy-check",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "proxy_requests": {
+      "entity_attributes": [
+        "entity.Class == \"proxy\""
+      ],
+      "splay": false,
+      "splay_coverage": 0
+    },
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo failing cron && exit 1",
+    "environment": "default",
+    "handlers": [
+      "filtered-cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 0,
+    "low_flap_threshold": 0,
+    "name": "failing-cron",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "schedules"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": [
+      {
+        "0": [
+          "passing"
+        ]
+      },
+      {
+        "1": [
+          "failing"
+        ]
+      }
+    ],
+    "stdin": false,
+    "subdue": null,
+    "cron": "* * * * *",
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo passing interval && exit 0",
+    "environment": "default",
+    "handlers": [
+      "filtered-cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 60,
+    "low_flap_threshold": 0,
+    "name": "passing-interval",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "schedules"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": [
+      {
+        "0": [
+          "passing"
+        ]
+      },
+      {
+        "1": [
+          "failing"
+        ]
+      }
+    ],
+    "stdin": false,
+    "subdue": null,
+    "cron": "",
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo passing round robin && exit 0",
+    "environment": "default",
+    "handlers": [
+      "filtered-cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 60,
+    "low_flap_threshold": 0,
+    "name": "passing-round-robin",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "schedules"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": [
+      {
+        "0": [
+          "passing"
+        ]
+      },
+      {
+        "1": [
+          "failing"
+        ]
+      }
+    ],
+    "stdin": false,
+    "subdue": null,
+    "cron": "",
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo {{ .ID }}",
+    "environment": "default",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "token-substitution",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc",
+      "rbac"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "HookConfig",
+  "spec": {
+    "name": "passing",
+    "command": "echo passing",
+    "timeout": 60,
+    "stdin": false,
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "HookConfig",
+  "spec": {
+    "name": "failing",
+    "command": "echo failing",
+    "timeout": 60,
+    "stdin": false,
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "cat",
+    "type": "pipe",
+    "command": "cat",
+    "timeout": 0,
+    "handlers": [],
+    "filters": [],
+    "env_vars": [],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "filtered-cat",
+    "type": "pipe",
+    "command": "cat",
+    "timeout": 0,
+    "handlers": [],
+    "filters": [
+      "handle-failing-only"
+    ],
+    "env_vars": [],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "EventFilter",
+  "spec": {
+    "name": "handle-failing-only",
+    "action": "allow",
+    "statements": [
+      "event.Check.Status == 1"
+    ],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Asset",
+  "spec": {
+    "name": "foo",
+    "url": "http:foo.com",
+    "sha512": "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
+    "metadata": null,
+    "filters": [],
+    "organization": "default"
+  }
+}
+{
+  "type": "Mutator",
+  "spec": {
+    "name": "cat",
+    "command": "cat",
+    "timeout": 0,
+    "env_vars": [],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Entity",
+  "spec": {
+    "class": "proxy",
+    "deregister": false,
+    "deregistration": {},
+    "environment": "default",
+    "id": "proxy",
+    "keepalive_timeout": 0,
+    "last_seen": 0,
+    "organization": "default",
+    "subscriptions": [
+      "proxy"
+    ],
+    "system": {
+      "network": {
+        "interfaces": null
+      }
+    }
+  }
+}
+{
+  "type": "Environment",
+  "spec": {
+    "description": "",
+    "name": "dev",
+    "organization": "ops"
+  }
+}
+{
+  "type": "Extension",
+  "spec": {
+    "name": "foo",
+    "url": "http:foo.com",
+    "organization": "default"
+  }
+}
+{
+  "type": "Organization",
+  "spec": {
+    "description": "",
+    "name": "ops"
+  }
+}
+{
+  "type": "Role",
+  "spec": {
+    "name": "dev-ops",
+    "rules": [
+      {
+        "type": "*",
+        "environment": "dev",
+        "organization": "ops",
+        "permissions": [
+          "read"
+        ]
+      }
+    ]
+  }
+}
+{
+  "type": "Silenced",
+  "spec": {
+    "id": "*:silenced-check",
+    "expire": -1,
+    "expire_on_resolve": false,
+    "creator": "admin",
+    "check": "silenced-check",
+    "reason": "just cause",
+    "organization": "default",
+    "environment": "default",
+    "begin": 1528837186
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo rbac",
+    "environment": "dev",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "check-rbac",
+    "organization": "ops",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "rbac"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
