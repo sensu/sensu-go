@@ -2,7 +2,7 @@
 ##
 # agent configuration
 ##
-#agent-id: ""
+#id: ""
 #organization: "default"
 #environment: "default"
 #subscriptions: ""
