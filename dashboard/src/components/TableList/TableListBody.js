@@ -8,8 +8,8 @@ const styles = theme => ({
     borderStyle: "solid",
     borderColor: theme.palette.divider,
     borderTopWidth: 0,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
     borderBottomWidth: 1,
 
     // Keep content from bleeding out of container
