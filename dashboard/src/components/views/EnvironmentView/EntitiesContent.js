@@ -18,6 +18,8 @@ class EntitiesContent extends React.PureComponent {
     queryParams: PropTypes.shape({
       filter: PropTypes.string,
       order: PropTypes.string,
+      offset: PropTypes.string,
+      limit: PropTypes.string,
     }).isRequired,
     setQueryParams: PropTypes.func.isRequired,
   };
@@ -26,6 +28,8 @@ class EntitiesContent extends React.PureComponent {
     query EnvironmentViewEntitiesContentQuery(
       $environment: String!
       $organization: String!
+      $limit: Int
+      $offset: Int
       $order: EntityListOrder = ID
       $filter: String
     ) {
@@ -38,11 +42,15 @@ class EntitiesContent extends React.PureComponent {
   `;
 
   render() {
+    const { queryParams, setQueryParams, match } = this.props;
+
+    const { filter, order, limit = "50", offset = "0" } = queryParams;
+
     return (
       <Query
         query={EntitiesContent.query}
         fetchPolicy="cache-and-network"
-        variables={{ ...this.props.match.params, ...this.props.queryParams }}
+        variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -56,8 +64,8 @@ class EntitiesContent extends React.PureComponent {
                   renderSearch={
                     <SearchBox
                       placeholder="Filter entities…"
-                      initialValue={this.props.queryParams.filter}
-                      onSearch={filter => this.props.setQueryParams({ filter })}
+                      initialValue={filter}
+                      onSearch={value => setQueryParams({ filter: value })}
                     />
                   }
                   renderMenuItems={
@@ -70,9 +78,11 @@ class EntitiesContent extends React.PureComponent {
                 />
               </Content>
               <EntitiesList
-                environment={environment}
+                limit={limit}
+                offset={offset}
+                onChangeParams={setQueryParams}
                 loading={loading || aborted}
-                onQueryChange={this.props.setQueryParams}
+                environment={environment}
                 refetch={refetch}
               />
             </AppContent>
@@ -83,4 +93,6 @@ class EntitiesContent extends React.PureComponent {
   }
 }
 
-export default withQueryParams(["filter", "order"])(EntitiesContent);
+export default withQueryParams(["filter", "order", "offset", "limit"])(
+  EntitiesContent,
+);

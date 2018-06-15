@@ -18,6 +18,7 @@ import ConfirmDelete from "/components/partials/ConfirmDelete";
 import deleteEntity from "/mutations/deleteEntity";
 
 import Loader from "/components/util/Loader";
+import Pagination from "/components/partials/Pagination";
 
 import EntitiesListHeader from "./EntitiesListHeader";
 import EntitiesListItem from "./EntitiesListItem";
@@ -46,29 +47,41 @@ const trimIds = (selectedIds, props) => {
 class EntitiesList extends React.PureComponent {
   static propTypes = {
     client: PropTypes.object.isRequired,
-    // eslint-disable-next-line react/no-unused-prop-types
     environment: PropTypes.object,
     loading: PropTypes.bool,
-    onQueryChange: PropTypes.func.isRequired,
+    onChangeParams: PropTypes.func.isRequired,
+    limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   };
 
   static defaultProps = {
     environment: null,
     loading: false,
+    limit: undefined,
+    offset: undefined,
   };
 
   static fragments = {
     environment: gql`
       fragment EntitiesList_environment on Environment {
-        entities(limit: 1000, filter: $filter, orderBy: $order)
-          @connection(key: "entities", filter: ["filter", "orderBy"]) {
+        entities(
+          limit: $limit
+          offset: $offset
+          filter: $filter
+          orderBy: $order
+        ) @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
             ...EntitiesListItem_entity
+          }
+
+          pageInfo {
+            ...Pagination_pageInfo
           }
         }
       }
 
       ${EntitiesListItem.fragments.entity}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
@@ -123,7 +136,7 @@ class EntitiesList extends React.PureComponent {
 
   _handleSort = val => {
     let newVal = val;
-    this.props.onQueryChange(query => {
+    this.props.onChangeParams(query => {
       // Toggle between ASC & DESC
       const curVal = query.get("order");
       if (curVal === "ID" && newVal === "ID") {
@@ -134,6 +147,7 @@ class EntitiesList extends React.PureComponent {
   };
 
   render() {
+    const { environment, limit, offset, onChangeParams } = this.props;
     const entities = getEntities(this.props);
     const selectLen = this.state.selectedIds.length;
 
@@ -193,6 +207,12 @@ class EntitiesList extends React.PureComponent {
             ))}
           </TableListBody>
         </Loader>
+        <Pagination
+          limit={limit}
+          offset={offset}
+          pageInfo={environment && environment.entities.pageInfo}
+          onChangeParams={onChangeParams}
+        />
       </TableList>
     );
   }

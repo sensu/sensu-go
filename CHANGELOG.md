@@ -20,6 +20,7 @@ prior to assuming the existence of said check.
 commands, which is compatible with `sensuctl create`.
 - Added debug event log with all event data.
 - Added test resources in `testing/config/resources.json` to be used in staging.
+- Added environment variables to checks.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
@@ -36,6 +37,7 @@ when creating resources with `sensuctl create`.
 - Use a default hostname if one cannot be retrieved.
 - Return an error from `sensuctl configure` when the configured organization
 or environment does not exist.
+- Remove an unnecessary parameter from sensuctl environment create.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
