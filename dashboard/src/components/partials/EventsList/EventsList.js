@@ -17,6 +17,7 @@ import TableList, {
 import Loader from "/components/util/Loader";
 import ListController from "/components/util/ListController";
 
+import Pagination from "/components/partials/Pagination";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 
 import EventsListHeader from "./EventsListHeader";
@@ -60,12 +61,16 @@ class EventsContainer extends React.Component {
       events: PropTypes.object,
     }),
     onChangeQuery: PropTypes.func.isRequired,
+    limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     loading: PropTypes.bool,
   };
 
   static defaultProps = {
     loading: false,
     environment: null,
+    limit: undefined,
+    offset: undefined,
   };
 
   static fragments = {
@@ -83,8 +88,12 @@ class EventsContainer extends React.Component {
           }
         }
 
-        events(limit: 100, filter: $filter, orderBy: $order)
-          @connection(key: "events", filter: ["filter", "orderBy"]) {
+        events(
+          limit: $limit
+          offset: $offset
+          filter: $filter
+          orderBy: $order
+        ) @connection(key: "events", filter: ["filter", "orderBy"]) {
           nodes {
             id
             deleted @client
@@ -101,6 +110,10 @@ class EventsContainer extends React.Component {
             }
             ...EventsListItem_event
           }
+
+          pageInfo {
+            ...Pagination_pageInfo
+          }
         }
 
         ...EventsListHeader_environment
@@ -108,6 +121,7 @@ class EventsContainer extends React.Component {
 
       ${EventsListItem.fragments.event}
       ${EventsListHeader.fragments.environment}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
@@ -188,7 +202,14 @@ class EventsContainer extends React.Component {
   );
 
   render() {
-    const { classes, environment, loading, onChangeQuery } = this.props;
+    const {
+      classes,
+      environment,
+      loading,
+      limit,
+      offset,
+      onChangeQuery,
+    } = this.props;
 
     const items = environment
       ? environment.events.nodes.filter(event => !event.deleted)
@@ -218,6 +239,12 @@ class EventsContainer extends React.Component {
               <Loader loading={loading}>
                 <TableListBody>{children}</TableListBody>
               </Loader>
+              <Pagination
+                limit={limit}
+                offset={offset}
+                pageInfo={environment && environment.events.pageInfo}
+                onChangeQuery={onChangeQuery}
+              />
             </TableList>
 
             {this.state.silence && (

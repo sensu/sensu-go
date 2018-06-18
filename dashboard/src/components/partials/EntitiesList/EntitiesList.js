@@ -12,6 +12,7 @@ import deleteEntity from "/mutations/deleteEntity";
 
 import Loader from "/components/util/Loader";
 import ListController from "/components/util/ListController";
+import Pagination from "/components/partials/Pagination";
 
 import EntitiesListHeader from "./EntitiesListHeader";
 import EntitiesListItem from "./EntitiesListItem";
@@ -22,27 +23,40 @@ class EntitiesList extends React.PureComponent {
     environment: PropTypes.object,
     loading: PropTypes.bool,
     onChangeQuery: PropTypes.func.isRequired,
+    limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   };
 
   static defaultProps = {
     environment: null,
     loading: false,
+    limit: undefined,
+    offset: undefined,
   };
 
   static fragments = {
     environment: gql`
       fragment EntitiesList_environment on Environment {
-        entities(limit: 1000, filter: $filter, orderBy: $order)
-          @connection(key: "entities", filter: ["filter", "orderBy"]) {
+        entities(
+          limit: $limit
+          offset: $offset
+          filter: $filter
+          orderBy: $order
+        ) @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
             id
             deleted @client
             ...EntitiesListItem_entity
           }
+
+          pageInfo {
+            ...Pagination_pageInfo
+          }
         }
       }
 
       ${EntitiesListItem.fragments.entity}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
@@ -77,7 +91,7 @@ class EntitiesList extends React.PureComponent {
   );
 
   render() {
-    const { environment, loading, onChangeQuery } = this.props;
+    const { environment, loading, onChangeQuery, limit, offset } = this.props;
 
     const items = environment
       ? environment.entities.nodes.filter(entity => !entity.deleted)
@@ -101,6 +115,12 @@ class EntitiesList extends React.PureComponent {
             <Loader loading={loading}>
               <TableListBody>{children}</TableListBody>
             </Loader>
+            <Pagination
+              limit={limit}
+              offset={offset}
+              pageInfo={environment && environment.entities.pageInfo}
+              onChangeQuery={onChangeQuery}
+            />
           </TableList>
         )}
       </ListController>

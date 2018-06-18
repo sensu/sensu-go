@@ -70,6 +70,7 @@ func NewCheck(c *CheckConfig) *Check {
 		RoundRobin:           c.RoundRobin,
 		OutputMetricFormat:   c.OutputMetricFormat,
 		OutputMetricHandlers: c.OutputMetricHandlers,
+		EnvVars:              c.EnvVars,
 	}
 	return check
 }
@@ -125,6 +126,10 @@ func (c *Check) Validate() error {
 
 	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
 		return errors.New("invalid flap thresholds")
+	}
+
+	if err := ValidateEnvVars(c.EnvVars); err != nil {
+		return err
 	}
 
 	return c.Subdue.Validate()
@@ -270,6 +275,10 @@ func (c *CheckConfig) Validate() error {
 
 	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
 		return errors.New("invalid flap thresholds")
+	}
+
+	if err := ValidateEnvVars(c.EnvVars); err != nil {
+		return err
 	}
 
 	return c.Subdue.Validate()
