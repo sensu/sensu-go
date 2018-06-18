@@ -1,0 +1,50 @@
+---
+##
+# general configuration
+##
+state-dir: "/var/lib/sensu"
+
+##
+# agent configuration
+##
+#agent-host: "[::]" # listen on all IPv4 and IPv6 addresses
+#agent-port: 8081
+
+##
+# api configuration
+##
+#api-host: "[::]" # listen on all IPv4 and IPv6 addresses
+#api-port: 8080
+
+##
+# ssl configuration
+##
+#cert-file: "/path/to/ssl/cert.pem"
+#key-file: "/path/to/ssl/key.pem"
+#trusted-ca-file: "/path/to/trusted-certificate-authorities.pem"
+#insecure-skip-tls-verify: false
+
+##
+# store configuration
+##
+#listen-client-urls: ""
+#listen-peer-urls: ""
+#initial-cluster: ""
+#initial-advertise-peer-urls: ""
+#initial-cluster-state: ""
+#initial-cluster-token: ""
+#name: ""
+
+##
+# dashboard configuration
+##
+#dashboard-host: "[::]" # listen on all IPv4 and IPv6 addresses
+#dashboard-port: 3000
+
+##
+# other
+##
+#config-file: ""
+#debug: false
+#deregistration-handler: ""
+log-level: "debug"
