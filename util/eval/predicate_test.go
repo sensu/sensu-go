@@ -16,6 +16,7 @@ func TestEvaluatePredicate(t *testing.T) {
 		args    args
 		want    bool
 		wantErr bool
+		errType string
 	}{
 		{
 			name: "unparsable expression",
@@ -23,6 +24,7 @@ func TestEvaluatePredicate(t *testing.T) {
 				expression: "1 &&",
 			},
 			wantErr: true,
+			errType: "SyntaxError",
 		},
 		{
 			name: "unevaluable expression",
@@ -37,6 +39,7 @@ func TestEvaluatePredicate(t *testing.T) {
 				expression: "42",
 			},
 			wantErr: true,
+			errType: "TypeError",
 		},
 		{
 			name: "positive result",
@@ -125,6 +128,18 @@ func TestEvaluatePredicate(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Evaluate() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if err != nil && tt.wantErr && tt.errType != "" {
+				switch tt.errType {
+				case "SyntaxError":
+					if _, ok := err.(SyntaxError); !ok {
+						t.Error("want SyntaxError")
+					}
+				case "TypeError":
+					if _, ok := err.(TypeError); !ok {
+						t.Error("want TypeError")
+					}
+				}
 			}
 			if got != tt.want {
 				t.Errorf("Evaluate() = %v, want %v", got, tt.want)

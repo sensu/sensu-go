@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sirupsen/logrus"
 )
 
 // matchEntities matches the provided list of entities to the entity attributes
@@ -18,13 +19,27 @@ func matchEntities(entities []*types.Entity, proxyRequest *types.ProxyRequests) 
 
 OUTER:
 	for _, entity := range entities {
-		for _, expression := range proxyRequest.EntityAttributes {
+		for _, statement := range proxyRequest.EntityAttributes {
 			parameters := map[string]interface{}{"entity": entity}
 
-			result, err := eval.EvaluatePredicate(expression, parameters)
+			result, err := eval.EvaluatePredicate(statement, parameters)
 			if err != nil {
+				fields := logrus.Fields{
+					"statement":    statement,
+					"entity":       entity.ID,
+					"organization": entity.Organization,
+					"environment":  entity.Environment,
+				}
+				// Only report an error if the expression's syntax is invalid
+				switch err.(type) {
+				case eval.SyntaxError:
+					logger.WithFields(fields).WithError(err).Error("syntax error")
+				case eval.TypeError:
+					logger.WithFields(fields).WithError(err).Error("type error")
+				default:
+					logger.WithFields(fields).WithError(err).Debug("skipping statement")
+				}
 				// Skip to the next entity
-				logger.WithError(err).Errorf("expression '%s' is invalid", expression)
 				continue OUTER
 			}
 
