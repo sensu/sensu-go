@@ -2,22 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
-
+import deleteEntity from "/mutations/deleteEntity";
+import Loader from "/components/util/Loader";
 import TableList, {
   TableListBody,
   TableListEmptyState,
-  TableListSelect as Select,
 } from "/components/TableList";
 
-import Button from "@material-ui/core/Button";
-import ButtonSet from "/components/ButtonSet";
-import MenuItem from "@material-ui/core/MenuItem";
-import ListItemText from "@material-ui/core/ListItemText";
-
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import deleteEntity from "/mutations/deleteEntity";
-
-import Loader from "/components/util/Loader";
 import Pagination from "/components/partials/Pagination";
 
 import EntitiesListHeader from "./EntitiesListHeader";
@@ -78,9 +69,13 @@ class EntitiesList extends React.PureComponent {
             ...Pagination_pageInfo
           }
         }
+        subscriptions(orderBy: OCCURRENCES, omitEntity: true) {
+          ...EntitiesListHeader_subscriptions
+        }
       }
 
       ${EntitiesListItem.fragments.entity}
+      ${EntitiesListHeader.fragments.subscriptions}
       ${Pagination.fragments.pageInfo}
     `,
   };
@@ -119,6 +114,16 @@ class EntitiesList extends React.PureComponent {
       };
     });
 
+  _handleChangeFilter = (filter, val) => {
+    switch (filter) {
+      case "subscription":
+        this.props.onChangeParams({ filter: `'${val}' IN Subscriptions` });
+        break;
+      default:
+        throw new Error(`unexpected filter '${filter}'`);
+    }
+  };
+
   _handleDeleteItems = () => {
     const { selectedIds } = this.state;
     const { client } = this.props;
@@ -146,42 +151,22 @@ class EntitiesList extends React.PureComponent {
     });
   };
 
+  _getSubscriptions = () =>
+    this.props.environment && this.props.environment.subscriptions;
+
   render() {
     const { environment, limit, offset, onChangeParams } = this.props;
     const entities = getEntities(this.props);
-    const selectLen = this.state.selectedIds.length;
 
     return (
       <TableList>
         <EntitiesListHeader
+          onChangeFilter={this._handleChangeFilter}
           onClickSelect={this._handleClickHeaderSelect}
+          onChangeSort={this._handleSort}
+          onSubmitDelete={this._handleDeleteItems}
           selectedCount={this.state.selectedIds.length}
-          actions={
-            <ButtonSet>
-              <Select label="Sort" onChange={this._handleSort}>
-                <MenuItem key="ID" value="ID">
-                  <ListItemText>Name</ListItemText>
-                </MenuItem>
-                <MenuItem key="LASTSEEN" value="LASTSEEN">
-                  <ListItemText>Last Seen</ListItemText>
-                </MenuItem>
-              </Select>
-            </ButtonSet>
-          }
-          bulkActions={
-            <ButtonSet>
-              <ConfirmDelete
-                identifier={`${selectLen} ${
-                  selectLen === 1 ? "entity" : "entities"
-                }`}
-                onSubmit={() => this._handleDeleteItems()}
-              >
-                {confirm => (
-                  <Button onClick={() => confirm.open()}>Delete</Button>
-                )}
-              </ConfirmDelete>
-            </ButtonSet>
-          }
+          subscriptions={this._getSubscriptions()}
         />
         <Loader loading={this.props.loading}>
           <TableListBody>

@@ -48,22 +48,20 @@ class EventListItem extends React.Component {
   static fragments = {
     event: gql`
       fragment EventsListItem_event on Event {
-        ... on Event {
-          id
-          timestamp
-          deleted @client
-          check {
-            status
-            name
-            output
-          }
-          entity {
-            name
-          }
-          namespace {
-            organization
-            environment
-          }
+        id
+        timestamp
+        deleted @client
+        check {
+          status
+          name
+          output
+        }
+        entity {
+          name
+        }
+        namespace {
+          organization
+          environment
         }
       }
     `,

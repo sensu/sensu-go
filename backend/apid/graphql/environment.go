@@ -3,6 +3,7 @@ package graphql
 import (
 	"errors"
 	"sort"
+	"strings"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
@@ -11,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
+	string_utils "github.com/sensu/sensu-go/util/strings"
 )
 
 var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
@@ -282,4 +284,50 @@ func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverPara
 	// Limit
 	limit := clampInt(p.Args.Limit, 0, len(history))
 	return history[0:limit], nil
+}
+
+// Subscriptions implements response to request for 'subscriptions' field.
+func (r *envImpl) Subscriptions(p schema.EnvironmentSubscriptionsFieldResolverParams) (interface{}, error) {
+	set := string_utils.OccurrenceSet{}
+	env := p.Source.(*types.Environment)
+	ctx := types.SetContextFromResource(p.Context, env)
+
+	entities, err := r.entityCtrl.Query(ctx)
+	if err != nil {
+		return set, err
+	}
+	for _, entity := range entities {
+		newSet := occurrencesOfSubscriptions(entity)
+		set.Merge(newSet)
+	}
+
+	checks, err := r.checksCtrl.Query(ctx)
+	if err != nil {
+		return set, err
+	}
+	for _, check := range checks {
+		newSet := occurrencesOfSubscriptions(check)
+		set.Merge(newSet)
+	}
+
+	// If specified omit subscriptions prefix'd with 'entity:'
+	if p.Args.OmitEntity {
+		for _, subscription := range set.Values() {
+			if strings.HasPrefix(subscription, "entity:") {
+				set.Remove(subscription)
+			}
+		}
+	}
+
+	// Sort entries
+	subscriptionSet := newSubscriptionSet(set)
+	if p.Args.OrderBy == schema.SubscriptionSetOrders.ALPHA_DESC {
+		subscriptionSet.sortByAlpha(false)
+	} else if p.Args.OrderBy == schema.SubscriptionSetOrders.ALPHA_ASC {
+		subscriptionSet.sortByAlpha(true)
+	} else if p.Args.OrderBy == schema.SubscriptionSetOrders.OCCURRENCES {
+		subscriptionSet.sortByOccurrence()
+	}
+
+	return subscriptionSet, nil
 }
