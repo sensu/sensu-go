@@ -20,6 +20,9 @@ prior to assuming the existence of said check.
 commands, which is compatible with `sensuctl create`.
 - Added debug event log with all event data.
 - Added yml.example configurations for staging backend and agents.
+- Added test resources in `testing/config/resources.json` to be used in staging.
+- Added all missing configuration options to `agent.yml.example` and
+`backend.yml.example`.
 - Added environment variables to checks.
 
 ### Changed
