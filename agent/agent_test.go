@@ -46,13 +46,13 @@ func TestSendLoop(t *testing.T) {
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
+	defer ta.Stop()
 	err := ta.Run()
 	assert.NoError(t, err)
 	if err != nil {
 		assert.FailNow(t, "agent failed to run")
 	}
 	<-done
-	ta.Stop()
 }
 
 func TestReceiveLoop(t *testing.T) {
@@ -83,6 +83,7 @@ func TestReceiveLoop(t *testing.T) {
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
+	defer ta.Stop()
 	ta.handler.AddHandler("testMessageType", func(payload []byte) error {
 		msg := &testMessageType{}
 		err := json.Unmarshal(payload, msg)
@@ -100,7 +101,6 @@ func TestReceiveLoop(t *testing.T) {
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
 	<-done
-	ta.Stop()
 }
 
 func TestKeepaliveLoggingRedaction(t *testing.T) {
@@ -143,11 +143,11 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
+	defer ta.Stop()
 	err := ta.Run()
 	assert.NoError(t, err)
 	if err != nil {
 		assert.FailNow(t, "agent failed to run")
 	}
 	<-done
-	ta.Stop()
 }
