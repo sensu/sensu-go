@@ -152,7 +152,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	config.ExtendedAttributes = []byte(`{"team":"devops"}`)
 	config.AgentID = "TestTokenSubstitution"
 	agent := NewAgent(config)
-	ch := make(chan *transport.Message, 2)
+	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
 	// check command with valid token substitution
@@ -173,20 +173,35 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
 	assert.Contains(event.Check.Output, "TestTokenSubstitution devops defaultValue")
+}
+
+func TestHandleTokenSubstitutionNoKey(t *testing.T) {
+	assert := assert.New(t)
+
+	checkConfig := types.FixtureCheckConfig("check")
+	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig.Stdin = true
+
+	config := FixtureConfig()
+	config.ExtendedAttributes = []byte(`{"team":"devops"}`)
+	config.AgentID = "TestTokenSubstitution"
+	agent := NewAgent(config)
+	ch := make(chan *transport.Message, 1)
+	agent.sendq = ch
 
 	// check command with unmatched token
 	checkConfig.Command = `{{ .Foo }}`
 
-	payload, err = json.Marshal(request)
+	payload, err := json.Marshal(request)
 	if err != nil {
 		assert.FailNow("error marshaling check request")
 	}
 
 	assert.NoError(agent.handleCheck(payload))
 
-	msg = <-ch
+	msg := <-ch
 
-	event = &types.Event{}
+	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Contains(event.Check.Output, "has no entry for key")
