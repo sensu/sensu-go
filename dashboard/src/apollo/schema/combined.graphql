@@ -476,7 +476,11 @@ type Environment implements Node {
   """All check configurations associated with the environment."""
   checks(
     offset: Int = 0
+
+    """Limit adds optional limit to the number of entries returned."""
     limit: Int = 10
+
+    """OrderBy adds optional order to the records retrieved."""
     orderBy: CheckListOrder = NAME_DESC
 
     """
@@ -488,7 +492,11 @@ type Environment implements Node {
   """All entities associated with the environment."""
   entities(
     offset: Int = 0
+
+    """Limit adds optional limit to the number of entries returned."""
     limit: Int = 10
+
+    """OrderBy adds optional order to the records retrieved."""
     orderBy: EntityListOrder = ID_DESC
 
     """
@@ -500,7 +508,11 @@ type Environment implements Node {
   """All events associated with the environment."""
   events(
     offset: Int = 0
+
+    """Limit adds optional limit to the number of entries returned."""
     limit: Int = 10
+
+    """OrderBy adds optional order to the records retrieved."""
     orderBy: EventsListOrder = SEVERITY
 
     """
@@ -510,7 +522,21 @@ type Environment implements Node {
   ): EventConnection!
 
   """All silences associated with the environment."""
-  silences(offset: Int = 0, limit: Int = 10): SilencedConnection!
+  silences(
+    offset: Int = 0
+
+    """Limit adds optional limit to the number of entries returned."""
+    limit: Int = 10
+  ): SilencedConnection!
+
+  """All subscriptions in use in the environment."""
+  subscriptions(
+    """Omit entity subscriptions from set."""
+    omitEntity: Boolean = false
+
+    """OrderBy adds optional order to the records retrieved."""
+    orderBy: SubscriptionSetOrder = OCCURRENCES
+  ): SubscriptionSet!
 
   """
   checkHistory includes all persisted check execution results associated with
@@ -1021,6 +1047,33 @@ input SilenceInputs {
 
   """Expire is the number of seconds the entry will live"""
   expire: Int = -1
+}
+
+"""
+SubscriptionOccurences describes the number of occurrences of a subscription.
+"""
+type SubscriptionOccurences {
+  subscription: String!
+  occurrences: Int!
+}
+
+"""SubscriptionSet describes a set of subscriptions."""
+type SubscriptionSet {
+  """Returns all subscriptions in the set. Optionally constrained"""
+  entries(limit: Int = 50, offset: Int = 0): [SubscriptionOccurences!]!
+
+  """Returns all subscriptions in the set. Optinally constrained."""
+  values(limit: Int = 50, offset: Int = 0): [String!]!
+
+  """Returns the number of values in the set."""
+  size: Int
+}
+
+"""Describes ways in which a set of subscriptions can be ordered."""
+enum SubscriptionSetOrder {
+  ALPHA_ASC
+  ALPHA_DESC
+  OCCURRENCES
 }
 
 """

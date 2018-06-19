@@ -2,10 +2,11 @@
 ##
 # agent configuration
 ##
-#id: ""
+id: "staging-agent-1"
 #organization: "default"
 #environment: "default"
-#subscriptions: ""
+subscriptions: "schedules,rbac"
+# UPDATE BACKEND URL
 #backend-url:
 #  - "ws://127.0.0.1:8081"
 
@@ -48,5 +49,5 @@
 #keepalive-timeout: 120
 #keepalive-interval: 20
 #custom-attributes: ""
-#log-level: "warn"
+log-level: "debug"
 #redact: ""

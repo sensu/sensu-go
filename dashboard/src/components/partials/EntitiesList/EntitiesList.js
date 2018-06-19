@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
-
 import TableList, {
   TableListBody,
   TableListEmptyState,
@@ -53,9 +52,11 @@ class EntitiesList extends React.PureComponent {
             ...Pagination_pageInfo
           }
         }
+        ...EntitiesListHeader_environment
       }
 
       ${EntitiesListItem.fragments.entity}
+      ${EntitiesListHeader.fragments.environment}
       ${Pagination.fragments.pageInfo}
     `,
   };
@@ -111,6 +112,7 @@ class EntitiesList extends React.PureComponent {
               onClickSelect={toggleSelectedItems}
               onClickDelete={() => this.deleteEntities(selectedItems)}
               onChangeQuery={onChangeQuery}
+              environment={environment}
             />
             <Loader loading={loading}>
               <TableListBody>{children}</TableListBody>

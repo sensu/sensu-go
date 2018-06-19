@@ -47,4 +47,4 @@ state-dir: "/var/lib/sensu"
 #config-file: ""
 #debug: false
 #deregistration-handler: ""
-#log-level: "warn"
+log-level: "debug"

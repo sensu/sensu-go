@@ -2,10 +2,11 @@
 ##
 # agent configuration
 ##
-#id: ""
-#organization: "default"
-#environment: "default"
-#subscriptions: ""
+id: "staging-agent-2"
+organization: "ops"
+environment: "dev"
+subscriptions: "rbac"
+# UPDATE BACKEND URL
 #backend-url:
 #  - "ws://127.0.0.1:8081"
 
@@ -43,10 +44,10 @@
 ##
 #cache-dir: "/var/cache/sensu/sensu-agent"
 #config-file: ""
-#deregister: false
+#deregister: true
 #deregistration-handler: ""
 #keepalive-timeout: 120
 #keepalive-interval: 20
-#custom-attributes: ""
-#log-level: "warn"
-#redact: ""
+custom-attributes: "{\"ec2_access_key\": \"P@ssw0rd\",\"secret\": \"P@ssw0rd\"}"
+log-level: "debug"
+redact: "ec2_access_key"

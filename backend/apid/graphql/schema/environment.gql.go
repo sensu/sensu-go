@@ -42,8 +42,8 @@ type EnvironmentOrganizationFieldResolver interface {
 // EnvironmentChecksFieldResolverArgs contains arguments provided to checks when selected
 type EnvironmentChecksFieldResolverArgs struct {
 	Offset  int            // Offset - self descriptive
-	Limit   int            // Limit - self descriptive
-	OrderBy CheckListOrder // OrderBy - self descriptive
+	Limit   int            // Limit adds optional limit to the number of entries returned.
+	OrderBy CheckListOrder // OrderBy adds optional order to the records retrieved.
 	Filter  string         // Filter reduces the set using the given Sensu Query Expression predicate.
 }
 
@@ -62,8 +62,8 @@ type EnvironmentChecksFieldResolver interface {
 // EnvironmentEntitiesFieldResolverArgs contains arguments provided to entities when selected
 type EnvironmentEntitiesFieldResolverArgs struct {
 	Offset  int             // Offset - self descriptive
-	Limit   int             // Limit - self descriptive
-	OrderBy EntityListOrder // OrderBy - self descriptive
+	Limit   int             // Limit adds optional limit to the number of entries returned.
+	OrderBy EntityListOrder // OrderBy adds optional order to the records retrieved.
 	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
 }
 
@@ -82,8 +82,8 @@ type EnvironmentEntitiesFieldResolver interface {
 // EnvironmentEventsFieldResolverArgs contains arguments provided to events when selected
 type EnvironmentEventsFieldResolverArgs struct {
 	Offset  int             // Offset - self descriptive
-	Limit   int             // Limit - self descriptive
-	OrderBy EventsListOrder // OrderBy - self descriptive
+	Limit   int             // Limit adds optional limit to the number of entries returned.
+	OrderBy EventsListOrder // OrderBy adds optional order to the records retrieved.
 	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
 }
 
@@ -102,7 +102,7 @@ type EnvironmentEventsFieldResolver interface {
 // EnvironmentSilencesFieldResolverArgs contains arguments provided to silences when selected
 type EnvironmentSilencesFieldResolverArgs struct {
 	Offset int // Offset - self descriptive
-	Limit  int // Limit - self descriptive
+	Limit  int // Limit adds optional limit to the number of entries returned.
 }
 
 // EnvironmentSilencesFieldResolverParams contains contextual info to resolve silences field
@@ -115,6 +115,24 @@ type EnvironmentSilencesFieldResolverParams struct {
 type EnvironmentSilencesFieldResolver interface {
 	// Silences implements response to request for silences field.
 	Silences(p EnvironmentSilencesFieldResolverParams) (interface{}, error)
+}
+
+// EnvironmentSubscriptionsFieldResolverArgs contains arguments provided to subscriptions when selected
+type EnvironmentSubscriptionsFieldResolverArgs struct {
+	OmitEntity bool                 // OmitEntity - Omit entity subscriptions from set.
+	OrderBy    SubscriptionSetOrder // OrderBy adds optional order to the records retrieved.
+}
+
+// EnvironmentSubscriptionsFieldResolverParams contains contextual info to resolve subscriptions field
+type EnvironmentSubscriptionsFieldResolverParams struct {
+	graphql.ResolveParams
+	Args EnvironmentSubscriptionsFieldResolverArgs
+}
+
+// EnvironmentSubscriptionsFieldResolver implement to resolve requests for the Environment's subscriptions field.
+type EnvironmentSubscriptionsFieldResolver interface {
+	// Subscriptions implements response to request for subscriptions field.
+	Subscriptions(p EnvironmentSubscriptionsFieldResolverParams) (interface{}, error)
 }
 
 // EnvironmentCheckHistoryFieldResolverArgs contains arguments provided to checkHistory when selected
@@ -206,6 +224,7 @@ type EnvironmentFieldResolvers interface {
 	EnvironmentEntitiesFieldResolver
 	EnvironmentEventsFieldResolver
 	EnvironmentSilencesFieldResolver
+	EnvironmentSubscriptionsFieldResolver
 	EnvironmentCheckHistoryFieldResolver
 }
 
@@ -314,6 +333,12 @@ func (_ EnvironmentAliases) Silences(p EnvironmentSilencesFieldResolverParams) (
 	return val, err
 }
 
+// Subscriptions implements response to request for 'subscriptions' field.
+func (_ EnvironmentAliases) Subscriptions(p EnvironmentSubscriptionsFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // CheckHistory implements response to request for 'checkHistory' field.
 func (_ EnvironmentAliases) CheckHistory(p EnvironmentCheckHistoryFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -416,6 +441,19 @@ func _ObjTypeEnvironmentSilencesHandler(impl interface{}) graphql1.FieldResolveF
 	}
 }
 
+func _ObjTypeEnvironmentSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EnvironmentSubscriptionsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := EnvironmentSubscriptionsFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Subscriptions(frp)
+	}
+}
+
 func _ObjTypeEnvironmentCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EnvironmentCheckHistoryFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -460,7 +498,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
-						Description:  "self descriptive",
+						Description:  "Limit adds optional limit to the number of entries returned.",
 						Type:         graphql1.Int,
 					},
 					"offset": &graphql1.ArgumentConfig{
@@ -470,7 +508,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 					},
 					"orderBy": &graphql1.ArgumentConfig{
 						DefaultValue: "NAME_DESC",
-						Description:  "self descriptive",
+						Description:  "OrderBy adds optional order to the records retrieved.",
 						Type:         graphql.InputType("CheckListOrder"),
 					},
 				},
@@ -502,7 +540,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
-						Description:  "self descriptive",
+						Description:  "Limit adds optional limit to the number of entries returned.",
 						Type:         graphql1.Int,
 					},
 					"offset": &graphql1.ArgumentConfig{
@@ -512,7 +550,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 					},
 					"orderBy": &graphql1.ArgumentConfig{
 						DefaultValue: "ID_DESC",
-						Description:  "self descriptive",
+						Description:  "OrderBy adds optional order to the records retrieved.",
 						Type:         graphql.InputType("EntityListOrder"),
 					},
 				},
@@ -530,7 +568,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
-						Description:  "self descriptive",
+						Description:  "Limit adds optional limit to the number of entries returned.",
 						Type:         graphql1.Int,
 					},
 					"offset": &graphql1.ArgumentConfig{
@@ -540,7 +578,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 					},
 					"orderBy": &graphql1.ArgumentConfig{
 						DefaultValue: "SEVERITY",
-						Description:  "self descriptive",
+						Description:  "OrderBy adds optional order to the records retrieved.",
 						Type:         graphql.InputType("EventsListOrder"),
 					},
 				},
@@ -574,7 +612,7 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 				Args: graphql1.FieldConfigArgument{
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
-						Description:  "self descriptive",
+						Description:  "Limit adds optional limit to the number of entries returned.",
 						Type:         graphql1.Int,
 					},
 					"offset": &graphql1.ArgumentConfig{
@@ -587,6 +625,24 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 				Description:       "All silences associated with the environment.",
 				Name:              "silences",
 				Type:              graphql1.NewNonNull(graphql.OutputType("SilencedConnection")),
+			},
+			"subscriptions": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"omitEntity": &graphql1.ArgumentConfig{
+						DefaultValue: false,
+						Description:  "Omit entity subscriptions from set.",
+						Type:         graphql1.Boolean,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "OCCURRENCES",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("SubscriptionSetOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All subscriptions in use in the environment.",
+				Name:              "subscriptions",
+				Type:              graphql1.NewNonNull(graphql.OutputType("SubscriptionSet")),
 			},
 		},
 		Interfaces: []*graphql1.Interface{
@@ -607,17 +663,71 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEnvironmentDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEnvironmentConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checkHistory": _ObjTypeEnvironmentCheckHistoryHandler,
-		"checks":       _ObjTypeEnvironmentChecksHandler,
-		"colourId":     _ObjTypeEnvironmentColourIDHandler,
-		"description":  _ObjTypeEnvironmentDescriptionHandler,
-		"entities":     _ObjTypeEnvironmentEntitiesHandler,
-		"events":       _ObjTypeEnvironmentEventsHandler,
-		"id":           _ObjTypeEnvironmentIDHandler,
-		"name":         _ObjTypeEnvironmentNameHandler,
-		"organization": _ObjTypeEnvironmentOrganizationHandler,
-		"silences":     _ObjTypeEnvironmentSilencesHandler,
+		"checkHistory":  _ObjTypeEnvironmentCheckHistoryHandler,
+		"checks":        _ObjTypeEnvironmentChecksHandler,
+		"colourId":      _ObjTypeEnvironmentColourIDHandler,
+		"description":   _ObjTypeEnvironmentDescriptionHandler,
+		"entities":      _ObjTypeEnvironmentEntitiesHandler,
+		"events":        _ObjTypeEnvironmentEventsHandler,
+		"id":            _ObjTypeEnvironmentIDHandler,
+		"name":          _ObjTypeEnvironmentNameHandler,
+		"organization":  _ObjTypeEnvironmentOrganizationHandler,
+		"silences":      _ObjTypeEnvironmentSilencesHandler,
+		"subscriptions": _ObjTypeEnvironmentSubscriptionsHandler,
 	},
+}
+
+// SubscriptionSetOrder Describes ways in which a set of subscriptions can be ordered.
+type SubscriptionSetOrder string
+
+// SubscriptionSetOrders holds enum values
+var SubscriptionSetOrders = _EnumTypeSubscriptionSetOrderValues{
+	ALPHA_ASC:   "ALPHA_ASC",
+	ALPHA_DESC:  "ALPHA_DESC",
+	OCCURRENCES: "OCCURRENCES",
+}
+
+// SubscriptionSetOrderType Describes ways in which a set of subscriptions can be ordered.
+var SubscriptionSetOrderType = graphql.NewType("SubscriptionSetOrder", graphql.EnumKind)
+
+// RegisterSubscriptionSetOrder registers SubscriptionSetOrder object type with given service.
+func RegisterSubscriptionSetOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeSubscriptionSetOrderDesc)
+}
+func _EnumTypeSubscriptionSetOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a set of subscriptions can be ordered.",
+		Name:        "SubscriptionSetOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"ALPHA_ASC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ALPHA_ASC",
+			},
+			"ALPHA_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ALPHA_DESC",
+			},
+			"OCCURRENCES": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "OCCURRENCES",
+			},
+		},
+	}
+}
+
+// describe SubscriptionSetOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeSubscriptionSetOrderDesc = graphql.EnumDesc{Config: _EnumTypeSubscriptionSetOrderConfigFn}
+
+type _EnumTypeSubscriptionSetOrderValues struct {
+	// ALPHA_ASC - self descriptive
+	ALPHA_ASC SubscriptionSetOrder
+	// ALPHA_DESC - self descriptive
+	ALPHA_DESC SubscriptionSetOrder
+	// OCCURRENCES - self descriptive
+	OCCURRENCES SubscriptionSetOrder
 }
 
 // CheckListOrder self descriptive
