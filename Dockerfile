@@ -1,4 +1,12 @@
-FROM alpine:3.6
+FROM alpine:3.8 as etcdctl-fetch
+
+RUN apk add --no-cache curl
+
+RUN curl -fsSLO https://github.com/coreos/etcd/releases/download/v3.3.9/etcd-v3.3.9-linux-amd64.tar.gz && \
+  tar xvf etcd-v3.3.9-linux-amd64.tar.gz --strip-components 1 etcd-v3.3.9-linux-amd64/etcd etcd-v3.3.9-linux-amd64/etcdctl
+
+
+FROM alpine:3.8
 MAINTAINER Sensu, Inc. Engineering <engineering@sensu.io>
 
 LABEL name="sensu/sensu" \
@@ -23,6 +31,8 @@ RUN apk add --no-cache ca-certificates dumb-init && \
     ln -sf /opt/sensu/bin/sensu-entrypoint.sh /usr/local/bin/sensu-agent && \
     ln -sf /opt/sensu/bin/sensu-entrypoint.sh /usr/local/bin/sensu-backend && \
     ln -sf /opt/sensu/bin/sensuctl /usr/local/bin/sensuctl
+
+COPY --from=etcdctl-fetch etcdctl /usr/local/bin/etcdctl
 
 COPY target/linux-amd64/ /opt/sensu/bin/
 COPY docker-scripts/ /opt/sensu/bin/
