@@ -52,7 +52,7 @@ type ErrorHandler interface {
 type ErrorHandlerFunc func(error)
 
 func (e ErrorHandlerFunc) HandleError(err error) {
-	return e(err)
+	e(err)
 }
 
 // EtcdService is an etcd backed monitor service monitor based on a leased key.
@@ -65,8 +65,6 @@ type EtcdService struct {
 }
 
 type monitor struct {
-	entity  *types.Entity
-	event   *types.Event
 	key     string
 	leaseID clientv3.LeaseID
 	ttl     int64
@@ -76,14 +74,9 @@ type monitor struct {
 func NewService(client *clientv3.Client, failureHandler MonitorFailureHandler, errorHandler ErrorHandler) *EtcdService {
 	return &EtcdService{
 		client:         client,
-		failureHandler: failurehandler,
+		failureHandler: failureHandler,
 		errorHandler:   errorHandler,
 	}
-}
-
-// HandleFailure handles the failing monitor.
-func (m *EtcdService) HandleFailure(entity *types.Entity, event *types.Event) error {
-	return m.FailureHandler.HandleFailure(entity, event)
 }
 
 // GetMonitor checks for the presense of a monitor for a given entity or check.
@@ -111,14 +104,12 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 	// and do a put on the key with that lease.
 	leaseID := clientv3.LeaseID(ttl)
 
-	lease, err := m.client.Grant(ctx, ttl)
+	_, err = m.client.Grant(ctx, ttl)
 	if err != nil {
 		return err
 	}
 
 	mon = &monitor{
-		entity:  entity,
-		event:   event,
 		key:     key,
 		leaseID: leaseID,
 		ttl:     ttl,
@@ -135,9 +126,21 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 	if !res.Succeeded {
 		return fmt.Errorf("could not create monitor for %s", key)
 	}
-	// start watcher here only if monitor didn't previously exist
-	err = m.watchMon(ctx, mon)
-	return err
+
+	failureFunc := func() {
+		logger.Infof("monitor timed out, for %s, handling failure", key)
+		err := m.failureHandler.HandleFailure(entity, event)
+		if err != nil {
+			m.errorHandler.HandleError(err)
+		}
+	}
+
+	shutdownFunc := func() {
+		logger.Info("shutting down monitor for %s", key)
+	}
+
+	watchMon(ctx, m.client, mon.key, failureFunc, shutdownFunc)
+	return nil
 }
 
 func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, error) {
@@ -148,13 +151,17 @@ func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, err
 	}
 	// if it exists, return it as a monitor
 	if len(response.Kvs) > 0 {
-		mon := response.Kvs[0]
+		kv := response.Kvs[0]
 		// if there is no lease, this will be 0 (NoLease constant in etcd)
-		leaseID := clientv3.LeaseID(mon.Lease)
+		leaseID := clientv3.LeaseID(kv.Lease)
+		ttl, err := strconv.ParseInt(string(kv.Value), 10, 64)
+		if err != nil {
+			return nil, err
+		}
 		return &monitor{
-			key:     string(mon.Key),
+			key:     string(kv.Key),
 			leaseID: leaseID,
-			ttl:     strconv.Atoi(mon.value),
+			ttl:     ttl,
 		}, nil
 	}
 	// otherwise, return nil
@@ -163,21 +170,20 @@ func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, err
 
 // watchMon takes a monitor key and watches for a deletion op. If a delete event
 // is witnessed, it calls the provided HandleFailure func.
-func (m *EtcdService) watchMon(ctx context.Context, mon *monitor) {
+func watchMon(ctx context.Context, cli *clientv3.Client, key string, failureHandler func(), shutdownHandler func()) {
 	go func() {
-		responseChan := m.client.Watch(ctx, mon.key)
+		responseChan := cli.Watch(ctx, key)
 		for wresp := range responseChan {
 			for _, ev := range wresp.Events {
 				if ev.Type == mvccpb.DELETE {
-					err := m.HandleFailure(mon.entity, mon.event)
-					if err != nil {
-						m.HandleError(err)
-					}
+					failureHandler()
+					return
 				}
 				// if there is a PUT on the key, the lease has been extended,
 				// and we want to kill this watcher as another one will be
 				// started.
 				if ev.Type == mvccpb.PUT {
+					shutdownHandler()
 					return
 				}
 			}
