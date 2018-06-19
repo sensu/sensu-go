@@ -472,10 +472,6 @@ func (a *Agent) Stop() {
 	a.wg.Wait()
 }
 
-func (a *Agent) addHandler(msgType string, handlerFunc handler.MessageHandlerFunc) {
-	a.handler.AddHandler(msgType, handlerFunc)
-}
-
 // StartStatsd starts up a StatsD listener on the agent, logs an error for any
 // failures.
 func (a *Agent) StartStatsd() {

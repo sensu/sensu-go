@@ -24,6 +24,7 @@ commands, which is compatible with `sensuctl create`.
 - Added all missing configuration options to `agent.yml.example` and
 `backend.yml.example`.
 - Added environment variables to checks.
+- Added logging redaction integration test.
 - Added check token substitution integration test.
 
 ### Changed
@@ -87,6 +88,7 @@ an error being logged. Instead, a debug message is logged.
 - Removed check output metric extraction e2e test, in favor of more detailed
 integration coverage.
 - Removed the `leader` package
+- Removed logging redaction e2e test, in favor of integration coverage.
 - Removed check token substitution e2e test, in favor of integration coverage.
 
 ## [2.0.0-beta.1] - 2018-05-07
