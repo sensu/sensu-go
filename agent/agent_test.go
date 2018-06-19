@@ -83,7 +83,7 @@ func TestReceiveLoop(t *testing.T) {
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
-	ta.addHandler("testMessageType", func(payload []byte) error {
+	ta.handler.AddHandler("testMessageType", func(payload []byte) error {
 		msg := &testMessageType{}
 		err := json.Unmarshal(payload, msg)
 		assert.NoError(t, err)

@@ -20,7 +20,7 @@ func NewOccurrenceSet(s ...string) OccurrenceSet {
 // Add entry and increment count
 func (o OccurrenceSet) Add(ss ...string) {
 	for _, s := range ss {
-		num, _ := o[s]
+		num := o[s]
 		o[s] = num + 1
 	}
 }
@@ -49,7 +49,7 @@ func (o OccurrenceSet) Values() []string {
 // Merge given set of occurrences
 func (o OccurrenceSet) Merge(b OccurrenceSet) {
 	for name, bCount := range b {
-		aCount, _ := o[name]
+		aCount := o[name]
 		o[name] = aCount + bCount
 	}
 }
