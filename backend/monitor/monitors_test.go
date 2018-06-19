@@ -29,6 +29,10 @@ func TestGetMonitors(t *testing.T) {
 
 }
 
+func TestGetMonitors(t *testing.T) {
+
+}
+
 func TestMonitorsHandleUpdate(t *testing.T) {
 
 	passEntity := types.FixtureEntity("entity")
