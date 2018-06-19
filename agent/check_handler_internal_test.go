@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var binDir = filepath.Join("..", "bin")
@@ -164,7 +165,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 		assert.FailNow("error marshaling check request")
 	}
 
-	assert.NoError(agent.handleCheck(payload))
+	require.NoError(t, agent.handleCheck(payload))
 
 	msg := <-ch
 
@@ -197,7 +198,7 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 		assert.FailNow("error marshaling check request")
 	}
 
-	assert.NoError(agent.handleCheck(payload))
+	require.NoError(t, agent.handleCheck(payload))
 
 	msg := <-ch
 
