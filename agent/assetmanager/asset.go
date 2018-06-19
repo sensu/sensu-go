@@ -51,7 +51,14 @@ func (d *RuntimeAsset) isRelevantTo(entity types.Entity) (bool, error) {
 	for _, filter := range d.asset.Filters {
 		result, err := eval.EvaluatePredicate(filter, params)
 		if err != nil {
-			return false, err
+			switch err.(type) {
+			case eval.SyntaxError, eval.TypeError:
+				return false, err
+			default:
+				// Other errors during execution are likely due to missing attrs,
+				// simply continue in this case.
+				continue
+			}
 		}
 
 		if !result {

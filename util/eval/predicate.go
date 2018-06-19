@@ -7,6 +7,21 @@ import (
 	"github.com/sensu/govaluate"
 )
 
+// SyntaxError is used to indicate that an expression could not be parsed.
+type SyntaxError string
+
+func (s SyntaxError) Error() string {
+	return string(s)
+}
+
+// TypeError is used to indicate that a predicate expression did not evaluate
+// to a bool.
+type TypeError string
+
+func (s TypeError) Error() string {
+	return string(s)
+}
+
 // Predicate defines a group of logical expressions that can be used for
 // in-memory filtering of resources.
 type Predicate struct {
@@ -35,14 +50,14 @@ func (p *Predicate) Eval(parameters govaluate.Parameters) (bool, error) {
 
 	match, ok := result.(bool)
 	if !ok {
-		return false, fmt.Errorf("expression result was non-boolean value")
+		return false, TypeError(fmt.Sprintf("govaluate expression: want bool, got %t", result))
 	}
 
 	return match, nil
 }
 
 // Evaluate is funcationally the same as Eval with the exception that given map
-// is automatically wrapped into a `govalute.Parameters` structure.
+// is automatically wrapped into a `govaluate.Parameters` structure.
 func (p *Predicate) Evaluate(parameters map[string]interface{}) (bool, error) {
 	if parameters == nil {
 		return p.Eval(nil)
@@ -55,7 +70,7 @@ func (p *Predicate) Evaluate(parameters map[string]interface{}) (bool, error) {
 func EvaluatePredicate(expression string, parameters map[string]interface{}) (bool, error) {
 	predicate, err := NewPredicate(expression)
 	if err != nil {
-		return false, err
+		return false, SyntaxError(err.Error())
 	}
 	return predicate.Evaluate(parameters)
 }
@@ -68,7 +83,7 @@ func ValidateStatements(statements []string, forbidModifier bool) error {
 	for _, statement := range statements {
 		exp, err := govaluate.NewEvaluableExpressionWithFunctions(statement, funcs)
 		if err != nil {
-			return fmt.Errorf("invalid statement '%s': %s", statement, err.Error())
+			return SyntaxError(fmt.Sprintf("syntax error: %s (%s)", err, statement))
 		}
 
 		// We can optionally forbid modifier tokens if we believe an expression has

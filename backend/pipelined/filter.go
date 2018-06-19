@@ -15,8 +15,15 @@ func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	result, err := eval.EvaluatePredicate(statement, parameters)
 	if err != nil {
 		fields := utillogging.EventFields(event, false)
-		logger.WithError(err).WithFields(fields).
-			Errorf("statement '%s' is invalid", statement)
+		fields["statement"] = statement
+		if _, ok := err.(eval.SyntaxError); ok {
+			// Errors during execution are typically due to missing attrs
+			logger.WithError(err).WithFields(fields).Error("syntax error")
+		} else if _, ok := err.(eval.TypeError); ok {
+			logger.WithError(err).WithFields(fields).Error("type error")
+		} else {
+			logger.WithError(err).WithFields(fields).Debug("missing attribute")
+		}
 		return false
 	}
 
