@@ -34,7 +34,7 @@ subscriptions: "metrics,misc"
 # statsd configuration
 ##
 #statsd-disable: false
-#statsd-event-handlers: ""
+statsd-event-handlers: "cat"
 #statsd-flush-interval: 10
 #statsd-metrics-host: "127.0.0.1"
 #statsd-metrics-port: 8125

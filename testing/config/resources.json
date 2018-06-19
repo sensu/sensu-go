@@ -476,14 +476,6 @@
   }
 }
 {
-  "type": "Environment",
-  "spec": {
-    "description": "",
-    "name": "dev",
-    "organization": "ops"
-  }
-}
-{
   "type": "Extension",
   "spec": {
     "name": "foo",
@@ -496,6 +488,14 @@
   "spec": {
     "description": "",
     "name": "ops"
+  }
+}
+{
+  "type": "Environment",
+  "spec": {
+    "description": "",
+    "name": "dev",
+    "organization": "ops"
   }
 }
 {
