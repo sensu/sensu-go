@@ -16,15 +16,10 @@ var (
 	monitorKeyBuilder = store.NewKeyBuilder(monitorPathPrefix)
 )
 
-// EtcdGetter provides access to the etcd client.
-type EtcdGetter struct {
-	Client *clientv3.Client
-}
-
 // Service is the monitors interface.
 type Service interface {
-	// GetMonitor starts a new monitor.
-	GetMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error
+	// RefreshMonitor starts a new monitor.
+	RefreshMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error
 }
 
 // Factory takes an entity and returns a Monitor interface so the
@@ -49,8 +44,7 @@ func (e ErrorHandlerFunc) HandleError(err error) {
 }
 
 // EtcdService is an etcd backend monitor service based on leased keys. Each key
-// has a watcher that waits for a DELETE or PUT event and calls a handler to run
-// a behavior implemented by that handler.
+// has a watcher that waits for a DELETE or PUT event and calls a handler.
 type EtcdService struct {
 	failureHandler MonitorFailureHandler
 	errorHandler   ErrorHandler
@@ -72,11 +66,11 @@ func NewService(client *clientv3.Client, failureHandler MonitorFailureHandler, e
 	}
 }
 
-// GetMonitor checks for the presense of a monitor for a given name.
+// RefreshMonitor checks for the presense of a monitor for a given name.
 // If no monitor exists, one is created. If a monitor exists, its lease ttl is
 // extended. If the monitor's ttl has changed, a new lease is created and the
 // key is updated with that new lease.
-func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error {
+func (m *EtcdService) RefreshMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error {
 	key := monitorKeyBuilder.Build(name)
 	// try to get the monitor from the store
 	mon, err := m.getMonitor(ctx, key)
@@ -107,18 +101,15 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 		ttl:     ttl,
 	}
 
-	res, err := m.client.Put(ctx, key, fmt.Sprintf("%d", mon.ttl), clientv3.WithLease(lease.ID))
+	_, err = m.client.Put(ctx, key, fmt.Sprintf("%d", mon.ttl), clientv3.WithLease(lease.ID))
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("transaction response in monitors:", res)
 
 	failureFunc := func() {
 		logger.Infof("monitor timed out, for %s, handling failure", key)
 		err := m.failureHandler.HandleFailure(entity, event)
 		if err != nil {
-			fmt.Println("monitor timed out:", err)
 			m.errorHandler.HandleError(err)
 		}
 	}

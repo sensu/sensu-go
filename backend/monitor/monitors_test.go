@@ -37,32 +37,33 @@ func putKeyWithLease(cli *clientv3.Client, key string, ttl int64) error {
 	return err
 }
 
-func TestGetMonitorNew(t *testing.T) {
+// TestRefreshMonitorNew
+func TestRefreshMonitorNew(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	require.NoError(t, err)
 	defer client.Close()
 
-	monitorName := "testGetMonitorNew"
+	monitorName := "testRefreshMonitorNew"
 	testEntity := types.FixtureEntity("entity")
 	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
 
 	handler := &testMonitorsHandler{}
 	monitorService := NewService(client, handler, handler)
-	err = monitorService.GetMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
+	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
 	require.NoError(t, err)
 
 }
 
-func TestGetMonitorExisting(t *testing.T) {
+func TestRefreshMonitorExisting(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	require.NoError(t, err)
 	defer client.Close()
 
-	monitorName := "testGetMonitorExisting"
+	monitorName := "testRefreshMonitorExisting"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
 	testEntity := types.FixtureEntity("entity")
 	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
@@ -73,18 +74,18 @@ func TestGetMonitorExisting(t *testing.T) {
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
 
-	err = monitorService.GetMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
+	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
 	require.NoError(t, err)
 }
 
-func TestGetMonitorNewTTL(t *testing.T) {
+func TestRefreshMonitorNewTTL(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	require.NoError(t, err)
 	defer client.Close()
 
-	monitorName := "testGetMonitorNewTTL"
+	monitorName := "testRefreshMonitorNewTTL"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
 	testEntity := types.FixtureEntity("entity")
 	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
@@ -98,11 +99,11 @@ func TestGetMonitorNewTTL(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println("put response in test:", response)
 
-	err = monitorService.GetMonitor(context.Background(), monitorName, testEntity, testEvent, 20)
+	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 20)
 	require.NoError(t, err)
 }
 
-func TestLittleGetMonitorNone(t *testing.T) {
+func TestGetMonitorNone(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -111,12 +112,12 @@ func TestLittleGetMonitorNone(t *testing.T) {
 
 	handler := &testMonitorsHandler{}
 	monitorService := NewService(client, handler, handler)
-	mon, err := monitorService.getMonitor(context.Background(), "testLittleGetMonitorNone")
+	mon, err := monitorService.getMonitor(context.Background(), "testGetMonitorNone")
 	require.NoError(t, err)
 	assert.Nil(t, mon)
 }
 
-func TestLittleGetMonitorExisting(t *testing.T) {
+func TestGetMonitorExisting(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -125,7 +126,7 @@ func TestLittleGetMonitorExisting(t *testing.T) {
 
 	handler := &testMonitorsHandler{}
 	testMon := &monitor{
-		key:     "testLittleGetMonitorExisting",
+		key:     "testGetMonitorExisting",
 		leaseID: 0,
 		ttl:     0,
 	}
@@ -138,6 +139,8 @@ func TestLittleGetMonitorExisting(t *testing.T) {
 	assert.EqualValues(t, testMon.key, mon.key)
 }
 
+// TestWatchMonDelete uses a wait group to monitor the state of watchMon. The
+// test passes if the failure handler is called, which closes the wait group.
 func TestWatchMonDelete(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
@@ -161,6 +164,8 @@ func TestWatchMonDelete(t *testing.T) {
 	failWait.Wait()
 }
 
+// TestWatchMonPut uses a wait group to monitor the state of watchMon. The
+// test passes if the failure handler is called, which closes the wait group.
 func TestWatchMonPut(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
