@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -25,14 +26,23 @@ func (handler *testMonitorsHandler) HandleFailure(entity *types.Entity, event *t
 
 func (handler *testMonitorsHandler) HandleError(err error) {}
 
-func TestGetMonitor(t *testing.T) {
+func putKeyWithLease(cli *clientv3.Client, key string, ttl int64) error {
+	lease, err := cli.Grant(context.Background(), ttl)
+	if err != nil {
+		return err
+	}
+	_, err = cli.Put(context.Background(), key, fmt.Sprintf("%d", ttl), clientv3.WithLease(lease.ID))
+	return err
+}
+
+func TestGetMonitorNew(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	defer client.Close()
 	require.NoError(t, err)
 
-	monitorName := "testGetMonitor"
+	monitorName := "testGetMonitorNew"
 	testEntity := types.FixtureEntity("entity")
 	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
 
@@ -40,9 +50,57 @@ func TestGetMonitor(t *testing.T) {
 	monitorService := NewService(client, handler, handler)
 	err = monitorService.GetMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
 	require.NoError(t, err)
+
 }
 
-func TestLittleGetMonitorNoExistingMonitor(t *testing.T) {
+func TestGetMonitorExisting(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client, err := e.NewClient()
+	defer client.Close()
+	require.NoError(t, err)
+
+	monitorName := "testGetMonitorExisting"
+	monitorPath := monitorKeyBuilder.Build(monitorName)
+	testEntity := types.FixtureEntity("entity")
+	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
+
+	handler := &testMonitorsHandler{}
+	monitorService := NewService(client, handler, handler)
+
+	err = putKeyWithLease(client, monitorPath, 15)
+	require.NoError(t, err)
+
+	err = monitorService.GetMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
+	require.NoError(t, err)
+}
+
+func TestGetMonitorNewTTL(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client, err := e.NewClient()
+	defer client.Close()
+	require.NoError(t, err)
+
+	monitorName := "testGetMonitorNewTTL"
+	monitorPath := monitorKeyBuilder.Build(monitorName)
+	testEntity := types.FixtureEntity("entity")
+	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
+
+	handler := &testMonitorsHandler{}
+	monitorService := NewService(client, handler, handler)
+
+	err = putKeyWithLease(client, monitorPath, 15)
+	require.NoError(t, err)
+	response, err := client.Get(context.Background(), monitorPath)
+	require.NoError(t, err)
+	fmt.Println("put response in test:", response)
+
+	err = monitorService.GetMonitor(context.Background(), monitorName, testEntity, testEvent, 20)
+	require.NoError(t, err)
+}
+
+func TestLittleGetMonitorNone(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -51,12 +109,12 @@ func TestLittleGetMonitorNoExistingMonitor(t *testing.T) {
 
 	handler := &testMonitorsHandler{}
 	monitorService := NewService(client, handler, handler)
-	mon, err := monitorService.getMonitor(context.Background(), "testLittleGetKey")
+	mon, err := monitorService.getMonitor(context.Background(), "testLittleGetMonitorNone")
 	require.NoError(t, err)
-	assert.EqualValues(t, nil, mon)
+	assert.Nil(t, mon)
 }
 
-func TestLittleGetMonitorWithExistingMonitor(t *testing.T) {
+func TestLittleGetMonitorExisting(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -65,7 +123,7 @@ func TestLittleGetMonitorWithExistingMonitor(t *testing.T) {
 
 	handler := &testMonitorsHandler{}
 	testMon := &monitor{
-		key:     "testKey",
+		key:     "testLittleGetMonitorExisting",
 		leaseID: 0,
 		ttl:     0,
 	}

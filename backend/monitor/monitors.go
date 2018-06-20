@@ -114,17 +114,12 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 	}
 
 	// put key and start the watcher
-	cmp := clientv3.Compare(clientv3.Version(key), "=", 0)
-	req := clientv3.OpPut(mon.key, fmt.Sprintf("%d", mon.ttl), clientv3.WithLease(mon.leaseID))
-	res, err := m.client.Txn(ctx).If(cmp).Then(req).Commit()
+	res, err := m.client.Put(ctx, key, fmt.Sprintf("%d", mon.ttl), clientv3.WithLease(lease.ID))
 	if err != nil {
-		fmt.Println("etcd transaction error:", err)
 		return err
 	}
 
-	if !res.Succeeded {
-		return fmt.Errorf("could not create monitor for %s", key)
-	}
+	fmt.Println("transaction response in monitors:", res)
 
 	failureFunc := func() {
 		logger.Infof("monitor timed out, for %s, handling failure", key)
