@@ -23,55 +23,59 @@ func (handler *testMonitorsHandler) HandleFailure(entity *types.Entity, event *t
 	return errors.New("test failure handler error")
 }
 
-func (handler *testMonitorsHandler) HandleError(err error) {
-	fmt.Println("error handled")
-}
+func (handler *testMonitorsHandler) HandleError(err error) {}
 
-func TestMonitorsHandleUpdate(t *testing.T) {
+func TestGetMonitor(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	defer client.Close()
 	require.NoError(t, err)
-	passEntity := types.FixtureEntity("entity")
-	failEntity := types.FixtureEntity("fail")
 
-	testCases := []struct {
-		name        string
-		entity      *types.Entity
-		event       *types.Event
-		handler     *testMonitorsHandler
-		expectedErr error
-	}{
-		{
-			name:   "test no error",
-			entity: passEntity,
-			event: &types.Event{
-				Entity: passEntity,
-			},
-			handler:     &testMonitorsHandler{},
-			expectedErr: nil,
-		},
-		{
-			name:   "test with error",
-			entity: failEntity,
-			event: &types.Event{
-				Entity: failEntity,
-			},
-			handler:     &testMonitorsHandler{},
-			expectedErr: errors.New("test failure handler error"),
-		},
+	monitorName := "testGetMonitor"
+	testEntity := types.FixtureEntity("entity")
+	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
+
+	handler := &testMonitorsHandler{}
+	monitorService := NewService(client, handler, handler)
+	err = monitorService.GetMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
+	require.NoError(t, err)
+}
+
+func TestLittleGetMonitorNoExistingMonitor(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client, err := e.NewClient()
+	defer client.Close()
+	require.NoError(t, err)
+
+	handler := &testMonitorsHandler{}
+	monitorService := NewService(client, handler, handler)
+	mon, err := monitorService.getMonitor(context.Background(), "testLittleGetKey")
+	require.NoError(t, err)
+	assert.EqualValues(t, nil, mon)
+}
+
+func TestLittleGetMonitorWithExistingMonitor(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client, err := e.NewClient()
+	defer client.Close()
+	require.NoError(t, err)
+
+	handler := &testMonitorsHandler{}
+	testMon := &monitor{
+		key:     "testKey",
+		leaseID: 0,
+		ttl:     0,
 	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
+	monitorService := NewService(client, handler, handler)
+	_, err = client.Put(context.Background(), testMon.key, fmt.Sprintf("%d", testMon.ttl))
+	require.NoError(t, err)
 
-			monitorService := NewService(client, tc.handler, tc.handler)
-
-			assert.EqualValues(tc.expectedErr, monitorService.failureHandler.HandleFailure(tc.entity, tc.event))
-		})
-	}
-
+	mon, err := monitorService.getMonitor(context.Background(), testMon.key)
+	require.NoError(t, err)
+	assert.EqualValues(t, testMon.key, mon.key)
 }
 
 func TestWatchMonDelete(t *testing.T) {
@@ -87,7 +91,7 @@ func TestWatchMonDelete(t *testing.T) {
 		failWait.Done()
 	}
 
-	key := "monitortest"
+	key := "monitorTestDelete"
 	_, err = client.Put(context.Background(), key, "test value")
 	require.NoError(t, err)
 	watchMon(context.Background(), client, key, testFailureHandler, nil)
@@ -110,7 +114,7 @@ func TestWatchMonPut(t *testing.T) {
 		shutdownWait.Done()
 	}
 
-	key := "monitortest"
+	key := "monitorTestPut"
 	_, err = client.Put(context.Background(), key, "test value")
 	require.NoError(t, err)
 	watchMon(context.Background(), client, key, nil, testShutdownHandler)

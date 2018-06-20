@@ -102,16 +102,14 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 
 	// If the ttls do not match or the monitor doesn't exist, create a new lease
 	// and do a put on the key with that lease.
-	leaseID := clientv3.LeaseID(ttl)
-
-	_, err = m.client.Grant(ctx, ttl)
+	lease, err := m.client.Grant(ctx, ttl)
 	if err != nil {
 		return err
 	}
 
 	mon = &monitor{
 		key:     key,
-		leaseID: leaseID,
+		leaseID: lease.ID,
 		ttl:     ttl,
 	}
 
@@ -120,6 +118,7 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 	req := clientv3.OpPut(mon.key, fmt.Sprintf("%d", mon.ttl), clientv3.WithLease(mon.leaseID))
 	res, err := m.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
+		fmt.Println("etcd transaction error:", err)
 		return err
 	}
 
@@ -131,6 +130,7 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 		logger.Infof("monitor timed out, for %s, handling failure", key)
 		err := m.failureHandler.HandleFailure(entity, event)
 		if err != nil {
+			fmt.Println("monitor timed out:", err)
 			m.errorHandler.HandleError(err)
 		}
 	}
