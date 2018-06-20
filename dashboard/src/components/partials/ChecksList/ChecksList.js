@@ -13,7 +13,7 @@ import Row from "/components/CheckRow";
 import Loader from "/components/util/Loader";
 import Pagination from "/components/partials/Pagination";
 
-class CheckList extends React.Component {
+class ChecksList extends React.Component {
   static propTypes = {
     environment: PropTypes.shape({
       checks: PropTypes.shape({
@@ -35,7 +35,7 @@ class CheckList extends React.Component {
 
   static fragments = {
     environment: gql`
-      fragment CheckList_environment on Environment {
+      fragment ChecksList_environment on Environment {
         checks(limit: $limit, offset: $offset) {
           nodes {
             id
@@ -87,4 +87,4 @@ class CheckList extends React.Component {
   }
 }
 
-export default CheckList;
+export default ChecksList;
