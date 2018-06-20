@@ -59,17 +59,17 @@
 {
   "type": "CheckConfig",
   "spec": {
-    "command": "echo asset",
+    "command": "check-cpu.sh -w 85 -c 95",
     "environment": "default",
     "handlers": [],
     "high_flap_threshold": 0,
     "interval": 10,
     "low_flap_threshold": 0,
-    "name": "check-with-asset",
+    "name": "check-cpu-with-asset",
     "organization": "default",
     "publish": true,
     "runtime_assets": [
-      "foo"
+      "check-cpu.sh"
     ],
     "subscriptions": [
       "misc"
@@ -335,7 +335,7 @@
     "cron": "",
     "ttl": 0,
     "timeout": 0,
-    "round_robin": false,
+    "round_robin": true,
     "output_metric_format": "",
     "output_metric_handlers": []
   }
@@ -435,9 +435,9 @@
 {
   "type": "Asset",
   "spec": {
-    "name": "foo",
-    "url": "http://www.foo.com",
-    "sha512": "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
+    "name": "check-cpu.sh",
+    "url": "https://github.com/sensu-plugins/sensu-plugins-cpu-checks/archive/2.1.0.tar.gz",
+    "sha512": "da4f4eb7b16d18c7e870efcb145b2b09234836e7bb3218f58adf376ba4cb84ddd2743356aa89c22509da8c5f552eaf98eb721bc7e18e1832f664142da67b06df",
     "metadata": null,
     "filters": [],
     "organization": "default"
