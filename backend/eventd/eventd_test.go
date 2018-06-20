@@ -131,6 +131,7 @@ func TestEventMonitor(t *testing.T) {
 }
 
 func TestCheckOccurrences(t *testing.T) {
+	now := time.Now()
 	testCases := []struct {
 		name                         string
 		status                       uint32
@@ -144,7 +145,7 @@ func TestCheckOccurrences(t *testing.T) {
 			status:      0,
 			occurrences: int64(0),
 			history: []types.CheckHistory{
-				{Status: 0, Executed: time.Now().Unix() - 1},
+				{Status: 0, Executed: now.Unix() - 1},
 			},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
@@ -154,7 +155,7 @@ func TestCheckOccurrences(t *testing.T) {
 			status:      1,
 			occurrences: int64(0),
 			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 1},
+				{Status: 1, Executed: now.Unix() - 1},
 			},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
@@ -164,8 +165,8 @@ func TestCheckOccurrences(t *testing.T) {
 			status:      0,
 			occurrences: int64(1),
 			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 2},
-				{Status: 0, Executed: time.Now().Unix() - 1},
+				{Status: 1, Executed: now.Unix() - 2},
+				{Status: 0, Executed: now.Unix() - 1},
 			},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
@@ -175,8 +176,8 @@ func TestCheckOccurrences(t *testing.T) {
 			status:      1,
 			occurrences: int64(1),
 			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 2},
-				{Status: 1, Executed: time.Now().Unix() - 1},
+				{Status: 1, Executed: now.Unix() - 2},
+				{Status: 1, Executed: now.Unix() - 1},
 			},
 			expectedOccurrences:          2,
 			expectedOccurrencesWatermark: 2,
@@ -186,11 +187,25 @@ func TestCheckOccurrences(t *testing.T) {
 			status:      1,
 			occurrences: int64(1),
 			history: []types.CheckHistory{
-				{Status: 2, Executed: time.Now().Unix() - 2},
-				{Status: 1, Executed: time.Now().Unix() - 1},
+				{Status: 2, Executed: now.Unix() - 2},
+				{Status: 1, Executed: now.Unix() - 1},
 			},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
+		},
+		{
+			name:        "GH-1624 occurrences property should not reset to 1 on resolve",
+			status:      0,
+			occurrences: 5,
+			history: []types.CheckHistory{
+				{Status: 2, Executed: now.Unix() - 6},
+				{Status: 2, Executed: now.Unix() - 5},
+				{Status: 2, Executed: now.Unix() - 4},
+				{Status: 2, Executed: now.Unix() - 3},
+				{Status: 2, Executed: now.Unix() - 2},
+			},
+			expectedOccurrences:          5,
+			expectedOccurrencesWatermark: 5,
 		},
 	}
 

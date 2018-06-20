@@ -228,20 +228,27 @@ func updateOccurrences(event *types.Event) {
 	if !event.HasCheck() {
 		return
 	}
-	if len(event.Check.History) > 1 && (event.IsIncident() || isFlapping(event)) {
-		historyLen := len(event.Check.History)
-		if event.Check.History[historyLen-1].Status == event.Check.History[historyLen-2].Status {
-			event.Check.Occurrences++
-		} else {
+
+	defer func() {
+		if event.Check.Occurrences == 0 {
 			event.Check.Occurrences = 1
 		}
+		if event.Check.Occurrences > event.Check.OccurrencesWatermark {
+			event.Check.OccurrencesWatermark = event.Check.Occurrences
+		}
+	}()
+
+	if len(event.Check.History) < 2 || !(event.IsIncident() || isFlapping(event)) {
+		return
+	}
+
+	hist := event.Check.History
+	if hist[len(hist)-1].Status == hist[len(hist)-2].Status {
+		event.Check.Occurrences++
 	} else {
 		event.Check.Occurrences = 1
 	}
 
-	if event.Check.Occurrences > event.Check.OccurrencesWatermark {
-		event.Check.OccurrencesWatermark = event.Check.Occurrences
-	}
 }
 
 // HandleUpdate updates the event in the store and publishes it to TopicEvent.
