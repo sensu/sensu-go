@@ -252,7 +252,7 @@ function wait_for_appveyor_jobs {
 
     if (!$success) {throw "Test jobs were not finished in $env:TIME_OUT_MINS minutes"}
 
-    echo "Test jobs are finished"
+    if ($success) {throw "Test jobs are finished"}
 }
 
 function build_package([string]$package, [string]$arch)
