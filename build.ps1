@@ -251,6 +251,8 @@ function wait_for_appveyor_jobs {
     }
 
     if (!$success) {throw "Test jobs were not finished in $env:TIME_OUT_MINS minutes"}
+
+    echo "Test jobs are finished"
 }
 
 function build_package([string]$package, [string]$arch)
@@ -336,6 +338,7 @@ ElseIf ($cmd -eq "wait_for_appveyor_jobs") {
         build_package "agent" "x64"
         build_package "agent" "x86"
     }
+    wait_for_appveyor_jobs
 }
 Else {
     install_deps
