@@ -91,6 +91,7 @@ integration coverage.
 - Removed logging redaction e2e test, in favor of integration coverage.
 - Removed check token substitution e2e test, in favor of integration coverage.
 - Removed round robin scheduling e2e test.
+- Removed hooks e2e test.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
