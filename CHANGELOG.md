@@ -82,6 +82,8 @@ lockfiles to not be cleaned up.
 - Fixed a bug where the CLI default for round robin checks was not appearing.
 - Missing custom attributes in govaluate expressions no longer result in
 an error being logged. Instead, a debug message is logged.
+- Fixed a bug in check occurrences where the behaviour was not in line with
+1.x behaviour. Check occurrences now only update on failing check statuses.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
