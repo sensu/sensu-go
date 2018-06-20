@@ -11,13 +11,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// create leased key under monitors prefix:
-//	- /sensu.io/monitors/org/env/<entity or round robin check>
-// update leased key
-// get ttl of current monitor (check for existence of key)
-// watch monitor for deletion event, alert on that entity
-// also might need a mechanism for deleting a monitor (ie deregistration)
-
 var (
 	monitorPathPrefix = "monitors"
 	monitorKeyBuilder = store.NewKeyBuilder(monitorPathPrefix)
@@ -55,9 +48,9 @@ func (e ErrorHandlerFunc) HandleError(err error) {
 	e(err)
 }
 
-// EtcdService is an etcd backed monitor service monitor based on a leased key.
-// Monitor leases can be extended, and a watcher on the key will run a handler
-// when the lease expires and the key is deleted.
+// EtcdService is an etcd backend monitor service based on leased keys. Each key
+// has a watcher that waits for a DELETE or PUT event and calls a handler to run
+// a behavior implemented by that handler.
 type EtcdService struct {
 	failureHandler MonitorFailureHandler
 	errorHandler   ErrorHandler
@@ -70,7 +63,7 @@ type monitor struct {
 	ttl     int64
 }
 
-// NewMonitor returns a new monitor.
+// NewService returns a new monitor service.
 func NewService(client *clientv3.Client, failureHandler MonitorFailureHandler, errorHandler ErrorHandler) *EtcdService {
 	return &EtcdService{
 		client:         client,
@@ -79,9 +72,10 @@ func NewService(client *clientv3.Client, failureHandler MonitorFailureHandler, e
 	}
 }
 
-// GetMonitor checks for the presense of a monitor for a given entity or check.
-// if no monitor exists, one is created. If a monitor exists, its ttl is
-// extended. If the monitor's ttl has changed, create a new lease.
+// GetMonitor checks for the presense of a monitor for a given name.
+// If no monitor exists, one is created. If a monitor exists, its lease ttl is
+// extended. If the monitor's ttl has changed, a new lease is created and the
+// key is updated with that new lease.
 func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error {
 	key := monitorKeyBuilder.Build(name)
 	// try to get the monitor from the store
@@ -113,7 +107,6 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 		ttl:     ttl,
 	}
 
-	// put key and start the watcher
 	res, err := m.client.Put(ctx, key, fmt.Sprintf("%d", mon.ttl), clientv3.WithLease(lease.ID))
 	if err != nil {
 		return err
@@ -134,6 +127,7 @@ func (m *EtcdService) GetMonitor(ctx context.Context, name string, entity *types
 		logger.Info("shutting down monitor for %s", key)
 	}
 
+	// start the watcher
 	watchMon(ctx, m.client, mon.key, failureFunc, shutdownFunc)
 	return nil
 }
@@ -147,7 +141,6 @@ func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, err
 	// if it exists, return it as a monitor
 	if len(response.Kvs) > 0 {
 		kv := response.Kvs[0]
-		// if there is no lease, this will be 0 (NoLease constant in etcd)
 		leaseID := clientv3.LeaseID(kv.Lease)
 		ttl, err := strconv.ParseInt(string(kv.Value), 10, 64)
 		if err != nil {
@@ -159,12 +152,12 @@ func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, err
 			ttl:     ttl,
 		}, nil
 	}
-	// otherwise, return nil
 	return nil, nil
 }
 
-// watchMon takes a monitor key and watches for a deletion op. If a delete event
-// is witnessed, it calls the provided HandleFailure func.
+// watchMon takes a monitor key and watches for etcd ops. If a DELETE event
+// is witnessed, it calls the provided HandleFailure func. If a PUT event is
+// witnessed, the watcher is stopped.
 func watchMon(ctx context.Context, cli *clientv3.Client, key string, failureHandler func(), shutdownHandler func()) {
 	go func() {
 		responseChan := cli.Watch(ctx, key)
@@ -175,8 +168,7 @@ func watchMon(ctx context.Context, cli *clientv3.Client, key string, failureHand
 					return
 				}
 				// if there is a PUT on the key, the lease has been extended,
-				// and we want to kill this watcher as another one will be
-				// started.
+				// and we want to kill this watcher to avoid duplicate watchers.
 				if ev.Type == mvccpb.PUT {
 					shutdownHandler()
 					return

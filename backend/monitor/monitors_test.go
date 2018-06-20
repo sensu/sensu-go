@@ -1,3 +1,5 @@
+// +build integration,!race
+
 package monitor
 
 import (
@@ -39,8 +41,8 @@ func TestGetMonitorNew(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
 	monitorName := "testGetMonitorNew"
 	testEntity := types.FixtureEntity("entity")
@@ -57,8 +59,8 @@ func TestGetMonitorExisting(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
 	monitorName := "testGetMonitorExisting"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
@@ -79,8 +81,8 @@ func TestGetMonitorNewTTL(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
 	monitorName := "testGetMonitorNewTTL"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
@@ -104,8 +106,8 @@ func TestLittleGetMonitorNone(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
 	handler := &testMonitorsHandler{}
 	monitorService := NewService(client, handler, handler)
@@ -118,8 +120,8 @@ func TestLittleGetMonitorExisting(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
 	handler := &testMonitorsHandler{}
 	testMon := &monitor{
@@ -140,8 +142,8 @@ func TestWatchMonDelete(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
 	var failWait sync.WaitGroup
 
@@ -163,8 +165,8 @@ func TestWatchMonPut(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
 	var shutdownWait sync.WaitGroup
 
