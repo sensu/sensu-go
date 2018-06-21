@@ -91,7 +91,6 @@ integration coverage.
 - Removed the `leader` package
 - Removed logging redaction e2e test, in favor of integration coverage.
 - Removed check token substitution e2e test, in favor of integration coverage.
-- Removed proxy check e2e test.
 - Removed round robin scheduling e2e test.
 - Removed proxy check e2e test.
 
