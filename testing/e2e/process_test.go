@@ -452,22 +452,3 @@ func waitForBackend(url string) bool {
 	}
 	return false
 }
-
-func writeTempFile(t *testing.T, content []byte, filename string) (string, func()) {
-	file, err := ioutil.TempFile("", filename)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := file.Write(content); err != nil {
-		_ = os.Remove(file.Name())
-		t.Fatal(err)
-	}
-
-	if err := file.Close(); err != nil {
-		_ = os.Remove(file.Name())
-		t.Fatal(err)
-	}
-
-	return file.Name(), func() { _ = os.Remove(file.Name()) }
-}
