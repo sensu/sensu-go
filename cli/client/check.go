@@ -81,7 +81,11 @@ func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
 	}
 
 	checkPath := fmt.Sprintf("/checks/%s/execute", url.PathEscape(req.Name))
-	res, err := client.R().SetBody(bytes).Post(checkPath)
+	res, err := client.R().
+		SetQueryParam("env", client.config.Environment()).
+		SetQueryParam("org", client.config.Organization()).
+		SetBody(bytes).
+		Post(checkPath)
 
 	if err != nil {
 		return err
