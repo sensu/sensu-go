@@ -19,7 +19,6 @@ var (
 	agentPortCounter                     int64 = 20000
 	agentPath, backendPath, sensuctlPath string
 	binDir                               = filepath.Join("..", "..", "bin")
-	toolsDir                             = filepath.Join(binDir, "tools")
 	backoff                              = retry.ExponentialBackoff{
 		InitialDelayInterval: 500 * time.Millisecond,
 		MaxDelayInterval:     20 * time.Second,
