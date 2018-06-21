@@ -94,6 +94,7 @@ integration coverage.
 - Removed round robin scheduling e2e test.
 - Removed proxy check e2e test.
 - Removed check scheduling e2e test.
+- Removed keepalive e2e test.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
