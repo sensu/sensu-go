@@ -97,6 +97,7 @@ integration coverage.
 - Removed check scheduling e2e test.
 - Removed keepalive e2e test.
 - Removed event handler e2e test.
+- Removed `sensuctl` create e2e tests.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
