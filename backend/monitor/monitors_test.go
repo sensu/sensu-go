@@ -97,7 +97,6 @@ func TestRefreshMonitorNewTTL(t *testing.T) {
 	require.NoError(t, err)
 	response, err := client.Get(context.Background(), monitorPath)
 	require.NoError(t, err)
-	fmt.Println("put response in test:", response)
 
 	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 20)
 	require.NoError(t, err)
