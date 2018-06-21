@@ -95,7 +95,7 @@ func TestRefreshMonitorNewTTL(t *testing.T) {
 
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
-	_, err := client.Get(context.Background(), monitorPath)
+	_, err = client.Get(context.Background(), monitorPath)
 	require.NoError(t, err)
 
 	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 20)
