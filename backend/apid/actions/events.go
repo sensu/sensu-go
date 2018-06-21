@@ -109,23 +109,8 @@ func (a EventController) Destroy(ctx context.Context, entity, check string) erro
 // Create creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
 func (a EventController) Create(ctx context.Context, event types.Event) error {
-	if !event.HasCheck() {
-		return NewErrorf(InvalidArgument)
-	}
-
-	check := event.Check
-	entity := event.Entity
-
 	// Adjust context
 	policy := a.Policy.WithContext(ctx)
-
-	// Check for existing
-	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr)
-	}
 
 	// Verify permissions
 	if ok := policy.CanCreate(&event); !ok {
@@ -134,6 +119,20 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 
 	if err := event.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
+	}
+
+	// Verify if we already have an existing event for this entity/check pair.
+	// Doesn't apply to metric events.
+	if event.HasCheck() {
+		check := event.Check
+		entity := event.Entity
+
+		e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
+		if err != nil {
+			return NewError(InternalErr, err)
+		} else if e != nil {
+			return NewErrorf(AlreadyExistsErr)
+		}
 	}
 
 	// Publish to event pipeline
