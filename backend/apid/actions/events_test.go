@@ -311,6 +311,15 @@ func TestEventCreate(t *testing.T) {
 	badEvent := types.FixtureEvent("entity1", "check1")
 	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
+	incompleteEvent := &types.Event{
+		Entity: types.FixtureEntity("entity1"),
+	}
+
+	metricEvent := &types.Event{
+		Entity:  types.FixtureEntity("entity1"),
+		Metrics: types.FixtureMetrics(),
+	}
+
 	testCases := []struct {
 		name            string
 		ctx             context.Context
@@ -364,6 +373,19 @@ func TestEventCreate(t *testing.T) {
 			busErr:          errors.New("where's the wizard"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
+		},
+		{
+			name:            "No check or metric event",
+			ctx:             defaultCtx,
+			argument:        incompleteEvent,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:        "Metric Event",
+			ctx:         defaultCtx,
+			argument:    metricEvent,
+			expectedErr: false,
 		},
 	}
 
