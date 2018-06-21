@@ -98,6 +98,7 @@ integration coverage.
 - Removed keepalive e2e test.
 - Removed event handler e2e test.
 - Removed `sensuctl` create e2e tests.
+- Removed hooks e2e test.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
