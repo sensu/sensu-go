@@ -18,13 +18,13 @@ var (
 
 // Service is the monitors interface.
 type Service interface {
-	// RefreshMonitor starts a new monitor.
+	// RefreshMonitor starts a new monitor or resets an existing monitor.
 	RefreshMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error
 }
 
-// Factory takes an entity and returns a Monitor interface so the
-// monitor can be mocked.
-type Factory func(*clientv3.Client, UpdateHandler, FailureHandler) Service
+// Factory takes an etcd client, failure handler, and error handler and returns
+// a monitor service.
+type Factory func(*clientv3.Client, MonitorFailureHandler, ErrorHandler) Service
 
 // MonitorFailureHandler provides a failure handler. TODO: rename this to
 // FailureHandler when we remove the other monitor code.
@@ -32,11 +32,12 @@ type MonitorFailureHandler interface {
 	HandleFailure(entity *types.Entity, event *types.Event) error
 }
 
+// ErrorHandler is the error handler func interface.
 type ErrorHandler interface {
 	HandleError(error)
 }
 
-// ErrorHandler provides a handler for errors from WatchMon.
+// ErrorHandlerFunc implements ErrorHandler
 type ErrorHandlerFunc func(error)
 
 func (e ErrorHandlerFunc) HandleError(err error) {
