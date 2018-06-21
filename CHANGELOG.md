@@ -82,6 +82,7 @@ lockfiles to not be cleaned up.
 - Fixed a bug where the CLI default for round robin checks was not appearing.
 - Missing custom attributes in govaluate expressions no longer result in
 an error being logged. Instead, a debug message is logged.
+- Update AppVeyor API token to enable GitHub deployments.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
