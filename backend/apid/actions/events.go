@@ -9,13 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// eventUpdateFields whitelists fields allowed to be updated for Events
-var eventUpdateFields = []string{
-	"Timestamp",
-	"Entity",
-	"Check",
-}
-
 // EventController expose actions in which a viewer can perform.
 type EventController struct {
 	Store  store.EventStore
@@ -113,67 +106,11 @@ func (a EventController) Destroy(ctx context.Context, entity, check string) erro
 	return NewErrorf(NotFound)
 }
 
-// Update updates the event indicated by the supplied entity and check.
-func (a EventController) Update(ctx context.Context, event types.Event) error {
-	if !event.HasCheck() {
-		return NewErrorf(InvalidArgument)
-	}
-
-	check := event.Check
-	entity := event.Entity
-
-	// Adjust context
-	policy := a.Policy.WithContext(ctx)
-
-	// Validate
-	if err := event.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Check for existing
-	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if e == nil {
-		return NewErrorf(NotFound)
-	}
-
-	// Copy
-	copyFields(e, &event, eventUpdateFields...)
-
-	// Verify viewer can make change
-	if ok := policy.CanUpdate(e); !ok {
-		return NewErrorf(PermissionDenied, "update")
-	}
-
-	// Publish to event pipeline
-	if err := a.Bus.Publish(messaging.TopicEventRaw, &event); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
 // Create creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
 func (a EventController) Create(ctx context.Context, event types.Event) error {
-	if !event.HasCheck() {
-		return NewErrorf(InvalidArgument)
-	}
-
-	check := event.Check
-	entity := event.Entity
-
 	// Adjust context
 	policy := a.Policy.WithContext(ctx)
-
-	// Check for existing
-	e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr)
-	}
 
 	// Verify permissions
 	if ok := policy.CanCreate(&event); !ok {
@@ -182,6 +119,20 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 
 	if err := event.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
+	}
+
+	// Verify if we already have an existing event for this entity/check pair.
+	// Doesn't apply to metric events.
+	if event.HasCheck() {
+		check := event.Check
+		entity := event.Entity
+
+		e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
+		if err != nil {
+			return NewError(InternalErr, err)
+		} else if e != nil {
+			return NewErrorf(AlreadyExistsErr)
+		}
 	}
 
 	// Publish to event pipeline

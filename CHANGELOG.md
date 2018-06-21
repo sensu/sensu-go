@@ -83,6 +83,7 @@ lockfiles to not be cleaned up.
 - Missing custom attributes in govaluate expressions no longer result in
 an error being logged. Instead, a debug message is logged.
 - Update AppVeyor API token to enable GitHub deployments.
+- Allow creation of metric events via backend API.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
