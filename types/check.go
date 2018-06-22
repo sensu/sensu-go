@@ -58,7 +58,6 @@ func NewCheck(c *CheckConfig) *Check {
 		Publish:              c.Publish,
 		RuntimeAssets:        c.RuntimeAssets,
 		Subscriptions:        c.Subscriptions,
-		ExtendedAttributes:   c.ExtendedAttributes,
 		ProxyEntityID:        c.ProxyEntityID,
 		CheckHooks:           c.CheckHooks,
 		Stdin:                c.Stdin,
@@ -72,6 +71,9 @@ func NewCheck(c *CheckConfig) *Check {
 		OutputMetricHandlers: c.OutputMetricHandlers,
 		EnvVars:              c.EnvVars,
 	}
+	dummyCheck := &Check{}
+	_ = dynamic.Unmarshal(c.ExtendedAttributes, dummyCheck)
+	check.ExtendedAttributes = dummyCheck.ExtendedAttributes
 	return check
 }
 
