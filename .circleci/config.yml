@@ -30,7 +30,9 @@ jobs:
       - run: ./build.sh integration
       - run: ./build.sh build
 
-    # While we're spinning CircleCI up, only build "build/" branches
+    # Only build build-related branches (to test CI/CD changes) and master
+    # for now.
     branches:
       only:
         - /build\/.+/
+        - /^master$/
