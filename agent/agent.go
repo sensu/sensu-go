@@ -298,6 +298,10 @@ func (a *Agent) receivePump() {
 }
 
 func (a *Agent) sendMessage(msgType string, payload []byte) {
+	logger.WithFields(logrus.Fields{
+		"type":    msgType,
+		"message": string(payload),
+	}).Debug("sending message")
 	// blocks until message can be enqueued.
 	// TODO(greg): ring buffer?
 	msg := &transport.Message{
