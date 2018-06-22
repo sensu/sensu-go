@@ -287,7 +287,7 @@ func (a *Agent) receivePump() {
 
 			logger.WithFields(logrus.Fields{
 				"type":    msg.Type,
-				"message": string(msg.Payload),
+				"payload": string(msg.Payload),
 			}).Info("message received")
 			err := a.handler.Handle(msg.Type, msg.Payload)
 			if err != nil {
@@ -300,7 +300,7 @@ func (a *Agent) receivePump() {
 func (a *Agent) sendMessage(msgType string, payload []byte) {
 	logger.WithFields(logrus.Fields{
 		"type":    msgType,
-		"message": string(payload),
+		"payload": string(payload),
 	}).Debug("sending message")
 	// blocks until message can be enqueued.
 	// TODO(greg): ring buffer?
