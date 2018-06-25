@@ -43,7 +43,7 @@ const styles = theme => ({
   },
 });
 
-class EntitiesListHeader extends React.PureComponent {
+class EventsListHeader extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     onClickSelect: PropTypes.func.isRequired,
@@ -203,4 +203,4 @@ class EntitiesListHeader extends React.PureComponent {
   }
 }
 
-export default withStyles(styles)(EntitiesListHeader);
+export default withStyles(styles)(EventsListHeader);
