@@ -29,6 +29,8 @@ class ChecksContent extends React.Component {
       $organization: String!
       $limit: Int
       $offset: Int
+      $order: CheckListOrder
+      $filter: String
     ) {
       environment(organization: $organization, environment: $environment) {
         ...ChecksList_environment
@@ -41,12 +43,12 @@ class ChecksContent extends React.Component {
   render() {
     const { match, queryParams, setQueryParams } = this.props;
 
-    const { limit = "50", offset = "0" } = queryParams;
+    const { limit = "50", offset = "0", order, filter } = queryParams;
 
     return (
       <Query
         query={ChecksContent.query}
-        variables={{ ...match.params, limit, offset }}
+        variables={{ ...match.params, limit, offset, order, filter }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -74,4 +76,6 @@ class ChecksContent extends React.Component {
   }
 }
 
-export default withQueryParams(["offset", "limit"])(ChecksContent);
+export default withQueryParams(["filter", "order", "offset", "limit"])(
+  ChecksContent,
+);
