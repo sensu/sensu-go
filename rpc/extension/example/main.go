@@ -19,6 +19,8 @@ var (
 	port = flag.Int("port", 31000, "port to run extension server on")
 )
 
+// LastCheckStatusZero returns true if the last status of the check was 0
+// or if the event does not contain a check
 func LastCheckStatusZero(event *types.Event) (bool, error) {
 	if !event.HasCheck() {
 		// Filter metrics events as well.
@@ -27,9 +29,11 @@ func LastCheckStatusZero(event *types.Event) (bool, error) {
 	return event.Check.Status == 0, nil
 }
 
+// FailingCheck logs which entity/check is failing
 func FailingCheck(event *types.Event, mutated []byte) error {
 	if !event.HasCheck() {
 		log.Print("event does not contain check")
+		return nil
 	}
 	log.Printf("entity %q: %s is failing", event.Entity.ID, event.Check.Name)
 	return nil
