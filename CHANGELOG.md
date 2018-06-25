@@ -84,6 +84,8 @@ lockfiles to not be cleaned up.
 an error being logged. Instead, a debug message is logged.
 - Update AppVeyor API token to enable GitHub deployments.
 - Allow creation of metric events via backend API.
+- Fixed a bug where in some circumstances checks created with sensuctl create
+would never fail.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
