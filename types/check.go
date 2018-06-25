@@ -71,9 +71,12 @@ func NewCheck(c *CheckConfig) *Check {
 		OutputMetricHandlers: c.OutputMetricHandlers,
 		EnvVars:              c.EnvVars,
 	}
-	dummyCheck := &Check{}
-	_ = dynamic.Unmarshal(c.ExtendedAttributes, dummyCheck)
-	check.ExtendedAttributes = dummyCheck.ExtendedAttributes
+	// Unmarshal extended attributes into a different Check value, so that
+	// we don't accidentally corrupt any of the default values for Check.
+	// See https://github.com/sensu/sensu-go/issues/1732 for more information.
+	tmpCheck := Check{}
+	_ = dynamic.Unmarshal(c.ExtendedAttributes, &tmpCheck)
+	check.ExtendedAttributes = tmpCheck.ExtendedAttributes
 	return check
 }
 
