@@ -81,7 +81,7 @@ class EntitiesContent extends React.PureComponent {
                 limit={limit}
                 offset={offset}
                 loading={loading || aborted}
-                onChangeParams={setQueryParams}
+                onChangeQuery={setQueryParams}
                 environment={environment}
                 refetch={refetch}
               />

@@ -30,18 +30,23 @@ export class TableListItem extends React.Component {
     classes: PropTypes.object.isRequired,
     primary: PropTypes.string.isRequired,
     secondary: PropTypes.string,
+    loading: PropTypes.bool,
   };
 
   static defaultProps = {
     className: "",
     secondary: null,
+    loading: false,
   };
 
   render() {
-    const { classes, primary, secondary } = this.props;
+    const { classes, primary, secondary, loading } = this.props;
 
     return (
-      <div className={classes.root}>
+      <div
+        className={classes.root}
+        style={{ visibility: loading ? "hidden" : "visible" }}
+      >
         <span
           className={`${classes.icon} ${classes.line}`}
           role="img"
