@@ -144,9 +144,9 @@ class ListController extends React.PureComponent {
       setSelectedKeys: this.setSelectedKeys,
       setSelectedItems: this.setSelectedItems,
       toggleSelectedItems: () =>
-        selectedKeys.length === keys.length
-          ? this.setSelectedKeys([])
-          : this.setSelectedKeys(keys),
+        selectedKeys.length === 0
+          ? this.setSelectedKeys(keys)
+          : this.setSelectedKeys([]),
     });
   }
 }
