@@ -39,13 +39,14 @@ func Marshal(v AttrGetter) ([]byte, error) {
 	s := jsoniter.NewStream(jsoniter.ConfigCompatibleWithStandardLibrary, nil, 4096)
 	s.WriteObjectStart()
 
-	if err := encodeStructFields(v, s); err != nil {
+	skipFields, err := encodeStructFields(v, s)
+	if err != nil {
 		return nil, err
 	}
 
 	extended := v.GetExtendedAttributes()
 	if len(extended) > 0 {
-		if err := encodeExtendedFields(extended, s); err != nil {
+		if err := encodeExtendedFields(extended, skipFields, s); err != nil {
 			return nil, err
 		}
 	}
@@ -109,10 +110,13 @@ func Unmarshal(msg []byte, v Attributes) error {
 	return nil
 }
 
-func encodeExtendedFields(extended []byte, s *jsoniter.Stream) error {
+func encodeExtendedFields(extended []byte, skipFields []string, s *jsoniter.Stream) error {
 	var anys map[string]jsoniter.Any
 	if err := jsoniter.Unmarshal(extended, &anys); err != nil {
 		return err
+	}
+	for _, toSkip := range skipFields {
+		delete(anys, toSkip)
 	}
 	for _, any := range sortAnys(anys) {
 		s.WriteMore()
@@ -122,14 +126,14 @@ func encodeExtendedFields(extended []byte, s *jsoniter.Stream) error {
 	return nil
 }
 
-func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
+func encodeStructFields(v AttrGetter, s *jsoniter.Stream) ([]string, error) {
 	strukt := reflect.Indirect(reflect.ValueOf(v))
 	if !strukt.IsValid() {
 		// Zero value of a nil pointer, nothing to do.
-		return nil
+		return nil, nil
 	}
 	if kind := strukt.Kind(); kind != reflect.Struct {
-		return fmt.Errorf("invalid type (want struct): %v", kind)
+		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
 	}
 
 	extendedAttributesAddress := addressOfExtendedAttributes(v)
@@ -148,14 +152,17 @@ func encodeStructFields(v AttrGetter, s *jsoniter.Stream) error {
 	sort.Slice(fields, func(i, j int) bool {
 		return fields[i].JSONName < fields[j].JSONName
 	})
+	fieldNames := make([]string, 0, len(fields))
 	for i, field := range fields {
 		if i > 0 {
 			s.WriteMore()
 		}
 		s.WriteObjectField(field.JSONName)
 		s.WriteVal(field.Value.Interface())
+		fieldNames = append(fieldNames, field.JSONName)
 	}
-	return nil
+
+	return fieldNames, nil
 }
 
 func lookupField(fields []structField, name string) (structField, bool) {

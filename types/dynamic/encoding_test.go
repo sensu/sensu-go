@@ -194,3 +194,15 @@ func TestMarshalUnmarshalEmbedded(t *testing.T) {
 
 	require.Equal(t, test, &result)
 }
+
+func TestEncodeNoDuplicateFields(t *testing.T) {
+	p := &Problematic{
+		Foo:   "foo",
+		Attrs: []byte(`{"Foo": "bar"}`),
+	}
+	b, err := Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	require.Equal(t, `{"Bar":null,"Foo":"foo"}`, string(b))
+}
