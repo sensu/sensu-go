@@ -183,8 +183,8 @@ type ExecuteCheckPayload {
   clientMutationId: String
 
   """
-  Any calidation or unrecoverable errors that occurred while executing the
-  mutation.
+  Includes any failed preconditions or unrecoverable errors that occurred while
+  executing the mutation.
   """
   errors: [Error!]!
 }

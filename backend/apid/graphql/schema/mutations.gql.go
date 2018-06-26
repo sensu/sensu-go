@@ -1648,7 +1648,7 @@ func _ObjectTypeExecuteCheckPayloadConfigFn() graphql1.ObjectConfig {
 			"errors": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Any calidation or unrecoverable errors that occurred while executing the\nmutation.",
+				Description:       "Includes any failed preconditions or unrecoverable errors that occurred while\nexecuting the mutation.",
 				Name:              "errors",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Error")))),
 			},
