@@ -12,6 +12,7 @@ import CheckResult from "./EventDetailsCheckResult";
 import Summary from "./EventDetailsSummary";
 import DeleteAction from "./EventDetailsDeleteAction";
 import ResolveAction from "./EventDetailsResolveAction";
+import ReRunAction from "./EventDetailsReRunAction";
 
 class EventDetailsContainer extends React.PureComponent {
   static propTypes = {
@@ -32,6 +33,7 @@ class EventDetailsContainer extends React.PureComponent {
         deleted @client
         ...EventDetailsDeleteAction_event
         ...EventDetailsResolveAction_event
+        ...EventDetailsReRunAction_event
 
         check {
           ...EventDetailsCheckResult_check
@@ -51,6 +53,7 @@ class EventDetailsContainer extends React.PureComponent {
       ${Summary.fragments.entity}
       ${DeleteAction.fragments.event}
       ${ResolveAction.fragments.event}
+      ${ReRunAction.fragments.event}
     `,
   };
 
@@ -83,6 +86,7 @@ class EventDetailsContainer extends React.PureComponent {
               <div style={{ flexGrow: 1 }} />
               <ButtonSet>
                 <ResolveAction client={client} event={event} />
+                <ReRunAction client={client} event={event} />
                 <DeleteAction
                   client={client}
                   event={event}
