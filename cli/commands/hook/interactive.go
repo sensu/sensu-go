@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
@@ -48,10 +49,10 @@ func (opts *hookOpts) withFlags(flags *pflag.FlagSet) {
 	stdinBool, _ := flags.GetBool("stdin")
 	opts.Stdin = strconv.FormatBool(stdinBool)
 
-	if org, _ := flags.GetString("organization"); org != "" {
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
 		opts.Org = org
 	}
-	if env, _ := flags.GetString("environment"); env != "" {
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
 		opts.Env = env
 	}
 }
