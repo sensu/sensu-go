@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ViewCommand ...
+// ViewCommand defines subcommand to view active configuration
 func ViewCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "view",
