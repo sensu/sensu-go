@@ -1,7 +1,8 @@
 package completion
 
 import (
-	"github.com/spf13/cobra"
+  "github.com/sensu/sensu-go/cli"
+  "github.com/spf13/cobra"
 )
 
 const (
