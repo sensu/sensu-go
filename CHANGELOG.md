@@ -88,6 +88,7 @@ an error being logged. Instead, a debug message is logged.
 - Fixed a bug where in some circumstances checks created with sensuctl create
 would never fail.
 - Fixed a goroutine leak in the ring.
+- Fixed `sensuctl completion` help for bash and zsh.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
