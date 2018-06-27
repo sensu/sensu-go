@@ -39,10 +39,10 @@ func (opts *mutatorOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.EnvVars, _ = flags.GetString("env-vars")
 
-	if org, _ := flags.GetString("organization"); org != "" {
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
 		opts.Org = org
 	}
-	if env, _ := flags.GetString("environment"); env != "" {
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
 		opts.Env = env
 	}
 }

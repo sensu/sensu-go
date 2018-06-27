@@ -26,6 +26,7 @@ commands, which is compatible with `sensuctl create`.
 - Added environment variables to checks.
 - Added logging redaction integration test.
 - Added check token substitution integration test.
+- Added the `sensuctl config view` subcommand.
 - Added extension service configuration to staging resources.
 
 ### Changed
@@ -44,6 +45,8 @@ when creating resources with `sensuctl create`.
 - Return an error from `sensuctl configure` when the configured organization
 or environment does not exist.
 - Remove an unnecessary parameter from sensuctl environment create.
+- The profile environment & organization values are used by default when
+creating a resource with sensuctl.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.

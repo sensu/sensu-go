@@ -96,10 +96,10 @@ func (opts *filterOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Action, _ = flags.GetString("action")
 	opts.Statements, _ = flags.GetString("statements")
 
-	if org, _ := flags.GetString("organization"); org != "" {
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
 		opts.Org = org
 	}
-	if env, _ := flags.GetString("environment"); env != "" {
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
 		opts.Env = env
 	}
 }

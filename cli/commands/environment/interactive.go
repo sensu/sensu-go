@@ -2,6 +2,7 @@ package environment
 
 import (
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
@@ -21,7 +22,7 @@ func (opts *envOpts) withEnv(env *types.Environment) {
 func (opts *envOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Description, _ = flags.GetString("description")
 
-	if org, _ := flags.GetString("organization"); org != "" {
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
 		opts.Org = org
 	}
 }

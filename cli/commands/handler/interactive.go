@@ -65,10 +65,10 @@ func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.Type, _ = flags.GetString("type")
 
-	if org, _ := flags.GetString("organization"); org != "" {
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
 		opts.Org = org
 	}
-	if env, _ := flags.GetString("environment"); env != "" {
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
 		opts.Env = env
 	}
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -44,8 +45,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				if err := opts.administerQuestionnaire(); err != nil {
 					return err
 				}
+			} else {
+				opts.withFlags(cmd.Flags())
 			}
-			opts.withFlags(cmd.Flags())
 
 			// Apply given arguments to entity
 			entity := types.Entity{}
@@ -69,6 +71,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	_ = cmd.Flags().StringP("class", "c", "", "entity class, either proxy or agent")
 	_ = cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of subscriptions")
+	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 
 }

@@ -83,10 +83,10 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	roundRobinBool, _ := flags.GetBool("round-robin")
 	opts.RoundRobin = strconv.FormatBool(roundRobinBool)
 
-	if org, _ := flags.GetString("organization"); org != "" {
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
 		opts.Org = org
 	}
-	if env, _ := flags.GetString("environment"); env != "" {
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
 		opts.Env = env
 	}
 }

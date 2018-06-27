@@ -24,16 +24,47 @@ func newEntityOpts() *entityOpts {
 func (opts *entityOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Class, _ = flags.GetString("class")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
+
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
+		opts.Org = org
+	}
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
+		opts.Env = env
+	}
 }
 
 func (opts *entityOpts) administerQuestionnaire() error {
 	qs := []*survey.Question{
+		{
+			Name: "class",
+			Prompt: &survey.Input{
+				Message: "Class:",
+				Default: opts.Class,
+				Help:    "entity class, either proxy or agent",
+			},
+			Validate: survey.Required,
+		},
 		{
 			Name: "subscriptions",
 			Prompt: &survey.Input{
 				Message: "Subscriptions:",
 				Default: opts.Subscriptions,
 				Help:    "comma separated list of subscriptions",
+			},
+		},
+		{
+			Name: "org",
+			Prompt: &survey.Input{
+				Message: "Organization:",
+				Default: opts.Org,
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "env",
+			Prompt: &survey.Input{
+				Message: "Environment:",
+				Default: opts.Env,
 			},
 			Validate: survey.Required,
 		},
