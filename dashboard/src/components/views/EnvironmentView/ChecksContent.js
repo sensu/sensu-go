@@ -59,7 +59,7 @@ class ChecksContent extends React.Component {
                 <CheckList
                   limit={limit}
                   offset={offset}
-                  onChangeParams={setQueryParams}
+                  onChangeQuery={setQueryParams}
                   environment={environment}
                   loading={loading || aborted}
                   refetch={refetch}

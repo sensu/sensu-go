@@ -21,7 +21,7 @@ class CheckList extends React.Component {
       }),
     }),
     loading: PropTypes.bool,
-    onChangeParams: PropTypes.func.isRequired,
+    onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   };
@@ -54,7 +54,7 @@ class CheckList extends React.Component {
   };
 
   render() {
-    const { environment, loading, limit, offset, onChangeParams } = this.props;
+    const { environment, loading, limit, offset, onChangeQuery } = this.props;
     const checks = environment ? environment.checks.nodes : [];
 
     return (
@@ -80,7 +80,7 @@ class CheckList extends React.Component {
           limit={limit}
           offset={offset}
           pageInfo={environment && environment.checks.pageInfo}
-          onChangeParams={onChangeParams}
+          onChangeQuery={onChangeQuery}
         />
       </Loader>
     );

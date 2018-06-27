@@ -82,11 +82,7 @@ func (m *EtcdService) RefreshMonitor(ctx context.Context, name string, entity *t
 	// lease with keep-alive.
 	if mon != nil && mon.ttl == ttl {
 		_, kaerr := m.client.KeepAliveOnce(ctx, mon.leaseID)
-		if kaerr != nil {
-			return kaerr
-		}
-
-		return nil
+		return kaerr
 	}
 
 	// If the ttls do not match or the monitor doesn't exist, create a new lease

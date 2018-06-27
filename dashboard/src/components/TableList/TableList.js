@@ -27,11 +27,12 @@ export class TableList extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
-    children: PropTypes.node.isRequired,
+    children: PropTypes.node,
   };
 
   static defaultProps = {
     className: "",
+    children: null,
   };
 
   render() {

@@ -84,7 +84,12 @@ func (c *CheckWatcher) startWatcher() {
 	watchChan := c.store.GetCheckConfigWatcher(c.ctx)
 	for {
 		select {
-		case watchEvent := <-watchChan:
+		case watchEvent, ok := <-watchChan:
+			if !ok {
+				// The watchChan has closed. Restart the watcher.
+				watchChan = c.store.GetCheckConfigWatcher(c.ctx)
+				continue
+			}
 			c.handleWatchEvent(watchEvent)
 		case <-c.ctx.Done():
 			c.mu.Lock()

@@ -476,14 +476,6 @@
   }
 }
 {
-  "type": "Extension",
-  "spec": {
-    "name": "foo",
-    "url": "http://www.foo.com",
-    "organization": "default"
-  }
-}
-{
   "type": "Organization",
   "spec": {
     "description": "",
@@ -496,6 +488,133 @@
     "description": "",
     "name": "dev",
     "organization": "ops"
+  }
+}
+{
+  "type": "Extension",
+  "spec": {
+    "name": "handle-extension",
+    "url": "127.0.0.1:31000",
+    "organization": "ops"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "filter-extension",
+    "type": "pipe",
+    "timeout": 0,
+    "handlers": [],
+    "filters": [
+      "handle-extension"
+    ],
+    "env_vars": [],
+    "environment": "dev",
+    "organization": "ops"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "mutate-extension",
+    "type": "pipe",
+    "mutator": "handle-extension",
+    "timeout": 0,
+    "handlers": [],
+    "filters": [],
+    "env_vars": [],
+    "environment": "dev",
+    "organization": "ops"
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo grpc handle event",
+    "environment": "dev",
+    "handlers": [
+      "handle-extension"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "grpc-handle",
+    "organization": "ops",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "rbac"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": [],
+    "env_vars": null
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo grpc filter event",
+    "environment": "dev",
+    "handlers": [
+      "filter-extension"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "grpc-filter",
+    "organization": "ops",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "rbac"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": [],
+    "env_vars": null
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo grpc mutate event",
+    "environment": "dev",
+    "handlers": [
+      "mutate-extension"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "grpc-mutate",
+    "organization": "ops",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "rbac"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": [],
+    "env_vars": null
   }
 }
 {

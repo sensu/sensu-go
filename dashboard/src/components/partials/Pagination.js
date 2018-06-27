@@ -22,14 +22,14 @@ class Pagination extends React.PureComponent {
     pageInfo: PropTypes.object,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    onChangeParams: PropTypes.func,
+    onChangeQuery: PropTypes.func,
   };
 
   static defaultProps = {
     pageInfo: undefined,
     limit: undefined,
     offset: undefined,
-    onChangeParams: undefined,
+    onChangeQuery: undefined,
   };
 
   static fragments = {
@@ -41,14 +41,14 @@ class Pagination extends React.PureComponent {
   };
 
   _handleChangePage = (event, page) => {
-    if (this.props.onChangeParams) {
-      this.props.onChangeParams({ offset: page * this.props.limit });
+    if (this.props.onChangeQuery) {
+      this.props.onChangeQuery({ offset: page * this.props.limit });
     }
   };
 
   _handleChangeLimit = event => {
-    if (this.props.onChangeParams) {
-      this.props.onChangeParams({ limit: event.target.value });
+    if (this.props.onChangeQuery) {
+      this.props.onChangeQuery({ limit: event.target.value });
     }
   };
 

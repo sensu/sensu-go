@@ -27,6 +27,7 @@ commands, which is compatible with `sensuctl create`.
 - Added logging redaction integration test.
 - Added check token substitution integration test.
 - Added the `sensuctl config view` subcommand.
+- Added extension service configuration to staging resources.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
@@ -87,6 +88,8 @@ lockfiles to not be cleaned up.
 an error being logged. Instead, a debug message is logged.
 - Update AppVeyor API token to enable GitHub deployments.
 - Allow creation of metric events via backend API.
+- Fixed a bug where in some circumstances checks created with sensuctl create
+would never fail.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
@@ -104,6 +107,7 @@ integration coverage.
 - Removed hooks e2e test.
 - Removed assets e2e test.
 - Removed agent reconnection e2e test.
+- Removed extensions e2e test.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
