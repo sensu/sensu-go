@@ -5,7 +5,7 @@
 id: "staging-agent-2"
 organization: "ops"
 environment: "dev"
-subscriptions: "rbac"
+subscriptions: "rbac,round-robin"
 # UPDATE BACKEND URL
 #backend-url:
 #  - "ws://127.0.0.1:8081"

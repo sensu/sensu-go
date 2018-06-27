@@ -5,7 +5,7 @@
 id: "staging-agent-1"
 #organization: "default"
 #environment: "default"
-subscriptions: "schedules,rbac"
+subscriptions: "schedules,rbac,round-robin"
 # UPDATE BACKEND URL
 #backend-url:
 #  - "ws://127.0.0.1:8081"

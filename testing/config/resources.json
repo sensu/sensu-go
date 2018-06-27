@@ -302,7 +302,7 @@
 {
   "type": "CheckConfig",
   "spec": {
-    "command": "echo passing round robin && exit 0",
+    "command": "echo passing round robin 0 && exit 0",
     "environment": "default",
     "handlers": [
       "filtered-cat"
@@ -310,12 +310,12 @@
     "high_flap_threshold": 0,
     "interval": 60,
     "low_flap_threshold": 0,
-    "name": "passing-round-robin",
+    "name": "passing-round-robin-0",
     "organization": "default",
     "publish": true,
     "runtime_assets": [],
     "subscriptions": [
-      "schedules"
+      "round-robin"
     ],
     "proxy_entity_id": "",
     "check_hooks": [
@@ -330,6 +330,66 @@
         ]
       }
     ],
+    "stdin": false,
+    "subdue": null,
+    "cron": "",
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": true,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo passing round robin 1 && exit 0",
+    "environment": "default",
+    "handlers": [
+      "filtered-cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 60,
+    "low_flap_threshold": 0,
+    "name": "passing-round-robin-1",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "round-robin"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": [],
+    "stdin": false,
+    "subdue": null,
+    "cron": "",
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": true,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
+    "command": "echo passing round robin 2 && exit 0",
+    "environment": "default",
+    "handlers": [
+      "filtered-cat"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 60,
+    "low_flap_threshold": 0,
+    "name": "passing-round-robin-2",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "round-robin"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": [],
     "stdin": false,
     "subdue": null,
     "cron": "",
