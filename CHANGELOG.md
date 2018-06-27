@@ -26,6 +26,7 @@ commands, which is compatible with `sensuctl create`.
 - Added environment variables to checks.
 - Added logging redaction integration test.
 - Added check token substitution integration test.
+- Added extension service configuration to staging resources.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
@@ -103,6 +104,7 @@ integration coverage.
 - Removed hooks e2e test.
 - Removed assets e2e test.
 - Removed agent reconnection e2e test.
+- Removed extensions e2e test.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added
