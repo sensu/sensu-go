@@ -28,6 +28,7 @@ commands, which is compatible with `sensuctl create`.
 - Added check token substitution integration test.
 - Added the `sensuctl config view` subcommand.
 - Added extension service configuration to staging resources.
+- Added some documentation around extensions.
 
 ### Changed
 - Add logging around the Sensu event pipeline.
