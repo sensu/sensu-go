@@ -317,7 +317,7 @@
     "subscriptions": [
       "round-robin"
     ],
-    "proxy_entity_id": "",
+    "proxy_entity_id": "proxy-round-robin-0",
     "check_hooks": [
       {
         "0": [
@@ -358,7 +358,7 @@
     "subscriptions": [
       "round-robin"
     ],
-    "proxy_entity_id": "",
+    "proxy_entity_id": "proxy-round-robin-1",
     "check_hooks": [],
     "stdin": false,
     "subdue": null,
@@ -388,7 +388,7 @@
     "subscriptions": [
       "round-robin"
     ],
-    "proxy_entity_id": "",
+    "proxy_entity_id": "proxy-round-robin-2",
     "check_hooks": [],
     "stdin": false,
     "subdue": null,
