@@ -14,12 +14,12 @@ cmd=${1:-"all"}
 
 RACE=""
 
-VERSION_CMD="GOOS=linux GOARCH=amd64 go run ./version/cmd/version/version.go"
+VERSION_CMD="go run ./version/cmd/version/version.go"
 
 HANDLERS=(slack)
 
 set_race_flag() {
-    if [ "$GOARCH" == "amd64" ]; then
+    if [ "$GOARCH" == "amd64" ] && [ "$CGO_ENABLED" == "1" ]; then
         RACE="-race"
     fi
 }
@@ -79,6 +79,13 @@ build_tool_binary () {
 }
 
 build_binary () {
+    # Unset GOOS and GOARCH so that the version command builds on native OS/arch
+    unset GOOS
+    unset GOARCH
+
+    local version=$($VERSION_CMD -v)
+    local prerelease=$($VERSION_CMD -p)
+
     local goos=$1
     local goarch=$2
     local cmd=$3
@@ -87,8 +94,6 @@ build_binary () {
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-    local version=$($VERSION_CMD -v)
-    local prerelease=$($VERSION_CMD -p)
     local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
     local build_sha=$(git rev-parse HEAD)
 
