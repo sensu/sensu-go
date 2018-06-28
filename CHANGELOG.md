@@ -37,6 +37,7 @@ commands, which is compatible with `sensuctl create`.
 - Added some documentation around extensions.
 
 ### Changed
+- Upgraded gometalinter to v2.
 - Add logging around the Sensu event pipeline.
 - Split out the docker commands in build script so that building images and
   pushing can be done separately.
