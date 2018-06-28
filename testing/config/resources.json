@@ -429,6 +429,33 @@
   }
 }
 {
+  "type": "CheckConfig",
+  "spec": {
+    "command": "sleep 5 && exit 0",
+    "environment": "default",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 60,
+    "low_flap_threshold": 0,
+    "name": "execution-timeout",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 2,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
   "type": "HookConfig",
   "spec": {
     "name": "passing",
