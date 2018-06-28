@@ -14,7 +14,7 @@ cmd=${1:-"all"}
 
 RACE=""
 
-VERSION_CMD="go run ./version/cmd/version/version.go"
+VERSION_CMD="GOOS=linux GOARCH=amd64 go run ./version/cmd/version/version.go"
 
 HANDLERS=(slack)
 
