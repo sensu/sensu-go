@@ -7,6 +7,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed `sensuctl completion` help for bash and zsh.
+
+## [2.0.0-beta.2] - 2018-06-28
+
 ### Added
 - Performed an audit of events and checks. Added `event.HasCheck()` nil checks
 prior to assuming the existence of said check.
