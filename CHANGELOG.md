@@ -93,6 +93,7 @@ an error being logged. Instead, a debug message is logged.
 would never fail.
 - Fixed a goroutine leak in the ring.
 - Fixed `sensuctl completion` help for bash and zsh.
+- Display the name of extensions with table formatting in sensuctl.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
