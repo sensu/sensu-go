@@ -1,6 +1,7 @@
 package completion
 
 import (
+	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -16,8 +17,8 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
 . $(brew --prefix)/etc/bash_completion
 fi
 
-# After bash-completions are availabe add the following to your ~/.bash_profile
-source <(sensu-cli completion bash)
+# After bash-completions are available add the following to your ~/.bash_profile
+source <(` + cli.SensuCmdName + ` completion bash)
 
 # You can source your ~/.bash_profile or launch a new terminal to utilize completion.
 source ~/.bash_profile

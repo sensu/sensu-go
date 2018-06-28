@@ -11,7 +11,7 @@ import (
 const (
 	zshUsage = `
 # Add the following to your ~/.zshrc
-source <(` + cli.SensuCmdName + `sensuctl completion zsh)
+source <(` + cli.SensuCmdName + ` completion zsh)
 
 # You can source your ~/.zshrc or launch a new terminal to utilize completion.
 source ~/.zshrc
