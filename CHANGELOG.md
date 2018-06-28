@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed `sensuctl completion` help for bash and zsh.
 - Fixed a bug in build.sh where versions for Windows and Mac OS were not
 generated correctly.
+- Display the name of extensions with table formatting in sensuctl.
 
 ## [2.0.0-beta.2] - 2018-06-28
 
@@ -38,6 +39,7 @@ commands, which is compatible with `sensuctl create`.
 - Added some documentation around extensions.
 
 ### Changed
+- Upgraded gometalinter to v2.
 - Add logging around the Sensu event pipeline.
 - Split out the docker commands in build script so that building images and
   pushing can be done separately.
@@ -99,6 +101,7 @@ an error being logged. Instead, a debug message is logged.
 - Fixed a bug where in some circumstances checks created with sensuctl create
 would never fail.
 - Fixed a goroutine leak in the ring.
+- Fixed `sensuctl completion` help for bash and zsh.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor

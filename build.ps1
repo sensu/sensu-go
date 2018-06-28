@@ -35,7 +35,7 @@ function install_deps
 {
     echo "Installing deps..."
     go get github.com/axw/gocov/gocov
-    go get gopkg.in/alecthomas/gometalinter.v1
+    go get gopkg.in/alecthomas/gometalinter.v2
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
@@ -184,7 +184,7 @@ function linter_commands
 {
     echo "Running linter..."
 
-    gometalinter.v1 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=golint --enable=ineffassign --enable=goconst --tests ./...
+    gometalinter.v2 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=golint --enable=ineffassign --enable=goconst --tests ./...
     If ($LASTEXITCODE -ne 0) {
         echo "Linting failed..."
         exit 1
