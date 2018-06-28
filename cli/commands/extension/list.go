@@ -51,17 +51,17 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				asset, _ := data.(types.Asset)
-				return asset.Name
+				extension, _ := data.(types.Extension)
+				return extension.Name
 			},
 		},
 		{
 			Title: "URL",
 			CellTransformer: func(data interface{}) string {
-				asset, _ := data.(types.Asset)
-				u, err := url.Parse(asset.URL)
+				extension, _ := data.(types.Extension)
+				u, err := url.Parse(extension.URL)
 				if err != nil {
-					return ""
+					return extension.URL
 				}
 
 				_, file := path.Split(u.EscapedPath())
