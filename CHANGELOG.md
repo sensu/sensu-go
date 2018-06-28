@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
+- Display the name of extensions with table formatting in sensuctl.
 
 ## [2.0.0-beta.2] - 2018-06-28
 
@@ -97,6 +98,7 @@ an error being logged. Instead, a debug message is logged.
 - Fixed a bug where in some circumstances checks created with sensuctl create
 would never fail.
 - Fixed a goroutine leak in the ring.
+- Fixed `sensuctl completion` help for bash and zsh.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
