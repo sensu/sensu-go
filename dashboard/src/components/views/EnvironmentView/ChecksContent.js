@@ -48,6 +48,7 @@ class ChecksContent extends React.Component {
     return (
       <Query
         query={ChecksContent.query}
+        fetchPolicy="cache-and-network"
         variables={{ ...match.params, limit, offset, order, filter }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
