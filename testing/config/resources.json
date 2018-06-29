@@ -32,9 +32,7 @@
   "spec": {
     "command": "echo $(hostname)'.cpu:41|c' | nc -u -w1 127.0.0.1 8125",
     "environment": "default",
-    "handlers": [
-      "cat"
-    ],
+    "handlers": [],
     "high_flap_threshold": 0,
     "interval": 10,
     "low_flap_threshold": 0,
@@ -131,7 +129,7 @@
     "command": "echo silenced",
     "environment": "default",
     "handlers": [
-      "cat"
+      "silenced-cat"
     ],
     "high_flap_threshold": 0,
     "interval": 10,
@@ -157,6 +155,33 @@
 {
   "type": "CheckConfig",
   "spec": {
+    "command": "echo ttl",
+    "environment": "default",
+    "handlers": [],
+    "high_flap_threshold": 0,
+    "interval": 60,
+    "low_flap_threshold": 0,
+    "name": "ttl-check",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 90,
+    "timeout": 30,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": []
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
     "command": "echo not published",
     "environment": "default",
     "handlers": [
@@ -165,7 +190,7 @@
     "high_flap_threshold": 0,
     "interval": 10,
     "low_flap_threshold": 0,
-    "name": "silenced-check",
+    "name": "unpublished-check",
     "organization": "default",
     "publish": false,
     "runtime_assets": [],
@@ -209,8 +234,8 @@
       "entity_attributes": [
         "entity.Class == \"proxy\""
       ],
-      "splay": false,
-      "splay_coverage": 0
+      "splay": true,
+      "splay_coverage": 90
     },
     "round_robin": false,
     "output_metric_format": "",
@@ -220,10 +245,40 @@
 {
   "type": "CheckConfig",
   "spec": {
+    "command": "echo hello tcp",
+    "environment": "default",
+    "handlers": [
+      "tcp-handler"
+    ],
+    "high_flap_threshold": 0,
+    "interval": 10,
+    "low_flap_threshold": 0,
+    "name": "tcp-handled-check",
+    "organization": "default",
+    "publish": true,
+    "runtime_assets": [],
+    "subscriptions": [
+      "misc"
+    ],
+    "proxy_entity_id": "",
+    "check_hooks": null,
+    "stdin": false,
+    "subdue": null,
+    "ttl": 0,
+    "timeout": 0,
+    "round_robin": false,
+    "output_metric_format": "",
+    "output_metric_handlers": [],
+    "env_vars": null
+  }
+}
+{
+  "type": "CheckConfig",
+  "spec": {
     "command": "echo failing cron && exit 1",
     "environment": "default",
     "handlers": [
-      "filtered-cat"
+      "incident-filtered-cat"
     ],
     "high_flap_threshold": 0,
     "interval": 0,
@@ -264,7 +319,7 @@
     "command": "echo passing interval && exit 0",
     "environment": "default",
     "handlers": [
-      "filtered-cat"
+      "passing-filtered-cat"
     ],
     "high_flap_threshold": 0,
     "interval": 60,
@@ -305,7 +360,7 @@
     "command": "echo passing round robin 0 && exit 0",
     "environment": "default",
     "handlers": [
-      "filtered-cat"
+      "handler-set"
     ],
     "high_flap_threshold": 0,
     "interval": 60,
@@ -346,7 +401,7 @@
     "command": "echo passing round robin 1 && exit 0",
     "environment": "default",
     "handlers": [
-      "filtered-cat"
+      "handler-set"
     ],
     "high_flap_threshold": 0,
     "interval": 60,
@@ -376,7 +431,7 @@
     "command": "echo passing round robin 2 && exit 0",
     "environment": "default",
     "handlers": [
-      "filtered-cat"
+      "handler-set"
     ],
     "high_flap_threshold": 0,
     "interval": 60,
@@ -494,14 +549,79 @@
 {
   "type": "Handler",
   "spec": {
-    "name": "filtered-cat",
+    "name": "incident-filtered-cat",
     "type": "pipe",
     "command": "cat",
     "timeout": 0,
     "handlers": [],
     "filters": [
-      "handle-failing-only"
+      "is_incident"
     ],
+    "env_vars": [],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "passing-filtered-cat",
+    "type": "pipe",
+    "command": "cat",
+    "timeout": 0,
+    "handlers": [],
+    "filters": [
+      "handle-passing-only"
+    ],
+    "env_vars": [],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "handler-set",
+    "type": "set",
+    "timeout": 0,
+    "handlers": [
+      "incident-filtered-cat",
+      "passing-filtered-cat"
+    ],
+    "filters": [],
+    "env_vars": [],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "silenced-cat",
+    "type": "pipe",
+    "command": "cat",
+    "timeout": 0,
+    "handlers": [],
+    "filters": [
+      "not_silenced"
+    ],
+    "env_vars": [],
+    "environment": "default",
+    "organization": "default"
+  }
+}
+{
+  "type": "Handler",
+  "spec": {
+    "name": "tcp-handler",
+    "type": "tcp",
+    "timeout": 0,
+    "socket": {
+      "host": "127.0.0.1",
+      "port": 3333
+    },
+    "handlers": [],
+    "filters": [],
     "env_vars": [],
     "environment": "default",
     "organization": "default"
@@ -510,10 +630,10 @@
 {
   "type": "EventFilter",
   "spec": {
-    "name": "handle-failing-only",
+    "name": "handle-passing-only",
     "action": "allow",
     "statements": [
-      "event.Check.Status == 1"
+      "event.Check.Status == 0"
     ],
     "environment": "default",
     "organization": "default"
@@ -589,7 +709,7 @@
   "type": "Handler",
   "spec": {
     "name": "filter-extension",
-    "type": "pipe",
+    "type": "grpc",
     "timeout": 0,
     "handlers": [],
     "filters": [
@@ -604,7 +724,7 @@
   "type": "Handler",
   "spec": {
     "name": "mutate-extension",
-    "type": "pipe",
+    "type": "grpc",
     "mutator": "handle-extension",
     "timeout": 0,
     "handlers": [],
