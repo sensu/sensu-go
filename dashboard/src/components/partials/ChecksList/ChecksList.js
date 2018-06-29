@@ -16,8 +16,6 @@ import ButtonSet from "/components/ButtonSet";
 
 import Loader from "/components/util/Loader";
 
-import IconButton from "/components/base/IconButton";
-
 import MenuController from "/components/controller/MenuController";
 import ListController from "/components/controller/ListController";
 
@@ -190,9 +188,9 @@ class ChecksList extends React.Component {
                   >
                     {({ open, ref }) => (
                       <RootRef rootRef={ref}>
-                        <IconButton onClick={open}>
+                        <Button onClick={open}>
                           Sort <DropdownArrow />
-                        </IconButton>
+                        </Button>
                       </RootRef>
                     )}
                   </MenuController>
