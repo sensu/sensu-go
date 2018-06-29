@@ -55,10 +55,6 @@ class CheckListItem extends React.Component {
           {check.name}
           <br />
           {check.command}
-          <br />
-          {check.subscriptions}
-          <br />
-          {check.interval}
         </TableCell>
         <TableCell>
           <div ref={this._menuAnchorRef}>
