@@ -37,6 +37,7 @@ commands, which is compatible with `sensuctl create`.
 - Added the `sensuctl config view` subcommand.
 - Added extension service configuration to staging resources.
 - Added some documentation around extensions.
+- Added Dockerfile.rhel to build RHEL containers.
 
 ### Changed
 - Upgraded gometalinter to v2.
