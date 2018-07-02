@@ -277,31 +277,31 @@ docker_build() {
     done
 
     # build the docker image with master tag
-    docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
+    docker build --label build.sha=${build_sha} -t sensu/sensu-go:master .
 }
 
 docker_push() {
     local release=$1
-    local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
-    local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
+    local version=$(echo sensu/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
+    local version_iteration=$(echo sensu/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
 
     # ensure we are authenticated
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 
     # push master - tags and pushes latest master docker build only
     if [ "$release" == "master" ]; then
-        docker push sensuapp/sensu-go:master
+        docker push sensu/sensu-go:master
         exit 0
     fi
 
     # if versioned release push to 'latest' tag
     if [ "$release" == "versioned" ]; then
-        docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
-        docker push sensuapp/sensu-go:latest
+        docker tag sensu/sensu-go:master sensu/sensu-go:latest
+        docker push sensu/sensu-go:latest
     fi
 
     # push current revision
-    docker tag sensuapp/sensu-go:master $version_iteration
+    docker tag sensu/sensu-go:master $version_iteration
     docker push $version_iteration
     docker tag $version_iteration $version
     docker push $version
@@ -350,10 +350,10 @@ deploy() {
     # Deploy system packages to PackageCloud
     make clean
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-    docker pull sensuapp/sensu-go-build
-    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI sensuapp/sensu-go-build publish_travis
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build clean
+    docker pull sensu/sensu-go-build
+    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI -v `pwd`:/go/src/github.com/sensu/sensu-go sensu/sensu-go-build
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI sensu/sensu-go-build publish_travis
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensu/sensu-go-build clean
 
     # Deploy Docker images to the Docker Hub
     docker_build

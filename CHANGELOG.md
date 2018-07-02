@@ -58,6 +58,7 @@ or environment does not exist.
 - Remove an unnecessary parameter from sensuctl environment create.
 - The profile environment & organization values are used by default when
 creating a resource with sensuctl.
+- Migrated docker image to sensu Docker Hub organization from sensuapp.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
