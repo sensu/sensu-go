@@ -12,7 +12,7 @@ LABEL name="sensu/sensu-go" \
       run="docker run -d --name sensu-backend sensu/sensu-go" \
       io.k8s.description="Sensu" \
       io.k8s.display-name="Sensu" \
-      io.openshift.expose-services="8081:http,8080:http,3000:http,2379:http"
+      io.openshift.expose-services="8081:http,8080:http,3000:http,2379:http" \
       io.openshift.tags="sensu,monitoring,observability"
 
 VOLUME /var/lib/sensu
