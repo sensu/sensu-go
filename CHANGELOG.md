@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug in build.sh where versions for Windows and Mac OS were not
 generated correctly.
 - Display the name of extensions with table formatting in sensuctl.
+- Fixed TLS issue that occurred when dashboard communicated with API.
 
 ## [2.0.0-beta.2] - 2018-06-28
 
