@@ -22,32 +22,10 @@ type Service interface {
 	RefreshMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error
 }
 
-// Factory takes an etcd client, failure handler, and error handler and returns
-// a monitor service.
-type Factory func(*clientv3.Client, MonitorFailureHandler, ErrorHandler) Service
-
-// MonitorFailureHandler provides a failure handler. TODO: rename this to
-// FailureHandler when we remove the other monitor code.
-type MonitorFailureHandler interface {
-	HandleFailure(entity *types.Entity, event *types.Event) error
-}
-
-// ErrorHandler is the error handler func interface.
-type ErrorHandler interface {
-	HandleError(error)
-}
-
-// ErrorHandlerFunc implements ErrorHandler
-type ErrorHandlerFunc func(error)
-
-func (e ErrorHandlerFunc) HandleError(err error) {
-	e(err)
-}
-
 // EtcdService is an etcd backend monitor service based on leased keys. Each key
 // has a watcher that waits for a DELETE or PUT event and calls a handler.
 type EtcdService struct {
-	failureHandler MonitorFailureHandler
+	failureHandler FailureHandler
 	errorHandler   ErrorHandler
 	client         *clientv3.Client
 }
@@ -58,12 +36,22 @@ type monitor struct {
 	ttl     int64
 }
 
-// NewService returns a new monitor service.
-func NewService(client *clientv3.Client, failureHandler MonitorFailureHandler, errorHandler ErrorHandler) *EtcdService {
+// EtcdFactory returns a Factory bound to an etcd client
+func EtcdFactory(c *clientv3.Client) Factory {
+	return func(f FailureHandler, e ErrorHandler) Service {
+		return NewEtcdService(c, f, e)
+	}
+}
+
+// Factory is a function that receives handlers and returns a service.
+type Factory func(FailureHandler, ErrorHandler) Service
+
+// NewEtcdService returns a new monitor service backed by Etcd.
+func NewEtcdService(client *clientv3.Client, fail FailureHandler, err ErrorHandler) *EtcdService {
 	return &EtcdService{
 		client:         client,
-		failureHandler: failureHandler,
-		errorHandler:   errorHandler,
+		failureHandler: fail,
+		errorHandler:   err,
 	}
 }
 
@@ -147,8 +135,8 @@ func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, err
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
 func watchMon(ctx context.Context, cli *clientv3.Client, key string, failureHandler func(), shutdownHandler func()) {
+	responseChan := cli.Watch(ctx, key)
 	go func() {
-		responseChan := cli.Watch(ctx, key)
 		for wresp := range responseChan {
 			for _, ev := range wresp.Events {
 				if ev.Type == mvccpb.DELETE {

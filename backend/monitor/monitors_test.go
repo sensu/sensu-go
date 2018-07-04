@@ -19,14 +19,14 @@ import (
 type testMonitorsHandler struct{}
 
 // create failure and error handlers for use with the monitor
-func (handler *testMonitorsHandler) HandleFailure(entity *types.Entity, event *types.Event) error {
+func (*testMonitorsHandler) HandleFailure(entity *types.Entity, event *types.Event) error {
 	if entity.ID == "entity" {
 		return nil
 	}
 	return errors.New("test failure handler error")
 }
 
-func (handler *testMonitorsHandler) HandleError(err error) {}
+func (*testMonitorsHandler) HandleError(err error) {}
 
 func putKeyWithLease(cli *clientv3.Client, key string, ttl int64) error {
 	lease, err := cli.Grant(context.Background(), ttl)
@@ -50,7 +50,7 @@ func TestRefreshMonitorNew(t *testing.T) {
 	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewService(client, handler, handler)
+	monitorService := NewEtcdService(client, handler, handler)
 	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
 	require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestRefreshMonitorExisting(t *testing.T) {
 	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewService(client, handler, handler)
+	monitorService := NewEtcdService(client, handler, handler)
 
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestRefreshMonitorNewTTL(t *testing.T) {
 	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewService(client, handler, handler)
+	monitorService := NewEtcdService(client, handler, handler)
 
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestGetMonitorNone(t *testing.T) {
 	defer client.Close()
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewService(client, handler, handler)
+	monitorService := NewEtcdService(client, handler, handler)
 	mon, err := monitorService.getMonitor(context.Background(), "testGetMonitorNone")
 	require.NoError(t, err)
 	assert.Nil(t, mon)
@@ -129,7 +129,7 @@ func TestGetMonitorExisting(t *testing.T) {
 		leaseID: 0,
 		ttl:     0,
 	}
-	monitorService := NewService(client, handler, handler)
+	monitorService := NewEtcdService(client, handler, handler)
 	_, err = client.Put(context.Background(), testMon.key, fmt.Sprintf("%d", testMon.ttl))
 	require.NoError(t, err)
 
@@ -147,7 +147,7 @@ func TestWatchMonDelete(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	var failWait sync.WaitGroup
+	failWait := &sync.WaitGroup{}
 
 	testFailureHandler := func() {
 		failWait.Done()

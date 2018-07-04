@@ -31,15 +31,13 @@ type Eventd struct {
 	store          store.Store
 	bus            messaging.MessageBus
 	handlerCount   int
-	monitorFactory monitor.FactoryFunc
-
-	eventChan    chan interface{}
-	subscription messaging.Subscription
-	errChan      chan error
-	monitors     map[string]monitor.Interface
-	mu           *sync.Mutex
-	shutdownChan chan struct{}
-	wg           *sync.WaitGroup
+	monitorFactory monitor.Factory
+	eventChan      chan interface{}
+	subscription   messaging.Subscription
+	errChan        chan error
+	mu             *sync.Mutex
+	shutdownChan   chan struct{}
+	wg             *sync.WaitGroup
 }
 
 // Option is a functional option.
@@ -47,25 +45,23 @@ type Option func(*Eventd) error
 
 // Config configures Eventd
 type Config struct {
-	Store store.Store
-	Bus   messaging.MessageBus
+	Store          store.Store
+	Bus            messaging.MessageBus
+	MonitorFactory monitor.Factory
 }
 
 // New creates a new Eventd.
 func New(c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
-		store:        c.Store,
-		bus:          c.Bus,
-		handlerCount: 10,
-		monitorFactory: func(entity *types.Entity, event *types.Event, t time.Duration, u monitor.UpdateHandler, f monitor.FailureHandler) monitor.Interface {
-			return monitor.New(entity, event, t, u, f)
-		},
-		errChan:      make(chan error, 1),
-		shutdownChan: make(chan struct{}, 1),
-		eventChan:    make(chan interface{}, 100),
-		wg:           &sync.WaitGroup{},
-		mu:           &sync.Mutex{},
-		monitors:     make(map[string]monitor.Interface),
+		store:          c.Store,
+		bus:            c.Bus,
+		handlerCount:   10,
+		monitorFactory: c.MonitorFactory,
+		errChan:        make(chan error, 1),
+		shutdownChan:   make(chan struct{}, 1),
+		eventChan:      make(chan interface{}, 100),
+		wg:             &sync.WaitGroup{},
+		mu:             &sync.Mutex{},
 	}
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -137,12 +133,11 @@ func (e *Eventd) startHandlers() {
 	}
 }
 
-func (e *Eventd) handleMessage(msg interface{}) error {
-	var (
-		mon monitor.Interface
-		ok  bool
-	)
+func (e *Eventd) HandleError(err error) {
+	logger.WithError(err).Error("error monitoring event")
+}
 
+func (e *Eventd) handleMessage(msg interface{}) error {
 	event, ok := msg.(*types.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")
@@ -210,15 +205,12 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		// monitor map
 		// only monitor if there is a check TTL and the check is not a
 		// round robin check.
-		e.mu.Lock()
-		mon, ok = e.monitors[entity.ID]
-		if !ok || mon.IsStopped() {
-			timeout := time.Duration(event.Check.Ttl) * time.Second
-			mon = e.monitorFactory(entity, event, timeout, e, e)
-			e.monitors[entity.ID] = mon
+		timeout := int64(event.Check.Ttl)
+		service := e.monitorFactory(e, e)
+		if err := service.RefreshMonitor(context.TODO(), entity.ID, entity, event, timeout); err != nil {
+			return fmt.Errorf("error refreshing monitor for entity %s: %s", entity.ID, err)
 		}
-		e.mu.Unlock()
-		return mon.HandleUpdate(event)
+		return e.HandleUpdate(event)
 	}
 
 	return e.bus.Publish(messaging.TopicEvent, event)

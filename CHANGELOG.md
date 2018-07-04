@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Use etcd monitor instead of in-memory monitor.
+
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
 - Fixed a bug in build.sh where versions for Windows and Mac OS were not

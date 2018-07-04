@@ -1,12 +1,11 @@
 package keepalived
 
 import (
+	"context"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
-	"github.com/sensu/sensu-go/testing/mockmonitor"
 	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -31,6 +30,20 @@ func (k *keepalivedTest) Receiver() chan<- interface{} {
 	return k.receiver
 }
 
+type fakeMonitorService struct {
+}
+
+func (f fakeMonitorService) RefreshMonitor(context.Context, string, *types.Entity, *types.Event, int64) error {
+	return nil
+}
+
+func fakeFactory(monitor.FailureHandler, monitor.ErrorHandler) monitor.Service {
+	return fakeMonitorService{}
+}
+
+// type assertion
+var _ monitor.Service = fakeMonitorService{}
+
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}
 	deregisterer := &mockDeregisterer{}
@@ -38,13 +51,8 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 		RingGetter: &mockring.Getter{},
 	})
 	require.NoError(t, err)
-	k, err := New(Config{Store: store, Bus: bus})
+	k, err := New(Config{Store: store, Bus: bus, MonitorFactory: fakeFactory})
 	require.NoError(t, err)
-	k.monitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
-		mon := &mockmonitor.MockMonitor{}
-		mon.On("HandleUpdate", mock.Anything).Return(nil)
-		return mon
-	}
 	test := &keepalivedTest{
 		MessageBus:   bus,
 		Store:        store,
@@ -145,7 +153,6 @@ func TestStartStop(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.NoError(t, k.Stop())
-			assert.Equal(t, tc.monitors, len(k.monitors))
 		})
 	}
 }
@@ -153,11 +160,6 @@ func TestStartStop(t *testing.T) {
 func TestEventProcessing(t *testing.T) {
 	test := newKeepalivedTest(t)
 	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
-	mon := &mockmonitor.MockMonitor{}
-	mon.On("HandleUpdate", mock.Anything).Return(nil)
-	test.Keepalived.monitorFactory = func(entity *types.Entity, event *types.Event, t time.Duration, updateHandler monitor.UpdateHandler, failureHandler monitor.FailureHandler) monitor.Interface {
-		return mon
-	}
 	require.NoError(t, test.Keepalived.Start())
 	event := types.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
@@ -167,7 +169,6 @@ func TestEventProcessing(t *testing.T) {
 
 	test.Keepalived.keepaliveChan <- event
 	assert.NoError(t, test.Keepalived.Stop())
-	mon.AssertCalled(t, "HandleUpdate", event)
 }
 
 type testSubscriber struct {
@@ -227,7 +228,7 @@ func TestProcessRegistration(t *testing.T) {
 			subscription, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub)
 			require.NoError(t, err)
 
-			keepalived, err := New(Config{Store: store, Bus: messageBus})
+			keepalived, err := New(Config{Store: store, Bus: messageBus, MonitorFactory: fakeFactory})
 			require.NoError(t, err)
 
 			store.On("GetEntityByID", mock.Anything, "agent1").Return(tc.storeEntity, nil)
