@@ -198,13 +198,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	entity := event.Entity
-
 	if event.Check.Ttl > 0 {
 		// Reset the TTL monitor
 		timeout := int64(event.Check.Ttl)
-		service := e.monitorFactory(e, e)
-		err := service.RefreshMonitor(context.TODO(), entity.ID, entity, event, timeout)
+		supervisor := e.monitorFactory(e)
+		err := supervisor.Monitor(context.TODO(), event.Entity.ID, event, timeout)
 		if err == nil {
 			// HandleUpdate also publishes the event
 			err = e.HandleUpdate(event)
@@ -250,7 +248,8 @@ func (e *Eventd) HandleUpdate(event *types.Event) error {
 
 // HandleFailure creates a check event with a warn status and publishes it to
 // TopicEvent.
-func (e *Eventd) HandleFailure(entity *types.Entity, event *types.Event) error {
+func (e *Eventd) HandleFailure(event *types.Event) error {
+	entity := event.Entity
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
 

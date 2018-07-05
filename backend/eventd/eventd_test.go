@@ -74,15 +74,15 @@ func TestEventHandling(t *testing.T) {
 	assert.Equal(t, event.Timestamp, event.Check.LastOK)
 }
 
-type fakeMonitorService struct {
+type fakeMonitorSupervisor struct {
 }
 
-func (f fakeMonitorService) RefreshMonitor(context.Context, string, *types.Entity, *types.Event, int64) error {
+func (f fakeMonitorSupervisor) Monitor(context.Context, string, *types.Event, int64) error {
 	return nil
 }
 
-func fakeFactory(monitor.FailureHandler, monitor.ErrorHandler) monitor.Service {
-	return fakeMonitorService{}
+func fakeFactory(monitor.Handler) monitor.Supervisor {
+	return fakeMonitorSupervisor{}
 }
 
 func TestEventMonitor(t *testing.T) {

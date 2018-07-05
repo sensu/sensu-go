@@ -22,9 +22,15 @@ type Interface interface {
 	GetTimeout() time.Duration
 }
 
+// Handler is a handler for monitor events.
+type Handler interface {
+	FailureHandler
+	ErrorHandler
+}
+
 // FailureHandler handles monitoring failures.
 type FailureHandler interface {
-	HandleFailure(entity *types.Entity, event *types.Event) error
+	HandleFailure(event *types.Event) error
 }
 
 // ErrorHandler handles internal monitor errors.

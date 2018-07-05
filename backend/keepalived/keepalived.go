@@ -160,8 +160,8 @@ func (k *Keepalived) initFromStore() error {
 		if d < 0 {
 			d = 0
 		}
-		svc := k.monitorFactory(k, k)
-		err = svc.RefreshMonitor(context.TODO(), keepalive.EntityID, event.Entity, event, keepalive.Time)
+		supervisor := k.monitorFactory(k)
+		err = supervisor.Monitor(context.TODO(), keepalive.EntityID, event, keepalive.Time)
 		if err != nil {
 			return err
 		}
@@ -210,8 +210,8 @@ func (k *Keepalived) processKeepalives() {
 		}
 
 		timeout := int64(entity.KeepaliveTimeout)
-		service := k.monitorFactory(k, k)
-		if err := service.RefreshMonitor(context.TODO(), entity.ID, entity, event, timeout); err != nil {
+		supervisor := k.monitorFactory(k)
+		if err := supervisor.Monitor(context.TODO(), entity.ID, event, timeout); err != nil {
 			logger.WithError(err).Error("error monitoring entity")
 		}
 
@@ -304,9 +304,10 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 
 // HandleFailure checks if the entity should be deregistered, and emits a
 // keepalive event if the entity is still valid.
-func (k *Keepalived) HandleFailure(entity *types.Entity, _ *types.Event) error {
-	// Note, we don't need to use the event parameter here as we're
-	// constructing new one instead.
+func (k *Keepalived) HandleFailure(e *types.Event) error {
+	// Note, we don't want to use the e parameter here as we're
+	// constructing a new event instead.
+	entity := e.Entity
 	ctx := types.SetContextFromResource(context.Background(), entity)
 
 	deregisterer := &Deregistration{

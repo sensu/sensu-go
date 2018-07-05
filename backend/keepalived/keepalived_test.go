@@ -30,19 +30,19 @@ func (k *keepalivedTest) Receiver() chan<- interface{} {
 	return k.receiver
 }
 
-type fakeMonitorService struct {
+type fakeMonitorSupervisor struct {
 }
 
-func (f fakeMonitorService) RefreshMonitor(context.Context, string, *types.Entity, *types.Event, int64) error {
+func (f fakeMonitorSupervisor) Monitor(context.Context, string, *types.Event, int64) error {
 	return nil
 }
 
-func fakeFactory(monitor.FailureHandler, monitor.ErrorHandler) monitor.Service {
-	return fakeMonitorService{}
+func fakeFactory(monitor.Handler) monitor.Supervisor {
+	return fakeMonitorSupervisor{}
 }
 
 // type assertion
-var _ monitor.Service = fakeMonitorService{}
+var _ monitor.Supervisor = fakeMonitorSupervisor{}
 
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}

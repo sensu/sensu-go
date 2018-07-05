@@ -19,8 +19,8 @@ import (
 type testMonitorsHandler struct{}
 
 // create failure and error handlers for use with the monitor
-func (*testMonitorsHandler) HandleFailure(entity *types.Entity, event *types.Event) error {
-	if entity.ID == "entity" {
+func (*testMonitorsHandler) HandleFailure(event *types.Event) error {
+	if event.Entity.ID == "entity" {
 		return nil
 	}
 	return errors.New("test failure handler error")
@@ -37,68 +37,65 @@ func putKeyWithLease(cli *clientv3.Client, key string, ttl int64) error {
 	return err
 }
 
-// TestRefreshMonitorNew
-func TestRefreshMonitorNew(t *testing.T) {
+// TestMonitorNew
+func TestMonitorNew(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	require.NoError(t, err)
 	defer client.Close()
 
-	monitorName := "testRefreshMonitorNew"
-	testEntity := types.FixtureEntity("entity")
-	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
+	monitorName := "testMonitorNew"
+	testEvent := types.FixtureEvent("entity", "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewEtcdService(client, handler, handler)
-	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
+	monitorSupervisor := NewEtcdSupervisor(client, handler)
+	err = monitorSupervisor.Monitor(context.Background(), monitorName, testEvent, 15)
 	require.NoError(t, err)
 
 }
 
-func TestRefreshMonitorExisting(t *testing.T) {
+func TestMonitorExisting(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	require.NoError(t, err)
 	defer client.Close()
 
-	monitorName := "testRefreshMonitorExisting"
+	monitorName := "testMonitorExisting"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
-	testEntity := types.FixtureEntity("entity")
-	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
+	testEvent := types.FixtureEvent("entity", "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewEtcdService(client, handler, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler)
 
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
 
-	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 15)
+	err = monitorSupervisor.Monitor(context.Background(), monitorName, testEvent, 15)
 	require.NoError(t, err)
 }
 
-func TestRefreshMonitorNewTTL(t *testing.T) {
+func TestMonitorNewTTL(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
 	require.NoError(t, err)
 	defer client.Close()
 
-	monitorName := "testRefreshMonitorNewTTL"
+	monitorName := "testMonitorNewTTL"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
-	testEntity := types.FixtureEntity("entity")
-	testEvent := types.FixtureEvent(testEntity.ID, "testCheck")
+	testEvent := types.FixtureEvent("entity", "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewEtcdService(client, handler, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler)
 
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
 	_, err = client.Get(context.Background(), monitorPath)
 	require.NoError(t, err)
 
-	err = monitorService.RefreshMonitor(context.Background(), monitorName, testEntity, testEvent, 20)
+	err = monitorSupervisor.Monitor(context.Background(), monitorName, testEvent, 20)
 	require.NoError(t, err)
 }
 
@@ -110,8 +107,8 @@ func TestGetMonitorNone(t *testing.T) {
 	defer client.Close()
 
 	handler := &testMonitorsHandler{}
-	monitorService := NewEtcdService(client, handler, handler)
-	mon, err := monitorService.getMonitor(context.Background(), "testGetMonitorNone")
+	monitorSupervisor := NewEtcdSupervisor(client, handler)
+	mon, err := monitorSupervisor.getMonitor(context.Background(), "testGetMonitorNone")
 	require.NoError(t, err)
 	assert.Nil(t, mon)
 }
@@ -129,11 +126,11 @@ func TestGetMonitorExisting(t *testing.T) {
 		leaseID: 0,
 		ttl:     0,
 	}
-	monitorService := NewEtcdService(client, handler, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler)
 	_, err = client.Put(context.Background(), testMon.key, fmt.Sprintf("%d", testMon.ttl))
 	require.NoError(t, err)
 
-	mon, err := monitorService.getMonitor(context.Background(), testMon.key)
+	mon, err := monitorSupervisor.getMonitor(context.Background(), testMon.key)
 	require.NoError(t, err)
 	assert.EqualValues(t, testMon.key, mon.key)
 }
