@@ -34,6 +34,12 @@ func (m *MockBus) Err() <-chan error {
 	return args.Get(0).(<-chan error)
 }
 
+// Name ...
+func (m *MockBus) Name() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // Subscribe ...
 func (m *MockBus) Subscribe(topic string, consumer string, subscriber messaging.Subscriber) (messaging.Subscription, error) {
 	args := m.Called(topic, consumer, subscriber)

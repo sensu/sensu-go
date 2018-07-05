@@ -146,7 +146,7 @@ func newStartCommand() *cobra.Command {
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
 			}
 
-			err = sensuBackend.LoadConfig(cfg)
+			sensuBackend, err := backend.Initialize(cfg)
 			if err != nil {
 				return err
 			}

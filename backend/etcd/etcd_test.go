@@ -39,5 +39,5 @@ func TestNewEtcd(t *testing.T) {
 	assert.Equal(t, "key", string(getResp.Kvs[0].Key))
 	assert.Equal(t, "value", string(getResp.Kvs[0].Value))
 
-	require.NoError(t, e.Stop())
+	require.NoError(t, e.Shutdown())
 }

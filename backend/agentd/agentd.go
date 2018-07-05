@@ -135,6 +135,11 @@ func (a *Agentd) Err() <-chan error {
 	return a.errChan
 }
 
+// Name returns the daemon name
+func (a *Agentd) Name() string {
+	return "agentd"
+}
+
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

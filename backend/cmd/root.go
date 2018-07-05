@@ -6,15 +6,18 @@ import (
 )
 
 var (
-	sensuBackend *backend.Backend
-	rootCmd      = &cobra.Command{
+	// sensuBackend *backend.Backend
+	initialize initializeFunc
+	rootCmd    = &cobra.Command{
 		Use:   "sensu-backend",
 		Short: "sensu backend",
 	}
 )
 
+type initializeFunc func(*backend.Config) (*backend.Backend, error)
+
 // Execute ...
-func Execute(b *backend.Backend) error {
-	sensuBackend = b
+func Execute(fn initializeFunc) error {
+	initialize = fn
 	return rootCmd.Execute()
 }

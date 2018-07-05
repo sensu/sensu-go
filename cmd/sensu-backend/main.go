@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	backend := &backend.Backend{}
-	if err := cmd.Execute(backend); err != nil {
+	initializeFn := backend.Initialize
+	if err := cmd.Execute(initializeFn); err != nil {
 		logger.Fatal(err)
 	}
 }

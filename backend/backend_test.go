@@ -70,9 +70,7 @@ func TestBackendHTTPListener(t *testing.T) {
 
 			tlsOpts := tc.tls
 
-			b := &Backend{}
-
-			err = b.LoadConfig(&Config{
+			b, err := Initialize(&Config{
 				AgentHost:                   "127.0.0.1",
 				AgentPort:                   agentPort,
 				APIHost:                     "127.0.0.1",

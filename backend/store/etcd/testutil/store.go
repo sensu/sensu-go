@@ -21,7 +21,7 @@ type IntegrationTestStore struct {
 
 // Teardown etcd and remove temp directory
 func (e *IntegrationTestStore) Teardown() {
-	_ = e._etcd.Stop()
+	_ = e._etcd.Shutdown()
 	e._removeTmpFn()
 }
 
@@ -63,7 +63,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 
 	client, err := e.NewClient()
 	if err != nil {
-		_ = e.Stop()
+		_ = e.Shutdown()
 		removeTmp()
 		return nil, err
 	}
