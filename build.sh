@@ -282,8 +282,8 @@ docker_build() {
 
 docker_push() {
     local release=$1
-    local version=$(echo sensu/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
-    local version_iteration=$(echo sensu/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
+    local version=$(echo sensu/sensu:$($VERSION_CMD -v))
+    local version_iteration=$(echo sensu/sensu:$($VERSION_CMD -v).$($VERSION_CMD -i))
 
     # ensure we are authenticated
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
