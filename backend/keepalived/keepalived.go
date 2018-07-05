@@ -95,10 +95,12 @@ func (k *Keepalived) Start() error {
 	if err != nil {
 		return err
 	}
+
 	k.subscription = sub
-	//if err := k.initFromStore(); err != nil {
-	//	return err
-	//}
+	if err := k.initFromStore(); err != nil {
+		_ = sub.Cancel()
+		return err
+	}
 
 	k.startWorkers()
 
