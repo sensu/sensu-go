@@ -200,17 +200,16 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	entity := event.Entity
 
-	if event.Check.Ttl > 0 && !event.Check.RoundRobin {
-		// create a monitor for the event's entity if it doesn't exist in the
-		// monitor map
-		// only monitor if there is a check TTL and the check is not a
-		// round robin check.
+	if event.Check.Ttl > 0 {
+		// Reset the TTL monitor
 		timeout := int64(event.Check.Ttl)
 		service := e.monitorFactory(e, e)
-		if err := service.RefreshMonitor(context.TODO(), entity.ID, entity, event, timeout); err != nil {
-			return fmt.Errorf("error refreshing monitor for entity %s: %s", entity.ID, err)
+		err := service.RefreshMonitor(context.TODO(), entity.ID, entity, event, timeout)
+		if err == nil {
+			// HandleUpdate also publishes the event
+			err = e.HandleUpdate(event)
 		}
-		return e.HandleUpdate(event)
+		return err
 	}
 
 	return e.bus.Publish(messaging.TopicEvent, event)
