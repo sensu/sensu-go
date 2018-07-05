@@ -23,7 +23,6 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: ./build.sh deps
       - run: ./build.sh lint
-      - run: ./build.sh build_tools
       - run: ./build.sh build
 
       - persist_to_workspace:
