@@ -6,7 +6,8 @@ import Button from "@material-ui/core/Button";
 
 import { withQueryParams } from "/components/QueryParams";
 import AppContent from "/components/AppContent";
-import CheckList from "/components/CheckList";
+
+import ChecksList from "/components/partials/ChecksList";
 
 import Query from "/components/util/Query";
 
@@ -28,24 +29,27 @@ class ChecksContent extends React.Component {
       $organization: String!
       $limit: Int
       $offset: Int
+      $order: CheckListOrder
+      $filter: String
     ) {
       environment(organization: $organization, environment: $environment) {
-        ...CheckList_environment
+        ...ChecksList_environment
       }
     }
 
-    ${CheckList.fragments.environment}
+    ${ChecksList.fragments.environment}
   `;
 
   render() {
     const { match, queryParams, setQueryParams } = this.props;
 
-    const { limit = "50", offset = "0" } = queryParams;
+    const { limit = "50", offset = "0", order, filter } = queryParams;
 
     return (
       <Query
         query={ChecksContent.query}
-        variables={{ ...match.params, limit, offset }}
+        fetchPolicy="cache-and-network"
+        variables={{ ...match.params, limit, offset, order, filter }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -56,7 +60,7 @@ class ChecksContent extends React.Component {
             <AppContent>
               <Button onClick={() => refetch()}>reload</Button>
               <Paper>
-                <CheckList
+                <ChecksList
                   limit={limit}
                   offset={offset}
                   onChangeQuery={setQueryParams}
@@ -73,4 +77,6 @@ class ChecksContent extends React.Component {
   }
 }
 
-export default withQueryParams(["offset", "limit"])(ChecksContent);
+export default withQueryParams(["filter", "order", "offset", "limit"])(
+  ChecksContent,
+);
