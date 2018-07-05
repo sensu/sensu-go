@@ -303,7 +303,7 @@ func (b *Backend) Run() (derr error) {
 			trace := string(debug.Stack())
 			logger.WithField("panic", trace).WithError(err.(error)).Error("recovering from panic due to error, shutting down etcd")
 		}
-		err := b.etcd.Shutdown()
+		err := b.etcd.Stop()
 		if derr == nil {
 			derr = err
 		}

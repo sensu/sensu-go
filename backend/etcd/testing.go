@@ -37,7 +37,7 @@ func NewTestEtcd(t *testing.T) (*Etcd, func()) {
 	return e, func() {
 		defer remove()
 		defer func() {
-			require.NoError(t, e.Shutdown())
+			require.NoError(t, e.Stop())
 		}()
 	}
 }

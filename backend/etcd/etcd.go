@@ -226,22 +226,20 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	return &Etcd{config, e, loopbackAddr}, nil
 }
 
-// Name returns the configured name for Etcd.
-func (e *Etcd) Name() string {
-	return e.cfg.Name
-}
-
 // Err returns the error channel for Etcd or nil if no etcd is started.
 func (e *Etcd) Err() <-chan error {
 	return e.etcd.Err()
 }
 
-// Shutdown will cleanly shutdown the running Etcd.
-func (e *Etcd) Shutdown() error {
-	etcdStopped := e.etcd.Server.StopNotify()
-	e.etcd.Close()
-	<-etcdStopped
-	return nil
+// Healthy returns true if Etcd is healthy, false otherwise.
+func (e *Etcd) Healthy() bool {
+	err := e.Status()
+	return err == nil
+}
+
+// Name returns the configured name for Etcd.
+func (e *Etcd) Name() string {
+	return e.cfg.Name
 }
 
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
@@ -268,19 +266,38 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	return cli, nil
 }
 
-// Healthy returns true if Etcd is healthy, false otherwise.
-func (e *Etcd) Healthy() bool {
+// Start is only defined to comply with the Daemon interface. etcd is actually
+// started in the NewEtcd function above, which is called during the
+// initialization step, because some daemons need to be configured with an etcd
+// client (which is only available once etcd is running). Therefore, we don't
+// need to start etcd when we start all the daemons.
+func (e *Etcd) Start() error {
+	return nil
+}
+
+// Status ...
+func (e *Etcd) Status() error {
 	client, err := e.NewClient()
 	if err != nil {
-		return false
+		return err
 	}
+
 	mapi := clientv3.NewMaintenance(client)
 	// TODO(greg): what can we do with the response? are there some operational
 	// parameters that are useful?
 	//
 	// https://godoc.org/github.com/coreos/etcd/etcdserver/etcdserverpb#StatusResponse
 	_, err = mapi.Status(context.TODO(), e.cfg.ListenClientURL)
-	return err == nil
+
+	return err
+}
+
+// Stop will cleanly shutdown the running Etcd.
+func (e *Etcd) Stop() error {
+	etcdStopped := e.etcd.Server.StopNotify()
+	e.etcd.Close()
+	<-etcdStopped
+	return nil
 }
 
 // LoopbackURL returns the lookback URL used by etcd

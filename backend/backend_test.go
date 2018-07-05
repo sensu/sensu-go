@@ -85,7 +85,8 @@ func TestBackendHTTPListener(t *testing.T) {
 				EtcdInitialCluster:          initCluster,
 				EtcdInitialClusterState:     etcd.ClusterStateNew,
 				EtcdInitialAdvertisePeerURL: apURL,
-				TLS: tlsOpts,
+				EtcdName:                    "default",
+				TLS:                         tlsOpts,
 			})
 			assert.NoError(t, err)
 			if err != nil {
