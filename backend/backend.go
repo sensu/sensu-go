@@ -45,40 +45,6 @@ type Backend struct {
 
 // LoadConfig initializes the backend with the provided config
 func (b *Backend) LoadConfig(config *Config) error {
-	// In other places we have a NewConfig() method, but I think that doing it
-	// this way is more safe, because it doesn't require "trust" in callers.
-	if config.EtcdListenClientURL == "" {
-		config.EtcdListenClientURL = DefaultEtcdClientURL
-	}
-
-	if config.EtcdListenPeerURL == "" {
-		config.EtcdListenPeerURL = DefaultEtcdPeerURL
-	}
-
-	if config.EtcdInitialCluster == "" {
-		config.EtcdInitialCluster = fmt.Sprintf("%s=%s", DefaultEtcdName, DefaultEtcdPeerURL)
-	}
-
-	if config.EtcdInitialClusterState == "" {
-		config.EtcdInitialClusterState = etcd.ClusterStateNew
-	}
-
-	if config.EtcdInitialAdvertisePeerURL == "" {
-		config.EtcdInitialAdvertisePeerURL = DefaultEtcdPeerURL
-	}
-
-	if config.EtcdName == "" {
-		config.EtcdName = DefaultEtcdName
-	}
-
-	if config.APIPort == 0 {
-		config.APIPort = 8080
-	}
-
-	if config.AgentPort == 0 {
-		config.AgentPort = 8081
-	}
-
 	// Check for TLS config and load certs if present
 	var (
 		tlsConfig *tls.Config
