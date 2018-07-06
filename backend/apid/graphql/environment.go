@@ -146,11 +146,44 @@ func (r *envImpl) Silences(p schema.EnvironmentSilencesFieldResolverParams) (int
 		return nil, err
 	}
 
+	// apply filters
+	var filteredSilences []*types.Silenced
+	filter := p.Args.Filter
+	if len(filter) > 0 {
+		predicate, err := eval.NewPredicate(filter)
+		if err != nil {
+			logger.WithError(err).Debug("error with given predicate")
+		} else {
+			for _, r := range records {
+				if matched, err := predicate.Eval(r); err != nil {
+					logger.WithError(err).Debug("unable to filter record")
+				} else if matched {
+					filteredSilences = append(filteredSilences, r)
+				}
+			}
+		}
+	} else {
+		filteredSilences = records
+	}
+
+	// sort records
+	switch p.Args.OrderBy {
+	case schema.SilencesListOrders.BEGIN_DESC:
+		sort.Sort(sort.Reverse(types.SortSilencedByBegin(filteredSilences)))
+	case schema.SilencesListOrders.BEGIN:
+		sort.Sort(types.SortSilencedByBegin(filteredSilences))
+	case schema.SilencesListOrders.ID:
+		sort.Sort(sort.Reverse(types.SortSilencedByID(filteredSilences)))
+	case schema.SilencesListOrders.ID_DESC:
+	default:
+		sort.Sort(types.SortSilencedByID(filteredSilences))
+	}
+
 	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredSilences))
 	return newOffsetContainer(
-		records[l:h],
-		len(records),
+		filteredSilences[l:h],
+		len(filteredSilences),
 		p.Args.Offset,
 		p.Args.Limit,
 	), nil

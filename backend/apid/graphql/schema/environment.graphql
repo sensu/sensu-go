@@ -55,6 +55,10 @@ type Environment implements Node {
     offset: Int = 0
     "Limit adds optional limit to the number of entries returned."
     limit: Int = 10
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: SilencesListOrder = ID_DESC
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = "",
   ): SilencedConnection!
 
   "All subscriptions in use in the environment."
@@ -100,6 +104,13 @@ enum EventsListOrder {
   OLDEST
   NEWEST
   SEVERITY
+}
+
+enum SilencesListOrder {
+  ID
+  ID_DESC
+  BEGIN
+  BEGIN_DESC
 }
 
 enum MutedColour {
