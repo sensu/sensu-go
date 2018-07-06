@@ -280,7 +280,6 @@ type stopGroup []daemonStopper
 
 func (s stopGroup) Stop() (err error) {
 	for _, stopper := range s {
-		fmt.Println(stopper.Name)
 		logger.Info("shutting down ", stopper.Name)
 		e := stopper.Stop()
 		if err == nil {
