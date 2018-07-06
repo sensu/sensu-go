@@ -3,6 +3,7 @@ package backend
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"runtime/debug"
 
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -24,8 +25,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// Backend is a Sensu Backend server responsible for handling incoming
-// HTTP requests and upgrading them
+// Backend represents the backend server, which is used to hold the datastore
+// and coordinating the daemons
 type Backend struct {
 	daemons []daemon.Daemon
 	etcd    *etcd.Etcd
@@ -34,7 +35,10 @@ type Backend struct {
 	shutdownChan chan struct{}
 }
 
-// Initialize ...
+// Initialize instantiates a Backend struct with the provided config, by
+// configuring etcd and establishing a list of daemons, which constitute our
+// backend. The daemons will later be started according to their position in the
+// b.daemons list, and stopped in reverse order
 func Initialize(config *Config) (*Backend, error) {
 	// Initialize a Backend struct
 	b := &Backend{}
@@ -76,6 +80,7 @@ func Initialize(config *Config) (*Backend, error) {
 		}
 	}
 
+	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
 		return nil, errors.New("error starting etcd: " + err.Error())
@@ -87,15 +92,6 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, errors.New("error initializing an etcd client: " + err.Error())
 	}
 
-	// Initialize the bus
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ring.EtcdGetter{Client: client},
-	})
-	if err != nil {
-		return nil, errors.New("error initializing the bus: " + err.Error())
-	}
-	b.daemons = append(b.daemons, bus)
-
 	// Initialize the store, which lives on top of etcd
 	store := etcdstore.NewStore(client, e.Name())
 	if err := seeds.SeedInitialData(store); err != nil {
@@ -105,16 +101,14 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize an etcd getter
 	queueGetter := queue.EtcdGetter{Client: client}
 
-	// Initialize schedulerd
-	scheduler, err := schedulerd.New(schedulerd.Config{
-		Store:       store,
-		Bus:         bus,
-		QueueGetter: queueGetter,
+	// Initialize the bus
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: ring.EtcdGetter{Client: client},
 	})
 	if err != nil {
-		return nil, errors.New("error initializing schedulerd: " + err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, scheduler)
+	b.daemons = append(b.daemons, bus)
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
@@ -123,9 +117,54 @@ func Initialize(config *Config) (*Backend, error) {
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 	})
 	if err != nil {
-		return nil, errors.New("error initializing pipelined: " + err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err.Error())
 	}
 	b.daemons = append(b.daemons, pipeline)
+
+	// Initialize eventd
+	event, err := eventd.New(eventd.Config{
+		Store: store,
+		Bus:   bus,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, event)
+
+	// Initialize schedulerd
+	scheduler, err := schedulerd.New(schedulerd.Config{
+		Store:       store,
+		Bus:         bus,
+		QueueGetter: queueGetter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, scheduler)
+
+	// Initialize agentd
+	agent, err := agentd.New(agentd.Config{
+		Host:  config.AgentHost,
+		Port:  config.AgentPort,
+		Bus:   bus,
+		Store: store,
+		TLS:   config.TLS,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, agent)
+
+	// Initialize keepalived
+	keepalive, err := keepalived.New(keepalived.Config{
+		DeregistrationHandler: config.DeregistrationHandler,
+		Bus:   bus,
+		Store: store,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, keepalive)
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{
@@ -138,22 +177,9 @@ func Initialize(config *Config) (*Backend, error) {
 		BackendStatus: b.Status,
 	})
 	if err != nil {
-		return nil, errors.New("error initializing apid: " + err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())
 	}
 	b.daemons = append(b.daemons, api)
-
-	// Initialize agentd
-	agent, err := agentd.New(agentd.Config{
-		Host:  config.AgentHost,
-		Port:  config.AgentPort,
-		Bus:   bus,
-		Store: store,
-		TLS:   config.TLS,
-	})
-	if err != nil {
-		return nil, errors.New("error initializing agentd: " + err.Error())
-	}
-	b.daemons = append(b.daemons, agent)
 
 	// Initialize dashboardd
 	dashboard, err := dashboardd.New(dashboardd.Config{
@@ -163,47 +189,27 @@ func Initialize(config *Config) (*Backend, error) {
 		TLS:     config.TLS,
 	})
 	if err != nil {
-		return nil, errors.New("error initializing dashboardd: " + err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err.Error())
 	}
 	b.daemons = append(b.daemons, dashboard)
 
-	// Initialize eventd
-	event, err := eventd.New(eventd.Config{
-		Store: store,
-		Bus:   bus,
-	})
-	if err != nil {
-		return nil, errors.New("error initializing eventd: " + err.Error())
-	}
-	b.daemons = append(b.daemons, event)
-
-	// Initialize keepalived
-	keepalive, err := keepalived.New(keepalived.Config{
-		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:   bus,
-		Store: store,
-	})
-	if err != nil {
-		return nil, errors.New("error initializing keepalived: " + err.Error())
-	}
-	b.daemons = append(b.daemons, keepalive)
-
-	// Add etcd to our backend, since it's needed almost everywhere
+	// Add etcd to our backend, since it's needed across the methods
 	b.etcd = e
 
 	return b, nil
 }
 
-// Run ...
+// Run starts all of the Backend server's daemons
 func (b *Backend) Run() error {
 	eg := errGroup{
 		out: make(chan error),
 	}
 	sg := stopGroup{}
 
+	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.daemons {
 		if err := d.Start(); err != nil {
-			return errors.New("error starting daemon: " + err.Error())
+			return fmt.Errorf("error starting %s: %s", d.Name(), err.Error())
 		}
 
 		// Add the daemon to our errGroup
@@ -216,6 +222,15 @@ func (b *Backend) Run() error {
 		})
 	}
 
+	// Reverse the order of our stopGroup so daemons are stopped in the proper
+	// order (last one started is first one stopped)
+	for i := len(sg)/2 - 1; i >= 0; i-- {
+		opp := len(sg) - 1 - i
+		sg[i], sg[opp] = sg[opp], sg[i]
+	}
+
+	// Add etcd to our errGroup, since it's not included in the daemon list
+	eg.errors = append(eg.errors, b.etcd)
 	eg.Go()
 
 	select {
@@ -230,7 +245,8 @@ func (b *Backend) Run() error {
 	defer func() {
 		if err := recover(); err != nil {
 			trace := string(debug.Stack())
-			logger.WithField("panic", trace).WithError(err.(error)).Error("recovering from panic due to error, shutting down etcd")
+			logger.WithField("panic", trace).WithError(err.(error)).
+				Error("recovering from panic due to error, shutting down etcd")
 		}
 		err := b.etcd.Shutdown()
 		if derr == nil {
@@ -264,6 +280,7 @@ type stopGroup []daemonStopper
 
 func (s stopGroup) Stop() (err error) {
 	for _, stopper := range s {
+		fmt.Println(stopper.Name)
 		logger.Info("shutting down ", stopper.Name)
 		e := stopper.Stop()
 		if err == nil {
