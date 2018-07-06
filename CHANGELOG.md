@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- The Backend struct has been refactored to allow easier customization for the
+enterprise edition.
+
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
 - Fixed a bug in build.sh where versions for Windows and Mac OS were not
