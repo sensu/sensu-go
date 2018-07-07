@@ -36,8 +36,8 @@ func TestEventStorage(t *testing.T) {
 		assert.EqualValues(t, event, events[0])
 
 		// Get all events with wildcards
-		ctx = context.WithValue(ctx, types.OrganizationKey, "*")
-		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
+		ctx = context.WithValue(ctx, types.OrganizationKey, types.OrganizationTypeAll)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentTypeAll)
 		events, err = store.GetEvents(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
@@ -50,7 +50,7 @@ func TestEventStorage(t *testing.T) {
 
 		// Get all events from an unexisting org
 		ctx = context.WithValue(ctx, types.OrganizationKey, "acme")
-		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentKeyAll)
 		events, err = store.GetEvents(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(events))

@@ -21,13 +21,11 @@ func matchesRuleType(rule types.Rule, resource string) bool {
 }
 
 func matchesRuleEnvironment(rule types.Rule, environment string) bool {
-	return rule.Environment == environment || rule.Environment == "*"
+	return rule.Environment == environment || rule.Environment == types.EnvironmentTypeAll
 }
 
-// TODO (JK): this function may end up becoming more complex if
-// we decide to use "*" as more than a way of saying "all organizations"
 func matchesRuleOrganization(rule types.Rule, organization string) bool {
-	return rule.Organization == organization || rule.Organization == "*"
+	return rule.Organization == organization || rule.Organization == types.OrganizationTypeAll
 }
 
 // CanAccessResource will verify whether or not a user has permission to perform

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"sensu-go/types"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,7 +48,7 @@ func TestRuleValidate(t *testing.T) {
 	assert.NoError(t, r.Validate())
 
 	// Wildcard org
-	r.Organization = "*"
+	r.Organization = types.OrganizationTypeAll
 	assert.NoError(t, r.Validate())
 }
 
