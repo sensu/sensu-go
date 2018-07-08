@@ -1,7 +1,7 @@
 package types
 
 import (
-	"sensu-go/types"
+	"types"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
