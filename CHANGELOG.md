@@ -17,6 +17,9 @@ generated correctly.
 - Display the name of extensions with table formatting in sensuctl.
 - Check TTL now works with round robin checks.
 
+### Removed
+- Removed check subdue e2e test.
+
 ## [2.0.0-beta.2] - 2018-06-28
 
 ### Added

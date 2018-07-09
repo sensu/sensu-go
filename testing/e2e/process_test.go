@@ -14,13 +14,10 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
-	"strings"
-	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -151,139 +148,6 @@ func (b *backendProcess) Terminate() error {
 	return terminateProcess(b.cmd.Process)
 }
 
-type agentProcess struct {
-	agentConfig
-	backendURL string
-	APIPort    int
-	SocketPort int
-
-	Stdout io.Reader
-	Stderr io.Reader
-
-	cmd *exec.Cmd
-}
-
-type agentConfig struct {
-	CustomAttributes  string
-	ID                string
-	Redact            []string
-	KeepaliveTimeout  int
-	KeepaliveInterval int
-	Organization      string
-	Environment       string
-}
-
-// newAgent abstracts the initialization of an agent process and returns a
-// ready-to-use agent or exit with a fatal error if an error occurred while
-// initializing it
-func newAgent(config agentConfig, sensuctl *sensuCtl, t *testing.T) (*agentProcess, func()) {
-	agent := &agentProcess{agentConfig: config, backendURL: sensuctl.wsURL}
-	agent.APIPort = int(atomic.AddInt64(&agentPortCounter, 1))
-	agent.SocketPort = int(atomic.AddInt64(&agentPortCounter, 1))
-	if agent.Organization == "" {
-		agent.Organization = sensuctl.Organization
-	}
-	if agent.Environment == "" {
-		agent.Environment = sensuctl.Environment
-	}
-
-	// Start the agent
-	if err := agent.Start(t); err != nil {
-		t.Fatal(err)
-	}
-
-	// Wait for the agent to send its first keepalive so we are sure it's
-	// connected to the backend
-	if ready := waitForAgent(agent.ID, sensuctl); !ready {
-		t.Fatal("the backend never received a keepalive from the agent")
-	}
-
-	return agent, func() {
-		if err := agent.Terminate(); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func (a *agentProcess) Start(t *testing.T) error {
-	var interval string
-	if a.agentConfig.KeepaliveInterval == 0 {
-		interval = "1"
-	} else {
-		interval = strconv.Itoa(a.agentConfig.KeepaliveInterval)
-	}
-
-	var timeout string
-	if a.agentConfig.KeepaliveTimeout == 0 {
-		timeout = "10"
-	} else {
-		timeout = strconv.Itoa(a.agentConfig.KeepaliveTimeout)
-	}
-
-	args := []string{
-		"start",
-		"--id", a.ID,
-		"--subscriptions", "test",
-		"--environment", a.Environment,
-		"--organization", a.Organization,
-		"--api-port", strconv.Itoa(a.APIPort),
-		"--socket-port", strconv.Itoa(a.SocketPort),
-		"--keepalive-interval", interval,
-		"--keepalive-timeout", timeout,
-		"--backend-url", a.backendURL,
-		"--statsd-disable",
-	}
-
-	// Support custom attributes
-	if a.CustomAttributes != "" {
-		args = append(args, "--custom-attributes")
-		args = append(args, a.CustomAttributes)
-	}
-
-	// Support redact fields
-	if len(a.Redact) != 0 {
-		args = append(args, "--redact")
-		args = append(args, strings.Join(a.Redact, ","))
-	}
-
-	cmd := exec.Command(agentPath, args...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	a.Stdout = stdout
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
-	a.Stderr = stderr
-
-	stdoutScanner := bufio.NewScanner(stdout)
-	stderrScanner := bufio.NewScanner(stderr)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-	log.Printf("started agent with pid %d", cmd.Process.Pid)
-	a.cmd = cmd
-	return nil
-}
-
-func (a *agentProcess) Terminate() error {
-	return terminateProcess(a.cmd.Process)
-}
-
 type sensuCtl struct {
 	ConfigDir    string
 	Organization string
@@ -364,14 +228,6 @@ func newCustomSensuctl(t *testing.T, wsURL, httpURL, org, env string) (*sensuCtl
 	return ctl, func() { _ = os.RemoveAll(tmpDir) }
 }
 
-// newSensuCtl initializes a sensuctl
-func newSensuCtl(t *testing.T) (*sensuCtl, func()) {
-	org := uuid.New().String()
-	env := uuid.New().String()
-
-	return newCustomSensuctl(t, backend.WSURL, backend.HTTPURL, org, env)
-}
-
 // run executes the sensuctl binary with the provided arguments
 func (s *sensuCtl) run(args ...string) ([]byte, error) {
 	// Make sure we point to our temporary config directory
@@ -404,31 +260,6 @@ func terminateProcess(p *os.Process) error {
 	// allow the process to exit cleanly
 	_, err := p.Wait()
 	return err
-}
-
-func waitForAgent(id string, sensuctl *sensuCtl) bool {
-	fmt.Println("WAITING....", id, sensuctl.Organization, sensuctl.Environment)
-	for i := 0; i < 5; i++ {
-		_, err := sensuctl.run(
-			"event", "info", id, "keepalive",
-			"--organization", sensuctl.Organization,
-			"--environment", sensuctl.Environment,
-		)
-		if err != nil {
-			log.Println("keepalive not received, sleeping...")
-			time.Sleep(time.Duration(i+1) * time.Second)
-			continue
-		}
-
-		log.Println("agent ready")
-		return true
-	}
-	out, err := sensuctl.run("entity", "list")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("ENTITY LIST", string(out))
-	return false
 }
 
 func waitForBackend(url string) bool {
