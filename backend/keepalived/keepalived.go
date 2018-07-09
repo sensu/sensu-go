@@ -157,13 +157,14 @@ func (k *Keepalived) initFromStore() error {
 
 		// Recreate the monitor with a time offset calculated from the keepalive
 		// entry timestamp minus the current time.
-		d := time.Duration(int64(keepalive.Time) - time.Now().Unix())
+		d := int64(keepalive.Time) - time.Now().Unix()
 
 		if d < 0 {
 			d = 0
 		}
+
 		supervisor := k.monitorFactory(k)
-		err = supervisor.Monitor(context.TODO(), keepalive.EntityID, event, keepalive.Time)
+		err = supervisor.Monitor(context.TODO(), keepalive.EntityID, event, d)
 		if err != nil {
 			return err
 		}
