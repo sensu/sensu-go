@@ -4,24 +4,25 @@ import gql from "graphql-tag";
 
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
-import Typography from "@material-ui/core/Typography";
 
 import ConfirmDelete from "/components/partials/ConfirmDelete";
+import ListItem from "/components/partials/ListItem";
+
 import RelativeDate from "/components/RelativeDate";
-import StatusListItem from "/components/StatusListItem";
+import CheckStatusIcon from "/components/CheckStatusIcon";
 import NamespaceLink from "/components/util/NamespaceLink";
 
 class EntitiesListItem extends React.PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
     selected: PropTypes.bool,
-    onClickSelect: PropTypes.func,
+    onChangeSelected: PropTypes.func,
     onClickDelete: PropTypes.func,
   };
 
   static defaultProps = {
     selected: undefined,
-    onClickSelect: ev => ev,
+    onChangeSelected: ev => ev,
     onClickDelete: ev => ev,
   };
 
@@ -41,18 +42,17 @@ class EntitiesListItem extends React.PureComponent {
     `,
   };
 
-  _renderMenu = renderProps => {
-    const { open, onClose, anchorEl } = renderProps;
+  renderMenu = ({ close, anchorEl }) => {
     const { onClickDelete } = this.props;
 
     return (
-      <Menu keepMounted open={open} onClose={onClose} anchorEl={anchorEl}>
+      <Menu open onClose={close} anchorEl={anchorEl}>
         <ConfirmDelete key="delete" onSubmit={onClickDelete}>
           {confirm => (
             <MenuItem
               onClick={() => {
                 confirm.open();
-                onClose();
+                close();
               }}
             >
               Delete
@@ -64,32 +64,33 @@ class EntitiesListItem extends React.PureComponent {
   };
 
   render() {
-    const { entity, selected, onClickSelect } = this.props;
+    const { entity, selected, onChangeSelected } = this.props;
 
     return (
-      <StatusListItem
-        status={entity.status}
+      <ListItem
         selected={selected}
-        onClickSelect={onClickSelect}
+        onChangeSelected={onChangeSelected}
+        icon={<CheckStatusIcon statusCode={entity.status} />}
         title={
           <NamespaceLink
             namespace={entity.namespace}
             to={`/entities/${entity.name}`}
           >
-            <Typography color="textSecondary">
-              <strong>{entity.name}</strong> {entity.system.platform}{" "}
-              {entity.system.platformVersion}
-            </Typography>
+            <strong>{entity.name}</strong> {entity.system.platform}{" "}
+            {entity.system.platformVersion}
           </NamespaceLink>
         }
-        renderMenu={this._renderMenu}
-      >
-        <strong>{entity.class}</strong> - Last seen{" "}
-        <strong>
-          <RelativeDate dateTime={entity.lastSeen} />
-        </strong>{" "}
-        with status <strong>{entity.status}</strong>.
-      </StatusListItem>
+        details={
+          <React.Fragment>
+            <strong>{entity.class}</strong> - Last seen{" "}
+            <strong>
+              <RelativeDate dateTime={entity.lastSeen} />
+            </strong>{" "}
+            with status <strong>{entity.status}</strong>.
+          </React.Fragment>
+        }
+        renderMenu={this.renderMenu}
+      />
     );
   }
 }

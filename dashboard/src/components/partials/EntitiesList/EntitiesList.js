@@ -2,10 +2,14 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
-import TableList, {
-  TableListBody,
-  TableListEmptyState,
-} from "/components/TableList";
+
+import Paper from "@material-ui/core/Paper";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableRow from "@material-ui/core/TableRow";
+import TableCell from "@material-ui/core/TableCell";
+
+import { TableListEmptyState } from "/components/TableList";
 
 import deleteEntity from "/mutations/deleteEntity";
 
@@ -70,14 +74,18 @@ class EntitiesList extends React.PureComponent {
     const { loading } = this.props;
 
     return (
-      <TableListEmptyState
-        loading={loading}
-        primary="No results matched your query."
-        secondary="
+      <TableRow>
+        <TableCell>
+          <TableListEmptyState
+            loading={loading}
+            primary="No results matched your query."
+            secondary="
           Try refining your search query in the search box. The filter buttons
           above are also a helpful way of quickly finding entities.
         "
-      />
+          />
+        </TableCell>
+      </TableRow>
     );
   };
 
@@ -86,7 +94,7 @@ class EntitiesList extends React.PureComponent {
       key={key}
       entity={entity}
       selected={selected}
-      onClickSelect={() => setSelected(!selected)}
+      onChangeSelected={setSelected}
       onClickDelete={() => this.deleteEntities([entity])}
     />
   );
@@ -106,24 +114,27 @@ class EntitiesList extends React.PureComponent {
         renderItem={this.renderEntity}
       >
         {({ children, selectedItems, toggleSelectedItems }) => (
-          <TableList>
-            <EntitiesListHeader
-              selectedCount={selectedItems.length}
-              onClickSelect={toggleSelectedItems}
-              onClickDelete={() => this.deleteEntities(selectedItems)}
-              onChangeQuery={onChangeQuery}
-              environment={environment}
-            />
+          <Paper>
             <Loader loading={loading}>
-              <TableListBody>{children}</TableListBody>
+              <EntitiesListHeader
+                selectedCount={selectedItems.length}
+                rowCount={children.length || 0}
+                onClickSelect={toggleSelectedItems}
+                onClickDelete={() => this.deleteEntities(selectedItems)}
+                onChangeQuery={onChangeQuery}
+                environment={environment}
+              />
+              <Table>
+                <TableBody>{children}</TableBody>
+              </Table>
+              <Pagination
+                limit={limit}
+                offset={offset}
+                pageInfo={environment && environment.entities.pageInfo}
+                onChangeQuery={onChangeQuery}
+              />
             </Loader>
-            <Pagination
-              limit={limit}
-              offset={offset}
-              pageInfo={environment && environment.entities.pageInfo}
-              onChangeQuery={onChangeQuery}
-            />
-          </TableList>
+          </Paper>
         )}
       </ListController>
     );

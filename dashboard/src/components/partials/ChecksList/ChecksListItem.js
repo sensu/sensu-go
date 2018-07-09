@@ -2,19 +2,17 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import Button from "@material-ui/core/ButtonBase";
-import Checkbox from "@material-ui/core/Checkbox";
-import Disclosure from "@material-ui/icons/MoreVert";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
-import TableCell from "@material-ui/core/TableCell";
-import TableRow from "@material-ui/core/TableRow";
+
+import Code from "/components/Code";
+import ListItem from "/components/partials/ListItem";
 
 class CheckListItem extends React.Component {
   static propTypes = {
     check: PropTypes.object.isRequired,
     selected: PropTypes.bool.isRequired,
-    setSelected: PropTypes.func.isRequired,
+    onChangeSelected: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
   };
 
@@ -23,6 +21,7 @@ class CheckListItem extends React.Component {
       fragment ChecksListItem_check on CheckConfig {
         name
         command
+        source
         subscriptions
         interval
       }
@@ -41,32 +40,32 @@ class CheckListItem extends React.Component {
   };
 
   render() {
-    const { check, selected, setSelected, onClickSilence } = this.props;
+    const { check, selected, onChangeSelected, onClickSilence } = this.props;
 
     return (
-      <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            checked={selected}
-            onChange={event => setSelected(event.target.checked)}
-          />
-        </TableCell>
-        <TableCell style={{ width: "100%" }}>
-          {check.name}
-          <br />
-          {check.command}
-        </TableCell>
-        <TableCell>
-          <div ref={this._menuAnchorRef}>
-            <Button onClick={this.openMenu}>
-              <Disclosure />
-            </Button>
-          </div>
-          <Menu
-            open={this.state.menuOpen}
-            onClose={this.closeMenu}
-            anchorEl={this._menuAnchorRef.current}
-          >
+      <ListItem
+        selected={selected}
+        onChangeSelected={onChangeSelected}
+        title={<strong>{check.name}</strong>}
+        details={
+          <React.Fragment>
+            <Code>{check.command}</Code>
+            <br />
+            Executed every{" "}
+            <strong>
+              {check.interval} {check.interval === 1 ? "second" : "seconds"}
+            </strong>{" "}
+            by{" "}
+            <strong>
+              {check.subscriptions.length}{" "}
+              {check.subscriptions.length === 1
+                ? "subscription"
+                : "subscriptions"}
+            </strong>.
+          </React.Fragment>
+        }
+        renderMenu={({ anchorEl, close }) => (
+          <Menu open onClose={close} anchorEl={anchorEl}>
             <MenuItem
               onClick={() => {
                 onClickSilence();
@@ -76,8 +75,8 @@ class CheckListItem extends React.Component {
               Silence
             </MenuItem>
           </Menu>
-        </TableCell>
-      </TableRow>
+        )}
+      />
     );
   }
 }

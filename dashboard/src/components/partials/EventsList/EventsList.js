@@ -1,18 +1,16 @@
 import React from "react";
 import PropTypes from "prop-types";
-
 import { withApollo } from "react-apollo";
-import { compose } from "recompose";
 import gql from "graphql-tag";
-import { withStyles } from "@material-ui/core/styles";
+
+import Paper from "@material-ui/core/Paper";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableRow from "@material-ui/core/TableRow";
 
 import resolveEvent from "/mutations/resolveEvent";
 import deleteEvent from "/mutations/deleteEvent";
-
-import TableList, {
-  TableListBody,
-  TableListEmptyState,
-} from "/components/TableList";
 
 import Loader from "/components/util/Loader";
 import ListController from "/components/controller/ListController";
@@ -20,42 +18,13 @@ import ListController from "/components/controller/ListController";
 import Pagination from "/components/partials/Pagination";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 
+import { TableListEmptyState } from "/components/TableList";
+
 import EventsListHeader from "./EventsListHeader";
 import EventsListItem from "./EventsListItem";
 
-const styles = theme => ({
-  root: {
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  headerButton: {
-    marginLeft: theme.spacing.unit / 2,
-    "&:first-child": {
-      marginLeft: theme.spacing.unit,
-    },
-  },
-  filterActions: {
-    display: "none",
-    [theme.breakpoints.up("sm")]: {
-      display: "flex",
-    },
-  },
-  // Remove padding from button container
-  checkbox: {
-    marginLeft: -11,
-    color: theme.palette.primary.contrastText,
-  },
-  hidden: {
-    display: "none",
-  },
-  grow: {
-    flex: "1 1 auto",
-  },
-});
-
 class EventsContainer extends React.Component {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
     client: PropTypes.object.isRequired,
     environment: PropTypes.shape({
       events: PropTypes.object,
@@ -179,37 +148,34 @@ class EventsContainer extends React.Component {
     const { loading } = this.props;
 
     return (
-      <TableListEmptyState
-        loading={loading}
-        primary="No results matched your query."
-        secondary="
+      <TableRow>
+        <TableCell>
+          <TableListEmptyState
+            loading={loading}
+            primary="No results matched your query."
+            secondary="
           Try refining your search query in the search box. The filter buttons
           above are also a helpful way of quickly finding events.
         "
-      />
+          />
+        </TableCell>
+      </TableRow>
     );
   };
 
-  renderEvent = ({ key, item: event, selected, toggleSelected }) => (
+  renderEvent = ({ key, item: event, selected, setSelected }) => (
     <EventsListItem
       key={key}
       event={event}
       selected={selected}
-      onClickSelect={toggleSelected}
+      onChangeSelected={setSelected}
       onClickSilenceEntity={() => this.silenceEntity(event.entity)}
       onClickSilenceCheck={() => this.silenceCheck(event.check)}
     />
   );
 
   render() {
-    const {
-      classes,
-      environment,
-      loading,
-      limit,
-      offset,
-      onChangeQuery,
-    } = this.props;
+    const { environment, loading, limit, offset, onChangeQuery } = this.props;
 
     const items = environment
       ? environment.events.nodes.filter(event => !event.deleted)
@@ -225,10 +191,11 @@ class EventsContainer extends React.Component {
         renderItem={this.renderEvent}
       >
         {({ children, selectedItems, toggleSelectedItems }) => (
-          <React.Fragment>
-            <TableList className={classes.root}>
+          <Paper>
+            <Loader loading={loading}>
               <EventsListHeader
                 selectedCount={selectedItems.length}
+                rowCount={children.length || 0}
                 onClickSelect={toggleSelectedItems}
                 onClickSilence={() => this.silenceEvents(selectedItems)}
                 onClickResolve={() => this.resolveEvents(selectedItems)}
@@ -236,28 +203,29 @@ class EventsContainer extends React.Component {
                 environment={environment}
                 onChangeQuery={onChangeQuery}
               />
-              <Loader loading={loading}>
-                <TableListBody>{children}</TableListBody>
-              </Loader>
+              <Table>
+                <TableBody>{children}</TableBody>
+              </Table>
+
               <Pagination
                 limit={limit}
                 offset={offset}
                 pageInfo={environment && environment.events.pageInfo}
                 onChangeQuery={onChangeQuery}
               />
-            </TableList>
 
-            {this.state.silence && (
-              <SilenceEntryDialog
-                values={this.state.silence}
-                onClose={() => this.setState({ silence: null })}
-              />
-            )}
-          </React.Fragment>
+              {this.state.silence && (
+                <SilenceEntryDialog
+                  values={this.state.silence}
+                  onClose={() => this.setState({ silence: null })}
+                />
+              )}
+            </Loader>
+          </Paper>
         )}
       </ListController>
     );
   }
 }
 
-export default compose(withStyles(styles), withApollo)(EventsContainer);
+export default withApollo(EventsContainer);
