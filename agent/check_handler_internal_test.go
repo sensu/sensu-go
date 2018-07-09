@@ -71,7 +71,7 @@ func TestExecuteCheck(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(int32(0), event.Check.Status)
+	assert.Equal(uint32(0), event.Check.Status)
 	assert.False(event.HasMetrics())
 
 	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
@@ -84,7 +84,7 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(int32(1), event.Check.Status)
+	assert.Equal(uint32(1), event.Check.Status)
 	assert.NotZero(event.Check.Issued)
 
 	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep"), "5")
@@ -98,7 +98,7 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(int32(2), event.Check.Status)
+	assert.Equal(uint32(2), event.Check.Status)
 
 	checkConfig.Command = truePath
 	checkConfig.OutputMetricHandlers = nil
