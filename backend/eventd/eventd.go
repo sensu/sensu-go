@@ -200,9 +200,20 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	if event.Check.Ttl > 0 {
 		// Reset the TTL monitor
+		var monitorKey string
+
+		// Typically we want the entity ID to be the thing we monitor, but if
+		// it's a round robin check and there is no proxy entity, then just use
+		// the check name instead.
+		if event.Check.RoundRobin && event.Entity.Class != types.EntityProxyClass {
+			monitorKey = event.Check.Name
+		} else {
+			monitorKey = event.Entity.ID
+		}
+
 		timeout := int64(event.Check.Ttl)
 		supervisor := e.monitorFactory(e)
-		err := supervisor.Monitor(context.TODO(), event.Entity.ID, event, timeout)
+		err := supervisor.Monitor(context.TODO(), monitorKey, event, timeout)
 		if err == nil {
 			// HandleUpdate also publishes the event
 			err = e.HandleUpdate(event)
