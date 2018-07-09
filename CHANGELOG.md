@@ -63,6 +63,7 @@ or environment does not exist.
 - The profile environment & organization values are used by default when
 creating a resource with sensuctl.
 - Migrated docker image to sensu Docker Hub organization from sensuapp.
+- Use the sensu/sensu image instead of sensu/sensu-go in Docker Hub.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.

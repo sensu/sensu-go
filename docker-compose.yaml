@@ -1,7 +1,7 @@
 version: '3'
 services:
   sensu-backend1:
-    image: sensu/sensu-go:master
+    image: sensu/sensu:master
     command: sensu-backend start --listen-client-urls http://0.0.0.0:2379
     hostname: backend1
     restart: always
@@ -11,7 +11,7 @@ services:
       - "8080:8080"
       - "8081:8081"
   sensu-agent1:
-    image: sensu/sensu-go:master
+    image: sensu/sensu:master
     command: sensu-agent start --backend-url ws://sensu-backend1:8081 --subscriptions test
     hostname: agent1
     restart: always
