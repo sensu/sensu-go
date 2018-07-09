@@ -47,7 +47,7 @@ func TestRuleValidate(t *testing.T) {
 	assert.NoError(t, r.Validate())
 
 	// Wildcard org
-	r.Organization = types.OrganizationTypeAll
+	r.Organization = OrganizationTypeAll
 	assert.NoError(t, r.Validate())
 }
 
