@@ -1,4 +1,4 @@
-// +build integration,race
+// +build integration
 
 package keepalived
 
@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
@@ -16,6 +18,14 @@ import (
 )
 
 func TestKeepaliveMonitor(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
 	})
@@ -45,7 +55,9 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	k, err := New(Config{Store: store, Bus: bus})
+	mFac := monitor.EtcdFactory(client)
+
+	k, err := New(Config{Store: store, Bus: bus, MonitorFactory: mFac})
 	require.NoError(t, err)
 
 	if err := k.Start(); err != nil {

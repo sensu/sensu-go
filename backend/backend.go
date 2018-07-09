@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/migration"
+	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ring"
@@ -284,8 +285,9 @@ func (b *Backend) Run() (derr error) {
 	}
 
 	b.eventd, err = eventd.New(eventd.Config{
-		Store: store,
-		Bus:   bus,
+		Store:          store,
+		Bus:            bus,
+		MonitorFactory: monitor.EtcdFactory(client),
 	})
 	if err != nil {
 		return fmt.Errorf("error creating eventd: %s", err)
@@ -297,8 +299,9 @@ func (b *Backend) Run() (derr error) {
 
 	b.keepalived, err = keepalived.New(keepalived.Config{
 		DeregistrationHandler: b.Config.DeregistrationHandler,
-		Bus:   bus,
-		Store: store,
+		Bus:            bus,
+		Store:          store,
+		MonitorFactory: monitor.EtcdFactory(client),
 	})
 	if err != nil {
 		return fmt.Errorf("error creating keepalived: %s", err)

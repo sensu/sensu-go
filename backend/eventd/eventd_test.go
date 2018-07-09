@@ -1,13 +1,12 @@
 package eventd
 
 import (
-	"errors"
+	"context"
 	"testing"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
-	"github.com/sensu/sensu-go/testing/mockmonitor"
 	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -75,6 +74,17 @@ func TestEventHandling(t *testing.T) {
 	assert.Equal(t, event.Timestamp, event.Check.LastOK)
 }
 
+type fakeMonitorSupervisor struct {
+}
+
+func (f fakeMonitorSupervisor) Monitor(context.Context, string, *types.Event, int64) error {
+	return nil
+}
+
+func fakeFactory(monitor.Handler) monitor.Supervisor {
+	return fakeMonitorSupervisor{}
+}
+
 func TestEventMonitor(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
@@ -87,11 +97,7 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, err)
 	e.handlerCount = 5
 
-	mon := &mockmonitor.MockMonitor{}
-	mon.On("HandleUpdate", mock.Anything).Return(errors.New("error handling update"))
-	e.monitorFactory = func(*types.Entity, *types.Event, time.Duration, monitor.UpdateHandler, monitor.FailureHandler) monitor.Interface {
-		return mon
-	}
+	e.monitorFactory = fakeFactory
 
 	require.NoError(t, e.Start())
 
@@ -125,7 +131,6 @@ func TestEventMonitor(t *testing.T) {
 	err = e.Stop()
 	assert.NoError(t, err)
 
-	mon.AssertCalled(t, "HandleUpdate", event)
 	// Make sure the event has been marked with the proper state
 	assert.Equal(t, types.EventPassingState, event.Check.State)
 }

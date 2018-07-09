@@ -7,11 +7,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Use etcd monitor instead of in-memory monitor.
+
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
 - Fixed a bug in build.sh where versions for Windows and Mac OS were not
 generated correctly.
 - Display the name of extensions with table formatting in sensuctl.
+- Check TTL now works with round robin checks.
 
 ## [2.0.0-beta.2] - 2018-06-28
 
