@@ -1,7 +1,6 @@
 package types
 
 import (
-	"types"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
