@@ -31,15 +31,13 @@ type Eventd struct {
 	store          store.Store
 	bus            messaging.MessageBus
 	handlerCount   int
-	monitorFactory monitor.FactoryFunc
-
-	eventChan    chan interface{}
-	subscription messaging.Subscription
-	errChan      chan error
-	monitors     map[string]monitor.Interface
-	mu           *sync.Mutex
-	shutdownChan chan struct{}
-	wg           *sync.WaitGroup
+	monitorFactory monitor.Factory
+	eventChan      chan interface{}
+	subscription   messaging.Subscription
+	errChan        chan error
+	mu             *sync.Mutex
+	shutdownChan   chan struct{}
+	wg             *sync.WaitGroup
 }
 
 // Option is a functional option.
@@ -47,25 +45,23 @@ type Option func(*Eventd) error
 
 // Config configures Eventd
 type Config struct {
-	Store store.Store
-	Bus   messaging.MessageBus
+	Store          store.Store
+	Bus            messaging.MessageBus
+	MonitorFactory monitor.Factory
 }
 
 // New creates a new Eventd.
 func New(c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
-		store:        c.Store,
-		bus:          c.Bus,
-		handlerCount: 10,
-		monitorFactory: func(entity *types.Entity, event *types.Event, t time.Duration, u monitor.UpdateHandler, f monitor.FailureHandler) monitor.Interface {
-			return monitor.New(entity, event, t, u, f)
-		},
-		errChan:      make(chan error, 1),
-		shutdownChan: make(chan struct{}, 1),
-		eventChan:    make(chan interface{}, 100),
-		wg:           &sync.WaitGroup{},
-		mu:           &sync.Mutex{},
-		monitors:     make(map[string]monitor.Interface),
+		store:          c.Store,
+		bus:            c.Bus,
+		handlerCount:   10,
+		monitorFactory: c.MonitorFactory,
+		errChan:        make(chan error, 1),
+		shutdownChan:   make(chan struct{}, 1),
+		eventChan:      make(chan interface{}, 100),
+		wg:             &sync.WaitGroup{},
+		mu:             &sync.Mutex{},
 	}
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -137,12 +133,11 @@ func (e *Eventd) startHandlers() {
 	}
 }
 
-func (e *Eventd) handleMessage(msg interface{}) error {
-	var (
-		mon monitor.Interface
-		ok  bool
-	)
+func (e *Eventd) HandleError(err error) {
+	logger.WithError(err).Error("error monitoring event")
+}
 
+func (e *Eventd) handleMessage(msg interface{}) error {
 	event, ok := msg.(*types.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")
@@ -203,22 +198,27 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	entity := event.Entity
+	if event.Check.Ttl > 0 {
+		// Reset the TTL monitor
+		var monitorKey string
 
-	if event.Check.Ttl > 0 && !event.Check.RoundRobin {
-		// create a monitor for the event's entity if it doesn't exist in the
-		// monitor map
-		// only monitor if there is a check TTL and the check is not a
-		// round robin check.
-		e.mu.Lock()
-		mon, ok = e.monitors[entity.ID]
-		if !ok || mon.IsStopped() {
-			timeout := time.Duration(event.Check.Ttl) * time.Second
-			mon = e.monitorFactory(entity, event, timeout, e, e)
-			e.monitors[entity.ID] = mon
+		// Typically we want the entity ID to be the thing we monitor, but if
+		// it's a round robin check and there is no proxy entity, then just use
+		// the check name instead.
+		if event.Check.RoundRobin && event.Entity.Class != types.EntityProxyClass {
+			monitorKey = event.Check.Name
+		} else {
+			monitorKey = event.Entity.ID
 		}
-		e.mu.Unlock()
-		return mon.HandleUpdate(event)
+
+		timeout := int64(event.Check.Ttl)
+		supervisor := e.monitorFactory(e)
+		err := supervisor.Monitor(context.TODO(), monitorKey, event, timeout)
+		if err == nil {
+			// HandleUpdate also publishes the event
+			err = e.HandleUpdate(event)
+		}
+		return err
 	}
 
 	return e.bus.Publish(messaging.TopicEvent, event)
@@ -259,7 +259,8 @@ func (e *Eventd) HandleUpdate(event *types.Event) error {
 
 // HandleFailure creates a check event with a warn status and publishes it to
 // TopicEvent.
-func (e *Eventd) HandleFailure(entity *types.Entity, event *types.Event) error {
+func (e *Eventd) HandleFailure(event *types.Event) error {
+	entity := event.Entity
 	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
 	ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
 

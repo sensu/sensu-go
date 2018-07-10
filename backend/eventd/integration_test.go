@@ -1,11 +1,13 @@
-// +build integration,race
+// +build integration
 
 package eventd
 
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
@@ -23,6 +25,16 @@ func (r testReceiver) Receiver() chan<- interface{} {
 }
 
 func TestEventdMonitor(t *testing.T) {
+	ed, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := ed.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	monFac := monitor.EtcdFactory(client)
+
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
 	})
@@ -51,7 +63,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	e, err := New(Config{Store: store, Bus: bus})
+	e, err := New(Config{Store: store, Bus: bus, MonitorFactory: monFac})
 	require.NoError(t, err)
 
 	if err := e.Start(); err != nil {
