@@ -27,7 +27,7 @@ func (p *RolePolicy) Context() Context {
 // WithContext returns new policy populated with rules & organization.
 func (p RolePolicy) WithContext(ctx context.Context) RolePolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
-	p.context.Organization = "*"
+	p.context.Organization = types.OrganizationTypeAll
 
 	return p
 }

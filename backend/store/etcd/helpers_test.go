@@ -56,7 +56,7 @@ func TestQuery(t *testing.T) {
 		assert.Len(t, resp.Kvs, 1)
 
 		// Mock a context to query across every single organization
-		ctx = context.WithValue(ctx, types.OrganizationKey, "*")
+		ctx = context.WithValue(ctx, types.OrganizationKey, types.OrganizationTypeAll)
 
 		// We now have two result given our "wildcard" org
 		resp, err = query(ctx, etcd, getCheckConfigsPath)
@@ -65,7 +65,7 @@ func TestQuery(t *testing.T) {
 
 		// Mock a context to query across every single environment of the acme org
 		ctx = context.WithValue(ctx, types.OrganizationKey, "acme")
-		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
+		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentTypeAll)
 
 		// We now have two result given our "wildcard" env
 		resp, err = query(ctx, etcd, getCheckConfigsPath)
@@ -73,8 +73,8 @@ func TestQuery(t *testing.T) {
 		assert.Len(t, resp.Kvs, 2)
 
 		// Mock a context to query across every single organization and environment
-		ctx = context.WithValue(ctx, types.OrganizationKey, "*")
-		ctx = context.WithValue(ctx, types.EnvironmentKey, "*")
+		ctx = context.WithValue(ctx, types.OrganizationKey, types.OrganizationTypeAll)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentTypeAll)
 
 		// We now have two result given our "wildcard" org
 		resp, err = query(ctx, etcd, getCheckConfigsPath)
