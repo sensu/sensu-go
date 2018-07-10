@@ -120,7 +120,7 @@ class SilencesList extends React.Component {
       key={key}
       silence={item}
       selected={selected}
-      setSelected={setSelected}
+      onClickSelect={setSelected}
       onClickDelete={() => this.deleteItem(item)}
     />
   );

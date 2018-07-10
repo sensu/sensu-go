@@ -14,7 +14,7 @@ class SilencesListItem extends React.Component {
   static propTypes = {
     silence: PropTypes.object.isRequired,
     selected: PropTypes.bool.isRequired,
-    setSelected: PropTypes.func.isRequired,
+    onClickSelect: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
   };
 
@@ -41,22 +41,20 @@ class SilencesListItem extends React.Component {
   };
 
   render() {
-    const { silence, selected, setSelected, onClickDelete } = this.props;
+    const { silence, selected, onClickSelect, onClickDelete } = this.props;
 
     return (
       <TableRow>
         <TableCell padding="checkbox">
           <Checkbox
             checked={selected}
-            onChange={event => setSelected(event.target.checked)}
+            onChange={() => onClickSelect(!selected)}
           />
         </TableCell>
         <TableCell style={{ width: "100%" }}>
-          <b>{silence.storeId}</b>
+          {silence.storeId}
           <br />
-          <sub>
-            {silence.expiresOnResolve ? "Expires on resolve" : "Never expires"}
-          </sub>
+          {silence.expiresOnResolve ? "Expires on resolve" : "Never expires"}
         </TableCell>
         <TableCell>{silence.creator.username}</TableCell>
         <TableCell>

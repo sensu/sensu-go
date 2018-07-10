@@ -2,12 +2,16 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import Paper from "@material-ui/core/Paper";
-import Button from "@material-ui/core/Button";
 import AppContent from "/components/AppContent";
-import SilencesList from "/components/partials/SilencesList";
-import Query from "/components/util/Query";
+import CollapsingMenu from "/components/CollapsingMenu";
+import Content from "/components/Content";
+import ListToolbar from "/components/partials/ListToolbar";
 import NotFoundView from "/components/views/NotFoundView";
+import Paper from "@material-ui/core/Paper";
+import Query from "/components/util/Query";
+import RefreshIcon from "@material-ui/icons/Refresh";
+import SearchBox from "/components/SearchBox";
+import SilencesList from "/components/partials/SilencesList";
 import { withQueryParams } from "/components/QueryParams";
 
 class SilencesContent extends React.Component {
@@ -54,7 +58,24 @@ class SilencesContent extends React.Component {
 
           return (
             <AppContent>
-              <Button onClick={() => refetch()}>reload</Button>
+              <Content gutters bottomMargin>
+                <ListToolbar
+                  renderSearch={
+                    <SearchBox
+                      placeholder="Filter entities…"
+                      initialValue={filter}
+                      onSearch={value => setQueryParams({ filter: value })}
+                    />
+                  }
+                  renderMenuItems={
+                    <CollapsingMenu.Button
+                      title="Reload"
+                      icon={<RefreshIcon />}
+                      onClick={() => refetch()}
+                    />
+                  }
+                />
+              </Content>
               <Paper>
                 <SilencesList
                   limit={limit}
