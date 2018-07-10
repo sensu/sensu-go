@@ -2,6 +2,7 @@ package backend
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"runtime/debug"
 
@@ -25,62 +26,28 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// Backend is a Sensu Backend server responsible for handling incoming
-// HTTP requests and upgrading them
+// Backend represents the backend server, which is used to hold the datastore
+// and coordinating the daemons
 type Backend struct {
-	Config *Config
+	daemons []daemon.Daemon
+	etcd    *etcd.Etcd
 
-	shutdownChan chan struct{}
 	done         chan struct{}
-	messageBus   messaging.MessageBus
-	apid         daemon.Daemon
-	agentd       daemon.Daemon
-	schedulerd   daemon.Daemon
-	etcd         *etcd.Etcd
-
-	dashboardd daemon.Daemon
-	eventd     daemon.Daemon
-	pipelined  daemon.Daemon
-	keepalived daemon.Daemon
+	shutdownChan chan struct{}
 }
 
-// LoadConfig initializes the backend with the provided config
-func (b *Backend) LoadConfig(config *Config) error {
-	// In other places we have a NewConfig() method, but I think that doing it
-	// this way is more safe, because it doesn't require "trust" in callers.
-	if config.EtcdListenClientURL == "" {
-		config.EtcdListenClientURL = DefaultEtcdClientURL
-	}
+// Initialize instantiates a Backend struct with the provided config, by
+// configuring etcd and establishing a list of daemons, which constitute our
+// backend. The daemons will later be started according to their position in the
+// b.daemons list, and stopped in reverse order
+func Initialize(config *Config) (*Backend, error) {
+	// Initialize a Backend struct
+	b := &Backend{}
 
-	if config.EtcdListenPeerURL == "" {
-		config.EtcdListenPeerURL = DefaultEtcdPeerURL
-	}
+	b.done = make(chan struct{})
+	b.shutdownChan = make(chan struct{})
 
-	if config.EtcdInitialCluster == "" {
-		config.EtcdInitialCluster = fmt.Sprintf("%s=%s", DefaultEtcdName, DefaultEtcdPeerURL)
-	}
-
-	if config.EtcdInitialClusterState == "" {
-		config.EtcdInitialClusterState = etcd.ClusterStateNew
-	}
-
-	if config.EtcdInitialAdvertisePeerURL == "" {
-		config.EtcdInitialAdvertisePeerURL = DefaultEtcdPeerURL
-	}
-
-	if config.EtcdName == "" {
-		config.EtcdName = DefaultEtcdName
-	}
-
-	if config.APIPort == 0 {
-		config.APIPort = 8080
-	}
-
-	if config.AgentPort == 0 {
-		config.AgentPort = 8081
-	}
-
-	// Check for TLS config and load certs if present
+	// Intialize the TLS configuration
 	var (
 		tlsConfig *tls.Config
 		err       error
@@ -88,16 +55,12 @@ func (b *Backend) LoadConfig(config *Config) error {
 	if config.TLS != nil {
 		tlsConfig, err = config.TLS.ToTLSConfig()
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	b.Config = config
-	b.done = make(chan struct{})
-	b.shutdownChan = make(chan struct{})
-
-	// we go ahead and setup and start etcd here, because we'll have to pass
-	// a store along to the API.
+	// Initialize and start etcd, because we'll need to provide an etcd client to
+	// the Wizard bus, which requires etcd to be started.
 	cfg := etcd.NewConfig()
 	cfg.DataDir = config.StateDir
 	cfg.ListenClientURL = config.EtcdListenClientURL
@@ -118,26 +81,193 @@ func (b *Backend) LoadConfig(config *Config) error {
 		}
 	}
 
+	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
-		return fmt.Errorf("error starting etcd: %s", err.Error())
+		return nil, errors.New("error starting etcd: " + err.Error())
 	}
-	b.etcd = e
 
+	// Create an etcd client for our daemons
 	client, err := e.NewClient()
 	if err != nil {
-		return err
+		return nil, errors.New("error initializing an etcd client: " + err.Error())
 	}
 
+	// Initialize the store, which lives on top of etcd
+	store := etcdstore.NewStore(client, e.Name())
+	if err := seeds.SeedInitialData(store); err != nil {
+		return nil, errors.New("error initializing the store: " + err.Error())
+	}
+
+	// Initialize an etcd getter
+	queueGetter := queue.EtcdGetter{Client: client}
+
+	// Initialize the bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: ring.EtcdGetter{Client: client},
 	})
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())
 	}
-	b.messageBus = bus
+	b.daemons = append(b.daemons, bus)
 
-	return nil
+	// Initialize pipelined
+	pipeline, err := pipelined.New(pipelined.Config{
+		Store: store,
+		Bus:   bus,
+		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, pipeline)
+
+	// Initialize eventd
+	event, err := eventd.New(eventd.Config{
+		Store:          store,
+		Bus:            bus,
+		MonitorFactory: monitor.EtcdFactory(client),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, event)
+
+	// Initialize schedulerd
+	scheduler, err := schedulerd.New(schedulerd.Config{
+		Store:       store,
+		Bus:         bus,
+		QueueGetter: queueGetter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, scheduler)
+
+	// Initialize agentd
+	agent, err := agentd.New(agentd.Config{
+		Host:  config.AgentHost,
+		Port:  config.AgentPort,
+		Bus:   bus,
+		Store: store,
+		TLS:   config.TLS,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, agent)
+
+	// Initialize keepalived
+	keepalive, err := keepalived.New(keepalived.Config{
+		DeregistrationHandler: config.DeregistrationHandler,
+		Bus:            bus,
+		Store:          store,
+		MonitorFactory: monitor.EtcdFactory(client),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, keepalive)
+
+	// Initialize apid
+	api, err := apid.New(apid.Config{
+		Host:          config.APIHost,
+		Port:          config.APIPort,
+		Bus:           bus,
+		Store:         store,
+		QueueGetter:   queueGetter,
+		TLS:           config.TLS,
+		BackendStatus: b.Status,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, api)
+
+	// Initialize dashboardd
+	dashboard, err := dashboardd.New(dashboardd.Config{
+		APIPort: config.APIPort,
+		Host:    config.DashboardHost,
+		Port:    config.DashboardPort,
+		TLS:     config.TLS,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err.Error())
+	}
+	b.daemons = append(b.daemons, dashboard)
+
+	// Add etcd to our backend, since it's needed across the methods
+	b.etcd = e
+
+	return b, nil
+}
+
+// Run starts all of the Backend server's daemons
+func (b *Backend) Run() error {
+	eg := errGroup{
+		out: make(chan error),
+	}
+	sg := stopGroup{}
+
+	// Loop across the daemons in order to start them, then add them to our groups
+	for _, d := range b.daemons {
+		if err := d.Start(); err != nil {
+			return fmt.Errorf("error starting %s: %s", d.Name(), err.Error())
+		}
+
+		// Add the daemon to our errGroup
+		eg.errors = append(eg.errors, d)
+
+		// Add the daemon to our stopGroup
+		sg = append(sg, daemonStopper{
+			Name:    d.Name(),
+			stopper: d,
+		})
+	}
+
+	// Reverse the order of our stopGroup so daemons are stopped in the proper
+	// order (last one started is first one stopped)
+	for i := len(sg)/2 - 1; i >= 0; i-- {
+		opp := len(sg) - 1 - i
+		sg[i], sg[opp] = sg[opp], sg[i]
+	}
+
+	// Add etcd to our errGroup, since it's not included in the daemon list
+	eg.errors = append(eg.errors, b.etcd)
+	eg.Go()
+
+	select {
+	case err := <-eg.Err():
+		logger.Error(err.Error())
+	case <-b.shutdownChan:
+		logger.Info("backend shutting down")
+	}
+
+	var derr error
+	logger.Info("shutting down etcd")
+	defer func() {
+		if err := recover(); err != nil {
+			trace := string(debug.Stack())
+			logger.WithField("panic", trace).WithError(err.(error)).
+				Error("recovering from panic due to error, shutting down etcd")
+		}
+		err := b.etcd.Shutdown()
+		if derr == nil {
+			derr = err
+		}
+	}()
+
+	if err := sg.Stop(); err != nil {
+		if derr == nil {
+			derr = err
+		}
+	}
+
+	// we allow inErrChan to leak to avoid panics from other
+	// goroutines writing errors to either after shutdown has been initiated.
+	close(b.done)
+
+	return derr
 }
 
 type stopper interface {
@@ -184,200 +314,6 @@ func (e errGroup) Err() <-chan error {
 	return e.out
 }
 
-// Run starts all of the Backend server's event loops and sets up the HTTP
-// server.
-func (b *Backend) Run() (derr error) {
-	if err := b.messageBus.Start(); err != nil {
-		return err
-	}
-
-	// Right now, instantiating a new Etcd will start etcd. If we change that
-	// s.t. Etcd has its own Start() method, conforming to Daemon, then we will
-	// want to make sure that we aren't calling NewClient before starting it,
-	// I think. That might return a connection error.
-	client, err := b.etcd.NewClient()
-	if err != nil {
-		return err
-	}
-	etcdName := b.etcd.Name()
-
-	// Seed initial data
-	store := etcdstore.NewStore(client, etcdName)
-	if err := seeds.SeedInitialData(store); err != nil {
-		return err
-	}
-
-	bus := b.messageBus
-	tlsOpts := b.Config.TLS
-	queueGetter := queue.EtcdGetter{Client: client}
-
-	b.schedulerd, err = schedulerd.New(schedulerd.Config{
-		Store:       store,
-		Bus:         bus,
-		QueueGetter: queueGetter,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating schedulerd: %s", err)
-	}
-	if err := b.schedulerd.Start(); err != nil {
-		return fmt.Errorf("error starting schedulerd: %s", err)
-	}
-
-	b.pipelined, err = pipelined.New(pipelined.Config{
-		Store: store,
-		Bus:   bus,
-		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating pipelined: %s", err)
-	}
-
-	if err := b.pipelined.Start(); err != nil {
-		return fmt.Errorf("error starting pipelined: %s", err)
-	}
-
-	// TLS config gets passed down here
-	b.apid, err = apid.New(apid.Config{
-		Host:          b.Config.APIHost,
-		Port:          b.Config.APIPort,
-		Bus:           bus,
-		Store:         store,
-		QueueGetter:   queueGetter,
-		TLS:           tlsOpts,
-		BackendStatus: b.Status,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating apid: %s", err)
-	}
-
-	if err := b.apid.Start(); err != nil {
-		return fmt.Errorf("error starting apid: %s", err)
-	}
-
-	b.agentd, err = agentd.New(agentd.Config{
-		Host:  b.Config.AgentHost,
-		Port:  b.Config.AgentPort,
-		Bus:   bus,
-		Store: store,
-		TLS:   tlsOpts,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating agentd: %s", err)
-	}
-
-	if err := b.agentd.Start(); err != nil {
-		return fmt.Errorf("error starting agentd: %s", err)
-	}
-
-	dashCfg := dashboardd.Config{
-		Host:    b.Config.DashboardHost,
-		Port:    b.Config.DashboardPort,
-		TLS:     b.Config.TLS,
-		APIPort: b.Config.APIPort,
-	}
-	b.dashboardd, err = dashboardd.New(dashCfg)
-	if err != nil {
-		return fmt.Errorf("error creating dashboardd: %s", err)
-	}
-
-	if err := b.dashboardd.Start(); err != nil {
-		return fmt.Errorf("error starting dashboardd: %s", err)
-	}
-
-	b.eventd, err = eventd.New(eventd.Config{
-		Store:          store,
-		Bus:            bus,
-		MonitorFactory: monitor.EtcdFactory(client),
-	})
-	if err != nil {
-		return fmt.Errorf("error creating eventd: %s", err)
-	}
-
-	if err := b.eventd.Start(); err != nil {
-		return fmt.Errorf("error starting eventd: %s", err)
-	}
-
-	b.keepalived, err = keepalived.New(keepalived.Config{
-		DeregistrationHandler: b.Config.DeregistrationHandler,
-		Bus:            bus,
-		Store:          store,
-		MonitorFactory: monitor.EtcdFactory(client),
-	})
-	if err != nil {
-		return fmt.Errorf("error creating keepalived: %s", err)
-	}
-
-	if err := b.keepalived.Start(); err != nil {
-		return fmt.Errorf("error starting keepalived: %s", err)
-	}
-
-	eg := errGroup{
-		out: make(chan error),
-		errors: []errorer{
-			b.apid,
-			b.agentd,
-			b.schedulerd,
-			b.etcd,
-			b.messageBus,
-			b.pipelined,
-			b.dashboardd,
-			b.eventd,
-			b.keepalived,
-		},
-	}
-	eg.Go()
-
-	select {
-	case err := <-eg.Err():
-		logger.Error(err.Error())
-	case <-b.shutdownChan:
-		logger.Info("backend shutting down")
-	}
-
-	logger.Info("shutting down etcd")
-	defer func() {
-		if err := recover(); err != nil {
-			trace := string(debug.Stack())
-			logger.WithField("panic", trace).WithError(err.(error)).Error("recovering from panic due to error, shutting down etcd")
-		}
-		err := b.etcd.Shutdown()
-		if derr == nil {
-			derr = err
-		}
-	}()
-
-	sg := stopGroup{
-		// stop allowing API connections
-		{Name: "apid", stopper: b.apid},
-		// stop allowing dashboard connections
-		{Name: "dashboardd", stopper: b.dashboardd},
-		// disconnect all agents and don't allow any more to connect.
-		{Name: "agentd", stopper: b.agentd},
-		// stop scheduling checks.
-		{Name: "schedulerd", stopper: b.schedulerd},
-		// Shutting down eventd will cause it to drain events to the bus
-		{Name: "eventd", stopper: b.eventd},
-		// Once events have been drained from eventd, pipelined can finish
-		// processing events.
-		{Name: "pipelined", stopper: b.pipelined},
-		// finally shutdown the message bus once all other components have stopped
-		// using it.
-		{Name: "message bus", stopper: b.messageBus},
-	}
-
-	if err := sg.Stop(); err != nil {
-		if derr == nil {
-			derr = err
-		}
-	}
-
-	// we allow inErrChan to leak to avoid panics from other
-	// goroutines writing errors to either after shutdown has been initiated.
-	close(b.done)
-
-	return derr
-}
-
 // Migration performs the migration of data inside the store
 func (b *Backend) Migration() error {
 	logger.Infof("starting migration on the store with URL '%s'", b.etcd.LoopbackURL())
@@ -388,13 +324,11 @@ func (b *Backend) Migration() error {
 // Status returns a map of component name to boolean healthy indicator.
 func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
-		"store":       b.etcd.Healthy(),
-		"message_bus": b.messageBus.Status() == nil,
-		"schedulerd":  b.schedulerd.Status() == nil,
-		"pipelined":   b.pipelined.Status() == nil,
-		"eventd":      b.eventd.Status() == nil,
-		"agentd":      b.agentd.Status() == nil,
-		"apid":        b.apid.Status() == nil,
+		"store": b.etcd.Healthy(),
+	}
+
+	for _, d := range b.daemons {
+		sm[d.Name()] = d.Status() == nil
 	}
 
 	return sm

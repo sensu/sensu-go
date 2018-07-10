@@ -128,6 +128,11 @@ func (k *Keepalived) Err() <-chan error {
 	return k.errChan
 }
 
+// Name returns the daemon name
+func (k *Keepalived) Name() string {
+	return "keepalived"
+}
+
 func (k *Keepalived) initFromStore() error {
 	// For which clients were we previously alerting?
 	keepalives, err := k.store.GetFailingKeepalives(context.TODO())

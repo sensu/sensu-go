@@ -17,4 +17,7 @@ type Daemon interface {
 	// Err returns a channel that the caller can use to listen for terminal errors
 	// indicating a premature shutdown of the Daemon.
 	Err() <-chan error
+
+	// Name returns the name of the daemon
+	Name() string
 }

@@ -317,5 +317,9 @@ func (e *Eventd) Status() error {
 // Err returns a channel to listen for terminal errors on.
 func (e *Eventd) Err() <-chan error {
 	return e.errChan
+}
 
+// Name returns the daemon name
+func (e *Eventd) Name() string {
+	return "eventd"
 }

@@ -79,6 +79,11 @@ func (b *WizardBus) Err() <-chan error {
 	return b.errchan
 }
 
+// Name returns the daemon name
+func (b *WizardBus) Name() string {
+	return "message_bus"
+}
+
 // Create a WizardBus topic (WizardTopic) with consumer channel
 // bindings. Every topic has its own mutex, sending data to consumers
 // should only be blocked when adding (Subscribe) or removing

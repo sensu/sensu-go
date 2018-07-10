@@ -147,6 +147,11 @@ func (a *APId) Err() <-chan error {
 	return a.errChan
 }
 
+// Name returns the daemon name
+func (a *APId) Name() string {
+	return "apid"
+}
+
 func registerUnauthenticatedResources(
 	router *mux.Router,
 	bStatus func() types.StatusMap,

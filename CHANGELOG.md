@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Changed
+- The Backend struct has been refactored to allow easier customization for the
+enterprise edition.
 - Use etcd monitor instead of in-memory monitor.
 
 ### Fixed

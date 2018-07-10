@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/sensu/sensu-go/backend"
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/version"
@@ -46,6 +47,17 @@ const (
 	flagStoreInitialClusterState     = "initial-cluster-state"
 	flagStoreInitialClusterToken     = "initial-cluster-token"
 	flagStoreNodeName                = "name"
+
+	// Default values
+
+	// defaultEtcdClientURL is the default URL to listen for Etcd clients
+	defaultEtcdClientURL = "http://127.0.0.1:2379"
+	// defaultEtcdName is the default etcd member node name (single-node cluster
+	// only)
+	defaultEtcdName = "default"
+	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
+	// cluster only)
+	defaultEtcdPeerURL = "http://127.0.0.1:2380"
 )
 
 func init() {
@@ -134,7 +146,7 @@ func newStartCommand() *cobra.Command {
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
 			}
 
-			err = sensuBackend.LoadConfig(cfg)
+			sensuBackend, err := backend.Initialize(cfg)
 			if err != nil {
 				return err
 			}
@@ -197,13 +209,14 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagLogLevel, "warn")
 
 	// Etcd defaults
-	viper.SetDefault(flagStoreClientURL, "")
-	viper.SetDefault(flagStorePeerURL, "")
-	viper.SetDefault(flagStoreInitialCluster, "")
-	viper.SetDefault(flagStoreInitialAdvertisePeerURL, "")
-	viper.SetDefault(flagStoreInitialClusterState, "")
+	viper.SetDefault(flagStoreClientURL, defaultEtcdClientURL)
+	viper.SetDefault(flagStorePeerURL, defaultEtcdPeerURL)
+	viper.SetDefault(flagStoreInitialCluster,
+		fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL))
+	viper.SetDefault(flagStoreInitialAdvertisePeerURL, defaultEtcdPeerURL)
+	viper.SetDefault(flagStoreInitialClusterState, etcd.ClusterStateNew)
 	viper.SetDefault(flagStoreInitialClusterToken, "")
-	viper.SetDefault(flagStoreNodeName, "")
+	viper.SetDefault(flagStoreNodeName, defaultEtcdName)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
