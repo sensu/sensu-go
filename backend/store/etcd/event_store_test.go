@@ -50,7 +50,7 @@ func TestEventStorage(t *testing.T) {
 
 		// Get all events from an unexisting org
 		ctx = context.WithValue(ctx, types.OrganizationKey, "acme")
-		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentKeyAll)
+		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentTypeAll)
 		events, err = store.GetEvents(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(events))
