@@ -128,6 +128,11 @@ func (d *Dashboardd) Err() <-chan error {
 	return d.errChan
 }
 
+// Name returns the daemon name
+func (d *Dashboardd) Name() string {
+	return "dashboardd"
+}
+
 func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
 

@@ -277,31 +277,36 @@ docker_build() {
     done
 
     # build the docker image with master tag
-    docker build --label build.sha=${build_sha} -t sensu/sensu-go:master .
+    docker build --label build.sha=${build_sha} -t sensu/sensu:master .
 }
 
 docker_push() {
     local release=$1
-    local version=$(echo sensu/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
-    local version_iteration=$(echo sensu/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
+    local version=$(echo sensu/sensu:$($VERSION_CMD -v))
+    local version_iteration=$(echo sensu/sensu:$($VERSION_CMD -v).$($VERSION_CMD -i))
 
     # ensure we are authenticated
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 
     # push master - tags and pushes latest master docker build only
     if [ "$release" == "master" ]; then
-        docker push sensu/sensu-go:master
+        docker push sensu/sensu:master
+        exit 0
+    fi
+
+    if [ "$release" == "nightly" ]; then
+        docker push sensu/sensu:nightly
         exit 0
     fi
 
     # if versioned release push to 'latest' tag
     if [ "$release" == "versioned" ]; then
-        docker tag sensu/sensu-go:master sensu/sensu-go:latest
-        docker push sensu/sensu-go:latest
+        docker tag sensu/sensu:master sensu/sensu:latest
+        docker push sensu/sensu:latest
     fi
 
     # push current revision
-    docker tag sensu/sensu-go:master $version_iteration
+    docker tag sensu/sensu:master $version_iteration
     docker push $version_iteration
     docker tag $version_iteration $version
     docker push $version

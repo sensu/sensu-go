@@ -16,38 +16,18 @@ var (
 	monitorKeyBuilder = store.NewKeyBuilder(monitorPathPrefix)
 )
 
-// Service is the monitors interface.
-type Service interface {
-	// RefreshMonitor starts a new monitor or resets an existing monitor.
-	RefreshMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error
+// Supervisor provides a way to refresh a named monitor. It is a proxy for all
+// of the running monitors in the system.
+type Supervisor interface {
+	// Monitor starts a new monitor or resets an existing monitor.
+	Monitor(ctx context.Context, id string, event *types.Event, ttl int64) error
 }
 
-// Factory takes an etcd client, failure handler, and error handler and returns
-// a monitor service.
-type Factory func(*clientv3.Client, MonitorFailureHandler, ErrorHandler) Service
-
-// MonitorFailureHandler provides a failure handler. TODO: rename this to
-// FailureHandler when we remove the other monitor code.
-type MonitorFailureHandler interface {
-	HandleFailure(entity *types.Entity, event *types.Event) error
-}
-
-// ErrorHandler is the error handler func interface.
-type ErrorHandler interface {
-	HandleError(error)
-}
-
-// ErrorHandlerFunc implements ErrorHandler
-type ErrorHandlerFunc func(error)
-
-func (e ErrorHandlerFunc) HandleError(err error) {
-	e(err)
-}
-
-// EtcdService is an etcd backend monitor service based on leased keys. Each key
-// has a watcher that waits for a DELETE or PUT event and calls a handler.
-type EtcdService struct {
-	failureHandler MonitorFailureHandler
+// EtcdSupervisor is an etcd backend monitor supervisor based on leased keys.
+// Each key has a watcher that waits for a DELETE or PUT event and calls a
+// handler.
+type EtcdSupervisor struct {
+	failureHandler FailureHandler
 	errorHandler   ErrorHandler
 	client         *clientv3.Client
 }
@@ -58,20 +38,30 @@ type monitor struct {
 	ttl     int64
 }
 
-// NewService returns a new monitor service.
-func NewService(client *clientv3.Client, failureHandler MonitorFailureHandler, errorHandler ErrorHandler) *EtcdService {
-	return &EtcdService{
-		client:         client,
-		failureHandler: failureHandler,
-		errorHandler:   errorHandler,
+// EtcdFactory returns a Factory bound to an etcd client
+func EtcdFactory(c *clientv3.Client) Factory {
+	return func(h Handler) Supervisor {
+		return NewEtcdSupervisor(c, h)
 	}
 }
 
-// RefreshMonitor checks for the presense of a monitor for a given name.
+// Factory is a function that receives handlers and returns a Supervisor.
+type Factory func(Handler) Supervisor
+
+// NewEtcdSupervisor returns a new Supervisor backed by Etcd.
+func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
+	return &EtcdSupervisor{
+		client:         client,
+		failureHandler: h,
+		errorHandler:   h,
+	}
+}
+
+// Monitor checks for the presence of a monitor for a given name.
 // If no monitor exists, one is created. If a monitor exists, its lease ttl is
 // extended. If the monitor's ttl has changed, a new lease is created and the
 // key is updated with that new lease.
-func (m *EtcdService) RefreshMonitor(ctx context.Context, name string, entity *types.Entity, event *types.Event, ttl int64) error {
+func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.Event, ttl int64) error {
 	key := monitorKeyBuilder.Build(name)
 	// try to get the monitor from the store
 	mon, err := m.getMonitor(ctx, key)
@@ -105,7 +95,7 @@ func (m *EtcdService) RefreshMonitor(ctx context.Context, name string, entity *t
 
 	failureFunc := func() {
 		logger.Infof("monitor timed out, for %s, handling failure", key)
-		err := m.failureHandler.HandleFailure(entity, event)
+		err := m.failureHandler.HandleFailure(event)
 		if err != nil {
 			m.errorHandler.HandleError(err)
 		}
@@ -120,7 +110,7 @@ func (m *EtcdService) RefreshMonitor(ctx context.Context, name string, entity *t
 	return nil
 }
 
-func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, error) {
+func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, error) {
 	// try to get the key from the store
 	response, err := m.client.Get(ctx, key)
 	if err != nil {
@@ -147,8 +137,8 @@ func (m *EtcdService) getMonitor(ctx context.Context, key string) (*monitor, err
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
 func watchMon(ctx context.Context, cli *clientv3.Client, key string, failureHandler func(), shutdownHandler func()) {
+	responseChan := cli.Watch(ctx, key)
 	go func() {
-		responseChan := cli.Watch(ctx, key)
 		for wresp := range responseChan {
 			for _, ev := range wresp.Events {
 				if ev.Type == mvccpb.DELETE {

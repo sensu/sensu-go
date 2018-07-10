@@ -10,7 +10,7 @@ import TableList, {
 import deleteEntity from "/mutations/deleteEntity";
 
 import Loader from "/components/util/Loader";
-import ListController from "/components/util/ListController";
+import ListController from "/components/controller/ListController";
 import Pagination from "/components/partials/Pagination";
 
 import EntitiesListHeader from "./EntitiesListHeader";

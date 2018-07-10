@@ -16,7 +16,16 @@ var commaWhitespaceRegex *regexp.Regexp
 // configuration the user's configured default format is used as the flag's
 // default value.
 func AddFormatFlag(flagSet *pflag.FlagSet) {
-	flagSet.String("format", config.DefaultFormat, `format of data returned ("json"|config.FormatTabular)`)
+	flagSet.String(
+		"format",
+		config.DefaultFormat,
+		fmt.Sprintf(
+			`format of data returned ("%s"|"%s"|"%s")`,
+			config.FormatJSON,
+			config.FormatWrappedJSON,
+			config.FormatTabular,
+		),
+	)
 }
 
 // AddAllOrganization adds the '--all-organizations' flag to the given command
