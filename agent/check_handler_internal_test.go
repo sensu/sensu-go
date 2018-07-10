@@ -3,6 +3,7 @@ package agent
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -118,7 +119,8 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(err)
 	err = ioutil.WriteFile(f.Name(), []byte(metrics), 0644)
 	assert.NoError(err)
-	defer f.Close()
+	f.Close()
+	defer os.Remove(f.Name())
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
 	catPath := testutil.CommandPath(filepath.Join(toolsDir, "cat"), f.Name())
 	checkConfig.Command = catPath
