@@ -29,8 +29,8 @@ import (
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
-	daemons []daemon.Daemon
-	etcd    *etcd.Etcd
+	Daemons []daemon.Daemon
+	Etcd    *etcd.Etcd
 
 	done         chan struct{}
 	shutdownChan chan struct{}
@@ -39,7 +39,7 @@ type Backend struct {
 // Initialize instantiates a Backend struct with the provided config, by
 // configuring etcd and establishing a list of daemons, which constitute our
 // backend. The daemons will later be started according to their position in the
-// b.daemons list, and stopped in reverse order
+// b.Daemons list, and stopped in reverse order
 func Initialize(config *Config) (*Backend, error) {
 	// Initialize a Backend struct
 	b := &Backend{}
@@ -109,7 +109,7 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, bus)
+	b.Daemons = append(b.Daemons, bus)
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
@@ -120,7 +120,7 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, pipeline)
+	b.Daemons = append(b.Daemons, pipeline)
 
 	// Initialize eventd
 	event, err := eventd.New(eventd.Config{
@@ -131,7 +131,7 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, event)
+	b.Daemons = append(b.Daemons, event)
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(schedulerd.Config{
@@ -142,7 +142,7 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, scheduler)
+	b.Daemons = append(b.Daemons, scheduler)
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
@@ -155,7 +155,7 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, agent)
+	b.Daemons = append(b.Daemons, agent)
 
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
@@ -167,7 +167,7 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, keepalive)
+	b.Daemons = append(b.Daemons, keepalive)
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{
@@ -182,7 +182,7 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, api)
+	b.Daemons = append(b.Daemons, api)
 
 	// Initialize dashboardd
 	dashboard, err := dashboardd.New(dashboardd.Config{
@@ -194,10 +194,10 @@ func Initialize(config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err.Error())
 	}
-	b.daemons = append(b.daemons, dashboard)
+	b.Daemons = append(b.Daemons, dashboard)
 
 	// Add etcd to our backend, since it's needed across the methods
-	b.etcd = e
+	b.Etcd = e
 
 	return b, nil
 }
@@ -210,7 +210,7 @@ func (b *Backend) Run() error {
 	sg := stopGroup{}
 
 	// Loop across the daemons in order to start them, then add them to our groups
-	for _, d := range b.daemons {
+	for _, d := range b.Daemons {
 		if err := d.Start(); err != nil {
 			return fmt.Errorf("error starting %s: %s", d.Name(), err.Error())
 		}
@@ -233,7 +233,7 @@ func (b *Backend) Run() error {
 	}
 
 	// Add etcd to our errGroup, since it's not included in the daemon list
-	eg.errors = append(eg.errors, b.etcd)
+	eg.errors = append(eg.errors, b.Etcd)
 	eg.Go()
 
 	select {
@@ -251,7 +251,7 @@ func (b *Backend) Run() error {
 			logger.WithField("panic", trace).WithError(err.(error)).
 				Error("recovering from panic due to error, shutting down etcd")
 		}
-		err := b.etcd.Shutdown()
+		err := b.Etcd.Shutdown()
 		if derr == nil {
 			derr = err
 		}
@@ -316,18 +316,18 @@ func (e errGroup) Err() <-chan error {
 
 // Migration performs the migration of data inside the store
 func (b *Backend) Migration() error {
-	logger.Infof("starting migration on the store with URL '%s'", b.etcd.LoopbackURL())
-	migration.Run(b.etcd.LoopbackURL())
+	logger.Infof("starting migration on the store with URL '%s'", b.Etcd.LoopbackURL())
+	migration.Run(b.Etcd.LoopbackURL())
 	return nil
 }
 
 // Status returns a map of component name to boolean healthy indicator.
 func (b *Backend) Status() types.StatusMap {
 	sm := map[string]bool{
-		"store": b.etcd.Healthy(),
+		"store": b.Etcd.Healthy(),
 	}
 
-	for _, d := range b.daemons {
+	for _, d := range b.Daemons {
 		sm[d.Name()] = d.Status() == nil
 	}
 
