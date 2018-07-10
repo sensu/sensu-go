@@ -17,6 +17,7 @@ enterprise edition.
 - Fixed a bug in build.sh where versions for Windows and Mac OS were not
 generated correctly.
 - Display the name of extensions with table formatting in sensuctl.
+- Fixed TLS issue that occurred when dashboard communicated with API.
 - Check TTL now works with round robin checks.
 - Format string for --format flag help now shows actual arguments.
 
