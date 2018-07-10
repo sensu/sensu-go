@@ -20,6 +20,9 @@ generated correctly.
 - Check TTL now works with round robin checks.
 - Format string for --format flag help now shows actual arguments.
 
+### Removed
+- Removed check subdue e2e test.
+
 ## [2.0.0-beta.2] - 2018-06-28
 
 ### Added
