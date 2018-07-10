@@ -5,13 +5,16 @@ import gql from "graphql-tag";
 import AppContent from "/components/AppContent";
 import CollapsingMenu from "/components/CollapsingMenu";
 import Content from "/components/Content";
+import DialogController from "/components/util/DialogController";
 import ListToolbar from "/components/partials/ListToolbar";
 import NotFoundView from "/components/views/NotFoundView";
 import Paper from "@material-ui/core/Paper";
+import PlusIcon from "@material-ui/icons/Add";
 import Query from "/components/util/Query";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import SearchBox from "/components/SearchBox";
 import SilencesList from "/components/partials/SilencesList";
+import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import { withQueryParams } from "/components/QueryParams";
 
 class SilencesContent extends React.Component {
@@ -68,11 +71,34 @@ class SilencesContent extends React.Component {
                     />
                   }
                   renderMenuItems={
-                    <CollapsingMenu.Button
-                      title="Reload"
-                      icon={<RefreshIcon />}
-                      onClick={() => refetch()}
-                    />
+                    <React.Fragment>
+                      <CollapsingMenu.Button
+                        title="Reload"
+                        icon={<RefreshIcon />}
+                        onClick={() => refetch()}
+                      />
+                      <DialogController>
+                        {({ isOpen, open, close }) => (
+                          <React.Fragment>
+                            <CollapsingMenu.Button
+                              title="New"
+                              icon={<PlusIcon />}
+                              onClick={() => open()}
+                            />
+                            {isOpen && (
+                              <SilenceEntryDialog
+                                values={{ props: {}, check: "" }}
+                                onClose={() => {
+                                  // TODO: Only refetch / poison list on success
+                                  refetch();
+                                  close();
+                                }}
+                              />
+                            )}
+                          </React.Fragment>
+                        )}
+                      </DialogController>
+                    </React.Fragment>
                   }
                 />
               </Content>
