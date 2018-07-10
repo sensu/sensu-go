@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 generated correctly.
 - Display the name of extensions with table formatting in sensuctl.
 - Check TTL now works with round robin checks.
+- Format string for --format flag help now shows actual arguments.
 
 ## [2.0.0-beta.2] - 2018-06-28
 
