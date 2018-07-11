@@ -6,7 +6,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 
 import CheckStatusIcon from "/components/CheckStatusIcon";
-import { TableListSelect } from "/components/TableList";
+import ButtonMenu from "/components/partials/ButtonMenu";
 
 class StatusMenu extends React.Component {
   static propTypes = {
@@ -23,7 +23,7 @@ class StatusMenu extends React.Component {
     const { className, onChange } = this.props;
 
     return (
-      <TableListSelect className={className} label="Status" onChange={onChange}>
+      <ButtonMenu className={className} label="Status" onChange={onChange}>
         <MenuItem key="incident" value={"HasCheck && IsIncident"}>
           <ListItemText primary="Incident" style={{ paddingLeft: 40 }} />
         </MenuItem>
@@ -51,7 +51,7 @@ class StatusMenu extends React.Component {
           </ListItemIcon>
           <ListItemText primary="Passing" />
         </MenuItem>
-      </TableListSelect>
+      </ButtonMenu>
     );
   }
 }

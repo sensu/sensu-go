@@ -4,6 +4,7 @@ import gql from "graphql-tag";
 
 import Button from "@material-ui/core/Button";
 import DropdownArrow from "@material-ui/icons/ArrowDropDown";
+import Paper from "@material-ui/core/Paper";
 import RootRef from "@material-ui/core/RootRef";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -23,6 +24,7 @@ import Pagination from "/components/partials/Pagination";
 import ListHeader from "/components/partials/ListHeader";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import ListSortMenu from "/components/partials/ListSortMenu";
+import IconButton from "/components/partials/IconButton";
 
 import ChecksListItem from "./ChecksListItem";
 
@@ -144,7 +146,7 @@ class ChecksList extends React.Component {
       key={key}
       check={check}
       selected={selected}
-      setSelected={setSelected}
+      onChangeSelected={setSelected}
       onClickSilence={() => this.silenceCheck(check)}
     />
   );
@@ -161,61 +163,63 @@ class ChecksList extends React.Component {
         renderItem={this.renderCheck}
       >
         {({ children, selectedItems, toggleSelectedItems }) => (
-          <Loader loading={loading}>
-            <ListHeader
-              sticky
-              selectedCount={selectedItems.length}
-              rowCount={children.length || 0}
-              onClickSelect={toggleSelectedItems}
-              renderBulkActions={() => (
-                <ButtonSet>
-                  <Button onClick={() => this.silenceChecks(selectedItems)}>
-                    <Typography variant="button">Silence</Typography>
-                  </Button>
-                </ButtonSet>
-              )}
-              renderActions={() => (
-                <ButtonSet>
-                  <MenuController
-                    renderMenu={({ anchorEl, close }) => (
-                      <ListSortMenu
-                        anchorEl={anchorEl}
-                        onClose={close}
-                        options={["NAME"]}
-                        onChangeQuery={onChangeQuery}
-                      />
-                    )}
-                  >
-                    {({ open, ref }) => (
-                      <RootRef rootRef={ref}>
-                        <Button onClick={open}>
-                          Sort <DropdownArrow />
-                        </Button>
-                      </RootRef>
-                    )}
-                  </MenuController>
-                </ButtonSet>
-              )}
-            />
-
-            <Table>
-              <TableBody>{children}</TableBody>
-            </Table>
-
-            <Pagination
-              limit={limit}
-              offset={offset}
-              pageInfo={environment && environment.checks.pageInfo}
-              onChangeQuery={onChangeQuery}
-            />
-
-            {this.state.silence && (
-              <SilenceEntryDialog
-                values={this.state.silence}
-                onClose={() => this.setState({ silence: null })}
+          <Paper>
+            <Loader loading={loading}>
+              <ListHeader
+                sticky
+                selectedCount={selectedItems.length}
+                rowCount={children.length || 0}
+                onClickSelect={toggleSelectedItems}
+                renderBulkActions={() => (
+                  <ButtonSet>
+                    <Button onClick={() => this.silenceChecks(selectedItems)}>
+                      <Typography variant="button">Silence</Typography>
+                    </Button>
+                  </ButtonSet>
+                )}
+                renderActions={() => (
+                  <ButtonSet>
+                    <MenuController
+                      renderMenu={({ anchorEl, close }) => (
+                        <ListSortMenu
+                          anchorEl={anchorEl}
+                          onClose={close}
+                          options={["NAME"]}
+                          onChangeQuery={onChangeQuery}
+                        />
+                      )}
+                    >
+                      {({ open, ref }) => (
+                        <RootRef rootRef={ref}>
+                          <IconButton onClick={open} icon={<DropdownArrow />}>
+                            Sort
+                          </IconButton>
+                        </RootRef>
+                      )}
+                    </MenuController>
+                  </ButtonSet>
+                )}
               />
-            )}
-          </Loader>
+
+              <Table>
+                <TableBody>{children}</TableBody>
+              </Table>
+
+              <Pagination
+                limit={limit}
+                offset={offset}
+                pageInfo={environment && environment.checks.pageInfo}
+                onChangeQuery={onChangeQuery}
+              />
+
+              {this.state.silence && (
+                <SilenceEntryDialog
+                  values={this.state.silence}
+                  onClose={() => this.setState({ silence: null })}
+                />
+              )}
+            </Loader>
+          </Paper>
         )}
       </ListController>
     );
