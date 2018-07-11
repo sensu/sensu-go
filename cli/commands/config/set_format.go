@@ -12,7 +12,7 @@ import (
 // SetFormatCommand given argument changes format for active profile
 func SetFormatCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
-		Use:          "set-format [ENVIRONMENT]",
+		Use:          "set-format [FORMAT]",
 		Short:        "Set format for active profile",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
