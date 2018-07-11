@@ -1,26 +1,38 @@
 package routers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
+// CheckController represents the controller needs of the ChecksRouter.
+type CheckController interface {
+	Create(context.Context, types.CheckConfig) error
+	CreateOrReplace(context.Context, types.CheckConfig) error
+	Update(context.Context, types.CheckConfig) error
+	Query(context.Context) ([]*types.CheckConfig, error)
+	Find(context.Context, string) (*types.CheckConfig, error)
+	Destroy(context.Context, string) error
+	AddCheckHook(context.Context, string, types.HookList) error
+	RemoveCheckHook(context.Context, string, string, string) error
+	QueueAdhocRequest(context.Context, string, *types.AdhocRequest) error
+}
+
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
-	controller actions.CheckController
+	controller CheckController
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter {
+func NewChecksRouter(ctrl CheckController) *ChecksRouter {
 	return &ChecksRouter{
-		controller: actions.NewCheckController(store, getter),
+		controller: ctrl,
 	}
 }
 
