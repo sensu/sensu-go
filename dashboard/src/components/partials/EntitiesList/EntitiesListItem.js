@@ -2,11 +2,20 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import Checkbox from "@material-ui/core/Checkbox";
+import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
+import MoreVert from "@material-ui/icons/MoreVert";
+import RootRef from "@material-ui/core/RootRef";
+import TableCell from "@material-ui/core/TableCell";
+
+import MenuController from "/components/controller/MenuController";
 
 import ConfirmDelete from "/components/partials/ConfirmDelete";
-import ListItem from "/components/partials/ListItem";
+import ResourceDetails from "/components/partials/ResourceDetails";
+import TableOverflowCell from "/components/partials/TableOverflowCell";
+import TableSelectableRow from "/components/partials/TableSelectableRow";
 
 import RelativeDate from "/components/RelativeDate";
 import CheckStatusIcon from "/components/CheckStatusIcon";
@@ -67,30 +76,49 @@ class EntitiesListItem extends React.PureComponent {
     const { entity, selected, onChangeSelected } = this.props;
 
     return (
-      <ListItem
-        selected={selected}
-        onChangeSelected={onChangeSelected}
-        icon={<CheckStatusIcon statusCode={entity.status} />}
-        title={
-          <NamespaceLink
-            namespace={entity.namespace}
-            to={`/entities/${entity.name}`}
-          >
-            <strong>{entity.name}</strong> {entity.system.platform}{" "}
-            {entity.system.platformVersion}
-          </NamespaceLink>
-        }
-        details={
-          <React.Fragment>
-            <strong>{entity.class}</strong> - Last seen{" "}
-            <strong>
-              <RelativeDate dateTime={entity.lastSeen} />
-            </strong>{" "}
-            with status <strong>{entity.status}</strong>.
-          </React.Fragment>
-        }
-        renderMenu={this.renderMenu}
-      />
+      <TableSelectableRow selected={selected}>
+        <TableCell padding="checkbox">
+          <Checkbox
+            color="primary"
+            checked={selected}
+            onChange={e => onChangeSelected(e.target.checked)}
+          />
+        </TableCell>
+        <TableOverflowCell>
+          <ResourceDetails
+            icon={<CheckStatusIcon statusCode={entity.status} />}
+            title={
+              <NamespaceLink
+                namespace={entity.namespace}
+                to={`/entities/${entity.name}`}
+              >
+                <strong>{entity.name}</strong> {entity.system.platform}{" "}
+                {entity.system.platformVersion}
+              </NamespaceLink>
+            }
+            details={
+              <React.Fragment>
+                <strong>{entity.class}</strong> - Last seen{" "}
+                <strong>
+                  <RelativeDate dateTime={entity.lastSeen} />
+                </strong>{" "}
+                with status <strong>{entity.status}</strong>.
+              </React.Fragment>
+            }
+          />
+        </TableOverflowCell>
+        <TableCell padding="checkbox">
+          <MenuController renderMenu={this.renderMenu}>
+            {({ open, ref }) => (
+              <RootRef rootRef={ref}>
+                <IconButton onClick={open}>
+                  <MoreVert />
+                </IconButton>
+              </RootRef>
+            )}
+          </MenuController>
+        </TableCell>
+      </TableSelectableRow>
     );
   }
 }

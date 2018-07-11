@@ -2,11 +2,21 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import Checkbox from "@material-ui/core/Checkbox";
+import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
+import MoreVert from "@material-ui/icons/MoreVert";
+import RootRef from "@material-ui/core/RootRef";
+import TableCell from "@material-ui/core/TableCell";
+
+import MenuController from "/components/controller/MenuController";
+
+import ResourceDetails from "/components/partials/ResourceDetails";
+import TableOverflowCell from "/components/partials/TableOverflowCell";
+import TableSelectableRow from "/components/partials/TableSelectableRow";
 
 import Code from "/components/Code";
-import ListItem from "/components/partials/ListItem";
 
 class CheckListItem extends React.Component {
   static propTypes = {
@@ -43,40 +53,62 @@ class CheckListItem extends React.Component {
     const { check, selected, onChangeSelected, onClickSilence } = this.props;
 
     return (
-      <ListItem
-        selected={selected}
-        onChangeSelected={onChangeSelected}
-        title={<strong>{check.name}</strong>}
-        details={
-          <React.Fragment>
-            <Code>{check.command}</Code>
-            <br />
-            Executed every{" "}
-            <strong>
-              {check.interval} {check.interval === 1 ? "second" : "seconds"}
-            </strong>{" "}
-            by{" "}
-            <strong>
-              {check.subscriptions.length}{" "}
-              {check.subscriptions.length === 1
-                ? "subscription"
-                : "subscriptions"}
-            </strong>.
-          </React.Fragment>
-        }
-        renderMenu={({ anchorEl, close }) => (
-          <Menu open onClose={close} anchorEl={anchorEl}>
-            <MenuItem
-              onClick={() => {
-                onClickSilence();
-                this.closeMenu();
-              }}
-            >
-              Silence
-            </MenuItem>
-          </Menu>
-        )}
-      />
+      <TableSelectableRow selected={selected}>
+        <TableCell padding="checkbox">
+          <Checkbox
+            color="primary"
+            checked={selected}
+            onChange={e => onChangeSelected(e.target.checked)}
+          />
+        </TableCell>
+        <TableOverflowCell>
+          <ResourceDetails
+            title={<strong>{check.name}</strong>}
+            details={
+              <React.Fragment>
+                <Code>{check.command}</Code>
+                <br />
+                Executed every{" "}
+                <strong>
+                  {check.interval} {check.interval === 1 ? "second" : "seconds"}
+                </strong>{" "}
+                by{" "}
+                <strong>
+                  {check.subscriptions.length}{" "}
+                  {check.subscriptions.length === 1
+                    ? "subscription"
+                    : "subscriptions"}
+                </strong>.
+              </React.Fragment>
+            }
+          />
+        </TableOverflowCell>
+
+        <TableCell padding="checkbox">
+          <MenuController
+            renderMenu={({ anchorEl, close }) => (
+              <Menu open onClose={close} anchorEl={anchorEl}>
+                <MenuItem
+                  onClick={() => {
+                    onClickSilence();
+                    this.closeMenu();
+                  }}
+                >
+                  Silence
+                </MenuItem>
+              </Menu>
+            )}
+          >
+            {({ open, ref }) => (
+              <RootRef rootRef={ref}>
+                <IconButton onClick={open}>
+                  <MoreVert />
+                </IconButton>
+              </RootRef>
+            )}
+          </MenuController>
+        </TableCell>
+      </TableSelectableRow>
     );
   }
 }
