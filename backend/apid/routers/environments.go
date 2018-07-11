@@ -1,24 +1,33 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
+// EnvironmentController represents the controller needs of the EnvironmentsRouter.
+type EnvironmentController interface {
+	Create(context.Context, types.Environment) error
+	CreateOrReplace(context.Context, types.Environment) error
+	Update(context.Context, types.Environment) error
+	Query(context.Context, string) ([]*types.Environment, error)
+	Find(context.Context, string, string) (*types.Environment, error)
+	Destroy(context.Context, string, string) error
+}
+
 // EnvironmentsRouter handles requests for /rbac/organizations/{org}/environments
 type EnvironmentsRouter struct {
-	controller actions.EnvironmentController
+	controller EnvironmentController
 }
 
 // NewEnvironmentsRouter instantiates new router for controlling check resources
-func NewEnvironmentsRouter(store store.EnvironmentStore) *EnvironmentsRouter {
+func NewEnvironmentsRouter(ctrl EnvironmentController) *EnvironmentsRouter {
 	return &EnvironmentsRouter{
-		controller: actions.NewEnvironmentController(store),
+		controller: ctrl,
 	}
 }
 
@@ -61,9 +70,12 @@ func (r *EnvironmentsRouter) create(req *http.Request) (interface{}, error) {
 	if err = unmarshalBody(req, &env); err != nil {
 		return nil, err
 	}
-	env.Organization, err = url.PathUnescape(mux.Vars(req)["organization"])
-	if err != nil {
-		return nil, err
+	vars := mux.Vars(req)
+	if org := vars["organization"]; len(org) > 0 {
+		env.Organization, err = url.PathUnescape(org)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = r.controller.Create(req.Context(), env)
@@ -76,9 +88,12 @@ func (r *EnvironmentsRouter) createOrReplace(req *http.Request) (interface{}, er
 	if err = unmarshalBody(req, &env); err != nil {
 		return nil, err
 	}
-	env.Organization, err = url.PathUnescape(mux.Vars(req)["organization"])
-	if err != nil {
-		return nil, err
+	vars := mux.Vars(req)
+	if org := vars["organization"]; len(org) > 0 {
+		env.Organization, err = url.PathUnescape(org)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = r.controller.CreateOrReplace(req.Context(), env)
