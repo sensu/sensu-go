@@ -119,7 +119,7 @@ func TestExecuteCheck(t *testing.T) {
 	f, err := ioutil.TempFile("", "metric")
 	assert.NoError(err)
 	_, err = fmt.Fprintln(f, metrics)
-	assert.NoError(err)
+	require.NoError(t, err)
 	f.Close()
 	defer os.Remove(f.Name())
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
@@ -134,10 +134,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.True(event.HasMetrics())
-	if len(event.Metrics.Points) != 2 {
-		fmt.Println(event)
-	}
-	require.Equal(t, 2, len(event.Metrics.Points))
+	require.Equal(t, 2, len(event.Metrics.Points), string(msg.Payload))
 	metric0 := event.Metrics.Points[0]
 	assert.Equal(float64(1), metric0.Value)
 	assert.Equal("metric.foo", metric0.Name)
