@@ -38,16 +38,16 @@ func NewChecksRouter(ctrl CheckController) *ChecksRouter {
 
 // Mount the ChecksRouter to a parent Router
 func (r *ChecksRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/checks"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/checks"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
-	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
+	routes.Path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
+	routes.Path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
 
 	// handlefunc returns a custom status and response
 	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)

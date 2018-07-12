@@ -24,16 +24,16 @@ func NewSilencedRouter(store store.Store) *SilencedRouter {
 
 // Mount the SilencedRouter to a parent Router
 func (r *SilencedRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/silenced"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/silenced"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.path("subscriptions/{subscription}", r.list).Methods(http.MethodGet)
-	routes.path("checks/{check}", r.list).Methods(http.MethodGet)
+	routes.Path("subscriptions/{subscription}", r.list).Methods(http.MethodGet)
+	routes.Path("checks/{check}", r.list).Methods(http.MethodGet)
 }
 
 func (r *SilencedRouter) list(req *http.Request) (interface{}, error) {

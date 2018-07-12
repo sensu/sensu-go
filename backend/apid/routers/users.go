@@ -24,20 +24,20 @@ func NewUsersRouter(store store.Store) *UsersRouter {
 
 // Mount the UsersRouter to a parent Router
 func (r *UsersRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/rbac/users"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/users"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
-	routes.path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
-	routes.path("{id}/roles/{role}", r.removeRole).Methods(http.MethodDelete)
+	routes.Path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
+	routes.Path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
+	routes.Path("{id}/roles/{role}", r.removeRole).Methods(http.MethodDelete)
 
 	// TODO: Remove?
-	routes.path("{id}/password", r.updatePassword).Methods(http.MethodPut)
+	routes.Path("{id}/password", r.updatePassword).Methods(http.MethodPut)
 }
 
 func (r *UsersRouter) list(req *http.Request) (interface{}, error) {

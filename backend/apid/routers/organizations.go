@@ -32,12 +32,12 @@ func NewOrganizationsRouter(ctrl OrganizationsController) *OrganizationsRouter {
 
 // Mount the OrganizationsRouter to a parent Router
 func (r *OrganizationsRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/rbac/organizations"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/organizations"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 }
 
 func (r *OrganizationsRouter) list(req *http.Request) (interface{}, error) {

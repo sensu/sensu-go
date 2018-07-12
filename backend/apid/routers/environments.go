@@ -33,12 +33,12 @@ func NewEnvironmentsRouter(ctrl EnvironmentController) *EnvironmentsRouter {
 
 // Mount the EnvironmentsRouter to a parent Router
 func (r *EnvironmentsRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/rbac/organizations"}
-	routes.path("{organization}/environments", r.list).Methods(http.MethodGet)
-	routes.path("{organization}/environments/{environment}", r.find).Methods(http.MethodGet)
-	routes.path("{organization}/environments", r.create).Methods(http.MethodPost)
-	routes.path("{organization}/environments/{environment}", r.createOrReplace).Methods(http.MethodPut)
-	routes.path("{organization}/environments/{environment}", r.destroy).Methods(http.MethodDelete)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/organizations"}
+	routes.Path("{organization}/environments", r.list).Methods(http.MethodGet)
+	routes.Path("{organization}/environments/{environment}", r.find).Methods(http.MethodGet)
+	routes.Path("{organization}/environments", r.create).Methods(http.MethodPost)
+	routes.Path("{organization}/environments/{environment}", r.createOrReplace).Methods(http.MethodPut)
+	routes.Path("{organization}/environments/{environment}", r.destroy).Methods(http.MethodDelete)
 }
 
 func (r *EnvironmentsRouter) list(req *http.Request) (interface{}, error) {
