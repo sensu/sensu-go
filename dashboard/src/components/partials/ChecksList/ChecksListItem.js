@@ -38,17 +38,6 @@ class CheckListItem extends React.Component {
     `,
   };
 
-  state = { menuOpen: false };
-
-  _menuAnchorRef = React.createRef();
-
-  openMenu = () => {
-    this.setState({ menuOpen: true });
-  };
-  closeMenu = () => {
-    this.setState({ menuOpen: false });
-  };
-
   render() {
     const { check, selected, onChangeSelected, onClickSilence } = this.props;
 
