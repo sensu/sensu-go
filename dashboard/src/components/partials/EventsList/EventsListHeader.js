@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import Checkbox from "@material-ui/core/Checkbox";
+import Button from "@material-ui/core/Button";
 import { withStyles } from "@material-ui/core/styles";
 import capitalize from "lodash/capitalize";
 
@@ -10,15 +10,12 @@ import Typography from "@material-ui/core/Typography";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
-import {
-  TableListHeader,
-  TableListSelect,
-  TableListButton as Button,
-} from "/components/TableList";
 import ButtonSet from "/components/ButtonSet";
 
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import StatusMenu from "/components/partials/StatusMenu";
+import ListHeader from "/components/partials/ListHeader";
+import ButtonMenu from "/components/partials/ButtonMenu";
 
 const styles = theme => ({
   headerButton: {
@@ -51,6 +48,7 @@ class EventsListHeader extends React.PureComponent {
     onClickResolve: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     selectedCount: PropTypes.number.isRequired,
+    rowCount: PropTypes.number.isRequired,
     environment: PropTypes.shape({
       checks: PropTypes.object,
       entities: PropTypes.object,
@@ -109,6 +107,7 @@ class EventsListHeader extends React.PureComponent {
     const {
       classes,
       selectedCount,
+      rowCount,
       onClickSelect,
       onClickSilence,
       onClickResolve,
@@ -126,17 +125,12 @@ class EventsListHeader extends React.PureComponent {
     ];
 
     return (
-      <TableListHeader sticky active={selectedCount > 0}>
-        <Checkbox
-          component="button"
-          className={classes.checkbox}
-          onClick={onClickSelect}
-          checked={false}
-          indeterminate={selectedCount > 0}
-        />
-        {selectedCount > 0 && <div>{selectedCount} Selected</div>}
-        <div className={classes.grow} />
-        {selectedCount > 0 ? (
+      <ListHeader
+        sticky
+        selectedCount={selectedCount}
+        rowCount={rowCount}
+        onClickSelect={onClickSelect}
+        renderBulkActions={() => (
           <ButtonSet>
             <ConfirmDelete
               identifier={`${selectedCount} ${
@@ -157,35 +151,25 @@ class EventsListHeader extends React.PureComponent {
               <Typography variant="button">Resolve</Typography>
             </Button>
           </ButtonSet>
-        ) : (
-          <div className={classes.filterActions}>
-            <TableListSelect
-              className={classes.headerButton}
-              label="Entity"
-              onChange={this.requeryEntity}
-            >
+        )}
+        renderActions={() => (
+          <ButtonSet>
+            <ButtonMenu label="Entity" onChange={this.requeryEntity}>
               {entityNames.map(name => (
                 <MenuItem key={name} value={name}>
                   <ListItemText primary={name} />
                 </MenuItem>
               ))}
-            </TableListSelect>
-            <TableListSelect
-              className={classes.headerButton}
-              label="Check"
-              onChange={this.requeryCheck}
-            >
+            </ButtonMenu>
+            <ButtonMenu label="Check" onChange={this.requeryCheck}>
               {checkNames.map(name => (
                 <MenuItem key={name} value={name}>
                   <ListItemText primary={name} />
                 </MenuItem>
               ))}
-            </TableListSelect>
-            <StatusMenu
-              className={classes.headerButton}
-              onChange={this.requeryStatus}
-            />
-            <TableListSelect
+            </ButtonMenu>
+            <StatusMenu onChange={this.requeryStatus} />
+            <ButtonMenu
               className={classes.headerButton}
               label="Sort"
               onChange={this._handleChangeSort}
@@ -195,10 +179,10 @@ class EventsListHeader extends React.PureComponent {
                   <ListItemText primary={capitalize(name)} />
                 </MenuItem>
               ))}
-            </TableListSelect>
-          </div>
+            </ButtonMenu>
+          </ButtonSet>
         )}
-      </TableListHeader>
+      />
     );
   }
 }

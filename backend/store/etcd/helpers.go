@@ -20,10 +20,10 @@ type getObjectsPath func(context.Context, string) string
 func query(ctx context.Context, store *Store, fn getObjectsPath) (*clientv3.GetResponse, error) {
 	// Support "*" as a wildcard
 	var org, env string
-	if org = types.ContextOrganization(ctx); org == "*" {
+	if org = types.ContextOrganization(ctx); org == types.OrganizationTypeAll {
 		org = ""
 	}
-	if env = types.ContextEnvironment(ctx); env == "*" {
+	if env = types.ContextEnvironment(ctx); env == types.EnvironmentTypeAll {
 		env = ""
 	}
 

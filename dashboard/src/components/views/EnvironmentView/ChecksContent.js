@@ -1,17 +1,22 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Paper from "@material-ui/core/Paper";
-import Button from "@material-ui/core/Button";
+
+import RefreshIcon from "@material-ui/icons/Refresh";
 
 import { withQueryParams } from "/components/QueryParams";
 import AppContent from "/components/AppContent";
 
-import ChecksList from "/components/partials/ChecksList";
-
 import Query from "/components/util/Query";
 
+import ChecksList from "/components/partials/ChecksList";
+import ListToolbar from "/components/partials/ListToolbar";
+
 import NotFoundView from "/components/views/NotFoundView";
+
+import CollapsingMenu from "/components/CollapsingMenu";
+import Content from "/components/Content";
+import SearchBox from "/components/SearchBox";
 
 class ChecksContent extends React.Component {
   static propTypes = {
@@ -58,17 +63,33 @@ class ChecksContent extends React.Component {
 
           return (
             <AppContent>
-              <Button onClick={() => refetch()}>reload</Button>
-              <Paper>
-                <ChecksList
-                  limit={limit}
-                  offset={offset}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  loading={loading || aborted}
-                  refetch={refetch}
+              <Content gutters bottomMargin>
+                <ListToolbar
+                  renderSearch={
+                    <SearchBox
+                      placeholder="Filter checks…"
+                      initialValue={filter}
+                      onSearch={value => setQueryParams({ filter: value })}
+                    />
+                  }
+                  renderMenuItems={
+                    <CollapsingMenu.Button
+                      title="Reload"
+                      icon={<RefreshIcon />}
+                      onClick={() => refetch()}
+                    />
+                  }
                 />
-              </Paper>
+              </Content>
+
+              <ChecksList
+                limit={limit}
+                offset={offset}
+                onChangeQuery={setQueryParams}
+                environment={environment}
+                loading={loading || aborted}
+                refetch={refetch}
+              />
             </AppContent>
           );
         }}

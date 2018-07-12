@@ -2,17 +2,20 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import Query from "/components/util/Query";
-import AppContent from "/components/AppContent";
-import SearchBox from "/components/SearchBox";
-import Content from "/components/Content";
-import NotFoundView from "/components/views/NotFoundView";
 import RefreshIcon from "@material-ui/icons/Refresh";
-import CollapsingMenu from "/components/CollapsingMenu";
-import { withQueryParams } from "/components/QueryParams";
 
-import ListToolbar from "/components/partials/ListToolbar";
+import Query from "/components/util/Query";
+
 import EventsList from "/components/partials/EventsList";
+import ListToolbar from "/components/partials/ListToolbar";
+
+import NotFoundView from "/components/views/NotFoundView";
+
+import SearchBox from "/components/SearchBox";
+import { withQueryParams } from "/components/QueryParams";
+import AppContent from "/components/AppContent";
+import CollapsingMenu from "/components/CollapsingMenu";
+import Content from "/components/Content";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";

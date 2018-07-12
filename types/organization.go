@@ -5,6 +5,11 @@ import (
 	"net/url"
 )
 
+const (
+	// OrganizationTypeAll matches all actions
+	OrganizationTypeAll = "*"
+)
+
 // Validate returns an error if the organization does not pass validation tests
 func (o *Organization) Validate() error {
 	if err := ValidateName(o.Name); err != nil {

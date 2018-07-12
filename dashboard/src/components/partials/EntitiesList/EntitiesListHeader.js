@@ -2,36 +2,22 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import { withStyles } from "@material-ui/core/styles";
-
 import Button from "@material-ui/core/Button";
-import Checkbox from "@material-ui/core/Checkbox";
 import ListItemText from "@material-ui/core/ListItemText";
 import MenuItem from "@material-ui/core/MenuItem";
 import Typography from "@material-ui/core/Typography";
 
-import { TableListHeader, TableListSelect } from "/components/TableList";
 import ButtonSet from "/components/ButtonSet";
-
+import ListHeader from "/components/partials/ListHeader";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
-
-const styles = theme => ({
-  // Remove padding from button container
-  checkbox: {
-    marginLeft: -11,
-    color: theme.palette.primary.contrastText,
-  },
-  grow: {
-    flex: "1 1 auto",
-  },
-});
+import ButtonMenu from "/components/partials/ButtonMenu";
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     selectedCount: PropTypes.number.isRequired,
+    rowCount: PropTypes.number.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
     environment: PropTypes.object,
   };
@@ -79,27 +65,22 @@ class EntitiesListHeader extends React.PureComponent {
 
   render() {
     const {
-      classes,
       environment,
       onClickDelete,
       onClickSelect,
       selectedCount,
+      rowCount,
     } = this.props;
 
     const subscriptions = environment ? environment.subscriptions.values : [];
 
     return (
-      <TableListHeader sticky active={selectedCount > 0}>
-        <Checkbox
-          component="button"
-          className={classes.checkbox}
-          onClick={onClickSelect}
-          checked={false}
-          indeterminate={selectedCount > 0}
-        />
-        {selectedCount > 0 && <div>{selectedCount} Selected</div>}
-        <div className={classes.grow} />
-        {selectedCount > 0 ? (
+      <ListHeader
+        sticky
+        selectedCount={selectedCount}
+        rowCount={rowCount}
+        onClickSelect={onClickSelect}
+        renderBulkActions={() => (
           <ButtonSet>
             <ConfirmDelete
               identifier={`${selectedCount} ${
@@ -114,9 +95,10 @@ class EntitiesListHeader extends React.PureComponent {
               )}
             </ConfirmDelete>
           </ButtonSet>
-        ) : (
+        )}
+        renderActions={() => (
           <ButtonSet>
-            <TableListSelect
+            <ButtonMenu
               label="subscription"
               // eslint-disable-next-line react/jsx-no-bind
               onChange={this._handleChangeFiler.bind(this, "subscription")}
@@ -126,20 +108,20 @@ class EntitiesListHeader extends React.PureComponent {
                   <ListItemText primary={entry} />
                 </MenuItem>
               ))}
-            </TableListSelect>
-            <TableListSelect label="Sort" onChange={this._handleChangeSort}>
+            </ButtonMenu>
+            <ButtonMenu label="Sort" onChange={this._handleChangeSort}>
               <MenuItem key="ID" value="ID">
                 <ListItemText>Name</ListItemText>
               </MenuItem>
               <MenuItem key="LASTSEEN" value="LASTSEEN">
                 <ListItemText>Last Seen</ListItemText>
               </MenuItem>
-            </TableListSelect>
+            </ButtonMenu>
           </ButtonSet>
         )}
-      </TableListHeader>
+      />
     );
   }
 }
 
-export default withStyles(styles)(EntitiesListHeader);
+export default EntitiesListHeader;

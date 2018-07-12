@@ -91,8 +91,8 @@ func (s *Store) GetEnvironment(ctx context.Context, org, env string) (*types.Env
 
 // GetEnvironments returns all Environments.
 func (s *Store) GetEnvironments(ctx context.Context, org string) ([]*types.Environment, error) {
-	// Support "*" as a wildcard
-	if org == "*" {
+	// Support "*" as a wildcard (defined by constant types.OrganizationTypeAll)
+	if org == types.OrganizationTypeAll {
 		org = ""
 	}
 

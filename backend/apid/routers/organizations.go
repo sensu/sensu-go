@@ -1,24 +1,32 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
+type OrganizationsController interface {
+	Query(ctx context.Context) ([]*types.Organization, error)
+	Find(ctx context.Context, name string) (*types.Organization, error)
+	Create(ctx context.Context, newOrg types.Organization) error
+	CreateOrReplace(ctx context.Context, newOrg types.Organization) error
+	Update(ctx context.Context, given types.Organization) error
+	Destroy(ctx context.Context, name string) error
+}
+
 // OrganizationsRouter handles requests for /organizations
 type OrganizationsRouter struct {
-	controller actions.OrganizationsController
+	controller OrganizationsController
 }
 
 // NewOrganizationsRouter instantiates new router for controlling check resources
-func NewOrganizationsRouter(store store.OrganizationStore) *OrganizationsRouter {
+func NewOrganizationsRouter(ctrl OrganizationsController) *OrganizationsRouter {
 	return &OrganizationsRouter{
-		controller: actions.NewOrganizationsController(store),
+		controller: ctrl,
 	}
 }
 

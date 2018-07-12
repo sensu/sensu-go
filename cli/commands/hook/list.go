@@ -26,7 +26,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			org := cli.Config.Organization()
 			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
-				org = "*"
+				org = types.OrganizationTypeAll
 			}
 
 			// Fetch hooks from the API
