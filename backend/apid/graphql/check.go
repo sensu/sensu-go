@@ -78,6 +78,17 @@ func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	return ok
 }
 
+// NodeID implements response to request for 'nodeId' field.
+func (r *checkImpl) NodeID(p graphql.ResolveParams) (string, error) {
+	check := p.Source.(*types.Check)
+	config := types.CheckConfig{
+		Organization: check.Organization,
+		Environment:  check.Environment,
+		Name:         check.Name,
+	}
+	return globalid.CheckTranslator.EncodeToString(&config), nil
+}
+
 // Executed implements response to request for 'executed' field.
 func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 	c := p.Source.(*types.Check)

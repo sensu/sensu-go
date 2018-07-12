@@ -1013,6 +1013,12 @@ var _ObjectTypeCheckConfigEdgeDesc = graphql.ObjectDesc{
 	},
 }
 
+// CheckNodeIDFieldResolver implement to resolve requests for the Check's nodeId field.
+type CheckNodeIDFieldResolver interface {
+	// NodeID implements response to request for nodeId field.
+	NodeID(p graphql.ResolveParams) (string, error)
+}
+
 // CheckNameFieldResolver implement to resolve requests for the Check's name field.
 type CheckNameFieldResolver interface {
 	// Name implements response to request for name field.
@@ -1248,6 +1254,7 @@ type CheckTtlFieldResolver interface {
 //   }
 //
 type CheckFieldResolvers interface {
+	CheckNodeIDFieldResolver
 	CheckNameFieldResolver
 	CheckCommandFieldResolver
 	CheckHandlersFieldResolver
@@ -1323,6 +1330,13 @@ type CheckFieldResolvers interface {
 //   }
 //
 type CheckAliases struct{}
+
+// NodeID implements response to request for 'nodeId' field.
+func (_ CheckAliases) NodeID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
 
 // Name implements response to request for 'name' field.
 func (_ CheckAliases) Name(p graphql.ResolveParams) (string, error) {
@@ -1518,6 +1532,13 @@ var CheckType = graphql.NewType("Check", graphql.ObjectKind)
 func RegisterCheck(svc *graphql.Service, impl CheckFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeCheckDesc, impl)
 }
+func _ObjTypeCheckNodeIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckNodeIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.NodeID(frp)
+	}
+}
+
 func _ObjTypeCheckNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckNameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -1812,6 +1833,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"nodeId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "id of the check's configuration",
+				Name:              "nodeId",
+				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
 			"occurrences": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1941,6 +1969,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"lastOK":               _ObjTypeCheckLastOKHandler,
 		"lowFlapThreshold":     _ObjTypeCheckLowFlapThresholdHandler,
 		"name":                 _ObjTypeCheckNameHandler,
+		"nodeId":               _ObjTypeCheckNodeIDHandler,
 		"occurrences":          _ObjTypeCheckOccurrencesHandler,
 		"occurrencesWatermark": _ObjTypeCheckOccurrencesWatermarkHandler,
 		"output":               _ObjTypeCheckOutputHandler,

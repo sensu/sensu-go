@@ -71,6 +71,9 @@ A Check is a check specification and optionally the results of the check's
 execution.
 """
 type Check {
+  """id of the check's configuration"""
+  nodeId: ID!
+
   """name is the unique identifier for a check"""
   name: String!
 
@@ -563,6 +566,44 @@ interface EnvironmentNode {
   environment: Environment
 }
 
+"""A terse description of an error."""
+enum ErrCode {
+  """
+  Indicates that some unrecoverable error occurred during execution of the
+  operation.
+  """
+  ERR_INTERNAL
+
+  """
+  Indicates that the record associated with the given field could not be found.
+  """
+  ERR_NOT_FOUND
+
+  """
+  Indicates that a record already exists and the operation could not be
+  completed.
+  """
+  ERR_ALREADY_EXISTS
+
+  """
+  Operation was canceled because the authorization token did not have sufficient
+  permissions.
+  """
+  ERR_PERMISSION_DENIED
+}
+
+"""
+Error describes a failed pre-condition or unexpected problem that occurred while
+processing the operation.
+"""
+interface Error {
+  """The field associated with the error."""
+  input: String
+
+  """A code concisely describing the error."""
+  code: ErrCode!
+}
+
 """
 An Event is the encapsulating type sent across the Sensu websocket transport.
 """
@@ -616,6 +657,31 @@ enum EventsListOrder {
   OLDEST
   NEWEST
   SEVERITY
+}
+
+input ExecuteCheckInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Global ID of the check to update."""
+  id: ID!
+
+  """Subscriptions is an optional list of subscriptions to target."""
+  subscriptions: [String!]!
+
+  """Reason is used to provide context to the adho request."""
+  reason: String = ""
+}
+
+type ExecuteCheckPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """
+  Includes any failed preconditions or unrecoverable errors that occurred while
+  executing the mutation.
+  """
+  errors: [Error!]!
 }
 
 """A Handler is a handler specification."""
@@ -750,6 +816,9 @@ type Mutation {
 
   """Updates given check."""
   updateCheck(input: UpdateCheckInput!): UpdateCheckPayload
+
+  """Updates given check."""
+  executeCheck(input: ExecuteCheckInput!): ExecuteCheckPayload
 
   """Removes given check."""
   deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
@@ -1047,6 +1116,17 @@ input SilenceInputs {
 
   """Expire is the number of seconds the entry will live"""
   expire: Int = -1
+}
+
+type StandardError implements Error {
+  """The field associated with the error."""
+  input: String
+
+  """A code concisely describing the error."""
+  code: ErrCode!
+
+  """Message describing the error."""
+  message: String!
 }
 
 """

@@ -26,10 +26,14 @@ import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import ListSortMenu from "/components/partials/ListSortMenu";
 import IconButton from "/components/partials/IconButton";
 
+import executeCheck from "/mutations/executeCheck";
+import { withApollo } from "react-apollo";
+
 import ChecksListItem from "./ChecksListItem";
 
 class ChecksList extends React.Component {
   static propTypes = {
+    client: PropTypes.object.isRequired,
     environment: PropTypes.shape({
       checks: PropTypes.shape({
         nodes: PropTypes.array.isRequired,
@@ -110,6 +114,14 @@ class ChecksList extends React.Component {
     this.silenceChecks([check]);
   };
 
+  executeChecks = checks => {
+    checks.forEach(({ id }) => executeCheck(this.props.client, { id }));
+  };
+
+  executeCheck = check => {
+    this.executeChecks([check]);
+  };
+
   _handleChangeSort = val => {
     let newVal = val;
     this.props.onChangeQuery(query => {
@@ -148,6 +160,7 @@ class ChecksList extends React.Component {
       selected={selected}
       onChangeSelected={setSelected}
       onClickSilence={() => this.silenceCheck(check)}
+      onClickExecute={() => this.executeCheck(check)}
     />
   );
 
@@ -174,6 +187,9 @@ class ChecksList extends React.Component {
                   <ButtonSet>
                     <Button onClick={() => this.silenceChecks(selectedItems)}>
                       <Typography variant="button">Silence</Typography>
+                    </Button>
+                    <Button onClick={() => this.executeChecks(selectedItems)}>
+                      <Typography variant="button">Execute</Typography>
                     </Button>
                   </ButtonSet>
                 )}
@@ -226,4 +242,4 @@ class ChecksList extends React.Component {
   }
 }
 
-export default ChecksList;
+export default withApollo(ChecksList);
