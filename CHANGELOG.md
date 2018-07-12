@@ -26,6 +26,7 @@ generated correctly.
 
 ### Removed
 - Removed check subdue e2e test.
+- Removed deprecated import command.
 
 ## [2.0.0-beta.2] - 2018-06-28
 
