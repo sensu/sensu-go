@@ -65,7 +65,7 @@ class SilencesContent extends React.Component {
                 <ListToolbar
                   renderSearch={
                     <SearchBox
-                      placeholder="Filter entities…"
+                      placeholder="Filter silences…"
                       initialValue={filter}
                       onSearch={value => setQueryParams({ filter: value })}
                     />
