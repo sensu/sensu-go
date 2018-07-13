@@ -667,7 +667,7 @@ input ExecuteCheckInput {
   id: ID!
 
   """Subscriptions is an optional list of subscriptions to target."""
-  subscriptions: [String!]!
+  subscriptions: [String!] = []
 
   """Reason is used to provide context to the adho request."""
   reason: String = ""

@@ -11,12 +11,12 @@ const mutation = gql`
   }
 `;
 
-export default (client, { id }) =>
+export default (client, { id, subscriptions = [] }) =>
   client
     .mutate({
       mutation,
       variables: {
-        input: { id },
+        input: { id, subscriptions },
       },
     })
     .then(res => res.data.executeCheck);
