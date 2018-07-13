@@ -59,7 +59,7 @@ func (r *EntitiesRouter) list(req *http.Request) (interface{}, error) {
 
 func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {
 	entity := types.Entity{}
-	if err := unmarshalBody(req, &entity); err != nil {
+	if err := UnmarshalBody(req, &entity); err != nil {
 		return nil, err
 	}
 	err := r.controller.Create(req.Context(), entity)
@@ -68,7 +68,7 @@ func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *EntitiesRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	entity := types.Entity{}
-	if err := unmarshalBody(req, &entity); err != nil {
+	if err := UnmarshalBody(req, &entity); err != nil {
 		return nil, err
 	}
 

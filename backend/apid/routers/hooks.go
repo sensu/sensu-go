@@ -49,7 +49,7 @@ func (r *HooksRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *HooksRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.HookConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +59,7 @@ func (r *HooksRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *HooksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.HookConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 

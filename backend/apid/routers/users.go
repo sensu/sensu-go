@@ -66,7 +66,7 @@ func (r *UsersRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.User{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.User{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +112,7 @@ func (r *UsersRouter) reinstate(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	params := map[string]string{}
-	if err := unmarshalBody(req, &params); err != nil {
+	if err := UnmarshalBody(req, &params); err != nil {
 		return nil, err
 	}
 

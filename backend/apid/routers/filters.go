@@ -47,7 +47,7 @@ func (r *EventFiltersRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *EventFiltersRouter) create(req *http.Request) (interface{}, error) {
 	filter := types.EventFilter{}
-	if err := unmarshalBody(req, &filter); err != nil {
+	if err := UnmarshalBody(req, &filter); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func (r *EventFiltersRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *EventFiltersRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	filter := types.EventFilter{}
-	if err := unmarshalBody(req, &filter); err != nil {
+	if err := UnmarshalBody(req, &filter); err != nil {
 		return nil, err
 	}
 

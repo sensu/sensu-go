@@ -70,7 +70,7 @@ func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.CheckConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -80,7 +80,7 @@ func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.CheckConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -100,7 +100,7 @@ func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 	cfg := types.HookList{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
 	adhocReq := types.AdhocRequest{}
-	if err := unmarshalBody(req, &adhocReq); err != nil {
+	if err := UnmarshalBody(req, &adhocReq); err != nil {
 		writeError(w, err)
 		return
 	}

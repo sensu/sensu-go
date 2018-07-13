@@ -48,7 +48,7 @@ func (r *AssetsRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *AssetsRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.Asset{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -58,7 +58,7 @@ func (r *AssetsRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *AssetsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	var asset types.Asset
-	if err := unmarshalBody(req, &asset); err != nil {
+	if err := UnmarshalBody(req, &asset); err != nil {
 		return nil, err
 	}
 	err := r.controller.CreateOrReplace(req.Context(), asset)

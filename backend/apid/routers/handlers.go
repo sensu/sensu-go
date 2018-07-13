@@ -34,7 +34,7 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 
 func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
 	handler := types.Handler{}
-	if err := unmarshalBody(req, &handler); err != nil {
+	if err := UnmarshalBody(req, &handler); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +43,7 @@ func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *HandlersRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	handler := types.Handler{}
-	if err := unmarshalBody(req, &handler); err != nil {
+	if err := UnmarshalBody(req, &handler); err != nil {
 		return nil, err
 	}
 

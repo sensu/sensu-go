@@ -191,7 +191,7 @@ func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Ro
 	return router.HandleFunc(path, actionHandler(fn))
 }
 
-func unmarshalBody(req *http.Request, record interface{}) error {
+func UnmarshalBody(req *http.Request, record interface{}) error {
 	err := json.NewDecoder(req.Body).Decode(&record)
 	if err != nil {
 		logger.WithError(err).Error("unable to read request body")

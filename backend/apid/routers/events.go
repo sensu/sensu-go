@@ -63,7 +63,7 @@ func (r *EventsRouter) destroy(req *http.Request) (interface{}, error) {
 
 func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	event := types.Event{}
-	if err := unmarshalBody(req, &event); err != nil {
+	if err := UnmarshalBody(req, &event); err != nil {
 		return nil, err
 	}
 
@@ -73,7 +73,7 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	event := types.Event{}
-	if err := unmarshalBody(req, &event); err != nil {
+	if err := UnmarshalBody(req, &event); err != nil {
 		return nil, err
 	}
 

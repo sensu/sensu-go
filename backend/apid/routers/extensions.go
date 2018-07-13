@@ -48,7 +48,7 @@ func (r *ExtensionsRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *ExtensionsRouter) register(req *http.Request) (interface{}, error) {
 	var extension types.Extension
-	if err := unmarshalBody(req, &extension); err != nil {
+	if err := UnmarshalBody(req, &extension); err != nil {
 		return nil, err
 	}
 	err := r.controller.Register(req.Context(), extension)

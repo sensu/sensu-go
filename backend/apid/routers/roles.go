@@ -53,7 +53,7 @@ func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.Role{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -63,7 +63,7 @@ func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.Role{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +83,7 @@ func (r *RolesRouter) destroy(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) addRule(req *http.Request) (interface{}, error) {
 	cfg := types.Rule{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 

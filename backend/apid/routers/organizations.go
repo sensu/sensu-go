@@ -57,7 +57,7 @@ func (r *OrganizationsRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *OrganizationsRouter) create(req *http.Request) (interface{}, error) {
 	org := types.Organization{}
-	if err := unmarshalBody(req, &org); err != nil {
+	if err := UnmarshalBody(req, &org); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (r *OrganizationsRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *OrganizationsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	org := types.Organization{}
-	if err := unmarshalBody(req, &org); err != nil {
+	if err := UnmarshalBody(req, &org); err != nil {
 		return nil, err
 	}
 

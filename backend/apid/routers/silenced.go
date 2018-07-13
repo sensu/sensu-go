@@ -52,7 +52,7 @@ func (r *SilencedRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.Silenced{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.Silenced{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 

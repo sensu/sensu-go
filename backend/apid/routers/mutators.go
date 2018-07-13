@@ -47,7 +47,7 @@ func (r *MutatorsRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *MutatorsRouter) create(req *http.Request) (interface{}, error) {
 	mut := types.Mutator{}
-	if err := unmarshalBody(req, &mut); err != nil {
+	if err := UnmarshalBody(req, &mut); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func (r *MutatorsRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *MutatorsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	mutator := types.Mutator{}
-	if err := unmarshalBody(req, &mutator); err != nil {
+	if err := UnmarshalBody(req, &mutator); err != nil {
 		return nil, err
 	}
 

@@ -67,7 +67,7 @@ func (r *EnvironmentsRouter) find(req *http.Request) (interface{}, error) {
 func (r *EnvironmentsRouter) create(req *http.Request) (interface{}, error) {
 	env := types.Environment{}
 	var err error
-	if err = unmarshalBody(req, &env); err != nil {
+	if err = UnmarshalBody(req, &env); err != nil {
 		return nil, err
 	}
 	vars := mux.Vars(req)
@@ -85,7 +85,7 @@ func (r *EnvironmentsRouter) create(req *http.Request) (interface{}, error) {
 func (r *EnvironmentsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	env := types.Environment{}
 	var err error
-	if err = unmarshalBody(req, &env); err != nil {
+	if err = UnmarshalBody(req, &env); err != nil {
 		return nil, err
 	}
 	vars := mux.Vars(req)
