@@ -4,11 +4,9 @@ package ring
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,95 +59,80 @@ func TestNext(t *testing.T) {
 		require.NoError(t, ring.Add(context.Background(), item))
 	}
 
+	var got []string
+
 	for i := 0; i < 9; i++ {
 		item, err := ring.Next(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, items[i%3], item)
+		got = append(got, item)
 	}
+
+	want := append(items, items...)
+	want = append(want, items...)
+
+	assert.Equal(t, want, got)
 
 	require.NoError(t, ring.Remove(context.Background(), "bar"))
 
 	newItems := []string{"foo", "baz"}
+	want = want[:0]
+	for i := 0; i < 5; i++ {
+		want = append(want, newItems...)
+	}
+
+	got = got[:0]
 
 	for i := 0; i < 10; i++ {
 		item, err := ring.Next(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, newItems[i%2], item)
+		got = append(got, item)
 	}
+
+	assert.Equal(t, want, got)
 }
 
-func TestPeek(t *testing.T) {
+func TestErrorOnNext(t *testing.T) {
 	t.Parallel()
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
+	clientA, err := e.NewClient()
 	require.NoError(t, err)
-	defer client.Close()
+	defer clientA.Close()
 
-	ring := EtcdGetter{client}.GetRing("testpeek")
+	getterA := EtcdGetter{clientA}
 
-	items := []string{"foo", "bar", "baz"}
-	for _, item := range items {
-		require.NoError(t, ring.Add(context.Background(), item))
-	}
-
-	item, err := ring.Peek(context.Background())
+	clientB, err := e.NewClient()
 	require.NoError(t, err)
-	assert.Equal(t, "foo", item)
+	defer clientB.Close()
 
-	ring = EtcdGetter{client}.GetRing("testempty")
-	_, err = ring.Peek(context.Background())
-	assert.Equal(t, ErrEmptyRing, err)
-}
+	getterB := EtcdGetter{clientB}
 
-func TestBlockOnNext(t *testing.T) {
-	t.Parallel()
-
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-
-	client, err := e.NewClient()
-	require.NoError(t, err)
-	defer client.Close()
-
-	getter := EtcdGetter{client}
-
-	r1 := getter.GetRing("blocknext")
-	r2 := getter.GetRing("blocknext")
+	r1 := getterA.GetRing("blocknext")
+	r2 := getterB.GetRing("blocknext")
 	r2.(*Ring).backendID = "something-else-entirely"
 
 	require.NoError(t, r1.Add(context.Background(), "foo"))
 	require.NoError(t, r2.Add(context.Background(), "bar"))
 
-	var wg sync.WaitGroup
-	var errNext error
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		value, err := r2.Next(context.Background())
-		if err != nil {
-			errNext = err
-			return
-		}
-
-		assert.Equal(t, "bar", value)
-	}()
+	_, err = r2.Next(context.Background())
+	if err != ErrNotOwner {
+		t.Fatalf("wanted ErrNotOwner, got %v", err)
+	}
 
 	value, err := r1.Next(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "foo", value)
 
-	wg.Wait()
-
-	// Make sure we didn't encountered any error while getting the next item
-	require.NoError(t, errNext)
-
-	value, err = r1.Next(context.Background())
+	value, err = r2.Next(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "foo", value)
+	assert.Equal(t, "bar", value)
+
+	_, err = r1.Next(context.Background())
+	if err != ErrNotOwner {
+		t.Fatalf("wanted ErrNotOwner, got %v", err)
+	}
 }
 
 func TestTransferOwnership(t *testing.T) {
@@ -171,17 +154,13 @@ func TestTransferOwnership(t *testing.T) {
 	require.NoError(t, r1.Add(context.Background(), "foo"))
 	require.NoError(t, r2.Add(context.Background(), "foo"))
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		<-time.After(time.Second)
-		cancel()
-	}()
-	_, err = r1.Next(ctx)
-	assert.Contains(t, err.Error(), ctx.Err().Error()) // it timed out
-
 	value, err := r2.Next(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "foo", value)
+
+	if _, err := r1.Next(context.Background()); err != ErrNotOwner {
+		t.Fatalf("wanted ErrNotOwner, got %v", err)
+	}
 }
 
 func TestErrNotOwner(t *testing.T) {
@@ -232,23 +211,4 @@ func TestExpire(t *testing.T) {
 
 	_, err = ring.Next(context.Background())
 	assert.Equal(t, ErrEmptyRing, err)
-}
-
-func TestDeleteWatch(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.TODO())
-
-	wc := make(chan clientv3.WatchResponse, 1)
-	// A delete occurs
-	wc <- clientv3.WatchResponse{}
-
-	// Get a notification for every delete event
-	wait := notifyDeletes(ctx, wc)
-
-	// Ensure a notification occurs
-	<-wait
-	cancel()
-
-	// Ensure the wait channel closes after the context is cancelled
-	for range wait {
-	}
 }

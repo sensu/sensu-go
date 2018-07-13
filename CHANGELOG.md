@@ -26,9 +26,12 @@ generated correctly.
 - Push the sensu/sensu:nightly docker image to the Docker Hub.
 - Replaced dummy certs with ones that won't expire until 100 years in the
 future.
+- Fixed a bug where clustered round robin check execution executed checks
+too often.
 
 ### Removed
 - Removed check subdue e2e test.
+- Removed unused Peek method in the Ring data structure.
 
 ### Breaking Changes
 - Removed deprecated import command.
