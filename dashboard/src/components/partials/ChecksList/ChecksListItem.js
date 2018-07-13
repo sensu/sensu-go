@@ -87,7 +87,7 @@ class CheckListItem extends React.Component {
                 <MenuItem
                   onClick={() => {
                     onClickExecute();
-                    this.closeMenu();
+                    close();
                   }}
                 >
                   Execute
@@ -95,7 +95,7 @@ class CheckListItem extends React.Component {
                 <MenuItem
                   onClick={() => {
                     onClickSilence();
-                    this.closeMenu();
+                    close();
                   }}
                 >
                   Silence

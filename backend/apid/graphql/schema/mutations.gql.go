@@ -1464,8 +1464,9 @@ func _InputTypeExecuteCheckInputConfigFn() graphql1.InputObjectConfig {
 				Type:         graphql1.String,
 			},
 			"subscriptions": &graphql1.InputObjectFieldConfig{
-				Description: "Subscriptions is an optional list of subscriptions to target.",
-				Type:        graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+				DefaultValue: []interface{}{},
+				Description:  "Subscriptions is an optional list of subscriptions to target.",
+				Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 			},
 		},
 		Name: "ExecuteCheckInput",
