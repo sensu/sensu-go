@@ -24,11 +24,11 @@ func NewExtensionsRouter(store store.ExtensionRegistry) *ExtensionsRouter {
 
 // Mount the ExtensionsRouter to a parent Router
 func (r *ExtensionsRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/extensions"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.put(r.register)
-	routes.del(r.deregister)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/extensions"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Put(r.register)
+	routes.Del(r.deregister)
 }
 
 func (r *ExtensionsRouter) list(req *http.Request) (interface{}, error) {
@@ -48,7 +48,7 @@ func (r *ExtensionsRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *ExtensionsRouter) register(req *http.Request) (interface{}, error) {
 	var extension types.Extension
-	if err := unmarshalBody(req, &extension); err != nil {
+	if err := UnmarshalBody(req, &extension); err != nil {
 		return nil, err
 	}
 	err := r.controller.Register(req.Context(), extension)

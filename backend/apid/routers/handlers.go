@@ -24,17 +24,17 @@ func NewHandlersRouter(store store.HandlerStore) *HandlersRouter {
 
 // Mount the HandlersRouter to a parent Router
 func (r *HandlersRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/handlers"}
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/handlers"}
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Put(r.createOrReplace)
 }
 
 func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
 	handler := types.Handler{}
-	if err := unmarshalBody(req, &handler); err != nil {
+	if err := UnmarshalBody(req, &handler); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +43,7 @@ func (r *HandlersRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *HandlersRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	handler := types.Handler{}
-	if err := unmarshalBody(req, &handler); err != nil {
+	if err := UnmarshalBody(req, &handler); err != nil {
 		return nil, err
 	}
 

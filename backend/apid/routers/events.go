@@ -25,13 +25,13 @@ func NewEventsRouter(store store.EventStore, bus messaging.MessageBus) *EventsRo
 
 // Mount the EventsRouter to a parent Router
 func (r *EventsRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/events"}
-	routes.getAll(r.list)
-	routes.path("{entity}", r.listByEntity).Methods(http.MethodGet)
-	routes.path("{entity}/{check}", r.find).Methods(http.MethodGet)
-	routes.path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
-	routes.path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
-	routes.post(r.create)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/events"}
+	routes.GetAll(r.list)
+	routes.Path("{entity}", r.listByEntity).Methods(http.MethodGet)
+	routes.Path("{entity}/{check}", r.find).Methods(http.MethodGet)
+	routes.Path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
+	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
+	routes.Post(r.create)
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
@@ -63,7 +63,7 @@ func (r *EventsRouter) destroy(req *http.Request) (interface{}, error) {
 
 func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	event := types.Event{}
-	if err := unmarshalBody(req, &event); err != nil {
+	if err := UnmarshalBody(req, &event); err != nil {
 		return nil, err
 	}
 
@@ -73,7 +73,7 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	event := types.Event{}
-	if err := unmarshalBody(req, &event); err != nil {
+	if err := UnmarshalBody(req, &event); err != nil {
 		return nil, err
 	}
 
