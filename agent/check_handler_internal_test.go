@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -117,8 +118,8 @@ func TestExecuteCheck(t *testing.T) {
 	metrics := "metric.foo 1 123456789\nmetric.bar 2 987654321"
 	f, err := ioutil.TempFile("", "metric")
 	assert.NoError(err)
-	err = ioutil.WriteFile(f.Name(), []byte(metrics), 0644)
-	assert.NoError(err)
+	_, err = fmt.Fprintln(f, metrics)
+	require.NoError(t, err)
 	f.Close()
 	defer os.Remove(f.Name())
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
@@ -133,7 +134,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.True(event.HasMetrics())
-	assert.Equal(2, len(event.Metrics.Points))
+	require.Equal(t, 2, len(event.Metrics.Points), string(msg.Payload))
 	metric0 := event.Metrics.Points[0]
 	assert.Equal(float64(1), metric0.Value)
 	assert.Equal("metric.foo", metric0.Name)

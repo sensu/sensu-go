@@ -10,6 +10,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMutationTypeExecuteCheck(t *testing.T) {
+	inputs := schema.ExecuteCheckInput{}
+	params := schema.MutationExecuteCheckFieldResolverParams{}
+	params.Args.Input = &inputs
+
+	impl := mutationsImpl{checkExecutor: mockCheckExecutor{}}
+
+	// Success
+	body, err := impl.ExecuteCheck(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	impl.checkExecutor = mockCheckExecutor{err: errors.New("wow")}
+	body, err = impl.ExecuteCheck(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+}
+
 func TestMutationTypeDeleteEntityField(t *testing.T) {
 	inputs := schema.DeleteRecordInput{}
 	params := schema.MutationDeleteEntityFieldResolverParams{}

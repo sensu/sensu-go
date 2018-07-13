@@ -1,0 +1,50 @@
+"""
+Error describes a failed pre-condition or unexpected problem that occurred while
+processing the operation.
+"""
+interface Error {
+  "The field associated with the error."
+  input: String
+
+  "A code concisely describing the error."
+  code: ErrCode!
+}
+
+type StandardError implements Error {
+  "The field associated with the error."
+  input: String
+
+  "A code concisely describing the error."
+  code: ErrCode!
+
+  "Message describing the error."
+  message: String!
+}
+
+"""
+A terse description of an error.
+"""
+enum ErrCode {
+  """
+  Indicates that some unrecoverable error occurred during execution of the
+  operation.
+  """
+  ERR_INTERNAL
+
+  """
+  Indicates that the record associated with the given field could not be found.
+  """
+  ERR_NOT_FOUND
+
+  """
+  Indicates that a record already exists and the operation could not be
+  completed.
+  """
+  ERR_ALREADY_EXISTS
+
+  """
+  Operation was canceled because the authorization token did not have sufficient
+  permissions.
+  """
+  ERR_PERMISSION_DENIED
+}

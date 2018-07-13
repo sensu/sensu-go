@@ -84,6 +84,9 @@ A Check is a check specification and optionally the results of the check's
 execution.
 """
 type Check {
+  "id of the check's configuration"
+  nodeId: ID!
+
   "name is the unique identifier for a check"
   name: String!
 

@@ -24,16 +24,16 @@ func NewRolesRouter(store store.RBACStore) *RolesRouter {
 
 // Mount the RolesRouter to a parent Router
 func (r *RolesRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/rbac/roles"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/roles"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.path("{id}/rules/{type}", r.addRule).Methods(http.MethodPut)
-	routes.path("{id}/rules/{type}", r.rmRule).Methods(http.MethodDelete)
+	routes.Path("{id}/rules/{type}", r.addRule).Methods(http.MethodPut)
+	routes.Path("{id}/rules/{type}", r.rmRule).Methods(http.MethodDelete)
 }
 
 func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
@@ -53,7 +53,7 @@ func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.Role{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -63,7 +63,7 @@ func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.Role{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +83,7 @@ func (r *RolesRouter) destroy(req *http.Request) (interface{}, error) {
 
 func (r *RolesRouter) addRule(req *http.Request) (interface{}, error) {
 	cfg := types.Rule{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 

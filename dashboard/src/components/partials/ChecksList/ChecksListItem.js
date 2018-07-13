@@ -23,6 +23,7 @@ class CheckListItem extends React.Component {
     check: PropTypes.object.isRequired,
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
+    onClickExecute: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
   };
 
@@ -39,7 +40,13 @@ class CheckListItem extends React.Component {
   };
 
   render() {
-    const { check, selected, onChangeSelected, onClickSilence } = this.props;
+    const {
+      check,
+      selected,
+      onChangeSelected,
+      onClickSilence,
+      onClickExecute,
+    } = this.props;
 
     return (
       <TableSelectableRow selected={selected}>
@@ -79,8 +86,16 @@ class CheckListItem extends React.Component {
               <Menu open onClose={close} anchorEl={anchorEl}>
                 <MenuItem
                   onClick={() => {
+                    onClickExecute();
+                    close();
+                  }}
+                >
+                  Execute
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
                     onClickSilence();
-                    this.closeMenu();
+                    close();
                   }}
                 >
                   Silence

@@ -38,16 +38,16 @@ func NewChecksRouter(ctrl CheckController) *ChecksRouter {
 
 // Mount the ChecksRouter to a parent Router
 func (r *ChecksRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/checks"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/checks"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
-	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
+	routes.Path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
+	routes.Path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
 
 	// handlefunc returns a custom status and response
 	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)
@@ -70,7 +70,7 @@ func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.CheckConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -80,7 +80,7 @@ func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.CheckConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -100,7 +100,7 @@ func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 	cfg := types.HookList{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
 	adhocReq := types.AdhocRequest{}
-	if err := unmarshalBody(req, &adhocReq); err != nil {
+	if err := UnmarshalBody(req, &adhocReq); err != nil {
 		writeError(w, err)
 		return
 	}

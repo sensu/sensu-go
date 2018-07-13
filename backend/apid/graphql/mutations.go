@@ -19,7 +19,8 @@ var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
 //
 
 type mutationsImpl struct {
-	checkCtrl actions.CheckController
+	checkCtrl     actions.CheckController
+	checkExecutor checkExecutor
 
 	entityDestroyer entityDestroyer
 
@@ -38,7 +39,8 @@ func newMutationImpl(store store.Store, getter types.QueueGetter, bus messaging.
 	silenceCtrl := actions.NewSilencedController(store)
 
 	return &mutationsImpl{
-		checkCtrl: checkCtrl,
+		checkCtrl:     checkCtrl,
+		checkExecutor: checkCtrl,
 
 		entityDestroyer: entityCtrl,
 
@@ -112,6 +114,25 @@ func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverPar
 	return map[string]interface{}{
 		"clientMutationId": p.Args.Input.ClientMutationID,
 		"deletedId":        components.String(),
+	}, nil
+}
+
+// ExecuteCheck implements response to request for the 'executeCheck' field.
+func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID)
+	ctx := setContextFromComponents(p.Context, components)
+
+	check := components.UniqueComponent()
+	adhocReq := types.AdhocRequest{
+		Name:          check,
+		Subscriptions: p.Args.Input.Subscriptions,
+		Reason:        p.Args.Input.Reason,
+	}
+
+	err := r.checkExecutor.QueueAdhocRequest(ctx, check, &adhocReq)
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"errors":           wrapInputErrors("id", err),
 	}, nil
 }
 
