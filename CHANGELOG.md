@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added unit test coverage for check routers.
+- Added an enterprise feature flag in sensuctl.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization for the
