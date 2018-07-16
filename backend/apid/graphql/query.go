@@ -17,15 +17,17 @@ var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
 type queryImpl struct {
 	eventFinder  eventFinder
 	entityFinder entityFinder
+	checkFinder  checkFinder
 	envFinder    environmentFinder
 
 	nodeResolver *nodeResolver
 }
 
-func newQueryImpl(store store.Store, resolver *nodeResolver) *queryImpl {
+func newQueryImpl(store store.Store, resolver *nodeResolver, queue types.QueueGetter) *queryImpl {
 	return &queryImpl{
 		eventFinder:  actions.NewEventController(store, nil),
 		entityFinder: actions.NewEntityController(store),
+		checkFinder:  actions.NewCheckController(store, queue),
 		envFinder:    actions.NewEnvironmentController(store),
 		nodeResolver: resolver,
 	}
@@ -54,6 +56,13 @@ func (r *queryImpl) Entity(p schema.QueryEntityFieldResolverParams) (interface{}
 	ctx := types.SetContextFromResource(p.Context, p.Args.Ns)
 	entity, err := r.entityFinder.Find(ctx, p.Args.Name)
 	return handleControllerResults(entity, err)
+}
+
+// Check implements response to request for 'check' field.
+func (r *queryImpl) Check(p schema.QueryCheckFieldResolverParams) (interface{}, error) {
+	ctx := types.SetContextFromResource(p.Context, p.Args.Ns)
+	check, err := r.checkFinder.Find(ctx, p.Args.Name)
+	return handleControllerResults(check, err)
 }
 
 // Node implements response to request for 'node' field.

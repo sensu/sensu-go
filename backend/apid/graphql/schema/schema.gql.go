@@ -87,6 +87,24 @@ type QueryEntityFieldResolver interface {
 	Entity(p QueryEntityFieldResolverParams) (interface{}, error)
 }
 
+// QueryCheckFieldResolverArgs contains arguments provided to check when selected
+type QueryCheckFieldResolverArgs struct {
+	Ns   *NamespaceInput // Ns - self descriptive
+	Name string          // Name - self descriptive
+}
+
+// QueryCheckFieldResolverParams contains contextual info to resolve check field
+type QueryCheckFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryCheckFieldResolverArgs
+}
+
+// QueryCheckFieldResolver implement to resolve requests for the Query's check field.
+type QueryCheckFieldResolver interface {
+	// Check implements response to request for check field.
+	Check(p QueryCheckFieldResolverParams) (interface{}, error)
+}
+
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
 type QueryNodeFieldResolverArgs struct {
 	ID string // ID - The ID of an object.
@@ -170,6 +188,7 @@ type QueryFieldResolvers interface {
 	QueryEnvironmentFieldResolver
 	QueryEventFieldResolver
 	QueryEntityFieldResolver
+	QueryCheckFieldResolver
 	QueryNodeFieldResolver
 }
 
@@ -244,6 +263,12 @@ func (_ QueryAliases) Entity(p QueryEntityFieldResolverParams) (interface{}, err
 	return val, err
 }
 
+// Check implements response to request for 'check' field.
+func (_ QueryAliases) Check(p QueryCheckFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Node implements response to request for 'node' field.
 func (_ QueryAliases) Node(p QueryNodeFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -303,6 +328,19 @@ func _ObjTypeQueryEntityHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeQueryCheckHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryCheckFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryCheckFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Check(frp)
+	}
+}
+
 func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryNodeFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -320,6 +358,22 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "The query root of Sensu's GraphQL interface.",
 		Fields: graphql1.Fields{
+			"check": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"name": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+					"ns": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql.InputType("NamespaceInput")),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "check fetches the check config associated with the given set of arguments.",
+				Name:              "check",
+				Type:              graphql.OutputType("CheckConfig"),
+			},
 			"entity": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"name": &graphql1.ArgumentConfig{
@@ -407,6 +461,7 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeQueryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"check":       _ObjTypeQueryCheckHandler,
 		"entity":      _ObjTypeQueryEntityHandler,
 		"environment": _ObjTypeQueryEnvironmentHandler,
 		"event":       _ObjTypeQueryEventHandler,

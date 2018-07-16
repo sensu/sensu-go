@@ -29,6 +29,11 @@ type Query {
   entity(ns: NamespaceInput!, name: String!): Entity
 
   """
+  check fetches the check config associated with the given set of arguments.
+  """
+  check(ns: NamespaceInput!, name: String!): CheckConfig
+
+  """
   Node fetches an object given its ID.
   """
   node(

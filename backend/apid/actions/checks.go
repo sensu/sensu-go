@@ -92,7 +92,7 @@ func (a CheckController) Find(ctx context.Context, name string) (*types.CheckCon
 	return nil, NewErrorf(NotFound)
 }
 
-// Create instatiates, validates and persists new resource if viewer has access.
+// Create instantiates, validates and persists new resource if viewer has access.
 func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newCheck)
