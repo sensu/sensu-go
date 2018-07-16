@@ -5,7 +5,7 @@ import gql from "graphql-tag";
 import AppContent from "/components/AppContent";
 import CollapsingMenu from "/components/CollapsingMenu";
 import Content from "/components/Content";
-import DialogController from "/components/util/DialogController";
+import ModalController from "/components/controller/ModalController";
 import ListToolbar from "/components/partials/ListToolbar";
 import NotFoundView from "/components/views/NotFoundView";
 import Paper from "@material-ui/core/Paper";
@@ -77,30 +77,29 @@ class SilencesContent extends React.Component {
                         icon={<RefreshIcon />}
                         onClick={() => refetch()}
                       />
-                      <DialogController>
-                        {({ isOpen, open, close }) => (
-                          <React.Fragment>
-                            <CollapsingMenu.Button
-                              title="New"
-                              icon={<PlusIcon />}
-                              onClick={() => open()}
-                            />
-                            {isOpen && (
-                              <SilenceEntryDialog
-                                values={{
-                                  props: {},
-                                  ns: match.params,
-                                }}
-                                onClose={() => {
-                                  // TODO: Only refetch / poison list on success
-                                  refetch();
-                                  close();
-                                }}
-                              />
-                            )}
-                          </React.Fragment>
+                      <ModalController
+                        renderModal={({ close }) => (
+                          <SilenceEntryDialog
+                            values={{
+                              props: {},
+                              ns: match.params,
+                            }}
+                            onClose={() => {
+                              // TODO: Only refetch / poison list on success
+                              refetch();
+                              close();
+                            }}
+                          />
                         )}
-                      </DialogController>
+                      >
+                        {({ open }) => (
+                          <CollapsingMenu.Button
+                            title="New"
+                            icon={<PlusIcon />}
+                            onClick={() => open()}
+                          />
+                        )}
+                      </ModalController>
                     </React.Fragment>
                   }
                 />

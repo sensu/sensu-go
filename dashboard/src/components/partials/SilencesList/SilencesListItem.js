@@ -33,17 +33,6 @@ class SilencesListItem extends React.Component {
     `,
   };
 
-  state = { menuOpen: false };
-
-  _menuAnchorRef = React.createRef();
-
-  openMenu = () => {
-    this.setState({ menuOpen: true });
-  };
-  closeMenu = () => {
-    this.setState({ menuOpen: false });
-  };
-
   renderExpiryCondition = () => {
     const { expires, expireOnResolve } = this.props.silence;
     if (expires && expireOnResolve) {
