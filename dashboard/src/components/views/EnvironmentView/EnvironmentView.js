@@ -10,6 +10,7 @@ import EntitiesContent from "./EntitiesContent";
 import EventsContent from "./EventsContent";
 import EventDetailsContent from "./EventDetailsContent";
 import EntityDetailsContent from "./EntityDetailsContent";
+import SilencesContent from "./SilencesContent";
 
 class EnvironmentView extends React.PureComponent {
   static propTypes = {
@@ -47,6 +48,11 @@ class EnvironmentView extends React.PureComponent {
           <Route
             path={`${match.path}/entities/:name`}
             component={EntityDetailsContent}
+          />
+          <Route
+            exact
+            path={`${match.path}/silences`}
+            component={SilencesContent}
           />
           <Redirect exact from={match.path} to={`${match.url}/events`} />
           <Route component={NotFoundView} />

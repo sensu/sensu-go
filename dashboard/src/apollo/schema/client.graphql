@@ -4,7 +4,12 @@ extend type Event {
 }
 
 extend type Entity {
-  "Describes whether the event has been deleted from the system"
+  "Describes whether the entity has been deleted from the system"
+  deleted: Boolean!
+}
+
+extend type Silenced {
+  "Describes whether the entry has been deleted from the system"
   deleted: Boolean!
 }
 

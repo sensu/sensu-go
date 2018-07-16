@@ -3,9 +3,10 @@ import PropTypes from "prop-types";
 import classNames from "classnames";
 
 import { withStyles } from "@material-ui/core/styles";
-import EventIcon from "@material-ui/icons/Notifications";
-import EntityIcon from "@material-ui/icons/DesktopMac";
-import CheckIcon from "@material-ui/icons/AssignmentTurnedIn";
+import CheckIcon from "/icons/Check";
+import EntityIcon from "/icons/Entity";
+import EventIcon from "/icons/Event";
+import SilenceIcon from "/icons/Silence";
 
 import QuickNavButton from "/components/QuickNavButton";
 
@@ -48,6 +49,13 @@ class QuickNav extends React.Component {
           Icon={CheckIcon}
           caption="Checks"
           to="checks"
+        />
+        <QuickNavButton
+          organization={organization}
+          environment={environment}
+          Icon={SilenceIcon}
+          caption="Silenced"
+          to="silences"
         />
       </div>
     );

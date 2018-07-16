@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -82,4 +84,51 @@ func (s *Silenced) URIPath() string {
 		s.ID, _ = SilencedID(s.Subscription, s.Check)
 	}
 	return fmt.Sprintf("/silenced/%s", url.PathEscape(s.ID))
+}
+
+// Get implements govaluate.Parameters
+func (s *Silenced) Get(fname string) (interface{}, error) {
+	strukt := reflect.Indirect(reflect.ValueOf(s))
+	field := strukt.FieldByName(fname)
+	if field.IsValid() {
+		return reflect.Indirect(field).Interface(), nil
+	}
+	return nil, nil
+}
+
+// SortSilencedByPredicate can be used to sort a given collection using a given
+// predicate.
+func SortSilencedByPredicate(es []*Silenced, fn func(a, b *Silenced) bool) sort.Interface {
+	return &silenceSorter{silences: es, byFn: fn}
+}
+
+// SortSilencedByID can be used to sort a given collection by their IDs.
+func SortSilencedByID(es []*Silenced) sort.Interface {
+	return SortSilencedByPredicate(es, func(a, b *Silenced) bool { return a.ID < b.ID })
+}
+
+// SortSilencedByBegin can be used to sort a given collection by their begin
+// timestamp.
+func SortSilencedByBegin(es []*Silenced) sort.Interface {
+	return SortSilencedByPredicate(es, func(a, b *Silenced) bool { return a.Begin < b.Begin })
+}
+
+type silenceSorter struct {
+	silences []*Silenced
+	byFn     func(a, b *Silenced) bool
+}
+
+// Len implements sort.Interface.
+func (s *silenceSorter) Len() int {
+	return len(s.silences)
+}
+
+// Swap implements sort.Interface.
+func (s *silenceSorter) Swap(i, j int) {
+	s.silences[i], s.silences[j] = s.silences[j], s.silences[i]
+}
+
+// Less implements sort.Interface.
+func (s *silenceSorter) Less(i, j int) bool {
+	return s.byFn(s.silences[i], s.silences[j])
 }

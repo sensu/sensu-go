@@ -441,7 +441,7 @@ type Entity implements Node {
   """Extended attributes includes arbitrary user-defined data"""
   extendedAttributes: JSON!
 
-  """Describes whether the event has been deleted from the system"""
+  """Describes whether the entity has been deleted from the system"""
   deleted: Boolean!
 }
 
@@ -530,6 +530,14 @@ type Environment implements Node {
 
     """Limit adds optional limit to the number of entries returned."""
     limit: Int = 10
+
+    """OrderBy adds optional order to the records retrieved."""
+    orderBy: SilencesListOrder = ID_DESC
+
+    """
+    Filter reduces the set using the given Sensu Query Expression predicate.
+    """
+    filter: String = ""
   ): SilencedConnection!
 
   """All subscriptions in use in the environment."""
@@ -1093,6 +1101,9 @@ type Silenced implements Node & EnvironmentNode {
 
   """Begin is a timestamp at which the silenced entry takes effect."""
   begin: DateTime
+
+  """Describes whether the entry has been deleted from the system"""
+  deleted: Boolean!
 }
 
 """A connection to a sequence of records."""
@@ -1116,6 +1127,13 @@ input SilenceInputs {
 
   """Expire is the number of seconds the entry will live"""
   expire: Int = -1
+}
+
+enum SilencesListOrder {
+  ID
+  ID_DESC
+  BEGIN
+  BEGIN_DESC
 }
 
 type StandardError implements Error {

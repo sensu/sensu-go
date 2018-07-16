@@ -101,8 +101,10 @@ type EnvironmentEventsFieldResolver interface {
 
 // EnvironmentSilencesFieldResolverArgs contains arguments provided to silences when selected
 type EnvironmentSilencesFieldResolverArgs struct {
-	Offset int // Offset - self descriptive
-	Limit  int // Limit adds optional limit to the number of entries returned.
+	Offset  int               // Offset - self descriptive
+	Limit   int               // Limit adds optional limit to the number of entries returned.
+	OrderBy SilencesListOrder // OrderBy adds optional order to the records retrieved.
+	Filter  string            // Filter reduces the set using the given Sensu Query Expression predicate.
 }
 
 // EnvironmentSilencesFieldResolverParams contains contextual info to resolve silences field
@@ -610,6 +612,11 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 			},
 			"silences": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
+					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
 						Description:  "Limit adds optional limit to the number of entries returned.",
@@ -619,6 +626,11 @@ func _ObjectTypeEnvironmentConfigFn() graphql1.ObjectConfig {
 						DefaultValue: 0,
 						Description:  "self descriptive",
 						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "ID_DESC",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("SilencesListOrder"),
 					},
 				},
 				DeprecationReason: "",
@@ -879,6 +891,67 @@ type _EnumTypeEventsListOrderValues struct {
 	NEWEST EventsListOrder
 	// SEVERITY - self descriptive
 	SEVERITY EventsListOrder
+}
+
+// SilencesListOrder self descriptive
+type SilencesListOrder string
+
+// SilencesListOrders holds enum values
+var SilencesListOrders = _EnumTypeSilencesListOrderValues{
+	BEGIN:      "BEGIN",
+	BEGIN_DESC: "BEGIN_DESC",
+	ID:         "ID",
+	ID_DESC:    "ID_DESC",
+}
+
+// SilencesListOrderType self descriptive
+var SilencesListOrderType = graphql.NewType("SilencesListOrder", graphql.EnumKind)
+
+// RegisterSilencesListOrder registers SilencesListOrder object type with given service.
+func RegisterSilencesListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeSilencesListOrderDesc)
+}
+func _EnumTypeSilencesListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "self descriptive",
+		Name:        "SilencesListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"BEGIN": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BEGIN",
+			},
+			"BEGIN_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BEGIN_DESC",
+			},
+			"ID": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID",
+			},
+			"ID_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID_DESC",
+			},
+		},
+	}
+}
+
+// describe SilencesListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeSilencesListOrderDesc = graphql.EnumDesc{Config: _EnumTypeSilencesListOrderConfigFn}
+
+type _EnumTypeSilencesListOrderValues struct {
+	// ID - self descriptive
+	ID SilencesListOrder
+	// ID_DESC - self descriptive
+	ID_DESC SilencesListOrder
+	// BEGIN - self descriptive
+	BEGIN SilencesListOrder
+	// BEGIN_DESC - self descriptive
+	BEGIN_DESC SilencesListOrder
 }
 
 // MutedColour self descriptive
