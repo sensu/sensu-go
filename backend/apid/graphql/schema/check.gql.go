@@ -34,6 +34,30 @@ type CheckConfigCommandFieldResolver interface {
 	Command(p graphql.ResolveParams) (string, error)
 }
 
+// CheckConfigCheckHooksFieldResolver implement to resolve requests for the CheckConfig's checkHooks field.
+type CheckConfigCheckHooksFieldResolver interface {
+	// CheckHooks implements response to request for checkHooks field.
+	CheckHooks(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckConfigCronFieldResolver implement to resolve requests for the CheckConfig's cron field.
+type CheckConfigCronFieldResolver interface {
+	// Cron implements response to request for cron field.
+	Cron(p graphql.ResolveParams) (string, error)
+}
+
+// CheckConfigEnvVarsFieldResolver implement to resolve requests for the CheckConfig's envVars field.
+type CheckConfigEnvVarsFieldResolver interface {
+	// EnvVars implements response to request for envVars field.
+	EnvVars(p graphql.ResolveParams) ([]string, error)
+}
+
+// CheckConfigExtendedAttributesFieldResolver implement to resolve requests for the CheckConfig's extendedAttributes field.
+type CheckConfigExtendedAttributesFieldResolver interface {
+	// ExtendedAttributes implements response to request for extendedAttributes field.
+	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
+}
+
 // CheckConfigHandlersFieldResolver implement to resolve requests for the CheckConfig's handlers field.
 type CheckConfigHandlersFieldResolver interface {
 	// Handlers implements response to request for handlers field.
@@ -58,10 +82,40 @@ type CheckConfigLowFlapThresholdFieldResolver interface {
 	LowFlapThreshold(p graphql.ResolveParams) (int, error)
 }
 
+// CheckConfigOutputMetricFormatFieldResolver implement to resolve requests for the CheckConfig's outputMetricFormat field.
+type CheckConfigOutputMetricFormatFieldResolver interface {
+	// OutputMetricFormat implements response to request for outputMetricFormat field.
+	OutputMetricFormat(p graphql.ResolveParams) (string, error)
+}
+
+// CheckConfigOutputMetricHandlersFieldResolver implement to resolve requests for the CheckConfig's outputMetricHandlers field.
+type CheckConfigOutputMetricHandlersFieldResolver interface {
+	// OutputMetricHandlers implements response to request for outputMetricHandlers field.
+	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckConfigProxyEntityIDFieldResolver implement to resolve requests for the CheckConfig's proxyEntityId field.
+type CheckConfigProxyEntityIDFieldResolver interface {
+	// ProxyEntityID implements response to request for proxyEntityId field.
+	ProxyEntityID(p graphql.ResolveParams) (string, error)
+}
+
+// CheckConfigProxyRequestsFieldResolver implement to resolve requests for the CheckConfig's proxyRequests field.
+type CheckConfigProxyRequestsFieldResolver interface {
+	// ProxyRequests implements response to request for proxyRequests field.
+	ProxyRequests(p graphql.ResolveParams) (interface{}, error)
+}
+
 // CheckConfigPublishFieldResolver implement to resolve requests for the CheckConfig's publish field.
 type CheckConfigPublishFieldResolver interface {
 	// Publish implements response to request for publish field.
 	Publish(p graphql.ResolveParams) (bool, error)
+}
+
+// CheckConfigRoundRobinFieldResolver implement to resolve requests for the CheckConfig's roundRobin field.
+type CheckConfigRoundRobinFieldResolver interface {
+	// RoundRobin implements response to request for roundRobin field.
+	RoundRobin(p graphql.ResolveParams) (bool, error)
 }
 
 // CheckConfigSubscriptionsFieldResolver implement to resolve requests for the CheckConfig's subscriptions field.
@@ -70,22 +124,10 @@ type CheckConfigSubscriptionsFieldResolver interface {
 	Subscriptions(p graphql.ResolveParams) ([]string, error)
 }
 
-// CheckConfigSourceFieldResolver implement to resolve requests for the CheckConfig's source field.
-type CheckConfigSourceFieldResolver interface {
-	// Source implements response to request for source field.
-	Source(p graphql.ResolveParams) (string, error)
-}
-
 // CheckConfigStdinFieldResolver implement to resolve requests for the CheckConfig's stdin field.
 type CheckConfigStdinFieldResolver interface {
 	// Stdin implements response to request for stdin field.
 	Stdin(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckConfigCheckHooksFieldResolver implement to resolve requests for the CheckConfig's checkHooks field.
-type CheckConfigCheckHooksFieldResolver interface {
-	// CheckHooks implements response to request for checkHooks field.
-	CheckHooks(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckConfigSubdueFieldResolver implement to resolve requests for the CheckConfig's subdue field.
@@ -104,6 +146,12 @@ type CheckConfigTimeoutFieldResolver interface {
 type CheckConfigTtlFieldResolver interface {
 	// Ttl implements response to request for ttl field.
 	Ttl(p graphql.ResolveParams) (int, error)
+}
+
+// CheckConfigToJSONFieldResolver implement to resolve requests for the CheckConfig's toJSON field.
+type CheckConfigToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 //
@@ -172,18 +220,26 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigNamespaceFieldResolver
 	CheckConfigNameFieldResolver
 	CheckConfigCommandFieldResolver
+	CheckConfigCheckHooksFieldResolver
+	CheckConfigCronFieldResolver
+	CheckConfigEnvVarsFieldResolver
+	CheckConfigExtendedAttributesFieldResolver
 	CheckConfigHandlersFieldResolver
 	CheckConfigHighFlapThresholdFieldResolver
 	CheckConfigIntervalFieldResolver
 	CheckConfigLowFlapThresholdFieldResolver
+	CheckConfigOutputMetricFormatFieldResolver
+	CheckConfigOutputMetricHandlersFieldResolver
+	CheckConfigProxyEntityIDFieldResolver
+	CheckConfigProxyRequestsFieldResolver
 	CheckConfigPublishFieldResolver
+	CheckConfigRoundRobinFieldResolver
 	CheckConfigSubscriptionsFieldResolver
-	CheckConfigSourceFieldResolver
 	CheckConfigStdinFieldResolver
-	CheckConfigCheckHooksFieldResolver
 	CheckConfigSubdueFieldResolver
 	CheckConfigTimeoutFieldResolver
 	CheckConfigTtlFieldResolver
+	CheckConfigToJSONFieldResolver
 }
 
 // CheckConfigAliases implements all methods on CheckConfigFieldResolvers interface by using reflection to
@@ -278,6 +334,32 @@ func (_ CheckConfigAliases) Command(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// CheckHooks implements response to request for 'checkHooks' field.
+func (_ CheckConfigAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Cron implements response to request for 'cron' field.
+func (_ CheckConfigAliases) Cron(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
+// EnvVars implements response to request for 'envVars' field.
+func (_ CheckConfigAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.([]string)
+	return ret, err
+}
+
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (_ CheckConfigAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Handlers implements response to request for 'handlers' field.
 func (_ CheckConfigAliases) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -323,6 +405,32 @@ func (_ CheckConfigAliases) LowFlapThreshold(p graphql.ResolveParams) (int, erro
 	return ret, err
 }
 
+// OutputMetricFormat implements response to request for 'outputMetricFormat' field.
+func (_ CheckConfigAliases) OutputMetricFormat(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
+// OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
+func (_ CheckConfigAliases) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// ProxyEntityID implements response to request for 'proxyEntityId' field.
+func (_ CheckConfigAliases) ProxyEntityID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
+// ProxyRequests implements response to request for 'proxyRequests' field.
+func (_ CheckConfigAliases) ProxyRequests(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Publish implements response to request for 'publish' field.
 func (_ CheckConfigAliases) Publish(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -336,29 +444,17 @@ func (_ CheckConfigAliases) Publish(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
-// Subscriptions implements response to request for 'subscriptions' field.
-func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
+// RoundRobin implements response to request for 'roundRobin' field.
+func (_ CheckConfigAliases) RoundRobin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.([]string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'subscriptions'")
-	}
+	ret := val.(bool)
 	return ret, err
 }
 
-// Source implements response to request for 'source' field.
-func (_ CheckConfigAliases) Source(p graphql.ResolveParams) (string, error) {
+// Subscriptions implements response to request for 'subscriptions' field.
+func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'source'")
-	}
+	ret := val.([]string)
 	return ret, err
 }
 
@@ -373,12 +469,6 @@ func (_ CheckConfigAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 		return ret, errors.New("unable to coerce value for field 'stdin'")
 	}
 	return ret, err
-}
-
-// CheckHooks implements response to request for 'checkHooks' field.
-func (_ CheckConfigAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
 }
 
 // Subdue implements response to request for 'subdue' field.
@@ -411,6 +501,12 @@ func (_ CheckConfigAliases) Ttl(p graphql.ResolveParams) (int, error) {
 		return ret, errors.New("unable to coerce value for field 'ttl'")
 	}
 	return ret, err
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (_ CheckConfigAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // CheckConfigType CheckConfig is the specification of a check.
@@ -448,6 +544,34 @@ func _ObjTypeCheckConfigCommandHandler(impl interface{}) graphql1.FieldResolveFn
 	}
 }
 
+func _ObjTypeCheckConfigCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigCheckHooksFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CheckHooks(frp)
+	}
+}
+
+func _ObjTypeCheckConfigCronHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigCronFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cron(frp)
+	}
+}
+
+func _ObjTypeCheckConfigEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigEnvVarsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.EnvVars(frp)
+	}
+}
+
+func _ObjTypeCheckConfigExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigExtendedAttributesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ExtendedAttributes(frp)
+	}
+}
+
 func _ObjTypeCheckConfigHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigHandlersFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -476,10 +600,45 @@ func _ObjTypeCheckConfigLowFlapThresholdHandler(impl interface{}) graphql1.Field
 	}
 }
 
+func _ObjTypeCheckConfigOutputMetricFormatHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigOutputMetricFormatFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.OutputMetricFormat(frp)
+	}
+}
+
+func _ObjTypeCheckConfigOutputMetricHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigOutputMetricHandlersFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.OutputMetricHandlers(frp)
+	}
+}
+
+func _ObjTypeCheckConfigProxyEntityIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigProxyEntityIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ProxyEntityID(frp)
+	}
+}
+
+func _ObjTypeCheckConfigProxyRequestsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigProxyRequestsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ProxyRequests(frp)
+	}
+}
+
 func _ObjTypeCheckConfigPublishHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigPublishFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Publish(frp)
+	}
+}
+
+func _ObjTypeCheckConfigRoundRobinHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigRoundRobinFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RoundRobin(frp)
 	}
 }
 
@@ -490,24 +649,10 @@ func _ObjTypeCheckConfigSubscriptionsHandler(impl interface{}) graphql1.FieldRes
 	}
 }
 
-func _ObjTypeCheckConfigSourceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigSourceFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Source(frp)
-	}
-}
-
 func _ObjTypeCheckConfigStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigStdinFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Stdin(frp)
-	}
-}
-
-func _ObjTypeCheckConfigCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigCheckHooksFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.CheckHooks(frp)
 	}
 }
 
@@ -532,6 +677,13 @@ func _ObjTypeCheckConfigTtlHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckConfigToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "CheckConfig is the specification of a check.",
@@ -541,7 +693,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "CheckHooks is the configured list of check hooks for the check",
 				Name:              "checkHooks",
-				Type:              graphql.OutputType("HookList"),
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("HookList")))),
 			},
 			"command": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -549,6 +701,27 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Description:       "command is the command to be executed.",
 				Name:              "command",
 				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"cron": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Cron is the cron string at which the check should be run.",
+				Name:              "cron",
+				Type:              graphql1.String,
+			},
+			"envVars": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "EnvVars is the list of environment variables to set for the check's\nexecution environment.",
+				Name:              "envVars",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
+			"extendedAttributes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "ExtendedAttributes store serialized arbitrary JSON-encoded data",
+				Name:              "extendedAttributes",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
 			"handlers": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -599,6 +772,34 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
 			},
+			"outputMetricFormat": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "OutputOutputMetricFormat is the metric protocol that the check's output will be\nexpected to follow in order to be extracted.",
+				Name:              "outputMetricFormat",
+				Type:              graphql1.String,
+			},
+			"outputMetricHandlers": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "OutputOutputMetricHandlers is the list of event handlers that will respond to metrics\nthat have been extracted from the check.",
+				Name:              "outputMetricHandlers",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Handler"))),
+			},
+			"proxyEntityId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "proxyEntityId indicates the name of the entity representing an external resource",
+				Name:              "proxyEntityId",
+				Type:              graphql1.String,
+			},
+			"proxyRequests": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "proxyRequests represents a request to execute a proxy check.",
+				Name:              "proxyRequests",
+				Type:              graphql.OutputType("ProxyRequests"),
+			},
 			"publish": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -606,12 +807,12 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "publish",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
-			"source": &graphql1.Field{
+			"roundRobin": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Source indicates the name of the entity representing an external resource",
-				Name:              "source",
-				Type:              graphql1.String,
+				Description:       "RoundRobin enables round-robin scheduling if set true.",
+				Name:              "roundRobin",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
 			"stdin": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -641,6 +842,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "timeout",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 			"ttl": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -667,22 +875,30 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeCheckConfigConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checkHooks":        _ObjTypeCheckConfigCheckHooksHandler,
-		"command":           _ObjTypeCheckConfigCommandHandler,
-		"handlers":          _ObjTypeCheckConfigHandlersHandler,
-		"highFlapThreshold": _ObjTypeCheckConfigHighFlapThresholdHandler,
-		"id":                _ObjTypeCheckConfigIDHandler,
-		"interval":          _ObjTypeCheckConfigIntervalHandler,
-		"lowFlapThreshold":  _ObjTypeCheckConfigLowFlapThresholdHandler,
-		"name":              _ObjTypeCheckConfigNameHandler,
-		"namespace":         _ObjTypeCheckConfigNamespaceHandler,
-		"publish":           _ObjTypeCheckConfigPublishHandler,
-		"source":            _ObjTypeCheckConfigSourceHandler,
-		"stdin":             _ObjTypeCheckConfigStdinHandler,
-		"subdue":            _ObjTypeCheckConfigSubdueHandler,
-		"subscriptions":     _ObjTypeCheckConfigSubscriptionsHandler,
-		"timeout":           _ObjTypeCheckConfigTimeoutHandler,
-		"ttl":               _ObjTypeCheckConfigTtlHandler,
+		"checkHooks":           _ObjTypeCheckConfigCheckHooksHandler,
+		"command":              _ObjTypeCheckConfigCommandHandler,
+		"cron":                 _ObjTypeCheckConfigCronHandler,
+		"envVars":              _ObjTypeCheckConfigEnvVarsHandler,
+		"extendedAttributes":   _ObjTypeCheckConfigExtendedAttributesHandler,
+		"handlers":             _ObjTypeCheckConfigHandlersHandler,
+		"highFlapThreshold":    _ObjTypeCheckConfigHighFlapThresholdHandler,
+		"id":                   _ObjTypeCheckConfigIDHandler,
+		"interval":             _ObjTypeCheckConfigIntervalHandler,
+		"lowFlapThreshold":     _ObjTypeCheckConfigLowFlapThresholdHandler,
+		"name":                 _ObjTypeCheckConfigNameHandler,
+		"namespace":            _ObjTypeCheckConfigNamespaceHandler,
+		"outputMetricFormat":   _ObjTypeCheckConfigOutputMetricFormatHandler,
+		"outputMetricHandlers": _ObjTypeCheckConfigOutputMetricHandlersHandler,
+		"proxyEntityId":        _ObjTypeCheckConfigProxyEntityIDHandler,
+		"proxyRequests":        _ObjTypeCheckConfigProxyRequestsHandler,
+		"publish":              _ObjTypeCheckConfigPublishHandler,
+		"roundRobin":           _ObjTypeCheckConfigRoundRobinHandler,
+		"stdin":                _ObjTypeCheckConfigStdinHandler,
+		"subdue":               _ObjTypeCheckConfigSubdueHandler,
+		"subscriptions":        _ObjTypeCheckConfigSubscriptionsHandler,
+		"timeout":              _ObjTypeCheckConfigTimeoutHandler,
+		"toJSON":               _ObjTypeCheckConfigToJSONHandler,
+		"ttl":                  _ObjTypeCheckConfigTtlHandler,
 	},
 }
 
@@ -1091,6 +1307,12 @@ var _ObjectTypeCheckConfigEdgeDesc = graphql.ObjectDesc{
 	},
 }
 
+// CheckNodeIDFieldResolver implement to resolve requests for the Check's nodeId field.
+type CheckNodeIDFieldResolver interface {
+	// NodeID implements response to request for nodeId field.
+	NodeID(p graphql.ResolveParams) (string, error)
+}
+
 // CheckNameFieldResolver implement to resolve requests for the Check's name field.
 type CheckNameFieldResolver interface {
 	// Name implements response to request for name field.
@@ -1101,6 +1323,24 @@ type CheckNameFieldResolver interface {
 type CheckCommandFieldResolver interface {
 	// Command implements response to request for command field.
 	Command(p graphql.ResolveParams) (string, error)
+}
+
+// CheckCheckHooksFieldResolver implement to resolve requests for the Check's checkHooks field.
+type CheckCheckHooksFieldResolver interface {
+	// CheckHooks implements response to request for checkHooks field.
+	CheckHooks(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckEnvVarsFieldResolver implement to resolve requests for the Check's envVars field.
+type CheckEnvVarsFieldResolver interface {
+	// EnvVars implements response to request for envVars field.
+	EnvVars(p graphql.ResolveParams) ([]string, error)
+}
+
+// CheckExtendedAttributesFieldResolver implement to resolve requests for the Check's extendedAttributes field.
+type CheckExtendedAttributesFieldResolver interface {
+	// ExtendedAttributes implements response to request for extendedAttributes field.
+	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckHandlersFieldResolver implement to resolve requests for the Check's handlers field.
@@ -1121,10 +1361,40 @@ type CheckIntervalFieldResolver interface {
 	Interval(p graphql.ResolveParams) (int, error)
 }
 
+// CheckCronFieldResolver implement to resolve requests for the Check's cron field.
+type CheckCronFieldResolver interface {
+	// Cron implements response to request for cron field.
+	Cron(p graphql.ResolveParams) (string, error)
+}
+
 // CheckLowFlapThresholdFieldResolver implement to resolve requests for the Check's lowFlapThreshold field.
 type CheckLowFlapThresholdFieldResolver interface {
 	// LowFlapThreshold implements response to request for lowFlapThreshold field.
 	LowFlapThreshold(p graphql.ResolveParams) (int, error)
+}
+
+// CheckOutputMetricFormatFieldResolver implement to resolve requests for the Check's outputMetricFormat field.
+type CheckOutputMetricFormatFieldResolver interface {
+	// OutputMetricFormat implements response to request for outputMetricFormat field.
+	OutputMetricFormat(p graphql.ResolveParams) (string, error)
+}
+
+// CheckOutputMetricHandlersFieldResolver implement to resolve requests for the Check's outputMetricHandlers field.
+type CheckOutputMetricHandlersFieldResolver interface {
+	// OutputMetricHandlers implements response to request for outputMetricHandlers field.
+	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckProxyEntityIDFieldResolver implement to resolve requests for the Check's proxyEntityId field.
+type CheckProxyEntityIDFieldResolver interface {
+	// ProxyEntityID implements response to request for proxyEntityId field.
+	ProxyEntityID(p graphql.ResolveParams) (string, error)
+}
+
+// CheckProxyRequestsFieldResolver implement to resolve requests for the Check's proxyRequests field.
+type CheckProxyRequestsFieldResolver interface {
+	// ProxyRequests implements response to request for proxyRequests field.
+	ProxyRequests(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckPublishFieldResolver implement to resolve requests for the Check's publish field.
@@ -1133,28 +1403,28 @@ type CheckPublishFieldResolver interface {
 	Publish(p graphql.ResolveParams) (bool, error)
 }
 
+// CheckRuntimeAssetsFieldResolver implement to resolve requests for the Check's runtimeAssets field.
+type CheckRuntimeAssetsFieldResolver interface {
+	// RuntimeAssets implements response to request for runtimeAssets field.
+	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckRoundRobinFieldResolver implement to resolve requests for the Check's roundRobin field.
+type CheckRoundRobinFieldResolver interface {
+	// RoundRobin implements response to request for roundRobin field.
+	RoundRobin(p graphql.ResolveParams) (bool, error)
+}
+
 // CheckSubscriptionsFieldResolver implement to resolve requests for the Check's subscriptions field.
 type CheckSubscriptionsFieldResolver interface {
 	// Subscriptions implements response to request for subscriptions field.
 	Subscriptions(p graphql.ResolveParams) ([]string, error)
 }
 
-// CheckSourceFieldResolver implement to resolve requests for the Check's source field.
-type CheckSourceFieldResolver interface {
-	// Source implements response to request for source field.
-	Source(p graphql.ResolveParams) (string, error)
-}
-
 // CheckStdinFieldResolver implement to resolve requests for the Check's stdin field.
 type CheckStdinFieldResolver interface {
 	// Stdin implements response to request for stdin field.
 	Stdin(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckCheckHooksFieldResolver implement to resolve requests for the Check's checkHooks field.
-type CheckCheckHooksFieldResolver interface {
-	// CheckHooks implements response to request for checkHooks field.
-	CheckHooks(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckSubdueFieldResolver implement to resolve requests for the Check's subdue field.
@@ -1326,17 +1596,26 @@ type CheckTtlFieldResolver interface {
 //   }
 //
 type CheckFieldResolvers interface {
+	CheckNodeIDFieldResolver
 	CheckNameFieldResolver
 	CheckCommandFieldResolver
+	CheckCheckHooksFieldResolver
+	CheckEnvVarsFieldResolver
+	CheckExtendedAttributesFieldResolver
 	CheckHandlersFieldResolver
 	CheckHighFlapThresholdFieldResolver
 	CheckIntervalFieldResolver
+	CheckCronFieldResolver
 	CheckLowFlapThresholdFieldResolver
+	CheckOutputMetricFormatFieldResolver
+	CheckOutputMetricHandlersFieldResolver
+	CheckProxyEntityIDFieldResolver
+	CheckProxyRequestsFieldResolver
 	CheckPublishFieldResolver
+	CheckRuntimeAssetsFieldResolver
+	CheckRoundRobinFieldResolver
 	CheckSubscriptionsFieldResolver
-	CheckSourceFieldResolver
 	CheckStdinFieldResolver
-	CheckCheckHooksFieldResolver
 	CheckSubdueFieldResolver
 	CheckDurationFieldResolver
 	CheckExecutedFieldResolver
@@ -1402,6 +1681,13 @@ type CheckFieldResolvers interface {
 //
 type CheckAliases struct{}
 
+// NodeID implements response to request for 'nodeId' field.
+func (_ CheckAliases) NodeID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
 // Name implements response to request for 'name' field.
 func (_ CheckAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -1426,6 +1712,25 @@ func (_ CheckAliases) Command(p graphql.ResolveParams) (string, error) {
 		return ret, errors.New("unable to coerce value for field 'command'")
 	}
 	return ret, err
+}
+
+// CheckHooks implements response to request for 'checkHooks' field.
+func (_ CheckAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// EnvVars implements response to request for 'envVars' field.
+func (_ CheckAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.([]string)
+	return ret, err
+}
+
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (_ CheckAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Handlers implements response to request for 'handlers' field.
@@ -1460,6 +1765,13 @@ func (_ CheckAliases) Interval(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
+// Cron implements response to request for 'cron' field.
+func (_ CheckAliases) Cron(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := fmt.Sprint(val)
+	return ret, err
+}
+
 // LowFlapThreshold implements response to request for 'lowFlapThreshold' field.
 func (_ CheckAliases) LowFlapThreshold(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -1473,34 +1785,21 @@ func (_ CheckAliases) LowFlapThreshold(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
-// Publish implements response to request for 'publish' field.
-func (_ CheckAliases) Publish(p graphql.ResolveParams) (bool, error) {
+// OutputMetricFormat implements response to request for 'outputMetricFormat' field.
+func (_ CheckAliases) OutputMetricFormat(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(bool)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'publish'")
-	}
+	ret := fmt.Sprint(val)
 	return ret, err
 }
 
-// Subscriptions implements response to request for 'subscriptions' field.
-func (_ CheckAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
+// OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
+func (_ CheckAliases) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.([]string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'subscriptions'")
-	}
-	return ret, err
+	return val, err
 }
 
-// Source implements response to request for 'source' field.
-func (_ CheckAliases) Source(p graphql.ResolveParams) (string, error) {
+// ProxyEntityID implements response to request for 'proxyEntityId' field.
+func (_ CheckAliases) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
@@ -1512,8 +1811,8 @@ func (_ CheckAliases) Source(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// Stdin implements response to request for 'stdin' field.
-func (_ CheckAliases) Stdin(p graphql.ResolveParams) (bool, error) {
+// ProxyRequests implements response to request for 'proxyRequests' field.
+func (_ CheckAliases) ProxyRequests(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(bool)
 	if err != nil {
@@ -1525,10 +1824,38 @@ func (_ CheckAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
-// CheckHooks implements response to request for 'checkHooks' field.
-func (_ CheckAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
+// Publish implements response to request for 'publish' field.
+func (_ CheckAliases) Publish(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(bool)
+	return ret, err
+}
+
+// RuntimeAssets implements response to request for 'runtimeAssets' field.
+func (_ CheckAliases) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
+}
+
+// RoundRobin implements response to request for 'roundRobin' field.
+func (_ CheckAliases) RoundRobin(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(bool)
+	return ret, err
+}
+
+// Subscriptions implements response to request for 'subscriptions' field.
+func (_ CheckAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.([]string)
+	return ret, err
+}
+
+// Stdin implements response to request for 'stdin' field.
+func (_ CheckAliases) Stdin(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(bool)
+	return ret, err
 }
 
 // Subdue implements response to request for 'subdue' field.
@@ -1728,6 +2055,13 @@ var CheckType = graphql.NewType("Check", graphql.ObjectKind)
 func RegisterCheck(svc *graphql.Service, impl CheckFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeCheckDesc, impl)
 }
+func _ObjTypeCheckNodeIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckNodeIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.NodeID(frp)
+	}
+}
+
 func _ObjTypeCheckNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckNameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -1739,6 +2073,27 @@ func _ObjTypeCheckCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckCommandFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Command(frp)
+	}
+}
+
+func _ObjTypeCheckCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckCheckHooksFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CheckHooks(frp)
+	}
+}
+
+func _ObjTypeCheckEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckEnvVarsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.EnvVars(frp)
+	}
+}
+
+func _ObjTypeCheckExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckExtendedAttributesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ExtendedAttributes(frp)
 	}
 }
 
@@ -1763,10 +2118,45 @@ func _ObjTypeCheckIntervalHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckCronHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckCronFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cron(frp)
+	}
+}
+
 func _ObjTypeCheckLowFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckLowFlapThresholdFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.LowFlapThreshold(frp)
+	}
+}
+
+func _ObjTypeCheckOutputMetricFormatHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckOutputMetricFormatFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.OutputMetricFormat(frp)
+	}
+}
+
+func _ObjTypeCheckOutputMetricHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckOutputMetricHandlersFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.OutputMetricHandlers(frp)
+	}
+}
+
+func _ObjTypeCheckProxyEntityIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckProxyEntityIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ProxyEntityID(frp)
+	}
+}
+
+func _ObjTypeCheckProxyRequestsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckProxyRequestsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ProxyRequests(frp)
 	}
 }
 
@@ -1777,6 +2167,20 @@ func _ObjTypeCheckPublishHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckRuntimeAssetsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckRuntimeAssetsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RuntimeAssets(frp)
+	}
+}
+
+func _ObjTypeCheckRoundRobinHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckRoundRobinFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RoundRobin(frp)
+	}
+}
+
 func _ObjTypeCheckSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckSubscriptionsFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -1784,24 +2188,10 @@ func _ObjTypeCheckSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn
 	}
 }
 
-func _ObjTypeCheckSourceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckSourceFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Source(frp)
-	}
-}
-
 func _ObjTypeCheckStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckStdinFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Stdin(frp)
-	}
-}
-
-func _ObjTypeCheckCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckCheckHooksFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.CheckHooks(frp)
 	}
 }
 
@@ -1932,7 +2322,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "CheckHooks is the list of check hooks for the check",
 				Name:              "checkHooks",
-				Type:              graphql.OutputType("HookList"),
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("HookList")))),
 			},
 			"command": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1941,6 +2331,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "command",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"cron": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Cron is the cron string at which the check should be run.",
+				Name:              "cron",
+				Type:              graphql1.String,
+			},
 			"duration": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1948,12 +2345,26 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "duration",
 				Type:              graphql1.Float,
 			},
+			"envVars": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "envVars is the list of environment variables to set for the check's\nexecution environment.",
+				Name:              "envVars",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
 			"executed": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Executed describes the time in which the check request was executed",
 				Name:              "executed",
 				Type:              graphql1.NewNonNull(graphql1.DateTime),
+			},
+			"extendedAttributes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "ExtendedAttributes store serialized arbitrary JSON-encoded data",
+				Name:              "extendedAttributes",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
 			"handlers": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -2022,6 +2433,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"nodeId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "id of the check's configuration",
+				Name:              "nodeId",
+				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
 			"occurrences": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -2043,6 +2461,34 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "output",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"outputMetricFormat": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "OutputOutputMetricFormat is the metric protocol that the check's output will be\nexpected to follow in order to be extracted.",
+				Name:              "outputMetricFormat",
+				Type:              graphql1.String,
+			},
+			"outputMetricHandlers": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "OutputOutputMetricHandlers is the list of event handlers that will respond to metrics\nthat have been extracted from the check.",
+				Name:              "outputMetricHandlers",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Handler"))),
+			},
+			"proxyEntityId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "proxyEntityId indicates the name of the entity representing an external resource",
+				Name:              "proxyEntityId",
+				Type:              graphql1.String,
+			},
+			"proxyRequests": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "proxyRequests represents a request to execute a proxy check.",
+				Name:              "proxyRequests",
+				Type:              graphql.OutputType("ProxyRequests"),
+			},
 			"publish": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -2050,19 +2496,26 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "publish",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
+			"roundRobin": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RoundRobin enables round-robin scheduling if set true.",
+				Name:              "roundRobin",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"runtimeAssets": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RuntimeAssets are a list of assets required to execute check.",
+				Name:              "runtimeAssets",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Asset"))),
+			},
 			"silenced": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Silenced is a list of silenced entry ids (subscription and check name)",
 				Name:              "silenced",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
-			},
-			"source": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Source indicates the name of the entity representing an external resource",
-				Name:              "source",
-				Type:              graphql1.String,
 			},
 			"state": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -2140,8 +2593,11 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"checkHooks":           _ObjTypeCheckCheckHooksHandler,
 		"command":              _ObjTypeCheckCommandHandler,
+		"cron":                 _ObjTypeCheckCronHandler,
 		"duration":             _ObjTypeCheckDurationHandler,
+		"envVars":              _ObjTypeCheckEnvVarsHandler,
 		"executed":             _ObjTypeCheckExecutedHandler,
+		"extendedAttributes":   _ObjTypeCheckExtendedAttributesHandler,
 		"handlers":             _ObjTypeCheckHandlersHandler,
 		"highFlapThreshold":    _ObjTypeCheckHighFlapThresholdHandler,
 		"history":              _ObjTypeCheckHistoryHandler,
@@ -2151,12 +2607,18 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"lastOK":               _ObjTypeCheckLastOKHandler,
 		"lowFlapThreshold":     _ObjTypeCheckLowFlapThresholdHandler,
 		"name":                 _ObjTypeCheckNameHandler,
+		"nodeId":               _ObjTypeCheckNodeIDHandler,
 		"occurrences":          _ObjTypeCheckOccurrencesHandler,
 		"occurrencesWatermark": _ObjTypeCheckOccurrencesWatermarkHandler,
 		"output":               _ObjTypeCheckOutputHandler,
+		"outputMetricFormat":   _ObjTypeCheckOutputMetricFormatHandler,
+		"outputMetricHandlers": _ObjTypeCheckOutputMetricHandlersHandler,
+		"proxyEntityId":        _ObjTypeCheckProxyEntityIDHandler,
+		"proxyRequests":        _ObjTypeCheckProxyRequestsHandler,
 		"publish":              _ObjTypeCheckPublishHandler,
+		"roundRobin":           _ObjTypeCheckRoundRobinHandler,
+		"runtimeAssets":        _ObjTypeCheckRuntimeAssetsHandler,
 		"silenced":             _ObjTypeCheckSilencedHandler,
-		"source":               _ObjTypeCheckSourceHandler,
 		"state":                _ObjTypeCheckStateHandler,
 		"status":               _ObjTypeCheckStatusHandler,
 		"stdin":                _ObjTypeCheckStdinHandler,
@@ -2378,5 +2840,234 @@ var _ObjectTypeCheckHistoryDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"executed": _ObjTypeCheckHistoryExecutedHandler,
 		"status":   _ObjTypeCheckHistoryStatusHandler,
+	},
+}
+
+// ProxyRequestsEntityAttributesFieldResolver implement to resolve requests for the ProxyRequests's entityAttributes field.
+type ProxyRequestsEntityAttributesFieldResolver interface {
+	// EntityAttributes implements response to request for entityAttributes field.
+	EntityAttributes(p graphql.ResolveParams) (interface{}, error)
+}
+
+// ProxyRequestsSplayFieldResolver implement to resolve requests for the ProxyRequests's splay field.
+type ProxyRequestsSplayFieldResolver interface {
+	// Splay implements response to request for splay field.
+	Splay(p graphql.ResolveParams) (bool, error)
+}
+
+// ProxyRequestsSplay_coverageFieldResolver implement to resolve requests for the ProxyRequests's splay_coverage field.
+type ProxyRequestsSplay_coverageFieldResolver interface {
+	// Splay_coverage implements response to request for splay_coverage field.
+	Splay_coverage(p graphql.ResolveParams) (int, error)
+}
+
+//
+// ProxyRequestsFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'ProxyRequests' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type ProxyRequestsFieldResolvers interface {
+	ProxyRequestsEntityAttributesFieldResolver
+	ProxyRequestsSplayFieldResolver
+	ProxyRequestsSplay_coverageFieldResolver
+}
+
+// ProxyRequestsAliases implements all methods on ProxyRequestsFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type ProxyRequestsAliases struct{}
+
+// EntityAttributes implements response to request for 'entityAttributes' field.
+func (_ ProxyRequestsAliases) EntityAttributes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Splay implements response to request for 'splay' field.
+func (_ ProxyRequestsAliases) Splay(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := val.(bool)
+	return ret, err
+}
+
+// Splay_coverage implements response to request for 'splay_coverage' field.
+func (_ ProxyRequestsAliases) Splay_coverage(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret := graphql1.Int.ParseValue(val).(int)
+	return ret, err
+}
+
+// ProxyRequestsType A ProxyRequests represents a request to execute a proxy check.
+var ProxyRequestsType = graphql.NewType("ProxyRequests", graphql.ObjectKind)
+
+// RegisterProxyRequests registers ProxyRequests object type with given service.
+func RegisterProxyRequests(svc *graphql.Service, impl ProxyRequestsFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeProxyRequestsDesc, impl)
+}
+func _ObjTypeProxyRequestsEntityAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProxyRequestsEntityAttributesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.EntityAttributes(frp)
+	}
+}
+
+func _ObjTypeProxyRequestsSplayHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProxyRequestsSplayFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Splay(frp)
+	}
+}
+
+func _ObjTypeProxyRequestsSplay_coverageHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProxyRequestsSplay_coverageFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Splay_coverage(frp)
+	}
+}
+
+func _ObjectTypeProxyRequestsConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "A ProxyRequests represents a request to execute a proxy check.",
+		Fields: graphql1.Fields{
+			"entityAttributes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "entityAttributes store serialized arbitrary JSON-encoded data to match\nentities in the registry.",
+				Name:              "entityAttributes",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("JSON")))),
+			},
+			"splay": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "splay indicates if proxy check requests should be splayed, published evenly\nover a window of time.",
+				Name:              "splay",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"splay_coverage": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "splayCoverage is the percentage used for proxy check request splay\ncalculation.",
+				Name:              "splay_coverage",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ProxyRequestsFieldResolvers.")
+		},
+		Name: "ProxyRequests",
+	}
+}
+
+// describe ProxyRequests's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeProxyRequestsDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeProxyRequestsConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"entityAttributes": _ObjTypeProxyRequestsEntityAttributesHandler,
+		"splay":            _ObjTypeProxyRequestsSplayHandler,
+		"splay_coverage":   _ObjTypeProxyRequestsSplay_coverageHandler,
 	},
 }

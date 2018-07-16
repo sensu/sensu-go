@@ -30,7 +30,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			if ok, err := flg.GetBool(flags.AllOrgs); err != nil {
 				return err
 			} else if ok {
-				org = "*"
+				org = types.OrganizationTypeAll
 			}
 			// Fetch silenceds from the API
 			sub, err := flg.GetString("subscription")

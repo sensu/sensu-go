@@ -86,8 +86,8 @@ func setupAdminRole(store store.Store) error {
 			Name: "admin",
 			Rules: []types.Rule{{
 				Type:         types.RuleTypeAll,
-				Environment:  "*",
-				Organization: "*",
+				Environment:  types.EnvironmentTypeAll,
+				Organization: types.OrganizationTypeAll,
 				Permissions:  types.RuleAllPerms,
 			}},
 		},
@@ -101,8 +101,8 @@ func setupReadOnlyRole(store store.Store) error {
 			Name: "read-only",
 			Rules: []types.Rule{{
 				Type:         types.RuleTypeAll,
-				Environment:  "*",
-				Organization: "*",
+				Environment:  types.EnvironmentTypeAll,
+				Organization: types.OrganizationTypeAll,
 				Permissions:  []string{types.RulePermRead},
 			}},
 		},

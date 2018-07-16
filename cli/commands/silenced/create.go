@@ -42,9 +42,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			} else {
-				if err := opts.withFlags(cmd.Flags()); err != nil {
-					return err
-				}
+				opts.withFlags(cmd.Flags())
 				if opts.Check == "" && opts.Subscription == "" {
 					return fmt.Errorf("must specify --check or --subscription")
 				}

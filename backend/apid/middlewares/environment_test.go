@@ -92,8 +92,8 @@ func TestValidateWildcard(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", server.URL, nil)
 	query := req.URL.Query()
-	query.Add("env", "*")
-	query.Add("org", "*")
+	query.Add("env", types.EnvironmentTypeAll)
+	query.Add("org", types.OrganizationTypeAll)
 	req.URL.RawQuery = query.Encode()
 
 	res, err := http.DefaultClient.Do(req)

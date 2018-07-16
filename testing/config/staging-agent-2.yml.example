@@ -1,0 +1,53 @@
+---
+##
+# agent configuration
+##
+id: "staging-agent-2"
+organization: "ops"
+environment: "dev"
+subscriptions: "rbac,round-robin"
+# UPDATE BACKEND URL
+#backend-url:
+#  - "ws://127.0.0.1:8081"
+
+##
+# authentication configuration
+##
+#user: "agent"
+#password: "P@ssw0rd!"
+
+##
+# api configuration
+##
+#api-host: "127.0.0.1"
+#api-port: 3031
+#disable-api: false
+
+##
+# socket configuration
+##
+#disable-sockets: false
+#socket-host: "127.0.0.1"
+#socket-port: 3030
+
+##
+# statsd configuration
+##
+#statsd-disable: false
+#statsd-event-handlers: ""
+#statsd-flush-interval: 10
+#statsd-metrics-host: "127.0.0.1"
+#statsd-metrics-port: 8125
+
+##
+# other
+##
+#cache-dir: "/var/cache/sensu/sensu-agent"
+#config-file: ""
+#deregister: true
+#deregistration-handler: ""
+#keepalive-timeout: 120
+#keepalive-interval: 20
+custom-attributes: "{\"ec2_access_key\": \"P@ssw0rd\",\"secret\": \"P@ssw0rd\"}"
+log-level: "debug"
+redact: "ec2_access_key"

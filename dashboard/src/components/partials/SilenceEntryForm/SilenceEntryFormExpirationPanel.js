@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { withField } from "@10xjs/form";
 
+import Collapse from "@material-ui/core/Collapse";
 import FormControl from "@material-ui/core/FormControl";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import TextField from "@material-ui/core/TextField";
@@ -14,38 +15,30 @@ import Panel from "./SilenceEntryFormPanel";
 
 const DEFAULT_EXPIRE_DURATION = 3600;
 
-const parseNumber = value => {
-  const number = parseInt(value, 10);
-  return isNaN(number) ? -1 : number;
-};
-
-const formatNumber = value => (value === -1 ? "" : `${value}`);
-
 class SilenceEntryFormExpirationPanel extends React.PureComponent {
   static propTypes = {
     expireOnResolve: PropTypes.object.isRequired,
     expire: PropTypes.object.isRequired,
-    setFieldValue: PropTypes.func.isRequired,
   };
 
   render() {
-    const { expireOnResolve, expire, setFieldValue } = this.props;
+    const { expireOnResolve, expire } = this.props;
 
-    const expireAfterDuration = expire.stateValue > 0;
+    const expireAfterDuration = expire.rawValue > 0;
 
     if (expireAfterDuration) {
-      this._lastExprireValue = expire.props.value;
+      this._lastExprireValue = expire.input.value;
     }
 
     const hasDefaultValue =
-      !expireOnResolve.props.checked && !expireAfterDuration;
+      !expireOnResolve.input.checked && !expireAfterDuration;
 
     const summary =
       [
-        expireOnResolve.props.checked ? "on resolved check" : null,
+        expireOnResolve.input.checked ? "on resolved check" : null,
         expireAfterDuration
-          ? `after ${expire.stateValue} ${
-              expire.stateValue === 1 ? "second" : "seconds"
+          ? `after ${expire.rawValue} ${
+              expire.rawValue === 1 ? "second" : "seconds"
             }`
           : null,
       ]
@@ -64,7 +57,7 @@ class SilenceEntryFormExpirationPanel extends React.PureComponent {
         </Typography>
         <FormControl fullWidth>
           <FormControlLabel
-            control={<Switch {...expireOnResolve.props} />}
+            control={<Switch {...expireOnResolve.input} />}
             label="Expire when a matching check resolves"
           />
         </FormControl>
@@ -75,8 +68,7 @@ class SilenceEntryFormExpirationPanel extends React.PureComponent {
                 checked={expireAfterDuration}
                 onChange={event => {
                   const checked = event.target.checked;
-                  setFieldValue(
-                    "expire",
+                  expire.setValue(
                     checked
                       ? this._lastExprireValue || DEFAULT_EXPIRE_DURATION
                       : -1,
@@ -87,8 +79,7 @@ class SilenceEntryFormExpirationPanel extends React.PureComponent {
             label="Expire after a fixed duration"
           />
         </FormControl>
-        {// WIP: react-motion react-resize-observer expander thing here
-        (expireAfterDuration || expire.focused) && (
+        <Collapse in={expireAfterDuration || expire.focused}>
           <FormControl fullWidth>
             <TextField
               type="number"
@@ -98,28 +89,38 @@ class SilenceEntryFormExpirationPanel extends React.PureComponent {
                   <InputAdornment position="end">seconds</InputAdornment>
                 ),
               }}
-              {...expire.composeProps({
+              {...expire.composeInput({
                 onChange: event => {
-                  setFieldValue("check", Math.random());
                   if (!event.target.value) {
                     this._lastExprireValue = undefined;
-                    setFieldValue("expire", -1);
+                    expire.setValue(-1);
                   }
                 },
               })}
             />
           </FormControl>
-        )}
+        </Collapse>
       </Panel>
     );
   }
 }
 
 export default compose(
-  withField("expireOnResolve", { path: "expireOnResolve", checkbox: true }),
+  withField("expireOnResolve", {
+    path: "props.expireOnResolve",
+    checkbox: true,
+  }),
   withField("expire", {
-    path: "expire",
-    parse: parseNumber,
-    format: formatNumber,
+    path: "props.expire",
+    parse(value) {
+      const number = parseInt(value, 10);
+      return isNaN(number) ? -1 : number;
+    },
+    format(value) {
+      if (value === undefined || value === null || value === -1) {
+        return "";
+      }
+      return `${value}`;
+    },
   }),
 )(SilenceEntryFormExpirationPanel);

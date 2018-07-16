@@ -9,12 +9,12 @@ import Panel from "./SilenceEntryFormPanel";
 class SilenceEntryFormReasonPanel extends React.PureComponent {
   render() {
     return (
-      <Field path="reason">
-        {reason => (
+      <Field path="props.reason">
+        {({ input, rawValue }) => (
           <Panel
             title="Reason"
-            summary={reason.props.value}
-            hasDefaultValue={!reason.rawValue}
+            summary={input.value}
+            hasDefaultValue={!rawValue}
           >
             <Typography color="textSecondary">
               Explanation for the creation of this entry.
@@ -26,7 +26,7 @@ class SilenceEntryFormReasonPanel extends React.PureComponent {
               fullWidth
               rowsMax="4"
               margin="normal"
-              {...reason.props}
+              {...input}
             />
           </Panel>
         )}

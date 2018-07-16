@@ -1,41 +1,53 @@
 package routers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
+// CheckController represents the controller needs of the ChecksRouter.
+type CheckController interface {
+	Create(context.Context, types.CheckConfig) error
+	CreateOrReplace(context.Context, types.CheckConfig) error
+	Update(context.Context, types.CheckConfig) error
+	Query(context.Context) ([]*types.CheckConfig, error)
+	Find(context.Context, string) (*types.CheckConfig, error)
+	Destroy(context.Context, string) error
+	AddCheckHook(context.Context, string, types.HookList) error
+	RemoveCheckHook(context.Context, string, string, string) error
+	QueueAdhocRequest(context.Context, string, *types.AdhocRequest) error
+}
+
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
-	controller actions.CheckController
+	controller CheckController
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter {
+func NewChecksRouter(ctrl CheckController) *ChecksRouter {
 	return &ChecksRouter{
-		controller: actions.NewCheckController(store, getter),
+		controller: ctrl,
 	}
 }
 
 // Mount the ChecksRouter to a parent Router
 func (r *ChecksRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/checks"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/checks"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
-	routes.path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
+	routes.Path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
+	routes.Path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
 
 	// handlefunc returns a custom status and response
 	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)
@@ -58,7 +70,7 @@ func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.CheckConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +80,7 @@ func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.CheckConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -88,7 +100,7 @@ func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 	cfg := types.HookList{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -122,7 +134,7 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 
 func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
 	adhocReq := types.AdhocRequest{}
-	if err := unmarshalBody(req, &adhocReq); err != nil {
+	if err := UnmarshalBody(req, &adhocReq); err != nil {
 		writeError(w, err)
 		return
 	}

@@ -6,6 +6,11 @@ import (
 	"net/url"
 )
 
+const (
+	// EnvironmentTypeAll matches all actions
+	EnvironmentTypeAll = "*"
+)
+
 // Validate returns an error if the environment does not pass validation tests.
 func (e *Environment) Validate() error {
 	if err := ValidateName(e.Name); err != nil {

@@ -63,7 +63,7 @@ required = [
 
 [[constraint]]
   name = "github.com/mholt/archiver"
-  version = "2.0.0"
+  revision = "e4ef56d48eb029648b0e895bb0b6a393ef0829c3"
 
 [[constraint]]
   branch = "master"

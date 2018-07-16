@@ -2,6 +2,9 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -10,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var binDir = filepath.Join("..", "bin")
@@ -69,7 +73,7 @@ func TestExecuteCheck(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(int32(0), event.Check.Status)
+	assert.Equal(uint32(0), event.Check.Status)
 	assert.False(event.HasMetrics())
 
 	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
@@ -82,7 +86,7 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(int32(1), event.Check.Status)
+	assert.Equal(uint32(1), event.Check.Status)
 	assert.NotZero(event.Check.Issued)
 
 	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep"), "5")
@@ -96,7 +100,7 @@ func TestExecuteCheck(t *testing.T) {
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
-	assert.EqualValues(int32(2), event.Check.Status)
+	assert.Equal(uint32(2), event.Check.Status)
 
 	checkConfig.Command = truePath
 	checkConfig.OutputMetricHandlers = nil
@@ -111,7 +115,16 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
 
+	metrics := "metric.foo 1 123456789\nmetric.bar 2 987654321"
+	f, err := ioutil.TempFile("", "metric")
+	assert.NoError(err)
+	_, err = fmt.Fprintln(f, metrics)
+	require.NoError(t, err)
+	f.Close()
+	defer os.Remove(f.Name())
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
+	catPath := testutil.CommandPath(filepath.Join(toolsDir, "cat"), f.Name())
+	checkConfig.Command = catPath
 
 	agent.executeCheck(request)
 
@@ -121,6 +134,81 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.True(event.HasMetrics())
+	require.Equal(t, 2, len(event.Metrics.Points), string(msg.Payload))
+	metric0 := event.Metrics.Points[0]
+	assert.Equal(float64(1), metric0.Value)
+	assert.Equal("metric.foo", metric0.Name)
+	assert.Equal(int64(123456789), metric0.Timestamp)
+	metric1 := event.Metrics.Points[1]
+	assert.Equal(float64(2), metric1.Value)
+	assert.Equal("metric.bar", metric1.Name)
+	assert.Equal(int64(987654321), metric1.Timestamp)
+}
+
+func TestHandleTokenSubstitution(t *testing.T) {
+	assert := assert.New(t)
+
+	checkConfig := types.FixtureCheckConfig("check")
+	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig.Stdin = true
+
+	config := FixtureConfig()
+	config.ExtendedAttributes = []byte(`{"team":"devops"}`)
+	config.AgentID = "TestTokenSubstitution"
+	agent := NewAgent(config)
+	ch := make(chan *transport.Message, 1)
+	agent.sendq = ch
+
+	// check command with valid token substitution
+	checkConfig.Command = `echo {{ .ID }} {{ .Team }} {{ .Missing | default "defaultValue" }}`
+	checkConfig.Timeout = 10
+
+	payload, err := json.Marshal(request)
+	if err != nil {
+		assert.FailNow("error marshaling check request")
+	}
+
+	require.NoError(t, agent.handleCheck(payload))
+
+	msg := <-ch
+
+	event := &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.EqualValues(int32(0), event.Check.Status)
+	assert.Contains(event.Check.Output, "TestTokenSubstitution devops defaultValue")
+}
+
+func TestHandleTokenSubstitutionNoKey(t *testing.T) {
+	assert := assert.New(t)
+
+	checkConfig := types.FixtureCheckConfig("check")
+	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig.Stdin = true
+
+	config := FixtureConfig()
+	config.ExtendedAttributes = []byte(`{"team":"devops"}`)
+	config.AgentID = "TestTokenSubstitution"
+	agent := NewAgent(config)
+	ch := make(chan *transport.Message, 1)
+	agent.sendq = ch
+
+	// check command with unmatched token
+	checkConfig.Command = `{{ .Foo }}`
+
+	payload, err := json.Marshal(request)
+	if err != nil {
+		assert.FailNow("error marshaling check request")
+	}
+
+	require.NoError(t, agent.handleCheck(payload))
+
+	msg := <-ch
+
+	event := &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.Contains(event.Check.Output, "has no entry for key")
 }
 
 func TestPrepareCheck(t *testing.T) {

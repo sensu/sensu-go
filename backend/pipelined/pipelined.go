@@ -108,6 +108,11 @@ func (p *Pipelined) Err() <-chan error {
 	return p.errChan
 }
 
+// Name returns the daemon name
+func (p *Pipelined) Name() string {
+	return "pipelined"
+}
+
 // createPipelines creates several goroutines, responsible for pulling
 // Sensu events from a channel (bound to message bus "event" topic)
 // and for handling them.

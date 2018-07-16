@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"time"
 
 	"github.com/graphql-go/graphql"
@@ -41,14 +42,30 @@ func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
-	handlers, err := r.handlerCtrl.Query(p.Context)
+	return fetchHandlers(p.Context, r.handlerCtrl, check.Handlers)
+}
+
+// OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
+func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.CheckConfig)
+	return fetchHandlers(p.Context, r.handlerCtrl, check.OutputMetricHandlers)
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.CheckConfig)
+	return types.WrapResource(check), nil
+}
+
+func fetchHandlers(ctx context.Context, ctrl actions.HandlerController, names []string) ([]*types.Handler, error) {
+	handlers, err := ctrl.Query(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Filter out irrevelant handlers
 	for i := 0; i < len(handlers); {
-		for _, h := range check.Handlers {
+		for _, h := range names {
 			if h == handlers[i].Name {
 				continue
 			}
@@ -76,6 +93,17 @@ type checkImpl struct {
 func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*types.Check)
 	return ok
+}
+
+// NodeID implements response to request for 'nodeId' field.
+func (r *checkImpl) NodeID(p graphql.ResolveParams) (string, error) {
+	check := p.Source.(*types.Check)
+	config := types.CheckConfig{
+		Organization: check.Organization,
+		Environment:  check.Environment,
+		Name:         check.Name,
+	}
+	return globalid.CheckTranslator.EncodeToString(&config), nil
 }
 
 // Executed implements response to request for 'executed' field.

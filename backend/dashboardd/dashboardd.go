@@ -128,6 +128,11 @@ func (d *Dashboardd) Err() <-chan error {
 	return d.errChan
 }
 
+// Name returns the daemon name
+func (d *Dashboardd) Name() string {
+	return "dashboardd"
+}
+
 func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
 
@@ -225,11 +230,13 @@ func newBackendProxy(port int, TLS *types.TLSOptions) (*httputil.ReverseProxy, e
 
 	// Configure TLS
 	if TLS != nil {
+		target.Scheme = "https"
+
 		cfg, err := TLS.ToTLSConfig()
 		if err != nil {
 			return nil, err
 		}
-		target.Scheme = "https"
+		cfg.InsecureSkipVerify = true // skip host verification on loopback interface
 		transport.TLSClientConfig = cfg
 	}
 

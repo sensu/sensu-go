@@ -6,6 +6,16 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// checks
+
+type mockCheckExecutor struct {
+	err error
+}
+
+func (m mockCheckExecutor) QueueAdhocRequest(_ context.Context, _ string, _ *types.AdhocRequest) error {
+	return m.err
+}
+
 // entities
 
 type mockEntityFetcher struct {
@@ -15,6 +25,14 @@ type mockEntityFetcher struct {
 
 func (m mockEntityFetcher) Find(_ context.Context, _ string) (*types.Entity, error) {
 	return m.record, m.err
+}
+
+type mockEntityDestroyer struct {
+	err error
+}
+
+func (m mockEntityDestroyer) Destroy(_ context.Context, _ string) error {
+	return m.err
 }
 
 // events

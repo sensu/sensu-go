@@ -2,16 +2,20 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import Query from "/components/util/Query";
-import AppContent from "/components/AppContent";
-import EventsContainer from "/components/EventsContainer";
-import SearchBox from "/components/SearchBox";
-import Content from "/components/Content";
-import NotFoundView from "/components/views/NotFoundView";
 import RefreshIcon from "@material-ui/icons/Refresh";
+
+import Query from "/components/util/Query";
+
+import EventsList from "/components/partials/EventsList";
 import ListToolbar from "/components/partials/ListToolbar";
-import CollapsingMenu from "/components/CollapsingMenu";
+
+import NotFoundView from "/components/views/NotFoundView";
+
+import SearchBox from "/components/SearchBox";
 import { withQueryParams } from "/components/QueryParams";
+import AppContent from "/components/AppContent";
+import CollapsingMenu from "/components/CollapsingMenu";
+import Content from "/components/Content";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
@@ -22,6 +26,8 @@ class EventsContent extends React.Component {
     queryParams: PropTypes.shape({
       filter: PropTypes.string,
       order: PropTypes.string,
+      offset: PropTypes.string,
+      limit: PropTypes.string,
     }).isRequired,
     setQueryParams: PropTypes.func.isRequired,
   };
@@ -30,23 +36,29 @@ class EventsContent extends React.Component {
     query EnvironmentViewEventsContentQuery(
       $filter: String = "${defaultExpression}"
       $order: EventsListOrder = SEVERITY
+      $limit: Int,
+      $offset: Int,
       $environment: String!
       $organization: String!
     ) {
       environment(organization: $organization, environment: $environment) {
-        ...EventsContainer_environment
+        ...EventsList_environment
       }
     }
 
-    ${EventsContainer.fragments.environment}
+    ${EventsList.fragments.environment}
   `;
 
   render() {
+    const { queryParams, setQueryParams, match } = this.props;
+
+    const { filter, order, limit = "50", offset = "0" } = queryParams;
+
     return (
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
-        variables={{ ...this.props.match.params, ...this.props.queryParams }}
+        variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
           if (!environment && !loading && !aborted) {
@@ -60,8 +72,8 @@ class EventsContent extends React.Component {
                   renderSearch={
                     <SearchBox
                       placeholder="Filter events…"
-                      initialValue={this.props.queryParams.filter}
-                      onSearch={filter => this.props.setQueryParams({ filter })}
+                      initialValue={filter}
+                      onSearch={value => setQueryParams({ filter: value })}
                     />
                   }
                   renderMenuItems={
@@ -73,8 +85,10 @@ class EventsContent extends React.Component {
                   }
                 />
               </Content>
-              <EventsContainer
-                onQueryChange={this.props.setQueryParams}
+              <EventsList
+                limit={limit}
+                offset={offset}
+                onChangeQuery={setQueryParams}
                 environment={environment}
                 loading={loading || aborted}
               />
@@ -86,4 +100,6 @@ class EventsContent extends React.Component {
   }
 }
 
-export default withQueryParams(["filter", "order"])(EventsContent);
+export default withQueryParams(["filter", "order", "offset", "limit"])(
+  EventsContent,
+);

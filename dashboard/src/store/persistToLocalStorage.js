@@ -1,5 +1,5 @@
 import { applyMiddleware } from "redux";
-import equals from "ramda/src/equals";
+import equals from "lodash/isEqual";
 
 const storage = window.localStorage;
 

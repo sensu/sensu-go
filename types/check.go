@@ -58,7 +58,6 @@ func NewCheck(c *CheckConfig) *Check {
 		Publish:              c.Publish,
 		RuntimeAssets:        c.RuntimeAssets,
 		Subscriptions:        c.Subscriptions,
-		ExtendedAttributes:   c.ExtendedAttributes,
 		ProxyEntityID:        c.ProxyEntityID,
 		CheckHooks:           c.CheckHooks,
 		Stdin:                c.Stdin,
@@ -70,7 +69,14 @@ func NewCheck(c *CheckConfig) *Check {
 		RoundRobin:           c.RoundRobin,
 		OutputMetricFormat:   c.OutputMetricFormat,
 		OutputMetricHandlers: c.OutputMetricHandlers,
+		EnvVars:              c.EnvVars,
 	}
+	// Unmarshal extended attributes into a different Check value, so that
+	// we don't accidentally corrupt any of the default values for Check.
+	// See https://github.com/sensu/sensu-go/issues/1732 for more information.
+	tmpCheck := Check{}
+	_ = dynamic.Unmarshal(c.ExtendedAttributes, &tmpCheck)
+	check.ExtendedAttributes = tmpCheck.ExtendedAttributes
 	return check
 }
 
@@ -125,6 +131,10 @@ func (c *Check) Validate() error {
 
 	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
 		return errors.New("invalid flap thresholds")
+	}
+
+	if err := ValidateEnvVars(c.EnvVars); err != nil {
+		return err
 	}
 
 	return c.Subdue.Validate()
@@ -270,6 +280,10 @@ func (c *CheckConfig) Validate() error {
 
 	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
 		return errors.New("invalid flap thresholds")
+	}
+
+	if err := ValidateEnvVars(c.EnvVars); err != nil {
+		return err
 	}
 
 	return c.Subdue.Validate()

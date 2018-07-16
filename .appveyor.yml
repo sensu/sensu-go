@@ -10,7 +10,7 @@ image:
 
 environment:
   GOPATH: c:\gopath
-  GOVERSION: 1.10
+  GOVERSION: 1.10.2
 
   matrix:
     - GOARCH: 386
@@ -18,7 +18,7 @@ environment:
       MSI_BUILDER: true
       TIME_OUT_MINS: 30
       APPVEYOR_API_TOKEN:
-        secure: rkeQYUjyfquA6N33QIUU46tWQMgnxZfHvn1Y6WiZm6o=
+        secure: 9DEZNCLW186SbfhAzXCPXh8TfOFysY56bW32dSpTWlQ=
     - GOARCH: amd64
       TEST_SUITE: unit
     - GOARCH: 386

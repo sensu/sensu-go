@@ -24,7 +24,7 @@ friction for new and experienced Sensu users.
 
 Sensu 2.0 installer packages are available for a number of computing
 platforms (e.g. Debian/Ubuntu, RHEL/Centos, etc), but the easiest way
-to get started is with the official Docker image, sensuapp/sensu.
+to get started is with the official Docker image, sensu/sensu.
 
 Please note the following installation steps to get Sensu up and
 running on your local workstation with Docker.
@@ -38,14 +38,14 @@ platforms. Please download and install Docker CE before proceeding._
    ```
    $ docker run -d --name sensu-backend \
    -p 2380:2380 -p 3000:3000 -p 8080:8080 -p 8081:8081 \
-   sensuapp/sensu-go:2.0.0-beta.1 sensu-backend start
+   sensu/sensu-go:2.0.0-beta.1 sensu-backend start
    ```
 
 2. Start the Sensu 2.0 Agent process
 
    ```
    $ docker run -d --name sensu-agent --link sensu-backend \
-   sensuapp/sensu-go:2.0.0-beta.1 sensu-agent start \
+   sensu/sensu-go:2.0.0-beta.1 sensu-agent start \
    --backend-url ws://sensu-backend:8081 \
    --subscriptions workstation,docker
    ```
@@ -224,8 +224,8 @@ The simplest way to the build Sensu is with the `sensu-go-build` image. The
 image contains all the required tools to build the agent, backend and sensuctl.
 
 ```sh
-docker pull sensuapp/sensu-go-build
-docker run -it -e GOOS=darwin -v `pwd`:/go/src/github.com/sensu/sensu-go --entrypoint='/go/src/github.com/sensu/sensu-go/build.sh' sensuapp/sensu-go-build
+docker pull sensu/sensu-go-build
+docker run -it -e GOOS=darwin -v `pwd`:/go/src/github.com/sensu/sensu-go --entrypoint='/go/src/github.com/sensu/sensu-go/build.sh' sensu/sensu-go-build
 ```
 
 If you would like to build for different platforms and architectures use GOOS

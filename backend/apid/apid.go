@@ -30,7 +30,7 @@ type APId struct {
 	running       *atomic.Value
 	wg            *sync.WaitGroup
 	errChan       chan error
-	httpServer    *http.Server
+	HttpServer    *http.Server
 	bus           messaging.MessageBus
 	backendStatus func() types.StatusMap
 	store         store.Store
@@ -74,7 +74,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus)
 
-	a.httpServer = &http.Server{
+	a.HttpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
@@ -100,16 +100,16 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // Start APId.
 func (a *APId) Start() error {
-	logger.Info("starting apid on address: ", a.httpServer.Addr)
+	logger.Info("starting apid on address: ", a.HttpServer.Addr)
 	a.wg.Add(1)
 
 	go func() {
 		defer a.wg.Done()
 		var err error
 		if a.tls != nil {
-			err = a.httpServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
+			err = a.HttpServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
 		} else {
-			err = a.httpServer.ListenAndServe()
+			err = a.HttpServer.ListenAndServe()
 		}
 		if err != nil && err != http.ErrServerClosed {
 			a.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
@@ -121,10 +121,10 @@ func (a *APId) Start() error {
 
 // Stop httpApi.
 func (a *APId) Stop() error {
-	if err := a.httpServer.Shutdown(context.TODO()); err != nil {
+	if err := a.HttpServer.Shutdown(context.TODO()); err != nil {
 		// failure/timeout shutting down the server gracefully
 		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
-		if closeErr := a.httpServer.Close(); closeErr != nil {
+		if closeErr := a.HttpServer.Close(); closeErr != nil {
 			logger.Error("failed to shutdown http server forcefully")
 		}
 	}
@@ -145,6 +145,11 @@ func (a *APId) Status() error {
 // Err returns a channel to listen for terminal errors on.
 func (a *APId) Err() <-chan error {
 	return a.errChan
+}
+
+// Name returns the daemon name
+func (a *APId) Name() string {
+	return "apid"
 }
 
 func registerUnauthenticatedResources(
@@ -185,16 +190,16 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 			middlewares.LimitRequest{},
 		),
 		routers.NewAssetRouter(store),
-		routers.NewChecksRouter(store, getter),
+		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
 		routers.NewEntitiesRouter(store),
-		routers.NewEnvironmentsRouter(store),
+		routers.NewEnvironmentsRouter(actions.NewEnvironmentController(store)),
 		routers.NewEventFiltersRouter(store),
 		routers.NewEventsRouter(store, bus),
 		routers.NewGraphQLRouter(store, bus, getter),
 		routers.NewHandlersRouter(store),
 		routers.NewHooksRouter(store),
 		routers.NewMutatorsRouter(store),
-		routers.NewOrganizationsRouter(store),
+		routers.NewOrganizationsRouter(actions.NewOrganizationsController(store)),
 		routers.NewRolesRouter(store),
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),

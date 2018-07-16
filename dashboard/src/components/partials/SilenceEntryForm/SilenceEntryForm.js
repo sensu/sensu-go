@@ -1,60 +1,94 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Form } from "@10xjs/form";
+import { Form, SubmitValidationError } from "@10xjs/form";
 
-import TargetsPanel from "./SilenceEntryFormTargetsPanel";
-import CheckPanel from "./SilenceEntryFormCheckPanel";
-import SubscriptionPanel from "./SilenceEntryFormSubscriptionPanel";
-import ExpirationPanel from "./SilenceEntryFormExpirationPanel";
-import SchedulePanel from "./SilenceEntryFormSchedulePanel";
-import ReasonPanel from "./SilenceEntryFormReasonPanel";
+import { requiredError, parseValidationErrors } from "/utils/validation";
+
+const validate = values => {
+  const errors = {};
+
+  if (
+    !values.check &&
+    !values.subscription &&
+    !(values.targets && values.targets.length)
+  ) {
+    errors.check = requiredError();
+    errors.subscription = requiredError();
+  }
+
+  return errors;
+};
 
 class SilenceEntryForm extends React.PureComponent {
   static propTypes = {
-    onSubmit: PropTypes.func,
-    onSubmitSuccess: PropTypes.func,
-    values: PropTypes.object,
-  };
-
-  static defaultProps = {
-    onSubmit: undefined,
-    onSubmitSuccess: undefined,
-    values: undefined,
+    values: PropTypes.object.isRequired,
+    onCreateSilence: PropTypes.func.isRequired,
+    onCreateSilenceSuccess: PropTypes.func.isRequired,
+    onSubmitSuccess: PropTypes.func.isRequired,
+    children: PropTypes.func.isRequired,
   };
 
   formRef = React.createRef();
 
-  submit() {
-    this.formRef.current.submit();
-  }
+  _handleSubmit = values => {
+    const { onCreateSilence, onCreateSilenceSuccess } = this.props;
+    const { targets, ...rest } = values;
+
+    // To avoid redundant logic between singular and bulk bulk creation,
+    // singular entries are handled as an array of one target.
+    const currentTargets = targets
+      ? values.targets.map(target => ({ ...target, ...rest }))
+      : [rest];
+
+    return Promise.all(currentTargets.map(onCreateSilence)).then(results => {
+      const failedTagets = [];
+      const succeededTargets = [];
+      const errors = [];
+
+      // Separate the individual results into sets of failed and succeeded.
+      results.forEach((targetResult, i) => {
+        if (targetResult.errors) {
+          errors.push(parseValidationErrors(targetResult.errors));
+          failedTagets.push(currentTargets[i]);
+        } else {
+          succeededTargets.push(targetResult);
+        }
+      });
+
+      if (succeededTargets.length) {
+        // The success callback may be called while other targets have failed
+        // during bulk creation.
+        onCreateSilenceSuccess(succeededTargets);
+      }
+
+      if (failedTagets.length === 1) {
+        this.formRef.current.setValue("targets", undefined);
+        this.formRef.current.setValue("check", failedTagets[0].check);
+        this.formRef.current.setValue(
+          "subscription",
+          failedTagets[0].subscription,
+        );
+        throw new SubmitValidationError(errors[0]);
+      } else if (failedTagets.length) {
+        this.formRef.current.setValue("targets", failedTagets);
+        throw new SubmitValidationError({ targets: errors });
+      }
+    });
+  };
 
   render() {
-    const { values, onSubmit, onSubmitSuccess } = this.props;
-
     return (
       <Form
         ref={this.formRef}
-        onSubmit={onSubmit}
-        onSubmitSuccess={onSubmitSuccess}
-        values={values}
+        values={this.props.values}
+        validate={validate}
+        onSubmit={this._handleSubmit}
+        onSubmitSuccess={this.props.onSubmitSuccess}
       >
-        {({ submit, setValue }) => (
-          <form onSubmit={submit}>
-            {Array.isArray(values.targets) ? (
-              <TargetsPanel />
-            ) : (
-              <React.Fragment>
-                <CheckPanel />
-                <SubscriptionPanel />
-              </React.Fragment>
-            )}
-            <SchedulePanel />
-            <ExpirationPanel setFieldValue={setValue} />
-            <ReasonPanel />
-          </form>
-        )}
+        {this.props.children}
       </Form>
     );
   }
 }
+
 export default SilenceEntryForm;

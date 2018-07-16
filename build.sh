@@ -19,7 +19,7 @@ VERSION_CMD="go run ./version/cmd/version/version.go"
 HANDLERS=(slack)
 
 set_race_flag() {
-    if [ "$GOARCH" == "amd64" ]; then
+    if [ "$GOARCH" == "amd64" ] && [ "$CGO_ENABLED" == "1" ]; then
         RACE="-race"
     fi
 }
@@ -42,7 +42,7 @@ esac
 install_deps () {
     echo "Installing deps..."
     go get github.com/axw/gocov/gocov
-    go get gopkg.in/alecthomas/gometalinter.v1
+    go get gopkg.in/alecthomas/gometalinter.v2
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
     go get honnef.co/go/tools/cmd/megacheck
@@ -79,6 +79,13 @@ build_tool_binary () {
 }
 
 build_binary () {
+    # Unset GOOS and GOARCH so that the version command builds on native OS/arch
+    unset GOOS
+    unset GOARCH
+
+    local version=$($VERSION_CMD -v)
+    local prerelease=$($VERSION_CMD -p)
+
     local goos=$1
     local goarch=$2
     local cmd=$3
@@ -87,8 +94,6 @@ build_binary () {
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-    local version=$($VERSION_CMD -v)
-    local prerelease=$($VERSION_CMD -p)
     local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
     local build_sha=$(git rev-parse HEAD)
 
@@ -179,7 +184,7 @@ build_command () {
 linter_commands () {
     echo "Running linter..."
 
-    gometalinter.v1 --vendor --disable-all --enable=vet --enable=ineffassign --enable=goconst --tests ./...
+    gometalinter.v2 --vendor --disable-all --enable=vet --enable=ineffassign --enable=goconst --tests ./...
     if [ $? -ne 0 ]; then
         echo "Linting failed..."
         exit 1
@@ -272,31 +277,36 @@ docker_build() {
     done
 
     # build the docker image with master tag
-    docker build --label build.sha=${build_sha} -t sensuapp/sensu-go:master .
+    docker build --label build.sha=${build_sha} -t sensu/sensu:master .
 }
 
 docker_push() {
     local release=$1
-    local version=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t))
-    local version_iteration=$(echo sensuapp/sensu-go:$($VERSION_CMD -v)-$($VERSION_CMD -t).$($VERSION_CMD -i))
+    local version=$(echo sensu/sensu:$($VERSION_CMD -v))
+    local version_iteration=$(echo sensu/sensu:$($VERSION_CMD -v).$($VERSION_CMD -i))
 
     # ensure we are authenticated
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 
     # push master - tags and pushes latest master docker build only
     if [ "$release" == "master" ]; then
-        docker push sensuapp/sensu-go:master
+        docker push sensu/sensu:master
+        exit 0
+    fi
+
+    if [ "$release" == "nightly" ]; then
+        docker push sensu/sensu:nightly
         exit 0
     fi
 
     # if versioned release push to 'latest' tag
     if [ "$release" == "versioned" ]; then
-        docker tag sensuapp/sensu-go:master sensuapp/sensu-go:latest
-        docker push sensuapp/sensu-go:latest
+        docker tag sensu/sensu:master sensu/sensu:latest
+        docker push sensu/sensu:latest
     fi
 
     # push current revision
-    docker tag sensuapp/sensu-go:master $version_iteration
+    docker tag sensu/sensu:master $version_iteration
     docker push $version_iteration
     docker tag $version_iteration $version
     docker push $version
@@ -345,10 +355,10 @@ deploy() {
     # Deploy system packages to PackageCloud
     make clean
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-    docker pull sensuapp/sensu-go-build
-    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI sensuapp/sensu-go-build publish_travis
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensuapp/sensu-go-build clean
+    docker pull sensu/sensu-go-build
+    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI -v `pwd`:/go/src/github.com/sensu/sensu-go sensu/sensu-go-build
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI sensu/sensu-go-build publish_travis
+    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensu/sensu-go-build clean
 
     # Deploy Docker images to the Docker Hub
     docker_build

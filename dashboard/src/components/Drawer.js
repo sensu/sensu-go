@@ -10,9 +10,10 @@ import List from "@material-ui/core/List";
 import Divider from "@material-ui/core/Divider";
 import { withStyles } from "@material-ui/core/styles";
 
-import EntityIcon from "@material-ui/icons/DesktopMac";
-import CheckIcon from "@material-ui/icons/AssignmentTurnedIn";
-import EventIcon from "@material-ui/icons/Notifications";
+import CheckIcon from "/icons/Check";
+import EntityIcon from "/icons/Entity";
+import EventIcon from "/icons/Event";
+import SilenceIcon from "/icons/Silence";
 import FeedbackIcon from "@material-ui/icons/Feedback";
 import LogoutIcon from "@material-ui/icons/ExitToApp";
 import IconButton from "@material-ui/core/IconButton";
@@ -188,6 +189,13 @@ class Drawer extends React.Component {
                     component={Link}
                     onClick={onToggle}
                     to={linkPath(params, "checks")}
+                  />
+                  <DrawerButton
+                    Icon={SilenceIcon}
+                    primary="Silenced"
+                    component={Link}
+                    onClick={onToggle}
+                    to={linkPath(params, "silences")}
                   />
                 </List>
               )}

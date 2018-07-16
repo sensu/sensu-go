@@ -24,20 +24,20 @@ func NewUsersRouter(store store.Store) *UsersRouter {
 
 // Mount the UsersRouter to a parent Router
 func (r *UsersRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/rbac/users"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/users"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
-	routes.path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
-	routes.path("{id}/roles/{role}", r.removeRole).Methods(http.MethodDelete)
+	routes.Path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
+	routes.Path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
+	routes.Path("{id}/roles/{role}", r.removeRole).Methods(http.MethodDelete)
 
 	// TODO: Remove?
-	routes.path("{id}/password", r.updatePassword).Methods(http.MethodPut)
+	routes.Path("{id}/password", r.updatePassword).Methods(http.MethodPut)
 }
 
 func (r *UsersRouter) list(req *http.Request) (interface{}, error) {
@@ -66,7 +66,7 @@ func (r *UsersRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.User{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.User{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +112,7 @@ func (r *UsersRouter) reinstate(req *http.Request) (interface{}, error) {
 
 func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	params := map[string]string{}
-	if err := unmarshalBody(req, &params); err != nil {
+	if err := UnmarshalBody(req, &params); err != nil {
 		return nil, err
 	}
 

@@ -66,7 +66,7 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 
 	// Support "*" as a wildcard for filtering environments
 	var env string
-	if env = types.ContextEnvironment(ctx); env == "*" {
+	if env = types.ContextEnvironment(ctx); env == types.EnvironmentTypeAll {
 		env = ""
 	}
 

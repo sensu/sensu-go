@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/commands/timeutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
@@ -51,29 +52,20 @@ func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
 	return err
 }
 
-func (o *silencedOpts) withFlags(flags *pflag.FlagSet) (err error) {
-	o.Expire, err = flags.GetString("expire")
-	if err != nil {
-		return err
+func (o *silencedOpts) withFlags(flags *pflag.FlagSet) {
+	o.Expire, _ = flags.GetString("expire")
+	o.ExpireOnResolve, _ = flags.GetBool("expire-on-resolve")
+	o.Reason, _ = flags.GetString("reason")
+	o.Subscription, _ = flags.GetString("subscription")
+	o.Check, _ = flags.GetString("check")
+	o.Begin, _ = flags.GetString("begin")
+
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
+		o.Org = org
 	}
-	o.ExpireOnResolve, err = flags.GetBool("expire-on-resolve")
-	if err != nil {
-		return err
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
+		o.Env = env
 	}
-	o.Reason, err = flags.GetString("reason")
-	if err != nil {
-		return err
-	}
-	o.Subscription, err = flags.GetString("subscription")
-	if err != nil {
-		return err
-	}
-	o.Check, err = flags.GetString("check")
-	if err != nil {
-		return err
-	}
-	o.Begin, err = flags.GetString("begin")
-	return err
 }
 
 func (o *silencedOpts) administerQuestionnaire(editing bool) error {

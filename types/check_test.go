@@ -341,3 +341,10 @@ func TestIsSubdued(t *testing.T) {
 		})
 	}
 }
+
+func TestAliasedExtendedAttributeBehaviour_GH1732(t *testing.T) {
+	config := FixtureCheckConfig("foo")
+	config.SetExtendedAttributes([]byte(`{"status":5}`))
+	check := NewCheck(config)
+	require.Equal(t, uint32(0), check.Status)
+}

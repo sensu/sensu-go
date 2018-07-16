@@ -24,12 +24,12 @@ func NewHooksRouter(store store.HookConfigStore) *HooksRouter {
 
 // Mount the HooksRouter to a parent Router
 func (r *HooksRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/hooks"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/hooks"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 }
 
 func (r *HooksRouter) list(req *http.Request) (interface{}, error) {
@@ -49,7 +49,7 @@ func (r *HooksRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *HooksRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.HookConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +59,7 @@ func (r *HooksRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *HooksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.HookConfig{}
-	if err := unmarshalBody(req, &cfg); err != nil {
+	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
 

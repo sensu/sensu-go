@@ -12,16 +12,22 @@ type checkFinder interface {
 	Find(ctx context.Context, name string) (*types.CheckConfig, error)
 }
 
+type checkExecutor interface {
+	QueueAdhocRequest(context.Context, string, *types.AdhocRequest) error
+}
+
 // entities
 
 type entityQuerier interface {
 	Query(ctx context.Context) ([]*types.Entity, error)
 }
 
-// entities
-
 type entityFinder interface {
 	Find(ctx context.Context, name string) (*types.Entity, error)
+}
+
+type entityDestroyer interface {
+	Destroy(ctx context.Context, name string) error
 }
 
 // events

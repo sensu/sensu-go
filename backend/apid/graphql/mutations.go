@@ -9,18 +9,20 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
 
 var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
 
 //
-// Implement HookFieldResolvers
+// Implement MutationFieldResolvers
 //
 
 type mutationsImpl struct {
-	checkCtrl actions.CheckController
+	checkCtrl     actions.CheckController
+	checkExecutor checkExecutor
+
+	entityDestroyer entityDestroyer
 
 	eventFinder    eventFinder
 	eventReplacer  eventReplacer
@@ -33,10 +35,14 @@ type mutationsImpl struct {
 func newMutationImpl(store store.Store, getter types.QueueGetter, bus messaging.MessageBus) *mutationsImpl {
 	eventCtrl := actions.NewEventController(store, bus)
 	checkCtrl := actions.NewCheckController(store, getter)
+	entityCtrl := actions.NewEntityController(store)
 	silenceCtrl := actions.NewSilencedController(store)
 
 	return &mutationsImpl{
-		checkCtrl: checkCtrl,
+		checkCtrl:     checkCtrl,
+		checkExecutor: checkCtrl,
+
+		entityDestroyer: entityCtrl,
 
 		eventFinder:    eventCtrl,
 		eventReplacer:  eventCtrl,
@@ -111,6 +117,25 @@ func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverPar
 	}, nil
 }
 
+// ExecuteCheck implements response to request for the 'executeCheck' field.
+func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID)
+	ctx := setContextFromComponents(p.Context, components)
+
+	check := components.UniqueComponent()
+	adhocReq := types.AdhocRequest{
+		Name:          check,
+		Subscriptions: p.Args.Input.Subscriptions,
+		Reason:        p.Args.Input.Reason,
+	}
+
+	err := r.checkExecutor.QueueAdhocRequest(ctx, check, &adhocReq)
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"errors":           wrapInputErrors("id", err),
+	}, nil
+}
+
 func copyCheckInputs(r *types.CheckConfig, ins *schema.CheckConfigInputs) {
 	r.RuntimeAssets = ins.Assets
 	r.Command = ins.Command
@@ -126,9 +151,23 @@ type checkMutationPayload struct {
 	schema.CreateCheckPayloadAliases
 }
 
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*mutationsImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	return false
+//
+// Implement entity mutations
+//
+
+// DeleteEntity implements response to request for the 'deleteEntity' field.
+func (r *mutationsImpl) DeleteEntity(p schema.MutationDeleteEntityFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID)
+	ctx := setContextFromComponents(p.Context, components)
+
+	err := r.entityDestroyer.Destroy(ctx, components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"deletedId":        p.Args.Input.ID,
+	}, nil
 }
 
 //

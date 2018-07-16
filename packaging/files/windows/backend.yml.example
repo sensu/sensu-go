@@ -34,3 +34,17 @@ state-dir: "C:\ProgramData\sensu\data"
 #initial-cluster-state: ""
 #initial-cluster-token: ""
 #name: ""
+
+##
+# dashboard configuration
+##
+#dashboard-host: "[::]" # listen on all IPv4 and IPv6 addresses
+#dashboard-port: 3000
+
+##
+# other
+##
+#config-file: ""
+#debug: false
+#deregistration-handler: ""
+#log-level: "warn"

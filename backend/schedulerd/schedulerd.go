@@ -72,3 +72,8 @@ func (s *Schedulerd) Status() error {
 func (s *Schedulerd) Err() <-chan error {
 	return s.errChan
 }
+
+// Name returns the daemon name
+func (s *Schedulerd) Name() string {
+	return "schedulerd"
+}

@@ -83,10 +83,10 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	roundRobinBool, _ := flags.GetBool("round-robin")
 	opts.RoundRobin = strconv.FormatBool(roundRobinBool)
 
-	if org, _ := flags.GetString("organization"); org != "" {
+	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
 		opts.Org = org
 	}
-	if env, _ := flags.GetString("environment"); env != "" {
+	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
 		opts.Env = env
 	}
 }
@@ -261,7 +261,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "round-robin",
 			Prompt: &survey.Input{
 				Message: "Round Robin",
-				Default: opts.RoundRobin,
+				Default: roundRobinDefault,
 				Help:    "if true, schedule this check in a round-robin fashion",
 			},
 			Validate: func(val interface{}) error {

@@ -8,6 +8,31 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added unit test coverage for check routers.
+
+### Changed
+- The Backend struct has been refactored to allow easier customization for the
+enterprise edition.
+- Use etcd monitor instead of in-memory monitor.
+
+### Fixed
+- Fixed `sensuctl completion` help for bash and zsh.
+- Fixed a bug in build.sh where versions for Windows and Mac OS were not
+generated correctly.
+- Display the name of extensions with table formatting in sensuctl.
+- Fixed TLS issue that occurred when dashboard communicated with API.
+- Check TTL now works with round robin checks.
+- Format string for --format flag help now shows actual arguments.
+
+### Removed
+- Removed check subdue e2e test.
+
+### Breaking Changes
+- Removed deprecated import command.
+
+## [2.0.0-beta.2] - 2018-06-28
+
+### Added
 - Performed an audit of events and checks. Added `event.HasCheck()` nil checks
 prior to assuming the existence of said check.
 - Added a Create method to the entities api.
@@ -19,8 +44,20 @@ prior to assuming the existence of said check.
 - Added the format `wrapped-json` to sensuctl `configure`, `list` and `info`
 commands, which is compatible with `sensuctl create`.
 - Added debug event log with all event data.
+- Added yml.example configurations for staging backend and agents.
+- Added test resources in `testing/config/resources.json` to be used in staging.
+- Added all missing configuration options to `agent.yml.example` and
+`backend.yml.example`.
+- Added environment variables to checks.
+- Added logging redaction integration test.
+- Added check token substitution integration test.
+- Added the `sensuctl config view` subcommand.
+- Added extension service configuration to staging resources.
+- Added some documentation around extensions.
+- Added Dockerfile.rhel to build RHEL containers.
 
 ### Changed
+- Upgraded gometalinter to v2.
 - Add logging around the Sensu event pipeline.
 - Split out the docker commands in build script so that building images and
   pushing can be done separately.
@@ -31,6 +68,15 @@ github.com/nikkiki/sensu-influxdb-handler
 - Don't allow unknown fields in types that do not support custom attributes
 when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
+- Updated goversion in the appveyor configuration for minor releases.
+- Use a default hostname if one cannot be retrieved.
+- Return an error from `sensuctl configure` when the configured organization
+or environment does not exist.
+- Remove an unnecessary parameter from sensuctl environment create.
+- The profile environment & organization values are used by default when
+creating a resource with sensuctl.
+- Migrated docker image to sensu Docker Hub organization from sensuapp.
+- Use the sensu/sensu image instead of sensu/sensu-go in Docker Hub.
 
 ### Fixed
 - Prevent panic when verifying if a metric event is silenced.
@@ -63,10 +109,37 @@ the organization they reside in.
 - Fixed a bug with the IN operator in query statements.
 - Boolean fields with a value of `false` now appear in json format (removed
 `omitempty` from protobufs).
+- The sensuctl create command no longer prints a spurious warning when
+non-default organizations or environments are configured.
+- When installing assets, errors no longer cause file descriptors to leak, or
+lockfiles to not be cleaned up.
+- Fixed a bug where the CLI default for round robin checks was not appearing.
+- Missing custom attributes in govaluate expressions no longer result in
+an error being logged. Instead, a debug message is logged.
+- Update AppVeyor API token to enable GitHub deployments.
+- Allow creation of metric events via backend API.
+- Fixed a bug where in some circumstances checks created with sensuctl create
+would never fail.
+- Fixed a goroutine leak in the ring.
+- Fixed `sensuctl completion` help for bash and zsh.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
+- Removed check output metric extraction e2e test, in favor of more detailed
+integration coverage.
 - Removed the `leader` package
+- Removed logging redaction e2e test, in favor of integration coverage.
+- Removed check token substitution e2e test, in favor of integration coverage.
+- Removed round robin scheduling e2e test.
+- Removed proxy check e2e test.
+- Removed check scheduling e2e test.
+- Removed keepalive e2e test.
+- Removed event handler e2e test.
+- Removed `sensuctl` create e2e tests.
+- Removed hooks e2e test.
+- Removed assets e2e test.
+- Removed agent reconnection e2e test.
+- Removed extensions e2e test.
 
 ## [2.0.0-beta.1] - 2018-05-07
 ### Added

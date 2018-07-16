@@ -1,35 +1,43 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
+type OrganizationsController interface {
+	Query(ctx context.Context) ([]*types.Organization, error)
+	Find(ctx context.Context, name string) (*types.Organization, error)
+	Create(ctx context.Context, newOrg types.Organization) error
+	CreateOrReplace(ctx context.Context, newOrg types.Organization) error
+	Update(ctx context.Context, given types.Organization) error
+	Destroy(ctx context.Context, name string) error
+}
+
 // OrganizationsRouter handles requests for /organizations
 type OrganizationsRouter struct {
-	controller actions.OrganizationsController
+	controller OrganizationsController
 }
 
 // NewOrganizationsRouter instantiates new router for controlling check resources
-func NewOrganizationsRouter(store store.OrganizationStore) *OrganizationsRouter {
+func NewOrganizationsRouter(ctrl OrganizationsController) *OrganizationsRouter {
 	return &OrganizationsRouter{
-		controller: actions.NewOrganizationsController(store),
+		controller: ctrl,
 	}
 }
 
 // Mount the OrganizationsRouter to a parent Router
 func (r *OrganizationsRouter) Mount(parent *mux.Router) {
-	routes := resourceRoute{router: parent, pathPrefix: "/rbac/organizations"}
-	routes.getAll(r.list)
-	routes.get(r.find)
-	routes.post(r.create)
-	routes.del(r.destroy)
-	routes.put(r.createOrReplace)
+	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/organizations"}
+	routes.GetAll(r.list)
+	routes.Get(r.find)
+	routes.Post(r.create)
+	routes.Del(r.destroy)
+	routes.Put(r.createOrReplace)
 }
 
 func (r *OrganizationsRouter) list(req *http.Request) (interface{}, error) {
@@ -49,7 +57,7 @@ func (r *OrganizationsRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *OrganizationsRouter) create(req *http.Request) (interface{}, error) {
 	org := types.Organization{}
-	if err := unmarshalBody(req, &org); err != nil {
+	if err := UnmarshalBody(req, &org); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +67,7 @@ func (r *OrganizationsRouter) create(req *http.Request) (interface{}, error) {
 
 func (r *OrganizationsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	org := types.Organization{}
-	if err := unmarshalBody(req, &org); err != nil {
+	if err := UnmarshalBody(req, &org); err != nil {
 		return nil, err
 	}
 

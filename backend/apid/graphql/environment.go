@@ -3,6 +3,7 @@ package graphql
 import (
 	"errors"
 	"sort"
+	"strings"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
@@ -11,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
+	string_utils "github.com/sensu/sensu-go/util/strings"
 )
 
 var _ schema.EnvironmentFieldResolvers = (*envImpl)(nil)
@@ -142,10 +144,42 @@ func (r *envImpl) Silences(p schema.EnvironmentSilencesFieldResolverParams) (int
 		return nil, err
 	}
 
-	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	// apply filters
+	var filteredSilences []*types.Silenced
+	filter := p.Args.Filter
+	if len(filter) > 0 {
+		predicate, err := eval.NewPredicate(filter)
+		if err != nil {
+			logger.WithError(err).Debug("error with given predicate")
+		} else {
+			for _, r := range records {
+				if matched, err := predicate.Eval(r); err != nil {
+					logger.WithError(err).Debug("unable to filter record")
+				} else if matched {
+					filteredSilences = append(filteredSilences, r)
+				}
+			}
+		}
+	} else {
+		filteredSilences = records
+	}
+
+	// sort records
+	switch p.Args.OrderBy {
+	case schema.SilencesListOrders.BEGIN_DESC:
+		sort.Sort(sort.Reverse(types.SortSilencedByBegin(filteredSilences)))
+	case schema.SilencesListOrders.BEGIN:
+		sort.Sort(types.SortSilencedByBegin(filteredSilences))
+	case schema.SilencesListOrders.ID:
+		sort.Sort(sort.Reverse(types.SortSilencedByID(filteredSilences)))
+	case schema.SilencesListOrders.ID_DESC:
+	default:
+		sort.Sort(types.SortSilencedByID(filteredSilences))
+	}
+
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredSilences))
+	res.Nodes = filteredSilences[l:h]
+	res.PageInfo.totalCount = len(filteredSilences)
 	return res, nil
 }
 
@@ -273,4 +307,50 @@ func (r *envImpl) CheckHistory(p schema.EnvironmentCheckHistoryFieldResolverPara
 	// Limit
 	limit := clampInt(p.Args.Limit, 0, len(history))
 	return history[0:limit], nil
+}
+
+// Subscriptions implements response to request for 'subscriptions' field.
+func (r *envImpl) Subscriptions(p schema.EnvironmentSubscriptionsFieldResolverParams) (interface{}, error) {
+	set := string_utils.OccurrenceSet{}
+	env := p.Source.(*types.Environment)
+	ctx := types.SetContextFromResource(p.Context, env)
+
+	entities, err := r.entityCtrl.Query(ctx)
+	if err != nil {
+		return set, err
+	}
+	for _, entity := range entities {
+		newSet := occurrencesOfSubscriptions(entity)
+		set.Merge(newSet)
+	}
+
+	checks, err := r.checksCtrl.Query(ctx)
+	if err != nil {
+		return set, err
+	}
+	for _, check := range checks {
+		newSet := occurrencesOfSubscriptions(check)
+		set.Merge(newSet)
+	}
+
+	// If specified omit subscriptions prefix'd with 'entity:'
+	if p.Args.OmitEntity {
+		for _, subscription := range set.Values() {
+			if strings.HasPrefix(subscription, "entity:") {
+				set.Remove(subscription)
+			}
+		}
+	}
+
+	// Sort entries
+	subscriptionSet := newSubscriptionSet(set)
+	if p.Args.OrderBy == schema.SubscriptionSetOrders.ALPHA_DESC {
+		subscriptionSet.sortByAlpha(false)
+	} else if p.Args.OrderBy == schema.SubscriptionSetOrders.ALPHA_ASC {
+		subscriptionSet.sortByAlpha(true)
+	} else if p.Args.OrderBy == schema.SubscriptionSetOrders.OCCURRENCES {
+		subscriptionSet.sortByOccurrence()
+	}
+
+	return subscriptionSet, nil
 }

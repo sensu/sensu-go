@@ -278,10 +278,7 @@ func init() {
 }
 func (this *Entity) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Entity)
@@ -294,10 +291,7 @@ func (this *Entity) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -354,10 +348,7 @@ func (this *Entity) Equal(that interface{}) bool {
 }
 func (this *System) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*System)
@@ -370,10 +361,7 @@ func (this *System) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -402,10 +390,7 @@ func (this *System) Equal(that interface{}) bool {
 }
 func (this *Network) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Network)
@@ -418,10 +403,7 @@ func (this *Network) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -437,10 +419,7 @@ func (this *Network) Equal(that interface{}) bool {
 }
 func (this *NetworkInterface) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*NetworkInterface)
@@ -453,10 +432,7 @@ func (this *NetworkInterface) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -478,10 +454,7 @@ func (this *NetworkInterface) Equal(that interface{}) bool {
 }
 func (this *Deregistration) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Deregistration)
@@ -494,10 +467,7 @@ func (this *Deregistration) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}

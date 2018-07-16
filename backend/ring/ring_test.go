@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -176,7 +177,7 @@ func TestTransferOwnership(t *testing.T) {
 		cancel()
 	}()
 	_, err = r1.Next(ctx)
-	assert.Equal(t, ctx.Err(), err) // it timed out
+	assert.Contains(t, err.Error(), ctx.Err().Error()) // it timed out
 
 	value, err := r2.Next(context.Background())
 	require.NoError(t, err)
@@ -231,4 +232,23 @@ func TestExpire(t *testing.T) {
 
 	_, err = ring.Next(context.Background())
 	assert.Equal(t, ErrEmptyRing, err)
+}
+
+func TestDeleteWatch(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.TODO())
+
+	wc := make(chan clientv3.WatchResponse, 1)
+	// A delete occurs
+	wc <- clientv3.WatchResponse{}
+
+	// Get a notification for every delete event
+	wait := notifyDeletes(ctx, wc)
+
+	// Ensure a notification occurs
+	<-wait
+	cancel()
+
+	// Ensure the wait channel closes after the context is cancelled
+	for range wait {
+	}
 }

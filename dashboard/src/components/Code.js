@@ -1,6 +1,7 @@
 import * as React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
+import { fade } from "@material-ui/core/styles/colorManipulator";
 
 const styles = theme => ({
   root: {
@@ -12,7 +13,7 @@ const styles = theme => ({
     fontFamily: theme.typography.monospace.fontFamily,
     fontWeight: 500,
     userSelect: "text",
-    backgroundColor: theme.palette.divider,
+    backgroundColor: fade(theme.palette.text.primary, 0.05),
     color: theme.palette.secondary.dark,
   },
 });

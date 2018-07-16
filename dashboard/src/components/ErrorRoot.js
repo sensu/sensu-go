@@ -117,38 +117,42 @@ ${"```"}`
 };
 
 const unwrapError = error => {
-  const meta = {};
+  if (error instanceof Error) {
+    const meta = {};
 
-  if (error instanceof ReactError) {
-    return {
-      componentStack: error.componentStack,
-      ...unwrapError(error.original),
-    };
-  }
-
-  if (isApolloError(error) && error.networkError) {
-    return unwrapError(error.networkError);
-  }
-
-  if (error instanceof FetchError) {
-    if (error.original) {
+    if (error instanceof ReactError) {
       return {
-        url: error.url,
-        statusCode: error.statusCode,
+        componentStack: error.componentStack,
         ...unwrapError(error.original),
       };
     }
 
-    meta.url = error.url;
-    meta.statusCode = error.statusCode;
+    if (isApolloError(error) && error.networkError) {
+      return unwrapError(error.networkError);
+    }
+
+    if (error instanceof FetchError) {
+      if (error.original) {
+        return {
+          url: error.url,
+          statusCode: error.statusCode,
+          ...unwrapError(error.original),
+        };
+      }
+
+      meta.url = error.url;
+      meta.statusCode = error.statusCode;
+    }
+
+    return {
+      ...meta,
+      name: error.name,
+      stack: error.stack,
+      message: error.message,
+    };
   }
 
-  return {
-    ...meta,
-    name: error.name,
-    stack: error.stack,
-    message: error.message,
-  };
+  return { message: `${error}`, stack: "", name: "Error" };
 };
 
 class ErrorRoot extends React.PureComponent {
@@ -161,15 +165,25 @@ class ErrorRoot extends React.PureComponent {
 
   static getDerivedStateFromProps(props) {
     const unwrapped = unwrapError(props.error);
-    return {
-      ...unwrapped,
-      frames: ErrorStackParser.parse(unwrapped)
+    let frames;
+
+    try {
+      frames = ErrorStackParser.parse(unwrapped)
         .map(frame => ({
           ...frame,
           functionName: `${frame.functionName}`,
           fileName: frame.fileName.replace(window.location.origin, ""),
         }))
-        .map(formatFrame),
+        .map(formatFrame);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+      frames = [];
+    }
+
+    return {
+      ...unwrapped,
+      frames,
     };
   }
 

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"path"
 	"sync"
 	"time"
@@ -204,31 +205,22 @@ func (r *Ring) getRemovalOps(ctx context.Context, value string) ([]clientv3.Cmp,
 	return cmps, ops, nil
 }
 
-// Next returns the next owned item in the Ring and advances the iteration. If
-// the Ring does not contain any items owned by this client, then Next will
-// block until the context is cancelled. If the Ring contains no items
-// whatsoever, then ErrEmptyRing will be returned.
-func (r *Ring) Next(ctx context.Context) (string, error) {
-	watchCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	delChan := make(chan struct{})
-	wc := r.client.Watch(watchCtx, r.Name, clientv3.WithPrefix())
-	if wc == nil {
-		return "", ctx.Err()
-	}
+// notifyDeletes watches a clientv3.WatchChan for delete events and sends a
+// message on ch when one occurs, until its context is cancelled.
+func notifyDeletes(ctx context.Context, wc clientv3.WatchChan) (ch chan struct{}) {
+	ch = make(chan struct{}, 1)
 	go func() {
-		// This goroutine watches the ring for delete events
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 		defer func() {
-			close(delChan)
+			close(ch)
 		}()
 		for {
 			select {
 			case resp := <-wc:
 				for _, evt := range resp.Events {
 					if evt.Type == mvccpb.DELETE {
-						delChan <- struct{}{}
+						ch <- struct{}{}
 					}
 				}
 			case <-ctx.Done():
@@ -238,29 +230,45 @@ func (r *Ring) Next(ctx context.Context) (string, error) {
 				// This seems to happen from time to time, but is very hard
 				// to reproduce.
 				// TODO: find some way of avoiding this.
-				delChan <- struct{}{}
+				ch <- struct{}{}
 			}
 		}
 	}()
+	return ch
+}
+
+// Next returns the next owned item in the Ring and advances the iteration. If
+// the Ring does not contain any items owned by this client, then Next will
+// block until the context is cancelled. If the Ring contains no items
+// whatsoever, then ErrEmptyRing will be returned.
+func (r *Ring) Next(ctx context.Context) (string, error) {
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
+	defer cancel()
+	wc := r.client.Watch(ctx, r.Name, clientv3.WithPrefix())
+	if wc == nil {
+		return "", ctx.Err()
+	}
+	wait := notifyDeletes(ctx, wc)
 	for {
-		select {
-		case <-ctx.Done():
-			return "", ctx.Err()
-		default:
+		if err := ctx.Err(); err != nil {
+			return "", fmt.Errorf("couldn't get next ring item: %s", err)
 		}
 		response, err := r.client.Get(ctx, r.Name, clientv3.WithFirstKey()...)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error getting next ring item: %s", err)
 		}
 		if len(response.Kvs) == 0 {
 			return "", ErrEmptyRing
 		}
 		ownedKvs, err := r.getOwnedKvs(ctx, response.Kvs)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error while getting next ring item: %s", err)
 		}
+		// This member doesn't own any keys in the ring. Wait for a delete event
+		// to occur before trying to get a key again.
 		if len(ownedKvs) == 0 || ownedKvs[0] != response.Kvs[0] {
-			<-delChan
+			<-wait
 			continue
 		}
 		kvs := response.Kvs[0]
@@ -281,7 +289,7 @@ func (r *Ring) Next(ctx context.Context) (string, error) {
 
 		resp, err := r.kv.Txn(ctx).If(delCmp, putCmp, eqCmp).Then(delOp, putOp).Commit()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error while executing ring transaction: %s", err)
 		}
 		if resp.Succeeded {
 			return value, nil
