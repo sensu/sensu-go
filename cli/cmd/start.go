@@ -107,7 +107,17 @@ Management Commands:
 {{- end}}
 {{- end}}
 
+{{- if hasEnterpriseSubCommands . }}
+
+Enterprise Commands:
+
+{{- range enterpriseSubCommands . }}
+  {{rpad .Name .NamePadding }} {{.Short}}
+{{- end}}
+{{- end}}
+
 {{- if .HasSubCommands }}
+
 
 Run '{{.CommandPath}} COMMAND --help' for more information on a command.
 {{- end}}
