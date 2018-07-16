@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
 
@@ -30,7 +30,8 @@ type Config struct {
 
 // Cluster contains the Sensu cluster access information
 type Cluster struct {
-	APIUrl string `json:"api-url"`
+	APIUrl  string `json:"api-url"`
+	Edition string `json:"edition"`
 	*types.Tokens
 }
 

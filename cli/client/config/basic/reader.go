@@ -10,6 +10,14 @@ func (c *Config) APIUrl() string {
 	return c.Cluster.APIUrl
 }
 
+// Edition returns the active cluster edition. Defaults to core
+func (c *Config) Edition() string {
+	if c.Cluster.Edition == "" {
+		return config.DefaultEdition
+	}
+	return c.Cluster.Edition
+}
+
 // Environment returns the user's active environment
 func (c *Config) Environment() string {
 	if c.Profile.Environment == "" {
@@ -24,6 +32,12 @@ func (c *Config) Format() string {
 		return config.DefaultFormat
 	}
 	return c.Profile.Format
+}
+
+// IsEnterprise indicates whether or not the configured cluster is running an
+// enterprise edition (EE)
+func (c *Config) IsEnterprise() bool {
+	return types.EnterpriseEdition == c.Edition()
 }
 
 // Organization returns the user's active organization

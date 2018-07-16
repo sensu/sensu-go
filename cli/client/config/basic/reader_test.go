@@ -13,6 +13,19 @@ func TestAPIUrl(t *testing.T) {
 	assert.Equal(t, conf.Cluster.APIUrl, conf.APIUrl())
 }
 
+func TestFormat(t *testing.T) {
+	conf := &Config{Profile: Profile{Format: "json"}}
+	assert.Equal(t, conf.Profile.Format, conf.Format())
+}
+
+func TestEdition(t *testing.T) {
+	conf := &Config{Cluster: Cluster{Edition: types.CoreEdition}}
+	assert.Equal(t, types.CoreEdition, conf.Edition())
+
+	conf.Cluster.Edition = ""
+	assert.Equal(t, types.CoreEdition, conf.Edition())
+}
+
 func TestEnvironment(t *testing.T) {
 	conf := &Config{Profile: Profile{Environment: "dev"}}
 	assert.Equal(t, conf.Profile.Environment, conf.Environment())
@@ -23,14 +36,20 @@ func TestEnvironmentDefault(t *testing.T) {
 	assert.Equal(t, config.DefaultEnvironment, conf.Environment())
 }
 
-func TestFormat(t *testing.T) {
-	conf := &Config{Profile: Profile{Format: "json"}}
-	assert.Equal(t, conf.Profile.Format, conf.Format())
-}
-
 func TestFormatDefault(t *testing.T) {
 	conf := &Config{}
 	assert.Equal(t, config.DefaultFormat, conf.Format())
+}
+
+func TestIsEnterprise(t *testing.T) {
+	conf := &Config{Cluster: Cluster{Edition: types.CoreEdition}}
+	assert.False(t, conf.IsEnterprise())
+
+	conf.Cluster.Edition = ""
+	assert.False(t, conf.IsEnterprise())
+
+	conf.Cluster.Edition = types.EnterpriseEdition
+	assert.True(t, conf.IsEnterprise())
 }
 
 func TestOrganization(t *testing.T) {

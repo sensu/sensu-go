@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/config"
 	"github.com/sensu/sensu-go/cli/commands/configure"
 	"github.com/sensu/sensu-go/cli/commands/create"
+	"github.com/sensu/sensu-go/cli/commands/enterprise/licensing"
 	"github.com/sensu/sensu-go/cli/commands/entity"
 	"github.com/sensu/sensu-go/cli/commands/environment"
 	"github.com/sensu/sensu-go/cli/commands/event"
@@ -48,6 +49,9 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		silenced.HelpCommand(cli),
 		create.CreateCommand(cli),
 		extension.HelpCommand(cli),
+
+		// Enterprise commands
+		licensing.HelpCommand(cli),
 	)
 
 	for _, cmd := range rootCmd.Commands() {

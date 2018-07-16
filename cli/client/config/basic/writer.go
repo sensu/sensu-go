@@ -16,6 +16,13 @@ func (c *Config) SaveAPIUrl(url string) error {
 	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
 }
 
+// SaveEdition saves the Sensu edition to a configuration file
+func (c *Config) SaveEdition(edition string) error {
+	c.Cluster.Edition = edition
+
+	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
+}
+
 // SaveEnvironment saves the user's default environment to a configuration file
 func (c *Config) SaveEnvironment(env string) error {
 	c.Profile.Environment = env
