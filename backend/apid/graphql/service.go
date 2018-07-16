@@ -41,6 +41,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterNamespaceInput(svc)
 	schema.RegisterOrganization(svc, newOrgImpl(store))
 	schema.RegisterOffsetPageInfo(svc, &offsetPageInfoImpl{})
+	schema.RegisterProxyRequests(svc, &schema.ProxyRequestsAliases{})
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
 	schema.RegisterSchema(svc)
 	schema.RegisterSilenced(svc, newSilencedImpl(store, cfg.QueueGetter))
@@ -77,9 +78,9 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterHookList(svc, &hookListImpl{})
 
 	// Register time window
-	schema.RegisterTimeWindowDays(svc, &timeWindowDaysImpl{})
-	schema.RegisterTimeWindowWhen(svc, &timeWindowWhenImpl{})
-	schema.RegisterTimeWindowTimeRange(svc, &timeWindowTimeRangeImpl{})
+	schema.RegisterTimeWindowDays(svc, &schema.TimeWindowDaysAliases{})
+	schema.RegisterTimeWindowWhen(svc, &schema.TimeWindowWhenAliases{})
+	schema.RegisterTimeWindowTimeRange(svc, &schema.TimeWindowTimeRangeAliases{})
 
 	// Register user types
 	schema.RegisterRole(svc, &roleImpl{})
