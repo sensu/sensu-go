@@ -295,6 +295,7 @@ docker_push() {
     fi
 
     if [ "$release" == "nightly" ]; then
+        docker tag sensu/sensu:master sensu/sensu:nightly
         docker push sensu/sensu:nightly
         exit 0
     fi
