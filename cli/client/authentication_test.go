@@ -17,7 +17,7 @@ func TestCreateAccessToken(t *testing.T) {
 		assert.NotEmpty(t, r.Header["Authorization"])
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Sensu-Edition", types.CoreEdition)
+		w.Header().Set(types.EditionHeader, types.CoreEdition)
 		_, _ = w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))

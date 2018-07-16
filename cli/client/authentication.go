@@ -32,7 +32,7 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*type
 		return nil, "", errors.New("Unable to unmarshal response from server")
 	}
 
-	edition := res.Header().Get("Sensu-Edition")
+	edition := res.Header().Get(types.EditionHeader)
 
 	return &tokens, edition, err
 }
