@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
@@ -174,14 +174,26 @@ func (_ SubscriptionSetAliases) Entries(p SubscriptionSetEntriesFieldResolverPar
 // Values implements response to request for 'values' field.
 func (_ SubscriptionSetAliases) Values(p SubscriptionSetValuesFieldResolverParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'values'")
+	}
 	return ret, err
 }
 
 // Size implements response to request for 'size' field.
 func (_ SubscriptionSetAliases) Size(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'size'")
+	}
 	return ret, err
 }
 
@@ -424,14 +436,26 @@ type SubscriptionOccurencesAliases struct{}
 // Subscription implements response to request for 'subscription' field.
 func (_ SubscriptionOccurencesAliases) Subscription(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'subscription'")
+	}
 	return ret, err
 }
 
 // Occurrences implements response to request for 'occurrences' field.
 func (_ SubscriptionOccurencesAliases) Occurrences(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'occurrences'")
+	}
 	return ret, err
 }
 

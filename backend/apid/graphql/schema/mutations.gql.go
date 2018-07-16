@@ -1628,7 +1628,13 @@ type ExecuteCheckPayloadAliases struct{}
 // ClientMutationID implements response to request for 'clientMutationId' field.
 func (_ ExecuteCheckPayloadAliases) ClientMutationID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'clientMutationId'")
+	}
 	return ret, err
 }
 

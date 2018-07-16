@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -187,21 +187,39 @@ type StandardErrorAliases struct{}
 // Input implements response to request for 'input' field.
 func (_ StandardErrorAliases) Input(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'input'")
+	}
 	return ret, err
 }
 
 // Code implements response to request for 'code' field.
 func (_ StandardErrorAliases) Code(p graphql.ResolveParams) (ErrCode, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := ErrCode(val.(string))
+	ret, ok := ErrCode(val.(string)), true
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'code'")
+	}
 	return ret, err
 }
 
 // Message implements response to request for 'message' field.
 func (_ StandardErrorAliases) Message(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'message'")
+	}
 	return ret, err
 }
 

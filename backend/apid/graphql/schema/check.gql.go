@@ -343,14 +343,26 @@ func (_ CheckConfigAliases) CheckHooks(p graphql.ResolveParams) (interface{}, er
 // Cron implements response to request for 'cron' field.
 func (_ CheckConfigAliases) Cron(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'cron'")
+	}
 	return ret, err
 }
 
 // EnvVars implements response to request for 'envVars' field.
 func (_ CheckConfigAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'envVars'")
+	}
 	return ret, err
 }
 
@@ -408,7 +420,13 @@ func (_ CheckConfigAliases) LowFlapThreshold(p graphql.ResolveParams) (int, erro
 // OutputMetricFormat implements response to request for 'outputMetricFormat' field.
 func (_ CheckConfigAliases) OutputMetricFormat(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'outputMetricFormat'")
+	}
 	return ret, err
 }
 
@@ -421,7 +439,13 @@ func (_ CheckConfigAliases) OutputMetricHandlers(p graphql.ResolveParams) (inter
 // ProxyEntityID implements response to request for 'proxyEntityId' field.
 func (_ CheckConfigAliases) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'proxyEntityId'")
+	}
 	return ret, err
 }
 
@@ -447,14 +471,26 @@ func (_ CheckConfigAliases) Publish(p graphql.ResolveParams) (bool, error) {
 // RoundRobin implements response to request for 'roundRobin' field.
 func (_ CheckConfigAliases) RoundRobin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'roundRobin'")
+	}
 	return ret, err
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
 func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'subscriptions'")
+	}
 	return ret, err
 }
 
@@ -1684,7 +1720,13 @@ type CheckAliases struct{}
 // NodeID implements response to request for 'nodeId' field.
 func (_ CheckAliases) NodeID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'nodeId'")
+	}
 	return ret, err
 }
 
@@ -1723,7 +1765,13 @@ func (_ CheckAliases) CheckHooks(p graphql.ResolveParams) (interface{}, error) {
 // EnvVars implements response to request for 'envVars' field.
 func (_ CheckAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'envVars'")
+	}
 	return ret, err
 }
 
@@ -1768,7 +1816,13 @@ func (_ CheckAliases) Interval(p graphql.ResolveParams) (int, error) {
 // Cron implements response to request for 'cron' field.
 func (_ CheckAliases) Cron(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'cron'")
+	}
 	return ret, err
 }
 
@@ -1788,7 +1842,13 @@ func (_ CheckAliases) LowFlapThreshold(p graphql.ResolveParams) (int, error) {
 // OutputMetricFormat implements response to request for 'outputMetricFormat' field.
 func (_ CheckAliases) OutputMetricFormat(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'outputMetricFormat'")
+	}
 	return ret, err
 }
 
@@ -1806,7 +1866,7 @@ func (_ CheckAliases) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'source'")
+		return ret, errors.New("unable to coerce value for field 'proxyEntityId'")
 	}
 	return ret, err
 }
@@ -1814,20 +1874,19 @@ func (_ CheckAliases) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 // ProxyRequests implements response to request for 'proxyRequests' field.
 func (_ CheckAliases) ProxyRequests(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(bool)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'stdin'")
-	}
-	return ret, err
+	return val, err
 }
 
 // Publish implements response to request for 'publish' field.
 func (_ CheckAliases) Publish(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'publish'")
+	}
 	return ret, err
 }
 
@@ -1840,21 +1899,39 @@ func (_ CheckAliases) RuntimeAssets(p graphql.ResolveParams) (interface{}, error
 // RoundRobin implements response to request for 'roundRobin' field.
 func (_ CheckAliases) RoundRobin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'roundRobin'")
+	}
 	return ret, err
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
 func (_ CheckAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'subscriptions'")
+	}
 	return ret, err
 }
 
 // Stdin implements response to request for 'stdin' field.
 func (_ CheckAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'stdin'")
+	}
 	return ret, err
 }
 
@@ -2984,14 +3061,26 @@ func (_ ProxyRequestsAliases) EntityAttributes(p graphql.ResolveParams) (interfa
 // Splay implements response to request for 'splay' field.
 func (_ ProxyRequestsAliases) Splay(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'splay'")
+	}
 	return ret, err
 }
 
 // Splay_coverage implements response to request for 'splay_coverage' field.
 func (_ ProxyRequestsAliases) Splay_coverage(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'splay_coverage'")
+	}
 	return ret, err
 }
 
