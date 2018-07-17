@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"path"
 	"sync"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
@@ -35,7 +34,18 @@ var (
 
 	leaseIDCache = make(map[string]clientv3.LeaseID)
 	pkgMu        sync.Mutex
+
+	initialItemKey []byte
 )
+
+func init() {
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.BigEndian, uint64(0)); err != nil {
+		// Should never happen
+		panic(err)
+	}
+	initialItemKey = buf.Bytes()
+}
 
 func getBackendID() string {
 	// It's necessary to do this here instead of in init, because on Windows,
@@ -74,6 +84,7 @@ type Ring struct {
 	itemPrefix      string
 	assertionPrefix string
 	nextItemKey     string
+	keySeqKey       string
 }
 
 // New returns a new Ring.
@@ -90,6 +101,7 @@ func New(name string, client *clientv3.Client) *Ring {
 		itemPrefix:      path.Join(name, "items"),
 		assertionPrefix: path.Join(name, "owner"),
 		nextItemKey:     path.Join(name, "next"),
+		keySeqKey:       path.Join(name, "seq"),
 	}
 	ring.initWatcher()
 	return ring
@@ -144,7 +156,10 @@ func (r *Ring) advance() error {
 	delOp := clientv3.OpDelete(key)
 
 	// Place the value at the tail of the ring
-	nextKey := newKey(r.itemPrefix)
+	nextKey, err := r.newItemKey()
+	if err != nil {
+		return err
+	}
 	putCmp := clientv3.Compare(clientv3.ModRevision(nextKey), "=", 0)
 	putOp := clientv3.OpPut(nextKey, value)
 
@@ -187,17 +202,45 @@ func (r *Ring) getLeaseID() (clientv3.LeaseID, error) {
 	return leaseID, nil
 }
 
-// newKey creates a new key for a ring item. It uses the big-endian encoded
-// current time in unix nanoseconds, which produces a value that can be
-// lexicographically ordered.
-func newKey(prefix string) string {
-	now := time.Now().UnixNano()
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.BigEndian, now); err != nil {
-		// Should never happen for a bytes.Buffer
-		panic(err)
+// newItemKey creates a new key for a ring item.
+func (r *Ring) newItemKey() (result string, err error) {
+	// Get the current key, or initialize it to be the first item key
+	exists := clientv3.Compare(clientv3.Value(r.keySeqKey), ">", string(initialItemKey))
+	put := clientv3.OpPut(r.keySeqKey, string(initialItemKey))
+	get := clientv3.OpGet(r.keySeqKey)
+
+	resp, err := r.kv.Txn(context.Background()).If(exists).Then(get).Else(put, get).Commit()
+	if err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
 	}
-	return path.Join(prefix, buf.String())
+
+	respIdx := len(resp.Responses) - 1
+	kv := resp.Responses[respIdx].GetResponseRange().Kvs[0]
+
+	// decode the key into an integer
+	var n uint64
+	if err := binary.Read(bytes.NewReader(kv.Value), binary.BigEndian, &n); err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
+	}
+
+	buf := new(bytes.Buffer)
+
+	if err := binary.Write(buf, binary.BigEndian, n+1); err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
+	}
+
+	notModified := clientv3.Compare(clientv3.Value(r.keySeqKey), "=", string(kv.Value))
+	put = clientv3.OpPut(r.keySeqKey, buf.String())
+
+	resp, err = r.kv.Txn(context.Background()).If(notModified).Then(put).Commit()
+	if err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
+	}
+	if !resp.Succeeded {
+		return r.newItemKey()
+	}
+
+	return path.Join(r.itemPrefix, buf.String()), nil
 }
 
 // Add adds a new owned value to the ring, which is then owned by the client
@@ -209,7 +252,10 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		key := newKey(r.itemPrefix)
+		key, err := r.newItemKey()
+		if err != nil {
+			return err
+		}
 		putCmp := clientv3.Compare(clientv3.Version(key), "=", 0)
 		leaseID, err := r.getLeaseID()
 		if err != nil {

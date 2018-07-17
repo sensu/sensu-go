@@ -4,6 +4,8 @@ package ring
 
 import (
 	"context"
+	"encoding/binary"
+	"strings"
 	"testing"
 	"time"
 
@@ -211,4 +213,56 @@ func TestExpire(t *testing.T) {
 
 	_, err = ring.Next(context.Background())
 	assert.Equal(t, ErrEmptyRing, err)
+}
+
+func TestNewItemKey(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	clientA, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clientB, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r1 := EtcdGetter{clientA}.GetRing("foo").(*Ring)
+	r2 := EtcdGetter{clientB}.GetRing("foo").(*Ring)
+
+	k1, err := r1.newItemKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.Split(k1, "/")
+	idPart1 := parts[len(parts)-1]
+
+	k2, err := r2.newItemKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts = strings.Split(k2, "/")
+	idPart2 := parts[len(parts)-1]
+
+	var n1, n2 uint64
+
+	if err := binary.Read(strings.NewReader(idPart1), binary.BigEndian, &n1); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := n1, uint64(1); got != want {
+		t.Errorf("bad id: got %d, want %d", got, want)
+	}
+
+	if err := binary.Read(strings.NewReader(idPart2), binary.BigEndian, &n2); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := n2, uint64(2); got != want {
+		t.Errorf("bad id: got %d, want %d", got, want)
+	}
 }
