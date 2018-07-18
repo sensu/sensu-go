@@ -4,6 +4,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/asset"
 	"github.com/sensu/sensu-go/cli/commands/check"
+	"github.com/sensu/sensu-go/cli/commands/cluster"
 	"github.com/sensu/sensu-go/cli/commands/completion"
 	"github.com/sensu/sensu-go/cli/commands/config"
 	"github.com/sensu/sensu-go/cli/commands/configure"
@@ -48,6 +49,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		silenced.HelpCommand(cli),
 		create.CreateCommand(cli),
 		extension.HelpCommand(cli),
+		cluster.HelpCommand(cli),
 	)
 
 	for _, cmd := range rootCmd.Commands() {

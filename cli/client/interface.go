@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -22,6 +23,7 @@ type APIClient interface {
 	UserAPIClient
 	SilencedAPIClient
 	GenericClient
+	ClusterMemberClient
 }
 
 // GenericClient exposes generic resource methods.
@@ -177,4 +179,10 @@ type SilencedAPIClient interface {
 
 	// UpdateSilenced updates an existing silenced entry.
 	UpdateSilenced(*types.Silenced) error
+}
+
+// ClusterMemberClient specifies client methods for cluster membership management
+type ClusterMemberClient interface {
+	// MemberList lists cluster members
+	MemberList() (*clientv3.MemberListResponse, error)
 }

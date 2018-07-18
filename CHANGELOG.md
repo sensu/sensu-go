@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added unit test coverage for check routers.
 - Added API support for cluster management.
+- Added sensuctl cluster member-list command.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization for the
