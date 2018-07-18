@@ -198,13 +198,13 @@ func TestEventIsSilenced(t *testing.T) {
 
 func TestEventsBySeverity(t *testing.T) {
 	critical := FixtureEvent("entity", "check")
-	critical.Check.Status = 1
+	critical.Check.Status = 2 // crit
 	warn := FixtureEvent("entity", "check")
-	warn.Check.Status = 2
+	warn.Check.Status = 1 // warn
 	unknown := FixtureEvent("entity", "check")
-	unknown.Check.Status = 3
+	unknown.Check.Status = 3 // unknown
 	ok := FixtureEvent("entity", "check")
-	ok.Check.Status = 0
+	ok.Check.Status = 0 // ok
 	okOlder := FixtureEvent("entity", "check")
 	okOlder.Timestamp = 42
 	noCheck := FixtureEvent("entity", "check")
