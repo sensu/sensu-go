@@ -20,10 +20,9 @@ type offsetPageInfo struct {
 	totalCount int
 }
 
-func newOffsetContainer(nodes interface{}, totalCount, offset, limit int) offsetContainer {
+func newOffsetContainer(offset, limit int) offsetContainer {
 	container := offsetContainer{}
-	container.Nodes = nodes
-	container.PageInfo.totalCount = totalCount
+	container.Nodes = make([]interface{}, 0)
 	container.PageInfo.offset = offset
 	container.PageInfo.limit = limit
 	return container

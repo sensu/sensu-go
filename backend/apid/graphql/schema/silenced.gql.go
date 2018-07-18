@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 	time "time"
@@ -207,35 +207,65 @@ type SilencedAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ SilencedAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
 	return ret, err
 }
 
 // StoreID implements response to request for 'storeId' field.
 func (_ SilencedAliases) StoreID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'storeId'")
+	}
 	return ret, err
 }
 
 // Expire implements response to request for 'expire' field.
 func (_ SilencedAliases) Expire(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'expire'")
+	}
 	return ret, err
 }
 
 // Expires implements response to request for 'expires' field.
 func (_ SilencedAliases) Expires(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(*time.Time)
+	ret, ok := val.(*time.Time)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'expires'")
+	}
 	return ret, err
 }
 
 // ExpireOnResolve implements response to request for 'expireOnResolve' field.
 func (_ SilencedAliases) ExpireOnResolve(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'expireOnResolve'")
+	}
 	return ret, err
 }
 
@@ -254,14 +284,26 @@ func (_ SilencedAliases) Check(p graphql.ResolveParams) (interface{}, error) {
 // Reason implements response to request for 'reason' field.
 func (_ SilencedAliases) Reason(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'reason'")
+	}
 	return ret, err
 }
 
 // Subscription implements response to request for 'subscription' field.
 func (_ SilencedAliases) Subscription(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'subscription'")
+	}
 	return ret, err
 }
 
@@ -280,7 +322,13 @@ func (_ SilencedAliases) Environment(p graphql.ResolveParams) (interface{}, erro
 // Begin implements response to request for 'begin' field.
 func (_ SilencedAliases) Begin(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(*time.Time)
+	ret, ok := val.(*time.Time)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'begin'")
+	}
 	return ret, err
 }
 

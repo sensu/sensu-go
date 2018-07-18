@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
@@ -280,28 +280,52 @@ type EnvironmentAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ EnvironmentAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
 	return ret, err
 }
 
 // Description implements response to request for 'description' field.
 func (_ EnvironmentAliases) Description(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'description'")
+	}
 	return ret, err
 }
 
 // Name implements response to request for 'name' field.
 func (_ EnvironmentAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
 	return ret, err
 }
 
 // ColourID implements response to request for 'colourId' field.
 func (_ EnvironmentAliases) ColourID(p graphql.ResolveParams) (MutedColour, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := MutedColour(val.(string))
+	ret, ok := MutedColour(val.(string)), true
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'colourId'")
+	}
 	return ret, err
 }
 

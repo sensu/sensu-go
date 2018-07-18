@@ -277,7 +277,18 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 						jen.Id("p").Dot("Info").Dot("FieldName"),
 					)
 				if coerceType != nil {
-					g.Id("ret").Op(":=").Add(coerceType) //Id("val").Assert(retType)
+					g.List(jen.Id("ret"), jen.Id("ok")).Op(":=").Add(coerceType)
+					g.If(jen.Id("err").Op("!=").Nil()).Block(
+						jen.Return(jen.List(jen.Id("ret"), jen.Id("err"))),
+					)
+					g.If(jen.Op("!").Id("ok")).Block(
+						jen.Return(jen.List(
+							jen.Id("ret"),
+							jen.Qual("errors", "New").Call(
+								jen.Lit(fmt.Sprintf("unable to coerce value for field '%s'", name)),
+							),
+						)),
+					)
 					g.Return(jen.List(jen.Id("ret"), jen.Id("err")))
 				} else {
 					g.Return(jen.List(jen.Id("val"), jen.Id("err")))
@@ -763,7 +774,10 @@ func genFieldResolverTypeCoercion(t ast.Type, i info, nullable bool) jen.Code {
 
 	if def, ok := i.definitions[namedType.Name.Value]; ok {
 		if _, ok := def.(*ast.EnumDefinition); ok {
-			return jen.Id(namedType.Name.Value).Call(mkAssert(jen.String()))
+			return jen.List(
+				jen.Id(namedType.Name.Value).Call(mkAssert(jen.String())),
+				jen.True(),
+			)
 		}
 		return nil
 	}
@@ -774,7 +788,7 @@ func genFieldResolverTypeCoercion(t ast.Type, i info, nullable bool) jen.Code {
 	case graphql.Float.Name():
 		return jen.Qual(defsPkg, "Float").Op(".").Id("ParseValue").Call(jen.Id("val")).Assert(jen.Float64())
 	case graphql.String.Name(), graphql.ID.Name():
-		return jen.Qual("fmt", "Sprint").Call(jen.Id("val"))
+		return mkAssert(jen.Id("string"))
 	case graphql.Boolean.Name():
 		return mkAssert(jen.Id("bool"))
 	case graphql.DateTime.Name():

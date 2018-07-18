@@ -3,7 +3,7 @@
 package schema
 
 import (
-	fmt "fmt"
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
@@ -258,7 +258,13 @@ type EntityAliases struct{}
 // ID implements response to request for 'id' field.
 func (_ EntityAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
 	return ret, err
 }
 
@@ -271,14 +277,26 @@ func (_ EntityAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
 // Name implements response to request for 'name' field.
 func (_ EntityAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
 	return ret, err
 }
 
 // Class implements response to request for 'class' field.
 func (_ EntityAliases) Class(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'class'")
+	}
 	return ret, err
 }
 
@@ -291,21 +309,39 @@ func (_ EntityAliases) System(p graphql.ResolveParams) (interface{}, error) {
 // Subscriptions implements response to request for 'subscriptions' field.
 func (_ EntityAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'subscriptions'")
+	}
 	return ret, err
 }
 
 // LastSeen implements response to request for 'lastSeen' field.
 func (_ EntityAliases) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(*time.Time)
+	ret, ok := val.(*time.Time)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'lastSeen'")
+	}
 	return ret, err
 }
 
 // Deregister implements response to request for 'deregister' field.
 func (_ EntityAliases) Deregister(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(bool)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'deregister'")
+	}
 	return ret, err
 }
 
@@ -318,28 +354,52 @@ func (_ EntityAliases) Deregistration(p graphql.ResolveParams) (interface{}, err
 // KeepaliveTimeout implements response to request for 'keepaliveTimeout' field.
 func (_ EntityAliases) KeepaliveTimeout(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'keepaliveTimeout'")
+	}
 	return ret, err
 }
 
 // User implements response to request for 'user' field.
 func (_ EntityAliases) User(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'user'")
+	}
 	return ret, err
 }
 
 // Redact implements response to request for 'redact' field.
 func (_ EntityAliases) Redact(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'redact'")
+	}
 	return ret, err
 }
 
 // Status implements response to request for 'status' field.
 func (_ EntityAliases) Status(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := graphql1.Int.ParseValue(val).(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'status'")
+	}
 	return ret, err
 }
 
@@ -1019,7 +1079,13 @@ type SystemAliases struct{}
 // Hostname implements response to request for 'hostname' field.
 func (_ SystemAliases) Hostname(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'hostname'")
+	}
 	return ret, err
 }
 
@@ -1032,35 +1098,65 @@ func (_ SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
 // Os implements response to request for 'os' field.
 func (_ SystemAliases) Os(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'os'")
+	}
 	return ret, err
 }
 
 // Platform implements response to request for 'platform' field.
 func (_ SystemAliases) Platform(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'platform'")
+	}
 	return ret, err
 }
 
 // PlatformFamily implements response to request for 'platformFamily' field.
 func (_ SystemAliases) PlatformFamily(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'platformFamily'")
+	}
 	return ret, err
 }
 
 // PlatformVersion implements response to request for 'platformVersion' field.
 func (_ SystemAliases) PlatformVersion(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'platformVersion'")
+	}
 	return ret, err
 }
 
 // Arch implements response to request for 'arch' field.
 func (_ SystemAliases) Arch(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'arch'")
+	}
 	return ret, err
 }
 
@@ -1510,21 +1606,39 @@ type NetworkInterfaceAliases struct{}
 // Name implements response to request for 'name' field.
 func (_ NetworkInterfaceAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
 	return ret, err
 }
 
 // Mac implements response to request for 'mac' field.
 func (_ NetworkInterfaceAliases) Mac(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'mac'")
+	}
 	return ret, err
 }
 
 // Addresses implements response to request for 'addresses' field.
 func (_ NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.([]string)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'addresses'")
+	}
 	return ret, err
 }
 
@@ -1729,7 +1843,13 @@ type DeregistrationAliases struct{}
 // Handler implements response to request for 'handler' field.
 func (_ DeregistrationAliases) Handler(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := fmt.Sprint(val)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'handler'")
+	}
 	return ret, err
 }
 
