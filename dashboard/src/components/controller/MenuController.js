@@ -17,14 +17,14 @@ class MenuController extends React.Component {
       <ModalController
         renderModal={props =>
           renderMenu({
-            ref: this._menuAnchorRef,
+            anchorEl: this._menuAnchorRef.current,
             ...props,
           })
         }
       >
         {props =>
           children({
-            anchorEl: this.menuAnchorRef.current,
+            ref: this._menuAnchorRef,
             ...props,
           })
         }
