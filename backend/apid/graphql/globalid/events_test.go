@@ -36,7 +36,6 @@ func TestEventComponents(t *testing.T) {
 	assert.Equal("one", components.EntityName())
 	assert.Equal("two", components.CheckName())
 	assert.Empty(components.MetricID())
-	assert.Equal(int64(1234), components.Timestamp())
 
 	components.resourceType = "metric"
 	assert.Empty(components.CheckName())
