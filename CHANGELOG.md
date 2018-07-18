@@ -24,6 +24,8 @@ generated correctly.
 - Check TTL now works with round robin checks.
 - Format string for --format flag help now shows actual arguments.
 - Push the sensu/sensu:nightly docker image to the Docker Hub.
+- Replaced dummy certs with ones that won't expire until 100 years in the
+future.
 
 ### Removed
 - Removed check subdue e2e test.
