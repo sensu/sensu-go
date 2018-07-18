@@ -23,6 +23,7 @@ generated correctly.
 - Fixed TLS issue that occurred when dashboard communicated with API.
 - Check TTL now works with round robin checks.
 - Format string for --format flag help now shows actual arguments.
+- Push the sensu/sensu:nightly docker image to the Docker Hub.
 
 ### Removed
 - Removed check subdue e2e test.
