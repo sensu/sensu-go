@@ -64,7 +64,6 @@ class ChecksContent extends React.Component {
           data: { environment } = {},
           loading,
           aborted,
-          refetch,
           isPolling,
           startPolling,
           stopPolling,
@@ -102,7 +101,6 @@ class ChecksContent extends React.Component {
                 onChangeQuery={setQueryParams}
                 environment={environment}
                 loading={(loading && !isPolling) || aborted}
-                refetch={refetch}
               />
             </AppContent>
           );

@@ -19,9 +19,9 @@ class Query extends React.PureComponent {
     },
   };
 
-  static getDerivedStateFromProps(props, state) {
-    return {
-      ...state,
+  constructor(props) {
+    super(props);
+    this.state = {
       pollInterval: props.pollInterval,
     };
   }
