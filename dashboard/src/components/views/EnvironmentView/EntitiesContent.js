@@ -12,6 +12,10 @@ import LiveIcon from "/icons/Live";
 import CollapsingMenu from "/components/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
 
+// duration used when polling is enabled; set fairly high until we understand
+// the impact.
+const pollInterval = 2500; // 2.5s
+
 class EntitiesContent extends React.PureComponent {
   static propTypes = {
     match: PropTypes.object.isRequired,
@@ -41,23 +45,25 @@ class EntitiesContent extends React.PureComponent {
     ${EntitiesList.fragments.environment}
   `;
 
-  state = {
-    isLive: false,
-  };
-
   render() {
     const { queryParams, setQueryParams, match } = this.props;
     const { filter, order, limit = "50", offset = "0" } = queryParams;
-    const { isLive } = this.state;
 
     return (
       <Query
         query={EntitiesContent.query}
         fetchPolicy="cache-and-network"
-        pollInterval={isLive ? 2500 : 0}
         variables={{ ...match.params, filter, order, limit, offset }}
       >
-        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+        {({
+          data: { environment } = {},
+          loading,
+          aborted,
+          refetch,
+          isPolling,
+          startPolling,
+          stopPolling,
+        }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
           }
@@ -76,8 +82,10 @@ class EntitiesContent extends React.PureComponent {
                   renderMenuItems={
                     <CollapsingMenu.Button
                       title="LIVE"
-                      icon={<LiveIcon inactive={!isLive} />}
-                      onClick={() => this.setState({ isLive: !isLive })}
+                      icon={<LiveIcon active={isPolling} />}
+                      onClick={() =>
+                        isPolling ? stopPolling() : startPolling(pollInterval)
+                      }
                     />
                   }
                 />
@@ -85,7 +93,7 @@ class EntitiesContent extends React.PureComponent {
               <EntitiesList
                 limit={limit}
                 offset={offset}
-                loading={(loading && !isLive) || aborted}
+                loading={(loading && !isPolling) || aborted}
                 onChangeQuery={setQueryParams}
                 environment={environment}
                 refetch={refetch}
