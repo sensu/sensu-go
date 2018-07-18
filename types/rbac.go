@@ -28,6 +28,9 @@ const (
 	// RuleTypeCheck access control for check objects
 	RuleTypeCheck = "checks"
 
+	// RuleTypeCluster access control for cluster management
+	RuleTypeCluster = "cluster"
+
 	// RuleTypeEntity access control for entity objects
 	RuleTypeEntity = "entities"
 

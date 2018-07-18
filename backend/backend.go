@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"runtime/debug"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
@@ -178,6 +179,7 @@ func Initialize(config *Config) (*Backend, error) {
 		QueueGetter:   queueGetter,
 		TLS:           config.TLS,
 		BackendStatus: b.Status,
+		Cluster:       clientv3.NewCluster(client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())

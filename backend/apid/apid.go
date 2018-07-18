@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -36,6 +37,7 @@ type APId struct {
 	store         store.Store
 	queueGetter   types.QueueGetter
 	tls           *types.TLSOptions
+	cluster       clientv3.Cluster
 }
 
 // Option is a functional option.
@@ -50,6 +52,7 @@ type Config struct {
 	QueueGetter   types.QueueGetter
 	TLS           *types.TLSOptions
 	BackendStatus func() types.StatusMap
+	Cluster       clientv3.Cluster
 }
 
 // New creates a new APId.
@@ -66,13 +69,14 @@ func New(c Config, opts ...Option) (*APId, error) {
 		running:       &atomic.Value{},
 		wg:            &sync.WaitGroup{},
 		errChan:       make(chan error, 1),
+		cluster:       c.Cluster,
 	}
 
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.backendStatus)
 	registerAuthenticationResources(router, a.store)
-	registerRestrictedResources(router, a.store, a.queueGetter, a.bus)
+	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
 	a.HttpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -178,7 +182,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus) {
+func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
@@ -204,6 +208,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
 		routers.NewExtensionsRouter(store),
+		routers.NewClusterRouter(actions.NewClusterController(cluster)),
 	)
 }
 
