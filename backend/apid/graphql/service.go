@@ -54,7 +54,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterViewer(svc, newViewerImpl(store, cfg.QueueGetter, cfg.Bus))
 
 	// Register check types
-	schema.RegisterCheck(svc, &checkImpl{})
+	schema.RegisterCheck(svc, newCheckImpl(store))
 	schema.RegisterCheckConfig(svc, newCheckCfgImpl(store))
 	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
