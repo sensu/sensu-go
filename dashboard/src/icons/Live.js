@@ -4,7 +4,10 @@ import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
 import SvgIcon from "@material-ui/core/SvgIcon";
 
-const duration = 300;
+// https://material.io/design/iconography/animated-icons.html#transitions
+const duration = 500;
+const outDuration = 100;
+
 const styles = {
   root: {},
   inactive: {
@@ -12,31 +15,35 @@ const styles = {
       opacity: 1,
       fill: "none",
       transform: "translateY(0) scale(1)",
-      transition: "opacity 100ms ease-in, transform 100ms ease-in",
+      transition: `
+        opacity ${outDuration}ms ease-in,
+        transform ${outDuration}ms ease-in
+      `,
     },
     "& $antenna": {
       opacity: 0,
       transition: "none",
     },
     "& $waves": {
-      opacity: 0,
-      transform: "scale(0.8)",
-      transition: "none",
       "& path": {
+        opacity: 0,
         animation: "none",
+        transition: "none",
       },
     },
   },
   waves: {
-    transition: `transform ${duration}ms ease, opacity ${duration}ms`,
-    transitionDelay: duration * (5 / 8),
-    transformOrigin: "center",
     "& path": {
-      fillOpacity: 0.66,
-      animation: "10s ease-in-out 0s normal infinite live-gentle-pulse",
+      opacity: 1,
+      transition: `opacity ${duration}ms ease-out`,
+      transitionDelay: duration * (9 / 16),
+      fillOpacity: 0.65,
+      animation: "10s ease-in-out 2s normal infinite ic-live-gentle-ripple",
     },
+    // stagger transition & animations to give an impression of a ripple
     "& path:last-child": {
-      animationDelay: "1s",
+      transitionDelay: duration * (13 / 16),
+      animationDelay: "3s",
     },
   },
   antenna: {
@@ -53,40 +60,35 @@ const styles = {
       opacity ${duration * (2 / 3)}ms step-end
     `,
   },
-  "@keyframes live-gentle-pulse": {
+  "@keyframes ic-live-gentle-ripple": {
     "0%": {
-      fillOpacity: 0.66,
+      fillOpacity: 0.65,
     },
     "10%": {
       fillOpacity: 0.95,
     },
     "20%,100%": {
-      fillOpacity: 0.66,
+      fillOpacity: 0.65,
     },
   },
 };
 
 class Icon extends React.PureComponent {
   static propTypes = {
+    active: PropTypes.bool,
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
-    inactive: PropTypes.bool,
   };
 
   static defaultProps = {
-    inactive: false,
+    active: true,
     className: undefined,
   };
 
   render() {
-    const {
-      classes,
-      className: classNameProp,
-      inactive,
-      ...props
-    } = this.props;
+    const { classes, className: classNameProp, active, ...props } = this.props;
     const className = classnames(classNameProp, {
-      [classes.inactive]: inactive,
+      [classes.inactive]: !active,
     });
 
     return (
