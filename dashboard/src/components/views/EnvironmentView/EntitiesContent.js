@@ -8,7 +8,7 @@ import NotFoundView from "/components/views/NotFoundView";
 import EntitiesList from "/components/partials/EntitiesList";
 import SearchBox from "/components/SearchBox";
 import ListToolbar from "/components/partials/ListToolbar";
-import RefreshIcon from "@material-ui/icons/Refresh";
+import LiveIcon from "/icons/Live";
 import CollapsingMenu from "/components/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
 
@@ -41,15 +41,20 @@ class EntitiesContent extends React.PureComponent {
     ${EntitiesList.fragments.environment}
   `;
 
+  state = {
+    isLive: false,
+  };
+
   render() {
     const { queryParams, setQueryParams, match } = this.props;
-
     const { filter, order, limit = "50", offset = "0" } = queryParams;
+    const { isLive } = this.state;
 
     return (
       <Query
         query={EntitiesContent.query}
         fetchPolicy="cache-and-network"
+        pollInterval={isLive ? 2500 : 0}
         variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({ data: { environment } = {}, loading, aborted, refetch }) => {
@@ -70,9 +75,9 @@ class EntitiesContent extends React.PureComponent {
                   }
                   renderMenuItems={
                     <CollapsingMenu.Button
-                      title="Reload"
-                      icon={<RefreshIcon />}
-                      onClick={() => refetch()}
+                      title="LIVE"
+                      icon={<LiveIcon inactive={!isLive} />}
+                      onClick={() => this.setState({ isLive: !isLive })}
                     />
                   }
                 />
@@ -80,7 +85,7 @@ class EntitiesContent extends React.PureComponent {
               <EntitiesList
                 limit={limit}
                 offset={offset}
-                loading={loading || aborted}
+                loading={(loading && !isLive) || aborted}
                 onChangeQuery={setQueryParams}
                 environment={environment}
                 refetch={refetch}
