@@ -42,13 +42,15 @@ func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
-	return fetchHandlers(p.Context, r.handlerCtrl, check.Handlers)
+	ctx := types.SetContextFromResource(p.Context, check)
+	return fetchHandlers(ctx, r.handlerCtrl, check.Handlers)
 }
 
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
-	return fetchHandlers(p.Context, r.handlerCtrl, check.OutputMetricHandlers)
+	ctx := types.SetContextFromResource(p.Context, check)
+	return fetchHandlers(ctx, r.handlerCtrl, check.OutputMetricHandlers)
 }
 
 // ToJSON implements response to request for 'toJSON' field.
