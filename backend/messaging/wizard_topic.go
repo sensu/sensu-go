@@ -39,14 +39,20 @@ func (t *wizardTopic) Send(msg interface{}) {
 	}
 }
 
-// SendDirect sends a message directly to a subscriber of this topic.
-func (t *wizardTopic) SendDirect(msg interface{}) error {
+// SoundRoundRobin sends a message to the next subscriber in a round-robin
+// ring. In a distributed environment, SendDirect may send a message, or it
+// may not, depending if the next subscriber in the round-robin is bound to
+// the backend.
+func (t *wizardTopic) SendRoundRobin(msg interface{}) error {
 	if t.ring == nil {
 		return errors.New("no ring for topic: " + t.id)
 	}
 
 	id, err := t.ring.Next(context.Background())
 	if err != nil {
+		if err == ring.ErrNotOwner || err == ring.ErrEmptyRing {
+			return nil
+		}
 		return err
 	}
 

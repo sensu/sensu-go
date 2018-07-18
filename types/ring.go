@@ -20,9 +20,6 @@ type Ring interface {
 	// returned again. Next returns the selected value, and an error indicating
 	// if the operation failed, or if the context was cancelled.
 	Next(context.Context) (string, error)
-
-	// Peek gets the next item in the Ring, but does not advance the iteration.
-	Peek(context.Context) (string, error)
 }
 
 // RingGetter provides a way to get a Ring.

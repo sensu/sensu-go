@@ -4,11 +4,11 @@ package ring
 
 import (
 	"context"
-	"sync"
+	"encoding/binary"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,95 +61,80 @@ func TestNext(t *testing.T) {
 		require.NoError(t, ring.Add(context.Background(), item))
 	}
 
+	var got []string
+
 	for i := 0; i < 9; i++ {
 		item, err := ring.Next(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, items[i%3], item)
+		got = append(got, item)
 	}
+
+	want := append(items, items...)
+	want = append(want, items...)
+
+	assert.Equal(t, want, got)
 
 	require.NoError(t, ring.Remove(context.Background(), "bar"))
 
 	newItems := []string{"foo", "baz"}
+	want = want[:0]
+	for i := 0; i < 5; i++ {
+		want = append(want, newItems...)
+	}
+
+	got = got[:0]
 
 	for i := 0; i < 10; i++ {
 		item, err := ring.Next(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, newItems[i%2], item)
+		got = append(got, item)
 	}
+
+	assert.Equal(t, want, got)
 }
 
-func TestPeek(t *testing.T) {
+func TestErrorOnNext(t *testing.T) {
 	t.Parallel()
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
+	clientA, err := e.NewClient()
 	require.NoError(t, err)
-	defer client.Close()
+	defer clientA.Close()
 
-	ring := EtcdGetter{client}.GetRing("testpeek")
+	getterA := EtcdGetter{clientA}
 
-	items := []string{"foo", "bar", "baz"}
-	for _, item := range items {
-		require.NoError(t, ring.Add(context.Background(), item))
-	}
-
-	item, err := ring.Peek(context.Background())
+	clientB, err := e.NewClient()
 	require.NoError(t, err)
-	assert.Equal(t, "foo", item)
+	defer clientB.Close()
 
-	ring = EtcdGetter{client}.GetRing("testempty")
-	_, err = ring.Peek(context.Background())
-	assert.Equal(t, ErrEmptyRing, err)
-}
+	getterB := EtcdGetter{clientB}
 
-func TestBlockOnNext(t *testing.T) {
-	t.Parallel()
-
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-
-	client, err := e.NewClient()
-	require.NoError(t, err)
-	defer client.Close()
-
-	getter := EtcdGetter{client}
-
-	r1 := getter.GetRing("blocknext")
-	r2 := getter.GetRing("blocknext")
+	r1 := getterA.GetRing("blocknext")
+	r2 := getterB.GetRing("blocknext")
 	r2.(*Ring).backendID = "something-else-entirely"
 
 	require.NoError(t, r1.Add(context.Background(), "foo"))
 	require.NoError(t, r2.Add(context.Background(), "bar"))
 
-	var wg sync.WaitGroup
-	var errNext error
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		value, err := r2.Next(context.Background())
-		if err != nil {
-			errNext = err
-			return
-		}
-
-		assert.Equal(t, "bar", value)
-	}()
+	_, err = r2.Next(context.Background())
+	if err != ErrNotOwner {
+		t.Fatalf("wanted ErrNotOwner, got %v", err)
+	}
 
 	value, err := r1.Next(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "foo", value)
 
-	wg.Wait()
-
-	// Make sure we didn't encountered any error while getting the next item
-	require.NoError(t, errNext)
-
-	value, err = r1.Next(context.Background())
+	value, err = r2.Next(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "foo", value)
+	assert.Equal(t, "bar", value)
+
+	_, err = r1.Next(context.Background())
+	if err != ErrNotOwner {
+		t.Fatalf("wanted ErrNotOwner, got %v", err)
+	}
 }
 
 func TestTransferOwnership(t *testing.T) {
@@ -171,17 +156,13 @@ func TestTransferOwnership(t *testing.T) {
 	require.NoError(t, r1.Add(context.Background(), "foo"))
 	require.NoError(t, r2.Add(context.Background(), "foo"))
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		<-time.After(time.Second)
-		cancel()
-	}()
-	_, err = r1.Next(ctx)
-	assert.Contains(t, err.Error(), ctx.Err().Error()) // it timed out
-
 	value, err := r2.Next(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "foo", value)
+
+	if _, err := r1.Next(context.Background()); err != ErrNotOwner {
+		t.Fatalf("wanted ErrNotOwner, got %v", err)
+	}
 }
 
 func TestErrNotOwner(t *testing.T) {
@@ -234,21 +215,54 @@ func TestExpire(t *testing.T) {
 	assert.Equal(t, ErrEmptyRing, err)
 }
 
-func TestDeleteWatch(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.TODO())
+func TestNewItemKey(t *testing.T) {
+	t.Parallel()
 
-	wc := make(chan clientv3.WatchResponse, 1)
-	// A delete occurs
-	wc <- clientv3.WatchResponse{}
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
 
-	// Get a notification for every delete event
-	wait := notifyDeletes(ctx, wc)
+	clientA, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// Ensure a notification occurs
-	<-wait
-	cancel()
+	clientB, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// Ensure the wait channel closes after the context is cancelled
-	for range wait {
+	r1 := EtcdGetter{clientA}.GetRing("foo").(*Ring)
+	r2 := EtcdGetter{clientB}.GetRing("foo").(*Ring)
+
+	k1, err := r1.newItemKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.Split(k1, "/")
+	idPart1 := parts[len(parts)-1]
+
+	k2, err := r2.newItemKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts = strings.Split(k2, "/")
+	idPart2 := parts[len(parts)-1]
+
+	var n1, n2 uint64
+
+	if err := binary.Read(strings.NewReader(idPart1), binary.BigEndian, &n1); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := n1, uint64(1); got != want {
+		t.Errorf("bad id: got %d, want %d", got, want)
+	}
+
+	if err := binary.Read(strings.NewReader(idPart2), binary.BigEndian, &n2); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := n2, uint64(2); got != want {
+		t.Errorf("bad id: got %d, want %d", got, want)
 	}
 }

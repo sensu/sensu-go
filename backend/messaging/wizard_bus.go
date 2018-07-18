@@ -169,7 +169,7 @@ func (b *WizardBus) PublishDirect(topic string, msg interface{}) error {
 		}
 	}
 
-	return wt.SendDirect(msg)
+	return wt.SendRoundRobin(msg)
 }
 
 // makeRing constructs a ring for a topic. rings are lazily constructed;

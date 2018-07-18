@@ -9,13 +9,13 @@ import (
 	"fmt"
 	"path"
 	"sync"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,11 +34,25 @@ var (
 
 	leaseIDCache = make(map[string]clientv3.LeaseID)
 	pkgMu        sync.Mutex
+
+	initialItemKey []byte
 )
 
+func init() {
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.BigEndian, uint64(0)); err != nil {
+		// Should never happen
+		panic(err)
+	}
+	initialItemKey = buf.Bytes()
+}
+
 func getBackendID() string {
+	// It's necessary to do this here instead of in init, because on Windows,
+	// creating a UUID at init time seems to cause a panic in some cases.
 	backendOnce.Do(func() {
 		backendID = uuid.New().String()
+		logger = logger.WithFields(logrus.Fields{"backend": backendID})
 	})
 	return backendID
 }
@@ -60,25 +74,112 @@ type Ring struct {
 	// The name of the ring.
 	Name string
 
-	client       *clientv3.Client
-	kv           clientv3.KV
-	backendID    string
-	leaseTimeout int64
+	client          *clientv3.Client
+	kv              clientv3.KV
+	backendID       string
+	leaseTimeout    int64
+	once            sync.Once
+	watchChan       clientv3.WatchChan
+	wakeup          chan struct{}
+	itemPrefix      string
+	assertionPrefix string
+	nextItemKey     string
+	keySeqKey       string
 }
 
 // New returns a new Ring.
 func New(name string, client *clientv3.Client) *Ring {
 	pkgMu.Lock()
 	defer pkgMu.Unlock()
-	return &Ring{
-		Name:         name,
-		client:       client,
-		kv:           clientv3.NewKV(client),
-		backendID:    getBackendID(),
-		leaseTimeout: 120, // 120 seconds
+	ring := &Ring{
+		Name:            name,
+		client:          client,
+		kv:              clientv3.NewKV(client),
+		backendID:       getBackendID(),
+		leaseTimeout:    120, // 120 seconds
+		wakeup:          make(chan struct{}, 1),
+		itemPrefix:      path.Join(name, "items"),
+		assertionPrefix: path.Join(name, "owner"),
+		nextItemKey:     path.Join(name, "next"),
+		keySeqKey:       path.Join(name, "seq"),
 	}
+	ring.initWatcher()
+	return ring
 }
 
+func (r *Ring) initWatcher() {
+	r.watchChan = r.client.Watch(context.Background(), r.nextItemKey, clientv3.WithPrefix())
+}
+
+// supervise tries to acquire a mutex on the ring. If it succeeds, r's client
+// will be responsible for doing the ring accounting.
+func (r *Ring) supervise() error {
+	session, err := concurrency.NewSession(r.client)
+	if err != nil {
+		return err
+	}
+	mu := concurrency.NewMutex(session, path.Join(r.Name, "mutex"))
+	go func() {
+		mu.Lock(context.Background())
+		defer mu.Unlock(context.Background())
+		for range r.wakeup {
+			if err := r.advance(); err != nil {
+				logger.WithError(err).Error("couldn't get the next ring item")
+			}
+		}
+	}()
+	return nil
+}
+
+// advance takes an item from the head of the ring and puts it at the tail.
+// it also does a put of the item value to the nextItemKey. This enables
+// other clients to be informed of the ring advancing via the watcher.
+// If there are no items in the ring then advance will put an empty value
+// to the nextItemKey, so that clients will be able to return ErrEmptyRing.
+func (r *Ring) advance() error {
+	response, err := r.client.Get(context.Background(), r.itemPrefix, clientv3.WithFirstKey()...)
+	if err != nil {
+		return fmt.Errorf("error getting next ring item: %s", err)
+	}
+	if len(response.Kvs) == 0 {
+		// Put a nil value so that clients will know the ring is empty
+		_, err := r.client.Put(context.TODO(), r.nextItemKey, "")
+		return err
+	}
+
+	kvs := response.Kvs[0]
+	key := string(kvs.Key)
+	value := string(kvs.Value)
+
+	// Delete the head of the ring
+	delCmp := clientv3.Compare(clientv3.ModRevision(key), "=", kvs.ModRevision)
+	delOp := clientv3.OpDelete(key)
+
+	// Place the value at the tail of the ring
+	nextKey, err := r.newItemKey()
+	if err != nil {
+		return err
+	}
+	putCmp := clientv3.Compare(clientv3.ModRevision(nextKey), "=", 0)
+	putOp := clientv3.OpPut(nextKey, value)
+
+	// Execute the transaction
+	resp, err := r.kv.Txn(context.Background()).If(delCmp, putCmp).Then(delOp, putOp).Commit()
+	if err != nil {
+		return fmt.Errorf("error while executing ring transaction: %s", err)
+	}
+	if !resp.Succeeded {
+		// try again, the transaction was likely invalidated by another client
+		// adding or removing items to/from the ring.
+		return r.advance()
+	}
+
+	// Put the key somewhere the watcher can reliably access it
+	_, err = r.client.Put(context.TODO(), r.nextItemKey, value)
+	return err
+}
+
+// gets a lease ID from cache, or creates a new one if it does not exist yet
 func (r *Ring) getLeaseID() (clientv3.LeaseID, error) {
 	pkgMu.Lock()
 	defer pkgMu.Unlock()
@@ -101,37 +202,73 @@ func (r *Ring) getLeaseID() (clientv3.LeaseID, error) {
 	return leaseID, nil
 }
 
-func newKey(prefix string) string {
-	now := time.Now().UnixNano()
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.BigEndian, now); err != nil {
-		// Should never happen
-		panic(err)
+// newItemKey creates a new key for a ring item.
+func (r *Ring) newItemKey() (result string, err error) {
+	// Get the current key, or initialize it to be the first item key
+	exists := clientv3.Compare(clientv3.Value(r.keySeqKey), ">", string(initialItemKey))
+	put := clientv3.OpPut(r.keySeqKey, string(initialItemKey))
+	get := clientv3.OpGet(r.keySeqKey)
+
+	resp, err := r.kv.Txn(context.Background()).If(exists).Then(get).Else(put, get).Commit()
+	if err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
 	}
-	return path.Join(prefix, buf.String())
+
+	respIdx := len(resp.Responses) - 1
+	kv := resp.Responses[respIdx].GetResponseRange().Kvs[0]
+
+	// decode the key into an integer
+	var n uint64
+	if err := binary.Read(bytes.NewReader(kv.Value), binary.BigEndian, &n); err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
+	}
+
+	buf := new(bytes.Buffer)
+
+	if err := binary.Write(buf, binary.BigEndian, n+1); err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
+	}
+
+	notModified := clientv3.Compare(clientv3.Value(r.keySeqKey), "=", string(kv.Value))
+	put = clientv3.OpPut(r.keySeqKey, buf.String())
+
+	resp, err = r.kv.Txn(context.Background()).If(notModified).Then(put).Commit()
+	if err != nil {
+		return "", fmt.Errorf("couldn't create ring key: %s", err)
+	}
+	if !resp.Succeeded {
+		return r.newItemKey()
+	}
+
+	return path.Join(r.itemPrefix, buf.String()), nil
 }
 
-// Add adds a new owned value to the ring, which is associated with the client
+// Add adds a new owned value to the ring, which is then owned by the client
 // that added it. Only the client that added it will be able to retrieve it with
-// Next. If the value already exists, ownership will be transferred.
+// Next. If the value already exists, ownership will be transferred to the
+// client that most recently added it.
 func (r *Ring) Add(ctx context.Context, value string) error {
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		key := newKey(r.Name)
+		key, err := r.newItemKey()
+		if err != nil {
+			return err
+		}
 		putCmp := clientv3.Compare(clientv3.Version(key), "=", 0)
 		leaseID, err := r.getLeaseID()
 		if err != nil {
 			return err
 		}
 		putOp := clientv3.OpPut(key, value, clientv3.WithLease(leaseID))
+		// If the item is already in there, remove it and add it again
 		cmps, ops, err := r.getRemovalOps(ctx, value)
 		if err != nil {
 			return err
 		}
 		ownershipAssertion := clientv3.OpPut(
-			path.Join(r.Name, value), r.backendID, clientv3.WithLease(leaseID))
+			path.Join(r.assertionPrefix, value), r.backendID, clientv3.WithLease(leaseID))
 		cmps = append(cmps, putCmp)
 		ops = append(ops, putOp, ownershipAssertion)
 		response, err := r.kv.Txn(ctx).If(cmps...).Then(ops...).Commit()
@@ -149,18 +286,26 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 func (r *Ring) Remove(ctx context.Context, value string) error {
 	for {
 		if err := ctx.Err(); err != nil {
+			// The context was cancelled by the caller
 			return err
 		}
-		resp, err := r.client.Get(ctx, path.Join(r.Name, value))
+		// Check for the ownership assertion first
+		resp, err := r.client.Get(ctx, path.Join(r.assertionPrefix, value))
 		if err != nil {
 			return err
 		}
 		if len(resp.Kvs) == 0 {
+			// The item has already been deleted by another process
 			return nil
 		}
+		// This client is not the owner of the item, so it should not be
+		// allowed to delete it.
 		if string(resp.Kvs[0].Value) != r.backendID {
 			return ErrNotOwner
 		}
+
+		// Get the comparisons and operations necessary to remove the item from
+		// the ring.
 		cmps, ops, err := r.getRemovalOps(ctx, value)
 		if err != nil {
 			return err
@@ -168,12 +313,16 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 		if len(ops) == 0 {
 			return nil
 		}
+
 		// Ensure the owner has not changed
-		eqCmp := clientv3.Compare(clientv3.Value(path.Join(r.Name, value)), "=", r.backendID)
+		eqCmp := clientv3.Compare(clientv3.Value(path.Join(r.assertionPrefix, value)), "=", r.backendID)
+
 		// Delete the ownership assertion
-		delOp := clientv3.OpDelete(path.Join(r.Name, value))
+		delOp := clientv3.OpDelete(path.Join(r.assertionPrefix, value))
 		ops = append(ops, delOp)
 		cmps = append(cmps, eqCmp)
+
+		// Transactionally delete the item and its ownership assertion
 		response, err := r.kv.Txn(ctx).If(cmps...).Then(ops...).Commit()
 		if err != nil {
 			return err
@@ -184,9 +333,12 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 	}
 }
 
+// getRemovalOps gets the comparisons and operations necessary to
+// transactionally remove an item from the ring, including the item's ownership
+// assertion.
 func (r *Ring) getRemovalOps(ctx context.Context, value string) ([]clientv3.Cmp, []clientv3.Op, error) {
 	// Get all the items in the ring
-	response, err := r.client.Get(ctx, r.Name, clientv3.WithPrefix())
+	response, err := r.client.Get(ctx, r.itemPrefix, clientv3.WithPrefix())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -205,124 +357,61 @@ func (r *Ring) getRemovalOps(ctx context.Context, value string) ([]clientv3.Cmp,
 	return cmps, ops, nil
 }
 
-// notifyDeletes watches a clientv3.WatchChan for delete events and sends a
-// message on ch when one occurs, until its context is cancelled.
-func notifyDeletes(ctx context.Context, wc clientv3.WatchChan) (ch chan struct{}) {
-	ch = make(chan struct{}, 1)
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		defer func() {
-			close(ch)
-		}()
-		for {
-			select {
-			case resp := <-wc:
-				for _, evt := range resp.Events {
-					if evt.Type == mvccpb.DELETE {
-						ch <- struct{}{}
-					}
-				}
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				// Use polling as well in case the delete event didn't fire.
-				// This seems to happen from time to time, but is very hard
-				// to reproduce.
-				// TODO: find some way of avoiding this.
-				ch <- struct{}{}
-			}
-		}
-	}()
-	return ch
-}
-
-// Next returns the next owned item in the Ring and advances the iteration. If
-// the Ring does not contain any items owned by this client, then Next will
-// block until the context is cancelled. If the Ring contains no items
-// whatsoever, then ErrEmptyRing will be returned.
+// Next returns the next item in the Ring, if the ring's client owns the item,
+// and advances the iteration. If the ring's client does not own the item, then
+// ErrNotOwner is returned. If the Ring contains no items whatsoever, then
+// ErrNoItems will be returned.
 func (r *Ring) Next(ctx context.Context) (string, error) {
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
-	defer cancel()
-	wc := r.client.Watch(ctx, r.Name, clientv3.WithPrefix())
-	if wc == nil {
-		return "", ctx.Err()
-	}
-	wait := notifyDeletes(ctx, wc)
-	for {
-		if err := ctx.Err(); err != nil {
-			return "", fmt.Errorf("couldn't get next ring item: %s", err)
-		}
-		response, err := r.client.Get(ctx, r.Name, clientv3.WithFirstKey()...)
-		if err != nil {
-			return "", fmt.Errorf("error getting next ring item: %s", err)
-		}
-		if len(response.Kvs) == 0 {
-			return "", ErrEmptyRing
-		}
-		ownedKvs, err := r.getOwnedKvs(ctx, response.Kvs)
-		if err != nil {
-			return "", fmt.Errorf("error while getting next ring item: %s", err)
-		}
-		// This member doesn't own any keys in the ring. Wait for a delete event
-		// to occur before trying to get a key again.
-		if len(ownedKvs) == 0 || ownedKvs[0] != response.Kvs[0] {
-			<-wait
-			continue
-		}
-		kvs := response.Kvs[0]
-		key := string(kvs.Key)
-		value := string(kvs.Value)
-
-		// Ensure ownership has not changed in the meantime
-		eqCmp := clientv3.Compare(clientv3.Value(path.Join(r.Name, value)), "=", r.backendID)
-
-		// Delete the head of the ring
-		delCmp := clientv3.Compare(clientv3.ModRevision(key), "=", kvs.ModRevision)
-		delOp := clientv3.OpDelete(key)
-
-		// Place the value at the tail of the ring
-		nextKey := newKey(r.Name)
-		putCmp := clientv3.Compare(clientv3.ModRevision(nextKey), "=", 0)
-		putOp := clientv3.OpPut(nextKey, value)
-
-		resp, err := r.kv.Txn(ctx).If(delCmp, putCmp, eqCmp).Then(delOp, putOp).Commit()
-		if err != nil {
-			return "", fmt.Errorf("error while executing ring transaction: %s", err)
-		}
-		if resp.Succeeded {
-			return value, nil
-		}
-	}
-}
-
-func (r *Ring) getOwnedKvs(ctx context.Context, kvs []*mvccpb.KeyValue) ([]*mvccpb.KeyValue, error) {
-	result := make([]*mvccpb.KeyValue, 0, len(kvs))
-	for _, kv := range kvs {
-		resp, err := r.client.Get(ctx, path.Join(r.Name, string(kv.Value)))
-		if err != nil {
-			return nil, err
-		}
-		if len(resp.Kvs) == 0 {
-			continue
-		}
-		if string(resp.Kvs[0].Value) == r.backendID {
-			result = append(result, kv)
-		}
-	}
-	return result, nil
-}
-
-// Peek returns the next item in the Ring without advancing the iteration. If
-// the Ring is empty, then Peek returns an empty string and ErrEmptyRing.
-func (r *Ring) Peek(ctx context.Context) (string, error) {
-	response, err := r.client.Get(ctx, r.Name, clientv3.WithFirstKey()...)
+	var err error
+	r.once.Do(func() {
+		err = r.supervise()
+	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error initializing ring: %s", err)
 	}
-	if len(response.Kvs) == 0 {
+	r.wake()
+	watchResponse := <-r.watchChan
+	if watchResponse.Canceled {
+		r.initWatcher()
+		return r.Next(ctx)
+	}
+	if len(watchResponse.Events) == 0 {
+		return r.Next(ctx)
+	}
+	event := watchResponse.Events[0]
+	value := string(event.Kv.Value)
+	if len(value) == 0 {
+		// The zero-length sentinel value informs us that the ring is empty
 		return "", ErrEmptyRing
 	}
-	return string(response.Kvs[0].Value), nil
+	isOwner, err := r.owns(value)
+	if err != nil {
+		return "", fmt.Errorf("error checking key ownership: %s: %s", string(value), err)
+	}
+	if !isOwner {
+		return "", ErrNotOwner
+	}
+	return string(value), nil
+}
+
+// tests whether the key is owned by this backend or another
+func (r *Ring) owns(key string) (bool, error) {
+	resp, err := r.client.Get(context.Background(), path.Join(r.assertionPrefix, key))
+	if err != nil {
+		return false, err
+	}
+	if len(resp.Kvs) == 0 {
+		return false, nil
+	}
+	owner := string(resp.Kvs[0].Value)
+	return owner == r.backendID, nil
+}
+
+// wakeup the supervisor goroutine, in the case that it was able to obtain the
+// etcd mutex.
+func (r *Ring) wake() {
+	select {
+	case r.wakeup <- struct{}{}:
+	default:
+	}
 }
