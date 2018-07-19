@@ -75,15 +75,6 @@ class EventDetailsContainer extends React.PureComponent {
             <Content bottomMargin>
               <div style={{ flexGrow: 1 }} />
               <CollapsingMenu>
-                <ReRunAction event={event}>
-                  {exec => (
-                    <CollapsingMenu.Button
-                      title="Re-run"
-                      icon={<QueueIcon />}
-                      onClick={() => exec()}
-                    />
-                  )}
-                </ReRunAction>
                 <ResolveAction event={event}>
                   {({ resolve }) => (
                     <CollapsingMenu.Button
@@ -93,6 +84,15 @@ class EventDetailsContainer extends React.PureComponent {
                     />
                   )}
                 </ResolveAction>
+                <ReRunAction event={event}>
+                  {exec => (
+                    <CollapsingMenu.Button
+                      title="Re-run"
+                      icon={<QueueIcon />}
+                      onClick={() => exec()}
+                    />
+                  )}
+                </ReRunAction>
                 <DeleteAction event={event}>
                   {del => (
                     <CollapsingMenu.Button
