@@ -84,13 +84,6 @@ class SilencesContent extends React.Component {
                   }
                   renderMenuItems={
                     <React.Fragment>
-                      <CollapsingMenu.Button
-                        title="LIVE"
-                        icon={<LiveIcon active={isPolling} />}
-                        onClick={() =>
-                          isPolling ? stopPolling() : startPolling(pollInterval)
-                        }
-                      />
                       <ModalController
                         renderModal={({ close }) => (
                           <SilenceEntryDialog
@@ -114,6 +107,13 @@ class SilencesContent extends React.Component {
                           />
                         )}
                       </ModalController>
+                      <CollapsingMenu.Button
+                        title="LIVE"
+                        icon={<LiveIcon active={isPolling} />}
+                        onClick={() =>
+                          isPolling ? stopPolling() : startPolling(pollInterval)
+                        }
+                      />
                     </React.Fragment>
                   }
                 />

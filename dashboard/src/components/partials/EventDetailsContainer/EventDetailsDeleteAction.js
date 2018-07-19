@@ -1,18 +1,19 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import { compose } from "recompose";
 import { withRouter } from "react-router-dom";
-import Button from "@material-ui/core/Button";
+import { withApollo } from "react-apollo";
+
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import deleteEvent from "/mutations/deleteEvent";
 
 class EventDetailsDeleteAction extends React.PureComponent {
   static propTypes = {
+    children: PropTypes.func.isRequired,
     client: PropTypes.object.isRequired,
     event: PropTypes.object,
     history: PropTypes.object.isRequired,
-    onRequestStart: PropTypes.func.isRequired,
-    onRequestEnd: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -31,57 +32,27 @@ class EventDetailsDeleteAction extends React.PureComponent {
     `,
   };
 
-  state = {
-    locked: false,
-  };
-
-  requestStart() {
-    this.props.onRequestStart();
-    this.setState({ locked: true });
-  }
-
-  requestEnd() {
-    this.props.onRequestEnd();
-    this.setState({ locked: false });
-  }
-
   deleteEvent = () => {
     const {
       client,
       event: { id, ns },
       history,
     } = this.props;
-    if (this.state.locked) {
-      return;
-    }
-
-    // Cleanup
-    this.requestStart();
 
     // Send request
-    deleteEvent(client, { id }).then(
-      () => {
-        this.requestEnd();
-        history.replace(`/${ns.org}/${ns.env}/events`);
-      },
-      error => {
-        this.requestEnd();
-        throw error;
-      },
+    deleteEvent(client, { id }).then(() =>
+      history.replace(`/${ns.org}/${ns.env}/events`),
     );
   };
 
   render() {
     return (
       <ConfirmDelete identifier="this event" onSubmit={this.deleteEvent}>
-        {dialog => (
-          <Button variant="raised" onClick={dialog.open}>
-            Delete
-          </Button>
-        )}
+        {dialog => this.props.children(dialog.open)}
       </ConfirmDelete>
     );
   }
 }
 
-export default withRouter(EventDetailsDeleteAction);
+const enhancer = compose(withRouter, withApollo);
+export default enhancer(EventDetailsDeleteAction);
