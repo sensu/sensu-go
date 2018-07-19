@@ -82,7 +82,7 @@ func TestMemberList(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
 	ctx := testutil.NewContext(
 		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleTypeAll)))
+			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
 	_, err := ctrl.MemberList(ctx)
 	if err != nil {
@@ -94,7 +94,7 @@ func TestMemberAdd(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
 	ctx := testutil.NewContext(
 		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleTypeAll)))
+			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
 	_, err := ctrl.MemberAdd(ctx, []string{"foo"})
 	if err != nil {
@@ -106,7 +106,7 @@ func TestMemberUpdate(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
 	ctx := testutil.NewContext(
 		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleTypeAll)))
+			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
 	_, err := ctrl.MemberUpdate(ctx, 1234, []string{"foo"})
 	if err != nil {
@@ -118,7 +118,7 @@ func TestMemberRemove(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
 	ctx := testutil.NewContext(
 		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleTypeAll)))
+			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
 	_, err := ctrl.MemberRemove(ctx, 1234)
 	if err != nil {

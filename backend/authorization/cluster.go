@@ -27,7 +27,12 @@ func (p ClusterPolicy) WithContext(ctx context.Context) ClusterPolicy {
 	return p
 }
 
-// Returns true if RuleTypeAll applies
+// Returns true if types.RuleAllPerms applies
 func (p *ClusterPolicy) HasPermission() bool {
-	return canPerform(p, types.RuleTypeAll)
+	for _, perm := range types.RuleAllPerms {
+		if !canPerform(p, perm) {
+			return false
+		}
+	}
+	return true
 }
