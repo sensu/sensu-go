@@ -205,8 +205,10 @@ func TestEventsBySeverity(t *testing.T) {
 	unknown.Check.Status = 3 // unknown
 	ok := FixtureEvent("entity", "check")
 	ok.Check.Status = 0 // ok
+	ok.Check.LastOK = 42
 	okOlder := FixtureEvent("entity", "check")
-	okOlder.Timestamp = 42
+	okOlder.Check.Status = 0 // ok
+	okOlder.Check.LastOK = 7
 	noCheck := FixtureEvent("entity", "check")
 	noCheck.Check = nil
 
