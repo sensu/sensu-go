@@ -18,6 +18,11 @@ extend type Silenced {
   deleted: Boolean!
 }
 
+extend type CheckConfig {
+  "Describes whether the check has been deleted from the system"
+  deleted: Boolean!
+}
+
 extend type Query {
   "Describes state of authorization tokens"
   auth: Auth
