@@ -185,4 +185,7 @@ type SilencedAPIClient interface {
 type ClusterMemberClient interface {
 	// MemberList lists cluster members
 	MemberList() (*clientv3.MemberListResponse, error)
+
+	// MemberAdd adds a cluster member
+	MemberAdd(peerAddrs []string) (*clientv3.MemberAddResponse, error)
 }
