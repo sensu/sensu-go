@@ -1,24 +1,30 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Grid from "@material-ui/core/Grid";
 
-import Loader from "/components/util/Loader";
-
-import Content from "/components/Content";
 import ButtonSet from "/components/ButtonSet";
+import Content from "/components/Content";
+import Grid from "@material-ui/core/Grid";
+import LiveButton from "/components/partials/LiveButton";
+import Loader from "/components/util/Loader";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
+
 import CheckResult from "./EventDetailsCheckResult";
-import Summary from "./EventDetailsSummary";
 import DeleteAction from "./EventDetailsDeleteAction";
 import ResolveAction from "./EventDetailsResolveAction";
 import ReRunAction from "./EventDetailsReRunAction";
+import Summary from "./EventDetailsSummary";
 
 class EventDetailsContainer extends React.PureComponent {
   static propTypes = {
     client: PropTypes.object.isRequired,
     event: PropTypes.object,
     loading: PropTypes.bool.isRequired,
+    poller: PropTypes.shape({
+      running: PropTypes.bool,
+      start: PropTypes.func,
+      stop: PropTypes.func,
+    }).isRequired,
   };
 
   static defaultProps = {
@@ -74,7 +80,7 @@ class EventDetailsContainer extends React.PureComponent {
   };
 
   render() {
-    const { client, event, loading } = this.props;
+    const { client, event, loading, poller } = this.props;
     const { pendingRequests } = this.state;
     const hasPendingRequests = pendingRequests > 0;
 
@@ -85,6 +91,12 @@ class EventDetailsContainer extends React.PureComponent {
             <Content bottomMargin>
               <div style={{ flexGrow: 1 }} />
               <ButtonSet>
+                <LiveButton
+                  active={poller.running}
+                  onClick={() =>
+                    poller.running ? poller.stop() : poller.start()
+                  }
+                />
                 <ResolveAction client={client} event={event} />
                 <ReRunAction client={client} event={event} />
                 <DeleteAction

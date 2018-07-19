@@ -4,6 +4,8 @@ import gql from "graphql-tag";
 import Grid from "@material-ui/core/Grid";
 import Content from "/components/Content";
 import ButtonSet from "/components/ButtonSet";
+import LiveButton from "/components/partials/LiveButton";
+
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
 import EntityDetailsEvents from "./EntityDetailsEvents";
 import EntityDetailsInformation from "./EntityDetailsInformation";
@@ -12,6 +14,11 @@ import DeleteAction from "./EntityDetailsDeleteAction";
 class EntityDetailsContainer extends React.PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
+    poller: PropTypes.shape({
+      running: PropTypes.bool,
+      start: PropTypes.func,
+      stop: PropTypes.func,
+    }).isRequired,
   };
 
   static fragments = {
@@ -35,12 +42,17 @@ class EntityDetailsContainer extends React.PureComponent {
   };
 
   render() {
-    const { entity } = this.props;
+    const { entity, poller } = this.props;
+
     return (
       <React.Fragment>
         <Content bottomMargin>
           <div style={{ flexGrow: 1 }} />
           <ButtonSet>
+            <LiveButton
+              active={poller.running}
+              onClick={() => (poller.running ? poller.stop() : poller.start())}
+            />
             <DeleteAction entity={entity} />
           </ButtonSet>
         </Content>
