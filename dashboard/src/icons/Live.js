@@ -37,7 +37,7 @@ const styles = {
       opacity: 1,
       transition: `opacity ${duration}ms ease-out`,
       transitionDelay: duration * (9 / 16),
-      fillOpacity: 0.65,
+      fillOpacity: 0.5,
       animation: "10s ease-in-out 2s normal infinite ic-live-gentle-ripple",
     },
     // stagger transition & animations to give an impression of a ripple
@@ -62,13 +62,13 @@ const styles = {
   },
   "@keyframes ic-live-gentle-ripple": {
     "0%": {
-      fillOpacity: 0.65,
+      fillOpacity: 0.5,
     },
     "10%": {
       fillOpacity: 0.95,
     },
     "20%,100%": {
-      fillOpacity: 0.65,
+      fillOpacity: 0.5,
     },
   },
 };
