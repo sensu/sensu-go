@@ -12,9 +12,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added API support for cluster management.
 
 ### Changed
-- The Backend struct has been refactored to allow easier customization for the
+- The Backend struct has been refactored to allow easier customization in
 enterprise edition.
 - Use etcd monitor instead of in-memory monitor.
+- Refactoring of the cmd package for sensuctl to allow easier customization in
+the enterprise edition.
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.

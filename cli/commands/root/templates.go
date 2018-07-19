@@ -1,9 +1,37 @@
-package main
+package root
 
 import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 )
+
+var usageTemplate = `Usage:
+{{- if not .HasSubCommands}}	{{.UseLine}}{{end}}
+{{- if .HasSubCommands}}	{{ .CommandPath}} COMMAND{{end}}
+{{- if .HasAvailableLocalFlags}}
+Flags:
+{{ wrappedLocalFlagUsages . | trimRightSpace}}
+{{- end}}
+{{- if .HasAvailableInheritedFlags}}
+Global Flags:
+{{ wrappedInheritedFlagUsages . | trimRightSpace}}
+{{- end}}
+{{- if hasOperationalSubCommands . }}
+Commands:
+{{- range operationalSubCommands . }}
+  {{rpad .Name .NamePadding }} {{.Short}}
+{{- end}}
+{{- end}}
+{{- if hasManagementSubCommands . }}
+Management Commands:
+{{- range managementSubCommands . }}
+  {{rpad .Name .NamePadding }} {{.Short}}
+{{- end}}
+{{- end}}
+{{- if .HasSubCommands }}
+Run '{{.CommandPath}} COMMAND --help' for more information on a command.
+{{- end}}
+`
 
 func init() {
 	cobra.AddTemplateFunc("hasOperationalSubCommands", hasOperationalSubCommands)
