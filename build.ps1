@@ -94,10 +94,10 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
         $ldflags = $ldflags + " -X $version_pkg.PreReleaseIdentifier=$prerelease"
     }
 
-    # sensu-agent & sensuctl main packages are still in a subdirectoy cmd package
-    $main_pkg = "$bin/cmd/..."
-    If ($bin -eq "backend") {
-        $main_pkg = "cmd/$cmd_name"
+    # sensu-agent main package is still in a subdirectoy cmd package
+    $main_pkg = "cmd/$cmd_name"
+    If ($bin -eq "agent") {
+        $main_pkg = "$bin/cmd/..."
     }
 
     go build -ldflags "$ldflags" -o $outfile "$REPO_PATH/$main_pkg"
