@@ -4,6 +4,7 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
@@ -40,4 +41,14 @@ func TestNewEtcd(t *testing.T) {
 	assert.Equal(t, "value", string(getResp.Kvs[0].Value))
 
 	require.NoError(t, e.Shutdown())
+}
+
+func TestEtcdHealthy(t *testing.T) {
+	e, cleanup := NewTestEtcd(t)
+	defer cleanup()
+	response, err := e.Healthy()
+	assert.Nil(t, err)
+	assert.NotNil(t, response)
+	respData, err := json.Marshal(response)
+	assert.Nil(t, err)
 }

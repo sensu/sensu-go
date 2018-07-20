@@ -328,8 +328,12 @@ func (b *Backend) Migration() error {
 
 // Status returns a map of component name to boolean healthy indicator.
 func (b *Backend) Status() types.StatusMap {
+	err := b.Etcd.Status() == nil
+	_, err := b.Etcd.Healthy()
+	etcdState := err == nil
+
 	sm := map[string]bool{
-		"store": b.Etcd.Healthy(),
+		"store": etcdState,
 	}
 
 	for _, d := range b.Daemons {

@@ -268,19 +268,15 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	return cli, nil
 }
 
-// Healthy returns true if Etcd is healthy, false otherwise.
-func (e *Etcd) Healthy() bool {
+// Healthy returns Etcd status information.
+func (e *Etcd) Healthy() (*clientv3.StatusResponse, error) {
 	client, err := e.NewClient()
 	if err != nil {
-		return false
+		return nil, err
 	}
 	mapi := clientv3.NewMaintenance(client)
-	// TODO(greg): what can we do with the response? are there some operational
-	// parameters that are useful?
-	//
-	// https://godoc.org/github.com/coreos/etcd/etcdserver/etcdserverpb#StatusResponse
-	_, err = mapi.Status(context.TODO(), e.cfg.ListenClientURL)
-	return err == nil
+	response, err := mapi.Status(context.TODO(), e.cfg.ListenClientURL)
+	return response, err
 }
 
 // LoopbackURL returns the lookback URL used by etcd
