@@ -42,13 +42,15 @@ func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
-	return fetchHandlers(p.Context, r.handlerCtrl, check.Handlers)
+	ctx := types.SetContextFromResource(p.Context, check)
+	return fetchHandlers(ctx, r.handlerCtrl, check.Handlers)
 }
 
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
-	return fetchHandlers(p.Context, r.handlerCtrl, check.OutputMetricHandlers)
+	ctx := types.SetContextFromResource(p.Context, check)
+	return fetchHandlers(ctx, r.handlerCtrl, check.OutputMetricHandlers)
 }
 
 // ToJSON implements response to request for 'toJSON' field.
@@ -87,6 +89,14 @@ func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 type checkImpl struct {
 	schema.CheckAliases
+	handlerCtrl actions.HandlerController
+}
+
+func newCheckImpl(store store.Store) *checkImpl {
+	impl := checkImpl{
+		handlerCtrl: actions.NewHandlerController(store),
+	}
+	return &impl
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
@@ -131,6 +141,20 @@ func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface
 
 	length := clampInt(p.Args.First, 0, len(history))
 	return history[0:length], nil
+}
+
+// Handlers implements response to request for 'handlers' field.
+func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.Check)
+	ctx := types.SetContextFromResource(p.Context, check)
+	return fetchHandlers(ctx, r.handlerCtrl, check.Handlers)
+}
+
+// OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
+func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.Check)
+	ctx := types.SetContextFromResource(p.Context, check)
+	return fetchHandlers(ctx, r.handlerCtrl, check.OutputMetricHandlers)
 }
 
 //
