@@ -36,7 +36,7 @@ export const getDayperiod = date => {
   const parts = hourFormatter.formatToParts(date);
 
   for (let i = parts.length - 1; i >= 0; i -= 1) {
-    if (parts[i].type === "dayperiod") {
+    if (parts[i].type === "dayperiod" || parts[i].type === "dayPeriod") {
       return parts[i].value;
     }
   }
