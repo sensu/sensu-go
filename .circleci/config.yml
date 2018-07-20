@@ -9,6 +9,9 @@ sensu_go_build_env: &sensu_go_build_env
   #### expecting it in the form of
   ####   /go/src/github.com/circleci/go-tool
   ####   /go/src/bitbucket.org/circleci/go-tool
+  environment:
+    - SENSU_BUILD_ITERATION: 1
+
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
     - image: circleci/golang:1.10
@@ -21,10 +24,9 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: ./build.sh deps
-      - run: ./build.sh lint
-      - run: ./build.sh build_tools
-      - run: ./build.sh build
+      - run: sudo $PWD/circle-ci-setup.sh
+      - run: make
+      - run: find out/
 
       - persist_to_workspace:
           root: /go/src/github.com/
