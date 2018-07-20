@@ -25,6 +25,8 @@ jobs:
 
       # specify any bash command here prefixed with `run: `
       - run: sudo $PWD/circle-ci-setup.sh
+      - run: ./build.sh lint
+      - run: ./build.sh build_tools
       - run: make
       - run: find out/
 
