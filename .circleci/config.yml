@@ -12,7 +12,7 @@ sensu_go_build_env: &sensu_go_build_env
   environment:
     # Hard-coding this for now.
     - SENSU_BUILD_ITERATION: 1
-    - SENSU_RELEASE_REPO: $HOME/sensu-release
+    - SENSU_RELEASE_REPO: /home/circleci/sensu-release
 
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
