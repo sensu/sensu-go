@@ -28,6 +28,7 @@ jobs:
           fingerprints:
             - f0:2b:79:fb:d8:c1:69:93:78:33:86:9f:31:f3:4e:51
       - run: git clone git@github.com:sensu/sensu-release $SENSU_RELEASE_REPO
+      - run: cd $SENSU_RELEASE_REPO && git rev-parse --short HEAD
 
       - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
       - run: $SENSU_RELEASE_REPO/install-awscli.sh
