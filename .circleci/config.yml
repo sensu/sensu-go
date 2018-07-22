@@ -25,6 +25,8 @@ jobs:
 
     steps:
       - checkout
+
+      # Clone the sensu-release repo
       - add_ssh_keys:
           fingerprints:
             - f0:2b:79:fb:d8:c1:69:93:78:33:86:9f:31:f3:4e:51
@@ -34,13 +36,19 @@ jobs:
       # Decrypt+setup secure variables
       - run: $SENSU_RELEASE_REPO/decrypt-secure-variables.sh $SENSU_RELEASE_REPO/secure-variables.enc CIRCLECI_SECURE_VARS_PASSWORD $SECURE_VARIABLES_PLAINTEXT_FILE
       - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
+
+      # Install CI provider deps
       - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
       - run: $SENSU_RELEASE_REPO/install-awscli.sh
+
+      # *Now* get to building...
       - run: ./build.sh deps
       - run: ./build.sh lint
       - run: ./build.sh build_tools
       - run: make
-      - run: find out/
+
+      # Post packages to S3
+      - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
 
       - persist_to_workspace:
           root: /go/src/github.com/
