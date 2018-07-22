@@ -13,6 +13,7 @@ sensu_go_build_env: &sensu_go_build_env
     # Hard-coding this for now.
     - SENSU_BUILD_ITERATION: 1
     - SENSU_RELEASE_REPO: /home/circleci/sensu-release
+    - SECURE_VARIABLES_PLAINTEXT_FILE: /home/circleci/secure-variables.plain
 
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
@@ -30,6 +31,9 @@ jobs:
       - run: git clone git@github.com:sensu/sensu-release $SENSU_RELEASE_REPO
       - run: cd $SENSU_RELEASE_REPO && git rev-parse --short HEAD
 
+      # Decrypt+setup secure variables
+      - run: $SENSU_RELEASE_REPO/decrypt-secure-variables.sh $SENSU_RELEASE_REPO/secure-variables.enc CIRCLECI_SECURE_VARS_PASSWORD $SECURE_VARIABLES_PLAINTEXT_FILE
+      - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
       - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
       - run: $SENSU_RELEASE_REPO/install-awscli.sh
       - run: ./build.sh deps
