@@ -51,6 +51,7 @@ jobs:
           at: /go/src/github.com
       - run: ./build.sh unit
       - run: ./build.sh integration
+      - run: ./build.sh e2e
 
 workflows:
   version: 2
