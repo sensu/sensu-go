@@ -27,6 +27,7 @@ jobs:
       - run: git clone git@github.com:sensu/sensu-release $SENSU_RELEASE_REPO
 
       - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
+      - run: $SENSU_RELEASE_REPO/install-awscli.sh
       - run: ./build.sh deps
       - run: ./build.sh lint
       - run: ./build.sh build_tools
