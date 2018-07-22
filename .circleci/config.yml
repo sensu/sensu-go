@@ -10,7 +10,9 @@ sensu_go_build_env: &sensu_go_build_env
   ####   /go/src/github.com/circleci/go-tool
   ####   /go/src/bitbucket.org/circleci/go-tool
   environment:
+    # Hard-coding this for now.
     - SENSU_BUILD_ITERATION: 1
+    - SENSU_RELEASE_REPO: $HOME/sensu-release
 
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
@@ -22,9 +24,9 @@ jobs:
 
     steps:
       - checkout
+      - run: git clone git@github.com:sensu/sensu-release $SENSU_RELEASE_REPO
 
-      # specify any bash command here prefixed with `run: `
-      - run: sudo $PWD/circle-ci-setup.sh
+      - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
       - run: ./build.sh deps
       - run: ./build.sh lint
       - run: ./build.sh build_tools
