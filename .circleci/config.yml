@@ -24,6 +24,9 @@ jobs:
 
     steps:
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - f0:2b:79:fb:d8:c1:69:93:78:33:86:9f:31:f3:4e:51
       - run: git clone git@github.com:sensu/sensu-release $SENSU_RELEASE_REPO
 
       - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
