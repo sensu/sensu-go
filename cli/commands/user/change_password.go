@@ -134,7 +134,7 @@ func verifyExistingPassword(cli *cli.SensuCli, flags *pflag.FlagSet, isInteracti
 	}
 
 	// Attempt to authenticate
-	if _, err := cli.Client.CreateAccessToken(cli.Config.APIUrl(), username, input.Password); err != nil {
+	if _, _, err := cli.Client.CreateAccessToken(cli.Config.APIUrl(), username, input.Password); err != nil {
 		return errBadCurrentPassword
 	}
 
