@@ -24,7 +24,7 @@ func TestHasPermission(t *testing.T) {
 			rule := types.Rule{
 				Permissions: []string{tc.RulePermission},
 			}
-			assert.Equal(tc.Want, hasPermission(rule, tc.UserPermission))
+			assert.Equal(tc.Want, HasPermission(rule, tc.UserPermission))
 		})
 	}
 }
@@ -46,7 +46,7 @@ func TestMatchesRuleType(t *testing.T) {
 			rule := types.Rule{
 				Type: tc.RuleType,
 			}
-			assert.Equal(tc.Want, matchesRuleType(rule, tc.Resource))
+			assert.Equal(tc.Want, MatchesRuleType(rule, tc.Resource))
 		})
 	}
 }
