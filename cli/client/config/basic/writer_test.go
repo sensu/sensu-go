@@ -13,12 +13,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSaveAPIUrl(t *testing.T) {
+func tmpDir(t *testing.T) (string, func()) {
+	t.Helper()
+
 	dir, err := ioutil.TempDir("", "sensu")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanup := func() {
+		err := os.RemoveAll(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	return dir, cleanup
+}
+
+func TestSaveAPIUrl(t *testing.T) {
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -31,12 +45,23 @@ func TestSaveAPIUrl(t *testing.T) {
 	assert.Equal(t, url, config.APIUrl())
 }
 
+func TestSaveEdition(t *testing.T) {
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
+
+	require.NoError(t, config.SaveEdition(types.CoreEdition))
+	assert.Equal(t, types.CoreEdition, config.Edition())
+}
+
 func TestSaveEnvironment(t *testing.T) {
-	dir, err := ioutil.TempDir("", "sensu")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -50,11 +75,8 @@ func TestSaveEnvironment(t *testing.T) {
 }
 
 func TestSaveFormat(t *testing.T) {
-	dir, err := ioutil.TempDir("", "sensu")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -68,11 +90,8 @@ func TestSaveFormat(t *testing.T) {
 }
 
 func TestSaveOrganization(t *testing.T) {
-	dir, err := ioutil.TempDir("", "sensu")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -86,11 +105,8 @@ func TestSaveOrganization(t *testing.T) {
 }
 
 func TestSaveTokens(t *testing.T) {
-	dir, err := ioutil.TempDir("", "sensu")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -105,11 +121,8 @@ func TestSaveTokens(t *testing.T) {
 
 func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 	// In case the API URL is passed with a flag, we don't want to save it
-	dir, err := ioutil.TempDir("", "sensu")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
 
 	// Set flags
 	flags := pflag.NewFlagSet("api-url", pflag.ContinueOnError)
@@ -137,11 +150,8 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	dir, err := ioutil.TempDir("", "sensu")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
