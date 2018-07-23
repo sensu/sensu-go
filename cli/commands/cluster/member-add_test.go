@@ -29,7 +29,7 @@ func TestRenderMemberAddTemplate(t *testing.T) {
 		},
 	}
 
-	want := `added member 12345678 to cluster
+	want := `added member bc614e to cluster
 
 ETCD_NAME="foo"
 ETCD_INITIAL_CLUSTER="foo=http://127.0.0.1,foo=http://192.168.0.1,bar=http://example.com"
