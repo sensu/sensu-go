@@ -10,7 +10,9 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-func getWatcherAction(event *clientv3.Event) store.WatchActionType {
+// GetWatcherAction maps an etcd Event to the corresponding WatchActionType.
+// This function is exported for use by sensu-enterprise-go's etcd watchers.
+func GetWatcherAction(event *clientv3.Event) store.WatchActionType {
 	switch event.Type {
 	case mvccpb.PUT:
 		if event.IsCreate() {
@@ -44,7 +46,7 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 					checkConfig *types.CheckConfig
 				)
 
-				action = getWatcherAction(event)
+				action = GetWatcherAction(event)
 				if action == store.WatchUnknown {
 					logger.Error("unknown etcd watch action: ", event.Type.String())
 				}
@@ -96,7 +98,7 @@ func (s *Store) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsse
 
 		for watchResponse := range watcherChan {
 			for _, event := range watchResponse.Events {
-				action = getWatcherAction(event)
+				action = GetWatcherAction(event)
 				if action == store.WatchUnknown {
 					logger.Error("unknown etcd watch action: ", event.Type.String())
 				}
@@ -139,7 +141,7 @@ func (s *Store) GetHookConfigWatcher(ctx context.Context) <-chan store.WatchEven
 
 		for watchResponse := range watcherChan {
 			for _, event := range watchResponse.Events {
-				action = getWatcherAction(event)
+				action = GetWatcherAction(event)
 				if action == store.WatchUnknown {
 					logger.Error("unknown etcd watch action: ", event.Type.String())
 				}
