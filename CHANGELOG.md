@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added API support for cluster management.
 - Added sensuctl cluster member-list command.
 - Added Sensu edition detection in sensuctl.
+- Added sensuctl cluster member-add command.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization in
