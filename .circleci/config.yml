@@ -9,6 +9,12 @@ sensu_go_build_env: &sensu_go_build_env
   #### expecting it in the form of
   ####   /go/src/github.com/circleci/go-tool
   ####   /go/src/bitbucket.org/circleci/go-tool
+  environment:
+    # Hard-coding this for now.
+    - SENSU_BUILD_ITERATION: 1
+    - SENSU_RELEASE_REPO: /home/circleci/sensu-release
+    - SECURE_VARIABLES_PLAINTEXT_FILE: /home/circleci/secure-variables.plain
+
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
     - image: circleci/golang:1.10
@@ -20,11 +26,29 @@ jobs:
     steps:
       - checkout
 
-      # specify any bash command here prefixed with `run: `
+      # Clone the sensu-release repo
+      - add_ssh_keys:
+          fingerprints:
+            - f0:2b:79:fb:d8:c1:69:93:78:33:86:9f:31:f3:4e:51
+      - run: git clone git@github.com:sensu/sensu-release $SENSU_RELEASE_REPO
+      - run: cd $SENSU_RELEASE_REPO && git rev-parse --short HEAD
+
+      # Decrypt+setup secure variables
+      - run: $SENSU_RELEASE_REPO/decrypt-secure-variables.sh $SENSU_RELEASE_REPO/secure-variables.enc CIRCLECI_SECURE_VARS_PASSWORD $SECURE_VARIABLES_PLAINTEXT_FILE
+      - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
+
+      # Install CI provider deps
+      - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
+      - run: $SENSU_RELEASE_REPO/install-awscli.sh
+
+      # *Now* get to building...
       - run: ./build.sh deps
       - run: ./build.sh lint
       - run: ./build.sh build_tools
-      - run: ./build.sh build
+      - run: make
+
+      # Post packages to S3
+      - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
 
       - persist_to_workspace:
           root: /go/src/github.com/
@@ -39,6 +63,7 @@ jobs:
           at: /go/src/github.com
       - run: ./build.sh unit
       - run: ./build.sh integration
+      - run: ./build.sh e2e
 
 workflows:
   version: 2
