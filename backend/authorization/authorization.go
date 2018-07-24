@@ -7,7 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func hasPermission(rule types.Rule, action string) bool {
+// HasPermission returns true if permission is granted on the action
+func HasPermission(rule types.Rule, action string) bool {
 	for _, permission := range rule.Permissions {
 		if permission == action {
 			return true
@@ -16,7 +17,8 @@ func hasPermission(rule types.Rule, action string) bool {
 	return false
 }
 
-func matchesRuleType(rule types.Rule, resource string) bool {
+// MatchesRuleType returns true if the rule type matches the resource
+func MatchesRuleType(rule types.Rule, resource string) bool {
 	return rule.Type == resource || rule.Type == types.RuleTypeAll
 }
 
@@ -33,7 +35,7 @@ func matchesRuleOrganization(rule types.Rule, organization string) bool {
 func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 	// TODO: Reject irrelevant rules?
 	for _, rule := range actor.Rules {
-		if !matchesRuleType(rule, resource) {
+		if !MatchesRuleType(rule, resource) {
 			continue
 		}
 		if !matchesRuleOrganization(rule, org) {
@@ -42,7 +44,7 @@ func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 		if resource != types.RuleTypeAsset && resource != types.RuleTypeOrganization && !matchesRuleEnvironment(rule, env) {
 			continue
 		}
-		if hasPermission(rule, action) {
+		if HasPermission(rule, action) {
 			return true
 		}
 	}
