@@ -48,6 +48,7 @@ class EventListItem extends React.Component {
       fragment EventsListItem_event on Event {
         id
         timestamp
+        isSilenced
         deleted @client
         check {
           status
@@ -124,7 +125,12 @@ class EventListItem extends React.Component {
         <TableOverflowCell>
           <ResourceDetails
             icon={
-              event.check && <CheckStatusIcon statusCode={event.check.status} />
+              event.check && (
+                <CheckStatusIcon
+                  statusCode={event.check.status}
+                  silenced={event.isSilenced}
+                />
+              )
             }
             title={
               <NamespaceLink

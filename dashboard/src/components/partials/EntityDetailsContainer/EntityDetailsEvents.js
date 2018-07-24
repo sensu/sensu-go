@@ -35,6 +35,7 @@ class EntityDetailsEvents extends React.PureComponent {
 
         id
         timestamp
+        isSilenced
       }
     `,
   };
@@ -53,7 +54,13 @@ class EntityDetailsEvents extends React.PureComponent {
             component="span"
             style={{ position: "absolute", left: 0 }}
           >
-            <StatusIcon statusCode={check.status} inline mutedOK small />
+            <StatusIcon
+              statusCode={check.status}
+              silenced={event.isSilenced}
+              inline
+              mutedOK
+              small
+            />
           </Typography>
           <InlineLink
             to={`/${ns.org}/${ns.env}/events/${entity.name}/${check.name}`}
