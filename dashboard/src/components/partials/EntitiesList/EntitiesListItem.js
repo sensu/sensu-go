@@ -43,6 +43,7 @@ class EntitiesListItem extends React.PureComponent {
         lastSeen
         class
         status
+        isSilenced
         system {
           platform
           platformVersion
@@ -86,7 +87,12 @@ class EntitiesListItem extends React.PureComponent {
         </TableCell>
         <TableOverflowCell>
           <ResourceDetails
-            icon={<CheckStatusIcon statusCode={entity.status} />}
+            icon={
+              <CheckStatusIcon
+                statusCode={entity.status}
+                silenced={entity.isSilenced}
+              />
+            }
             title={
               <NamespaceLink
                 namespace={entity.namespace}

@@ -122,6 +122,18 @@ type EntityEventsFieldResolver interface {
 	Events(p EntityEventsFieldResolverParams) (interface{}, error)
 }
 
+// EntityIsSilencedFieldResolver implement to resolve requests for the Entity's isSilenced field.
+type EntityIsSilencedFieldResolver interface {
+	// IsSilenced implements response to request for isSilenced field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+}
+
+// EntitySilencedByFieldResolver implement to resolve requests for the Entity's silencedBy field.
+type EntitySilencedByFieldResolver interface {
+	// SilencedBy implements response to request for silencedBy field.
+	SilencedBy(p graphql.ResolveParams) (interface{}, error)
+}
+
 // EntityExtendedAttributesFieldResolver implement to resolve requests for the Entity's extendedAttributes field.
 type EntityExtendedAttributesFieldResolver interface {
 	// ExtendedAttributes implements response to request for extendedAttributes field.
@@ -205,6 +217,8 @@ type EntityFieldResolvers interface {
 	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
 	EntityEventsFieldResolver
+	EntityIsSilencedFieldResolver
+	EntitySilencedByFieldResolver
 	EntityExtendedAttributesFieldResolver
 }
 
@@ -415,6 +429,25 @@ func (_ EntityAliases) Events(p EntityEventsFieldResolverParams) (interface{}, e
 	return val, err
 }
 
+// IsSilenced implements response to request for 'isSilenced' field.
+func (_ EntityAliases) IsSilenced(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'isSilenced'")
+	}
+	return ret, err
+}
+
+// SilencedBy implements response to request for 'silencedBy' field.
+func (_ EntityAliases) SilencedBy(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // ExtendedAttributes implements response to request for 'extendedAttributes' field.
 func (_ EntityAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -548,6 +581,20 @@ func _ObjTypeEntityEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEntityIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityIsSilencedFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.IsSilenced(frp)
+	}
+}
+
+func _ObjTypeEntitySilencedByHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntitySilencedByFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.SilencedBy(frp)
+	}
+}
+
 func _ObjTypeEntityExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityExtendedAttributesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -605,6 +652,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"isSilenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "isSilenced return true if the entity has any silences associated with it.",
+				Name:              "isSilenced",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
 			"keepaliveTimeout": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -650,6 +704,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "Related returns a sorted list of like entities from the same environment.",
 				Name:              "related",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Entity"))),
+			},
+			"silencedBy": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "All silences associated with the entity.",
+				Name:              "silencedBy",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Silenced")))),
 			},
 			"status": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -704,12 +765,14 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"events":             _ObjTypeEntityEventsHandler,
 		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
 		"id":                 _ObjTypeEntityIDHandler,
+		"isSilenced":         _ObjTypeEntityIsSilencedHandler,
 		"keepaliveTimeout":   _ObjTypeEntityKeepaliveTimeoutHandler,
 		"lastSeen":           _ObjTypeEntityLastSeenHandler,
 		"name":               _ObjTypeEntityNameHandler,
 		"namespace":          _ObjTypeEntityNamespaceHandler,
 		"redact":             _ObjTypeEntityRedactHandler,
 		"related":            _ObjTypeEntityRelatedHandler,
+		"silencedBy":         _ObjTypeEntitySilencedByHandler,
 		"status":             _ObjTypeEntityStatusHandler,
 		"subscriptions":      _ObjTypeEntitySubscriptionsHandler,
 		"system":             _ObjTypeEntitySystemHandler,
