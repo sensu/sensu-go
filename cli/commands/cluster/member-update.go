@@ -26,7 +26,7 @@ func MemberUpdateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			id, err := strconv.ParseUint(memberID, 16, 64)
 			if err != nil {
-				return fmt.Errorf("invalid id: %x", err)
+				return fmt.Errorf("invalid id: %s", err)
 			}
 
 			if _, err := cli.Client.MemberUpdate(id, peerAddrs); err != nil {

@@ -50,3 +50,16 @@ func (c *RestClient) MemberUpdate(id uint64, peerAddrs []string) (*clientv3.Memb
 	var result clientv3.MemberUpdateResponse
 	return &result, json.Unmarshal(res.Body(), &result)
 }
+
+func (c *RestClient) MemberRemove(id uint64) (*clientv3.MemberRemoveResponse, error) {
+	endpoint := fmt.Sprintf("%s/%x", clusterMembersBasePath, id)
+	res, err := c.R().Delete(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("DELETE %q: %s", endpoint, err)
+	}
+	if res.StatusCode() >= 400 {
+		return nil, unmarshalError(res)
+	}
+	var result clientv3.MemberRemoveResponse
+	return &result, json.Unmarshal(res.Body(), &result)
+}

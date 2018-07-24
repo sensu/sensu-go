@@ -191,4 +191,7 @@ type ClusterMemberClient interface {
 
 	// MemberUpdate updates a cluster member
 	MemberUpdate(id uint64, peerAddrs []string) (*clientv3.MemberUpdateResponse, error)
+
+	// MemberRemove removes a cluster member
+	MemberRemove(id uint64) (*clientv3.MemberRemoveResponse, error)
 }
