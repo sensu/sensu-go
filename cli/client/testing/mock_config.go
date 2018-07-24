@@ -19,6 +19,12 @@ func (m *MockConfig) APIUrl() string {
 	return args.String(0)
 }
 
+// Edition mocks the cluster edition
+func (m *MockConfig) Edition() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // Environment mocks the environment config
 func (m *MockConfig) Environment() string {
 	args := m.Called()
@@ -40,6 +46,12 @@ func (m *MockConfig) Organization() string {
 // SaveAPIUrl mocks saving the API URL
 func (m *MockConfig) SaveAPIUrl(url string) error {
 	args := m.Called(url)
+	return args.Error(0)
+}
+
+// SaveEdition mocks saving the environment
+func (m *MockConfig) SaveEdition(edition string) error {
+	args := m.Called(edition)
 	return args.Error(0)
 }
 
