@@ -188,4 +188,7 @@ type ClusterMemberClient interface {
 
 	// MemberAdd adds a cluster member
 	MemberAdd(peerAddrs []string) (*clientv3.MemberAddResponse, error)
+
+	// MemberUpdate updates a cluster member
+	MemberUpdate(id uint64, peerAddrs []string) (*clientv3.MemberUpdateResponse, error)
 }

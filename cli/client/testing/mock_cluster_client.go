@@ -11,3 +11,8 @@ func (c *MockClient) MemberAdd(peerAddrs []string) (*clientv3.MemberAddResponse,
 	args := c.Called(peerAddrs)
 	return args.Get(0).(*clientv3.MemberAddResponse), args.Error(1)
 }
+
+func (c *MockClient) MemberUpdate(id uint64, peerAddrs []string) (*clientv3.MemberUpdateResponse, error) {
+	args := c.Called(id, peerAddrs)
+	return args.Get(0).(*clientv3.MemberUpdateResponse), args.Error(1)
+}

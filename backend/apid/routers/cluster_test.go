@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -118,7 +119,7 @@ func TestClusterRouterMemberRemove(t *testing.T) {
 	client := new(http.Client)
 	ctrl.On("MemberRemove", mock.Anything, uint64(1234)).Return(new(clientv3.MemberRemoveResponse), nil)
 
-	endpoint := "/cluster/members/1234"
+	endpoint := fmt.Sprintf("/cluster/members/%x", 1234)
 	req := newRequest(t, http.MethodDelete, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
@@ -179,9 +180,9 @@ func TestClusterRouterMemberUpdate(t *testing.T) {
 	defer server.Close()
 
 	client := new(http.Client)
-	ctrl.On("MemberUpdate", mock.Anything, uint64(1234), []string{"127.0.0.1:1234"}).Return(new(clientv3.MemberUpdateResponse), nil)
+	ctrl.On("MemberUpdate", mock.Anything, uint64(1234), []string{"127.0.0.1:5678"}).Return(new(clientv3.MemberUpdateResponse), nil)
 
-	endpoint := "/cluster/members/1234?peer-addrs=127.0.0.1:1234"
+	endpoint := fmt.Sprintf("/cluster/members/%x?peer-addrs=127.0.0.1:5678", 1234)
 	req := newRequest(t, http.MethodPut, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
@@ -194,7 +195,7 @@ func TestClusterRouterMemberUpdate(t *testing.T) {
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
-	ctrl.AssertCalled(t, "MemberUpdate", mock.Anything, uint64(1234), []string{"127.0.0.1:1234"})
+	ctrl.AssertCalled(t, "MemberUpdate", mock.Anything, uint64(1234), []string{"127.0.0.1:5678"})
 }
 
 func TestClusterRouterMemberUpdateBadRequestID(t *testing.T) {

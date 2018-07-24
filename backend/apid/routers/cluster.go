@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -48,15 +49,12 @@ func (r *ClusterRouter) Mount(parent *mux.Router) {
 }
 
 func parseID(req *http.Request) (uint64, error) {
-	params := mux.Vars(req)
-	id, err := strconv.Atoi(params["id"])
+	paramID := mux.Vars(req)["id"]
+	id, err := strconv.ParseUint(paramID, 16, 64)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("bad id (%s): %s", paramID, err)
 	}
-	if id < 0 {
-		return 0, errors.New("member IDs must be positive integers")
-	}
-	return uint64(id), nil
+	return id, nil
 }
 
 func parsePeerAddrs(req *http.Request) ([]string, error) {

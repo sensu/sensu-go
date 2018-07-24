@@ -41,7 +41,7 @@ func printToTable(result interface{}, w io.Writer) {
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				member := data.(*etcdserverpb.Member)
-				return fmt.Sprintf("%d", member.ID)
+				return fmt.Sprintf("%x", member.ID)
 			},
 		},
 		{

@@ -70,14 +70,18 @@ func joinMembers(data templateData) string {
 	return strings.Join(result, ",")
 }
 
-const memberAddTmplStr = `added member {{ .Member.ID }} to cluster
+const memberAddTmplStr = `added member {{ hex .Member.ID }} to cluster
 
 ETCD_NAME="{{ .Name }}"
 ETCD_INITIAL_CLUSTER="{{ joinMembers . }}"
 ETCD_INITIAL_CLUSTER_STATE="existing"
 `
 
+func hex(id uint64) string {
+	return fmt.Sprintf("%x", id)
+}
+
 var memberAddTmpl = template.Must(
 	template.New("memberadd").Funcs(
-		template.FuncMap{"joinMembers": joinMembers}).Parse(
+		template.FuncMap{"joinMembers": joinMembers, "hex": hex}).Parse(
 		memberAddTmplStr))
