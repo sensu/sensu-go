@@ -55,26 +55,12 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		if fp == "" {
-			if err := helpers.DetectEmptyStdin(os.Stdin); err != nil {
-				_ = cmd.Help()
-				return err
-			}
-			in = os.Stdin
-		} else {
-			f, err := os.Open(fp)
-			if err != nil {
-				return err
-			}
-			stat, err := f.Stat()
-			if err != nil {
-				return err
-			}
-			if stat.IsDir() {
-				return errors.New("directories not supported yet")
-			}
-			in = f
+
+		in, err = helpers.InputData(fp)
+		if err != nil {
+			return err
 		}
+
 		resources, err := parseResources(in)
 		if err != nil {
 			return err
