@@ -4,8 +4,9 @@ import Hidden from "@material-ui/core/Hidden";
 import Menu from "@material-ui/core/Menu";
 import ButtonSet from "/components/ButtonSet";
 import VerticalDisclosureButton from "/components/VerticalDisclosureButton";
-import MenuItem from "./MenuItem";
+import Item from "./Item";
 import Button from "./Button";
+import SubMenu from "./SubMenu";
 
 const Context = React.createContext();
 
@@ -27,8 +28,9 @@ class CollapsingMenu extends React.PureComponent {
     breakpoint: "sm",
   };
 
-  static MenuItem = MenuItem;
+  static Item = Item;
   static Button = Button;
+  static SubMenu = SubMenu;
 
   constructor(props) {
     super(props);
@@ -52,11 +54,31 @@ class CollapsingMenu extends React.PureComponent {
     return (
       <React.Fragment>
         <Hidden {...{ [`${prevBreakpoint}Down`]: true }}>
-          <Context.Provider value={{ collapsed: false, close }}>
-            <ButtonSet>{children}</ButtonSet>
-          </Context.Provider>
+          <ButtonSet>
+            <Context.Provider
+              value={{
+                collapsed: false,
+                parent: "buttonset",
+                close,
+              }}
+            >
+              {children}
+            </Context.Provider>
+          </ButtonSet>
         </Hidden>
         <Hidden {...{ [`${breakpoint}Up`]: true }}>
+          <ButtonSet>
+            <Context.Provider
+              value={{
+                collapsed: true,
+                parent: "buttonset",
+                close,
+              }}
+            >
+              {children}
+            </Context.Provider>
+          </ButtonSet>
+
           <VerticalDisclosureButton
             aria-label="More"
             aria-owns={menuId}
@@ -68,8 +90,15 @@ class CollapsingMenu extends React.PureComponent {
             anchorEl={this.state.anchorEl}
             open={Boolean(this.state.anchorEl)}
             onClose={close}
+            keepMounted
           >
-            <Context.Provider value={{ collapsed: true, close }}>
+            <Context.Provider
+              value={{
+                collapsed: true,
+                parent: "menu",
+                close,
+              }}
+            >
               {children}
             </Context.Provider>
           </Menu>

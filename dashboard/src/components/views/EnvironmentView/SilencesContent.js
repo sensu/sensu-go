@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import AppContent from "/components/AppContent";
-import CollapsingMenu from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import Content from "/components/Content";
 import ModalController from "/components/controller/ModalController";
 import ListToolbar from "/components/partials/ListToolbar";

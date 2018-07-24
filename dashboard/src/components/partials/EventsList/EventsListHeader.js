@@ -3,46 +3,22 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import Button from "@material-ui/core/Button";
-import { withStyles } from "@material-ui/core/styles";
 import capitalize from "lodash/capitalize";
 
 import Typography from "@material-ui/core/Typography";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import ButtonSet from "/components/ButtonSet";
+import Menu from "@material-ui/core/Menu";
 
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import StatusMenu from "/components/partials/StatusMenu";
 import ListHeader from "/components/partials/ListHeader";
-import ButtonMenu from "/components/partials/ButtonMenu";
-
-const styles = theme => ({
-  headerButton: {
-    marginLeft: theme.spacing.unit / 2,
-    "&:first-child": {
-      marginLeft: theme.spacing.unit,
-    },
-  },
-  filterActions: {
-    display: "none",
-    [theme.breakpoints.up("sm")]: {
-      display: "flex",
-    },
-  },
-  // Remove padding from button container
-  checkbox: {
-    marginLeft: -11,
-    color: theme.palette.primary.contrastText,
-  },
-  grow: {
-    flex: "1 1 auto",
-  },
-});
 
 class EventsListHeader extends React.PureComponent {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
@@ -86,6 +62,16 @@ class EventsListHeader extends React.PureComponent {
     this.props.onChangeQuery({ filter: `Check.Name == '${newValue}'` });
   };
 
+  requeryHide = newValue => {
+    if (newValue === "passing") {
+      this.props.onChangeQuery({ filter: `Check.Status != 0` });
+    } else if (newValue === "silenced") {
+      this.props.onChangeQuery({ filter: `!IsSilenced` });
+    } else {
+      throw new TypeError(`unknown value ${newValue}`);
+    }
+  };
+
   requeryStatus = newValue => {
     if (Array.isArray(newValue)) {
       if (newValue.length === 1) {
@@ -105,7 +91,6 @@ class EventsListHeader extends React.PureComponent {
 
   render() {
     const {
-      classes,
       selectedCount,
       rowCount,
       onClickSelect,
@@ -153,38 +138,104 @@ class EventsListHeader extends React.PureComponent {
           </ButtonSet>
         )}
         renderActions={() => (
-          <ButtonSet>
-            <ButtonMenu label="Entity" onChange={this.requeryEntity}>
-              {entityNames.map(name => (
-                <MenuItem key={name} value={name}>
-                  <ListItemText primary={name} />
-                </MenuItem>
-              ))}
-            </ButtonMenu>
-            <ButtonMenu label="Check" onChange={this.requeryCheck}>
-              {checkNames.map(name => (
-                <MenuItem key={name} value={name}>
-                  <ListItemText primary={name} />
-                </MenuItem>
-              ))}
-            </ButtonMenu>
-            <StatusMenu onChange={this.requeryStatus} />
-            <ButtonMenu
-              className={classes.headerButton}
-              label="Sort"
-              onChange={this._handleChangeSort}
-            >
-              {["SEVERITY", "NEWEST", "OLDEST"].map(name => (
-                <MenuItem key={name} value={name}>
-                  <ListItemText primary={capitalize(name)} />
-                </MenuItem>
-              ))}
-            </ButtonMenu>
-          </ButtonSet>
+          <CollapsingMenu breakpoint="md">
+            <CollapsingMenu.SubMenu
+              title="Hide"
+              renderMenu={({ anchorEl, close }) => (
+                <Menu open onClose={close} anchorEl={anchorEl}>
+                  <MenuItem
+                    onClick={() => {
+                      this.requeryHide("passing");
+                      close();
+                    }}
+                  >
+                    <ListItemText primary="Passing" />
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      this.requeryHide("silenced");
+                      close();
+                    }}
+                  >
+                    <ListItemText primary="Silenced" />
+                  </MenuItem>
+                </Menu>
+              )}
+            />
+            <CollapsingMenu.SubMenu
+              title="Entity"
+              renderMenu={({ anchorEl, close }) => (
+                <Menu open onClose={close} anchorEl={anchorEl}>
+                  {entityNames.map(name => (
+                    <MenuItem
+                      key={name}
+                      onClick={() => {
+                        this.requeryEntity(name);
+                        close();
+                      }}
+                    >
+                      <ListItemText primary={name} />
+                    </MenuItem>
+                  ))}
+                </Menu>
+              )}
+            />
+            <CollapsingMenu.SubMenu
+              title="Check"
+              renderMenu={({ anchorEl, close }) => (
+                <Menu open onClose={close} anchorEl={anchorEl}>
+                  {checkNames.map(name => (
+                    <MenuItem
+                      key={name}
+                      onClick={() => {
+                        this.requeryCheck(name);
+                        close();
+                      }}
+                    >
+                      <ListItemText primary={name} />
+                    </MenuItem>
+                  ))}
+                </Menu>
+              )}
+            />
+            <CollapsingMenu.SubMenu
+              title="Status"
+              pinned
+              renderMenu={({ anchorEl, close }) => (
+                <StatusMenu
+                  anchorEl={anchorEl}
+                  onClose={close}
+                  onChange={val => {
+                    this.requeryStatus(val);
+                    close();
+                  }}
+                />
+              )}
+            />
+            <CollapsingMenu.SubMenu
+              title="Sort"
+              pinned
+              renderMenu={({ anchorEl, close }) => (
+                <Menu open onClose={close} anchorEl={anchorEl}>
+                  {["SEVERITY", "NEWEST", "OLDEST"].map(name => (
+                    <MenuItem
+                      key={name}
+                      onClick={() => {
+                        this._handleChangeSort(name);
+                        close();
+                      }}
+                    >
+                      <ListItemText primary={capitalize(name)} />
+                    </MenuItem>
+                  ))}
+                </Menu>
+              )}
+            />
+          </CollapsingMenu>
         )}
       />
     );
   }
 }
 
-export default withStyles(styles)(EventsListHeader);
+export default EventsListHeader;

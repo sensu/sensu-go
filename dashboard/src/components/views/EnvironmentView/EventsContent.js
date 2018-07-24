@@ -14,7 +14,7 @@ import NotFoundView from "/components/views/NotFoundView";
 import SearchBox from "/components/SearchBox";
 import { withQueryParams } from "/components/QueryParams";
 import AppContent from "/components/AppContent";
-import CollapsingMenu from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import Content from "/components/Content";
 
 // If none given default expression is used.
