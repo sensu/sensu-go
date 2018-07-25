@@ -7,15 +7,19 @@ import CollapsingMenu from "/components/CollapsingMenu";
 import Content from "/components/Content";
 import ModalController from "/components/controller/ModalController";
 import ListToolbar from "/components/partials/ListToolbar";
+import LiveIcon from "/icons/Live";
 import NotFoundView from "/components/views/NotFoundView";
 import Paper from "@material-ui/core/Paper";
 import PlusIcon from "@material-ui/icons/Add";
 import Query from "/components/util/Query";
-import RefreshIcon from "@material-ui/icons/Refresh";
 import SearchBox from "/components/SearchBox";
 import SilencesList from "/components/partials/SilencesList";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import { withQueryParams } from "/components/QueryParams";
+
+// duration used when polling is enabled; set fairly high until we understand
+// the impact.
+const pollInterval = 2500; // 2.5s
 
 class SilencesContent extends React.Component {
   static propTypes = {
@@ -54,7 +58,15 @@ class SilencesContent extends React.Component {
         fetchPolicy="cache-and-network"
         variables={{ ...match.params, limit, offset, order, filter }}
       >
-        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+        {({
+          data: { environment } = {},
+          loading,
+          aborted,
+          refetch,
+          isPolling,
+          startPolling,
+          stopPolling,
+        }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
           }
@@ -72,11 +84,6 @@ class SilencesContent extends React.Component {
                   }
                   renderMenuItems={
                     <React.Fragment>
-                      <CollapsingMenu.Button
-                        title="Reload"
-                        icon={<RefreshIcon />}
-                        onClick={() => refetch()}
-                      />
                       <ModalController
                         renderModal={({ close }) => (
                           <SilenceEntryDialog
@@ -100,6 +107,13 @@ class SilencesContent extends React.Component {
                           />
                         )}
                       </ModalController>
+                      <CollapsingMenu.Button
+                        title="LIVE"
+                        icon={<LiveIcon active={isPolling} />}
+                        onClick={() =>
+                          isPolling ? stopPolling() : startPolling(pollInterval)
+                        }
+                      />
                     </React.Fragment>
                   }
                 />
@@ -110,7 +124,7 @@ class SilencesContent extends React.Component {
                   offset={offset}
                   onChangeQuery={setQueryParams}
                   environment={environment}
-                  loading={loading || aborted}
+                  loading={(loading && !isPolling) || aborted}
                   refetch={refetch}
                 />
               </Paper>

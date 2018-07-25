@@ -195,22 +195,48 @@ func EventsByTimestamp(es []*Event, asc bool) sort.Interface {
 	return sorter
 }
 
+// EventsByLastOk can be used to sort a given collection of events by time it
+// last received an OK status.
+func EventsByLastOk(es []*Event, asc bool) sort.Interface {
+	return &eventSorter{es, cmpByLastOk}
+}
+
 func cmpBySeverity(a, b *Event) bool {
 	ap, bp := deriveSeverity(a), deriveSeverity(b)
 
 	// Sort events with the same exit status by timestamp
 	if ap == bp {
-		return a.Timestamp > b.Timestamp
+		return cmpByLastOk(a, b)
 	}
 	return ap < bp
 }
 
-// We want the order of importance to be critical (1), warning (2), unknown (3),
-// and Ok (0) so we shift the check's status. If event is not a check sort to
+func cmpByLastOk(a, b *Event) bool {
+	at, bt := a.Timestamp, b.Timestamp
+	if a.HasCheck() {
+		at = a.Check.LastOK
+	}
+	if b.HasCheck() {
+		bt = b.Check.LastOK
+	}
+	return at > bt
+}
+
+// Based on convention we define the order of importance as critical (2),
+// warning (1), unknown (>2), and Ok (0). If event is not a check sort to
 // very end.
-func deriveSeverity(e *Event) uint32 {
+func deriveSeverity(e *Event) int {
 	if e.HasCheck() {
-		return (e.Check.Status + 3) % 4
+		switch e.Check.Status {
+		case 0:
+			return 3
+		case 1:
+			return 1
+		case 2:
+			return 0
+		default:
+			return 2
+		}
 	}
 	return 4
 }

@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import RefreshIcon from "@material-ui/icons/Refresh";
+import LiveIcon from "/icons/Live";
 
 import { withQueryParams } from "/components/QueryParams";
 import AppContent from "/components/AppContent";
@@ -17,6 +17,10 @@ import NotFoundView from "/components/views/NotFoundView";
 import CollapsingMenu from "/components/CollapsingMenu";
 import Content from "/components/Content";
 import SearchBox from "/components/SearchBox";
+
+// duration used when polling is enabled; set fairly high until we understand
+// the impact.
+const pollInterval = 2500; // 2.5s
 
 class ChecksContent extends React.Component {
   static propTypes = {
@@ -56,7 +60,14 @@ class ChecksContent extends React.Component {
         fetchPolicy="cache-and-network"
         variables={{ ...match.params, limit, offset, order, filter }}
       >
-        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+        {({
+          data: { environment } = {},
+          loading,
+          aborted,
+          isPolling,
+          startPolling,
+          stopPolling,
+        }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
           }
@@ -74,9 +85,11 @@ class ChecksContent extends React.Component {
                   }
                   renderMenuItems={
                     <CollapsingMenu.Button
-                      title="Reload"
-                      icon={<RefreshIcon />}
-                      onClick={() => refetch()}
+                      title="LIVE"
+                      icon={<LiveIcon active={isPolling} />}
+                      onClick={() =>
+                        isPolling ? stopPolling() : startPolling(pollInterval)
+                      }
                     />
                   }
                 />
@@ -87,8 +100,7 @@ class ChecksContent extends React.Component {
                 offset={offset}
                 onChangeQuery={setQueryParams}
                 environment={environment}
-                loading={loading || aborted}
-                refetch={refetch}
+                loading={(loading && !isPolling) || aborted}
               />
             </AppContent>
           );
