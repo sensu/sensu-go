@@ -269,13 +269,6 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	return cli, nil
 }
 
-type RespMap struct {
-	memberID uint64
-	name     string
-	err      error
-	healthy  bool
-}
-
 // Healthy returns Etcd status information.
 func (e *Etcd) Healthy() ([]*RespMap, error) {
 	var healthMap []*RespMap
