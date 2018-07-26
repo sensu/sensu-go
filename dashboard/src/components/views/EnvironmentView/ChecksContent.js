@@ -14,7 +14,7 @@ import ListToolbar from "/components/partials/ListToolbar";
 
 import NotFoundView from "/components/views/NotFoundView";
 
-import CollapsingMenu from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import Content from "/components/Content";
 import SearchBox from "/components/SearchBox";
 

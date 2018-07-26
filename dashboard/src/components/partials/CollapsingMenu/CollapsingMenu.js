@@ -4,8 +4,9 @@ import Hidden from "@material-ui/core/Hidden";
 import Menu from "@material-ui/core/Menu";
 import ButtonSet from "/components/ButtonSet";
 import VerticalDisclosureButton from "/components/VerticalDisclosureButton";
-import MenuItem from "./MenuItem";
+import Item from "./Item";
 import Button from "./Button";
+import SubMenu from "./SubMenu";
 
 const Context = React.createContext();
 
@@ -27,8 +28,9 @@ class CollapsingMenu extends React.PureComponent {
     breakpoint: "sm",
   };
 
-  static MenuItem = MenuItem;
+  static Item = Item;
   static Button = Button;
+  static SubMenu = SubMenu;
 
   constructor(props) {
     super(props);

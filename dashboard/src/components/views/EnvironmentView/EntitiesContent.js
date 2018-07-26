@@ -9,7 +9,7 @@ import EntitiesList from "/components/partials/EntitiesList";
 import SearchBox from "/components/SearchBox";
 import ListToolbar from "/components/partials/ListToolbar";
 import LiveIcon from "/icons/Live";
-import CollapsingMenu from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
 
 // duration used when polling is enabled; set fairly high until we understand

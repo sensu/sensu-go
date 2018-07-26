@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import CollapsingMenu from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import Content from "/components/Content";
 import DeleteIcon from "@material-ui/icons/Delete";
 import Grid from "@material-ui/core/Grid";

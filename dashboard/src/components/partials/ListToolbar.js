@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
-import CollapsingMenu from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 
 const FillSpace = withStyles({
   root: {
