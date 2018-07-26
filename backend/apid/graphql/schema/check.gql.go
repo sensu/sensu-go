@@ -118,10 +118,16 @@ type CheckConfigRoundRobinFieldResolver interface {
 	RoundRobin(p graphql.ResolveParams) (bool, error)
 }
 
-// CheckConfigSubscriptionsFieldResolver implement to resolve requests for the CheckConfig's subscriptions field.
-type CheckConfigSubscriptionsFieldResolver interface {
-	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p graphql.ResolveParams) ([]string, error)
+// CheckConfigIsSilencedFieldResolver implement to resolve requests for the CheckConfig's isSilenced field.
+type CheckConfigIsSilencedFieldResolver interface {
+	// IsSilenced implements response to request for isSilenced field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+}
+
+// CheckConfigSilencesFieldResolver implement to resolve requests for the CheckConfig's silences field.
+type CheckConfigSilencesFieldResolver interface {
+	// Silences implements response to request for silences field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckConfigStdinFieldResolver implement to resolve requests for the CheckConfig's stdin field.
@@ -134,6 +140,12 @@ type CheckConfigStdinFieldResolver interface {
 type CheckConfigSubdueFieldResolver interface {
 	// Subdue implements response to request for subdue field.
 	Subdue(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CheckConfigSubscriptionsFieldResolver implement to resolve requests for the CheckConfig's subscriptions field.
+type CheckConfigSubscriptionsFieldResolver interface {
+	// Subscriptions implements response to request for subscriptions field.
+	Subscriptions(p graphql.ResolveParams) ([]string, error)
 }
 
 // CheckConfigTimeoutFieldResolver implement to resolve requests for the CheckConfig's timeout field.
@@ -234,9 +246,11 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigProxyRequestsFieldResolver
 	CheckConfigPublishFieldResolver
 	CheckConfigRoundRobinFieldResolver
-	CheckConfigSubscriptionsFieldResolver
+	CheckConfigIsSilencedFieldResolver
+	CheckConfigSilencesFieldResolver
 	CheckConfigStdinFieldResolver
 	CheckConfigSubdueFieldResolver
+	CheckConfigSubscriptionsFieldResolver
 	CheckConfigTimeoutFieldResolver
 	CheckConfigTtlFieldResolver
 	CheckConfigToJSONFieldResolver
@@ -481,17 +495,23 @@ func (_ CheckConfigAliases) RoundRobin(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
-// Subscriptions implements response to request for 'subscriptions' field.
-func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
+// IsSilenced implements response to request for 'isSilenced' field.
+func (_ CheckConfigAliases) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.([]string)
+	ret, ok := val.(bool)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'subscriptions'")
+		return ret, errors.New("unable to coerce value for field 'isSilenced'")
 	}
 	return ret, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (_ CheckConfigAliases) Silences(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Stdin implements response to request for 'stdin' field.
@@ -511,6 +531,19 @@ func (_ CheckConfigAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 func (_ CheckConfigAliases) Subdue(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
+}
+
+// Subscriptions implements response to request for 'subscriptions' field.
+func (_ CheckConfigAliases) Subscriptions(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'subscriptions'")
+	}
+	return ret, err
 }
 
 // Timeout implements response to request for 'timeout' field.
@@ -678,10 +711,17 @@ func _ObjTypeCheckConfigRoundRobinHandler(impl interface{}) graphql1.FieldResolv
 	}
 }
 
-func _ObjTypeCheckConfigSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigSubscriptionsFieldResolver)
+func _ObjTypeCheckConfigIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigIsSilencedFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Subscriptions(frp)
+		return resolver.IsSilenced(frp)
+	}
+}
+
+func _ObjTypeCheckConfigSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigSilencesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Silences(frp)
 	}
 }
 
@@ -696,6 +736,13 @@ func _ObjTypeCheckConfigSubdueHandler(impl interface{}) graphql1.FieldResolveFn 
 	resolver := impl.(CheckConfigSubdueFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subdue(frp)
+	}
+}
+
+func _ObjTypeCheckConfigSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigSubscriptionsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subscriptions(frp)
 	}
 }
 
@@ -787,6 +834,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "interval",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
+			"isSilenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "isSilenced return true if the entity has any silences associated with it.",
+				Name:              "isSilenced",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
 			"lowFlapThreshold": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -849,6 +903,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Description:       "RoundRobin enables round-robin scheduling if set true.",
 				Name:              "roundRobin",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"silences": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "All silences matching the entity's subscriptions and where the silence\nmatches all checks.",
+				Name:              "silences",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Silenced")))),
 			},
 			"stdin": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -920,6 +981,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"highFlapThreshold":    _ObjTypeCheckConfigHighFlapThresholdHandler,
 		"id":                   _ObjTypeCheckConfigIDHandler,
 		"interval":             _ObjTypeCheckConfigIntervalHandler,
+		"isSilenced":           _ObjTypeCheckConfigIsSilencedHandler,
 		"lowFlapThreshold":     _ObjTypeCheckConfigLowFlapThresholdHandler,
 		"name":                 _ObjTypeCheckConfigNameHandler,
 		"namespace":            _ObjTypeCheckConfigNamespaceHandler,
@@ -929,6 +991,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"proxyRequests":        _ObjTypeCheckConfigProxyRequestsHandler,
 		"publish":              _ObjTypeCheckConfigPublishHandler,
 		"roundRobin":           _ObjTypeCheckConfigRoundRobinHandler,
+		"silences":             _ObjTypeCheckConfigSilencesHandler,
 		"stdin":                _ObjTypeCheckConfigStdinHandler,
 		"subdue":               _ObjTypeCheckConfigSubdueHandler,
 		"subscriptions":        _ObjTypeCheckConfigSubscriptionsHandler,
@@ -1540,6 +1603,18 @@ type CheckSilencedFieldResolver interface {
 	Silenced(p graphql.ResolveParams) ([]string, error)
 }
 
+// CheckIsSilencedFieldResolver implement to resolve requests for the Check's isSilenced field.
+type CheckIsSilencedFieldResolver interface {
+	// IsSilenced implements response to request for isSilenced field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+}
+
+// CheckSilencesFieldResolver implement to resolve requests for the Check's silences field.
+type CheckSilencesFieldResolver interface {
+	// Silences implements response to request for silences field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
+}
+
 // CheckLastOKFieldResolver implement to resolve requests for the Check's lastOK field.
 type CheckLastOKFieldResolver interface {
 	// LastOK implements response to request for lastOK field.
@@ -1663,6 +1738,8 @@ type CheckFieldResolvers interface {
 	CheckTotalStateChangeFieldResolver
 	CheckHooksFieldResolver
 	CheckSilencedFieldResolver
+	CheckIsSilencedFieldResolver
+	CheckSilencesFieldResolver
 	CheckLastOKFieldResolver
 	CheckOccurrencesFieldResolver
 	CheckOccurrencesWatermarkFieldResolver
@@ -2057,6 +2134,25 @@ func (_ CheckAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
 	return ret, err
 }
 
+// IsSilenced implements response to request for 'isSilenced' field.
+func (_ CheckAliases) IsSilenced(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'isSilenced'")
+	}
+	return ret, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (_ CheckAliases) Silences(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // LastOK implements response to request for 'lastOK' field.
 func (_ CheckAliases) LastOK(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -2355,6 +2451,20 @@ func _ObjTypeCheckSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckIsSilencedFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.IsSilenced(frp)
+	}
+}
+
+func _ObjTypeCheckSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckSilencesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Silences(frp)
+	}
+}
+
 func _ObjTypeCheckLastOKHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckLastOKFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -2482,6 +2592,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "interval",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
+			"isSilenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "isSilenced return true if the entity has any silences associated with it.",
+				Name:              "isSilenced",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
 			"issued": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -2594,6 +2711,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "silenced",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.String)),
 			},
+			"silences": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "All silences matching the entity's subscriptions and where the silence\nmatches all checks.",
+				Name:              "silences",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Silenced")))),
+			},
 			"state": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -2680,6 +2804,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"history":              _ObjTypeCheckHistoryHandler,
 		"hooks":                _ObjTypeCheckHooksHandler,
 		"interval":             _ObjTypeCheckIntervalHandler,
+		"isSilenced":           _ObjTypeCheckIsSilencedHandler,
 		"issued":               _ObjTypeCheckIssuedHandler,
 		"lastOK":               _ObjTypeCheckLastOKHandler,
 		"lowFlapThreshold":     _ObjTypeCheckLowFlapThresholdHandler,
@@ -2696,6 +2821,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"roundRobin":           _ObjTypeCheckRoundRobinHandler,
 		"runtimeAssets":        _ObjTypeCheckRuntimeAssetsHandler,
 		"silenced":             _ObjTypeCheckSilencedHandler,
+		"silences":             _ObjTypeCheckSilencesHandler,
 		"state":                _ObjTypeCheckStateHandler,
 		"status":               _ObjTypeCheckStatusHandler,
 		"stdin":                _ObjTypeCheckStdinHandler,

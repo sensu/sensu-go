@@ -85,3 +85,67 @@ func TestCheckTypeNodeIDFieldImpl(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
+
+func TestCheckTypeIsSilencedField(t *testing.T) {
+	check := types.FixtureCheck("my-check")
+	check.Silenced = []string{"unix:my-check"}
+	mock := mockSilenceQuerier{els: []*types.Silenced{
+		types.FixtureSilenced("unix:my-check"),
+	}}
+
+	// return associated silence
+	impl := &checkImpl{silenceQuerier: mock}
+	res, err := impl.IsSilenced(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.True(t, res)
+}
+
+func TestCheckTypeSilencesField(t *testing.T) {
+	check := types.FixtureCheck("my-check")
+	check.Subscriptions = []string{"unix"}
+	check.Silenced = []string{"unix:my-check"}
+	mock := mockSilenceQuerier{els: []*types.Silenced{
+		types.FixtureSilenced("unix:my-check"),
+		types.FixtureSilenced("fred:my-check"),
+		types.FixtureSilenced("unix:not-my-check"),
+	}}
+
+	// return associated silence
+	impl := &checkImpl{silenceQuerier: mock}
+	res, err := impl.Silences(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 1)
+}
+
+func TestCheckConfigTypeIsSilencedField(t *testing.T) {
+	check := types.FixtureCheckConfig("my-check")
+	check.Subscriptions = []string{"unix"}
+	mock := mockSilenceQuerier{els: []*types.Silenced{
+		types.FixtureSilenced("*:my-check"),
+	}}
+
+	// return associated silence
+	impl := &checkCfgImpl{silenceQuerier: mock}
+	res, err := impl.IsSilenced(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.True(t, res)
+}
+
+func TestCheckConfigTypeSilencesField(t *testing.T) {
+	check := types.FixtureCheckConfig("my-check")
+	check.Subscriptions = []string{"unix"}
+	mock := mockSilenceQuerier{els: []*types.Silenced{
+		types.FixtureSilenced("*:my-check"),
+		types.FixtureSilenced("unix:*"),
+		types.FixtureSilenced("unix:my-check"),
+		types.FixtureSilenced("unix:different-check"),
+		types.FixtureSilenced("unrelated:my-check"),
+		types.FixtureSilenced("*:another-check"),
+	}}
+
+	// return associated silence
+	impl := &checkCfgImpl{silenceQuerier: mock}
+	res, err := impl.Silences(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 2)
+}

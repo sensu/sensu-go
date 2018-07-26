@@ -71,14 +71,23 @@ type CheckConfig implements Node {
   "RoundRobin enables round-robin scheduling if set true."
   roundRobin: Boolean!
 
-  "Subscriptions is the list of subscribers for the check."
-  subscriptions: [String]!
+  "isSilenced return true if the entity has any silences associated with it."
+  isSilenced: Boolean!
+
+  """
+  All silences matching the entity's subscriptions and where the silence
+  matches all checks.
+  """
+  silences: [Silenced!]!
 
   "STDIN indicates if the check command accepts JSON via stdin from the agent"
   stdin: Boolean!
 
   "Subdue represents one or more time windows when the check should be subdued."
   subdue: TimeWindowWhen
+
+  "Subscriptions is the list of subscribers for the check."
+  subscriptions: [String]!
 
   """
   Timeout is the timeout, in seconds, at which the check has to run.
@@ -227,6 +236,15 @@ type Check {
 
   "Silenced is a list of silenced entry ids (subscription and check name)"
   silenced: [String]!
+
+  "isSilenced return true if the entity has any silences associated with it."
+  isSilenced: Boolean!
+
+  """
+  All silences matching the entity's subscriptions and where the silence
+  matches all checks.
+  """
+  silences: [Silenced!]!
 
   """
   LastOK displays last time this check's status was set to zero.

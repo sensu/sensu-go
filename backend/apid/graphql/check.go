@@ -10,11 +10,22 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/strings"
 )
 
 var _ schema.CheckFieldResolvers = (*checkImpl)(nil)
 var _ schema.CheckConfigFieldResolvers = (*checkCfgImpl)(nil)
 var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
+
+type namedCheck interface {
+	GetName() string
+	GetSubscriptions() []string
+}
+
+type silenceableCheck interface {
+	namedCheck
+	GetSilenced() []string
+}
 
 //
 // Implement CheckConfigFieldResolvers
@@ -22,11 +33,18 @@ var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
 
 type checkCfgImpl struct {
 	schema.CheckConfigAliases
-	handlerCtrl actions.HandlerController
+	handlerCtrl    actions.HandlerController
+	silenceQuerier silenceQuerier
 }
 
 func newCheckCfgImpl(store store.Store) *checkCfgImpl {
-	return &checkCfgImpl{handlerCtrl: actions.NewHandlerController(store)}
+	handlerCtrl := actions.NewHandlerController(store)
+	silenceCtrl := actions.NewSilencedController(store)
+
+	return &checkCfgImpl{
+		handlerCtrl:    handlerCtrl,
+		silenceQuerier: silenceCtrl,
+	}
 }
 
 // ID implements response to request for 'id' field.
@@ -53,6 +71,22 @@ func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{
 	return fetchHandlers(ctx, r.handlerCtrl, check.OutputMetricHandlers)
 }
 
+// IsSilenced implements response to request for 'isSilenced' field.
+func (r *checkCfgImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
+	check := p.Source.(*types.CheckConfig)
+	ctx := types.SetContextFromResource(p.Context, check)
+	sls, err := fetchCheckConfigSilences(ctx, r.silenceQuerier, check)
+	return len(sls) > 0, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (r *checkCfgImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.CheckConfig)
+	ctx := types.SetContextFromResource(p.Context, check)
+	sls, err := fetchCheckConfigSilences(ctx, r.silenceQuerier, check)
+	return sls, err
+}
+
 // ToJSON implements response to request for 'toJSON' field.
 func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
@@ -77,6 +111,27 @@ func fetchHandlers(ctx context.Context, ctrl actions.HandlerController, names []
 	return handlers, nil
 }
 
+func fetchCheckConfigSilences(ctx context.Context, ctrl silenceQuerier, check namedCheck) ([]*types.Silenced, error) {
+	sls, err := ctrl.Query(ctx, "", "")
+	matched := make([]*types.Silenced, 0, len(sls))
+	if err != nil {
+		return []*types.Silenced{}, err
+	}
+
+	now := time.Now().Unix()
+	for _, sl := range sls {
+		if !sl.StartSilence(now) {
+			continue
+		}
+		if (sl.Check == check.GetName() && (sl.Subscription == "" || sl.Subscription == "*")) ||
+			((sl.Check == "" || sl.Check == "*") && strings.InArray(sl.Subscription, check.GetSubscriptions())) {
+			matched = append(matched, sl)
+		}
+	}
+
+	return matched, nil
+}
+
 // IsTypeOf is used to determine if a given value is associated with the Check type
 func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*types.CheckConfig)
@@ -89,14 +144,18 @@ func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 type checkImpl struct {
 	schema.CheckAliases
-	handlerCtrl actions.HandlerController
+	handlerCtrl    actions.HandlerController
+	silenceQuerier silenceQuerier
 }
 
 func newCheckImpl(store store.Store) *checkImpl {
-	impl := checkImpl{
-		handlerCtrl: actions.NewHandlerController(store),
+	handlerCtrl := actions.NewHandlerController(store)
+	silenceCtrl := actions.NewSilencedController(store)
+
+	return &checkImpl{
+		handlerCtrl:    handlerCtrl,
+		silenceQuerier: silenceCtrl,
 	}
-	return &impl
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
@@ -150,11 +209,43 @@ func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	return fetchHandlers(ctx, r.handlerCtrl, check.Handlers)
 }
 
+// IsSilenced implements response to request for 'isSilenced' field.
+func (r *checkImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
+	check := p.Source.(*types.Check)
+	ctx := types.SetContextFromResource(p.Context, check)
+	sls, err := fetchCheckSilences(ctx, r.silenceQuerier, check)
+	return len(sls) > 0, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (r *checkImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.Check)
+	ctx := types.SetContextFromResource(p.Context, check)
+	sls, err := fetchCheckSilences(ctx, r.silenceQuerier, check)
+	return sls, err
+}
+
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.Check)
 	ctx := types.SetContextFromResource(p.Context, check)
 	return fetchHandlers(ctx, r.handlerCtrl, check.OutputMetricHandlers)
+}
+
+func fetchCheckSilences(ctx context.Context, ctrl silenceQuerier, check silenceableCheck) ([]*types.Silenced, error) {
+	sls, err := ctrl.Query(ctx, "", "")
+	matched := make([]*types.Silenced, 0, len(sls))
+	if err != nil {
+		return matched, err
+	}
+
+	for _, sl := range sls {
+		if strings.InArray(sl.ID, check.GetSilenced()) {
+			matched = append(matched, sl)
+		}
+	}
+
+	return matched, nil
 }
 
 //
