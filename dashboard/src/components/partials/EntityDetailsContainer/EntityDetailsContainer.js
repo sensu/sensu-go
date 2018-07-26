@@ -2,13 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import CollapsingMenu from "/components/CollapsingMenu";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import Content from "/components/Content";
 import Grid from "@material-ui/core/Grid";
 import DeleteIcon from "@material-ui/icons/Delete";
 import LiveIcon from "/icons/Live";
-
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
+
 import EntityDetailsEvents from "./EntityDetailsEvents";
 import EntityDetailsInformation from "./EntityDetailsInformation";
 import DeleteAction from "./EntityDetailsDeleteAction";
