@@ -59,7 +59,7 @@ func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func (client *RestClient) CreateEntity(entity *types.Entity) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil

@@ -39,7 +39,7 @@ func (client *RestClient) CreateMutator(mutator *types.Mutator) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 	return nil
 }
@@ -88,7 +88,7 @@ func (client *RestClient) UpdateMutator(mutator *types.Mutator) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil

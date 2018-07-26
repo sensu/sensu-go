@@ -26,7 +26,7 @@ func (client *RestClient) CreateRole(role *types.Role) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -40,7 +40,7 @@ func (client *RestClient) DeleteRole(name string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -56,7 +56,7 @@ func (client *RestClient) FetchRole(name string) (*types.Role, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
 	return &role, nil
@@ -72,7 +72,7 @@ func (client *RestClient) ListRoles() ([]types.Role, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return roles, unmarshalError(res)
+		return roles, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &roles)
@@ -88,7 +88,7 @@ func (client *RestClient) AddRule(roleName string, rule *types.Rule) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -103,7 +103,7 @@ func (client *RestClient) RemoveRule(name string, t string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil

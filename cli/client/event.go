@@ -23,7 +23,7 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &event)
@@ -40,7 +40,7 @@ func (client *RestClient) ListEvents(org string) ([]types.Event, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &events)
@@ -54,7 +54,7 @@ func (client *RestClient) DeleteEvent(entity, check string) error {
 		return err
 	}
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 	return nil
 }
@@ -76,7 +76,7 @@ func (client *RestClient) ResolveEvent(event *types.Event) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
