@@ -43,7 +43,7 @@ class EntityDetailsInformation extends React.PureComponent {
         keepaliveTimeout
         lastSeen
         status
-        silencedBy {
+        silences {
           storeId
         }
         user
@@ -88,7 +88,7 @@ class EntityDetailsInformation extends React.PureComponent {
         <CardContent>
           <Typography variant="headline">
             {entity.name}
-            {entity.silencedBy.length > 0 && (
+            {entity.silences.length > 0 && (
               <Tooltip title="Silenced">
                 <SilencedIcon style={{ float: "right" }} />
               </Tooltip>
@@ -108,11 +108,11 @@ class EntityDetailsInformation extends React.PureComponent {
                     ({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
-                {entity.silencedBy.length > 0 && (
+                {entity.silences.length > 0 && (
                   <DictionaryEntry>
                     <DictionaryKey>Silenced By</DictionaryKey>
                     <DictionaryValue>
-                      {entity.silencedBy.map(s => s.storeId).join(", ")}
+                      {entity.silences.map(s => s.storeId).join(", ")}
                     </DictionaryValue>
                   </DictionaryEntry>
                 )}

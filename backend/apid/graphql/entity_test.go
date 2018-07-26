@@ -104,7 +104,7 @@ func TestEntityTypeEventsField(t *testing.T) {
 	assert.Len(t, evs, 3)
 }
 
-func TestEntityTypeSilencedByField(t *testing.T) {
+func TestEntityTypeSilencesField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	entity.Subscriptions = []string{"entity:en", "unix", "www"}
 	mock := mockSilenceQuerier{els: []*types.Silenced{
@@ -116,7 +116,7 @@ func TestEntityTypeSilencedByField(t *testing.T) {
 
 	// return associated silence
 	impl := &entityImpl{silenceQuerier: mock}
-	evs, err := impl.SilencedBy(graphql.ResolveParams{Source: entity})
+	evs, err := impl.Silences(graphql.ResolveParams{Source: entity})
 	require.NoError(t, err)
 	assert.Len(t, evs, 2)
 }

@@ -512,8 +512,11 @@ type Entity implements Node {
   """
   isSilenced: Boolean!
 
-  """All silences associated with the entity."""
-  silencedBy: [Silenced!]!
+  """
+  All silences matching the entity's subscriptions and where the silence
+  matches all checks.
+  """
+  silences: [Silenced!]!
 
   """Extended attributes includes arbitrary user-defined data"""
   extendedAttributes: JSON!

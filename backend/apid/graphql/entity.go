@@ -174,8 +174,8 @@ func (r *entityImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	return len(sls) > 0, err
 }
 
-// SilencedBy implements response to request for 'silencedBy' field.
-func (r *entityImpl) SilencedBy(p graphql.ResolveParams) (interface{}, error) {
+// Silences implements response to request for 'silences' field.
+func (r *entityImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 	entity := p.Source.(*types.Entity)
 	ctx := types.SetContextFromResource(p.Context, entity)
 	sls, err := fetchEntitySilencedEntries(ctx, r.silenceQuerier, entity)
