@@ -3,15 +3,17 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 
 import { withStyles } from "@material-ui/core/styles";
-import OKIcon from "@material-ui/icons/CheckCircle";
-import WarnIcon from "@material-ui/icons/Warning";
-import ErrIcon from "@material-ui/icons/Error";
-import UnknownIcon from "@material-ui/icons/Help";
-
 import { statusCodeToId } from "/utils/checkStatus";
-import OKIconSm from "/icons/SmallCheck";
-import WarnIconSm from "/icons/WarnHollow";
+
+import SvgIcon from "@material-ui/core/SvgIcon";
+import ErrIcon from "/icons/Error";
 import ErrIconSm from "/icons/ErrorHollow";
+import OKIcon from "/icons/OK";
+import OKIconSm from "/icons/SmallCheck";
+import WarnIcon from "/icons/Warn";
+import WarnIconSm from "/icons/WarnHollow";
+import UnknownIcon from "/icons/Unknown";
+import SilenceIcon from "/icons/Silence";
 
 const styles = theme => ({
   inline: {
@@ -32,6 +34,12 @@ const styles = theme => ({
   },
   muted: {
     color: theme.palette.grey[500],
+  },
+  silenced: {
+    opacity: 0.35,
+  },
+  silenceIcon: {
+    opacity: 0.71,
   },
 });
 
@@ -58,6 +66,7 @@ class Icon extends React.PureComponent {
     small: PropTypes.bool,
     statusCode: PropTypes.number.isRequired,
     inline: PropTypes.bool,
+    silenced: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -65,6 +74,7 @@ class Icon extends React.PureComponent {
     inline: false,
     mutedOK: false,
     small: false,
+    silenced: false,
   };
 
   render() {
@@ -75,6 +85,7 @@ class Icon extends React.PureComponent {
       mutedOK,
       small,
       statusCode,
+      silenced,
 
       ...props
     } = this.props;
@@ -84,9 +95,35 @@ class Icon extends React.PureComponent {
     const className = classnames(classNameProp, classes[status], {
       [classes.muted]: status === "success" && mutedOK,
       [classes.inline]: inline,
+      [classes.silenced]: silenced && !small,
     });
 
-    return <Component className={className} {...props} />;
+    const icon = <Component className={className} {...props} />;
+    if (silenced) {
+      if (small) {
+        return <SilenceIcon className={className} />;
+      }
+      return (
+        <SvgIcon viewBox="0 0 24 24">
+          <SilenceIcon
+            x={12}
+            y={12}
+            width={12}
+            height={12}
+            className={classes.silencedIcon}
+          />
+          {React.cloneElement(icon, {
+            x: 0,
+            y: 0,
+            width: 24,
+            height: 24,
+            withGap: true,
+          })}
+        </SvgIcon>
+      );
+    }
+
+    return icon;
   }
 }
 

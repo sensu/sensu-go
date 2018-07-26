@@ -18,6 +18,8 @@ import Maybe from "/components/Maybe";
 import Monospaced from "/components/Monospaced";
 import RelativeDate from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
+import SilencedIcon from "/icons/Silence";
+import Tooltip from "@material-ui/core/Tooltip";
 
 const Strong = withStyles({
   root: {
@@ -41,6 +43,9 @@ class EntityDetailsInformation extends React.PureComponent {
         keepaliveTimeout
         lastSeen
         status
+        silences {
+          storeId
+        }
         user
         redact
         extendedAttributes
@@ -81,7 +86,14 @@ class EntityDetailsInformation extends React.PureComponent {
       <Card>
         <CardHighlight color={status} />
         <CardContent>
-          <Typography variant="headline">{entity.name}</Typography>
+          <Typography variant="headline">
+            {entity.name}
+            {entity.silences.length > 0 && (
+              <Tooltip title="Silenced">
+                <SilencedIcon style={{ float: "right" }} />
+              </Tooltip>
+            )}
+          </Typography>
           <Typography variant="caption" paragraph>
             {entity.subscriptions.join(", ")}
           </Typography>
@@ -96,6 +108,14 @@ class EntityDetailsInformation extends React.PureComponent {
                     ({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
+                {entity.silences.length > 0 && (
+                  <DictionaryEntry>
+                    <DictionaryKey>Silenced By</DictionaryKey>
+                    <DictionaryValue>
+                      {entity.silences.map(s => s.storeId).join(", ")}
+                    </DictionaryValue>
+                  </DictionaryEntry>
+                )}
                 <DictionaryEntry>
                   <DictionaryKey>Last Seen</DictionaryKey>
                   <DictionaryValue>

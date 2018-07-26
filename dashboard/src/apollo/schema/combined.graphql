@@ -80,6 +80,18 @@ type Check {
   """command is the command to be executed."""
   command: String!
 
+  """CheckHooks is the list of check hooks for the check"""
+  checkHooks: [HookList!]!
+
+  """
+  envVars is the list of environment variables to set for the check's
+  execution environment.
+  """
+  envVars: [String!]!
+
+  """ExtendedAttributes store serialized arbitrary JSON-encoded data"""
+  extendedAttributes: JSON!
+
   """
   handlers are the event handler for the check (incidents and/or metrics).
   """
@@ -96,30 +108,51 @@ type Check {
   """
   interval: Int!
 
+  """Cron is the cron string at which the check should be run."""
+  cron: String
+
   """
   LowFlapThreshold is the flap detection low threshold (% state change) for
   the check. Sensu uses the same flap detection algorithm as Nagios.
   """
   lowFlapThreshold: Int
 
+  """
+  OutputOutputMetricFormat is the metric protocol that the check's output will be
+  expected to follow in order to be extracted.
+  """
+  outputMetricFormat: String
+
+  """
+  OutputOutputMetricHandlers is the list of event handlers that will respond to metrics
+  that have been extracted from the check.
+  """
+  outputMetricHandlers: [Handler]!
+
+  """
+  proxyEntityId indicates the name of the entity representing an external resource
+  """
+  proxyEntityId: String
+
+  """proxyRequests represents a request to execute a proxy check."""
+  proxyRequests: ProxyRequests
+
   """Publish indicates if check requests are published for the check"""
   publish: Boolean!
+
+  """RuntimeAssets are a list of assets required to execute check."""
+  runtimeAssets: [Asset]!
+
+  """RoundRobin enables round-robin scheduling if set true."""
+  roundRobin: Boolean!
 
   """Subscriptions is the list of subscribers for the check."""
   subscriptions: [String]!
 
   """
-  Source indicates the name of the entity representing an external resource
-  """
-  source: String
-
-  """
   STDIN indicates if the check command accepts JSON via stdin from the agent
   """
   stdin: Boolean!
-
-  """CheckHooks is the list of check hooks for the check"""
-  checkHooks: HookList
 
   """
   Subdue represents one or more time windows when the check should be subdued.
@@ -202,6 +235,21 @@ type CheckConfig implements Node {
   """command is the command to be executed."""
   command: String!
 
+  """CheckHooks is the configured list of check hooks for the check"""
+  checkHooks: [HookList!]!
+
+  """Cron is the cron string at which the check should be run."""
+  cron: String
+
+  """
+  EnvVars is the list of environment variables to set for the check's
+  execution environment.
+  """
+  envVars: [String!]!
+
+  """ExtendedAttributes store serialized arbitrary JSON-encoded data"""
+  extendedAttributes: JSON!
+
   """
   handlers are the event handler for the check (incidents and/or metrics).
   """
@@ -224,24 +272,39 @@ type CheckConfig implements Node {
   """
   lowFlapThreshold: Int
 
+  """
+  OutputOutputMetricFormat is the metric protocol that the check's output will be
+  expected to follow in order to be extracted.
+  """
+  outputMetricFormat: String
+
+  """
+  OutputOutputMetricHandlers is the list of event handlers that will respond to metrics
+  that have been extracted from the check.
+  """
+  outputMetricHandlers: [Handler]!
+
+  """
+  proxyEntityId indicates the name of the entity representing an external resource
+  """
+  proxyEntityId: String
+
+  """proxyRequests represents a request to execute a proxy check."""
+  proxyRequests: ProxyRequests
+
   """Publish indicates if check requests are published for the check"""
   publish: Boolean!
+
+  """RoundRobin enables round-robin scheduling if set true."""
+  roundRobin: Boolean!
 
   """Subscriptions is the list of subscribers for the check."""
   subscriptions: [String]!
 
   """
-  Source indicates the name of the entity representing an external resource
-  """
-  source: String
-
-  """
   STDIN indicates if the check command accepts JSON via stdin from the agent
   """
   stdin: Boolean!
-
-  """CheckHooks is the configured list of check hooks for the check"""
-  checkHooks: HookList
 
   """
   Subdue represents one or more time windows when the check should be subdued.
@@ -255,6 +318,12 @@ type CheckConfig implements Node {
   TTL represents the length of time in seconds for which a check result is valid.
   """
   ttl: Int!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl import`.
+  """
+  toJSON: JSON!
 }
 
 """A connection to a sequence of records."""
@@ -437,6 +506,17 @@ type Entity implements Node {
 
   """All events associated with the entity."""
   events(orderBy: EventsListOrder = SEVERITY): [Event!]!
+
+  """
+  isSilenced return true if the entity has any silences associated with it.
+  """
+  isSilenced: Boolean!
+
+  """
+  All silences matching the entity's subscriptions and where the silence
+  matches all checks.
+  """
+  silences: [Silenced!]!
 
   """Extended attributes includes arbitrary user-defined data"""
   extendedAttributes: JSON!
@@ -968,6 +1048,27 @@ type Organization {
   iconId: Icon!
 }
 
+"""A ProxyRequests represents a request to execute a proxy check."""
+type ProxyRequests {
+  """
+  entityAttributes store serialized arbitrary JSON-encoded data to match
+  entities in the registry.
+  """
+  entityAttributes: [JSON!]!
+
+  """
+  splay indicates if proxy check requests should be splayed, published evenly
+  over a window of time.
+  """
+  splay: Boolean!
+
+  """
+  splayCoverage is the percentage used for proxy check request splay
+  calculation.
+  """
+  splay_coverage: Int!
+}
+
 """The query root of Sensu's GraphQL interface."""
 type Query {
   """Current viewer."""
@@ -984,6 +1085,11 @@ type Query {
 
   """Entity fetches the entity associated with the given set of arguments."""
   entity(ns: NamespaceInput!, name: String!): Entity
+
+  """
+  check fetches the check config associated with the given set of arguments.
+  """
+  check(ns: NamespaceInput!, name: String!): CheckConfig
 
   """Node fetches an object given its ID."""
   node(

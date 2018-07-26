@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"sort"
 	"time"
 
@@ -25,17 +26,20 @@ var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 type entityImpl struct {
 	schema.EntityAliases
-	entityQuerier entityQuerier
-	eventQuerier  eventQuerier
+	entityQuerier  entityQuerier
+	eventQuerier   eventQuerier
+	silenceQuerier silenceQuerier
 }
 
 func newEntityImpl(store store.Store) *entityImpl {
-	entityQuerier := actions.NewEntityController(store)
-	eventQuerier := actions.NewEventController(store, nil)
+	entityCtrl := actions.NewEntityController(store)
+	eventCtrl := actions.NewEventController(store, nil)
+	silenceCtrl := actions.NewSilencedController(store)
 
 	return &entityImpl{
-		entityQuerier: entityQuerier,
-		eventQuerier:  eventQuerier,
+		entityQuerier:  entityCtrl,
+		eventQuerier:   eventCtrl,
+		silenceQuerier: silenceCtrl,
 	}
 }
 
@@ -160,6 +164,41 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 		st = maxUint32(ev.Check.Status, st)
 	}
 	return int(st), nil
+}
+
+// IsSilenced implements response to request for 'isSilenced' field.
+func (r *entityImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
+	entity := p.Source.(*types.Entity)
+	ctx := types.SetContextFromResource(p.Context, entity)
+	sls, err := fetchEntitySilencedEntries(ctx, r.silenceQuerier, entity)
+	return len(sls) > 0, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (r *entityImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
+	entity := p.Source.(*types.Entity)
+	ctx := types.SetContextFromResource(p.Context, entity)
+	sls, err := fetchEntitySilencedEntries(ctx, r.silenceQuerier, entity)
+	return sls, err
+}
+
+func fetchEntitySilencedEntries(ctx context.Context, ctrl silenceQuerier, entity *types.Entity) ([]*types.Silenced, error) {
+	sls, err := ctrl.Query(ctx, "", "")
+	matched := make([]*types.Silenced, 0, len(sls))
+	if err != nil {
+		return matched, err
+	}
+
+	for _, sl := range sls {
+		if !(sl.Check == "" || sl.Check == "*") {
+			continue
+		}
+		if strings.InArray(sl.Subscription, entity.Subscriptions) {
+			matched = append(matched, sl)
+		}
+	}
+
+	return matched, nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
