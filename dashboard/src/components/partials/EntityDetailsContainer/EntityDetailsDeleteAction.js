@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 import { compose } from "recompose";
 import { withApollo } from "react-apollo";
 import { withRouter } from "react-router-dom";
-import Button from "@material-ui/core/Button";
+
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import deleteEntity from "/mutations/deleteEntity";
 
@@ -13,6 +13,7 @@ class EntityDetailsDeleteAction extends React.PureComponent {
     client: PropTypes.object.isRequired,
     entity: PropTypes.object,
     history: PropTypes.object.isRequired,
+    children: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -47,11 +48,7 @@ class EntityDetailsDeleteAction extends React.PureComponent {
         identifier={this.props.entity.name}
         onSubmit={this.deleteRecord}
       >
-        {dialog => (
-          <Button variant="raised" onClick={() => dialog.open()}>
-            Delete
-          </Button>
-        )}
+        {dialog => this.props.children(dialog.open)}
       </ConfirmDelete>
     );
   }

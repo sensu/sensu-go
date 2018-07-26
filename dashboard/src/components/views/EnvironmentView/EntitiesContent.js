@@ -8,9 +8,13 @@ import NotFoundView from "/components/views/NotFoundView";
 import EntitiesList from "/components/partials/EntitiesList";
 import SearchBox from "/components/SearchBox";
 import ListToolbar from "/components/partials/ListToolbar";
-import RefreshIcon from "@material-ui/icons/Refresh";
+import LiveIcon from "/icons/Live";
 import CollapsingMenu from "/components/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
+
+// duration used when polling is enabled; set fairly high until we understand
+// the impact.
+const pollInterval = 2500; // 2.5s
 
 class EntitiesContent extends React.PureComponent {
   static propTypes = {
@@ -43,7 +47,6 @@ class EntitiesContent extends React.PureComponent {
 
   render() {
     const { queryParams, setQueryParams, match } = this.props;
-
     const { filter, order, limit = "50", offset = "0" } = queryParams;
 
     return (
@@ -52,7 +55,15 @@ class EntitiesContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         variables={{ ...match.params, filter, order, limit, offset }}
       >
-        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+        {({
+          data: { environment } = {},
+          loading,
+          aborted,
+          refetch,
+          isPolling,
+          startPolling,
+          stopPolling,
+        }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
           }
@@ -70,9 +81,11 @@ class EntitiesContent extends React.PureComponent {
                   }
                   renderMenuItems={
                     <CollapsingMenu.Button
-                      title="Reload"
-                      icon={<RefreshIcon />}
-                      onClick={() => refetch()}
+                      title="LIVE"
+                      icon={<LiveIcon active={isPolling} />}
+                      onClick={() =>
+                        isPolling ? stopPolling() : startPolling(pollInterval)
+                      }
                     />
                   }
                 />
@@ -80,7 +93,7 @@ class EntitiesContent extends React.PureComponent {
               <EntitiesList
                 limit={limit}
                 offset={offset}
-                loading={loading || aborted}
+                loading={(loading && !isPolling) || aborted}
                 onChangeQuery={setQueryParams}
                 environment={environment}
                 refetch={refetch}

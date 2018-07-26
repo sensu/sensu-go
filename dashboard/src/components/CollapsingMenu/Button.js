@@ -15,19 +15,21 @@ class CollapsingButton extends React.PureComponent {
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
     onClick: PropTypes.func.isRequired,
+    pinned: PropTypes.bool,
   };
 
   static defaultProps = {
     icon: null,
     subtitle: null,
+    pinned: false,
   };
 
   render() {
-    const { icon, title, subtitle, onClick: onClickProp } = this.props;
+    const { icon, title, subtitle, onClick: onClickProp, pinned } = this.props;
 
     return (
       <Item>
-        {({ collapsed, close }) => {
+        {({ parent, collapsed, close }) => {
           const onClick = ev => {
             if (onClickProp) {
               onClickProp(ev);
@@ -35,7 +37,7 @@ class CollapsingButton extends React.PureComponent {
             close(ev);
           };
 
-          if (collapsed) {
+          if (parent === "menu" && collapsed && !pinned) {
             return (
               <MenuItem onClick={onClick}>
                 <ListItemIcon>{icon}</ListItemIcon>
@@ -44,12 +46,16 @@ class CollapsingButton extends React.PureComponent {
             );
           }
 
-          return (
-            <Button onClick={onClick}>
-              <ButtonIcon>{icon}</ButtonIcon>
-              {title}
-            </Button>
-          );
+          if (parent === "buttonset" && (pinned || !collapsed)) {
+            return (
+              <Button onClick={onClick}>
+                <ButtonIcon>{icon}</ButtonIcon>
+                {title}
+              </Button>
+            );
+          }
+
+          return null;
         }}
       </Item>
     );

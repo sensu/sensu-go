@@ -22,6 +22,7 @@ import (
 	"github.com/sensu/sensu-go/backend/ring"
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/seeds"
+	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
@@ -32,6 +33,7 @@ import (
 type Backend struct {
 	Daemons []daemon.Daemon
 	Etcd    *etcd.Etcd
+	Store   store.Store
 
 	done         chan struct{}
 	shutdownChan chan struct{}
@@ -96,7 +98,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize the store, which lives on top of etcd
 	store := etcdstore.NewStore(client, e.Name())
-	if err := seeds.SeedInitialData(store); err != nil {
+	if err = seeds.SeedInitialData(store); err != nil {
 		return nil, errors.New("error initializing the store: " + err.Error())
 	}
 
@@ -198,8 +200,9 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, dashboard)
 
-	// Add etcd to our backend, since it's needed across the methods
+	// Add etcd and store to our backend, since it's needed across the methods
 	b.Etcd = e
+	b.Store = store
 
 	return b, nil
 }

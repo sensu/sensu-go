@@ -5,8 +5,9 @@ import MenuItem from "@material-ui/core/MenuItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 
-import CheckStatusIcon from "/components/CheckStatusIcon";
 import ButtonMenu from "/components/partials/ButtonMenu";
+import CheckStatusIcon from "/components/CheckStatusIcon";
+import ErrorHollow from "/icons/ErrorHollow";
 
 class StatusMenu extends React.Component {
   static propTypes = {
@@ -25,7 +26,10 @@ class StatusMenu extends React.Component {
     return (
       <ButtonMenu className={className} label="Status" onChange={onChange}>
         <MenuItem key="incident" value={"HasCheck && IsIncident"}>
-          <ListItemText primary="Incident" style={{ paddingLeft: 40 }} />
+          <ListItemIcon>
+            <ErrorHollow />
+          </ListItemIcon>
+          <ListItemText primary="Incident" />
         </MenuItem>
         <MenuItem key="warning" value={[1]}>
           <ListItemIcon>

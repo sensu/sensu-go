@@ -1,12 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import { compose } from "recompose";
 import { withRouter } from "react-router-dom";
-import Button from "@material-ui/core/Button";
+import { withApollo } from "react-apollo";
+
 import executeCheck from "/mutations/executeCheck";
 
 class EventDetailsReRunAction extends React.PureComponent {
   static propTypes = {
+    children: PropTypes.func.isRequired,
     client: PropTypes.object.isRequired,
     event: PropTypes.object,
   };
@@ -41,8 +44,9 @@ class EventDetailsReRunAction extends React.PureComponent {
   };
 
   render() {
-    return <Button onClick={this.handleClick}>Re-Run</Button>;
+    return this.props.children(this.handleClick);
   }
 }
 
-export default withRouter(EventDetailsReRunAction);
+const enhancer = compose(withApollo, withRouter);
+export default enhancer(EventDetailsReRunAction);

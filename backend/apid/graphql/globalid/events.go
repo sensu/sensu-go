@@ -3,7 +3,6 @@ package globalid
 import (
 	"encoding/base64"
 	"encoding/json"
-	"strconv"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -50,13 +49,6 @@ func (n *EventComponents) MetricID() string {
 	return ""
 }
 
-// Timestamp method returns final element of global ID's uniqueComponents.
-func (n *EventComponents) Timestamp() int64 {
-	timestampStr := n.getUniqueComponents(2)
-	timestamp, _ := strconv.ParseInt(timestampStr, 10, 64)
-	return timestamp
-}
-
 func (n *EventComponents) getUniqueComponents(i int) string {
 	if len(n.uniqueComponents) == 0 {
 		bytes, _ := base64.StdEncoding.DecodeString(n.uniqueComponent)
@@ -96,20 +88,17 @@ func encodeEvent(event *types.Event) StandardComponents {
 	components.resource = eventName
 	addMultitenantFields(&components, event.Entity)
 
-	timestamp := strconv.FormatInt(event.Timestamp, 10)
 	if event.HasCheck() {
 		components.resourceType = eventCheckType
 		components.uniqueComponent = encodeUniqueComponents(
 			event.Entity.ID,
 			event.Check.Name,
-			timestamp,
 		)
 	} else if event.HasMetrics() {
 		components.resourceType = eventMetricType
 		components.uniqueComponent = encodeUniqueComponents(
 			event.Entity.ID,
 			"1234", // event.Metrics.ID,
-			timestamp,
 		)
 	}
 

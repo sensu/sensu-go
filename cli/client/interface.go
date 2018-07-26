@@ -24,6 +24,7 @@ type APIClient interface {
 	SilencedAPIClient
 	GenericClient
 	ClusterMemberClient
+	LicenseClient
 }
 
 // GenericClient exposes generic resource methods.
@@ -191,4 +192,18 @@ type ClusterMemberClient interface {
 
 	// MemberUpdate updates a cluster member
 	MemberUpdate(id uint64, peerAddrs []string) (*clientv3.MemberUpdateResponse, error)
+
+	// MemberRemove removes a cluster member
+	MemberRemove(id uint64) (*clientv3.MemberRemoveResponse, error)
+}
+
+// LicenseClient specifies the enteprise client methods for license management.
+// This is a temporary workaround until
+// https://github.com/sensu/sensu-go/issues/1870 is implemented
+type LicenseClient interface {
+	// FetchLicense fetches the installed license
+	FetchLicense() (interface{}, error)
+
+	// UpdateLicense updates the installed enterprise license
+	UpdateLicense(license interface{}) error
 }
