@@ -15,8 +15,9 @@ func (a apiError) Error() string {
 	return a.Message
 }
 
+// UnmarshalError decode the API error
 // TODO: Export err type from routers package.
-func unmarshalError(res *resty.Response) error {
+func UnmarshalError(res *resty.Response) error {
 	var apiErr apiError
 	if err := json.Unmarshal(res.Body(), &apiErr); err != nil {
 		apiErr.Message = string(res.Body())

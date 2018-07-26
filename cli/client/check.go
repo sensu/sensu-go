@@ -32,7 +32,7 @@ func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -52,7 +52,7 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -92,7 +92,7 @@ func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -109,7 +109,7 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &check)
@@ -125,7 +125,7 @@ func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return checks, unmarshalError(res)
+		return checks, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &checks)
@@ -141,7 +141,7 @@ func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *type
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -156,7 +156,7 @@ func (client *RestClient) RemoveCheckHook(check *types.CheckConfig, checkHookTyp
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil

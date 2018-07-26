@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -54,26 +55,12 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		if fp == "" {
-			if err := detectEmptyStdin(os.Stdin); err != nil {
-				_ = cmd.Help()
-				return err
-			}
-			in = os.Stdin
-		} else {
-			f, err := os.Open(fp)
-			if err != nil {
-				return err
-			}
-			stat, err := f.Stat()
-			if err != nil {
-				return err
-			}
-			if stat.IsDir() {
-				return errors.New("directories not supported yet")
-			}
-			in = f
+
+		in, err = helpers.InputData(fp)
+		if err != nil {
+			return err
 		}
+
 		resources, err := parseResources(in)
 		if err != nil {
 			return err
@@ -83,19 +70,6 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		}
 		return putResources(cli.Client, resources)
 	}
-}
-
-func detectEmptyStdin(f *os.File) error {
-	fi, err := f.Stat()
-	if err != nil {
-		return err
-	}
-	if fi.Size() == 0 {
-		if fi.Mode()&os.ModeNamedPipe == 0 {
-			return errors.New("empty stdin")
-		}
-	}
-	return nil
 }
 
 func parseResources(in io.Reader) ([]types.Resource, error) {

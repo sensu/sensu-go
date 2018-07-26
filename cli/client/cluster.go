@@ -17,7 +17,7 @@ func (c *RestClient) MemberList() (*clientv3.MemberListResponse, error) {
 		return nil, fmt.Errorf("GET %q: %s", clusterMembersBasePath, err)
 	}
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 	var result clientv3.MemberListResponse
 	return &result, json.Unmarshal(res.Body(), &result)
@@ -31,7 +31,7 @@ func (c *RestClient) MemberAdd(peerAddrs []string) (*clientv3.MemberAddResponse,
 		return nil, fmt.Errorf("POST %q: %s", endpoint, err)
 	}
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 	var result clientv3.MemberAddResponse
 	return &result, json.Unmarshal(res.Body(), &result)
@@ -45,7 +45,7 @@ func (c *RestClient) MemberUpdate(id uint64, peerAddrs []string) (*clientv3.Memb
 		return nil, fmt.Errorf("PUT %q: %s", endpoint, err)
 	}
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 	var result clientv3.MemberUpdateResponse
 	return &result, json.Unmarshal(res.Body(), &result)
@@ -58,7 +58,7 @@ func (c *RestClient) MemberRemove(id uint64) (*clientv3.MemberRemoveResponse, er
 		return nil, fmt.Errorf("DELETE %q: %s", endpoint, err)
 	}
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 	var result clientv3.MemberRemoveResponse
 	return &result, json.Unmarshal(res.Body(), &result)

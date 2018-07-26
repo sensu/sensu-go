@@ -16,7 +16,7 @@ func (client *RestClient) AddRoleToUser(username, role string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -30,7 +30,7 @@ func (client *RestClient) CreateUser(user *types.User) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -45,7 +45,7 @@ func (client *RestClient) DisableUser(username string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (client *RestClient) ListUsers() ([]types.User, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return users, unmarshalError(res)
+		return users, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &users)
@@ -77,7 +77,7 @@ func (client *RestClient) ReinstateUser(uname string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -92,7 +92,7 @@ func (client *RestClient) RemoveRoleFromUser(username, role string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func (client *RestClient) UpdatePassword(username, pwd string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil

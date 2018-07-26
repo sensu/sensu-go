@@ -20,7 +20,7 @@ func (client *RestClient) CreateHook(hook *types.HookConfig) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -39,7 +39,7 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -54,7 +54,7 @@ func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -70,7 +70,7 @@ func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, unmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &hook)
@@ -86,7 +86,7 @@ func (client *RestClient) ListHooks(org string) ([]types.HookConfig, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return hooks, unmarshalError(res)
+		return hooks, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &hooks)

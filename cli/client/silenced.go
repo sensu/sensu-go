@@ -22,7 +22,7 @@ func (client *RestClient) CreateSilenced(silenced *types.Silenced) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -35,7 +35,7 @@ func (client *RestClient) DeleteSilenced(id string) error {
 		return err
 	}
 	if res.StatusCode() >= 400 {
-		return unmarshalError(res)
+		return UnmarshalError(res)
 	}
 	return nil
 }
@@ -64,7 +64,7 @@ func (client *RestClient) ListSilenceds(org, sub, check string) ([]types.Silence
 		return nil, err
 	}
 	if resp.StatusCode() >= 400 {
-		return nil, unmarshalError(resp)
+		return nil, UnmarshalError(resp)
 	}
 
 	var result []types.Silenced
@@ -79,7 +79,7 @@ func (client *RestClient) FetchSilenced(id string) (*types.Silenced, error) {
 		return nil, err
 	}
 	if resp.StatusCode() >= 400 {
-		return nil, unmarshalError(resp)
+		return nil, UnmarshalError(resp)
 	}
 	var result types.Silenced
 	return &result, json.Unmarshal(resp.Body(), &result)
@@ -96,7 +96,7 @@ func (client *RestClient) UpdateSilenced(s *types.Silenced) error {
 		return err
 	}
 	if resp.StatusCode() >= 400 {
-		return unmarshalError(resp)
+		return UnmarshalError(resp)
 	}
 	return nil
 }
