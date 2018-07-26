@@ -2,7 +2,7 @@ package routers
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,7 +12,7 @@ import (
 type statusFn func() types.StatusMap
 
 type HealthController interface {
-	Health(ctx context.Context) []*types.ClusterHealth
+	GetClusterHealth(ctx context.Context) []*types.ClusterHealth
 }
 
 // StatusRouter handles requests for /events
@@ -40,20 +40,11 @@ func (r *StatusRouter) info(req *http.Request) (interface{}, error) {
 }
 
 func (r *StatusRouter) health(w http.ResponseWriter, _ *http.Request) {
-	respMap := r.controller.Health(context.Background())
-	fmt.Println(respMap)
-	fmt.Println(r.status().Healthy())
+	clusterHealth := r.controller.GetClusterHealth(context.Background())
 	if !r.status().Healthy() {
 		http.Error(w, "", http.StatusServiceUnavailable)
 		return
 	}
-	/*
-		resp, err := etcdHealth
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println(resp)
-	*/
-	// return a body with cluster health info from etcd.Healthy()
-	// Implicitly returns 200
+
+	_ = json.NewEncoder(w).Encode(clusterHealth)
 }

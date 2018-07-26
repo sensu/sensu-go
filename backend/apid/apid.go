@@ -74,7 +74,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
-	registerUnauthenticatedResources(router, a.backendStatus)
+	registerUnauthenticatedResources(router, a.backendStatus, a.store)
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
@@ -159,6 +159,7 @@ func (a *APId) Name() string {
 func registerUnauthenticatedResources(
 	router *mux.Router,
 	bStatus func() types.StatusMap,
+	store store.Store,
 ) {
 	mountRouters(
 		NewSubrouter(
@@ -166,7 +167,7 @@ func registerUnauthenticatedResources(
 			middlewares.SimpleLogger{},
 			middlewares.LimitRequest{},
 		),
-		routers.NewStatusRouter(bStatus),
+		routers.NewStatusRouter(bStatus, store),
 	)
 }
 

@@ -2,7 +2,6 @@ package routers
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -35,7 +34,7 @@ type mockHealthController struct {
 	mock.Mock
 }
 
-func (m *mockHealthController) Health(ctx context.Context) []*types.ClusterHealth {
+func (m *mockHealthController) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
 	args := m.Called(ctx)
 	return args.Get(0).([]*types.ClusterHealth)
 }
@@ -51,7 +50,7 @@ func newStatusTest(t *testing.T, fn func() types.StatusMap) (*mockHealthControll
 func TestStatusInfo(t *testing.T) {
 	controller, server := newStatusTest(t, passStatus())
 	defer server.Close()
-	controller.On("Health", mock.Anything).Return([]*types.ClusterHealth{})
+	controller.On("GetClusterHealth", mock.Anything).Return([]*types.ClusterHealth{})
 	client := new(http.Client)
 	endpoint := "/info"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
@@ -69,7 +68,7 @@ func TestStatusInfo(t *testing.T) {
 func TestHealthStatusSuccess(t *testing.T) {
 	controller, server := newStatusTest(t, passStatus())
 	defer server.Close()
-	controller.On("Health", mock.Anything).Return([]*types.ClusterHealth{})
+	controller.On("GetClusterHealth", mock.Anything).Return([]*types.ClusterHealth{})
 
 	client := new(http.Client)
 	endpoint := "/health"
@@ -86,9 +85,9 @@ func TestHealthStatusSuccess(t *testing.T) {
 }
 
 func TestHealthStatusFail(t *testing.T) {
-	controller, server := newStatusTest(t, passStatus())
+	controller, server := newStatusTest(t, failStatus())
 	defer server.Close()
-	controller.On("Health", mock.Anything).Return([]*types.ClusterHealth{})
+	controller.On("GetClusterHealth", mock.Anything).Return([]*types.ClusterHealth{})
 
 	client := new(http.Client)
 	endpoint := "/health"
@@ -98,11 +97,35 @@ func TestHealthStatusFail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Printf("bad status: %d (%q)\n", resp.StatusCode, string(body))
-	fmt.Println(resp.StatusCode)
 	if resp.StatusCode <= 400 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		t.Fatalf("expected bad status, got: %d (%q)", resp.StatusCode, string(body))
+	}
+}
+
+func TestHealthyClusterStatus(t *testing.T) {
+	controller, server := newStatusTest(t, passStatus())
+	defer server.Close()
+	clusterHealth := []*types.ClusterHealth{}
+	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend0",
+		Err:      nil,
+		Healthy:  true,
+	})
+	controller.On("GetClusterHealth", mock.Anything).Return(clusterHealth)
+
+	client := new(http.Client)
+	endpoint := "/health"
+	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode >= 400 {
 		body, _ := ioutil.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
+
 }

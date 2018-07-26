@@ -20,7 +20,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/coreos/pkg/capnslog"
 	"google.golang.org/grpc/grpclog"
@@ -270,52 +269,14 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 }
 
 // Healthy returns Etcd status information.
-func (e *Etcd) Healthy() ([]*RespMap, error) {
-	var healthMap []*RespMap
-
+func (e *Etcd) Healthy() bool {
 	client, err := e.NewClient()
 	if err != nil {
-		return healthMap, err
+		return false
 	}
-
-	// Do a get op against every cluster member. Collect the  memberIDs and
-	// op errors into a response map, and return this map as etcd health
-	// information.
-	mList, err := client.MemberList(context.Background())
-	if err != nil {
-		return healthMap, nil
-	}
-
-	for _, member := range mList.Members {
-		respMap := &RespMap{
-			memberID: member.ID,
-			name:     member.Name,
-		}
-
-		cli, cliErr := clientv3.New(clientv3.Config{
-			Endpoints:   member.ClientURLs,
-			DialTimeout: 5 * time.Second,
-		})
-
-		if err != nil {
-			respMap.err = cliErr
-			respMap.healthy = false
-			healthMap = append(healthMap, respMap)
-			continue
-		}
-		_, getErr := cli.Get(context.Background(), "health")
-
-		if getErr == nil || getErr == rpctypes.ErrPermissionDenied {
-			respMap.err = nil
-			respMap.healthy = true
-		} else {
-			respMap.err = getErr
-			respMap.healthy = false
-		}
-
-		healthMap = append(healthMap, respMap)
-	}
-	return healthMap, nil
+	mapi := clientv3.NewMaintenance(client)
+	_, err = mapi.Status(context.TODO(), e.cfg.ListenClientURL)
+	return err == nil
 }
 
 // LoopbackURL returns the lookback URL used by etcd

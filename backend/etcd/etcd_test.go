@@ -45,10 +45,6 @@ func TestNewEtcd(t *testing.T) {
 func TestEtcdHealthy(t *testing.T) {
 	e, cleanup := NewTestEtcd(t)
 	defer cleanup()
-	response, err := e.Healthy()
-	assert.NoError(t, err)
-	responseMap := response[0]
-	assert.Nil(t, responseMap.err)
-	assert.True(t, responseMap.healthy)
-	assert.Equal(t, "default", responseMap.name)
+	health := e.Healthy()
+	assert.True(t, health)
 }
