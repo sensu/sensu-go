@@ -5,6 +5,8 @@ import (
 )
 
 const (
+	// DefaultEdition represents the default Sensu edition
+	DefaultEdition = types.CoreEdition
 	// DefaultEnvironment represents the default environment
 	DefaultEnvironment = "default"
 	// DefaultFormat represents the default format output when displaying objects
@@ -28,8 +30,9 @@ type Config interface {
 // Read contains all methods related to reading configuration
 type Read interface {
 	APIUrl() string
-	Format() string
+	Edition() string
 	Environment() string
+	Format() string
 	Organization() string
 	Tokens() *types.Tokens
 }
@@ -37,8 +40,9 @@ type Read interface {
 // Write contains all methods related to setting and writting configuration
 type Write interface {
 	SaveAPIUrl(string) error
-	SaveFormat(string) error
+	SaveEdition(string) error
 	SaveEnvironment(string) error
+	SaveFormat(string) error
 	SaveOrganization(string) error
 	SaveTokens(*types.Tokens) error
 }

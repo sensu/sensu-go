@@ -1,12 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
+import CheckStatusIcon from "/components/CheckStatusIcon";
+import ErrorHollow from "/icons/ErrorHollow";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
-
-import CheckStatusIcon from "/components/CheckStatusIcon";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
 
 class StatusMenu extends React.Component {
   static propTypes = {
@@ -32,7 +32,10 @@ class StatusMenu extends React.Component {
           key="incident"
           onClick={() => onChange("HasCheck && IsIncident")}
         >
-          <ListItemText primary="Incident" style={{ paddingLeft: 40 }} />
+          <ListItemIcon>
+            <ErrorHollow />
+          </ListItemIcon>
+          <ListItemText primary="Incident" />
         </MenuItem>
         <MenuItem key="warning" onClick={() => onChange([1])}>
           <ListItemIcon>

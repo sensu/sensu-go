@@ -35,6 +35,15 @@ type Entity implements Node {
   "All events associated with the entity."
   events(orderBy: EventsListOrder = SEVERITY): [Event!]!
 
+  "isSilenced return true if the entity has any silences associated with it."
+  isSilenced: Boolean!
+
+  """
+  All silences matching the entity's subscriptions and where the silence
+  matches all checks.
+  """
+  silences: [Silenced!]!
+
   "Extended attributes includes arbitrary user-defined data"
   extendedAttributes: JSON!
 }

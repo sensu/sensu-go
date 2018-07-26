@@ -6,12 +6,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/go-resty/resty"
 	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sirupsen/logrus"
 )
 
 var logger *logrus.Entry
+
+// ErrNotImplemented is returned by client methods that haven't been
+// implemented in Sensu Core.
+var ErrNotImplemented = errors.New("method not implemented")
 
 // RestClient wraps resty.Client
 type RestClient struct {

@@ -32,7 +32,6 @@ class CheckListItem extends React.Component {
       fragment ChecksListItem_check on CheckConfig {
         name
         command
-        source
         subscriptions
         interval
       }

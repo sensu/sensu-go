@@ -6,40 +6,74 @@ import (
 )
 
 var usageTemplate = `Usage:
+
 {{- if not .HasSubCommands}}	{{.UseLine}}{{end}}
 {{- if .HasSubCommands}}	{{ .CommandPath}} COMMAND{{end}}
+
 {{- if .HasAvailableLocalFlags}}
+
 Flags:
 {{ wrappedLocalFlagUsages . | trimRightSpace}}
+
 {{- end}}
+
 {{- if .HasAvailableInheritedFlags}}
+
 Global Flags:
 {{ wrappedInheritedFlagUsages . | trimRightSpace}}
+
 {{- end}}
+
 {{- if hasOperationalSubCommands . }}
+
 Commands:
+
 {{- range operationalSubCommands . }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end}}
 {{- end}}
+
 {{- if hasManagementSubCommands . }}
+
 Management Commands:
+
 {{- range managementSubCommands . }}
   {{rpad .Name .NamePadding }} {{.Short}}
 {{- end}}
 {{- end}}
+
+{{- if hasEnterpriseSubCommands . }}
+
+Enterprise Commands:
+
+{{- range enterpriseSubCommands . }}
+  {{rpad .Name .NamePadding }} {{.Short}}
+{{- end}}
+{{- end}}
+
 {{- if .HasSubCommands }}
+
 Run '{{.CommandPath}} COMMAND --help' for more information on a command.
 {{- end}}
 `
 
 func init() {
+	cobra.AddTemplateFunc("enterpriseSubCommands", enterpriseSubCommands)
+	cobra.AddTemplateFunc("hasEnterpriseSubCommands", hasEnterpriseSubCommands)
 	cobra.AddTemplateFunc("hasOperationalSubCommands", hasOperationalSubCommands)
 	cobra.AddTemplateFunc("hasManagementSubCommands", hasManagementSubCommands)
 	cobra.AddTemplateFunc("operationalSubCommands", operationalSubCommands)
 	cobra.AddTemplateFunc("managementSubCommands", managementSubCommands)
 	cobra.AddTemplateFunc("wrappedInheritedFlagUsages", wrappedInheritedFlagUsages)
 	cobra.AddTemplateFunc("wrappedLocalFlagUsages", wrappedLocalFlagUsages)
+}
+
+func enterpriseSubCommands(cmd *cobra.Command) []*cobra.Command {
+	return []*cobra.Command{}
+}
+
+func hasEnterpriseSubCommands(cmd *cobra.Command) bool {
+	return false
 }
 
 func hasOperationalSubCommands(cmd *cobra.Command) bool {

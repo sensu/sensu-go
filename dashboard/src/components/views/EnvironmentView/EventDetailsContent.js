@@ -8,6 +8,10 @@ import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 import Container from "/components/partials/EventDetailsContainer";
 
+// duration used when polling is enabled; set fairly high until we understand
+// the impact.
+const pollInterval = 1500; // 1.5s
+
 const query = gql`
   query EventDetailsContentQuery(
     $ns: NamespaceInput!
@@ -39,9 +43,18 @@ class EventDetailsContent extends React.PureComponent {
       <Query
         query={query}
         fetchPolicy="cache-and-network"
+        pollInterval={pollInterval}
         variables={{ ...match.params, ns }}
       >
-        {({ client, data: { event } = {}, loading, aborted }) => {
+        {({
+          client,
+          data: { event } = {},
+          loading,
+          aborted,
+          isPolling,
+          startPolling,
+          stopPolling,
+        }) => {
           if (!loading && !aborted && (!event || event.deleted)) {
             return <NotFoundView />;
           }
@@ -51,7 +64,12 @@ class EventDetailsContent extends React.PureComponent {
               <Container
                 client={client}
                 event={event}
-                loading={loading || aborted}
+                loading={(loading && !isPolling) || aborted}
+                poller={{
+                  running: isPolling,
+                  start: startPolling,
+                  stop: stopPolling,
+                }}
               />
             </AppContent>
           );

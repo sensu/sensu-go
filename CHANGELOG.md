@@ -11,6 +11,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added unit test coverage for check routers.
 - Added API support for cluster management.
 - Added sensuctl cluster member-list command.
+- Added Sensu edition detection in sensuctl.
+- Added sensuctl cluster member-add command.
+- Added API client support for enterprise license management.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization in

@@ -23,6 +23,8 @@ import Duration from "/components/Duration";
 import StatusIcon from "/components/CheckStatusIcon";
 import Monospaced from "/components/Monospaced";
 import Maybe from "/components/Maybe";
+import SilencedIcon from "/icons/Silence";
+import Tooltip from "@material-ui/core/Tooltip";
 
 class EventDetailsCheckResult extends React.PureComponent {
   static propTypes = {
@@ -42,6 +44,7 @@ class EventDetailsCheckResult extends React.PureComponent {
         issued
         duration
         output
+        silenced
       }
     `,
     entity: gql`
@@ -63,6 +66,11 @@ class EventDetailsCheckResult extends React.PureComponent {
         <CardContent>
           <Typography variant="headline" paragraph>
             Check Result
+            {check.silenced.length > 0 && (
+              <Tooltip title="Silenced">
+                <SilencedIcon style={{ float: "right" }} />
+              </Tooltip>
+            )}
           </Typography>
           <Grid container spacing={0}>
             <Grid item xs={12} sm={6}>
@@ -75,6 +83,14 @@ class EventDetailsCheckResult extends React.PureComponent {
                     ({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
+                {check.silenced.length > 0 && (
+                  <DictionaryEntry>
+                    <DictionaryKey>Silenced By</DictionaryKey>
+                    <DictionaryValue>
+                      {check.silenced.join(", ")}
+                    </DictionaryValue>
+                  </DictionaryEntry>
+                )}
                 <DictionaryEntry>
                   <DictionaryKey>Last OK</DictionaryKey>
                   <DictionaryValue>

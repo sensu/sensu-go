@@ -1,24 +1,32 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Grid from "@material-ui/core/Grid";
 
-import Loader from "/components/util/Loader";
-
+import CollapsingMenu from "/components/CollapsingMenu";
 import Content from "/components/Content";
-import ButtonSet from "/components/ButtonSet";
+import DeleteIcon from "@material-ui/icons/Delete";
+import Grid from "@material-ui/core/Grid";
+import LiveIcon from "/icons/Live";
+import Loader from "/components/util/Loader";
+import SmallCheckIcon from "/icons/SmallCheck";
+import QueueIcon from "@material-ui/icons/Queue";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
+
 import CheckResult from "./EventDetailsCheckResult";
-import Summary from "./EventDetailsSummary";
 import DeleteAction from "./EventDetailsDeleteAction";
 import ResolveAction from "./EventDetailsResolveAction";
 import ReRunAction from "./EventDetailsReRunAction";
+import Summary from "./EventDetailsSummary";
 
 class EventDetailsContainer extends React.PureComponent {
   static propTypes = {
-    client: PropTypes.object.isRequired,
     event: PropTypes.object,
     loading: PropTypes.bool.isRequired,
+    poller: PropTypes.shape({
+      running: PropTypes.bool,
+      start: PropTypes.func,
+      stop: PropTypes.func,
+    }).isRequired,
   };
 
   static defaultProps = {
@@ -57,43 +65,52 @@ class EventDetailsContainer extends React.PureComponent {
     `,
   };
 
-  state = {
-    pendingRequests: 0,
-  };
-
-  handleRequestStart = () => {
-    this.setState(({ pendingRequests }) => ({
-      pendingRequests: pendingRequests + 1,
-    }));
-  };
-
-  handleRequestEnd = () => {
-    this.setState(({ pendingRequests }) => ({
-      pendingRequests: pendingRequests - 1,
-    }));
-  };
-
   render() {
-    const { client, event, loading } = this.props;
-    const { pendingRequests } = this.state;
-    const hasPendingRequests = pendingRequests > 0;
+    const { event, loading, poller } = this.props;
 
     return (
-      <Loader loading={loading || hasPendingRequests} passthrough>
+      <Loader loading={loading} passthrough>
         {event && (
           <React.Fragment>
             <Content bottomMargin>
               <div style={{ flexGrow: 1 }} />
-              <ButtonSet>
-                <ResolveAction client={client} event={event} />
-                <ReRunAction client={client} event={event} />
-                <DeleteAction
-                  client={client}
-                  event={event}
-                  onRequestStart={this.handleRequestStart}
-                  onRequestEnd={this.handleRequestEnd}
+              <CollapsingMenu>
+                <ResolveAction event={event}>
+                  {({ resolve }) => (
+                    <CollapsingMenu.Button
+                      title="Resolve"
+                      icon={<SmallCheckIcon />}
+                      onClick={() => resolve()}
+                    />
+                  )}
+                </ResolveAction>
+                <ReRunAction event={event}>
+                  {exec => (
+                    <CollapsingMenu.Button
+                      title="Re-run"
+                      icon={<QueueIcon />}
+                      onClick={() => exec()}
+                    />
+                  )}
+                </ReRunAction>
+                <DeleteAction event={event}>
+                  {del => (
+                    <CollapsingMenu.Button
+                      title="Delete"
+                      icon={<DeleteIcon />}
+                      onClick={() => del()}
+                    />
+                  )}
+                </DeleteAction>
+                <CollapsingMenu.Button
+                  pinned
+                  title="LIVE"
+                  icon={<LiveIcon active={poller.running} />}
+                  onClick={() =>
+                    poller.running ? poller.stop() : poller.start()
+                  }
                 />
-              </ButtonSet>
+              </CollapsingMenu>
             </Content>
             <Content>
               <Grid container spacing={16}>

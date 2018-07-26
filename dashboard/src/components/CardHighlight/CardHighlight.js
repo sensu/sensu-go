@@ -11,10 +11,10 @@ const styles = theme => ({
     margin: "0 0 -2px 0",
   },
   primary: {
-    backgroundColor: theme.palette.primary,
+    backgroundColor: theme.palette.primary.main,
   },
   secondary: {
-    backgroundColor: theme.palette.secondary,
+    backgroundColor: theme.palette.secondary.main,
   },
   success: {
     backgroundColor: theme.palette.success,

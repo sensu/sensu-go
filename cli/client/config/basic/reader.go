@@ -10,6 +10,14 @@ func (c *Config) APIUrl() string {
 	return c.Cluster.APIUrl
 }
 
+// Edition returns the active cluster edition. Defaults to core
+func (c *Config) Edition() string {
+	if c.Cluster.Edition == "" {
+		return config.DefaultEdition
+	}
+	return c.Cluster.Edition
+}
+
 // Environment returns the user's active environment
 func (c *Config) Environment() string {
 	if c.Profile.Environment == "" {

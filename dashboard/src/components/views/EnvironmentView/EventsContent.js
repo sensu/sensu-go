@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import RefreshIcon from "@material-ui/icons/Refresh";
+import LiveIcon from "/icons/Live";
 
 import Query from "/components/util/Query";
 
@@ -19,6 +19,10 @@ import Content from "/components/Content";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck && IsIncident";
+
+// duration used when polling is enabled; set fairly high until we understand
+// the impact.
+const pollInterval = 2500; // 2.5s
 
 class EventsContent extends React.Component {
   static propTypes = {
@@ -60,7 +64,14 @@ class EventsContent extends React.Component {
         fetchPolicy="cache-and-network"
         variables={{ ...match.params, filter, order, limit, offset }}
       >
-        {({ data: { environment } = {}, loading, aborted, refetch }) => {
+        {({
+          data: { environment } = {},
+          loading,
+          aborted,
+          isPolling,
+          startPolling,
+          stopPolling,
+        }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
           }
@@ -78,9 +89,11 @@ class EventsContent extends React.Component {
                   }
                   renderMenuItems={
                     <CollapsingMenu.Button
-                      title="Reload"
-                      icon={<RefreshIcon />}
-                      onClick={() => refetch()}
+                      title="LIVE"
+                      icon={<LiveIcon active={isPolling} />}
+                      onClick={() =>
+                        isPolling ? stopPolling() : startPolling(pollInterval)
+                      }
                     />
                   }
                 />
@@ -90,7 +103,7 @@ class EventsContent extends React.Component {
                 offset={offset}
                 onChangeQuery={setQueryParams}
                 environment={environment}
-                loading={loading || aborted}
+                loading={(loading && !isPolling) || aborted}
               />
             </AppContent>
           );
