@@ -6,8 +6,8 @@ Promise.config({
     wForgottenReturn: false,
   },
   // Capturing long stack traces appears to have negative performance impacts
-  // when we see recursion. In particular this made cache updates 10X slower (in
-  // practice seeing an extra ~350ms on large pages).
+  // when using recursion. Specifically this was leading to cache reads / writes
+  // taking upwards of 10X longer.
   longStackTraces: false,
 });
 
