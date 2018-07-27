@@ -19,11 +19,12 @@ import ListHeader from "/components/partials/ListHeader";
 
 class EventsListHeader extends React.PureComponent {
   static propTypes = {
+    onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
-    selectedCount: PropTypes.number.isRequired,
+    selectedItems: PropTypes.array.isRequired,
     rowCount: PropTypes.number.isRequired,
     environment: PropTypes.shape({
       checks: PropTypes.object,
@@ -37,6 +38,13 @@ class EventsListHeader extends React.PureComponent {
   };
 
   static fragments = {
+    event: gql`
+      fragment EventsListHeader_event on Event {
+        check {
+          isSilenced
+        }
+      }
+    `,
     environment: gql`
       fragment EventsListHeader_environment on Environment {
         checks(limit: 1000) {
@@ -91,12 +99,13 @@ class EventsListHeader extends React.PureComponent {
 
   render() {
     const {
-      selectedCount,
+      selectedItems,
       rowCount,
+      onClickClearSilences,
+      onClickDelete,
       onClickSelect,
       onClickSilence,
       onClickResolve,
-      onClickDelete,
       environment,
     } = this.props;
 
@@ -108,6 +117,9 @@ class EventsListHeader extends React.PureComponent {
       ...(environment ? environment.checks.nodes.map(node => node.name) : []),
       "keepalive",
     ];
+
+    const selectedCount = selectedItems.length;
+    const selectedSilenced = selectedItems.filter(ev => ev.check.isSilenced);
 
     return (
       <ListHeader
@@ -132,6 +144,11 @@ class EventsListHeader extends React.PureComponent {
             <Button onClick={onClickSilence}>
               <Typography variant="button">Silence</Typography>
             </Button>
+            {selectedSilenced.length > 0 && (
+              <Button onClick={onClickClearSilences}>
+                <Typography variant="button">Unsilence</Typography>
+              </Button>
+            )}
             <Button onClick={onClickResolve}>
               <Typography variant="button">Resolve</Typography>
             </Button>

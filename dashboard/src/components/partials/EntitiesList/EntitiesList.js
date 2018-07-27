@@ -71,8 +71,8 @@ class EntitiesList extends React.PureComponent {
       }
 
       ${ClearSilencesDialog.fragments.silence}
-      ${EntitiesListItem.fragments.entity}
       ${EntitiesListHeader.fragments.environment}
+      ${EntitiesListItem.fragments.entity}
       ${Pagination.fragments.pageInfo}
     `,
   };

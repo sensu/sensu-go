@@ -212,9 +212,7 @@ func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 // IsSilenced implements response to request for 'isSilenced' field.
 func (r *checkImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	check := p.Source.(*types.Check)
-	ctx := types.SetContextFromResource(p.Context, check)
-	sls, err := fetchCheckSilences(ctx, r.silenceQuerier, check)
-	return len(sls) > 0, err
+	return len(check.Silenced) > 0, nil
 }
 
 // Silences implements response to request for 'silences' field.

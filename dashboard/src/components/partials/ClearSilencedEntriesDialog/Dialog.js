@@ -117,7 +117,8 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
   renderEmpty = () => (
     <DialogContent>
       <DialogContentParagraph>
-        No silences found for given item.
+        {`There doesn't seem to be anything here. This may can occur when
+        the silence(s) have already been cleared or have expired.`}
       </DialogContentParagraph>
     </DialogContent>
   );

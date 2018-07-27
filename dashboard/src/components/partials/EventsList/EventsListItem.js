@@ -28,6 +28,7 @@ class EventListItem extends React.Component {
   static propTypes = {
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
+    onClickClearSilences: PropTypes.func.isRequired,
     onClickSilenceEntity: PropTypes.func.isRequired,
     onClickSilenceCheck: PropTypes.func.isRequired,
     client: PropTypes.object.isRequired,
@@ -54,6 +55,7 @@ class EventListItem extends React.Component {
           status
           name
           output
+          isSilenced
         }
         entity {
           name
@@ -94,17 +96,26 @@ class EventListItem extends React.Component {
         >
           Silence Check
         </MenuItem>
-        {event.check &&
-          event.check.status !== 0 && (
-            <MenuItem
-              onClick={() => {
-                this.resolve();
-                close();
-              }}
-            >
-              Resolve
-            </MenuItem>
-          )}
+        {event.check.isSilenced && (
+          <MenuItem
+            onClick={() => {
+              this.props.onClickClearSilences();
+              close();
+            }}
+          >
+            Unsilence
+          </MenuItem>
+        )}
+        {event.check.status !== 0 && (
+          <MenuItem
+            onClick={() => {
+              this.resolve();
+              close();
+            }}
+          >
+            Resolve
+          </MenuItem>
+        )}
       </Menu>
     );
   };

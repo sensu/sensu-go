@@ -22,7 +22,7 @@ const defaultExpression = "HasCheck";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
-const pollInterval = 2500; // 2.5s
+const pollInterval = 5000; // 5s
 
 class EventsContent extends React.Component {
   static propTypes = {
@@ -55,7 +55,7 @@ class EventsContent extends React.Component {
 
   render() {
     const { queryParams, setQueryParams, match } = this.props;
-    const { filter, order, limit = "25", offset = "0" } = queryParams;
+    const { filter, order, limit = "50", offset = "0" } = queryParams;
 
     return (
       <Query
@@ -70,6 +70,7 @@ class EventsContent extends React.Component {
           isPolling,
           startPolling,
           stopPolling,
+          refetch,
         }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
@@ -103,6 +104,7 @@ class EventsContent extends React.Component {
                 onChangeQuery={setQueryParams}
                 environment={environment}
                 loading={(loading && !isPolling) || aborted}
+                refetch={refetch}
               />
             </AppContent>
           );
