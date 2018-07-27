@@ -16,7 +16,7 @@ const styles = theme => ({
 
 // Provides to spec spacing between buttons in a set.
 // https://material.io/guidelines/components/buttons.html#buttons-style
-class ButtonSet extends React.Component {
+class ButtonSet extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,

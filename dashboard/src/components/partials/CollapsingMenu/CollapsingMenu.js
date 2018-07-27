@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 
 import withWidth, { isWidthUp } from "@material-ui/core/withWidth";
 import ButtonSet from "/components/ButtonSet";
-import Hidden from "@material-ui/core/Hidden";
 import Menu from "@material-ui/core/Menu";
 import VerticalDisclosureButton from "/components/VerticalDisclosureButton";
 
