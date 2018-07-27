@@ -157,6 +157,7 @@ class EventsContainer extends React.Component {
       silence: {
         check: "*",
         subscription: `entity:${entity.name}`,
+        props: {},
       },
     });
   };
@@ -166,6 +167,7 @@ class EventsContainer extends React.Component {
       silence: {
         check: check.name,
         subscription: "*",
+        props: {},
       },
     });
   };
