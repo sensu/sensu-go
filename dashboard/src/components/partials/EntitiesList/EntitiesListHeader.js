@@ -94,7 +94,7 @@ class EntitiesListHeader extends React.PureComponent {
             )}
             {selectedSilenced.length === 0 && (
               <Button onClick={onClickClearSilences}>
-                <Typography variant="button">Clear Silences</Typography>
+                <Typography variant="button">Unsilence</Typography>
               </Button>
             )}
             <ConfirmDelete

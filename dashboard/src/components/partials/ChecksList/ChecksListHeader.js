@@ -54,7 +54,7 @@ class ChecksListHeader extends React.PureComponent {
             )}
             {selectedSilenced.length === 0 && (
               <Button onClick={onClickClearSilences}>
-                <Typography variant="button">Clear Silences</Typography>
+                <Typography variant="button">Unsilence</Typography>
               </Button>
             )}
             <Button onClick={onClickExecute}>

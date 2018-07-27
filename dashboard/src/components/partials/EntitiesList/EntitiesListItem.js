@@ -73,7 +73,7 @@ class EntitiesListItem extends React.PureComponent {
               close(ev);
             }}
           >
-            Clear Silences
+            Unsilence
           </MenuItem>
         ) : (
           <MenuItem

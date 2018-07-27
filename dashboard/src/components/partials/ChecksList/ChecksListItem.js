@@ -122,7 +122,7 @@ class CheckListItem extends React.Component {
                       close();
                     }}
                   >
-                    Clear Silences
+                    Unsilence
                   </MenuItem>
                 )}
                 <ConfirmDelete
