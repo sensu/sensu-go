@@ -66,6 +66,10 @@ class EventListItem extends React.PureComponent {
     `,
   };
 
+  handleClickCheckbox = () => {
+    this.props.onChangeSelected(!this.props.selected);
+  };
+
   renderMenu = ({ close, anchorEl }) => {
     const { event } = this.props;
 
@@ -114,7 +118,7 @@ class EventListItem extends React.PureComponent {
   };
 
   render() {
-    const { selected, event, onChangeSelected } = this.props;
+    const { selected, event } = this.props;
     const { entity, check, timestamp } = event;
 
     return (
@@ -123,7 +127,7 @@ class EventListItem extends React.PureComponent {
           <Checkbox
             color="primary"
             checked={selected}
-            onChange={e => onChangeSelected(e.target.checked)}
+            onChange={this.handleClickCheckbox}
           />
         </TableCell>
         <TableOverflowCell>
@@ -141,7 +145,9 @@ class EventListItem extends React.PureComponent {
                 namespace={event.namespace}
                 to={`/events/${entity.name}/${check.name}`}
               >
-                {entity.name} › {check.name}
+                <strong>
+                  {entity.name} › {check.name}
+                </strong>
               </NamespaceLink>
             }
             details={
