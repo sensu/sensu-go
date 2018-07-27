@@ -21,6 +21,7 @@ enterprise edition.
 - Use etcd monitor instead of in-memory monitor.
 - Refactoring of the cmd package for sensuctl to allow easier customization in
 the enterprise edition.
+- Upgrade dep to v0.5.0
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
