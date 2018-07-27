@@ -41,3 +41,10 @@ func TestNewEtcd(t *testing.T) {
 
 	require.NoError(t, e.Shutdown())
 }
+
+func TestEtcdHealthy(t *testing.T) {
+	e, cleanup := NewTestEtcd(t)
+	defer cleanup()
+	health := e.Healthy()
+	assert.True(t, health)
+}

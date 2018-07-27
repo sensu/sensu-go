@@ -89,6 +89,9 @@ type Store interface {
 	// HandlerStore provides an interface for managing events handlers
 	HandlerStore
 
+	// HealthStore provides an interface for getting cluster health information
+	HealthStore
+
 	// HookConfigStore provides an interface for managing hooks configuration
 	HookConfigStore
 
@@ -346,6 +349,11 @@ type HandlerStore interface {
 
 	// UpdateHandler creates or updates a given handler.
 	UpdateHandler(ctx context.Context, handler *types.Handler) error
+}
+
+// HealthStore provides methods for cluster health
+type HealthStore interface {
+	GetClusterHealth(ctx context.Context) []*types.ClusterHealth
 }
 
 // KeepaliveStore provides methods for managing entities keepalives

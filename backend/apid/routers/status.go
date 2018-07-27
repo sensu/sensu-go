@@ -1,6 +1,8 @@
 package routers
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -9,14 +11,22 @@ import (
 
 type statusFn func() types.StatusMap
 
+type HealthController interface {
+	GetClusterHealth(ctx context.Context) []*types.ClusterHealth
+}
+
 // StatusRouter handles requests for /events
 type StatusRouter struct {
-	status statusFn
+	status     statusFn
+	controller HealthController
 }
 
 // NewStatusRouter instantiates new events controller
-func NewStatusRouter(status statusFn) *StatusRouter {
-	return &StatusRouter{status: status}
+func NewStatusRouter(status statusFn, ctrl HealthController) *StatusRouter {
+	return &StatusRouter{
+		status:     status,
+		controller: ctrl,
+	}
 }
 
 // Mount the StatusRouter to a parent Router
@@ -30,9 +40,11 @@ func (r *StatusRouter) info(req *http.Request) (interface{}, error) {
 }
 
 func (r *StatusRouter) health(w http.ResponseWriter, _ *http.Request) {
+	clusterHealth := r.controller.GetClusterHealth(context.Background())
 	if !r.status().Healthy() {
 		http.Error(w, "", http.StatusServiceUnavailable)
 		return
 	}
-	// Implicitly returns 200
+
+	_ = json.NewEncoder(w).Encode(clusterHealth)
 }
