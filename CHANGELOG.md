@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added Sensu edition detection in sensuctl.
 - Added sensuctl cluster member-add command.
 - Added API client support for enterprise license management.
+- Added a header to API calls that returns the current Sensu Edition.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization in

@@ -17,6 +17,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/version"
 )
 
 // APId is the backend HTTP API.
@@ -166,6 +167,7 @@ func registerUnauthenticatedResources(
 			router.NewRoute(),
 			middlewares.SimpleLogger{},
 			middlewares.LimitRequest{},
+			middlewares.Edition{Name: version.Edition},
 		),
 		routers.NewStatusRouter(bStatus, store),
 	)
@@ -178,6 +180,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 			middlewares.SimpleLogger{},
 			middlewares.RefreshToken{},
 			middlewares.LimitRequest{},
+			middlewares.Edition{Name: version.Edition},
 		),
 		routers.NewAuthenticationRouter(store),
 	)
@@ -193,6 +196,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 			middlewares.AllowList{Store: store},
 			middlewares.Authorization{Store: store},
 			middlewares.LimitRequest{},
+			middlewares.Edition{Name: version.Edition},
 		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(actions.NewCheckController(store, getter)),

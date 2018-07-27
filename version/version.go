@@ -25,11 +25,14 @@ var (
 	// BuildSHA stores the git sha of the build
 	// (e.g. 8673bed0a9705083987b9ecbbc1cc0758df13dd2)
 	BuildSHA string
+
+	// Edition stores the Sensu Edition of the current build (ex. core)
+	Edition string
 )
 
 var (
 	ErrNoBuildIteration = errors.New("Build iteration could not be found. If running locally you must set SENSU_BUILD_ITERATION.")
-	TagParseError       = errors.New("A build iteration could not be parsed from the tag")
+	ErrTagParse         = errors.New("A build iteration could not be parsed from the tag")
 )
 
 var (
@@ -114,7 +117,7 @@ func Iteration(tag string, bt BuildType) (string, error) {
 	bi := buildNumberRE.FindString(tag)
 	var err error
 	if bi == "" {
-		err = TagParseError
+		err = ErrTagParse
 	}
 	return bi, err
 }

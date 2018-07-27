@@ -83,11 +83,13 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
     $version = &"go" "run" "./version/cmd/version/version.go" "-v" | Out-String
     $build_date = Get-Date -format "yyyy'-'MM'-'dd'T'T'-'Z"
     $build_sha = (git rev-parse HEAD) | Out-String
+    $edition = "core"
 
     $version_pkg = "github.com/sensu/sensu-go/version"
     $ldflags = "-X $version_pkg.Version=$version"
     $ldflags = $ldflags + " -X $version_pkg.BuildDate=$build_date"
     $ldflags = $ldflags + " -X $version_pkg.BuildSHA=$build_sha"
+    $ldflags = $ldflags + " -X $version_pkg.Edition=$edition"
 
     If ($build_type -ne "nightly" -And $build_type -ne "stable") {
         $prerelease = &"go" "run" "./version/cmd/version/version.go" "-p" | Out-String
