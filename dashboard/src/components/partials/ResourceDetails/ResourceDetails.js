@@ -29,6 +29,7 @@ const styles = theme => ({
   },
   icon: {
     marginRight: 24,
+    flex: "none",
   },
 });
 

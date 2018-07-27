@@ -70,9 +70,9 @@ class EntitiesList extends React.PureComponent {
         ...EntitiesListHeader_environment
       }
 
+      ${ClearSilencesDialog.fragments.silence}
       ${EntitiesListItem.fragments.entity}
       ${EntitiesListHeader.fragments.environment}
-      ${ClearSilencesDialog.fragments.silence}
       ${Pagination.fragments.pageInfo}
     `,
   };

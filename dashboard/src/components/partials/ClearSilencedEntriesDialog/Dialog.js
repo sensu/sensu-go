@@ -61,6 +61,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
         ...SilenceExpiration_silence
 
         id
+        deleted @client
         storeId
         creator {
           username
@@ -122,13 +123,20 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
   );
 
   render() {
-    const { open, close, fullScreen, silences } = this.props;
+    const { open, close, fullScreen, silences: silencesProp } = this.props;
     const { submitting } = this.state;
+
+    // omit duplicates
+    const silences = Object.values(
+      (silencesProp || [])
+        .filter(sl => !sl.deleted)
+        .reduce((memo, sl) => Object.assign({ [sl.storeId]: sl }, memo), {}),
+    );
 
     return (
       <Dialog fullScreen={fullScreen} open={open} onClose={close}>
         <ListController
-          items={silences || []}
+          items={silences}
           getItemKey={node => node.storeId}
           renderEmptyState={this.renderEmpty}
           renderItem={this.renderListItem}

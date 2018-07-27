@@ -66,18 +66,6 @@ class EntitiesListItem extends React.PureComponent {
 
     return (
       <Menu open onClose={close} anchorEl={anchorEl}>
-        <ConfirmDelete key="delete" onSubmit={onClickDelete}>
-          {confirm => (
-            <MenuItem
-              onClick={() => {
-                confirm.open();
-                close();
-              }}
-            >
-              Delete
-            </MenuItem>
-          )}
-        </ConfirmDelete>
         {entity.isSilenced ? (
           <MenuItem
             onClick={ev => {
@@ -97,6 +85,18 @@ class EntitiesListItem extends React.PureComponent {
             Silence
           </MenuItem>
         )}
+        <ConfirmDelete key="delete" onSubmit={onClickDelete}>
+          {confirm => (
+            <MenuItem
+              onClick={() => {
+                confirm.open();
+                close();
+              }}
+            >
+              Delete
+            </MenuItem>
+          )}
+        </ConfirmDelete>
       </Menu>
     );
   };

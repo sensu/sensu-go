@@ -15,7 +15,7 @@ import ListSubheader from "@material-ui/core/ListSubheader";
 import MenuItem from "@material-ui/core/MenuItem";
 import Menu from "@material-ui/core/Menu";
 import Switch from "@material-ui/core/Switch";
-import BulbIcon from "@material-ui/icons/LightbulbOutline";
+import BulbIcon from "@material-ui/icons/SettingsBrightness";
 import EyeIcon from "@material-ui/icons/RemoveRedEye";
 
 const styles = theme => ({

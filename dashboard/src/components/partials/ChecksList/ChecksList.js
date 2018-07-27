@@ -1,34 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import { withApollo } from "react-apollo";
 
-import Button from "@material-ui/core/Button";
-import DropdownArrow from "@material-ui/icons/ArrowDropDown";
+import deleteCheck from "/mutations/deleteCheck";
+import executeCheck from "/mutations/executeCheck";
+import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
+import ListController from "/components/controller/ListController";
+import Loader from "/components/util/Loader";
 import Paper from "@material-ui/core/Paper";
-import RootRef from "@material-ui/core/RootRef";
+import Pagination from "/components/partials/Pagination";
+import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
-import Typography from "@material-ui/core/Typography";
-
 import { TableListEmptyState } from "/components/TableList";
-import ButtonSet from "/components/ButtonSet";
 
-import Loader from "/components/util/Loader";
-
-import MenuController from "/components/controller/MenuController";
-import ListController from "/components/controller/ListController";
-
-import Pagination from "/components/partials/Pagination";
-import ListHeader from "/components/partials/ListHeader";
-import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
-import ListSortMenu from "/components/partials/ListSortMenu";
-import IconButton from "/components/partials/IconButton";
-
-import executeCheck from "/mutations/executeCheck";
-import { withApollo } from "react-apollo";
-
+import ChecksListHeader from "./ChecksListHeader";
 import ChecksListItem from "./ChecksListItem";
 
 class ChecksList extends React.Component {
@@ -43,6 +32,7 @@ class ChecksList extends React.Component {
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    refetch: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -63,10 +53,15 @@ class ChecksList extends React.Component {
         ) @connection(key: "checks", filter: ["filter", "orderBy"]) {
           nodes {
             id
+            deleted @client
             name
             namespace {
               environment
               organization
+            }
+            silences {
+              storeId
+              ...ClearSilencedEntriesDialog_silence
             }
 
             ...ChecksListItem_check
@@ -78,23 +73,27 @@ class ChecksList extends React.Component {
         }
       }
 
-      ${Pagination.fragments.pageInfo}
       ${ChecksListItem.fragments.check}
+      ${ClearSilencesDialog.fragments.silence}
+      ${Pagination.fragments.pageInfo}
     `,
   };
 
   state = {
     silence: null,
+    unsilence: null,
   };
 
   silenceChecks = checks => {
-    const targets = checks.map(check => ({
-      ns: {
-        environment: check.namespace.environment,
-        organization: check.namespace.organization,
-      },
-      check: check.name,
-    }));
+    const targets = checks
+      .filter(check => check.silences.length === 0)
+      .map(check => ({
+        ns: {
+          environment: check.namespace.environment,
+          organization: check.namespace.organization,
+        },
+        check: check.name,
+      }));
 
     if (targets.length === 1) {
       this.setState({
@@ -110,16 +109,18 @@ class ChecksList extends React.Component {
     }
   };
 
-  silenceCheck = check => {
-    this.silenceChecks([check]);
+  clearSilences = checks => {
+    this.setState({
+      unsilence: checks.reduce((memo, ch) => [...memo, ...ch.silences], []),
+    });
   };
 
   executeChecks = checks => {
     checks.forEach(({ id }) => executeCheck(this.props.client, { id }));
   };
 
-  executeCheck = check => {
-    this.executeChecks([check]);
+  deleteChecks = checks => {
+    checks.forEach(({ id }) => deleteCheck(this.props.client, { id }));
   };
 
   _handleChangeSort = val => {
@@ -159,14 +160,27 @@ class ChecksList extends React.Component {
       check={check}
       selected={selected}
       onChangeSelected={setSelected}
-      onClickSilence={() => this.silenceCheck(check)}
-      onClickExecute={() => this.executeCheck(check)}
+      onClickClearSilences={() => this.clearSilences([check])}
+      onClickDelete={() => this.deleteChecks([check])}
+      onClickExecute={() => this.executeChecks([check])}
+      onClickSilence={() => this.silenceChecks([check])}
     />
   );
 
   render() {
-    const { environment, loading, limit, offset, onChangeQuery } = this.props;
-    const items = environment ? environment.checks.nodes : [];
+    const { silence, unsilence } = this.state;
+    const {
+      environment,
+      loading,
+      limit,
+      offset,
+      onChangeQuery,
+      refetch,
+    } = this.props;
+
+    const items = environment
+      ? environment.checks.nodes.filter(ch => !ch.deleted)
+      : [];
 
     return (
       <ListController
@@ -175,46 +189,23 @@ class ChecksList extends React.Component {
         renderEmptyState={this.renderEmptyState}
         renderItem={this.renderCheck}
       >
-        {({ children, selectedItems, toggleSelectedItems }) => (
+        {({
+          children,
+          selectedItems,
+          setSelectedItems,
+          toggleSelectedItems,
+        }) => (
           <Paper>
             <Loader loading={loading}>
-              <ListHeader
-                sticky
-                selectedCount={selectedItems.length}
-                rowCount={children.length || 0}
-                onClickSelect={toggleSelectedItems}
-                renderBulkActions={() => (
-                  <ButtonSet>
-                    <Button onClick={() => this.silenceChecks(selectedItems)}>
-                      <Typography variant="button">Silence</Typography>
-                    </Button>
-                    <Button onClick={() => this.executeChecks(selectedItems)}>
-                      <Typography variant="button">Execute</Typography>
-                    </Button>
-                  </ButtonSet>
-                )}
-                renderActions={() => (
-                  <ButtonSet>
-                    <MenuController
-                      renderMenu={({ anchorEl, close }) => (
-                        <ListSortMenu
-                          anchorEl={anchorEl}
-                          onClose={close}
-                          options={["NAME"]}
-                          onChangeQuery={onChangeQuery}
-                        />
-                      )}
-                    >
-                      {({ open, ref }) => (
-                        <RootRef rootRef={ref}>
-                          <IconButton onClick={open} icon={<DropdownArrow />}>
-                            Sort
-                          </IconButton>
-                        </RootRef>
-                      )}
-                    </MenuController>
-                  </ButtonSet>
-                )}
+              <ChecksListHeader
+                onChangeQuery={onChangeQuery}
+                onClickClearSilences={() => this.clearSilences(selectedItems)}
+                onClickDelete={() => this.deleteChecks(selectedItems)}
+                onClickExecute={() => this.executeChecks(selectedItems)}
+                onClickSilence={() => this.silenceChecks(selectedItems)}
+                rowCount={items.length}
+                selectedItems={selectedItems}
+                toggleSelectedItems={toggleSelectedItems}
               />
 
               <Table>
@@ -228,12 +219,26 @@ class ChecksList extends React.Component {
                 onChangeQuery={onChangeQuery}
               />
 
-              {this.state.silence && (
+              {silence && (
                 <SilenceEntryDialog
-                  values={this.state.silence}
-                  onClose={() => this.setState({ silence: null })}
+                  values={silence}
+                  onClose={() => {
+                    this.setState({ silence: null });
+                    setSelectedItems([]);
+                    refetch();
+                  }}
                 />
               )}
+
+              <ClearSilencesDialog
+                silences={unsilence}
+                open={!!unsilence}
+                close={() => {
+                  this.setState({ unsilence: null });
+                  setSelectedItems([]);
+                  refetch();
+                }}
+              />
             </Loader>
           </Paper>
         )}

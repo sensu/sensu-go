@@ -61,12 +61,13 @@ class ChecksContent extends React.Component {
         variables={{ ...match.params, limit, offset, order, filter }}
       >
         {({
+          aborted,
           data: { environment } = {},
           loading,
-          aborted,
           isPolling,
           startPolling,
           stopPolling,
+          refetch,
         }) => {
           if (!environment && !loading && !aborted) {
             return <NotFoundView />;
@@ -101,6 +102,7 @@ class ChecksContent extends React.Component {
                 onChangeQuery={setQueryParams}
                 environment={environment}
                 loading={(loading && !isPolling) || aborted}
+                refetch={refetch}
               />
             </AppContent>
           );
