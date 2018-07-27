@@ -155,7 +155,7 @@ class EventsContainer extends React.Component {
   silenceEntity = entity => {
     this.setState({
       silence: {
-        check: "",
+        check: "*",
         subscription: `entity:${entity.name}`,
       },
     });
@@ -165,7 +165,7 @@ class EventsContainer extends React.Component {
     this.setState({
       silence: {
         check: check.name,
-        subscription: "",
+        subscription: "*",
       },
     });
   };
