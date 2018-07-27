@@ -14,6 +14,7 @@ import WarnIcon from "/icons/Warn";
 import WarnIconSm from "/icons/WarnHollow";
 import UnknownIcon from "/icons/Unknown";
 import SilenceIcon from "/icons/Silence";
+import Tooltip from "@material-ui/core/Tooltip";
 
 const styles = theme => ({
   inline: {
@@ -98,32 +99,39 @@ class Icon extends React.PureComponent {
       [classes.silenced]: silenced && !small,
     });
 
+    const title = silenced ? "silenced" : status;
     const icon = <Component className={className} {...props} />;
     if (silenced) {
       if (small) {
-        return <SilenceIcon className={className} />;
+        return (
+          <Tooltip title={title}>
+            <SilenceIcon className={className} />
+          </Tooltip>
+        );
       }
       return (
-        <SvgIcon viewBox="0 0 24 24">
-          <SilenceIcon
-            x={12}
-            y={12}
-            width={12}
-            height={12}
-            className={classes.silencedIcon}
-          />
-          {React.cloneElement(icon, {
-            x: 0,
-            y: 0,
-            width: 24,
-            height: 24,
-            withGap: true,
-          })}
-        </SvgIcon>
+        <Tooltip title={title}>
+          <SvgIcon viewBox="0 0 24 24">
+            <SilenceIcon
+              x={12}
+              y={12}
+              width={12}
+              height={12}
+              className={classes.silencedIcon}
+            />
+            {React.cloneElement(icon, {
+              x: 0,
+              y: 0,
+              width: 24,
+              height: 24,
+              withGap: true,
+            })}
+          </SvgIcon>
+        </Tooltip>
       );
     }
 
-    return icon;
+    return <Tooltip title={title}>{icon}</Tooltip>;
   }
 }
 
