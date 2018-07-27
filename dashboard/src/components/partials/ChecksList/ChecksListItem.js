@@ -3,26 +3,27 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import Checkbox from "@material-ui/core/Checkbox";
+import Code from "/components/Code";
+import ConfirmDelete from "/components/partials/ConfirmDelete";
 import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
+import MenuController from "/components/controller/MenuController";
 import MenuItem from "@material-ui/core/MenuItem";
 import MoreVert from "@material-ui/icons/MoreVert";
-import RootRef from "@material-ui/core/RootRef";
-import TableCell from "@material-ui/core/TableCell";
-
-import MenuController from "/components/controller/MenuController";
-
 import ResourceDetails from "/components/partials/ResourceDetails";
+import RootRef from "@material-ui/core/RootRef";
+import SilenceIcon from "/icons/Silence";
+import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
-
-import Code from "/components/Code";
 
 class CheckListItem extends React.Component {
   static propTypes = {
     check: PropTypes.object.isRequired,
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
+    onClickClearSilences: PropTypes.func.isRequired,
+    onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
   };
@@ -34,6 +35,7 @@ class CheckListItem extends React.Component {
         command
         subscriptions
         interval
+        isSilenced
       }
     `,
   };
@@ -43,8 +45,10 @@ class CheckListItem extends React.Component {
       check,
       selected,
       onChangeSelected,
-      onClickSilence,
+      onClickClearSilences,
+      onClickDelete,
       onClickExecute,
+      onClickSilence,
     } = this.props;
 
     return (
@@ -58,7 +62,17 @@ class CheckListItem extends React.Component {
         </TableCell>
         <TableOverflowCell>
           <ResourceDetails
-            title={<strong>{check.name}</strong>}
+            title={
+              <React.Fragment>
+                <strong>{check.name} </strong>
+                {check.isSilenced && (
+                  <SilenceIcon
+                    fontSize="inherit"
+                    style={{ verticalAlign: "text-top" }}
+                  />
+                )}
+              </React.Fragment>
+            }
             details={
               <React.Fragment>
                 <Code>{check.command}</Code>
@@ -91,14 +105,43 @@ class CheckListItem extends React.Component {
                 >
                   Execute
                 </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    onClickSilence();
+                {!check.isSilenced && (
+                  <MenuItem
+                    onClick={() => {
+                      onClickSilence();
+                      close();
+                    }}
+                  >
+                    Silence
+                  </MenuItem>
+                )}
+                {check.isSilenced && (
+                  <MenuItem
+                    onClick={() => {
+                      onClickClearSilences();
+                      close();
+                    }}
+                  >
+                    Unsilence
+                  </MenuItem>
+                )}
+                <ConfirmDelete
+                  key="delete"
+                  onSubmit={ev => {
+                    onClickDelete(ev);
                     close();
                   }}
                 >
-                  Silence
-                </MenuItem>
+                  {confirm => (
+                    <MenuItem
+                      onClick={() => {
+                        confirm.open();
+                      }}
+                    >
+                      Delete
+                    </MenuItem>
+                  )}
+                </ConfirmDelete>
               </Menu>
             )}
           >

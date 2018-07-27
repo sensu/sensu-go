@@ -6,8 +6,9 @@ import addDeletedFieldTo from "./resolvers/deleted";
 const resolvers = merge.all([
   {},
   auth,
-  addDeletedFieldTo("Event"),
+  addDeletedFieldTo("CheckConfig"),
   addDeletedFieldTo("Entity"),
+  addDeletedFieldTo("Event"),
   addDeletedFieldTo("Silenced"),
 ]);
 

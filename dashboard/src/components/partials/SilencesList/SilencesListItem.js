@@ -8,9 +8,9 @@ import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuController from "/components/controller/MenuController";
 import MenuItem from "@material-ui/core/MenuItem";
-import RelativeDate from "/components/RelativeDate";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import RootRef from "@material-ui/core/RootRef";
+import SilenceExpiration from "/components/partials/SilenceExpiration";
 import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
@@ -26,41 +26,12 @@ class SilencesListItem extends React.Component {
   static fragments = {
     silence: gql`
       fragment SilencesListItem_silence on Silenced {
+        ...SilenceExpiration_silence
         storeId
-        expireOnResolve
-        expires
       }
-    `,
-  };
 
-  renderExpiryCondition = () => {
-    const { expires, expireOnResolve } = this.props.silence;
-    if (expires && expireOnResolve) {
-      return (
-        <React.Fragment>
-          Expires when <strong>resolved</strong> or{" "}
-          <strong>
-            <RelativeDate dateTime={expires} />
-          </strong>.
-        </React.Fragment>
-      );
-    } else if (expireOnResolve) {
-      return (
-        <React.Fragment>
-          Expires when <strong>resolved</strong>.
-        </React.Fragment>
-      );
-    } else if (expires) {
-      return (
-        <React.Fragment>
-          Expires{" "}
-          <strong>
-            <RelativeDate dateTime={expires} />
-          </strong>.
-        </React.Fragment>
-      );
-    }
-    return "Does not expire.";
+      ${SilenceExpiration.fragments.silence}
+    `,
   };
 
   render() {
@@ -77,7 +48,7 @@ class SilencesListItem extends React.Component {
         <TableOverflowCell>
           <ResourceDetails
             title={<strong>{silence.storeId}</strong>}
-            details={this.renderExpiryCondition()}
+            details={<SilenceExpiration silence={silence} />}
           />
         </TableOverflowCell>
         <TableCell padding="checkbox">

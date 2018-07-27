@@ -1,10 +1,15 @@
-extend type Event {
-  "Describes whether the event has been deleted from the system"
+extend type CheckConfig {
+  "Describes whether the check has been deleted from the system"
   deleted: Boolean!
 }
 
 extend type Entity {
   "Describes whether the entity has been deleted from the system"
+  deleted: Boolean!
+}
+
+extend type Event {
+  "Describes whether the event has been deleted from the system"
   deleted: Boolean!
 }
 

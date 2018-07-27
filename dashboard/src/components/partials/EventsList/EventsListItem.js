@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import { withApollo } from "react-apollo";
 
 import Checkbox from "@material-ui/core/Checkbox";
 import IconButton from "@material-ui/core/IconButton";
@@ -12,7 +11,6 @@ import RootRef from "@material-ui/core/RootRef";
 import TableCell from "@material-ui/core/TableCell";
 
 import Code from "/components/Code";
-import resolveEvent from "/mutations/resolveEvent";
 import RelativeDate from "/components/RelativeDate";
 
 import MenuController from "/components/controller/MenuController";
@@ -24,13 +22,14 @@ import TableSelectableRow from "/components/partials/TableSelectableRow";
 import NamespaceLink from "/components/util/NamespaceLink";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 
-class EventListItem extends React.Component {
+class EventListItem extends React.PureComponent {
   static propTypes = {
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
+    onClickClearSilences: PropTypes.func.isRequired,
     onClickSilenceEntity: PropTypes.func.isRequired,
     onClickSilenceCheck: PropTypes.func.isRequired,
-    client: PropTypes.object.isRequired,
+    onClickResolve: PropTypes.func.isRequired,
     event: PropTypes.shape({
       entity: PropTypes.shape({
         name: PropTypes.string.isRequired,
@@ -54,6 +53,7 @@ class EventListItem extends React.Component {
           status
           name
           output
+          isSilenced
         }
         entity {
           name
@@ -66,9 +66,8 @@ class EventListItem extends React.Component {
     `,
   };
 
-  resolve = () => {
-    const { client, event } = this.props;
-    resolveEvent(client, event);
+  handleClickCheckbox = () => {
+    this.props.onChangeSelected(!this.props.selected);
   };
 
   renderMenu = ({ close, anchorEl }) => {
@@ -94,23 +93,32 @@ class EventListItem extends React.Component {
         >
           Silence Check
         </MenuItem>
-        {event.check &&
-          event.check.status !== 0 && (
-            <MenuItem
-              onClick={() => {
-                this.resolve();
-                close();
-              }}
-            >
-              Resolve
-            </MenuItem>
-          )}
+        {event.check.isSilenced && (
+          <MenuItem
+            onClick={() => {
+              this.props.onClickClearSilences();
+              close();
+            }}
+          >
+            Unsilence
+          </MenuItem>
+        )}
+        {event.check.status !== 0 && (
+          <MenuItem
+            onClick={() => {
+              this.props.onClickResolve();
+              close();
+            }}
+          >
+            Resolve
+          </MenuItem>
+        )}
       </Menu>
     );
   };
 
   render() {
-    const { selected, event, onChangeSelected } = this.props;
+    const { selected, event } = this.props;
     const { entity, check, timestamp } = event;
 
     return (
@@ -119,7 +127,7 @@ class EventListItem extends React.Component {
           <Checkbox
             color="primary"
             checked={selected}
-            onChange={e => onChangeSelected(e.target.checked)}
+            onChange={this.handleClickCheckbox}
           />
         </TableCell>
         <TableOverflowCell>
@@ -137,7 +145,9 @@ class EventListItem extends React.Component {
                 namespace={event.namespace}
                 to={`/events/${entity.name}/${check.name}`}
               >
-                {entity.name} › {check.name}
+                <strong>
+                  {entity.name} › {check.name}
+                </strong>
               </NamespaceLink>
             }
             details={
@@ -174,4 +184,4 @@ class EventListItem extends React.Component {
   }
 }
 
-export default withApollo(EventListItem);
+export default EventListItem;

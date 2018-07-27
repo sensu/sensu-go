@@ -5,6 +5,10 @@ Promise.config({
   warnings: {
     wForgottenReturn: false,
   },
+  // Capturing long stack traces appears to have negative performance impacts
+  // when using recursion. Specifically this was leading to cache reads / writes
+  // taking upwards of 10X longer.
+  longStackTraces: false,
 });
 
 const polyfillCollections = () =>

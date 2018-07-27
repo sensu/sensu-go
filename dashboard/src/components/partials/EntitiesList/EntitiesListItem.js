@@ -26,13 +26,17 @@ class EntitiesListItem extends React.PureComponent {
     entity: PropTypes.object.isRequired,
     selected: PropTypes.bool,
     onChangeSelected: PropTypes.func,
+    onClickClearSilence: PropTypes.func,
     onClickDelete: PropTypes.func,
+    onClickSilence: PropTypes.func,
   };
 
   static defaultProps = {
     selected: undefined,
     onChangeSelected: ev => ev,
+    onClickClearSilence: ev => ev,
     onClickDelete: ev => ev,
+    onClickSilence: ev => ev,
   };
 
   static fragments = {
@@ -53,10 +57,34 @@ class EntitiesListItem extends React.PureComponent {
   };
 
   renderMenu = ({ close, anchorEl }) => {
-    const { onClickDelete } = this.props;
+    const {
+      entity,
+      onClickClearSilence,
+      onClickDelete,
+      onClickSilence,
+    } = this.props;
 
     return (
       <Menu open onClose={close} anchorEl={anchorEl}>
+        {entity.isSilenced ? (
+          <MenuItem
+            onClick={ev => {
+              onClickClearSilence(ev);
+              close(ev);
+            }}
+          >
+            Unsilence
+          </MenuItem>
+        ) : (
+          <MenuItem
+            onClick={ev => {
+              onClickSilence(ev);
+              close(ev);
+            }}
+          >
+            Silence
+          </MenuItem>
+        )}
         <ConfirmDelete key="delete" onSubmit={onClickDelete}>
           {confirm => (
             <MenuItem

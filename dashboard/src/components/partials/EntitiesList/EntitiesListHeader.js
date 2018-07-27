@@ -14,12 +14,14 @@ import ButtonMenu from "/components/partials/ButtonMenu";
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
-    onClickSelect: PropTypes.func.isRequired,
-    onClickDelete: PropTypes.func.isRequired,
-    selectedCount: PropTypes.number.isRequired,
-    rowCount: PropTypes.number.isRequired,
-    onChangeQuery: PropTypes.func.isRequired,
     environment: PropTypes.object,
+    onChangeQuery: PropTypes.func.isRequired,
+    onClickClearSilences: PropTypes.func.isRequired,
+    onClickDelete: PropTypes.func.isRequired,
+    onClickSelect: PropTypes.func.isRequired,
+    onClickSilence: PropTypes.func.isRequired,
+    rowCount: PropTypes.number.isRequired,
+    selectedItems: PropTypes.array.isRequired,
   };
 
   static defaultProps = {
@@ -27,7 +29,6 @@ class EntitiesListHeader extends React.PureComponent {
     onChangeFilter: () => {},
     onChangeSort: () => {},
     onSubmitDelete: () => {},
-    selectedCount: 0,
     environment: undefined,
   };
 
@@ -66,12 +67,16 @@ class EntitiesListHeader extends React.PureComponent {
   render() {
     const {
       environment,
+      onClickClearSilences,
       onClickDelete,
       onClickSelect,
-      selectedCount,
+      onClickSilence,
+      selectedItems,
       rowCount,
     } = this.props;
 
+    const selectedCount = selectedItems.length;
+    const selectedSilenced = selectedItems.filter(en => !en.silences.length);
     const subscriptions = environment ? environment.subscriptions.values : [];
 
     return (
@@ -82,6 +87,16 @@ class EntitiesListHeader extends React.PureComponent {
         onClickSelect={onClickSelect}
         renderBulkActions={() => (
           <ButtonSet>
+            {selectedSilenced.length > 0 && (
+              <Button onClick={onClickSilence}>
+                <Typography variant="button">Silence</Typography>
+              </Button>
+            )}
+            {selectedSilenced.length === 0 && (
+              <Button onClick={onClickClearSilences}>
+                <Typography variant="button">Unsilence</Typography>
+              </Button>
+            )}
             <ConfirmDelete
               identifier={`${selectedCount} ${
                 selectedCount === 1 ? "entity" : "entities"

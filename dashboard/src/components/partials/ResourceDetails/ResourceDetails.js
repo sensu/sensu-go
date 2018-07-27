@@ -12,23 +12,19 @@ const styles = theme => ({
   item: {
     lineHeight: "26px",
     color: theme.palette.text.secondary,
-
     "& strong": {
       color: theme.palette.text.primary,
     },
-
     "& a, & a:hover, & a:visited": {
       color: "inherit",
     },
   },
   title: {
-    fontSize: 14,
-  },
-  details: {
-    fontSize: 13,
+    fontWeight: 600,
   },
   icon: {
     marginRight: 24,
+    flex: "none",
   },
 });
 

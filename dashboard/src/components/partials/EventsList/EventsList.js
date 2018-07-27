@@ -17,6 +17,7 @@ import ListController from "/components/controller/ListController";
 
 import Pagination from "/components/partials/Pagination";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
+import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
 
 import { TableListEmptyState } from "/components/TableList";
 
@@ -33,6 +34,7 @@ class EventsContainer extends React.Component {
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     loading: PropTypes.bool,
+    refetch: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -66,17 +68,24 @@ class EventsContainer extends React.Component {
           nodes {
             id
             deleted @client
-            entity {
-              name
-            }
-            check {
-              name
-            }
 
             namespace {
               environment
               organization
             }
+
+            entity {
+              name
+            }
+
+            check {
+              name
+              silences {
+                ...ClearSilencedEntriesDialog_silence
+              }
+            }
+
+            ...EventsListHeader_event
             ...EventsListItem_event
           }
 
@@ -88,14 +97,17 @@ class EventsContainer extends React.Component {
         ...EventsListHeader_environment
       }
 
-      ${EventsListItem.fragments.event}
+      ${ClearSilencesDialog.fragments.silence}
       ${EventsListHeader.fragments.environment}
+      ${EventsListHeader.fragments.event}
+      ${EventsListItem.fragments.event}
       ${Pagination.fragments.pageInfo}
     `,
   };
 
   state = {
     silence: null,
+    unsilence: null,
   };
 
   resolveEvents = events => {
@@ -106,6 +118,14 @@ class EventsContainer extends React.Component {
   deleteEvents = events => {
     const { client } = this.props;
     events.forEach(event => deleteEvent(client, { id: event.id }));
+  };
+
+  clearSilences = items => {
+    this.setState({
+      unsilence: items
+        .filter(item => item.check.silences.length > 0)
+        .reduce((memo, item) => [...memo, ...item.check.silences], []),
+    });
   };
 
   silenceEvents = events => {
@@ -135,13 +155,21 @@ class EventsContainer extends React.Component {
   silenceEntity = entity => {
     this.setState({
       silence: {
+        check: "*",
         subscription: `entity:${entity.name}`,
+        props: {},
       },
     });
   };
 
   silenceCheck = check => {
-    this.setState({ silence: { check: check.name } });
+    this.setState({
+      silence: {
+        check: check.name,
+        subscription: "*",
+        props: {},
+      },
+    });
   };
 
   renderEmptyState = () => {
@@ -169,13 +197,23 @@ class EventsContainer extends React.Component {
       event={event}
       selected={selected}
       onChangeSelected={setSelected}
+      onClickClearSilences={() => this.clearSilences([event])}
       onClickSilenceEntity={() => this.silenceEntity(event.entity)}
       onClickSilenceCheck={() => this.silenceCheck(event.check)}
+      onClickResolve={() => this.resolveEvents([event])}
     />
   );
 
   render() {
-    const { environment, loading, limit, offset, onChangeQuery } = this.props;
+    const { silence, unsilence } = this.state;
+    const {
+      environment,
+      loading,
+      limit,
+      offset,
+      onChangeQuery,
+      refetch,
+    } = this.props;
 
     const items = environment
       ? environment.events.nodes.filter(event => !event.deleted)
@@ -190,13 +228,19 @@ class EventsContainer extends React.Component {
         renderEmptyState={this.renderEmptyState}
         renderItem={this.renderEvent}
       >
-        {({ children, selectedItems, toggleSelectedItems }) => (
+        {({
+          children,
+          selectedItems,
+          setSelectedItems,
+          toggleSelectedItems,
+        }) => (
           <Paper>
             <Loader loading={loading}>
               <EventsListHeader
-                selectedCount={selectedItems.length}
+                selectedItems={selectedItems}
                 rowCount={children.length || 0}
                 onClickSelect={toggleSelectedItems}
+                onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickSilence={() => this.silenceEvents(selectedItems)}
                 onClickResolve={() => this.resolveEvents(selectedItems)}
                 onClickDelete={() => this.deleteEvents(selectedItems)}
@@ -214,10 +258,24 @@ class EventsContainer extends React.Component {
                 onChangeQuery={onChangeQuery}
               />
 
-              {this.state.silence && (
+              <ClearSilencesDialog
+                silences={unsilence}
+                open={!!unsilence}
+                close={() => {
+                  this.setState({ unsilence: null });
+                  setSelectedItems([]);
+                  refetch();
+                }}
+              />
+
+              {silence && (
                 <SilenceEntryDialog
-                  values={this.state.silence}
-                  onClose={() => this.setState({ silence: null })}
+                  values={silence}
+                  onClose={() => {
+                    this.setState({ silence: null });
+                    setSelectedItems([]);
+                    refetch();
+                  }}
                 />
               )}
             </Loader>

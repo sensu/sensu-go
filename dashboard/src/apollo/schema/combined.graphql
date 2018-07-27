@@ -197,6 +197,17 @@ type Check {
   """
   silenced: [String]!
 
+  """
+  isSilenced return true if the entity has any silences associated with it.
+  """
+  isSilenced: Boolean!
+
+  """
+  All silences matching the entity's subscriptions and where the silence
+  matches all checks.
+  """
+  silences: [Silenced!]!
+
   """LastOK displays last time this check's status was set to zero."""
   lastOK: DateTime
 
@@ -298,8 +309,16 @@ type CheckConfig implements Node {
   """RoundRobin enables round-robin scheduling if set true."""
   roundRobin: Boolean!
 
-  """Subscriptions is the list of subscribers for the check."""
-  subscriptions: [String]!
+  """
+  isSilenced return true if the entity has any silences associated with it.
+  """
+  isSilenced: Boolean!
+
+  """
+  All silences matching the entity's subscriptions and where the silence
+  matches all checks.
+  """
+  silences: [Silenced!]!
 
   """
   STDIN indicates if the check command accepts JSON via stdin from the agent
@@ -310,6 +329,9 @@ type CheckConfig implements Node {
   Subdue represents one or more time windows when the check should be subdued.
   """
   subdue: TimeWindowWhen
+
+  """Subscriptions is the list of subscribers for the check."""
+  subscriptions: [String]!
 
   """Timeout is the timeout, in seconds, at which the check has to run."""
   timeout: Int!
@@ -324,6 +346,9 @@ type CheckConfig implements Node {
   sharing snippets that can then be imported with `sensuctl import`.
   """
   toJSON: JSON!
+
+  """Describes whether the check has been deleted from the system"""
+  deleted: Boolean!
 }
 
 """A connection to a sequence of records."""

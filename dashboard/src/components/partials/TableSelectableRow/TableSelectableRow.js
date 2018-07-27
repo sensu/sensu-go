@@ -30,12 +30,13 @@ class TableSelectableRow extends React.PureComponent {
   };
 
   render() {
-    const { classes, selected, children } = this.props;
+    const { classes, selected, children, ...props } = this.props;
+    const className = classnames(classes.root, {
+      [classes.selected]: selected,
+    });
 
     return (
-      <TableRow
-        className={classnames(classes.root, { [classes.selected]: selected })}
-      >
+      <TableRow className={className} {...props}>
         {children}
       </TableRow>
     );

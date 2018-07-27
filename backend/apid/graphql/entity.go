@@ -189,8 +189,9 @@ func fetchEntitySilencedEntries(ctx context.Context, ctrl silenceQuerier, entity
 		return matched, err
 	}
 
+	now := time.Now().Unix()
 	for _, sl := range sls {
-		if !(sl.Check == "" || sl.Check == "*") {
+		if !(sl.Check == "" || sl.Check == "*") || !sl.StartSilence(now) {
 			continue
 		}
 		if strings.InArray(sl.Subscription, entity.Subscriptions) {

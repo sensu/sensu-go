@@ -13,7 +13,7 @@ import SubdirectoryArrowLeft from "@material-ui/icons/KeyboardArrowLeft";
 
 import Item from "./Item";
 
-class SubMenu extends React.PureComponent {
+class SubMenu extends React.Component {
   static displayName = "CollapsingMenu.SubMenu";
 
   static propTypes = {

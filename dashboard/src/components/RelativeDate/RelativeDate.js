@@ -1,11 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 import capitalizeStr from "lodash/capitalize";
+import Tooltip from "@material-ui/core/Tooltip";
 
 // time interval in which delta is recalculated
-const recalcInterval = 30000;
+const recalcInterval = 60000;
+const precision = 60000;
 
-class RelativeDate extends React.PureComponent {
+class RelativeDate extends React.Component {
   static propTypes = {
     capitalize: PropTypes.bool,
     dateTime: PropTypes.string.isRequired,
@@ -32,12 +34,27 @@ class RelativeDate extends React.PureComponent {
     unit: undefined,
   };
 
+  static getDerivedStateFromProps(props, state) {
+    let timestamp = new Date(props.dateTime).getTime();
+    timestamp -= timestamp % precision;
+
+    if (state.timestamp !== timestamp) {
+      return { timestamp };
+    }
+    return null;
+  }
+
   state = {
-    now: null,
+    timestamp: null,
+    now: Date.now(),
   };
 
   componentDidMount() {
     this.interval = setInterval(this.setDelta, recalcInterval);
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextState.timestamp !== this.state.timestamp;
   }
 
   componentWillUnmount() {
@@ -49,18 +66,28 @@ class RelativeDate extends React.PureComponent {
   };
 
   render() {
-    const { dateTime, capitalize, style, unit, ...props } = this.props;
-    const dateValue = new Date(dateTime);
-    const formatter = new IntlRelativeFormat("en", { style });
+    const { dateTime, capitalize, unit, style, ...props } = this.props;
+    const { timestamp, now } = this.state;
 
-    let relativeDate = formatter.format(dateValue, unit);
+    const formatter = new IntlRelativeFormat("en", { style });
+    const dateValue = new Date(timestamp);
+    const delta = now - dateValue;
+
+    let relativeDate = "just now";
+    if (delta > 10000) {
+      relativeDate = "seconds ago";
+    } else if (delta > 60000) {
+      relativeDate = formatter.format(dateValue, unit);
+    }
     if (capitalize) {
       relativeDate = capitalizeStr(relativeDate);
     }
     return (
-      <time dateTime={dateTime} {...props}>
-        {relativeDate}
-      </time>
+      <Tooltip title={dateValue.toString()}>
+        <time dateTime={dateTime} {...props}>
+          {relativeDate}
+        </time>
+      </Tooltip>
     );
   }
 }
