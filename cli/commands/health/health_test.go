@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListCommand(t *testing.T) {
+func TestHealthCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := HealthCommand(cli)
+	cmd := Command(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")

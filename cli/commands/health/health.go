@@ -11,16 +11,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func HealthCommand(cli *cli.SensuCli) {
+func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "health",
 		Short:        "get sensu health status",
 		SilenceUsage: false,
-		Run: func(cmd *cobra.Command, args []string) {
-			result, _ := cli.Client.Health()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			result, err := cli.Client.Health()
+			if err != nil {
+				return err
+			}
 			return helpers.Print(cmd, cli.Config.Format(), printToTable, nil, result)
 		},
 	}
+	return cmd
 }
 
 func printToTable(result interface{}, w io.Writer) {
@@ -46,7 +50,7 @@ func printToTable(result interface{}, w io.Writer) {
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				clusterHealth := data.(*types.ClusterHealth)
-				return clusterHealth.Err.Error()
+				return fmt.Sprintf("%v", clusterHealth.Err)
 			},
 		},
 		{

@@ -32,7 +32,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		configure.Command(cli),
 		completion.Command(rootCmd),
 		logout.Command(cli),
-		health.HelpCommand(cli),
+		health.Command(cli),
 
 		// Management Commands
 		asset.HelpCommand(cli),
