@@ -96,14 +96,12 @@ build_binary () {
 
     local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
     local build_sha=$(git rev-parse HEAD)
-    local edition="core"
 
     local version_pkg="github.com/sensu/sensu-go/version"
     local ldflags=" -X $version_pkg.Version=${version}"
     local ldflags+=" -X $version_pkg.PreReleaseIdentifier=${prerelease}"
     local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
     local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
-    local ldflags+=" -X $version_pkg.Edition=${edition}"
 
     # sensu-agent main package is still in a subdirectoy cmd package
     local main_pkg="cmd/${cmd_name}"
