@@ -67,17 +67,17 @@ class RelativeDate extends React.Component {
 
   render() {
     const { dateTime, capitalize, unit, style, ...props } = this.props;
-    const { timestamp, now } = this.state;
+    const { now } = this.state;
 
     const formatter = new IntlRelativeFormat("en", { style });
-    const dateValue = new Date(timestamp);
+    const dateValue = new Date(dateTime);
     const delta = now - dateValue;
 
     let relativeDate = "just now";
-    if (delta > 10000) {
-      relativeDate = "seconds ago";
-    } else if (delta > 60000) {
+    if (delta >= 60000) {
       relativeDate = formatter.format(dateValue, unit);
+    } else if (delta >= 10000) {
+      relativeDate = "seconds ago";
     }
     if (capitalize) {
       relativeDate = capitalizeStr(relativeDate);
