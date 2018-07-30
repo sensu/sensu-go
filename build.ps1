@@ -39,7 +39,6 @@ function install_deps
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
     go get github.com/kisielk/errcheck
-    go get github.com/golang/lint/golint
 }
 
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)
@@ -184,7 +183,7 @@ function linter_commands
 {
     echo "Running linter..."
 
-    gometalinter.v2 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=golint --enable=ineffassign --enable=goconst --tests ./...
+    gometalinter.v2 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=ineffassign --enable=goconst --tests ./...
     If ($LASTEXITCODE -ne 0) {
         echo "Linting failed..."
         exit 1
