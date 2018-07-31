@@ -24,7 +24,7 @@ func MemberListCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error listing cluster members: %s", err)
 			}
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, nil, result)
+			return helpers.Print(cmd, cli.Config.Format(), printMemberListToTable, nil, result)
 		},
 	}
 
@@ -33,7 +33,7 @@ func MemberListCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-func printToTable(result interface{}, w io.Writer) {
+func printMemberListToTable(result interface{}, w io.Writer) {
 	memberList := result.(*clientv3.MemberListResponse)
 	table := table.New([]*table.Column{
 		{

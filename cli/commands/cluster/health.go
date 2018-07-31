@@ -21,13 +21,13 @@ func HealthCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return helpers.Print(cmd, cli.Config.Format(), printHealthToTable, nil, result)
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, nil, result)
 		},
 	}
 	return cmd
 }
 
-func printHealthToTable(result interface{}, w io.Writer) {
+func printToTable(result interface{}, w io.Writer) {
 	table := table.New([]*table.Column{
 		{
 			Title:       "ID",

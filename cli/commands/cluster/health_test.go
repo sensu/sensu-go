@@ -1,4 +1,4 @@
-package health
+package cluster
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ func TestHealthCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := newCLI()
-	cmd := Command(cli)
+	cmd := HealthCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")

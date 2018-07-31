@@ -9,7 +9,7 @@ import (
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cluster",
-		Short: "manage sensu cluster",
+		Short: "Manage sensu cluster",
 	}
 
 	cmd.AddCommand(
@@ -17,6 +17,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		MemberAddCommand(cli),
 		MemberUpdateCommand(cli),
 		MemberRemoveCommand(cli),
+		HealthCommand(cli),
 	)
 
 	return cmd

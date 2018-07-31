@@ -15,7 +15,6 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/extension"
 	"github.com/sensu/sensu-go/cli/commands/filter"
 	"github.com/sensu/sensu-go/cli/commands/handler"
-	"github.com/sensu/sensu-go/cli/commands/health"
 	"github.com/sensu/sensu-go/cli/commands/hook"
 	"github.com/sensu/sensu-go/cli/commands/logout"
 	"github.com/sensu/sensu-go/cli/commands/mutator"
@@ -32,7 +31,6 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		configure.Command(cli),
 		completion.Command(rootCmd),
 		logout.Command(cli),
-		health.Command(cli),
 
 		// Management Commands
 		asset.HelpCommand(cli),
