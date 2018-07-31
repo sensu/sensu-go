@@ -1,9 +1,10 @@
+// +build integration,!race
+
 package schedulerd
 
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
@@ -65,11 +66,8 @@ func TestSchedulerd(t *testing.T) {
 	assert.NoError(t, check.Validate())
 	assert.NoError(t, st.UpdateCheckConfig(ctx, check))
 
-	time.Sleep(1 * time.Second)
-
 	require.NoError(t, st.DeleteCheckConfigByName(ctx, check.Name))
 
-	time.Sleep(1 * time.Second)
 	sub.Cancel()
 	close(tsub.ch)
 

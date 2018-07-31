@@ -240,6 +240,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:4c6bcdba286b48fc683ed73c0e2d8248d3ba57b4431fd210f071279423d67d1f"
+  name = "github.com/echlebek/crock"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d3073eb0a044dbc6f88962d94ffb2e987b31c19a"
+
+[[projects]]
+  branch = "master"
   digest = "1:9d5bd7c02a73959247ccbf524180e363631ece23c58e12b21d697f4741c7926f"
   name = "github.com/echlebek/timeproxy"
   packages = ["."]
@@ -714,8 +722,10 @@
   digest = "1:6786113356facb95eafb16f32fc3af40e8dabc8cbf912d98b6d99fa410328509"
   name = "github.com/shirou/gopsutil"
   packages = [
+    "cpu",
     "host",
     "internal/common",
+    "mem",
     "net",
     "process",
   ]
@@ -1048,6 +1058,7 @@
     "github.com/dave/jennifer/jen",
     "github.com/dgrijalva/jwt-go",
     "github.com/docker/docker/pkg/term",
+    "github.com/echlebek/crock",
     "github.com/echlebek/timeproxy",
     "github.com/emicklei/proto",
     "github.com/go-resty/resty",

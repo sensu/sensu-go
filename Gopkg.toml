@@ -182,3 +182,7 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/echlebek/timeproxy"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/echlebek/crock"
