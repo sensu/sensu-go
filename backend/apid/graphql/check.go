@@ -57,18 +57,30 @@ func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
 	return p.Source, nil
 }
 
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (*checkCfgImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.CheckConfig)
+	return wrapExtendedAttributes(check.ExtendedAttributes), nil
+}
+
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
 	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlers(ctx, r.handlerCtrl, check.Handlers)
+	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.Handlers)
 }
 
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
 	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlers(ctx, r.handlerCtrl, check.OutputMetricHandlers)
+	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.OutputMetricHandlers)
+}
+
+// ProxyEntityID implements response to request for 'proxyEntityId' field.
+func (r *checkCfgImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
+	check := p.Source.(*types.CheckConfig)
+	return check.ProxyEntityID, nil
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
@@ -93,22 +105,21 @@ func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	return types.WrapResource(check), nil
 }
 
-func fetchHandlers(ctx context.Context, ctrl actions.HandlerController, names []string) ([]*types.Handler, error) {
+func fetchHandlersWithNames(ctx context.Context, ctrl actions.HandlerController, names []string) ([]*types.Handler, error) {
 	handlers, err := ctrl.Query(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Filter out irrevelant handlers
-	for i := 0; i < len(handlers); {
-		for _, h := range names {
-			if h == handlers[i].Name {
-				continue
-			}
+	relevantHandlers := handlers[:0]
+	for _, handler := range handlers {
+		if !strings.FoundInArray(handler.Name, names) {
+			continue
 		}
-		handlers = append(handlers[:i], handlers[i+1:]...)
+		relevantHandlers = append(relevantHandlers, handler)
 	}
-	return handlers, nil
+	return relevantHandlers, nil
 }
 
 func fetchCheckConfigSilences(ctx context.Context, ctrl silenceQuerier, check namedCheck) ([]*types.Silenced, error) {
@@ -181,6 +192,12 @@ func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 	return time.Unix(c.Executed, 0), nil
 }
 
+// ExtendedAttributes implements response to request for 'extendedAttributes' field.
+func (*checkImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
+	check := p.Source.(*types.Check)
+	return wrapExtendedAttributes(check.ExtendedAttributes), nil
+}
+
 // LastOK implements response to request for 'lastOK' field.
 func (r *checkImpl) LastOK(p graphql.ResolveParams) (*time.Time, error) {
 	c := p.Source.(*types.Check)
@@ -206,7 +223,7 @@ func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface
 func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.Check)
 	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlers(ctx, r.handlerCtrl, check.Handlers)
+	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.Handlers)
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
@@ -227,7 +244,13 @@ func (r *checkImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.Check)
 	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlers(ctx, r.handlerCtrl, check.OutputMetricHandlers)
+	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.OutputMetricHandlers)
+}
+
+// ProxyEntityID implements response to request for 'proxyEntityId' field.
+func (r *checkImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
+	check := p.Source.(*types.Check)
+	return check.ProxyEntityID, nil
 }
 
 func fetchCheckSilences(ctx context.Context, ctrl silenceQuerier, check silenceableCheck) ([]*types.Silenced, error) {

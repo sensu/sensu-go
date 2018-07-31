@@ -16,6 +16,15 @@ const styles = theme => ({
   background: {
     backgroundColor: emphasize(theme.palette.background.paper, 0.01875),
   },
+  highlight: {
+    color:
+      theme.palette.type === "dark"
+        ? theme.palette.secondary.light
+        : theme.palette.secondary.dark,
+    "& $background": {
+      backgroundColor: emphasize(theme.palette.text.primary, 0.05),
+    },
+  },
   scaleFont: {
     // Browsers tend to render monospaced fonts a little larger than intended.
     // Attempt to scale accordingly.
@@ -30,6 +39,7 @@ class Monospaced extends React.Component {
     className: PropTypes.string,
     component: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     children: PropTypes.node.isRequired,
+    highlight: PropTypes.bool,
     scaleFont: PropTypes.bool,
   };
 
@@ -37,6 +47,7 @@ class Monospaced extends React.Component {
     background: false,
     component: "pre",
     className: "",
+    highlight: false,
     scaleFont: true,
   };
 
@@ -46,6 +57,7 @@ class Monospaced extends React.Component {
       classes,
       className: classNameProp,
       children,
+      highlight,
       scaleFont,
       ...props
     } = this.props;
@@ -53,6 +65,7 @@ class Monospaced extends React.Component {
     const className = classnames(classes.root, classNameProp, {
       [classes.background]: background,
       [classes.scaleFont]: scaleFont,
+      [classes.highlight]: highlight,
     });
     return (
       <Typography className={className} {...props}>

@@ -3058,10 +3058,10 @@ type ProxyRequestsSplayFieldResolver interface {
 	Splay(p graphql.ResolveParams) (bool, error)
 }
 
-// ProxyRequestsSplay_coverageFieldResolver implement to resolve requests for the ProxyRequests's splay_coverage field.
-type ProxyRequestsSplay_coverageFieldResolver interface {
-	// Splay_coverage implements response to request for splay_coverage field.
-	Splay_coverage(p graphql.ResolveParams) (int, error)
+// ProxyRequestsSplayCoverageFieldResolver implement to resolve requests for the ProxyRequests's splayCoverage field.
+type ProxyRequestsSplayCoverageFieldResolver interface {
+	// SplayCoverage implements response to request for splayCoverage field.
+	SplayCoverage(p graphql.ResolveParams) (int, error)
 }
 
 //
@@ -3128,7 +3128,7 @@ type ProxyRequestsSplay_coverageFieldResolver interface {
 type ProxyRequestsFieldResolvers interface {
 	ProxyRequestsEntityAttributesFieldResolver
 	ProxyRequestsSplayFieldResolver
-	ProxyRequestsSplay_coverageFieldResolver
+	ProxyRequestsSplayCoverageFieldResolver
 }
 
 // ProxyRequestsAliases implements all methods on ProxyRequestsFieldResolvers interface by using reflection to
@@ -3197,15 +3197,15 @@ func (_ ProxyRequestsAliases) Splay(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
-// Splay_coverage implements response to request for 'splay_coverage' field.
-func (_ ProxyRequestsAliases) Splay_coverage(p graphql.ResolveParams) (int, error) {
+// SplayCoverage implements response to request for 'splayCoverage' field.
+func (_ ProxyRequestsAliases) SplayCoverage(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := graphql1.Int.ParseValue(val).(int)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'splay_coverage'")
+		return ret, errors.New("unable to coerce value for field 'splayCoverage'")
 	}
 	return ret, err
 }
@@ -3231,10 +3231,10 @@ func _ObjTypeProxyRequestsSplayHandler(impl interface{}) graphql1.FieldResolveFn
 	}
 }
 
-func _ObjTypeProxyRequestsSplay_coverageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ProxyRequestsSplay_coverageFieldResolver)
+func _ObjTypeProxyRequestsSplayCoverageHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProxyRequestsSplayCoverageFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Splay_coverage(frp)
+		return resolver.SplayCoverage(frp)
 	}
 }
 
@@ -3256,11 +3256,11 @@ func _ObjectTypeProxyRequestsConfigFn() graphql1.ObjectConfig {
 				Name:              "splay",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
-			"splay_coverage": &graphql1.Field{
+			"splayCoverage": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "splayCoverage is the percentage used for proxy check request splay\ncalculation.",
-				Name:              "splay_coverage",
+				Name:              "splayCoverage",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 		},
@@ -3283,6 +3283,6 @@ var _ObjectTypeProxyRequestsDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"entityAttributes": _ObjTypeProxyRequestsEntityAttributesHandler,
 		"splay":            _ObjTypeProxyRequestsSplayHandler,
-		"splay_coverage":   _ObjTypeProxyRequestsSplay_coverageHandler,
+		"splayCoverage":    _ObjTypeProxyRequestsSplayCoverageHandler,
 	},
 }

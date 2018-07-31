@@ -63,7 +63,11 @@ class EventDetailsSummary extends React.Component {
           <Dictionary>
             <DictionaryEntry>
               <DictionaryKey>Check</DictionaryKey>
-              <DictionaryValue>{check.name}</DictionaryValue>
+              <DictionaryValue>
+                <InlineLink to={`/${ns.org}/${ns.env}/checks/${check.name}`}>
+                  {check.name}
+                </InlineLink>
+              </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Interval</DictionaryKey>

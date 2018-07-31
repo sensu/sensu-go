@@ -8,9 +8,10 @@ import NotFoundView from "/components/views/NotFoundView";
 import ChecksContent from "./ChecksContent";
 import EntitiesContent from "./EntitiesContent";
 import EventsContent from "./EventsContent";
-import EventDetailsContent from "./EventDetailsContent";
+import CheckDetailsContent from "./CheckDetailsContent";
 import EntityDetailsContent from "./EntityDetailsContent";
 import SilencesContent from "./SilencesContent";
+import EventDetailsContent from "./EventDetailsContent";
 
 class EnvironmentView extends React.PureComponent {
   static propTypes = {
@@ -53,6 +54,10 @@ class EnvironmentView extends React.PureComponent {
             exact
             path={`${match.path}/silences`}
             component={SilencesContent}
+          />
+          <Route
+            path={`${match.path}/checks/:name`}
+            component={CheckDetailsContent}
           />
           <Redirect exact from={match.path} to={`${match.url}/events`} />
           <Route component={NotFoundView} />

@@ -54,7 +54,7 @@ const styles = theme => {
   };
 };
 
-class TableListHeader extends React.Component {
+class ListHeader extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     sticky: PropTypes.bool,
@@ -107,4 +107,4 @@ class TableListHeader extends React.Component {
   }
 }
 
-export default withStyles(styles)(TableListHeader);
+export default withStyles(styles)(ListHeader);

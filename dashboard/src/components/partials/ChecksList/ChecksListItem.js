@@ -10,6 +10,7 @@ import Menu from "@material-ui/core/Menu";
 import MenuController from "/components/controller/MenuController";
 import MenuItem from "@material-ui/core/MenuItem";
 import MoreVert from "@material-ui/icons/MoreVert";
+import NamespaceLink from "/components/util/NamespaceLink";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import RootRef from "@material-ui/core/RootRef";
 import SilenceIcon from "/icons/Silence";
@@ -36,6 +37,10 @@ class CheckListItem extends React.Component {
         subscriptions
         interval
         isSilenced
+        namespace {
+          organization
+          environment
+        }
       }
     `,
   };
@@ -63,7 +68,10 @@ class CheckListItem extends React.Component {
         <TableOverflowCell>
           <ResourceDetails
             title={
-              <React.Fragment>
+              <NamespaceLink
+                namespace={check.namespace}
+                to={`/checks/${check.name}`}
+              >
                 <strong>{check.name} </strong>
                 {check.isSilenced && (
                   <SilenceIcon
@@ -71,7 +79,7 @@ class CheckListItem extends React.Component {
                     style={{ verticalAlign: "text-top" }}
                   />
                 )}
-              </React.Fragment>
+              </NamespaceLink>
             }
             details={
               <React.Fragment>
