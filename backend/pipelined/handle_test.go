@@ -95,9 +95,9 @@ func TestPipelinedHandleEvent(t *testing.T) {
 		return m, nil
 	}
 
+	assert.NoError(t, p.handleEvent(event))
 	// TODO: Re-enable the following functionality
 	// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
-	// assert.NoError(t, p.handleEvent(event))
 	// m.AssertCalled(t, "HandleEvent", event, mock.Anything)
 }
 
