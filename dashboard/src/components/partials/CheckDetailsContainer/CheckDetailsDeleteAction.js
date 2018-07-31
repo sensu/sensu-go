@@ -21,8 +21,8 @@ class CheckDetailsDeleteAction extends React.PureComponent {
   };
 
   static fragments = {
-    checkConfig: gql`
-      fragment CheckDetailsDeleteAction_checkConfig on CheckConfig {
+    check: gql`
+      fragment CheckDetailsDeleteAction_check on CheckConfig {
         id
         name
         ns: namespace {

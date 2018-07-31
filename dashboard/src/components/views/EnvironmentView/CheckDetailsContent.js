@@ -44,13 +44,14 @@ class CheckDetailsContent extends React.PureComponent {
         variables={{ name, ns }}
       >
         {({
+          aborted,
           client,
           data: { check } = {},
           loading,
-          aborted,
           isPolling,
           startPolling,
           stopPolling,
+          refetch,
         }) => {
           if (!loading && !aborted && (!check || check.deleted)) {
             return <NotFoundView />;
@@ -67,6 +68,7 @@ class CheckDetailsContent extends React.PureComponent {
                   start: startPolling,
                   stop: stopPolling,
                 }}
+                refetch={refetch}
               />
             </AppContent>
           );

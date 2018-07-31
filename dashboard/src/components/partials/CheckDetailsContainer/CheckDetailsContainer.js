@@ -22,19 +22,26 @@ import LiveIcon from "/icons/Live";
 import Loader from "/components/util/Loader";
 import Maybe from "/components/Maybe";
 import Monospaced from "/components/Monospaced";
+import SilencedIcon from "/icons/Silence";
 import Typography from "@material-ui/core/Typography";
+import Tooltip from "@material-ui/core/Tooltip";
+import QueueIcon from "@material-ui/icons/Queue";
 
 import DeleteAction from "./CheckDetailsDeleteAction";
+import ExecuteAction from "./CheckDetailsExecuteAction";
+import UnsilenceAction from "./CheckDetailsUnsilenceAction";
 
 class CheckDetailsContainer extends React.PureComponent {
   static propTypes = {
     check: PropTypes.object,
     loading: PropTypes.bool.isRequired,
     poller: PropTypes.object.isRequired,
+    refetch: PropTypes.func,
   };
 
   static defaultProps = {
     check: null,
+    refetch: () => null,
   };
 
   static fragments = {
@@ -48,6 +55,7 @@ class CheckDetailsContainer extends React.PureComponent {
         stdin
         highFlapThreshold
         lowFlapThreshold
+        isSilenced
 
         interval
         cron
@@ -77,10 +85,14 @@ class CheckDetailsContainer extends React.PureComponent {
         envVars
         extendedAttributes
 
-        ...CheckDetailsDeleteAction_checkConfig
+        ...CheckDetailsDeleteAction_check
+        ...CheckDetailsExecuteAction_check
+        ...CheckDetailsUnsilenceAction_check
       }
 
-      ${DeleteAction.fragments.checkConfig}
+      ${DeleteAction.fragments.check}
+      ${ExecuteAction.fragments.check}
+      ${UnsilenceAction.fragments.check}
     `,
   };
 
@@ -121,7 +133,7 @@ class CheckDetailsContainer extends React.PureComponent {
   }
 
   render() {
-    const { check, loading, poller } = this.props;
+    const { check, loading, poller, refetch } = this.props;
 
     return (
       <Loader loading={loading} passthrough>
@@ -130,12 +142,32 @@ class CheckDetailsContainer extends React.PureComponent {
             <Content bottomMargin>
               <div style={{ flexGrow: 1 }} />
               <CollapsingMenu>
+                {check.isSilenced && (
+                  <UnsilenceAction check={check} refetch={refetch}>
+                    {unsilence => (
+                      <CollapsingMenu.Button
+                        title="Unsilence"
+                        icon={<SilencedIcon />}
+                        onClick={unsilence}
+                      />
+                    )}
+                  </UnsilenceAction>
+                )}
+                <ExecuteAction check={check}>
+                  {executeCheck => (
+                    <CollapsingMenu.Button
+                      title="Execute"
+                      icon={<QueueIcon />}
+                      onClick={executeCheck}
+                    />
+                  )}
+                </ExecuteAction>
                 <DeleteAction check={check}>
-                  {del => (
+                  {deleteCheck => (
                     <CollapsingMenu.Button
                       title="Delete"
                       icon={<DeleteIcon />}
-                      onClick={() => del()}
+                      onClick={deleteCheck}
                     />
                   )}
                 </DeleteAction>
@@ -155,7 +187,12 @@ class CheckDetailsContainer extends React.PureComponent {
                   <Card>
                     <CardContent>
                       <Typography variant="headline">
-                        Check Configuration
+                        {check.isSilenced > 0 && (
+                          <Tooltip title="Silenced">
+                            <SilencedIcon style={{ float: "right" }} />
+                          </Tooltip>
+                        )}
+                        Configuration
                       </Typography>
                       <Typography variant="caption" paragraph>
                         Defines when, where and how a check is executed.
@@ -232,7 +269,7 @@ class CheckDetailsContainer extends React.PureComponent {
                             <DictionaryEntry>
                               <DictionaryKey>Timeout</DictionaryKey>
                               <DictionaryValue>
-                                <Maybe value={check.timeout} fallback="never">
+                                <Maybe value={check.timeout} fallback="Never">
                                   {timeout => `${timeout}s`}
                                 </Maybe>
                               </DictionaryValue>
@@ -244,90 +281,6 @@ class CheckDetailsContainer extends React.PureComponent {
                                 <Maybe value={check.ttl} fallback="Forever">
                                   {ttl => `${ttl}s`}
                                 </Maybe>
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>EnvVars</DictionaryKey>
-                              <DictionaryValue>
-                                {check.envVars.length > 0 ? (
-                                  <Monospaced background>
-                                    {check.envVars.join("\n")}
-                                  </Monospaced>
-                                ) : (
-                                  "None"
-                                )}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-                          </Dictionary>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                          <Dictionary>
-                            <DictionaryEntry>
-                              <DictionaryKey>Flap Threshold</DictionaryKey>
-                              <DictionaryValue>
-                                High: {check.highFlapThreshold} Low:{" "}
-                                {check.lowFlapThreshold}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>Accepts STDIN?</DictionaryKey>
-                              <DictionaryValue>
-                                {check.stdin ? "Yes" : "No"}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>Handlers</DictionaryKey>
-                              <DictionaryValue>
-                                {check.handlers.length > 0 ? (
-                                  <List disablePadding>
-                                    {check.handlers.map(handler => (
-                                      <ListItem key={handler.name}>
-                                        <ListItemTitle>
-                                          {handler.name}
-                                        </ListItemTitle>
-                                      </ListItem>
-                                    ))}
-                                  </List>
-                                ) : (
-                                  "—"
-                                )}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>
-                                Output Metric Format
-                              </DictionaryKey>
-                              <DictionaryValue>
-                                <Maybe
-                                  value={check.outputMetricFormat}
-                                  fallback="None"
-                                />
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>
-                                Output Metric Handlers
-                              </DictionaryKey>
-                              <DictionaryValue>
-                                {check.outputMetricHandlers.length > 0 ? (
-                                  <List disablePadding>
-                                    {check.outputMetricHandlers.map(handler => (
-                                      <ListItem key={handler.name}>
-                                        <ListItemTitle>
-                                          {handler.name}
-                                        </ListItemTitle>
-                                      </ListItem>
-                                    ))}
-                                  </List>
-                                ) : (
-                                  "—"
-                                )}
                               </DictionaryValue>
                             </DictionaryEntry>
 
@@ -352,11 +305,102 @@ class CheckDetailsContainer extends React.PureComponent {
                                 </Maybe>
                               </DictionaryValue>
                             </DictionaryEntry>
+                          </Dictionary>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                          <Dictionary>
+                            <DictionaryEntry>
+                              <DictionaryKey>Flap Threshold</DictionaryKey>
+                              <DictionaryValue>
+                                High: {check.highFlapThreshold} Low:{" "}
+                                {check.lowFlapThreshold}
+                              </DictionaryValue>
+                            </DictionaryEntry>
+
+                            <DictionaryEntry>
+                              <DictionaryKey>Accepts STDIN?</DictionaryKey>
+                              <DictionaryValue>
+                                {check.stdin ? "Yes" : "No"}
+                              </DictionaryValue>
+                            </DictionaryEntry>
+
+                            <DictionaryEntry>
+                              <DictionaryKey>ENV Vars</DictionaryKey>
+                              <DictionaryValue>
+                                {check.envVars.length > 0 ? (
+                                  <Code>{check.envVars.join("\n")}</Code>
+                                ) : (
+                                  "None"
+                                )}
+                              </DictionaryValue>
+                            </DictionaryEntry>
+                          </Dictionary>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+
+                    <Divider />
+
+                    <CardContent>
+                      <Grid container spacing={0}>
+                        <Grid item xs={12} sm={6}>
+                          <Dictionary>
+                            <DictionaryEntry>
+                              <DictionaryKey>Handlers</DictionaryKey>
+                              <DictionaryValue>
+                                {check.handlers.length > 0 ? (
+                                  <List disablePadding>
+                                    {check.handlers.map(handler => (
+                                      <ListItem key={handler.name}>
+                                        <ListItemTitle>
+                                          {handler.name}
+                                        </ListItemTitle>
+                                      </ListItem>
+                                    ))}
+                                  </List>
+                                ) : (
+                                  "—"
+                                )}
+                              </DictionaryValue>
+                            </DictionaryEntry>
 
                             <DictionaryEntry>
                               <DictionaryKey>Hooks</DictionaryKey>
                               <DictionaryValue>
                                 {this.renderHooks()}
+                              </DictionaryValue>
+                            </DictionaryEntry>
+                          </Dictionary>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Dictionary>
+                            <DictionaryEntry>
+                              <DictionaryKey>Metric Format</DictionaryKey>
+                              <DictionaryValue>
+                                <Maybe
+                                  value={check.outputMetricFormat}
+                                  fallback="None"
+                                />
+                              </DictionaryValue>
+                            </DictionaryEntry>
+
+                            <DictionaryEntry>
+                              <DictionaryKey>Metric Handlers</DictionaryKey>
+                              <DictionaryValue>
+                                {check.outputMetricHandlers.length > 0 ? (
+                                  <List disablePadding>
+                                    {check.outputMetricHandlers.map(handler => (
+                                      <ListItem key={handler.name}>
+                                        <ListItemTitle>
+                                          {handler.name}
+                                        </ListItemTitle>
+                                      </ListItem>
+                                    ))}
+                                  </List>
+                                ) : (
+                                  "—"
+                                )}
                               </DictionaryValue>
                             </DictionaryEntry>
                           </Dictionary>

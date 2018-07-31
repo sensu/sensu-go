@@ -156,7 +156,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
                 </StyledTable>
               </DialogContent>
               <DialogActions>
-                <Button onClick={close} color="primary">
+                <Button onClick={close} color="contrast">
                   Cancel
                 </Button>
                 <Button
