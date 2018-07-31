@@ -24,7 +24,6 @@ import (
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -118,7 +117,9 @@ func Initialize(config *Config) (*Backend, error) {
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store: store,
 		Bus:   bus,
-		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
+		// TODO: Re-enable the following functionality
+		// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
+		// ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err.Error())

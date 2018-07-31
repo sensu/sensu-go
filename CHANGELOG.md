@@ -24,6 +24,7 @@ enterprise edition.
 the enterprise edition.
 - Upgrade dep to v0.5.0
 - Added cluster health information to /health endpoint in sensu-backend.
+- Temporarily disabled grpc extensions functionality.
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.

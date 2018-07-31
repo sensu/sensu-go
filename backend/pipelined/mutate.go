@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 	utillogging "github.com/sensu/sensu-go/util/logging"
@@ -48,23 +47,26 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 	}
 
 	if mutator == nil {
-		// Check to see if there is an extension matching the mutator
-		extension, err := p.store.GetExtension(ctx, handler.Mutator)
-		if err != nil {
-			if err == store.ErrNoExtension {
-				return nil, nil
-			}
-			return nil, err
-		}
-		executor, err := p.extensionExecutor(extension)
-		if err != nil {
-			return nil, err
-		}
-		eventData, err := executor.MutateEvent(event)
-		if err != nil {
-			return nil, err
-		}
-		return eventData, nil
+		// TODO: Re-enable the following functionality
+		// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
+		// // Check to see if there is an extension matching the mutator
+		// extension, err := p.store.GetExtension(ctx, handler.Mutator)
+		// if err != nil {
+		// 	if err == store.ErrNoExtension {
+		// 		return nil, nil
+		// 	}
+		// 	return nil, err
+		// }
+		// executor, err := p.extensionExecutor(extension)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// eventData, err := executor.MutateEvent(event)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// return eventData, nil
+		return nil, errors.New("grpc mutator temporarily disabled")
 	}
 
 	eventData, err := p.pipeMutator(mutator, event)

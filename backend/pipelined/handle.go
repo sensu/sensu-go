@@ -88,9 +88,12 @@ func (p *Pipelined) handleEvent(event *types.Event) error {
 				logger.WithFields(fields).Error(err)
 			}
 		case "grpc":
-			if _, err := p.grpcHandler(u.Extension, event, eventData); err != nil {
-				logger.WithFields(fields).Error(err)
-			}
+			// TODO: Re-enable the following functionality
+			// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
+			// if _, err := p.grpcHandler(u.Extension, event, eventData); err != nil {
+			// 	logger.WithFields(fields).Error(err)
+			// }
+			logger.WithFields(fields).Error("grpc handler temporarily disabled")
 		default:
 			return errors.New("unknown handler type")
 		}

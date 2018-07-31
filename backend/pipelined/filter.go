@@ -141,29 +141,32 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 			continue
 		}
 
-		// If the filter didn't exist, it might be an extension filter
-		ext, err := p.store.GetExtension(ctx, filterName)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).
-				Warningf("could not retrieve the filter %s", filterName)
-			continue
-		}
+		// TODO: Re-enable the following functionality
+		// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
+		// // If the filter didn't exist, it might be an extension filter
+		// ext, err := p.store.GetExtension(ctx, filterName)
+		// if err != nil {
+		// 	logger.WithFields(fields).WithError(err).
+		// 		Warningf("could not retrieve the filter %s", filterName)
+		// 	continue
+		// }
 
-		executor, err := p.extensionExecutor(ext)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).
-				Errorf("could not execute the filter %s", filterName)
-			continue
-		}
-		filtered, err := executor.FilterEvent(event)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).
-				Errorf("could not execute the filter %s", filterName)
-			continue
-		}
-		if filtered {
-			return true
-		}
+		// executor, err := p.extensionExecutor(ext)
+		// if err != nil {
+		// 	logger.WithFields(fields).WithError(err).
+		// 		Errorf("could not execute the filter %s", filterName)
+		// 	continue
+		// }
+		// filtered, err := executor.FilterEvent(event)
+		// if err != nil {
+		// 	logger.WithFields(fields).WithError(err).
+		// 		Errorf("could not execute the filter %s", filterName)
+		// 	continue
+		// }
+		// if filtered {
+		// 	return true
+		// }
+		logger.WithFields(fields).Error("grpc filter temporarily disabled")
 	}
 
 	return false
