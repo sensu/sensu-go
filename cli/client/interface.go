@@ -16,6 +16,7 @@ type APIClient interface {
 	ExtensionAPIClient
 	FilterAPIClient
 	HandlerAPIClient
+	HealthAPIClient
 	HookAPIClient
 	MutatorAPIClient
 	OrganizationAPIClient
@@ -112,6 +113,11 @@ type HandlerAPIClient interface {
 	ListHandlers(string) ([]types.Handler, error)
 	FetchHandler(string) (*types.Handler, error)
 	UpdateHandler(*types.Handler) error
+}
+
+// HealthAPIClient client methods for health api
+type HealthAPIClient interface {
+	Health() ([]*types.ClusterHealth, error)
 }
 
 // HookAPIClient client methods for hooks
