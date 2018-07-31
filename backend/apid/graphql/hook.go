@@ -69,6 +69,6 @@ func (*hookListImpl) Type(p graphql.ResolveParams) (string, error) {
 
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*hookListImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(*types.HookConfig)
+	_, ok := s.(types.HookConfig)
 	return ok
 }
