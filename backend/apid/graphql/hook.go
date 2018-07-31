@@ -57,18 +57,18 @@ type hookListImpl struct{}
 
 // Hooks implements response to request for 'config' field.
 func (*hookListImpl) Hooks(p graphql.ResolveParams) ([]string, error) {
-	l, _ := p.Source.(*types.HookList)
+	l, _ := p.Source.(types.HookList)
 	return l.Hooks, nil
 }
 
 // Type implements response to request for 'type' field.
 func (*hookListImpl) Type(p graphql.ResolveParams) (string, error) {
-	l, _ := p.Source.(*types.HookList)
+	l, _ := p.Source.(types.HookList)
 	return l.Type, nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*hookListImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.HookConfig)
+	_, ok := s.(types.HookList)
 	return ok
 }
