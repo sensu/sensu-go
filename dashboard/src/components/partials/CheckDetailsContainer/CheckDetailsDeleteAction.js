@@ -1,19 +1,19 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import { compose } from "recompose";
+import { withApollo } from "react-apollo";
 import { withRouter } from "react-router-dom";
-import Button from "@material-ui/core/Button";
 
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import deleteCheck from "/mutations/deleteCheck";
 
 class CheckDetailsDeleteAction extends React.PureComponent {
   static propTypes = {
-    client: PropTypes.object.isRequired,
     check: PropTypes.object,
+    children: PropTypes.func.isRequired,
+    client: PropTypes.object.isRequired,
     history: PropTypes.object.isRequired,
-    onRequestStart: PropTypes.func.isRequired,
-    onRequestEnd: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -24,6 +24,7 @@ class CheckDetailsDeleteAction extends React.PureComponent {
     checkConfig: gql`
       fragment CheckDetailsDeleteAction_checkConfig on CheckConfig {
         id
+        name
         ns: namespace {
           org: organization
           env: environment
@@ -32,33 +33,12 @@ class CheckDetailsDeleteAction extends React.PureComponent {
     `,
   };
 
-  state = {
-    locked: false,
-  };
-
-  requestStart() {
-    this.props.onRequestStart();
-    this.setState({ locked: true });
-  }
-
-  requestEnd() {
-    this.props.onRequestEnd();
-    this.setState({ locked: false });
-  }
-
-  deleteCheck = () => {
+  deleteRecord = () => {
     const {
       client,
       check: { id, ns },
       history,
     } = this.props;
-
-    if (this.state.locked) {
-      return;
-    }
-
-    // Lock
-    this.requestStart();
 
     // Send request
     deleteCheck(client, { id }).then(
@@ -77,15 +57,15 @@ class CheckDetailsDeleteAction extends React.PureComponent {
 
   render() {
     return (
-      <ConfirmDelete identifier="this check" onSubmit={this.deleteCheck}>
-        {dialog => (
-          <Button variant="raised" onClick={dialog.open}>
-            Delete
-          </Button>
-        )}
+      <ConfirmDelete
+        identifier={this.props.check.name}
+        onSubmit={this.deleteRecord}
+      >
+        {dialog => this.props.children(dialog.open)}
       </ConfirmDelete>
     );
   }
 }
 
-export default withRouter(CheckDetailsDeleteAction);
+const enhancer = compose(withApollo, withRouter);
+export default enhancer(CheckDetailsDeleteAction);

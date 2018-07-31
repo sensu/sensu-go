@@ -8,6 +8,10 @@ import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 import CheckDetailsContainer from "/components/partials/CheckDetailsContainer";
 
+// duration used when polling is enabled; set fairly high until we understand
+// the impact.
+const pollInterval = 1500; // 1.5s
+
 const query = gql`
   query CheckDetailsContentQuery($ns: NamespaceInput!, $name: String!) {
     check(ns: $ns, name: $name) {
@@ -35,10 +39,19 @@ class CheckDetailsContent extends React.PureComponent {
     return (
       <Query
         query={query}
+        pollInterval={pollInterval}
         fetchPolicy="cache-and-network"
         variables={{ name, ns }}
       >
-        {({ client, data: { check } = {}, loading, aborted }) => {
+        {({
+          client,
+          data: { check } = {},
+          loading,
+          aborted,
+          isPolling,
+          startPolling,
+          stopPolling,
+        }) => {
           if (!loading && !aborted && (!check || check.deleted)) {
             return <NotFoundView />;
           }
@@ -48,7 +61,12 @@ class CheckDetailsContent extends React.PureComponent {
               <CheckDetailsContainer
                 client={client}
                 check={check}
-                loading={loading || aborted}
+                loading={(loading && !isPolling) || aborted}
+                poller={{
+                  running: isPolling,
+                  start: startPolling,
+                  stop: stopPolling,
+                }}
               />
             </AppContent>
           );
