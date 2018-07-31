@@ -14,7 +14,10 @@ const styles = theme => ({
     fontWeight: 500,
     userSelect: "text",
     backgroundColor: fade(theme.palette.text.primary, 0.05),
-    color: theme.palette.secondary.dark,
+    color:
+      theme.palette.type === "dark"
+        ? theme.palette.secondary.light
+        : theme.palette.secondary.dark,
   },
 });
 

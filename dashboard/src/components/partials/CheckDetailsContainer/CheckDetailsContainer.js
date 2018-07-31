@@ -329,7 +329,9 @@ class CheckDetailsContainer extends React.PureComponent {
                               <DictionaryKey>ENV Vars</DictionaryKey>
                               <DictionaryValue>
                                 {check.envVars.length > 0 ? (
-                                  <Code>{check.envVars.join("\n")}</Code>
+                                  <Monospaced highlight background>
+                                    {check.envVars.join("\n")}
+                                  </Monospaced>
                                 ) : (
                                   "None"
                                 )}
@@ -413,9 +415,11 @@ class CheckDetailsContainer extends React.PureComponent {
                         <Divider />
                         <Monospaced background>
                           <CardContent>
-                            {`# Extended attributes\n\n${
-                              check.extendedAttributes
-                            }`}
+                            {`# Extra\n\n${JSON.stringify(
+                              check.extendedAttributes,
+                              null,
+                              "\t",
+                            )}`}
                           </CardContent>
                         </Monospaced>
                       </React.Fragment>
