@@ -42,6 +42,8 @@ generated correctly.
 future.
 - Fixed a bug where clustered round robin check execution executed checks
 too often.
+- Rules are now implicitly granting read permission to their configured
+environment & organization.
 
 ### Removed
 - Removed check subdue e2e test.

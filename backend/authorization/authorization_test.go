@@ -106,6 +106,10 @@ func TestCanAccessResource(t *testing.T) {
 	}{
 		{"NoMatches", "checks", "prod", "notsensu", types.RulePermCreate, false},
 		{"AllMatch", "entities", "dev", "sensu", types.RulePermRead, true},
+		{"ReadItsEnvironment", types.RuleTypeEnvironment, "dev", "sensu", types.RulePermRead, true},
+		{"ReadItsOrganization", types.RuleTypeOrganization, "", "sensu", types.RulePermRead, true},
+		{"ReadAnotherEnvironment", types.RuleTypeEnvironment, "prod", "sensu", types.RulePermRead, false},
+		{"ReadAnotherOrganization", types.RuleTypeOrganization, "", "acme", types.RulePermRead, false},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.TestName, func(t *testing.T) {
