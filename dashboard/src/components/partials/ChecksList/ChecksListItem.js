@@ -5,6 +5,7 @@ import gql from "graphql-tag";
 import Checkbox from "@material-ui/core/Checkbox";
 import Code from "/components/Code";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
+import CronDescriptor from "/components/partials/CronDescriptor";
 import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuController from "/components/controller/MenuController";
@@ -36,6 +37,7 @@ class CheckListItem extends React.Component {
         command
         subscriptions
         interval
+        cron
         isSilenced
         namespace {
           organization
@@ -85,9 +87,17 @@ class CheckListItem extends React.Component {
               <React.Fragment>
                 <Code>{check.command}</Code>
                 <br />
-                Executed every{" "}
+                Executed{" "}
                 <strong>
-                  {check.interval} {check.interval === 1 ? "second" : "seconds"}
+                  {check.interval ? (
+                    `
+                      every
+                      ${check.interval}
+                      ${check.interval === 1 ? "second" : "seconds"}
+                    `
+                  ) : (
+                    <CronDescriptor expression={check.cron} />
+                  )}
                 </strong>{" "}
                 by{" "}
                 <strong>
