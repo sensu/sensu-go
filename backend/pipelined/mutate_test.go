@@ -118,8 +118,12 @@ func TestPipelinedExtensionMutator(t *testing.T) {
 	handler.Mutator = "extension"
 
 	eventData, err := p.mutateEvent(handler, event)
-	require.NoError(t, err)
-	require.Equal(t, []byte("remote"), eventData)
+	// TODO: Re-enable the following functionality
+	// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
+	// require.NoError(t, err)
+	// require.Equal(t, []byte("remote"), eventData)
+	require.Error(t, err)
+	require.Nil(t, eventData)
 }
 
 func TestPipelinedPipeMutator(t *testing.T) {

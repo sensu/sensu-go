@@ -50,14 +50,16 @@ type Option func(*Pipelined) error
 // New creates a new Pipelined with supplied Options applied.
 func New(c Config, options ...Option) (*Pipelined, error) {
 	p := &Pipelined{
-		store:             c.Store,
-		bus:               c.Bus,
-		extensionExecutor: c.ExtensionExecutorGetter,
-		stopping:          make(chan struct{}, 1),
-		running:           &atomic.Value{},
-		wg:                &sync.WaitGroup{},
-		errChan:           make(chan error, 1),
-		eventChan:         make(chan interface{}, 100),
+		store: c.Store,
+		bus:   c.Bus,
+		// TODO: Re-enable the following functionality
+		// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
+		// extensionExecutor: c.ExtensionExecutorGetter,
+		stopping:  make(chan struct{}, 1),
+		running:   &atomic.Value{},
+		wg:        &sync.WaitGroup{},
+		errChan:   make(chan error, 1),
+		eventChan: make(chan interface{}, 100),
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {

@@ -171,9 +171,12 @@ func TestPipelinedFilter(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "Extension filter",
-			filters:  []string{"extension_filter"},
-			expected: true,
+			name:    "Extension filter",
+			filters: []string{"extension_filter"},
+			// TODO: Re-enable the following functionality
+			// Feature temporarily disabled: https://github.com/sensu/sensu-go/issues/1883
+			// expected: true,
+			expected: false,
 		},
 	}
 
