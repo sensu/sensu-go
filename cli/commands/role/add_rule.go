@@ -3,6 +3,7 @@ package role
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
@@ -82,7 +83,10 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	_ = cmd.Flags().StringP("type", "t", "", "type associated with the rule")
+	_ = cmd.Flags().StringP("type", "t", "",
+		"type associated with the rule, "+
+			"allowed values: "+strings.Join(types.AllTypes, ", "),
+	)
 	_ = cmd.Flags().BoolP("create", "c", false, "create permission")
 	_ = cmd.Flags().BoolP("read", "r", false, "read permission")
 	_ = cmd.Flags().BoolP("update", "u", false, "update permission")
@@ -144,9 +148,9 @@ func (opts *ruleOpts) administerQuestionnaire() error {
 		},
 		{
 			Name: "type",
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Rule Type:",
-				Default: opts.Type,
+				Options: types.AllTypes,
 			},
 			Validate: survey.Required,
 		},

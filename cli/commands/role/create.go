@@ -3,6 +3,7 @@ package role
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/types"
@@ -50,7 +51,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	_ = cmd.Flags().StringP("type", "t", "", "type associated with the rule")
+	_ = cmd.Flags().StringP("type", "t", "",
+		"type associated with the rule, "+
+			"allowed values: "+strings.Join(types.AllTypes, ", "),
+	)
 	_ = cmd.Flags().BoolP("create", "c", false, "create permission")
 	_ = cmd.Flags().BoolP("read", "r", false, "read permission")
 	_ = cmd.Flags().BoolP("update", "u", false, "update permission")

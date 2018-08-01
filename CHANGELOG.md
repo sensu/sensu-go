@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added API client support for enterprise license management.
 - Added a header to API calls that returns the current Sensu Edition.
 - Added sensuctl cluster health command.
+- List the supported resource types in sensuctl.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization in
