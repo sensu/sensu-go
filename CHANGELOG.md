@@ -44,6 +44,7 @@ future.
 too often.
 - Rules are now implicitly granting read permission to their configured
 environment & organization.
+- Fixed a bug where users could accidentally create invalid gRPC handlers.
 
 ### Removed
 - Removed check subdue e2e test.
