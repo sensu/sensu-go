@@ -83,7 +83,7 @@ class RelativeDate extends React.Component {
     } else if (delta >= -10000) {
       relativeDate = "in a few seconds";
     } else if (delta >= -60000) {
-      relativeDate = "momentarily";
+      relativeDate = "in less than a minute";
     }
     if (capitalize) {
       relativeDate = capitalizeStr(relativeDate);
