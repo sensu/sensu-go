@@ -25,6 +25,7 @@ enterprise edition.
 the enterprise edition.
 - Upgrade dep to v0.5.0
 - Added cluster health information to /health endpoint in sensu-backend.
+- API responses are inspected after each request for the Sensu Edition header.
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
