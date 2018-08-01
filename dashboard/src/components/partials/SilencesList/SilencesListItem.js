@@ -8,6 +8,7 @@ import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuController from "/components/controller/MenuController";
 import MenuItem from "@material-ui/core/MenuItem";
+import RelativeDate from "/components/RelativeDate";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import RootRef from "@material-ui/core/RootRef";
 import SilenceExpiration from "/components/partials/SilenceExpiration";
@@ -28,10 +29,28 @@ class SilencesListItem extends React.Component {
       fragment SilencesListItem_silence on Silenced {
         ...SilenceExpiration_silence
         storeId
+        begin
       }
 
       ${SilenceExpiration.fragments.silence}
     `,
+  };
+
+  renderDetails = () => {
+    const { silence } = this.props;
+
+    if (new Date(silence.begin) > new Date()) {
+      return (
+        <React.Fragment>
+          Takes effect{" "}
+          <strong>
+            <RelativeDate dateTime={silence.begin} />
+          </strong>.
+        </React.Fragment>
+      );
+    }
+
+    return <SilenceExpiration silence={silence} />;
   };
 
   render() {
@@ -48,7 +67,7 @@ class SilencesListItem extends React.Component {
         <TableOverflowCell>
           <ResourceDetails
             title={<strong>{silence.storeId}</strong>}
-            details={<SilenceExpiration silence={silence} />}
+            details={this.renderDetails()}
           />
         </TableOverflowCell>
         <TableCell padding="checkbox">
