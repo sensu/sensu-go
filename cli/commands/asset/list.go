@@ -74,7 +74,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				}
 				u, err := url.Parse(asset.URL)
 				if err != nil {
-					return "TypeError"
+					return ""
 				}
 
 				_, file := path.Split(u.EscapedPath())
