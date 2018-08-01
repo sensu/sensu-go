@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -58,6 +59,10 @@ func (c HandlerController) Create(ctx context.Context, handler types.Handler) er
 		return NewError(InvalidArgument, err)
 	}
 
+	if handler.Type == types.HandlerGRPCType {
+		return NewError(InvalidArgument, errors.New("use the extensions API for this handler type"))
+	}
+
 	// Persist
 	if err := c.Store.UpdateHandler(ctx, &handler); err != nil {
 		return NewError(InternalErr, err)
@@ -83,6 +88,10 @@ func (c HandlerController) CreateOrReplace(ctx context.Context, handler types.Ha
 	// Validate
 	if err := handler.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
+	}
+
+	if handler.Type == types.HandlerGRPCType {
+		return NewError(InvalidArgument, errors.New("use the extensions API for this handler type"))
 	}
 
 	// Persist
