@@ -50,7 +50,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				role, ok := data.(types.Role)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return role.Name
 			},

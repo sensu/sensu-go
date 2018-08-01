@@ -72,7 +72,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return silenced.ID
 			},
@@ -82,7 +82,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return silenced.Subscription
 			},
@@ -92,7 +92,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return silenced.Check
 			},
@@ -102,7 +102,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return time.Unix(silenced.Begin, 0).Format(time.RFC822)
 			},
@@ -112,7 +112,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return expireTime(silenced.Begin, silenced.Expire).String()
 			},
@@ -122,7 +122,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return globals.BooleanStyleP(silenced.ExpireOnResolve)
 			},
@@ -132,7 +132,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return silenced.Creator
 			},
@@ -142,7 +142,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return silenced.Reason
 			},
@@ -153,7 +153,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return silenced.Organization
 			},
@@ -164,7 +164,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return silenced.Environment
 			},

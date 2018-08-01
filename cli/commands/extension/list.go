@@ -54,7 +54,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				extension, ok := data.(types.Extension)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return extension.Name
 			},
@@ -64,7 +64,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				extension, ok := data.(types.Extension)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				u, err := url.Parse(extension.URL)
 				if err != nil {

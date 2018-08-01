@@ -55,7 +55,7 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			CellTransformer: func(data interface{}) string {
 				rule, ok := data.(types.Rule)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return rule.Type
 			},
@@ -65,7 +65,7 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			CellTransformer: func(data interface{}) string {
 				rule, ok := data.(types.Rule)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return rule.Organization
 			},
@@ -75,7 +75,7 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			CellTransformer: func(data interface{}) string {
 				rule, ok := data.(types.Rule)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return rule.Environment
 			},
@@ -85,7 +85,7 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			CellTransformer: func(data interface{}) string {
 				rule, ok := data.(types.Rule)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(rule.Permissions, ",")
 			},

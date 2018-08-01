@@ -59,7 +59,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				entity, ok := data.(types.Entity)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return entity.ID
 			},
@@ -69,7 +69,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				entity, ok := data.(types.Entity)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return entity.Class
 			},
@@ -79,7 +79,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				entity, ok := data.(types.Entity)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return entity.System.OS
 			},
@@ -89,7 +89,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				entity, ok := data.(types.Entity)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(entity.Subscriptions, ",")
 			},
@@ -99,7 +99,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				entity, ok := data.(types.Entity)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return timeutil.HumanTimestamp(entity.LastSeen)
 			},

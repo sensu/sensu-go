@@ -60,7 +60,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return check.Name
 			},
@@ -70,7 +70,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return check.Command
 			},
@@ -80,7 +80,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				interval := strconv.FormatUint(uint64(check.Interval), 10)
 				return interval
@@ -91,7 +91,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return check.Cron
 			},
@@ -101,7 +101,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				timeout := strconv.FormatUint(uint64(check.Timeout), 10)
 				return timeout
@@ -112,7 +112,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				ttl := strconv.FormatUint(uint64(check.Ttl), 10)
 				return ttl
@@ -123,7 +123,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(check.Subscriptions, ",")
 			},
@@ -133,7 +133,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(check.Handlers, ",")
 			},
@@ -143,7 +143,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(check.RuntimeAssets, ",")
 			},
@@ -153,7 +153,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return globals.FormatHookLists(check.CheckHooks)
 			},
@@ -163,7 +163,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return globals.BooleanStyleP(check.Publish)
 			},
@@ -173,7 +173,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strconv.FormatBool(check.Stdin)
 			},
@@ -183,7 +183,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return check.OutputMetricFormat
 			},
@@ -193,7 +193,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				check, ok := data.(types.CheckConfig)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(check.OutputMetricHandlers, ",")
 			},

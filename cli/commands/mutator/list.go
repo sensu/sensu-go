@@ -59,7 +59,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				mutator, ok := data.(types.Mutator)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return mutator.Name
 			},
@@ -70,7 +70,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				mutator, ok := data.(types.Mutator)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return mutator.Command
 			},
@@ -81,7 +81,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				mutator, ok := data.(types.Mutator)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(mutator.EnvVars, ",")
 			},
@@ -92,7 +92,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				mutator, ok := data.(types.Mutator)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				timeout := strconv.FormatUint(uint64(mutator.Timeout), 10)
 				return timeout

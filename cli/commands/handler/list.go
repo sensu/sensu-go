@@ -60,7 +60,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, ok := data.(types.Handler)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return handler.Name
 			},
@@ -70,7 +70,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, ok := data.(types.Handler)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return handler.Type
 			},
@@ -80,7 +80,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, ok := data.(types.Handler)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strconv.FormatUint(uint64(handler.Timeout), 10)
 			},
@@ -90,7 +90,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, ok := data.(types.Handler)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(handler.Filters, ",")
 			},
@@ -100,7 +100,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, ok := data.(types.Handler)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return handler.Mutator
 			},
@@ -110,7 +110,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, ok := data.(types.Handler)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				switch handler.Type {
 				case types.HandlerTCPType:
@@ -146,7 +146,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				handler, ok := data.(types.Handler)
 				if !ok {
-					return ""
+					return "TypeError"
 				}
 				return strings.Join(handler.EnvVars, ",")
 			},
