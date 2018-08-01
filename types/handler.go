@@ -23,6 +23,9 @@ const (
 	// HandlerUDPType represents handlers that send event data to a remote UDP
 	// socket
 	HandlerUDPType = "udp"
+
+	// HandlerGRPCType is a special kind of handler that represents an extension
+	HandlerGRPCType = "grpc"
 )
 
 // Validate returns an error if the handler does not pass validation tests.

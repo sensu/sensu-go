@@ -41,11 +41,9 @@ esac
 
 install_deps () {
     echo "Installing deps..."
-    go get github.com/axw/gocov/gocov
     go get gopkg.in/alecthomas/gometalinter.v2
     go get github.com/gordonklaus/ineffassign
     go get github.com/jgautheron/goconst/cmd/goconst
-    go get honnef.co/go/tools/cmd/megacheck
 }
 
 cmd_name_map() {
@@ -184,12 +182,6 @@ linter_commands () {
     echo "Running linter..."
 
     gometalinter.v2 --vendor --disable-all --enable=vet --enable=ineffassign --enable=goconst --tests ./...
-    if [ $? -ne 0 ]; then
-        echo "Linting failed..."
-        exit 1
-    fi
-
-    megacheck $(go list ./... | grep -v dashboardd | grep -v agent/assetmanager | grep -v scripts)
     if [ $? -ne 0 ]; then
         echo "Linting failed..."
         exit 1
