@@ -91,7 +91,7 @@ class SilencesListItem extends React.Component {
           padding="none"
           style={{
             // TODO: magic number
-            paddingTop: 6,
+            paddingTop: 8, // one spacing unit
           }}
         >
           <Chip
