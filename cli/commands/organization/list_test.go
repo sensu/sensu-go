@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
@@ -14,7 +13,7 @@ import (
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -26,7 +25,7 @@ func TestListCommand(t *testing.T) {
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListOrganizations").Return([]types.Organization{
 		*types.FixtureOrganization("one"),
@@ -43,7 +42,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListOrganizations").Return([]types.Organization{}, errors.New("fire"))
 
@@ -53,12 +52,4 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert.Empty(out)
 	assert.NotNil(err)
 	assert.Equal("fire", err.Error())
-}
-
-func newCLI() *cli.SensuCli {
-	cli := test.NewMockCLI()
-	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("json")
-
-	return cli
 }
