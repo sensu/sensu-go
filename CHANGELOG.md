@@ -25,6 +25,8 @@ enterprise edition.
 the enterprise edition.
 - Upgrade dep to v0.5.0
 - Added cluster health information to /health endpoint in sensu-backend.
+- Rename list-rules subcommand to info in sensuctl role commmand with alias
+for backward compatibility.
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.

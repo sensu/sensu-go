@@ -10,22 +10,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListRulesCommand(t *testing.T) {
+func TestInfoCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	config := cli.Config.(*client.MockConfig)
 	config.On("Format").Return("json")
 
-	cmd := ListRulesCommand(cli)
+	cmd := InfoCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
-	assert.Regexp("list-rules", cmd.Use)
-	assert.Regexp("list rules", cmd.Short)
+	assert.Regexp("info", cmd.Use)
+	assert.Regexp("show detailed role information", cmd.Short)
 }
 
-func TestListRulesCommandRunEWithError(t *testing.T) {
+func TestInfoCommandRunEWithError(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 
@@ -38,14 +38,14 @@ func TestListRulesCommandRunEWithError(t *testing.T) {
 		errors.New("sadfa"),
 	)
 
-	cmd := ListRulesCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"abc"})
 
 	assert.Empty(out)
 	assert.Error(err)
 }
 
-func TestListRulesCommandRunEClosure(t *testing.T) {
+func TestInfoCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 
@@ -58,7 +58,7 @@ func TestListRulesCommandRunEClosure(t *testing.T) {
 		nil,
 	)
 
-	cmd := ListRulesCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"abc"})
 
 	assert.NotEmpty(out)
@@ -69,7 +69,7 @@ func TestListRulesCommandRunEClosure(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestListRulesCommandRunEJSON(t *testing.T) {
+func TestInfoCommandRunEJSON(t *testing.T) {
 	assert := assert.New(t)
 	cli := newCLI()
 
@@ -79,7 +79,7 @@ func TestListRulesCommandRunEJSON(t *testing.T) {
 		nil,
 	)
 
-	cmd := ListRulesCommand(cli)
+	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"abc"})
 
 	assert.NotEmpty(out)

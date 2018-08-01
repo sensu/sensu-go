@@ -13,11 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ListRulesCommand defines new command to list rules associated w/ a role
-func ListRulesCommand(cli *cli.SensuCli) *cobra.Command {
+// InfoCommand defines new command to list rules associated w/ a role
+func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "list-rules [ROLE]",
-		Short:        "list rules associated with a role",
+		Use:          "info [ROLE]",
+		Aliases:      []string{"list-rules"}, // backward compatibility
+		Short:        "show detailed role information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
