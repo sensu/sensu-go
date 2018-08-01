@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"google.golang.org/grpc"
 )
+
+const ExtensionTimeout = 5 * time.Second
 
 type clientConnCache struct {
 	sync.Mutex
@@ -63,7 +66,9 @@ func NewGRPCExtensionExecutor(ext *types.Extension) (ExtensionExecutor, error) {
 
 // FilterEvent filters an event.
 func (e *GRPCExtensionExecutor) FilterEvent(evt *types.Event) (bool, error) {
-	resp, err := e.client.FilterEvent(context.Background(), &FilterEventRequest{Event: evt})
+	ctx, cancel := context.WithTimeout(context.Background(), ExtensionTimeout)
+	defer cancel()
+	resp, err := e.client.FilterEvent(ctx, &FilterEventRequest{Event: evt})
 	if err != nil {
 		return false, err
 	}
@@ -75,7 +80,9 @@ func (e *GRPCExtensionExecutor) FilterEvent(evt *types.Event) (bool, error) {
 
 // MutateEvent mutates an event.
 func (e *GRPCExtensionExecutor) MutateEvent(evt *types.Event) ([]byte, error) {
-	resp, err := e.client.MutateEvent(context.Background(), &MutateEventRequest{Event: evt})
+	ctx, cancel := context.WithTimeout(context.Background(), ExtensionTimeout)
+	defer cancel()
+	resp, err := e.client.MutateEvent(ctx, &MutateEventRequest{Event: evt})
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +95,9 @@ func (e *GRPCExtensionExecutor) MutateEvent(evt *types.Event) ([]byte, error) {
 // HandleEvent handles an event.
 func (e *GRPCExtensionExecutor) HandleEvent(evt *types.Event, mutatedEvt []byte) (HandleEventResponse, error) {
 	req := &HandleEventRequest{Event: evt, MutatedEvent: mutatedEvt}
-	resp, err := e.client.HandleEvent(context.Background(), req)
+	ctx, cancel := context.WithTimeout(context.Background(), ExtensionTimeout)
+	defer cancel()
+	resp, err := e.client.HandleEvent(ctx, req)
 	if err != nil && resp == nil {
 		return HandleEventResponse{}, err
 	}

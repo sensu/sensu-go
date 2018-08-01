@@ -40,6 +40,7 @@ future.
 - Fixed a bug where clustered round robin check execution executed checks
 too often.
 - Catch errors in type assertions in cli.
+- Fixed a bug where users could accidentally create invalid gRPC handlers.
 
 ### Removed
 - Removed check subdue e2e test.
