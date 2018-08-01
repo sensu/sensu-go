@@ -58,21 +58,30 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return check.Name
 			},
 		},
 		{
 			Title: "Command",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return check.Command
 			},
 		},
 		{
 			Title: "Interval",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				interval := strconv.FormatUint(uint64(check.Interval), 10)
 				return interval
 			},
@@ -80,14 +89,20 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Cron",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return check.Cron
 			},
 		},
 		{
 			Title: "Timeout",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				timeout := strconv.FormatUint(uint64(check.Timeout), 10)
 				return timeout
 			},
@@ -95,7 +110,10 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "TTL",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				ttl := strconv.FormatUint(uint64(check.Ttl), 10)
 				return ttl
 			},
@@ -103,56 +121,80 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Subscriptions",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return strings.Join(check.Subscriptions, ",")
 			},
 		},
 		{
 			Title: "Handlers",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return strings.Join(check.Handlers, ",")
 			},
 		},
 		{
 			Title: "Assets",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return strings.Join(check.RuntimeAssets, ",")
 			},
 		},
 		{
 			Title: "Hooks",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return globals.FormatHookLists(check.CheckHooks)
 			},
 		},
 		{
 			Title: "Publish?",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return globals.BooleanStyleP(check.Publish)
 			},
 		},
 		{
 			Title: "Stdin?",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return strconv.FormatBool(check.Stdin)
 			},
 		},
 		{
 			Title: "Metric Format",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return check.OutputMetricFormat
 			},
 		},
 		{
 			Title: "Metric Handlers",
 			CellTransformer: func(data interface{}) string {
-				check, _ := data.(types.CheckConfig)
+				check, ok := data.(types.CheckConfig)
+				if !ok {
+					return ""
+				}
 				return strings.Join(check.OutputMetricHandlers, ",")
 			},
 		},

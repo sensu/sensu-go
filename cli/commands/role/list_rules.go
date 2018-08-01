@@ -53,28 +53,40 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			Title:       "Type",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				rule, _ := data.(types.Rule)
+				rule, ok := data.(types.Rule)
+				if !ok {
+					return ""
+				}
 				return rule.Type
 			},
 		},
 		{
 			Title: "Org.",
 			CellTransformer: func(data interface{}) string {
-				rule, _ := data.(types.Rule)
+				rule, ok := data.(types.Rule)
+				if !ok {
+					return ""
+				}
 				return rule.Organization
 			},
 		},
 		{
 			Title: "Env.",
 			CellTransformer: func(data interface{}) string {
-				rule, _ := data.(types.Rule)
+				rule, ok := data.(types.Rule)
+				if !ok {
+					return ""
+				}
 				return rule.Environment
 			},
 		},
 		{
 			Title: "Permissions",
 			CellTransformer: func(data interface{}) string {
-				rule, _ := data.(types.Rule)
+				rule, ok := data.(types.Rule)
+				if !ok {
+					return ""
+				}
 				return strings.Join(rule.Permissions, ",")
 			},
 		},

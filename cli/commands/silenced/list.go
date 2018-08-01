@@ -70,56 +70,80 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return silenced.ID
 			},
 		},
 		{
 			Title: "Subscription",
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return silenced.Subscription
 			},
 		},
 		{
 			Title: "Check",
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return silenced.Check
 			},
 		},
 		{
 			Title: "Begin",
 			CellTransformer: func(data interface{}) string {
-				s, _ := data.(types.Silenced)
-				return time.Unix(s.Begin, 0).Format(time.RFC822)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
+				return time.Unix(silenced.Begin, 0).Format(time.RFC822)
 			},
 		},
 		{
 			Title: "Expire",
 			CellTransformer: func(data interface{}) string {
-				s, _ := data.(types.Silenced)
-				return expireTime(s.Begin, s.Expire).String()
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
+				return expireTime(silenced.Begin, silenced.Expire).String()
 			},
 		},
 		{
 			Title: "ExpireOnResolve",
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return globals.BooleanStyleP(silenced.ExpireOnResolve)
 			},
 		},
 		{
 			Title: "Creator",
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return silenced.Creator
 			},
 		},
 		{
 			Title: "Reason",
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return silenced.Reason
 			},
 		},
@@ -127,7 +151,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Organization",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return silenced.Organization
 			},
 		},
@@ -135,7 +162,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Environment",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				silenced, _ := data.(types.Silenced)
+				silenced, ok := data.(types.Silenced)
+				if !ok {
+					return ""
+				}
 				return silenced.Environment
 			},
 		},

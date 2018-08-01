@@ -39,6 +39,7 @@ generated correctly.
 future.
 - Fixed a bug where clustered round robin check execution executed checks
 too often.
+- Catch errors in type assertions in cli.
 
 ### Removed
 - Removed check subdue e2e test.

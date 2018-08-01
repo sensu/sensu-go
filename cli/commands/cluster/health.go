@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// HealthCommand gets the Sensu health status of a cluster
 func HealthCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "health",
@@ -33,7 +34,10 @@ func printToTable(result interface{}, w io.Writer) {
 			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*types.ClusterHealth)
+				if !ok {
+					return ""
+				}
 				return fmt.Sprintf("%x", clusterHealth.MemberID)
 			},
 		},
@@ -41,7 +45,10 @@ func printToTable(result interface{}, w io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*types.ClusterHealth)
+				if !ok {
+					return ""
+				}
 				return clusterHealth.Name
 			},
 		},
@@ -49,7 +56,10 @@ func printToTable(result interface{}, w io.Writer) {
 			Title:       "Error",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*types.ClusterHealth)
+				if !ok {
+					return ""
+				}
 				return fmt.Sprintf("%v", clusterHealth.Err)
 			},
 		},
@@ -57,7 +67,10 @@ func printToTable(result interface{}, w io.Writer) {
 			Title:       "Healthy",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*types.ClusterHealth)
+				if !ok {
+					return ""
+				}
 				return fmt.Sprintf("%t", clusterHealth.Healthy)
 			},
 		},

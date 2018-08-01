@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// MemberRemoveCommand removes a cluster member by ID
 func MemberRemoveCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "member-remove [ID]",

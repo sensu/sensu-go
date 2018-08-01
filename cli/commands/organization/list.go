@@ -48,14 +48,20 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				org, _ := data.(types.Organization)
+				org, ok := data.(types.Organization)
+				if !ok {
+					return ""
+				}
 				return org.Name
 			},
 		},
 		{
 			Title: "Description",
 			CellTransformer: func(data interface{}) string {
-				org, _ := data.(types.Organization)
+				org, ok := data.(types.Organization)
+				if !ok {
+					return ""
+				}
 				return org.Description
 			},
 		},

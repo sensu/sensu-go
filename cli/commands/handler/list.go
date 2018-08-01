@@ -58,43 +58,60 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return ""
+				}
 				return handler.Name
 			},
 		},
 		{
 			Title: "Type",
 			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return ""
+				}
 				return handler.Type
 			},
 		},
 		{
 			Title: "Timeout",
 			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return ""
+				}
 				return strconv.FormatUint(uint64(handler.Timeout), 10)
 			},
 		},
 		{
 			Title: "Filters",
 			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return ""
+				}
 				return strings.Join(handler.Filters, ",")
 			},
 		},
 		{
 			Title: "Mutator",
 			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return ""
+				}
 				return handler.Mutator
 			},
 		},
 		{
 			Title: "Execute",
 			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
-
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return ""
+				}
 				switch handler.Type {
 				case types.HandlerTCPType:
 					fallthrough
@@ -127,7 +144,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Environment Variables",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				handler, _ := data.(types.Handler)
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return ""
+				}
 				return strings.Join(handler.EnvVars, ",")
 			},
 		},

@@ -58,42 +58,60 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Entity",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
+				event, ok := data.(types.Event)
+				if !ok {
+					return ""
+				}
 				return event.Entity.ID
 			},
 		},
 		{
 			Title: "Check",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
+				event, ok := data.(types.Event)
+				if !ok {
+					return ""
+				}
 				return event.Check.Name
 			},
 		},
 		{
 			Title: "Output",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
+				event, ok := data.(types.Event)
+				if !ok {
+					return ""
+				}
 				return event.Check.Output
 			},
 		},
 		{
 			Title: "Status",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
+				event, ok := data.(types.Event)
+				if !ok {
+					return ""
+				}
 				return strconv.Itoa(int(event.Check.Status))
 			},
 		},
 		{
 			Title: "Silenced",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
+				event, ok := data.(types.Event)
+				if !ok {
+					return ""
+				}
 				return globals.BooleanStyleP(len(event.Check.Silenced) > 0)
 			},
 		},
 		{
 			Title: "Timestamp",
 			CellTransformer: func(data interface{}) string {
-				event, _ := data.(types.Event)
+				event, ok := data.(types.Event)
+				if !ok {
+					return ""
+				}
 				time := time.Unix(event.Timestamp, 0)
 				return time.String()
 			},

@@ -57,35 +57,50 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				entity, _ := data.(types.Entity)
+				entity, ok := data.(types.Entity)
+				if !ok {
+					return ""
+				}
 				return entity.ID
 			},
 		},
 		{
 			Title: "Class",
 			CellTransformer: func(data interface{}) string {
-				entity, _ := data.(types.Entity)
+				entity, ok := data.(types.Entity)
+				if !ok {
+					return ""
+				}
 				return entity.Class
 			},
 		},
 		{
 			Title: "OS",
 			CellTransformer: func(data interface{}) string {
-				entity, _ := data.(types.Entity)
+				entity, ok := data.(types.Entity)
+				if !ok {
+					return ""
+				}
 				return entity.System.OS
 			},
 		},
 		{
 			Title: "Subscriptions",
 			CellTransformer: func(data interface{}) string {
-				entity, _ := data.(types.Entity)
+				entity, ok := data.(types.Entity)
+				if !ok {
+					return ""
+				}
 				return strings.Join(entity.Subscriptions, ",")
 			},
 		},
 		{
 			Title: "Last Seen",
 			CellTransformer: func(data interface{}) string {
-				entity, _ := data.(types.Entity)
+				entity, ok := data.(types.Entity)
+				if !ok {
+					return ""
+				}
 				return timeutil.HumanTimestamp(entity.LastSeen)
 			},
 		},
