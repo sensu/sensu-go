@@ -57,7 +57,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				env, ok := data.(types.Environment)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return env.Organization
 			},
@@ -68,7 +68,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				env, ok := data.(types.Environment)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return env.Name
 			},
@@ -78,7 +78,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				env, ok := data.(types.Environment)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return env.Description
 			},

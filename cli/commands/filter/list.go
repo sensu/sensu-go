@@ -58,7 +58,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				filter, ok := data.(types.EventFilter)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return filter.Name
 			},
@@ -68,7 +68,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				filter, ok := data.(types.EventFilter)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return filter.Action
 			},
@@ -78,7 +78,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				filter, ok := data.(types.EventFilter)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return strings.Join(filter.Statements, " && ")
 			},

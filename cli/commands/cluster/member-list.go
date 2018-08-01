@@ -45,7 +45,7 @@ func printMemberListToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				member, ok := data.(*etcdserverpb.Member)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return fmt.Sprintf("%x", member.ID)
 			},
@@ -56,7 +56,7 @@ func printMemberListToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				member, ok := data.(*etcdserverpb.Member)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return member.Name
 			},
@@ -66,7 +66,7 @@ func printMemberListToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				member, ok := data.(*etcdserverpb.Member)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return strings.Join(member.PeerURLs, ",")
 			},
@@ -76,7 +76,7 @@ func printMemberListToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				member, ok := data.(*etcdserverpb.Member)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return strings.Join(member.ClientURLs, ",")
 			},

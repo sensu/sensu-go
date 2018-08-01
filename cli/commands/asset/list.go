@@ -60,7 +60,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				asset, ok := data.(types.Asset)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return asset.Name
 			},
@@ -70,7 +70,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				asset, ok := data.(types.Asset)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				u, err := url.Parse(asset.URL)
 				if err != nil {
@@ -90,7 +90,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				asset, ok := data.(types.Asset)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				if len(asset.Sha512) >= 128 {
 					return string(asset.Sha512[0:7])

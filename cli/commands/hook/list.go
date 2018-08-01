@@ -58,7 +58,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				hook, ok := data.(types.HookConfig)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return hook.Name
 			},
@@ -68,7 +68,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				hook, ok := data.(types.HookConfig)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return hook.Command
 			},
@@ -78,7 +78,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				hook, ok := data.(types.HookConfig)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				timeout := strconv.FormatUint(uint64(hook.Timeout), 10)
 				return timeout
@@ -89,7 +89,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				hook, ok := data.(types.HookConfig)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return strconv.FormatBool(hook.Stdin)
 			},

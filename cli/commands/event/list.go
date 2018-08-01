@@ -60,7 +60,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				event, ok := data.(types.Event)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return event.Entity.ID
 			},
@@ -70,7 +70,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				event, ok := data.(types.Event)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return event.Check.Name
 			},
@@ -80,7 +80,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				event, ok := data.(types.Event)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return event.Check.Output
 			},
@@ -90,7 +90,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				event, ok := data.(types.Event)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return strconv.Itoa(int(event.Check.Status))
 			},
@@ -100,7 +100,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				event, ok := data.(types.Event)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return globals.BooleanStyleP(len(event.Check.Silenced) > 0)
 			},
@@ -110,7 +110,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				event, ok := data.(types.Event)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				time := time.Unix(event.Timestamp, 0)
 				return time.String()

@@ -36,7 +36,7 @@ func printToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				clusterHealth, ok := data.(*types.ClusterHealth)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return fmt.Sprintf("%x", clusterHealth.MemberID)
 			},
@@ -47,7 +47,7 @@ func printToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				clusterHealth, ok := data.(*types.ClusterHealth)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return clusterHealth.Name
 			},
@@ -58,7 +58,7 @@ func printToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				clusterHealth, ok := data.(*types.ClusterHealth)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return fmt.Sprintf("%v", clusterHealth.Err)
 			},
@@ -69,7 +69,7 @@ func printToTable(result interface{}, w io.Writer) {
 			CellTransformer: func(data interface{}) string {
 				clusterHealth, ok := data.(*types.ClusterHealth)
 				if !ok {
-					return "TypeError"
+					return cli.TypeError
 				}
 				return fmt.Sprintf("%t", clusterHealth.Healthy)
 			},
