@@ -410,7 +410,7 @@ class CheckDetailsContainer extends React.PureComponent {
                       </Grid>
                     </CardContent>
 
-                    {check.extendedAttributes && (
+                    {Object.keys(check.extendedAttributes).length > 0 && (
                       <React.Fragment>
                         <Divider />
                         <Monospaced background>
