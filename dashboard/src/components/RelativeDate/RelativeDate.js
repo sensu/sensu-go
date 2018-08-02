@@ -67,10 +67,10 @@ class RelativeDate extends React.Component {
 
   render() {
     const { dateTime, capitalize, unit, style, ...props } = this.props;
-    const { now } = this.state;
 
     const formatter = new IntlRelativeFormat("en", { style });
     const dateValue = new Date(dateTime);
+    const now = new Date();
     const delta = now - dateValue;
 
     let relativeDate;
