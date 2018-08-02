@@ -55,7 +55,7 @@ class EventsContent extends React.Component {
 
   render() {
     const { queryParams, setQueryParams, match } = this.props;
-    const { filter, order, limit = "50", offset = "0" } = queryParams;
+    const { filter, order, limit = "25", offset = "0" } = queryParams;
 
     return (
       <Query

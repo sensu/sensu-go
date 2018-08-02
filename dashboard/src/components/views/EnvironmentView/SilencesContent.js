@@ -50,7 +50,7 @@ class SilencesContent extends React.Component {
 
   render() {
     const { match, queryParams, setQueryParams } = this.props;
-    const { limit = "50", offset = "0", order, filter } = queryParams;
+    const { limit = "25", offset = "0", order, filter } = queryParams;
 
     return (
       <Query
