@@ -58,14 +58,20 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				asset, _ := data.(types.Asset)
+				asset, ok := data.(types.Asset)
+				if !ok {
+					return cli.TypeError
+				}
 				return asset.Name
 			},
 		},
 		{
 			Title: "URL",
 			CellTransformer: func(data interface{}) string {
-				asset, _ := data.(types.Asset)
+				asset, ok := data.(types.Asset)
+				if !ok {
+					return cli.TypeError
+				}
 				u, err := url.Parse(asset.URL)
 				if err != nil {
 					return ""
@@ -82,8 +88,10 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Hash",
 			CellTransformer: func(data interface{}) string {
-				asset, _ := data.(types.Asset)
-
+				asset, ok := data.(types.Asset)
+				if !ok {
+					return cli.TypeError
+				}
 				if len(asset.Sha512) >= 128 {
 					return string(asset.Sha512[0:7])
 				}
