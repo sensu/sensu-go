@@ -159,7 +159,7 @@ class EventsListHeader extends React.PureComponent {
                 <CollapsingMenu.Button
                   title="Delete"
                   icon={<DeleteIcon />}
-                  onClick={() => confirm.open}
+                  onClick={confirm.open}
                 />
               )}
             </ConfirmDelete>

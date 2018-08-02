@@ -151,7 +151,7 @@ class SilencesList extends React.Component {
                       <CollapsingMenu.Button
                         title="Delete"
                         icon={<DeleteIcon />}
-                        onClick={() => confirm.open}
+                        onClick={confirm.open}
                       />
                     )}
                   </ConfirmDelete>
