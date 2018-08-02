@@ -240,3 +240,15 @@ func TestProcessRegistration(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateKeepaliveEvent(t *testing.T) {
+	entity := types.FixtureEntity("entity1")
+	keepaliveEvent := createKeepaliveEvent(entity)
+	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
+	assert.Equal(t, uint32(120), keepaliveEvent.Check.Interval)
+	assert.Equal(t, []string{"keepalive"}, keepaliveEvent.Check.Handlers)
+	assert.Equal(t, uint32(1), keepaliveEvent.Check.Status)
+	assert.NotEqual(t, int64(0), keepaliveEvent.Check.Issued)
+	assert.Equal(t, uint32(1), keepaliveEvent.Check.History[0].Status)
+	assert.NotEqual(t, int64(0), keepaliveEvent.Check.History[0].Executed)
+}

@@ -261,6 +261,13 @@ func createKeepaliveEvent(entity *types.Entity) *types.Event {
 		Environment:  entity.Environment,
 		Organization: entity.Organization,
 		Status:       1,
+		Issued:       time.Now().Unix(),
+		History: []types.CheckHistory{
+			{
+				Status:   1,
+				Executed: time.Now().Unix(),
+			},
+		},
 	}
 	keepaliveEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
