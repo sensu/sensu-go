@@ -2,10 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import Button from "@material-ui/core/Button";
+import ButtonIcon from "/components/ButtonIcon";
 import ButtonSet from "/components/ButtonSet";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import DropdownArrow from "@material-ui/icons/ArrowDropDown";
-import IconButton from "/components/partials/IconButton";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortMenu from "/components/partials/ListSortMenu";
 import MenuController from "/components/controller/MenuController";
@@ -88,9 +88,12 @@ class ChecksListHeader extends React.PureComponent {
             >
               {({ open, ref }) => (
                 <RootRef rootRef={ref}>
-                  <IconButton onClick={open} icon={<DropdownArrow />}>
+                  <Button onClick={open}>
                     Sort
-                  </IconButton>
+                    <ButtonIcon alignment="right">
+                      <DropdownArrow />
+                    </ButtonIcon>
+                  </Button>
                 </RootRef>
               )}
             </MenuController>

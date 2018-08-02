@@ -1,12 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
 
+import Button from "@material-ui/core/Button";
+import ButtonIcon from "/components/ButtonIcon";
 import DropdownArrow from "@material-ui/icons/ArrowDropDown";
+
 import Menu from "@material-ui/core/Menu";
 import RootRef from "@material-ui/core/RootRef";
 
 import MenuController from "/components/controller/MenuController";
-import IconButton from "/components/partials/IconButton";
 
 class ButtonMenu extends React.Component {
   static propTypes = {
@@ -45,9 +47,12 @@ class ButtonMenu extends React.Component {
       >
         {({ open, ref }) => (
           <RootRef rootRef={ref}>
-            <IconButton onClick={open} icon={<DropdownArrow />}>
+            <Button onClick={open}>
               {label}
-            </IconButton>
+              <ButtonIcon alignment="right">
+                <DropdownArrow />
+              </ButtonIcon>
+            </Button>
           </RootRef>
         )}
       </MenuController>

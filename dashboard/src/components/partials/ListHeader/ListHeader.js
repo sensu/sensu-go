@@ -21,9 +21,9 @@ const styles = theme => {
       // component to keep the header checkbox aligned with row checkboxes.
       // See: https://github.com/mui-org/material-ui/blob/3353f44/packages/material-ui/src/TableCell/TableCell.js#L50
       paddingLeft: 12,
-      paddingRight: 24,
-      paddingTop: 4,
-      paddingBottom: 4,
+      paddingRight: 12,
+      paddingTop: theme.spacing.unit / 2,
+      paddingBottom: theme.spacing.unit / 2,
       backgroundColor: theme.palette.primary.light,
       color: theme.palette.primary.contrastText,
       display: "flex",

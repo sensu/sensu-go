@@ -13,6 +13,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import FaceIcon from "@material-ui/icons/Face";
+import Hidden from "@material-ui/core/Hidden";
 import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuController from "/components/controller/MenuController";
@@ -28,6 +29,19 @@ import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 import Tooltip from "@material-ui/core/Tooltip";
+
+const RightAlign = ({ children }) => (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "flex-end",
+    }}
+  >
+    {children}
+  </div>
+);
+
+RightAlign.propTypes = { children: PropTypes.node.isRequired };
 
 class SilencesListItem extends React.Component {
   static propTypes = {
@@ -87,85 +101,85 @@ class SilencesListItem extends React.Component {
             details={this.renderDetails()}
           />
         </TableOverflowCell>
-        <TableCell
-          padding="none"
-          style={{
-            // TODO: magic number
-            paddingTop: 8, // one spacing unit
-          }}
-        >
-          <Chip
-            avatar={
-              <Avatar>
-                <FaceIcon />
-              </Avatar>
-            }
-            label={silence.creator.username}
+        <Hidden only="xs">
+          <TableCell
+            padding="none"
             style={{
-              // TODO: ideally have Chip scale to current fontSize(?)
-              transform: "scale(0.87)",
+              // TODO: magic number
+              paddingTop: 8, // one spacing unit
             }}
-          />
-        </TableCell>
+          >
+            <Chip
+              avatar={
+                <Avatar>
+                  <FaceIcon />
+                </Avatar>
+              }
+              label={silence.creator.username}
+              style={{
+                // TODO: ideally have Chip scale to current fontSize(?)
+                transform: "scale(0.87)",
+              }}
+            />
+          </TableCell>
+        </Hidden>
         <TableCell padding="checkbox">
-          {silence.reason && (
-            <ModalController
-              renderModal={({ close }) => (
-                <Dialog
-                  open
-                  fullWidth
-                  TransitionComponent={props => (
-                    <Slide direction="up" {...props} />
-                  )}
-                  onClose={close}
-                >
-                  <DialogTitle>Silenced For...</DialogTitle>
-                  <DialogContent>
-                    <DialogContentText id="alert-dialog-slide-description">
-                      {silence.reason}
-                    </DialogContentText>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={close} color="contrast">
-                      Close
-                    </Button>
-                  </DialogActions>
-                </Dialog>
+          <RightAlign>
+            {silence.reason && (
+              <ModalController
+                renderModal={({ close }) => (
+                  <Dialog
+                    open
+                    fullWidth
+                    TransitionComponent={props => (
+                      <Slide direction="up" {...props} />
+                    )}
+                    onClose={close}
+                  >
+                    <DialogTitle>Reason Given</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>{silence.reason}</DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={close} color="contrast">
+                        Close
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+                )}
+              >
+                {({ open }) => (
+                  <Tooltip title={"Reason"}>
+                    <IconButton onClick={open}>
+                      <NotesIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </ModalController>
+            )}
+            <MenuController
+              renderMenu={({ anchorEl, close }) => (
+                <Menu open onClose={close} anchorEl={anchorEl}>
+                  <MenuItem
+                    onClick={() => {
+                      onClickDelete();
+                      this.closeMenu();
+                    }}
+                  >
+                    Delete
+                  </MenuItem>
+                </Menu>
               )}
             >
-              {({ open }) => (
-                <Tooltip title={"Reason"}>
+              {({ open, ref }) => (
+                <RootRef rootRef={ref}>
                   <IconButton onClick={open}>
-                    <NotesIcon />
+                    <DisclosureIcon />
                   </IconButton>
-                </Tooltip>
+                </RootRef>
               )}
-            </ModalController>
-          )}
-        </TableCell>
-        <TableCell padding="checkbox">
-          <MenuController
-            renderMenu={({ anchorEl, close }) => (
-              <Menu open onClose={close} anchorEl={anchorEl}>
-                <MenuItem
-                  onClick={() => {
-                    onClickDelete();
-                    this.closeMenu();
-                  }}
-                >
-                  Delete
-                </MenuItem>
-              </Menu>
-            )}
-          >
-            {({ open, ref }) => (
-              <RootRef rootRef={ref}>
-                <IconButton onClick={open}>
-                  <DisclosureIcon />
-                </IconButton>
-              </RootRef>
-            )}
-          </MenuController>
+            </MenuController>
+          </RightAlign>
         </TableCell>
       </TableSelectableRow>
     );

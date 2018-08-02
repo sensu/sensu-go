@@ -68,7 +68,7 @@ class SubMenu extends React.Component {
               <RootRef rootRef={ref}>
                 <Button onClick={open}>
                   {title}
-                  <ButtonIcon alignRight>
+                  <ButtonIcon alignment="right">
                     <DropdownArrow />
                   </ButtonIcon>
                 </Button>

@@ -4,6 +4,7 @@ import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
 
 import Button from "@material-ui/core/Button";
+import ButtonIcon from "/components/ButtonIcon";
 import DropdownArrow from "@material-ui/icons/ArrowDropDown";
 import RootRef from "@material-ui/core/RootRef";
 import Table from "@material-ui/core/Table";
@@ -167,7 +168,10 @@ class SilencesList extends React.Component {
                     {({ open, ref }) => (
                       <RootRef rootRef={ref}>
                         <Button onClick={open}>
-                          Sort <DropdownArrow />
+                          Sort
+                          <ButtonIcon alignment="right">
+                            <DropdownArrow />
+                          </ButtonIcon>
                         </Button>
                       </RootRef>
                     )}
