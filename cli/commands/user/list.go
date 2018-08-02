@@ -47,21 +47,30 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Username",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				user, _ := data.(types.User)
+				user, ok := data.(types.User)
+				if !ok {
+					return cli.TypeError
+				}
 				return user.Username
 			},
 		},
 		{
 			Title: "Roles",
 			CellTransformer: func(data interface{}) string {
-				user, _ := data.(types.User)
+				user, ok := data.(types.User)
+				if !ok {
+					return cli.TypeError
+				}
 				return strings.Join(user.Roles, ",")
 			},
 		},
 		{
 			Title: "Enabled",
 			CellTransformer: func(data interface{}) string {
-				user, _ := data.(types.User)
+				user, ok := data.(types.User)
+				if !ok {
+					return cli.TypeError
+				}
 				return globals.BooleanStyleP(!user.Disabled)
 			},
 		},

@@ -13,6 +13,9 @@ import (
 // SensuCmdName name of the command
 const SensuCmdName = "sensuctl"
 
+// TypeError is the string returned in the event of an invalid type assertion
+const TypeError = "TypeError"
+
 // SensuCli is an instance of the Sensu command line client;
 // encapsulates API client, logger & general configuration.
 type SensuCli struct {
