@@ -279,8 +279,12 @@ func (r *mutationsImpl) DeleteSilence(p schema.MutationDeleteSilenceFieldResolve
 }
 
 func copySilenceInputs(r *types.Silenced, ins *schema.SilenceInputs) {
+	r.Begin = 0
+	if ins.Begin.After(time.Now()) {
+		r.Begin = ins.Begin.Unix()
+	}
+
 	r.Reason = ins.Reason
-	r.Begin = ins.Begin.Unix()
 	r.Expire = int64(ins.Expire)
 	r.ExpireOnResolve = ins.ExpireOnResolve
 }
