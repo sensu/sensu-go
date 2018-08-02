@@ -14,7 +14,7 @@ import (
 func TestShowCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := InfoCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -26,7 +26,7 @@ func TestShowCommand(t *testing.T) {
 func TestShowCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchFilter", "in").Return(types.FixtureEventFilter("name-one"), nil)
 
@@ -41,7 +41,7 @@ func TestShowCommandRunEClosure(t *testing.T) {
 func TestShowCommandRunMissingArgs(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
@@ -53,7 +53,7 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchFilter", "in").Return(types.FixtureEventFilter("name-one"), nil)
 
@@ -72,7 +72,7 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 func TestShowCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchFilter", "in").Return(&types.EventFilter{}, errors.New("my-err"))
 

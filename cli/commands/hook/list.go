@@ -56,21 +56,30 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				hook, _ := data.(types.HookConfig)
+				hook, ok := data.(types.HookConfig)
+				if !ok {
+					return cli.TypeError
+				}
 				return hook.Name
 			},
 		},
 		{
 			Title: "Command",
 			CellTransformer: func(data interface{}) string {
-				hook, _ := data.(types.HookConfig)
+				hook, ok := data.(types.HookConfig)
+				if !ok {
+					return cli.TypeError
+				}
 				return hook.Command
 			},
 		},
 		{
 			Title: "Timeout",
 			CellTransformer: func(data interface{}) string {
-				hook, _ := data.(types.HookConfig)
+				hook, ok := data.(types.HookConfig)
+				if !ok {
+					return cli.TypeError
+				}
 				timeout := strconv.FormatUint(uint64(hook.Timeout), 10)
 				return timeout
 			},
@@ -78,7 +87,10 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Stdin?",
 			CellTransformer: func(data interface{}) string {
-				hook, _ := data.(types.HookConfig)
+				hook, ok := data.(types.HookConfig)
+				if !ok {
+					return cli.TypeError
+				}
 				return strconv.FormatBool(hook.Stdin)
 			},
 		},

@@ -15,7 +15,7 @@ import (
 func TestInfoCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := InfoCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -27,7 +27,7 @@ func TestInfoCommand(t *testing.T) {
 func TestInfoCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchSilenced", mock.Anything).Return(types.FixtureSilenced("foo:bar"), nil)
 
@@ -42,7 +42,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 func TestInfoCommandRunMissingArgs(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"wrong", "stuff"})
 
@@ -54,7 +54,7 @@ func TestInfoCommandRunMissingArgs(t *testing.T) {
 func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchSilenced", mock.Anything).Return(types.FixtureSilenced("foo:bar"), nil)
 
@@ -73,7 +73,7 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchSilenced", mock.Anything).Return(&types.Silenced{}, errors.New("my-err"))
 

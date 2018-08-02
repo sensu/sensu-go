@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -17,7 +16,7 @@ import (
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -28,7 +27,7 @@ func TestListCommand(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := newCLI()
+	cli := test.NewCLI()
 
 	config := cli.Config.(*client.MockConfig)
 	config.On("Format").Return("none")
@@ -48,7 +47,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 
 func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
 	assert := assert.New(t)
-	cli := newCLI()
+	cli := test.NewCLI()
 
 	config := cli.Config.(*client.MockConfig)
 	config.On("Format").Return("none")
@@ -69,7 +68,7 @@ func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
 func TestListCommandRunEClosureWithJSON(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListAssets", mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
@@ -86,7 +85,7 @@ func TestListCommandRunEClosureWithJSON(t *testing.T) {
 func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListAssets", mock.Anything).Return([]types.Asset{}, errors.New("fire"))
 
@@ -101,7 +100,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 func TestListFlags(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
 	flag := cmd.Flag("all-organizations")
@@ -109,12 +108,4 @@ func TestListFlags(t *testing.T) {
 
 	flag = cmd.Flag("format")
 	assert.NotNil(flag)
-}
-
-func newCLI() *cli.SensuCli {
-	cli := test.NewMockCLI()
-	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("json")
-
-	return cli
 }

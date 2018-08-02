@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -17,7 +16,7 @@ import (
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -29,7 +28,7 @@ func TestListCommand(t *testing.T) {
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("foo:bar"),
@@ -49,7 +48,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 func TestListCommandRunEClosureWithAll(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("foo:bar"),
@@ -65,7 +64,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := newCLI()
+	cli := test.NewCLI()
 
 	silenced := types.FixtureSilenced("foo:bar")
 	silenced.Reason = "justcause!"
@@ -106,7 +105,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{}, errors.New("my-err"))
 
@@ -121,7 +120,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 func TestListFlags(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
 	flag := cmd.Flag("all-organizations")
@@ -129,12 +128,4 @@ func TestListFlags(t *testing.T) {
 
 	flag = cmd.Flag("format")
 	assert.NotNil(flag)
-}
-
-func newCLI() *cli.SensuCli {
-	cli := test.NewMockCLI()
-	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("json")
-
-	return cli
 }

@@ -57,7 +57,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				mutator, _ := data.(types.Mutator)
+				mutator, ok := data.(types.Mutator)
+				if !ok {
+					return cli.TypeError
+				}
 				return mutator.Name
 			},
 		},
@@ -65,7 +68,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Command",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				mutator, _ := data.(types.Mutator)
+				mutator, ok := data.(types.Mutator)
+				if !ok {
+					return cli.TypeError
+				}
 				return mutator.Command
 			},
 		},
@@ -73,7 +79,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Environment Variables",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				mutator, _ := data.(types.Mutator)
+				mutator, ok := data.(types.Mutator)
+				if !ok {
+					return cli.TypeError
+				}
 				return strings.Join(mutator.EnvVars, ",")
 			},
 		},
@@ -81,7 +90,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Timeout",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				mutator, _ := data.(types.Mutator)
+				mutator, ok := data.(types.Mutator)
+				if !ok {
+					return cli.TypeError
+				}
 				timeout := strconv.FormatUint(uint64(mutator.Timeout), 10)
 				return timeout
 			},

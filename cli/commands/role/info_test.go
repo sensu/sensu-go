@@ -71,7 +71,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 
 func TestInfoCommandRunEJSON(t *testing.T) {
 	assert := assert.New(t)
-	cli := newCLI()
+	cli := test.NewCLI()
 
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchRole", "abc").Return(

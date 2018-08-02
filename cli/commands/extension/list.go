@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ListCommand lists all extensions
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -51,14 +52,20 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				extension, _ := data.(types.Extension)
+				extension, ok := data.(types.Extension)
+				if !ok {
+					return cli.TypeError
+				}
 				return extension.Name
 			},
 		},
 		{
 			Title: "URL",
 			CellTransformer: func(data interface{}) string {
-				extension, _ := data.(types.Extension)
+				extension, ok := data.(types.Extension)
+				if !ok {
+					return cli.TypeError
+				}
 				u, err := url.Parse(extension.URL)
 				if err != nil {
 					return extension.URL

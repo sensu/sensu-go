@@ -34,13 +34,19 @@ func MemberListCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printMemberListToTable(result interface{}, w io.Writer) {
-	memberList := result.(*clientv3.MemberListResponse)
+	memberList, ok := result.(*clientv3.MemberListResponse)
+	if !ok {
+		return
+	}
 	table := table.New([]*table.Column{
 		{
 			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				member := data.(*etcdserverpb.Member)
+				member, ok := data.(*etcdserverpb.Member)
+				if !ok {
+					return cli.TypeError
+				}
 				return fmt.Sprintf("%x", member.ID)
 			},
 		},
@@ -48,21 +54,30 @@ func printMemberListToTable(result interface{}, w io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				member := data.(*etcdserverpb.Member)
+				member, ok := data.(*etcdserverpb.Member)
+				if !ok {
+					return cli.TypeError
+				}
 				return member.Name
 			},
 		},
 		{
 			Title: "Peer URLs",
 			CellTransformer: func(data interface{}) string {
-				member := data.(*etcdserverpb.Member)
+				member, ok := data.(*etcdserverpb.Member)
+				if !ok {
+					return cli.TypeError
+				}
 				return strings.Join(member.PeerURLs, ",")
 			},
 		},
 		{
 			Title: "Client URLs",
 			CellTransformer: func(data interface{}) string {
-				member := data.(*etcdserverpb.Member)
+				member, ok := data.(*etcdserverpb.Member)
+				if !ok {
+					return cli.TypeError
+				}
 				return strings.Join(member.ClientURLs, ",")
 			},
 		},
