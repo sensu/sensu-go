@@ -167,7 +167,6 @@ class EventListItem extends React.PureComponent {
                 and exited with status <strong>{check.status}</strong>.
               </React.Fragment>
             }
-            renderMenu={this.renderMenu}
           />
         </TableOverflowCell>
         <TableCell padding="checkbox">
