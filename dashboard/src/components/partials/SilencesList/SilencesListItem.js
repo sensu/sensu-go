@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import { withProps } from "recompose";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
@@ -30,18 +31,13 @@ import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 import Tooltip from "@material-ui/core/Tooltip";
 
-const RightAlign = ({ children }) => (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "flex-end",
-    }}
-  >
-    {children}
-  </div>
-);
-
-RightAlign.propTypes = { children: PropTypes.node.isRequired };
+const SlideUp = withProps({ direction: "up" })(Slide);
+const RightAlign = withProps({
+  style: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+})("div");
 
 class SilencesListItem extends React.Component {
   static propTypes = {
@@ -131,9 +127,7 @@ class SilencesListItem extends React.Component {
                   <Dialog
                     open
                     fullWidth
-                    TransitionComponent={props => (
-                      <Slide direction="up" {...props} />
-                    )}
+                    TransitionComponent={SlideUp}
                     onClose={close}
                   >
                     <DialogTitle>Reason Given</DialogTitle>
