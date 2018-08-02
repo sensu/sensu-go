@@ -41,6 +41,7 @@ future.
 too often.
 - Catch errors in type assertions in cli.
 - Fixed a bug where users could accidentally create invalid gRPC handlers.
+- Fixed agentd so it does not subscribe to empty subscriptions.
 
 ### Removed
 - Removed check subdue e2e test.
