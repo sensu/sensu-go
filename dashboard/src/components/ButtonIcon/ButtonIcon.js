@@ -8,11 +8,11 @@ const styles = () => ({
     verticalAlign: "bottom",
   },
   leftAligned: {
-    marginLeft: -8,
+    marginLeft: -4,
     paddingRight: 4,
   },
   rightAligned: {
-    marginRight: -8,
+    marginRight: -4,
     paddingLeft: 4,
   },
   icon: {

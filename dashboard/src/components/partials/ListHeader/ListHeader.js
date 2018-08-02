@@ -29,9 +29,9 @@ const styles = theme => {
       display: "flex",
       alignItems: "center",
       zIndex: theme.zIndex.appBar - 1,
-      "& *": {
-        color: theme.palette.primary.contrastText,
-      },
+      // "& *": {
+      //   color: theme.palette.primary.contrastText,
+      // },
     },
     active: {
       backgroundColor: theme.palette.primary.main,
@@ -98,6 +98,7 @@ class ListHeader extends React.Component {
           onClick={onClickSelect}
           checked={selectedCount === rowCount}
           indeterminate={selectedCount > 0 && selectedCount !== rowCount}
+          style={{ color: "inherit" }}
         />
         {selectedCount > 0 && <div>{selectedCount} Selected</div>}
         <div className={classes.grow} />

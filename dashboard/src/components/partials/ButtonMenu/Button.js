@@ -4,11 +4,10 @@ import PropTypes from "prop-types";
 import Button from "@material-ui/core/Button";
 import ButtonIcon from "/components/ButtonIcon";
 import DropdownArrow from "@material-ui/icons/ArrowDropDown";
-
-import Menu from "@material-ui/core/Menu";
+import MenuController from "/components/controller/MenuController";
 import RootRef from "@material-ui/core/RootRef";
 
-import MenuController from "/components/controller/MenuController";
+import Menu from "./Menu";
 
 class ButtonMenu extends React.Component {
   static propTypes = {
@@ -18,30 +17,13 @@ class ButtonMenu extends React.Component {
   };
 
   render() {
-    const { label, children } = this.props;
+    const { label, children, onChange } = this.props;
 
     return (
       <MenuController
         renderMenu={({ anchorEl, close }) => (
-          <Menu open onClose={close} anchorEl={anchorEl}>
-            {React.Children.map(children, child => {
-              const onClick = event => {
-                if (child.props.onClick) {
-                  child.props.onClick(event);
-                  if (event.defaultPrevented) {
-                    return;
-                  }
-                }
-
-                if (child.props.value !== undefined) {
-                  this.props.onChange(child.props.value);
-                }
-
-                close();
-              };
-
-              return React.cloneElement(child, { onClick });
-            })}
+          <Menu anchorEl={anchorEl} onChange={onChange} onClose={close}>
+            {children}
           </Menu>
         )}
       >

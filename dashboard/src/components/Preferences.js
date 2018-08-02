@@ -17,7 +17,7 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
 import MenuItem from "@material-ui/core/MenuItem";
-import Menu from "@material-ui/core/Menu";
+import MenuList from "@material-ui/core/MenuList";
 import Slide from "@material-ui/core/Slide";
 import Switch from "@material-ui/core/Switch";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -106,7 +106,7 @@ class Preferences extends React.Component {
             <ListItemText primary="Theme" secondary={theme.theme} />
           </ListItem>
         </List>
-        <Menu
+        <MenuList
           id="theme-menu"
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -130,7 +130,7 @@ class Preferences extends React.Component {
               <ListItemText primary="Uchiwa" secondary="Cool in blue." />
             </ListItem>
           </MenuItem>
-        </Menu>
+        </MenuList>
       </Dialog>
     );
   }
