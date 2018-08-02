@@ -58,7 +58,6 @@ class ChecksListHeader extends React.PureComponent {
               icon={<SilenceIcon />}
               onClick={onClickSilence}
               title="Silence"
-              pinned
             />
             <CollapsingMenu.Button
               title="Unsilence"
