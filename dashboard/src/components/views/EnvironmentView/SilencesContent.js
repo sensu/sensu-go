@@ -56,6 +56,7 @@ class SilencesContent extends React.Component {
       <Query
         query={SilencesContent.query}
         fetchPolicy="cache-and-network"
+        pollInterval={pollInterval}
         variables={{ ...match.params, limit, offset, order, filter }}
       >
         {({
@@ -124,7 +125,7 @@ class SilencesContent extends React.Component {
                   offset={offset}
                   onChangeQuery={setQueryParams}
                   environment={environment}
-                  loading={(loading && !isPolling) || aborted}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
                   refetch={refetch}
                 />
               </Paper>

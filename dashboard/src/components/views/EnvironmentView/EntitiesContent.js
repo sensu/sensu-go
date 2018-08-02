@@ -53,6 +53,7 @@ class EntitiesContent extends React.PureComponent {
       <Query
         query={EntitiesContent.query}
         fetchPolicy="cache-and-network"
+        pollInterval={pollInterval}
         variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({
@@ -93,7 +94,7 @@ class EntitiesContent extends React.PureComponent {
               <EntitiesList
                 limit={limit}
                 offset={offset}
-                loading={(loading && !isPolling) || aborted}
+                loading={(loading && (!environment || !isPolling)) || aborted}
                 onChangeQuery={setQueryParams}
                 environment={environment}
                 refetch={refetch}

@@ -61,6 +61,7 @@ class EventsContent extends React.Component {
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
+        pollInterval={pollInterval}
         variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({
@@ -103,7 +104,7 @@ class EventsContent extends React.Component {
                 offset={offset}
                 onChangeQuery={setQueryParams}
                 environment={environment}
-                loading={(loading && !isPolling) || aborted}
+                loading={(loading && (!environment || !isPolling)) || aborted}
                 refetch={refetch}
               />
             </AppContent>
