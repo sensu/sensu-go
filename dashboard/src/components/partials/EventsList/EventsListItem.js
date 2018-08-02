@@ -35,7 +35,6 @@ class EventListItem extends React.PureComponent {
       }).isRequired,
       check: PropTypes.shape({
         name: PropTypes.string.isRequired,
-        output: PropTypes.string.isRequired,
       }).isRequired,
       timestamp: PropTypes.string.isRequired,
     }).isRequired,
@@ -51,7 +50,6 @@ class EventListItem extends React.PureComponent {
         check {
           status
           name
-          output
           isSilenced
           history(first: 1) {
             status
@@ -167,12 +165,6 @@ class EventListItem extends React.PureComponent {
                   <RelativeDate dateTime={timestamp} />
                 </strong>{" "}
                 and exited with status <strong>{check.status}</strong>.
-                {check.output && (
-                  <React.Fragment>
-                    <br />
-                    <Code>{check.output}</Code>
-                  </React.Fragment>
-                )}
               </React.Fragment>
             }
             renderMenu={this.renderMenu}
