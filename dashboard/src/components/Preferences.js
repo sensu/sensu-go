@@ -16,6 +16,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
+import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import MenuList from "@material-ui/core/MenuList";
 import Slide from "@material-ui/core/Slide";
@@ -106,31 +107,33 @@ class Preferences extends React.Component {
             <ListItemText primary="Theme" secondary={theme.theme} />
           </ListItem>
         </List>
-        <MenuList
+        <Menu
           id="theme-menu"
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={this.handleThemeClose}
         >
-          <MenuItem onClick={this.handleThemeSelect("sensu")}>
-            <ListItem>
-              <ListItemText primary="Default" secondary=" " />
-            </ListItem>
-          </MenuItem>
-          <MenuItem onClick={this.handleThemeSelect("classic")}>
-            <ListItem>
-              <ListItemText
-                primary="Classic"
-                secondary="Vintage Sensu in apple green."
-              />
-            </ListItem>
-          </MenuItem>
-          <MenuItem onClick={this.handleThemeSelect("uchiwa")}>
-            <ListItem>
-              <ListItemText primary="Uchiwa" secondary="Cool in blue." />
-            </ListItem>
-          </MenuItem>
-        </MenuList>
+          <MenuList>
+            <MenuItem onClick={this.handleThemeSelect("sensu")}>
+              <ListItem>
+                <ListItemText primary="Default" secondary=" " />
+              </ListItem>
+            </MenuItem>
+            <MenuItem onClick={this.handleThemeSelect("classic")}>
+              <ListItem>
+                <ListItemText
+                  primary="Classic"
+                  secondary="Vintage Sensu in apple green."
+                />
+              </ListItem>
+            </MenuItem>
+            <MenuItem onClick={this.handleThemeSelect("uchiwa")}>
+              <ListItem>
+                <ListItemText primary="Uchiwa" secondary="Cool in blue." />
+              </ListItem>
+            </MenuItem>
+          </MenuList>
+        </Menu>
       </Dialog>
     );
   }
