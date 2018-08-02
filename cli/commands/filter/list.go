@@ -56,21 +56,30 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				filter, _ := data.(types.EventFilter)
+				filter, ok := data.(types.EventFilter)
+				if !ok {
+					return cli.TypeError
+				}
 				return filter.Name
 			},
 		},
 		{
 			Title: "Action",
 			CellTransformer: func(data interface{}) string {
-				filter, _ := data.(types.EventFilter)
+				filter, ok := data.(types.EventFilter)
+				if !ok {
+					return cli.TypeError
+				}
 				return filter.Action
 			},
 		},
 		{
 			Title: "Statements",
 			CellTransformer: func(data interface{}) string {
-				filter, _ := data.(types.EventFilter)
+				filter, ok := data.(types.EventFilter)
+				if !ok {
+					return cli.TypeError
+				}
 				return strings.Join(filter.Statements, " && ")
 			},
 		},

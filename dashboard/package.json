@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@10xjs/date-input-controller": "^0.1.5",
-    "@10xjs/form": "git+https://github.com/jamesdphillips/form.git#373871ea",
+    "@10xjs/form": "https://github.com/jamesdphillips/form/releases/download/0.1.7/form.tgz",
     "@material-ui/core": "^1.4.0",
     "@material-ui/icons": "^2.0.0",
     "apollo-cache-inmemory": "^1.1.12",
