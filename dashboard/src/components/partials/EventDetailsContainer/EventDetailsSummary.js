@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
+import CronDescriptor from "/components/partials/CronDescriptor";
 import Divider from "@material-ui/core/Divider";
 import Dictionary, {
   DictionaryKey,
@@ -14,6 +14,7 @@ import RelativeDate from "/components/RelativeDate";
 import Monospaced from "/components/Monospaced";
 import Maybe from "/components/Maybe";
 import InlineLink from "/components/InlineLink";
+import Typography from "@material-ui/core/Typography";
 
 class EventDetailsSummary extends React.Component {
   static propTypes = {
@@ -43,6 +44,7 @@ class EventDetailsSummary extends React.Component {
         name
         command
         interval
+        cron
         subscriptions
         timeout
         ttl
@@ -70,16 +72,20 @@ class EventDetailsSummary extends React.Component {
               </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
-              <DictionaryKey>Interval</DictionaryKey>
-              <DictionaryValue>{check.interval}</DictionaryValue>
+              <DictionaryKey>Schedule</DictionaryKey>
+              <DictionaryValue>
+                <Maybe value={check.cron} fallback={`${check.interval}s`}>
+                  {cron => <CronDescriptor capitalize expression={cron} />}
+                </Maybe>
+              </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Timeout</DictionaryKey>
-              <DictionaryValue>{check.timeout}</DictionaryValue>
+              <DictionaryValue>{check.timeout}s</DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>TTL</DictionaryKey>
-              <DictionaryValue>{check.ttl}</DictionaryValue>
+              <DictionaryValue>{check.ttl}s</DictionaryValue>
             </DictionaryEntry>
           </Dictionary>
         </CardContent>
