@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 
 ### Fixed
+- Fixed agentd so it does not subscribe to empty subscriptions.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 
