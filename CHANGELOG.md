@@ -8,8 +8,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added the Sensu edition in sensuctl config view subcommand.
 
 ### Changed
+- API responses are inspected after each request for the Sensu Edition header.
 
 ### Fixed
 - Fixed agentd so it does not subscribe to empty subscriptions.

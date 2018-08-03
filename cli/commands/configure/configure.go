@@ -8,7 +8,6 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	config "github.com/sensu/sensu-go/cli/client/config"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -70,7 +69,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Authenticate
-			tokens, edition, err := cli.Client.CreateAccessToken(
+			tokens, err := cli.Client.CreateAccessToken(
 				answers.URL, answers.Username, answers.Password,
 			)
 			if err != nil {
@@ -83,18 +82,6 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 
 			// Write new credentials to disk
 			if err = cli.Config.SaveTokens(tokens); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf(
-					"unable to write new configuration file with error: %s",
-					err,
-				)
-			}
-
-			// Write Sensu edition to disk
-			if edition == "" {
-				edition = types.CoreEdition
-			}
-			if err = cli.Config.SaveEdition(edition); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
 				return fmt.Errorf(
 					"unable to write new configuration file with error: %s",

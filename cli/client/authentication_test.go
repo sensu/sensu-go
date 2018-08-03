@@ -17,7 +17,6 @@ func TestCreateAccessToken(t *testing.T) {
 		assert.NotEmpty(t, r.Header["Authorization"])
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set(types.EditionHeader, types.CoreEdition)
 		_, _ = w.Write([]byte(`{"access_token": "foo", "expires_at": 123456789, "refresh_token": "bar"}`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
@@ -30,10 +29,9 @@ func TestCreateAccessToken(t *testing.T) {
 	mockConfig.On("APIUrl").Return("")
 	mockConfig.On("Tokens").Return(&types.Tokens{})
 
-	token, edition, err := client.CreateAccessToken(server.URL, "foo", "bar")
+	token, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
-	assert.Equal(t, types.CoreEdition, edition)
 }
 
 func TestCreateAccessTokenForbidden(t *testing.T) {
@@ -50,7 +48,7 @@ func TestCreateAccessTokenForbidden(t *testing.T) {
 	mockConfig.On("APIUrl").Return("")
 	mockConfig.On("Tokens").Return(&types.Tokens{})
 
-	_, _, err := client.CreateAccessToken(server.URL, "foo", "bar")
+	_, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.Error(t, err)
 }
 

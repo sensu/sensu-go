@@ -20,6 +20,7 @@ func ViewCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			activeConfig := map[string]string{
 				"api-url":      cli.Config.APIUrl(),
+				"edition":      cli.Config.Edition(),
 				"environment":  cli.Config.Environment(),
 				"organization": cli.Config.Organization(),
 				"format":       cli.Config.Format(),
@@ -54,6 +55,10 @@ func printToList(v interface{}, writer io.Writer) error {
 			{
 				Label: "API URL",
 				Value: r["api-url"],
+			},
+			{
+				Label: "Sensu Edition",
+				Value: r["edition"],
 			},
 			{
 				Label: "Environment",
