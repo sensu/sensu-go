@@ -22,6 +22,8 @@ for backward compatibility.
 environment & organization.
 - The splay_coverage attribute is no longer mandatory in sensuctl for proxy
 check requests and use its default value instead.
+- sensu-agent & sensu-backend no longer display help usage and duplicated error
+message on startup failure.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 

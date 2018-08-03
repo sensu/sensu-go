@@ -88,6 +88,7 @@ func newStartCommand() *cobra.Command {
 		Use:           "start",
 		Short:         "start the sensu backend",
 		SilenceErrors: true,
+		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_ = viper.BindPFlags(cmd.Flags())
 			if setupErr != nil {
