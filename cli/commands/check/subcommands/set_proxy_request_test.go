@@ -16,7 +16,7 @@ import (
 
 func TestSetProxyRequestsCommand(t *testing.T) {
 	const proxyJSON = `{"entity_attributes":["entity.Class == \"proxy\""], "splay":true, "splay_coverage":90}`
-	const invalidProxyJSON = `{"splay":true, "splay_coverage":0}`
+	const invalidProxyJSON = `{"splay":true, "splay_coverage":200}`
 	tests := []struct {
 		args           []string
 		useflag        bool

@@ -43,10 +43,17 @@ func SetProxyRequestsCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				in = os.Stdin
 			}
+
 			var proxyRequest types.ProxyRequests
 			if err := json.NewDecoder(in).Decode(&proxyRequest); err != nil {
 				return err
 			}
+
+			// Set the default splay_coverage value if not configured
+			if proxyRequest.SplayCoverage == 0 {
+				proxyRequest.SplayCoverage = types.DefaultSplayCoverage
+			}
+
 			check.ProxyRequests = &proxyRequest
 			if err := check.Validate(); err != nil {
 				return err
