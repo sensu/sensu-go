@@ -20,6 +20,8 @@ for backward compatibility.
 - Fixed agentd so it does not subscribe to empty subscriptions.
 - Rules are now implicitly granting read permission to their configured
 environment & organization.
+- The splay_coverage attribute is no longer mandatory in sensuctl for proxy
+check requests and use its default value instead.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 
