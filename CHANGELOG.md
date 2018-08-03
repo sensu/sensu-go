@@ -8,6 +8,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Fixed
+- Fixed agentd so it does not subscribe to empty subscriptions.
+
+## [2.0.0-beta.3-1] - 2018-08-02
+
+### Added
 - Added unit test coverage for check routers.
 - Added API support for cluster management.
 - Added sensuctl cluster member-list command.
@@ -41,7 +50,6 @@ future.
 too often.
 - Catch errors in type assertions in cli.
 - Fixed a bug where users could accidentally create invalid gRPC handlers.
-- Fixed agentd so it does not subscribe to empty subscriptions.
 
 ### Removed
 - Removed check subdue e2e test.
