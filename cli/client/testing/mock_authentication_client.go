@@ -3,9 +3,9 @@ package testing
 import "github.com/sensu/sensu-go/types"
 
 // CreateAccessToken for use with mock lib
-func (c *MockClient) CreateAccessToken(url, u, p string) (*types.Tokens, string, error) {
+func (c *MockClient) CreateAccessToken(url, u, p string) (*types.Tokens, error) {
 	args := c.Called(url, u, p)
-	return args.Get(0).(*types.Tokens), args.String(1), args.Error(2)
+	return args.Get(0).(*types.Tokens), args.Error(1)
 }
 
 // Logout for use with mock lib

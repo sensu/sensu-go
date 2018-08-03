@@ -9,7 +9,7 @@ import (
 )
 
 // CreateAccessToken returns a new access token given userid and password
-func (client *RestClient) CreateAccessToken(url, userid, password string) (*types.Tokens, string, error) {
+func (client *RestClient) CreateAccessToken(url, userid, password string) (*types.Tokens, error) {
 	// Make sure any existing auth token doesn't get injected instead
 	client.ClearAuthToken()
 	defer client.Reset()
@@ -17,24 +17,22 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*type
 	// Execute
 	res, err := client.R().SetBasicAuth(userid, password).Get(url + "/auth")
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	if res.StatusCode() == 401 {
-		return nil, "", errors.New(string(res.Body()))
+		return nil, errors.New(string(res.Body()))
 	} else if res.StatusCode() >= 400 {
 		// TODO: (JK) we may want to expose a bit more of the error here
-		return nil, "", errors.New("Received an unexpected response from the API")
+		return nil, errors.New("Received an unexpected response from the API")
 	}
 
 	var tokens types.Tokens
 	if err = json.Unmarshal(res.Body(), &tokens); err != nil {
-		return nil, "", errors.New("Unable to unmarshal response from server")
+		return nil, errors.New("Unable to unmarshal response from server")
 	}
 
-	edition := res.Header().Get(types.EditionHeader)
-
-	return &tokens, edition, err
+	return &tokens, err
 }
 
 // Logout performs a logout of the configured user

@@ -8,11 +8,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added the Sensu edition in sensuctl config view subcommand.
+- List the supported resource types in sensuctl.
 
 ### Changed
+- API responses are inspected after each request for the Sensu Edition header.
+- Rename list-rules subcommand to info in sensuctl role commmand with alias
+for backward compatibility.
 
 ### Fixed
 - Fixed agentd so it does not subscribe to empty subscriptions.
+- Rules are now implicitly granting read permission to their configured
+environment & organization.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 
@@ -25,7 +32,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added API client support for enterprise license management.
 - Added a header to API calls that returns the current Sensu Edition.
 - Added sensuctl cluster health command.
-- List the supported resource types in sensuctl.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization in
@@ -35,8 +41,6 @@ enterprise edition.
 the enterprise edition.
 - Upgrade dep to v0.5.0
 - Added cluster health information to /health endpoint in sensu-backend.
-- Rename list-rules subcommand to info in sensuctl role commmand with alias
-for backward compatibility.
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
@@ -51,8 +55,6 @@ generated correctly.
 future.
 - Fixed a bug where clustered round robin check execution executed checks
 too often.
-- Rules are now implicitly granting read permission to their configured
-environment & organization.
 - Catch errors in type assertions in cli.
 - Fixed a bug where users could accidentally create invalid gRPC handlers.
 
