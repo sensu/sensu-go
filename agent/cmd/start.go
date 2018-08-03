@@ -101,8 +101,10 @@ func newStartCommand() *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
-		Use:   "start",
-		Short: "start the sensu agent",
+		Use:           "start",
+		Short:         "start the sensu agent",
+		SilenceErrors: true,
+		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := viper.BindPFlags(cmd.Flags()); err != nil {
 				return err
