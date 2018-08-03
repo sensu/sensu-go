@@ -8,6 +8,17 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added the Sensu edition in sensuctl config view subcommand.
+
+### Changed
+- API responses are inspected after each request for the Sensu Edition header.
+
+### Fixed
+- Fixed agentd so it does not subscribe to empty subscriptions.
+
+## [2.0.0-beta.3-1] - 2018-08-02
+
+### Added
 - Added unit test coverage for check routers.
 - Added API support for cluster management.
 - Added sensuctl cluster member-list command.
@@ -16,7 +27,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added API client support for enterprise license management.
 - Added a header to API calls that returns the current Sensu Edition.
 - Added sensuctl cluster health command.
-- Added the Sensu edition in sensuctl config view subcommand.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization in
@@ -26,7 +36,6 @@ enterprise edition.
 the enterprise edition.
 - Upgrade dep to v0.5.0
 - Added cluster health information to /health endpoint in sensu-backend.
-- API responses are inspected after each request for the Sensu Edition header.
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
@@ -41,6 +50,8 @@ generated correctly.
 future.
 - Fixed a bug where clustered round robin check execution executed checks
 too often.
+- Catch errors in type assertions in cli.
+- Fixed a bug where users could accidentally create invalid gRPC handlers.
 
 ### Removed
 - Removed check subdue e2e test.

@@ -76,7 +76,7 @@ func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprint(cmd.OutOrStdout(), "OK")
+	fmt.Fprintln(cmd.OutOrStdout(), "OK")
 	return nil
 }
 

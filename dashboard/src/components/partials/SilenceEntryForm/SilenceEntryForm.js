@@ -77,13 +77,23 @@ class SilenceEntryForm extends React.PureComponent {
   };
 
   render() {
+    const { values: valuesProp, onSubmitSuccess } = this.props;
+
+    // Insert defaults
+    const values = Object.assign(valuesProp || {}, {
+      props: {
+        expireOnResolve: valuesProp.expireOnResolve || false,
+        ...valuesProp.props,
+      },
+    });
+
     return (
       <Form
         ref={this.formRef}
-        values={this.props.values}
+        values={values}
         validate={validate}
         onSubmit={this._handleSubmit}
-        onSubmitSuccess={this.props.onSubmitSuccess}
+        onSubmitSuccess={onSubmitSuccess}
       >
         {this.props.children}
       </Form>

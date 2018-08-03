@@ -176,7 +176,11 @@ func (e *Event) Get(name string) (interface{}, error) {
 // EventsBySeverity can be used to sort a given collection of events by check
 // status and timestamp.
 func EventsBySeverity(es []*Event) sort.Interface {
-	return &eventSorter{es, cmpBySeverity}
+	return &eventSorter{es, createCmpEvents(
+		cmpBySeverity,
+		cmpByLastOk,
+		cmpByEntityID,
+	)}
 }
 
 // EventsByTimestamp can be used to sort a given collection of events by time it
@@ -198,20 +202,42 @@ func EventsByTimestamp(es []*Event, asc bool) sort.Interface {
 // EventsByLastOk can be used to sort a given collection of events by time it
 // last received an OK status.
 func EventsByLastOk(es []*Event, asc bool) sort.Interface {
-	return &eventSorter{es, cmpByLastOk}
+	return &eventSorter{es, createCmpEvents(
+		cmpByLastOk,
+		cmpByEntityID,
+	)}
 }
 
-func cmpBySeverity(a, b *Event) bool {
+func cmpByEntityID(a, b *Event) int {
+	ai, bi := "", ""
+	if a.Entity != nil {
+		ai = a.Entity.ID
+	}
+	if b.Entity != nil {
+		bi = b.Entity.ID
+	}
+
+	if ai == bi {
+		return 0
+	} else if ai < bi {
+		return 1
+	}
+	return -1
+}
+
+func cmpBySeverity(a, b *Event) int {
 	ap, bp := deriveSeverity(a), deriveSeverity(b)
 
 	// Sort events with the same exit status by timestamp
 	if ap == bp {
-		return cmpByLastOk(a, b)
+		return 0
+	} else if ap < bp {
+		return 1
 	}
-	return ap < bp
+	return -1
 }
 
-func cmpByLastOk(a, b *Event) bool {
+func cmpByLastOk(a, b *Event) int {
 	at, bt := a.Timestamp, b.Timestamp
 	if a.HasCheck() {
 		at = a.Check.LastOK
@@ -219,7 +245,13 @@ func cmpByLastOk(a, b *Event) bool {
 	if b.HasCheck() {
 		bt = b.Check.LastOK
 	}
-	return at > bt
+
+	if at == bt {
+		return 0
+	} else if at > bt {
+		return 1
+	}
+	return -1
 }
 
 // Based on convention we define the order of importance as critical (2),
@@ -239,6 +271,21 @@ func deriveSeverity(e *Event) int {
 		}
 	}
 	return 4
+}
+
+type cmpEvents func(a, b *Event) int
+
+func createCmpEvents(cmps ...cmpEvents) func(a, b *Event) bool {
+	return func(a, b *Event) bool {
+		for _, cmp := range cmps {
+			st := cmp(a, b)
+			if st == 0 { // if equal try the next comparitor
+				continue
+			}
+			return st == 1
+		}
+		return true
+	}
 }
 
 type eventSorter struct {

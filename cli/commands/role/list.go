@@ -48,7 +48,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				role, _ := data.(types.Role)
+				role, ok := data.(types.Role)
+				if !ok {
+					return cli.TypeError
+				}
 				return role.Name
 			},
 		},

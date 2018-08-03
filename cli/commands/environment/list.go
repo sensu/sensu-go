@@ -55,7 +55,10 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Organization",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				env, _ := data.(types.Environment)
+				env, ok := data.(types.Environment)
+				if !ok {
+					return cli.TypeError
+				}
 				return env.Organization
 			},
 		},
@@ -63,14 +66,20 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				env, _ := data.(types.Environment)
+				env, ok := data.(types.Environment)
+				if !ok {
+					return cli.TypeError
+				}
 				return env.Name
 			},
 		},
 		{
 			Title: "Description",
 			CellTransformer: func(data interface{}) string {
-				env, _ := data.(types.Environment)
+				env, ok := data.(types.Environment)
+				if !ok {
+					return cli.TypeError
+				}
 				return env.Description
 			},
 		},

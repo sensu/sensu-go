@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -17,7 +16,7 @@ import (
 func TestListCommand(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -29,7 +28,7 @@ func TestListCommand(t *testing.T) {
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
@@ -46,7 +45,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListHandlers", "*").Return([]types.Handler{
 		*types.FixtureHandler("one"),
@@ -63,7 +62,7 @@ func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
 		*types.FixtureSetHandler("one", "two", "three"),
@@ -82,7 +81,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListHandlers", mock.Anything).Return([]types.Handler{}, errors.New("fire"))
 
@@ -97,7 +96,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 func TestListFlags(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := newCLI()
+	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
 	flag := cmd.Flag("all-organizations")
@@ -105,12 +104,4 @@ func TestListFlags(t *testing.T) {
 
 	flag = cmd.Flag("format")
 	assert.NotNil(flag)
-}
-
-func newCLI() *cli.SensuCli {
-	cli := test.NewMockCLI()
-	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("json")
-
-	return cli
 }

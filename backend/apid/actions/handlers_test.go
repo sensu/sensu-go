@@ -136,6 +136,9 @@ func TestHandlerCreateOrReplace(t *testing.T) {
 	badHandler := types.FixtureHandler("bad")
 	badHandler.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
+	grpcHandler := types.FixtureHandler("grpc")
+	grpcHandler.Type = types.HandlerGRPCType
+
 	tests := []struct {
 		name            string
 		ctx             context.Context
@@ -169,6 +172,13 @@ func TestHandlerCreateOrReplace(t *testing.T) {
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badHandler,
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:            "Bad handler type",
+			ctx:             defaultCtx,
+			argument:        grpcHandler,
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
 		},
