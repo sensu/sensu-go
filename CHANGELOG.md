@@ -8,6 +8,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [2.0.0-beta.3-1] - 2018-08-02
+
+### Added
 - Added unit test coverage for check routers.
 - Added API support for cluster management.
 - Added sensuctl cluster member-list command.
