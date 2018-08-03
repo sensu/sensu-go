@@ -65,7 +65,7 @@ func (r *silencedImpl) Environment(p graphql.ResolveParams) (interface{}, error)
 // Expires implements response to request for 'expires' field.
 func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
 	s := p.Source.(*types.Silenced)
-	if s.Begin > 0 && s.Expire > 0 {
+	if s.Expire > 0 {
 		return convertTs(s.Begin + s.Expire), nil
 	}
 	return nil, nil

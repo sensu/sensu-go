@@ -102,7 +102,7 @@ class CheckDetailsContainer extends React.PureComponent {
     if (interval > 0) {
       return `Every ${interval}s`;
     } else if (cron && cron.length > 0) {
-      return <CronDescriptor expression={cron} />;
+      return <CronDescriptor capitalize expression={cron} />;
     }
     return "Never";
   }

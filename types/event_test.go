@@ -209,6 +209,10 @@ func TestEventsBySeverity(t *testing.T) {
 	okOlder := FixtureEvent("entity", "check")
 	okOlder.Check.Status = 0 // ok
 	okOlder.Check.LastOK = 7
+	okOlderDiff := FixtureEvent("entity", "check")
+	okOlderDiff.Check.Status = 0 // ok
+	okOlderDiff.Check.LastOK = 7
+	okOlderDiff.Entity.ID = "zzz"
 	noCheck := FixtureEvent("entity", "check")
 	noCheck.Check = nil
 
@@ -219,13 +223,18 @@ func TestEventsBySeverity(t *testing.T) {
 	}{
 		{
 			name:     "Sorts by severity",
-			input:    []*Event{ok, warn, unknown, noCheck, okOlder, critical},
-			expected: []*Event{critical, warn, unknown, ok, okOlder, noCheck},
+			input:    []*Event{ok, warn, unknown, noCheck, okOlderDiff, okOlder, critical},
+			expected: []*Event{critical, warn, unknown, ok, okOlder, okOlderDiff, noCheck},
 		},
 		{
-			name:     "Fallback to timestamp when severity is same",
+			name:     "Fallback to lastOK when severity is same",
 			input:    []*Event{okOlder, ok, okOlder},
 			expected: []*Event{ok, okOlder, okOlder},
+		},
+		{
+			name:     "Fallback to entity ID when severity is same",
+			input:    []*Event{okOlderDiff, okOlder, ok, okOlder},
+			expected: []*Event{ok, okOlder, okOlder, okOlderDiff},
 		},
 		{
 			name:     "Events w/o a check are sorted to end",

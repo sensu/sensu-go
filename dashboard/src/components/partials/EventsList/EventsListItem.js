@@ -54,6 +54,9 @@ class EventListItem extends React.PureComponent {
           name
           output
           isSilenced
+          history(first: 1) {
+            status
+          }
         }
         entity {
           name
@@ -121,8 +124,16 @@ class EventListItem extends React.PureComponent {
     const { selected, event } = this.props;
     const { entity, check, timestamp } = event;
 
+    // Try to determine if the failing check just started failing and if so
+    // highlight the row.
+    const incidentStarted =
+      check.status > 0 &&
+      check.history.length > 0 &&
+      check.history[0].status !== check.status &&
+      new Date(new Date(timestamp).valueOf() + 2500) >= new Date();
+
     return (
-      <TableSelectableRow selected={selected}>
+      <TableSelectableRow selected={selected} highlight={incidentStarted}>
         <TableCell padding="checkbox">
           <Checkbox
             color="primary"
