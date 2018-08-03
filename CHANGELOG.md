@@ -20,6 +20,8 @@ for backward compatibility.
 - Fixed agentd so it does not subscribe to empty subscriptions.
 - Rules are now implicitly granting read permission to their configured
 environment & organization.
+- sensu-agent & sensu-backend no longer display help usage and duplicated error
+message on startup failure.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 
