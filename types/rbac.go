@@ -76,6 +76,25 @@ var (
 		RulePermUpdate,
 		RulePermDelete,
 	}
+
+	// AllTypes specifies all possible types
+	AllTypes = []string{
+		RuleTypeAll,
+		RuleTypeAsset,
+		RuleTypeCheck,
+		RuleTypeEntity,
+		RuleTypeEnvironment,
+		RuleTypeEvent,
+		RuleTypeEventFilter,
+		RuleTypeExtension,
+		RuleTypeHandler,
+		RuleTypeHook,
+		RuleTypeMutator,
+		RuleTypeOrganization,
+		RuleTypeRole,
+		RuleTypeSilenced,
+		RuleTypeUser,
+	}
 )
 
 //

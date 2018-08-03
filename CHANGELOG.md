@@ -9,12 +9,17 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added the Sensu edition in sensuctl config view subcommand.
+- List the supported resource types in sensuctl.
 
 ### Changed
 - API responses are inspected after each request for the Sensu Edition header.
+- Rename list-rules subcommand to info in sensuctl role commmand with alias
+for backward compatibility.
 
 ### Fixed
 - Fixed agentd so it does not subscribe to empty subscriptions.
+- Rules are now implicitly granting read permission to their configured
+environment & organization.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 

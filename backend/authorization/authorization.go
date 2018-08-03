@@ -30,11 +30,35 @@ func matchesRuleOrganization(rule types.Rule, organization string) bool {
 	return rule.Organization == organization || rule.Organization == types.OrganizationTypeAll
 }
 
+// isReadingRuleEnvironment returns true if the user tries to read an
+// environment that is specified in the rule
+func isReadingRuleEnvironment(rule types.Rule, action, resource, environment string) bool {
+	if action == types.RulePermRead && resource == types.RuleTypeEnvironment && environment == rule.Environment {
+		return true
+	}
+	return false
+}
+
+// isReadingRuleOrganization returns true if the user tries to read an
+// organization that is specified in the rule
+func isReadingRuleOrganization(rule types.Rule, action, resource, organization string) bool {
+	if action == types.RulePermRead && resource == types.RuleTypeOrganization && organization == rule.Organization {
+		return true
+	}
+	return false
+}
+
 // CanAccessResource will verify whether or not a user has permission to perform
 // an action, for a resource, within an organization
 func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 	// TODO: Reject irrelevant rules?
 	for _, rule := range actor.Rules {
+		// Verify if the user is trying to read an environment or an organization
+		// that would implicitly be granted if one its rules belongs to this
+		// environment or organization
+		if isReadingRuleEnvironment(rule, action, resource, env) || isReadingRuleOrganization(rule, action, resource, org) {
+			return true
+		}
 		if !MatchesRuleType(rule, resource) {
 			continue
 		}
