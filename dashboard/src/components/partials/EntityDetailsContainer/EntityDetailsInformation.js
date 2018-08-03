@@ -163,7 +163,9 @@ class EntityDetailsInformation extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Platform</DictionaryKey>
                   <DictionaryValue>
-                    {system.platform} / {system.platformFamily}
+                    {[system.platform, system.platformFamily]
+                      .reduce((memo, val) => (val ? [...memo, val] : memo), [])
+                      .join(" / ")}
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
