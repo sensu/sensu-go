@@ -29,6 +29,9 @@ const styles = theme => ({
       paddingLeft: theme.spacing.unit,
       paddingRight: theme.spacing.unit,
     },
+
+    // for content that inherits
+    color: theme.palette.text.primary,
   },
   gutters: theme.mixins.gutters({
     paddingLeft: theme.spacing.unit,
