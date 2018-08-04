@@ -99,14 +99,16 @@ class EventsContent extends React.Component {
                   }
                 />
               </Content>
-              <EventsList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                loading={(loading && (!environment || !isPolling)) || aborted}
-                refetch={refetch}
-              />
+              <Content bottomMargin>
+                <EventsList
+                  limit={limit}
+                  offset={offset}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  refetch={refetch}
+                />
+              </Content>
             </AppContent>
           );
         }}
