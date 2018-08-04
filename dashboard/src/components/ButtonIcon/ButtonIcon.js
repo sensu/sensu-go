@@ -3,17 +3,17 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
 
-const styles = () => ({
+const styles = theme => ({
   root: {
     verticalAlign: "bottom",
   },
   leftAligned: {
     marginLeft: -4,
-    paddingRight: 4,
+    paddingRight: theme.spacing.unit,
   },
   rightAligned: {
     marginRight: -4,
-    paddingLeft: 4,
+    paddingLeft: theme.spacing.unit,
   },
   icon: {
     fontSize: 20,
