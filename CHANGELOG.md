@@ -25,6 +25,7 @@ check requests and use its default value instead.
 - sensu-agent & sensu-backend no longer display help usage and duplicated error
 message on startup failure.
 - `Issued` & `History` are now set on keepalive events.
+- Resolves a potential panic in `sensuctl cluster health`.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 
