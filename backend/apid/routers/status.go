@@ -12,7 +12,7 @@ import (
 type statusFn func() types.StatusMap
 
 type HealthController interface {
-	GetClusterHealth(ctx context.Context) []*types.ClusterHealth
+	GetClusterHealth(ctx context.Context) *types.HealthResponse
 }
 
 // StatusRouter handles requests for /events

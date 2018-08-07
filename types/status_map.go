@@ -1,5 +1,7 @@
 package types
 
+import "github.com/coreos/etcd/etcdserver/etcdserverpb"
+
 // StatusMap is a map of backend component names to their current status info.
 type StatusMap map[string]bool
 
@@ -24,4 +26,10 @@ type ClusterHealth struct {
 	Err error
 	// Healthy describes the health of the cluster member.
 	Healthy bool
+}
+
+// HealthResponse contains cluster health and cluster alarms.
+type HealthResponse struct {
+	Alarms        []*etcdserverpb.AlarmMember
+	ClusterHealth []*ClusterHealth
 }
