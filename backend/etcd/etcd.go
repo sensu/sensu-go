@@ -112,6 +112,11 @@ type Etcd struct {
 	loopbackURL string
 }
 
+// BackendID returns the ID of the etcd cluster member
+func (e *Etcd) BackendID() (result string) {
+	return e.etcd.Server.ID().String()
+}
+
 // NewEtcd returns a new, configured, and running Etcd. The running Etcd will
 // panic on error. The calling goroutine should recover() from the panic and
 // shutdown accordingly. Callers must also ensure that the running Etcd is

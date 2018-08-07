@@ -1,13 +1,15 @@
-// +build integration,!race
+// +build integration
 
 package queue
 
 import (
 	"context"
-	"sync"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +24,7 @@ func TestEnqueue(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testenq", client)
+	queue := New("testenq", client, e.BackendID())
 	err = queue.Enqueue(context.Background(), "test item")
 	assert.NoError(t, err)
 }
@@ -36,7 +38,7 @@ func TestDequeueSingleItem(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testdeq", client)
+	queue := New("testdeq", client, e.BackendID())
 	err = queue.Enqueue(context.Background(), "test single item dequeue")
 	require.NoError(t, err)
 
@@ -44,10 +46,13 @@ func TestDequeueSingleItem(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test single item dequeue", item.Value())
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	cancel()
+	defer item.Ack(context.Background())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
 	item, err = queue.Dequeue(ctx)
-	require.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestDequeueFIFO(t *testing.T) {
@@ -59,7 +64,7 @@ func TestDequeueFIFO(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testfifo", client)
+	queue := New("testfifo", client, e.BackendID())
 	items := []string{"hello", "there", "world", "asdf", "fjdksl", "lalalal"}
 
 	for _, item := range items {
@@ -77,80 +82,6 @@ func TestDequeueFIFO(t *testing.T) {
 	require.Equal(t, items, result)
 }
 
-func TestDequeueParallel(t *testing.T) {
-	t.Parallel()
-
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-	client, err := e.NewClient()
-	defer client.Close()
-	require.NoError(t, err)
-
-	queue := New("testparallel", client)
-	items := map[string]struct{}{
-		"hello":   struct{}{},
-		"there":   struct{}{},
-		"world":   struct{}{},
-		"asdf":    struct{}{},
-		"fjdksl":  struct{}{},
-		"lalalal": struct{}{},
-	}
-
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	wg.Add(len(items))
-	var errEnqueue error
-
-	for item := range items {
-		go func(item string) {
-			defer wg.Done()
-
-			// Prevent data races when inspecting the error
-			mu.Lock()
-			defer mu.Unlock()
-
-			if err := queue.Enqueue(context.Background(), item); err != nil {
-				errEnqueue = err
-			}
-		}(item)
-	}
-	wg.Wait()
-
-	// Make sure we didn't encountered any error when adding items to the queue.
-	// If we had multiple errors, only the last one is saved
-	require.NoError(t, errEnqueue)
-
-	results := make(map[string]struct{})
-	var errDequeue error
-	wg.Add(len(items))
-
-	for range items {
-		go func() {
-			defer wg.Done()
-
-			item, err := queue.Dequeue(context.Background())
-
-			// Prevent data races when inspecting the error or the result
-			mu.Lock()
-			defer mu.Unlock()
-
-			if err != nil {
-				errDequeue = err
-				return
-			}
-
-			results[item.Value()] = struct{}{}
-		}()
-	}
-	wg.Wait()
-
-	// Make sure we didn't encountered any error while dequeuing items from the
-	// queue. If we had multiple errors, only the last one is saved
-	require.NoError(t, errEnqueue)
-
-	assert.Equal(t, items, results)
-}
-
 func TestNack(t *testing.T) {
 	t.Parallel()
 
@@ -160,7 +91,7 @@ func TestNack(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testnack", client)
+	queue := New("testnack", client, e.BackendID())
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
@@ -185,7 +116,7 @@ func TestAck(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testack", client)
+	queue := New("testack", client, e.BackendID())
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
@@ -211,7 +142,7 @@ func TestOnce(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testonce", client)
+	queue := New("testonce", client, e.BackendID())
 
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
@@ -237,7 +168,7 @@ func TestNackExpired(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testexpired", client)
+	queue := New("testexpired", client, e.BackendID())
 	queue.itemTimeout = 2 * time.Second
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -261,7 +192,7 @@ func TestNackExpired(t *testing.T) {
 	// wait to make sure the item has timed out
 	time.Sleep(2 * time.Second)
 
-	newQueue := New("testexpired", newClient)
+	newQueue := New("testexpired", newClient, e.BackendID())
 	newQueue.itemTimeout = 2 * time.Second
 
 	// nacked item should go back in the work queue lane
@@ -269,4 +200,144 @@ func TestNackExpired(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "test item", item.Value())
+}
+
+type memberListOverrideClient struct {
+	*clientv3.Client
+	memberListResponse *clientv3.MemberListResponse
+	memberListError    error
+}
+
+func (o *memberListOverrideClient) MemberList(ctx context.Context) (*clientv3.MemberListResponse, error) {
+	return o.memberListResponse, o.memberListError
+}
+
+func TestMultipleSubscribers(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	require.NoError(t, err)
+	defer client.Close()
+
+	// the override client simulates multiple backends by providing a custom
+	// MemberList method
+	override := &memberListOverrideClient{
+		Client: client,
+		memberListResponse: &clientv3.MemberListResponse{
+			Header: &etcdserverpb.ResponseHeader{},
+			Members: []*etcdserverpb.Member{
+				{
+					ID: 1,
+				},
+				{
+					ID: 2,
+				},
+				{
+					ID: 3,
+				},
+			},
+		},
+	}
+
+	// Each queue is associated with a different backend
+	q1 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 1))
+	q2 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 2))
+	q3 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 3))
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	require.NoError(t, q1.Enqueue(ctx, "foobar"))
+
+	// Each queue gets the message!
+	for _, q := range []*Queue{q1, q2, q3} {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		item, err := q.Dequeue(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, "foobar", item.Value())
+	}
+}
+
+func TestCleanupQueue(t *testing.T) {
+	// This tests ensures that defunct queues are garbage-collected
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	require.NoError(t, err)
+	defer client.Close()
+
+	// the override client simulates multiple backends by providing a custom
+	// MemberList method
+	memberListResponse := &clientv3.MemberListResponse{
+		Header: &etcdserverpb.ResponseHeader{},
+		Members: []*etcdserverpb.Member{
+			{
+				ID: 1,
+			},
+			{
+				ID: 2,
+			},
+			{
+				ID: 3,
+			},
+		},
+	}
+	override := &memberListOverrideClient{
+		Client:             client,
+		memberListResponse: memberListResponse,
+	}
+
+	// Each queue is associated with a different backend
+	q1 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 1))
+	q2 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 2))
+	q3 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 3))
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	// At this point q1, q2 and q3 all have items waiting
+	require.NoError(t, q1.Enqueue(ctx, "foobar"))
+
+	// Truncate the member list to be only q1
+	oldMembers := memberListResponse.Members
+	memberListResponse.Members = oldMembers[:1]
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	// After the next enqueue operation, the values for q2 and q3 will be removed
+	require.NoError(t, q1.Enqueue(ctx, "barbaz"))
+
+	// Restore the member list to its original state
+	memberListResponse.Members = oldMembers
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	require.NoError(t, q1.Enqueue(ctx, "rubber ducky"))
+
+	// q1 expects to get three values
+	for _, exp := range []string{"foobar", "barbaz", "rubber ducky"} {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		item, err := q1.Dequeue(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, exp, item.Value())
+	}
+
+	// q2 and q3 expect only a single value
+	for _, q := range []*Queue{q2, q3} {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+
+		item, err := q.Dequeue(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, "rubber ducky", item.Value())
+	}
 }

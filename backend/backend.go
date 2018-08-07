@@ -103,11 +103,11 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 
 	// Initialize an etcd getter
-	queueGetter := queue.EtcdGetter{Client: client}
+	queueGetter := queue.EtcdGetter{Client: client, BackendID: e.BackendID()}
 
 	// Initialize the bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ring.EtcdGetter{Client: client},
+		RingGetter: ring.EtcdGetter{Client: client, BackendID: e.BackendID()},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())

@@ -12,10 +12,9 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
-	"github.com/google/uuid"
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -47,24 +46,15 @@ func init() {
 	initialItemKey = buf.Bytes()
 }
 
-func getBackendID() string {
-	// It's necessary to do this here instead of in init, because on Windows,
-	// creating a UUID at init time seems to cause a panic in some cases.
-	backendOnce.Do(func() {
-		backendID = uuid.New().String()
-		logger = logger.WithFields(logrus.Fields{"backend": backendID})
-	})
-	return backendID
-}
-
 // EtcdGetter is an Etcd implementation of Getter.
 type EtcdGetter struct {
 	*clientv3.Client
+	BackendID string
 }
 
 // GetRing gets a named Ring.
 func (e EtcdGetter) GetRing(path ...string) types.Ring {
-	return New(ringKeyBuilder.Build(path...), e.Client)
+	return New(ringKeyBuilder.Build(path...), e.Client, e.BackendID)
 }
 
 // Ring is a ring of values. Users can cycle through the values in the Ring
@@ -88,14 +78,14 @@ type Ring struct {
 }
 
 // New returns a new Ring.
-func New(name string, client *clientv3.Client) *Ring {
+func New(name string, client *clientv3.Client, backendID string) *Ring {
 	pkgMu.Lock()
 	defer pkgMu.Unlock()
 	ring := &Ring{
 		Name:            name,
 		client:          client,
 		kv:              clientv3.NewKV(client),
-		backendID:       getBackendID(),
+		backendID:       backendID,
 		leaseTimeout:    120, // 120 seconds
 		wakeup:          make(chan struct{}, 1),
 		itemPrefix:      path.Join(name, "items"),
@@ -124,7 +114,7 @@ func (r *Ring) supervise() error {
 		defer mu.Unlock(context.Background())
 		for range r.wakeup {
 			if err := r.advance(); err != nil {
-				logger.WithError(err).Error("couldn't get the next ring item")
+				logger.WithError(err).Error("supervisor error")
 			}
 		}
 	}()
@@ -156,10 +146,11 @@ func (r *Ring) advance() error {
 	delOp := clientv3.OpDelete(key)
 
 	// Place the value at the tail of the ring
-	nextKey, err := r.newItemKey()
+	seq, err := etcd.Sequence(r.kv, r.keySeqKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting next ring item: %s", err)
 	}
+	nextKey := path.Join(r.itemPrefix, seq)
 	putCmp := clientv3.Compare(clientv3.ModRevision(nextKey), "=", 0)
 	putOp := clientv3.OpPut(nextKey, value)
 
@@ -202,47 +193,6 @@ func (r *Ring) getLeaseID() (clientv3.LeaseID, error) {
 	return leaseID, nil
 }
 
-// newItemKey creates a new key for a ring item.
-func (r *Ring) newItemKey() (result string, err error) {
-	// Get the current key, or initialize it to be the first item key
-	exists := clientv3.Compare(clientv3.Value(r.keySeqKey), ">", string(initialItemKey))
-	put := clientv3.OpPut(r.keySeqKey, string(initialItemKey))
-	get := clientv3.OpGet(r.keySeqKey)
-
-	resp, err := r.kv.Txn(context.Background()).If(exists).Then(get).Else(put, get).Commit()
-	if err != nil {
-		return "", fmt.Errorf("couldn't create ring key: %s", err)
-	}
-
-	respIdx := len(resp.Responses) - 1
-	kv := resp.Responses[respIdx].GetResponseRange().Kvs[0]
-
-	// decode the key into an integer
-	var n uint64
-	if err := binary.Read(bytes.NewReader(kv.Value), binary.BigEndian, &n); err != nil {
-		return "", fmt.Errorf("couldn't create ring key: %s", err)
-	}
-
-	buf := new(bytes.Buffer)
-
-	if err := binary.Write(buf, binary.BigEndian, n+1); err != nil {
-		return "", fmt.Errorf("couldn't create ring key: %s", err)
-	}
-
-	notModified := clientv3.Compare(clientv3.Value(r.keySeqKey), "=", string(kv.Value))
-	put = clientv3.OpPut(r.keySeqKey, buf.String())
-
-	resp, err = r.kv.Txn(context.Background()).If(notModified).Then(put).Commit()
-	if err != nil {
-		return "", fmt.Errorf("couldn't create ring key: %s", err)
-	}
-	if !resp.Succeeded {
-		return r.newItemKey()
-	}
-
-	return path.Join(r.itemPrefix, buf.String()), nil
-}
-
 // Add adds a new owned value to the ring, which is then owned by the client
 // that added it. Only the client that added it will be able to retrieve it with
 // Next. If the value already exists, ownership will be transferred to the
@@ -250,9 +200,13 @@ func (r *Ring) newItemKey() (result string, err error) {
 func (r *Ring) Add(ctx context.Context, value string) error {
 	for {
 		if err := ctx.Err(); err != nil {
-			return err
+			return fmt.Errorf("couldn't add item to ring: %s", err)
 		}
-		key, err := r.newItemKey()
+		seq, err := etcd.Sequence(r.kv, r.keySeqKey)
+		if err != nil {
+			return fmt.Errorf("couldn't add item to ring: %s", err)
+		}
+		key := path.Join(r.itemPrefix, seq)
 		if err != nil {
 			return err
 		}
