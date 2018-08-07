@@ -35,7 +35,7 @@ func (s *Store) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
 			health.Err = cliErr
 			health.Healthy = false
 			healthList = append(healthList, health)
-			continue
+			return healthList
 		}
 		_, getErr := cli.Get(context.Background(), "health")
 
