@@ -143,12 +143,13 @@ func (a *Agentd) Name() string {
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.WithError(err).Error("transport error on websocket upgrade")
+		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	cfg := SessionConfig{
+		AgentAddr:     r.RemoteAddr,
 		AgentID:       r.Header.Get(transport.HeaderKeyAgentID),
 		Environment:   r.Header.Get(transport.HeaderKeyEnvironment),
 		Organization:  r.Header.Get(transport.HeaderKeyOrganization),

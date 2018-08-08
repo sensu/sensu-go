@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -30,8 +29,6 @@ type SessionStore interface {
 // bus to the agent from other daemons. It handles transport handshaking and
 // transport channel multiplexing/demultiplexing.
 type Session struct {
-	ID string
-
 	cfg          SessionConfig
 	conn         transport.Transport
 	store        SessionStore
@@ -58,6 +55,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 type SessionConfig struct {
 	Organization  string
 	Environment   string
+	AgentAddr     string
 	AgentID       string
 	User          string
 	Subscriptions []string
@@ -68,11 +66,6 @@ type SessionConfig struct {
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
 func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store) (*Session, error) {
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
-
 	// Validate the agent organization and environment
 	ctx := context.TODO()
 	if _, err := store.GetEnvironment(ctx, cfg.Organization, cfg.Environment); err != nil {
@@ -80,12 +73,12 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 	}
 
 	logger.WithFields(logrus.Fields{
+		"addr":          cfg.AgentAddr,
 		"id":            cfg.AgentID,
 		"subscriptions": cfg.Subscriptions,
 	}).Info("agent connected")
 
 	s := &Session{
-		ID:            id.String(),
 		conn:          conn,
 		cfg:           cfg,
 		stopping:      make(chan struct{}, 1),
@@ -127,7 +120,8 @@ func (s *Session) recvPump() {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
 				logger.WithFields(logrus.Fields{
-					"session":    s.ID,
+					"addr":       s.cfg.AgentAddr,
+					"id":         s.cfg.AgentID,
 					"recv error": err.Error(),
 				}).Warn("stopping session")
 				return
