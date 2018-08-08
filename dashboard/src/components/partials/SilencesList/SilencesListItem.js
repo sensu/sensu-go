@@ -157,7 +157,7 @@ class SilencesListItem extends React.Component {
                   <MenuItem
                     onClick={() => {
                       onClickDelete();
-                      this.closeMenu();
+                      close();
                     }}
                   >
                     Delete
