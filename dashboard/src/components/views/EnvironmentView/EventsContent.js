@@ -79,7 +79,7 @@ class EventsContent extends React.Component {
 
           return (
             <AppContent>
-              <Content gutters bottomMargin>
+              <Content bottomMargin container gutters>
                 <ListToolbar
                   renderSearch={
                     <SearchBox
@@ -99,6 +99,7 @@ class EventsContent extends React.Component {
                   }
                 />
               </Content>
+
               <Content bottomMargin>
                 <EventsList
                   limit={limit}

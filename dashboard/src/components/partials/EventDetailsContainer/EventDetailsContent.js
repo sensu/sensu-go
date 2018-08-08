@@ -112,7 +112,7 @@ class EventDetailsContainer extends React.PureComponent {
                 />
               </CollapsingMenu>
             </Content>
-            <Content>
+            <Content container>
               <Grid container spacing={16}>
                 <Grid item xs={12}>
                   <CheckResult check={event.check} entity={event.entity} />

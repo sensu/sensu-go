@@ -76,7 +76,7 @@ class ChecksContent extends React.Component {
 
           return (
             <AppContent>
-              <Content gutters bottomMargin>
+              <Content bottomMargin container gutters>
                 <ListToolbar
                   renderSearch={
                     <SearchBox

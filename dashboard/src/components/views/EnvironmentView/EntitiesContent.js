@@ -71,7 +71,7 @@ class EntitiesContent extends React.PureComponent {
 
           return (
             <AppContent>
-              <Content gutters bottomMargin>
+              <Content bottomMargin container gutters>
                 <ListToolbar
                   renderSearch={
                     <SearchBox
