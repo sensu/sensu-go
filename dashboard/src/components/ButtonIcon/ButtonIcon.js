@@ -3,43 +3,39 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
 
-const styles = theme => {
-  const padding = theme.spacing.unit / 2;
-
-  return {
-    root: {
-      verticalAlign: "bottom",
-    },
-    leftAligned: {
-      marginLeft: -padding,
-      paddingRight: padding,
-    },
-    rightAligned: {
-      marginRight: -padding,
-      paddingLeft: padding,
-    },
-    icon: {
-      fontSize: theme.spacing.unit * 2.5,
-    },
-  };
-};
+const styles = theme => ({
+  root: {
+    verticalAlign: "bottom",
+  },
+  leftAligned: {
+    marginLeft: -4,
+    paddingRight: theme.spacing.unit,
+  },
+  rightAligned: {
+    marginRight: -4,
+    paddingLeft: theme.spacing.unit,
+  },
+  icon: {
+    fontSize: 20,
+  },
+});
 
 class ButtonIcon extends React.PureComponent {
   static propTypes = {
+    alignment: PropTypes.oneOf(["left", "right"]),
     classes: PropTypes.object.isRequired,
     component: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
     children: PropTypes.node.isRequired,
-    alignRight: PropTypes.bool,
   };
 
   static defaultProps = {
+    alignment: "left",
     component: "span",
-    alignRight: false,
   };
 
   render() {
     const {
-      alignRight,
+      alignment,
       classes,
       component: Component,
       children: childrenProp,
@@ -53,8 +49,8 @@ class ButtonIcon extends React.PureComponent {
     });
 
     const className = classnames(classes.root, {
-      [classes.leftAligned]: !alignRight,
-      [classes.rightAligned]: alignRight,
+      [classes.leftAligned]: alignment === "left",
+      [classes.rightAligned]: alignment === "right",
     });
 
     return (

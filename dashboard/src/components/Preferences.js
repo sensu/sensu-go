@@ -1,45 +1,41 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { compose } from "recompose";
-import { withStyles } from "@material-ui/core/styles";
+import { compose, withProps } from "recompose";
+import withMobileDialog from "@material-ui/core/withMobileDialog";
 
-import Modal from "@material-ui/core/Modal";
-import Paper from "@material-ui/core/Paper";
+import AppBar from "@material-ui/core/AppBar";
+import BulbIcon from "@material-ui/icons/SettingsBrightness";
+import CloseIcon from "@material-ui/icons/Close";
+import Dialog from "@material-ui/core/Dialog";
+import EyeIcon from "@material-ui/icons/RemoveRedEye";
+import IconButton from "@material-ui/core/IconButton";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
-import MenuItem from "@material-ui/core/MenuItem";
 import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import MenuList from "@material-ui/core/MenuList";
+import Slide from "@material-ui/core/Slide";
 import Switch from "@material-ui/core/Switch";
-import BulbIcon from "@material-ui/icons/SettingsBrightness";
-import EyeIcon from "@material-ui/icons/RemoveRedEye";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
 
-const styles = theme => ({
-  root: {
-    alignItems: "center",
-    justifyContent: "center",
-    backdropFilter: "blur(3px)",
-  },
-  paper: {
-    minWidth: 360,
-    padding: theme.spacing.unit * 2,
-  },
-});
+const SlideUp = withProps({ direction: "up" })(Slide);
 
 class Preferences extends React.Component {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    fullScreen: PropTypes.bool.isRequired,
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
     theme: PropTypes.shape({
       theme: PropTypes.string,
       dark: PropTypes.bool,
     }).isRequired,
-    open: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    dispatch: PropTypes.func.isRequired,
   };
 
   state = {
@@ -67,57 +63,84 @@ class Preferences extends React.Component {
   };
 
   render() {
-    const { classes, open, onClose, theme } = this.props;
+    const { fullScreen, open, onClose, theme } = this.props;
     const { anchorEl } = this.state;
 
     return (
-      <Modal className={classes.root} open={open} onClose={onClose}>
-        <Paper className={classes.paper}>
-          <List subheader={<ListSubheader>Appearance</ListSubheader>}>
-            <ListItem>
-              <ListItemIcon>
-                <BulbIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary="Lights Out"
-                secondary="Switch to the dark theme..."
-              />
-              <ListItemSecondaryAction>
-                <Switch onChange={this.handleToggle} checked={theme.dark} />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <ListItem button onClick={this.handleThemeClick}>
-              <ListItemIcon>
-                <EyeIcon />
-              </ListItemIcon>
-              <ListItemText primary="Theme" secondary={theme.theme} />
-            </ListItem>
-          </List>
-          <Menu
-            id="theme-menu"
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={this.handleThemeClose}
-          >
+      <Dialog
+        open={open}
+        onClose={onClose}
+        TransitionComponent={SlideUp}
+        fullScreen={fullScreen}
+        fullWidth
+        PaperProps={{
+          style: { minHeight: 400 },
+        }}
+      >
+        <AppBar style={{ position: "relative" }}>
+          <Toolbar>
+            <IconButton color="inherit" onClick={onClose} aria-label="Close">
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="title" color="inherit">
+              Preferences
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <List subheader={<ListSubheader>Appearance</ListSubheader>}>
+          <ListItem>
+            <ListItemIcon>
+              <BulbIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Lights Out"
+              secondary="Switch to the dark theme..."
+            />
+            <ListItemSecondaryAction>
+              <Switch onChange={this.handleToggle} checked={theme.dark} />
+            </ListItemSecondaryAction>
+          </ListItem>
+          <ListItem button onClick={this.handleThemeClick}>
+            <ListItemIcon>
+              <EyeIcon />
+            </ListItemIcon>
+            <ListItemText primary="Theme" secondary={theme.theme} />
+          </ListItem>
+        </List>
+        <Menu
+          id="theme-menu"
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={this.handleThemeClose}
+        >
+          <MenuList>
             <MenuItem onClick={this.handleThemeSelect("sensu")}>
-              Default
+              <ListItem>
+                <ListItemText primary="Default" secondary=" " />
+              </ListItem>
             </MenuItem>
             <MenuItem onClick={this.handleThemeSelect("classic")}>
-              Classic
+              <ListItem>
+                <ListItemText
+                  primary="Classic"
+                  secondary="Vintage Sensu in apple green."
+                />
+              </ListItem>
             </MenuItem>
             <MenuItem onClick={this.handleThemeSelect("uchiwa")}>
-              Uchiwa
+              <ListItem>
+                <ListItemText primary="Uchiwa" secondary="Cool in blue." />
+              </ListItem>
             </MenuItem>
-            <MenuItem onClick={this.handleThemeSelect("dva")}>DVA</MenuItem>
-          </Menu>
-        </Paper>
-      </Modal>
+          </MenuList>
+        </Menu>
+      </Dialog>
     );
   }
 }
 
 const enhancer = compose(
+  withMobileDialog({ breakpoint: "xs" }),
   connect(st => ({ theme: st.theme })),
-  withStyles(styles),
 );
 export default enhancer(Preferences);

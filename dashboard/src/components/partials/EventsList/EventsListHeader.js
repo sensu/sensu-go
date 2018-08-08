@@ -1,21 +1,22 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-
-import Button from "@material-ui/core/Button";
 import capitalize from "lodash/capitalize";
 
-import Typography from "@material-ui/core/Typography";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
 import CollapsingMenu from "/components/partials/CollapsingMenu";
-import ButtonSet from "/components/ButtonSet";
 import Menu from "@material-ui/core/Menu";
 
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import StatusMenu from "/components/partials/StatusMenu";
 import ListHeader from "/components/partials/ListHeader";
+
+import DeleteIcon from "@material-ui/icons/Delete";
+import SilenceIcon from "/icons/Silence";
+import SmallCheckIcon from "/icons/SmallCheck";
+import UnsilenceIcon from "/icons/Unsilence";
 
 class EventsListHeader extends React.PureComponent {
   static propTypes = {
@@ -128,7 +129,26 @@ class EventsListHeader extends React.PureComponent {
         rowCount={rowCount}
         onClickSelect={onClickSelect}
         renderBulkActions={() => (
-          <ButtonSet>
+          <CollapsingMenu breakpoint="md">
+            <CollapsingMenu.Button
+              alt="Create a silence targeting selected events."
+              icon={<SilenceIcon />}
+              onClick={onClickSilence}
+              title="Silence"
+            />
+            <CollapsingMenu.Button
+              title="Unsilence"
+              icon={<UnsilenceIcon />}
+              onClick={onClickClearSilences}
+              alt="Clear silences associated with selected events."
+              disabled={selectedSilenced.length === 0}
+            />
+            <CollapsingMenu.Button
+              title="Resolve"
+              icon={<SmallCheckIcon />}
+              onClick={onClickResolve}
+              pinned
+            />
             <ConfirmDelete
               identifier={`${selectedCount} ${
                 selectedCount === 1 ? "event" : "events"
@@ -136,23 +156,14 @@ class EventsListHeader extends React.PureComponent {
               onSubmit={onClickDelete}
             >
               {confirm => (
-                <Button onClick={confirm.open}>
-                  <Typography variant="button">Delete</Typography>
-                </Button>
+                <CollapsingMenu.Button
+                  title="Delete"
+                  icon={<DeleteIcon />}
+                  onClick={confirm.open}
+                />
               )}
             </ConfirmDelete>
-            <Button onClick={onClickSilence}>
-              <Typography variant="button">Silence</Typography>
-            </Button>
-            {selectedSilenced.length > 0 && (
-              <Button onClick={onClickClearSilences}>
-                <Typography variant="button">Unsilence</Typography>
-              </Button>
-            )}
-            <Button onClick={onClickResolve}>
-              <Typography variant="button">Resolve</Typography>
-            </Button>
-          </ButtonSet>
+          </CollapsingMenu>
         )}
         renderActions={() => (
           <CollapsingMenu breakpoint="md">

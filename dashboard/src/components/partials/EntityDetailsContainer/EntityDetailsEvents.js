@@ -5,7 +5,7 @@ import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
 import List from "@material-ui/core/List";
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import InlineLink from "/components/InlineLink";
 import ListItem, {
@@ -70,7 +70,7 @@ class EntityDetailsEvents extends React.PureComponent {
         </ListItemTitle>
         <ListItemSubtitle inset>
           Exited with status {check.status};{" "}
-          <RelativeDate dateTime={event.timestamp} />
+          <RelativeToCurrentDate dateTime={event.timestamp} />
         </ListItemSubtitle>
       </ListItem>
     );

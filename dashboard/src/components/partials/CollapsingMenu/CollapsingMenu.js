@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-
 import withWidth, { isWidthUp } from "@material-ui/core/withWidth";
+
 import ButtonSet from "/components/ButtonSet";
+import DisclosureIcon from "@material-ui/icons/MoreVert";
+import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
-import VerticalDisclosureButton from "/components/VerticalDisclosureButton";
 
 import Item from "./Item";
 import Button from "./Button";
@@ -25,10 +26,14 @@ class CollapsingMenu extends React.PureComponent {
     breakpoint: PropTypes.oneOf(breakpoints.slice(1)),
     children: PropTypes.node.isRequired,
     width: PropTypes.string.isRequired,
+    DiscolosureProps: PropTypes.shape(IconButton.propTypes),
   };
 
   static defaultProps = {
     breakpoint: "sm",
+    DiscolosureProps: {
+      color: "inherit",
+    },
   };
 
   static Item = Item;
@@ -63,7 +68,7 @@ class CollapsingMenu extends React.PureComponent {
   };
 
   renderCollapsed = () => {
-    const { children } = this.props;
+    const { children, DiscolosureProps } = this.props;
 
     const menuId = `collapsed-menu-${this._id}`;
     const close = () => this.setState({ anchorEl: null });
@@ -82,12 +87,15 @@ class CollapsingMenu extends React.PureComponent {
           </Context.Provider>
         </ButtonSet>
 
-        <VerticalDisclosureButton
+        <IconButton
           aria-label="More"
           aria-owns={menuId}
           aria-haspopup="true"
           onClick={ev => this.setState({ anchorEl: ev.currentTarget })}
-        />
+          {...DiscolosureProps}
+        >
+          <DisclosureIcon />
+        </IconButton>
         <Menu
           id={menuId}
           anchorEl={this.state.anchorEl}

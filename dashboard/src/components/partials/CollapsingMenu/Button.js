@@ -5,12 +5,29 @@ import ButtonIcon from "/components/ButtonIcon";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import MenuItem from "@material-ui/core/MenuItem";
+import Tooltip from "@material-ui/core/Tooltip";
+
 import Item from "./Item";
+
+const DescribedButton = ({ alt, ...props }) => {
+  if (alt) {
+    return (
+      <Tooltip title={alt}>
+        <BaseButton {...props} />
+      </Tooltip>
+    );
+  }
+  return <BaseButton {...props} />;
+};
+DescribedButton.propTypes = { alt: PropTypes.string };
+DescribedButton.defaultProps = { alt: null };
 
 class Button extends React.PureComponent {
   static displayName = "CollapsingMenu.Button";
 
   static propTypes = {
+    alt: PropTypes.string,
+    disabled: PropTypes.bool,
     icon: PropTypes.node,
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
@@ -19,13 +36,32 @@ class Button extends React.PureComponent {
   };
 
   static defaultProps = {
+    alt: null,
+    color: "inherit",
+    disabled: false,
     icon: null,
     subtitle: null,
     pinned: false,
   };
 
   render() {
-    const { icon, title, subtitle, onClick: onClickProp, pinned } = this.props;
+    const {
+      icon,
+      title,
+      subtitle,
+      onClick: onClickProp,
+      pinned,
+      ...props
+    } = this.props;
+
+    const menuProps = {
+      disabled: props.disabled,
+    };
+    const buttonProps = {
+      alt: props.alt,
+      color: props.color,
+      disabled: props.disabled,
+    };
 
     return (
       <Item
@@ -39,17 +75,17 @@ class Button extends React.PureComponent {
           };
 
           return (
-            <MenuItem onClick={onClick}>
+            <MenuItem onClick={onClick} {...menuProps}>
               <ListItemIcon>{icon}</ListItemIcon>
               <ListItemText inset primary={title} secondary={subtitle} />
             </MenuItem>
           );
         }}
         renderToolbarItem={() => (
-          <BaseButton onClick={onClickProp}>
+          <DescribedButton onClick={onClickProp} {...buttonProps}>
             <ButtonIcon>{icon}</ButtonIcon>
             {title}
-          </BaseButton>
+          </DescribedButton>
         )}
       />
     );

@@ -17,6 +17,8 @@ class SubMenu extends React.Component {
   static displayName = "CollapsingMenu.SubMenu";
 
   static propTypes = {
+    disabled: PropTypes.bool,
+    color: PropTypes.string,
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
     pinned: PropTypes.bool,
@@ -24,12 +26,14 @@ class SubMenu extends React.Component {
   };
 
   static defaultProps = {
+    disabled: false,
+    color: "inherit",
     subtitle: null,
     pinned: false,
   };
 
   render() {
-    const { title, subtitle, pinned, renderMenu } = this.props;
+    const { title, subtitle, pinned, renderMenu, ...props } = this.props;
 
     return (
       <Item
@@ -62,20 +66,24 @@ class SubMenu extends React.Component {
             </MenuController>
           );
         }}
-        renderToolbarItem={() => (
-          <MenuController renderMenu={renderMenu}>
-            {({ open, ref }) => (
-              <RootRef rootRef={ref}>
-                <Button onClick={open}>
-                  {title}
-                  <ButtonIcon alignRight>
-                    <DropdownArrow />
-                  </ButtonIcon>
-                </Button>
-              </RootRef>
-            )}
-          </MenuController>
-        )}
+        renderToolbarItem={() => {
+          const { color, disabled } = props;
+
+          return (
+            <MenuController renderMenu={renderMenu}>
+              {({ open, ref }) => (
+                <RootRef rootRef={ref}>
+                  <Button color={color} disabled={disabled} onClick={open}>
+                    {title}
+                    <ButtonIcon alignment="right">
+                      <DropdownArrow />
+                    </ButtonIcon>
+                  </Button>
+                </RootRef>
+              )}
+            </MenuController>
+          );
+        }}
       />
     );
   }

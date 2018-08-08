@@ -47,12 +47,13 @@ class EntitiesContent extends React.PureComponent {
 
   render() {
     const { queryParams, setQueryParams, match } = this.props;
-    const { filter, order, limit = "50", offset = "0" } = queryParams;
+    const { filter, order, limit = "25", offset = "0" } = queryParams;
 
     return (
       <Query
         query={EntitiesContent.query}
         fetchPolicy="cache-and-network"
+        pollInterval={pollInterval}
         variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({
@@ -70,7 +71,7 @@ class EntitiesContent extends React.PureComponent {
 
           return (
             <AppContent>
-              <Content gutters bottomMargin>
+              <Content bottomMargin container gutters>
                 <ListToolbar
                   renderSearch={
                     <SearchBox
@@ -90,14 +91,16 @@ class EntitiesContent extends React.PureComponent {
                   }
                 />
               </Content>
-              <EntitiesList
-                limit={limit}
-                offset={offset}
-                loading={(loading && !isPolling) || aborted}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                refetch={refetch}
-              />
+              <Content bottomMargin>
+                <EntitiesList
+                  limit={limit}
+                  offset={offset}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  refetch={refetch}
+                />
+              </Content>
             </AppContent>
           );
         }}

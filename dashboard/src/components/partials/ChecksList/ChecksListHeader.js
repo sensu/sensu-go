@@ -1,16 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import Button from "@material-ui/core/Button";
-import ButtonSet from "/components/ButtonSet";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DropdownArrow from "@material-ui/icons/ArrowDropDown";
-import IconButton from "/components/partials/IconButton";
+import DeleteIcon from "@material-ui/icons/Delete";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortMenu from "/components/partials/ListSortMenu";
-import MenuController from "/components/controller/MenuController";
-import RootRef from "@material-ui/core/RootRef";
-import Typography from "@material-ui/core/Typography";
+import SilenceIcon from "/icons/Silence";
+import QueueIcon from "@material-ui/icons/Queue";
+import UnsilenceIcon from "/icons/Unsilence";
 
 class ChecksListHeader extends React.PureComponent {
   static propTypes = {
@@ -46,20 +44,28 @@ class ChecksListHeader extends React.PureComponent {
         rowCount={rowCount}
         onClickSelect={toggleSelectedItems}
         renderBulkActions={() => (
-          <ButtonSet>
-            {selectedSilenced.length > 0 && (
-              <Button onClick={onClickSilence}>
-                <Typography variant="button">Silence</Typography>
-              </Button>
-            )}
-            {selectedSilenced.length === 0 && (
-              <Button onClick={onClickClearSilences}>
-                <Typography variant="button">Unsilence</Typography>
-              </Button>
-            )}
-            <Button onClick={onClickExecute}>
-              <Typography variant="button">Execute</Typography>
-            </Button>
+          <CollapsingMenu>
+            <CollapsingMenu.Button
+              title="Execute"
+              icon={<QueueIcon />}
+              onClick={onClickExecute}
+              alt="Queue an adhoc execution of the selected checks."
+              pinned
+            />
+            <CollapsingMenu.Button
+              alt="Create a silence targeting selected checks."
+              disabled={selectedSilenced.length === 0}
+              icon={<SilenceIcon />}
+              onClick={onClickSilence}
+              title="Silence"
+            />
+            <CollapsingMenu.Button
+              title="Unsilence"
+              icon={<UnsilenceIcon />}
+              onClick={onClickClearSilences}
+              alt="Clear silences associated with selected checks."
+              disabled={selectedSilenced.length > 0}
+            />
             <ConfirmDelete
               onSubmit={ev => {
                 onClickDelete(ev);
@@ -67,16 +73,20 @@ class ChecksListHeader extends React.PureComponent {
               }}
             >
               {confirm => (
-                <Button onClick={confirm.open}>
-                  <Typography variant="button">Delete</Typography>
-                </Button>
+                <CollapsingMenu.Button
+                  title="Delete"
+                  icon={<DeleteIcon />}
+                  onClick={confirm.open}
+                />
               )}
             </ConfirmDelete>
-          </ButtonSet>
+          </CollapsingMenu>
         )}
         renderActions={() => (
-          <ButtonSet>
-            <MenuController
+          <CollapsingMenu>
+            <CollapsingMenu.SubMenu
+              title="Sort"
+              pinned
               renderMenu={({ anchorEl, close }) => (
                 <ListSortMenu
                   anchorEl={anchorEl}
@@ -85,16 +95,8 @@ class ChecksListHeader extends React.PureComponent {
                   onChangeQuery={onChangeQuery}
                 />
               )}
-            >
-              {({ open, ref }) => (
-                <RootRef rootRef={ref}>
-                  <IconButton onClick={open} icon={<DropdownArrow />}>
-                    Sort
-                  </IconButton>
-                </RootRef>
-              )}
-            </MenuController>
-          </ButtonSet>
+            />
+          </CollapsingMenu>
         )}
       />
     );

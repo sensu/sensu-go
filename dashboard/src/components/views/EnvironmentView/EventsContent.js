@@ -55,12 +55,13 @@ class EventsContent extends React.Component {
 
   render() {
     const { queryParams, setQueryParams, match } = this.props;
-    const { filter, order, limit = "50", offset = "0" } = queryParams;
+    const { filter, order, limit = "25", offset = "0" } = queryParams;
 
     return (
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
+        pollInterval={pollInterval}
         variables={{ ...match.params, filter, order, limit, offset }}
       >
         {({
@@ -78,7 +79,7 @@ class EventsContent extends React.Component {
 
           return (
             <AppContent>
-              <Content gutters bottomMargin>
+              <Content bottomMargin container gutters>
                 <ListToolbar
                   renderSearch={
                     <SearchBox
@@ -98,14 +99,17 @@ class EventsContent extends React.Component {
                   }
                 />
               </Content>
-              <EventsList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                loading={(loading && !isPolling) || aborted}
-                refetch={refetch}
-              />
+
+              <Content bottomMargin>
+                <EventsList
+                  limit={limit}
+                  offset={offset}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  refetch={refetch}
+                />
+              </Content>
             </AppContent>
           );
         }}

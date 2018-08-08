@@ -52,12 +52,13 @@ class ChecksContent extends React.Component {
   render() {
     const { match, queryParams, setQueryParams } = this.props;
 
-    const { limit = "50", offset = "0", order, filter } = queryParams;
+    const { limit = "25", offset = "0", order, filter } = queryParams;
 
     return (
       <Query
         query={ChecksContent.query}
         fetchPolicy="cache-and-network"
+        pollInterval={pollInterval}
         variables={{ ...match.params, limit, offset, order, filter }}
       >
         {({
@@ -75,7 +76,7 @@ class ChecksContent extends React.Component {
 
           return (
             <AppContent>
-              <Content gutters bottomMargin>
+              <Content bottomMargin container gutters>
                 <ListToolbar
                   renderSearch={
                     <SearchBox
@@ -96,14 +97,16 @@ class ChecksContent extends React.Component {
                 />
               </Content>
 
-              <ChecksList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                loading={(loading && !isPolling) || aborted}
-                refetch={refetch}
-              />
+              <Content bottomMargin>
+                <ChecksList
+                  limit={limit}
+                  offset={offset}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  refetch={refetch}
+                />
+              </Content>
             </AppContent>
           );
         }}

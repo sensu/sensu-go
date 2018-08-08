@@ -14,9 +14,11 @@ import Dictionary, {
   DictionaryValue,
   DictionaryEntry,
 } from "/components/Dictionary";
+import List from "@material-ui/core/List";
+import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import Maybe from "/components/Maybe";
 import Monospaced from "/components/Monospaced";
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -95,7 +97,7 @@ class EntityDetailsInformation extends React.PureComponent {
             )}
           </Typography>
           <Typography variant="caption" paragraph>
-            {entity.subscriptions.join(", ")}
+            Current state of the {entity.class}.
           </Typography>
           <Grid container spacing={0}>
             <Grid item xs={12} sm={6}>
@@ -119,38 +121,73 @@ class EntityDetailsInformation extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Last Seen</DictionaryKey>
                   <DictionaryValue>
-                    <RelativeDate dateTime={entity.lastSeen} />
+                    <Maybe value={entity.lastSeen} fallback="n/a">
+                      {val => <RelativeToCurrentDate dateTime={val} />}
+                    </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
-                  <DictionaryKey>Class</DictionaryKey>
-                  <DictionaryValue>{entity.class}</DictionaryValue>
+                  <DictionaryKey>User</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={entity.user} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
-                  <DictionaryKey>User</DictionaryKey>
-                  <DictionaryValue>{entity.user}</DictionaryValue>
+                  <DictionaryKey>Subscriptions</DictionaryKey>
+                  <DictionaryValue>
+                    {entity.subscriptions.length > 0 ? (
+                      <List disablePadding>
+                        {entity.subscriptions.map(subscription => (
+                          <ListItem key={subscription}>
+                            <ListItemTitle>{subscription}</ListItemTitle>
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      "—"
+                    )}
+                  </DictionaryValue>
                 </DictionaryEntry>
               </Dictionary>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Dictionary>
                 <DictionaryEntry>
+                  <DictionaryKey>Class</DictionaryKey>
+                  <DictionaryValue>{entity.class}</DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
                   <DictionaryKey>Hostname</DictionaryKey>
-                  <DictionaryValue>{system.hostname}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={system.hostname} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>OS</DictionaryKey>
-                  <DictionaryValue>{system.os}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={system.os} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Platform</DictionaryKey>
                   <DictionaryValue>
-                    {system.platform} / {system.platformFamily}
+                    <Maybe value={system.platform} fallback="n/a">
+                      {() =>
+                        [system.platform, system.platformFamily]
+                          .reduce(
+                            (memo, val) => (val ? [...memo, val] : memo),
+                            [],
+                          )
+                          .join(" / ")
+                      }
+                    </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Architecture</DictionaryKey>
-                  <DictionaryValue>{system.arch}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={system.arch} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
               </Dictionary>
             </Grid>

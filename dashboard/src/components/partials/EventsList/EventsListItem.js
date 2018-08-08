@@ -10,8 +10,7 @@ import MoreVert from "@material-ui/icons/MoreVert";
 import RootRef from "@material-ui/core/RootRef";
 import TableCell from "@material-ui/core/TableCell";
 
-import Code from "/components/Code";
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 
 import MenuController from "/components/controller/MenuController";
 
@@ -36,7 +35,6 @@ class EventListItem extends React.PureComponent {
       }).isRequired,
       check: PropTypes.shape({
         name: PropTypes.string.isRequired,
-        output: PropTypes.string.isRequired,
       }).isRequired,
       timestamp: PropTypes.string.isRequired,
     }).isRequired,
@@ -52,7 +50,6 @@ class EventListItem extends React.PureComponent {
         check {
           status
           name
-          output
           isSilenced
           history(first: 1) {
             status
@@ -165,18 +162,11 @@ class EventListItem extends React.PureComponent {
               <React.Fragment>
                 Last occurred{" "}
                 <strong>
-                  <RelativeDate dateTime={timestamp} />
+                  <RelativeToCurrentDate dateTime={timestamp} />
                 </strong>{" "}
                 and exited with status <strong>{check.status}</strong>.
-                {check.output && (
-                  <React.Fragment>
-                    <br />
-                    <Code>{check.output}</Code>
-                  </React.Fragment>
-                )}
               </React.Fragment>
             }
-            renderMenu={this.renderMenu}
           />
         </TableOverflowCell>
         <TableCell padding="checkbox">

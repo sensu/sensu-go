@@ -26,21 +26,24 @@ class Content extends React.PureComponent {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     children: PropTypes.node.isRequired,
+    container: PropTypes.bool,
     bottomMargin: PropTypes.bool,
     gutters: PropTypes.bool,
   };
 
   static defaultProps = {
-    className: "",
     bottomMargin: false,
+    className: "",
+    container: false,
     gutters: false,
   };
 
   render() {
     const {
+      children,
       classes,
       className: classNameProp,
-      children,
+      container,
       bottomMargin,
       gutters,
     } = this.props;
@@ -49,7 +52,11 @@ class Content extends React.PureComponent {
       [classes.bottomMargin]: bottomMargin,
       [classes.gutters]: gutters,
     });
-    return <div className={className}>{children}</div>;
+
+    if (container || React.Children.count(children) > 1) {
+      return <div className={className}>{children}</div>;
+    }
+    return React.cloneElement(children, { className });
   }
 }
 

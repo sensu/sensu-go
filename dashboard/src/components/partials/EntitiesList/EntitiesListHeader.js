@@ -2,15 +2,16 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import Button from "@material-ui/core/Button";
-import ListItemText from "@material-ui/core/ListItemText";
-import MenuItem from "@material-ui/core/MenuItem";
-import Typography from "@material-ui/core/Typography";
-
-import ButtonSet from "/components/ButtonSet";
-import ListHeader from "/components/partials/ListHeader";
+import CollapsingMenu from "/components/partials/CollapsingMenu";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
-import ButtonMenu from "/components/partials/ButtonMenu";
+import DeleteIcon from "@material-ui/icons/Delete";
+import ListHeader from "/components/partials/ListHeader";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListSortMenu from "/components/partials/ListSortMenu";
+import { Menu } from "/components/partials/ButtonMenu";
+import MenuItem from "@material-ui/core/MenuItem";
+import SilenceIcon from "/icons/Silence";
+import UnsilenceIcon from "/icons/Unsilence";
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
@@ -86,17 +87,22 @@ class EntitiesListHeader extends React.PureComponent {
         rowCount={rowCount}
         onClickSelect={onClickSelect}
         renderBulkActions={() => (
-          <ButtonSet>
-            {selectedSilenced.length > 0 && (
-              <Button onClick={onClickSilence}>
-                <Typography variant="button">Silence</Typography>
-              </Button>
-            )}
-            {selectedSilenced.length === 0 && (
-              <Button onClick={onClickClearSilences}>
-                <Typography variant="button">Unsilence</Typography>
-              </Button>
-            )}
+          <CollapsingMenu>
+            <CollapsingMenu.Button
+              alt="Create a silence targeting selected entities."
+              disabled={selectedSilenced.length === 0}
+              icon={<SilenceIcon />}
+              onClick={onClickSilence}
+              title="Silence"
+              pinned
+            />
+            <CollapsingMenu.Button
+              title="Unsilence"
+              icon={<UnsilenceIcon />}
+              onClick={onClickClearSilences}
+              alt="Clear silences associated with selected entities."
+              disabled={selectedSilenced.length > 0}
+            />
             <ConfirmDelete
               identifier={`${selectedCount} ${
                 selectedCount === 1 ? "entity" : "entities"
@@ -104,35 +110,46 @@ class EntitiesListHeader extends React.PureComponent {
               onSubmit={onClickDelete}
             >
               {confirm => (
-                <Button onClick={confirm.open}>
-                  <Typography variant="button">Delete</Typography>
-                </Button>
+                <CollapsingMenu.Button
+                  title="Delete"
+                  icon={<DeleteIcon />}
+                  onClick={confirm.open}
+                />
               )}
             </ConfirmDelete>
-          </ButtonSet>
+          </CollapsingMenu>
         )}
         renderActions={() => (
-          <ButtonSet>
-            <ButtonMenu
-              label="subscription"
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={this._handleChangeFiler.bind(this, "subscription")}
-            >
-              {subscriptions.map(entry => (
-                <MenuItem key={entry} value={entry}>
-                  <ListItemText primary={entry} />
-                </MenuItem>
-              ))}
-            </ButtonMenu>
-            <ButtonMenu label="Sort" onChange={this._handleChangeSort}>
-              <MenuItem key="ID" value="ID">
-                <ListItemText>Name</ListItemText>
-              </MenuItem>
-              <MenuItem key="LASTSEEN" value="LASTSEEN">
-                <ListItemText>Last Seen</ListItemText>
-              </MenuItem>
-            </ButtonMenu>
-          </ButtonSet>
+          <CollapsingMenu>
+            <CollapsingMenu.SubMenu
+              title="Subscription"
+              renderMenu={({ anchorEl, close }) => (
+                <Menu
+                  anchorEl={anchorEl}
+                  onChange={val => this._handleChangeFiler("subscription", val)}
+                  onClose={close}
+                >
+                  {subscriptions.map(entry => (
+                    <MenuItem key={entry} value={entry}>
+                      <ListItemText primary={entry} />
+                    </MenuItem>
+                  ))}
+                </Menu>
+              )}
+            />
+            <CollapsingMenu.SubMenu
+              title="Sort"
+              pinned
+              renderMenu={({ anchorEl, close }) => (
+                <ListSortMenu
+                  anchorEl={anchorEl}
+                  onClose={close}
+                  options={["ID"]}
+                  onChangeQuery={this.props.onChangeQuery}
+                />
+              )}
+            />
+          </CollapsingMenu>
         )}
       />
     );

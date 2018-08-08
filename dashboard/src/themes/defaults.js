@@ -31,6 +31,14 @@ const defaults = {
       },
     };
   },
+  overrides: {
+    MuiDialog: {
+      root: {
+        backdropFilter: "blur(3px)",
+        transition: "backdropFilter 300ms ease-in-out",
+      },
+    },
+  },
 };
 
 export default defaults;
