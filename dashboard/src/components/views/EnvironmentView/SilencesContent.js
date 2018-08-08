@@ -9,7 +9,6 @@ import ModalController from "/components/controller/ModalController";
 import ListToolbar from "/components/partials/ListToolbar";
 import LiveIcon from "/icons/Live";
 import NotFoundView from "/components/views/NotFoundView";
-import Paper from "@material-ui/core/Paper";
 import PlusIcon from "@material-ui/icons/Add";
 import Query from "/components/util/Query";
 import SearchBox from "/components/SearchBox";
@@ -119,7 +118,8 @@ class SilencesContent extends React.Component {
                   }
                 />
               </Content>
-              <Paper>
+
+              <Content bottomMargin>
                 <SilencesList
                   limit={limit}
                   offset={offset}
@@ -128,7 +128,7 @@ class SilencesContent extends React.Component {
                   loading={(loading && (!environment || !isPolling)) || aborted}
                   refetch={refetch}
                 />
-              </Paper>
+              </Content>
             </AppContent>
           );
         }}

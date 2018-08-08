@@ -97,14 +97,16 @@ class ChecksContent extends React.Component {
                 />
               </Content>
 
-              <ChecksList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                loading={(loading && (!environment || !isPolling)) || aborted}
-                refetch={refetch}
-              />
+              <Content bottomMargin>
+                <ChecksList
+                  limit={limit}
+                  offset={offset}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  refetch={refetch}
+                />
+              </Content>
             </AppContent>
           );
         }}

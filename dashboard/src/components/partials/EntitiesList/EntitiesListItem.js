@@ -56,6 +56,22 @@ class EntitiesListItem extends React.PureComponent {
     `,
   };
 
+  renderDescription = () => {
+    const { entity } = this.props;
+
+    return (
+      <React.Fragment>
+        <strong>{entity.class}</strong> - Last seen{" "}
+        {entity.lastSeen && (
+          <strong>
+            <RelativeDate dateTime={entity.lastSeen} />{" "}
+          </strong>
+        )}
+        with status <strong>{entity.status}</strong>.
+      </React.Fragment>
+    );
+  };
+
   renderMenu = ({ close, anchorEl }) => {
     const {
       entity,
@@ -130,15 +146,7 @@ class EntitiesListItem extends React.PureComponent {
                 {entity.system.platformVersion}
               </NamespaceLink>
             }
-            details={
-              <React.Fragment>
-                <strong>{entity.class}</strong> - Last seen{" "}
-                <strong>
-                  <RelativeDate dateTime={entity.lastSeen} />
-                </strong>{" "}
-                with status <strong>{entity.status}</strong>.
-              </React.Fragment>
-            }
+            details={this.renderDescription()}
           />
         </TableOverflowCell>
         <TableCell padding="checkbox">

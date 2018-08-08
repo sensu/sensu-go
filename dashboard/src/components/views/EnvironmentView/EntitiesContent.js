@@ -91,14 +91,16 @@ class EntitiesContent extends React.PureComponent {
                   }
                 />
               </Content>
-              <EntitiesList
-                limit={limit}
-                offset={offset}
-                loading={(loading && (!environment || !isPolling)) || aborted}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                refetch={refetch}
-              />
+              <Content bottomMargin>
+                <EntitiesList
+                  limit={limit}
+                  offset={offset}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  refetch={refetch}
+                />
+              </Content>
             </AppContent>
           );
         }}

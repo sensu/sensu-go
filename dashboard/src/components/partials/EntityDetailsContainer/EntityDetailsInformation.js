@@ -121,12 +121,16 @@ class EntityDetailsInformation extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Last Seen</DictionaryKey>
                   <DictionaryValue>
-                    <RelativeDate dateTime={entity.lastSeen} />
+                    <Maybe value={entity.lastSeen} fallback="n/a">
+                      {val => <RelativeDate dateTime={val} />}
+                    </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>User</DictionaryKey>
-                  <DictionaryValue>{entity.user}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={entity.user} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Subscriptions</DictionaryKey>
@@ -154,23 +158,36 @@ class EntityDetailsInformation extends React.PureComponent {
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Hostname</DictionaryKey>
-                  <DictionaryValue>{system.hostname}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={system.hostname} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>OS</DictionaryKey>
-                  <DictionaryValue>{system.os}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={system.os} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Platform</DictionaryKey>
                   <DictionaryValue>
-                    {[system.platform, system.platformFamily]
-                      .reduce((memo, val) => (val ? [...memo, val] : memo), [])
-                      .join(" / ")}
+                    <Maybe value={system.platform} fallback="n/a">
+                      {() =>
+                        [system.platform, system.platformFamily]
+                          .reduce(
+                            (memo, val) => (val ? [...memo, val] : memo),
+                            [],
+                          )
+                          .join(" / ")
+                      }
+                    </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Architecture</DictionaryKey>
-                  <DictionaryValue>{system.arch}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={system.arch} fallback="n/a" />
+                  </DictionaryValue>
                 </DictionaryEntry>
               </Dictionary>
             </Grid>

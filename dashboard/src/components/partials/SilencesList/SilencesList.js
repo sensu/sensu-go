@@ -6,6 +6,7 @@ import { withApollo } from "react-apollo";
 import CollapsingMenu from "/components/partials/CollapsingMenu";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import DeleteIcon from "@material-ui/icons/Delete";
+import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -136,63 +137,65 @@ class SilencesList extends React.Component {
         renderItem={this.renderItem}
       >
         {({ children, selectedItems, toggleSelectedItems }) => (
-          <Loader loading={loading}>
-            <ListHeader
-              sticky
-              selectedCount={selectedItems.length}
-              rowCount={children.length || 0}
-              onClickSelect={toggleSelectedItems}
-              renderBulkActions={() => (
-                <CollapsingMenu>
-                  <ConfirmDelete
-                    onSubmit={() => this.deleteItems(selectedItems)}
-                  >
-                    {confirm => (
-                      <CollapsingMenu.Button
-                        title="Delete"
-                        icon={<DeleteIcon />}
-                        onClick={confirm.open}
-                      />
-                    )}
-                  </ConfirmDelete>
-                </CollapsingMenu>
-              )}
-              renderActions={() => (
-                <CollapsingMenu>
-                  <CollapsingMenu.SubMenu
-                    title="Sort"
-                    pinned
-                    renderMenu={({ anchorEl, close }) => (
-                      <ListSortMenu
-                        anchorEl={anchorEl}
-                        onClose={close}
-                        options={["ID", "BEGIN"]}
-                        onChangeQuery={onChangeQuery}
-                      />
-                    )}
-                  />
-                </CollapsingMenu>
-              )}
-            />
-
-            <Table>
-              <TableBody>{children}</TableBody>
-            </Table>
-
-            <Pagination
-              limit={limit}
-              offset={offset}
-              pageInfo={environment && environment.silences.pageInfo}
-              onChangeQuery={onChangeQuery}
-            />
-
-            {this.state.silence && (
-              <SilenceEntryDialog
-                values={this.state.silence}
-                onClose={() => this.setState({ silence: null })}
+          <Paper>
+            <Loader loading={loading}>
+              <ListHeader
+                sticky
+                selectedCount={selectedItems.length}
+                rowCount={children.length || 0}
+                onClickSelect={toggleSelectedItems}
+                renderBulkActions={() => (
+                  <CollapsingMenu>
+                    <ConfirmDelete
+                      onSubmit={() => this.deleteItems(selectedItems)}
+                    >
+                      {confirm => (
+                        <CollapsingMenu.Button
+                          title="Delete"
+                          icon={<DeleteIcon />}
+                          onClick={confirm.open}
+                        />
+                      )}
+                    </ConfirmDelete>
+                  </CollapsingMenu>
+                )}
+                renderActions={() => (
+                  <CollapsingMenu>
+                    <CollapsingMenu.SubMenu
+                      title="Sort"
+                      pinned
+                      renderMenu={({ anchorEl, close }) => (
+                        <ListSortMenu
+                          anchorEl={anchorEl}
+                          onClose={close}
+                          options={["ID", "BEGIN"]}
+                          onChangeQuery={onChangeQuery}
+                        />
+                      )}
+                    />
+                  </CollapsingMenu>
+                )}
               />
-            )}
-          </Loader>
+
+              <Table>
+                <TableBody>{children}</TableBody>
+              </Table>
+
+              <Pagination
+                limit={limit}
+                offset={offset}
+                pageInfo={environment && environment.silences.pageInfo}
+                onChangeQuery={onChangeQuery}
+              />
+
+              {this.state.silence && (
+                <SilenceEntryDialog
+                  values={this.state.silence}
+                  onClose={() => this.setState({ silence: null })}
+                />
+              )}
+            </Loader>
+          </Paper>
         )}
       </ListController>
     );
