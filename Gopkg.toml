@@ -79,7 +79,7 @@ required = [
 
 [[constraint]]
   name = "github.com/shirou/gopsutil"
-  version = "2.18.4"
+  version = "2.18.7"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
@@ -120,7 +120,7 @@ required = [
 # Locked for Windows
 [[override]]
   name = "github.com/StackExchange/wmi"
-  revision = "9f32b5905fd6ce7384093f9d048437e79f7b4d85"
+  revision = "b12b22c5341f0c26d88c4d66176330500e84db68"
 
 # Locked for Windows
 [[override]]
