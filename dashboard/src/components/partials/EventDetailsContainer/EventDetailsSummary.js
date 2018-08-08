@@ -10,7 +10,7 @@ import Dictionary, {
   DictionaryValue,
   DictionaryEntry,
 } from "/components/Dictionary";
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 import Monospaced from "/components/Monospaced";
 import Maybe from "/components/Maybe";
 import InlineLink from "/components/InlineLink";
@@ -112,7 +112,7 @@ class EventDetailsSummary extends React.Component {
               <DictionaryKey>Last Seen</DictionaryKey>
               <DictionaryValue>
                 <Maybe value={entity.lastSeen} fallback="unknown">
-                  {val => <RelativeDate dateTime={val} />}
+                  {val => <RelativeToCurrentDate dateTime={val} />}
                 </Maybe>
               </DictionaryValue>
             </DictionaryEntry>

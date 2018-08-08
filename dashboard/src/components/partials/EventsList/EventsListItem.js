@@ -10,7 +10,7 @@ import MoreVert from "@material-ui/icons/MoreVert";
 import RootRef from "@material-ui/core/RootRef";
 import TableCell from "@material-ui/core/TableCell";
 
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 
 import MenuController from "/components/controller/MenuController";
 
@@ -162,7 +162,7 @@ class EventListItem extends React.PureComponent {
               <React.Fragment>
                 Last occurred{" "}
                 <strong>
-                  <RelativeDate dateTime={timestamp} />
+                  <RelativeToCurrentDate dateTime={timestamp} />
                 </strong>{" "}
                 and exited with status <strong>{check.status}</strong>.
               </React.Fragment>

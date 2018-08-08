@@ -17,7 +17,7 @@ import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 import NamespaceLink from "/components/util/NamespaceLink";
 
@@ -64,7 +64,7 @@ class EntitiesListItem extends React.PureComponent {
         <strong>{entity.class}</strong> - Last seen{" "}
         {entity.lastSeen && (
           <strong>
-            <RelativeDate dateTime={entity.lastSeen} />{" "}
+            <RelativeToCurrentDate dateTime={entity.lastSeen} />{" "}
           </strong>
         )}
         with status <strong>{entity.status}</strong>.

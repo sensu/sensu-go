@@ -13,7 +13,7 @@ import Dictionary, {
   DictionaryEntry,
 } from "/components/Dictionary";
 import CardHighlight from "/components/CardHighlight";
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 import {
   DateStringFormatter,
   DateTime,
@@ -95,7 +95,9 @@ class EventDetailsCheckResult extends React.PureComponent {
                   <DictionaryKey>Last OK</DictionaryKey>
                   <DictionaryValue>
                     <Maybe value={check.lastOK} fallback="Never">
-                      {val => <RelativeDate dateTime={val} capitalize />}
+                      {val => (
+                        <RelativeToCurrentDate dateTime={val} capitalize />
+                      )}
                     </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>

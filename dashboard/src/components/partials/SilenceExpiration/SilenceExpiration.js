@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 
 class SilenceExpiration extends React.Component {
   static propTypes = {
@@ -26,7 +26,7 @@ class SilenceExpiration extends React.Component {
         <React.Fragment>
           Expires when <strong>resolved</strong> or{" "}
           <strong>
-            <RelativeDate dateTime={expires} />
+            <RelativeToCurrentDate dateTime={expires} />
           </strong>.
         </React.Fragment>
       );
@@ -41,7 +41,7 @@ class SilenceExpiration extends React.Component {
         <React.Fragment>
           Expires{" "}
           <strong>
-            <RelativeDate dateTime={expires} />
+            <RelativeToCurrentDate dateTime={expires} />
           </strong>.
         </React.Fragment>
       );

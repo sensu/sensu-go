@@ -18,7 +18,7 @@ import List from "@material-ui/core/List";
 import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import Maybe from "/components/Maybe";
 import Monospaced from "/components/Monospaced";
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -122,7 +122,7 @@ class EntityDetailsInformation extends React.PureComponent {
                   <DictionaryKey>Last Seen</DictionaryKey>
                   <DictionaryValue>
                     <Maybe value={entity.lastSeen} fallback="n/a">
-                      {val => <RelativeDate dateTime={val} />}
+                      {val => <RelativeToCurrentDate dateTime={val} />}
                     </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>

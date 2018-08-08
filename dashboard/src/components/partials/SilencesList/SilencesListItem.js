@@ -21,7 +21,7 @@ import MenuController from "/components/controller/MenuController";
 import MenuItem from "@material-ui/core/MenuItem";
 import ModalController from "/components/controller/ModalController";
 import NotesIcon from "@material-ui/icons/Notes";
-import RelativeDate from "/components/RelativeDate";
+import { RelativeToCurrentDate } from "/components/RelativeDate";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import RootRef from "@material-ui/core/RootRef";
 import SilenceExpiration from "/components/partials/SilenceExpiration";
@@ -71,7 +71,7 @@ class SilencesListItem extends React.Component {
         <React.Fragment>
           Takes effect{" "}
           <strong>
-            <RelativeDate dateTime={silence.begin} />
+            <RelativeToCurrentDate dateTime={silence.begin} />
           </strong>.
         </React.Fragment>
       );
