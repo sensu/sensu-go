@@ -48,7 +48,10 @@ class RelativeDate extends React.Component {
   };
 
   shouldComponentUpdate(nextProps, nextState) {
-    return nextState.timestamp !== this.state.timestamp;
+    return (
+      nextState.timestamp !== this.state.timestamp ||
+      this.props.to.valueOf() !== nextProps.to.valueOf()
+    );
   }
 
   render() {

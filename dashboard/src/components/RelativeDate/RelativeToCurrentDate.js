@@ -6,6 +6,7 @@ import RelativeDate from "./RelativeDate";
 class RelativeToCurrentDate extends React.PureComponent {
   static propTypes = {
     ...RelativeDate.propTypes,
+    to: PropTypes.any, // eslint-disable-line react/require-default-props
     refreshInterval: PropTypes.number,
   };
 
