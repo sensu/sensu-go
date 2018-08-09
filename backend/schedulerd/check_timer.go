@@ -3,8 +3,8 @@ package schedulerd
 import (
 	"crypto/md5"
 	"encoding/binary"
-	"time"
 
+	time "github.com/echlebek/timeproxy"
 	"github.com/robfig/cron"
 )
 

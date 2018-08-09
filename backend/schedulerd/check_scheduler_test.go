@@ -1,5 +1,3 @@
-// +build integration,race
-
 package schedulerd
 
 import (
@@ -66,8 +64,6 @@ func newScheduler(t *testing.T, ctx context.Context) *TestCheckScheduler {
 }
 
 func TestCheckSchedulerInterval(t *testing.T) {
-	t.Parallel()
-
 	assert := assert.New(t)
 
 	// Start a scheduler
@@ -103,13 +99,13 @@ func TestCheckSchedulerInterval(t *testing.T) {
 	}()
 
 	assert.NoError(scheduler.scheduler.Start())
+	mockTime.Start()
 	wg.Wait()
+	mockTime.Stop()
 	assert.NoError(scheduler.scheduler.Stop())
 }
 
 func TestCheckSubdueInterval(t *testing.T) {
-	t.Parallel()
-
 	assert := assert.New(t)
 
 	// Start a scheduler
@@ -152,7 +148,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 	}()
 
 	assert.NoError(scheduler.scheduler.Start())
-	time.Sleep(1 * time.Second)
+	mockTime.Set(mockTime.Now().Add(2 * time.Second))
 	assert.NoError(scheduler.scheduler.Stop())
 
 	// We should have no element in our channel
@@ -160,8 +156,6 @@ func TestCheckSubdueInterval(t *testing.T) {
 }
 
 func TestCheckSchedulerCron(t *testing.T) {
-	t.Parallel()
-
 	assert := assert.New(t)
 
 	// Start a scheduler
@@ -203,13 +197,13 @@ func TestCheckSchedulerCron(t *testing.T) {
 	}()
 
 	assert.NoError(scheduler.scheduler.Start())
+	mockTime.Start()
 	wg.Wait()
+	mockTime.Stop()
 	assert.NoError(scheduler.scheduler.Stop())
 }
 
 func TestCheckSubdueCron(t *testing.T) {
-	t.Parallel()
-
 	assert := assert.New(t)
 
 	// Start a scheduler
@@ -253,7 +247,7 @@ func TestCheckSubdueCron(t *testing.T) {
 	}()
 
 	assert.NoError(scheduler.scheduler.Start())
-	time.Sleep(5 * time.Second)
+	mockTime.Set(mockTime.Now().Add(10 * time.Second))
 	assert.NoError(scheduler.scheduler.Stop())
 
 	// We should have no element in our channel

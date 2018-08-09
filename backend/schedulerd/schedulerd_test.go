@@ -1,9 +1,10 @@
+// +build integration,!race
+
 package schedulerd
 
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
@@ -13,14 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type testSubscriber struct {
-	ch chan interface{}
-}
-
-func (ts testSubscriber) Receiver() chan<- interface{} {
-	return ts.ch
-}
 
 func TestSchedulerd(t *testing.T) {
 	// Setup wizard bus
@@ -65,11 +58,8 @@ func TestSchedulerd(t *testing.T) {
 	assert.NoError(t, check.Validate())
 	assert.NoError(t, st.UpdateCheckConfig(ctx, check))
 
-	time.Sleep(1 * time.Second)
-
 	require.NoError(t, st.DeleteCheckConfigByName(ctx, check.Name))
 
-	time.Sleep(1 * time.Second)
 	sub.Cancel()
 	close(tsub.ch)
 

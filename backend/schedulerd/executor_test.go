@@ -1,4 +1,4 @@
-// +build integration,race
+// +build integration
 
 package schedulerd
 

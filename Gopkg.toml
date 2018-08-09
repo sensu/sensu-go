@@ -178,3 +178,11 @@ required = [
 [[constraint]]
   name = "github.com/atlassian/gostatsd"
   version = "6.1.1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/echlebek/timeproxy"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/echlebek/crock"

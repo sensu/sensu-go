@@ -8,7 +8,7 @@ import (
 )
 
 func TestNextCronTime(t *testing.T) {
-	now := time.Now()
+	now := mockTime.Now()
 
 	// Valid cron string will return a time in the future, on an even minute
 	nextCron, err := NextCronTime(now, "* * * * *")
@@ -40,7 +40,7 @@ func TestSplay(t *testing.T) {
 func TestInitialOffset(t *testing.T) {
 	inputs := []uint{1, 10, 60}
 	for _, intervalSeconds := range inputs {
-		now := time.Now()
+		now := mockTime.Now()
 		timer := NewIntervalTimer("check1", intervalSeconds)
 		nextExecution := timer.calcInitialOffset()
 		executionTime := now.Add(nextExecution)

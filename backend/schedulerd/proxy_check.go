@@ -3,8 +3,8 @@ package schedulerd
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
+	time "github.com/echlebek/timeproxy"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
