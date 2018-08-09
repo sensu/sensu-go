@@ -280,7 +280,8 @@ func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
 		return nil, err
 	}
 
-	for _, kv := range response.Kvs {
+	if len(response.Kvs) > 0 {
+		kv := response.Kvs[0]
 		item, err := q.tryDelete(ctx, kv)
 		if err != nil {
 			return nil, err

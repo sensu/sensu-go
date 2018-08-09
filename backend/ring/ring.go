@@ -28,9 +28,6 @@ var (
 	ringPathPrefix = "rings"
 	ringKeyBuilder = store.NewKeyBuilder(ringPathPrefix)
 
-	backendID   string
-	backendOnce sync.Once
-
 	leaseIDCache = make(map[string]clientv3.LeaseID)
 	pkgMu        sync.Mutex
 
