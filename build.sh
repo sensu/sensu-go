@@ -39,13 +39,6 @@ case "$GOOS" in
         ;;
 esac
 
-install_deps () {
-    echo "Installing deps..."
-    go get gopkg.in/alecthomas/gometalinter.v2
-    go get github.com/gordonklaus/ineffassign
-    go get github.com/jgautheron/goconst/cmd/goconst
-}
-
 cmd_name_map() {
     local cmd=$1
 
@@ -180,6 +173,17 @@ build_command () {
 
 linter_commands () {
     echo "Running linter..."
+
+    go get honnef.co/go/tools/cmd/megacheck
+    go get gopkg.in/alecthomas/gometalinter.v2
+    go get github.com/gordonklaus/ineffassign
+    go get github.com/jgautheron/goconst/cmd/goconst
+
+    megacheck $(go list ./... | grep -v dashboardd | grep -v agent/assetmanager | grep -v scripts)
+    if [ $? -ne 0 ]; then
+        echo "Linting failed..."
+        exit 1
+    fi
 
     gometalinter.v2 --vendor --disable-all --enable=vet --enable=ineffassign --enable=goconst --tests ./...
     if [ $? -ne 0 ]; then
@@ -384,9 +388,6 @@ case "$cmd" in
         check_deploy
         deploy "${@:2}"
         ;;
-    "deps")
-        install_deps
-        ;;
     "docker")
         docker_commands "${@:2}"
         ;;
@@ -404,7 +405,6 @@ case "$cmd" in
         echo "noop"
         ;;
     "quality")
-        linter_commands
         unit_test_commands
         ;;
     "unit")
@@ -414,8 +414,6 @@ case "$cmd" in
         integration_test_commands
         ;;
     *)
-        install_deps
-        linter_commands
         build_tools
         unit_test_commands
         integration_test_commands

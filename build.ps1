@@ -31,16 +31,6 @@ switch ($env:GOOS)
     "windows" {set_race_flag}
 }
 
-function install_deps
-{
-    echo "Installing deps..."
-    go get github.com/axw/gocov/gocov
-    go get gopkg.in/alecthomas/gometalinter.v2
-    go get github.com/gordonklaus/ineffassign
-    go get github.com/jgautheron/goconst/cmd/goconst
-    go get github.com/kisielk/errcheck
-}
-
 function build_tool_binary([string]$goos, [string]$goarch, [string]$bin, [string]$subdir)
 {
     $outfile = "target/$goos-$goarch/$subdir/$bin.exe"
@@ -183,13 +173,18 @@ function linter_commands
 {
     echo "Running linter..."
 
-    gometalinter.v2 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=ineffassign --enable=goconst --tests ./...
+    go get gopkg.in/alecthomas/gometalinter.v2
+    go get github.com/gordonklaus/ineffassign
+    go get github.com/jgautheron/goconst/cmd/goconst
+    go get honnef.co/go/tools/cmd/megacheck
+
+    megacheck $(go list ./... | grep -v dashboardd | grep -v agent/assetmanager | grep -v scripts)
     If ($LASTEXITCODE -ne 0) {
         echo "Linting failed..."
         exit 1
     }
 
-    errcheck $(go list ./... | Select-String -pattern "dashboardd", "agent/assetmanager", "scripts" -notMatch)
+    gometalinter.v2 --vendor --disable-all --enable=vet --linter='vet:go tool vet -composites=false {paths}:PATH:LINE:MESSAGE' --enable=ineffassign --enable=goconst --tests ./...
     If ($LASTEXITCODE -ne 0) {
         echo "Linting failed..."
         exit 1
@@ -299,9 +294,6 @@ ElseIf ($cmd -eq "build_cli") {
 ElseIf ($cmd -eq "build_tools") {
     build_tools
 }
-ElseIf ($cmd -eq "deps") {
-    install_deps
-}
 ElseIf ($cmd -eq "docker") {
     # no-op for now
 }
@@ -313,7 +305,6 @@ ElseIf ($cmd -eq "lint") {
     linter_commands
 }
 ElseIf ($cmd -eq "quality") {
-    linter_commands
     unit_test_commands
 }
 ElseIf ($cmd -eq "unit") {
@@ -337,8 +328,6 @@ ElseIf ($cmd -eq "wait_for_appveyor_jobs") {
     }
 }
 Else {
-    install_deps
-    linter_commands
     build_tools
     unit_test_commands
     integration_test_commands
