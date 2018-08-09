@@ -25,7 +25,6 @@ install:
 # Travis clones with depth=50 by default. If the most recent tag is more than
 # 50 commits back, git describe will fail. Fetch tags and full history.
 - "git fetch --unshallow --tags"
-- "./build.sh deps"
 - "./build.sh build_tools"
 script: "./build.sh $TEST_SUITE"
 jobs:
@@ -53,7 +52,6 @@ jobs:
         condition: $TRAVIS_EVENT_TYPE = api
 env:
   matrix:
-  - GOARCH=amd64 TEST_SUITE=lint
   - GOARCH=386 TEST_SUITE=unit GOGC=off
   - GOARCH=amd64 TEST_SUITE=unit GOGC=off
   - GOARCH=386 TEST_SUITE=integration GOGC=off
