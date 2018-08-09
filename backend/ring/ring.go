@@ -207,9 +207,6 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 			return fmt.Errorf("couldn't add item to ring: %s", err)
 		}
 		key := path.Join(r.itemPrefix, seq)
-		if err != nil {
-			return err
-		}
 		putCmp := clientv3.Compare(clientv3.Version(key), "=", 0)
 		leaseID, err := r.getLeaseID()
 		if err != nil {

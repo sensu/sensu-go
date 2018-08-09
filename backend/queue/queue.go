@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"path"
 	"strings"
@@ -308,12 +309,14 @@ func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
 }
 
 func (q *Queue) getItemTimestamp(key []byte) (time.Time, error) {
-	binaryTimestamp := key[len(key)-8:]
+	ts, err := hex.DecodeString(string(key[len(key)-16:]))
+	if err != nil {
+		return time.Time{}, err
+	}
 
 	var itemTimestamp int64
-	buf := bytes.NewReader(binaryTimestamp)
-	err := binary.Read(buf, binary.BigEndian, &itemTimestamp)
-	if err != nil {
+	buf := bytes.NewReader(ts)
+	if err := binary.Read(buf, binary.BigEndian, &itemTimestamp); err != nil {
 		return time.Time{}, err
 	}
 	unixTimestamp := time.Unix(0, itemTimestamp)
@@ -389,12 +392,12 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 // The queue uses timestamps to order its queue items, and also to
 // determine how old queue items are.
 func (q *Queue) timeStamp() (string, error) {
-	now := time.Now().UnixNano()
+	now := uint64(time.Now().UnixNano())
 	buf := new(bytes.Buffer)
 	if err := binary.Write(buf, binary.BigEndian, now); err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+	return hex.EncodeToString(buf.Bytes()), nil
 }
 
 func (q *Queue) waitPutEvent(ctx context.Context) (*clientv3.Event, error) {

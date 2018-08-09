@@ -5,6 +5,7 @@ package queue
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -340,4 +341,63 @@ func TestCleanupQueue(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "rubber ducky", item.Value())
 	}
+}
+
+func TestDequeueParallel(t *testing.T) {
+	t.Parallel()
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client, err := e.NewClient()
+	defer client.Close()
+	require.NoError(t, err)
+	queue := New("testparallel", client, e.BackendID())
+	items := map[string]struct{}{
+		"hello":   struct{}{},
+		"there":   struct{}{},
+		"world":   struct{}{},
+		"asdf":    struct{}{},
+		"fjdksl":  struct{}{},
+		"lalalal": struct{}{},
+	}
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	wg.Add(len(items))
+	var errEnqueue error
+	for item := range items {
+		go func(item string) {
+			defer wg.Done()
+			// Prevent data races when inspecting the error
+			mu.Lock()
+			defer mu.Unlock()
+			if err := queue.Enqueue(context.Background(), item); err != nil {
+				errEnqueue = err
+			}
+		}(item)
+	}
+	wg.Wait()
+	// Make sure we didn't encountered any error when adding items to the queue.
+	// If we had multiple errors, only the last one is saved
+	require.NoError(t, errEnqueue)
+	results := make(map[string]struct{})
+	var errDequeue error
+	wg.Add(len(items))
+	for range items {
+		go func() {
+			defer wg.Done()
+			item, err := queue.Dequeue(context.Background())
+			// Prevent data races when inspecting the error or the result
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil {
+				errDequeue = err
+				return
+			}
+			results[item.Value()] = struct{}{}
+		}()
+	}
+	wg.Wait()
+	// Make sure we didn't encountered any error while dequeuing items from the
+	// queue. If we had multiple errors, only the last one is saved
+	require.NoError(t, errEnqueue)
+	assert.Equal(t, items, results)
 }
