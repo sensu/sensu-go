@@ -15,14 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type testSubscriber struct {
-	ch chan interface{}
-}
-
-func (ts testSubscriber) Receiver() chan<- interface{} {
-	return ts.ch
-}
-
 func TestSchedulerd(t *testing.T) {
 	// Setup wizard bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
