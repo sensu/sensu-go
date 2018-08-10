@@ -27,6 +27,8 @@ check requests and use its default value instead.
 message on startup failure.
 - `Issued` & `History` are now set on keepalive events.
 - Resolves a potential panic in `sensuctl cluster health`.
+- Fixed a bug in InfluxDB metric parsing. The timestamp is now optional and
+compliant with InfluxDB line protocol.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 
