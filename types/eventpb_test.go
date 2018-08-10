@@ -4,10 +4,11 @@
 package types
 
 import testing "testing"
-import rand "math/rand"
+import math_rand "math/rand"
 import time "time"
+import github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
+import github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
 import proto "github.com/golang/protobuf/proto"
-import jsonpb "github.com/gogo/protobuf/jsonpb"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
@@ -19,14 +20,14 @@ var _ = math.Inf
 
 func TestEventProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -44,13 +45,13 @@ func TestEventProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_golang_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEventMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
@@ -62,7 +63,7 @@ func TestEventMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -75,15 +76,15 @@ func TestEventMarshalTo(t *testing.T) {
 
 func TestEventJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -93,11 +94,11 @@ func TestEventJSON(t *testing.T) {
 }
 func TestEventProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_golang_protobuf_proto.MarshalTextString(p)
 	msg := &Event{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -107,11 +108,11 @@ func TestEventProtoText(t *testing.T) {
 
 func TestEventProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_golang_protobuf_proto.CompactTextString(p)
 	msg := &Event{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -121,10 +122,10 @@ func TestEventProtoCompactText(t *testing.T) {
 
 func TestEventSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_golang_protobuf_proto.Size(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -135,7 +136,7 @@ func TestEventSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_golang_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}

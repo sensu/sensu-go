@@ -4,10 +4,11 @@
 package types
 
 import testing "testing"
-import rand "math/rand"
+import math_rand "math/rand"
 import time "time"
+import github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
+import github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
 import proto "github.com/golang/protobuf/proto"
-import jsonpb "github.com/gogo/protobuf/jsonpb"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
@@ -19,14 +20,14 @@ var _ = math.Inf
 
 func TestMetricsProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetrics(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Metrics{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -44,13 +45,13 @@ func TestMetricsProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_golang_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestMetricsMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetrics(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
@@ -62,7 +63,7 @@ func TestMetricsMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Metrics{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -75,14 +76,14 @@ func TestMetricsMarshalTo(t *testing.T) {
 
 func TestMetricPointProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricPoint(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &MetricPoint{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -100,13 +101,13 @@ func TestMetricPointProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_golang_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestMetricPointMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricPoint(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
@@ -118,7 +119,7 @@ func TestMetricPointMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &MetricPoint{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -131,14 +132,14 @@ func TestMetricPointMarshalTo(t *testing.T) {
 
 func TestMetricTagProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricTag(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &MetricTag{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -156,13 +157,13 @@ func TestMetricTagProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_golang_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestMetricTagMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricTag(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
@@ -174,7 +175,7 @@ func TestMetricTagMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &MetricTag{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -187,15 +188,15 @@ func TestMetricTagMarshalTo(t *testing.T) {
 
 func TestMetricsJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetrics(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Metrics{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -205,15 +206,15 @@ func TestMetricsJSON(t *testing.T) {
 }
 func TestMetricPointJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricPoint(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &MetricPoint{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -223,15 +224,15 @@ func TestMetricPointJSON(t *testing.T) {
 }
 func TestMetricTagJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricTag(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &MetricTag{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -241,11 +242,11 @@ func TestMetricTagJSON(t *testing.T) {
 }
 func TestMetricsProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetrics(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_golang_protobuf_proto.MarshalTextString(p)
 	msg := &Metrics{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -255,11 +256,11 @@ func TestMetricsProtoText(t *testing.T) {
 
 func TestMetricsProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetrics(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_golang_protobuf_proto.CompactTextString(p)
 	msg := &Metrics{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -269,11 +270,11 @@ func TestMetricsProtoCompactText(t *testing.T) {
 
 func TestMetricPointProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricPoint(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_golang_protobuf_proto.MarshalTextString(p)
 	msg := &MetricPoint{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -283,11 +284,11 @@ func TestMetricPointProtoText(t *testing.T) {
 
 func TestMetricPointProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricPoint(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_golang_protobuf_proto.CompactTextString(p)
 	msg := &MetricPoint{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -297,11 +298,11 @@ func TestMetricPointProtoCompactText(t *testing.T) {
 
 func TestMetricTagProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricTag(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_golang_protobuf_proto.MarshalTextString(p)
 	msg := &MetricTag{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -311,11 +312,11 @@ func TestMetricTagProtoText(t *testing.T) {
 
 func TestMetricTagProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricTag(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_golang_protobuf_proto.CompactTextString(p)
 	msg := &MetricTag{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -325,10 +326,10 @@ func TestMetricTagProtoCompactText(t *testing.T) {
 
 func TestMetricsSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetrics(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_golang_protobuf_proto.Size(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -339,7 +340,7 @@ func TestMetricsSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_golang_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
@@ -347,10 +348,10 @@ func TestMetricsSize(t *testing.T) {
 
 func TestMetricPointSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricPoint(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_golang_protobuf_proto.Size(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -361,7 +362,7 @@ func TestMetricPointSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_golang_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
@@ -369,10 +370,10 @@ func TestMetricPointSize(t *testing.T) {
 
 func TestMetricTagSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedMetricTag(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_golang_protobuf_proto.Size(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -383,7 +384,7 @@ func TestMetricTagSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_golang_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}

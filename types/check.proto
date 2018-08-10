@@ -213,7 +213,7 @@ message Check {
 
   // TotalStateChange indicates the total state change percentage for the
   // check's history
-  uint32 total_state_change = 29 [(gogoproto.jsontag) = "total_state-change"];
+  uint32 total_state_change = 29 [(gogoproto.jsontag) = "total_state_change"];
 
   // LastOK displays last time this check was ok; if event status is 0 this is set to timestamp
   int64 last_ok = 30 [(gogoproto.customname) = "LastOK", (gogoproto.jsontag) = "last_ok"];

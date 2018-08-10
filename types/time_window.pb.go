@@ -142,7 +142,10 @@ func init() {
 }
 func (this *TimeWindowWhen) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TimeWindowWhen)
@@ -155,7 +158,10 @@ func (this *TimeWindowWhen) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -166,7 +172,10 @@ func (this *TimeWindowWhen) Equal(that interface{}) bool {
 }
 func (this *TimeWindowDays) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TimeWindowDays)
@@ -179,7 +188,10 @@ func (this *TimeWindowDays) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -251,7 +263,10 @@ func (this *TimeWindowDays) Equal(that interface{}) bool {
 }
 func (this *TimeWindowTimeRange) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TimeWindowTimeRange)
@@ -264,7 +279,10 @@ func (this *TimeWindowTimeRange) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}

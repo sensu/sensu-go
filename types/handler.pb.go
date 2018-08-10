@@ -156,7 +156,10 @@ func init() {
 }
 func (this *Handler) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Handler)
@@ -169,7 +172,10 @@ func (this *Handler) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -225,7 +231,10 @@ func (this *Handler) Equal(that interface{}) bool {
 }
 func (this *HandlerSocket) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*HandlerSocket)
@@ -238,7 +247,10 @@ func (this *HandlerSocket) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}

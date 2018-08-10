@@ -28,6 +28,9 @@ message on startup failure.
 - `Issued` & `History` are now set on keepalive events.
 - Resolves a potential panic in `sensuctl cluster health`.
 
+### Breaking Changes
+- Corrects the check field `total_state-change` json tag to `total_state_change`.
+
 ## [2.0.0-beta.3-1] - 2018-08-02
 
 ### Added
