@@ -89,8 +89,10 @@ class EventsListHeader extends React.PureComponent {
         const val = newValue.join(",");
         this.props.onChangeQuery({ filter: `Check.Status IN (${val})` });
       }
-    } else {
+    } else if (newValue === "") {
       this.props.onChangeQuery(query => query.delete("filter"));
+    } else {
+      this.props.onChangeQuery({ filter: newValue });
     }
   };
 
