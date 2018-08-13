@@ -10,14 +10,13 @@ import MoreVert from "@material-ui/icons/MoreVert";
 import RootRef from "@material-ui/core/RootRef";
 import TableCell from "@material-ui/core/TableCell";
 
-import { RelativeToCurrentDate } from "/components/RelativeDate";
-
 import MenuController from "/components/controller/MenuController";
 
 import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 
+import EventStatusDescriptor from "/components/partials/EventStatusDescriptor";
 import NamespaceLink from "/components/util/NamespaceLink";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 
@@ -45,16 +44,15 @@ class EventListItem extends React.PureComponent {
     event: gql`
       fragment EventsListItem_event on Event {
         id
-        timestamp
         isSilenced
         deleted @client
         check {
-          status
           name
           isSilenced
           history(first: 1) {
             status
           }
+          ...EventStatusDescriptor_check
         }
         entity {
           name
@@ -63,7 +61,11 @@ class EventListItem extends React.PureComponent {
           organization
           environment
         }
+        ...EventStatusDescriptor_event
       }
+
+      ${EventStatusDescriptor.fragments.check}
+      ${EventStatusDescriptor.fragments.event}
     `,
   };
 
@@ -169,13 +171,7 @@ class EventListItem extends React.PureComponent {
               </NamespaceLink>
             }
             details={
-              <React.Fragment>
-                Last occurred{" "}
-                <strong>
-                  <RelativeToCurrentDate dateTime={timestamp} />
-                </strong>{" "}
-                and exited with status <strong>{check.status}</strong>.
-              </React.Fragment>
+              <EventStatusDescriptor event={event} check={event.check} />
             }
           />
         </TableOverflowCell>

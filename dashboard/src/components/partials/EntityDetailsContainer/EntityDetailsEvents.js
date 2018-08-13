@@ -3,15 +3,15 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
-import List from "@material-ui/core/List";
-import { RelativeToCurrentDate } from "/components/RelativeDate";
-import StatusIcon from "/components/CheckStatusIcon";
+import EventStatusDescriptor from "/components/partials/EventStatusDescriptor";
 import InlineLink from "/components/InlineLink";
+import List from "@material-ui/core/List";
 import ListItem, {
   ListItemTitle,
   ListItemSubtitle,
 } from "/components/DetailedListItem";
+import StatusIcon from "/components/CheckStatusIcon";
+import Typography from "@material-ui/core/Typography";
 
 class EntityDetailsEvents extends React.PureComponent {
   static propTypes = {
@@ -28,6 +28,7 @@ class EntityDetailsEvents extends React.PureComponent {
         check {
           name
           status
+          ...EventStatusDescriptor_check
         }
         entity {
           name
@@ -36,7 +37,11 @@ class EntityDetailsEvents extends React.PureComponent {
         id
         timestamp
         isSilenced
+        ...EventStatusDescriptor_event
       }
+
+      ${EventStatusDescriptor.fragments.check}
+      ${EventStatusDescriptor.fragments.event}
     `,
   };
 
@@ -69,8 +74,7 @@ class EntityDetailsEvents extends React.PureComponent {
           </InlineLink>
         </ListItemTitle>
         <ListItemSubtitle inset>
-          Exited with status {check.status};{" "}
-          <RelativeToCurrentDate dateTime={event.timestamp} />
+          <EventStatusDescriptor compact event={event} check={check} />
         </ListItemSubtitle>
       </ListItem>
     );
