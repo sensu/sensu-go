@@ -29,6 +29,8 @@ message on startup failure.
 - Resolves a potential panic in `sensuctl cluster health`.
 - Fixed a bug in InfluxDB metric parsing. The timestamp is now optional and
 compliant with InfluxDB line protocol.
+- Fixed an issue where adhoc checks would not be issued to all agents in a
+clustered installation.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 

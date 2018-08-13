@@ -4,8 +4,6 @@ package ring
 
 import (
 	"context"
-	"encoding/binary"
-	"strings"
 	"testing"
 	"time"
 
@@ -24,7 +22,7 @@ func TestAdd(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	ring := EtcdGetter{client}.GetRing("testadd")
+	ring := EtcdGetter{Client: client, BackendID: "TestAdd"}.GetRing("testadd")
 	err = ring.Add(context.Background(), "foo")
 	assert.NoError(t, err)
 }
@@ -39,7 +37,7 @@ func TestRemove(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	ring := EtcdGetter{client}.GetRing("testremove")
+	ring := EtcdGetter{Client: client, BackendID: "TestRemove"}.GetRing("testremove")
 	require.NoError(t, ring.Add(context.Background(), "foo"))
 	require.NoError(t, ring.Remove(context.Background(), "foo"))
 }
@@ -54,7 +52,7 @@ func TestNext(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	ring := EtcdGetter{client}.GetRing("testnext")
+	ring := EtcdGetter{Client: client, BackendID: "TestNext"}.GetRing("testnext")
 
 	items := []string{"foo", "bar", "baz"}
 	for _, item := range items {
@@ -99,21 +97,16 @@ func TestErrorOnNext(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	clientA, err := e.NewClient()
+	client, err := e.NewClient()
 	require.NoError(t, err)
-	defer clientA.Close()
+	defer client.Close()
 
-	getterA := EtcdGetter{clientA}
+	getterA := EtcdGetter{Client: client, BackendID: "TestErrorOnNextA"}
 
-	clientB, err := e.NewClient()
-	require.NoError(t, err)
-	defer clientB.Close()
-
-	getterB := EtcdGetter{clientB}
+	getterB := EtcdGetter{Client: client, BackendID: "TestErrorOnNextB"}
 
 	r1 := getterA.GetRing("blocknext")
 	r2 := getterB.GetRing("blocknext")
-	r2.(*Ring).backendID = "something-else-entirely"
 
 	require.NoError(t, r1.Add(context.Background(), "foo"))
 	require.NoError(t, r2.Add(context.Background(), "bar"))
@@ -147,7 +140,7 @@ func TestTransferOwnership(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	getter := EtcdGetter{client}
+	getter := EtcdGetter{Client: client, BackendID: "TestTransferOwner"}
 
 	r1 := getter.GetRing("testtransfer")
 	r2 := getter.GetRing("testtransfer")
@@ -175,7 +168,7 @@ func TestErrNotOwner(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	getter := EtcdGetter{client}
+	getter := EtcdGetter{Client: client, BackendID: "TestErrNotOwner"}
 
 	r1 := getter.GetRing("testerrnotowner")
 	r2 := getter.GetRing("testerrnotowner")
@@ -195,7 +188,7 @@ func TestExpire(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	ring := EtcdGetter{client}.GetRing("testexpire").(*Ring)
+	ring := EtcdGetter{Client: client, BackendID: "TestExpire"}.GetRing("testexpire").(*Ring)
 	ring.leaseTimeout = 1
 
 	if err := ring.Add(context.Background(), "foo"); err != nil {
@@ -213,56 +206,4 @@ func TestExpire(t *testing.T) {
 
 	_, err = ring.Next(context.Background())
 	assert.Equal(t, ErrEmptyRing, err)
-}
-
-func TestNewItemKey(t *testing.T) {
-	t.Parallel()
-
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-
-	clientA, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	clientB, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r1 := EtcdGetter{clientA}.GetRing("foo").(*Ring)
-	r2 := EtcdGetter{clientB}.GetRing("foo").(*Ring)
-
-	k1, err := r1.newItemKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	parts := strings.Split(k1, "/")
-	idPart1 := parts[len(parts)-1]
-
-	k2, err := r2.newItemKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	parts = strings.Split(k2, "/")
-	idPart2 := parts[len(parts)-1]
-
-	var n1, n2 uint64
-
-	if err := binary.Read(strings.NewReader(idPart1), binary.BigEndian, &n1); err != nil {
-		t.Fatal(err)
-	}
-
-	if got, want := n1, uint64(1); got != want {
-		t.Errorf("bad id: got %d, want %d", got, want)
-	}
-
-	if err := binary.Read(strings.NewReader(idPart2), binary.BigEndian, &n2); err != nil {
-		t.Fatal(err)
-	}
-
-	if got, want := n2, uint64(2); got != want {
-		t.Errorf("bad id: got %d, want %d", got, want)
-	}
 }
