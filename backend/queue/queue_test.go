@@ -375,7 +375,7 @@ func TestDequeueParallel(t *testing.T) {
 		}(item)
 	}
 	wg.Wait()
-	// Make sure we didn't encountered any error when adding items to the queue.
+	// Make sure we didn't encounter any error when adding items to the queue.
 	// If we had multiple errors, only the last one is saved
 	require.NoError(t, errEnqueue)
 	results := make(map[string]struct{})
@@ -396,7 +396,7 @@ func TestDequeueParallel(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	// Make sure we didn't encountered any error while dequeuing items from the
+	// Make sure we didn't encounter any error while dequeuing items from the
 	// queue. If we had multiple errors, only the last one is saved
 	require.NoError(t, errEnqueue)
 	assert.Equal(t, items, results)

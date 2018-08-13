@@ -111,7 +111,7 @@ func (r *Ring) supervise() error {
 		defer mu.Unlock(context.Background())
 		for range r.wakeup {
 			if err := r.advance(); err != nil {
-				logger.WithError(err).Error("supervisor error")
+				logger.WithError(err).Error("supervisor: couldn't get the next ring item")
 			}
 		}
 	}()
