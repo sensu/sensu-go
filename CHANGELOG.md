@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - API responses are inspected after each request for the Sensu Edition header.
 - Rename list-rules subcommand to info in sensuctl role commmand with alias
 for backward compatibility.
+- Updated gogo/protobuf and golang/protobuf versions.
 
 ### Fixed
 - Fixed agentd so it does not subscribe to empty subscriptions.
