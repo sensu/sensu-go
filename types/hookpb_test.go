@@ -4,10 +4,11 @@
 package types
 
 import testing "testing"
-import rand "math/rand"
+import math_rand "math/rand"
 import time "time"
+import github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
+import github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
 import proto "github.com/golang/protobuf/proto"
-import jsonpb "github.com/gogo/protobuf/jsonpb"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
@@ -19,14 +20,14 @@ var _ = math.Inf
 
 func TestHookConfigProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookConfig(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &HookConfig{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -44,13 +45,13 @@ func TestHookConfigProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_golang_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestHookConfigMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookConfig(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
@@ -62,7 +63,7 @@ func TestHookConfigMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &HookConfig{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -75,14 +76,14 @@ func TestHookConfigMarshalTo(t *testing.T) {
 
 func TestHookProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHook(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Hook{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -100,13 +101,13 @@ func TestHookProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_golang_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestHookMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHook(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
@@ -118,7 +119,7 @@ func TestHookMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Hook{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -131,14 +132,14 @@ func TestHookMarshalTo(t *testing.T) {
 
 func TestHookListProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookList(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &HookList{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -156,13 +157,13 @@ func TestHookListProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_golang_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestHookListMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookList(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
@@ -174,7 +175,7 @@ func TestHookListMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &HookList{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -187,15 +188,15 @@ func TestHookListMarshalTo(t *testing.T) {
 
 func TestHookConfigJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookConfig(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &HookConfig{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -205,15 +206,15 @@ func TestHookConfigJSON(t *testing.T) {
 }
 func TestHookJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHook(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Hook{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -223,15 +224,15 @@ func TestHookJSON(t *testing.T) {
 }
 func TestHookListJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookList(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &HookList{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -241,11 +242,11 @@ func TestHookListJSON(t *testing.T) {
 }
 func TestHookConfigProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookConfig(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_golang_protobuf_proto.MarshalTextString(p)
 	msg := &HookConfig{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -255,11 +256,11 @@ func TestHookConfigProtoText(t *testing.T) {
 
 func TestHookConfigProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookConfig(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_golang_protobuf_proto.CompactTextString(p)
 	msg := &HookConfig{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -269,11 +270,11 @@ func TestHookConfigProtoCompactText(t *testing.T) {
 
 func TestHookProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHook(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_golang_protobuf_proto.MarshalTextString(p)
 	msg := &Hook{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -283,11 +284,11 @@ func TestHookProtoText(t *testing.T) {
 
 func TestHookProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHook(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_golang_protobuf_proto.CompactTextString(p)
 	msg := &Hook{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -297,11 +298,11 @@ func TestHookProtoCompactText(t *testing.T) {
 
 func TestHookListProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookList(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_golang_protobuf_proto.MarshalTextString(p)
 	msg := &HookList{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -311,11 +312,11 @@ func TestHookListProtoText(t *testing.T) {
 
 func TestHookListProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookList(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_golang_protobuf_proto.CompactTextString(p)
 	msg := &HookList{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_golang_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if !p.Equal(msg) {
@@ -325,10 +326,10 @@ func TestHookListProtoCompactText(t *testing.T) {
 
 func TestHookConfigSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookConfig(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_golang_protobuf_proto.Size(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -339,7 +340,7 @@ func TestHookConfigSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_golang_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
@@ -347,10 +348,10 @@ func TestHookConfigSize(t *testing.T) {
 
 func TestHookSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHook(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_golang_protobuf_proto.Size(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -361,7 +362,7 @@ func TestHookSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_golang_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
@@ -369,10 +370,10 @@ func TestHookSize(t *testing.T) {
 
 func TestHookListSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedHookList(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_golang_protobuf_proto.Size(p)
+	dAtA, err := github_com_golang_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -383,7 +384,7 @@ func TestHookListSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_golang_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}

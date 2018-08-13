@@ -297,7 +297,7 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:ee5d91441af0be09b8ef41aa003b22f7b4a9afbfc6d1b8db062f4ece6fd4168c"
+  digest = "1:da39f4a22829ca95e63566208e0ea42d6f055f41dff1b14fdab88d88f62df653"
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
@@ -307,12 +307,12 @@
     "sortkeys",
     "types",
   ]
-  pruneopts = "UT"
-  revision = "117892bf1866fbaa2318c03e50e40564c8845457"
+  pruneopts = "T"
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:c4a0b805dd1c5da53270447399d10c185dec897a5bf8e7b7c72c3ab5e279ec28"
+  digest = "1:832e17df5ff8bbe0e0693d2fb46c5e53f96c662ee804049ce3ab6557df74e3ab"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -323,8 +323,9 @@
     "ptypes/struct",
     "ptypes/timestamp",
   ]
-  pruneopts = "UT"
-  revision = "130e6b02ab059e7b717a096f397c5b60111cae74"
+  pruneopts = "T"
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"

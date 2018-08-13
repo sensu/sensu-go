@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - API responses are inspected after each request for the Sensu Edition header.
 - Rename list-rules subcommand to info in sensuctl role commmand with alias
 for backward compatibility.
+- Updated gogo/protobuf and golang/protobuf versions.
 
 ### Fixed
 - Fixed agentd so it does not subscribe to empty subscriptions.
@@ -31,6 +32,9 @@ message on startup failure.
 compliant with InfluxDB line protocol.
 - Fixed an issue where adhoc checks would not be issued to all agents in a
 clustered installation.
+
+### Breaking Changes
+- Corrects the check field `total_state-change` json tag to `total_state_change`.
 
 ## [2.0.0-beta.3-1] - 2018-08-02
 

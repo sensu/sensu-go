@@ -16,6 +16,14 @@ required = [
   name="github.com/shirou/gopsutil"
   unused-packages = false
 
+[[prune.project]]
+  name="github.com/gogo/protobuf"
+  unused-packages = false
+
+[[prune.project]]
+  name = "github.com/golang/protobuf"
+  unused-packages = false
+
 [[constraint]]
   name = "github.com/AlecAivazis/survey"
   version = "1.4.1"
@@ -137,7 +145,7 @@ required = [
 
 [[constraint]]
   name = "github.com/gogo/protobuf"
-  revision = "117892bf1866fbaa2318c03e50e40564c8845457"
+  version = "1.1.1"
 
 [[override]]
   name = "github.com/dsnet/compress"
@@ -186,3 +194,7 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/echlebek/crock"
+
+[[constraint]]
+  name = "github.com/golang/protobuf"
+  version = "1.1.0"

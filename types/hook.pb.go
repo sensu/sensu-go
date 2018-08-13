@@ -8,7 +8,9 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
-import binary "encoding/binary"
+import bytes "bytes"
+
+import encoding_binary "encoding/binary"
 
 import io "io"
 
@@ -16,6 +18,12 @@ import io "io"
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // HookConfig is the specification of a hook
 type HookConfig struct {
@@ -30,13 +38,44 @@ type HookConfig struct {
 	// Environment indicates to which env a hook belongs to
 	Environment string `protobuf:"bytes,5,opt,name=environment,proto3" json:"environment,omitempty"`
 	// Organization indicates to which org a hook belongs to
-	Organization string `protobuf:"bytes,6,opt,name=organization,proto3" json:"organization,omitempty"`
+	Organization         string   `protobuf:"bytes,6,opt,name=organization,proto3" json:"organization,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *HookConfig) Reset()                    { *m = HookConfig{} }
-func (m *HookConfig) String() string            { return proto.CompactTextString(m) }
-func (*HookConfig) ProtoMessage()               {}
-func (*HookConfig) Descriptor() ([]byte, []int) { return fileDescriptorHook, []int{0} }
+func (m *HookConfig) Reset()         { *m = HookConfig{} }
+func (m *HookConfig) String() string { return proto.CompactTextString(m) }
+func (*HookConfig) ProtoMessage()    {}
+func (*HookConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_hook_e5ba98497dafa5a3, []int{0}
+}
+func (m *HookConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *HookConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_HookConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *HookConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HookConfig.Merge(dst, src)
+}
+func (m *HookConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *HookConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_HookConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_HookConfig proto.InternalMessageInfo
 
 func (m *HookConfig) GetName() string {
 	if m != nil {
@@ -94,13 +133,44 @@ type Hook struct {
 	// Output from the execution of Command
 	Output string `protobuf:"bytes,5,opt,name=output,proto3" json:"output,omitempty"`
 	// Status is the exit status code produced by the hook
-	Status int32 `protobuf:"varint,6,opt,name=status,proto3" json:"status"`
+	Status               int32    `protobuf:"varint,6,opt,name=status,proto3" json:"status"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Hook) Reset()                    { *m = Hook{} }
-func (m *Hook) String() string            { return proto.CompactTextString(m) }
-func (*Hook) ProtoMessage()               {}
-func (*Hook) Descriptor() ([]byte, []int) { return fileDescriptorHook, []int{1} }
+func (m *Hook) Reset()         { *m = Hook{} }
+func (m *Hook) String() string { return proto.CompactTextString(m) }
+func (*Hook) ProtoMessage()    {}
+func (*Hook) Descriptor() ([]byte, []int) {
+	return fileDescriptor_hook_e5ba98497dafa5a3, []int{1}
+}
+func (m *Hook) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Hook) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Hook.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Hook) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Hook.Merge(dst, src)
+}
+func (m *Hook) XXX_Size() int {
+	return m.Size()
+}
+func (m *Hook) XXX_DiscardUnknown() {
+	xxx_messageInfo_Hook.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Hook proto.InternalMessageInfo
 
 func (m *Hook) GetDuration() float64 {
 	if m != nil {
@@ -141,13 +211,44 @@ type HookList struct {
 	// Hooks is the list of hooks for the check hook
 	Hooks []string `protobuf:"bytes,1,rep,name=hooks" json:"hooks"`
 	// Type indicates the type or response code for the check hook
-	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Type                 string   `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *HookList) Reset()                    { *m = HookList{} }
-func (m *HookList) String() string            { return proto.CompactTextString(m) }
-func (*HookList) ProtoMessage()               {}
-func (*HookList) Descriptor() ([]byte, []int) { return fileDescriptorHook, []int{2} }
+func (m *HookList) Reset()         { *m = HookList{} }
+func (m *HookList) String() string { return proto.CompactTextString(m) }
+func (*HookList) ProtoMessage()    {}
+func (*HookList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_hook_e5ba98497dafa5a3, []int{2}
+}
+func (m *HookList) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *HookList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_HookList.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *HookList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HookList.Merge(dst, src)
+}
+func (m *HookList) XXX_Size() int {
+	return m.Size()
+}
+func (m *HookList) XXX_DiscardUnknown() {
+	xxx_messageInfo_HookList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_HookList proto.InternalMessageInfo
 
 func (m *HookList) GetHooks() []string {
 	if m != nil {
@@ -205,6 +306,9 @@ func (this *HookConfig) Equal(that interface{}) bool {
 	if this.Organization != that1.Organization {
 		return false
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *Hook) Equal(that interface{}) bool {
@@ -244,6 +348,9 @@ func (this *Hook) Equal(that interface{}) bool {
 	if this.Status != that1.Status {
 		return false
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *HookList) Equal(that interface{}) bool {
@@ -274,6 +381,9 @@ func (this *HookList) Equal(that interface{}) bool {
 		}
 	}
 	if this.Type != that1.Type {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -332,6 +442,9 @@ func (m *HookConfig) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintHook(dAtA, i, uint64(len(m.Organization)))
 		i += copy(dAtA[i:], m.Organization)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -361,7 +474,7 @@ func (m *Hook) MarshalTo(dAtA []byte) (int, error) {
 	if m.Duration != 0 {
 		dAtA[i] = 0x11
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Duration))))
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Duration))))
 		i += 8
 	}
 	if m.Executed != 0 {
@@ -384,6 +497,9 @@ func (m *Hook) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x30
 		i++
 		i = encodeVarintHook(dAtA, i, uint64(m.Status))
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -424,6 +540,9 @@ func (m *HookList) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintHook(dAtA, i, uint64(len(m.Type)))
 		i += copy(dAtA[i:], m.Type)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -445,6 +564,7 @@ func NewPopulatedHookConfig(r randyHook, easy bool) *HookConfig {
 	this.Environment = string(randStringHook(r))
 	this.Organization = string(randStringHook(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedHook(r, 7)
 	}
 	return this
 }
@@ -471,6 +591,7 @@ func NewPopulatedHook(r randyHook, easy bool) *Hook {
 		this.Status *= -1
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedHook(r, 7)
 	}
 	return this
 }
@@ -484,6 +605,7 @@ func NewPopulatedHookList(r randyHook, easy bool) *HookList {
 	}
 	this.Type = string(randStringHook(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedHook(r, 3)
 	}
 	return this
 }
@@ -585,6 +707,9 @@ func (m *HookConfig) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovHook(uint64(l))
 	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -609,6 +734,9 @@ func (m *Hook) Size() (n int) {
 	if m.Status != 0 {
 		n += 1 + sovHook(uint64(m.Status))
 	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -624,6 +752,9 @@ func (m *HookList) Size() (n int) {
 	l = len(m.Type)
 	if l > 0 {
 		n += 1 + l + sovHook(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -837,6 +968,7 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -913,7 +1045,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
+			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
 			m.Duration = float64(math.Float64frombits(v))
 		case 3:
@@ -1014,6 +1146,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1122,6 +1255,7 @@ func (m *HookList) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1236,9 +1370,9 @@ var (
 	ErrIntOverflowHook   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("hook.proto", fileDescriptorHook) }
+func init() { proto.RegisterFile("hook.proto", fileDescriptor_hook_e5ba98497dafa5a3) }
 
-var fileDescriptorHook = []byte{
+var fileDescriptor_hook_e5ba98497dafa5a3 = []byte{
 	// 406 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x92, 0xb1, 0xae, 0xd3, 0x30,
 	0x14, 0x86, 0x6b, 0xda, 0xe6, 0xb6, 0xa7, 0x65, 0xf1, 0x00, 0xd1, 0x1d, 0x92, 0x28, 0x08, 0x29,

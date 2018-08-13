@@ -25,6 +25,8 @@ var typeMap = map[string]interface{}{
 	"check_request":          &CheckRequest{},
 	"Claims":                 &Claims{},
 	"claims":                 &Claims{},
+	"ClusterHealth":          &ClusterHealth{},
+	"cluster_health":         &ClusterHealth{},
 	"Deregistration":         &Deregistration{},
 	"deregistration":         &Deregistration{},
 	"Entity":                 &Entity{},
