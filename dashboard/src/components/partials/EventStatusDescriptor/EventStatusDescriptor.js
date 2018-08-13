@@ -33,6 +33,7 @@ class EventStatusDescriptor extends React.PureComponent {
 
   numFormatter = new Intl.NumberFormat();
 
+  // Metric received X minutes ago.
   renderMetricDescription() {
     const { event } = this.props;
 
@@ -46,7 +47,8 @@ class EventStatusDescriptor extends React.PureComponent {
     );
   }
 
-  renderOKDescription() {
+  // Last executed X minutes ago.
+  renderLastExecution() {
     const { event } = this.props;
 
     return (
@@ -59,6 +61,8 @@ class EventStatusDescriptor extends React.PureComponent {
     );
   }
 
+  // Incident started X minutes ago and has continued for Y consecutive
+  // executions.
   renderIncidentDescription() {
     const { check, compact } = this.props;
 
@@ -68,31 +72,33 @@ class EventStatusDescriptor extends React.PureComponent {
         <strong>
           <RelativeToCurrentDate dateTime={check.lastOK} />
         </strong>
-        {!compact && this.renderExtendedDescription()}
+        {!compact && (
+          <React.Fragment>
+            {" "}
+            and has continued for{" "}
+            <strong>{this.numFormatter.format(check.occurrences)}</strong>{" "}
+            consecutive executions
+          </React.Fragment>
+        )}
         .
       </React.Fragment>
     );
   }
 
-  renderExtendedDescription() {
+  // Event began returning unknown status {status} Y minutes ago.
+  // Starting X minutes ago, began returning unknown status code Y.
+  renderUnknownStatusDescription() {
     const { check } = this.props;
-
-    if (check.status > 2) {
-      return (
-        <React.Fragment>
-          {" "}
-          and the last execution exited with status{" "}
-          <strong>{check.status}</strong>
-        </React.Fragment>
-      );
-    }
 
     return (
       <React.Fragment>
-        {" "}
-        and has continued for{" "}
-        <strong>{this.numFormatter.format(check.occurrences)}</strong>{" "}
-        consecutive executions
+        Starting{" "}
+        <strong>
+          <RelativeToCurrentDate dateTime={check.lastOK} />
+        </strong>
+        {", "}
+        event began returning unknown status code{" "}
+        <strong>{check.status}</strong>.
       </React.Fragment>
     );
   }
@@ -105,7 +111,11 @@ class EventStatusDescriptor extends React.PureComponent {
     }
 
     if (check.status === 0 || check.lastOK === null) {
-      return this.renderOKDescription();
+      return this.renderLastExecution();
+    }
+
+    if (check.status > 2) {
+      return this.renderUnknownStatusDescription();
     }
 
     return this.renderIncidentDescription();
