@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	time "github.com/echlebek/timeproxy"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
 
 var (
-	defaultExpiration = time.Minute * time.Duration(15)
+	defaultExpiration = time.Minute * 15
 	secret            []byte
 )
 
