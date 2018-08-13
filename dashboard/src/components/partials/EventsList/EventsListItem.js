@@ -79,15 +79,6 @@ class EventListItem extends React.PureComponent {
     return (
       <Menu open onClose={close} anchorEl={anchorEl}>
         <MenuItem
-          key={"silence-pair"}
-          onClick={() => {
-            this.props.onClickSilencePair();
-            close();
-          }}
-        >
-          Silence Pair
-        </MenuItem>
-        <MenuItem
           key={"silence-Entity"}
           onClick={() => {
             this.props.onClickSilenceEntity();
@@ -104,6 +95,15 @@ class EventListItem extends React.PureComponent {
           }}
         >
           Silence Check
+        </MenuItem>
+        <MenuItem
+          key={"silence-pair"}
+          onClick={() => {
+            this.props.onClickSilencePair();
+            close();
+          }}
+        >
+          Silence Both
         </MenuItem>
         {event.check.isSilenced && (
           <MenuItem
