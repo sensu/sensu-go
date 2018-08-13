@@ -26,6 +26,7 @@ class EventListItem extends React.PureComponent {
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
+    onClickSilencePair: PropTypes.func.isRequired,
     onClickSilenceEntity: PropTypes.func.isRequired,
     onClickSilenceCheck: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
@@ -75,6 +76,15 @@ class EventListItem extends React.PureComponent {
 
     return (
       <Menu open onClose={close} anchorEl={anchorEl}>
+        <MenuItem
+          key={"silence-pair"}
+          onClick={() => {
+            this.props.onClickSilencePair();
+            close();
+          }}
+        >
+          Silence Pair
+        </MenuItem>
         <MenuItem
           key={"silence-Entity"}
           onClick={() => {
