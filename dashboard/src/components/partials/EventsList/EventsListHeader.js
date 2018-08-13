@@ -247,15 +247,20 @@ class EventsListHeader extends React.PureComponent {
               pinned
               renderMenu={({ anchorEl, close }) => (
                 <Menu open onClose={close} anchorEl={anchorEl}>
-                  {["SEVERITY", "NEWEST", "OLDEST"].map(name => (
+                  {[
+                    { name: "Last OK", value: "LASTOK" },
+                    { name: "Severity", value: "SEVERITY" },
+                    { name: "Newest", value: "NEWEST" },
+                    { name: "Oldest", value: "OLDEST" },
+                  ].map(option => (
                     <MenuItem
-                      key={name}
+                      key={option.value}
                       onClick={() => {
-                        this._handleChangeSort(name);
+                        this._handleChangeSort(option.value);
                         close();
                       }}
                     >
-                      <ListItemText primary={capitalize(name)} />
+                      <ListItemText primary={option.name} />
                     </MenuItem>
                   ))}
                 </Menu>

@@ -776,6 +776,8 @@ enum EventsListOrder {
   OLDEST
   NEWEST
   SEVERITY
+  LASTOK
+  LASTOK_DESC
 }
 
 input ExecuteCheckInput {
