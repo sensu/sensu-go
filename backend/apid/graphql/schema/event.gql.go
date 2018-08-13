@@ -51,6 +51,12 @@ type EventIsIncidentFieldResolver interface {
 	IsIncident(p graphql.ResolveParams) (bool, error)
 }
 
+// EventIsNewIncidentFieldResolver implement to resolve requests for the Event's isNewIncident field.
+type EventIsNewIncidentFieldResolver interface {
+	// IsNewIncident implements response to request for isNewIncident field.
+	IsNewIncident(p graphql.ResolveParams) (bool, error)
+}
+
 // EventIsResolutionFieldResolver implement to resolve requests for the Event's isResolution field.
 type EventIsResolutionFieldResolver interface {
 	// IsResolution implements response to request for isResolution field.
@@ -132,6 +138,7 @@ type EventFieldResolvers interface {
 	EventCheckFieldResolver
 	EventHooksFieldResolver
 	EventIsIncidentFieldResolver
+	EventIsNewIncidentFieldResolver
 	EventIsResolutionFieldResolver
 	EventIsSilencedFieldResolver
 }
@@ -246,6 +253,19 @@ func (_ EventAliases) IsIncident(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
+// IsNewIncident implements response to request for 'isNewIncident' field.
+func (_ EventAliases) IsNewIncident(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'isNewIncident'")
+	}
+	return ret, err
+}
+
 // IsResolution implements response to request for 'isResolution' field.
 func (_ EventAliases) IsResolution(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -328,6 +348,13 @@ func _ObjTypeEventIsIncidentHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEventIsNewIncidentHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EventIsNewIncidentFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.IsNewIncident(frp)
+	}
+}
+
 func _ObjTypeEventIsResolutionHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventIsResolutionFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -381,6 +408,13 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 				Name:              "isIncident",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
+			"isNewIncident": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "isNewIncident returns true if the event is an incident but it's previous\niteration was OK.",
+				Name:              "isNewIncident",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
 			"isResolution": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -428,15 +462,16 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEventDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEventConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"check":        _ObjTypeEventCheckHandler,
-		"entity":       _ObjTypeEventEntityHandler,
-		"hooks":        _ObjTypeEventHooksHandler,
-		"id":           _ObjTypeEventIDHandler,
-		"isIncident":   _ObjTypeEventIsIncidentHandler,
-		"isResolution": _ObjTypeEventIsResolutionHandler,
-		"isSilenced":   _ObjTypeEventIsSilencedHandler,
-		"namespace":    _ObjTypeEventNamespaceHandler,
-		"timestamp":    _ObjTypeEventTimestampHandler,
+		"check":         _ObjTypeEventCheckHandler,
+		"entity":        _ObjTypeEventEntityHandler,
+		"hooks":         _ObjTypeEventHooksHandler,
+		"id":            _ObjTypeEventIDHandler,
+		"isIncident":    _ObjTypeEventIsIncidentHandler,
+		"isNewIncident": _ObjTypeEventIsNewIncidentHandler,
+		"isResolution":  _ObjTypeEventIsResolutionHandler,
+		"isSilenced":    _ObjTypeEventIsSilencedHandler,
+		"namespace":     _ObjTypeEventNamespaceHandler,
+		"timestamp":     _ObjTypeEventTimestampHandler,
 	},
 }
 

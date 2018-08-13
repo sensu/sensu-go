@@ -29,6 +29,12 @@ type Event implements Node {
   "isIncident determines if an event indicates an incident."
   isIncident: Boolean!
 
+  """
+  isNewIncident returns true if the event is an incident but it's previous
+  iteration was OK.
+  """
+  isNewIncident: Boolean!
+
   "isResolution returns true if an event has just transitions from an incident."
   isResolution: Boolean!
 

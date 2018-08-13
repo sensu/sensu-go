@@ -45,13 +45,13 @@ class EventListItem extends React.PureComponent {
       fragment EventsListItem_event on Event {
         id
         isSilenced
+        isNewIncident
+        timestamp
         deleted @client
         check {
           name
           isSilenced
-          history(first: 1) {
-            status
-          }
+          status
           ...EventStatusDescriptor_check
         }
         entity {
@@ -135,14 +135,12 @@ class EventListItem extends React.PureComponent {
 
     // Try to determine if the failing check just started failing and if so
     // highlight the row.
-    const incidentStarted =
-      check.status > 0 &&
-      check.history.length > 0 &&
-      check.history[0].status !== check.status &&
+    const isNewIncident =
+      event.isNewIncident &&
       new Date(new Date(timestamp).valueOf() + 2500) >= new Date();
 
     return (
-      <TableSelectableRow selected={selected} highlight={incidentStarted}>
+      <TableSelectableRow selected={selected} highlight={isNewIncident}>
         <TableCell padding="checkbox">
           <Checkbox
             color="primary"
