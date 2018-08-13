@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -45,8 +46,8 @@ func ParseInflux(metric string) (InfluxList, error) {
 	for _, line := range lines {
 		i := Influx{}
 		args := strings.Split(line, " ")
-		if len(args) != 3 {
-			return InfluxList{}, errors.New("influxdb line format requires exactly 3 arguments")
+		if len(args) != 3 && len(args) != 2 {
+			return InfluxList{}, errors.New("influxdb line format requires 2 arguments with a 3rd (optional) timestamp")
 		}
 
 		measurementTag := strings.Split(args[0], ",")
@@ -90,15 +91,19 @@ func ParseInflux(metric string) (InfluxList, error) {
 		}
 		i.FieldSet = fieldList
 
-		timestamp := args[2]
-		if len(timestamp) > 10 {
-			timestamp = timestamp[:10]
+		if len(args) == 3 {
+			timestamp := args[2]
+			if len(timestamp) > 10 {
+				timestamp = timestamp[:10]
+			}
+			t, err := strconv.ParseInt(timestamp, 10, 64)
+			if err != nil {
+				return InfluxList{}, errors.New("metric timestamp is invalid, third argument must be an int")
+			}
+			i.Timestamp = t
+		} else {
+			i.Timestamp = time.Now().UTC().Unix()
 		}
-		t, err := strconv.ParseInt(timestamp, 10, 64)
-		if err != nil {
-			return InfluxList{}, errors.New("metric timestamp is invalid, third argument must be an int")
-		}
-		i.Timestamp = t
 		influxList = append(influxList, i)
 	}
 

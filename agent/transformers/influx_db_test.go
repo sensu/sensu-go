@@ -11,9 +11,10 @@ func TestParseInflux(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		metric         string
-		expectedFormat InfluxList
-		expectedErr    bool
+		metric           string
+		expectedFormat   InfluxList
+		expectedErr      bool
+		timeInconclusive bool
 	}{
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200",
@@ -104,7 +105,12 @@ func TestParseInflux(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			metric:         "weather temperature=82",
+			metric:           "weather temperature=82",
+			timeInconclusive: true,
+			expectedErr:      false,
+		},
+		{
+			metric:         "weather temperature=82 12345 blah",
 			expectedFormat: InfluxList{},
 			expectedErr:    true,
 		},
@@ -133,7 +139,9 @@ func TestParseInflux(t *testing.T) {
 			} else {
 				assert.NoError(err)
 			}
-			assert.Equal(tc.expectedFormat, graphite)
+			if !tc.timeInconclusive {
+				assert.Equal(tc.expectedFormat, graphite)
+			}
 		})
 	}
 }
@@ -230,9 +238,10 @@ func TestParseAndTransformInflux(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		metric         string
-		expectedFormat []*types.MetricPoint
-		expectedErr    bool
+		metric           string
+		expectedFormat   []*types.MetricPoint
+		expectedErr      bool
+		timeInconclusive bool
 	}{
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200",
@@ -319,7 +328,12 @@ func TestParseAndTransformInflux(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			metric:      "weather temperature=82",
+			metric:           "weather temperature=82",
+			timeInconclusive: true,
+			expectedErr:      false,
+		},
+		{
+			metric:      "weather temperature=82 12345 blah",
 			expectedErr: true,
 		},
 		{
@@ -344,7 +358,9 @@ func TestParseAndTransformInflux(t *testing.T) {
 			} else {
 				assert.NoError(err)
 				mp := influx.Transform()
-				assert.Equal(tc.expectedFormat, mp)
+				if !tc.timeInconclusive {
+					assert.Equal(tc.expectedFormat, mp)
+				}
 			}
 		})
 	}
