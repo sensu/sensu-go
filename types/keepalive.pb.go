@@ -8,6 +8,8 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -15,19 +17,56 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // A KeepaliveRecord is a tuple of an Entity ID and the time at which the
 // entity's keepalive will next expire.
 type KeepaliveRecord struct {
-	Environment  string `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment,omitempty"`
-	Organization string `protobuf:"bytes,2,opt,name=organization,proto3" json:"organization,omitempty"`
-	EntityID     string `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	Time         int64  `protobuf:"varint,4,opt,name=time,proto3" json:"time"`
+	Environment          string   `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment,omitempty"`
+	Organization         string   `protobuf:"bytes,2,opt,name=organization,proto3" json:"organization,omitempty"`
+	EntityID             string   `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	Time                 int64    `protobuf:"varint,4,opt,name=time,proto3" json:"time"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *KeepaliveRecord) Reset()                    { *m = KeepaliveRecord{} }
-func (m *KeepaliveRecord) String() string            { return proto.CompactTextString(m) }
-func (*KeepaliveRecord) ProtoMessage()               {}
-func (*KeepaliveRecord) Descriptor() ([]byte, []int) { return fileDescriptorKeepalive, []int{0} }
+func (m *KeepaliveRecord) Reset()         { *m = KeepaliveRecord{} }
+func (m *KeepaliveRecord) String() string { return proto.CompactTextString(m) }
+func (*KeepaliveRecord) ProtoMessage()    {}
+func (*KeepaliveRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_keepalive_38538ce9028cf062, []int{0}
+}
+func (m *KeepaliveRecord) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KeepaliveRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KeepaliveRecord.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *KeepaliveRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeepaliveRecord.Merge(dst, src)
+}
+func (m *KeepaliveRecord) XXX_Size() int {
+	return m.Size()
+}
+func (m *KeepaliveRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeepaliveRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KeepaliveRecord proto.InternalMessageInfo
 
 func (m *KeepaliveRecord) GetEnvironment() string {
 	if m != nil {
@@ -62,10 +101,7 @@ func init() {
 }
 func (this *KeepaliveRecord) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*KeepaliveRecord)
@@ -78,10 +114,7 @@ func (this *KeepaliveRecord) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -95,6 +128,9 @@ func (this *KeepaliveRecord) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Time != that1.Time {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -137,6 +173,9 @@ func (m *KeepaliveRecord) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintKeepalive(dAtA, i, uint64(m.Time))
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -159,6 +198,7 @@ func NewPopulatedKeepaliveRecord(r randyKeepalive, easy bool) *KeepaliveRecord {
 		this.Time *= -1
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedKeepalive(r, 5)
 	}
 	return this
 }
@@ -252,6 +292,9 @@ func (m *KeepaliveRecord) Size() (n int) {
 	}
 	if m.Time != 0 {
 		n += 1 + sovKeepalive(uint64(m.Time))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -416,6 +459,7 @@ func (m *KeepaliveRecord) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -530,9 +574,9 @@ var (
 	ErrIntOverflowKeepalive   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("keepalive.proto", fileDescriptorKeepalive) }
+func init() { proto.RegisterFile("keepalive.proto", fileDescriptor_keepalive_38538ce9028cf062) }
 
-var fileDescriptorKeepalive = []byte{
+var fileDescriptor_keepalive_38538ce9028cf062 = []byte{
 	// 243 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcf, 0x4e, 0x4d, 0x2d,
 	0x48, 0xcc, 0xc9, 0x2c, 0x4b, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd,

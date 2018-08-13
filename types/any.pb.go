@@ -17,15 +17,52 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 type Any struct {
-	TypeUrl string `protobuf:"bytes,1,opt,name=type_url,json=typeUrl,proto3" json:"type_url,omitempty"`
-	Value   []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	TypeUrl              string   `protobuf:"bytes,1,opt,name=type_url,json=typeUrl,proto3" json:"type_url,omitempty"`
+	Value                []byte   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Any) Reset()                    { *m = Any{} }
-func (m *Any) String() string            { return proto.CompactTextString(m) }
-func (*Any) ProtoMessage()               {}
-func (*Any) Descriptor() ([]byte, []int) { return fileDescriptorAny, []int{0} }
+func (m *Any) Reset()         { *m = Any{} }
+func (m *Any) String() string { return proto.CompactTextString(m) }
+func (*Any) ProtoMessage()    {}
+func (*Any) Descriptor() ([]byte, []int) {
+	return fileDescriptor_any_ff1ffd5b413dda60, []int{0}
+}
+func (m *Any) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Any) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Any.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Any) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Any.Merge(dst, src)
+}
+func (m *Any) XXX_Size() int {
+	return m.Size()
+}
+func (m *Any) XXX_DiscardUnknown() {
+	xxx_messageInfo_Any.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Any proto.InternalMessageInfo
 
 func (m *Any) GetTypeUrl() string {
 	if m != nil {
@@ -46,10 +83,7 @@ func init() {
 }
 func (this *Any) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Any)
@@ -62,10 +96,7 @@ func (this *Any) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -73,6 +104,9 @@ func (this *Any) Equal(that interface{}) bool {
 		return false
 	}
 	if !bytes.Equal(this.Value, that1.Value) {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -104,6 +138,9 @@ func (m *Any) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintAny(dAtA, i, uint64(len(m.Value)))
 		i += copy(dAtA[i:], m.Value)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -125,6 +162,7 @@ func NewPopulatedAny(r randyAny, easy bool) *Any {
 		this.Value[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedAny(r, 3)
 	}
 	return this
 }
@@ -211,6 +249,9 @@ func (m *Any) Size() (n int) {
 	l = len(m.Value)
 	if l > 0 {
 		n += 1 + l + sovAny(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -329,6 +370,7 @@ func (m *Any) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -443,9 +485,9 @@ var (
 	ErrIntOverflowAny   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("any.proto", fileDescriptorAny) }
+func init() { proto.RegisterFile("any.proto", fileDescriptor_any_ff1ffd5b413dda60) }
 
-var fileDescriptorAny = []byte{
+var fileDescriptor_any_ff1ffd5b413dda60 = []byte{
 	// 167 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4c, 0xcc, 0xab, 0xd4,
 	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b, 0xa9, 0x2c,

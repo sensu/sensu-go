@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // EventFilter is a filter specification.
 type EventFilter struct {
@@ -29,13 +37,44 @@ type EventFilter struct {
 	// Organization indicates to which org a filter belongs to
 	Organization string `protobuf:"bytes,5,opt,name=organization,proto3" json:"organization,omitempty"`
 	// When indicates a TimeWindowWhen that a filter uses to filter by days & times
-	When *TimeWindowWhen `protobuf:"bytes,6,opt,name=when" json:"when,omitempty"`
+	When                 *TimeWindowWhen `protobuf:"bytes,6,opt,name=when" json:"when,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
-func (m *EventFilter) Reset()                    { *m = EventFilter{} }
-func (m *EventFilter) String() string            { return proto.CompactTextString(m) }
-func (*EventFilter) ProtoMessage()               {}
-func (*EventFilter) Descriptor() ([]byte, []int) { return fileDescriptorFilter, []int{0} }
+func (m *EventFilter) Reset()         { *m = EventFilter{} }
+func (m *EventFilter) String() string { return proto.CompactTextString(m) }
+func (*EventFilter) ProtoMessage()    {}
+func (*EventFilter) Descriptor() ([]byte, []int) {
+	return fileDescriptor_filter_ee73b8fb45db20c9, []int{0}
+}
+func (m *EventFilter) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventFilter.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *EventFilter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventFilter.Merge(dst, src)
+}
+func (m *EventFilter) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventFilter) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventFilter.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventFilter proto.InternalMessageInfo
 
 func (m *EventFilter) GetName() string {
 	if m != nil {
@@ -84,10 +123,7 @@ func init() {
 }
 func (this *EventFilter) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*EventFilter)
@@ -100,10 +136,7 @@ func (this *EventFilter) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -128,6 +161,9 @@ func (this *EventFilter) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.When.Equal(that1.When) {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -196,6 +232,9 @@ func (m *EventFilter) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n1
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -223,6 +262,7 @@ func NewPopulatedEventFilter(r randyFilter, easy bool) *EventFilter {
 		this.When = NewPopulatedTimeWindowWhen(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedFilter(r, 7)
 	}
 	return this
 }
@@ -327,6 +367,9 @@ func (m *EventFilter) Size() (n int) {
 	if m.When != nil {
 		l = m.When.Size()
 		n += 1 + l + sovFilter(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -563,6 +606,7 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -677,9 +721,9 @@ var (
 	ErrIntOverflowFilter   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("filter.proto", fileDescriptorFilter) }
+func init() { proto.RegisterFile("filter.proto", fileDescriptor_filter_ee73b8fb45db20c9) }
 
-var fileDescriptorFilter = []byte{
+var fileDescriptor_filter_ee73b8fb45db20c9 = []byte{
 	// 281 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x90, 0x41, 0x4a, 0xc3, 0x40,
 	0x14, 0x86, 0x1d, 0xdb, 0x06, 0x3a, 0x29, 0x82, 0xb3, 0x90, 0x50, 0x61, 0x0c, 0x75, 0x93, 0x8d,

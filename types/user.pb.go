@@ -8,6 +8,8 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -15,18 +17,55 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // User describes an authenticated user
 type User struct {
-	Username string   `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Password string   `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	Roles    []string `protobuf:"bytes,3,rep,name=roles" json:"roles,omitempty"`
-	Disabled bool     `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled"`
+	Username             string   `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Password             string   `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	Roles                []string `protobuf:"bytes,3,rep,name=roles" json:"roles,omitempty"`
+	Disabled             bool     `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *User) Reset()                    { *m = User{} }
-func (m *User) String() string            { return proto.CompactTextString(m) }
-func (*User) ProtoMessage()               {}
-func (*User) Descriptor() ([]byte, []int) { return fileDescriptorUser, []int{0} }
+func (m *User) Reset()         { *m = User{} }
+func (m *User) String() string { return proto.CompactTextString(m) }
+func (*User) ProtoMessage()    {}
+func (*User) Descriptor() ([]byte, []int) {
+	return fileDescriptor_user_9b813aa1a9a38e4e, []int{0}
+}
+func (m *User) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *User) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_User.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *User) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_User.Merge(dst, src)
+}
+func (m *User) XXX_Size() int {
+	return m.Size()
+}
+func (m *User) XXX_DiscardUnknown() {
+	xxx_messageInfo_User.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_User proto.InternalMessageInfo
 
 func (m *User) GetUsername() string {
 	if m != nil {
@@ -61,10 +100,7 @@ func init() {
 }
 func (this *User) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*User)
@@ -77,10 +113,7 @@ func (this *User) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -99,6 +132,9 @@ func (this *User) Equal(that interface{}) bool {
 		}
 	}
 	if this.Disabled != that1.Disabled {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -155,6 +191,9 @@ func (m *User) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i++
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -178,6 +217,7 @@ func NewPopulatedUser(r randyUser, easy bool) *User {
 	}
 	this.Disabled = bool(bool(r.Intn(2) == 0))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedUser(r, 5)
 	}
 	return this
 }
@@ -273,6 +313,9 @@ func (m *User) Size() (n int) {
 	}
 	if m.Disabled {
 		n += 2
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -438,6 +481,7 @@ func (m *User) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -552,9 +596,9 @@ var (
 	ErrIntOverflowUser   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("user.proto", fileDescriptorUser) }
+func init() { proto.RegisterFile("user.proto", fileDescriptor_user_9b813aa1a9a38e4e) }
 
-var fileDescriptorUser = []byte{
+var fileDescriptor_user_9b813aa1a9a38e4e = []byte{
 	// 209 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2a, 0x2d, 0x4e, 0x2d,
 	0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b, 0xa9,

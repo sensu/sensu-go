@@ -8,6 +8,8 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -15,18 +17,55 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // Rule maps permissions to a given type
 type Rule struct {
-	Type         string   `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Environment  string   `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
-	Organization string   `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
-	Permissions  []string `protobuf:"bytes,4,rep,name=permissions" json:"permissions"`
+	Type                 string   `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Environment          string   `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
+	Organization         string   `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
+	Permissions          []string `protobuf:"bytes,4,rep,name=permissions" json:"permissions"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Rule) Reset()                    { *m = Rule{} }
-func (m *Rule) String() string            { return proto.CompactTextString(m) }
-func (*Rule) ProtoMessage()               {}
-func (*Rule) Descriptor() ([]byte, []int) { return fileDescriptorRbac, []int{0} }
+func (m *Rule) Reset()         { *m = Rule{} }
+func (m *Rule) String() string { return proto.CompactTextString(m) }
+func (*Rule) ProtoMessage()    {}
+func (*Rule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_rbac_d66417309d00d7dd, []int{0}
+}
+func (m *Rule) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Rule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Rule.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Rule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Rule.Merge(dst, src)
+}
+func (m *Rule) XXX_Size() int {
+	return m.Size()
+}
+func (m *Rule) XXX_DiscardUnknown() {
+	xxx_messageInfo_Rule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Rule proto.InternalMessageInfo
 
 func (m *Rule) GetType() string {
 	if m != nil {
@@ -58,14 +97,45 @@ func (m *Rule) GetPermissions() []string {
 
 // Role describes set of rules
 type Role struct {
-	Name  string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Rules []Rule `protobuf:"bytes,2,rep,name=rules" json:"rules"`
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Rules                []Rule   `protobuf:"bytes,2,rep,name=rules" json:"rules"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Role) Reset()                    { *m = Role{} }
-func (m *Role) String() string            { return proto.CompactTextString(m) }
-func (*Role) ProtoMessage()               {}
-func (*Role) Descriptor() ([]byte, []int) { return fileDescriptorRbac, []int{1} }
+func (m *Role) Reset()         { *m = Role{} }
+func (m *Role) String() string { return proto.CompactTextString(m) }
+func (*Role) ProtoMessage()    {}
+func (*Role) Descriptor() ([]byte, []int) {
+	return fileDescriptor_rbac_d66417309d00d7dd, []int{1}
+}
+func (m *Role) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Role) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Role.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Role) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Role.Merge(dst, src)
+}
+func (m *Role) XXX_Size() int {
+	return m.Size()
+}
+func (m *Role) XXX_DiscardUnknown() {
+	xxx_messageInfo_Role.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Role proto.InternalMessageInfo
 
 func (m *Role) GetName() string {
 	if m != nil {
@@ -87,10 +157,7 @@ func init() {
 }
 func (this *Rule) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Rule)
@@ -103,10 +170,7 @@ func (this *Rule) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -127,14 +191,14 @@ func (this *Rule) Equal(that interface{}) bool {
 			return false
 		}
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *Role) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Role)
@@ -147,10 +211,7 @@ func (this *Role) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -164,6 +225,9 @@ func (this *Role) Equal(that interface{}) bool {
 		if !this.Rules[i].Equal(&that1.Rules[i]) {
 			return false
 		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
 	}
 	return true
 }
@@ -215,6 +279,9 @@ func (m *Rule) MarshalTo(dAtA []byte) (int, error) {
 			i += copy(dAtA[i:], s)
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -251,6 +318,9 @@ func (m *Role) MarshalTo(dAtA []byte) (int, error) {
 			i += n
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -274,6 +344,7 @@ func NewPopulatedRule(r randyRbac, easy bool) *Rule {
 		this.Permissions[i] = string(randStringRbac(r))
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedRbac(r, 5)
 	}
 	return this
 }
@@ -290,6 +361,7 @@ func NewPopulatedRole(r randyRbac, easy bool) *Role {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedRbac(r, 3)
 	}
 	return this
 }
@@ -387,6 +459,9 @@ func (m *Rule) Size() (n int) {
 			n += 1 + l + sovRbac(uint64(l))
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -402,6 +477,9 @@ func (m *Role) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovRbac(uint64(l))
 		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -576,6 +654,7 @@ func (m *Rule) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -686,6 +765,7 @@ func (m *Role) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -800,9 +880,9 @@ var (
 	ErrIntOverflowRbac   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("rbac.proto", fileDescriptorRbac) }
+func init() { proto.RegisterFile("rbac.proto", fileDescriptor_rbac_d66417309d00d7dd) }
 
-var fileDescriptorRbac = []byte{
+var fileDescriptor_rbac_d66417309d00d7dd = []byte{
 	// 270 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x50, 0x4d, 0x4a, 0xc4, 0x30,
 	0x18, 0x9d, 0x4c, 0x3b, 0xc2, 0xa4, 0x8a, 0x98, 0x55, 0x71, 0x91, 0x96, 0xba, 0xe9, 0xc6, 0x0c,

@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // A Mutator is a mutator specification.
 type Mutator struct {
@@ -28,13 +36,44 @@ type Mutator struct {
 	// Environment indicates to which env a mutator belongs to
 	Environment string `protobuf:"bytes,5,opt,name=environment,proto3" json:"environment,omitempty"`
 	// Organization specifies the organization to which the mutator belongs.
-	Organization string `protobuf:"bytes,6,opt,name=organization,proto3" json:"organization,omitempty"`
+	Organization         string   `protobuf:"bytes,6,opt,name=organization,proto3" json:"organization,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Mutator) Reset()                    { *m = Mutator{} }
-func (m *Mutator) String() string            { return proto.CompactTextString(m) }
-func (*Mutator) ProtoMessage()               {}
-func (*Mutator) Descriptor() ([]byte, []int) { return fileDescriptorMutator, []int{0} }
+func (m *Mutator) Reset()         { *m = Mutator{} }
+func (m *Mutator) String() string { return proto.CompactTextString(m) }
+func (*Mutator) ProtoMessage()    {}
+func (*Mutator) Descriptor() ([]byte, []int) {
+	return fileDescriptor_mutator_020d72a99ab03bd3, []int{0}
+}
+func (m *Mutator) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Mutator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Mutator.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Mutator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Mutator.Merge(dst, src)
+}
+func (m *Mutator) XXX_Size() int {
+	return m.Size()
+}
+func (m *Mutator) XXX_DiscardUnknown() {
+	xxx_messageInfo_Mutator.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Mutator proto.InternalMessageInfo
 
 func (m *Mutator) GetName() string {
 	if m != nil {
@@ -83,10 +122,7 @@ func init() {
 }
 func (this *Mutator) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Mutator)
@@ -99,10 +135,7 @@ func (this *Mutator) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -127,6 +160,9 @@ func (this *Mutator) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Organization != that1.Organization {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -190,6 +226,9 @@ func (m *Mutator) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintMutator(dAtA, i, uint64(len(m.Organization)))
 		i += copy(dAtA[i:], m.Organization)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -215,6 +254,7 @@ func NewPopulatedMutator(r randyMutator, easy bool) *Mutator {
 	this.Environment = string(randStringMutator(r))
 	this.Organization = string(randStringMutator(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMutator(r, 7)
 	}
 	return this
 }
@@ -318,6 +358,9 @@ func (m *Mutator) Size() (n int) {
 	l = len(m.Organization)
 	if l > 0 {
 		n += 1 + l + sovMutator(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -540,6 +583,7 @@ func (m *Mutator) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -654,9 +698,9 @@ var (
 	ErrIntOverflowMutator   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("mutator.proto", fileDescriptorMutator) }
+func init() { proto.RegisterFile("mutator.proto", fileDescriptor_mutator_020d72a99ab03bd3) }
 
-var fileDescriptorMutator = []byte{
+var fileDescriptor_mutator_020d72a99ab03bd3 = []byte{
 	// 267 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x90, 0x3d, 0x4e, 0xc3, 0x40,
 	0x10, 0x85, 0x19, 0xf2, 0x63, 0xb2, 0x49, 0x9a, 0xad, 0x56, 0x14, 0x1b, 0x2b, 0x08, 0xe1, 0x06,

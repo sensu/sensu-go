@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Extension is a registered sensu extension.
 type Extension struct {
@@ -22,13 +30,44 @@ type Extension struct {
 	// URL is the URL of the gRPC service that implements the extension.
 	URL string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	// Organization indicates which organization an extension belongs to.
-	Organization string `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
+	Organization         string   `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Extension) Reset()                    { *m = Extension{} }
-func (m *Extension) String() string            { return proto.CompactTextString(m) }
-func (*Extension) ProtoMessage()               {}
-func (*Extension) Descriptor() ([]byte, []int) { return fileDescriptorExtension, []int{0} }
+func (m *Extension) Reset()         { *m = Extension{} }
+func (m *Extension) String() string { return proto.CompactTextString(m) }
+func (*Extension) ProtoMessage()    {}
+func (*Extension) Descriptor() ([]byte, []int) {
+	return fileDescriptor_extension_118dd9190d6b2c53, []int{0}
+}
+func (m *Extension) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Extension) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Extension.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Extension) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Extension.Merge(dst, src)
+}
+func (m *Extension) XXX_Size() int {
+	return m.Size()
+}
+func (m *Extension) XXX_DiscardUnknown() {
+	xxx_messageInfo_Extension.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Extension proto.InternalMessageInfo
 
 func (m *Extension) GetName() string {
 	if m != nil {
@@ -56,10 +95,7 @@ func init() {
 }
 func (this *Extension) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Extension)
@@ -72,10 +108,7 @@ func (this *Extension) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -86,6 +119,9 @@ func (this *Extension) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Organization != that1.Organization {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -123,6 +159,9 @@ func (m *Extension) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintExtension(dAtA, i, uint64(len(m.Organization)))
 		i += copy(dAtA[i:], m.Organization)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -141,6 +180,7 @@ func NewPopulatedExtension(r randyExtension, easy bool) *Extension {
 	this.URL = string(randStringExtension(r))
 	this.Organization = string(randStringExtension(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedExtension(r, 4)
 	}
 	return this
 }
@@ -231,6 +271,9 @@ func (m *Extension) Size() (n int) {
 	l = len(m.Organization)
 	if l > 0 {
 		n += 1 + l + sovExtension(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -376,6 +419,7 @@ func (m *Extension) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -490,9 +534,9 @@ var (
 	ErrIntOverflowExtension   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("extension.proto", fileDescriptorExtension) }
+func init() { proto.RegisterFile("extension.proto", fileDescriptor_extension_118dd9190d6b2c53) }
 
-var fileDescriptorExtension = []byte{
+var fileDescriptor_extension_118dd9190d6b2c53 = []byte{
 	// 194 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4f, 0xad, 0x28, 0x49,
 	0xcd, 0x2b, 0xce, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd,

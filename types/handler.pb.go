@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // A Handler is a handler specification.
 type Handler struct {
@@ -38,13 +46,44 @@ type Handler struct {
 	// Environment indicates to which env a handler belongs to
 	Environment string `protobuf:"bytes,10,opt,name=environment,proto3" json:"environment,omitempty"`
 	// Organization indicates to which org a handler belongs to
-	Organization string `protobuf:"bytes,11,opt,name=organization,proto3" json:"organization,omitempty"`
+	Organization         string   `protobuf:"bytes,11,opt,name=organization,proto3" json:"organization,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Handler) Reset()                    { *m = Handler{} }
-func (m *Handler) String() string            { return proto.CompactTextString(m) }
-func (*Handler) ProtoMessage()               {}
-func (*Handler) Descriptor() ([]byte, []int) { return fileDescriptorHandler, []int{0} }
+func (m *Handler) Reset()         { *m = Handler{} }
+func (m *Handler) String() string { return proto.CompactTextString(m) }
+func (*Handler) ProtoMessage()    {}
+func (*Handler) Descriptor() ([]byte, []int) {
+	return fileDescriptor_handler_93bcbe4bbb5cf625, []int{0}
+}
+func (m *Handler) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Handler) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Handler.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Handler) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Handler.Merge(dst, src)
+}
+func (m *Handler) XXX_Size() int {
+	return m.Size()
+}
+func (m *Handler) XXX_DiscardUnknown() {
+	xxx_messageInfo_Handler.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Handler proto.InternalMessageInfo
 
 func (m *Handler) GetName() string {
 	if m != nil {
@@ -128,13 +167,44 @@ type HandlerSocket struct {
 	// Host is the socket peer address.
 	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
 	// Port is the socket peer port.
-	Port uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port"`
+	Port                 uint32   `protobuf:"varint,2,opt,name=port,proto3" json:"port"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *HandlerSocket) Reset()                    { *m = HandlerSocket{} }
-func (m *HandlerSocket) String() string            { return proto.CompactTextString(m) }
-func (*HandlerSocket) ProtoMessage()               {}
-func (*HandlerSocket) Descriptor() ([]byte, []int) { return fileDescriptorHandler, []int{1} }
+func (m *HandlerSocket) Reset()         { *m = HandlerSocket{} }
+func (m *HandlerSocket) String() string { return proto.CompactTextString(m) }
+func (*HandlerSocket) ProtoMessage()    {}
+func (*HandlerSocket) Descriptor() ([]byte, []int) {
+	return fileDescriptor_handler_93bcbe4bbb5cf625, []int{1}
+}
+func (m *HandlerSocket) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *HandlerSocket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_HandlerSocket.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *HandlerSocket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HandlerSocket.Merge(dst, src)
+}
+func (m *HandlerSocket) XXX_Size() int {
+	return m.Size()
+}
+func (m *HandlerSocket) XXX_DiscardUnknown() {
+	xxx_messageInfo_HandlerSocket.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_HandlerSocket proto.InternalMessageInfo
 
 func (m *HandlerSocket) GetHost() string {
 	if m != nil {
@@ -156,10 +226,7 @@ func init() {
 }
 func (this *Handler) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Handler)
@@ -172,10 +239,7 @@ func (this *Handler) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -227,14 +291,14 @@ func (this *Handler) Equal(that interface{}) bool {
 	if this.Organization != that1.Organization {
 		return false
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *HandlerSocket) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*HandlerSocket)
@@ -247,10 +311,7 @@ func (this *HandlerSocket) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -258,6 +319,9 @@ func (this *HandlerSocket) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Port != that1.Port {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -373,6 +437,9 @@ func (m *Handler) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintHandler(dAtA, i, uint64(len(m.Organization)))
 		i += copy(dAtA[i:], m.Organization)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -401,6 +468,9 @@ func (m *HandlerSocket) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x10
 		i++
 		i = encodeVarintHandler(dAtA, i, uint64(m.Port))
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -442,6 +512,7 @@ func NewPopulatedHandler(r randyHandler, easy bool) *Handler {
 	this.Environment = string(randStringHandler(r))
 	this.Organization = string(randStringHandler(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedHandler(r, 12)
 	}
 	return this
 }
@@ -451,6 +522,7 @@ func NewPopulatedHandlerSocket(r randyHandler, easy bool) *HandlerSocket {
 	this.Host = string(randStringHandler(r))
 	this.Port = uint32(r.Uint32())
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedHandler(r, 3)
 	}
 	return this
 }
@@ -579,6 +651,9 @@ func (m *Handler) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovHandler(uint64(l))
 	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -591,6 +666,9 @@ func (m *HandlerSocket) Size() (n int) {
 	}
 	if m.Port != 0 {
 		n += 1 + sovHandler(uint64(m.Port))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -962,6 +1040,7 @@ func (m *Handler) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1060,6 +1139,7 @@ func (m *HandlerSocket) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1174,9 +1254,9 @@ var (
 	ErrIntOverflowHandler   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("handler.proto", fileDescriptorHandler) }
+func init() { proto.RegisterFile("handler.proto", fileDescriptor_handler_93bcbe4bbb5cf625) }
 
-var fileDescriptorHandler = []byte{
+var fileDescriptor_handler_93bcbe4bbb5cf625 = []byte{
 	// 382 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x91, 0x3f, 0xce, 0xd3, 0x30,
 	0x18, 0xc6, 0x31, 0x4d, 0x9b, 0xd4, 0x69, 0x16, 0x4f, 0x56, 0x85, 0x92, 0xa8, 0x08, 0x91, 0x85,

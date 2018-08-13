@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // An Event is the encapsulating type sent across the Sensu websocket transport.
 type Event struct {
@@ -26,15 +34,46 @@ type Event struct {
 	// Metrics ...
 	Metrics *Metrics `protobuf:"bytes,4,opt,name=metrics" json:"metrics,omitempty"`
 	// Silenced is a list of silenced entry ids (subscription and check name)
-	Silenced []string `protobuf:"bytes,5,rep,name=silenced" json:"silenced,omitempty"`
+	Silenced []string `protobuf:"bytes,5,rep,name=silenced" json:"silenced,omitempty"` // Deprecated: Do not use.
 	// Hooks describes the results of multiple hooks; if event is associated to hook execution.
-	Hooks []*Hook `protobuf:"bytes,6,rep,name=hooks" json:"hooks,omitempty"`
+	Hooks                []*Hook  `protobuf:"bytes,6,rep,name=hooks" json:"hooks,omitempty"` // Deprecated: Do not use.
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Event) Reset()                    { *m = Event{} }
-func (m *Event) String() string            { return proto.CompactTextString(m) }
-func (*Event) ProtoMessage()               {}
-func (*Event) Descriptor() ([]byte, []int) { return fileDescriptorEvent, []int{0} }
+func (m *Event) Reset()         { *m = Event{} }
+func (m *Event) String() string { return proto.CompactTextString(m) }
+func (*Event) ProtoMessage()    {}
+func (*Event) Descriptor() ([]byte, []int) {
+	return fileDescriptor_event_eb19941e1ef5a152, []int{0}
+}
+func (m *Event) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Event) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Event.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Event) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Event.Merge(dst, src)
+}
+func (m *Event) XXX_Size() int {
+	return m.Size()
+}
+func (m *Event) XXX_DiscardUnknown() {
+	xxx_messageInfo_Event.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Event proto.InternalMessageInfo
 
 func (m *Event) GetTimestamp() int64 {
 	if m != nil {
@@ -64,6 +103,7 @@ func (m *Event) GetMetrics() *Metrics {
 	return nil
 }
 
+// Deprecated: Do not use.
 func (m *Event) GetSilenced() []string {
 	if m != nil {
 		return m.Silenced
@@ -71,6 +111,7 @@ func (m *Event) GetSilenced() []string {
 	return nil
 }
 
+// Deprecated: Do not use.
 func (m *Event) GetHooks() []*Hook {
 	if m != nil {
 		return m.Hooks
@@ -83,10 +124,7 @@ func init() {
 }
 func (this *Event) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event)
@@ -99,10 +137,7 @@ func (this *Event) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -133,6 +168,9 @@ func (this *Event) Equal(that interface{}) bool {
 		if !this.Hooks[i].Equal(that1.Hooks[i]) {
 			return false
 		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
 	}
 	return true
 }
@@ -213,6 +251,9 @@ func (m *Event) MarshalTo(dAtA []byte) (int, error) {
 			i += n
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -253,6 +294,7 @@ func NewPopulatedEvent(r randyEvent, easy bool) *Event {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedEvent(r, 7)
 	}
 	return this
 }
@@ -358,6 +400,9 @@ func (m *Event) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovEvent(uint64(l))
 		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -594,6 +639,7 @@ func (m *Event) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -708,9 +754,9 @@ var (
 	ErrIntOverflowEvent   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("event.proto", fileDescriptorEvent) }
+func init() { proto.RegisterFile("event.proto", fileDescriptor_event_eb19941e1ef5a152) }
 
-var fileDescriptorEvent = []byte{
+var fileDescriptor_event_eb19941e1ef5a152 = []byte{
 	// 304 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x90, 0x31, 0x4e, 0xc3, 0x30,
 	0x14, 0x86, 0x79, 0x4d, 0x13, 0xa8, 0x03, 0x03, 0x86, 0xc1, 0xaa, 0x90, 0x89, 0xca, 0x92, 0x05,

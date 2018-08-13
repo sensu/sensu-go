@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Silenced is the representation of a silence entry.
 type Silenced struct {
@@ -37,13 +45,44 @@ type Silenced struct {
 	// Environment indicates which env a silenced entry belongs to.
 	Environment string `protobuf:"bytes,9,opt,name=environment,proto3" json:"environment,omitempty"`
 	// Begin is a timestamp at which the silenced entry takes effect.
-	Begin int64 `protobuf:"varint,10,opt,name=begin,proto3" json:"begin"`
+	Begin                int64    `protobuf:"varint,10,opt,name=begin,proto3" json:"begin"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Silenced) Reset()                    { *m = Silenced{} }
-func (m *Silenced) String() string            { return proto.CompactTextString(m) }
-func (*Silenced) ProtoMessage()               {}
-func (*Silenced) Descriptor() ([]byte, []int) { return fileDescriptorSilenced, []int{0} }
+func (m *Silenced) Reset()         { *m = Silenced{} }
+func (m *Silenced) String() string { return proto.CompactTextString(m) }
+func (*Silenced) ProtoMessage()    {}
+func (*Silenced) Descriptor() ([]byte, []int) {
+	return fileDescriptor_silenced_e0e6efca73a174c5, []int{0}
+}
+func (m *Silenced) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Silenced) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Silenced.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Silenced) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Silenced.Merge(dst, src)
+}
+func (m *Silenced) XXX_Size() int {
+	return m.Size()
+}
+func (m *Silenced) XXX_DiscardUnknown() {
+	xxx_messageInfo_Silenced.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Silenced proto.InternalMessageInfo
 
 func (m *Silenced) GetID() string {
 	if m != nil {
@@ -120,10 +159,7 @@ func init() {
 }
 func (this *Silenced) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Silenced)
@@ -136,10 +172,7 @@ func (this *Silenced) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -171,6 +204,9 @@ func (this *Silenced) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Begin != that1.Begin {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -252,6 +288,9 @@ func (m *Silenced) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintSilenced(dAtA, i, uint64(m.Begin))
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -283,6 +322,7 @@ func NewPopulatedSilenced(r randySilenced, easy bool) *Silenced {
 		this.Begin *= -1
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedSilenced(r, 11)
 	}
 	return this
 }
@@ -398,6 +438,9 @@ func (m *Silenced) Size() (n int) {
 	}
 	if m.Begin != 0 {
 		n += 1 + sovSilenced(uint64(m.Begin))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -717,6 +760,7 @@ func (m *Silenced) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -831,9 +875,9 @@ var (
 	ErrIntOverflowSilenced   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("silenced.proto", fileDescriptorSilenced) }
+func init() { proto.RegisterFile("silenced.proto", fileDescriptor_silenced_e0e6efca73a174c5) }
 
-var fileDescriptorSilenced = []byte{
+var fileDescriptor_silenced_e0e6efca73a174c5 = []byte{
 	// 351 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x91, 0x41, 0x4e, 0xe3, 0x30,
 	0x14, 0x86, 0xc7, 0x69, 0x93, 0xb6, 0x6e, 0xd5, 0xd1, 0x58, 0xa3, 0x91, 0x07, 0x21, 0x27, 0x2a,

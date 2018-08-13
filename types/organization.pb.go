@@ -8,6 +8,8 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -15,18 +17,55 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // Organization represents a Sensu organization in RBAC
 type Organization struct {
 	// Description is more information for an organization.
 	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 	// Name is the unique identifier for an organization.
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Organization) Reset()                    { *m = Organization{} }
-func (m *Organization) String() string            { return proto.CompactTextString(m) }
-func (*Organization) ProtoMessage()               {}
-func (*Organization) Descriptor() ([]byte, []int) { return fileDescriptorOrganization, []int{0} }
+func (m *Organization) Reset()         { *m = Organization{} }
+func (m *Organization) String() string { return proto.CompactTextString(m) }
+func (*Organization) ProtoMessage()    {}
+func (*Organization) Descriptor() ([]byte, []int) {
+	return fileDescriptor_organization_3ea247a538caeb4b, []int{0}
+}
+func (m *Organization) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Organization) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Organization.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Organization) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Organization.Merge(dst, src)
+}
+func (m *Organization) XXX_Size() int {
+	return m.Size()
+}
+func (m *Organization) XXX_DiscardUnknown() {
+	xxx_messageInfo_Organization.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Organization proto.InternalMessageInfo
 
 func (m *Organization) GetDescription() string {
 	if m != nil {
@@ -47,10 +86,7 @@ func init() {
 }
 func (this *Organization) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Organization)
@@ -63,10 +99,7 @@ func (this *Organization) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -74,6 +107,9 @@ func (this *Organization) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Name != that1.Name {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -105,6 +141,9 @@ func (m *Organization) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintOrganization(dAtA, i, uint64(len(m.Name)))
 		i += copy(dAtA[i:], m.Name)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -122,6 +161,7 @@ func NewPopulatedOrganization(r randyOrganization, easy bool) *Organization {
 	this.Description = string(randStringOrganization(r))
 	this.Name = string(randStringOrganization(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedOrganization(r, 3)
 	}
 	return this
 }
@@ -208,6 +248,9 @@ func (m *Organization) Size() (n int) {
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovOrganization(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -324,6 +367,7 @@ func (m *Organization) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -438,9 +482,9 @@ var (
 	ErrIntOverflowOrganization   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("organization.proto", fileDescriptorOrganization) }
+func init() { proto.RegisterFile("organization.proto", fileDescriptor_organization_3ea247a538caeb4b) }
 
-var fileDescriptorOrganization = []byte{
+var fileDescriptor_organization_3ea247a538caeb4b = []byte{
 	// 185 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0xca, 0x2f, 0x4a, 0x4f,
 	0xcc, 0xcb, 0xac, 0x4a, 0x2c, 0xc9, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2,

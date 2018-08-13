@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Asset defines an asset agents install as a dependency for a check.
 type Asset struct {
@@ -30,13 +38,44 @@ type Asset struct {
 	// queries are joined by the "AND" operator.
 	Filters []string `protobuf:"bytes,5,rep,name=filters" json:"filters"`
 	// Organization indicates to which org an asset belongs to
-	Organization string `protobuf:"bytes,6,opt,name=organization,proto3" json:"organization,omitempty"`
+	Organization         string   `protobuf:"bytes,6,opt,name=organization,proto3" json:"organization,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Asset) Reset()                    { *m = Asset{} }
-func (m *Asset) String() string            { return proto.CompactTextString(m) }
-func (*Asset) ProtoMessage()               {}
-func (*Asset) Descriptor() ([]byte, []int) { return fileDescriptorAsset, []int{0} }
+func (m *Asset) Reset()         { *m = Asset{} }
+func (m *Asset) String() string { return proto.CompactTextString(m) }
+func (*Asset) ProtoMessage()    {}
+func (*Asset) Descriptor() ([]byte, []int) {
+	return fileDescriptor_asset_41544f59afe1c367, []int{0}
+}
+func (m *Asset) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Asset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Asset.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Asset) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Asset.Merge(dst, src)
+}
+func (m *Asset) XXX_Size() int {
+	return m.Size()
+}
+func (m *Asset) XXX_DiscardUnknown() {
+	xxx_messageInfo_Asset.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Asset proto.InternalMessageInfo
 
 func (m *Asset) GetName() string {
 	if m != nil {
@@ -82,13 +121,11 @@ func (m *Asset) GetOrganization() string {
 
 func init() {
 	proto.RegisterType((*Asset)(nil), "sensu.types.Asset")
+	proto.RegisterMapType((map[string]string)(nil), "sensu.types.Asset.MetadataEntry")
 }
 func (this *Asset) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Asset)
@@ -101,10 +138,7 @@ func (this *Asset) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -134,6 +168,9 @@ func (this *Asset) Equal(that interface{}) bool {
 		}
 	}
 	if this.Organization != that1.Organization {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -209,6 +246,9 @@ func (m *Asset) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintAsset(dAtA, i, uint64(len(m.Organization)))
 		i += copy(dAtA[i:], m.Organization)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -240,6 +280,7 @@ func NewPopulatedAsset(r randyAsset, easy bool) *Asset {
 	}
 	this.Organization = string(randStringAsset(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedAsset(r, 7)
 	}
 	return this
 }
@@ -348,6 +389,9 @@ func (m *Asset) Size() (n int) {
 	l = len(m.Organization)
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -669,6 +713,7 @@ func (m *Asset) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -783,9 +828,9 @@ var (
 	ErrIntOverflowAsset   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("asset.proto", fileDescriptorAsset) }
+func init() { proto.RegisterFile("asset.proto", fileDescriptor_asset_41544f59afe1c367) }
 
-var fileDescriptorAsset = []byte{
+var fileDescriptor_asset_41544f59afe1c367 = []byte{
 	// 315 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x2c, 0x2e, 0x4e,
 	0x2d, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b,

@@ -8,6 +8,8 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -15,17 +17,54 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // Environment represents a Sensu environment in RBAC
 type Environment struct {
-	Description  string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
-	Name         string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Organization string `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
+	Description          string   `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Organization         string   `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Environment) Reset()                    { *m = Environment{} }
-func (m *Environment) String() string            { return proto.CompactTextString(m) }
-func (*Environment) ProtoMessage()               {}
-func (*Environment) Descriptor() ([]byte, []int) { return fileDescriptorEnvironment, []int{0} }
+func (m *Environment) Reset()         { *m = Environment{} }
+func (m *Environment) String() string { return proto.CompactTextString(m) }
+func (*Environment) ProtoMessage()    {}
+func (*Environment) Descriptor() ([]byte, []int) {
+	return fileDescriptor_environment_e5ec34405647b13b, []int{0}
+}
+func (m *Environment) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Environment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Environment.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Environment) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Environment.Merge(dst, src)
+}
+func (m *Environment) XXX_Size() int {
+	return m.Size()
+}
+func (m *Environment) XXX_DiscardUnknown() {
+	xxx_messageInfo_Environment.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Environment proto.InternalMessageInfo
 
 func (m *Environment) GetDescription() string {
 	if m != nil {
@@ -53,10 +92,7 @@ func init() {
 }
 func (this *Environment) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Environment)
@@ -69,10 +105,7 @@ func (this *Environment) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -83,6 +116,9 @@ func (this *Environment) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Organization != that1.Organization {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -120,6 +156,9 @@ func (m *Environment) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintEnvironment(dAtA, i, uint64(len(m.Organization)))
 		i += copy(dAtA[i:], m.Organization)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -138,6 +177,7 @@ func NewPopulatedEnvironment(r randyEnvironment, easy bool) *Environment {
 	this.Name = string(randStringEnvironment(r))
 	this.Organization = string(randStringEnvironment(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedEnvironment(r, 4)
 	}
 	return this
 }
@@ -228,6 +268,9 @@ func (m *Environment) Size() (n int) {
 	l = len(m.Organization)
 	if l > 0 {
 		n += 1 + l + sovEnvironment(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -373,6 +416,7 @@ func (m *Environment) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -487,9 +531,9 @@ var (
 	ErrIntOverflowEnvironment   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("environment.proto", fileDescriptorEnvironment) }
+func init() { proto.RegisterFile("environment.proto", fileDescriptor_environment_e5ec34405647b13b) }
 
-var fileDescriptorEnvironment = []byte{
+var fileDescriptor_environment_e5ec34405647b13b = []byte{
 	// 200 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4c, 0xcd, 0x2b, 0xcb,
 	0x2c, 0xca, 0xcf, 0xcb, 0x4d, 0xcd, 0x2b, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e,

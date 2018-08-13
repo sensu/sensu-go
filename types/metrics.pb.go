@@ -8,6 +8,8 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import encoding_binary "encoding/binary"
 
 import io "io"
@@ -17,18 +19,55 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // A Metrics is an event metrics payload specification.
 type Metrics struct {
 	// Handlers is a list of handlers for the metric points.
 	Handlers []string `protobuf:"bytes,1,rep,name=handlers" json:"handlers"`
 	// Points is a list of metric points (measurements).
-	Points []*MetricPoint `protobuf:"bytes,2,rep,name=points" json:"points"`
+	Points               []*MetricPoint `protobuf:"bytes,2,rep,name=points" json:"points"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *Metrics) Reset()                    { *m = Metrics{} }
-func (m *Metrics) String() string            { return proto.CompactTextString(m) }
-func (*Metrics) ProtoMessage()               {}
-func (*Metrics) Descriptor() ([]byte, []int) { return fileDescriptorMetrics, []int{0} }
+func (m *Metrics) Reset()         { *m = Metrics{} }
+func (m *Metrics) String() string { return proto.CompactTextString(m) }
+func (*Metrics) ProtoMessage()    {}
+func (*Metrics) Descriptor() ([]byte, []int) {
+	return fileDescriptor_metrics_f833999814533f72, []int{0}
+}
+func (m *Metrics) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Metrics) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Metrics.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Metrics) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Metrics.Merge(dst, src)
+}
+func (m *Metrics) XXX_Size() int {
+	return m.Size()
+}
+func (m *Metrics) XXX_DiscardUnknown() {
+	xxx_messageInfo_Metrics.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Metrics proto.InternalMessageInfo
 
 func (m *Metrics) GetHandlers() []string {
 	if m != nil {
@@ -53,13 +92,44 @@ type MetricPoint struct {
 	// The metric point timestamp, time in nanoseconds since the Epoch.
 	Timestamp int64 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp"`
 	// Tags is a list of metric tags (dimensions).
-	Tags []*MetricTag `protobuf:"bytes,4,rep,name=tags" json:"tags"`
+	Tags                 []*MetricTag `protobuf:"bytes,4,rep,name=tags" json:"tags"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *MetricPoint) Reset()                    { *m = MetricPoint{} }
-func (m *MetricPoint) String() string            { return proto.CompactTextString(m) }
-func (*MetricPoint) ProtoMessage()               {}
-func (*MetricPoint) Descriptor() ([]byte, []int) { return fileDescriptorMetrics, []int{1} }
+func (m *MetricPoint) Reset()         { *m = MetricPoint{} }
+func (m *MetricPoint) String() string { return proto.CompactTextString(m) }
+func (*MetricPoint) ProtoMessage()    {}
+func (*MetricPoint) Descriptor() ([]byte, []int) {
+	return fileDescriptor_metrics_f833999814533f72, []int{1}
+}
+func (m *MetricPoint) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MetricPoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MetricPoint.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *MetricPoint) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetricPoint.Merge(dst, src)
+}
+func (m *MetricPoint) XXX_Size() int {
+	return m.Size()
+}
+func (m *MetricPoint) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetricPoint.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetricPoint proto.InternalMessageInfo
 
 func (m *MetricPoint) GetName() string {
 	if m != nil {
@@ -94,13 +164,44 @@ type MetricTag struct {
 	// The metric tag name.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The metric tag value.
-	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Value                string   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *MetricTag) Reset()                    { *m = MetricTag{} }
-func (m *MetricTag) String() string            { return proto.CompactTextString(m) }
-func (*MetricTag) ProtoMessage()               {}
-func (*MetricTag) Descriptor() ([]byte, []int) { return fileDescriptorMetrics, []int{2} }
+func (m *MetricTag) Reset()         { *m = MetricTag{} }
+func (m *MetricTag) String() string { return proto.CompactTextString(m) }
+func (*MetricTag) ProtoMessage()    {}
+func (*MetricTag) Descriptor() ([]byte, []int) {
+	return fileDescriptor_metrics_f833999814533f72, []int{2}
+}
+func (m *MetricTag) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MetricTag) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MetricTag.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *MetricTag) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetricTag.Merge(dst, src)
+}
+func (m *MetricTag) XXX_Size() int {
+	return m.Size()
+}
+func (m *MetricTag) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetricTag.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetricTag proto.InternalMessageInfo
 
 func (m *MetricTag) GetName() string {
 	if m != nil {
@@ -123,10 +224,7 @@ func init() {
 }
 func (this *Metrics) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Metrics)
@@ -139,10 +237,7 @@ func (this *Metrics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -162,14 +257,14 @@ func (this *Metrics) Equal(that interface{}) bool {
 			return false
 		}
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *MetricPoint) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*MetricPoint)
@@ -182,10 +277,7 @@ func (this *MetricPoint) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -206,14 +298,14 @@ func (this *MetricPoint) Equal(that interface{}) bool {
 			return false
 		}
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *MetricTag) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*MetricTag)
@@ -226,10 +318,7 @@ func (this *MetricTag) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -237,6 +326,9 @@ func (this *MetricTag) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Value != that1.Value {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -282,6 +374,9 @@ func (m *Metrics) MarshalTo(dAtA []byte) (int, error) {
 			}
 			i += n
 		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -330,6 +425,9 @@ func (m *MetricPoint) MarshalTo(dAtA []byte) (int, error) {
 			i += n
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -360,6 +458,9 @@ func (m *MetricTag) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintMetrics(dAtA, i, uint64(len(m.Value)))
 		i += copy(dAtA[i:], m.Value)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -387,6 +488,7 @@ func NewPopulatedMetrics(r randyMetrics, easy bool) *Metrics {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMetrics(r, 3)
 	}
 	return this
 }
@@ -410,6 +512,7 @@ func NewPopulatedMetricPoint(r randyMetrics, easy bool) *MetricPoint {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMetrics(r, 5)
 	}
 	return this
 }
@@ -419,6 +522,7 @@ func NewPopulatedMetricTag(r randyMetrics, easy bool) *MetricTag {
 	this.Name = string(randStringMetrics(r))
 	this.Value = string(randStringMetrics(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedMetrics(r, 3)
 	}
 	return this
 }
@@ -510,6 +614,9 @@ func (m *Metrics) Size() (n int) {
 			n += 1 + l + sovMetrics(uint64(l))
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -532,6 +639,9 @@ func (m *MetricPoint) Size() (n int) {
 			n += 1 + l + sovMetrics(uint64(l))
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -545,6 +655,9 @@ func (m *MetricTag) Size() (n int) {
 	l = len(m.Value)
 	if l > 0 {
 		n += 1 + l + sovMetrics(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -663,6 +776,7 @@ func (m *Metrics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -803,6 +917,7 @@ func (m *MetricPoint) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -911,6 +1026,7 @@ func (m *MetricTag) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1025,9 +1141,9 @@ var (
 	ErrIntOverflowMetrics   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("metrics.proto", fileDescriptorMetrics) }
+func init() { proto.RegisterFile("metrics.proto", fileDescriptor_metrics_f833999814533f72) }
 
-var fileDescriptorMetrics = []byte{
+var fileDescriptor_metrics_f833999814533f72 = []byte{
 	// 316 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x90, 0xbf, 0x4e, 0xf3, 0x30,
 	0x14, 0xc5, 0xbf, 0xdb, 0xb4, 0xfd, 0x1a, 0x97, 0x2e, 0x16, 0x42, 0x16, 0x83, 0x1d, 0x95, 0xc5,

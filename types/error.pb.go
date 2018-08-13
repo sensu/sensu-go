@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Error describes an error captured while processing an event in Sensu's
 // pipeline.
@@ -27,13 +35,44 @@ type Error struct {
 	// Timestamp refers to the instant in-which the error occurred.
 	Timestamp int64 `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp"`
 	// Event refers to the event that was being processed when the error occurred.
-	Event Event `protobuf:"bytes,5,opt,name=event" json:"event"`
+	Event                Event    `protobuf:"bytes,5,opt,name=event" json:"event"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Error) Reset()                    { *m = Error{} }
-func (m *Error) String() string            { return proto.CompactTextString(m) }
-func (*Error) ProtoMessage()               {}
-func (*Error) Descriptor() ([]byte, []int) { return fileDescriptorError, []int{0} }
+func (m *Error) Reset()         { *m = Error{} }
+func (m *Error) String() string { return proto.CompactTextString(m) }
+func (*Error) ProtoMessage()    {}
+func (*Error) Descriptor() ([]byte, []int) {
+	return fileDescriptor_error_ed97333ed54519d3, []int{0}
+}
+func (m *Error) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Error) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Error.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Error) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Error.Merge(dst, src)
+}
+func (m *Error) XXX_Size() int {
+	return m.Size()
+}
+func (m *Error) XXX_DiscardUnknown() {
+	xxx_messageInfo_Error.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Error proto.InternalMessageInfo
 
 func (m *Error) GetName() string {
 	if m != nil {
@@ -75,10 +114,7 @@ func init() {
 }
 func (this *Error) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Error)
@@ -91,10 +127,7 @@ func (this *Error) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -111,6 +144,9 @@ func (this *Error) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Event.Equal(&that1.Event) {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -161,6 +197,9 @@ func (m *Error) MarshalTo(dAtA []byte) (int, error) {
 		return 0, err
 	}
 	i += n1
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -185,6 +224,7 @@ func NewPopulatedError(r randyError, easy bool) *Error {
 	v1 := NewPopulatedEvent(r, easy)
 	this.Event = *v1
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedError(r, 6)
 	}
 	return this
 }
@@ -281,6 +321,9 @@ func (m *Error) Size() (n int) {
 	}
 	l = m.Event.Size()
 	n += 1 + l + sovError(uint64(l))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -474,6 +517,7 @@ func (m *Error) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -588,9 +632,9 @@ var (
 	ErrIntOverflowError   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("error.proto", fileDescriptorError) }
+func init() { proto.RegisterFile("error.proto", fileDescriptor_error_ed97333ed54519d3) }
 
-var fileDescriptorError = []byte{
+var fileDescriptor_error_ed97333ed54519d3 = []byte{
 	// 250 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x2d, 0x2a, 0xca,
 	0x2f, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b,

@@ -8,12 +8,20 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Tokens contains the structure for exchanging tokens with the API
 type Tokens struct {
@@ -22,13 +30,44 @@ type Tokens struct {
 	// ExpiresAt unix timestamp describing when the access token is no longer valid
 	ExpiresAt int64 `protobuf:"varint,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at"`
 	// Refresh token is used by client to request a new access token
-	Refresh string `protobuf:"bytes,3,opt,name=refresh,proto3" json:"refresh_token"`
+	Refresh              string   `protobuf:"bytes,3,opt,name=refresh,proto3" json:"refresh_token"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Tokens) Reset()                    { *m = Tokens{} }
-func (m *Tokens) String() string            { return proto.CompactTextString(m) }
-func (*Tokens) ProtoMessage()               {}
-func (*Tokens) Descriptor() ([]byte, []int) { return fileDescriptorAuthentication, []int{0} }
+func (m *Tokens) Reset()         { *m = Tokens{} }
+func (m *Tokens) String() string { return proto.CompactTextString(m) }
+func (*Tokens) ProtoMessage()    {}
+func (*Tokens) Descriptor() ([]byte, []int) {
+	return fileDescriptor_authentication_02faf1bd19288b36, []int{0}
+}
+func (m *Tokens) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Tokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Tokens.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *Tokens) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Tokens.Merge(dst, src)
+}
+func (m *Tokens) XXX_Size() int {
+	return m.Size()
+}
+func (m *Tokens) XXX_DiscardUnknown() {
+	xxx_messageInfo_Tokens.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Tokens proto.InternalMessageInfo
 
 func (m *Tokens) GetAccess() string {
 	if m != nil {
@@ -56,10 +95,7 @@ func init() {
 }
 func (this *Tokens) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Tokens)
@@ -72,10 +108,7 @@ func (this *Tokens) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -86,6 +119,9 @@ func (this *Tokens) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Refresh != that1.Refresh {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -122,6 +158,9 @@ func (m *Tokens) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintAuthentication(dAtA, i, uint64(len(m.Refresh)))
 		i += copy(dAtA[i:], m.Refresh)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -143,6 +182,7 @@ func NewPopulatedTokens(r randyAuthentication, easy bool) *Tokens {
 	}
 	this.Refresh = string(randStringAuthentication(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedAuthentication(r, 4)
 	}
 	return this
 }
@@ -232,6 +272,9 @@ func (m *Tokens) Size() (n int) {
 	l = len(m.Refresh)
 	if l > 0 {
 		n += 1 + l + sovAuthentication(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -367,6 +410,7 @@ func (m *Tokens) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -481,9 +525,11 @@ var (
 	ErrIntOverflowAuthentication   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("authentication.proto", fileDescriptorAuthentication) }
+func init() {
+	proto.RegisterFile("authentication.proto", fileDescriptor_authentication_02faf1bd19288b36)
+}
 
-var fileDescriptorAuthentication = []byte{
+var fileDescriptor_authentication_02faf1bd19288b36 = []byte{
 	// 232 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x49, 0x2c, 0x2d, 0xc9,
 	0x48, 0xcd, 0x2b, 0xc9, 0x4c, 0x4e, 0x2c, 0xc9, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9,

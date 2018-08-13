@@ -8,6 +8,8 @@ import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
+import bytes "bytes"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -15,16 +17,53 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // TimeWindowWhen defines the "when" attributes for time windows
 type TimeWindowWhen struct {
 	// Days is a hash of days
-	Days TimeWindowDays `protobuf:"bytes,1,opt,name=days" json:"days"`
+	Days                 TimeWindowDays `protobuf:"bytes,1,opt,name=days" json:"days"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *TimeWindowWhen) Reset()                    { *m = TimeWindowWhen{} }
-func (m *TimeWindowWhen) String() string            { return proto.CompactTextString(m) }
-func (*TimeWindowWhen) ProtoMessage()               {}
-func (*TimeWindowWhen) Descriptor() ([]byte, []int) { return fileDescriptorTimeWindow, []int{0} }
+func (m *TimeWindowWhen) Reset()         { *m = TimeWindowWhen{} }
+func (m *TimeWindowWhen) String() string { return proto.CompactTextString(m) }
+func (*TimeWindowWhen) ProtoMessage()    {}
+func (*TimeWindowWhen) Descriptor() ([]byte, []int) {
+	return fileDescriptor_time_window_a02508284a08209b, []int{0}
+}
+func (m *TimeWindowWhen) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TimeWindowWhen) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TimeWindowWhen.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *TimeWindowWhen) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TimeWindowWhen.Merge(dst, src)
+}
+func (m *TimeWindowWhen) XXX_Size() int {
+	return m.Size()
+}
+func (m *TimeWindowWhen) XXX_DiscardUnknown() {
+	xxx_messageInfo_TimeWindowWhen.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TimeWindowWhen proto.InternalMessageInfo
 
 func (m *TimeWindowWhen) GetDays() TimeWindowDays {
 	if m != nil {
@@ -35,20 +74,51 @@ func (m *TimeWindowWhen) GetDays() TimeWindowDays {
 
 // TimeWindowDays defines the days of a time window
 type TimeWindowDays struct {
-	All       []*TimeWindowTimeRange `protobuf:"bytes,1,rep,name=all" json:"all,omitempty"`
-	Sunday    []*TimeWindowTimeRange `protobuf:"bytes,2,rep,name=sunday" json:"sunday,omitempty"`
-	Monday    []*TimeWindowTimeRange `protobuf:"bytes,3,rep,name=monday" json:"monday,omitempty"`
-	Tuesday   []*TimeWindowTimeRange `protobuf:"bytes,4,rep,name=tuesday" json:"tuesday,omitempty"`
-	Wednesday []*TimeWindowTimeRange `protobuf:"bytes,5,rep,name=wednesday" json:"wednesday,omitempty"`
-	Thursday  []*TimeWindowTimeRange `protobuf:"bytes,6,rep,name=thursday" json:"thursday,omitempty"`
-	Friday    []*TimeWindowTimeRange `protobuf:"bytes,7,rep,name=friday" json:"friday,omitempty"`
-	Saturday  []*TimeWindowTimeRange `protobuf:"bytes,8,rep,name=saturday" json:"saturday,omitempty"`
+	All                  []*TimeWindowTimeRange `protobuf:"bytes,1,rep,name=all" json:"all,omitempty"`
+	Sunday               []*TimeWindowTimeRange `protobuf:"bytes,2,rep,name=sunday" json:"sunday,omitempty"`
+	Monday               []*TimeWindowTimeRange `protobuf:"bytes,3,rep,name=monday" json:"monday,omitempty"`
+	Tuesday              []*TimeWindowTimeRange `protobuf:"bytes,4,rep,name=tuesday" json:"tuesday,omitempty"`
+	Wednesday            []*TimeWindowTimeRange `protobuf:"bytes,5,rep,name=wednesday" json:"wednesday,omitempty"`
+	Thursday             []*TimeWindowTimeRange `protobuf:"bytes,6,rep,name=thursday" json:"thursday,omitempty"`
+	Friday               []*TimeWindowTimeRange `protobuf:"bytes,7,rep,name=friday" json:"friday,omitempty"`
+	Saturday             []*TimeWindowTimeRange `protobuf:"bytes,8,rep,name=saturday" json:"saturday,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
-func (m *TimeWindowDays) Reset()                    { *m = TimeWindowDays{} }
-func (m *TimeWindowDays) String() string            { return proto.CompactTextString(m) }
-func (*TimeWindowDays) ProtoMessage()               {}
-func (*TimeWindowDays) Descriptor() ([]byte, []int) { return fileDescriptorTimeWindow, []int{1} }
+func (m *TimeWindowDays) Reset()         { *m = TimeWindowDays{} }
+func (m *TimeWindowDays) String() string { return proto.CompactTextString(m) }
+func (*TimeWindowDays) ProtoMessage()    {}
+func (*TimeWindowDays) Descriptor() ([]byte, []int) {
+	return fileDescriptor_time_window_a02508284a08209b, []int{1}
+}
+func (m *TimeWindowDays) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TimeWindowDays) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TimeWindowDays.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *TimeWindowDays) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TimeWindowDays.Merge(dst, src)
+}
+func (m *TimeWindowDays) XXX_Size() int {
+	return m.Size()
+}
+func (m *TimeWindowDays) XXX_DiscardUnknown() {
+	xxx_messageInfo_TimeWindowDays.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TimeWindowDays proto.InternalMessageInfo
 
 func (m *TimeWindowDays) GetAll() []*TimeWindowTimeRange {
 	if m != nil {
@@ -113,13 +183,44 @@ type TimeWindowTimeRange struct {
 	Begin string `protobuf:"bytes,1,opt,name=begin,proto3" json:"begin"`
 	// End is the time which the filter should end, in the format '3:00PM', which
 	// satisfies the time.Kitchen format
-	End string `protobuf:"bytes,2,opt,name=end,proto3" json:"end"`
+	End                  string   `protobuf:"bytes,2,opt,name=end,proto3" json:"end"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TimeWindowTimeRange) Reset()                    { *m = TimeWindowTimeRange{} }
-func (m *TimeWindowTimeRange) String() string            { return proto.CompactTextString(m) }
-func (*TimeWindowTimeRange) ProtoMessage()               {}
-func (*TimeWindowTimeRange) Descriptor() ([]byte, []int) { return fileDescriptorTimeWindow, []int{2} }
+func (m *TimeWindowTimeRange) Reset()         { *m = TimeWindowTimeRange{} }
+func (m *TimeWindowTimeRange) String() string { return proto.CompactTextString(m) }
+func (*TimeWindowTimeRange) ProtoMessage()    {}
+func (*TimeWindowTimeRange) Descriptor() ([]byte, []int) {
+	return fileDescriptor_time_window_a02508284a08209b, []int{2}
+}
+func (m *TimeWindowTimeRange) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TimeWindowTimeRange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TimeWindowTimeRange.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *TimeWindowTimeRange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TimeWindowTimeRange.Merge(dst, src)
+}
+func (m *TimeWindowTimeRange) XXX_Size() int {
+	return m.Size()
+}
+func (m *TimeWindowTimeRange) XXX_DiscardUnknown() {
+	xxx_messageInfo_TimeWindowTimeRange.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TimeWindowTimeRange proto.InternalMessageInfo
 
 func (m *TimeWindowTimeRange) GetBegin() string {
 	if m != nil {
@@ -142,10 +243,7 @@ func init() {
 }
 func (this *TimeWindowWhen) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*TimeWindowWhen)
@@ -158,24 +256,21 @@ func (this *TimeWindowWhen) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
 	if !this.Days.Equal(&that1.Days) {
 		return false
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *TimeWindowDays) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*TimeWindowDays)
@@ -188,10 +283,7 @@ func (this *TimeWindowDays) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -259,14 +351,14 @@ func (this *TimeWindowDays) Equal(that interface{}) bool {
 			return false
 		}
 	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
 	return true
 }
 func (this *TimeWindowTimeRange) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*TimeWindowTimeRange)
@@ -279,10 +371,7 @@ func (this *TimeWindowTimeRange) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -290,6 +379,9 @@ func (this *TimeWindowTimeRange) Equal(that interface{}) bool {
 		return false
 	}
 	if this.End != that1.End {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -317,6 +409,9 @@ func (m *TimeWindowWhen) MarshalTo(dAtA []byte) (int, error) {
 		return 0, err
 	}
 	i += n1
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -431,6 +526,9 @@ func (m *TimeWindowDays) MarshalTo(dAtA []byte) (int, error) {
 			i += n
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -461,6 +559,9 @@ func (m *TimeWindowTimeRange) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintTimeWindow(dAtA, i, uint64(len(m.End)))
 		i += copy(dAtA[i:], m.End)
 	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	return i, nil
 }
 
@@ -478,6 +579,7 @@ func NewPopulatedTimeWindowWhen(r randyTimeWindow, easy bool) *TimeWindowWhen {
 	v1 := NewPopulatedTimeWindowDays(r, easy)
 	this.Days = *v1
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedTimeWindow(r, 2)
 	}
 	return this
 }
@@ -541,6 +643,7 @@ func NewPopulatedTimeWindowDays(r randyTimeWindow, easy bool) *TimeWindowDays {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedTimeWindow(r, 9)
 	}
 	return this
 }
@@ -550,6 +653,7 @@ func NewPopulatedTimeWindowTimeRange(r randyTimeWindow, easy bool) *TimeWindowTi
 	this.Begin = string(randStringTimeWindow(r))
 	this.End = string(randStringTimeWindow(r))
 	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedTimeWindow(r, 3)
 	}
 	return this
 }
@@ -631,6 +735,9 @@ func (m *TimeWindowWhen) Size() (n int) {
 	_ = l
 	l = m.Days.Size()
 	n += 1 + l + sovTimeWindow(uint64(l))
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -685,6 +792,9 @@ func (m *TimeWindowDays) Size() (n int) {
 			n += 1 + l + sovTimeWindow(uint64(l))
 		}
 	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
 
@@ -698,6 +808,9 @@ func (m *TimeWindowTimeRange) Size() (n int) {
 	l = len(m.End)
 	if l > 0 {
 		n += 1 + l + sovTimeWindow(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -786,6 +899,7 @@ func (m *TimeWindowWhen) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1084,6 +1198,7 @@ func (m *TimeWindowDays) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1192,6 +1307,7 @@ func (m *TimeWindowTimeRange) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1306,9 +1422,9 @@ var (
 	ErrIntOverflowTimeWindow   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("time_window.proto", fileDescriptorTimeWindow) }
+func init() { proto.RegisterFile("time_window.proto", fileDescriptor_time_window_a02508284a08209b) }
 
-var fileDescriptorTimeWindow = []byte{
+var fileDescriptor_time_window_a02508284a08209b = []byte{
 	// 367 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0x4f, 0x4a, 0xc3, 0x40,
 	0x14, 0x87, 0x3b, 0x4d, 0xfa, 0x6f, 0x2a, 0x82, 0xe3, 0x26, 0x2a, 0x24, 0xa5, 0x6e, 0xba, 0x31,
