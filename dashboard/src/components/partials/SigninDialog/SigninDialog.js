@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
 import { compose, withProps } from "recompose";
 import { withApollo } from "react-apollo";
 import { when } from "/utils/promise";
@@ -10,6 +9,7 @@ import createTokens from "/mutations/createTokens";
 import createStyledComponent from "/components/createStyledComponent";
 
 import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import Logo from "/icons/SensuLogo";
 import Slide from "@material-ui/core/Slide";
@@ -35,16 +35,13 @@ const Headline = createStyledComponent({
   }),
 });
 
-const styles = theme => ({
-  root: {
-    margin: "0 auto",
-    padding: 48,
-    maxWidth: 450,
-    textAlign: "left",
-    alignSelf: "center",
+const Container = createStyledComponent({
+  component: DialogContent,
+  styles: theme => ({
+    padding: theme.spacing.unit * 6,
     height: "auto",
     minHeight: 500,
-  },
+  }),
 });
 
 class SignInView extends React.Component {
@@ -108,7 +105,7 @@ class SignInView extends React.Component {
           variant={loading ? "indeterminate" : "determinate"}
           value={0}
         />
-        <div className={classes.root}>
+        <Container>
           <Branding color="secondary">
             <Logo />
           </Branding>
@@ -123,14 +120,11 @@ class SignInView extends React.Component {
             error={authError}
             onSubmit={this.handleSubmit}
           />
-        </div>
+        </Container>
       </Dialog>
     );
   }
 }
 
-export default compose(
-  withApollo,
-  withStyles(styles),
-  withMobileDialog({ breakpoint: "xs" }),
-)(SignInView);
+const enhance = compose(withApollo, withMobileDialog({ breakpoint: "xs" }));
+export default enhance(SignInView);
