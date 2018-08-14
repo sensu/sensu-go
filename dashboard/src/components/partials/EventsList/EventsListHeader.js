@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import capitalize from "lodash/capitalize";
 
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
