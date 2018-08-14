@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added the Sensu edition in sensuctl config view subcommand.
 - List the supported resource types in sensuctl.
 - Added agent ID and IP address to backend session connect/disconnect logs
+- Licenses collection for RHEL Dockerfiles and separated RHEL Dockerfiles.
 
 ### Changed
 - API responses are inspected after each request for the Sensu Edition header.

@@ -1,0 +1,1801 @@
+[
+	{
+		"project": "github.com/AlecAivazis/survey",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/NYTimes/gziphandler",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 0.9988925802879292
+			}
+		]
+	},
+	{
+		"project": "github.com/ash2k/stager",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 0.9988925802879292
+			}
+		]
+	},
+	{
+		"project": "github.com/atlassian/gostatsd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.96875
+			}
+		]
+	},
+	{
+		"project": "github.com/beorn7/perks/quantile",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/bluele/slack",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/coreos/bbolt",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/coreos/etcd",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/coreos/go-semver/semver",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/coreos/go-systemd/journal",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 0.9966703662597114
+			}
+		]
+	},
+	{
+		"project": "github.com/coreos/pkg/capnslog",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/dave/jennifer/jen",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/davecgh/go-spew/spew",
+		"licenses": [
+			{
+				"type": "ISC License",
+				"confidence": 0.9850746268656716
+			}
+		]
+	},
+	{
+		"project": "github.com/dgrijalva/jwt-go",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/docker/docker/pkg/term",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 0.9657534246575342
+			}
+		]
+	},
+	{
+		"project": "github.com/dsnet/compress",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9787234042553191
+			}
+		]
+	},
+	{
+		"project": "github.com/dustin/go-humanize",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.96875
+			}
+		]
+	},
+	{
+		"project": "github.com/emicklei/proto",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/fsnotify/fsnotify",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "github.com/ghodss/yaml",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.8357142857142857
+			}
+		]
+	},
+	{
+		"project": "github.com/go-resty/resty",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/gogo/protobuf",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9090909090909091
+			}
+		]
+	},
+	{
+		"project": "github.com/golang/protobuf",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.92
+			}
+		]
+	},
+	{
+		"project": "github.com/golang/snappy",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "github.com/google/btree",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/google/uuid",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "github.com/gorilla/mux",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "github.com/gorilla/websocket",
+		"licenses": [
+			{
+				"type": "BSD 2-clause \"Simplified\" License",
+				"confidence": 0.9852216748768473
+			}
+		]
+	},
+	{
+		"project": "github.com/graphql-go/graphql",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/grpc-ecosystem/go-grpc-prometheus",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/grpc-ecosystem/grpc-gateway",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.979253112033195
+			}
+		]
+	},
+	{
+		"project": "github.com/hashicorp/hcl",
+		"licenses": [
+			{
+				"type": "Mozilla Public License 2.0",
+				"confidence": 0.9971724787935909
+			}
+		]
+	},
+	{
+		"project": "github.com/jbenet/go-reuseport",
+		"licenses": [
+			{
+				"type": "ISC License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/jonboulle/clockwork",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/json-iterator/go",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/libp2p/go-reuseport",
+		"licenses": [
+			{
+				"type": "ISC License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/libp2p/go-sockaddr/net",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "github.com/magiconair/properties",
+		"licenses": [
+			{
+				"type": "BSD 2-clause \"Simplified\" License",
+				"confidence": 0.9577464788732394
+			}
+		]
+	},
+	{
+		"project": "github.com/mattn/go-colorable",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/mattn/go-isatty",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9587628865979382
+			}
+		]
+	},
+	{
+		"project": "github.com/mattn/go-runewidth",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/matttproud/golang_protobuf_extensions/pbutil",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/mgutz/ansi",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/mholt/archiver",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/mitchellh/go-homedir",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/mitchellh/mapstructure",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/nightlyone/lockfile",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/nwaples/rardecode",
+		"licenses": [
+			{
+				"type": "BSD 2-clause \"Simplified\" License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/olekukonko/tablewriter",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/pelletier/go-buffruneio",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/pelletier/go-toml",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/pierrec/lz4",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9916666666666667
+			}
+		]
+	},
+	{
+		"project": "github.com/pierrec/xxHash/xxHash32",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9916666666666667
+			}
+		]
+	},
+	{
+		"project": "github.com/pmezard/go-difflib/difflib",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9830508474576272
+			}
+		]
+	},
+	{
+		"project": "github.com/prometheus/client_golang/prometheus",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/prometheus/client_model/go",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/prometheus/common",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/prometheus/procfs",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/robfig/cron",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9946524064171123
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/govaluate",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/agent",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/agent/assetmanager",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/agent/cmd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/agent/transformers",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/agentd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid/actions",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid/graphql",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid/graphql/globalid",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid/graphql/relay",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid/graphql/schema",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid/middlewares",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/apid/routers",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/authentication/jwt",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/authorization",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/cmd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/daemon",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/dashboardd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/etcd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/eventd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/keepalived",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/messaging",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/migration",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/monitor",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/pipelined",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/queue",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/ring",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/schedulerd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/seeds",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/store",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/store/etcd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/backend/store/etcd/testutil",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/benchmark/cmd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/client",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/client/config",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/client/config/basic",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/client/testing",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/cmd",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/asset",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/check",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/check/subcommands",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/completion",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/config",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/configure",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/create",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/entity",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/environment",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/event",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/extension",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/filter",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/filter/subcommands",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/flags",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/handler",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/helpers",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/hook",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/hooks",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/importer",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/logout",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/mutator",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/organization",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/role",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/silenced",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/testing",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/timeutil",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/commands/user",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/elements/globals",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/elements/list",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/elements/report",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cli/elements/table",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/cmd/sensu-backend",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/command",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/dashboard",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/graphql",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/graphql/generator",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/graphql/integration",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/handler",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/handlers/slack",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/rpc",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/rpc/extension",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/rpc/extension/example",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/scripts/check_protoc",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/scripts/gengraphql",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/scripts/make_typemap",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/scripts/proto2graphql",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/system",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/e2e",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/mockbus",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/mockqueue",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/mockring",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/mockstore",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/mocktransport",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/tcphandler",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/testing/testutil",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/tools/cat",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/tools/false",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/tools/sleep",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/tools/true",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/transport",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/types",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/types/dynamic",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/types/v1",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/util/bytes",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/util/eval",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/util/logging",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/util/path",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/util/retry",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/util/strings",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/util/url",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/version",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/sensu/sensu-go/version/cmd/version",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/shirou/gopsutil",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.921875
+			}
+		]
+	},
+	{
+		"project": "github.com/sirupsen/logrus",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/soheilhy/cmux",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/spf13/afero",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 0.9573241061130334
+			}
+		]
+	},
+	{
+		"project": "github.com/spf13/cast",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/spf13/cobra",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 0.9573241061130334
+			}
+		]
+	},
+	{
+		"project": "github.com/spf13/jwalterweatherman",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/spf13/pflag",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "github.com/spf13/viper",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "github.com/stretchr/objx",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.96875
+			}
+		]
+	},
+	{
+		"project": "github.com/stretchr/testify",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9430051813471503
+			},
+			{
+				"type": "MIT License",
+				"confidence": 0.9430051813471503
+			}
+		]
+	},
+	{
+		"project": "github.com/tmc/grpc-websocket-proxy/wsproxy",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9891304347826086
+			}
+		]
+	},
+	{
+		"project": "github.com/ugorji/go/codec",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9946524064171123
+			}
+		]
+	},
+	{
+		"project": "github.com/ulikunitz/xz",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "github.com/willf/pad/utf8",
+		"licenses": [
+			{
+				"type": "BSD 2-clause \"Simplified\" License",
+				"confidence": 0.9753694581280788
+			}
+		]
+	},
+	{
+		"project": "github.com/xiang90/probing",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "golang.org/x/crypto",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "golang.org/x/net",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "golang.org/x/sys/unix",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "golang.org/x/text",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "golang.org/x/time/rate",
+		"licenses": [
+			{
+				"type": "BSD 3-clause \"New\" or \"Revised\" License",
+				"confidence": 0.9663865546218487
+			}
+		]
+	},
+	{
+		"project": "google.golang.org/genproto/googleapis/rpc/status",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "google.golang.org/grpc",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "gopkg.in/AlecAivazis/survey.v1",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 1
+			}
+		]
+	},
+	{
+		"project": "gopkg.in/h2non/filetype.v1",
+		"licenses": [
+			{
+				"type": "MIT License",
+				"confidence": 0.9841269841269841
+			}
+		]
+	},
+	{
+		"project": "gopkg.in/yaml.v2",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			},
+			{
+				"type": "MIT License",
+				"confidence": 0.8975609756097561
+			}
+		]
+	}
+]
